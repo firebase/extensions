@@ -1,0 +1,111 @@
+# Copyright 2018 Google LLC
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+
+# required
+name: invites-mod
+specVersion: v1beta1
+version: 1.0.0
+description: >
+    Adds basic invite-a-friend functionality to your Android, iOS, or Web app!
+    Requires a Mailgun account, which you can get for free through Google Cloud.
+
+# billing required because functions needs external network access
+billingRequired: true
+
+# apis to enable
+apis: []  # no apis needed for this mod
+
+# roles for the service account for the functions
+roles:
+  # tinaliang: replace with equivalent datastore admin role and add note
+- firebase.developAdmin # for firestore
+
+# functions to deploy
+resources:
+- name: sendInvitation
+  type: firebasemods.v1beta1.function
+  properties:
+    runtime: nodejs8
+    httpsTrigger: {}
+
+- name: acceptInvitation
+  type: firebasemods.v1beta1.function
+  properties:
+    runtime: nodejs8
+    httpsTrigger: {}
+
+# params
+env:
+- var: MAILGUN_API_KEY
+  label: Mailgun API Key
+  description: >
+    Your API key for Mailgun. You can register for a free Mailgun account with a generous
+    quota with Google Cloud at https://www.mailgun.com. After registering, you should receive
+    an email with your API key.
+  required: true
+
+- var: MAILGUN_DOMAIN
+  label: Email Domain Name
+  description: >
+    The domain name you'd like invitation emails to be sent from. This must be registered
+    in Mailgun.
+  required: true
+  validationRegex: '[\w\.]+'
+  validationErrorMessage: 'Must be a valid domain name.'
+
+- var: APP_NAME
+  label: Your App Name
+  required: true
+
+- var: ACCEPT_URL_TEMPLATE
+  label: Accept Invitation URL
+  description: >
+    The URL to include in invitation emails. "{token}" will be replaced with the actual invitation
+    token. The default value assumes your app is deployed with Firebase Hosting and expects
+    an 'acceptInvitation' query parameter at the root URL.
+  default: "https://${PROJECT_ID}.firebaseapp.com/?acceptInvitation={token}"
+  validationRegex: '.*\{token\}.*'
+  validationErrorMessage: >
+    Your URL must include '{token}' so that it can be replaced with an actual invitation token.
+
+- var: TARGET_RECEIVER_FIELDS
+  label: Document and Field Path for Accepting User's UID
+  description: >
+    When an invitation is accepted, the mod will add the receiving/accepting user's UID to the given
+    document/array field. If the receiver UID is 123 and sender UID is 234, entering
+    "users/{sender}.friends" here will append "123" to the "friends" array field for document "234"
+    in the "users" collection. Separate document/field pairs for this var with commas.
+  default: users/{sender}.friends
+  required: false
+  validationRegex: '.+/.+\..+'
+  validationErrorMessage: >
+    Values must be comma-separated document path + field, e.g. coll/doc.field,coll/doc.field
+
+- var: TARGET_SENDER_FIELDS
+  label: Document and Field Path for Sending User's UID
+  description: >
+    When an invitation is accepted, the mod will add the sending user's UID to the given
+    document/array field. If the receiver UID is 123 and sender UID is 234, entering
+    "users/{receiver}.friends" here will append "234" to the "friends" array field for document
+    "123" in the "users" collection. Separate document/field pairs for this var with commas.
+  default: users/{receiver}.friends
+  required: false
+  validationRegex: '.+/.+\..+'
+  validationErrorMessage: >
+    Values must be comma-separated document path + field, e.g. coll/doc.field,coll/doc.field
+
+- var: METADATA_FIRESTORE_COLLECTION
+  label: Metadata Firestore Collection
+  description: >
+    A top-level Firestore collection the mod can use to store metadata for invitations.
+  default: _invitations
+  required: true
+  validationRegex: '[\w_.-]+'
+  validationErrorMessage: >
+    Must be a simple alphanumeric field name, optionally with periods, underscores, or dashes.
+
+# post-install message
+usage: postinstall.md
