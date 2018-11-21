@@ -1,0 +1,10 @@
+test-project-key.json
+
+functions/.vscode/settings.json
+functions/tasks.json
+functions/node_modules
+functions/package-lock.json
+functions/src/*.js
+functions/src/*.js.map
+functions/test/*.js
+functions/test/*.js.map
