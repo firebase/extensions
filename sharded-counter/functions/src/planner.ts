@@ -14,8 +14,9 @@ export class Planner {
      * @param start Beginning of document range for this worker.
      * @param snaps List of shard snapshots to aggregate.
      */
-    public static planAggregations(start: string, snaps: firestore.DocumentSnapshot[]): AggregationPlan[] {
-        if (snaps.length === 0) return [];     
+    public static planAggregations(start: string,
+        snaps: firestore.DocumentSnapshot[]): AggregationPlan[] {
+        if (snaps.length === 0) return [];
 
         let result: AggregationPlan[] = [];
 
@@ -25,11 +26,17 @@ export class Planner {
         let shards: firestore.DocumentSnapshot[] = [];
         let partials: firestore.DocumentSnapshot[] = [];
         for (let i = snaps.length - 1; i >= 0; i--) {
-        let [newAggregate, newIsPartial] = Planner.constructAggregate(snaps[i].ref.path, prefixLen);
+            let [newAggregate, newIsPartial] = Planner.constructAggregate(snaps[i].ref.path,
+                prefixLen);
             if (newAggregate !== aggregate) {
                 shards.reverse();
                 partials.reverse();
-                result.push({aggregate: aggregate, isPartial: isPartial, shards: shards, partials: partials});
+                result.push({
+                    aggregate: aggregate,
+                    isPartial: isPartial,
+                    shards: shards,
+                    partials: partials
+                });
                 aggregate = newAggregate;
                 isPartial = newIsPartial;
                 shards = [];
@@ -43,21 +50,26 @@ export class Planner {
         }
         shards.reverse();
         partials.reverse();
-        result.push({aggregate: aggregate, isPartial: isPartial, shards: shards, partials: partials});    
-        result.reverse();    
+        result.push({
+            aggregate: aggregate,
+            isPartial: isPartial,
+            shards: shards,
+            partials: partials
+        });
+        result.reverse();
         return result;
     }
 
     protected static constructAggregate(shard: string, prefixLen): [string, boolean] {
         if (prefixLen === 0) return [path.dirname(path.dirname(shard)), false];
-    
+
         let collection = path.dirname(shard);
         shard = path.basename(shard);
         shard = Planner.decodeShard(shard);
-    
+
         // Make sure we're making a progress.
-        if (shard.length <= prefixLen) prefixLen--; 
-    
+        if (shard.length <= prefixLen) prefixLen--;
+
         shard = shard.substring(0, Math.min(prefixLen, 4));
         shard = Planner.encodeShard(shard);
         return [path.join(collection, shard), true];
@@ -66,13 +78,13 @@ export class Planner {
     protected static aggrPrefixLen(start: string, end: string): number {
         if (start === '') return 0;
         if (path.dirname(start) !== path.dirname(end)) return 0;
-    
+
         const shard1 = Planner.decodeShard(path.basename(start));
         const shard2 = Planner.decodeShard(path.basename(end));
         if (shard1.length !== shard2.length) return 0;
-    
+
         for (let i = 0; i < Math.min(shard1.length, 4); i++) {
-            if (shard1.charAt(i) !== shard2.charAt(i)) return i+1;
+            if (shard1.charAt(i) !== shard2.charAt(i)) return i + 1;
         }
         return 4;
     }

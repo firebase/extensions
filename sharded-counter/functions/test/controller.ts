@@ -24,6 +24,6 @@ import { WorkerShardingInfo, ShardedCounterController } from "../src/controller"
         }];
         const [reshard, slices] = ControllerTest.balanceWorkers(workers, 1);
         expect(reshard).to.be.equal(true);
-        expect(slices).to.deep.equal([{start: '00000000', end: '66666666'}])
+        expect(slices).to.deep.equal([{ start: '00000000', end: '66666666' }])
     }
 }
