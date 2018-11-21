@@ -4,13 +4,15 @@ export class Aggregator {
     /**
      * Aggregates increments from shards and partials and returns an update object suitable for
      * DocumentRef.update() call.
-     * @param counter Current snapshot of the main counter document. If null assume we aggregate to a partial.
+     * @param counter Current snap of the main counter document. null means we aggregate to partial.
      * @param partials Shard snapshots with partial aggregations.
      * @param shards Shard snapshots with counter increments.
      * 
      * TODO: Use numeric transforms instead of array transforms for partial aggregations.
      */
-    public static aggregate(counter: firestore.DocumentSnapshot, partials: firestore.DocumentSnapshot[],
+    public static aggregate(
+        counter: firestore.DocumentSnapshot,
+        partials: firestore.DocumentSnapshot[],
         shards: firestore.DocumentSnapshot[]): { [key: string]: any } {
         const update = {};
         for (let i = 0; i < shards.length; i++) {
@@ -41,7 +43,8 @@ export class Aggregator {
     }
 
     /**
-     * Appends data from a document into an update object that is suitable for DocumentRef.update() call.
+     * Appends data from a document into an update object that is suitable for DocumentRef.update()
+     * call.
      * e.g.
      *   let update = {'user': 'john'};
      *   mergeIntoUpdate([], {profile: {name: 'John Smith', cell: '123-456-7890'}}, update);
@@ -54,7 +57,8 @@ export class Aggregator {
      * @param data A document data that needs to be merged into the update
      * @param update An object that accumulates changes.
      */
-    protected static mergeIntoUpdate(field: string[], data: firestore.DocumentData, update: {[key: string]: any}) {
+    protected static mergeIntoUpdate(field: string[], data: firestore.DocumentData,
+        update: { [key: string]: any }) {
         // TODO: handle unsupported data better (e.g. arrays)
         let elem = data;
         field.forEach((key) => elem = elem[key]);

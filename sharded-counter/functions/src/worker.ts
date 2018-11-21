@@ -26,10 +26,10 @@ export class ShardedCounterWorker {
     private roundsCapped: number = 0;
 
     constructor(private metadoc: firestore.DocumentSnapshot, private shardCollection: string,
-            private singleRun: boolean = false) {
+        private singleRun: boolean = false) {
         this.db = metadoc.ref.firestore;
         this.metadoc = metadoc;
-        this.metadata = <WorkerMetadata> metadoc.data();
+        this.metadata = <WorkerMetadata>metadoc.data();
     }
 
     public run(): Promise<void> {
@@ -60,7 +60,7 @@ export class ShardedCounterWorker {
                 await this.db.runTransaction(async (t) => {
                     const snap = await t.get(this.metadoc.ref);
                     if (snap.exists && deepEqual(snap.data(), this.metadata)) {
-                        t.update(snap.ref, {timestamp: Date.now(), stats: stats});
+                        t.update(snap.ref, { timestamp: Date.now(), stats: stats });
                     }
                 });
             }
@@ -69,30 +69,30 @@ export class ShardedCounterWorker {
                 this.maybeAggregate();
             }, 1000);
 
-            timeoutTimer = setTimeout(() => shutdown().then(writeStats).then(resolve).catch(reject), WORKER_TIMEOUT_MS);
+            timeoutTimer = setTimeout(() => shutdown().then(writeStats).then(resolve).catch(reject),
+                WORKER_TIMEOUT_MS);
 
             unsubscribeMetadataListener = this.metadoc.ref.onSnapshot((snap) => {
                 console.log('metadoc update');
                 // if something's changed in the worker metadata since we were called, abort.
                 if (!snap.exists || !deepEqual(snap.data(), this.metadata)) {
                     console.log("shutting down cause metadoc changed.")
-                    console.log(JSON.stringify(snap.data()) + ' vs ' + JSON.stringify(this.metadata));
                     shutdown().then(resolve).catch(reject);
                 }
             });
 
             unsubscribeSliceListener = queryRange(
-                    this.db,
-                    this.shardCollection,
-                    this.metadata.slice.start,
-                    this.metadata.slice.end,
-                    SHARDS_LIMIT).onSnapshot((snap) => {
-                this.shards = snap.docs;
-                if (this.singleRun && this.shards.length === 0) {
-                    console.log("Shutting down, single run mode.");
-                    shutdown().then(writeStats).then(resolve).catch(reject);
-                }
-            });
+                this.db,
+                this.shardCollection,
+                this.metadata.slice.start,
+                this.metadata.slice.end,
+                SHARDS_LIMIT).onSnapshot((snap) => {
+                    this.shards = snap.docs;
+                    if (this.singleRun && this.shards.length === 0) {
+                        console.log("Shutting down, single run mode.");
+                        shutdown().then(writeStats).then(resolve).catch(reject);
+                    }
+                });
         });
     }
 
@@ -103,7 +103,7 @@ export class ShardedCounterWorker {
         if (this.shards.length === SHARDS_LIMIT) this.roundsCapped++;
 
         // Identify empty shards that are candidates for cleanup.
-        const [fulls, empties] = ShardedCounterWorker.separateShards(this.shards, this.singleRun); 
+        const [fulls, empties] = ShardedCounterWorker.separateShards(this.shards, this.singleRun);
         const cleanupPromises = ShardedCounterWorker.cleanupEmptyPartials(this.db, empties);
 
         const plans = Planner.planAggregations(this.metadata.slice.start, fulls);
@@ -121,9 +121,9 @@ export class ShardedCounterWorker {
                         ? Promise.resolve(null)
                         : t.get(this.db.doc(plan.aggregate));
 
-                    // Read all shards in transaction, since we want to delete them immediately.
-                    // Note that partials are not read here, because we use array transform to update them
-                    // and don't need transaction guarantees.
+                    // Read all shards in a transaction since we want to delete them immediately.
+                    // Note that partials are not read here, because we use array transform to
+                    // update them and don't need transaction guarantees.
                     const shardRefs = plan.shards.map((snap) => snap.ref);
                     const shardsPromise = (shardRefs.length > 0)
                         ? t.getAll(shardRefs[0], ...shardRefs.slice(1))
@@ -132,9 +132,11 @@ export class ShardedCounterWorker {
                     let counter: firestore.DocumentSnapshot;
                     let metadoc: firestore.DocumentSnapshot;
                     try {
-                        [shards, counter, metadoc] = await Promise.all([shardsPromise, counterPromise, metadocPromise]);
+                        [shards, counter, metadoc] = await Promise.all(
+                            [shardsPromise, counterPromise, metadocPromise]);
                     } catch (err) {
-                        console.log('Unable to read shards during aggregation round, skipping...', err);
+                        console.log('Unable to read shards during aggregation round, skipping...',
+                            err);
                         return [];
                     }
 
@@ -164,16 +166,14 @@ export class ShardedCounterWorker {
                                 paths.push(snap.ref.path);
                                 t.set(snap.ref, {
                                     '_updates_': firestore.FieldValue.arrayRemove(...data['_updates_'])
-                                }, {
-                                    merge: true
-                                });
+                                }, { merge: true });
                             }
                         }
                     });
                     return paths;
                 });
                 this.allPaths.push(...paths);
-            } catch(err) {
+            } catch (err) {
                 console.log('transaction to: ' + plan.aggregate + ' failed, skipping...', err);
             }
         });
@@ -187,7 +187,7 @@ export class ShardedCounterWorker {
     }
 
     protected static separateShards(shards: firestore.DocumentSnapshot[], singleRun: boolean):
-            [firestore.DocumentSnapshot[], firestore.DocumentSnapshot[]] {
+        [firestore.DocumentSnapshot[], firestore.DocumentSnapshot[]] {
         const fulls = [];
         const empties = [];
         shards.forEach((shard) => {
@@ -200,7 +200,8 @@ export class ShardedCounterWorker {
         return [fulls, empties];
     }
 
-    protected static cleanupEmptyPartials(db: firestore.Firestore, empties: firestore.DocumentSnapshot[]): Promise<void>[] {
+    protected static cleanupEmptyPartials(db: firestore.Firestore,
+        empties: firestore.DocumentSnapshot[]): Promise<void>[] {
         return empties.map(async (empty) => {
             try {
                 await db.runTransaction(async (t) => {
@@ -213,8 +214,8 @@ export class ShardedCounterWorker {
                         console.log('deletion failed: ' + empty.ref.path);
                     }
                 })
-            } catch(err) {
-                console.log('transaction to delete: ' + empty.ref.path + ' failed, skipping...', err);
+            } catch (err) {
+                console.log('transaction to delete: ' + empty.ref.path + ' failed, skipping', err);
             }
         });
     }
