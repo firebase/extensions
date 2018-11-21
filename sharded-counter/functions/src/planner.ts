@@ -1,6 +1,19 @@
 import { firestore } from "firebase-admin";
 import * as path from "path";
 
+/**
+ * There are two types of shards: "shard" and "partial". 
+ * 
+ * "shard" is incremented by client application and since each app instance has its own unique 
+ * shard, these are not contended.
+ * "partial" contains partial agregation from up to 499 "shards" and is updated by worker. These
+ * update frequently and workers modify them using numeric transforms rather than transaction to
+ * avoid contention.
+ * 
+ * Planner takes a list of shards (these can be partials or shards) and decides how to aggregate
+ * them to avoid contention.
+ */
+
 interface AggregationPlan {
     aggregate: string,                      // a document path to store this aggregation
     isPartial: boolean,                     // is the aggregate a partial shard or the main counter
