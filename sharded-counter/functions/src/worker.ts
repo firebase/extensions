@@ -9,11 +9,25 @@ const SHARDS_LIMIT = 499;
 const WORKER_TIMEOUT_MS = 45000;
 
 interface WorkerMetadata {
-    slice: Slice
-    stats: WorkerStats
-    timestamp: number
+    slice: Slice        // shard range a single worker is responsible for
+    stats: WorkerStats  // stats written by a worker at the end of successful run
+    timestamp: number   // timestamp is updated each time metadata is modified to detect changes
 }
 
+/**
+ * Worker is controlled by WorkerMetadata document stored at process.env.MODS_INTERNAL_COLLECTION
+ * path. Controller creates as many metadata documents as workers are required. Each worker monitors
+ * exclusive shard range (aka slice) and terminates successfully after 45 seconds, upon which it
+ * writes stats to its metadata document. That write triggers another worker run in GCF. This means
+ * workers are self scheduling.
+ * 
+ * If worker run fails, controller will detect that after 90s and reschedule worker by updating
+ * 'timestamp' field.
+ * 
+ * Workers avoid double scheduling and overruns by including their metadata documents in every
+ * aggregation transaction. If metadata changes underneath, transaction fails, worker detects that
+ * and terminates immmediately.
+ */
 export class ShardedCounterWorker {
     private db: firestore.Firestore;
     private metadata: WorkerMetadata;
