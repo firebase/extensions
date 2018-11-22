@@ -58,7 +58,13 @@ export class ShardedCounterWorker {
                 clearTimeout(timeoutTimer);
                 unsubscribeMetadataListener();
                 unsubscribeSliceListener();
-                if (this.aggregation != null) await this.aggregation;
+                if (this.aggregation != null) {
+                    try {
+                        await this.aggregation;
+                    } catch (err) {
+                        // Not much here we can do, transaction is over.
+                    }
+                }
             }
 
             const writeStats = async () => {
