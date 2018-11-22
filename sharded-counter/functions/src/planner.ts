@@ -4,11 +4,12 @@ import * as path from "path";
 /**
  * There are two types of shards: "shard" and "partial". 
  * 
- * "shard" is incremented by client application and since each app instance has its own unique 
+ * "shard" is incremented by client application and, since each app instance has its own unique 
  * shard, these are not contended.
  * "partial" contains partial agregation from up to 499 "shards" and is updated by worker. These
  * update frequently and workers modify them using numeric transforms rather than transaction to
  * avoid contention.
+ * "counter" is not a shard but the main document that aggregates all increments from all shards
  * 
  * Planner takes a list of shards (these can be partials or shards) and decides how to aggregate
  * them to avoid contention.

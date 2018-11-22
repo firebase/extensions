@@ -11,7 +11,7 @@ export interface WorkerShardingInfo {
 /**
  * Controller is run every minute by Cloud Scheduler and monitors health of workers via their
  * metadata documents. If any worker is overloaded or average worker load is below
- * 1000 shards/minute, workers will be rebalanced based on their reported stats.
+ * 1000 shards/minute workers will be rebalanced based on their reported stats.
  */
 export class ShardedCounterController {
     private workersRef: firestore.CollectionReference;
