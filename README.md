@@ -1,2 +1,3 @@
-# mods
-http://b/118181953 - Firebase Mods
+# Firebase Mods
+
+Example Mods curated by Firebasers
