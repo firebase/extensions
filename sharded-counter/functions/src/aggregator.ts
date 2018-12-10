@@ -1,3 +1,11 @@
+/*
+ * Copyright 2018 Google LLC
+ *
+ * Use of this source code is governed by an MIT-style
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT.
+ */
+
 import { firestore } from "firebase-admin";
 
 export class Aggregator {
@@ -7,7 +15,7 @@ export class Aggregator {
    * @param counter Current snap of the main counter document. null means we aggregate to partial.
    * @param partials Shard snapshots with partial aggregations.
    * @param shards Shard snapshots with counter increments.
-   * 
+   *
    * TODO: Use numeric transforms instead of array transforms for partial aggregations.
    */
   public static aggregate(
@@ -77,6 +85,3 @@ export class Aggregator {
     }
   }
 }
-
-
-

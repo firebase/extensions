@@ -1,3 +1,11 @@
+/*
+ * Copyright 2018 Google LLC
+ *
+ * Use of this source code is governed by an MIT-style
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT.
+ */
+
 import { firestore } from "firebase-admin";
 import * as deepEqual from "deep-equal";
 
@@ -20,10 +28,10 @@ interface WorkerMetadata {
  * exclusive shard range (aka slice) and terminates successfully after 45 seconds, upon which it
  * writes stats to its metadata document. That write triggers another worker run in GCF. This means
  * workers are self scheduling.
- * 
+ *
  * If worker run fails, controller will detect that after 90s and reschedule worker by updating
  * 'timestamp' field.
- * 
+ *
  * Workers avoid double scheduling and overruns by including their metadata documents in every
  * aggregation transaction. If metadata changes underneath, transaction fails, worker detects that
  * and terminates immmediately.
@@ -240,5 +248,3 @@ export class ShardedCounterWorker {
     });
   }
 }
-
-
