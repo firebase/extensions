@@ -1,0 +1,49 @@
+# Copyright 2018 Google LLC
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+
+specVersion: v1beta1
+name: data-wipeout
+version: 1.0.0
+description: Automatically delete a user's data when they delete their account.
+
+resources:
+- name: clearData
+  type: firebasemods.v1beta1.function
+  properties:
+    eventTrigger:
+      eventType: providers/firebase.auth/eventTypes/user.delete
+      resource: projects/${PROJECT_ID}
+
+env:
+- var: FIRESTORE_PATHS
+  label: Firestore paths
+  required: false
+  description: >-
+    What paths in your Firestore database contain user data? Leave empty if you don't use Firestore.
+    Write out the full paths, separated by commas. You can represent the user ID
+    of the deleted user with `{UID}`
+    For example, if you have the collections `users` and `admins`, and each collection has documents with user
+    ID as document IDs. You can write `users/{UID},admins/{UID}`.
+- var: RTDB_PATHS
+  label: Real Time Database paths
+  required: false
+  description: >-
+    What paths in your realtime database contain user data? Leave empty if you don't use realtime database.
+    Write out the full paths, separated by commas. You can represent the user ID
+    of the deleted user with `{UID}`
+    For example: `users/{UID},admins/{UID}`.
+- var: STORAGE_PATHS
+  label: Storage paths
+  required: false
+  description: >-
+    Where in Google Cloud Storage do you store user data? Leave empty if you don't use Storage.
+    Write out the full paths, separated by commas. You can represent the user ID
+    of the deleted user with `{UID}`. You can use `{DEFAULT}` to represent the default bucket.
+    For example, if you are using the default bucket, and have files with the naming scheme {UID}-pic.png,
+    then you can write `${DEFAULT}/{UID}-pic.png`. If you also have files with the naming scheme {UID}-logs.txt
+    in another bucket called my-awesome-app-logs, then you can write `${DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-pic.png`.
+
+usage: postinstall.md

@@ -1,0 +1,16 @@
+{
+  "name": "data-wipeout",
+  "version": "1.0.0",
+  "description": "Automatically delete a user's data when they delete their account.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Lauren Long <longlauren@google.com>",
+  "license": "MIT",
+  "dependencies": {
+    "firebase-admin": "6.0.0",
+    "firebase-functions": "^2.0.5",
+    "lodash": "^4.17.10"
+  }
+}
