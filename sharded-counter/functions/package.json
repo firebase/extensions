@@ -1,5 +1,5 @@
 {
-  "name": "sharded_counter_aggregator",
+  "name": "firestore-sharded-counter",
   "version": "0.0.1",
   "main": "src/index.js",
   "dependencies": {

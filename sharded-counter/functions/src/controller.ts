@@ -84,12 +84,12 @@ export class ShardedCounterController {
   /**
    * Checks if current workers are imbalanced or overloaded. Returns true and new slices
    * if resharding is required.
-   * @param workers     Sharding info for workers based on their stats
-   * @param minWorkers  Shall we scale down to 0 workers?
+   * @param currentWorkers  Sharding info for workers based on their stats
+   * @param minWorkers      Shall we scale down to 0 workers?
    */
-  protected static balanceWorkers(workers: WorkerShardingInfo[], minWorkers: number):
+  protected static balanceWorkers(currentWorkers: WorkerShardingInfo[], minWorkers: number):
     [boolean, Slice[]] {
-    if (workers.length === 0) {
+    if (currentWorkers.length === 0) {
       if (minWorkers > 0) {
         return [true, [{
           start: '/experiment/counter4/_counter_shards_/\t',
@@ -101,19 +101,21 @@ export class ShardedCounterController {
     }
     let splits: string[] = [];
     let reshard = false;
-    for (let i = 0; i < workers.length; i++) {
-      let worker = workers[i];
+    for (let i = 0; i < currentWorkers.length; i++) {
+      let worker = currentWorkers[i];
+      // If a worker doesn't have data, it probably hasn't finished yet. Wait for another round
+      // since we don't have all the information to rebalance.
       if (!worker.hasData) return [false, []];
 
       splits.push(worker.slice.start);
       splits = splits.concat(worker.splits || []);
       if (worker.overloaded) reshard = true;
 
-      if (i === (workers.length - 1)) {
+      if (i === (currentWorkers.length - 1)) {
         splits.push(worker.slice.end);
       }
     }
-    if (splits.length < 10 * workers.length && workers.length > 1) reshard = true;
+    if (splits.length < 10 * currentWorkers.length && currentWorkers.length > 1) reshard = true;
     if (splits.length <= 2 && minWorkers === 0) return [true, []];
 
     let slices: Slice[] = [];
