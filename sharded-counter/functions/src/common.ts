@@ -3,11 +3,11 @@ import * as path from "path";
 
 /**
  * Represents a document range that a single worker is responsible for.
- * 'start' and 'end' are paths to documents.
+ * 'start' and 'end' are paths to documents (the documents don't have to exist).
  */
 export interface Slice {
-  start: string,
-  end: string
+  start: string,  // a path to a first document (inclusive) in the slice
+  end: string     // a path to a last document (exclusinve) in the slice
 }
 
 /**
