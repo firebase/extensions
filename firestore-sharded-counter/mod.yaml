@@ -5,7 +5,7 @@
 # https://opensource.org/licenses/MIT.
 
 specVersion: v1beta1
-name: sharded-counter
+name: firestore-sharded-counter
 version: 0.0.1
 description: Auto-scalable counters for your app.
 
