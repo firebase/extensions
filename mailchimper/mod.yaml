@@ -1,0 +1,49 @@
+# Copyright 2018 Google LLC
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+
+specVersion: v1beta1
+name: mailchimper
+version: 1.0.0
+
+# recommended
+description:
+  Add new users to a Mailchimp list, and delete them from the list when they
+  delete their account.
+
+# required
+apis:
+
+resources:
+  - name: addUserToList
+    type: firebasemods.v1beta1.function
+    properties:
+      eventTrigger:
+        eventType: providers/firebase.auth/eventTypes/user.create
+        resource: projects/${PROJECT_ID}
+  - name: removeUserFromList
+    type: firebasemods.v1beta1.function
+    properties:
+      eventTrigger:
+        eventType: providers/firebase.auth/eventTypes/user.delete
+        resource: projects/${PROJECT_ID}
+
+env:
+  - var: MAILCHIMP_KEY
+    label: Mailchimp API Key
+    description: >-
+      You can get an API Key at https://admin.mailchimp.com/account/api/
+    required: true
+
+  - var: LIST_ID
+    label: List ID
+    description: >-
+      ID of list to subscribe new users to. Go to
+      https://admin.mailchimp.com/lists, click on the desired list or create a
+      new one, then select "Settings" menu, and click on "List Name and
+      Defaults". The List ID looks something like "27735fc60a".
+    required: true
+
+usage: postinstall
