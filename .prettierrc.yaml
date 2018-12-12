@@ -1,0 +1,6 @@
+trailingComma: es5
+arrowParens: always
+overrides:
+  - files: "*.yaml"
+    options:
+      proseWrap: always
