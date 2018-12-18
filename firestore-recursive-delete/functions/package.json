@@ -1,0 +1,16 @@
+{
+  "name": "firestore-delete-mod",
+  "version": "1.0.0",
+  "description": "Recursively delete Firestore data.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sam Stern <samstern@google.com>",
+  "license": "MIT",
+  "dependencies": {
+    "firebase-admin": "^6.1.0",
+    "firebase-functions": "^2.1.0",
+    "firebase-tools": "^6.0.1"
+  }
+}
