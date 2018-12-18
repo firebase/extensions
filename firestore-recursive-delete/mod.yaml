@@ -1,0 +1,27 @@
+# Copyright 2018 Google LLC
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+
+specVersion: v1beta1
+name: fs-delete
+version: 1.0.0
+
+description: Recursively delete Firestore data.
+
+apis:
+  - datastore.googleapis.com
+  - firestore.googleapis.com
+
+roles:
+  - datastore.user
+
+resources:
+  - name: fsdelete
+    type: firebasemods.v1beta1.function
+    properties:
+      httpsTrigger: {}
+      sourceDirectory: functions
+
+usage: postinstall.md
