@@ -1,1 +1,0 @@
-Your mod is now ready to go! When a user's account is deleted, their data will be automatically deleted.
