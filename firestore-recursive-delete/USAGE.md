@@ -10,12 +10,13 @@ admin.auth().setCustomUserClaims(uid, {
 }).then(...)
 ```
 
-Next, call the `fsdelete` function with the path parameter specifying the
-data to delete:
+In your client, call the HTTPS Callable Function `${FUNCTION_NAME_FSDELETE}`
+with the path parameter specifying the data to delete:
 
 ```
-// See: https://firebase.google.com/docs/functions/callable
-const deleteFn = firebase.functions().httpsCallable('fsdelete');
+// Sample code here is for JavaScript, see https://firebase.google.com/docs/functions/callable
+// for syntax for other languages
+const deleteFn = firebase.functions("${FUNCTION_LOCATION_FSDELETE}").httpsCallable("${FUNCTION_NAME_FSDELETE}");
 deleteFn({
     path: '/widgets/foo123/orders'
 }).then((result) => {
