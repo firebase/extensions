@@ -2,6 +2,8 @@
   "name": "firestore-sharded-counter",
   "version": "0.0.1",
   "main": "src/index.js",
+  "author": "patryk@google.com",
+  "description": "Auto-scalable counters for your app.",
   "dependencies": {
     "deep-equal": "^1.0.1",
     "firebase-admin": "^6.1.0",
