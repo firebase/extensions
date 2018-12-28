@@ -1,0 +1,35 @@
+# Copyright 2018 Google LLC
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+
+specVersion: v1beta1
+name: fs-delete
+version: 1.0.0
+
+description: >-
+  Recursively delete Firestore data. This mod creates a callable function that
+  can be called from a client app.
+
+roles:
+  - datastore.user # Firestore uses Datastore IAM roles
+
+resources:
+  - name: fsdelete
+    type: firebasemods.v1beta1.function
+    properties:
+      location: ${LOCATION}
+      httpsTrigger: {}
+      timeout: 240s
+      availableMemoryMb: 2048
+
+env:
+  - var: LOCATION
+    label: Deployment Location
+    description: >-
+      Where should the mod be deployed? (us-central1, us-east1, europe-west1,
+      asia-northeast1) Pick a location that is close to your Firestore database.
+      See
+      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage
+    default: us-central1
