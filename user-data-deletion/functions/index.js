@@ -38,6 +38,7 @@ exports.clearData = functions.auth.user().onDelete((user) => {
     promises.push(clearDatabaseData(uid));
   }
   if (process.env.STORAGE_PATHS) {
+    console.log("Initializing Storage");
     storage = admin.storage();
     promises.push(clearStorageData(uid));
   }

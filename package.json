@@ -4,11 +4,11 @@
   "description": "Repository of sample Firebase Mods.",
   "private": true,
   "scripts": {
-    "format": "prettier --write **/*.{yaml,js}",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "format": "prettier --write {,**/}*.{yaml,js,md}",
+    "test": "prettier --list-different {,**/}*.{yaml,js,md}"
   },
   "repository": "",
-  "author": "Bryan Kendall <bkend@google.com>",
+  "author": "Firebase (https://firebase.google.com/)",
   "license": "MIT",
   "bugs": {
     "url": ""

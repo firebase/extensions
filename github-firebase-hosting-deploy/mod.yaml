@@ -1,0 +1,48 @@
+# Copyright 2018 Google LLC
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+
+specVersion: v1beta1
+name: hosting-deploy
+version: 0.1.0
+description: Automatically deploy to Firebase Hosting on Git commit.
+
+apis:
+  - firebasehosting.googleapis.com
+
+roles:
+  - firebase.developAdmin # Necessary to deploy Firebase Hosting sites
+
+resources:
+  - name: deploy
+    type: firebasemods.v1beta1.function
+    properties:
+      runtime: nodejs8
+      httpsTrigger: {}
+      sourceDirectory: .
+
+env:
+  - var: REPO
+    label: Github Repository
+    required: true
+    description: >-
+      What is the full URL of the Github repository you want to set up CI for?
+  - var: SITE_NAME
+    label: Site Name
+    required: true
+    description: >-
+      What is the name of your Site?
+  - var: BRANCH
+    label: Deployment Branch
+    default: master
+    description: >-
+      What branch should trigger CI deploys?
+  - var: DEPLOY_ROOT
+    label: Deployment Root
+    default: public
+    description: >-
+      What directory in the repository should I deploy?
+
+usage: postinstall.md

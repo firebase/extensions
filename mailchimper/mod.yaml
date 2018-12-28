@@ -45,5 +45,3 @@ env:
       new one, then select "Settings" menu, and click on "List Name and
       Defaults". The List ID looks something like "27735fc60a".
     required: true
-
-usage: postinstall

@@ -5,9 +5,12 @@
 # https://opensource.org/licenses/MIT.
 
 specVersion: v1beta1
-name: data-wipeout
+name: data-deletion
 version: 1.0.0
 description: Automatically delete a user's data when they delete their account.
+
+roles:
+  - firebase.developAdmin # gives mod access to Firestore, realtime database, and storage.
 
 resources:
   - name: clearData
@@ -49,5 +52,3 @@ env:
       the naming scheme {UID}-logs.txt in another bucket called
       my-awesome-app-logs, then you can write
       `${DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-pic.png`.
-
-usage: postinstall.md
