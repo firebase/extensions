@@ -7,7 +7,7 @@ import * as path from "path";
  */
 export interface Slice {
   start: string,  // a path to a first document (inclusive) in the slice
-  end: string     // a path to a last document (exclusinve) in the slice
+  end: string     // a path to a last document (exclusive) in the slice
 }
 
 /**
