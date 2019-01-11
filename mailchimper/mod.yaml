@@ -42,6 +42,6 @@ env:
     description: >-
       ID of list to subscribe new users to. Go to
       https://admin.mailchimp.com/lists, click on the desired list or create a
-      new one, then select "Settings" menu, and click on "List Name and
-      Defaults". The List ID looks something like "27735fc60a".
+      new one, then select **Settings** menu, and click on **List Name and
+      Defaults**. The List ID looks something like `27735fc60a`.
     required: true
