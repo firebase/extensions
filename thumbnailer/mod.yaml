@@ -4,37 +4,27 @@
 # license that can be found in the LICENSE file or at
 # https://opensource.org/licenses/MIT.
 
-# required
 specVersion: v1beta1
 name: thumbnailer
-version: 1.0.0 # version of mod
+version: 1.0.0
 
-
-# recommended
 description: Automatically generate thumbnails for images uploaded to Firebase Storage.
 
-# required
-apis: # APIs that will be auto-enabled during installation
+apis:
 # Cloud Storage
 - storage-component.googleapis.com
 
-# IAM roles that the mod will operate under.
-# Firebase predefined roles (https://firebase.google.com/docs/projects/iam/roles#firebase_predefined_roles)
-# and Cloud predefined roles (https://cloud.google.com/iam/docs/understanding-roles#predefined_roles)
-# are supported.
 roles:
-- firebase.developAdmin # Allows access to write to Realtime Database, no finer grained role that I could find.
-- iam.serviceAccountTokenCreator # Signs a blob using a service account's system-managed private key.
-- storage.admin # Full control of buckets and objects. When applied to an individual bucket,
-#control applies only to the specified bucket and objects within that bucket.
+- firebase.developAdmin
+- iam.serviceAccountTokenCreator 
+- storage.admin
 
-# recommended
-env: # env variables that mod consumer sets during install
+env:
 - var: THUMB_MAX_HEIGHT
   label: Maximum height of thumbnail
   description: >
     What should be the maximum height of the thumbnail (in pixels)?
-  # numbers not allowed, need to supply string
+  # all default values must be strings, so number have to be wrapped in quotes
   default: "200"
 - var: THUMB_MAX_WIDTH
   label: Maximum width of thumbnail
@@ -59,12 +49,10 @@ env: # env variables that mod consumer sets during install
     for the thumbnail and original image will be uploaded?
   default: images
 
-# required
-resources: # Resources created by the mod, will be deleted when user uninstalls mod
+resources:
 - name: generateThumbnail
   type: firebasemods.v1beta1.function
   properties:
     eventTrigger:
       eventType: google.storage.object.finalize
-      # PROJECT_ID is autopopulated, COLLECTION is defined in "env" section above
       resource: projects/_/buckets/${THUMB_BUCKET}
