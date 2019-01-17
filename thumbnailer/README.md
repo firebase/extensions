@@ -44,7 +44,7 @@ _Disclaimer: without knowing your exact use, it's impossible to say exactly what
 
 This mod will generate costs due to:
 
-- **Cloud Functions Usage**: Each time a file is uploaded to the Cloud Storage bucket, a Cloud Function is invoked. If the free quota for Cloud Functions is consumed, then it will generate cost for the Firebase project. See more details at https://firebase.google.com/pricing.
+- **Cloud Functions Usage**: Each time a file is uploaded to the Cloud Storage bucket, a Cloud Function is invoked. If the free quota for Cloud Functions is consumed, then it will generate cost for the Firebase project.
 - **Realtime Database Usage**: Each invocation of the Cloud Function also writes to the Realtime Database. If the free quota for storing data in the Realtime Database is consumed, then it will generate cost for the Firebase project.
 
 See more details at https://firebase.google.com/pricing.
