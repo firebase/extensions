@@ -24,7 +24,7 @@ const FOLDER = process.env.SIGNED_URLS_FOLDER;
 
 /**
  * When an image is uploaded in the Storage bucket We generate a thumbnail automatically using
- * ImageMagick.
+ * ImageMagick which is installed by default on all Cloud Functions instances.
  * After the thumbnail has been generated and uploaded to Cloud Storage,
  * we write the public URL to the Firebase Realtime Database.
  */
