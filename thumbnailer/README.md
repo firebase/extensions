@@ -2,7 +2,7 @@
 
 ## Summary
 
-Automatically generate thumbnails for images that are uploaded to Firebase Storage. This mod is modified from the functions sample [generate-thumbnail](https://github.com/firebase/functions-samples/tree/Node-8/generate-thumbnail). 
+Automatically generate thumbnails for images that are uploaded to Firebase Storage. This mod is modified from the functions sample [generate-thumbnail](https://github.com/firebase/functions-samples/tree/Node-8/generate-thumbnail).
 
 ## Details
 
@@ -27,7 +27,6 @@ This Mod requires the following IAM roles:
 - `firebase.developAdmin` allows access to the Firebase "develop" products. This mod uses this role to write the signed urls to the Realtime Database.
 - `iam.serviceAccountTokenCreator` allows this mod sign a blob using the service account's system-managed private key. This is used to create the signed urls.
 - `storage.admin` allows full control of buckets and objects. When applied to an individual bucket, control applies only to the specified bucket and objects within that bucket. This role is used to get images from the Cloud Storage bucket and upload the thumbnails.
-
 
 ### Resources Created
 
