@@ -10,7 +10,7 @@ const admin = require('firebase-admin');
 const fs = require('fs');
 const functions = require('firebase-functions');
 const mkdirp = require('mkdirp-promise');
-const spawn = require('child-process-promise').spawn;
+const { spawn } = require('child-process-promise');
 const os = require('os');
 const path = require('path');
 
