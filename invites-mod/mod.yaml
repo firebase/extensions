@@ -39,22 +39,28 @@ resources:
 
 # params
 env:
-- var: MAILGUN_API_KEY
-  label: Mailgun API Key
-  description: >
-    Your API key for Mailgun. You can register for a free Mailgun account with a generous
-    quota with Google Cloud at https://www.mailgun.com. After registering, you should receive
-    an email with your API key.
-  required: true
+# - var: MAILGUN_API_KEY
+#   label: Mailgun API Key
+#   description: >
+#     Your API key for Mailgun. You can register for a free Mailgun account with a generous
+#     quota with Google Cloud at https://www.mailgun.com. After registering, you should receive
+#     an email with your API key.
+#   required: true
 
-- var: MAILGUN_DOMAIN
-  label: Email Domain Name
+# - var: MAILGUN_DOMAIN
+#   label: Email Domain Name
+#   description: >
+#     The domain name you'd like invitation emails to be sent from. This must be registered
+#     in Mailgun.
+#   required: true
+#   validationRegex: '[\w\.]+'
+#   validationErrorMessage: 'Must be a valid domain name.'
+
+- var: SENDGRID_API_KEY
+  label: SendGrid API Key
   description: >
-    The domain name you'd like invitation emails to be sent from. This must be registered
-    in Mailgun.
+    Your API key for SendGrid. //todo tinaliang insert directions here
   required: true
-  validationRegex: '[\w\.]+'
-  validationErrorMessage: 'Must be a valid domain name.'
 
 - var: APP_NAME
   label: Your App Name
