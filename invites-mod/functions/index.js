@@ -8,10 +8,12 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const requestP = require('request-promise');
+// const requestP = require('request-promise');
+const sgMail = require('@sendgrid/mail');
 
-const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY;
-const MAILGUN_DOMAIN_NAME = process.env.MAILGUN_DOMAIN_NAME;
+// const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY;
+// const MAILGUN_DOMAIN_NAME = process.env.MAILGUN_DOMAIN_NAME;
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const APP_NAME = process.env.APP_NAME;
 const INVITATIONS_COLLECTION = process.env.METADATA_FIRESTORE_COLLECTION;
 const ACCEPT_URL_TEMPLATE = process.env.ACCEPT_URL_TEMPLATE;
@@ -20,6 +22,7 @@ const TARGET_RECEIVER_FIELDS = process.env.TARGET_RECEIVER_FIELDS;
 
 admin.initializeApp();
 admin.firestore().settings({timestampsInSnapshots: true});
+sgMail.setApiKey(SENDGRID_API_KEY);
 
 
 exports.sendInvitation = functions.https.onCall(async (data, context) => {
@@ -56,19 +59,27 @@ async function sendInvitationEmail({email, auth, acceptUrl}) {
 <p>- ${auth.token.name} (via ${APP_NAME})</p>
 `;
 
-  return requestP({
-    method: 'POST',
-    url: `https://api.mailgun.net/v3/${MAILGUN_DOMAIN_NAME}/messages`,
-    headers: {
-      'Authorization': 'Basic ' + new Buffer(`api:${MAILGUN_API_KEY}`).toString('base64')
-    },
-    form: {
-      from: `${auth.token.name} via ${APP_NAME} <noreply@${MAILGUN_DOMAIN_NAME}>`,
-      to: email,
-      subject: `Join me on ${APP_NAME}`,
-      html: emailBodyHtml,
-    }
-  });
+  const msg = {
+    to: email,
+    from: `${auth.token.name} via ${APP_NAME}`,
+    subject: `Join me on ${APP_NAME}`,
+    html: emailBodyHtml,
+  };
+
+  return sgMail.send(msg);
+  // return requestP({
+  //   method: 'POST',
+  //   url: `https://api.mailgun.net/v3/${MAILGUN_DOMAIN_NAME}/messages`,
+  //   headers: {
+  //     'Authorization': 'Basic ' + new Buffer(`api:${MAILGUN_API_KEY}`).toString('base64')
+  //   },
+  //   form: {
+  //     from: `${auth.token.name} via ${APP_NAME} <noreply@${MAILGUN_DOMAIN_NAME}>`,
+  //     to: email,
+  //     subject: `Join me on ${APP_NAME}`,
+  //     html: emailBodyHtml,
+  //   }
+  // });
 }
 
 
