@@ -8,9 +8,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "engines": {
-    "node": "8"
-  },
   "dependencies": {
     "child-process-promise": "^2.2.0",
     "firebase-admin": "^6.5.0",
