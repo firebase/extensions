@@ -8,12 +8,10 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-// const requestP = require('request-promise');
 const sgMail = require('@sendgrid/mail');
 
-// const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY;
-// const MAILGUN_DOMAIN_NAME = process.env.MAILGUN_DOMAIN_NAME;
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const EMAIL_ALIAS = process.env.SENDGRID_EMAIL_ALIAS;
 const APP_NAME = process.env.APP_NAME;
 const INVITATIONS_COLLECTION = process.env.METADATA_FIRESTORE_COLLECTION;
 const ACCEPT_URL_TEMPLATE = process.env.ACCEPT_URL_TEMPLATE;
@@ -55,31 +53,21 @@ exports.sendInvitation = functions.https.onCall(async (data, context) => {
 async function sendInvitationEmail({email, auth, acceptUrl}) {
   let emailBodyHtml = `
 <p>Hi there ${email},</p>
-<p>I'm using ${APP_NAME} and I'd love for you to join me!. <a href="${acceptUrl}">Accept invitation</a></p>
+<p>I'm using ${APP_NAME} and I'd love for you to join me! <a href="${acceptUrl}">Accept invitation</a></p>
 <p>- ${auth.token.name} (via ${APP_NAME})</p>
 `;
 
   const msg = {
     to: email,
-    from: `${auth.token.name} via ${APP_NAME}`,
+    from: EMAIL_ALIAS,
     subject: `Join me on ${APP_NAME}`,
     html: emailBodyHtml,
   };
 
-  return sgMail.send(msg);
-  // return requestP({
-  //   method: 'POST',
-  //   url: `https://api.mailgun.net/v3/${MAILGUN_DOMAIN_NAME}/messages`,
-  //   headers: {
-  //     'Authorization': 'Basic ' + new Buffer(`api:${MAILGUN_API_KEY}`).toString('base64')
-  //   },
-  //   form: {
-  //     from: `${auth.token.name} via ${APP_NAME} <noreply@${MAILGUN_DOMAIN_NAME}>`,
-  //     to: email,
-  //     subject: `Join me on ${APP_NAME}`,
-  //     html: emailBodyHtml,
-  //   }
-  // });
+  return sgMail.send(msg).catch((err) => {
+    // Errors weren't being printed correctly in functions logs.
+    throw new Error(JSON.stringify(err, null, 2));
+  });
 }
 
 

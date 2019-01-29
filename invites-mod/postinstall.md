@@ -13,8 +13,9 @@ for details on how to call functions from Android, iOS, or web.
 
 To send an invitation, authenticate the user with Firebase Authentication, and call the `sendInvitation` function with the email address to invite.
 
-Your `sendInvitation` function can be accessed at **${FUNCTION_URL_SENDINVITATION}**
+Your `sendInvitation` function can be accessed at **${FUNCTION_URL_SENDINVITATION}**.
 
+To call it in your application, use: **${MOD_INSTANCE_ID}-sendInvitation**.
 Here is a web sample of how to use it:
 
     firebase.functions().httpsCallable('${MOD_INSTANCE_ID}-sendInvitation')({email: 'friendtoinvite@gmail.com'});
@@ -28,6 +29,7 @@ If the receiver clicks this link, you should authenticate them, and once authent
 
 Your `acceptInvitation` function can be accessed at **${FUNCTION_URL_ACCEPTINVITATION}**
 
+To call it in your application, use: **${MOD_INSTANCE_ID}-acceptInvitation**.
 Here is a web sample of how to use it:
 
     firebase.auth().onAuthStateChanged(user => {
@@ -40,7 +42,3 @@ Here is a web sample of how to use it:
         // authenticate the user here!
       }
     });
-
-# What's next?
-
-Have questions or feedback? Contact romannurik@.
