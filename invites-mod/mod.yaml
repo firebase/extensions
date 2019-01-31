@@ -10,7 +10,7 @@ specVersion: v1beta1
 version: 1.0.0
 description: >
     Adds basic invite-a-friend functionality to your Android, iOS, or Web app!
-    Requires a Mailgun account, which you can get for free through Google Cloud.
+    Requires a Sendgrid account, which you can sign up for free.
 
 # billing required because functions needs external network access
 billingRequired: true
@@ -20,7 +20,6 @@ apis: []  # no apis needed for this mod
 
 # roles for the service account for the functions
 roles:
-  # tinaliang: replace with equivalent datastore admin role and add note
 - firebase.developAdmin # for firestore
 
 # functions to deploy
@@ -39,29 +38,22 @@ resources:
 
 # params
 env:
-# - var: MAILGUN_API_KEY
-#   label: Mailgun API Key
-#   description: >
-#     Your API key for Mailgun. You can register for a free Mailgun account with a generous
-#     quota with Google Cloud at https://www.mailgun.com. After registering, you should receive
-#     an email with your API key.
-#   required: true
-
-# - var: MAILGUN_DOMAIN
-#   label: Email Domain Name
-#   description: >
-#     The domain name you'd like invitation emails to be sent from. This must be registered
-#     in Mailgun.
-#   required: true
-#   validationRegex: '[\w\.]+'
-#   validationErrorMessage: 'Must be a valid domain name.'
-
 - var: SENDGRID_API_KEY
   label: SendGrid API Key
   description: >
-    Your API key for SendGrid. //todo tinaliang insert directions here
+    Your API key for SendGrid.
   required: true
 
+- var: SENDGRID_EMAIL_ALIAS
+  label: SendGrid Email Alias
+  description: >
+    The email address invitations will be sent from. We do not support sending from the inviter's
+    personal email address. This can be your domain's email address. You could also create a new
+    email address for the purpose of sending invitations.
+  required: true
+  validationRegex: '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+  validationErrorMessage: >
+    You must provide a valid email address.
 - var: APP_NAME
   label: Your App Name
   required: true
