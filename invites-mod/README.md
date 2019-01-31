@@ -10,7 +10,7 @@ This Mod defines two callable functions - one to send invitations via email, and
 
 This Mod also requires a SendGrid account. They can be created for free at https://SendGrid.com/.
 
-#####Inviting a user
+##### Inviting a user
 The invite flow begins when an authenticated user enters the email address of the friend they wish to invite. This email is written to an invitations array[1] in Firestore, which triggers the Mod function that sends invitations.
 
 [1] How invitations sent by user are stored in Firestore
@@ -29,7 +29,7 @@ The invitation email that is sent is defined in the Mod, in `index.js` line 54. 
 <p>- ${auth.token.name} (via ${APP_NAME})</p>
 ```
 
-#####Receiving an invitation
+##### Receiving an invitation
 The Mod generates an invitation token and uses SendGrid to send an invitation to the given email address, along with a URL token of the form `?invitation=theVeryLongTokenHere`. It stores this generated token in an internal Firestore path[2].
 
 [2] How accept tokens are stored in Firestore
@@ -51,7 +51,7 @@ When the invitee receives the invitation, they click the link in the invite wher
     - theVeryLongTokenHere
 ```
 
-#####Accepting an invitation
+##### Accepting an invitation
 The Mod has a function that watches for writes of accepted tokens to Firestore. This functions is triggered, which finalizes the invitation. The function also deletes the `accept_invite_tokens` record for the receivre and the `invitations` record for the sender[4].
 
 [4] How data should look after invite has been accepted
