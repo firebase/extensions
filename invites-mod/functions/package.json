@@ -1,7 +1,7 @@
 {
   "name": "Invitations",
   "version": "1.0.0",
-  "description": "Invite people to your app using Mailgun",
+  "description": "Invite people to your app using SendGrid",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -12,7 +12,5 @@
     "@sendgrid/mail": "^6.3.1",
     "firebase-admin": "~6.0.0",
     "firebase-functions": "^2.1.0",
-    "request": "^2.88.0",
-    "request-promise": "^4.2.2"
   }
 }
