@@ -30,7 +30,7 @@ The invitation email that is sent is defined in the Mod, in `index.js` line 54. 
 ```
 
 #### Receiving an invitation
-The Mod generates an invitation token and uses SendGrid to send an invitation to the given email address, along with a URL token of the form `?invitation=theVeryLongTokenHere`. It stores this generated token in an internal Firestore path[2].
+The Mod generates an invitation token and uses SendGrid to send an invitation to the given email address along with a URL token of the form `?invitation=theVeryLongTokenHere`. It stores this generated token in an internal Firestore path[2].
 
 [2] How accept tokens are stored in Firestore
 ```
