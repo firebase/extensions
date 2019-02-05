@@ -2,18 +2,20 @@
 
 ## Summary
 
-Add "invite a friend" functionality to your application. Invite friends using [SendGrid](https://SendGrid.com/) and keep track of your invites with Firestore.
+Add "invite a friend" functionality to your application. Allow users of your app to send invite emails to their friends. This mod sends emails using [SendGrid](https://SendGrid.com/) and keeps track of invites with Firestore.
 
 ## Details
 
-This Mod defines two callable functions - one to send invitations via email, and the other that will be triggered upon acceptance of an email invitation. **Users must be authenticated for the functions to be triggered.**
+This Mod defines two callable functions - one to send invitations via email, and the other that will be triggered upon acceptance of an email invitation. **Users must first authenticate themselves (such as by signing in) before they can invite others. Transversely, users must authenticate themselves in the app first before the callable function for accepting an email invitation should be triggered.**
 
 This Mod also requires a SendGrid account. They can be created for free at https://SendGrid.com/.
 
 #### Inviting a user
-The invite flow begins when an authenticated user enters the email address of the friend they wish to invite. This email is written to an invitations array[1] in Firestore, which triggers the Mod function that sends invitations.
 
-[1] How invitations sent by user are stored in Firestore
+The invite flow begins when an authenticated user enters the email address of the friend they wish to invite. This email is written to an invitations array in Firestore, which triggers the cloud function that sends invitations.
+
+The invitation array is structured as follows:
+
 ```
 users:
   12345:
@@ -23,6 +25,7 @@ users:
 ```
 
 The invitation email that is sent is defined in the Mod, in `index.js` line 54. The invitation is written in HTML. Feel free to edit this invitation to control what your invitees will see. The default is as follows:
+
 ```
 <p>Hi there ${email},</p>
 <p>I'm using ${APP_NAME} and I'd love for you to join me! <a href="${acceptUrl}">Accept invitation</a></p>
@@ -30,9 +33,11 @@ The invitation email that is sent is defined in the Mod, in `index.js` line 54. 
 ```
 
 #### Receiving an invitation
-The Mod generates an invitation token and uses SendGrid to send an invitation to the given email address, along with a URL token of the form `?invitation=theVeryLongTokenHere`. It stores this generated token in an internal Firestore path[2].
 
-[2] How accept tokens are stored in Firestore
+The Mod generates an invitation token and uses SendGrid to send an invitation to the given email address, along with a URL token of the form `?invitation=theVeryLongTokenHere`. It stores this generated token in an internal Firestore path.
+
+The invitation tokens are stored in Firestore as follows:
+
 ```
 invitation_mods_internal:
   tokens:
@@ -41,9 +46,10 @@ invitation_mods_internal:
       receiver_email: foo@gmail.com
 ```
 
-When the invitee receives the invitation, they click the link in the invite where they should be redirected to your app. You must authenticate this user. The app is then responsible for grabbing the invitation query string and storing a “accepted tokens” entry in Firestore[3].
+When the invitee receives the invitation, they click the link in the invite where they should be redirected to your app. You must authenticate this user. The app is then responsible for grabbing the invitation query string and storing a “accepted tokens” entry in Firestore.
 
-[3] How accepted tokens are stored in Firestore
+The accepted tokens are stored in Firestore as follows:
+
 ```users:
   87345:
     name: John
@@ -52,9 +58,11 @@ When the invitee receives the invitation, they click the link in the invite wher
 ```
 
 #### Accepting an invitation
-The Mod has a function that watches for writes of accepted tokens to Firestore. This functions is triggered, which finalizes the invitation. The function also deletes the `accept_invite_tokens` record for the receivre and the `invitations` record for the sender[4].
+
+The Mod has a function that watches for writes of accepted tokens to Firestore. This functions is triggered, which finalizes the invitation. The function also deletes the `accept_invite_tokens` record for the receiver and the `invitations` record for the sender[4].
 
 [4] How data should look after invite has been accepted
+
 ```
 users:
   12345:
@@ -79,7 +87,6 @@ This Mod requires the following environment variables to be set:
 - `TARGET_SENDER_FIELDS` is the document/array field used to save the sending user's UID when an invitation is accepted. If the receiver UID is 123 and sender UID is 234, entering "users/{receiver}.friends" here will append "234" to the "friends" array field for document "123" in the "users" collection. Separate document/field pairs for this var with commas. The default is `users/{receiver}.friends`.
 - `METADATA_FIRESTORE_COLLECTION` is a top-level Firestore collection the mod can use to store metadata for invitations. The default is `_invitations`.
 
-
 ### Required Roles
 
 This Mod requires the following IAM roles:
@@ -90,8 +97,8 @@ This Mod requires the following IAM roles:
 
 This Mod creates two resources:
 
-- a Cloud Function that triggers on new emails written to the invitations array in Firestore.
-- a Cloud Function that triggers on new accepted tokens written to Firestore.
+- a callable Cloud Function with a Firestore trigger for new invitations.
+- a callable Cloud Function with a Firestore trigger for new acceptances.
 
 ### Privacy
 
@@ -110,7 +117,7 @@ See more details at https://firebase.google.com/pricing.
 
 ### Copyright
 
-Copyright 2018 Google LLC
+Copyright 2019 Google LLC
 
 Use of this source code is governed by an MIT-style
 license that can be found in the LICENSE file or at
