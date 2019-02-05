@@ -19,7 +19,6 @@ const TARGET_SENDER_FIELDS = process.env.TARGET_SENDER_FIELDS;
 const TARGET_RECEIVER_FIELDS = process.env.TARGET_RECEIVER_FIELDS;
 
 admin.initializeApp();
-admin.firestore().settings({timestampsInSnapshots: true});
 sgMail.setApiKey(SENDGRID_API_KEY);
 
 
@@ -32,15 +31,15 @@ exports.sendInvitation = functions.https.onCall(async (data, context) => {
   const senderUid = context.auth.uid;
   const email = data.email;
 
-  let doc = await admin.firestore()
+  const doc = await admin.firestore()
       .collection(INVITATIONS_COLLECTION)
       .add({
         senderUid,
         email
       });
 
-  let token = doc.id;
-  let acceptUrl = ACCEPT_URL_TEMPLATE.replace('{token}', token);
+  const token = doc.id;
+  const acceptUrl = ACCEPT_URL_TEMPLATE.replace('{token}', token);
   await sendInvitationEmail({
     email,
     auth: context.auth,
@@ -51,7 +50,7 @@ exports.sendInvitation = functions.https.onCall(async (data, context) => {
 
 
 async function sendInvitationEmail({email, auth, acceptUrl}) {
-  let emailBodyHtml = `
+  const emailBodyHtml = `
 <p>Hi there ${email},</p>
 <p>I'm using ${APP_NAME} and I'd love for you to join me! <a href="${acceptUrl}">Accept invitation</a></p>
 <p>- ${auth.token.name} (via ${APP_NAME})</p>
@@ -82,16 +81,16 @@ exports.acceptInvitation = functions.https.onCall(async (data, context) => {
 
   const invitationDoc = admin.firestore().collection(INVITATIONS_COLLECTION).doc(token);
 
-  let docSnap = await invitationDoc.get();
+  const docSnap = await invitationDoc.get();
   if (!docSnap.exists) {
     throw new functions.https.HttpsError('invalid-argument',
         'Invitation token invalid or expired.');
   }
 
-  let senderUid = docSnap.data().senderUid;
-  let templateParams = {sender: senderUid, receiver: receiverUid};
-  let receiverDocsFields = parseDocumentFieldPathList(TARGET_RECEIVER_FIELDS, templateParams);
-  let senderDocsFields = parseDocumentFieldPathList(TARGET_SENDER_FIELDS, templateParams);
+  const senderUid = docSnap.data().senderUid;
+  const templateParams = {sender: senderUid, receiver: receiverUid};
+  const receiverDocsFields = parseDocumentFieldPathList(TARGET_RECEIVER_FIELDS, templateParams);
+  const senderDocsFields = parseDocumentFieldPathList(TARGET_SENDER_FIELDS, templateParams);
 
   for (const {docPath, field} of receiverDocsFields) {
     await admin.firestore().doc(docPath).set({
