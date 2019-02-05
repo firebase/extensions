@@ -1,0 +1,109 @@
+# Copyright 2018 Google LLC
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+
+# required
+name: invites-mod
+specVersion: v1beta1
+version: 1.0.0
+description: >
+    Adds basic invite-a-friend functionality to your Android, iOS, or Web app!
+    Requires a Sendgrid account, which you can sign up for free.
+
+# billing required because functions needs external network access
+billingRequired: true
+
+# apis to enable
+apis: []  # no apis needed for this mod
+
+# roles for the service account for the functions
+roles:
+- firebase.developAdmin # for firestore
+
+# functions to deploy
+resources:
+- name: sendInvitation
+  type: firebasemods.v1beta1.function
+  properties:
+    runtime: nodejs8
+    httpsTrigger: {}
+
+- name: acceptInvitation
+  type: firebasemods.v1beta1.function
+  properties:
+    runtime: nodejs8
+    httpsTrigger: {}
+
+# params
+env:
+- var: SENDGRID_API_KEY
+  label: SendGrid API Key
+  description: >
+    Your API key for SendGrid.
+  required: true
+
+- var: SENDGRID_EMAIL_ALIAS
+  label: SendGrid Email Alias
+  description: >
+    The email address invitations will be sent from. We do not support sending from the inviter's
+    personal email address. This can be your domain's email address. You could also create a new
+    email address for the purpose of sending invitations.
+  required: true
+  validationRegex: '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+  validationErrorMessage: >
+    You must provide a valid email address.
+- var: APP_NAME
+  label: Your App Name
+  required: true
+
+- var: ACCEPT_URL_TEMPLATE
+  label: Accept Invitation URL
+  description: >
+    The URL to include in invitation emails. "{token}" will be replaced with the actual invitation
+    token. The default value assumes your app is deployed with Firebase Hosting and expects
+    an 'acceptInvitation' query parameter at the root URL.
+  default: "https://${PROJECT_ID}.firebaseapp.com/?acceptInvitation={token}"
+  validationRegex: '.*\{token\}.*'
+  validationErrorMessage: >
+    Your URL must include '{token}' so that it can be replaced with an actual invitation token.
+
+- var: TARGET_RECEIVER_FIELDS
+  label: Document and Field Path for Accepting User's UID
+  description: >
+    When an invitation is accepted, the mod will add the receiving/accepting user's UID to the given
+    document/array field. If the receiver UID is 123 and sender UID is 234, entering
+    "users/{sender}.friends" here will append "123" to the "friends" array field for document "234"
+    in the "users" collection. Separate document/field pairs for this var with commas.
+  default: users/{sender}.friends
+  required: false
+  validationRegex: '.+/.+\..+'
+  validationErrorMessage: >
+    Values must be comma-separated document path + field, e.g. coll/doc.field,coll/doc.field
+
+- var: TARGET_SENDER_FIELDS
+  label: Document and Field Path for Sending User's UID
+  description: >
+    When an invitation is accepted, the mod will add the sending user's UID to the given
+    document/array field. If the receiver UID is 123 and sender UID is 234, entering
+    "users/{receiver}.friends" here will append "234" to the "friends" array field for document
+    "123" in the "users" collection. Separate document/field pairs for this var with commas.
+  default: users/{receiver}.friends
+  required: false
+  validationRegex: '.+/.+\..+'
+  validationErrorMessage: >
+    Values must be comma-separated document path + field, e.g. coll/doc.field,coll/doc.field
+
+- var: METADATA_FIRESTORE_COLLECTION
+  label: Metadata Firestore Collection
+  description: >
+    A top-level Firestore collection the mod can use to store metadata for invitations.
+  default: _invitations
+  required: true
+  validationRegex: '[\w_.-]+'
+  validationErrorMessage: >
+    Must be a simple alphanumeric field name, optionally with periods, underscores, or dashes.
+
+# post-install message
+usage: postinstall.md
