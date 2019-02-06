@@ -2,7 +2,7 @@
 
 ## Summary
 
-Add "invite a friend" functionality to your application. Allow users of your app to send invite emails to their friends. This mod sends emails using [SendGrid](https://SendGrid.com/) and keeps track of invites with Firestore.
+Add "invite a friend" functionality to your application. Allow users of your app to send invite emails to their friends. This mod sends emails using [SendGrid](https://SendGrid.com/) and keeps track of invites and conversions with Cloud Firestore.
 
 ## Details
 
