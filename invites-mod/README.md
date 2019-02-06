@@ -59,9 +59,9 @@ The accepted tokens are stored in Firestore as follows:
 
 #### Accepting an invitation
 
-The Mod has a function that watches for writes of accepted tokens to Firestore. This functions is triggered, which finalizes the invitation. The function also deletes the `accept_invite_tokens` record for the receiver and the `invitations` record for the sender[4].
+The Mod has a function that watches for writes of accepted tokens to Firestore. This functions is triggered, which finalizes the invitation. The function also deletes the `accept_invite_tokens` record for the receiver and the `invitations` record for the sender.
 
-[4] How data should look after invite has been accepted
+How data should look after invite has been accepted
 
 ```
 users:
