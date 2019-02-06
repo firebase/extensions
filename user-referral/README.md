@@ -6,7 +6,7 @@ Add "invite a friend" functionality to your application. Allow users of your app
 
 ## Details
 
-This Mod defines two callable functions - one to send invitations via email, and the other that will be triggered upon acceptance of an email invitation. **Users must first authenticate themselves (such as by signing in) before they can invite others. Transversely, users must authenticate themselves in the app first before the callable function for accepting an email invitation should be triggered.**
+This Mod defines two callable functions - one to send invitations via email, and the other that will be triggered upon acceptance of an email invitation. 
 
 This Mod also requires a SendGrid account. They can be created for free at https://SendGrid.com/.
 
