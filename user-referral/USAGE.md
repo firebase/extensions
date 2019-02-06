@@ -1,5 +1,7 @@
 Congrats on setting up the Invitations mod!
 
+This Mod defines two callable functions - one to send invitations via email, and the other that will be triggered upon acceptance of an email invitation.
+
 # Setting up your Android/iOS/web client
 
 The client-side API for this mod is just a set of **callable functions.**
@@ -10,7 +12,7 @@ for details on how to call functions from Android, iOS, or web.
 
 # Sending invitations
 
-To send an invitation, authenticate the user with Firebase Authentication, and call the `sendInvitation` function with the email address to invite.
+To send an invitation, **authenticate the user with Firebase Authentication**, then call the `sendInvitation` function with the email address to invite.
 
 Your `sendInvitation` function can be accessed at **\${FUNCTION_URL_SENDINVITATION}**.
 
@@ -26,7 +28,7 @@ Here is a web sample of how to use it:
 The invitation email that gets sent will include an invitation
 token in the query string, as specified during mod configuration.
 
-If the receiver clicks this link, you should authenticate them, and once authenticated, your client should read this value and pass it to the `acceptInvitation` function.
+If the receiver clicks this link, **you should authenticate them with Firebase Authentication**, and once authenticated, your client should read this value and pass it to the `acceptInvitation` function.
 
 Your `acceptInvitation` function can be accessed at **\${FUNCTION_URL_ACCEPTINVITATION}**
 
