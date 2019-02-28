@@ -25,7 +25,7 @@ db.settings({ timestampsInSnapshots: true });
     let metadocRef = db.doc('testing/worker');
     let shardsRef = db.collection('testing/counter/_counter_shards_');
     let counterRef = db.doc('testing/counter');
-    await counterRef.set({ cnt: 2 });
+    await counterRef.set({ stats: { cnt: 2 }, data: 'hello world' });
     await metadocRef.set({
       slice: {
         start: 'testing/counter/_counter_shards_/\t',
@@ -33,10 +33,11 @@ db.settings({ timestampsInSnapshots: true });
       },
       timestamp: Date.now()
     });
-    await shardsRef.doc('\t\t012').set({ '_updates_': [{ cnt: 2 }] });
-    await shardsRef.doc('012345678').set({ cnt: 1 });
-    await shardsRef.doc('123456789').set({ cnt: 2 });
-    await shardsRef.doc('23456789a').set({ cnt: 3 });
+    await shardsRef.doc('\t\t012').set({ '_updates_': [{ '_data_': { stats: { cnt: 2 } } }] });
+    await shardsRef.doc('012345678').set({ stats: { cnt: 1 } });
+    await shardsRef.doc('123456789').set({ stats: { cnt: 2 } });
+    await shardsRef.doc('23456789a').set({ stats: { cnt: 3 } });
+    await shardsRef.doc('3456789ab').set({ stats: { new: 5 } });
     let metadoc = await metadocRef.get();
     console.log('Single run: ' + JSON.stringify(metadoc.data()));
 
@@ -44,7 +45,7 @@ db.settings({ timestampsInSnapshots: true });
     await worker.run();
 
     let counter = await db.doc('testing/counter').get();
-    expect(counter.data()).deep.equal({ cnt: 10 });
+    expect(counter.data()).deep.equal({ stats: { cnt: 10, new: 5 }, data: 'hello world' });
     metadoc = await metadocRef.get();
     console.log('Single run done: ' + JSON.stringify(metadoc.data()));
   }

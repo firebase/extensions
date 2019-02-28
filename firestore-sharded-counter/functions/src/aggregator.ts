@@ -7,6 +7,72 @@
  */
 
 import { firestore } from "firebase-admin";
+import { FieldPath, FieldValue } from "@google-cloud/firestore";
+
+export class NumericUpdate {
+  private _data: { [key: string]: any } = {};
+  get data() {return this._data; }
+
+  /**
+   * Merges numeric values from an arbitrary deep json into the NumericUpdate object.
+   *  - it ignores non-numeric leaves
+   *  - if there's a type mismatch ('number' vs 'object') current data will be overriden
+   * @param from An object with numeric values to merge from.
+   */
+  public mergeFrom(from: { [key: string]: any }) {
+    NumericUpdate.mergeRecursive(from, this._data);
+  }
+
+  /**
+   * Exports an object with modified fields in the counter.
+   * @param counter The counter data to be updated.
+   */
+  public toCounterUpdate(counter: { [key: string]: any }): { [key: string]: any } {
+    NumericUpdate.addCommonFieldsRecursive(counter, this._data);
+    return this._data;
+  }
+
+  /**
+   * Exports an update object for partial shard.
+   * 
+   * Resulting operation will append current data to an array "_updates_".
+   */
+  public toPartialUpdate(): { [key: string]: any } {
+    return { '_updates_': FieldValue.arrayUnion({
+                '_timestamp_': FieldValue.serverTimestamp(),
+                '_data_': this._data
+              })
+            };
+  }
+
+  private static mergeRecursive(from: {[key: string]: any}, to: {[key: string]: any}) {
+    for (let key in from) {
+      if (typeof from[key] === 'number') {
+        if (key in to && typeof to[key] === 'number') {
+          to[key] += from[key];
+        } else {
+          // Create a new node if doesn't exist or override if not a number.
+          to[key] = from[key];
+        }
+      } else if (typeof from[key] === 'object') {
+        if (key in to === false || typeof to[key] !== 'object') {
+          to[key] = {};
+        }
+        NumericUpdate.mergeRecursive(from[key], to[key]);
+      }
+    }
+  }
+
+  private static addCommonFieldsRecursive(from: {[key: string]: any}, to: {[key: string]: any}) {
+    for (let key in to) {
+      if (typeof to[key] === 'number' && typeof from[key] === 'number') {
+        to[key] += from[key];
+      } else if (typeof to[key] === 'object' && typeof from[key] === 'object') {
+        NumericUpdate.addCommonFieldsRecursive(from[key], to[key]);
+      }
+    }
+  }
+}
 
 export class Aggregator {
   /**
@@ -22,66 +88,21 @@ export class Aggregator {
     counter: firestore.DocumentSnapshot | null,
     partials: firestore.DocumentSnapshot[],
     shards: firestore.DocumentSnapshot[]): { [key: string]: any } {
-    const update = {};
+    const update = new NumericUpdate();
     shards.forEach((shard) => {
       if (!shard.exists) return;
       const data = shard.data();
-      Aggregator.mergeIntoUpdate([], data, update);
+      update.mergeFrom(data);
     });
     partials.forEach((partial) => {
       if (!partial.exists) return;
       const data = partial.data();
-      data['_updates_'].forEach((item) => {
-        for (let path in item) {
-          if (path in update) {
-            update[path] += item[path];
-          } else {
-            update[path] = item[path];
-          }
-        }
+      data['_updates_'].forEach((u) => {
+        update.mergeFrom(u['_data_']);
       });
     });
-    if (counter === null) {
-      // We are aggregating to a partial, append to an array of updates.
-      return { '_updates_': firestore.FieldValue.arrayUnion(update) }
-    } else {
-      for (let key in update) update[key] += (counter.get(key) || 0);
-      return update;
-    }
-  }
-
-  /**
-   * Appends data from a document into an update object that is suitable for DocumentRef.update()
-   * call.
-   * e.g.
-   *   let update = {'user': 'john', 'profile.name': 'John'};
-   *   mergeIntoUpdate([], {profile: {name: 'John Smith', cell: '123-456-7890'}}, update);
-   *   expect(update).to.deep.equal({
-   *     'user': 'john',
-   *     'profile.name': 'John Smith',
-   *     'profile.cell': '123-456-7890'
-   *   });
-   * @param field A field name stored as an array (e.g. 'stats.vists' => ['stats', 'visits'])
-   * @param data A document data that needs to be merged into the update
-   * @param update An object that accumulates changes.
-   */
-  protected static mergeIntoUpdate(field: string[], data: firestore.DocumentData,
-    update: { [key: string]: any }) {
-    // TODO: handle unsupported data better (e.g. arrays)
-    let elem = data;
-    field.forEach((key) => elem = elem[key]);
-    for (let key in elem) {
-      if (typeof elem[key] === 'number') {
-        // TODO(patryk): figure out escaping story here.
-        const path = field.concat(key).join('.')
-        if (path in update) {
-          update[path] += elem[key];
-        } else {
-          update[path] = elem[key];
-        }
-      } else if (typeof elem[key] === 'object') {
-        Aggregator.mergeIntoUpdate(field.concat(key), data, update);
-      }
-    }
+    return (counter === null)
+      ? update.toPartialUpdate()
+      : update.toCounterUpdate(counter.data());
   }
 }
