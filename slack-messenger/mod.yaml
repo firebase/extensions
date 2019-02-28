@@ -1,0 +1,41 @@
+# Copyright 2018 Google LLC
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+
+specVersion: v1beta1
+name: slack-messenger
+version: 1.0.0
+
+# recommended
+description:
+  Relays messages published to a PubSub topic to a Slack channel (via webhook).
+
+# required
+apis:
+
+resources:
+  - name: SlackMessageSender
+    type: firebasemods.v1beta1.function
+    properties:
+      runtime: go111
+      eventTrigger:
+        eventType: providers/cloud.pubsub/eventTypes/topic.publish
+        # Using the Deployment Manager syntax for a reference here as this is
+        # cleaner than constructing the full name. More details about this:
+        # https://cloud.google.com/deployment-manager/docs/step-by-step-guide/using-references
+        resource: $(ref.SlackMessengerTopic.name)
+  - name: SlackMessengerTopic
+    type: gcp-types/pubsub-v1:projects.topics
+    properties:
+      topic: ${MOD_INSTANCE_ID}-topic
+
+env:
+  - var: SLACK_WEBHOOK_URL
+    label: Slack Webhook URL
+    description:
+      The Webhook URL provided by Slack to post into a channel (e.g.
+      `https://hooks.slack.com/services/FOO/BAR/KEY`; learn more at
+      `https://api.slack.com/incoming-webhooks` )
+    required: true

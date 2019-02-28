@@ -1,0 +1,19 @@
+{
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "firebase-admin": "^7.0.0",
+    "firebase-functions": "^2.2.0",
+    "stripe": "^6.22.0"
+  },
+  "devDependencies": {
+    "@types/stripe": "^6.19.4"
+  }
+}

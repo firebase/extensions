@@ -28,8 +28,14 @@ env:
   - var: LOCATION
     label: Deployment Location
     description: >-
-      Where should the mod be deployed? (us-central1, us-east1, europe-west1,
-      asia-northeast1) Pick a location that is close to your Firestore database.
+      Where should the mod be deployed? (*us-central1, us-east1, europe-west1,
+      asia-northeast1*) Pick a location that is close to your Firestore
+      database.
+
       See
-      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage
+      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+    validationRegex: ^us-east1$|^us-central1$|^europe-west1$|^asia-northeast1$
+    validationErrorMessage: >
+      Invalid location, please pick one of: us-central1, us-east1,
+      europe-west1, asia-northeast1
     default: us-central1

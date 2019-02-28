@@ -1,0 +1,69 @@
+# Copyright 2019 Google LLC
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+
+specVersion: v1beta1
+name: stripe-saas
+version: 0.0.1
+
+description:
+  Manage SaaS subscriptions in your application using Stripe as a payment processor.
+
+roles:
+  - firebase.developAdmin
+
+env:
+  - var: STRIPE_SECRET_KEY
+    label: Stripe Secret Key
+    description: >
+      The secret API key for your Stripe account. Can be found at https://dashboard.stripe.com/account/apikeys
+    required: true
+  - var: STRIPE_SIGNING_SECRET
+    label: Stripe Signing Secret
+    description: >
+      Create a new webhook at https://dashboard.stripe.com/account/webhooks. Set the "URL to be called" to
+      http://example.com/ (you will change this later). Next, click on the webhook you just created and
+      reveal the "Signing Secret". This allows the stripe-saas mod to verify incoming webhooks as authentic.
+      Enter the secret here.
+    required: false
+  - var: USERS_COLLECTION
+    label: Firestore Users Collection
+    description: >
+      The Firestore users collection in which subscription information will be embedded. This collection MUST
+      be keyed by uid and MAY be your primary users collection. Only the information in the defined subscription
+      field will be written/overwritten by the stripe-saas mod.
+    default: users
+    required: true
+  - var: BILLING_FIELD
+    label: Firestore Billing Field
+    description: >
+      Name the document field in the users collection where you want to store information about the Stripe customer
+      and subscription. Enter "." to store information at the top level of the document.
+    default: billing
+    required: true
+  - var: SUBSCRIPTIONS_COLLECTION
+    label: Firestore Subscriptions Collection
+    description: >
+      Name a collection in which to store full Stripe API subscription data. This collection must be kept to ensure
+      that duplicate event processing does not take place.
+    default: _subscriptions
+    required: true
+
+resources:
+  - name: hook
+    type: firebasemods.v1beta1.function
+    properties:
+      httpsTrigger: {}
+      runtime: nodejs8
+  - name: subscribe
+    type: firebasemods.v1beta1.function
+    properties:
+      httpsTrigger: {}
+      runtime: nodejs8
+  - name: unsubscribe
+    type: firebasemods.v1beta1.function
+    properties:
+      httpsTrigger: {}
+      runtime: nodejs8
