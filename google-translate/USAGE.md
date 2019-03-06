@@ -1,12 +1,20 @@
-This Mod installs `${FUNCTION_NAME_TRANSLATE}` located in `${FUNCTION_LOCATION_TRANSLATE}`
+This Mod installs `${FUNCTION_NAME_TRANSLATE}` located in `${FUNCTION_LOCATION_TRANSLATE}`.
 
-Example usage, with languages en,pt,ko
+The Mod will automatically translate messages in the format:
+`{"message": "Your message contents go here."}`
+
+created under the following path:
+`/messages/ORIGINAL_LANGUAGE_CODE`, where ORIGINAL_LANGUAGE_CODE is the ISO-639-1 code.
+
+Example usage, with languages en,pt,ko, and the original language as English:
+
 ```
-translate({after: {message: "I like to eat cake"}}, {params: {languageID: 'en'}})
-translate({after: {message: "Good morning! Good night."}}, {params: {languageID: 'en'}})
+firebase database:push /messages/en --data '{"message": "I like to eat cake"}'
+firebase database:push /messages/en --data '{"message": "Good morning! Good night."}'
 ```
 
-This will create database entries in the following format:
+This will create database entries in the following format. Note that the IDs for
+each message under a language are automatically generated.
 
 ```
 {
