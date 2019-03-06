@@ -17,7 +17,6 @@ apis:
 
 roles:
   - firebase.developAdmin
-  - storage.admin
 
 env:
   - var: LANGUAGES

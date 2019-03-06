@@ -27,17 +27,17 @@ exports.translate = functions.database.ref('/messages/{languageID}/{messageID}')
     if (snapshot.val().translated) {
       return null;
     }
-    
-    for (let i = 0; i < LANGUAGES.length; i++) {
-      const target_language = LANGUAGES[i];
-      const msg = snapshot.val().message;
-      const src_language = context.params.languageID;
-      if (target_language !== src_language) {
-        const results = await translate.translate(msg, {from: src_language, to: target_language});
-        // en: dog; es: perro
-        console.log(`${context.params.languageID}: ${msg}; ${target_language}: ${results[0]}`);
 
-        admin.database().ref(`/messages/${target_language}/${snapshot.key}`).set({
+    for (let i = 0; i < LANGUAGES.length; i++) {
+      const targetLanguage = LANGUAGES[i];
+      const msg = snapshot.val().message;
+      const srcLanguage = context.params.languageID;
+      if (targetLanguage !== srcLanguage) {
+        const results = await translate.translate(msg, {from: srcLanguage, to: targetLanguage});
+        // en: dog; es: perro
+        console.log(`${context.params.languageID}: ${msg}; ${targetLanguage}: ${results[0]}`);
+
+        admin.database().ref(`/messages/${targetLanguage}/${snapshot.key}`).set({
           message: results[0],
           translated: true,
         });

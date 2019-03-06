@@ -17,14 +17,12 @@ This Mod requires the following environment variables to be set:
 
 - `LANGUAGES` a comma-separated string of languages, in the ISO-639-1 Code format. For example: English, Portuguese, Korean -> en,pt,kr.
 
-
 ### Required Roles
 
 This Mod requires the following IAM roles:
 
-- `firebase.developAdmin` allows access to the Firebase "develop" products. This mod uses this role to write the signed urls to the Realtime Database.
+- `firebase.developAdmin` allows access to the Firebase "develop" products. This mod uses this role to write messages to the database.
 - `translate.googleapis.com` allows access to the Cloud Translate API.
-- `storage.admin` allows full control of buckets and objects. When applied to an individual bucket, control applies only to the specified bucket and objects within that bucket. This role is used to get images from the Cloud Storage bucket and upload the s.
 
 ### Resources Created
 
