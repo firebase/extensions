@@ -17,11 +17,11 @@ const translate = new Translate({projectId: process.env.PROJECT_ID});
 // languages to be translated into
 const LANGUAGES = process.env.LANGUAGES.split(',');
 
-// Initializing firebase-admin using auto-populated environment variable.
-admin.initializeApp(JSON.parse(process.env.FIREBASE_CONFIG));
+// Initializing firebase-admin
+admin.initializeApp();
 
 // Translate an incoming message.
-exports.translate = functions.database.ref('/messages/{languageID}/{messageID}').onWrite(
+exports.translate = functions.database.ref(`${process.env.TRIGGER_PATH}/{languageID}/{messageID}`).onWrite(
   async (change, context) => {
     const snapshot = change.after;
     if (snapshot.val().translated) {
@@ -37,7 +37,7 @@ exports.translate = functions.database.ref('/messages/{languageID}/{messageID}')
         // en: dog; es: perro
         console.log(`${context.params.languageID}: ${msg}; ${targetLanguage}: ${results[0]}`);
 
-        admin.database().ref(`/messages/${targetLanguage}/${snapshot.key}`).set({
+        await admin.database().ref(`${process.env.TRIGGER_PATH}/${targetLanguage}/${snapshot.key}`).set({
           message: results[0],
           translated: true,
         });
