@@ -10,7 +10,7 @@ version: 1.0.0
 
 description:
   When a message is written to the database, translate the message in the
-  provided language to multiple destination languages
+  provided language to multiple destination languages as specified by mod user.
 
 apis:
   - translate.googleapis.com
@@ -23,8 +23,18 @@ env:
     label: Target languages to translate into, as a comma-separated list
     description: >
       What languages would you like to translate provided text into? Please
-      input these as a comma-separated list, e.g. en,es,de,fr
+      input these as a comma-separated list, e.g. en,es,de,fr.
+      [List of supported languages.](https://cloud.google.com/translate/docs/languages)
     default: en,es,de,fr
+    validationRegex: '^[a-zA-Z,-]+$'
+    validationErrorMessage: Languages must be a comma-separated list of language codes.
+    required: true
+  - var: TRIGGER_PATH
+    label: Path at which the mod listens for new messages and creates new message translations.
+    description: >
+      Where would you like to store translations?
+    validationRegex: '^\S+$'
+    validationErrorMessage: Database path cannot contain spaces.
     required: true
 
 resources:
@@ -34,4 +44,4 @@ resources:
       runtime: nodejs8
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.write
-        resource: projects/_/instances/${DATABASE_INSTANCE}/refs/messages/{languageID}/{messageID}
+        resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${TRIGGER_PATH}/{languageID}/{messageID}

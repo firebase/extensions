@@ -2,7 +2,7 @@
 
 ## Summary
 
-Automatically generate translations for messages saved in the database in a given language. This mod is modified from the functions sample [message-translate](https://github.com/firebase/functions-samples/tree/Node-8/message-translation).
+Automatically generate translations for messages saved in Firebase Realtime Database. The set of languages to translate between is user-configurable, and a user can post messages in any language out of this set.
 
 ## Details
 
