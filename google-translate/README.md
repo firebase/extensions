@@ -16,6 +16,7 @@ This Mod uses Cloud Translation. See [official documentation](https://cloud.goog
 This Mod requires the following environment variables to be set:
 
 - `LANGUAGES` a comma-separated string of languages, in the ISO-639-1 Code format. For example: English, Portuguese, Korean -> en,pt,kr.
+- `TRIGGER_PATH` the path to the Firebase real-time database under which translations should be stored.
 
 ### Required Roles
 
