@@ -1,20 +1,38 @@
-# Limit number of child nodes
+# Limit Database Entries
 
 ## Summary
 
-Limit the number of child nodes in a Firebase Realtime database below a given number.
+Limit database entries in a path in a Firebase Realtime database to maximum
+MAX_COUNT entries.
 This can be used to limit the number of lines of a chat history or logs.
 
 ## Details
 
-This Mod defines a Cloud Function that will trigger on write of a document to the Firebase Realtime Database. If the number of messages in the database at `PARENT_NODE_PATH` exceeds `MAX_COUNT`, this mod will prune the messages down to `MAX_COUNT`, deleting the oldest messages first.
+This Mod defines a Cloud Function that will trigger on write of a document to the Firebase Realtime Database. If the number of messages in the database at `NODE_PATH` exceeds `MAX_COUNT`, this mod will prune the messages down to `MAX_COUNT`, deleting the oldest messages first.
+
+For example, given a chat application with the following data structure:
+
+```
+/my-chat-app
+    /NODE_PATH
+        /key-123456
+            user: "Mat",
+            text: "Hey Bob!"
+        /key-123457
+            user: "Bob",
+            text: "Hey Mat! What's Up?"
+```
+
+`NODE_PATH` can be defined as `/chat/{message_id}`. Every time a new
+chat message is added, the mod counts the number of chat messages and
+removes the old ones if there are too many.
 
 ### Configuration
 
 This Mod requires the following environment variables to be set:
 
 - `MAX_COUNT` an integer representing the upper limit of items the mod should keep
-- `PARENT_NODE_PATH` a string representing the path we want the mod to operate on.
+- `NODE_PATH` a string representing the path we want the mod to operate on.
 
 ### Required Roles
 
@@ -37,7 +55,6 @@ _Disclaimer: without knowing your exact use, it's impossible to say exactly what
 This mod will generate costs due to:
 
 - **Cloud Functions Usage**: Each time a message is written to the path specified, a Cloud Function is invoked. If the free quota for Cloud Functions is consumed, then it will generate cost for the Firebase project.
-  .
 
 See more details at https://firebase.google.com/pricing.
 

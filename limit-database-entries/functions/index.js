@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,25 @@ const functions = require('firebase-functions');
 
 // Removes siblings of the node that element that triggered the function if
 // there are more than MAX_COUNT.
-exports.truncate = functions.database.ref(process.env.PARENT_NODE_PATH).onWrite(async (change) => {
-  const parentRef = change.after.ref.parent;
-  const snapshot = await parentRef.once('value');
+exports.truncate = functions.database.ref().onCreate(async (snapshot, context) => {
+  const parentRef = snapshot.ref.parent;
+  const snap = await parentRef.once('value');
 
-  console.log(`Node has ${snapshot.numChildren()} children, at ${process.env.PARENT_NODE_PATH}`);
-  if (snapshot.numChildren() >= process.env.MAX_COUNT) {
+  console.log(`Node has ${snap.numChildren()} children, at ${context.resource}`);
+  if (snap.numChildren() >= process.env.MAX_COUNT) {
     let childCount = 0;
     const updates = {};
-    snapshot.forEach((child) => {
-      if (++childCount <= snapshot.numChildren() - process.env.MAX_COUNT) {
+    snap.forEach((child) => {
+      if (++childCount <= snap.numChildren() - process.env.MAX_COUNT) {
         updates[child.key] = null;
       }
     });
     // Update the parent. This effectively removes the extra children.
-    return parentRef.update(updates);
+    return parentRef.update(updates).then(() => {
+      console.log(`Truncated db to ${process.env.MAX_COUNT} items`);
+    });
   }
+
+  console.log('No children deleted.');
   return null;
 });
