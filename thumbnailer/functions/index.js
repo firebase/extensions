@@ -20,7 +20,7 @@ admin.initializeApp(JSON.parse(process.env.FIREBASE_CONFIG));
 const MAX_HEIGHT = process.env.THUMB_MAX_HEIGHT;
 const MAX_WIDTH = process.env.THUMB_MAX_WIDTH;
 const PREFIX = process.env.THUMB_PREFIX;
-const FOLDER = process.env.SIGNED_URLS_FOLDER;
+const SIGNED_URLS_PATH = process.env.SIGNED_URLS_PATH;
 
 /**
  * When an image is uploaded in the Storage bucket We generate a thumbnail automatically using
@@ -95,7 +95,7 @@ exports.generateThumbnail = functions.storage.object().onFinalize(object => {
     const thumbFileUrl = thumbResult[0];
     const fileUrl = originalResult[0];
     // Add the URLs to the Database
-    return admin.database().ref(`${FOLDER}`).push({path: fileUrl, thumbnail: thumbFileUrl});
+    return admin.database().ref(`${SIGNED_URLS_PATH}`).push({path: fileUrl, thumbnail: thumbFileUrl});
   }).then(() => {
     return console.log('Thumbnail URLs saved to database.');
   });  

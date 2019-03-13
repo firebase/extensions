@@ -1,24 +1,24 @@
-# Automatically Generate Thumbnails
+# Automatically Resize Images
 
 ## Summary
 
-Automatically generate thumbnails for images that are uploaded to Firebase Storage. This mod is modified from the functions sample [generate-thumbnail](https://github.com/firebase/functions-samples/tree/Node-8/generate-thumbnail).
+Automatically generate resized images for images that are uploaded to Firebase Storage. This mod is modified from the functions sample [generate-thumbnail](https://github.com/firebase/functions-samples/tree/Node-8/generate-thumbnail).
 
 ## Details
 
 This Mod defines a Cloud Function that will trigger on upload of any file to a Cloud Storage bucket. If the file is not an image, then the Cloud Function will simply return. Otherwise, it will go through the flow detailed below.
 
-The thumbnail generation is performed using ImageMagick which is installed by default on all Cloud Functions instances. This is a CLI so we execute the command from node using the [child-process-promise](https://www.npmjs.com/package/child-process-promise) package. The image is first downloaded locally from the Firebase Storage bucket to the `tmp` folder using the [google-cloud](https://github.com/GoogleCloudPlatform/google-cloud-node) SDK.
+The image resizing is performed using ImageMagick which is installed by default on all Cloud Functions instances. This is a CLI so we execute the command from node using the [child-process-promise](https://www.npmjs.com/package/child-process-promise) package. The image is first downloaded locally from the Firebase Storage bucket to the `tmp` folder using the [google-cloud](https://github.com/GoogleCloudPlatform/google-cloud-node) SDK.
 
 ### Configuration
 
 This Mod requires the following environment variables to be set:
 
-- `THUMB_MAX_HEIGHT` is the maximum height for the thumbnail in pixels. The default is 200 pixels.
-- `THUMB_MAX_WIDTH` is the maximum width for the thumbnail in pixels. The default is 200 pixels.
-- `THUMB_PREFIX` is the prefix that will be prepended to the name of the original image. The prefix plus the name of the original image will be used as the name of the thumbnail image. The default is "thumb".
+- `IMG_MAX_HEIGHT` is the maximum height for the image in pixels. The default is 200 pixels.
+- `IMG_MAX_WIDTH` is the maximum width for the image in pixels. The default is 200 pixels.
+- `IMG_PREFIX` is the prefix that will be prepended to the name of the original image. The prefix plus the name of the original image will be used as the name of the thumbnail image. The default is "thumb".
 - `THUMB_BUCKET` is the name of the Cloud Storage bucket that the Cloud Function will listen to. The Cloud Function will only trigger and create thumbnail images of the images that are uploaded to this bucket. The default is the default bucket for your project.
-- `SIGNED_URLS_FOLDER` is the name of the node in the Firebase Realtime Database under which [signed urls](https://cloud.google.com/storage/docs/access-control/signed-urls) for the original image and the thumbnailed image will be uploaded. The default is "images".
+- `SIGNED_URLS_PATH` is the path to the node in the Firebase Realtime Database under which [signed urls](https://cloud.google.com/storage/docs/access-control/signed-urls) for the original image and the thumbnailed image will be uploaded. Signed URLs is a mechanism for query string authentication for buckets and objects. Signed URLs provide a way to give time-limited read or write access to anyone in possession of the URL, regardless of whether they have a Google account. The default path is "images".
 
 ### Required Roles
 
