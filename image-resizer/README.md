@@ -16,9 +16,9 @@ This Mod requires the following environment variables to be set:
 
 - `IMG_MAX_HEIGHT` is the maximum height for the image in pixels. The default is 200 pixels.
 - `IMG_MAX_WIDTH` is the maximum width for the image in pixels. The default is 200 pixels.
-- `IMG_PREFIX` is the prefix that will be prepended to the name of the original image. The prefix plus the name of the original image will be used as the name of the thumbnail image. The default is "thumb".
-- `THUMB_BUCKET` is the name of the Cloud Storage bucket that the Cloud Function will listen to. The Cloud Function will only trigger and create thumbnail images of the images that are uploaded to this bucket. The default is the default bucket for your project.
-- `SIGNED_URLS_PATH` is the path to the node in the Firebase Realtime Database under which [signed urls](https://cloud.google.com/storage/docs/access-control/signed-urls) for the original image and the thumbnailed image will be uploaded. Signed URLs is a mechanism for query string authentication for buckets and objects. Signed URLs provide a way to give time-limited read or write access to anyone in possession of the URL, regardless of whether they have a Google account. The default path is "images".
+- `IMG_PREFIX` is the prefix that will be prepended to the name of the original image. The prefix plus the name of the original image will be used as the name of the resized image. The default is "resized".
+- `IMG_BUCKET` is the name of the Cloud Storage bucket that the Cloud Function will listen to. The Cloud Function will only trigger and create resized images of the images that are uploaded to this bucket. The default is the default bucket for your project.
+- `SIGNED_URLS_PATH` is the path to the node in the Firebase Realtime Database under which [signed urls](https://cloud.google.com/storage/docs/access-control/signed-urls) for the original image and the resized image will be uploaded. Signed URLs is a mechanism for query string authentication for buckets and objects. Signed URLs provide a way to give time-limited read or write access to anyone in possession of the URL, regardless of whether they have a Google account. The default path is "images".
 
 ### Required Roles
 
@@ -26,7 +26,7 @@ This Mod requires the following IAM roles:
 
 - `firebase.developAdmin` allows access to the Firebase "develop" products. This mod uses this role to write the signed urls to the Realtime Database.
 - `iam.serviceAccountTokenCreator` allows this mod sign a blob using the service account's system-managed private key. This is used to create the signed urls.
-- `storage.admin` allows full control of buckets and objects. When applied to an individual bucket, control applies only to the specified bucket and objects within that bucket. This role is used to get images from the Cloud Storage bucket and upload the thumbnails.
+- `storage.admin` allows full control of buckets and objects. When applied to an individual bucket, control applies only to the specified bucket and objects within that bucket. This role is used to get images from the Cloud Storage bucket and upload the resized image.
 
 ### Resources Created
 
