@@ -5,12 +5,13 @@
 # https://opensource.org/licenses/MIT.
 
 specVersion: v1beta1
-name: limit-children
+name: limit-database-entries
 version: 1.0.0
 
 description: >-
-  Keep the number of child nodes in a Firebase database below a given number.
-  This can be used to limit the number of lines of a chat history or logs.
+  Keep the number of items  in a Firebase realtime database for a given path
+  below a given number. This can be used to limit the number of lines of a chat
+  history or logs.
 
 roles:
   - firebase.developAdmin
@@ -21,22 +22,21 @@ resources:
     properties:
       runtime: nodejs8
       eventTrigger:
-        eventType: providers/google.firebase.database/eventTypes/ref.write
-        resource: projects/_/instances/${DATABASE_INSTANCE}/refs/chat/{messageid}
+        eventType: providers/google.firebase.database/eventTypes/ref.create
+        resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${NODE_PATH}/{messageid}
 env:
   - var: MAX_COUNT
-    label: Max number of items to keep in the database
+    label: Max number of items to keep in the database path
     description: >-
-      Maximum number of items to keep in the database. Older items will be
+      Maximum number of items to keep in the database path. Older items will be
       truncated.
     validationRegex: ^\d+$
     validationErrorMessage: Invalid MAX_COUNT, must be a positive integer.
     required: true
-  - var: PARENT_NODE_PATH
+  - var: NODE_PATH
     label: Path at which this function should limit children.
     description: >-
-      Path at which to limit the children. For example, `/chat/{messageid}`, we
-      would limit the items under /chat/ to MAX_COUNT.
+      Path at which to limit the children to MAX_COUNT.
     validationRegex: ^\S+$
     validationErrorMessage: Path cannot have spaces.
     required: true
