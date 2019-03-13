@@ -68,7 +68,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize(object => {
   }).then(() => {
     console.log('The file has been downloaded to', tempLocalFile);
     // Generate a resized image using ImageMagick.
-    return spawn('convert', [tempLocalFile, '-resized image', `${MAX_WIDTH}x${MAX_HEIGHT}>`, tempLocalImgFile], {capture: ['stdout', 'stderr']});
+    return spawn('convert', [tempLocalFile, '-resize', `${MAX_WIDTH}x${MAX_HEIGHT}>`, tempLocalImgFile], {capture: ['stdout', 'stderr']});
   }).then(() => {
     console.log('resized image created at', tempLocalImgFile);
     // Uploading the resized image.
@@ -95,7 +95,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize(object => {
     const imgFileUrl = imgResult[0];
     const fileUrl = originalResult[0];
     // Add the URLs to the Database
-    return admin.database().ref(`${SIGNED_URLS_PATH}`).push({path: fileUrl, resized image: imgFileUrl});
+    return admin.database().ref(`${SIGNED_URLS_PATH}`).push({path: fileUrl, resizedImage: imgFileUrl});
   }).then(() => {
     return console.log('resized image URLs saved to database.');
   });  
