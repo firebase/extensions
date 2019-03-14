@@ -1,0 +1,69 @@
+# Copyright 2018 Google LLC
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+
+specVersion: v1beta1
+name: image-resizer
+version: 1.0.0
+
+description:
+  Automatically generate resized images for images uploaded to Firebase Storage.
+
+apis:
+  # Cloud Storage
+  - storage-component.googleapis.com
+
+roles:
+  - firebase.developAdmin
+  - iam.serviceAccountTokenCreator
+  - storage.admin
+
+env:
+  - var: IMG_MAX_HEIGHT
+    label: Maximum height of resized image
+    description: >
+      What should be the maximum height of the resized image (in pixels)?
+    # all default values must be strings, so number have to be wrapped in quotes
+    default: "200"
+    validationRegex: ^\d+$
+    validationErrorMessage: Invalid height, must be a positive integer.
+  - var: IMG_MAX_WIDTH
+    label: Maximum width of resized image
+    description: >
+      What should be the maximum width of the resized image (in pixels)?
+    default: "200"
+    validationRegex: ^\d+$
+    validationErrorMessage: Invalid width, must be a positive integer.
+  - var: IMG_PREFIX
+    label: Prefix affixed to resized image name
+    description: >
+      How would you like to prefix the resized images to distinguish them?
+    default: resized
+  - var: IMG_BUCKET
+    label: Storage bucket to listen to for creation of resized images
+    description: >
+      What storage bucket will the images that are to be resized be uploaded
+      to?
+    default: ${STORAGE_BUCKET}
+  - var: SIGNED_URLS_PATH
+    label:
+      Path representing RTDB node where signed urls for the resized image and original
+      image will be uploaded
+    description: >
+      What would you like to name the node in Firebase Realtime Database under
+      which signed urls (https://cloud.google.com/storage/docs/access-control/signed-urls)
+      for the resized image and original image will be uploaded? Signed URLs is a mechanism
+      for query string authentication for buckets and objects. Signed URLs provide a way to
+      give time-limited read or write access to anyone in possession of the URL, regardless
+      of whether they have a Google account.
+    default: images
+
+resources:
+  - name: generateResizedImage
+    type: firebasemods.v1beta1.function
+    properties:
+      eventTrigger:
+        eventType: google.storage.object.finalize
+        resource: projects/_/buckets/${IMG_BUCKET}
