@@ -1,4 +1,4 @@
-# Copyright 2018 Google LLC
+# Copyright 2019 Google LLC
 #
 # Use of this source code is governed by an MIT-style
 # license that can be found in the LICENSE file or at
@@ -34,9 +34,9 @@ env:
     validationErrorMessage: Invalid MAX_COUNT, must be a positive integer.
     required: true
   - var: NODE_PATH
-    label: Path at which this function should limit children.
+    label: Path at which this function should limit children
     description: >-
-      Path at which to limit the children to MAX_COUNT.
+      Path at which to limit the number of child nodes.
     validationRegex: ^\S+$
     validationErrorMessage: Path cannot have spaces.
     required: true
