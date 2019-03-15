@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2019 Google LLC
  *
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file or at
@@ -42,13 +42,13 @@ exports.generateResizedImage = functions.storage.object().onFinalize(object => {
   // Exit if this is triggered on a file that is not an image.
   if (!contentType.startsWith('image/')) {
     console.log('This is not an image.')
-    return Promise.resolve();
+    return;
   }
 
   // Exit if the image is already a resized image.
   if (fileName.startsWith(PREFIX)) {
     console.log('Already a resized image.');
-    return Promise.resolve();
+    return;
   }
 
   // Cloud Storage files.
@@ -79,7 +79,8 @@ exports.generateResizedImage = functions.storage.object().onFinalize(object => {
     fs.unlinkSync(tempLocalFile);
     fs.unlinkSync(tempLocalImgFile);
 
-    // Get the Signed URLs for the resized image and original image.
+    // Get the Signed URLs for the resized image and original image. The signed URLs provide authenticated read access to
+    // the images. These URLs expire on the date set in the config object below.
     const config = {
       action: 'read',
       expires: '03-01-2500',
@@ -89,14 +90,16 @@ exports.generateResizedImage = functions.storage.object().onFinalize(object => {
       file.getSignedUrl(config),
     ]);
   }).then(results => {
-    console.log('Got Signed URLs.');
-    const imgResult = results[0];
-    const originalResult = results[1];
-    const imgFileUrl = imgResult[0];
-    const fileUrl = originalResult[0];
-    // Add the URLs to the Database
-    return admin.database().ref(`${SIGNED_URLS_PATH}`).push({path: fileUrl, resizedImage: imgFileUrl});
-  }).then(() => {
-    return console.log('resized image URLs saved to database.');
+    if (SIGNED_URLS_PATH) {
+      console.log('Got Signed URLs.');
+      const imgResult = results[0];
+      const originalResult = results[1];
+      const imgFileUrl = imgResult[0];
+      const fileUrl = originalResult[0];
+      // Add the URLs to the Database
+      return admin.database().ref(`${SIGNED_URLS_PATH}`).push({path: fileUrl, resizedImage: imgFileUrl}).then(() => {
+        return console.log('resized image URLs saved to database.');
+      });
+    }
   });  
 });

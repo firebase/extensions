@@ -18,7 +18,7 @@ This Mod requires the following environment variables to be set:
 - `IMG_MAX_WIDTH` is the maximum width for the image in pixels. The default is 200 pixels.
 - `IMG_PREFIX` is the prefix that will be prepended to the name of the original image. The prefix plus the name of the original image will be used as the name of the resized image. The default is "resized".
 - `IMG_BUCKET` is the name of the Cloud Storage bucket that the Cloud Function will listen to. The Cloud Function will only trigger and create resized images of the images that are uploaded to this bucket. The default is the default bucket for your project.
-- `SIGNED_URLS_PATH` is the path to the node in the Firebase Realtime Database under which [signed urls](https://cloud.google.com/storage/docs/access-control/signed-urls) for the original image and the resized image will be uploaded. Signed URLs is a mechanism for query string authentication for buckets and objects. Signed URLs provide a way to give time-limited read or write access to anyone in possession of the URL, regardless of whether they have a Google account. The default path is "images".
+- `SIGNED_URLS_PATH` is the path to the node in the Firebase Realtime Database under which [signed urls](https://cloud.google.com/storage/docs/access-control/signed-urls) for the original image and the resized image will be uploaded. Signed URLs is a mechanism for query string authentication for buckets and objects. Signed URLs provide a way to give time-limited read or write access to anyone in possession of the URL, regardless of whether they have a Google account. This is not a required variable. If you would prefer not to use signed URLs, leave this field empty.
 
 ### Required Roles
 
