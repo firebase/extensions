@@ -2,8 +2,10 @@ Your mod is installed and ready to go!
 
 The function `${FUNCTION_NAME_GENERATERESIZEDIMAGE}` located in `${FUNCTION_LOCATION_GENERATERESIZEDIMAGE}` will trigger on the upload of any file to the Cloud Storage bucket you've chosen: `${IMG_BUCKET}`.
 
-You can upload images to `${IMG_BUCKET}` by going to the Firebase Console Storage tab and following instructions there. After a short while, a resized image with same name but prefixed with `${IMG_PREFIX}` will be created in the same bucket (you may have to refresh to see the new file).
+You can upload images to `${IMG_BUCKET}` by going to the Firebase Console Storage tab and following instructions there. Alternatively, you may use the [Cloud Storage for Firebase](https://firebase.google.com/docs/storage/) SDKs available in iOS, Android, and Web to upload images to `${IMG_BUCKET}`. After a short while, a resized image with same name but prefixed with `${IMG_PREFIX}` will be created in the same bucket (you may have to refresh to see the new file).
 
-[Signed URLs](https://cloud.google.com/storage/docs/access-control/signed-urls) for both the original image and resized image can be found by going to the Firebase Console Database tab and looking under `${SIGNED_URLS_PATH}`. Signed URLs is a mechanism for query string authentication for buckets and objects. Signed URLs provide a way to give time-limited read or write access to anyone in possession of the URL, regardless of whether they have a Google account.
+[Signed URLs](https://cloud.google.com/storage/docs/access-control/signed-urls) for both the original image and resized image can be found by going to the Firebase Console Database tab and looking under `${SIGNED_URLS_PATH}`. Signed URLs is a mechanism for query string authentication for buckets and objects. Signed URLs provide a way to give time-limited read or write access to anyone in possession of the URL, regardless of whether they have a Google account. How to use the signed URLs is up to you. One example use case could be for a webpage that displays all members of a club. A listener could be attached to the database so when a new resized image is created, both the original and the resized image are fetched immediately and displayed on the webpage.
+
+The expiration time on the signed URLs is configured on line 85 of the `index.js`.
 
 Happy resizing!
