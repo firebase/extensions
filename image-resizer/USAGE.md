@@ -6,6 +6,4 @@ You can upload images to `${IMG_BUCKET}` by going to the Firebase Console Storag
 
 [Signed URLs](https://cloud.google.com/storage/docs/access-control/signed-urls) for both the original image and resized image can be found by going to the Firebase Console Database tab and looking under `${SIGNED_URLS_PATH}`. Signed URLs is a mechanism for query string authentication for buckets and objects. Signed URLs provide a way to give time-limited read or write access to anyone in possession of the URL, regardless of whether they have a Google account. How to use the signed URLs is up to you. One example use case could be for a webpage that displays all members of a club. A listener could be attached to the database so when a new resized image is created, both the original and the resized image are fetched immediately and displayed on the webpage.
 
-The expiration time on the signed URLs is configured on line 85 of the `index.js`.
-
 Happy resizing!

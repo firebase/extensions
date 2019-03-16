@@ -49,11 +49,11 @@ env:
     default: ${STORAGE_BUCKET}
   - var: SIGNED_URLS_PATH
     label:
-      Path representing Realtime Database node where signed urls for the resized
+      Path representing Realtime Database node where signed URLs for the resized
       image and original image will be uploaded
     description: >
       What would you like to name the node in Firebase Realtime Database under
-      which signed urls
+      which signed URLs
       (https://cloud.google.com/storage/docs/access-control/signed-urls) for the
       resized image and original image will be uploaded? Signed URLs is a
       mechanism for query string authentication for buckets and objects. Signed
@@ -62,6 +62,13 @@ env:
       This is not a required variable. If you would prefer not to use signed
       URLs, leave this field empty.
     required: false
+  - var: SIGNED_URLS_EXPIRATION_DATE
+    label: Date after which the signed URLs will expire (format is MM-DD-YYYY)
+    description: >
+      After what date would you like the signed URLs to expire? Please input the
+      date in MM-DD-YYYY format. If you would prefer not to use signed
+      URLs, leave this field as the default.
+    default: "03-01-2500"
 
 resources:
   - name: generateResizedImage
