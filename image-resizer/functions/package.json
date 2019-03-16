@@ -1,7 +1,7 @@
 {
-  "name": "thumbnailer",
+  "name": "image-resizer",
   "version": "1.0.0",
-  "description": "Thumbnail Generator for Firebase",
+  "description": "Resized Image Generator for Firebase",
   "author": "Firebase",
   "license": "MIT",
   "main": "index.js",
