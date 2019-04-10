@@ -1,7 +1,7 @@
 Now that the `stripe-saas` mod has been installed, you will need to update your Stripe webhook
 to point to this URL:
 
-    https://${FUNCTION_LOCATION_HOOK}-${PROJECT_ID}.cloudfunctions.net/${FUNCTION_NAME_HOOK}
+    https://${function:hook.location}-${param:PROJECT_ID}.cloudfunctions.net/${function:hook.name}
 
 **Important:** For the `stripe-saas` mod to work, all of your Stripe customers MUST have a
 `uid` field in their `metadata` that corresponds to their Firebase Authentication uid. This
@@ -27,8 +27,8 @@ function. You must provide a `plan` and (if the user doesn't already have a defa
 source) a `source` [billing token][source]. An example in JavaScript:
 
 ```js
-const subscribe = firebase.functions().httpsCallable('${FUNCTION_NAME_SUBSCRIBE}');
-const unsubscribe = firebase.functions().httpsCallable('${FUNCTION_NAME_UNSUBSCRIBE}');
+const subscribe = firebase.functions().httpsCallable('${function:subscribe.name}');
+const unsubscribe = firebase.functions().httpsCallable('${function:unsubscribe.name}');
 
 // to create a new subscription
 const subscription = await subscribe({
@@ -45,7 +45,7 @@ await unsubscribe();
 The `stripe-saas` mod will automatically synchronize subscription information from Stripe
 into your Cloud Firestore database in two places:
 
-1. The `${USERS_COLLECTION}` collection, in a field called `${BILLING_FIELD}` (note: a `.`
+1. The `${param:USERS_COLLECTION}` collection, in a field called `${param:BILLING_FIELD}` (note: a `.`
    field indicates that subscription data will be stored at the top level of the document and
    not embedded). The subscription field will contain the following data:
 
@@ -59,7 +59,7 @@ into your Cloud Firestore database in two places:
      * `cancel_at_period_end`: True if the subscription will be canceled at the end of the current period.
      * `canceled_at`: A Timestamp indicating when the subscription was canceled.
 
-2. The `${SUBSCRIPTIONS_COLLECTION}` collection, which contains the  full [Stripe API payloads][sub]
+2. The `${param:SUBSCRIPTIONS_COLLECTION}` collection, which contains the  full [Stripe API payloads][sub]
    for each subscription. In addition, a `stripe_events` subcollection is created on each subscription
    to [avoid duplicate processing][idempotency].
 
@@ -71,7 +71,7 @@ active subscriptions, you could write a function like this:
 
 ```
 function subscription(uid) {
-  return get(/databases/$(database)/documents/${USERS_COLLECTION}/$(request.auth.uid)).data.${BILLING_FIELD}.subscription
+  return get(/databases/$(database)/documents/${param:USERS_COLLECTION}/$(request.auth.uid)).data.${param:BILLING_FIELD}.subscription
 }
 
 function hasSubscription(plan_id) {

@@ -1,4 +1,4 @@
-In order to start using the installed Mod, the webhook address `${FUNCTION_URL_DEPLOY}` will need to be added into your repositories settings. This can be done in the following manner:
+In order to start using the installed Mod, the webhook address `${function:deploy.url}` will need to be added into your repositories settings. This can be done in the following manner:
 
 1. Go to the repository on GitHub and click on "Settings", then "Webhooks".
 2. Add a new Webhook (click "Add webhook").
