@@ -14,13 +14,13 @@ for details on how to call functions from Android, iOS, or web.
 
 To send an invitation, **authenticate the user with Firebase Authentication**, then call the `sendInvitation` function with the email address to invite.
 
-Your `sendInvitation` function can be accessed at **\${FUNCTION_URL_SENDINVITATION}**.
+Your `sendInvitation` function can be accessed at **\${function:sendInvitation.url}**.
 
-To call it in your application, use: **\${MOD_INSTANCE_ID}-sendInvitation**.
+To call it in your application, use: **\${param:MOD_INSTANCE_ID}-sendInvitation**.
 Here is a web sample of how to use it:
 
 ```
-    firebase.functions().httpsCallable('${MOD_INSTANCE_ID}-sendInvitation')({email: 'friendtoinvite@gmail.com'});
+    firebase.functions().httpsCallable('${param:MOD_INSTANCE_ID}-sendInvitation')({email: 'friendtoinvite@gmail.com'});
 ```
 
 # Accepting invitations
@@ -30,9 +30,9 @@ token in the query string, as specified during mod configuration.
 
 If the receiver clicks this link, **you should authenticate them with Firebase Authentication**, and once authenticated, your client should read this value and pass it to the `acceptInvitation` function.
 
-Your `acceptInvitation` function can be accessed at **\${FUNCTION_URL_ACCEPTINVITATION}**
+Your `acceptInvitation` function can be accessed at **\${function:acceptInvitation.url}**
 
-To call it in your application, use: **\${MOD_INSTANCE_ID}-acceptInvitation**.
+To call it in your application, use: **\${param:MOD_INSTANCE_ID}-acceptInvitation**.
 Here is a web sample of how to use it:
 
 ```
@@ -40,7 +40,7 @@ Here is a web sample of how to use it:
       if (user) {
         let [_, token] = window.location.search.match(/acceptInvitation=([^&]+)/);
         if (token) {
-          firebase.functions().httpsCallable('${MOD_INSTANCE_ID}-acceptInvitation')({token});
+          firebase.functions().httpsCallable('${param:MOD_INSTANCE_ID}-acceptInvitation')({token});
         }
       } else {
         // authenticate the user here!
