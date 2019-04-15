@@ -8,11 +8,11 @@ specVersion: v1beta1
 name: slack-messenger
 version: 1.0.0
 
-# recommended
 description:
   Relays messages published to a PubSub topic to a Slack channel (via webhook).
 
-# required
+license: MIT
+
 apis:
 
 resources:
@@ -31,8 +31,8 @@ resources:
     properties:
       topic: ${MOD_INSTANCE_ID}-topic
 
-env:
-  - var: SLACK_WEBHOOK_URL
+params:
+  - param: SLACK_WEBHOOK_URL
     label: Slack Webhook URL
     description:
       The Webhook URL provided by Slack to post into a channel (e.g.

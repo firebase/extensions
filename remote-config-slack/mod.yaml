@@ -12,14 +12,17 @@ description:
   Listens for changes to Firebase Remote Config, pulls the deltas and posts
   it to Slack.
 
+license: MIT
+
 roles:
-  - firebase.growthAdmin
+  - role: firebase.growthAdmin
+    reason: Firebase Remote Config requires growth admin privileges.
 
 apis:
-  - firebaseremoteconfig.googleapis.com
+  - api: firebaseremoteconfig.googleapis.com
 
-env:
-  - var: SLACK_WEBHOOK_URL
+params:
+  - param: SLACK_WEBHOOK_URL
     label: Slack Webhook URL
     description:
       The Webhook URL provided by Slack to post into a channel (e.g.

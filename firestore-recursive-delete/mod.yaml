@@ -12,8 +12,11 @@ description: >-
   Recursively delete Firestore data. This mod creates a callable function that
   can be called from a client app.
 
+license: MIT
+
 roles:
-  - datastore.user # Firestore uses Datastore IAM roles
+  - role: datastore.user
+    reason: Firestore uses Datastore IAM roles
 
 resources:
   - name: fsdelete
@@ -24,8 +27,8 @@ resources:
       timeout: 240s
       availableMemoryMb: 2048
 
-env:
-  - var: LOCATION
+params:
+  - param: LOCATION
     label: Deployment Location
     description: >-
       Where should the mod be deployed? (*us-central1, us-east1, europe-west1,
