@@ -14,7 +14,7 @@ description:
 license: MIT
 
 apis:
-  - api: storage-component.googleapis.com
+  - apiName: storage-component.googleapis.com
     reason: Needed to use Cloud Storage
 
 roles:
