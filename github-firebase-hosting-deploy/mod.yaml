@@ -8,12 +8,14 @@ specVersion: v1beta1
 name: hosting-deploy
 version: 0.1.0
 description: Automatically deploy to Firebase Hosting on Git commit.
+license: MIT
 
 apis:
-  - firebasehosting.googleapis.com
+  - api: firebasehosting.googleapis.com
 
 roles:
-  - firebase.developAdmin # Necessary to deploy Firebase Hosting sites
+  - role: firebase.developAdmin
+    reason: Necessary to deploy Firebase Hosting sites
 
 resources:
   - name: deploy
@@ -23,8 +25,8 @@ resources:
       httpsTrigger: {}
       sourceDirectory: .
 
-env:
-  - var: REPO
+params:
+  - param: REPO
     label: Github Repository
     required: true
     validationRegex: https://github.com
@@ -35,19 +37,19 @@ env:
       What is the full URL of the Github repository you want to set up
       Continuous Integration for? *For example:
       https://github.com/firebase/firebase-tools*
-  - var: SITE_NAME
+  - param: SITE_NAME
     label: Site Name
     default: ${PROJECT_ID}
     description: >-
       What is the name of your site? If your project only has one site, this is
       usually the same as your project ID. You can see your site names at
       https://console.firebase.google.com/project/${PROJECT_ID}/hosting/main.
-  - var: BRANCH
+  - param: BRANCH
     label: Deployment Branch
     default: master
     description: >-
       What branch should trigger deploys to Firebase Hosting?
-  - var: DEPLOY_ROOT
+  - param: DEPLOY_ROOT
     label: Deployment Root
     default: public
     description: >-

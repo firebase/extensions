@@ -13,8 +13,10 @@ description: >-
   below a given number. This can be used to limit the number of lines of a chat
   history or logs.
 
+license: MIT
+
 roles:
-  - firebase.developAdmin
+  - role: firebase.developAdmin
 
 resources:
   - name: truncate
@@ -24,8 +26,8 @@ resources:
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.create
         resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${NODE_PATH}/{messageid}
-env:
-  - var: MAX_COUNT
+params:
+  - param: MAX_COUNT
     label: Max number of items to keep in the database path
     description: >-
       Maximum number of items to keep in the database path. Older items will be
@@ -33,7 +35,7 @@ env:
     validationRegex: ^\d+$
     validationErrorMessage: Invalid MAX_COUNT, must be a positive integer.
     required: true
-  - var: NODE_PATH
+  - param: NODE_PATH
     label: Path at which this function should limit children
     description: >-
       Path at which to limit the number of child nodes.

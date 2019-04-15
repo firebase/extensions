@@ -11,18 +11,19 @@ version: 1.0.0
 description:
   Automatically generate resized images for images uploaded to Cloud Storage for
   Firebase.
+license: MIT
 
 apis:
-  # Cloud Storage
-  - storage-component.googleapis.com
+  - api: storage-component.googleapis.com
+    reason: Needed to use Cloud Storage
 
 roles:
-  - firebase.developAdmin
-  - iam.serviceAccountTokenCreator
-  - storage.admin
+  - role: firebase.developAdmin
+  - role: iam.serviceAccountTokenCreator
+  - role: storage.admin
 
-env:
-  - var: IMG_MAX_HEIGHT
+params:
+  - param: IMG_MAX_HEIGHT
     label: Maximum height of resized image
     description: >
       What should be the maximum height of the resized image (in pixels)?
@@ -30,24 +31,24 @@ env:
     default: "200"
     validationRegex: ^\d+$
     validationErrorMessage: Invalid height, must be a positive integer.
-  - var: IMG_MAX_WIDTH
+  - param: IMG_MAX_WIDTH
     label: Maximum width of resized image
     description: >
       What should be the maximum width of the resized image (in pixels)?
     default: "200"
     validationRegex: ^\d+$
     validationErrorMessage: Invalid width, must be a positive integer.
-  - var: IMG_PREFIX
+  - param: IMG_PREFIX
     label: Prefix affixed to resized image name
     description: >
       How would you like to prefix the resized images to distinguish them?
     default: resized-
-  - var: IMG_BUCKET
+  - param: IMG_BUCKET
     label: Storage bucket to listen to for creation of resized images
     description: >
       What storage bucket will the images that are to be resized be uploaded to?
     default: ${STORAGE_BUCKET}
-  - var: SIGNED_URLS_PATH
+  - param: SIGNED_URLS_PATH
     label:
       Path representing Realtime Database node where signed URLs for the resized
       image and original image will be uploaded
@@ -62,7 +63,7 @@ env:
       This is not a required variable. If you would prefer not to use signed
       URLs, leave this field empty.
     required: false
-  - var: SIGNED_URLS_EXPIRATION_DATE
+  - param: SIGNED_URLS_EXPIRATION_DATE
     label: Date after which the signed URLs will expire (format is MM-DD-YYYY)
     description: >
       After what date would you like the signed URLs to expire? Please input the

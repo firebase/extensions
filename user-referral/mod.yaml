@@ -4,22 +4,20 @@
 # license that can be found in the LICENSE file or at
 # https://opensource.org/licenses/MIT.
 
-# required
 name: invites-mod
 specVersion: v1beta1
 version: 1.0.0
 description: >
   Adds basic invite-a-friend functionality to your Android, iOS, or Web app!
   Requires a Sendgrid account, which you can sign up for free.
+license: MIT
 
-# apis to enable
 apis: [] # no apis needed for this mod
 
-# roles for the service account for the functions
 roles:
-  - firebase.developAdmin # for firestore
+  - role: firebase.developAdmin
+    reason: for firestore
 
-# functions to deploy
 resources:
   - name: sendInvitation
     type: firebasemods.v1beta1.function
@@ -34,8 +32,8 @@ resources:
       httpsTrigger: {}
 
 # params
-env:
-  - var: SENDGRID_API_KEY
+params:
+  - param: SENDGRID_API_KEY
     label: SendGrid API Key
     description: >
       Your API key for SendGrid. Once you have created a SendGrid account, you
@@ -45,7 +43,7 @@ env:
       relay".
     required: true
 
-  - var: SENDGRID_EMAIL_ALIAS
+  - param: SENDGRID_EMAIL_ALIAS
     label: SendGrid Email Alias
     description: >
       The email address invitations will be sent from. We do not support sending
@@ -56,11 +54,11 @@ env:
     validationRegex: '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     validationErrorMessage: >
       You must provide a valid email address.
-  - var: APP_NAME
+  - param: APP_NAME
     label: The name of the app. This will be used in the invite email.
     required: true
 
-  - var: ACCEPT_URL_TEMPLATE
+  - param: ACCEPT_URL_TEMPLATE
     label: Accept Invitation URL
     description: >
       The URL to include in invitation emails. "{token}" will be replaced with
@@ -76,7 +74,7 @@ env:
       Your URL must include '{token}' so that it can be replaced with an actual
       invitation token.
 
-  - var: TARGET_RECEIVER_FIELDS
+  - param: TARGET_RECEIVER_FIELDS
     label: Document and Field Path for Accepting User's UID
     description: >
       When an invitation is accepted, the mod will add the receiving/accepting
@@ -91,7 +89,7 @@ env:
       Values must be comma-separated document path + field, e.g.
       coll/doc.field,coll/doc.field
 
-  - var: TARGET_SENDER_FIELDS
+  - param: TARGET_SENDER_FIELDS
     label: Document and Field Path for Sending User's UID
     description: >
       When an invitation is accepted, the mod will add the sending user's UID to
@@ -106,7 +104,7 @@ env:
       Values must be comma-separated document path + field, e.g.
       coll/doc.field,coll/doc.field
 
-  - var: METADATA_FIRESTORE_COLLECTION
+  - param: METADATA_FIRESTORE_COLLECTION
     label: Metadata Firestore Collection
     description: >
       A top-level Firestore collection the mod can use to store metadata for
