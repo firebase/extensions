@@ -25,7 +25,7 @@ roles:
     reason: Need permissions to create files.
 
   - role: storage.admin
-    reason: This mod generates images that take up storage.
+    reason: Stores generated images in Cloud Storage.
 
 params:
   - param: IMG_MAX_HEIGHT
