@@ -6,35 +6,37 @@
 specVersion: v1beta1
 name: url-shortener
 version: 1.0.0
+license: MIT
 
 description:
-  When a new URL is set, it adds a shortened version of the URL as an additional field.
+  When a new URL is set, it adds a shortened version of the URL as an additional
+  field.
 
 params:
   - param: ACCESS_TOKEN
     label: Access token
     description: >
-      Please paste your access token obtained from your 
-      Bit.ly application (https://bitly.com/a/oauth_apps). Click on "Generic access
-      token" and enter your password to generate the token.
+      Please paste your access token obtained from your Bit.ly application
+      (https://bitly.com/a/oauth_apps). Click on "Generic access token" and
+      enter your password to generate the token.
     required: true
   - param: TRIGGER_PATH
     label: Database path for URLs
     description: >
-      Path in the Realtime Database where URLs will be written to e.g. If you input `links`, 
-      then the mod will trigger with writes to `links/{urlId}/original`.
+      Path in the Realtime Database where URLs will be written to e.g. If you
+      input `links`, then the mod will trigger with writes to
+      `links/{urlId}/original`.
     default: links
     validationRegex: '^\S+$'
     validationErrorMessage: Database path cannot contain spaces.
     required: true
 
-
 roles:
   - role: firebase.developAdmin
     reason: >
-      This mod requires read and write access to the Real Time Database in order to read URLs 
-      and write shortened URLs back into the database.
-  
+      This mod requires read and write access to the Real Time Database in order
+      to read URLs and write shortened URLs back into the database.
+
 resources:
   - name: handleUrlWrite
     type: firebasemods.v1beta1.function
