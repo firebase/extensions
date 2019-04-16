@@ -4,12 +4,10 @@ function. You must provide a `plan` and (if the user doesn't already have a defa
 source) a `source` [billing token][source]. An example in JavaScript:
 
 ```js
-const subscribe = firebase
-  .functions()
-  .httpsCallable("${function:subscribe.name}");
+const subscribe = firebase.functions().httpsCallable(SUBSCRIBE_FUNCTION_NAME);
 const unsubscribe = firebase
   .functions()
-  .httpsCallable("${function:unsubscribe.name}");
+  .httpsCallable(UNSUBSCRIBE_FUNCTION_NAMEE);
 
 // to create a new subscription
 const subscription = await subscribe({
