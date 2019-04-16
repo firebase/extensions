@@ -1,4 +1,4 @@
-aaWhenever a Firebase Remote Config is modified in your project, the diff between the old configuration and the new configuration will be sent to the provided Slack webhook URL. See [Remote Config documentation](https://firebase.google.com/docs/remote-config/). Note that the first version of your Remote Config will not output a diff, but all following updates to the Remote Config will show parameter changes between the most recent version and the version just prior.
+Whenever a Firebase Remote Config is modified in your project, the diff between the old configuration and the new configuration will be sent to the provided Slack webhook URL. See [Remote Config documentation](https://firebase.google.com/docs/remote-config/). Note that the first version of your Remote Config will not output a diff, but all following updates to the Remote Config will show parameter changes between the most recent version and the version just prior.
 
 Example Remote Config diff, sent to Slack:
 
