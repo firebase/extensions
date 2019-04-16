@@ -11,7 +11,7 @@ description: Automatically deploy to Firebase Hosting on Git commit.
 license: MIT
 
 apis:
-  - api: firebasehosting.googleapis.com
+  - apiName: firebasehosting.googleapis.com
 
 roles:
   - role: firebase.developAdmin

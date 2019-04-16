@@ -19,7 +19,7 @@ description:
 license: MIT
 
 apis:
-  - api: translate.googleapis.com
+  - apiName: translate.googleapis.com
     reason: To use Cloud Translate to translate strings between multiple languages.
 
 roles:
