@@ -19,7 +19,7 @@ roles:
     reason: Firebase Remote Config requires growth admin privileges.
 
 apis:
-  - api: firebaseremoteconfig.googleapis.com
+  - apiName: firebaseremoteconfig.googleapis.com
 
 params:
   - param: SLACK_WEBHOOK_URL
