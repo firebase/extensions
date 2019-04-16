@@ -9,8 +9,8 @@ name: remote-config-to-slack
 version: 1.0.0
 
 description:
-  Listens for changes to Firebase Remote Config, pulls the deltas and posts
-  it to Slack.
+  Listens for changes to Firebase Remote Config, pulls the deltas and posts it
+  to Slack.
 
 license: MIT
 
@@ -20,6 +20,7 @@ roles:
 
 apis:
   - apiName: firebaseremoteconfig.googleapis.com
+    reason: To read changes from RemoteConfig objects
 
 params:
   - param: SLACK_WEBHOOK_URL

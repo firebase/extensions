@@ -17,6 +17,7 @@ license: MIT
 
 roles:
   - role: firebase.developAdmin
+    reason: Grants access to Firebase realtime database.
 
 resources:
   - name: truncate

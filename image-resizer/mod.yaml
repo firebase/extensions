@@ -19,8 +19,13 @@ apis:
 
 roles:
   - role: firebase.developAdmin
+    reason: Grants access to Cloud Storage.
+
   - role: iam.serviceAccountTokenCreator
+    reason: Need permissions to create files.
+
   - role: storage.admin
+    reason: This mod generates images that take up storage.
 
 params:
   - param: IMG_MAX_HEIGHT
@@ -67,8 +72,8 @@ params:
     label: Date after which the signed URLs will expire (format is MM-DD-YYYY)
     description: >
       After what date would you like the signed URLs to expire? Please input the
-      date in MM-DD-YYYY format. If you would prefer not to use signed
-      URLs, leave this field as the default.
+      date in MM-DD-YYYY format. If you would prefer not to use signed URLs,
+      leave this field as the default.
     default: "03-01-2500"
 
 resources:
