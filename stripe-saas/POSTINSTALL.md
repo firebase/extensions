@@ -13,9 +13,9 @@ set it. For example, in Node.js:
 
 ```js
 const customer = await stripe.customers.create({
-  email: 'customer@example.com',
-  description: 'Your Customer',
-  metadata: {uid: '<uid_goes_here>'}
+  email: "customer@example.com",
+  description: "Your Customer",
+  metadata: { uid: "<uid_goes_here>" },
 });
 ```
 
@@ -27,13 +27,17 @@ function. You must provide a `plan` and (if the user doesn't already have a defa
 source) a `source` [billing token][source]. An example in JavaScript:
 
 ```js
-const subscribe = firebase.functions().httpsCallable('${function:subscribe.name}');
-const unsubscribe = firebase.functions().httpsCallable('${function:unsubscribe.name}');
+const subscribe = firebase
+  .functions()
+  .httpsCallable("${function:subscribe.name}");
+const unsubscribe = firebase
+  .functions()
+  .httpsCallable("${function:unsubscribe.name}");
 
 // to create a new subscription
 const subscription = await subscribe({
-  plan: 'my_plan',
-  source: 'tok_thisisanexample' // Stripe card token
+  plan: "my_plan",
+  source: "tok_thisisanexample", // Stripe card token
 });
 
 // for a user with an existing subscription
@@ -49,17 +53,17 @@ into your Cloud Firestore database in two places:
    field indicates that subscription data will be stored at the top level of the document and
    not embedded). The subscription field will contain the following data:
 
-   * `customer_id`: The Stripe customer id for the user.
-   * `subscription`: an object containing the following subscription information:
-     * `id`: The Stripe subscription id.
-     * `plan_id`: The Stripe payment plan id for the subscription.
-     * `status`: The [subscription state][states], for example `active` or `past_due`.
-     * `current_period_end`: A Timestamp indicating when the current billing period will end.
-     * `current_period_start`: A Timestamp indicating when the current billing period began.
-     * `cancel_at_period_end`: True if the subscription will be canceled at the end of the current period.
-     * `canceled_at`: A Timestamp indicating when the subscription was canceled.
+   - `customer_id`: The Stripe customer id for the user.
+   - `subscription`: an object containing the following subscription information:
+     - `id`: The Stripe subscription id.
+     - `plan_id`: The Stripe payment plan id for the subscription.
+     - `status`: The [subscription state][states], for example `active` or `past_due`.
+     - `current_period_end`: A Timestamp indicating when the current billing period will end.
+     - `current_period_start`: A Timestamp indicating when the current billing period began.
+     - `cancel_at_period_end`: True if the subscription will be canceled at the end of the current period.
+     - `canceled_at`: A Timestamp indicating when the subscription was canceled.
 
-2. The `${param:SUBSCRIPTIONS_COLLECTION}` collection, which contains the  full [Stripe API payloads][sub]
+2. The `${param:SUBSCRIPTIONS_COLLECTION}` collection, which contains the full [Stripe API payloads][sub]
    for each subscription. In addition, a `stripe_events` subcollection is created on each subscription
    to [avoid duplicate processing][idempotency].
 

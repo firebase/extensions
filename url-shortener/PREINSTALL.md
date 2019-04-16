@@ -5,6 +5,7 @@ If your trigger path is `example/path/` and you write URLs to the database path 
 ## Sample Realtime Database Structure
 
 Here is an example of the database structure with a sample trigger path of `example/path`.
+
 ```
 /your-project-id-123
     /example/path

@@ -12,6 +12,7 @@ license: MIT
 
 apis:
   - apiName: firebasehosting.googleapis.com
+  - reason: Necessary to deploy sites onto Firebase Hosting
 
 roles:
   - role: firebase.developAdmin
