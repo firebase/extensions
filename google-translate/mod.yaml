@@ -20,25 +20,29 @@ license: MIT
 
 apis:
   - apiName: translate.googleapis.com
-    reason: To use Cloud Translate to translate strings between multiple languages.
+    reason:
+      To use Cloud Translate to translate strings between multiple languages.
 
 roles:
   - role: firebase.developAdmin
-    reason: Grants full access to Firebase Develop products and Analytics.
+    reason: Grants access to Firebase Realtime Database.
 
 params:
   - param: LANGUAGES
     label: Target languages to translate into, as a comma-separated list
     description: >
       What languages would you like to translate provided text into? Please
-      input these as a comma-separated list, e.g. en,es,de,fr.
-      [List of supported languages.](https://cloud.google.com/translate/docs/languages)
+      input these as a comma-separated list, e.g. en,es,de,fr. [List of
+      supported languages.](https://cloud.google.com/translate/docs/languages)
     default: en,es,de,fr
-    validationRegex: '^[a-zA-Z,-]+$'
-    validationErrorMessage: Languages must be a comma-separated list of language codes.
+    validationRegex: "^[a-zA-Z,-]+$"
+    validationErrorMessage:
+      Languages must be a comma-separated list of language codes.
     required: true
   - param: TRIGGER_PATH
-    label: Path at which the mod listens for new messages and creates new message translations.
+    label:
+      Path at which the mod listens for new messages and creates new message
+      translations.
     description: >
       Where would you like to store translations?
     validationRegex: '^\S+$'

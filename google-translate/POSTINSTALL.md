@@ -9,7 +9,6 @@ To trigger the mod, write messages to the database path at:
 `${param:TRIGGER_PATH}/{languageID}/{messageId}` via one of the [official Firebase SDKs](https://firebase.google.com/docs/database/). The message should be a JSON
 resembling the following: `{"message": "Your message goes here."}`.
 
-
 To try out this mod right away, run the following commands via the Firebase CLI:
 
 ```

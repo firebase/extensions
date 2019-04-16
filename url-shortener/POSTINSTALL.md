@@ -28,6 +28,7 @@ This way, you can display a clean URL by fetching `/${param:TRIGGER_PATH}/{urlID
 ## Try it out
 
 To try out this mod right away for the Realtime Database, run the following command via the Firebase CLI:
+
 ```
 firebase database:set /${param:TRIGGER_PATH}/url-123/original --data "https://google.com"
 ```

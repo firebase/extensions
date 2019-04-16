@@ -39,6 +39,6 @@ params:
       https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
     validationRegex: ^us-east1$|^us-central1$|^europe-west1$|^asia-northeast1$
     validationErrorMessage: >
-      Invalid location, please pick one of: us-central1, us-east1,
-      europe-west1, asia-northeast1
+      Invalid location, please pick one of: us-central1, us-east1, europe-west1,
+      asia-northeast1
     default: us-central1
