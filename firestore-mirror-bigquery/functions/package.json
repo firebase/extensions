@@ -1,0 +1,24 @@
+{
+  "name": "firestore-mirror-bigquery-mod",
+  "version": "1.0.0",
+  "description": "Mirror a Firestore collection to BigQuery",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "npm run clean && npm run compile",
+    "clean": "rimraf lib",
+    "compile": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Chris Bianca <chris@csfrequency.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@google-cloud/bigquery": "^2.1.0",
+    "firebase-admin": "^7.1.1",
+    "firebase-functions": "^2.2.1",
+    "lodash": "^4.17.11"
+  },
+  "devDependencies": {
+    "rimraf": "^2.6.3",
+    "typescript": "^3.2.4"
+  }
+}
