@@ -1,0 +1,66 @@
+specVersion: v1beta1
+name: fs-mirror-bigquery
+version: 1.0.0
+
+description: >-
+  Mirror data for a Firestore Collection to BigQuery. This mod creates an event
+  listener which triggers when Documents within a Collection are added, updated
+  or deleted.
+
+apis:
+  - apiName: bigquery-json.googleapis.com
+    reason: This mod uses BigQuery to mirror data from your Firestore collection
+
+roles:
+  - role: bigquery.dataEditor
+    reason: To allow the mod to configure and insert data into BigQuery
+
+resources:
+  - name: fsmirrorbigquery
+    type: firebasemods.v1beta1.function
+    properties:
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
+      location: ${LOCATION}
+
+params:
+  - param: LOCATION
+    label: Deployment Location
+    description: >-
+      Where should the mod be deployed? (*us-central1, us-east1, europe-west1,
+      asia-northeast1*) Pick a location that is close to your Firestore
+      database.
+
+      See
+      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+    validationRegex: ^us-east1$|^us-central1$|^europe-west1$|^asia-northeast1$
+    validationErrorMessage: >
+      Invalid location, please pick one of: us-central1, us-east1, europe-west1,
+      asia-northeast1
+    default: us-central1
+  - param: COLLECTION_PATH
+    label: Collection Path
+    description: >-
+      What is the path of the the collection you would like to mirror?
+    default: mods
+  - param: DATASET_ID
+    label: Dataset ID
+    description: >-
+      What is the ID of the BigQuery dataset that you would like to use? (The
+      mod will create the dataset if it doesn't already exist)
+    validationRegex: ^[a-zA-Z0-9_]+$
+    validationErrorMessage: >
+      Dataset IDs must be alphanumeric (plus underscores) and must be at most
+      1024 characters long.
+    default: mods
+  - param: TABLE_NAME
+    label: Table ID
+    description: >-
+      What is the ID of the BigQuery table that you would like to use? (The mod
+      will create the table if it doesn't already exist)
+    validationRegex: ^[a-zA-Z0-9_]+$
+    validationErrorMessage: >
+      Table IDs must be alphanumeric (plus underscores) and must be at most 1024
+      characters long.
+    default: mods
