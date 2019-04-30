@@ -11,8 +11,12 @@ description: Automatically delete a user's data when they delete their account.
 license: MIT
 
 roles:
-  - role: firebase.developAdmin
-    reason: gives mod access to Firestore, realtime database, and storage.
+  - role: firebasedatabase.admin
+    reason: gives mod access to Realtime Database so it can delete user data
+  - role: datastore.user
+    reason: gives mod access to Cloud Firestore so it can delete user data
+  - role: storage.admin
+    reason: gives mod access to Cloud Storage so it can delete user data
 
 resources:
   - name: clearData
@@ -62,6 +66,6 @@ params:
 
       For example, if you are using the default bucket, and have files with the
       naming scheme `{UID}-pic.png`, then you can write
-      `${DEFAULT}/{UID}-pic.png`. If you also have files with the naming scheme
+      `{DEFAULT}/{UID}-pic.png`. If you also have files with the naming scheme
       `{UID}-logs.txt` in another bucket called `my-awesome-app-logs`, then you
-      can write `${DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-pic.png`.
+      can write `{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-pic.png`.

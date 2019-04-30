@@ -12,10 +12,10 @@ license: MIT
 
 apis:
   - apiName: firebasehosting.googleapis.com
-  - reason: Necessary to deploy sites onto Firebase Hosting
+  - reason: allows the mod to deploy to Firebase Hosting
 
 roles:
-  - role: firebase.developAdmin
+  - role: firebasehosting.admin
     reason: Necessary to deploy Firebase Hosting sites
 
 resources:

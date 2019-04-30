@@ -16,7 +16,7 @@ license: MIT
 
 roles:
   - role: datastore.user
-    reason: Firestore uses Datastore IAM roles
+    reason: allows the mod to delete data from Cloud Firestore
 
 resources:
   - name: fsdelete

@@ -18,14 +18,12 @@ apis:
     reason: Needed to use Cloud Storage
 
 roles:
-  - role: firebase.developAdmin
-    reason: Grants access to Cloud Storage.
-
-  - role: iam.serviceAccountTokenCreator
-    reason: Need permissions to create files.
-
   - role: storage.admin
-    reason: Stores generated images in Cloud Storage.
+    reason: allows the mod to store generated images in Cloud Storage
+  - role: iam.serviceAccountTokenCreator
+    reason: allows the mod to generate signed URLs
+  - role: firebasedatabase.admin
+    reason: allows the mod to store signed URLs in the Realtime Database
 
 params:
   - param: IMG_MAX_HEIGHT
