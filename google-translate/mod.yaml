@@ -24,8 +24,8 @@ apis:
       To use Cloud Translate to translate strings between multiple languages.
 
 roles:
-  - role: firebase.developAdmin
-    reason: Grants access to Firebase Realtime Database.
+  - role: firebasedatabase.admin
+    reason: allows the mod to write translations into the Realtime Database.
 
 params:
   - param: LANGUAGES

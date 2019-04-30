@@ -15,8 +15,8 @@ description:
 license: MIT
 
 roles:
-  - role: firebase.developAdmin
-    reason: Grants access to Cloud Firestore.
+  - role: datastore.user
+    reason: allows the mod to read from and write to Cloud Firestore.
 
 params:
   - param: STRIPE_SECRET_KEY

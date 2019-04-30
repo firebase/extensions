@@ -12,6 +12,11 @@ description:
   When a new URL is set, it adds a shortened version of the URL as an additional
   field.
 
+roles:
+  - role: firebasedatabase.admin
+    reason: >
+      allows the mod to read URLs from the Realtime Database and write shortened URLs back into it
+
 params:
   - param: ACCESS_TOKEN
     label: Access token
@@ -30,12 +35,6 @@ params:
     validationRegex: '^\S+$'
     validationErrorMessage: Database path cannot contain spaces.
     required: true
-
-roles:
-  - role: firebase.developAdmin
-    reason: >
-      This mod requires read and write access to the Real Time Database in order
-      to read URLs and write shortened URLs back into the database.
 
 resources:
   - name: handleUrlWrite

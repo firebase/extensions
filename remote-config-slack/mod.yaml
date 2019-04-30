@@ -15,8 +15,8 @@ description:
 license: MIT
 
 roles:
-  - role: firebase.growthAdmin
-    reason: Firebase Remote Config requires growth admin privileges.
+  - role: cloudconfig.admin
+    reason: allows the mod to get information about a Remote Config change
 
 apis:
   - apiName: firebaseremoteconfig.googleapis.com

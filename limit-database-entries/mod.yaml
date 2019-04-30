@@ -16,8 +16,8 @@ description: >-
 license: MIT
 
 roles:
-  - role: firebase.developAdmin
-    reason: Grants access to Firebase realtime database.
+  - role: firebasedatabase.admin
+    reason: allows the mod to prune extra items from the Realtime Database.
 
 resources:
   - name: truncate

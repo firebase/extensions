@@ -15,8 +15,8 @@ license: MIT
 apis: [] # no apis needed for this mod
 
 roles:
-  - role: firebase.developAdmin
-    reason: for firestore
+  - role: datastore.user
+    reason: allows the mod to store metadata about invitations in Cloud Firestore
 
 resources:
   - name: sendInvitation
