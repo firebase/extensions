@@ -1,0 +1,50 @@
+# Copyright 2018 Google LLC
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+
+specVersion: v1beta1
+name: firestore-sharded-counter
+version: 0.0.1
+description: Auto-scalable counters for your app.
+
+roles:
+  - role: firebase.developAdmin
+    reason: To allow the mod to aggregate firestore counter shards.
+
+resources:
+- name: shardedCounterController
+  type: firebasemods.v1beta1.function
+  properties:
+    maxInstances: 1
+    httpsTrigger: {}
+
+- name: shardedCounterWorker
+  type: firebasemods.v1beta1.function
+  properties:
+    eventTrigger:
+      eventType: providers/cloud.firestore/eventTypes/document.write
+      resource: projects/${PROJECT_ID}/databases/(default)/documents/${MOD_METADATA_DOC}/workers/{workerId}
+
+env:
+- var: MOD_METADATA_DOC
+  label: Mod's metadata doc
+  description: >-
+    A path to a document where mod can keep its internal state.
+  default: _firebase_mods_/sharded_counter
+
+- var: COUNTER_SHARDS_COLLECTION
+  label: Counter Shards Collection
+  description: >-
+    What is the unique collection name that can be used as a subcollection for counter shards.
+    This name is reserved for sharded counter use only.
+  default: _counter_shards_
+
+- var: MIN_WORKERS
+  label: Min workers
+  description: >-
+    If set to 0 controller will scale down the number of workers to 0 and aggregate
+    increments itself every minute for low traffic (<100 increments per minute).
+    It may reduce function invocation cost at the expense of higher propagation latency.
+  default: '1'

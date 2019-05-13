@@ -1,0 +1,9 @@
+test-project-key.json
+
+.vscode
+node_modules
+package-lock.json
+*.js
+*.js.map
+
+functions/tasks.json
