@@ -1,0 +1,45 @@
+# Copyright 2019 Google LLC
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+specVersion: v1beta1
+name: url-shortener
+version: 1.0.0
+license: MIT
+
+description:
+  When a new URL is set, it adds a shortened version of the URL as an additional
+  field.
+
+roles:
+  - role: firebasedatabase.admin
+    reason: >
+      allows the mod to read URLs from the Realtime Database and write shortened URLs back into it
+
+params:
+  - param: ACCESS_TOKEN
+    label: Access token
+    description: >
+      Please paste your access token obtained from your Bit.ly application
+      (https://bitly.com/a/oauth_apps). Click on "Generic access token" and
+      enter your password to generate the token.
+    required: true
+  - param: TRIGGER_PATH
+    label: Database path for URLs
+    description: >
+      Path in the Realtime Database where URLs will be written to e.g. If you
+      input `links`, then the mod will trigger with writes to
+      `links/{urlId}/original`.
+    default: links
+    validationRegex: '^\S+$'
+    validationErrorMessage: Database path cannot contain spaces.
+    required: true
+
+resources:
+  - name: handleUrlWrite
+    type: firebasemods.v1beta1.function
+    properties:
+      eventTrigger:
+        eventType: providers/google.firebase.database/eventTypes/ref.create
+        resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${TRIGGER_PATH}/{linkID}/original
