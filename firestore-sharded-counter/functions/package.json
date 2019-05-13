@@ -1,0 +1,26 @@
+{
+  "name": "firestore-sharded-counter",
+  "version": "0.0.1",
+  "main": "src/index.js",
+  "author": "patryk@google.com",
+  "description": "Auto-scalable counters for your app.",
+  "dependencies": {
+    "deep-equal": "^1.0.1",
+    "firebase-admin": "^6.1.0",
+    "firebase-functions": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.6",
+    "@types/mocha": "^5.2.5",
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "mocha-typescript": "*",
+    "prettier": "1.15.3",
+    "ts-node": "^7.0.1",
+    "typescript": "^2.9.2"
+  },
+  "scripts": {
+    "format": "prettier --write {,**/}*.{yaml,ts,md}",
+    "test": "mocha --require ts-node/register test/**/*.ts"
+  }
+}
