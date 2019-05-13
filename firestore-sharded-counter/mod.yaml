@@ -9,10 +9,15 @@ name: firestore-sharded-counter
 version: 0.0.1
 description: Auto-scalable counters for your app.
 
+roles:
+  - role: firebase.developAdmin
+    reason: To allow the mod to aggregate firestore counter shards.
+
 resources:
 - name: shardedCounterController
   type: firebasemods.v1beta1.function
   properties:
+    maxInstances: 1
     httpsTrigger: {}
 
 - name: shardedCounterWorker
