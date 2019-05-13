@@ -15,10 +15,12 @@
     "chai": "^4.2.0",
     "mocha": "^5.2.0",
     "mocha-typescript": "*",
+    "prettier": "1.15.3",
     "ts-node": "^7.0.1",
     "typescript": "^2.9.2"
   },
   "scripts": {
+    "format": "prettier --write {,**/}*.{yaml,ts,md}",
     "test": "mocha --require ts-node/register test/**/*.ts"
   }
 }

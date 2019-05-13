@@ -24,10 +24,10 @@ import * as path from "path";
  */
 
 interface AggregationPlan {
-  aggregate: string,                      // a document path to store this aggregation
-  isPartial: boolean,                     // is the aggregate a partial shard or the main counter
-  shards: firestore.DocumentSnapshot[],   // shards to be aggregated
-  partials: firestore.DocumentSnapshot[]  // partials to be aggregated
+  aggregate: string; // a document path to store this aggregation
+  isPartial: boolean; // is the aggregate a partial shard or the main counter
+  shards: firestore.DocumentSnapshot[]; // shards to be aggregated
+  partials: firestore.DocumentSnapshot[]; // partials to be aggregated
 }
 
 export class Planner {
@@ -36,20 +36,29 @@ export class Planner {
    * @param start Beginning of document range for this worker.
    * @param snaps List of shard snapshots to aggregate.
    */
-  public static planAggregations(start: string,
-    snaps: firestore.DocumentSnapshot[]): AggregationPlan[] {
+  public static planAggregations(
+    start: string,
+    snaps: firestore.DocumentSnapshot[]
+  ): AggregationPlan[] {
     if (snaps.length === 0) return [];
 
     let result: AggregationPlan[] = [];
 
-    let prefixLen = Planner.aggrPrefixLen(start, snaps[snaps.length - 1].ref.path);
+    let prefixLen = Planner.aggrPrefixLen(
+      start,
+      snaps[snaps.length - 1].ref.path
+    );
     let [aggregate, isPartial] = Planner.constructAggregate(
-      snaps[snaps.length - 1].ref.path, prefixLen);
+      snaps[snaps.length - 1].ref.path,
+      prefixLen
+    );
     let shards: firestore.DocumentSnapshot[] = [];
     let partials: firestore.DocumentSnapshot[] = [];
     for (let i = snaps.length - 1; i >= 0; i--) {
-      let [newAggregate, newIsPartial] = Planner.constructAggregate(snaps[i].ref.path,
-        prefixLen);
+      let [newAggregate, newIsPartial] = Planner.constructAggregate(
+        snaps[i].ref.path,
+        prefixLen
+      );
       if (newAggregate !== aggregate) {
         shards.reverse();
         partials.reverse();
@@ -57,7 +66,7 @@ export class Planner {
           aggregate: aggregate,
           isPartial: isPartial,
           shards: shards,
-          partials: partials
+          partials: partials,
         });
         aggregate = newAggregate;
         isPartial = newIsPartial;
@@ -76,13 +85,16 @@ export class Planner {
       aggregate: aggregate,
       isPartial: isPartial,
       shards: shards,
-      partials: partials
+      partials: partials,
     });
     result.reverse();
     return result;
   }
 
-  protected static constructAggregate(shard: string, prefixLen): [string, boolean] {
+  protected static constructAggregate(
+    shard: string,
+    prefixLen
+  ): [string, boolean] {
     if (prefixLen === 0) return [path.dirname(path.dirname(shard)), false];
 
     let collection = path.dirname(shard);
@@ -98,7 +110,7 @@ export class Planner {
   }
 
   protected static aggrPrefixLen(start: string, end: string): number {
-    if (start === '') return 0;
+    if (start === "") return 0;
     if (path.dirname(start) !== path.dirname(end)) return 0;
 
     const shard1 = Planner.decodeShard(path.basename(start));
@@ -112,16 +124,16 @@ export class Planner {
   }
 
   protected static decodeShard(shard: string): string {
-    while (shard.charAt(0) === '\t') shard = shard.substring(1);
+    while (shard.charAt(0) === "\t") shard = shard.substring(1);
     return shard;
   }
 
   protected static encodeShard(shard: string): string {
-    while (shard.length < 5) shard = '\t' + shard;
+    while (shard.length < 5) shard = "\t" + shard;
     return shard;
   }
 
   protected static isPartialShard(shard: string): boolean {
-    return path.basename(shard).charAt(0) === '\t';
+    return path.basename(shard).charAt(0) === "\t";
   }
 }
