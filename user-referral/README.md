@@ -6,7 +6,7 @@ Add "invite a friend" functionality to your application. Allow users of your app
 
 ## Details
 
-This Mod defines two callable functions - one to send invitations via email, and the other that will be triggered upon acceptance of an email invitation. 
+This Mod defines two callable functions - one to send invitations via email, and the other that will be triggered upon acceptance of an email invitation.
 
 This Mod also requires a SendGrid account. They can be created for free at https://SendGrid.com/.
 
@@ -28,8 +28,8 @@ The invitation email that is sent is defined in the Mod, in `index.js` line 54. 
 
 ```
 <p>Hi there ${email},</p>
-<p>I'm using ${APP_NAME} and I'd love for you to join me! <a href="${acceptUrl}">Accept invitation</a></p>
-<p>- ${auth.token.name} (via ${APP_NAME})</p>
+<p>I'm using ${param:APP_NAME} and I'd love for you to join me! <a href="${acceptUrl}">Accept invitation</a></p>
+<p>- ${auth.token.name} (via ${param:APP_NAME})</p>
 ```
 
 #### Receiving an invitation
@@ -82,7 +82,7 @@ This Mod requires the following environment variables to be set:
 - `SENDGRID_API_KEY` is the API key for SendGrid. Once you have created a SendGrid account, you can create an API key by going to "API Keys" under "Settings" and clicking "Create API Key". Alternatively, you can go to "Setup Guide" and follow the instructions under "Integrate using our Web API or SMTP relay".
 - `SENDGRID_EMAIL_ALIAS` is the email address invitations will be sent from. We do not support sending from the inviter's personal email address. This can be your domain's email address. You can also create a new email address for the purpose of sending invitations from.
 - `APP_NAME` is the name of your app. This is used as part of the invitation email, as well as the subject heading of your email. If you do not wish use the app name in either the invitation email or subject heading, change the "required" field of this environment variable to `false`.
-- `ACCEPT_URL_TEMPLATE` is the URL to include in invitation emails. "{token}" will be replaced with the actual invitation token. The default value assumes your app is deployed with Firebase Hosting and expects an 'acceptInvitation' query parameter at the root URL. The default is `https://${PROJECT_ID}.firebaseapp.com/?acceptInvitation={token}`.
+- `ACCEPT_URL_TEMPLATE` is the URL to include in invitation emails. "{token}" will be replaced with the actual invitation token. The default value assumes your app is deployed with Firebase Hosting and expects an 'acceptInvitation' query parameter at the root URL. The default is `https://${param:PROJECT_ID}.firebaseapp.com/?acceptInvitation={token}`.
 - `TARGET_RECEIVER_FIELDS` is the document/array field used when an invitation is accepted. When an invitation is accepted, the mod will add the receiving/accepting user's UID to this field. If the receiver UID is 123 and sender UID is 234, entering "users/{sender}.friends" here will append "123" to the "friends" array field for document "234" in the "users" collection. Separate document/field pairs for this var with commas. The default is `users/{sender}.friends`.
 - `TARGET_SENDER_FIELDS` is the document/array field used to save the sending user's UID when an invitation is accepted. If the receiver UID is 123 and sender UID is 234, entering "users/{receiver}.friends" here will append "234" to the "friends" array field for document "123" in the "users" collection. Separate document/field pairs for this var with commas. The default is `users/{receiver}.friends`.
 - `METADATA_FIRESTORE_COLLECTION` is a top-level Firestore collection the mod can use to store metadata for invitations. The default is `_invitations`.

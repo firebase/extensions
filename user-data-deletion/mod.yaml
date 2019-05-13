@@ -8,9 +8,15 @@ specVersion: v1beta1
 name: data-deletion
 version: 1.0.0
 description: Automatically delete a user's data when they delete their account.
+license: MIT
 
 roles:
-  - firebase.developAdmin # gives mod access to Firestore, realtime database, and storage.
+  - role: firebasedatabase.admin
+    reason: gives mod access to Realtime Database so it can delete user data
+  - role: datastore.user
+    reason: gives mod access to Cloud Firestore so it can delete user data
+  - role: storage.admin
+    reason: gives mod access to Cloud Storage so it can delete user data
 
 resources:
   - name: clearData
@@ -20,13 +26,13 @@ resources:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${PROJECT_ID}
 
-env:
-  - var: FIRESTORE_PATHS
+params:
+  - param: FIRESTORE_PATHS
     label: Firestore paths
     required: false
     description: >-
       What paths in your Firestore database contain user data? Leave empty if
-      you don't use Firestore. 
+      you don't use Firestore.
 
       Write out the full paths, separated by commas. You can represent the user
       ID of the deleted user with `{UID}`.
@@ -35,7 +41,7 @@ env:
       collection has documents with user ID as document IDs. You can write
       `users/{UID},admins/{UID}`.
 
-  - var: RTDB_PATHS
+  - param: RTDB_PATHS
     label: Real Time Database paths
     required: false
     description: >-
@@ -47,7 +53,7 @@ env:
 
       For example: `users/{UID},admins/{UID}`.
 
-  - var: STORAGE_PATHS
+  - param: STORAGE_PATHS
     label: Storage paths
     required: false
     description: >-
@@ -60,6 +66,6 @@ env:
 
       For example, if you are using the default bucket, and have files with the
       naming scheme `{UID}-pic.png`, then you can write
-      `${DEFAULT}/{UID}-pic.png`. If you also have files with the naming scheme
+      `{DEFAULT}/{UID}-pic.png`. If you also have files with the naming scheme
       `{UID}-logs.txt` in another bucket called `my-awesome-app-logs`, then you
-      can write `${DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-pic.png`.
+      can write `{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-pic.png`.

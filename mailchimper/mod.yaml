@@ -7,13 +7,12 @@
 specVersion: v1beta1
 name: mailchimper
 version: 1.0.0
-
-# recommended
 description:
   Add new users to a Mailchimp list, and delete them from the list when they
   delete their account.
 
-# required
+license: MIT
+
 apis:
 
 resources:
@@ -30,14 +29,14 @@ resources:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${PROJECT_ID}
 
-env:
-  - var: MAILCHIMP_KEY
+params:
+  - param: MAILCHIMP_KEY
     label: Mailchimp API Key
     description: >-
       You can get an API Key at https://admin.mailchimp.com/account/api/
     required: true
 
-  - var: LIST_ID
+  - param: LIST_ID
     label: List ID
     description: >-
       ID of list to subscribe new users to. Go to
