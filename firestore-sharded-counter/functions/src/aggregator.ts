@@ -11,7 +11,9 @@ import { FieldPath, FieldValue } from "@google-cloud/firestore";
 
 export class NumericUpdate {
   private _data: { [key: string]: any } = {};
-  get data() {return this._data; }
+  get data() {
+    return this._data;
+  }
 
   /**
    * Merges numeric values from an arbitrary deep json into the NumericUpdate object.
@@ -27,35 +29,41 @@ export class NumericUpdate {
    * Exports an object with modified fields in the counter.
    * @param counter The counter data to be updated.
    */
-  public toCounterUpdate(counter: { [key: string]: any }): { [key: string]: any } {
+  public toCounterUpdate(counter: {
+    [key: string]: any;
+  }): { [key: string]: any } {
     NumericUpdate.addCommonFieldsRecursive(counter, this._data);
     return this._data;
   }
 
   /**
    * Exports an update object for partial shard.
-   * 
+   *
    * Resulting operation will append current data to an array "_updates_".
    */
   public toPartialUpdate(): { [key: string]: any } {
-    return { '_updates_': FieldValue.arrayUnion({
-                '_timestamp_': FieldValue.serverTimestamp(),
-                '_data_': this._data
-              })
-            };
+    return {
+      _updates_: FieldValue.arrayUnion({
+        _timestamp_: FieldValue.serverTimestamp(),
+        _data_: this._data,
+      }),
+    };
   }
 
-  private static mergeRecursive(from: {[key: string]: any}, to: {[key: string]: any}) {
+  private static mergeRecursive(
+    from: { [key: string]: any },
+    to: { [key: string]: any }
+  ) {
     for (let key in from) {
-      if (typeof from[key] === 'number') {
-        if (key in to && typeof to[key] === 'number') {
+      if (typeof from[key] === "number") {
+        if (key in to && typeof to[key] === "number") {
           to[key] += from[key];
         } else {
           // Create a new node if doesn't exist or override if not a number.
           to[key] = from[key];
         }
-      } else if (typeof from[key] === 'object') {
-        if (key in to === false || typeof to[key] !== 'object') {
+      } else if (typeof from[key] === "object") {
+        if (key in to === false || typeof to[key] !== "object") {
           to[key] = {};
         }
         NumericUpdate.mergeRecursive(from[key], to[key]);
@@ -63,11 +71,14 @@ export class NumericUpdate {
     }
   }
 
-  private static addCommonFieldsRecursive(from: {[key: string]: any}, to: {[key: string]: any}) {
+  private static addCommonFieldsRecursive(
+    from: { [key: string]: any },
+    to: { [key: string]: any }
+  ) {
     for (let key in to) {
-      if (typeof to[key] === 'number' && typeof from[key] === 'number') {
+      if (typeof to[key] === "number" && typeof from[key] === "number") {
         to[key] += from[key];
-      } else if (typeof to[key] === 'object' && typeof from[key] === 'object') {
+      } else if (typeof to[key] === "object" && typeof from[key] === "object") {
         NumericUpdate.addCommonFieldsRecursive(from[key], to[key]);
       }
     }
@@ -87,7 +98,8 @@ export class Aggregator {
   public static aggregate(
     counter: firestore.DocumentSnapshot | null,
     partials: firestore.DocumentSnapshot[],
-    shards: firestore.DocumentSnapshot[]): { [key: string]: any } {
+    shards: firestore.DocumentSnapshot[]
+  ): { [key: string]: any } {
     const update = new NumericUpdate();
     shards.forEach((shard) => {
       if (!shard.exists) return;
@@ -97,11 +109,11 @@ export class Aggregator {
     partials.forEach((partial) => {
       if (!partial.exists) return;
       const data = partial.data();
-      data['_updates_'].forEach((u) => {
-        update.mergeFrom(u['_data_']);
+      data["_updates_"].forEach((u) => {
+        update.mergeFrom(u["_data_"]);
       });
     });
-    return (counter === null)
+    return counter === null
       ? update.toPartialUpdate()
       : update.toCounterUpdate(counter.data());
   }
