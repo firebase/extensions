@@ -1,0 +1,69 @@
+specVersion: v1beta1
+name: fs-url-shortener
+version: 1.0.0
+author:
+  authorName: Chris Bianca
+  email: chris@csfrequency.com
+  url: https://github.com/chrisbianca
+
+description:
+  When a new URL is added to a Cloud Firestore Document, shorten the URL and add
+  it to the Document as an additional field.
+
+license: MIT
+
+roles:
+  - role: datastore.user
+    reason: Allows the mod to write short URLs into Cloud Firestore.
+
+params:
+  - param: LOCATION
+    label: Deployment Location
+    description: >-
+      Where should the mod be deployed? (*us-central1, us-east1, europe-west1,
+      asia-northeast1*) Pick a location that is close to your Firestore
+      database.
+
+      See
+      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+    validationRegex: ^us-east1$|^us-central1$|^europe-west1$|^asia-northeast1$
+    validationErrorMessage: >
+      Invalid location, please pick one of: us-central1, us-east1, europe-west1,
+      asia-northeast1
+    default: us-central1
+  - param: ACCESS_TOKEN
+    label: Bit.ly access token
+    description: >
+      Please paste your access token obtained from your Bit.ly application
+      (https://bitly.com/a/oauth_apps). Click on "Generic access token" and
+      enter your password to generate the token.
+    required: true
+  - param: COLLECTION_PATH
+    label: Collection path
+    description: >
+      What is the path to the collection containing the links you would like to
+      shorten?
+    default: urls
+    required: true
+  - param: URL_FIELD_NAME
+    label: URL field name
+    description: >
+      What is the name of the field that contains the URL you would like to
+      shorten?
+    default: url
+    required: true
+  - param: SHORT_URL_FIELD_NAME
+    label: Short URL field name
+    description: >
+      What is the name of the field where you'd like to store your short URLs?
+    default: shortUrl
+    required: true
+
+resources:
+  - name: urlshortener
+    type: firebasemods.v1beta1.function
+    properties:
+      runtime: nodejs8
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
