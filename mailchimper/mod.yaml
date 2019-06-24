@@ -8,12 +8,14 @@ specVersion: v1beta1
 name: mailchimper
 version: 1.0.0
 description:
-  Add new users to a Mailchimp list, and delete them from the list when they
+  Add new users to a Mailchimp audience, and delete them from the audience when they
   delete their account.
-
 license: MIT
+billingRequired: true
 
-apis:
+roles:
+  - role: firebaseauth.admin
+    reason: to detect when users are added and deleted. 
 
 resources:
   - name: addUserToList
@@ -36,11 +38,11 @@ params:
       You can get an API Key at https://admin.mailchimp.com/account/api/
     required: true
 
-  - param: LIST_ID
-    label: List ID
+  - param: AUDIENCE_ID
+    label: Audience ID
     description: >-
-      ID of list to subscribe new users to. Go to
+      ID of audience to subscribe new users to. Go to
       https://admin.mailchimp.com/lists, click on the desired list or create a
-      new one, then select **Settings** menu, and click on **List Name and
-      Defaults**. The List ID looks something like `27735fc60a`.
+      new one, then select **Settings** menu, and look for **Audience ID**.
+      The Audience ID looks something like `27735fc60a`.
     required: true

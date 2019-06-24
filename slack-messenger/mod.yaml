@@ -13,7 +13,7 @@ description:
 
 license: MIT
 
-apis:
+billingRequired: true
 
 resources:
   - name: SlackMessageSender

@@ -14,6 +14,8 @@ description:
 
 license: MIT
 
+billingRequired: true
+
 roles:
   - role: cloudconfig.admin
     reason: allows the mod to get information about a Remote Config change

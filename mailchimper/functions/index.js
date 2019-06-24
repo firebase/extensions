@@ -11,7 +11,7 @@ const functions = require("firebase-functions");
 const Mailchimp = require("mailchimp-api-v3");
 
 const mailchimp = new Mailchimp(process.env.MAILCHIMP_KEY);
-const list = process.env.LIST_ID;
+const list = process.env.AUDIENCE_ID;
 
 exports.addUserToList = functions.auth.user().onCreate((user) => {
   const email = user.email;

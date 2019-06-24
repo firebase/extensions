@@ -7,11 +7,10 @@
 specVersion: v1beta1
 name: image-resizer
 version: 1.0.0
-
+license: MIT
 description:
   Automatically generate resized images for images uploaded to Cloud Storage for
   Firebase.
-license: MIT
 
 apis:
   - apiName: storage-component.googleapis.com

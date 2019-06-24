@@ -9,6 +9,7 @@ name: hosting-deploy
 version: 0.1.0
 description: Automatically deploy to Firebase Hosting on Git commit.
 license: MIT
+billingRequired: true
 
 apis:
   - apiName: firebasehosting.googleapis.com

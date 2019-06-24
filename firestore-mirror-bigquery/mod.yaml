@@ -1,11 +1,12 @@
 specVersion: v1beta1
 name: fs-mirror-bigquery
 version: 1.0.0
-
 description: >-
   Mirror data for a Firestore Collection to BigQuery. This mod creates an event
   listener which triggers when Documents within a Collection are added, updated
   or deleted.
+license: MIT
+billingRequired: true
 
 apis:
   - apiName: bigquery-json.googleapis.com
