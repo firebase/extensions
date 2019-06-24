@@ -11,6 +11,7 @@ description:
   it to the Document as an additional field.
 
 license: MIT
+billingRequired: true
 
 roles:
   - role: datastore.user
