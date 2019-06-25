@@ -1,0 +1,57 @@
+specVersion: v1beta1
+name: auth-user-notifications
+version: 1.0.0
+
+description: >-
+  Send FCM messages to individual Auth users. This mod creates an event listener
+  which triggers when a notification is added to Firestore.
+
+apis:
+  - apiName: fcm.googleapis.com
+    reason: This mod uses FCM to send notifications to users
+
+roles:
+  - role: datastore.user
+    reason:
+      This mod needs to be able to read and write to Firestore which uses
+      Datastore IAM roles
+  - role: firebasenotifications.admin
+    reason:
+      This mod needs to be able to send notifications using Firebase Cloud
+      Messaging
+
+resources:
+  - name: authusernotifications
+    type: firebasemods.v1beta1.function
+    properties:
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.create
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${NOTIFICATIONS_PATH}/{notificationId}
+      location: ${LOCATION}
+
+params:
+  - param: LOCATION
+    label: Deployment Location
+    description: >-
+      Where should the mod be deployed? (*us-central1, us-east1, europe-west1,
+      asia-northeast1*) Pick a location that is close to your Firestore
+      database.
+
+      See
+      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+    validationRegex: ^us-east1$|^us-central1$|^europe-west1$|^asia-northeast1$
+    validationErrorMessage: >
+      Invalid location, please pick one of: us-central1, us-east1, europe-west1,
+      asia-northeast1
+    default: us-central1
+  - param: NOTIFICATIONS_PATH
+    label: Notifications Collection Path
+    description: >-
+      What is the path of the collection containing the FCM messages you would
+      like to send?
+    default: notifications
+  - param: DEVICES_PATH
+    label: User Devices Collection Path
+    description: >-
+      What is the path of the collection containing the user devices?
+    default: user-devices
