@@ -1,0 +1,22 @@
+{
+  "name": "auth-fcm-tokens-mod",
+  "version": "1.0.0",
+  "description": "Send RCM messages to individual Auth users.",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "npm run clean && npm run compile",
+    "clean": "rimraf lib",
+    "compile": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Chris Bianca <chris@csfrequency.com>",
+  "license": "MIT",
+  "dependencies": {
+    "firebase-admin": "^7.1.1",
+    "firebase-functions": "^2.2.1"
+  },
+  "devDependencies": {
+    "rimraf": "^2.6.3",
+    "typescript": "^3.2.4"
+  }
+}
