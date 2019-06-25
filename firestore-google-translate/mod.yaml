@@ -1,0 +1,79 @@
+specVersion: v1beta1
+name: fs-google-translate
+version: 1.0.0
+author:
+  authorName: Chris Bianca
+  email: chris@csfrequency.com
+  url: https://github.com/chrisbianca
+
+description:
+  When a message is written to Cloud Firestore, translate the message in the
+  provided language to multiple destination languages as specified by the mod
+  user.
+
+license: MIT
+
+apis:
+  - apiName: translate.googleapis.com
+    reason:
+      To use Cloud Translate to translate strings between multiple languages.
+
+roles:
+  - role: datastore.user
+    reason: Allows the mod to write translations into Cloud Firestore.
+
+params:
+  - param: LOCATION
+    label: Deployment Location
+    description: >-
+      Where should the mod be deployed? (*us-central1, us-east1, europe-west1,
+      asia-northeast1*) Pick a location that is close to your Firestore
+      database.
+
+      See
+      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+    validationRegex: ^us-east1$|^us-central1$|^europe-west1$|^asia-northeast1$
+    validationErrorMessage: >
+      Invalid location, please pick one of: us-central1, us-east1, europe-west1,
+      asia-northeast1
+    default: us-central1
+  - param: LANGUAGES
+    label: Target languages to translate into, as a comma-separated list
+    description: >
+      What languages would you like to translate provided text into? Please
+      input these as a comma-separated list, e.g. en,es,de,fr. [List of
+      supported languages.](https://cloud.google.com/translate/docs/languages)
+    default: en,es,de,fr
+    validationRegex: "^[a-zA-Z,-]+$"
+    validationErrorMessage:
+      Languages must be a comma-separated list of language codes.
+    required: true
+  - param: COLLECTION_PATH
+    label: Collection path
+    description: >
+      What is the path to the collection containing the messages you would like
+      to translate?
+    default: messages
+    required: true
+  - param: MESSAGE_FIELD_NAME
+    label: Message field name
+    description: >
+      What is the name of the field that contains the message you would like to
+      translate?
+    default: message
+    required: true
+  - param: TRANSLATIONS_FIELD_NAME
+    label: Translations field name
+    description: >
+      What is the name of the field where you'd like to store your translations?
+    default: translations
+    required: true
+
+resources:
+  - name: fstranslate
+    type: firebasemods.v1beta1.function
+    properties:
+      runtime: nodejs8
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{messageId}
