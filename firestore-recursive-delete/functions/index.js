@@ -7,9 +7,9 @@
  */
 
 const functions = require("firebase-functions");
-const firebase_tools = require("firebase-tools");
+const tools = require("firebase-tools");
 
-exports.fsdelete = functions.https.onCall((data, context) => {
+exports.fsdelete = functions.https.onCall(async (data, context) => {
   const auth = context.auth;
   if (!(auth && auth.uid)) {
     throw new functions.https.HttpsError(
@@ -39,22 +39,18 @@ exports.fsdelete = functions.https.onCall((data, context) => {
   );
 
   const deletePath = data.path;
-  return firebase_tools.firestore
-    .delete(deletePath, {
+  try {
+    await tools.firestore.delete(deletePath, {
       project: process.env.PROJECT_ID,
       recursive: true,
       yes: true,
-    })
-    .then(() => {
-      console.log("[fsdelete] Delete success");
-      return {
-        path: deletePath,
-      };
-    })
-    .catch((e) => {
-      console.warn("[fsdelete] Delete failure", e);
-      console.error(
-        new functions.https.HttpsError("unknown", JSON.stringify(e))
-      );
     });
+    console.log("[fsdelete] Delete success");
+    return {
+      path: deletePath,
+    };
+  } catch (e) {
+    console.warn("[fsdelete] Delete failure", e);
+    throw new functions.https.HttpsError("unknown", JSON.stringify(e));
+  }
 });

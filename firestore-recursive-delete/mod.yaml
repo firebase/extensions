@@ -17,6 +17,10 @@ license: MIT
 roles:
   - role: datastore.user
     reason: allows the mod to delete data from Cloud Firestore
+  - role: firebase.viewer
+    reason:
+      provides access to the `firebase.projects.get` permission needed by
+      firebase-tools
 
 resources:
   - name: fsdelete
