@@ -72,6 +72,13 @@ params:
       date in MM-DD-YYYY format. If you would prefer not to use signed URLs,
       leave this field as the default.
     default: "03-01-2500"
+  - param: CACHE_CONTROL_HEADER
+    label: Optional `cache-control` header for resized files
+    description: >
+      Would you like to specify a `cache-control` header for the resize image
+      files? If you would prefer not to use a `cache-control` header, leave this
+      field empty.
+    required: false
 
 resources:
   - name: generateResizedImage
