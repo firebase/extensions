@@ -23,7 +23,9 @@ The `Field` object consists of the following:
 - `fields`: An optional array of `Field` objects indicating the sub fields; only for `map` fields
 - `name`: The name of the field
 - `repeated`: An optional `boolean` to indicate this is an `array` field
-- `type`: The type of the field; one of: `boolean`, `geopoint`, `number`, `map`, `reference`, `string`, `timestamp`
+- `type`: The type of the field; one of: `boolean`, `geopoint`, `json`, `number`, `map`, `reference`, `string`, `timestamp`
+
+The special field type `json` can be used to write a Cloud Firestore `map` field to BigQuery as a serialized string of json rather than a structured record field. This is useful for dictionary fields which have variable keys.
 
 **It is recommended that you specify a `timestampField` in your schema as Cloud Functions for Firebase does not guarantee the ordering of event triggers.**
 

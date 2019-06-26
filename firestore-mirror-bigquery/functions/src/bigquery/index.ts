@@ -46,31 +46,35 @@ export const initialiseSchema = async (
   console.log("Initialised BigQuery");
 };
 
+export const buildDataRow = (
+  idFieldValues: { [fieldName: string]: string },
+  insertId: string,
+  operation: "DELETE" | "INSERT" | "UPDATE",
+  timestamp: string,
+  data?: Object
+): bigquery.RowMetadata => {
+  return {
+    data,
+    id: idFieldValues,
+    insertId,
+    operation,
+    timestamp,
+  };
+};
+
 /**
  * Insert a row of data into the BigQuery `raw` data table
  */
 export const insertData = async (
   datasetId: string,
   tableName: string,
-  idFieldValues: { [fieldName: string]: string },
-  eventId: string,
-  operation: "DELETE" | "INSERT" | "UPDATE",
-  timestamp: string,
-  data?: Object
-) => {
-  const row = {
-    data,
-    id: idFieldValues,
-    insertId: eventId,
-    operation,
-    timestamp,
-  };
-
+  rows: bigquery.RowMetadata | bigquery.RowMetadata[]
+): Promise<void> => {
   const realTableName = rawTableName(tableName);
   const dataset = bq.dataset(datasetId);
   const table = dataset.table(realTableName);
   try {
-    await table.insert(row);
+    await table.insert(rows);
   } catch (err) {
     console.error(`Failed to insert data in BigQuery: ${JSON.stringify(err)}`);
     return err;
@@ -156,7 +160,7 @@ const initialiseView = async (
       view: firestoreToBQView(datasetId, tableName, schema, idFieldNames),
     };
     await view.create(options);
-    console.log(`Created BigQueryview: ${viewName}`);
+    console.log(`Created BigQuery view: ${viewName}`);
   }
   return view;
 };

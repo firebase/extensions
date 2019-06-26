@@ -4,6 +4,7 @@ import * as _ from "lodash";
 export type FirestoreFieldType =
   | "boolean"
   | "geopoint"
+  | "json"
   | "number"
   | "map"
   | "reference"
@@ -36,6 +37,7 @@ const processors: { [K in FirestoreFieldType]: FieldProcessor } = {
     latitude: v.latitude,
     longitude: v.longitude,
   }),
+  json: (v) => JSON.stringify(v),
   number: (v: number) => v,
   map: (v, fields: FirestoreField[]) => processData(v, fields),
   reference: (v: firebase.firestore.DocumentReference) => v.path,
@@ -50,6 +52,7 @@ const processors: { [K in FirestoreFieldType]: FieldProcessor } = {
 const validators: { [K in FirestoreFieldType]: FieldValidator } = {
   boolean: _.isBoolean,
   geopoint: (v) => v instanceof firebase.firestore.GeoPoint,
+  json: _.isObject,
   number: _.isNumber,
   map: _.isObject,
   reference: (v) => v instanceof firebase.firestore.DocumentReference,
@@ -87,6 +90,7 @@ const processData = (snapshotData: Object, fields: FirestoreField[]) => {
     } else if (
       field.type === "boolean" ||
       field.type === "geopoint" ||
+      field.type === "json" ||
       field.type === "map" ||
       field.type === "number" ||
       field.type === "reference" ||

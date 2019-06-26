@@ -67,6 +67,8 @@ export const firestoreToBQField = (field: FirestoreField): BigQueryField => {
       latitudeField,
       longitudeField,
     ]);
+  } else if (field.type === "json") {
+    return bigQueryField(field.name, "STRING", firestoreToBQMode(field));
   } else if (field.type === "number") {
     return bigQueryField(field.name, "NUMERIC", firestoreToBQMode(field));
   } else if (field.type === "map") {
