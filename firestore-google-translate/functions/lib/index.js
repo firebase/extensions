@@ -19,11 +19,11 @@ const TRANSLATIONS_FIELD_NAME = process.env.TRANSLATIONS_FIELD_NAME;
 // Initializing firebase-admin
 admin.initializeApp();
 // Translate an incoming message.
-exports.translate = functions.handler.firestore.document.onWrite((change) => {
+exports.fstranslate = functions.handler.firestore.document.onWrite((change) => {
     if (!change.after.exists) {
         // Document was deleted, ignore
         console.log("Document was deleted, ignoring");
-        return Promise.resolve();
+        return;
     }
     else if (!change.before.exists) {
         // Document was created, check if message exists
@@ -34,7 +34,7 @@ exports.translate = functions.handler.firestore.document.onWrite((change) => {
         }
         else {
             console.log("Document was created without a message, skipping");
-            return Promise.resolve();
+            return;
         }
     }
     else {
@@ -43,7 +43,7 @@ exports.translate = functions.handler.firestore.document.onWrite((change) => {
         const msgBefore = change.before.get(MESSAGE_FIELD_NAME);
         if (msgAfter === msgBefore) {
             console.log("Document was updated, but message has not changed, skipping");
-            return Promise.resolve();
+            return;
         }
         if (msgAfter) {
             console.log("Document was updated, message has changed, translating");
@@ -51,7 +51,7 @@ exports.translate = functions.handler.firestore.document.onWrite((change) => {
         }
         else {
             console.log("Document was updated, no message exists, skipping");
-            return Promise.resolve();
+            return;
         }
     }
 });
@@ -70,7 +70,7 @@ const translateDocument = (snapshot) => __awaiter(this, void 0, void 0, function
         return output;
     }, {});
     // Update the document
-    return snapshot.ref.update(TRANSLATIONS_FIELD_NAME, translationsMap);
+    yield snapshot.ref.update(TRANSLATIONS_FIELD_NAME, translationsMap);
 });
 const translateMessage = (msg, targetLanguage) => __awaiter(this, void 0, void 0, function* () {
     const [translatedMsg] = yield translate.translate(msg, targetLanguage);
