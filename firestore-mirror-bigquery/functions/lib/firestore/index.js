@@ -12,6 +12,7 @@ const processors = {
         latitude: v.latitude,
         longitude: v.longitude,
     }),
+    json: (v) => JSON.stringify(v),
     number: (v) => v,
     map: (v, fields) => processData(v, fields),
     reference: (v) => v.path,
@@ -25,6 +26,7 @@ const processors = {
 const validators = {
     boolean: _.isBoolean,
     geopoint: (v) => v instanceof firebase.firestore.GeoPoint,
+    json: _.isObject,
     number: _.isNumber,
     map: _.isObject,
     reference: (v) => v instanceof firebase.firestore.DocumentReference,
@@ -55,6 +57,7 @@ const processData = (snapshotData, fields) => {
         }
         else if (field.type === "boolean" ||
             field.type === "geopoint" ||
+            field.type === "json" ||
             field.type === "map" ||
             field.type === "number" ||
             field.type === "reference" ||

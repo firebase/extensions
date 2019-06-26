@@ -35,22 +35,24 @@ exports.initialiseSchema = (datasetId, tableName, schema, idFieldNames) => __awa
     yield initialiseView(datasetId, realTableName, viewName, schema, idFieldNames);
     console.log("Initialised BigQuery");
 });
-/**
- * Insert a row of data into the BigQuery `raw` data table
- */
-exports.insertData = (datasetId, tableName, idFieldValues, eventId, operation, timestamp, data) => __awaiter(this, void 0, void 0, function* () {
-    const row = {
+exports.buildDataRow = (idFieldValues, insertId, operation, timestamp, data) => {
+    return {
         data,
         id: idFieldValues,
-        insertId: eventId,
+        insertId,
         operation,
         timestamp,
     };
+};
+/**
+ * Insert a row of data into the BigQuery `raw` data table
+ */
+exports.insertData = (datasetId, tableName, rows) => __awaiter(this, void 0, void 0, function* () {
     const realTableName = rawTableName(tableName);
     const dataset = bq.dataset(datasetId);
     const table = dataset.table(realTableName);
     try {
-        yield table.insert(row);
+        yield table.insert(rows);
     }
     catch (err) {
         console.error(`Failed to insert data in BigQuery: ${JSON.stringify(err)}`);
@@ -124,7 +126,7 @@ const initialiseView = (datasetId, tableName, viewName, schema, idFieldNames) =>
             view: schema_1.firestoreToBQView(datasetId, tableName, schema, idFieldNames),
         };
         yield view.create(options);
-        console.log(`Created BigQueryview: ${viewName}`);
+        console.log(`Created BigQuery view: ${viewName}`);
     }
     return view;
 });

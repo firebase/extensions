@@ -9,9 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
-const _ = require("lodash");
 const bigquery_1 = require("./bigquery");
 const firestore_1 = require("./firestore");
+const util_1 = require("./util");
 // TODO: How can we load a file dynamically?
 const schemaFile = require("../schema.json");
 // Flag to indicate if the BigQuery schema has been initialised.
@@ -30,14 +30,7 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
     // contain any wildcard parameters
     // NOTE: This is a workaround as `context.params` is not available in the
     // `.handler` namespace
-    let idFieldNames = [];
-    if (collectionPath.includes("/")) {
-        idFieldNames = collectionPath
-            // Find the params surrounded by `{` and `}`
-            .match(/{[^}]*}/g)
-            // Strip the `{` and `}` characters
-            .map((fieldName) => fieldName.substring(1, fieldName.length - 1));
-    }
+    const idFieldNames = util_1.extractIdFieldNames(collectionPath);
     // This initialisation should be moved to `mod install` if Mods adds support
     // for executing code as part of the install process
     // Currently it runs on every cold start of the function
@@ -48,45 +41,37 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
     console.log(`Mirroring data from Firestore Collection: ${process.env.COLLECTION_PATH}, to BigQuery Dataset: ${datasetId}, Table: ${tableName}`);
     // Identify the operation and data to be inserted
     let data;
+    let defaultTimestamp;
     let snapshot;
     let operation;
     if (!change.after.exists) {
         operation = "DELETE";
         snapshot = change.before;
+        defaultTimestamp = context.timestamp;
     }
     else if (!change.before.exists) {
         operation = "INSERT";
         snapshot = change.after;
         data = firestore_1.extractSnapshotData(snapshot, fields);
+        defaultTimestamp = snapshot.createTime
+            ? snapshot.createTime.toDate().toISOString()
+            : context.timestamp;
     }
     else {
         operation = "UPDATE";
         snapshot = change.after;
         data = firestore_1.extractSnapshotData(snapshot, fields);
+        defaultTimestamp = snapshot.updateTime
+            ? snapshot.updateTime.toDate().toISOString()
+            : context.timestamp;
     }
     // Extract the values of any `idFieldNames` specifed in the collection path
-    let docRef = snapshot.ref;
-    const idFieldValues = {
-        id: docRef.id,
-    };
-    for (let i = 0; i < idFieldNames.length; i++) {
-        docRef = docRef.parent.parent;
-        idFieldValues[idFieldNames[i]] = docRef.id;
-    }
-    // If a `timestampField` is specified in the schema then we use the value
-    // of the field as the timestamp, rather than the event timestamp
-    let timestamp;
-    if (timestampField) {
-        timestamp = _.get(data, timestampField);
-        if (!timestamp) {
-            console.warn(`Missing value for timestamp field: ${timestampField}, using event timestamp instead.`);
-            timestamp = context.timestamp;
-        }
-    }
-    else {
-        timestamp = context.timestamp;
-    }
-    return bigquery_1.insertData(datasetId, tableName, idFieldValues, 
+    const { idFieldValues } = util_1.extractIdFieldValues(snapshot, idFieldNames);
+    // Extract the timestamp, or use either the snapshot metadata or the event timestamp as a default
+    const timestamp = util_1.extractTimestamp(data, defaultTimestamp, timestampField);
+    // Build the row of data to insert into BigQuery
+    const row = bigquery_1.buildDataRow(idFieldValues, 
     // Use the function's event ID to protect against duplicate executions
     context.eventId, operation, timestamp, data);
+    return bigquery_1.insertData(datasetId, tableName, row);
 }));
