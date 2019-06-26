@@ -1,0 +1,26 @@
+{
+  "name": "budget-notification",
+  "description": "Sends budget alerts to Zapier and allows the mod consumer to configure notifications based on budget thresholds and optionally set a hard cap to disable billing.",
+  "scripts": {
+    "lint": "eslint .",
+    "serve": "firebase serve --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "dependencies": {
+    "@google-cloud/pubsub": "^0.28.1",
+    "firebase-admin": "~6.0.0",
+    "firebase-functions": "^2.1.0",
+    "google-auth-library": "^3.1.2",
+    "googleapis": "^39.1.0",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.4"
+  },
+  "devDependencies": {
+    "eslint": "^5.12.0",
+    "eslint-plugin-promise": "^4.0.1"
+  },
+  "private": true
+}
