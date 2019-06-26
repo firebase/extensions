@@ -19,11 +19,11 @@ admin.initializeApp();
 
 // Translate an incoming message.
 export const fstranslate = functions.handler.firestore.document.onWrite(
-  (change): Promise<void> => {
+  (change): Promise<void> | void => {
     if (!change.after.exists) {
       // Document was deleted, ignore
       console.log("Document was deleted, ignoring");
-      return Promise.resolve();
+      return;
     } else if (!change.before.exists) {
       // Document was created, check if message exists
       const msg = change.after.get(MESSAGE_FIELD_NAME);
@@ -32,7 +32,7 @@ export const fstranslate = functions.handler.firestore.document.onWrite(
         return translateDocument(change.after);
       } else {
         console.log("Document was created without a message, skipping");
-        return Promise.resolve();
+        return;
       }
     } else {
       // Document was updated, check if message has changed
@@ -43,7 +43,7 @@ export const fstranslate = functions.handler.firestore.document.onWrite(
         console.log(
           "Document was updated, but message has not changed, skipping"
         );
-        return Promise.resolve();
+        return;
       }
 
       if (msgAfter) {
@@ -51,7 +51,7 @@ export const fstranslate = functions.handler.firestore.document.onWrite(
         return translateDocument(change.after);
       } else {
         console.log("Document was updated, no message exists, skipping");
-        return Promise.resolve();
+        return;
       }
     }
   }
