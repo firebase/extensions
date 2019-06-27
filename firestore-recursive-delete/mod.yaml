@@ -4,15 +4,27 @@
 # license that can be found in the LICENSE file or at
 # https://opensource.org/licenses/MIT.
 
-specVersion: v1beta1
 name: fs-delete
+#displayName: Firestore Recursive Delete
+specVersion: v1beta1
 version: 1.0.0
 
 description: >-
   Recursively delete Firestore data. This mod creates a callable function that
   can be called from a client app.
-
 license: MIT
+billingRequired: false
+#sourceUrl: https://github.com/Firebase/mods/tree/master/firestore-recursive-delete
+#releaseNotesUrl: https://github.com/Firebase/mods/releases
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+contributors:
+  - authorName: Sam Stern
+    url: https://github.com/samtstern
+  - authorName: Chris Bianca
+    url: https://github.com/chrisbianca
 
 roles:
   - role: datastore.user
@@ -25,6 +37,9 @@ roles:
 resources:
   - name: fsdelete
     type: firebasemods.v1beta1.function
+    #description:
+    #  recursively deletes a Cloud Firestore collection and all sub-collections
+    #deletionPolicy: delete
     properties:
       location: ${LOCATION}
       httpsTrigger: {}
@@ -33,17 +48,22 @@ resources:
 
 params:
   - param: LOCATION
-    type: string
+    type: select
     label: Deployment Location
     description: >-
-      Where should the mod be deployed? (*us-central1, us-east1, europe-west1,
-      asia-northeast1*) Pick a location that is close to your Firestore
-      database.
-
-      See
+      Where should the mod be deployed? Pick a location that is close to your
+      Firestore database. See
       https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
-    validationRegex: ^us-east1$|^us-central1$|^europe-west1$|^asia-northeast1$
-    validationErrorMessage: >
-      Invalid location, please pick one of: us-central1, us-east1, europe-west1,
-      asia-northeast1
-    default: us-central1
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
