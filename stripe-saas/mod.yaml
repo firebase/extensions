@@ -20,12 +20,14 @@ roles:
 
 params:
   - param: STRIPE_SECRET_KEY
+    type: string
     label: Stripe Secret Key
     description: >
       The secret API key for your Stripe account. Can be found at
       https://dashboard.stripe.com/account/apikeys
     required: true
   - param: STRIPE_SIGNING_SECRET
+    type: string
     label: Stripe Signing Secret
     description: >
       Create a new webhook at https://dashboard.stripe.com/account/webhooks. Set
@@ -35,6 +37,7 @@ params:
       webhooks as authentic. Enter the secret here.
     required: false
   - param: USERS_COLLECTION
+    type: string
     label: Firestore Users Collection
     description: >
       The Firestore users collection in which subscription information will be
@@ -44,6 +47,7 @@ params:
     default: users
     required: true
   - param: BILLING_FIELD
+    type: string
     label: Firestore Billing Field
     description: >
       Name the document field in the users collection where you want to store
@@ -52,6 +56,7 @@ params:
     default: billing
     required: true
   - param: SUBSCRIPTIONS_COLLECTION
+    type: string
     label: Firestore Subscriptions Collection
     description: >
       Name a collection in which to store full Stripe API subscription data.

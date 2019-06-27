@@ -27,6 +27,7 @@ resources:
 
 params:
   - param: LOCATION
+    type: string
     label: Deployment Location
     description: >-
       Where should the mod be deployed? (*us-central1, us-east1, europe-west1,
@@ -41,11 +42,13 @@ params:
       asia-northeast1
     default: us-central1
   - param: COLLECTION_PATH
+    type: string
     label: Collection Path
     description: >-
       What is the path of the the collection you would like to mirror?
     default: mods
   - param: DATASET_ID
+    type: string
     label: Dataset ID
     description: >-
       What is the ID of the BigQuery dataset that you would like to use? (The
@@ -56,6 +59,7 @@ params:
       1024 characters long.
     default: mods
   - param: TABLE_NAME
+    type: string
     label: Table ID
     description: >-
       What is the ID of the BigQuery table that you would like to use? (The mod

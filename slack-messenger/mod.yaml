@@ -33,6 +33,7 @@ resources:
 
 params:
   - param: SLACK_WEBHOOK_URL
+    type: string
     label: Slack Webhook URL
     description:
       The Webhook URL provided by Slack to post into a channel (e.g.

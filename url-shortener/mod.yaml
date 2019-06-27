@@ -19,6 +19,7 @@ roles:
 
 params:
   - param: ACCESS_TOKEN
+    type: string
     label: Access token
     description: >
       Please paste your access token obtained from your Bit.ly application
@@ -26,6 +27,7 @@ params:
       enter your password to generate the token.
     required: true
   - param: TRIGGER_PATH
+    type: string
     label: Database path for URLs
     description: >
       Path in the Realtime Database where URLs will be written to e.g. If you

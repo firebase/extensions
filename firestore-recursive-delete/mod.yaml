@@ -33,6 +33,7 @@ resources:
 
 params:
   - param: LOCATION
+    type: string
     label: Deployment Location
     description: >-
       Where should the mod be deployed? (*us-central1, us-east1, europe-west1,

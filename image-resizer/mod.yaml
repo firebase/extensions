@@ -26,6 +26,7 @@ roles:
 
 params:
   - param: IMG_MAX_HEIGHT
+    type: string
     label: Maximum height of resized image
     description: >
       What should be the maximum height of the resized image (in pixels)?
@@ -34,6 +35,7 @@ params:
     validationRegex: ^\d+$
     validationErrorMessage: Invalid height, must be a positive integer.
   - param: IMG_MAX_WIDTH
+    type: string
     label: Maximum width of resized image
     description: >
       What should be the maximum width of the resized image (in pixels)?
@@ -41,11 +43,13 @@ params:
     validationRegex: ^\d+$
     validationErrorMessage: Invalid width, must be a positive integer.
   - param: IMG_PREFIX
+    type: string
     label: Prefix affixed to resized image name
     description: >
       How would you like to prefix the resized images to distinguish them?
     default: resized-
   - param: IMG_BUCKET
+    type: string
     label: Storage bucket to listen to for creation of resized images
     description: >
       What storage bucket will the images that are to be resized be uploaded to?
@@ -66,6 +70,7 @@ params:
       URLs, leave this field empty.
     required: false
   - param: SIGNED_URLS_EXPIRATION_DATE
+    type: string
     label: Date after which the signed URLs will expire (format is MM-DD-YYYY)
     description: >
       After what date would you like the signed URLs to expire? Please input the
