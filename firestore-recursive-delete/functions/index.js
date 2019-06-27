@@ -9,48 +9,60 @@
 const functions = require("firebase-functions");
 const tools = require("firebase-tools");
 
+const {
+  invalidArgument,
+  permissionDenied,
+  unauthenticated,
+  unknown,
+} = require("./errors");
+
+console.log("[fsdelete] Initialising mod with configuration", {
+  location: process.env.LOCATION,
+});
+
 exports.fsdelete = functions.https.onCall(async (data, context) => {
-  const auth = context.auth;
+  console.log("[fsdelete] Started mod execution with configuration", {
+    location: process.env.LOCATION,
+  });
+
+  const { auth } = context;
   if (!(auth && auth.uid)) {
-    throw new functions.https.HttpsError(
-      "unauthenticated",
-      "User must be authenticated to call this function"
-    );
+    console.warn("[fsdelete] Unable to delete, the user is unauthenticated");
+    throw unauthenticated();
   }
 
-  if (!(auth.token && auth.token.fsdelete)) {
-    throw new functions.https.HttpsError(
-      "permission-denied",
-      "User must have the 'fsdelete' custom claim set to 'true'"
+  const { token } = auth;
+  if (!(token && token.fsdelete)) {
+    console.warn(
+      "[fsdelete] Unable to delete, the user does not have the 'fsdelete' custom claim"
     );
+    throw permissionDenied();
   }
 
-  if (!data.path) {
-    throw new functions.https.HttpsError(
-      "invalid-argument",
-      "Must specify a 'path' argument."
-    );
+  const { path: deletePath } = data;
+  if (!deletePath) {
+    console.warn("[fsdelete] Unable to delete, no 'path' is specified");
+    throw invalidArgument("path");
   }
 
   console.log(
-    `[fsdelete] User ${context.auth.uid} has requested to delete path ${
-      data.path
-    }`
+    `[fsdelete] User: ${
+      context.auth.uid
+    } has requested to delete path: '${deletePath}'`
   );
 
-  const deletePath = data.path;
   try {
     await tools.firestore.delete(deletePath, {
       project: process.env.PROJECT_ID,
       recursive: true,
       yes: true,
     });
-    console.log("[fsdelete] Delete success");
+    console.log(`[fsdelete] Path: '${deletePath}' was successfully deleted`);
     return {
       path: deletePath,
     };
   } catch (e) {
-    console.warn("[fsdelete] Delete failure", e);
-    throw new functions.https.HttpsError("unknown", JSON.stringify(e));
+    console.error(`[fsdelete] Error when trying to delete: '${deletePath}'`, e);
+    throw unknown(e);
   }
 });
