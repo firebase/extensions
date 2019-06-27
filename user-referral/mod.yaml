@@ -34,6 +34,7 @@ resources:
 # params
 params:
   - param: SENDGRID_API_KEY
+    type: string
     label: SendGrid API Key
     description: >
       Your API key for SendGrid. Once you have created a SendGrid account, you
@@ -44,6 +45,7 @@ params:
     required: true
 
   - param: SENDGRID_EMAIL_ALIAS
+    type: string
     label: SendGrid Email Alias
     description: >
       The email address invitations will be sent from. We do not support sending
@@ -55,10 +57,12 @@ params:
     validationErrorMessage: >
       You must provide a valid email address.
   - param: APP_NAME
+    type: string
     label: The name of the app. This will be used in the invite email.
     required: true
 
   - param: ACCEPT_URL_TEMPLATE
+    type: string
     label: Accept Invitation URL
     description: >
       The URL to include in invitation emails. "{token}" will be replaced with
@@ -75,6 +79,7 @@ params:
       invitation token.
 
   - param: TARGET_RECEIVER_FIELDS
+    type: string
     label: Document and Field Path for Accepting User's UID
     description: >
       When an invitation is accepted, the mod will add the receiving/accepting
@@ -90,6 +95,7 @@ params:
       coll/doc.field,coll/doc.field
 
   - param: TARGET_SENDER_FIELDS
+    type: string
     label: Document and Field Path for Sending User's UID
     description: >
       When an invitation is accepted, the mod will add the sending user's UID to
@@ -105,6 +111,7 @@ params:
       coll/doc.field,coll/doc.field
 
   - param: METADATA_FIRESTORE_COLLECTION
+    type: string
     label: Metadata Firestore Collection
     description: >
       A top-level Firestore collection the mod can use to store metadata for

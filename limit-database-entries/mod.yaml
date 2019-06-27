@@ -29,6 +29,7 @@ resources:
         resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${NODE_PATH}/{messageid}
 params:
   - param: MAX_COUNT
+    type: string
     label: Max number of items to keep in the database path
     description: >-
       Maximum number of items to keep in the database path. Older items will be
@@ -37,6 +38,7 @@ params:
     validationErrorMessage: Invalid MAX_COUNT, must be a positive integer.
     required: true
   - param: NODE_PATH
+    type: string
     label: Path at which this function should limit children
     description: >-
       Path at which to limit the number of child nodes.

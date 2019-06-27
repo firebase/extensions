@@ -33,12 +33,14 @@ resources:
 
 params:
   - param: MAILCHIMP_KEY
+    type: string
     label: Mailchimp API Key
     description: >-
       You can get an API Key at https://admin.mailchimp.com/account/api/
     required: true
 
   - param: AUDIENCE_ID
+    type: string
     label: Audience ID
     description: >-
       ID of audience to subscribe new users to. Go to

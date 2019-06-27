@@ -29,6 +29,7 @@ resources:
 
 params:
   - param: REPO
+    type: string
     label: Github Repository
     required: true
     validationRegex: https://github.com
@@ -40,6 +41,7 @@ params:
       Continuous Integration for? *For example:
       https://github.com/firebase/firebase-tools*
   - param: SITE_NAME
+    type: string
     label: Site Name
     default: ${PROJECT_ID}
     description: >-
@@ -47,11 +49,13 @@ params:
       usually the same as your project ID. You can see your site names at
       https://console.firebase.google.com/project/${PROJECT_ID}/hosting/main.
   - param: BRANCH
+    type: string
     label: Deployment Branch
     default: master
     description: >-
       What branch should trigger deploys to Firebase Hosting?
   - param: DEPLOY_ROOT
+    type: string
     label: Deployment Root
     default: public
     description: >-
