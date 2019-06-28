@@ -5,17 +5,17 @@
 # https://opensource.org/licenses/MIT.
 
 name: fs-delete
-#displayName: Firestore Recursive Delete
+displayName: Firestore Recursive Delete
 specVersion: v1beta1
-version: 1.0.0
+version: 0.1.0
 
 description: >-
   Recursively delete Firestore data. This mod creates a callable function that
   can be called from a client app.
 license: MIT
 billingRequired: false
-#sourceUrl: https://github.com/Firebase/mods/tree/master/firestore-recursive-delete
-#releaseNotesUrl: https://github.com/Firebase/mods/releases
+sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-recursive-delete
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/README.md
 
 author:
   authorName: Firebase
