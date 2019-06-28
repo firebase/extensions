@@ -1,0 +1,44 @@
+# Copyright 2018 Google LLC
+#
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.
+
+specVersion: v1beta1
+name: firestore-sharded-counter
+version: 0.1.0
+description: Auto-scalable counters for your app.
+
+roles:
+  - role: datastore.user
+    reason: The mod aggregates firestore counter shards.
+
+resources:
+- name: controller
+  type: firebasemods.v1beta1.function
+  properties:
+    maxInstances: 1
+    httpsTrigger: {}
+
+- name: onWrite
+  type: firebasemods.v1beta1.function
+  properties:
+    maxInstances: 1
+    timeout: 120s
+    eventTrigger:
+      eventType: providers/cloud.firestore/eventTypes/document.write
+      resource: projects/${PROJECT_ID}/databases/(default)/documents/{collection}/{counter=**}/_counter_shards_/{shardId}
+
+- name: worker
+  type: firebasemods.v1beta1.function
+  properties:
+    eventTrigger:
+      eventType: providers/cloud.firestore/eventTypes/document.write
+      resource: projects/${PROJECT_ID}/databases/(default)/documents/${MOD_METADATA_DOC}/workers/{workerId}
+
+params:
+- param: MOD_METADATA_DOC
+  label: Mod's metadata doc
+  description: >-
+    A path to a document where mod can keep its internal state.
+  default: _firebase_mods_/sharded_counter

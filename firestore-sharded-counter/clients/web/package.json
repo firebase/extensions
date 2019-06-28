@@ -1,0 +1,23 @@
+{
+  "name": "firestore-counter-web",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "author": "patryk@google.com",
+  "description": "Web SDK to access sharded counters.",
+  "dependencies": {
+    "@types/uuid": "^3.4.4",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "firebase": "^6.2.3",
+    "prettier": "1.15.3",
+    "ts-loader": "^6.0.4",
+    "typescript": "^3.5.2",
+    "webpack": "^4.35.0",
+    "webpack-cli": "^3.3.5"
+  },
+  "scripts": {
+    "build": "npx webpack",
+    "format": "prettier --write {,**/}*.{yaml,ts,md}"
+  }
+}

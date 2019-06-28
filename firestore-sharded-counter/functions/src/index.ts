@@ -1,0 +1,80 @@
+/*
+ * Copyright 2018 Google LLC
+ *
+ * Use of this source code is governed by an MIT-style
+ * license that can be found in the LICENSE file or at
+ * https://opensource.org/licenses/MIT.
+ */
+
+import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
+import { ShardedCounterWorker } from "./worker";
+import { ShardedCounterController, ControllerStatus } from "./controller";
+
+admin.initializeApp();
+const firestore = admin.firestore();
+firestore.settings({ timestampsInSnapshots: true });
+
+const SHARDS_COLLECTION_ID = "_counter_shards_";
+const WORKERS_COLLECTION_ID = "_counter_workers_";
+
+/**
+ * Controller is scheduled every minute. It tries to aggregate shards if
+ * there's less than 200 of them. Otherwise it is scheduling and monitoring
+ * workers to do the aggregation.
+ */
+export const controller = functions.https.onRequest(
+  async (req, res) => {
+    const metadocRef = firestore.doc(process.env.MOD_METADATA_DOC);
+    const controller = new ShardedCounterController(
+      metadocRef,
+      SHARDS_COLLECTION_ID
+    );
+    let status = await controller.aggregateOnce({ start: "", end: "" }, 200);
+    if (
+      status === ControllerStatus.WORKERS_RUNNING ||
+      status === ControllerStatus.TOO_MANY_SHARDS ||
+      status === ControllerStatus.FAILURE
+    ) {
+      await controller.rescheduleWorkers();
+    }
+    res.status(200).send("OK");
+  }
+);
+
+/**
+ * Worker is responsible for aggregation of a defined range of shards. It is controlled
+ * by a worker metadata document. At the end of its run (that lasts for 45s) it writes
+ * back stats that kicks off another run at the same time.
+ * 
+ * Controller is monitoring these metadata documents to detect overload that requires
+ * resharding and to detect failed workers that need poking.
+ */
+export const worker = functions.firestore
+  .document(process.env.MOD_METADATA_DOC + WORKERS_COLLECTION_ID + "/{workerId}")
+  .onWrite(async (change, context) => {
+    // stop worker if document got deleted
+    if (!change.after.exists) return;
+
+    const worker = new ShardedCounterWorker(
+      change.after,
+      SHARDS_COLLECTION_ID
+    );
+    await worker.run();
+  });
+
+  /**
+   * This is an additional function that is triggered for every shard write. It is
+   * limited to one concurrent run at the time. This helps reduce latency for workloads
+   * that are below the theshold for workers.
+   */
+export const onWrite = functions.firestore
+  .document("/{collection}/{**}/_counter_shards_/{shardId}")
+  .onWrite(async (change, context) => {
+    const metadocRef = firestore.doc(process.env.MOD_METADATA_DOC);
+    const controller = new ShardedCounterController(
+      metadocRef,
+      SHARDS_COLLECTION_ID
+    );
+    await controller.aggregateContinuously({ start: "", end: "" }, 200, 60000);
+  });

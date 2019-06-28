@@ -1,0 +1,20 @@
+{
+  "name": "stress-test-driver",
+  "author": "patryk@google.com",
+  "description": "Stress test for sharded counter.",
+  "dependencies": {
+    "@google-cloud/firestore": "^1.3.0",
+    "@types/uuid": "^3.4.4",
+    "firebase-admin": "^7.3.0",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "prettier": "1.15.3",
+    "typescript": "^3.5.2"
+  },
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write {,**/}*.{yaml,ts,md}"
+  },
+  "private": true
+}
