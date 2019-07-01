@@ -11,51 +11,95 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
 const bitly_1 = require("bitly");
-const bitly = new bitly_1.BitlyClient(process.env.ACCESS_TOKEN);
-const SHORT_URL_FIELD_NAME = process.env.SHORT_URL_FIELD_NAME;
-const URL_FIELD_NAME = process.env.URL_FIELD_NAME;
-// Initializing firebase-admin
+const config_1 = require("./config");
+const logs = require("./logs");
+var ChangeType;
+(function (ChangeType) {
+    ChangeType[ChangeType["CREATE"] = 0] = "CREATE";
+    ChangeType[ChangeType["DELETE"] = 1] = "DELETE";
+    ChangeType[ChangeType["UPDATE"] = 2] = "UPDATE";
+})(ChangeType || (ChangeType = {}));
+const bitly = new bitly_1.BitlyClient(config_1.default.bitlyAccessToken);
+// Initialize the Firebase Admin SDK
 admin.initializeApp();
-// Shorten an incoming URL.
-exports.urlshortener = functions.handler.firestore.document.onWrite((change) => {
-    if (!change.after.exists) {
-        // Document was deleted, ignore
-        console.log("Document was deleted, skipping");
-        return Promise.resolve();
+logs.init();
+exports.fsurlshortener = functions.handler.firestore.document.onWrite((change) => __awaiter(this, void 0, void 0, function* () {
+    logs.start();
+    const changeType = getChangeType(change);
+    switch (changeType) {
+        case ChangeType.CREATE:
+            yield handleCreateDocument(change.after);
+            break;
+        case ChangeType.DELETE:
+            handleDeleteDocument();
+            break;
+        case ChangeType.UPDATE:
+            yield handleUpdateDocument(change.before, change.after);
+            break;
+        default: {
+            throw new Error(`Invalid change type: ${changeType}`);
+        }
     }
-    else if (!change.before.exists) {
-        // Document was created, check if URL exists
-        const url = change.before.get(URL_FIELD_NAME);
-        if (url) {
-            console.log("Document was created with URL, shortening");
-            return shortenUrl(change.after);
-        }
-        else {
-            console.log("Document was created without a URL, skipping");
-            return Promise.resolve();
-        }
+    logs.complete();
+}));
+const extractUrl = (snapshot) => {
+    return snapshot.get(config_1.default.urlFieldName);
+};
+const getChangeType = (change) => {
+    if (!change.after.exists) {
+        return ChangeType.DELETE;
+    }
+    if (!change.before.exists) {
+        return ChangeType.CREATE;
+    }
+    return ChangeType.UPDATE;
+};
+const handleCreateDocument = (snapshot) => __awaiter(this, void 0, void 0, function* () {
+    const url = extractUrl(snapshot);
+    if (url) {
+        logs.documentCreatedWithUrl();
+        yield shortenUrl(snapshot);
     }
     else {
-        // Document was updated, check if URL has changed
-        const urlAfter = change.after.get(URL_FIELD_NAME);
-        const urlBefore = change.before.get(URL_FIELD_NAME);
-        if (urlAfter === urlBefore) {
-            console.log("Document was updated, URL has not changed, skipping");
-            return Promise.resolve();
-        }
-        if (urlAfter) {
-            console.log("Document was updated, URL has changed, shortening");
-            return shortenUrl(change.after);
-        }
-        else {
-            console.log("Document was updated, no URL exists, skipping");
-            return Promise.resolve();
-        }
+        logs.documentCreatedNoUrl();
+    }
+});
+const handleDeleteDocument = () => {
+    logs.documentDeleted();
+};
+const handleUpdateDocument = (before, after) => __awaiter(this, void 0, void 0, function* () {
+    const urlAfter = extractUrl(after);
+    const urlBefore = extractUrl(before);
+    if (urlAfter === urlBefore) {
+        logs.documentUpdatedUnchangedUrl();
+    }
+    else if (urlAfter) {
+        logs.documentUpdatedChangedUrl();
+        yield shortenUrl(after);
+    }
+    else if (urlBefore) {
+        logs.documentUpdatedDeletedUrl();
+        yield updateShortUrl(after, admin.firestore.FieldValue.delete());
+    }
+    else {
+        logs.documentUpdatedNoUrl();
     }
 });
 const shortenUrl = (snapshot) => __awaiter(this, void 0, void 0, function* () {
-    const url = snapshot.get(URL_FIELD_NAME);
-    const response = yield bitly.shorten(url);
-    // Update the document
-    return snapshot.ref.update(SHORT_URL_FIELD_NAME, response.url);
+    const url = extractUrl(snapshot);
+    logs.shortenUrl(url);
+    try {
+        const response = yield bitly.shorten(url);
+        const { url: shortUrl } = response;
+        logs.shortenUrlComplete(shortUrl);
+        yield updateShortUrl(snapshot, shortUrl);
+    }
+    catch (err) {
+        logs.error(err);
+    }
+});
+const updateShortUrl = (snapshot, url) => __awaiter(this, void 0, void 0, function* () {
+    logs.updateDocument(snapshot.ref.path);
+    yield snapshot.ref.update(config_1.default.shortUrlFieldName, url);
+    logs.updateDocumentComplete(snapshot.ref.path);
 });
