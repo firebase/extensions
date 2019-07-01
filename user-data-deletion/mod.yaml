@@ -4,11 +4,25 @@
 # license that can be found in the LICENSE file or at
 # https://opensource.org/licenses/MIT.
 
-specVersion: v1beta1
 name: data-deletion
-version: 1.0.0
+displayName: User Data Deletion
+specVersion: v1beta1
+version: 0.1.0
+
 description: Automatically delete a user's data when they delete their account.
+
 license: MIT
+billingRequired: false
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+contributors:
+  - authorName: Lauren Long
+    url: https://github.com/laurenzlong
+  - authorName: Chris Bianca
+    email: chris@csfrequency.com
+    url: https://github.com/chrisbianca
 
 roles:
   - role: firebasedatabase.admin
@@ -21,12 +35,37 @@ roles:
 resources:
   - name: clearData
     type: firebasemods.v1beta1.function
+    #description:
+    #  listen for user's being deleted, then remove user data from Cloud
+    #  Firestore, Cloud Storage and the Realtime Database.
     properties:
+      location: ${LOCATION}
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${PROJECT_ID}
 
 params:
+  - param: LOCATION
+    type: select
+    label: Deployment Location
+    description: >-
+      Where should the mod be deployed? Pick a location that is close to your
+      Firestore database. See
+      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+
   - param: FIRESTORE_PATHS
     type: string
     label: Firestore paths
