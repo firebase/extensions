@@ -1,38 +1,63 @@
-specVersion: v1beta1
 name: fs-url-shortener
-version: 1.0.0
-author:
-  authorName: Chris Bianca
-  email: chris@csfrequency.com
-  url: https://github.com/chrisbianca
+displayName: Firestore URL Shortener
+specVersion: v1beta1
+version: 0.1.0
 
 description:
-  When a new URL is added to a Cloud Firestore Document, shorten the URL and add
-  it to the Document as an additional field.
+  When a new URL is added to a Cloud Firestore Document, shorten the URL using
+  Bit.ly and add it to the Document as an additional field.
 
 license: MIT
 billingRequired: true
+sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-url-shortener
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/README.md
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+contributors:
+  - authorName: Chris Bianca
+    email: chris@csfrequency.com
+    url: https://github.com/chrisbianca
 
 roles:
   - role: datastore.user
     reason: Allows the mod to write short URLs into Cloud Firestore.
 
+resources:
+  - name: fsurlshortener
+    type: firebasemods.v1beta1.function
+    #description:
+    #  listens for new urls, shortens them and writes them back to the same
+    #  document
+    properties:
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
+
 params:
   - param: LOCATION
+    type: select
     label: Deployment Location
     description: >-
-      Where should the mod be deployed? (*us-central1, us-east1, europe-west1,
-      asia-northeast1*) Pick a location that is close to your Firestore
-      database.
-
-      See
+      Where should the mod be deployed? Pick a location that is close to your
+      Firestore database. See
       https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
-    validationRegex: ^us-east1$|^us-central1$|^europe-west1$|^asia-northeast1$
-    validationErrorMessage: >
-      Invalid location, please pick one of: us-central1, us-east1, europe-west1,
-      asia-northeast1
-    default: us-central1
-  - param: ACCESS_TOKEN
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+  - param: BITLY_ACCESS_TOKEN
     label: Bit.ly access token
     description: >
       Please paste your access token obtained from your Bit.ly application
@@ -59,12 +84,3 @@ params:
       What is the name of the field where you'd like to store your short URLs?
     default: shortUrl
     required: true
-
-resources:
-  - name: urlshortener
-    type: firebasemods.v1beta1.function
-    properties:
-      runtime: nodejs8
-      eventTrigger:
-        eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
