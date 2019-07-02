@@ -5,7 +5,7 @@
 # https://opensource.org/licenses/MIT.
 
 name: fs-delete
-displayName: Firestore Recursive Delete
+displayName: Recursively delete data in a Firestore collection
 specVersion: v1beta1
 version: 0.1.0
 

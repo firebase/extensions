@@ -6,6 +6,7 @@
 
 specVersion: v1beta1
 name: stripe-saas
+displayName: Manage Stripe subscriptions in your applications
 version: 0.0.1
 
 description:

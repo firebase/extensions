@@ -6,6 +6,7 @@
 
 specVersion: v1beta1
 name: limit-database-entries
+displayName: Limit the number of entries in a Firebase realtimedatabase object
 version: 1.0.0
 
 description: >-

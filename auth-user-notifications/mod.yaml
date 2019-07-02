@@ -1,5 +1,6 @@
 specVersion: v1beta1
 name: auth-user-notifications
+displayName: Send FCM messages to a user
 version: 1.0.0
 
 description: >-

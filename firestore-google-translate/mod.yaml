@@ -1,5 +1,6 @@
 specVersion: v1beta1
 name: fs-google-translate
+displayName: Translate a message in Firestore
 version: 1.0.0
 author:
   authorName: Chris Bianca

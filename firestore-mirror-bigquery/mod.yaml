@@ -1,5 +1,6 @@
 specVersion: v1beta1
 name: fs-mirror-bigquery
+displayName: Mirror data from Firestore to BigQuery
 version: 1.0.0
 description: >-
   Mirror data for a Firestore Collection to BigQuery. This mod creates an event
