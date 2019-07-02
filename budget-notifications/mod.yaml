@@ -8,6 +8,7 @@
 
 specVersion: v1beta1
 name: budget-notification
+displayName: Send budget alert to Zapier
 version: 1.0.0
 
 description:
@@ -16,27 +17,33 @@ description:
   cap to disable billing.
 
 apis:
-  - cloudbilling.googleapis.com
-  - pubsub.googleapis.com
+  - apiName: cloudbilling.googleapis.com
+    reason: Todo
+  - apiName: pubsub.googleapis.com
+    reason: Todo
 
 roles:
-  - firebase.developAdmin
+  - role: firebase.developAdmin
+    reason: Todo
 
-env:
-  - var: ZAPIER_WEBHOOK
+params:
+  - param: ZAPIER_WEBHOOK
+    type: string
     label: Zapier Webhook URL
-    description: i.e. `https://hooks.zapier.com/hooks/catch/4732777/njgeg1/`
+    description: i.e. `https://hooks.zapier.com/hooks/catch/XXXXXXX/YYYYYY/`
     validationRegex: ^(?:https?:\/\/hooks.zapier.com/hooks/catch)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$
-    validationErrorMessage: Zapier url incorrect. e.g. (`https://hooks.zapier.com/hooks/catch/4732777/njgeg1/`)
+    validationErrorMessage: Zapier url incorrect. e.g. (`https://hooks.zapier.com/hooks/catch/XXXXXXX/YYYYYY/`)
     required: true
-  - var: TOPIC_NAME
+  - param: TOPIC_NAME
+    type: string
     label: Topic Name
     description: >
       The Pub/Sub topic you used to enable budget notifications. Please refer
       to the [Manage notifications](`https://cloud.google.com/billing/docs/how-to/budgets#manage-notifications`)
       section to configure a Pub/Sub topic if you haven't already.
     required: true
-  - var: EMAIL
+  - param: EMAIL
+    type: string
     label: Email
     description: >
       Email to send notifications to. This is only required if you plan to

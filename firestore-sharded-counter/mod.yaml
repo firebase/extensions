@@ -6,6 +6,7 @@
 
 specVersion: v1beta1
 name: firestore-sharded-counter
+displayName: A scalable counter service
 version: 0.1.0
 description: Auto-scalable counters for your app.
 

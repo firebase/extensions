@@ -6,6 +6,7 @@
 
 specVersion: v1beta1
 name: image-resizer
+displayName: Automatically resize an image uploaded to Cloud Storage for Firebase
 version: 1.0.0
 license: MIT
 description:

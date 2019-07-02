@@ -6,6 +6,7 @@
 
 specVersion: v1beta1
 name: remote-config-to-slack
+displayName: Remote Config to Slack
 version: 1.0.0
 
 description:

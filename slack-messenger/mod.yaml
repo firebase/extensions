@@ -6,6 +6,7 @@
 
 specVersion: v1beta1
 name: slack-messenger
+displayName: Send a message to slack when its added to a PubSub topic.
 version: 1.0.0
 
 description:

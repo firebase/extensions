@@ -6,6 +6,7 @@
 
 specVersion: v1beta1
 name: mailchimper
+displayName: Automatically add/remove users in Mailchimp when they sign up
 version: 1.0.0
 description:
   Add new users to a Mailchimp audience, and delete them from the audience when they

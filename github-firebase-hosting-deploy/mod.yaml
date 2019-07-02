@@ -6,6 +6,7 @@
 
 specVersion: v1beta1
 name: hosting-deploy
+displayName: Automatically deploy a GitHub commit to Firebase Hosting.
 version: 0.1.0
 description: Automatically deploy to Firebase Hosting on Git commit.
 license: MIT
@@ -13,7 +14,7 @@ billingRequired: true
 
 apis:
   - apiName: firebasehosting.googleapis.com
-  - reason: allows the mod to deploy to Firebase Hosting
+    reason: allows the mod to deploy to Firebase Hosting
 
 roles:
   - role: firebasehosting.admin
