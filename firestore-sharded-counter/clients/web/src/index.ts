@@ -21,6 +21,13 @@ export class Counter {
   private shards: { [key: string]: number } = {};
   private notifyPromise: Promise<void> = null;
 
+  /**
+   * Constructs a sharded counter object that references to a field
+   * in a document that is a counter.
+   * 
+   * @param doc A reference to a document with a counter field.
+   * @param field A path to a counter field in the above document.
+   */
   constructor(
     private doc: firebase.firestore.DocumentReference,
     private field: string
@@ -37,6 +44,12 @@ export class Counter {
     this.shards[shardsRef.doc("\t\t\t\t" + this.shardId.substr(0, 1)).path] = 0;
   }
 
+  /**
+   * Get latency compensated view of the counter.
+   * 
+   * All local increments will be reflected in the counter even if the main
+   * counter hasn't been updated yet.
+   */
   public async get(options?: firebase.firestore.GetOptions): Promise<number> {
     const valuePromises = Object.keys(this.shards).map(async (path) => {
       const shard = await this.db.doc(path).get(options);
@@ -46,6 +59,12 @@ export class Counter {
     return values.reduce((a,b) => a + b, 0);
   }
 
+  /**
+   * Listen to latency compensated view of the counter.
+   * 
+   * All local increments to this counter will be immediately visible in the
+   * snapshot.
+   */
   public onSnapshot(observable: ((next: CounterSnapshot) => void)) {
     Object.keys(this.shards).forEach((path) => {
       this.db
@@ -65,6 +84,13 @@ export class Counter {
     });
   }
 
+  /**
+   * Increment the counter by a given value.
+   * 
+   * e.g.
+   * const counter = new sharded.Counter(db.doc("path/document"), "counter");
+   * counter.incrementBy(1);
+   */
   public incrementBy(
     val: number
   ): Promise<void> {
@@ -80,6 +106,16 @@ export class Counter {
       .set(update, { merge: true });
   }
 
+  /**
+   * Access the assigned shard directly. Useful to update multiple counters
+   * at the same time, batches or transactions.
+   * 
+   * e.g.
+   * const counter = new sharded.Counter(db.doc("path/counter"), "");
+   * const shardRef = counter.shard();
+   * shardRef.set({"counter1", firestore.FieldValue.Increment(1),
+   *               "counter2", firestore.FieldValue.Increment(1));
+   */
   public shard(): firebase.firestore.DocumentReference {
     return this.doc.collection(SHARD_COLLECTION_ID).doc(this.shardId);
   }
