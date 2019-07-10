@@ -1,14 +1,15 @@
-Your mod is installed and ready to go!
+Whenever you modify a Remote Config template in your project, this mod sends the diff between the old and the new configs to `${param:SLACK_WEBHOOK_URL}`. Learn more about setting up and configuring templates in the [Remote Config documentation](https://firebase.google.com/docs/remote-config/templates). Note that the first version of your experiment will not output a diff, but all following updates to the experiment will show a diff for parameter changes.
 
-Whenever a Firebase Remote Config is modified in your project, the diff between the old configuration and the new configuration will be sent to ${param:SLACK_WEBHOOK_URL}. See [Remote Config documentation](https://firebase.google.com/docs/remote-config/). Note that the first version of your Remote Config will not output a diff, but all following updates to the Remote Config will show parameter changes between the most recent version and the version just prior.
+## Try it out
 
-To try out this mod immediately, add, modify, or delete a Remote Config parameter in Firebase Console [here](https://console.firebase.google.com/project/_/config) and clicking the Publish Changes button.
+Give this mod a try by adding, modifying, or deleting a Remote Config parameter in the [Firebase console](https://console.firebase.google.com/project/_/config), then clicking **Publish changes**.
 
-Example Remote Config diff, sent to Slack:
+Here's an example Remote Config diff, sent to Slack:
 
-Remote Config changed to version _2_.
-Updated by `user@example.com`
-from `CONSOLE` as `INCREMENTAL_UPDATE`.
+Remote Config template changed to version _2_.<br>
+Updated by `user@example.com`<br>
+from `CONSOLE` as `INCREMENTAL_UPDATE`.<br>
+
 _Added 1 parameter:_
 
 ```{
@@ -38,3 +39,4 @@ _Removed 1 parameter:_
    }
 }
 ```
+
