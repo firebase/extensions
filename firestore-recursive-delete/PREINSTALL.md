@@ -1,25 +1,27 @@
-This mod creates an HTTPS callable function that the client code can call to recursively delete Cloud Firestore data. A path needs to be provided to the call. If the path represents a collection, then all of its documents and their subcollections will be deleted. If the path represents a document, then that document and all of its subcollections will be deleted.
+Use this mod to recursively delete Cloud Firestore data.
 
-First, users that are allowed to delete data must have the
-`fsdelete` custom claim set to `true`:
+This mod creates an HTTPS-callable function that you can call in the client code to recursively delete data from a specified Cloud Firestore path. If the path represents a collection, then all of its documents and their subcollections will be deleted. If the path represents a document, then that document and all of its subcollections will be deleted.
+
+To use this mod, you need to configure the following:
+
+First, users that are allowed to delete data must have the `fsdelete` custom claim set to `true`:
 
 ```
-// See: https://firebase.google.com/docs/auth/admin/custom-claims
+// Refer to: https://firebase.google.com/docs/auth/admin/custom-claims
 admin.auth().setCustomUserClaims(uid, {
   fsdelete: true
 }).then(...)
 ```
 
-Then, the client can call the HTTPS Callable Function with the path parameter specifying the data to delete:
+Then, the client can call the HTTPS-callable function with the path parameter that specifies the data to delete.
+
+Note that the sample code here is for JavaScript. Refer to the [Cloud Functions for Firebase documentation](https://firebase.google.com/docs/functions/callable) for syntax of other languages.
 
 ```
-// Sample code here is for JavaScript, see https://firebase.google.com/docs/functions/callable
-// for syntax for other languages
-
-// 1) Initialize Cloud Functions for Firebase with the correct location:
+// Initialize Cloud Functions for Firebase with the desired location:
 firebase.app().functions(LOCATION);
 
-// 2) Create and call the function:
+// Create and call the function:
 const deleteFn = firebase.functions().httpsCallable(FUNCTION_NAME);
 deleteFn({
   path: '/widgets/foo123/orders'
