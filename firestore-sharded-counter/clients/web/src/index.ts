@@ -66,12 +66,14 @@ export class Counter {
   }
 
   public incrementBy(
-    val: firebase.firestore.FieldValue
+    val: number
   ): Promise<void> {
+    // @ts-ignore
+    const increment: any = firebase.firestore.FieldValue.increment(val);
     const update: { [key: string]: any } = this.field
       .split(".")
       .reverse()
-      .reduce((value, name) => ({ [name]: value }), <any>val);
+      .reduce((value, name) => ({ [name]: value }), increment);
     return this.doc
       .collection(SHARD_COLLECTION_ID)
       .doc(this.shardId)
