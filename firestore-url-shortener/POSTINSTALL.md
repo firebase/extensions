@@ -1,6 +1,6 @@
-The Mod will automatically shorten the URL in the `${param:URL_FIELD_NAME}` field in Documents created in the Cloud Firestore Collection: `${param:COLLECTION_PATH}`.
+This mod listens to the Cloud Firestore collection `${param:COLLECTION_PATH}`, then shortens any URL added to the field `${param:URL_FIELD_NAME}` in any document within that collection.
 
-The Mod will shorten this URL and output it in the `${param:SHORT_URL_FIELD_NAME}` field of the Document like so:
+This mod shortens the URL then saves it in the `${param:SHORT_URL_FIELD_NAME}` field of the same document like so:
 
 ```
 {
@@ -9,4 +9,4 @@ The Mod will shorten this URL and output it in the `${param:SHORT_URL_FIELD_NAME
 }
 ```
 
-If the URL in a Document is updated, the short URL will be automatically updated too.
+If the orignal URL in a document is updated, then the shortened URL will be automatically updated, too.
