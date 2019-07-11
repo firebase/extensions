@@ -1,1 +1,3 @@
-Email addresses of new users will now be added to your Mailchimp list, and will be removed from the list when the account is deleted.
+Whenever a new user is added your app, this mod adds the user's email address to your Mailchimp list.
+
+Also, if the user deletes their user account for your app, this mod removes the user from the Mailchimp list.
