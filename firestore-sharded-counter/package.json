@@ -1,6 +1,6 @@
 {
   "name": "firestore-sharded-counter",
-  "main": "lib/index.js",
+  "main": "functions/lib/index.js",
   "author": "patryk@google.com",
   "description": "Auto-scalable counters for your app.",
   "dependencies": {
@@ -17,12 +17,15 @@
     "mocha": "^5.2.0",
     "mocha-typescript": "*",
     "prettier": "1.15.3",
+    "rimraf": "^2.6.3",
     "ts-node": "^7.0.1",
     "typescript": "^3.5.2"
   },
   "scripts": {
+    "build": "npm run clean && npm run compile",
+    "clean": "rimraf functions/lib",
+    "compile": "tsc",
     "format": "prettier --write {,**/}*.{yaml,ts,md}",
-    "build": "tsc",
     "test": "mocha --require ts-node/register test/**/*.ts"
   }
 }

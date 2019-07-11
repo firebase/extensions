@@ -1,13 +1,13 @@
 {
-  "name": "firestore-mirror-bigquery-mod",
-  "version": "1.0.0",
+  "name": "fs-mirror-bigquery",
+  "version": "0.1.0",
   "description": "Mirror a Firestore collection to BigQuery",
-  "main": "lib/index.js",
+  "main": "functions/lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
-    "clean": "rimraf lib",
+    "clean": "rimraf functions/lib",
     "compile": "tsc",
-    "import": "node lib/import/index.js",
+    "import": "node functions/lib/import/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Chris Bianca <chris@csfrequency.com>",

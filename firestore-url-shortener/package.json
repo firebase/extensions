@@ -1,13 +1,13 @@
 {
-  "name": "firestore-url-shortener-mod",
-  "version": "1.0.0",
+  "name": "fs-url-shortener",
+  "version": "0.1.0",
   "description": "Automatically shorten url links",
   "author": "Chris Bianca <chris@csfrequency.com>",
   "license": "MIT",
-  "main": "lib/index.js",
+  "main": "functions/lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
-    "clean": "rimraf lib",
+    "clean": "rimraf functions/lib",
     "compile": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

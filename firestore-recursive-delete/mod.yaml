@@ -15,7 +15,7 @@ description: >-
 license: MIT
 billingRequired: false
 sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-recursive-delete
-releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/README.md
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
 
 author:
   authorName: Firebase
@@ -37,10 +37,10 @@ roles:
 resources:
   - name: fsdelete
     type: firebasemods.v1beta1.function
-    #description:
-    #  recursively deletes a Cloud Firestore collection and all sub-collections
-    #deletionPolicy: delete
+    description:
+      recursively deletes a Cloud Firestore collection and all sub-collections
     properties:
+      sourceDirectory: .
       location: ${LOCATION}
       httpsTrigger: {}
       timeout: 240s
@@ -59,6 +59,8 @@ params:
         value: us-central1
       - label: South Carolina (us-east1)
         value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)

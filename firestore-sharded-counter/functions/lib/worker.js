@@ -282,4 +282,3 @@ function isEmptyPartial(data) {
     //console.log("Result: " + update.isNoop());
     return update.isNoop();
 }
-//# sourceMappingURL=worker.js.map
