@@ -4,42 +4,83 @@
 # license that can be found in the LICENSE file or at
 # https://opensource.org/licenses/MIT.
 
-specVersion: v1beta1
 name: firestore-sharded-counter
 displayName: A scalable counter service
+specVersion: v1beta1
 version: 0.1.0
+
 description: Auto-scalable counters for your app.
+
+license: MIT
+billingRequired: false
+sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-sharded-counter
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+contributors:
+  - authorName: Patryk Lesiewicz
+    url: https://github.com/lepatryk
 
 roles:
   - role: datastore.user
     reason: The mod aggregates firestore counter shards.
 
 resources:
-- name: controller
-  type: firebasemods.v1beta1.function
-  properties:
-    maxInstances: 1
-    httpsTrigger: {}
+  - name: controller
+    type: firebasemods.v1beta1.function
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      maxInstances: 1
+      httpsTrigger: {}
 
-- name: onWrite
-  type: firebasemods.v1beta1.function
-  properties:
-    maxInstances: 1
-    timeout: 120s
-    eventTrigger:
-      eventType: providers/cloud.firestore/eventTypes/document.write
-      resource: projects/${PROJECT_ID}/databases/(default)/documents/{collection}/{counter=**}/_counter_shards_/{shardId}
+  - name: onWrite
+    type: firebasemods.v1beta1.function
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      maxInstances: 1
+      timeout: 120s
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/{collection}/{counter=**}/_counter_shards_/{shardId}
 
-- name: worker
-  type: firebasemods.v1beta1.function
-  properties:
-    eventTrigger:
-      eventType: providers/cloud.firestore/eventTypes/document.write
-      resource: projects/${PROJECT_ID}/databases/(default)/documents/${MOD_METADATA_DOC}/workers/{workerId}
+  - name: worker
+    type: firebasemods.v1beta1.function
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${MOD_METADATA_DOC}/workers/{workerId}
 
 params:
-- param: MOD_METADATA_DOC
-  label: Mod's metadata doc
-  description: >-
-    A path to a document where mod can keep its internal state.
-  default: _firebase_mods_/sharded_counter
+  - param: LOCATION
+    type: select
+    label: Deployment Location
+    description: >-
+      Where should the mod be deployed? Pick a location that is close to your
+      Firestore database. See
+      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+  - param: MOD_METADATA_DOC
+    label: Mod's metadata doc
+    description: >-
+      A path to a document where mod can keep its internal state.
+    default: _firebase_mods_/sharded_counter

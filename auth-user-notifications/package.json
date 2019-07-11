@@ -1,11 +1,11 @@
 {
-  "name": "auth-fcm-tokens-mod",
-  "version": "1.0.0",
-  "description": "Send RCM messages to individual Auth users.",
-  "main": "lib/index.js",
+  "name": "auth-user-notifications",
+  "version": "0.1.0",
+  "description": "Send FCM messages to individual Auth users.",
+  "main": "functions/lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
-    "clean": "rimraf lib",
+    "clean": "rimraf functions/lib",
     "compile": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

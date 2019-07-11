@@ -13,6 +13,8 @@ description: Automatically delete a user's data when they delete their account.
 
 license: MIT
 billingRequired: false
+sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/user-data-deletion
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
 
 author:
   authorName: Firebase
@@ -35,10 +37,11 @@ roles:
 resources:
   - name: clearData
     type: firebasemods.v1beta1.function
-    #description:
-    #  listen for user's being deleted, then remove user data from Cloud
-    #  Firestore, Cloud Storage and the Realtime Database.
+    description:
+      listen for user's being deleted, then remove user data from Cloud
+      Firestore, Cloud Storage and the Realtime Database.
     properties:
+      sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
@@ -57,6 +60,8 @@ params:
         value: us-central1
       - label: South Carolina (us-east1)
         value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)

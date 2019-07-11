@@ -5,7 +5,8 @@
 # https://opensource.org/licenses/MIT.
 
 name: image-resizer
-displayName: Automatically resize an image uploaded to Cloud Storage for Firebase
+displayName:
+  Automatically resize an image uploaded to Cloud Storage for Firebase
 specVersion: v1beta1
 version: 0.1.0
 
@@ -16,7 +17,7 @@ description:
 license: MIT
 billingRequired: false
 sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/image-resizer
-releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/README.md
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
 
 author:
   authorName: Firebase
@@ -43,8 +44,10 @@ roles:
 resources:
   - name: generateResizedImage
     type: firebasemods.v1beta1.function
-    #description: listen for new images, resize them and save them to cloud storage
+    description:
+      listen for new images, resize them and save them to cloud storage
     properties:
+      sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
         eventType: google.storage.object.finalize
@@ -63,6 +66,8 @@ params:
         value: us-central1
       - label: South Carolina (us-east1)
         value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)

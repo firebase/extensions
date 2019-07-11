@@ -69,4 +69,3 @@ exports.onWrite = functions.firestore
     const controller = new controller_1.ShardedCounterController(metadocRef, SHARDS_COLLECTION_ID);
     yield controller.aggregateContinuously({ start: "", end: "" }, 200, 60000);
 }));
-//# sourceMappingURL=index.js.map

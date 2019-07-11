@@ -10,7 +10,7 @@ description:
 license: MIT
 billingRequired: true
 sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-url-shortener
-releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/README.md
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
 
 author:
   authorName: Firebase
@@ -27,10 +27,11 @@ roles:
 resources:
   - name: fsurlshortener
     type: firebasemods.v1beta1.function
-    #description:
-    #  listens for new urls, shortens them and writes them back to the same
-    #  document
+    description:
+      listens for new urls, shortens them and writes them back to the same
+      document
     properties:
+      sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
@@ -49,6 +50,8 @@ params:
         value: us-central1
       - label: South Carolina (us-east1)
         value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
