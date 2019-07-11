@@ -1,1 +1,5 @@
-When a Firebase Authentication user is deleted from the Firebase project where this mod is installed, their data that is stored in Realtime Database, Cloud Firestore, and/or Cloud Storage will be automatically deleted as well. This mod can help an app respect user privacy and fulfill compliance requirements, but using it does not guarantee compliance with government and industry regulations.
+Use this mod to automatically delete a user's data if the user is deleted from Firebase Authentication.
+
+You can configure this mod to delete user data from any or all of the following: Realtime Database, Cloud Firestore, or Cloud Storage. Note that the user must be a Firebase Authenticated user.
+
+This mod is useful in respecting user privacy and fulfilling compliance requirements. However, using this mod does not guarantee compliance with government and industry regulations.
