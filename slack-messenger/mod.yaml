@@ -28,6 +28,7 @@ releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+lo
 author:
   authorName: Firebase
   url: https://firebase.google.com
+  
 contributors:
   - authorName: Bryan Kendall
     url: https://github.com/bkendall
