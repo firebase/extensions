@@ -27,7 +27,7 @@ export const error = (path: string, e: Error) => {
 };
 
 export const init = () => {
-  console.log("Initialising mod with configuration", configuration());
+  console.log("Initializing mod with configuration", configuration());
 };
 
 export const pathMissing = () => {

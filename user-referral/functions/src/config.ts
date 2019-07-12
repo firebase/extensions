@@ -18,6 +18,7 @@ export default {
   acceptUrlTemplate: process.env.ACCEPT_URL_TEMPLATE,
   appName: process.env.APP_NAME,
   invitationsCollection: process.env.METADATA_FIRESTORE_COLLECTION,
+  location: process.env.LOCATION,
   sendgridEmailAlias: process.env.SENDGRID_EMAIL_ALIAS,
   sendgridApiKey: process.env.SENDGRID_API_KEY,
   targetReceiverFields: process.env.TARGET_RECEIVER_FIELDS,

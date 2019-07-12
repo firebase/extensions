@@ -25,7 +25,7 @@ exports.error = (path, e) => {
     console.error(`Error when trying to delete: '${path}'`, e);
 };
 exports.init = () => {
-    console.log("Initialising mod with configuration", configuration());
+    console.log("Initializing mod with configuration", configuration());
 };
 exports.pathMissing = () => {
     console.warn("Unable to delete, no 'path' is specified");

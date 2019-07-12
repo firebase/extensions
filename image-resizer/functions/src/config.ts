@@ -16,6 +16,7 @@
 
 export default {
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
+  location: process.env.LOCATION,
   maxHeight: process.env.IMG_MAX_HEIGHT,
   maxWidth: process.env.IMG_MAX_WIDTH,
   signedUrlsPath: process.env.SIGNED_URLS_PATH,

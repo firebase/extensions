@@ -41,14 +41,14 @@ const bq = new bigquery.BigQuery();
  * Ideally this would run once when the mod is installed if that were
  * possible in the future.
  */
-exports.initialiseSchema = (datasetId, tableName, schema, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
-    console.log("Initialising BigQuery from schema file");
+exports.initializeSchema = (datasetId, tableName, schema, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
+    console.log("initializing BigQuery from schema file");
     const viewName = tableName;
     const realTableName = rawTableName(tableName);
     yield intialiseDataset(datasetId);
-    yield initialiseTable(datasetId, realTableName, schema.fields, idFieldNames);
-    yield initialiseView(datasetId, realTableName, viewName, schema, idFieldNames);
-    console.log("Initialised BigQuery");
+    yield initializeTable(datasetId, realTableName, schema.fields, idFieldNames);
+    yield initializeView(datasetId, realTableName, viewName, schema, idFieldNames);
+    console.log("initialized BigQuery");
 });
 exports.buildDataRow = (idFieldValues, insertId, operation, timestamp, data) => {
     return {
@@ -95,7 +95,7 @@ const intialiseDataset = (datasetId) => __awaiter(this, void 0, void 0, function
  * if it doesn't.  If the table does exist, validate that the BigQuery schema
  * is correct and add any missing fields.
  */
-const initialiseTable = (datasetId, tableName, fields, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
+const initializeTable = (datasetId, tableName, fields, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
     const dataset = bq.dataset(datasetId);
     let table = dataset.table(tableName);
     const [tableExists] = yield table.exists();
@@ -125,7 +125,7 @@ const initialiseTable = (datasetId, tableName, fields, idFieldNames) => __awaite
  * By default, the document ID is used as the row ID, but can be overriden
  * using the `idField` property in the schema definition.
  */
-const initialiseView = (datasetId, tableName, viewName, schema, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
+const initializeView = (datasetId, tableName, viewName, schema, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
     const dataset = bq.dataset(datasetId);
     let view = dataset.table(viewName);
     const [viewExists] = yield view.exists();

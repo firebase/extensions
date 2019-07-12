@@ -18,7 +18,7 @@ import * as bigquery from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
 import * as inquirer from "inquirer";
 
-import { buildDataRow, initialiseSchema, insertData } from "../bigquery";
+import { buildDataRow, initializeSchema, insertData } from "../bigquery";
 import { extractSnapshotData, FirestoreSchema } from "../firestore";
 import {
   extractIdFieldNames,
@@ -98,10 +98,10 @@ const run = async (): Promise<number> => {
   // contain any wildcard parameters
   const idFieldNames = extractIdFieldNames(collectionPath);
 
-  // This initialisation should be moved to `mod install` if Mods adds support
+  // This initialization should be moved to `mod install` if Mods adds support
   // for executing code as part of the install process
   // Currently it runs on every cold start of the function
-  await initialiseSchema(datasetId, tableName, schema, idFieldNames);
+  await initializeSchema(datasetId, tableName, schema, idFieldNames);
 
   console.log(
     `Mirroring data from Firestore Collection: ${collectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${tableName}`

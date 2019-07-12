@@ -56,7 +56,7 @@ exports.fileUploading = (hash) => {
     console.log(`Uploading file: ${hash}`);
 };
 exports.init = () => {
-    console.log("Initialising mod with configuration", config_1.default);
+    console.log("Initializing mod with configuration", config_1.default);
 };
 exports.repositoryCloned = (repository, path) => {
     console.log(`Cloned repository: '${repository}' to path: '${path}'`);

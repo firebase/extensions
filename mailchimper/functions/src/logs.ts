@@ -34,7 +34,7 @@ export const errorRemoveUser = (err: Error) => {
 };
 
 export const init = () => {
-  console.log("Initialising mod with configuration", obfuscatedConfig);
+  console.log("Initializing mod with configuration", obfuscatedConfig);
 };
 
 export const start = () => {

@@ -59,7 +59,7 @@ export const imageUploading = (path: string) => {
 };
 
 export const init = () => {
-  console.log("Initialising mod with configuration", config);
+  console.log("Initializing mod with configuration", config);
 };
 
 export const signedUrlsGenerated = () => {

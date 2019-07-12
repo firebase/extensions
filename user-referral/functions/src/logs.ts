@@ -56,7 +56,7 @@ export const errorSendInvitation = (err: Error) => {
 };
 
 export const init = () => {
-  console.log("Initialising mod with configuration", obfuscatedConfig);
+  console.log("Initializing mod with configuration", obfuscatedConfig);
 };
 
 export const invitationCreated = (path: string, id: string) => {

@@ -29,7 +29,7 @@ export const error = (err: Error) => {
 };
 
 export const init = () => {
-  console.log("Initialising mod with configuration", config);
+  console.log("Initializing mod with configuration", config);
 };
 
 export const pathSkipped = (path: string) => {

@@ -40,26 +40,26 @@ const bq = new bigquery.BigQuery();
  * Ideally this would run once when the mod is installed if that were
  * possible in the future.
  */
-export const initialiseSchema = async (
+export const initializeSchema = async (
   datasetId: string,
   tableName: string,
   schema: FirestoreSchema,
   idFieldNames: string[]
 ) => {
-  console.log("Initialising BigQuery from schema file");
+  console.log("initializing BigQuery from schema file");
   const viewName = tableName;
   const realTableName = rawTableName(tableName);
 
   await intialiseDataset(datasetId);
-  await initialiseTable(datasetId, realTableName, schema.fields, idFieldNames);
-  await initialiseView(
+  await initializeTable(datasetId, realTableName, schema.fields, idFieldNames);
+  await initializeView(
     datasetId,
     realTableName,
     viewName,
     schema,
     idFieldNames
   );
-  console.log("Initialised BigQuery");
+  console.log("initialized BigQuery");
 };
 
 export const buildDataRow = (
@@ -119,7 +119,7 @@ const intialiseDataset = async (datasetId: string) => {
  * if it doesn't.  If the table does exist, validate that the BigQuery schema
  * is correct and add any missing fields.
  */
-const initialiseTable = async (
+const initializeTable = async (
   datasetId: string,
   tableName: string,
   fields: FirestoreField[],
@@ -154,7 +154,7 @@ const initialiseTable = async (
  * By default, the document ID is used as the row ID, but can be overriden
  * using the `idField` property in the schema definition.
  */
-const initialiseView = async (
+const initializeView = async (
   datasetId: string,
   tableName: string,
   viewName: string,
