@@ -15,13 +15,6 @@
 name: fs-google-translate
 specVersion: v1beta1
 version: 0.1.0
-author:
-  authorName: Firebase
-  url: https://firebase.google.com
-contributors:
-  - authorName: Chris Bianca
-    email: chris@csfrequency.com
-    url: https://github.com/chrisbianca
   
 displayName: Translate text in Cloud Firestore
 
@@ -37,6 +30,7 @@ releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+lo
 author:
   authorName: Firebase
   url: https://firebase.google.com
+  
 contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
