@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Send a message to slack when its added to a PubSub topic.",
   "author": "Firebase",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "main": "functions/lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",

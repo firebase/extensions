@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Translate messages into multiple languages, provided by user",
   "author": "Chris Bianca <chris@csfrequency.com>",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "main": "functions/lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",

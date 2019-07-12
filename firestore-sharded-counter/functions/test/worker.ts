@@ -1,9 +1,17 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2019 Google LLC
  *
- * Use of this source code is governed by an MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 import { expect } from "chai";
@@ -37,23 +45,25 @@ class StateTracker {
   private partialSum = 0;
   private shardsSum = 0;
   constructor(private db: FirebaseFirestore.Firestore) {}
-  
+
   start(counterPath: string, collectionId: string) {
-    this.shardsUnsubscribe = db.collectionGroup(collectionId).onSnapshot((snap) => {
-      this.scheduleLog();
-      this.partialSum = 0;
-      this.shardsSum = 0;
-      console.log("ts1: " + snap.readTime.toMillis());
-      snap.forEach((doc) => {
-        if (doc.id.startsWith("\t")) {
-          doc.data()._updates_.forEach((u) => {
-            this.partialSum += u["_data_"]["counter"];
-          })
-        } else {
-          this.shardsSum += doc.get("counter") || 0;
-        }
-      })
-    });
+    this.shardsUnsubscribe = db
+      .collectionGroup(collectionId)
+      .onSnapshot((snap) => {
+        this.scheduleLog();
+        this.partialSum = 0;
+        this.shardsSum = 0;
+        console.log("ts1: " + snap.readTime.toMillis());
+        snap.forEach((doc) => {
+          if (doc.id.startsWith("\t")) {
+            doc.data()._updates_.forEach((u) => {
+              this.partialSum += u["_data_"]["counter"];
+            });
+          } else {
+            this.shardsSum += doc.get("counter") || 0;
+          }
+        });
+      });
 
     this.counterUnsubscribe = db.doc(counterPath).onSnapshot((snap) => {
       console.log("ts2: " + snap.readTime.toMillis());
@@ -73,9 +83,16 @@ class StateTracker {
     if (this.logPromise !== null) return;
     this.logPromise = new Promise((resolve, reject) => {
       setTimeout(() => {
-        console.log("counter: " + this.counterVal + ", partials: " + this.partialSum +
-         ", shards: " + this.shardsSum + ", total: " +
-          (this.counterVal + this.partialSum + this.shardsSum));
+        console.log(
+          "counter: " +
+            this.counterVal +
+            ", partials: " +
+            this.partialSum +
+            ", shards: " +
+            this.shardsSum +
+            ", total: " +
+            (this.counterVal + this.partialSum + this.shardsSum)
+        );
         this.logPromise = null;
         resolve();
       }, 0);
@@ -85,7 +102,6 @@ class StateTracker {
 
 @suite
 class WorkerTest {
-  
   @test @timeout(10000) async "can run single aggregation"() {
     const SHARDS_COLLECTION_ID = uuid.v4();
     const TEST_PATH = uuid.v4();
@@ -138,12 +154,12 @@ class WorkerTest {
     });
     metadoc = await metadocRef.get();
     console.log("Single run done: " + JSON.stringify(metadoc.data()));
-    
+
     await metadocRef.delete();
     await counterRef.delete();
     await counter2Ref.delete();
   }
-  
+
   @test @timeout(1000000) async "can aggregate to counters"() {
     const SHARDS_COLLECTION_ID = uuid.v4();
     const TEST_PATH = uuid.v4();
@@ -195,6 +211,5 @@ class WorkerTest {
     await tracker.stop();
     await metadocRef.delete();
     await counterRef.delete();
-
   }
 }
