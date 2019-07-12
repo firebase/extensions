@@ -13,14 +13,16 @@
 # limitations under the License.
 
 name: image-resizer
-displayName:
-  Automatically resize an image uploaded to Cloud Storage for Firebase
 specVersion: v1beta1
 version: 0.1.0
+license: MIT
+
+displayName: Resize images in Cloud Storage
 
 description:
-  Automatically generate resized images for images uploaded to Cloud Storage for
-  Firebase.
+  Resize new images uploaded to a Cloud Storage bucket to a specified size. Both the original and the resized images are stored
+  in the same bucket. Additionally, this mod can be configured to generate the signed URLs for both images and to store the 
+  URLs in Cloud Firestore.
 
 license: Apache-2.0
 billingRequired: false

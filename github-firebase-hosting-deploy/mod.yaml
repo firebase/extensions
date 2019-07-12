@@ -13,11 +13,13 @@
 # limitations under the License.
 
 name: hosting-deploy
-displayName: Automatically deploy a GitHub commit to Firebase Hosting.
+displayName: Deploy to Firebase hosting from Github
 specVersion: v1beta1
 version: 0.1.0
 
-description: Automatically deploy to Firebase Hosting on Git commit.
+description: 
+  When a new commit is made on a specified branch in Github, automatically delpoy the web code in a specified directory to
+  Firebase Hosting. (Requires a Github account.)
 
 license: Apache-2.0
 billingRequired: true
@@ -27,6 +29,7 @@ releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+lo
 author:
   authorName: Firebase
   url: https://firebase.google.com
+  
 contributors:
   - authorName: Bryan Kendall
     url: https://github.com/bkendall

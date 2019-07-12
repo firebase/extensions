@@ -13,13 +13,14 @@
 # limitations under the License.
 
 name: mailchimper
-displayName: Automatically add/remove users in Mailchimp when they sign up
-specVersion: v1beta1
 version: 0.1.0
-description:
-  Add new users to a Mailchimp audience, and delete them from the audience when
-  they delete their account.
+specVersion: v1beta1
+displayName: Add new users to Mailchimp
 
+description:
+  Automatically add new users to a specified Mailchimp email list. Users must be mananged by Firebase Authentication.
+  (Requires Mailchimp account.)
+  
 license: Apache-2.0
 billingRequired: true
 sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/mailchimper/

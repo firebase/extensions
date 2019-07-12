@@ -13,11 +13,13 @@
 # limitations under the License.
 
 name: firestore-sharded-counter
-displayName: A scalable counter service
+displayName: Scalable counter service
 specVersion: v1beta1
 version: 0.1.0
 
-description: Auto-scalable counters for your app.
+description: 
+  Keep accurate account of events in your app that happen at high velocity such as number of views and likes.
+  (Requires Firebase Web SDK.)
 
 license: Apache-2.0
 billingRequired: false

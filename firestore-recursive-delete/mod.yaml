@@ -13,13 +13,14 @@
 # limitations under the License.
 
 name: fs-delete
-displayName: Recursively delete data in a Firestore collection
+displayName: Delete Cloud Firestore sub-collections
 specVersion: v1beta1
 version: 0.1.0
 
 description: >-
-  Recursively delete Firestore data. This mod creates a callable function that
-  can be called from a client app.
+  This mod exposes an endpoint that can be called in client code to delete a Cloud Firestore collection or document,
+  as well as all its sub-collections.
+  
 license: Apache-2.0
 billingRequired: false
 sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-recursive-delete
