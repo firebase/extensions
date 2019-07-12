@@ -1,0 +1,22 @@
+{
+  "name": "crashlytics-gitlab",
+  "version": "0.1.0",
+  "description": "Send crashlytics reportds to GitLab",
+  "main": "functions/lib/index.js",
+  "scripts": {
+    "build": "npm run clean && npm run compile",
+    "clean": "rimraf functions/lib",
+    "compile": "tsc"
+  },
+  "author": "Chris Bianca <chris@csfrequency.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "firebase-admin": "^8.2.0",
+    "firebase-functions": "^3.0.1",
+    "gitlab": "^6.3.7"
+  },
+  "devDependencies": {
+    "rimraf": "^2.6.3",
+    "typescript": "^3.2.4"
+  }
+}
