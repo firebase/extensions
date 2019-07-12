@@ -15,7 +15,7 @@
 name: image-resizer
 specVersion: v1beta1
 version: 0.1.0
-license: MIT
+license: Apache-2.0
 
 displayName: Resize images in Cloud Storage
 
@@ -24,7 +24,6 @@ description:
   in the same bucket. Additionally, this mod can be configured to generate the signed URLs for both images and to store the 
   URLs in Cloud Firestore.
 
-license: Apache-2.0
 billingRequired: false
 sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/image-resizer
 releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
