@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "lib": ["es6"],
+    "module": "commonjs",
+    "noImplicitReturns": true,
+    "outDir": "functions/lib",
+    "sourceMap": false,
+    "target": "es6"
+  },
+  "compileOnSave": true,
+  "include": ["functions/src"]
+}
