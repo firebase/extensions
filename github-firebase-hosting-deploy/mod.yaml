@@ -4,13 +4,27 @@
 # license that can be found in the LICENSE file or at
 # https://opensource.org/licenses/MIT.
 
-specVersion: v1beta1
 name: hosting-deploy
 displayName: Automatically deploy a GitHub commit to Firebase Hosting.
+specVersion: v1beta1
 version: 0.1.0
+
 description: Automatically deploy to Firebase Hosting on Git commit.
+
 license: MIT
 billingRequired: true
+sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/github-firebase-hosting-deploy
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+contributors:
+  - authorName: Bryan Kendall
+    url: https://github.com/bkendall
+  - authorName: Chris Bianca
+    email: chris@csfrequency.com
+    url: https://github.com/chrisbianca
 
 apis:
   - apiName: firebasehosting.googleapis.com
@@ -23,13 +37,37 @@ roles:
 resources:
   - name: deploy
     type: firebasemods.v1beta1.function
+    description: triggers deployment of a GitHub repository to Firebase Hosting
     properties:
-      runtime: nodejs8
-      httpsTrigger: {}
       sourceDirectory: .
+      location: ${LOCATION}
+      httpsTrigger: {}
 
 params:
-  - param: REPO
+  - param: LOCATION
+    type: select
+    label: Deployment Location
+    description: >-
+      Where should the mod be deployed? Pick a location that is close to your
+      Firestore database. See
+      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+
+  - param: GITHUB_REPOSITORY
     type: string
     label: Github Repository
     required: true
@@ -41,6 +79,22 @@ params:
       What is the full URL of the Github repository you want to set up
       Continuous Integration for? *For example:
       https://github.com/firebase/firebase-tools*
+
+  - param: BRANCH
+    type: string
+    label: Deployment Branch
+    default: master
+    description: >-
+      What branch should trigger deploys to Firebase Hosting?
+
+  - param: DEPLOY_ROOT
+    type: string
+    label: Deployment Root
+    default: public
+    description: >-
+      What directory in the repository should contain the source code for
+      Firebase Hosting?
+
   - param: SITE_NAME
     type: string
     label: Site Name
@@ -49,16 +103,3 @@ params:
       What is the name of your site? If your project only has one site, this is
       usually the same as your project ID. You can see your site names at
       https://console.firebase.google.com/project/${PROJECT_ID}/hosting/main.
-  - param: BRANCH
-    type: string
-    label: Deployment Branch
-    default: master
-    description: >-
-      What branch should trigger deploys to Firebase Hosting?
-  - param: DEPLOY_ROOT
-    type: string
-    label: Deployment Root
-    default: public
-    description: >-
-      What directory in the repository should contain the source code for
-      Firebase Hosting?

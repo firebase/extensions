@@ -4,48 +4,90 @@
 # license that can be found in the LICENSE file or at
 # https://opensource.org/licenses/MIT.
 
-specVersion: v1beta1
 name: mailchimper
 displayName: Automatically add/remove users in Mailchimp when they sign up
-version: 1.0.0
+specVersion: v1beta1
+version: 0.1.0
 description:
-  Add new users to a Mailchimp audience, and delete them from the audience when they
-  delete their account.
+  Add new users to a Mailchimp audience, and delete them from the audience when
+  they delete their account.
+
 license: MIT
 billingRequired: true
+sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/mailchimper/
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
 
-roles:
-  - role: firebaseauth.admin
-    reason: to detect when users are added and deleted. 
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+contributors:
+  - authorName: Lauren Long
+    url: https://github.com/laurenzlong
+  - authorName: Chris Bianca
+    email: chris@csfrequency.com
+    url: https://github.com/chrisbianca
 
 resources:
   - name: addUserToList
     type: firebasemods.v1beta1.function
+    description:
+      listens to users being created and automatically adds them to a MailChimp
+      list
     properties:
+      sourceDirectory: .
+      location: ${LOCATION}
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.create
         resource: projects/${PROJECT_ID}
   - name: removeUserFromList
     type: firebasemods.v1beta1.function
+    description:
+      listens to users being deleted and automatically removes them from a
+      MailChimp list
     properties:
+      sourceDirectory: .
+      location: ${LOCATION}
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${PROJECT_ID}
 
 params:
-  - param: MAILCHIMP_KEY
+  - param: LOCATION
+    type: select
+    label: Deployment Location
+    description: >-
+      Where should the mod be deployed? Pick a location that is close to your
+      Firestore database. See
+      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+
+  - param: MAILCHIMP_API_KEY
     type: string
     label: Mailchimp API Key
     description: >-
       You can get an API Key at https://admin.mailchimp.com/account/api/
     required: true
 
-  - param: AUDIENCE_ID
+  - param: MAILCHIMP_AUDIENCE_ID
     type: string
     label: Audience ID
     description: >-
       ID of audience to subscribe new users to. Go to
       https://admin.mailchimp.com/lists, click on the desired list or create a
-      new one, then select **Settings** menu, and look for **Audience ID**.
-      The Audience ID looks something like `27735fc60a`.
+      new one, then select **Settings** menu, and look for **Audience ID**. The
+      Audience ID looks something like `27735fc60a`.
     required: true
