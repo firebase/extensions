@@ -13,12 +13,13 @@
 # limitations under the License.
 
 name: crashlytics-gitlab
-displayName: Create issues in GitLab from Crashlytics events.
+displayName: Create issues in GitLab from Crashlytics events
 specVersion: v1beta1
 version: 0.1.0
 
 description:
-  Automatically create Crashlytics issues in GitLab.
+  Automatically create Crashlytics issues in GitLab anytime a Crashlytics report is generated or an issue is created.
+  (Requires a Gitlab account.)
 
 license: Apache-2.0
 billingRequired: true
