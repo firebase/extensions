@@ -7,33 +7,75 @@
 name: invites-mod
 displayName: An invitation service
 specVersion: v1beta1
-version: 1.0.0
+version: 0.1.0
 description: >
   Adds basic invite-a-friend functionality to your Android, iOS, or Web app!
   Requires a Sendgrid account, which you can sign up for free.
-license: MIT
 
-apis: [] # no apis needed for this mod
+license: MIT
+billingRequired: true
+sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/user-referral/
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+contributors:
+  - authorName: Tina Liang
+    url: https://github.com/tinaliang
+  - authorName: Chris Bianca
+    email: chris@csfrequency.com
+    url: https://github.com/chrisbianca
 
 roles:
   - role: datastore.user
-    reason: allows the mod to store metadata about invitations in Cloud Firestore
+    reason:
+      allows the mod to store metadata about invitations in Cloud Firestore
 
 resources:
   - name: sendInvitation
     type: firebasemods.v1beta1.function
+    description:
+      creates an invitation in Cloud Firestore and sends it using the SendGrid
+      API
     properties:
-      runtime: nodejs8
+      sourceDirectory: .
+      location: ${LOCATION}
       httpsTrigger: {}
 
   - name: acceptInvitation
     type: firebasemods.v1beta1.function
+    description:
+      marks an invitation as accepted and updates Cloud Firestore accordingly
     properties:
-      runtime: nodejs8
+      sourceDirectory: .
+      location: ${LOCATION}
       httpsTrigger: {}
 
-# params
 params:
+  - param: LOCATION
+    type: select
+    label: Deployment Location
+    description: >-
+      Where should the mod be deployed? Pick a location that is close to your
+      Firestore database. See
+      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+
   - param: SENDGRID_API_KEY
     type: string
     label: SendGrid API Key
@@ -57,6 +99,7 @@ params:
     validationRegex: '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     validationErrorMessage: >
       You must provide a valid email address.
+
   - param: APP_NAME
     type: string
     label: The name of the app. This will be used in the invite email.
