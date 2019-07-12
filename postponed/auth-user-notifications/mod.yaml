@@ -17,7 +17,7 @@ displayName: Send push notification to specific users
 specVersion: v1beta1
 version: 0.1.0
 
-description: >-
+description:
   Use Firebase Cloud Messaging to send out notifications whenever a Cloud Firestore document containg the specified
   content and target user IDs is written to a particular collection. This mod is accompanied by client SDKs for Android,
   iOS,and Web for managing device tokens in Cloud Firestore. 
@@ -30,6 +30,7 @@ releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+lo
 author:
   authorName: Firebase
   url: https://firebase.google.com
+  
 contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com

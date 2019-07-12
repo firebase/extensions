@@ -17,7 +17,7 @@ displayName: Mirror data from Firestore to BigQuery
 specVersion: v1beta1
 version: 0.1.0
 
-description: >-
+description:
   Mirror data for a Firestore Collection to BigQuery. This mod creates an event
   listener which triggers when Documents within a Collection are added, updated
   or deleted.
@@ -30,6 +30,7 @@ releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+lo
 author:
   authorName: Firebase
   url: https://firebase.google.com
+  
 contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com

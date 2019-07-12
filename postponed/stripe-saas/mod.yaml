@@ -24,6 +24,10 @@ description:
 license: Apache-2.0
 billingRequired: true
 
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+  
 roles:
   - role: datastore.user
     reason: allows the mod to read from and write to Cloud Firestore.
