@@ -11,68 +11,124 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
 const translate_1 = require("@google-cloud/translate");
+const config_1 = require("./config");
+const logs = require("./logs");
+var ChangeType;
+(function (ChangeType) {
+    ChangeType[ChangeType["CREATE"] = 0] = "CREATE";
+    ChangeType[ChangeType["DELETE"] = 1] = "DELETE";
+    ChangeType[ChangeType["UPDATE"] = 2] = "UPDATE";
+})(ChangeType || (ChangeType = {}));
 const translate = new translate_1.Translate({ projectId: process.env.PROJECT_ID });
-// languages to be translated into
-const LANGUAGES = process.env.LANGUAGES.split(",");
-const MESSAGE_FIELD_NAME = process.env.MESSAGE_FIELD_NAME;
-const TRANSLATIONS_FIELD_NAME = process.env.TRANSLATIONS_FIELD_NAME;
-// Initializing firebase-admin
+// Initialize the Firebase Admin SDK
 admin.initializeApp();
-// Translate an incoming message.
-exports.fstranslate = functions.handler.firestore.document.onWrite((change) => {
-    if (!change.after.exists) {
-        // Document was deleted, ignore
-        console.log("Document was deleted, ignoring");
-        return;
+logs.init();
+exports.fstranslate = functions.handler.firestore.document.onWrite((change) => __awaiter(this, void 0, void 0, function* () {
+    logs.start();
+    const changeType = getChangeType(change);
+    try {
+        switch (changeType) {
+            case ChangeType.CREATE:
+                yield handleCreateDocument(change.after);
+                break;
+            case ChangeType.DELETE:
+                handleDeleteDocument();
+                break;
+            case ChangeType.UPDATE:
+                yield handleUpdateDocument(change.before, change.after);
+                break;
+            default:
+                throw new Error(`Invalid change type: ${changeType}`);
+        }
+        logs.complete();
     }
-    else if (!change.before.exists) {
-        // Document was created, check if message exists
-        const msg = change.after.get(MESSAGE_FIELD_NAME);
-        if (msg) {
-            console.log("Document was created with message, translating");
-            return translateDocument(change.after);
-        }
-        else {
-            console.log("Document was created without a message, skipping");
-            return;
-        }
+    catch (err) {
+        logs.error(err);
+    }
+}));
+const extractMsg = (snapshot) => {
+    return snapshot.get(config_1.default.messageFieldName);
+};
+const getChangeType = (change) => {
+    if (!change.after.exists) {
+        return ChangeType.DELETE;
+    }
+    if (!change.before.exists) {
+        return ChangeType.CREATE;
+    }
+    return ChangeType.UPDATE;
+};
+const handleCreateDocument = (snapshot) => __awaiter(this, void 0, void 0, function* () {
+    const msg = extractMsg(snapshot);
+    if (msg) {
+        logs.documentCreatedWithMsg();
+        yield translateDocument(snapshot);
     }
     else {
-        // Document was updated, check if message has changed
-        const msgAfter = change.after.get(MESSAGE_FIELD_NAME);
-        const msgBefore = change.before.get(MESSAGE_FIELD_NAME);
-        if (msgAfter === msgBefore) {
-            console.log("Document was updated, but message has not changed, skipping");
-            return;
-        }
-        if (msgAfter) {
-            console.log("Document was updated, message has changed, translating");
-            return translateDocument(change.after);
-        }
-        else {
-            console.log("Document was updated, no message exists, skipping");
-            return;
-        }
+        logs.documentCreatedNoMsg();
+    }
+});
+const handleDeleteDocument = () => {
+    logs.documentDeleted();
+};
+const handleUpdateDocument = (before, after) => __awaiter(this, void 0, void 0, function* () {
+    const msgAfter = extractMsg(after);
+    const msgBefore = extractMsg(before);
+    const msgHasChanged = msgAfter !== msgBefore;
+    if (!msgHasChanged) {
+        logs.documentUpdatedUnchangedMsg();
+        return;
+    }
+    if (msgAfter) {
+        logs.documentUpdatedChangedMsg();
+        yield translateDocument(after);
+    }
+    else if (msgBefore) {
+        logs.documentUpdatedDeletedMsg();
+        yield updateTranslations(after, admin.firestore.FieldValue.delete());
+    }
+    else {
+        logs.documentUpdatedNoMsg();
     }
 });
 const translateDocument = (snapshot) => __awaiter(this, void 0, void 0, function* () {
-    const message = snapshot.get(MESSAGE_FIELD_NAME);
-    const tasks = LANGUAGES.map((targetLanguage) => __awaiter(this, void 0, void 0, function* () {
+    const message = extractMsg(snapshot);
+    logs.translateMsgAllLanguages(message, config_1.default.languages);
+    const tasks = config_1.default.languages.map((targetLanguage) => __awaiter(this, void 0, void 0, function* () {
         const translatedMsg = yield translateMessage(message, targetLanguage);
         return {
             language: targetLanguage,
             message: translatedMsg,
         };
     }));
-    const translations = yield Promise.all(tasks);
-    const translationsMap = translations.reduce((output, translation) => {
-        output[translation.language] = translation.message;
-        return output;
-    }, {});
-    // Update the document
-    yield snapshot.ref.update(TRANSLATIONS_FIELD_NAME, translationsMap);
+    try {
+        const translations = yield Promise.all(tasks);
+        logs.translateMsgAllLanguagesComplete(message);
+        const translationsMap = translations.reduce((output, translation) => {
+            output[translation.language] = translation.message;
+            return output;
+        }, {});
+        yield updateTranslations(snapshot, translationsMap);
+    }
+    catch (err) {
+        logs.translateMsgAllLanguagesError(message, err);
+        throw err;
+    }
 });
 const translateMessage = (msg, targetLanguage) => __awaiter(this, void 0, void 0, function* () {
-    const [translatedMsg] = yield translate.translate(msg, targetLanguage);
-    return translatedMsg;
+    try {
+        logs.translateMsg(msg, targetLanguage);
+        const [translatedMsg] = yield translate.translate(msg, targetLanguage);
+        logs.translateMsgComplete(msg, targetLanguage);
+        return translatedMsg;
+    }
+    catch (err) {
+        logs.translateMsgError(msg, targetLanguage, err);
+        throw err;
+    }
+});
+const updateTranslations = (snapshot, translations) => __awaiter(this, void 0, void 0, function* () {
+    logs.updateDocument(snapshot.ref.path);
+    yield snapshot.ref.update(config_1.default.translationsFieldName, translations);
+    logs.updateDocumentComplete(snapshot.ref.path);
 });

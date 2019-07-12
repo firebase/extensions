@@ -4,28 +4,75 @@
 # license that can be found in the LICENSE file or at
 # https://opensource.org/licenses/MIT.
 
-specVersion: v1beta1
 name: remote-config-to-slack
 displayName: Remote Config to Slack
-version: 1.0.0
+specVersion: v1beta1
+version: 0.1.0
 
 description:
   Listens for changes to Firebase Remote Config, pulls the deltas and posts it
   to Slack.
 
 license: MIT
-
 billingRequired: true
+sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/remote-config-slack/
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
 
-roles:
-  - role: cloudconfig.admin
-    reason: allows the mod to get information about a Remote Config change
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+contributors:
+  - authorName: Ashley Gau
+    url: https://github.com/agau4779
+  - authorName: Chris Bianca
+    email: chris@csfrequency.com
+    url: https://github.com/chrisbianca
 
 apis:
   - apiName: firebaseremoteconfig.googleapis.com
     reason: To read changes from RemoteConfig objects
 
+roles:
+  - role: cloudconfig.admin
+    reason: allows the mod to get information about a Remote Config change
+
+resources:
+  - name: showConfigDiff
+    type: firebasemods.v1beta1.function
+    description:
+      listen for remote config updates, identify the changes and send them to
+      Slack
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: google.firebase.remoteconfig.update
+        resource: projects/${PROJECT_ID}
+
 params:
+  - param: LOCATION
+    type: select
+    label: Deployment Location
+    description: >-
+      Where should the mod be deployed? Pick a location that is close to your
+      Firestore database. See
+      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+
   - param: SLACK_WEBHOOK_URL
     type: string
     label: Slack Webhook URL
@@ -34,11 +81,3 @@ params:
       `https://hooks.slack.com/services/FOO/BAR/KEY`; learn more at
       `https://api.slack.com/incoming-webhooks` )
     required: true
-
-resources:
-  - name: showConfigDiff
-    type: firebasemods.v1beta1.function
-    properties:
-      eventTrigger:
-        eventType: google.firebase.remoteconfig.update
-        resource: projects/${PROJECT_ID}

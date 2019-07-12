@@ -4,31 +4,76 @@
 # license that can be found in the LICENSE file or at
 # https://opensource.org/licenses/MIT.
 
-specVersion: v1beta1
 name: limit-database-entries
 displayName: Limit the number of entries in a Firebase realtimedatabase object
-version: 1.0.0
+specVersion: v1beta1
+version: 0.1.0
 
 description: >-
-  Keep the number of items  in a Firebase realtime database for a given path
+  Keep the number of items in a Firebase realtime database for a given path
   below a given number. This can be used to limit the number of lines of a chat
   history or logs.
 
 license: MIT
+billingRequired: false
+sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/limit-database-entries/
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+contributors:
+  - authorName: Chris Bianca
+    email: chris@csfrequency.com
+    url: https://github.com/chrisbianca
 
 roles:
   - role: firebasedatabase.admin
     reason: allows the mod to prune extra items from the Realtime Database.
 
 resources:
-  - name: truncate
+  - name: rtdblimit
     type: firebasemods.v1beta1.function
+    description:
+      listens for new children, checks if the max count has been exceeded and
+      truncates if necessary
     properties:
-      runtime: nodejs8
+      sourceDirectory: .
+      location: ${LOCATION}
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.create
         resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${NODE_PATH}/{messageid}
 params:
+  - param: LOCATION
+    type: select
+    label: Deployment Location
+    description: >-
+      Where should the mod be deployed? Pick a location that is close to your
+      Firestore database. See
+      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+  - param: NODE_PATH
+    type: string
+    label: Path at which this function should limit children
+    description: >-
+      Path at which to limit the number of child nodes.
+    validationRegex: ^\S+$
+    validationErrorMessage: Path cannot have spaces.
+    required: true
   - param: MAX_COUNT
     type: string
     label: Max number of items to keep in the database path
@@ -37,12 +82,4 @@ params:
       truncated.
     validationRegex: ^\d+$
     validationErrorMessage: Invalid MAX_COUNT, must be a positive integer.
-    required: true
-  - param: NODE_PATH
-    type: string
-    label: Path at which this function should limit children
-    description: >-
-      Path at which to limit the number of child nodes.
-    validationRegex: ^\S+$
-    validationErrorMessage: Path cannot have spaces.
     required: true

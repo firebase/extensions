@@ -2,67 +2,119 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { Translate } from "@google-cloud/translate";
 
+import config from "./config";
+import * as logs from "./logs";
+
 type Translation = {
   language: string;
   message: string;
 };
 
+enum ChangeType {
+  CREATE,
+  DELETE,
+  UPDATE,
+}
+
 const translate = new Translate({ projectId: process.env.PROJECT_ID });
 
-// languages to be translated into
-const LANGUAGES = process.env.LANGUAGES.split(",");
-const MESSAGE_FIELD_NAME = process.env.MESSAGE_FIELD_NAME;
-const TRANSLATIONS_FIELD_NAME = process.env.TRANSLATIONS_FIELD_NAME;
-
-// Initializing firebase-admin
+// Initialize the Firebase Admin SDK
 admin.initializeApp();
 
-// Translate an incoming message.
+logs.init();
+
 export const fstranslate = functions.handler.firestore.document.onWrite(
-  (change): Promise<void> | void => {
-    if (!change.after.exists) {
-      // Document was deleted, ignore
-      console.log("Document was deleted, ignoring");
-      return;
-    } else if (!change.before.exists) {
-      // Document was created, check if message exists
-      const msg = change.after.get(MESSAGE_FIELD_NAME);
-      if (msg) {
-        console.log("Document was created with message, translating");
-        return translateDocument(change.after);
-      } else {
-        console.log("Document was created without a message, skipping");
-        return;
-      }
-    } else {
-      // Document was updated, check if message has changed
-      const msgAfter = change.after.get(MESSAGE_FIELD_NAME);
-      const msgBefore = change.before.get(MESSAGE_FIELD_NAME);
+  async (change): Promise<void> => {
+    logs.start();
 
-      if (msgAfter === msgBefore) {
-        console.log(
-          "Document was updated, but message has not changed, skipping"
-        );
-        return;
+    const changeType = getChangeType(change);
+
+    try {
+      switch (changeType) {
+        case ChangeType.CREATE:
+          await handleCreateDocument(change.after);
+          break;
+        case ChangeType.DELETE:
+          handleDeleteDocument();
+          break;
+        case ChangeType.UPDATE:
+          await handleUpdateDocument(change.before, change.after);
+          break;
+        default:
+          throw new Error(`Invalid change type: ${changeType}`);
       }
 
-      if (msgAfter) {
-        console.log("Document was updated, message has changed, translating");
-        return translateDocument(change.after);
-      } else {
-        console.log("Document was updated, no message exists, skipping");
-        return;
-      }
+      logs.complete();
+    } catch (err) {
+      logs.error(err);
     }
   }
 );
 
+const extractMsg = (snapshot: admin.firestore.DocumentSnapshot): any => {
+  return snapshot.get(config.messageFieldName);
+};
+
+const getChangeType = (
+  change: functions.Change<admin.firestore.DocumentSnapshot>
+): ChangeType => {
+  if (!change.after.exists) {
+    return ChangeType.DELETE;
+  }
+  if (!change.before.exists) {
+    return ChangeType.CREATE;
+  }
+  return ChangeType.UPDATE;
+};
+
+const handleCreateDocument = async (
+  snapshot: admin.firestore.DocumentSnapshot
+): Promise<void> => {
+  const msg = extractMsg(snapshot);
+  if (msg) {
+    logs.documentCreatedWithMsg();
+    await translateDocument(snapshot);
+  } else {
+    logs.documentCreatedNoMsg();
+  }
+};
+
+const handleDeleteDocument = (): void => {
+  logs.documentDeleted();
+};
+
+const handleUpdateDocument = async (
+  before: admin.firestore.DocumentSnapshot,
+  after: admin.firestore.DocumentSnapshot
+): Promise<void> => {
+  const msgAfter = extractMsg(after);
+  const msgBefore = extractMsg(before);
+
+  const msgHasChanged = msgAfter !== msgBefore;
+  if (!msgHasChanged) {
+    logs.documentUpdatedUnchangedMsg();
+    return;
+  }
+
+  if (msgAfter) {
+    logs.documentUpdatedChangedMsg();
+    await translateDocument(after);
+  } else if (msgBefore) {
+    logs.documentUpdatedDeletedMsg();
+    await updateTranslations(after, admin.firestore.FieldValue.delete());
+  } else {
+    logs.documentUpdatedNoMsg();
+  }
+};
+
 const translateDocument = async (
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
-  const message: string = snapshot.get(MESSAGE_FIELD_NAME);
+  const message: string = extractMsg(snapshot);
 
-  const tasks = LANGUAGES.map(
+  logs.translateMsgAllLanguages(message, config.languages);
+
+  const tasks = config.languages.map(
     async (targetLanguage: string): Promise<Translation> => {
       const translatedMsg = await translateMessage(message, targetLanguage);
       return {
@@ -72,23 +124,51 @@ const translateDocument = async (
     }
   );
 
-  const translations = await Promise.all(tasks);
-  const translationsMap: { [language: string]: string } = translations.reduce(
-    (output, translation) => {
-      output[translation.language] = translation.message;
-      return output;
-    },
-    {}
-  );
+  try {
+    const translations = await Promise.all(tasks);
 
-  // Update the document
-  await snapshot.ref.update(TRANSLATIONS_FIELD_NAME, translationsMap);
+    logs.translateMsgAllLanguagesComplete(message);
+
+    const translationsMap: { [language: string]: string } = translations.reduce(
+      (output, translation) => {
+        output[translation.language] = translation.message;
+        return output;
+      },
+      {}
+    );
+
+    await updateTranslations(snapshot, translationsMap);
+  } catch (err) {
+    logs.translateMsgAllLanguagesError(message, err);
+    throw err;
+  }
 };
 
 const translateMessage = async (
   msg: string,
   targetLanguage: string
 ): Promise<string> => {
-  const [translatedMsg] = await translate.translate(msg, targetLanguage);
-  return translatedMsg;
+  try {
+    logs.translateMsg(msg, targetLanguage);
+
+    const [translatedMsg] = await translate.translate(msg, targetLanguage);
+
+    logs.translateMsgComplete(msg, targetLanguage);
+
+    return translatedMsg;
+  } catch (err) {
+    logs.translateMsgError(msg, targetLanguage, err);
+    throw err;
+  }
+};
+
+const updateTranslations = async (
+  snapshot: admin.firestore.DocumentSnapshot,
+  translations: any
+): Promise<void> => {
+  logs.updateDocument(snapshot.ref.path);
+
+  await snapshot.ref.update(config.translationsFieldName, translations);
+
+  logs.updateDocumentComplete(snapshot.ref.path);
 };
