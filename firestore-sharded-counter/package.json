@@ -2,6 +2,7 @@
   "name": "firestore-sharded-counter",
   "main": "functions/lib/index.js",
   "author": "patryk@google.com",
+  "license": "Apache-2.0",
   "description": "Auto-scalable counters for your app.",
   "dependencies": {
     "@google-cloud/firestore": "^1.3.0",

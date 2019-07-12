@@ -1,6 +1,7 @@
 {
   "name": "budget-notification",
   "description": "Sends budget alerts to Zapier and allows the mod consumer to configure notifications based on budget thresholds and optionally set a hard cap to disable billing.",
+  "license": "Apache-2.0",
   "scripts": {
     "lint": "eslint .",
     "serve": "firebase serve --only functions",

@@ -2,7 +2,7 @@
   "name": "remote-config-to-slack",
   "version": "0.1.0",
   "description": "Remote Config to Slack",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "main": "functions/lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",

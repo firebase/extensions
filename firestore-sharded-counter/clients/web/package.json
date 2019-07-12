@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "src/index.js",
   "author": "patryk@google.com",
+  "license": "Apache-2.0",
   "description": "Web SDK to access sharded counters.",
   "dependencies": {
     "@types/uuid": "^3.4.4",

@@ -1,9 +1,17 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2019 Google LLC
  *
- * Use of this source code is governed by an MIT-style
- * license that can be found in the LICENSE file or at
- * https://opensource.org/licenses/MIT.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 import { initializeApp, credential } from "firebase-admin";
@@ -36,12 +44,12 @@ async function main() {
         docs: range(10).map(() => {
           return {
             path: "stress_test/counter/_counter_shards_/" + uuid.v4(),
-            object: { counter: 1 }
+            object: { counter: 1 },
           };
-        })
-      }
+        }),
+      };
       batch.set(taskRef, taskInfo);
-    })
+    });
     await batch.commit();
     console.log("Scheduled 1000 increments to counter: " + i);
     const sleepTime = timestamp + 1000 - Date.now();
