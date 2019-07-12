@@ -26,7 +26,7 @@ exports.error = (err) => {
     console.error("Error whilst truncating the database node", err);
 };
 exports.init = () => {
-    console.log("Initialising mod with configuration", config_1.default);
+    console.log("Initializing mod with configuration", config_1.default);
 };
 exports.pathSkipped = (path) => {
     console.log(`Path: '${path}' does not need to be truncated`);

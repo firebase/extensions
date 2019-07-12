@@ -17,6 +17,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = {
     firestorePaths: process.env.FIRESTORE_PATHS,
+    location: process.env.LOCATION,
     rtdbPaths: process.env.RTDB_PATHS,
     storagePaths: process.env.STORAGE_PATHS,
 };

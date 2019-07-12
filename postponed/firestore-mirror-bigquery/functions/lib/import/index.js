@@ -81,10 +81,10 @@ const run = () => __awaiter(this, void 0, void 0, function* () {
     // Is the collection path for a sub-collection and does the collection path
     // contain any wildcard parameters
     const idFieldNames = util_1.extractIdFieldNames(collectionPath);
-    // This initialisation should be moved to `mod install` if Mods adds support
+    // This initialization should be moved to `mod install` if Mods adds support
     // for executing code as part of the install process
     // Currently it runs on every cold start of the function
-    yield bigquery_1.initialiseSchema(datasetId, tableName, schema, idFieldNames);
+    yield bigquery_1.initializeSchema(datasetId, tableName, schema, idFieldNames);
     console.log(`Mirroring data from Firestore Collection: ${collectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${tableName}`);
     const importTimestamp = new Date().toISOString();
     // Load all the data for the collection

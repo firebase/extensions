@@ -47,7 +47,7 @@ exports.imageUploading = (path) => {
     console.log(`Uploading resized image to '${path}'`);
 };
 exports.init = () => {
-    console.log("Initialising mod with configuration", config_1.default);
+    console.log("Initializing mod with configuration", config_1.default);
 };
 exports.signedUrlsGenerated = () => {
     console.log("Generated Signed URLs");

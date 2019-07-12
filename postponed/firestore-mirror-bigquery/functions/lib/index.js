@@ -29,11 +29,11 @@ const firestore_1 = require("./firestore");
 const util_1 = require("./util");
 // TODO: How can we load a file dynamically?
 const schemaFile = require("../schema.json");
-// Flag to indicate if the BigQuery schema has been initialised.
-// This is a work around to prevent the need to run the initialisation on every
-// function execution and instead restricts the initialisation to cold starts
+// Flag to indicate if the BigQuery schema has been initialized.
+// This is a work around to prevent the need to run the initialization on every
+// function execution and instead restricts the initialization to cold starts
 // of the function.
-let isSchemaInitialised = false;
+let isSchemainitialized = false;
 exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change, context) => __awaiter(this, void 0, void 0, function* () {
     const collectionPath = process.env.COLLECTION_PATH;
     const datasetId = process.env.DATASET_ID;
@@ -46,12 +46,12 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
     // NOTE: This is a workaround as `context.params` is not available in the
     // `.handler` namespace
     const idFieldNames = util_1.extractIdFieldNames(collectionPath);
-    // This initialisation should be moved to `mod install` if Mods adds support
+    // This initialization should be moved to `mod install` if Mods adds support
     // for executing code as part of the install process
     // Currently it runs on every cold start of the function
-    if (!isSchemaInitialised) {
-        yield bigquery_1.initialiseSchema(datasetId, tableName, schema, idFieldNames);
-        isSchemaInitialised = true;
+    if (!isSchemainitialized) {
+        yield bigquery_1.initializeSchema(datasetId, tableName, schema, idFieldNames);
+        isSchemainitialized = true;
     }
     console.log(`Mirroring data from Firestore Collection: ${process.env.COLLECTION_PATH}, to BigQuery Dataset: ${datasetId}, Table: ${tableName}`);
     // Identify the operation and data to be inserted

@@ -38,7 +38,7 @@ exports.firestorePathError = (path, err) => {
     console.error(`Error deleting: '${path}' from Cloud Firestore`, err);
 };
 exports.init = () => {
-    console.log("Initialising mod with configuration", config_1.default);
+    console.log("Initializing mod with configuration", config_1.default);
 };
 exports.rtdbDeleted = () => {
     console.log("Finished deleting user data from the Realtime Database");

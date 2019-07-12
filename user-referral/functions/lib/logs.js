@@ -39,7 +39,7 @@ exports.errorSendInvitation = (err) => {
     console.error("Error when sending invitation", err);
 };
 exports.init = () => {
-    console.log("Initialising mod with configuration", obfuscatedConfig);
+    console.log("Initializing mod with configuration", obfuscatedConfig);
 };
 exports.invitationCreated = (path, id) => {
     console.log(`Created invitation id: '${id}' in collection: '${path}'`);

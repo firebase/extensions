@@ -18,7 +18,7 @@ import * as firebase from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as _ from "lodash";
 
-import { buildDataRow, initialiseSchema, insertData } from "./bigquery";
+import { buildDataRow, initializeSchema, insertData } from "./bigquery";
 import { extractSnapshotData, FirestoreSchema } from "./firestore";
 import {
   extractIdFieldNames,
@@ -29,11 +29,11 @@ import {
 // TODO: How can we load a file dynamically?
 const schemaFile = require("../schema.json");
 
-// Flag to indicate if the BigQuery schema has been initialised.
-// This is a work around to prevent the need to run the initialisation on every
-// function execution and instead restricts the initialisation to cold starts
+// Flag to indicate if the BigQuery schema has been initialized.
+// This is a work around to prevent the need to run the initialization on every
+// function execution and instead restricts the initialization to cold starts
 // of the function.
-let isSchemaInitialised = false;
+let isSchemainitialized = false;
 
 exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
   async (change, context) => {
@@ -51,12 +51,12 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
     // `.handler` namespace
     const idFieldNames = extractIdFieldNames(collectionPath);
 
-    // This initialisation should be moved to `mod install` if Mods adds support
+    // This initialization should be moved to `mod install` if Mods adds support
     // for executing code as part of the install process
     // Currently it runs on every cold start of the function
-    if (!isSchemaInitialised) {
-      await initialiseSchema(datasetId, tableName, schema, idFieldNames);
-      isSchemaInitialised = true;
+    if (!isSchemainitialized) {
+      await initializeSchema(datasetId, tableName, schema, idFieldNames);
+      isSchemainitialized = true;
     }
 
     console.log(

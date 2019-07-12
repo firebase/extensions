@@ -23,7 +23,7 @@ exports.error = (err) => {
     console.error("Error sending message to Slack", err);
 };
 exports.init = () => {
-    console.log("Initialising mod with configuration", config_1.default);
+    console.log("Initializing mod with configuration", config_1.default);
 };
 exports.messageSending = (url) => {
     console.log(`Sending message to Slack URL: '${url}'`);
@@ -33,4 +33,7 @@ exports.messageSent = (url) => {
 };
 exports.start = () => {
     console.log("Started mod execution with configuration", config_1.default);
+};
+exports.textMissing = () => {
+    console.warn("PubSub message does not contain a `text` field");
 };

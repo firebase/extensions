@@ -71,7 +71,7 @@ export const fileUploading = (hash: string) => {
 };
 
 export const init = () => {
-  console.log("Initialising mod with configuration", config);
+  console.log("Initializing mod with configuration", config);
 };
 
 export const repositoryCloned = (repository: string, path: string) => {

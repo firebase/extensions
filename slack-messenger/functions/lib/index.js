@@ -33,7 +33,7 @@ exports.slackMessenger = functions.handler.pubsub.topic.onPublish((message) => _
     try {
         const { text } = message.json;
         if (!text) {
-            console.warn("PubSub message does not contain a `text` field");
+            logs.textMissing();
             return;
         }
         logs.messageSending(config_1.default.slackWebhookUrl);

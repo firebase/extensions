@@ -45,7 +45,7 @@ exports.error = (err) => {
     console.error("Error when shortening url", err);
 };
 exports.init = () => {
-    console.log("Initialising mod with configuration", obfuscatedConfig);
+    console.log("Initializing mod with configuration", obfuscatedConfig);
 };
 exports.shortenUrl = (url) => {
     console.log(`Shortening url: '${url}'`);

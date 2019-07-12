@@ -32,7 +32,7 @@ exports.error = (err) => {
     console.error("Error when sending remote config to slack", err);
 };
 exports.init = () => {
-    console.log("Initialising mod with configuration", config_1.default);
+    console.log("Initializing mod with configuration", config_1.default);
 };
 exports.recentTemplatesLoaded = (version) => {
     console.log(`Loaded recent templates at version: ${version}`);
