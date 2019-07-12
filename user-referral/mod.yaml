@@ -13,12 +13,14 @@
 # limitations under the License.
 
 name: invites-mod
-displayName: An invitation service
+displayName: Enable users to refer friends
 specVersion: v1beta1
 version: 0.1.0
-description: >
-  Adds basic invite-a-friend functionality to your Android, iOS, or Web app!
-  Requires a Sendgrid account, which you can sign up for free.
+
+description: 
+  Allow your app users to send a pre-populated email to invite their friends to the app. This mod uses Cloud Firestore to
+  track invites and conversions, and SendGrid to send emails. Users must be managed by Firebase AUthentication.(Requires SendGrid
+  account)
 
 license: Apache-2.0
 billingRequired: true

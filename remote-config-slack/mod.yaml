@@ -13,13 +13,12 @@
 # limitations under the License.
 
 name: remote-config-to-slack
-displayName: Remote Config to Slack
+displayName: Post Remote Config changes to Slack
 specVersion: v1beta1
 version: 0.1.0
 
 description:
-  Listens for changes to Firebase Remote Config, pulls the deltas and posts it
-  to Slack.
+  Post remote config changes to a specified Slack channel so that your whole team stays in the loop.(Requires Slack account) 
 
 license: Apache-2.0
 billingRequired: true

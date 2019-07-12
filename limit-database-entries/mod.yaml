@@ -13,14 +13,14 @@
 # limitations under the License.
 
 name: limit-database-entries
-displayName: Limit the number of entries in a Firebase realtimedatabase object
+displayName: Limit database entries in Realtime Database
 specVersion: v1beta1
 version: 0.1.0
 
 description: >-
-  Keep the number of items in a Firebase realtime database for a given path
-  below a given number. This can be used to limit the number of lines of a chat
-  history or logs.
+  Limit the number of entries,such as the lines of a chat history, below a specified figure for a given 
+  path in a Firebase Realtime Database project. 
+ 
 
 license: Apache-2.0
 billingRequired: false

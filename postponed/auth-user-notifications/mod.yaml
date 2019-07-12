@@ -13,14 +13,15 @@
 # limitations under the License.
 
 name: auth-user-notifications
-displayName: Send FCM messages to a user
+displayName: Send push notification to specific users
 specVersion: v1beta1
 version: 0.1.0
 
 description: >-
-  Send FCM messages to individual Auth users. This mod creates an event listener
-  which triggers when a notification is added to Firestore.
-
+  Use Firebase Cloud Messaging to send out notifications whenever a Cloud Firestore document containg the specified
+  content and target user IDs is written to a particular collection. This mod is accompanied by client SDKs for Android,
+  iOS,and Web for managing device tokens in Cloud Firestore. 
+  
 license: Apache-2.0
 billingRequired: true
 sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/auth-user-notifications

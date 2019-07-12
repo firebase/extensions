@@ -13,14 +13,14 @@
 # limitations under the License.
 
 name: fs-url-shortener
-displayName: Firestore URL Shortener
+displayName: Shorten URLs written to Cloud Firestore
 specVersion: v1beta1
 version: 0.1.0
 
 description:
-  When a new URL is added to a Cloud Firestore Document, shorten the URL using
-  Bit.ly and add it to the Document as an additional field.
-
+  Auomatically shorten URLs written to a specified collection in Cloud Firestore using the Bitly API. Both the original and 
+  shortened URLs are stored.
+  
 license: Apache-2.0
 billingRequired: true
 sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-url-shortener

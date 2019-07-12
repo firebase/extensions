@@ -13,11 +13,14 @@
 # limitations under the License.
 
 name: data-deletion
-displayName: User Data Deletion
+displayName: Auto-delete user data
 specVersion: v1beta1
 version: 0.1.0
 
-description: Automatically delete a user's data when they delete their account.
+description: 
+  When a user deletes their account, automatically delete their data from Cloud Firestore, Realtime Database, and Cloud Storage.
+  This mod requires data schemas to use the User ID provided by Firebase Authentication, so users must be managed by Firebase
+  Authentication.
 
 license: Apache-2.0
 billingRequired: false

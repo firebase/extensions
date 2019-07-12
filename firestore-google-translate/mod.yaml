@@ -13,14 +13,18 @@
 # limitations under the License.
 
 name: fs-google-translate
-displayName: Translate a message in Firestore
 specVersion: v1beta1
 version: 0.1.0
+author:
+  authorName: Chris Bianca
+  email: chris@csfrequency.com
+  url: https://github.com/chrisbianca
+  
+displayName: Translate text in Cloud Firestore
 
 description:
-  When a message is written to Cloud Firestore, translate the message in the
-  provided language to multiple destination languages as specified by the mod
-  user.
+  Translate text written to a Cloud Firestore collection into one or more languages. Both original text and
+  translated text are stored in Cloud Firestore.
 
 license: Apache-2.0
 billingRequired: false

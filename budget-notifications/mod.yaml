@@ -14,13 +14,12 @@
 
 specVersion: v1beta1
 name: budget-notification
-displayName: Send budget alert to Zapier
+displayName: Send budget notifications to Zapier
 version: 1.0.0
 
 description:
-  A mod that sends budget alerts to Zapier and allows the mod consumer to
-  configure notifications based on budget thresholds and optionally set a hard
-  cap to disable billing.
+  Send notifications to Zapier when your Firebase project exceeds your budget. Optionally, you can also configure your Zapier
+  account to notify you and your team about budget overshooting via preferrred channels. (Requires a Zapier account)
 
 license: Apache-2.0
 billingRequired: true
