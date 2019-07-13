@@ -16,11 +16,11 @@ name: fs-google-translate
 specVersion: v1beta1
 version: 0.1.0
   
-displayName: Translate text in Cloud Firestore
+displayName: Translate text strings in Cloud Firestore
 
 description:
-  Translate text written to a Cloud Firestore collection into one or more languages. Both original text and
-  translated text are stored in Cloud Firestore.
+  Translate strings written to a Cloud Firestore collection into one or more languages. Both the original text string and
+  translated text string are stored in the same document.
 
 license: Apache-2.0
 billingRequired: false
@@ -38,18 +38,18 @@ contributors:
 
 apis:
   - apiName: translate.googleapis.com
-    reason:
-      To use Cloud Translate to translate strings between multiple languages.
+    reason: To use Google Translate to translate strings into your specified target languages.
 
 roles:
   - role: datastore.user
-    reason: Allows the mod to write translations into Cloud Firestore.
+    reason: Allows the mod to write translated strings to Cloud Firestore.
 
 resources:
   - name: fstranslate
     type: firebasemods.v1beta1.function
     description:
-      listen for new messages, translate them and save them to Cloud Firestore
+      Listens for writes of new strings to your specified Cloud Firestore collection, translates the strings,
+      then writes the translated strings back to the same document.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -60,10 +60,10 @@ resources:
 params:
   - param: LOCATION
     type: select
-    label: Deployment Location
+    label: Deployment location
     description: >-
-      Where should the mod be deployed? Pick a location that is close to your
-      Firestore database. See
+      Where should the mod be deployed? Enter a location that is close to your
+      Cloud Firestore database. For help selecting a location, refer to 
       https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
     options:
       - label: Iowa (us-central1)
@@ -81,33 +81,33 @@ params:
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
   - param: LANGUAGES
-    label: Target languages to translate into, as a comma-separated list
+    label: Target languages for translations, as a comma-separated list
     description: >
-      What languages would you like to translate provided text into? Please
-      input these as a comma-separated list, e.g. en,es,de,fr. [List of
-      supported languages.](https://cloud.google.com/translate/docs/languages)
+      Into which target languages do you want to translate new strings?
+      Enter the languages as ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr.
+      Visit https://cloud.google.com/translate/docs/languages for a list of supported languages.
     default: en,es,de,fr
     validationRegex: "^[a-zA-Z,-]+$"
     validationErrorMessage:
-      Languages must be a comma-separated list of language codes.
+      Languages must be a comma-separated list of ISO-639-1 language codes.
     required: true
   - param: COLLECTION_PATH
     label: Collection path
     description: >
-      What is the path to the collection containing the messages you would like
-      to translate?
+      What is the path to the collection that contains the strings that you
+      want to translate?
     default: messages
     required: true
   - param: MESSAGE_FIELD_NAME
     label: Message field name
     description: >
-      What is the name of the field that contains the message you would like to
-      translate?
+      What is the name of the field that contains the strings that you
+      want to translate?
     default: message
     required: true
   - param: TRANSLATIONS_FIELD_NAME
     label: Translations field name
     description: >
-      What is the name of the field where you'd like to store your translations?
+      What is the name of the field where you want to store your translations?
     default: translations
     required: true
