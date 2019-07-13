@@ -18,8 +18,8 @@ specVersion: v1beta1
 version: 0.1.0
 
 description:
-  Limit the number of entries,such as the lines of a chat history, below a specified figure for a given 
-  path in a Firebase Realtime Database project. 
+  Limit the number of nodes, such as the lines of a chat history, to your specified maximum count
+  in your specified Firebase Realtime Database path.
  
 license: Apache-2.0
 billingRequired: false
@@ -37,14 +37,15 @@ contributors:
 
 roles:
   - role: firebasedatabase.admin
-    reason: allows the mod to prune extra items from the Realtime Database.
+    reason: Allows the mod to delete nodes from your Realtime Database instance.
 
 resources:
   - name: rtdblimit
     type: firebasemods.v1beta1.function
     description:
-      listens for new children, checks if the max count has been exceeded and
-      truncates if necessary
+      Listens for new child nodes in your specified Realtime Database path,
+      checks if the max count has been exceeded,
+      then deletes the oldest nodes first, as needed to maintain the max count.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -54,11 +55,11 @@ resources:
 params:
   - param: LOCATION
     type: select
-    label: Deployment Location
+    label: Deployment location
     description: >-
-      Where should the mod be deployed? Pick a location that is close to your
-      Firestore database. See
-      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+      Where should the mod be deployed? You usually want a location close to your database.
+      Realtime Database instances are located in us-central1.
+      For help selecting a location, visit https://firebase.google.com/docs/functions/locations.
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -76,18 +77,18 @@ params:
         value: asia-northeast1
   - param: NODE_PATH
     type: string
-    label: Path at which this function should limit children
+    label: Realtime Database path
     description: >-
-      Path at which to limit the number of child nodes.
+      What is the Realtime Database path for which you want to limit the number of child nodes?
     validationRegex: ^\S+$
     validationErrorMessage: Path cannot have spaces.
     required: true
   - param: MAX_COUNT
     type: string
-    label: Max number of items to keep in the database path
+    label: Maximum count of nodes to keep
     description: >-
-      Maximum number of items to keep in the database path. Older items will be
-      truncated.
+      What is the maximum count of nodes to keep in your specified database path?
+      The oldest nodes will be deleted first to maintain this max count.
     validationRegex: ^\d+$
     validationErrorMessage: Invalid MAX_COUNT, must be a positive integer.
     required: true
