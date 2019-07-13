@@ -20,9 +20,9 @@ license: Apache-2.0
 displayName: Resize images in Cloud Storage
 
 description:
-  Resize new images uploaded to a Cloud Storage bucket to a specified size. Both the original and the resized images are stored
-  in the same bucket. Additionally, this mod can be configured to generate the signed URLs for both images and to store the 
-  URLs in Cloud Firestore.
+  Resize new images uploaded to a Cloud Storage bucket to a specified size. Both the original and the resized images
+  are stored in the same bucket. Additionally, you can configure this mod to generate the signed URLs for both images
+  and to store the URLs in Realtime Database.
 
 billingRequired: false
 sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/image-resizer
@@ -45,17 +45,18 @@ apis:
 
 roles:
   - role: storage.admin
-    reason: allows the mod to store generated images in Cloud Storage
+    reason: Allows the mod to store resized images in Cloud Storage
   - role: iam.serviceAccountTokenCreator
-    reason: allows the mod to generate signed URLs
+    reason: Allows the mod to generate signed URLs
   - role: firebasedatabase.admin
-    reason: allows the mod to store signed URLs in the Realtime Database
+    reason: Allows the mod to store signed URLs in Realtime Database
 
 resources:
   - name: generateResizedImage
     type: firebasemods.v1beta1.function
     description:
-      listen for new images, resize them and save them to cloud storage
+      Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images, then 
+      stores both images in the same Cloud Storage bucket.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -66,11 +67,11 @@ resources:
 params:
   - param: LOCATION
     type: select
-    label: Deployment Location
+    label: Deployment location
     description: >-
-      Where should the mod be deployed? Pick a location that is close to your
-      Firestore database. See
-      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+      Where should the mod be deployed? You usually want a location close to your database.
+      Realtime Database instances are located in us-central1.
+      For help selecting a location, visit https://firebase.google.com/docs/functions/locations.
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -86,57 +87,58 @@ params:
         value: asia-east2
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
+  
   - param: IMG_BUCKET
     type: string
-    label: Storage bucket to listen to for creation of resized images
+    label: Cloud Storage bucket for images
     description: >
-      What storage bucket will the images that are to be resized be uploaded to?
+      Which Cloud Storage bucket will contain the uploaded images that you want to resize?
+      This bucket will also store the resized images.
     default: ${STORAGE_BUCKET}
+  
   - param: IMG_MAX_HEIGHT
     type: string
     label: Maximum height of resized image
     description: >
-      What should be the maximum height of the resized image (in pixels)?
-    # all default values must be strings, so number have to be wrapped in quotes
+      What do you want the maximum height of resized images to be (in pixels)?
+      Learn more about how this mod resizes images to maintain aspect ratio in the mod's README.
+    # all default values must be strings, so number must be wrapped in quotes
     default: "200"
     validationRegex: ^\d+$
     validationErrorMessage: Invalid height, must be a positive integer.
+
   - param: IMG_MAX_WIDTH
     type: string
     label: Maximum width of resized image
     description: >
-      What should be the maximum width of the resized image (in pixels)?
+      What do you want the maximum width of resized images to be (in pixels)?
+      Learn more about how this mod resizes images to maintain aspect ratio in the mod's README.
+    # all default values must be strings, so number must be wrapped in quotes
     default: "200"
     validationRegex: ^\d+$
     validationErrorMessage: Invalid width, must be a positive integer.
+ 
   - param: SIGNED_URLS_PATH
-    label:
-      Path representing Realtime Database node where signed URLs for the resized
-      image and original image will be uploaded
+    label: (Optional) Realtime Database path for signed URLs for images
     description: >
-      What would you like to name the node in Firebase Realtime Database under
-      which signed URLs
-      (https://cloud.google.com/storage/docs/access-control/signed-urls) for the
-      resized image and original image will be uploaded? Signed URLs is a
-      mechanism for query string authentication for buckets and objects. Signed
-      URLs provide a way to give time-limited read or write access to anyone in
-      possession of the URL, regardless of whether they have a Google account.
-      This is not a required variable. If you would prefer not to use signed
-      URLs, leave this field empty.
+      What is the Realtime Database path where you want to store signed URLs for the original and resized images?
+      Learn more about signed URLs: https://cloud.google.com/storage/docs/access-control/signed-urls (or in this mod's README)
+      If you prefer to not use signed URLs, leave this field empty.
     required: false
+
   - param: SIGNED_URLS_EXPIRATION_DATE
     type: string
-    label: Date after which the signed URLs will expire (format is MM-DD-YYYY)
+    label: (Optional) Date after which signed URLs will expire (MM-DD-YYYY)
     description: >
-      After what date would you like the signed URLs to expire? Please input the
-      date in MM-DD-YYYY format. If you would prefer not to use signed URLs,
-      leave this field as the default.
+      After what date do you want the signed URLs to expire? Enter the date in MM-DD-YYYY format.
+      If you prefer to not use signed URLs, leave this field as the default.
     default: "03-01-2500"
     required: false
+
   - param: CACHE_CONTROL_HEADER
-    label: Optional `cache-control` header for resized files
+    label: (Optional) `cache-control` header for resized images
     description: >
-      Would you like to specify a `cache-control` header for the resize image
-      files? If you would prefer not to use a `cache-control` header, leave this
-      field empty.
+      Do you want to specify a `cache-control` header for the resized image files?
+      Learn more about `cache-control` headers: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+      If you prefer not to use a `cache-control` header, leave this field empty.
     required: false
