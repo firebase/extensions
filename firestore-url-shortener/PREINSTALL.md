@@ -4,4 +4,4 @@ This mod listens to your specified Cloud Firestore collection, then shortens any
 
 If the orignal URL in a document is updated, then the shortened URL will be automatically updated, too.
 
-This mod uses Bit.ly to shorten URLs, so you'll need to supply your Bit.ly access token as part of this mod's installation. You can generate this access token at https://bitly.com/a/oauth_apps.
+This mod uses Bitly to shorten URLs, so you'll need to supply your Bitly access token as part of this mod's installation. You can generate this access token at https://bitly.com/a/oauth_apps.

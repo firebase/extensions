@@ -19,7 +19,7 @@ version: 0.1.0
 
 description:
   Auomatically shorten URLs written to a specified collection in Cloud Firestore using the Bitly API. Both the original and 
-  shortened URLs are stored.
+  shortened URLs are stored in the same document.
   
 license: Apache-2.0
 billingRequired: true
@@ -37,14 +37,14 @@ contributors:
 
 roles:
   - role: datastore.user
-    reason: Allows the mod to write short URLs into Cloud Firestore.
+    reason: Allows the mod to write shortened URLs to Cloud Firestore.
 
 resources:
   - name: fsurlshortener
     type: firebasemods.v1beta1.function
     description:
-      listens for new urls, shortens them and writes them back to the same
-      document
+      Listens for writes of new URLs to your specified Cloud Firestore collection, shortens the URLs,
+      then writes the shortened form back to the same document.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -55,10 +55,10 @@ resources:
 params:
   - param: LOCATION
     type: select
-    label: Deployment Location
+    label: Deployment location
     description: >-
-      Where should the mod be deployed? Pick a location that is close to your
-      Firestore database. See
+      Where should the mod be deployed? Enter a location that is close to your
+      Cloud Firestore database. For help selecting a location, refer to 
       https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
     options:
       - label: Iowa (us-central1)
@@ -76,29 +76,28 @@ params:
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
   - param: BITLY_ACCESS_TOKEN
-    label: Bit.ly access token
+    label: Bitly access token
     description: >
-      Please paste your access token obtained from your Bit.ly application
-      (https://bitly.com/a/oauth_apps). Click on "Generic access token" and
-      enter your password to generate the token.
+      What is your Bitly access token?
+      Generate this access token at https://bitly.com/a/oauth_apps, then copy-paste it.
     required: true
   - param: COLLECTION_PATH
     label: Collection path
     description: >
-      What is the path to the collection containing the links you would like to
-      shorten?
+      What is the path to the collection that contains the URLs that you
+      want to shorten?
     default: urls
     required: true
   - param: URL_FIELD_NAME
     label: URL field name
     description: >
-      What is the name of the field that contains the URL you would like to
-      shorten?
+      What is the name of the field that contains the original long URLs that you
+      want to shorten?
     default: url
     required: true
   - param: SHORT_URL_FIELD_NAME
     label: Short URL field name
     description: >
-      What is the name of the field where you'd like to store your short URLs?
+      What is the name of the field where you want to store your shortened URLs?
     default: shortUrl
     required: true
