@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: hosting-deploy
+name: github-hosting-deploy
 displayName: Deploy to Firebase hosting from Github
 specVersion: v1beta1
 version: 0.1.0

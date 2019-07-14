@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: remote-config-to-slack
+name: remote-config-slack
 displayName: Post Remote Config changes to Slack
 specVersion: v1beta1
 version: 0.1.0
