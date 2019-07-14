@@ -1,4 +1,4 @@
-When a user's account is deleted from Firebase Authentication, their data will be automatically deleted from your specified Realtime Database instance, Cloud Firestore instance, and/or Cloud Storage bucket.
+When a user's account is deleted from your project's authenticated users, their data will be automatically deleted from your specified Realtime Database instance, Cloud Firestore instance, and/or Cloud Storage bucket.
 
 ## Try it out
 
