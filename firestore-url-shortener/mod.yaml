@@ -18,7 +18,7 @@ specVersion: v1beta1
 version: 0.1.0
 
 description:
-  Auomatically shorten URLs written to a specified collection in Cloud Firestore using the Bitly API. Both the original and 
+  Automatically shorten URLs written to a specified collection in Cloud Firestore using the Bitly API. Both the original and 
   shortened URLs are stored in the same document.
   
 license: Apache-2.0
