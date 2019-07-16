@@ -18,8 +18,7 @@ specVersion: v1beta1
 displayName: Add new users to Mailchimp
 
 description:
-  Automatically add new users to a specified Mailchimp email list. Users must be mananged by Firebase Authentication.
-  (Requires Mailchimp account.)
+  Automatically add new users to a specified Mailchimp email list.
   
 license: Apache-2.0
 billingRequired: true
@@ -41,8 +40,8 @@ resources:
   - name: addUserToList
     type: firebasemods.v1beta1.function
     description:
-      listens to users being created and automatically adds them to a MailChimp
-      list
+      Listens for new user accounts (as managed by Firebase Authentication),
+      then automatically adds the new user to your specified MailChimp email list.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -52,8 +51,8 @@ resources:
   - name: removeUserFromList
     type: firebasemods.v1beta1.function
     description:
-      listens to users being deleted and automatically removes them from a
-      MailChimp list
+      Listens for existing user accounts to be deleted (as managed by Firebase Authentication),
+      then automatically removes them from your specified MailChimp email list.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -64,11 +63,10 @@ resources:
 params:
   - param: LOCATION
     type: select
-    label: Deployment Location
+    label: Deployment location
     description: >-
-      Where should the mod be deployed? Pick a location that is close to your
-      Firestore database. See
-      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+      Where should the mod be deployed?
+      For help selecting a location, visit https://firebase.google.com/docs/functions/locations.
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -87,17 +85,18 @@ params:
 
   - param: MAILCHIMP_API_KEY
     type: string
-    label: Mailchimp API Key
+    label: Mailchimp API key
     description: >-
-      You can get an API Key at https://admin.mailchimp.com/account/api/
+      What is your Mailchimp API key?
+      To obtain a Mailchimp API key, visit https://admin.mailchimp.com/account/api/.
     required: true
 
   - param: MAILCHIMP_AUDIENCE_ID
     type: string
     label: Audience ID
     description: >-
-      ID of audience to subscribe new users to. Go to
-      https://admin.mailchimp.com/lists, click on the desired list or create a
-      new one, then select **Settings** menu, and look for **Audience ID**. The
-      Audience ID looks something like `27735fc60a`.
+      What is the Mailchimp Audience ID to which you want to subscribe new users?
+      To find your Audience ID: visit https://admin.mailchimp.com/lists,
+      click on the desired list or create a new list, then select **Settings**.
+      Look for **Audience ID** (for example, `27735fc60a`).
     required: true
