@@ -1,6 +1,7 @@
-This Mod contains a single function that is triggered on a PubSub topic. When it receives a message, it takes the contents of the message and forwards it to Slack using the provided webhook URL.
+Use this mod to post messages to your Slack channel using Pub/Sub message queuing.
 
-Using PubSub as the message queue allows us to utilize PubSub's performance, queuing capabilities, and retry logic (if desired). This gives us more reliability over simply using the Slack webhook and allows us to publish messages from anywhere and have one central place that sends them to Slack.
+Whenever a message is published to your specified Pub/Sub topic, this mod takes the contents of the message and forwards it to Slack using the specfied webhook URL.
 
-Messages can also be published programmatically; see the PubSub documentation for
-more information: `https://cloud.google.com/pubsub/docs/publisher`
+Using Pub/Sub as the message queue allows this mod to utilize Pub/Sub's performance, queuing capabilities, and retry logic (if desired). This gives the mod more reliability over simply using the Slack webhook and allows the mod to publish messages from anywhere and have one central place that sends them to Slack.
+
+You can also publish messages programmatically; learn more in the [Pub/Sub documentation](https://cloud.google.com/pubsub/docs/publisher).
