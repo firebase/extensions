@@ -18,7 +18,7 @@ specVersion: v1beta1
 version: 0.1.0
 
 description: 
-  Keep accurate account of events in your app that happen at high velocity such as number of views and likes.
+  Keep an accurate account of events in your app that happen at high velocity, such as number of views and likes.
   (Requires Firebase Web SDK.)
 
 license: Apache-2.0
