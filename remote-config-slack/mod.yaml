@@ -18,7 +18,7 @@ specVersion: v1beta1
 version: 0.1.0
 
 description:
-  Post remote config changes to a specified Slack channel so that your whole team stays in the loop.(Requires Slack account) 
+  Post Firebase Remote Config changes to a specified Slack channel. 
 
 license: Apache-2.0
 billingRequired: true
@@ -38,18 +38,18 @@ contributors:
 
 apis:
   - apiName: firebaseremoteconfig.googleapis.com
-    reason: To read changes from RemoteConfig objects
+    reason: Required to read changes in Remote Config templates.
 
 roles:
   - role: cloudconfig.admin
-    reason: allows the mod to get information about a Remote Config change
+    reason: Allows the mod to get information about a Remote Config template change.
 
 resources:
   - name: showConfigDiff
     type: firebasemods.v1beta1.function
     description:
-      listen for remote config updates, identify the changes and send them to
-      Slack
+      Listens for Remote Config template updates, identifies the changes,
+      then sends a summary of the changes to your specified Slack channel.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -60,11 +60,10 @@ resources:
 params:
   - param: LOCATION
     type: select
-    label: Deployment Location
+    label: Deployment location
     description: >-
-      Where should the mod be deployed? Pick a location that is close to your
-      Firestore database. See
-      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+      Where should the mod be deployed?
+      For help selecting a location, visit https://firebase.google.com/docs/functions/locations.
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -83,9 +82,9 @@ params:
 
   - param: SLACK_WEBHOOK_URL
     type: string
-    label: Slack Webhook URL
+    label: Slack webhook URL
     description:
-      The Webhook URL provided by Slack to post into a channel (e.g.
-      `https://hooks.slack.com/services/FOO/BAR/KEY`; learn more at
-      `https://api.slack.com/incoming-webhooks` )
+      What is the webhook URL provided by Slack for posting into a channel?
+      Here's an example webhook URL: https://hooks.slack.com/services/FOO/BAR/KEY
+      Learn more about webhooks and Slack: https://api.slack.com/incoming-webhooks
     required: true
