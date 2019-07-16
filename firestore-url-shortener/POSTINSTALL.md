@@ -9,4 +9,4 @@ This mod shortens the URL then saves it in the `${param:SHORT_URL_FIELD_NAME}` f
 }
 ```
 
-If the orignal URL in a document is updated, then the shortened URL will be automatically updated, too.
+If the original URL in a document is updated, then the shortened URL will be automatically updated, too.
