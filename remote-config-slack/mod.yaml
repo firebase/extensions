@@ -18,7 +18,7 @@ specVersion: v1beta1
 version: 0.1.0
 
 description:
-  Post Firebase Remote Config changes to a specified Slack channel. 
+  Post Firebase Remote Config changes to a specified Slack channel. (Requires a slack account)
 
 license: Apache-2.0
 billingRequired: true
