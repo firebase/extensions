@@ -64,8 +64,8 @@ params:
     type: select
     label: Deployment location
     description: >-
-      Where should the mod be deployed? Enter a location that is close to your
-      Cloud Firestore database and/or Cloud Storage bucket. For help selecting a location, refer to 
+      Where should the mod be deployed? You usually want a location close to your database.
+      For help selecting a location, visit 
       https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
     options:
       - label: Iowa (us-central1)
