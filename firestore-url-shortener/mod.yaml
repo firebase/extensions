@@ -57,8 +57,8 @@ params:
     type: select
     label: Deployment location
     description: >-
-      Where should the mod be deployed? Enter a location that is close to your
-      Cloud Firestore database. For help selecting a location, refer to 
+      Where should the mod be deployed? You usually want a location close to your database.
+      For help selecting a location, visit 
       https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
     options:
       - label: Iowa (us-central1)
@@ -78,21 +78,18 @@ params:
   - param: BITLY_ACCESS_TOKEN
     label: Bitly access token
     description: >
-      What is your Bitly access token?
-      Generate this access token at https://bitly.com/a/oauth_apps, then copy-paste it.
+      What is your Bitly access token? Generate this access token at https://bitly.com/a/oauth_apps.
     required: true
   - param: COLLECTION_PATH
     label: Collection path
     description: >
-      What is the path to the collection that contains the URLs that you
-      want to shorten?
+      What is the path to the collection that contains the URLs that you want to shorten?
     default: urls
     required: true
   - param: URL_FIELD_NAME
     label: URL field name
     description: >
-      What is the name of the field that contains the original long URLs that you
-      want to shorten?
+      What is the name of the field that contains the original long URLs that you want to shorten?
     default: url
     required: true
   - param: SHORT_URL_FIELD_NAME
