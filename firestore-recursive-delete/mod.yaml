@@ -13,13 +13,13 @@
 # limitations under the License.
 
 name: firestore-recursive-delete
-displayName: Delete Cloud Firestore sub-collections
+displayName: Delete Cloud Firestore subcollections
 specVersion: v1beta1
 version: 0.1.0
 
 description:
-  This mod exposes an endpoint that can be called in client code to delete a Cloud Firestore collection or document,
-  as well as all its sub-collections.
+  Call the HTTPS function created by this mod to delete a specified Cloud Firestore collection or document,
+  as well as all its subcollections.
   
 license: Apache-2.0
 billingRequired: false
@@ -38,17 +38,18 @@ contributors:
 
 roles:
   - role: datastore.user
-    reason: allows the mod to delete data from Cloud Firestore
+    reason: Allows the mod to delete data from Cloud Firestore
   - role: firebase.viewer
     reason:
-      provides access to the `firebase.projects.get` permission needed by
-      firebase-tools
+      Provides access to the `firebase.projects.get` permission required by
+      firebase-tools (the Firebase CLI).
 
 resources:
   - name: fsdelete
     type: firebasemods.v1beta1.function
     description:
-      recursively deletes a Cloud Firestore collection and all sub-collections
+      When called, recursively deletes your specified Cloud Firestore collection or document,
+      as well as all its subcollections.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -59,11 +60,10 @@ resources:
 params:
   - param: LOCATION
     type: select
-    label: Deployment Location
+    label: Deployment location
     description: >-
-      Where should the mod be deployed? Pick a location that is close to your
-      Firestore database. See
-      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+      Where should the mod be deployed? You usually want a location close to your database.
+      For help selecting a location, visit https://firebase.google.com/docs/functions/locations.
     options:
       - label: Iowa (us-central1)
         value: us-central1
