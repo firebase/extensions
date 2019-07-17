@@ -16,7 +16,7 @@
     "@google-cloud/bigquery": "^2.1.0",
     "firebase-admin": "^7.1.1",
     "firebase-functions": "^2.2.1",
-    "lodash": "^4.17.11"
+    "lodash": "^4.17.14"
   },
   "devDependencies": {
     "inquirer": "^6.4.0",
