@@ -1,48 +1,31 @@
-# Add Users to Mailchimp List
+# mailchimper
 
-## Summary
+**VERSION**: 0.1.0
 
-When a new Firebase Authentication user is added to the Firebase project where this mod is installed, their email address will be added to a Mailchimp list that the mod consumer specifies when installing this mod. When that user is deleted, their email address will also be deleted from the Mailchimp list.
+**DESCRIPTION**: Automatically add new users to a specified Mailchimp email list.
 
-## Details
 
-This mod uses the Mailchimp API, and requires a [Mailchimp account](https://login.mailchimp.com/signup/). It also requires that users of the app are managed through [Firebase Authentication](https://firebase.google.com/docs/auth/). This mod only adds new users to the Mailchimp list. It does not do a bulk import of existing users.
 
-### Configuration
+**CONFIGURATION PARAMETERS:**
 
-This Mod requires 2 variables to correctly run:
+* Deployment location: *Where should the mod be deployed? For help selecting a location, visit https://firebase.google.com/docs/functions/locations.*
 
-- `MAILCHIMP_KEY` is the API key for the Mailchimp account.
-- `LIST_ID` is the ID associated with the Mailchimp list to add new users to. It is an auto-generated string of letters and numbers, and is different from the human-readable name of the list. It is available on the settings page for a Mailchimp list.
+* Mailchimp API key: *What is your Mailchimp API key? To obtain a Mailchimp API key, visit https://admin.mailchimp.com/account/api/.*
 
-### Required Roles
+* Audience ID: *What is the Mailchimp Audience ID to which you want to subscribe new users? To find your Audience ID: visit https://admin.mailchimp.com/lists, click on the desired list or create a new list, then select **Settings**. Look for **Audience ID** (for example, `27735fc60a`).*
 
-Since this Mod only interacts with the Mailchimp API, and not any other Google products. It does not require any IAM roles.
 
-### Resources Created
 
-This Mod creates two resources:
+**CLOUD FUNCTIONS CREATED:**
 
-- a Cloud Function that triggers for every new user, which makes a call to the Mailchimp API to add the user to the configured list.
-- a Cloud Function that triggers for every deleted user, which makes a call to the Mailchimp API to remove the user from the configured list.
+* addUserToList (providers/firebase.auth/eventTypes/user.create)
 
-### Privacy
+* removeUserFromList (providers/firebase.auth/eventTypes/user.delete)
 
-This mod requires the API key for the mod consumer's Mailchimp account. It stores it in the source of the Cloud Functions it creates.
 
-### Potential Costs
 
-_Disclaimer: without knowing your exact use, it's impossible to say exactly what this may cost._
+**DETAILS**: Use this mod to add new users to an email list.
 
-This mod will generate costs due to:
+This mod adds the email addresses of each new user to your specified Mailchimp list. Also, if the user deletes their user account for your app, this mod removes the user from the Mailchimp list.
 
-- **Cloud Functions Usage**: This Mod makes external network calls (to Mailchimp), therefore it will generate costs for Cloud Functions. See more details at https://firebase.google.com/pricing.
-- **Mailchimp Usage**: If there are a lot of new users, and the subscriber count for Mailchimp goes over the free quota, then you will have to upgrade to a paid plan. See https://mailchimp.com/pricing for more details.
-
-### Copyright
-
-Copyright 2018 Google LLC
-
-Use of this source code is governed by an MIT-style
-license that can be found in the LICENSE file or at
-https://opensource.org/licenses/MIT.
+This mod uses Mailchimp, so you'll need to supply your Mailchimp information as part of this mod's installation.

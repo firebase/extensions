@@ -1,46 +1,79 @@
-# Remote Config Slack
+# remote-config-slack
 
-## Summary
+**VERSION**: 0.1.0
 
-This mod defines a Cloud Function that triggers whenever a Firebase RemoteConfig is modified and posts it to the user-provided Slack API webhook.
+**DESCRIPTION**: Post Firebase Remote Config changes to a specified Slack channel. (Requires a slack account)
 
-## Details
 
-This mod listens on changes in RemoteConfig for a single Firebase project. See [Firebase RemoteConfig documentation](https://firebase.google.com/docs/remote-config/).
 
-This mod uses the Slack API, and requires a webhook to send data to. See [Slack Incoming Webhooks documentation](https://api.slack.com/incoming-webhooks).
+**CONFIGURATION PARAMETERS:**
 
-### Configuration
+* Deployment location: *Where should the mod be deployed? For help selecting a location, visit https://firebase.google.com/docs/functions/locations.*
 
-This Mod requires 1 environment variable:
+* Slack webhook URL: *What is the webhook URL provided by Slack for posting into a channel?
+Here's an example webhook URL: https://hooks.slack.com/services/FOO/BAR/KEY
+Learn more about webhooks and Slack: https://api.slack.com/incoming-webhooks*
 
-- `SLACK_WEBHOOK_URL` is the Incoming Webhook URL to which this mod will post RemoteConfig updates.
 
-### Required Roles
 
-This mod requires the growthAdmin role, since RemoteConfig is a Firebase Growth product.
+**CLOUD FUNCTIONS CREATED:**
 
-### Resources Created
+* showConfigDiff (google.firebase.remoteconfig.update)
 
-This Mod does not create any resources.
 
-### Privacy
 
-This mod requires a Slack webhook URL to which to post. It stores it in the source of the Cloud Functions it creates.
+**DETAILS**: Use this mod to send the configuration diff for Firebase Remote Config templates to a Slack webhook URL.
 
-### Potential Costs
+Whenever you modify a Remote Config template in your project, this mod sends the diff between the old and the new configs to your specified Slack webhook URL. Learn more about setting up and configuring templates in the [Remote Config documentation](https://firebase.google.com/docs/remote-config/templates). Note that the first version of your template will not output a diff, but all following updates to the template will show a diff for parameter changes.
 
-_Disclaimer: without knowing your exact use, it's impossible to say exactly what this may cost._
+Here's an example Remote Config diff, sent to Slack:
 
-This mod will generate costs due to:
+Remote Config template changed to version _2_.<br>
+Updated by `user@example.com`<br>
+from `CONSOLE` as `INCREMENTAL_UPDATE`.<br>
 
-- **Cloud Functions Usage**: This Mod makes external network calls (to Slack), therefore it will generate costs for Cloud Functions. See more details at https://firebase.google.com/pricing.
-- **Slack Usage**: This Mod sends Slack messages via a webhook - the number of messages that are displayed in Slack and the number of webhooks allowed differ based on the Slack Plan tier. See https://slack.com/plans .
+_Added 1 parameter:_
 
-### Copyright
+```{
+   "name": "growth_modal",
+   "param": {
+      "defaultValue": {
+         "value": "a"
+      },
+      "conditionalValues": {
+         "alternate_growth_modal": {
+            "value": "b"
+         }
+      },
+      "description": "display a modal to drive user conversion"
+   }
+}
+```
 
-Copyright 2019 Google LLC
+_Removed 1 parameter:_
 
-Use of this source code is governed by an MIT-style
-license that can be found in the LICENSE file or at
-https://opensource.org/licenses/MIT.
+```{
+   "name": "holiday_promo_enabled",
+   "param": {
+      "defaultValue": {
+         "value": "false"
+      }
+   }
+}
+```
+
+
+
+**APIS USED**:
+
+* firebaseremoteconfig.googleapis.com (Reason: Required to read changes in Remote Config templates.)
+
+
+
+**ACCESS REQUIRED**:
+
+
+
+This mod will operate with the following project IAM roles:
+
+* cloudconfig.admin (Reason: Allows the mod to get information about a Remote Config template change.)

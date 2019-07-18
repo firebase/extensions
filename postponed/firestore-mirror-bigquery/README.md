@@ -1,6 +1,6 @@
 # fs-mirror-bigquery
 
-**VERSION**: 1.0.0
+**VERSION**: 0.1.0
 
 **DESCRIPTION**: Mirror data for a Firestore Collection to BigQuery. This mod creates an event listener which triggers when Documents within a Collection are added, updated or deleted.
 
@@ -8,8 +8,7 @@
 
 **CONFIGURATION PARAMETERS:**
 
-* Deployment Location: *Where should the mod be deployed? (*us-central1, us-east1, europe-west1, asia-northeast1*) Pick a location that is close to your Firestore database.
-See https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.*
+* Deployment Location: *Where should the mod be deployed? Pick a location that is close to your Firestore database. See https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.*
 
 * Collection Path: *What is the path of the the collection you would like to mirror?*
 
@@ -50,7 +49,9 @@ The `Field` object consists of the following:
 - `fields`: An optional array of `Field` objects indicating the sub fields; only for `map` fields
 - `name`: The name of the field
 - `repeated`: An optional `boolean` to indicate this is an `array` field
-- `type`: The type of the field; one of: `boolean`, `geopoint`, `number`, `map`, `reference`, `string`, `timestamp`
+- `type`: The type of the field; one of: `boolean`, `geopoint`, `json`, `number`, `map`, `reference`, `string`, `timestamp`
+
+The special field type `json` can be used to write a Cloud Firestore `map` field to BigQuery as a serialized string of json rather than a structured record field. This is useful for dictionary fields which have variable keys.
 
 **It is recommended that you specify a `timestampField` in your schema as Cloud Functions for Firebase does not guarantee the ordering of event triggers.**
 

@@ -1,46 +1,67 @@
-# Recursively Delete Firestore Data
+# firestore-recursive-delete
 
-## Summary
+**VERSION**: 0.1.0
 
-Normally, deleting a Firestore document does not delete all of its subcollections. This leads to "orphaned" documents that still exist and are directly retrievable using their exact paths but do not show up in query results. This mod provides the ability for deleting all of the subcollections and documents of a path.
+**DESCRIPTION**: Call the HTTPS function created by this mod to delete a specified Cloud Firestore collection or document, as well as all its subcollections.
 
-## Details
 
-This mod creates an HTTPS callable function that the client code can call to recursively delete Firestore data. A path needs to be provided to the call. If the path represents a collection, then all of its documents and their subcollections will be deleted. If the path represents a document, then that document and all of its subcollections will be deleted. See `USAGE.md` for details.
 
-### Configuration
+**CONFIGURATION PARAMETERS:**
 
-This Mod has 1 optional environment variable for configuration:
+* Deployment location: *Where should the mod be deployed? You usually want a location close to your database. For help selecting a location, visit https://firebase.google.com/docs/functions/locations.*
 
-- `LOCATION`: location to deploy the mod. For optimal performance, the mod consumer should pick a location closest to their Firestore database location. See `mod.yaml` for more info.
 
-### Required Roles
 
-Since this Mod needs to be able to delete data from Firestore, it requires the `datastore.user` role. (Firestore uses Datastore IAM roles.)
+**CLOUD FUNCTIONS CREATED:**
 
-### Resources Created
+* fsdelete (HTTPS)
 
-This Mod creates one resource: an HTTPS Callable Cloud Function that the mod consumer's client code can call with a path parameter to recursively delete data at that path. You can learn more about HTTPS Callable functions at https://firebase.google.com/docs/functions/callable.
 
-### Privacy
 
-This mod stores the environment variables in the source of the Cloud Function.
+**DETAILS**: Use this mod to recursively delete Cloud Firestore data.
 
-### Potential Costs
+This mod creates an HTTPS-callable function that you can call in the client code to recursively delete data from a specified Cloud Firestore path. If the path represents a collection, then all of its documents and their subcollections will be deleted. If the path represents a document, then that document and all of its subcollections will be deleted.
 
-_Disclaimer: without knowing your exact use, it's impossible to say exactly what this may cost._
+To use this mod, you need to configure the following:
 
-This mod may generate costs due to:
+First, users that are allowed to delete data must have the `fsdelete` custom claim set to `true`:
 
-- **Cloud Functions Usage**: When the client code calls the Cloud Function, an invocation will occur. If the free quota for Cloud Functions is consumed, then it will generate cost for the Firebase Project.
-- **Firestore Usage**: Each invocation of the Cloud Function potentially results in document deletions. If the free quota for Firestore document deletion is consumed, then it will generate cost for the Firebase Project.
+```
+// Refer to: https://firebase.google.com/docs/auth/admin/custom-claims
+admin.auth().setCustomUserClaims(uid, {
+  fsdelete: true
+}).then(...)
+```
 
-See more details at https://firebase.google.com/pricing.
+Then, the client can call the HTTPS-callable function with the path parameter that specifies the data to delete.
 
-### Copyright
+Note that the sample code here is for JavaScript. Refer to the [Cloud Functions for Firebase documentation](https://firebase.google.com/docs/functions/callable) for syntax of other languages.
 
-Copyright 2018 Google LLC
+```
+// Initialize Cloud Functions for Firebase with the desired location:
+firebase.app().functions(LOCATION);
 
-Use of this source code is governed by an MIT-style
-license that can be found in the LICENSE file or at
-https://opensource.org/licenses/MIT.
+// Create and call the function:
+const deleteFn = firebase.functions().httpsCallable(FUNCTION_NAME);
+deleteFn({
+  path: '/widgets/foo123/orders'
+}).then((result) => {
+  // Delete success!
+  // ...
+}).catch((err) => {
+  // Delete failed.
+  // ...
+});
+```
+
+
+
+**ACCESS REQUIRED**:
+
+
+
+This mod will operate with the following project IAM roles:
+
+* datastore.user (Reason: Allows the mod to delete data from Cloud Firestore)
+
+* firebase.viewer (Reason: Provides access to the `firebase.projects.get` permission required by firebase-tools (the Firebase CLI).)

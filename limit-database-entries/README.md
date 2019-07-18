@@ -1,67 +1,39 @@
-# Limit Database Entries
+# limit-database-entries
 
-## Summary
+**VERSION**: 0.1.0
 
-Limit database entries in a path in a Firebase Realtime database to maximum
-MAX_COUNT entries.
-This can be used to limit the number of lines of a chat history or logs.
+**DESCRIPTION**: Limit the number of nodes, such as the lines of a chat history, to your specified maximum count in your specified Firebase Realtime Database path.
 
-## Details
 
-This Mod defines a Cloud Function that will trigger on write of a document to the Firebase Realtime Database. If the number of messages in the database at `NODE_PATH` exceeds `MAX_COUNT`, this mod will prune the messages down to `MAX_COUNT`, deleting the oldest messages first.
 
-For example, given a chat application with the following data structure:
+**CONFIGURATION PARAMETERS:**
 
-```
-/my-chat-app
-    /NODE_PATH
-        /key-123456
-            user: "Mat",
-            text: "Hey Bob!"
-        /key-123457
-            user: "Bob",
-            text: "Hey Mat! What's Up?"
-```
+* Deployment location: *Where should the mod be deployed? You usually want a location close to your database. Realtime Database instances are located in us-central1. For help selecting a location, visit https://firebase.google.com/docs/functions/locations.*
 
-`NODE_PATH` can be defined as `/chat/{message_id}`. Every time a new
-chat message is added, the mod counts the number of chat messages and
-removes the old ones if there are too many.
+* Realtime Database path: *What is the Realtime Database path for which you want to limit the number of child nodes?*
 
-### Configuration
+* Maximum count of nodes to keep: *What is the maximum count of nodes to keep in your specified database path? The oldest nodes will be deleted first to maintain this max count.*
 
-This Mod requires the following environment variables to be set:
 
-- `MAX_COUNT` an integer representing the upper limit of items the mod should keep
-- `NODE_PATH` a string representing the path we want the mod to operate on.
 
-### Required Roles
+**CLOUD FUNCTIONS CREATED:**
 
-This Mod requires the following IAM roles:
+* rtdblimit (providers/google.firebase.database/eventTypes/ref.create)
 
-- `firebase.developAdmin` allows access to the Firebase "develop" products. This mod uses this role to delete messages in the database.
 
-### Resources Created
 
-- a Cloud Function that triggers on write of a message in the database.
+**DETAILS**: Use this mod to control the maximum number of nodes stored in a Firebase Realtime Database path.
 
-### Privacy
+If the number of nodes in your specified Realtime Database path exceeds the specified max count, this mod deletes the oldest nodes first until there are the max count number of nodes remaining.
 
-This mod stores the environment variables in the source of the Cloud Function.
+We recommend adding data via pushing, for example `firebase.database().ref().child('posts').push()`, because pushing assigns an automatically generated ID to the node in the database. During retrieval, these nodes are guaranteed to be ordered by the time they were added. Learn more about reading and writing data for your platform (iOS, Android, or Web) in the [Realtime Database documentation](https://firebase.google.com/docs/database/).
 
-### Potential Costs
 
-_Disclaimer: without knowing your exact use, it's impossible to say exactly what this may cost._
 
-This mod will generate costs due to:
+**ACCESS REQUIRED**:
 
-- **Cloud Functions Usage**: Each time a message is written to the path specified, a Cloud Function is invoked. If the free quota for Cloud Functions is consumed, then it will generate cost for the Firebase project.
 
-See more details at https://firebase.google.com/pricing.
 
-### Copyright
+This mod will operate with the following project IAM roles:
 
-Copyright 2019 Google LLC
-
-Use of this source code is governed by an MIT-style
-license that can be found in the LICENSE file or at
-https://opensource.org/licenses/MIT.
+* firebasedatabase.admin (Reason: Allows the mod to delete nodes from your Realtime Database instance.)

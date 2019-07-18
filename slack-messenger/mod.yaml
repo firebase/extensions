@@ -82,7 +82,7 @@ params:
   - param: SLACK_WEBHOOK_URL
     type: string
     label: Slack webhook URL
-    description: >-
+    description: |-
       What is the webhook URL provided by Slack for posting into a channel?
       Here's an example webhook URL: https://hooks.slack.com/services/FOO/BAR/KEY
       Learn more about webhooks and Slack: https://api.slack.com/incoming-webhooks
