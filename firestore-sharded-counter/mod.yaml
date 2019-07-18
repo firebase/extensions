@@ -18,8 +18,7 @@ specVersion: v1beta1
 version: 0.1.0
 
 description: 
-  Keep accurate account of events in your app that happen at high velocity such as number of views and likes.
-  (Requires Firebase Web SDK.)
+  Keep an accurate account of events in your app that happen at high velocity, such as number of views and likes.
 
 license: Apache-2.0
 billingRequired: false
@@ -36,7 +35,7 @@ contributors:
 
 roles:
   - role: datastore.user
-    reason: The mod aggregates firestore counter shards.
+    reason: Allows the mod to aggregate Cloud Firestore counter shards.
 
 resources:
   - name: controller
@@ -70,11 +69,10 @@ resources:
 params:
   - param: LOCATION
     type: select
-    label: Deployment Location
+    label: Deployment location
     description: >-
-      Where should the mod be deployed? Pick a location that is close to your
-      Firestore database. See
-      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+      Where should the mod be deployed? You usually want a location close to your database.
+      For help selecting a location, visit https://firebase.google.com/docs/functions/locations.
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -91,7 +89,7 @@ params:
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
   - param: MOD_METADATA_DOC
-    label: Mod's metadata doc
+    label: Document path for internal state
     description: >-
-      A path to a document where mod can keep its internal state.
+      What is the path to the document where the mod can keep its internal state?
     default: _firebase_mods_/sharded_counter

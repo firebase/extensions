@@ -25,6 +25,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const bigquery = require("@google-cloud/bigquery");
 const schema_1 = require("./schema");
+const logs = require("../logs");
 const bq = new bigquery.BigQuery();
 /**
  * Ensure that the defined Firestore schema exists within BigQuery and
@@ -42,13 +43,13 @@ const bq = new bigquery.BigQuery();
  * possible in the future.
  */
 exports.initializeSchema = (datasetId, tableName, schema, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
-    console.log("initializing BigQuery from schema file");
+    logs.bigQuerySchemaInitializing();
     const viewName = tableName;
     const realTableName = rawTableName(tableName);
     yield intialiseDataset(datasetId);
     yield initializeTable(datasetId, realTableName, schema.fields, idFieldNames);
     yield initializeView(datasetId, realTableName, viewName, schema, idFieldNames);
-    console.log("initialized BigQuery");
+    logs.bigQuerySchemaInitialized();
 });
 exports.buildDataRow = (idFieldValues, insertId, operation, timestamp, data) => {
     return {
@@ -66,13 +67,10 @@ exports.insertData = (datasetId, tableName, rows) => __awaiter(this, void 0, voi
     const realTableName = rawTableName(tableName);
     const dataset = bq.dataset(datasetId);
     const table = dataset.table(realTableName);
-    try {
-        yield table.insert(rows);
-    }
-    catch (err) {
-        console.error(`Failed to insert data in BigQuery: ${JSON.stringify(err)}`);
-        return err;
-    }
+    const rowCount = Array.isArray(rows) ? rows.length : 1;
+    logs.dataInserting(rowCount);
+    yield table.insert(rows);
+    logs.dataInserted(rowCount);
 });
 const rawTableName = (tableName) => `${tableName}_raw`;
 /**
@@ -82,11 +80,12 @@ const intialiseDataset = (datasetId) => __awaiter(this, void 0, void 0, function
     const dataset = bq.dataset(datasetId);
     const [datasetExists] = yield dataset.exists();
     if (datasetExists) {
-        console.log(`BigQuery dataset already exists: ${datasetId}`);
+        logs.bigQueryDatasetExists(datasetId);
     }
     else {
-        console.log(`Creating BigQuery dataset: ${datasetId}`);
+        logs.bigQueryDatasetCreating(datasetId);
         yield dataset.create();
+        logs.bigQueryDatasetCreated(datasetId);
     }
     return dataset;
 });
@@ -100,18 +99,17 @@ const initializeTable = (datasetId, tableName, fields, idFieldNames) => __awaite
     let table = dataset.table(tableName);
     const [tableExists] = yield table.exists();
     if (tableExists) {
-        console.log(`BigQuery table already exists: ${tableName}`);
         table = yield schema_1.validateBQTable(table, fields, idFieldNames);
     }
     else {
-        console.log(`Creating BigQuery table: ${tableName}`);
+        logs.bigQueryTableCreating(tableName);
         const options = {
             // `friendlyName` needs to be here to satisfy TypeScript
             friendlyName: tableName,
             schema: schema_1.firestoreToBQTable(fields, idFieldNames),
         };
         yield table.create(options);
-        console.log(`Created BigQuery table: ${tableName}`);
+        logs.bigQueryTableCreated(tableName);
     }
     return table;
 });
@@ -130,18 +128,17 @@ const initializeView = (datasetId, tableName, viewName, schema, idFieldNames) =>
     let view = dataset.table(viewName);
     const [viewExists] = yield view.exists();
     if (viewExists) {
-        console.log(`BigQuery view already exists: ${viewName}`);
         view = yield schema_1.validateBQView(view, tableName, schema, idFieldNames);
     }
     else {
-        console.log(`Creating BigQuery view: ${viewName}`);
+        logs.bigQueryViewCreating(viewName);
         const options = {
             // `friendlyName` needs to be here to satisfy TypeScript
             friendlyName: tableName,
             view: schema_1.firestoreToBQView(datasetId, tableName, schema, idFieldNames),
         };
         yield view.create(options);
-        console.log(`Created BigQuery view: ${viewName}`);
+        logs.bigQueryViewCreated(viewName);
     }
     return view;
 });
