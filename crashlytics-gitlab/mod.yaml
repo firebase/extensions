@@ -83,6 +83,8 @@ params:
         value: asia-east2
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
+    default: Iowa (us-central1)
+    required: true
   - param: GITLAB_URL
     label: GitLab URL
     description: >

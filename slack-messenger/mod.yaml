@@ -77,6 +77,8 @@ params:
         value: asia-east2
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
+    default: Iowa (us-central1)
+    required: true
   - param: SLACK_WEBHOOK_URL
     type: string
     label: Slack webhook URL
