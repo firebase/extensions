@@ -75,6 +75,8 @@ params:
         value: asia-east2
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
+    default: Iowa (us-central1)
+    required: true
   - param: BITLY_ACCESS_TOKEN
     label: Bitly access token
     description: >
