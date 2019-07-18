@@ -1,50 +1,37 @@
-# Slack Messenger
+# slack-messenger
 
-## Summary
+**VERSION**: 1.0.0
 
-Sends messages to Slack via a webhook from messages provided in a PubSub topic.
+**DESCRIPTION**: Sends messages published to a Pub/Sub topic to a specified Slack channel.
 
-## Details
 
-This Mod contains a single function that is triggered on a PubSub topic. When it receives a message, it takes the contents of the message and forwards it to Slack using the provided webhook URL.
 
-Using PubSub as the message queue allows us to utilize PubSub's performance, queuing capabilities, and retry logic (if desired). This gives us more reliability over simply using the Slack webhook and allows us to publish messages from anywhere and have one central place that sends them to Slack.
+**CONFIGURATION PARAMETERS:**
 
-### Configuration
+* Deployment location: *Where should the mod be deployed? For help selecting a location, visit https://firebase.google.com/docs/functions/locations.*
 
-This Mod requires the following environment variables to be set:
+* Slack webhook URL: *What is the webhook URL provided by Slack for posting into a channel?
+Here's an example webhook URL: https://hooks.slack.com/services/FOO/BAR/KEY
+Learn more about webhooks and Slack: https://api.slack.com/incoming-webhooks*
 
-- `SLACK_WEBHOOK_URL` is the Slack webhook URL used to post into a channel.
 
-### Required Roles
 
-This Mod requires no additional IAM roles.
+**CLOUD FUNCTIONS CREATED:**
 
-### Resources Created
+* slackMessenger (providers/cloud.pubsub/eventTypes/topic.publish)
 
-This Mod creates one resource:
 
-- a (golang) Cloud Function that is triggered by a PubSub topic.
 
-### Privacy
+**NON-CLOUD FUNCTION RESOURCES CREATED**:
 
-This mod stores the environment variables in the source of the Cloud Function.
+* SlackMessengerTopic (gcp-types/pubsub-v1:projects.topics)
 
-### Potential Costs
 
-_Disclaimer: without knowing your exact use, it's impossible to say exactly what this may cost._
 
-This mod will generate costs due to:
+**DETAILS**: Use this mod to post messages to your Slack channel using Pub/Sub message queuing.
 
-- **Cloud Functions Usage**: Each time a file is uploaded to the Cloud Storage bucket, a Cloud Function is invoked. If the free quota for Cloud Functions is consumed, then it will generate cost for the Firebase project.
-- **PubSub Topic Usage**: While this mod does not _send_ messages to PubSub topics, it does receive them. If the free quota for PubSub messaging is reached, it will generate cost for the Firebase project.
+Whenever a message is published to your specified Pub/Sub topic, this mod takes the contents of the message and forwards it to Slack using the specfied webhook URL.
 
-See more details at https://firebase.google.com/pricing/ and https://cloud.google.com/pricing/.
+Using Pub/Sub as the message queue allows this mod to utilize Pub/Sub's performance, queuing capabilities, and retry logic (if desired). This gives the mod more reliability over simply using the Slack webhook and allows the mod to publish messages from anywhere and have one central place that sends them to Slack.
 
-### Copyright
-
-Copyright 2018 Google LLC
-
-Use of this source code is governed by an MIT-style
-license that can be found in the LICENSE file or at
-https://opensource.org/licenses/MIT.
+You can also publish messages programmatically; learn more in the [Pub/Sub documentation](https://cloud.google.com/pubsub/docs/publisher).

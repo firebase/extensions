@@ -1,58 +1,67 @@
-# Automatically Resize Images
+# image-resizer
 
-## Summary
+**VERSION**: 0.1.0
 
-Automatically generate resized images for images that are uploaded to Firebase Storage. This mod is modified from the functions sample [generate-thumbnail](https://github.com/firebase/functions-samples/tree/Node-8/generate-thumbnail).
+**DESCRIPTION**: Resize new images uploaded to a Cloud Storage bucket to a specified size. Both the original and the resized images are stored in the same bucket. Additionally, you can configure this mod to generate the signed URLs for both images and to store the URLs in Realtime Database.
 
-## Details
 
-This Mod defines a Cloud Function that will trigger on upload of any file to a Cloud Storage bucket. If the file is not an image, then the Cloud Function will simply return. Otherwise, it will go through the flow detailed below.
 
-The image resizing is performed using ImageMagick which is installed by default on all Cloud Functions instances. This is a CLI so we execute the command from node using the [child-process-promise](https://www.npmjs.com/package/child-process-promise) package. The image is first downloaded locally from the Firebase Storage bucket to the `tmp` folder using the [google-cloud](https://github.com/GoogleCloudPlatform/google-cloud-node) SDK.
+**CONFIGURATION PARAMETERS:**
 
-### Configuration
+* Deployment location: *Where should the mod be deployed? You usually want a location close to your database. Realtime Database instances are located in us-central1. For help selecting a location, visit https://firebase.google.com/docs/functions/locations.*
 
-This Mod requires the following environment variables to be set:
+* Cloud Storage bucket for images: *Which Cloud Storage bucket will contain the uploaded images that you want to resize? This bucket will also store the resized images.
+*
 
-- `IMG_MAX_HEIGHT` is the maximum height for the image in pixels. The default is 200 pixels.
-- `IMG_MAX_WIDTH` is the maximum width for the image in pixels. The default is 200 pixels.
-- `IMG_PREFIX` is the prefix that will be prepended to the name of the original image. The prefix plus the name of the original image will be used as the name of the resized image. The default is "resized".
-- `IMG_BUCKET` is the name of the Cloud Storage bucket that the Cloud Function will listen to. The Cloud Function will only trigger and create resized images of the images that are uploaded to this bucket. The default is the default bucket for your project.
-- `SIGNED_URLS_PATH` is the path to the node in the Firebase Realtime Database under which [signed urls](https://cloud.google.com/storage/docs/access-control/signed-urls) for the original image and the resized image will be uploaded. Signed URLs is a mechanism for query string authentication for buckets and objects. Signed URLs provide a way to give time-limited read or write access to anyone in possession of the URL, regardless of whether they have a Google account. This is not a required variable. If you would prefer not to use signed URLs, leave this field empty.
+* Maximum height of resized image: *What do you want the maximum height of resized images to be (in pixels)? Learn more about how this parameter works within this mod: https://firebase.google.com/products/mods/image-resizer
+*
 
-### Required Roles
+* Maximum width of resized image: *What do you want the maximum width of resized images to be (in pixels)? Learn more about how this parameter works within this mod: https://firebase.google.com/products/mods/image-resizer
+*
 
-This Mod requires the following IAM roles:
+* (Optional) Realtime Database path for signed URLs for images: *What is the Realtime Database path where you want to store signed URLs for the original and resized images? Learn more about how this parameter works within this mod: https://firebase.google.com/products/mods/image-resizer If you prefer to not use signed URLs, leave this field empty.
+*
 
-- `firebase.developAdmin` allows access to the Firebase "develop" products. This mod uses this role to write the signed urls to the Realtime Database.
-- `iam.serviceAccountTokenCreator` allows this mod sign a blob using the service account's system-managed private key. This is used to create the signed urls.
-- `storage.admin` allows full control of buckets and objects. When applied to an individual bucket, control applies only to the specified bucket and objects within that bucket. This role is used to get images from the Cloud Storage bucket and upload the resized image.
+* (Optional) Date after which signed URLs will expire (MM-DD-YYYY): *After what date do you want the signed URLs to expire? Enter the date in MM-DD-YYYY format. If you prefer to not use signed URLs, leave this field as the default.
+*
 
-### Resources Created
+* (Optional) `cache-control` header for resized images: *Do you want to specify a `cache-control` header for the resized image files? Learn more about `cache-control` headers: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control If you prefer not to use a `cache-control` header, leave this field empty.
+*
 
-This Mod creates one resource:
 
-- a Cloud Function that triggers on upload of any file to a Cloud Storage bucket.
 
-### Privacy
+**CLOUD FUNCTIONS CREATED:**
 
-This mod stores the environment variables in the source of the Cloud Function.
+* generateResizedImage (google.storage.object.finalize)
 
-### Potential Costs
 
-_Disclaimer: without knowing your exact use, it's impossible to say exactly what this may cost._
 
-This mod will generate costs due to:
+**DETAILS**: Use this mod to create resized versions of an image uploaded to a Cloud Storage bucket.
 
-- **Cloud Functions Usage**: Each time a file is uploaded to the Cloud Storage bucket, a Cloud Function is invoked. If the free quota for Cloud Functions is consumed, then it will generate cost for the Firebase project.
-- **Realtime Database Usage**: Each invocation of the Cloud Function also writes to the Realtime Database. If the free quota for storing data in the Realtime Database is consumed, then it will generate cost for the Firebase project.
+Whenever an image file is uploaded to your specified Cloud Storage bucket, this mod creates a resized image with your specified dimensions. Both the original uploaded image and the resized image are saved in the same Storage bucket. The resized image file uses the same name as the original uploaded image, but  but is suffxed with `_${param:IMG_MAX_WIDTH}x${param:IMG_MAX_HEIGHT}` in the filename. Note that you might need to refresh the dashboard to see the new file for the resized image.
 
-See more details at https://firebase.google.com/pricing.
+When you configure this mod, you specify a maximum height and a maximum width (in pixels, px). This mod keeps the aspect ratio of uploaded images constant and shrinks the image until the resized image's dimensions are at or under your specified max height and width. For example, say that you specify a max height of 200px and a max width of 100px for resized images. An uploaded image is 480px high by 640px wide. The final image will be 75px high by 100px wide to maintain the aspect ratio of 0.75 while being at or under both of your maximum specified dimensions.
 
-### Copyright
+You can upload images to a Cloud Storage bucket directly in the Firebase console's Storage dashboard. Alternatively, you can upload images using the [Cloud Storage for Firebase SDK](https://firebase.google.com/docs/storage/) for your platform (iOS, Android, or Web).
 
-Copyright 2018 Google LLC
+This mod also optionally creates then writes [signed URLs](https://cloud.google.com/storage/docs/access-control/signed-urls) to your specified Firebase Realtime Database path - both for the original image and the resized image. Signed URLs are a mechanism for query string authentication for buckets and objects by providing a way to give time-limited read or write access to anyone in possession of the URL, regardless of whether they have a Google account. How to use the signed URLs is up to you. One example use case could be for a webpage that displays all members of a club. You could attach a listener to the database path so that when the mod creates a new resized image, both the original and the resized image are fetched immediately and displayed on the webpage.
 
-Use of this source code is governed by an MIT-style
-license that can be found in the LICENSE file or at
-https://opensource.org/licenses/MIT.
+
+
+**APIS USED**:
+
+* storage-component.googleapis.com (Reason: Needed to use Cloud Storage)
+
+
+
+**ACCESS REQUIRED**:
+
+
+
+This mod will operate with the following project IAM roles:
+
+* storage.admin (Reason: Allows the mod to store resized images in Cloud Storage)
+
+* iam.serviceAccountTokenCreator (Reason: Allows the mod to generate signed URLs)
+
+* firebasedatabase.admin (Reason: Allows the mod to store signed URLs in Realtime Database)

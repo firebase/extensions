@@ -15,7 +15,7 @@
 specVersion: v1beta1
 name: budget-notification
 displayName: Send budget notifications to Zapier
-version: 1.0.0
+version: 0.1.0
 
 description:
   Send notifications to Zapier when your Firebase project exceeds your budget. Optionally, you can also configure your Zapier
