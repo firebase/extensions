@@ -1,12 +1,11 @@
-## Final installation tep
+To finish the installation of this mod, you'll need to set up a [scheduled function](https://firebase.google.com/docs/functions/schedule-functions) to call `${function:controller.url}` every minute.
 
-To finish the installation please set up a cloud scheduler job to call the controller function every minute. You can do it by running the following gcloud command.
+You can do this setup by running the following `gcloud` command:
 
 ```
 gcloud scheduler jobs create http firestore-sharded-counter-controller --schedule="* * * * *" --uri=${function:controller.url} --project=${param:PROJECT_ID}
 ```
 
-## Integrate into your mod
 Once installation is complete you can now add this to your project.
 
 1. Download and copy the [Counter SDK](https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-sharded-counter/clients/web/dist/sharded-counter.js) into your project. 

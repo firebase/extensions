@@ -23,6 +23,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const errors = require("../errors");
+const logs = require("../logs");
 const bigQueryField = (name, type, mode, fields) => ({
     fields,
     mode: mode || "NULLABLE",
@@ -84,7 +86,7 @@ exports.firestoreToBQField = (field) => {
         return bigQueryField(field.name, "TIMESTAMP", firestoreToBQMode(field));
     }
     else {
-        throw new Error(`Invalid field definition: ${JSON.stringify(field)}`);
+        throw errors.invalidFieldDefinition(field);
     }
 };
 /**
@@ -119,6 +121,7 @@ exports.firestoreToBQView = (datasetId, tableName, schema, idFieldNames) => ({
  * definitions and updates the BigQuery table scheme if necessary.
  */
 exports.validateBQTable = (table, fields, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
+    logs.bigQueryTableValidating(table.id);
     const [metadata] = yield table.getMetadata();
     // Get the `data` and `id` fields from our schema, as this is what needs to be compared
     const idField = metadata.schema.fields[0];
@@ -126,15 +129,16 @@ exports.validateBQTable = (table, fields, idFieldNames) => __awaiter(this, void 
     const idFieldsChanged = validateBQIdFields(idField.fields, idFieldNames);
     const dataFieldsChanged = validateBQDataFields(dataField.fields, fields);
     if (dataFieldsChanged || idFieldsChanged) {
-        console.log("Updating BigQuery table schema");
+        logs.bigQueryTableUpdating(table.id);
         metadata.schema.fields[0] = idField;
         metadata.schema.fields[4] = dataField;
         yield table.setMetadata(metadata);
-        console.log("Updated BigQuery table schema");
+        logs.bigQueryTableUpdated(table.id);
     }
     else {
-        console.log("BigQuery table schema is up to date");
+        logs.bigQueryTableUpToDate(table.id);
     }
+    logs.bigQueryTableValidated(table.id);
     return table;
 });
 /**
@@ -149,10 +153,10 @@ const validateBQDataFields = (bqFields, fsFields) => {
         const bqSchemaField = exports.firestoreToBQField(fsField);
         if (bqField) {
             if (bqField.type !== bqSchemaField.type) {
-                throw new Error(`Field ${bqField.name} has different field type. BigQuery type: ${bqField.type}; Schema type: ${bqSchemaField.type}`);
+                throw errors.changedFieldType(bqField.name, bqField.type, bqSchemaField.type);
             }
             else if (bqField.mode !== bqSchemaField.mode) {
-                throw new Error(`Field ${bqField.name} has different field mode. BigQuery mode: ${bqField.mode}; Schema mode: ${bqSchemaField.mode}`);
+                throw errors.changedFieldMode(bqField.name, bqField.mode, bqSchemaField.mode);
             }
             else if (fsField.type === "map") {
                 // Validate the subfields for Firestore map fields
@@ -189,19 +193,21 @@ const validateBQIdFields = (bqFields, idFieldNames) => {
  * definitions and updates the BigQuery table scheme if necessary.
  */
 exports.validateBQView = (view, tableName, schema, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
+    logs.bigQueryViewValidating(view.id);
     const [metadata] = yield view.getMetadata();
     // Get the `query` field in our schema, as this is what needs to be compared
     const bqViewQuery = metadata.view.query;
     const schemaViewQuery = buildViewQuery(view.dataset.id, tableName, schema, idFieldNames);
     if (bqViewQuery === schemaViewQuery) {
-        console.log("BigQuery view is up to date");
+        logs.bigQueryViewUpToDate(view.id);
     }
     else {
-        console.log("Updating BigQuery view");
+        logs.bigQueryViewUpdating(view.id);
         metadata.view.query = schemaViewQuery;
         yield view.setMetadata(metadata);
-        console.log("Updated BigQuery view");
+        logs.bigQueryViewUpdated(view.id);
     }
+    logs.bigQueryViewValidated(view.id);
     return view;
 });
 /**

@@ -22,6 +22,7 @@ import {
   validateBQView,
 } from "./schema";
 import { FirestoreField, FirestoreSchema } from "../firestore";
+import * as logs from "../logs";
 
 const bq = new bigquery.BigQuery();
 
@@ -46,7 +47,8 @@ export const initializeSchema = async (
   schema: FirestoreSchema,
   idFieldNames: string[]
 ) => {
-  console.log("initializing BigQuery from schema file");
+  logs.bigQuerySchemaInitializing();
+
   const viewName = tableName;
   const realTableName = rawTableName(tableName);
 
@@ -59,7 +61,8 @@ export const initializeSchema = async (
     schema,
     idFieldNames
   );
-  console.log("initialized BigQuery");
+
+  logs.bigQuerySchemaInitialized();
 };
 
 export const buildDataRow = (
@@ -89,12 +92,11 @@ export const insertData = async (
   const realTableName = rawTableName(tableName);
   const dataset = bq.dataset(datasetId);
   const table = dataset.table(realTableName);
-  try {
-    await table.insert(rows);
-  } catch (err) {
-    console.error(`Failed to insert data in BigQuery: ${JSON.stringify(err)}`);
-    return err;
-  }
+  const rowCount = Array.isArray(rows) ? rows.length : 1;
+
+  logs.dataInserting(rowCount);
+  await table.insert(rows);
+  logs.dataInserted(rowCount);
 };
 
 const rawTableName = (tableName: string) => `${tableName}_raw`;
@@ -106,10 +108,11 @@ const intialiseDataset = async (datasetId: string) => {
   const dataset = bq.dataset(datasetId);
   const [datasetExists] = await dataset.exists();
   if (datasetExists) {
-    console.log(`BigQuery dataset already exists: ${datasetId}`);
+    logs.bigQueryDatasetExists(datasetId);
   } else {
-    console.log(`Creating BigQuery dataset: ${datasetId}`);
+    logs.bigQueryDatasetCreating(datasetId);
     await dataset.create();
+    logs.bigQueryDatasetCreated(datasetId);
   }
   return dataset;
 };
@@ -129,17 +132,16 @@ const initializeTable = async (
   let table = dataset.table(tableName);
   const [tableExists] = await table.exists();
   if (tableExists) {
-    console.log(`BigQuery table already exists: ${tableName}`);
     table = await validateBQTable(table, fields, idFieldNames);
   } else {
-    console.log(`Creating BigQuery table: ${tableName}`);
+    logs.bigQueryTableCreating(tableName);
     const options = {
       // `friendlyName` needs to be here to satisfy TypeScript
       friendlyName: tableName,
       schema: firestoreToBQTable(fields, idFieldNames),
     };
     await table.create(options);
-    console.log(`Created BigQuery table: ${tableName}`);
+    logs.bigQueryTableCreated(tableName);
   }
   return table;
 };
@@ -166,17 +168,16 @@ const initializeView = async (
 
   const [viewExists] = await view.exists();
   if (viewExists) {
-    console.log(`BigQuery view already exists: ${viewName}`);
     view = await validateBQView(view, tableName, schema, idFieldNames);
   } else {
-    console.log(`Creating BigQuery view: ${viewName}`);
+    logs.bigQueryViewCreating(viewName);
     const options = {
       // `friendlyName` needs to be here to satisfy TypeScript
       friendlyName: tableName,
       view: firestoreToBQView(datasetId, tableName, schema, idFieldNames),
     };
     await view.create(options);
-    console.log(`Created BigQuery view: ${viewName}`);
+    logs.bigQueryViewCreated(viewName);
   }
   return view;
 };

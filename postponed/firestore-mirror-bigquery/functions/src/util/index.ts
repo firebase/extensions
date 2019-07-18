@@ -17,6 +17,8 @@
 import * as firebase from "firebase-admin";
 import * as _ from "lodash";
 
+import * as logs from "../logs";
+
 export const extractIdFieldNames = (collectionPath: string): string[] => {
   let idFieldNames = [];
   if (collectionPath.includes("/")) {
@@ -62,9 +64,7 @@ export const extractTimestamp = (
   if (timestampField) {
     timestamp = _.get(data, timestampField);
     if (!timestamp) {
-      console.warn(
-        `Missing value for timestamp field: ${timestampField}, using default timestamp instead.`
-      );
+      logs.timestampMissingValue(timestampField);
     }
   }
   return timestamp || defaultTimestamp;

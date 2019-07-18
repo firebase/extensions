@@ -17,6 +17,9 @@
 import * as firebase from "firebase-admin";
 import * as _ from "lodash";
 
+import * as errors from "../errors";
+import * as logs from "../logs";
+
 export type FirestoreFieldType =
   | "boolean"
   | "geopoint"
@@ -100,9 +103,7 @@ const processData = (snapshotData: Object, fields: FirestoreField[]) => {
       // Ignore the field as there is no data
     } else if (field.repeated && !_.isArray(fieldValue)) {
       // The schema definition stipulates an array, but the value isn't an array
-      console.warn(
-        `Array field '${fieldName}' does not contain an array, skipping`
-      );
+      logs.arrayFieldInvalid(fieldName);
     } else if (
       field.type === "boolean" ||
       field.type === "geopoint" ||
@@ -115,7 +116,7 @@ const processData = (snapshotData: Object, fields: FirestoreField[]) => {
     ) {
       data[fieldName] = processField(field, fieldValue);
     } else {
-      throw new Error(`Invalid field definition: ${JSON.stringify(field)}`);
+      throw errors.invalidFieldDefinition(field);
     }
   });
   return data;
@@ -135,21 +136,13 @@ const processField = (field: FirestoreField, fieldValue: any): any => {
       if (isValid(value)) {
         return process(value, field.fields);
       } else {
-        console.warn(
-          `${field.type} array field '${
-            field.name
-          }': Invalid data type: ${typeof value}`
-        );
+        logs.dataTypeInvalid(field.name, `${field.type} array`, typeof value);
         return undefined;
       }
     });
   } else if (isValid(fieldValue)) {
     return process(fieldValue, field.fields);
   } else {
-    console.warn(
-      `${field.type} field '${
-        field.name
-      }': Invalid data type: ${typeof fieldValue}`
-    );
+    logs.dataTypeInvalid(field.name, field.type, typeof fieldValue);
   }
 };

@@ -16,6 +16,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const _ = require("lodash");
+const logs = require("../logs");
 exports.extractIdFieldNames = (collectionPath) => {
     let idFieldNames = [];
     if (collectionPath.includes("/")) {
@@ -51,7 +52,7 @@ exports.extractTimestamp = (data, defaultTimestamp, timestampField) => {
     if (timestampField) {
         timestamp = _.get(data, timestampField);
         if (!timestamp) {
-            console.warn(`Missing value for timestamp field: ${timestampField}, using default timestamp instead.`);
+            logs.timestampMissingValue(timestampField);
         }
     }
     return timestamp || defaultTimestamp;
