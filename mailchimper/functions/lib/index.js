@@ -29,10 +29,20 @@ const functions = require("firebase-functions");
 const Mailchimp = require("mailchimp-api-v3");
 const config_1 = require("./config");
 const logs = require("./logs");
-const mailchimp = new Mailchimp(config_1.default.mailchimpApiKey);
 logs.init();
+let mailchimp;
+try {
+    mailchimp = new Mailchimp(config_1.default.mailchimpApiKey);
+}
+catch (err) {
+    logs.initError(err);
+}
 exports.addUserToList = functions.handler.auth.user.onCreate((user) => __awaiter(this, void 0, void 0, function* () {
     logs.start();
+    if (!mailchimp) {
+        logs.mailchimpNotInitialized();
+        return;
+    }
     const { email, uid } = user;
     if (!email) {
         logs.userNoEmail();
@@ -53,6 +63,10 @@ exports.addUserToList = functions.handler.auth.user.onCreate((user) => __awaiter
 }));
 exports.removeUserFromList = functions.handler.auth.user.onDelete((user) => __awaiter(this, void 0, void 0, function* () {
     logs.start();
+    if (!mailchimp) {
+        logs.mailchimpNotInitialized();
+        return;
+    }
     const { email, uid } = user;
     if (!email) {
         logs.userNoEmail();

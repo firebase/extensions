@@ -37,6 +37,16 @@ export const init = () => {
   console.log("Initializing mod with configuration", obfuscatedConfig);
 };
 
+export const initError = (err: Error) => {
+  console.error("There was an error initializing the mod.", err);
+};
+
+export const mailchimpNotInitialized = () => {
+  console.error(
+    "Mailchimp was not initialized correctly, check for errors in the logs"
+  );
+};
+
 export const start = () => {
   console.log("Started mod execution with configuration", obfuscatedConfig);
 };
