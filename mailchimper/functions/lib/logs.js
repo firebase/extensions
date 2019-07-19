@@ -29,6 +29,12 @@ exports.errorRemoveUser = (err) => {
 exports.init = () => {
     console.log("Initializing mod with configuration", obfuscatedConfig);
 };
+exports.initError = (err) => {
+    console.error("There was an error initializing the mod.", err);
+};
+exports.mailchimpNotInitialized = () => {
+    console.error("Mailchimp was not initialized correctly, check for errors in the logs");
+};
 exports.start = () => {
     console.log("Started mod execution with configuration", obfuscatedConfig);
 };

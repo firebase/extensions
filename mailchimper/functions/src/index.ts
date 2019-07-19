@@ -22,13 +22,23 @@ import * as Mailchimp from "mailchimp-api-v3";
 import config from "./config";
 import * as logs from "./logs";
 
-const mailchimp = new Mailchimp(config.mailchimpApiKey);
-
 logs.init();
+
+let mailchimp: Mailchimp;
+try {
+  mailchimp = new Mailchimp(config.mailchimpApiKey);
+} catch (err) {
+  logs.initError(err);
+}
 
 export const addUserToList = functions.handler.auth.user.onCreate(
   async (user): Promise<void> => {
     logs.start();
+
+    if (!mailchimp) {
+      logs.mailchimpNotInitialized();
+      return;
+    }
 
     const { email, uid } = user;
     if (!email) {
@@ -56,6 +66,11 @@ export const addUserToList = functions.handler.auth.user.onCreate(
 export const removeUserFromList = functions.handler.auth.user.onDelete(
   async (user): Promise<void> => {
     logs.start();
+
+    if (!mailchimp) {
+      logs.mailchimpNotInitialized();
+      return;
+    }
 
     const { email, uid } = user;
     if (!email) {
