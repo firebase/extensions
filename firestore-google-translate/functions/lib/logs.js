@@ -41,7 +41,10 @@ exports.documentUpdatedUnchangedMsg = () => {
     console.log("Document was updated, message has not changed, no processing is required");
 };
 exports.error = (err) => {
-    console.log("Failed mod execution", err);
+    console.error("Failed mod execution", err);
+};
+exports.fieldNamesNotDifferent = () => {
+    console.error("The `Message` and `Translations` field names must be different for this mod to function correctly");
 };
 exports.init = () => {
     console.log("Initializing mod with configuration", config_1.default);

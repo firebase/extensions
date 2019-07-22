@@ -55,7 +55,13 @@ export const documentUpdatedUnchangedMsg = () => {
 };
 
 export const error = (err: Error) => {
-  console.log("Failed mod execution", err);
+  console.error("Failed mod execution", err);
+};
+
+export const fieldNamesNotDifferent = () => {
+  console.error(
+    "The `Message` and `Translations` field names must be different for this mod to function correctly"
+  );
 };
 
 export const init = () => {

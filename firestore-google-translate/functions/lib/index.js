@@ -40,6 +40,10 @@ admin.initializeApp();
 logs.init();
 exports.fstranslate = functions.handler.firestore.document.onWrite((change) => __awaiter(this, void 0, void 0, function* () {
     logs.start();
+    if (config_1.default.messageFieldName === config_1.default.translationsFieldName) {
+        logs.fieldNamesNotDifferent();
+        return;
+    }
     const changeType = getChangeType(change);
     try {
         switch (changeType) {
