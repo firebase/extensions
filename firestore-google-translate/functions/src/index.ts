@@ -43,6 +43,11 @@ export const fstranslate = functions.handler.firestore.document.onWrite(
   async (change): Promise<void> => {
     logs.start();
 
+    if (config.messageFieldName === config.translationsFieldName) {
+      logs.fieldNamesNotDifferent();
+      return;
+    }
+
     const changeType = getChangeType(change);
 
     try {
