@@ -82,7 +82,7 @@ params:
         value: asia-east2
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
-    default: Iowa (us-central1)
+    default: us-central1
     required: true
 
   - param: FIRESTORE_PATHS
