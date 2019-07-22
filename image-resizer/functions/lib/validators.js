@@ -15,5 +15,6 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+const suffixRegex = /_\d+x\d+$/;
 exports.isImage = (contentType) => contentType.startsWith("image/");
-exports.isResizedImage = (fileName, suffix) => fileName.endsWith(suffix);
+exports.isResizedImage = (fileName) => suffixRegex.test(fileName);
