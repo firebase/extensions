@@ -44,6 +44,9 @@ exports.documentUpdatedUnchangedUrl = () => {
 exports.error = (err) => {
     console.error("Error when shortening url", err);
 };
+exports.fieldNamesNotDifferent = () => {
+    console.error("The `URL` and `Short URL` field names must be different for this mod to function correctly");
+};
 exports.init = () => {
     console.log("Initializing mod with configuration", obfuscatedConfig);
 };
