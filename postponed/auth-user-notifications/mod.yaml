@@ -94,8 +94,10 @@ params:
       What is the path of the collection containing the FCM messages you would
       like to send?
     default: notifications
+    required: true
   - param: DEVICES_PATH
     label: User Devices Collection Path
     description: >-
       What is the path of the collection containing the user devices?
     default: user-devices
+    required: true

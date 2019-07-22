@@ -88,6 +88,7 @@ params:
     description: >-
       What is the path of the the collection you would like to mirror?
     default: mods
+    required: true
   - param: DATASET_ID
     type: string
     label: Dataset ID
@@ -99,6 +100,7 @@ params:
       Dataset IDs must be alphanumeric (plus underscores) and must be at most
       1024 characters long.
     default: mods
+    required: true
   - param: TABLE_NAME
     type: string
     label: Table ID
@@ -110,3 +112,4 @@ params:
       Table IDs must be alphanumeric (plus underscores) and must be at most 1024
       characters long.
     default: mods
+    required: true
