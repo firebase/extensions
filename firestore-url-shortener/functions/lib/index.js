@@ -40,6 +40,10 @@ admin.initializeApp();
 logs.init();
 exports.fsurlshortener = functions.handler.firestore.document.onWrite((change) => __awaiter(this, void 0, void 0, function* () {
     logs.start();
+    if (config_1.default.urlFieldName === config_1.default.shortUrlFieldName) {
+        logs.fieldNamesNotDifferent();
+        return;
+    }
     const changeType = getChangeType(change);
     switch (changeType) {
         case ChangeType.CREATE:

@@ -37,6 +37,11 @@ export const fsurlshortener = functions.handler.firestore.document.onWrite(
   async (change): Promise<void> => {
     logs.start();
 
+    if (config.urlFieldName === config.shortUrlFieldName) {
+      logs.fieldNamesNotDifferent();
+      return;
+    }
+
     const changeType = getChangeType(change);
 
     switch (changeType) {

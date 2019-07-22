@@ -59,6 +59,12 @@ export const error = (err: Error) => {
   console.error("Error when shortening url", err);
 };
 
+export const fieldNamesNotDifferent = () => {
+  console.error(
+    "The `URL` and `Short URL` field names must be different for this mod to function correctly"
+  );
+};
+
 export const init = () => {
   console.log("Initializing mod with configuration", obfuscatedConfig);
 };
