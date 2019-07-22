@@ -95,3 +95,4 @@ params:
     description: >-
       What is the path to the document where the mod can keep its internal state?
     default: _firebase_mods_/sharded_counter
+    required: true

@@ -97,7 +97,8 @@ params:
       Which Cloud Storage bucket will contain the uploaded images that you want to resize?
       This bucket will also store the resized images.
     default: ${STORAGE_BUCKET}
-  
+    required: true
+
   - param: IMG_MAX_HEIGHT
     type: string
     label: Maximum height of resized image
@@ -108,6 +109,7 @@ params:
     default: "200"
     validationRegex: ^\d+$
     validationErrorMessage: Invalid height, must be a positive integer.
+    required: true
 
   - param: IMG_MAX_WIDTH
     type: string
@@ -119,7 +121,8 @@ params:
     default: "200"
     validationRegex: ^\d+$
     validationErrorMessage: Invalid width, must be a positive integer.
- 
+    required: true
+
   - param: SIGNED_URLS_PATH
     label: (Optional) Realtime Database path for signed URLs for images
     description: >

@@ -15,6 +15,7 @@
  */
 
 export default {
+  bucket: process.env.IMG_BUCKET,
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
   location: process.env.LOCATION,
   maxHeight: process.env.IMG_MAX_HEIGHT,

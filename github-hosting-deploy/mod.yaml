@@ -97,6 +97,7 @@ params:
     description: >-
       Which branch in your GitHub repository do you want to use for
       triggering deploys to Firebase Hosting?
+    required: true
 
   - param: DEPLOY_ROOT
     type: string
@@ -105,6 +106,7 @@ params:
     description: >-
       Which directory in your GitHub repository contains the assets
       to be deployed to Firebase Hosting?
+    required: true
 
   - param: SITE_NAME
     type: string
@@ -114,3 +116,4 @@ params:
       What is the name of your site? If your Firebase project only has one site,
       your site name is usually the same as your project ID.
       Review your available site names: https://console.firebase.google.com/project/${PROJECT_ID}/hosting/main
+    required: true
