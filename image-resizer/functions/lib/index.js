@@ -56,7 +56,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
     const fileExtension = path.extname(filePath);
     const fileNameWithoutExtension = fileName.slice(0, -fileExtension.length);
     const suffix = `_${config_1.default.maxWidth}x${config_1.default.maxHeight}`;
-    const isResizedImage = validators.isResizedImage(fileNameWithoutExtension, suffix);
+    const isResizedImage = validators.isResizedImage(fileNameWithoutExtension);
     if (isResizedImage) {
         logs.imageAlreadyResized();
         return;
