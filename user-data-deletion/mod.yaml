@@ -18,7 +18,7 @@ specVersion: v1beta1
 version: 0.1.0
 
 description: 
-  When a user deletes their account, automatically delete their data from Realtime Database, Cloud Firestore,
+  When a user deletes their account, automatically delete their data from Cloud Firestore, Realtime Database,
   and/or Cloud Storage.
 
 license: Apache-2.0
@@ -38,10 +38,10 @@ contributors:
     url: https://github.com/chrisbianca
 
 roles:
-  - role: firebasedatabase.admin
-    reason: Allows the mod to delete (user) data from Realtime Database.
   - role: datastore.user
     reason: Allows the mod to delete (user) data from Cloud Firestore.
+  - role: firebasedatabase.admin
+    reason: Allows the mod to delete (user) data from Realtime Database.
   - role: storage.admin
     reason: Allows the mod to delete (user) data from Cloud Storage.
 
