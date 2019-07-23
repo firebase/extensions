@@ -44,3 +44,5 @@ Here is a web sample of how to use this function:
       }
     });
 ```
+
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.

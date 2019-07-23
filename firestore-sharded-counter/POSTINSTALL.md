@@ -47,3 +47,5 @@ Before you can use this mod, you'll need to set up a scheduled function and add 
         </body>
     </html>
     ```
+    
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.
