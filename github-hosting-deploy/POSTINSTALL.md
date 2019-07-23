@@ -15,7 +15,7 @@ You can now verify the webhook in one of two ways:
 1.  Review the _Recent Deliveries_ section. There should be one or more entries with a green checkmark indicating a successful call to the webhook.
 1.  Open the Firebase console, then go to the Functions dashboard. From there, you can go into the _Logs_ tab to check that there is one or more calls made to your webhook by GitHub.
 
-## Try it out
+### Try out your mod's configuration
 
 Give this mod a try by making a commit to the `${param:BRANCH}` branch, push it to GitHub, then watch the Firebase Hosting dashboard and your browser update!
 
