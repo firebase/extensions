@@ -5,3 +5,5 @@ Whenever a string is written to a specified field in any document within your sp
 You specify the desired target languages using ISO-639-1 codes. You can find a list of valid languages and their corresponding codes in the [Cloud Translate API documentation](https://cloud.google.com/translate/docs/languages).
 
 If the original non-translated field of the document is updated, then the translations will be automatically updated, as well.
+
+When you use Firebase Mods, you're only charged for the underlying resources that you use. Firebase Mods themselves are free to use. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)

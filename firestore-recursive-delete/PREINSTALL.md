@@ -33,3 +33,5 @@ deleteFn({
   // ...
 });
 ```
+
+When you use Firebase Mods, you're only charged for the underlying resources that you use. Firebase Mods themselves are free to use. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)

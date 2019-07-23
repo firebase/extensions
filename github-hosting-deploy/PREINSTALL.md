@@ -25,3 +25,5 @@ When everything is configured and hooked up, you can make a change in your repos
 1.  In the GitHub repository, make an update to `public/index.html`.
 1.  Commit then push the change to GitHub.
 1.  After a moment, check the Firebase Hosting dashboard in the Firebase console for the change (for this example, `https://my-project.firebaseapp.com`). The committed changes should appear in your browser.
+
+When you use Firebase Mods, you're only charged for the underlying resources that you use. Firebase Mods themselves are free to use. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
