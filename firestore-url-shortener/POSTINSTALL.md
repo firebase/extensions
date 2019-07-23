@@ -4,7 +4,7 @@ This mod shortens the URL then saves it in the `${param:SHORT_URL_FIELD_NAME}` f
 
 ```
 {
-  ${param:URL_FIELD_NAME}: 'https://my.super.long-link.com/api/user/profile/-jEHitne10395-k3593085',
+  ${param:URL_FIELD_NAME}: 'https://my.super.long-link.example.com/api/user/profile/-jEHitne10395-k3593085',
   ${param:SHORT_URL_FIELD_NAME}: 'https://bit.ly/EKDdza',
 }
 ```
