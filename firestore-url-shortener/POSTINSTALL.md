@@ -10,3 +10,5 @@ This mod shortens the URL then saves it in the `${param:SHORT_URL_FIELD_NAME}` f
 ```
 
 If the original URL in a document is updated, then the shortened URL will be automatically updated, too.
+
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.

@@ -5,3 +5,5 @@ You can find the topic here: `https://console.cloud.google.com/cloudpubsub/topic
 Then, click **Publish Message** to publish a message to the topic.
 
 You can also publish messages programmatically; learn more in the [Pub/Sub documentation](https://cloud.google.com/pubsub/docs/publisher).
+
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.

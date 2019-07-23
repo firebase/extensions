@@ -18,3 +18,5 @@ You can now verify the webhook in one of two ways:
 ## Try it out
 
 Give this mod a try by making a commit to the `${param:BRANCH}` branch, push it to GitHub, then watch the Firebase Hosting dashboard and your browser update!
+
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.

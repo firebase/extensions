@@ -15,3 +15,5 @@ Whenever a string is written to the field `${param:MESSAGE_FIELD_NAME}` in `${pa
 This mod translates the text into the target languages: `${param:LANGUAGES}` (using ISO-639-1 codes). You can find a list of valid languages and their corresponding codes in the [Cloud Translate API documentation](https://cloud.google.com/translate/docs/languages).
 
 If the `${param:MESSAGE_FIELD_NAME}` field of the document is updated, then the translations will be automatically updated, as well.
+
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.

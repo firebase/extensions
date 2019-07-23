@@ -40,3 +40,4 @@ _Removed 1 parameter:_
 }
 ```
 
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.
