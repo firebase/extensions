@@ -83,7 +83,7 @@ params:
     type: string
     label: GitHub repository
     required: true
-    validationRegex: https://github.com
+    validationRegex: https://github.com.*
     validationErrorMessage:
       This mod only supports GitHub URLs. Please enter a URL that starts with `https://github.com`.
     description: >-
