@@ -40,6 +40,9 @@ roles:
 resources:
   - name: controller
     type: firebasemods.v1beta1.function
+    description:
+      Scheduled to run every minute.
+      This function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -48,6 +51,8 @@ resources:
 
   - name: onWrite
     type: firebasemods.v1beta1.function
+    description:
+      Listens for changes on documents that may need incrementing.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -59,6 +64,10 @@ resources:
 
   - name: worker
     type: firebasemods.v1beta1.function
+    description:
+      Monitors a range of shards and aggregates them, as needed.
+      There may be 0 or more worker functions running at any point in time.
+      The controller function is responsible for scheduling and monitoring these workers.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
