@@ -40,6 +40,8 @@ roles:
 resources:
   - name: controller
     type: firebasemods.v1beta1.function
+    description:
+      Necessary for internal execution of the mod.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -48,6 +50,8 @@ resources:
 
   - name: onWrite
     type: firebasemods.v1beta1.function
+    description:
+      Listens for changes on documents that may need incrementing.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -59,6 +63,8 @@ resources:
 
   - name: worker
     type: firebasemods.v1beta1.function
+    description:
+      Necessary for internal execution of the mod.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
