@@ -1,6 +1,6 @@
 Before you can use this mod, you'll need to update your security rules, set up a scheduled function, and add some code to your JavaScript app.
 
-1.  Update your Cloud Firestore security rules to allow reads and writes to the `_counter_shards_` subcollection, for example:
+1.  Update your Cloud Firestore security rules to allow reads and writes to the `_counter_shards_` subcollection of where you want to count, for example:
 
     ```
     match /databases/{database}/documents/pages/{page} {
