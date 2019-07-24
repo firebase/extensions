@@ -1,4 +1,14 @@
-Before you can use this mod, you'll need to set up a scheduled function and add some code to your JavaScript app.
+Before you can use this mod, you'll need to update your security rules, set up a scheduled function, and add some code to your JavaScript app.
+
+1.  Update your Cloud Firestore security rules to allow reads and writes to the `_counter_shards_` subcollection.
+
+```
+match /databases/{database}/documents/pages/{page} {
+  match /_counter_shards_/{shardId} {
+    allow read, write;
+  }
+}
+```
 
 1.  Set up a [scheduled function](https://firebase.google.com/docs/functions/schedule-functions) to call `${function:controller.url}` every minute.
 
