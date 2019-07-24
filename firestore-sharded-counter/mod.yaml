@@ -41,7 +41,7 @@ resources:
   - name: controller
     type: firebasemods.v1beta1.function
     description:
-      Necessary for internal execution of the mod.
+      Scheduled every minute, either aggregates shards itself or schedules and monitors workers to aggregate shards.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -64,7 +64,7 @@ resources:
   - name: worker
     type: firebasemods.v1beta1.function
     description:
-      Necessary for internal execution of the mod.
+      Monitors a range of shards and aggregates them as needed. There may be 0 or more workers running at any point in time. Controller is responsible for scheduling and monitoring these workers.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
