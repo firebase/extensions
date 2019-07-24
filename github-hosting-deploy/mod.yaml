@@ -115,5 +115,5 @@ params:
     description: >-
       What is the name of your site? If your Firebase project only has one site,
       your site name is usually the same as your project ID.
-      Review your available site names: https://console.firebase.google.com/project/${PROJECT_ID}/hosting/main
+      View your [available site names](https://console.firebase.google.com/project/${PROJECT_ID}/hosting/main).
     required: true

@@ -104,7 +104,7 @@ params:
     label: Maximum height of resized image
     description: >
       What do you want the maximum height of resized images to be (in pixels)?
-      Learn more about how this parameter works within this mod: https://firebase.google.com/products/mods/image-resizer
+      Learn more about [how this parameter works](https://firebase.google.com/products/mods/image-resizer).
     # all default values must be strings, so number must be wrapped in quotes
     default: "200"
     validationRegex: ^\d+$
@@ -116,7 +116,7 @@ params:
     label: Maximum width of resized image
     description: >
       What do you want the maximum width of resized images to be (in pixels)?
-      Learn more about how this parameter works within this mod: https://firebase.google.com/products/mods/image-resizer
+      Learn more about [how this parameter works](https://firebase.google.com/products/mods/image-resizer).
     # all default values must be strings, so number must be wrapped in quotes
     default: "200"
     validationRegex: ^\d+$
@@ -127,7 +127,7 @@ params:
     label: (Optional) Realtime Database path for signed URLs for images
     description: >
       What is the Realtime Database path where you want to store signed URLs for the original and resized images?
-      Learn more about how this parameter works within this mod: https://firebase.google.com/products/mods/image-resizer
+      Learn more about [how this parameter works](https://firebase.google.com/products/mods/image-resizer).
       If you prefer to not use signed URLs, leave this field empty.
     required: false
 
