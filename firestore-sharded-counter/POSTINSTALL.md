@@ -7,7 +7,7 @@ Before you can use this mod, you'll need to update your security rules, set up a
     match /databases/{database}/documents/pages/{page} {
       // Allow to increment only 'visits' field and only by 1.
       match /_counter_shards_/{shardId} {
-    	allow read;
+        allow read;
         allow create: if request.resource.data.keys().size() == 1 &&
           request.resource.data.visists == 1;
         allow update: if request.resource.data.keys().size() == 1 &&
