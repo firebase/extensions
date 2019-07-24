@@ -68,7 +68,8 @@ params:
     label: Deployment location
     description: >-
       Where should the mod be deployed? You usually want a location close to your database.
-      For help selecting a location, visit https://firebase.google.com/docs/functions/locations.
+      For help selecting a location, refer to the
+      [location selection guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)
         value: us-central1
