@@ -45,15 +45,8 @@ resources:
       sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
-        eventType: providers/cloud.pubsub/eventTypes/topic.publish
-        # Using the Deployment Manager syntax for a reference here as this is
-        # cleaner than constructing the full name. More details about this:
-        # https://cloud.google.com/deployment-manager/docs/step-by-step-guide/using-references
-        resource: $(ref.SlackMessengerTopic.name)
-  - name: SlackMessengerTopic
-    type: gcp-types/pubsub-v1:projects.topics
-    properties:
-      topic: ${MOD_INSTANCE_ID}-topic
+        eventType: google.pubsub.topic.publish
+        resource: projects/${PROJECT_ID}/topics/${MOD_INSTANCE_ID}-topic
 
 params:
   - param: LOCATION
