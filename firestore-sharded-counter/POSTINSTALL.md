@@ -1,11 +1,18 @@
 Before you can use this mod, you'll need to update your security rules, set up a scheduled function, and add some code to your JavaScript app.
 
 1.  Update your Cloud Firestore security rules to allow reads and writes to the `_counter_shards_` subcollection.
+    E.g.
 
     ```
     match /databases/{database}/documents/pages/{page} {
+      // Allow to increment only 'visits' field and only by 1.
       match /_counter_shards_/{shardId} {
-        allow read, write;
+    	allow read;
+        allow create: if request.resource.data.keys().size() == 1 &&
+          request.resource.data.visists == 1;
+        allow update: if request.resource.data.keys().size() == 1 &&
+          request.resource.data.visits == resource.data.visits + 1;
+        allow delete: if false;
       }
     }
     ```
