@@ -90,7 +90,7 @@ params:
     label: Mailchimp API key
     description: >-
       What is your Mailchimp API key?
-      To obtain a Mailchimp API key, visit https://admin.mailchimp.com/account/api/.
+      To obtain a Mailchimp API key, go to your [Mailchimp account](https://admin.mailchimp.com/account/api/).
     required: true
 
   - param: MAILCHIMP_AUDIENCE_ID

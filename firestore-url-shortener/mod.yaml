@@ -80,7 +80,7 @@ params:
   - param: BITLY_ACCESS_TOKEN
     label: Bitly access token
     description: >
-      What is your Bitly access token? Generate this access token at https://bitly.com/a/oauth_apps.
+      What is your Bitly access token? Generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
     required: true
   - param: COLLECTION_PATH
     label: Collection path
