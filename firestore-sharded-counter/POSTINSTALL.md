@@ -1,7 +1,6 @@
 Before you can use this mod, you'll need to update your security rules, set up a scheduled function, and add some code to your JavaScript app.
 
-1.  Update your Cloud Firestore security rules to allow reads and writes to the `_counter_shards_` subcollection.
-    E.g.
+1.  Update your Cloud Firestore security rules to allow reads and writes to the `_counter_shards_` subcollection, for example:
 
     ```
     match /databases/{database}/documents/pages/{page} {
