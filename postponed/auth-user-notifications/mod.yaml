@@ -88,16 +88,20 @@ params:
         value: asia-northeast1
     default: us-central1
     required: true
+
   - param: NOTIFICATIONS_PATH
     label: Notifications Collection Path
     description: >-
       What is the path of the collection containing the FCM messages you would
       like to send?
     default: notifications
+    example: notifications
     required: true
+
   - param: DEVICES_PATH
     label: User Devices Collection Path
     description: >-
       What is the path of the collection containing the user devices?
     default: user-devices
+    example: user-devices
     required: true

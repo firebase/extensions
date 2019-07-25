@@ -96,6 +96,7 @@ params:
       Create a SendGrid API key: In your SendGrid account, go to "API Keys" under "Settings", then
       click "Create  API Key". Alternatively, in your SendGrid account, go to "Setup Guide",
       then follow the instructions to "Integrate using our Web API or SMTP relay".
+    example: a1b2c3d4e5f6g7
     required: true
 
   - param: SENDGRID_EMAIL_ALIAS
@@ -105,6 +106,7 @@ params:
       What is the email address that you want to use as the alias for sending email invitations?
       This alias can be your domain's email address, or you can create a new email address for the purpose of
       sending invitations. We do not support sending invitations using the inviter's personal email address.
+    example: email@domain.com
     required: true
     validationRegex: '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     validationErrorMessage: >
@@ -114,6 +116,7 @@ params:
     type: string
     label: App name
     description: What is the name of your app? This will be used in the invitation email.
+    example: My Amazing App
     required: true
 
   - param: ACCEPT_URL_TEMPLATE
@@ -127,6 +130,7 @@ params:
       Note that the default URL for this mod assumes your app uses Firebase Hosting, so the URL uses
       `acceptInvitation` as a query parameter at the root URL.
     default: "https://${PROJECT_ID}.firebaseapp.com/?acceptInvitation={token}"
+    example: https://${PROJECT_ID}.firebaseapp.com/?acceptInvitation={token}
     validationRegex: '.*\{token\}.*'
     validationErrorMessage: >
       Your URL must include '{token}' so that it can be replaced with an actual
@@ -144,6 +148,7 @@ params:
       to the "friends" array field for document "789" in the "users" collection.
       Document/field pairs are separated with commas.
     default: users/{sender}.friends
+    example: users/{sender}.friends
     required: false
     validationRegex: '.+/.+\..+'
     validationErrorMessage: >
@@ -160,6 +165,7 @@ params:
       to the "friends" array field for document "123" in the "users" collection.
       Document/field pairs are separated with commas.
     default: users/{receiver}.friends
+    example: users/{receiver}.friends
     required: false
     validationRegex: '.+/.+\..+'
     validationErrorMessage: >
@@ -172,6 +178,7 @@ params:
       What is the path for the Cloud Firestore collection where you want to store
       metadata for invitations?
     default: _invitations
+    example: _invitations
     required: true
     validationRegex: '[\w_.-]+'
     validationErrorMessage: >

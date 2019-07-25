@@ -81,22 +81,29 @@ params:
     label: Bitly access token
     description: >
       What is your Bitly access token? Generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
+    example: a1b2c3d4e5f6g7
     required: true
+
   - param: COLLECTION_PATH
     label: Collection path
     description: >
       What is the path to the collection that contains the URLs that you want to shorten?
     default: urls
+    example: urls
     required: true
+
   - param: URL_FIELD_NAME
     label: URL field name
     description: >
       What is the name of the field that contains the original long URLs that you want to shorten?
     default: url
+    example: url
     required: true
+
   - param: SHORT_URL_FIELD_NAME
     label: Short URL field name
     description: >
       What is the name of the field where you want to store your shortened URLs?
     default: shortUrl
+    example: shortUrl
     required: true
