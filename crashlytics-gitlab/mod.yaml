@@ -85,21 +85,27 @@ params:
         value: asia-northeast1
     default: us-central1
     required: true
+
   - param: GITLAB_URL
     label: GitLab URL
     description: >
       What is the URL of your GitLab instance?
     default: https://gitlab.com
+    example: https://gitlab.com
     required: true
+
   - param: GITLAB_PROJECT_ID
     label: GitLab Project ID
     description: >
       What is the ID of your GitLab project?
+    example: 12345678
     required: true
+
   - param: GITLAB_ACCESS_TOKEN
     label: GitLab Access Token
     description: >
       Please paste your access token obtained from your GitLab instance. From
       Setting, click on "Access tokens" and generate a new Personal Access
       Token.
+    example: a1bcDeFGHi23JKlM4NOp
     required: true

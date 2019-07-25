@@ -88,6 +88,7 @@ params:
   - param: FIRESTORE_PATHS
     type: string
     label: Cloud Firestore paths
+    example: users/{UID},admins/{UID}
     required: false
     description: >-
       Which paths in your Cloud Firestore instance contain user data? Leave empty if
@@ -101,6 +102,7 @@ params:
   - param: RTDB_PATHS
     type: string
     label: Realtime Database paths
+    example: users/{UID},admins/{UID}
     required: false
     description: >-
       Which paths in your Realtime Database instance contain user data? Leave empty if you
@@ -113,6 +115,7 @@ params:
   - param: STORAGE_PATHS
     type: string
     label: Cloud Storage paths
+    example: "{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt"
     required: false
     description: >-
       Where in Google Cloud Storage do you store user data? Leave empty if you

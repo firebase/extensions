@@ -90,11 +90,13 @@ params:
     description: >-
       What is the full URL of the GitHub repository from which you want to deploy?
       For example: `https://github.com/firebase/firebase-tools`
+    example: https://github.com/firebase/firebase-tools
 
   - param: BRANCH
     type: string
     label: Deployment branch
     default: master
+    example: master
     description: >-
       Which branch in your GitHub repository do you want to use for
       triggering deploys to Firebase Hosting?
@@ -104,6 +106,7 @@ params:
     type: string
     label: Deployment root
     default: public
+    example: public
     description: >-
       Which directory in your GitHub repository contains the assets
       to be deployed to Firebase Hosting?
@@ -113,6 +116,7 @@ params:
     type: string
     label: Site name
     default: ${PROJECT_ID}
+    example: my-project-12345
     description: >-
       What is the name of your site? If your Firebase project only has one site,
       your site name is usually the same as your project ID.

@@ -78,6 +78,7 @@ params:
         value: asia-northeast1
     default: us-central1
     required: true
+
   - param: NODE_PATH
     type: string
     label: Realtime Database path
@@ -85,7 +86,9 @@ params:
       What is the Realtime Database path for which you want to limit the number of child nodes?
     validationRegex: ^\S+$
     validationErrorMessage: Path cannot have spaces.
+    example: path/to/limit
     required: true
+
   - param: MAX_COUNT
     type: string
     label: Maximum count of nodes to keep
@@ -94,4 +97,5 @@ params:
       The oldest nodes will be deleted first to maintain this max count.
     validationRegex: ^\d+$
     validationErrorMessage: Invalid MAX_COUNT, must be a positive integer.
+    example: 10
     required: true
