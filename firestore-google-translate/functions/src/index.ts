@@ -20,6 +20,7 @@ import { Translate } from "@google-cloud/translate";
 
 import config from "./config";
 import * as logs from "./logs";
+import * as validators from "./validators";
 
 type Translation = {
   language: string;
@@ -43,8 +44,21 @@ export const fstranslate = functions.handler.firestore.document.onWrite(
   async (change): Promise<void> => {
     logs.start();
 
-    if (config.messageFieldName === config.translationsFieldName) {
+    const { languages, messageFieldName, translationsFieldName } = config;
+
+    if (validators.fieldNamesMatch(messageFieldName, translationsFieldName)) {
       logs.fieldNamesNotDifferent();
+      return;
+    }
+
+    if (
+      validators.fieldNameIsTranslationPath(
+        messageFieldName,
+        translationsFieldName,
+        languages
+      )
+    ) {
+      logs.messageFieldNameIsTranslationPath();
       return;
     }
 
