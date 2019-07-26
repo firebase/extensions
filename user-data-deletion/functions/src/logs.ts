@@ -96,6 +96,10 @@ export const storagePathDeleting = (path: string) => {
   console.log(`Deleting: '${path}' from Cloud Storage`);
 };
 
+export const storagePath404 = (path: string) => {
+  console.log(`File: '${path}' does not exist in Cloud Storage, skipping`);
+};
+
 export const storagePathError = (path: string, err: Error) => {
   console.error(`Error deleting: '${path}' from Cloud Storage`, err);
 };

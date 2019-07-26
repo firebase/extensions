@@ -97,7 +97,11 @@ const clearStorageData = async (storagePaths: string, uid: string) => {
       await file.delete();
       logs.storagePathDeleted(path);
     } catch (err) {
-      logs.storagePathError(path, err);
+      if (err.code === 404) {
+        logs.storagePath404(path);
+      } else {
+        logs.storagePathError(path, err);
+      }
     }
   });
 
