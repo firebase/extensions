@@ -39,7 +39,7 @@ Before you can use this mod, you'll need to update your security rules, set up a
         <body>
             <script>
                 // Initialize Firebase.
-                var firebaseConfig = {};
+                var firebaseConfig = { projectId: "${PROJECT_ID}" };
                 firebase.initializeApp(firebaseConfig);
                 var db = firebase.firestore();
 
