@@ -98,6 +98,8 @@ params:
       Which Cloud Storage bucket will contain the uploaded images that you want to resize?
       This bucket will also store the resized images.
     default: ${STORAGE_BUCKET}
+    validationRegex: (.)+\.(.)+\.(.)+
+    validationErrorMessage: Invalid storage bucket
     example: my-project-12345.appspot.com
     required: true
 
