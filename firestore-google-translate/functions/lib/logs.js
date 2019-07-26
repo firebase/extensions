@@ -49,6 +49,9 @@ exports.fieldNamesNotDifferent = () => {
 exports.init = () => {
     console.log("Initializing mod with configuration", config_1.default);
 };
+exports.messageFieldNameIsTranslationPath = () => {
+    console.error("The `Message` field name must not be the same as a `Translation` path for this mod to function correctly");
+};
 exports.start = () => {
     console.log("Started mod execution with configuration", config_1.default);
 };

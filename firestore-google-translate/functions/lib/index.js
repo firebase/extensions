@@ -28,6 +28,7 @@ const functions = require("firebase-functions");
 const translate_1 = require("@google-cloud/translate");
 const config_1 = require("./config");
 const logs = require("./logs");
+const validators = require("./validators");
 var ChangeType;
 (function (ChangeType) {
     ChangeType[ChangeType["CREATE"] = 0] = "CREATE";
@@ -40,8 +41,13 @@ admin.initializeApp();
 logs.init();
 exports.fstranslate = functions.handler.firestore.document.onWrite((change) => __awaiter(this, void 0, void 0, function* () {
     logs.start();
-    if (config_1.default.messageFieldName === config_1.default.translationsFieldName) {
+    const { languages, messageFieldName, translationsFieldName } = config_1.default;
+    if (validators.fieldNamesMatch(messageFieldName, translationsFieldName)) {
         logs.fieldNamesNotDifferent();
+        return;
+    }
+    if (validators.fieldNameIsTranslationPath(messageFieldName, translationsFieldName, languages)) {
+        logs.messageFieldNameIsTranslationPath();
         return;
     }
     const changeType = getChangeType(change);

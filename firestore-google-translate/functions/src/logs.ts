@@ -68,6 +68,12 @@ export const init = () => {
   console.log("Initializing mod with configuration", config);
 };
 
+export const messageFieldNameIsTranslationPath = () => {
+  console.error(
+    "The `Message` field name must not be the same as a `Translation` path for this mod to function correctly"
+  );
+};
+
 export const start = () => {
   console.log("Started mod execution with configuration", config);
 };
