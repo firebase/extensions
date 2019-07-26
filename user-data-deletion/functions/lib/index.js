@@ -96,7 +96,12 @@ const clearStorageData = (storagePaths, uid) => __awaiter(this, void 0, void 0, 
             logs.storagePathDeleted(path);
         }
         catch (err) {
-            logs.storagePathError(path, err);
+            if (err.code === 404) {
+                logs.storagePath404(path);
+            }
+            else {
+                logs.storagePathError(path, err);
+            }
         }
     }));
     yield Promise.all(promises);
