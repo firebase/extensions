@@ -15,7 +15,7 @@
 name: slack-messenger
 displayName: Send Pub/Sub messages to Slack
 specVersion: v1beta1
-version: 1.0.0
+version: 0.1.0
 
 description:
   Sends messages published to a Pub/Sub topic to a specified Slack channel.
