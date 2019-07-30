@@ -23,7 +23,7 @@ description:
 
 license: Apache-2.0
 billingRequired: true
-sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/budget-notifications/
+sourceUrl: https://accounts.google.com/AccountChooser/signinchooser?service=gerritcodereview&continue=https%3A%2F%2Fdev-partners.googlesource.com%2Flogin%2Fsamples%2Ffirebase%2Fmods%2F%2B%2Fmaster%2Fbudget-notifications
 releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
 
 author:

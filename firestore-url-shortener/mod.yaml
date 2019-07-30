@@ -18,18 +18,18 @@ specVersion: v1beta1
 version: 0.1.0
 
 description:
-  Automatically shorten URLs written to a specified collection in Cloud Firestore using the Bitly API. Both the original and 
+  Automatically shorten URLs written to a specified collection in Cloud Firestore using the Bitly API. Both the original and
   shortened URLs are stored in the same document.
-  
+
 license: Apache-2.0
 billingRequired: true
-sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-url-shortener
+sourceUrl: https://accounts.google.com/AccountChooser/signinchooser?service=gerritcodereview&continue=https%3A%2F%2Fdev-partners.googlesource.com%2Flogin%2Fsamples%2Ffirebase%2Fmods%2F%2B%2Fmaster%2Ffirestore-url-shortener
 releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
 
 author:
   authorName: Firebase
   url: https://firebase.google.com
-  
+
 contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
