@@ -17,19 +17,19 @@ displayName: Deploy to Firebase Hosting from GitHub
 specVersion: v1beta1
 version: 0.1.0
 
-description: 
+description:
   When a new commit is made on a specified branch in GitHub,
   automatically deploy the assets of a specified GitHub directory to Firebase Hosting.
 
 license: Apache-2.0
 billingRequired: true
-sourceUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+/master/github-hosting-deploy
+sourceUrl: https://accounts.google.com/AccountChooser/signinchooser?service=gerritcodereview&continue=https%3A%2F%2Fdev-partners.googlesource.com%2Flogin%2Fsamples%2Ffirebase%2Fmods%2F%2B%2Fmaster%2Fgithub-hosting-deploy
 releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
 
 author:
   authorName: Firebase
   url: https://firebase.google.com
-  
+
 contributors:
   - authorName: Bryan Kendall
     url: https://github.com/bkendall
