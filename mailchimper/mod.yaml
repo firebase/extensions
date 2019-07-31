@@ -41,7 +41,7 @@ resources:
     type: firebasemods.v1beta1.function
     description:
       Listens for new user accounts (as managed by Firebase Authentication),
-      then automatically adds the new user to your specified MailChimp email list.
+      then automatically adds the new user to your specified MailChimp email audience.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -52,7 +52,7 @@ resources:
     type: firebasemods.v1beta1.function
     description:
       Listens for existing user accounts to be deleted (as managed by Firebase Authentication),
-      then automatically removes them from your specified MailChimp email list.
+      then automatically removes them from your specified MailChimp email audience.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -101,7 +101,7 @@ params:
     description: >-
       What is the Mailchimp Audience ID to which you want to subscribe new users?
       To find your Audience ID: visit https://admin.mailchimp.com/lists,
-      click on the desired list or create a new list, then select **Settings**.
+      click on the desired audience or create a new audience, then select **Settings**.
       Look for **Audience ID** (for example, `27735fc60a`).
     example: 1ab2345c67
     required: true
