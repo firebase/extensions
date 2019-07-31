@@ -1,3 +1,5 @@
+### Using the mod
+
 This mod creates an HTTPS-callable function (`${function:fsdelete.name}`) that you can call in the client code to recursively delete data from a specified Cloud Firestore path.
 
 To start using this installed mod, you need to configure the following:
@@ -31,5 +33,7 @@ deleteFn({
   // ...
 });
 ```
+
+### Monitoring
 
 As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.
