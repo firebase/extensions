@@ -2,7 +2,7 @@
 
 Before you can use this mod, you'll need to update your security rules, set up a scheduled function, and add some code to your JavaScript app.
 
-1.  Update your Cloud Firestore security rules to allow reads and writes to the `_counter_shards_` subcollection of where you want to count. The exact Sscurity rules are application specific, but here's just an example of how you could allow clients to increment "visits" field on any document "page" under "/pages" path.
+1.  Update your Cloud Firestore security rules to allow reads and writes to the `_counter_shards_` subcollection of where you want to count. The exact security rules are application specific, but here's just an example of how you could allow clients to increment "visits" field on any document "page" under "/pages" path.
 
     ```
     match /databases/{database}/documents/pages/{page} {
