@@ -42,8 +42,8 @@ apis:
     reason: Required to deploy to Firebase Hosting
 
 roles:
-  - role: firebasehosting.admin
-    reason: Allows the mod to deploy to Firebase Hosting
+  - role: firebase.admin
+    reason: Allows the mod to deploy to Firebase Hosting. This mod will only interact with Firebase Hosting and Cloud Functions.
 
 resources:
   - name: deploy
