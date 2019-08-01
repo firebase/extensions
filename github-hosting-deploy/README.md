@@ -1,32 +1,10 @@
-# github-hosting-deploy
+# Deploy to Firebase Hosting from GitHub
 
-**VERSION**: 0.1.0
-
-**DESCRIPTION**: When a new commit is made on a specified branch in GitHub, automatically deploy the assets of a specified GitHub directory to Firebase Hosting.
+**Description**: When a new commit is made on a specified branch in GitHub, automatically deploy the assets of a specified GitHub directory to Firebase Hosting.
 
 
 
-**CONFIGURATION PARAMETERS:**
-
-* Deployment location: *Where should the mod be deployed? For help selecting a location, visit https://firebase.google.com/docs/functions/locations.*
-
-* GitHub repository: *What is the full URL of the GitHub repository from which you want to deploy? For example: `https://github.com/firebase/firebase-tools`*
-
-* Deployment branch: *Which branch in your GitHub repository do you want to use for triggering deploys to Firebase Hosting?*
-
-* Deployment root: *Which directory in your GitHub repository contains the assets to be deployed to Firebase Hosting?*
-
-* Site name: *What is the name of your site? If your Firebase project only has one site, your site name is usually the same as your project ID. Review your available site names: https://console.firebase.google.com/project/${PROJECT_ID}/hosting/main*
-
-
-
-**CLOUD FUNCTIONS CREATED:**
-
-* deploy (HTTPS)
-
-
-
-**DETAILS**: Use this mod to set up automated deployments of a static website from a git repository to Firebase Hosting.
+**Details**: Use this mod to set up automated deployments of a static website from a git repository to Firebase Hosting.
 
 This mod creates one resource: an HTTPS-triggered function that responds to GitHub webhooks. It's provided at the end of this mod's installation process and looks like `https://us-central1-my-project.cloudfunctions.net/mod-hosting-deploy-b33f-deploy`. You'll use this URL to configure a webhook on GitHub.
 
@@ -54,15 +32,38 @@ When everything is configured and hooked up, you can make a change in your repos
 1.  Commit then push the change to GitHub.
 1.  After a moment, check the Firebase Hosting dashboard in the Firebase console for the change (for this example, `https://my-project.firebaseapp.com`). The committed changes should appear in your browser.
 
+When you use Firebase Mods, you're only charged for the underlying resources that you use. Firebase Mods themselves are free to use. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
 
 
-**APIS USED**:
+
+
+**Configuration Parameters:**
+
+* Deployment location: Where should the mod be deployed? For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+
+* GitHub repository: What is the full URL of the GitHub repository from which you want to deploy? For example: `https://github.com/firebase/firebase-tools`
+
+* Deployment branch: Which branch in your GitHub repository do you want to use for triggering deploys to Firebase Hosting?
+
+* Deployment root: Which directory in your GitHub repository contains the assets to be deployed to Firebase Hosting?
+
+* Site name: What is the name of your site? If your Firebase project only has one site, your site name is usually the same as your project ID. View your [available site names](https://console.firebase.google.com/project/${PROJECT_ID}/hosting/main).
+
+
+
+**Cloud Functions:**
+
+* **deploy:** Triggers the deployment of your specified GitHub directory to Firebase Hosting.
+
+
+
+**APIs Used**:
 
 * firebasehosting.googleapis.com (Reason: Required to deploy to Firebase Hosting)
 
 
 
-**ACCESS REQUIRED**:
+**Access Required**:
 
 
 
