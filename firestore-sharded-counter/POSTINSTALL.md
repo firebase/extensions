@@ -2,7 +2,7 @@
 
 Before you can use this mod, you'll need to update your security rules, set up a scheduled function, and add some code to your JavaScript app.
 
-1.  Update your Cloud Firestore security rules to allow reads and writes to the `_counter_shards_` subcollection of where you want to count, for example:
+1.  Update your Cloud Firestore security rules to allow reads and writes to the `_counter_shards_` subcollection of where you want to count. The exact Sscurity rules are application specific, but here's just an example of how you could allow clients to increment "visits" field on any document "page" under "/pages" path.
 
     ```
     match /databases/{database}/documents/pages/{page} {
@@ -29,7 +29,7 @@ Before you can use this mod, you'll need to update your security rules, set up a
 
     Note: You might get a "Permission denied" error for the source repository. If you do, locate the **Sign in** button on the error page, then sign in to access to the repo.
 
-1.  Use the Counter SDK library in your code:
+1.  Use the Counter SDK library in your code to increment counters. The code snippet below shows an example of how to use it, for more comprehensive API documentation, please refer to the [source code](https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-sharded-counter/clients/web/src/index.ts):
 
     ```html
     <html>
@@ -48,7 +48,7 @@ Before you can use this mod, you'll need to update your security rules, set up a
                 // Initialize the sharded counter.
                 var views = new sharded.Counter(db.doc("pages/hello-world"), "stats.views");
 
-                // Increment by 3 the field "stats.views" of the document: ${param:MOD_METADATA_DOC}.
+                // Increment by 3 the field "stats.views" of the document: "pages/hello-world".
                 // (use your desired increment amount)
                 views.incrementBy(3);
 
