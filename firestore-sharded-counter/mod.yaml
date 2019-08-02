@@ -13,12 +13,12 @@
 # limitations under the License.
 
 name: firestore-sharded-counter
-displayName: Scalable counter service
+displayName: Increment counters in Firestore at scale
 specVersion: v1beta1
 version: 0.1.0
 
 description:
-  Keep an accurate account of events in your app that happen at high velocity, such as number of views and likes.
+  Increment counters in your Firestore documents at any rate. No more (1 write per second limitation!)[https://firebase.google.com/docs/firestore/quotas#writes_and_transactions]
 
 license: Apache-2.0
 billingRequired: false
