@@ -44,6 +44,8 @@ Here are some of the important features of this mod:
 
 This mod can work on any platform. However there's only [JavaScript SDK](https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-sharded-counter/clients/web/src/index.ts) included at this time. This will change in the future.
 
+*SECURITY RULES*
+
 Please remember to set adequate security rules for your app to allow counter lookups and updates. On top of the access to the document holding a counter you need to give access to `_counter_shards_` subcollections as well.
 
 Here's an example of how you could allow clients to increment "visits" field on
