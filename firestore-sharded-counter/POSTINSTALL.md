@@ -2,34 +2,35 @@
 
 Before you can use this mod, you'll need to update your security rules, set up a scheduled function, and add some code to your JavaScript app.
 
-1.  Update your Cloud Firestore security rules to allow reads and writes to the `_counter_shards_` subcollection of where you want to count. The exact security rules are application specific, but here's just an example of how you could allow clients to increment "visits" field on any document "page" under "/pages" path.
+1.  Update your Cloud Firestore security rules to allow reads and writes to the `_counter_shards_` subcollection of where you want to count. The exact security rules are application specific, but here's just an example of how you could allow clients to increment "visits" field on any document "page" in "pages" collection.
 
     ```
     match /databases/{database}/documents/pages/{page} {
-     // "page" documents in this path contain "visits" field that counts all the
-     // visits to the page. Only read access is necessary, clients will not update
-     // these documents directly.
-     allow read;
+      // "page" documents in this path contain "visits" field that counts all the
+      // visits to the page. Only read access is necessary, clients will not update
+      // these documents directly.
+      allow read;
 
-     // Clients need to be able to read and write to their shards.
-     match /_counter_shards_/{shardId} {
-       // Allow shard lookups for latency compensation.
-       allow get;
+      // Clients need to read and write to their shards in _counter_shards_ subcollection.
+      match /_counter_shards_/{shardId} {
+        // Allow shard lookups for latency compensation.
+        allow get;
 
-       // Querying on these should be disabled.
-       allow list: if false;
+        // Allow to increment only 'visits' field and only by 1.
+        allow create: if request.resource.data.keys().size() == 1 &&
+          request.resource.data.visists == 1;
+        allow update: if request.resource.data.keys().size() == 1 &&
+          request.resource.data.visits == resource.data.visits + 1;
 
-       // Allow to increment only 'visits' field and only by 1.
-       allow create: if request.resource.data.keys().size() == 1 &&
-         request.resource.data.visists == 1;
-       allow update: if request.resource.data.keys().size() == 1 &&
-         request.resource.data.visits == resource.data.visits + 1;
+        // Disable queries.
+        allow list: if false;
 
-       // Disable deletes.
-       allow delete: if false;
-     }
+        // Disable deletes.
+        allow delete: if false;
+      }
     }
     ```
+
 
 1.  Set up a [scheduled function](https://firebase.google.com/docs/functions/schedule-functions) to call `${function:controller.url}` every minute.
 

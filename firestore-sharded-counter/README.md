@@ -57,19 +57,19 @@ match /databases/{database}/documents/pages/{page} {
   // these documents directly.
   allow read;
 
-  // Clients need to be able to read and write to their shards.
+  // Clients need to read and write to their shards in _counter_shards_ subcollection.
   match /_counter_shards_/{shardId} {
     // Allow shard lookups for latency compensation.
     allow get;
-
-    // Querying on these should be disabled.
-    allow list: if false;
 
     // Allow to increment only 'visits' field and only by 1.
     allow create: if request.resource.data.keys().size() == 1 &&
       request.resource.data.visists == 1;
     allow update: if request.resource.data.keys().size() == 1 &&
       request.resource.data.visits == resource.data.visits + 1;
+
+    // Disable queries.
+    allow list: if false;
 
     // Disable deletes.
     allow delete: if false;
