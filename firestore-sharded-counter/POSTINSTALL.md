@@ -6,15 +6,28 @@ Before you can use this mod, you'll need to update your security rules, set up a
 
     ```
     match /databases/{database}/documents/pages/{page} {
-      // Allow to increment only 'visits' field and only by 1.
-      match /_counter_shards_/{shardId} {
-        allow read;
-        allow create: if request.resource.data.keys().size() == 1 &&
-          request.resource.data.visists == 1;
-        allow update: if request.resource.data.keys().size() == 1 &&
-          request.resource.data.visits == resource.data.visits + 1;
-        allow delete: if false;
-      }
+     // "page" documents in this path contain "visits" field that counts all the
+     // visits to the page. Only read access is necessary, clients will not update
+     // these documents directly.
+     allow read;
+
+     // Clients need to be able to read and write to their shards.
+     match /_counter_shards_/{shardId} {
+       // Allow shard lookups for latency compensation.
+       allow get;
+
+       // Querying on these should be disabled.
+       allow list: if false;
+
+       // Allow to increment only 'visits' field and only by 1.
+       allow create: if request.resource.data.keys().size() == 1 &&
+         request.resource.data.visists == 1;
+       allow update: if request.resource.data.keys().size() == 1 &&
+         request.resource.data.visits == resource.data.visits + 1;
+
+       // Disable deletes.
+       allow delete: if false;
+     }
     }
     ```
 
