@@ -91,7 +91,7 @@ const clearStorageData = async (storagePaths: string, uid: string) => {
       bucketName === "{DEFAULT}"
         ? admin.storage().bucket()
         : admin.storage().bucket(bucketName);
-    const file = bucket.file(parts[1]);
+    const file = bucket.file(parts.slice(1).join("/"));
     try {
       logs.storagePathDeleting(path);
       await file.delete();

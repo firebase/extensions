@@ -1,24 +1,10 @@
-# firestore-recursive-delete
+# Delete Cloud Firestore subcollections
 
-**VERSION**: 0.1.0
-
-**DESCRIPTION**: Call the HTTPS function created by this mod to delete a specified Cloud Firestore collection or document, as well as all its subcollections.
+**Description**: Call the HTTPS function created by this mod to delete a specified Cloud Firestore collection or document, as well as all its subcollections.
 
 
 
-**CONFIGURATION PARAMETERS:**
-
-* Deployment location: *Where should the mod be deployed? You usually want a location close to your database. For help selecting a location, visit https://firebase.google.com/docs/functions/locations.*
-
-
-
-**CLOUD FUNCTIONS CREATED:**
-
-* fsdelete (HTTPS)
-
-
-
-**DETAILS**: Use this mod to recursively delete Cloud Firestore data.
+**Details**: Use this mod to recursively delete Cloud Firestore data.
 
 This mod creates an HTTPS-callable function that you can call in the client code to recursively delete data from a specified Cloud Firestore path. If the path represents a collection, then all of its documents and their subcollections will be deleted. If the path represents a document, then that document and all of its subcollections will be deleted.
 
@@ -54,9 +40,24 @@ deleteFn({
 });
 ```
 
+When you use Firebase Mods, you're only charged for the underlying resources that you use. Firebase Mods themselves are free to use. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
 
 
-**ACCESS REQUIRED**:
+
+
+**Configuration Parameters:**
+
+* Deployment location: Where should the mod be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+
+
+
+**Cloud Functions:**
+
+* **fsdelete:** When called, recursively deletes your specified Cloud Firestore collection or document, as well as all its subcollections.
+
+
+
+**Access Required**:
 
 
 
