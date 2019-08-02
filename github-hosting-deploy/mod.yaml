@@ -15,7 +15,7 @@
 name: github-hosting-deploy
 displayName: Deploy to Firebase Hosting from GitHub
 specVersion: v1beta1
-version: 0.1.0
+version: 0.1.1
 
 description:
   When a new commit is made on a specified branch in GitHub,
@@ -42,8 +42,8 @@ apis:
     reason: Required to deploy to Firebase Hosting
 
 roles:
-  - role: firebasehosting.admin
-    reason: Allows the mod to deploy to Firebase Hosting
+  - role: firebase.admin
+    reason: Allows the mod to deploy to Firebase Hosting. This mod will only interact with Firebase Hosting and Cloud Functions.
 
 resources:
   - name: deploy

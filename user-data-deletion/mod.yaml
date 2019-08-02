@@ -15,7 +15,7 @@
 name: user-data-deletion
 displayName: Auto-delete user data
 specVersion: v1beta1
-version: 0.1.0
+version: 0.1.1
 
 description:
   When a user deletes their account, automatically delete their data from Cloud Firestore, Realtime Database,
