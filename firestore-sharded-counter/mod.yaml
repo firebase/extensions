@@ -17,8 +17,7 @@ displayName: Increment counters in Firestore at scale
 specVersion: v1beta1
 version: 0.1.0
 
-description:
-  Increment counters in your Firestore documents at any rate. No more (1 write per second limitation!)[https://firebase.google.com/docs/firestore/quotas#writes_and_transactions]
+description: Keep an accurate account of your app events in Firestore that happen at high velocity, such as number of views and likes.
 
 license: Apache-2.0
 billingRequired: false

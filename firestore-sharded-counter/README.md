@@ -1,87 +1,41 @@
-# firestore-sharded-counter
+# Scalable counter service
 
-**VERSION**: 0.1.0
-
-**DESCRIPTION**: Increment counters in your Firestore documents at any rate. No more [1 write per second limitation!](https://firebase.google.com/docs/firestore/quotas#writes_and_transactions)
+**Description**: Keep an accurate account of events in your app that happen at high velocity, such as number of views and likes.
 
 
 
-**CONFIGURATION PARAMETERS:**
+**Details**: Use this mod to add a highly scalable counter service to your app. This is ideal for applications that count viral actions or any very high velocity action such as views, likes, or shares.
 
-* Deployment location: *Where should the mod be deployed? You usually want a location close to your database. For help selecting a location, visit https://firebase.google.com/docs/functions/locations.*
+Note that this mod is for use with the JavaScript apps and requires the Firebase JavaScript SDK.
 
-* Document path for internal state: *What is the path to the document where the mod can keep its internal state?*
+This mod includes an SDK to install in your app which lets you specify a path to a Cloud Firestore document and increment a field value by any amount you choose. The mod creates a subcollection in your specified document to help track the counter in a scalable way.
 
+After installation, you'll need to set up a [scheduled function](https://firebase.google.com/docs/functions/schedule-functions) to help the controller function.
 
-
-**CLOUD FUNCTIONS CREATED:**
-
-* controller (HTTPS)
-
-* onWrite (providers/cloud.firestore/eventTypes/document.write)
-
-* worker (providers/cloud.firestore/eventTypes/document.write)
+When you use Firebase Mods, you're only charged for the underlying resources that you use. Firebase Mods themselves are free to use. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
 
 
 
-**DETAILS**: Use this mod to add a highly scalable counter service to your app. This is ideal for applications that count viral actions or any very high velocity action such as views, likes, or shares.
 
-Firestore has a restrictive limit of 1 per second of sustained write rate to a document. That makes counting in Firestore very challenging.
-This mod works around this limitation and lets your app update any field in any document of your Firestore database at high rate (security rules permitting). It accomplishes that by using numerous temporary shards to sustain even the highest bursts of traffic. Each client is incrementing their own unique shard and only background workers running as Cloud Functions for Firebase are continuously monitoring and aggregating these shards to the master documents.
+**Configuration Parameters:**
 
-Here are some of the important features of this mod:
+* Deployment location: Where should the mod be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
-- Minimal configuration, one mod for all your app needs.
-- Automatically scales from 0 updates per second to at least 10 thousand.
-- Supports an arbitrary number of counters in your app with no additional
-  configuration.
-- Works well offline and provides latency compensation.
-  - Counter updates are immediately visible locally even though the main counter is eventually updated.
-- Resource efficient.
-  - `worker` functions will scale down to 0 for low workloads if needed.
-  - `onWrite` function is [limted to 1 instance](https://cloud.google.com/functions/docs/max-instances#using_max_instances).
-  - `controller` is the only function that runs every minute regardless of the workload.
-
-This mod can work on any platform. However there's only [JavaScript SDK](https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-sharded-counter/clients/web/src/index.ts) included at this time. This will change in the future.
-
-*SECURITY RULES*
-
-Please remember to set adequate security rules for your app to allow counter lookups and updates. On top of the access to the document holding a counter you need to give access to `_counter_shards_` subcollections as well.
-
-Here's an example of how you could allow clients to increment "visits" field on
-any document "page" in "pages" collection.
-```
-match /databases/{database}/documents/pages/{page} {
-  // "page" documents in this path contain "visits" field that counts all the
-  // visits to the page. Only read access is necessary, clients will not update
-  // these documents directly.
-  allow read;
-
-  // Clients need to read and write to their shards in _counter_shards_ subcollection.
-  match /_counter_shards_/{shardId} {
-    // Allow shard lookups for latency compensation.
-    allow get;
-
-    // Allow to increment only 'visits' field and only by 1.
-    allow create: if request.resource.data.keys().size() == 1 &&
-      request.resource.data.visists == 1;
-    allow update: if request.resource.data.keys().size() == 1 &&
-      request.resource.data.visits == resource.data.visits + 1;
-
-    // Disable queries.
-    allow list: if false;
-
-    // Disable deletes.
-    allow delete: if false;
-  }
-}
-```
-
-After installation, you'll need to set up a [scheduled function](https://firebase.google.com/docs/functions/schedule-functions) to help the controller function (`${function:controller.url}`).
+* Document path for internal state: What is the path to the document where the mod can keep its internal state?
 
 
 
-**ACCESS REQUIRED**:
+**Cloud Functions:**
+
+* **controller:** Scheduled to run every minute. This function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
+
+* **onWrite:** Listens for changes on documents that may need incrementing.
+
+* **worker:** Monitors a range of shards and aggregates them, as needed. There may be 0 or more worker functions running at any point in time. The controller function is responsible for scheduling and monitoring these workers.
+
+
+
+**Access Required**:
 
 
 
