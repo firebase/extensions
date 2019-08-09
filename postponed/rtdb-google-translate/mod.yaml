@@ -1,0 +1,114 @@
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: rtdb-google-translate
+specVersion: v1beta1
+version: 0.1.0
+
+displayName: Translate text strings in Realtime Database
+
+description:
+  When a message is written to the database, translate the message in the
+  provided language to multiple destination languages as specified by mod user.
+
+license: Apache-2.0
+billingRequired: true
+sourceUrl: https://accounts.google.com/AccountChooser/signinchooser?service=gerritcodereview&continue=https%3A%2F%2Fdev-partners.googlesource.com%2Flogin%2Fsamples%2Ffirebase%2Fmods%2F%2B%2Fmaster%2Frtdb-google-translate
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+
+contributors:
+  - authorName: Ashley Gau
+    email: gau@google.com
+    url: https://github.com/agau4779
+  - authorName: Chris Bianca
+    email: chris@csfrequency.com
+    url: https://github.com/chrisbianca
+
+apis:
+  - apiName: translate.googleapis.com
+    reason:
+      To use Google Translate to translate strings into your specified target
+      languages.
+
+roles:
+  - role: firebasedatabase.admin
+    reason: Allows the mod to write translated strings to Realtime Database.
+
+resources:
+  - name: rtdbtranslate
+    type: firebasemods.v1beta1.function
+    description:
+      Listens for writes of new strings to your specified Realtime Database
+      path, translates the strings, then writes the translated strings back to
+      the Realtime Database.
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: providers/google.firebase.database/eventTypes/ref.write
+        resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${TRIGGER_PATH}/{languageID}/{messageID}
+
+params:
+  - param: LOCATION
+    type: select
+    label: Deployment location
+    description: >-
+      Where should the mod be deployed? You usually want a location close to
+      your database. For help selecting a location, refer to the [location
+      selection
+      guide](https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage).
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+    default: us-central1
+    required: true
+
+  - param: LANGUAGES
+    label: Target languages for translations, as a comma-separated list
+    description: >
+      Into which target languages do you want to translate new strings? The
+      languages are identifed using ISO-639-1 codes in a comma-separated list,
+      for example: en,es,de,fr. For these codes, visit the [supported languages
+      list](https://cloud.google.com/translate/docs/languages).
+    default: en,es,de,fr
+    example: en,es,de,fr
+    validationRegex: "^[a-zA-Z,-]+$"
+    validationErrorMessage:
+      Languages must be a comma-separated list of ISO-639-1 language codes.
+    required: true
+
+  - param: TRIGGER_PATH
+    label: Trigger path
+    description: >
+      What is the path that you want to listen for new messages and create new
+      message translations?
+    default: messages
+    example: messages
+    required: true
