@@ -59,7 +59,18 @@ export const sendInvitation = functions.https.onCall(async (data, context) => {
     return { acceptUrl };
   } catch (err) {
     logs.errorSendInvitation(err);
-    throw httpErrors.internal(err);
+    let message;
+    try {
+      // Sendgrid returns a JSON object as a string, so try to convert it
+      message = JSON.parse(err.message);
+    } catch (err) {
+      // Do nothing, we'll just log an internal error instead
+    }
+    if (message && message.code === 401) {
+      throw httpErrors.invalidApiKey();
+    } else {
+      throw httpErrors.internal(err);
+    }
   }
 });
 
@@ -156,9 +167,7 @@ const sendInvitationEmail = async (
 ): Promise<void> => {
   const emailBodyHtml = `
 <p>Hi there ${email},</p>
-<p>I'm using ${
-    config.appName
-  } and I'd love for you to join me! <a href="${acceptUrl}">Accept invitation</a></p>
+<p>I'm using ${config.appName} and I'd love for you to join me! <a href="${acceptUrl}">Accept invitation</a></p>
 <p>- ${auth.token.name} (via ${config.appName})</p>
 `;
 
