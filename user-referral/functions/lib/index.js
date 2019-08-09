@@ -59,7 +59,20 @@ exports.sendInvitation = functions.https.onCall((data, context) => __awaiter(thi
     }
     catch (err) {
         logs.errorSendInvitation(err);
-        throw httpErrors.internal(err);
+        let message;
+        try {
+            // Sendgrid returns a JSON object as a string, so try to convert it
+            message = JSON.parse(err.message);
+        }
+        catch (err) {
+            // Do nothing, we'll just log an internal error instead
+        }
+        if (message && message.code === 401) {
+            throw httpErrors.invalidApiKey();
+        }
+        else {
+            throw httpErrors.internal(err);
+        }
     }
 }));
 exports.acceptInvitation = functions.https.onCall((data, context) => __awaiter(this, void 0, void 0, function* () {

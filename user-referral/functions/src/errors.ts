@@ -17,7 +17,13 @@
 import * as functions from "firebase-functions";
 
 export const internal = (e: Error) =>
-  new functions.https.HttpsError("internal", JSON.stringify(e));
+  new functions.https.HttpsError("internal", "Internal error", e);
+
+export const invalidApiKey = () =>
+  new functions.https.HttpsError(
+    "unauthenticated",
+    "Your SendGrid API key is invalid, expired or revoked"
+  );
 
 export const invalidDocPathField = () =>
   new functions.https.HttpsError(
