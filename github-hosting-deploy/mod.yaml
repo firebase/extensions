@@ -53,6 +53,8 @@ resources:
       sourceDirectory: .
       location: ${LOCATION}
       httpsTrigger: {}
+      timeout: 300s
+      availableMemoryMb: 2048
 
 params:
   - param: LOCATION
