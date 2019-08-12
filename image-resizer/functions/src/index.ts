@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as storage from "@google-cloud/storage";
 import * as admin from "firebase-admin";
 import * as fs from "fs";
 import * as functions from "firebase-functions";
@@ -25,6 +26,19 @@ import * as path from "path";
 import config from "./config";
 import * as logs from "./logs";
 import * as validators from "./validators";
+
+type ResizedImageResult = {
+  signedUrl?: string;
+  size: string;
+  success: boolean;
+};
+
+// The signed URL config provide authenticated read access to the images.
+// These URLs expire on the date set in the mod.yaml.
+const signedUrlConfig: storage.GetSignedUrlConfig = {
+  action: "read",
+  expires: config.signedUrlsExpirationDate,
+};
 
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
@@ -48,12 +62,12 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       return;
     }
 
+    const bucket = admin.storage().bucket(object.bucket);
     const filePath = object.name; // File path in the bucket.
     const fileDir = path.dirname(filePath);
     const fileName = path.basename(filePath);
     const fileExtension = path.extname(filePath);
     const fileNameWithoutExtension = fileName.slice(0, -fileExtension.length);
-    const suffix = `_${config.maxWidth}x${config.maxHeight}`;
 
     const isResizedImage = validators.isResizedImage(fileNameWithoutExtension);
     if (isResizedImage) {
@@ -61,28 +75,10 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       return;
     }
 
-    let tempFile;
-    let tempResizedFile;
+    let originalFile;
     try {
-      // Path where resized image will be uploaded to in Storage.
-      const resizedFilePath = path.normalize(
-        path.join(
-          fileDir,
-          `${fileNameWithoutExtension}${suffix}${fileExtension}`
-        )
-      );
-      tempFile = path.join(os.tmpdir(), filePath);
-      const tempLocalDir = path.dirname(tempFile);
-      tempResizedFile = path.join(os.tmpdir(), resizedFilePath);
-
-      // Cloud Storage files.
-      const bucket = admin.storage().bucket(object.bucket);
-      const remoteFile = bucket.file(filePath);
-      const remoteResizedFile = bucket.file(resizedFilePath);
-      const metadata = {
-        contentType: contentType,
-        "Cache-Control": config.cacheControlHeader,
-      };
+      originalFile = path.join(os.tmpdir(), filePath);
+      const tempLocalDir = path.dirname(originalFile);
 
       // Create the temp directory where the storage file will be downloaded.
       logs.tempDirectoryCreating(tempLocalDir);
@@ -90,79 +86,144 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       logs.tempDirectoryCreated(tempLocalDir);
 
       // Download file from bucket.
+      const remoteFile = bucket.file(filePath);
       logs.imageDownloading(filePath);
-      await remoteFile.download({ destination: tempFile });
-      logs.imageDownloaded(filePath, tempFile);
+      await remoteFile.download({ destination: originalFile });
+      logs.imageDownloaded(filePath, originalFile);
 
-      // Generate a resized image using ImageMagick.
-      logs.imageResizing(config.maxWidth, config.maxHeight);
-      await spawn(
-        "convert",
-        [
-          tempFile,
-          "-resize",
-          `${config.maxWidth}x${config.maxHeight}>`,
-          tempResizedFile,
-        ],
-        { capture: ["stdout", "stderr"] }
-      );
-      logs.imageResized(tempResizedFile);
-
-      // Uploading the resized image.
-      logs.imageUploading(resizedFilePath);
-      await bucket.upload(tempResizedFile, {
-        destination: resizedFilePath,
-        metadata: metadata,
+      // Convert to a set to remove any duplicate sizes
+      const imageSizes = new Set(config.imageSizes);
+      const tasks: Promise<ResizedImageResult>[] = [];
+      imageSizes.forEach((imageSize) => {
+        tasks.push(
+          resizeImage(
+            bucket,
+            originalFile,
+            fileDir,
+            fileNameWithoutExtension,
+            fileExtension,
+            contentType,
+            imageSize
+          )
+        );
       });
-      logs.imageUploaded(resizedFilePath);
+
+      const results = await Promise.all(tasks);
+
+      // If any of the image resizing tasks failed, then don't save the URLs
+      // to RTDB and bail out the mod execution
+      const failed = results.some((result) => result.success === false);
+      if (failed) {
+        logs.failed();
+        return;
+      }
 
       if (config.signedUrlsPath) {
-        // Get the Signed URLs for the resized image and original image. The signed URLs provide authenticated read access to
-        // the images. These URLs expire on the date set in the config object below.
-        const signedUrlConfig = {
-          action: "read",
-          expires: config.signedUrlsExpirationDate,
-        };
-        logs.signedUrlsGenerating();
-        const results = await Promise.all([
-          // @ts-ignore incorrectly seeing "read" as a string
-          remoteResizedFile.getSignedUrl(signedUrlConfig),
-          // @ts-ignore incorrectly seeing "read" as a string
-          remoteFile.getSignedUrl(signedUrlConfig),
-        ]);
-        logs.signedUrlsGenerated();
+        const originalSignedUrl = await getSignedUrl(remoteFile);
 
-        const imgResult = results[0];
-        const originalResult = results[1];
-        const imgFileUrl = imgResult[0];
-        const fileUrl = originalResult[0];
+        const resizedImages = results.reduce((output, task) => {
+          output[task.size] = task.signedUrl;
+          return output;
+        }, {});
 
         // Add the URLs to the Database
         logs.signedUrlsSaving(config.signedUrlsPath);
         await admin
           .database()
           .ref(`${config.signedUrlsPath}`)
-          .push({ path: fileUrl, resizedImage: imgFileUrl });
+          .push({
+            path: originalSignedUrl,
+            resizedImages,
+          });
         logs.signedUrlsSaved(config.signedUrlsPath);
       } else {
         logs.signedUrlsNotConfigured();
       }
+      logs.complete();
     } catch (err) {
       logs.error(err);
     } finally {
-      try {
-        // Make sure all local files are cleaned up to free up disk space.
-        logs.tempFilesDeleting();
-        if (tempFile) {
-          fs.unlinkSync(tempFile);
-        }
-        if (tempResizedFile) {
-          fs.unlinkSync(tempResizedFile);
-        }
-        logs.tempFilesDeleted();
-      } catch (err) {
-        logs.errorDeleting(err);
+      if (originalFile) {
+        logs.tempOriginalFileDeleting(filePath);
+        fs.unlinkSync(originalFile);
+        logs.tempOriginalFileDeleted(filePath);
       }
     }
   }
 );
+
+const getSignedUrl = async (file: storage.File): Promise<string> => {
+  const response = await file.getSignedUrl(signedUrlConfig);
+  return response[0];
+};
+
+const resizeImage = async (
+  bucket: storage.Bucket,
+  originalFile: string,
+  fileDir: string,
+  fileNameWithoutExtension: string,
+  fileExtension: string,
+  contentType: string,
+  size: string
+): Promise<ResizedImageResult> => {
+  // Path where resized image will be uploaded to in Storage.
+  const resizedFilePath = path.normalize(
+    path.join(fileDir, `${fileNameWithoutExtension}_${size}${fileExtension}`)
+  );
+  let resizedFile;
+
+  try {
+    resizedFile = path.join(os.tmpdir(), resizedFilePath);
+
+    // Cloud Storage files.
+    const remoteResizedFile = bucket.file(resizedFilePath);
+    const metadata = {
+      contentType: contentType,
+      "Cache-Control": config.cacheControlHeader,
+    };
+
+    // Generate a resized image using ImageMagick.
+    logs.imageResizing(size);
+    await spawn("convert", [originalFile, "-resize", `${size}>`, resizedFile], {
+      capture: ["stdout", "stderr"],
+    });
+    logs.imageResized(resizedFile);
+
+    // Uploading the resized image.
+    logs.imageUploading(resizedFilePath);
+    await bucket.upload(resizedFile, {
+      destination: resizedFilePath,
+      metadata: metadata,
+    });
+    logs.imageUploaded(resizedFilePath);
+
+    if (config.signedUrlsPath) {
+      // Get the Signed URL for the resized image
+      logs.signedUrlsGenerating();
+      const resizedSignedUrl = await getSignedUrl(remoteResizedFile);
+      logs.signedUrlsGenerated();
+
+      return {
+        signedUrl: resizedSignedUrl,
+        size,
+        success: true,
+      };
+    } else {
+      return { size, success: true };
+    }
+  } catch (err) {
+    logs.error(err);
+    return { size, success: false };
+  } finally {
+    try {
+      // Make sure the local resized file is cleaned up to free up disk space.
+      if (resizedFile) {
+        logs.tempResizedFileDeleting(resizedFilePath);
+        fs.unlinkSync(resizedFile);
+        logs.tempResizedFileDeleted(resizedFilePath);
+      }
+    } catch (err) {
+      logs.errorDeleting(err);
+    }
+  }
+};

@@ -18,8 +18,7 @@ export default {
   bucket: process.env.IMG_BUCKET,
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
   location: process.env.LOCATION,
-  maxHeight: process.env.IMG_MAX_HEIGHT,
-  maxWidth: process.env.IMG_MAX_WIDTH,
+  imageSizes: process.env.IMG_SIZES.split(","),
   signedUrlsPath: process.env.SIGNED_URLS_PATH,
   signedUrlsExpirationDate: process.env.SIGNED_URLS_EXPIRATION_DATE,
 };
