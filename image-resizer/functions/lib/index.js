@@ -132,11 +132,14 @@ const getSignedUrl = (file) => __awaiter(this, void 0, void 0, function* () {
     return response[0];
 });
 const resizeImage = (bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size) => __awaiter(this, void 0, void 0, function* () {
+    const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
     // Path where resized image will be uploaded to in Storage.
-    const resizedFilePath = path.normalize(path.join(fileDir, `${fileNameWithoutExtension}_${size}${fileExtension}`));
+    const resizedFilePath = path.normalize(config_1.default.resizedImagesPath
+        ? path.join(fileDir, config_1.default.resizedImagesPath, resizedFileName)
+        : path.join(fileDir, resizedFileName));
     let resizedFile;
     try {
-        resizedFile = path.join(os.tmpdir(), resizedFilePath);
+        resizedFile = path.join(os.tmpdir(), resizedFileName);
         // Cloud Storage files.
         const remoteResizedFile = bucket.file(resizedFilePath);
         const metadata = {

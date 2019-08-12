@@ -118,6 +118,17 @@ params:
       Invalid sizes, must be a comma-separated list of WIDTHxHEIGHT values.
     required: true
 
+  - param: RESIZED_IMAGES_PATH
+    label: (Optional) Cloud Storage path for resized images
+    description: >
+      What is the Cloud Storage for Firebase path where you want to store the
+      resized images? Learn more about [how this parameter
+      works](https://firebase.google.com/products/mods/image-resizer). If you
+      prefer to store resized images at the root of the bucket, leave this field
+      empty.
+    example: thumbnails
+    required: false
+
   - param: SIGNED_URLS_PATH
     label: (Optional) Realtime Database path for signed URLs for images
     description: >
