@@ -19,6 +19,7 @@ export default {
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
   location: process.env.LOCATION,
   imageSizes: process.env.IMG_SIZES.split(","),
+  resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
   signedUrlsPath: process.env.SIGNED_URLS_PATH,
   signedUrlsExpirationDate: process.env.SIGNED_URLS_EXPIRATION_DATE,
 };

@@ -166,14 +166,17 @@ const resizeImage = async (
   contentType: string,
   size: string
 ): Promise<ResizedImageResult> => {
+  const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
   // Path where resized image will be uploaded to in Storage.
   const resizedFilePath = path.normalize(
-    path.join(fileDir, `${fileNameWithoutExtension}_${size}${fileExtension}`)
+    config.resizedImagesPath
+      ? path.join(fileDir, config.resizedImagesPath, resizedFileName)
+      : path.join(fileDir, resizedFileName)
   );
   let resizedFile;
 
   try {
-    resizedFile = path.join(os.tmpdir(), resizedFilePath);
+    resizedFile = path.join(os.tmpdir(), resizedFileName);
 
     // Cloud Storage files.
     const remoteResizedFile = bucket.file(resizedFilePath);
