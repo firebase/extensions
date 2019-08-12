@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-const functions = require("firebase-functions");
-exports.internal = (e) => new functions.https.HttpsError("internal", "Internal error", e);
-exports.invalidApiKey = () => new functions.https.HttpsError("unauthenticated", "Your SendGrid API key is invalid, expired or revoked");
-exports.invalidDocPathField = () => new functions.https.HttpsError("invalid-argument", "DocPath or field are invalid");
-exports.missingToken = () => new functions.https.HttpsError("invalid-argument", "Invitation token invalid or expired");
-exports.unauthenticated = () => new functions.https.HttpsError("unauthenticated", "User must be authenticated to call this function");
+exports.default = {
+    languages: process.env.LANGUAGES.split(","),
+    location: process.env.LOCATION,
+    triggerPath: process.env.TRIGGER_PATH,
+};
