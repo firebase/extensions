@@ -92,15 +92,16 @@ const clearStorageData = async (storagePaths: string, uid: string) => {
         ? admin.storage().bucket()
         : admin.storage().bucket(bucketName);
     const file = bucket.file(parts.slice(1).join("/"));
+    const bucketFilePath = `${bucket.name}/${file.name}`;
     try {
-      logs.storagePathDeleting(path);
+      logs.storagePathDeleting(bucketFilePath);
       await file.delete();
-      logs.storagePathDeleted(path);
+      logs.storagePathDeleted(bucketFilePath);
     } catch (err) {
       if (err.code === 404) {
-        logs.storagePath404(path);
+        logs.storagePath404(bucketFilePath);
       } else {
-        logs.storagePathError(path, err);
+        logs.storagePathError(bucketFilePath, err);
       }
     }
   });
