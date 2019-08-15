@@ -21,18 +21,13 @@ import * as _ from "lodash";
 import { buildDataRow, initializeSchema, insertData } from "./bigquery";
 import config from "./config";
 import { extractSnapshotData, FirestoreSchema } from "./firestore";
+import { ChangeType } from './firestoreEventHistoryTracker';
 import * as logs from "./logs";
 import {
   extractIdFieldNames,
   extractIdFieldValues,
   extractTimestamp,
 } from "./util";
-
-enum ChangeType {
-  CREATE,
-  DELETE,
-  UPDATE,
-}
 
 // TODO: How can we load a file dynamically?
 const schemaFile = require("../schema.json");
