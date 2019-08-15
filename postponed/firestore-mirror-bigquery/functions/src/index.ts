@@ -34,6 +34,10 @@ enum ChangeType {
   UPDATE,
 }
 
+export interface ExportDataSink {
+  insert(timestamp: string, operation: string, eventId: string, idFields: string[], data: Object);
+}
+
 // TODO: How can we load a file dynamically?
 const schemaFile = require("../schema.json");
 
