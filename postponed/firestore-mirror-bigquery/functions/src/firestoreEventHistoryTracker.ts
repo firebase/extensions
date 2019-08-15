@@ -20,14 +20,12 @@ export enum ChangeType {
   UPDATED
 }
 
-export class FirestoreDocumentChangeEvent {
-  constructor(
-    public timestamp: string,
-    public operation: ChangeType,
-    public name: string,
-    public eventId: string,
-    public data: Object
-  );
+export interface FirestoreDocumentChangeEvent {
+  timestamp: string;
+  operation: ChangeType;
+  name: string;
+  eventId: string;
+  data: Object;
 }
 
 export interface FirestoreEventHistoryTracker {
