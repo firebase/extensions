@@ -24,7 +24,7 @@ export class FirestoreDocumentChangeEvent {
   constructor(
     public timestamp: string,
     public operation: ChangeType,
-    public path: string,
+    public name: string,
     public eventId: string,
     public data: Object
   );
