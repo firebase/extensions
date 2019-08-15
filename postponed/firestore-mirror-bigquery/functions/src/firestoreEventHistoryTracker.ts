@@ -14,16 +14,22 @@
  * limitations under the License.
  */
 
-export class FirestoreEvent {
+export enum ChangeType {
+  CREATE,
+  DELETE,
+  UPDATED
+}
+
+export class FirestoreDocumentChangeEvent {
   constructor(
     public timestamp: string,
-    public operation: string,
+    public operation: ChangeType,
+    public path: string,
     public eventId: string,
-    public idFields: string[],
     public data: Object
   );
 }
 
 export interface FirestoreEventHistoryTracker {
-  record(event: FirestoreEvent);
+  record(event: FirestoreDocumentChangeEvent);
 }
