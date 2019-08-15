@@ -37,16 +37,9 @@ match /databases/{database}/documents/pages/{page} {
     allow get;
 
     // Allow to increment only 'visits' field and only by 1.
-    allow create: if request.resource.data.keys().size() == 1 &&
-      request.resource.data.visists == 1;
-    allow update: if request.resource.data.keys().size() == 1 &&
-      request.resource.data.visits == resource.data.visits + 1;
-
-    // Disable queries.
-    allow list: if false;
-
-    // Disable deletes.
-    allow delete: if false;
+    allow write: if request.resource.data.keys() == ["visits"]
+                   && (resource == null || request.resource.data.visits ==
+                   resource.data.visits + 1);
   }
 }
 ```
