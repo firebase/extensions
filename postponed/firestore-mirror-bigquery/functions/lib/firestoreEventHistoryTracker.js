@@ -1,3 +1,4 @@
+"use strict";
 /*
  * Copyright 2019 Google LLC
  *
@@ -13,21 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-export enum ChangeType {
-  CREATE,
-  DELETE,
-  UPDATE
-}
-
-export interface FirestoreDocumentChangeEvent {
-  timestamp: string;
-  operation: ChangeType;
-  name: string;
-  eventId: string;
-  data: Object;
-}
-
-export interface FirestoreEventHistoryTracker {
-  record(event: FirestoreDocumentChangeEvent);
-}
+Object.defineProperty(exports, "__esModule", { value: true });
+var ChangeType;
+(function (ChangeType) {
+    ChangeType[ChangeType["CREATE"] = 0] = "CREATE";
+    ChangeType[ChangeType["DELETE"] = 1] = "DELETE";
+    ChangeType[ChangeType["UPDATE"] = 2] = "UPDATE";
+})(ChangeType = exports.ChangeType || (exports.ChangeType = {}));

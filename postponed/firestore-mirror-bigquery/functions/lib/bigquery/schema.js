@@ -33,6 +33,7 @@ const bigQueryField = (name, type, mode, fields) => ({
 });
 // These field types form the basis of the `raw` data table
 const dataField = (fields) => bigQueryField("data", "RECORD", "NULLABLE", fields);
+const jsonDataField = bigQueryField("json_data", "STRING", "NULLABLE");
 const idField = (fields) => bigQueryField("id", "RECORD", "REQUIRED", [
     bigQueryField("id", "STRING", "REQUIRED"),
     ...fields,

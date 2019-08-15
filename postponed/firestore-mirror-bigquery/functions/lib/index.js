@@ -27,14 +27,9 @@ const functions = require("firebase-functions");
 const bigquery_1 = require("./bigquery");
 const config_1 = require("./config");
 const firestore_1 = require("./firestore");
+const firestoreEventHistoryTracker_1 = require("./firestoreEventHistoryTracker");
 const logs = require("./logs");
 const util_1 = require("./util");
-var ChangeType;
-(function (ChangeType) {
-    ChangeType[ChangeType["CREATE"] = 0] = "CREATE";
-    ChangeType[ChangeType["DELETE"] = 1] = "DELETE";
-    ChangeType[ChangeType["UPDATE"] = 2] = "UPDATE";
-})(ChangeType || (ChangeType = {}));
 // TODO: How can we load a file dynamically?
 const schemaFile = require("../schema.json");
 // Flag to indicate if the BigQuery schema has been initialized.
@@ -42,9 +37,15 @@ const schemaFile = require("../schema.json");
 // function execution and instead restricts the initialization to cold starts
 // of the function.
 let isSchemainitialized = false;
+let eventTracker;
 logs.init();
 exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change, context) => __awaiter(this, void 0, void 0, function* () {
     logs.start();
+    if (!eventTracker) {
+        eventTracker = new bigquery_1.FirestoreBigQueryEventHistoryTracker();
+    }
+    console.log("CHANGE: " + require('util').inspect(change));
+    console.log("CONTEXT: " + require('util').inspect(context));
     try {
         // @ts-ignore string not assignable to enum
         const schema = schemaFile;
@@ -54,6 +55,8 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
         // NOTE: This is a workaround as `context.params` is not available in the
         // `.handler` namespace
         const idFieldNames = util_1.extractIdFieldNames(config_1.default.collectionPath);
+        console.log("config.collectionPath = " + config_1.default.collectionPath);
+        console.log("idFieldNames = " + require('util').inspect(idFieldNames));
         // This initialization should be moved to `mod install` if Mods adds support
         // for executing code as part of the install process
         // Currently it runs on every cold start of the function
@@ -68,7 +71,7 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
         let operation;
         const changeType = getChangeType(change);
         switch (changeType) {
-            case ChangeType.CREATE:
+            case firestoreEventHistoryTracker_1.ChangeType.CREATE:
                 operation = "INSERT";
                 snapshot = change.after;
                 data = firestore_1.extractSnapshotData(snapshot, fields);
@@ -76,12 +79,12 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
                     ? snapshot.createTime.toDate().toISOString()
                     : context.timestamp;
                 break;
-            case ChangeType.DELETE:
+            case firestoreEventHistoryTracker_1.ChangeType.DELETE:
                 operation = "DELETE";
                 snapshot = change.before;
                 defaultTimestamp = context.timestamp;
                 break;
-            case ChangeType.UPDATE:
+            case firestoreEventHistoryTracker_1.ChangeType.UPDATE:
                 operation = "UPDATE";
                 snapshot = change.after;
                 data = firestore_1.extractSnapshotData(snapshot, fields);
@@ -101,6 +104,13 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
         const row = bigquery_1.buildDataRow(idFieldValues, 
         // Use the function's event ID to protect against duplicate executions
         context.eventId, operation, timestamp, data);
+        eventTracker.record({
+            timestamp: timestamp,
+            operation: operation,
+            name: context.resource.name,
+            eventId: context.eventId,
+            data: data
+        });
         yield bigquery_1.insertData(config_1.default.datasetId, config_1.default.tableName, row);
         logs.complete();
     }
@@ -110,10 +120,10 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
 }));
 const getChangeType = (change) => {
     if (!change.after.exists) {
-        return ChangeType.DELETE;
+        return firestoreEventHistoryTracker_1.ChangeType.DELETE;
     }
     if (!change.before.exists) {
-        return ChangeType.CREATE;
+        return firestoreEventHistoryTracker_1.ChangeType.CREATE;
     }
-    return ChangeType.UPDATE;
+    return firestoreEventHistoryTracker_1.ChangeType.UPDATE;
 };

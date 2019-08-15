@@ -22,9 +22,20 @@ import {
   validateBQView,
 } from "./schema";
 import { FirestoreField, FirestoreSchema } from "../firestore";
+import { ChangeType, FirestoreEventHistoryTracker, FirestoreDocumentChangeEvent } from "../firestoreEventHistoryTracker";
 import * as logs from "../logs";
 
 const bq = new bigquery.BigQuery();
+
+export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHistoryTracker {
+  bq: bigquery.BigQuery;
+
+  constructor() {
+  }
+
+  record(event: FirestoreDocumentChangeEvent) {
+  }
+}
 
 /**
  * Ensure that the defined Firestore schema exists within BigQuery and

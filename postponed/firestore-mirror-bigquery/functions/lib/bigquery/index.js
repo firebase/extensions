@@ -27,6 +27,13 @@ const bigquery = require("@google-cloud/bigquery");
 const schema_1 = require("./schema");
 const logs = require("../logs");
 const bq = new bigquery.BigQuery();
+class FirestoreBigQueryEventHistoryTracker {
+    constructor() {
+    }
+    record(event) {
+    }
+}
+exports.FirestoreBigQueryEventHistoryTracker = FirestoreBigQueryEventHistoryTracker;
 /**
  * Ensure that the defined Firestore schema exists within BigQuery and
  * contains the correct information.
