@@ -18,10 +18,10 @@ import * as firebase from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as _ from "lodash";
 
-import { buildDataRow, initializeSchema, insertData } from "./bigquery";
+import { buildDataRow, initializeSchema, insertData, FirestoreBigQueryEventHistoryTracker }  from "./bigquery";
 import config from "./config";
 import { extractSnapshotData, FirestoreSchema } from "./firestore";
-import { ChangeType } from './firestoreEventHistoryTracker';
+import { ChangeType, FirestoreEventHistoryTracker, FirestoreDocumentChangeEvent  } from './firestoreEventHistoryTracker';
 import * as logs from "./logs";
 import {
   extractIdFieldNames,
@@ -38,11 +38,20 @@ const schemaFile = require("../schema.json");
 // of the function.
 let isSchemainitialized = false;
 
+let eventTracker: FirestoreEventHistoryTracker;
+
 logs.init();
 
 exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
   async (change, context) => {
     logs.start();
+
+    if (!eventTracker) {
+      eventTracker = new FirestoreBigQueryEventHistoryTracker();
+    }
+
+    console.log("CHANGE: " + require('util').inspect(change));
+    console.log("CONTEXT: " + require('util').inspect(context));
 
     try {
       // @ts-ignore string not assignable to enum
@@ -54,6 +63,9 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
       // NOTE: This is a workaround as `context.params` is not available in the
       // `.handler` namespace
       const idFieldNames = extractIdFieldNames(config.collectionPath);
+
+      console.log("config.collectionPath = " + config.collectionPath);
+      console.log("idFieldNames = " + require('util').inspect(idFieldNames));
 
       // This initialization should be moved to `mod install` if Mods adds support
       // for executing code as part of the install process
@@ -120,6 +132,15 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
         timestamp,
         data
       );
+
+      eventTracker.record({
+        timestamp: timestamp,
+        operation: operation,
+        name: context.resource.name,
+        eventId: context.eventId,
+        data: data
+      });
+
       await insertData(config.datasetId, config.tableName, row);
 
       logs.complete();
