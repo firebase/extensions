@@ -1,6 +1,6 @@
 ### See it in action
 
-To test out this mod, follow these steps:
+To test out this extension, follow these steps:
 
 1.  Go to the [Cloud Firestore tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
 
@@ -10,11 +10,11 @@ To test out this mod, follow these steps:
 
 1.  In a few seconds, you'll see a new field called `${param:SHORT_URL_FIELD_NAME}` pop up in the same document you just created; it will contain the shortened URL.
 
-### Using the mod
+### Using the extension
 
-This mod listens to the Cloud Firestore collection `${param:COLLECTION_PATH}`, then shortens any URL added to the field `${param:URL_FIELD_NAME}` in any document within that collection.
+This extension listens to the Cloud Firestore collection `${param:COLLECTION_PATH}`, then shortens any URL added to the field `${param:URL_FIELD_NAME}` in any document within that collection.
 
-This mod shortens the URL then saves it in the `${param:SHORT_URL_FIELD_NAME}` field of the same document like so:
+This extension shortens the URL then saves it in the `${param:SHORT_URL_FIELD_NAME}` field of the same document like so:
 
 ```
 {
@@ -27,4 +27,4 @@ If the original URL in a document is updated, then the shortened URL will be aut
 
 ### Monitoring
 
-As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.
