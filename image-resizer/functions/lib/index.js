@@ -33,12 +33,6 @@ const path = require("path");
 const config_1 = require("./config");
 const logs = require("./logs");
 const validators = require("./validators");
-// The signed URL config provide authenticated read access to the images.
-// These URLs expire on the date set in the mod.yaml.
-const signedUrlConfig = {
-    action: "read",
-    expires: config_1.default.signedUrlsExpirationDate,
-};
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 logs.init();
@@ -94,26 +88,6 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
             logs.failed();
             return;
         }
-        if (config_1.default.signedUrlsPath) {
-            const originalSignedUrl = yield getSignedUrl(remoteFile);
-            const resizedImages = results.reduce((output, task) => {
-                output[task.size] = task.signedUrl;
-                return output;
-            }, {});
-            // Add the URLs to the Database
-            logs.signedUrlsSaving(config_1.default.signedUrlsPath);
-            yield admin
-                .database()
-                .ref(`${config_1.default.signedUrlsPath}`)
-                .push({
-                path: originalSignedUrl,
-                resizedImages,
-            });
-            logs.signedUrlsSaved(config_1.default.signedUrlsPath);
-        }
-        else {
-            logs.signedUrlsNotConfigured();
-        }
         logs.complete();
     }
     catch (err) {
@@ -127,10 +101,6 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         }
     }
 }));
-const getSignedUrl = (file) => __awaiter(this, void 0, void 0, function* () {
-    const response = yield file.getSignedUrl(signedUrlConfig);
-    return response[0];
-});
 const resizeImage = (bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size) => __awaiter(this, void 0, void 0, function* () {
     const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
     // Path where resized image will be uploaded to in Storage.
@@ -141,7 +111,6 @@ const resizeImage = (bucket, originalFile, fileDir, fileNameWithoutExtension, fi
     try {
         resizedFile = path.join(os.tmpdir(), resizedFileName);
         // Cloud Storage files.
-        const remoteResizedFile = bucket.file(resizedFilePath);
         const metadata = {
             contentType: contentType,
             "Cache-Control": config_1.default.cacheControlHeader,
@@ -159,20 +128,7 @@ const resizeImage = (bucket, originalFile, fileDir, fileNameWithoutExtension, fi
             metadata: metadata,
         });
         logs.imageUploaded(resizedFilePath);
-        if (config_1.default.signedUrlsPath) {
-            // Get the Signed URL for the resized image
-            logs.signedUrlsGenerating();
-            const resizedSignedUrl = yield getSignedUrl(remoteResizedFile);
-            logs.signedUrlsGenerated();
-            return {
-                signedUrl: resizedSignedUrl,
-                size,
-                success: true,
-            };
-        }
-        else {
-            return { size, success: true };
-        }
+        return { size, success: true };
     }
     catch (err) {
         logs.error(err);

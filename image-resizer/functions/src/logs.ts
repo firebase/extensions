@@ -70,26 +70,6 @@ export const init = () => {
   console.log("Initializing mod with configuration", config);
 };
 
-export const signedUrlsGenerated = () => {
-  console.log("Generated Signed URLs");
-};
-
-export const signedUrlsGenerating = () => {
-  console.log("Generating signed URLs");
-};
-
-export const signedUrlsNotConfigured = () => {
-  console.log("Signed URLS are not configured, skipping");
-};
-
-export const signedUrlsSaved = (path: string) => {
-  console.log(`Saved signed URLs to database at: '${path}'`);
-};
-
-export const signedUrlsSaving = (path: string) => {
-  console.log(`Saving signed URLs in database at: '${path}'`);
-};
-
 export const start = () => {
   console.log("Started mod execution with configuration", config);
 };

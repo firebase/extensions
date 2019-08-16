@@ -28,16 +28,8 @@ import * as logs from "./logs";
 import * as validators from "./validators";
 
 type ResizedImageResult = {
-  signedUrl?: string;
   size: string;
   success: boolean;
-};
-
-// The signed URL config provide authenticated read access to the images.
-// These URLs expire on the date set in the mod.yaml.
-const signedUrlConfig: storage.GetSignedUrlConfig = {
-  action: "read",
-  expires: config.signedUrlsExpirationDate,
 };
 
 // Initialize the Firebase Admin SDK
@@ -117,28 +109,6 @@ export const generateResizedImage = functions.storage.object().onFinalize(
         logs.failed();
         return;
       }
-
-      if (config.signedUrlsPath) {
-        const originalSignedUrl = await getSignedUrl(remoteFile);
-
-        const resizedImages = results.reduce((output, task) => {
-          output[task.size] = task.signedUrl;
-          return output;
-        }, {});
-
-        // Add the URLs to the Database
-        logs.signedUrlsSaving(config.signedUrlsPath);
-        await admin
-          .database()
-          .ref(`${config.signedUrlsPath}`)
-          .push({
-            path: originalSignedUrl,
-            resizedImages,
-          });
-        logs.signedUrlsSaved(config.signedUrlsPath);
-      } else {
-        logs.signedUrlsNotConfigured();
-      }
       logs.complete();
     } catch (err) {
       logs.error(err);
@@ -151,11 +121,6 @@ export const generateResizedImage = functions.storage.object().onFinalize(
     }
   }
 );
-
-const getSignedUrl = async (file: storage.File): Promise<string> => {
-  const response = await file.getSignedUrl(signedUrlConfig);
-  return response[0];
-};
 
 const resizeImage = async (
   bucket: storage.Bucket,
@@ -179,7 +144,6 @@ const resizeImage = async (
     resizedFile = path.join(os.tmpdir(), resizedFileName);
 
     // Cloud Storage files.
-    const remoteResizedFile = bucket.file(resizedFilePath);
     const metadata = {
       contentType: contentType,
       "Cache-Control": config.cacheControlHeader,
@@ -200,20 +164,7 @@ const resizeImage = async (
     });
     logs.imageUploaded(resizedFilePath);
 
-    if (config.signedUrlsPath) {
-      // Get the Signed URL for the resized image
-      logs.signedUrlsGenerating();
-      const resizedSignedUrl = await getSignedUrl(remoteResizedFile);
-      logs.signedUrlsGenerated();
-
-      return {
-        signedUrl: resizedSignedUrl,
-        size,
-        success: true,
-      };
-    } else {
-      return { size, success: true };
-    }
+    return { size, success: true };
   } catch (err) {
     logs.error(err);
     return { size, success: false };
