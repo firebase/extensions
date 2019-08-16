@@ -12,8 +12,6 @@ When you configure this mod, you specify a maximum height and a maximum width (i
 
 You can upload images to a Cloud Storage bucket directly in the Firebase console's Storage dashboard. Alternatively, you can upload images using the [Cloud Storage for Firebase SDK](https://firebase.google.com/docs/storage/) for your platform (iOS, Android, or Web).
 
-This mod also optionally creates then writes [signed URLs](https://cloud.google.com/storage/docs/access-control/signed-urls) to your specified Firebase Realtime Database path - both for the original image and the resized image. Signed URLs are a mechanism for query string authentication for buckets and objects by providing a way to give time-limited read or write access to anyone in possession of the URL, regardless of whether they have a Google account. How to use the signed URLs is up to you. One example use case could be for a webpage that displays all members of a club. You could attach a listener to the database path so that when the mod creates a new resized image, both the original and the resized image are fetched immediately and displayed on the webpage.
-
 When you use Firebase Mods, you're only charged for the underlying resources that you use. Firebase Mods themselves are free to use. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
 
 

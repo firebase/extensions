@@ -55,21 +55,6 @@ exports.imageUploading = (path) => {
 exports.init = () => {
     console.log("Initializing mod with configuration", config_1.default);
 };
-exports.signedUrlsGenerated = () => {
-    console.log("Generated Signed URLs");
-};
-exports.signedUrlsGenerating = () => {
-    console.log("Generating signed URLs");
-};
-exports.signedUrlsNotConfigured = () => {
-    console.log("Signed URLS are not configured, skipping");
-};
-exports.signedUrlsSaved = (path) => {
-    console.log(`Saved signed URLs to database at: '${path}'`);
-};
-exports.signedUrlsSaving = (path) => {
-    console.log(`Saving signed URLs in database at: '${path}'`);
-};
 exports.start = () => {
     console.log("Started mod execution with configuration", config_1.default);
 };
