@@ -21,7 +21,7 @@ displayName: Resize images in Cloud Storage
 
 description:
   Resize new images uploaded to a Cloud Storage bucket to a specified size. Both the original and the resized images
-  are stored in the same bucket. Additionally, you can configure this mod to generate the signed URLs for both images
+  are stored in the same bucket. Additionally, you can configure this extension to generate the signed URLs for both images
   and to store the URLs in Realtime Database.
 
 billingRequired: false
@@ -45,11 +45,11 @@ apis:
 
 roles:
   - role: storage.admin
-    reason: Allows the mod to store resized images in Cloud Storage
+    reason: Allows the extension to store resized images in Cloud Storage
   - role: iam.serviceAccountTokenCreator
-    reason: Allows the mod to generate signed URLs
+    reason: Allows the extension to generate signed URLs
   - role: firebasedatabase.admin
-    reason: Allows the mod to store signed URLs in Realtime Database
+    reason: Allows the extension to store signed URLs in Realtime Database
 
 resources:
   - name: generateResizedImage
@@ -69,7 +69,7 @@ params:
     type: select
     label: Deployment location
     description: >-
-      Where should the mod be deployed? You usually want a location close to your database.
+      Where should the extension be deployed? You usually want a location close to your database.
       Realtime Database instances are located in us-central1.
       For help selecting a location, refer to the
       [location selection guide](https://firebase.google.com/docs/functions/locations).
@@ -108,7 +108,7 @@ params:
     label: Maximum height of resized image
     description: >
       What do you want the maximum height of resized images to be (in pixels)?
-      Learn more about [how this parameter works](https://firebase.google.com/products/mods/image-resizer).
+      Learn more about [how this parameter works](https://firebase.google.com/products/extensions/image-resizer).
     # all default values must be strings, so number must be wrapped in quotes
     default: "200"
     example: 200
@@ -121,7 +121,7 @@ params:
     label: Maximum width of resized image
     description: >
       What do you want the maximum width of resized images to be (in pixels)?
-      Learn more about [how this parameter works](https://firebase.google.com/products/mods/image-resizer).
+      Learn more about [how this parameter works](https://firebase.google.com/products/extensions/image-resizer).
     # all default values must be strings, so number must be wrapped in quotes
     default: "200"
     example: 200
@@ -133,7 +133,7 @@ params:
     label: (Optional) Realtime Database path for signed URLs for images
     description: >
       What is the Realtime Database path where you want to store signed URLs for the original and resized images?
-      Learn more about [how this parameter works](https://firebase.google.com/products/mods/image-resizer).
+      Learn more about [how this parameter works](https://firebase.google.com/products/extensions/image-resizer).
       If you prefer to not use signed URLs, leave this field empty.
     example: signed/urls/path
     required: false
