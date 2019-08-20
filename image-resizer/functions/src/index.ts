@@ -27,10 +27,10 @@ import config from "./config";
 import * as logs from "./logs";
 import * as validators from "./validators";
 
-type ResizedImageResult = {
+interface ResizedImageResult {
   size: string;
   success: boolean;
-};
+}
 
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
