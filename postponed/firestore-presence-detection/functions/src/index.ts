@@ -71,29 +71,21 @@ const getChangeType =
 const handleUpsert = async(
     change: functions.Change<admin.database.DataSnapshot>, userID: string,
     sessionID: string): Promise<admin.firestore.WriteResult> => {
+
+  // Ensure the firestore collection is defined
   if (config.firestore_path === undefined) {
     throw new Error('Undefined firestore path');
   } else {
-    const dbRef =
-        admin.firestore().collection(config.firestore_path).doc(userID);
-
-    // Determine if the sessionID should be inserted or updated
-    return dbRef.get().then((docSnapshot) => {
-      logs.handleUpsert(
-          `${config.firestore_path}/${userID}/sessions/${sessionID}`,
-          change.after.val());
-      if (docSnapshot.exists) {
-        return dbRef.update({
-          ['sessions.' + sessionID]: change.after.val(),
-          'last_updated': admin.firestore.Timestamp.now()
-        });
-      } else {
-        return dbRef.create({
-          'sessions': {[sessionID]: change.after.val()},
-          'last_updated': admin.firestore.Timestamp.now()
-        });
-      }
-    });
+    logs.handleUpsert(
+        `${config.firestore_path}/${userID}/sessions/${sessionID}`,
+        change.after.val());
+    return admin.firestore()
+        .collection(config.firestore_path)
+        .doc(userID)
+        .set({
+      'sessions': {[sessionID]: change.after.val()},
+      'last_updated': admin.firestore.Timestamp.now()
+    }, {merge: true});
   }
 };
 
@@ -104,6 +96,8 @@ const handleUpsert = async(
 const handleDelete = async(
     change: functions.Change<admin.database.DataSnapshot>, userID: string,
     sessionID: string): Promise<admin.firestore.WriteResult> => {
+
+  // Ensure the firestore collection is defined
   if (config.firestore_path === undefined) {
     throw new Error('Undefined firestore path');
   } else {
