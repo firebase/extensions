@@ -32,37 +32,16 @@ const logs = require("./logs");
 const util_1 = require("./util");
 // TODO: How can we load a file dynamically?
 const schemaFile = require("../schema.json");
-// Flag to indicate if the BigQuery schema has been initialized.
-// This is a work around to prevent the need to run the initialization on every
-// function execution and instead restricts the initialization to cold starts
-// of the function.
-let isSchemainitialized = false;
 let eventTracker;
 logs.init();
 exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change, context) => __awaiter(this, void 0, void 0, function* () {
     logs.start();
-    if (!eventTracker) {
-        eventTracker = new bigquery_1.FirestoreBigQueryEventHistoryTracker();
-    }
-    console.log("CHANGE: " + require('util').inspect(change));
-    console.log("CONTEXT: " + require('util').inspect(context));
     try {
         // @ts-ignore string not assignable to enum
         const schema = schemaFile;
         const { fields, timestampField } = schema;
-        // Is the collection path for a sub-collection and does the collection path
-        // contain any wildcard parameters
-        // NOTE: This is a workaround as `context.params` is not available in the
-        // `.handler` namespace
-        const idFieldNames = util_1.extractIdFieldNames(config_1.default.collectionPath);
-        console.log("config.collectionPath = " + config_1.default.collectionPath);
-        console.log("idFieldNames = " + require('util').inspect(idFieldNames));
-        // This initialization should be moved to `mod install` if Mods adds support
-        // for executing code as part of the install process
-        // Currently it runs on every cold start of the function
-        if (!isSchemainitialized) {
-            yield bigquery_1.initializeSchema(config_1.default.datasetId, config_1.default.tableName, schema, idFieldNames);
-            isSchemainitialized = true;
+        if (!eventTracker) {
+            eventTracker = new bigquery_1.FirestoreBigQueryEventHistoryTracker(config_1.default);
         }
         // Identify the operation and data to be inserted
         let data;
@@ -71,7 +50,7 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
         let operation;
         const changeType = getChangeType(change);
         switch (changeType) {
-            case firestoreEventHistoryTracker_1.ChangeType.CREATE:
+            case firestoreEventHistoryTracker_1.ChangeType.INSERT:
                 operation = "INSERT";
                 snapshot = change.after;
                 data = firestore_1.extractSnapshotData(snapshot, fields);
@@ -82,6 +61,7 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
             case firestoreEventHistoryTracker_1.ChangeType.DELETE:
                 operation = "DELETE";
                 snapshot = change.before;
+                data = firestore_1.extractSnapshotData(snapshot, fields);
                 defaultTimestamp = context.timestamp;
                 break;
             case firestoreEventHistoryTracker_1.ChangeType.UPDATE:
@@ -96,22 +76,15 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
                 throw new Error(`Invalid change type: ${changeType}`);
             }
         }
-        // Extract the values of any `idFieldNames` specifed in the collection path
-        const { idFieldValues } = util_1.extractIdFieldValues(snapshot, idFieldNames);
-        // Extract the timestamp, or use either the snapshot metadata or the event timestamp as a default
         const timestamp = util_1.extractTimestamp(data, defaultTimestamp, timestampField);
-        // Build the row of data to insert into BigQuery
-        const row = bigquery_1.buildDataRow(idFieldValues, 
-        // Use the function's event ID to protect against duplicate executions
-        context.eventId, operation, timestamp, data);
-        eventTracker.record({
+        yield eventTracker.record({
             timestamp: timestamp,
-            operation: operation,
+            operation: changeType,
             name: context.resource.name,
+            documentId: snapshot.ref.id,
             eventId: context.eventId,
             data: data
         });
-        yield bigquery_1.insertData(config_1.default.datasetId, config_1.default.tableName, row);
         logs.complete();
     }
     catch (err) {
@@ -123,7 +96,7 @@ const getChangeType = (change) => {
         return firestoreEventHistoryTracker_1.ChangeType.DELETE;
     }
     if (!change.before.exists) {
-        return firestoreEventHistoryTracker_1.ChangeType.CREATE;
+        return firestoreEventHistoryTracker_1.ChangeType.INSERT;
     }
     return firestoreEventHistoryTracker_1.ChangeType.UPDATE;
 };

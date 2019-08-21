@@ -32,12 +32,9 @@ const bigQueryField = (name, type, mode, fields) => ({
     type,
 });
 // These field types form the basis of the `raw` data table
-const dataField = (fields) => bigQueryField("data", "RECORD", "NULLABLE", fields);
-const jsonDataField = bigQueryField("json_data", "STRING", "NULLABLE");
-const idField = (fields) => bigQueryField("id", "RECORD", "REQUIRED", [
-    bigQueryField("id", "STRING", "REQUIRED"),
-    ...fields,
-]);
+const dataField = bigQueryField("data", "STRING", "NULLABLE");
+const keyField = bigQueryField("key", "STRING", "REQUIRED");
+const idField = bigQueryField("id", "STRING", "REQUIRED");
 const insertIdField = bigQueryField("insertId", "STRING", "REQUIRED");
 const operationField = bigQueryField("operation", "STRING", "REQUIRED");
 const timestampField = bigQueryField("timestamp", "TIMESTAMP", "REQUIRED");
@@ -102,12 +99,13 @@ exports.firestoreToBQField = (field) => {
  * - data: A record to contain the Firestore document data fields specified
  * in the schema
  */
-exports.firestoreToBQTable = (fields, idFieldNames) => [
-    idField(idFieldNames.map((idFieldName) => bigQueryField(idFieldName, "STRING", "REQUIRED"))),
-    insertIdField,
+exports.firestoreToBQTable = () => [
     timestampField,
+    insertIdField,
+    keyField,
+    idField,
     operationField,
-    dataField(fields.map((subField) => exports.firestoreToBQField(subField))),
+    dataField
 ];
 /**
  * Convert from a Firestore schema into a SQL query that will be used to build
@@ -117,31 +115,40 @@ exports.firestoreToBQView = (datasetId, tableName, schema, idFieldNames) => ({
     query: buildViewQuery(datasetId, tableName, schema, idFieldNames),
     useLegacySql: false,
 });
+exports.latestConsistentSnapshotView = (datasetId, tableName) => ({
+    query: buildLatestSnapshotViewQuery(datasetId, tableName, exports.firestoreToBQTable()),
+    useLegacySql: false,
+});
 /**
  * Checks that the BigQuery table schema matches the Firestore field
  * definitions and updates the BigQuery table scheme if necessary.
  */
-exports.validateBQTable = (table, fields, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
-    logs.bigQueryTableValidating(table.id);
-    const [metadata] = yield table.getMetadata();
-    // Get the `data` and `id` fields from our schema, as this is what needs to be compared
-    const idField = metadata.schema.fields[0];
-    const dataField = metadata.schema.fields[4];
-    const idFieldsChanged = validateBQIdFields(idField.fields, idFieldNames);
-    const dataFieldsChanged = validateBQDataFields(dataField.fields, fields);
-    if (dataFieldsChanged || idFieldsChanged) {
-        logs.bigQueryTableUpdating(table.id);
-        metadata.schema.fields[0] = idField;
-        metadata.schema.fields[4] = dataField;
-        yield table.setMetadata(metadata);
-        logs.bigQueryTableUpdated(table.id);
-    }
-    else {
-        logs.bigQueryTableUpToDate(table.id);
-    }
-    logs.bigQueryTableValidated(table.id);
-    return table;
-});
+/*
+export const validateBQTable = async (
+  table: bigquery.Table,
+  fields: FirestoreField[],
+  idFieldNames: string[]
+): Promise<bigquery.Table> => {
+  logs.bigQueryTableValidating(table.id);
+
+  const [metadata] = await table.getMetadata();
+
+  // Get the `data` and `id` fields from our schema, as this is what needs to be compared
+  const idField: BigQueryField = metadata.schema.fields[0];
+  const idFieldsChanged = validateBQIdFields(idField.fields, idFieldNames);
+  if (idFieldsChanged) {
+    logs.bigQueryTableUpdating(table.id);
+    metadata.schema.fields[0] = idField;
+    await table.setMetadata(metadata);
+    logs.bigQueryTableUpdated(table.id);
+  } else {
+    logs.bigQueryTableUpToDate(table.id);
+  }
+
+  logs.bigQueryTableValidated(table.id);
+  return table;
+};
+*/
 /**
  * Checks that the BigQuery fields match the Firestore field definitions.
  * New fields are automatically added, whilst deleted fields are
@@ -222,7 +229,35 @@ const buildViewQuery = (datasetId, tableName, schema, idFieldNames) => {
     const idFieldsString = hasIdFields
         ? `${idFieldNames.map((idFieldName) => `id.${idFieldName}`).join(",")}`
         : undefined;
-    return `SELECT ${idField ? "" : "id.id,"} ${hasIdFields ? `${idFieldsString},` : ""} ${bqFieldNames.join(",")} from ( SELECT *, MAX(timestamp) OVER (PARTITION BY id.id${idFieldsString ? `,${idFieldsString}` : ""}) AS max_timestamp FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`;
+    const query = (`SELECT ${idField ? "" : "id.id,"} ${hasIdFields ? `${idFieldsString},` : ""} ${bqFieldNames.join(",")} from ( SELECT *, MAX(timestamp) OVER (PARTITION BY id.id${idFieldsString ? `,${idFieldsString}` : ""}) AS max_timestamp FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`);
+    console.log("view query: " + query);
+    return query;
+};
+const buildLatestSnapshotViewQuery = (datasetId, tableName, fields) => {
+    fields = fields.filter(field => field.name != "key" && field.name != "id");
+    const stateFields = fields.map(field => "latest_" + field.name);
+    const zipped = fields.map((field, index) => [field.name, stateFields[index]]);
+    const query = (`SELECT
+      key,
+      id,
+      ${stateFields.join(",")}
+     FROM (
+      SELECT
+        key,
+        id,
+        ${zipped.map(([stateField, latestStateField]) => `FIRST_VALUE(${stateField})
+            OVER(PARTITION BY key ORDER BY timestamp DESC)
+            AS ${latestStateField}`).join(',')},
+        FIRST_VALUE(operation)
+          OVER(PARTITION BY key ORDER BY timestamp DESC) = "DELETE"
+          AS is_deleted
+      FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`
+      ORDER BY key, timestamp DESC
+     )
+     WHERE NOT is_deleted
+     GROUP BY key, id, ${stateFields.join(",")}`);
+    console.log("buildLatestSnapshotViewQuery: " + query);
+    return query;
 };
 /**
  * Converts a set of Firestore field definitions into the equivalent named

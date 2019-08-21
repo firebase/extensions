@@ -18,25 +18,17 @@ import * as firebase from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as _ from "lodash";
 
-import { buildDataRow, initializeSchema, insertData, FirestoreBigQueryEventHistoryTracker }  from "./bigquery";
+import { FirestoreBigQueryEventHistoryTracker }  from "./bigquery";
 import config from "./config";
 import { extractSnapshotData, FirestoreSchema } from "./firestore";
-import { ChangeType, FirestoreEventHistoryTracker, FirestoreDocumentChangeEvent  } from './firestoreEventHistoryTracker';
+import { ChangeType, FirestoreEventHistoryTracker } from './firestoreEventHistoryTracker';
 import * as logs from "./logs";
 import {
-  extractIdFieldNames,
-  extractIdFieldValues,
   extractTimestamp,
 } from "./util";
 
 // TODO: How can we load a file dynamically?
 const schemaFile = require("../schema.json");
-
-// Flag to indicate if the BigQuery schema has been initialized.
-// This is a work around to prevent the need to run the initialization on every
-// function execution and instead restricts the initialization to cold starts
-// of the function.
-let isSchemainitialized = false;
 
 let eventTracker: FirestoreEventHistoryTracker;
 
@@ -46,38 +38,13 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
   async (change, context) => {
     logs.start();
 
-    if (!eventTracker) {
-      eventTracker = new FirestoreBigQueryEventHistoryTracker();
-    }
-
-    console.log("CHANGE: " + require('util').inspect(change));
-    console.log("CONTEXT: " + require('util').inspect(context));
-
     try {
       // @ts-ignore string not assignable to enum
       const schema: FirestoreSchema = schemaFile;
       const { fields, timestampField } = schema;
 
-      // Is the collection path for a sub-collection and does the collection path
-      // contain any wildcard parameters
-      // NOTE: This is a workaround as `context.params` is not available in the
-      // `.handler` namespace
-      const idFieldNames = extractIdFieldNames(config.collectionPath);
-
-      console.log("config.collectionPath = " + config.collectionPath);
-      console.log("idFieldNames = " + require('util').inspect(idFieldNames));
-
-      // This initialization should be moved to `mod install` if Mods adds support
-      // for executing code as part of the install process
-      // Currently it runs on every cold start of the function
-      if (!isSchemainitialized) {
-        await initializeSchema(
-          config.datasetId,
-          config.tableName,
-          schema,
-          idFieldNames
-        );
-        isSchemainitialized = true;
+      if (!eventTracker) {
+        eventTracker = new FirestoreBigQueryEventHistoryTracker(config);
       }
 
       // Identify the operation and data to be inserted
@@ -88,7 +55,7 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
 
       const changeType = getChangeType(change);
       switch (changeType) {
-        case ChangeType.CREATE:
+        case ChangeType.INSERT:
           operation = "INSERT";
           snapshot = change.after;
           data = extractSnapshotData(snapshot, fields);
@@ -99,6 +66,7 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
         case ChangeType.DELETE:
           operation = "DELETE";
           snapshot = change.before;
+          data = extractSnapshotData(snapshot, fields);
           defaultTimestamp = context.timestamp;
           break;
         case ChangeType.UPDATE:
@@ -114,34 +82,20 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
         }
       }
 
-      // Extract the values of any `idFieldNames` specifed in the collection path
-      const { idFieldValues } = extractIdFieldValues(snapshot, idFieldNames);
-
-      // Extract the timestamp, or use either the snapshot metadata or the event timestamp as a default
       const timestamp = extractTimestamp(
         data,
         defaultTimestamp,
         timestampField
       );
-      // Build the row of data to insert into BigQuery
-      const row = buildDataRow(
-        idFieldValues,
-        // Use the function's event ID to protect against duplicate executions
-        context.eventId,
-        operation,
-        timestamp,
-        data
-      );
 
-      eventTracker.record({
+      await eventTracker.record({
         timestamp: timestamp,
-        operation: operation,
+        operation: changeType,
         name: context.resource.name,
+        documentId: snapshot.ref.id,
         eventId: context.eventId,
         data: data
       });
-
-      await insertData(config.datasetId, config.tableName, row);
 
       logs.complete();
     } catch (err) {
@@ -157,7 +111,7 @@ const getChangeType = (
     return ChangeType.DELETE;
   }
   if (!change.before.exists) {
-    return ChangeType.CREATE;
+    return ChangeType.INSERT;
   }
   return ChangeType.UPDATE;
 };
