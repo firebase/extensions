@@ -1,0 +1,78 @@
+
+name: user-presence-detection
+specVersion: v1beta1
+version: 0.0.1
+licesnse: Apache-2.0
+
+displayName: Detect User Presence with Firestore
+
+description:
+  Detect user presence with Firestore.
+
+billingRequired: false
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+
+contributors:
+  - authorName: Michael Nguyen
+    url: https://github.com/nguymichael
+
+roles:
+  - role: datastore.user
+    reason: Allows the extension to store presence information in Firestore
+  - role: firebasedatabase.admin
+    reason: Allows the extension to store presence information in RTDB and register OnDisconnect
+
+resources:
+  - name: writeToFirestore
+    type: firebasemods.v1beta1.function
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: providers/google.firebase.database/eventTypes/ref.write
+        resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${RTDB_PATH}/{user_id}/sessions/{client_id}
+
+params:
+  - param: LOCATION
+    type: select
+    label: Deployment location
+    description: >
+      Where should the extension be deployed? You usually want a location close to your database.
+      Realtime Database instances are located in us-central1.
+      For help selecting a location, refer to the
+      [location selection guide](https://firebase.google.com/docs/functions/locations).
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+    default: us-central1
+    required: true
+
+  - param: RTDB_PATH
+    label: Realtime database path
+    description: >
+      What is the path you want to store the user presence information on RTDB?
+    default: _firebase_extensions/presence
+    example: _firebase_extensions/presence
+    required: true
+
+  - param: FIRESTORE_PATH
+    label: Firestore collection
+    description: >
+      What is the collection you want to store the user presence information in Firestore?
+    example: user_presence
+    required: true
