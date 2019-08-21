@@ -1,3 +1,12 @@
 {
-  "fields": []
+  "fields": [
+	  {
+		  "name": "key",
+		  "type": "string"
+	  },
+	  {
+		  "name": "data",
+		  "type": "string"
+	  }
+  ]
 }

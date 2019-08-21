@@ -17,178 +17,182 @@
 import * as bigquery from "@google-cloud/bigquery";
 import {
   firestoreToBQTable,
-  firestoreToBQView,
-  validateBQTable,
-  validateBQView,
+  latestConsistentSnapshotView
 } from "./schema";
-import { FirestoreField, FirestoreSchema } from "../firestore";
 import { ChangeType, FirestoreEventHistoryTracker, FirestoreDocumentChangeEvent } from "../firestoreEventHistoryTracker";
 import * as logs from "../logs";
-
-const bq = new bigquery.BigQuery();
 
 export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHistoryTracker {
   bq: bigquery.BigQuery;
 
-  constructor() {
+  constructor(public config: any, public schemaInitialized: boolean = false) {
+    this.bq = new bigquery.BigQuery();
   }
 
-  record(event: FirestoreDocumentChangeEvent) {
+  async record(events: FirestoreDocumentChangeEvent | FirestoreDocumentChangeEvent[]) {
+    if (!this.schemaInitialized) {
+      this.initializeSchema(this.config.datasetId, this.config.tableName);
+      this.schemaInitialized = true;
+    }
+    const rows = (Array.isArray(events) ? events : [events]).map(event => {
+      return this.buildDataRow(
+        // Use the function's event ID to protect against duplicate executions
+        event.eventId,
+        event.operation,
+        event.timestamp,
+        event.name,
+        event.documentId,
+        event.data);
+    });
+    await this.insertData(this.config.datasetId, this.config.tableName, rows);
   }
+
+  /**
+   * Ensure that the defined Firestore schema exists within BigQuery and
+   * contains the correct information.
+   *
+   *
+   * NOTE: This currently gets executed on every cold start of the function.
+   * Ideally this would run once when the mod is installed if that were
+   * possible in the future.
+   */
+  async initializeSchema(datasetId: string, tableName: string) {
+    logs.bigQuerySchemaInitializing();
+
+    const realTableName = rawTableName(tableName);
+
+    await this.initializeDataset(datasetId);
+    await this.initializeTable(datasetId, realTableName);
+    await this.initializeLatestView(datasetId, realTableName);
+
+    logs.bigQuerySchemaInitialized();
+  };
+
+  buildDataRow(
+    insertId: string,
+    changeType: ChangeType,
+    timestamp: string,
+    key: string,
+    id: string,
+    data?: Object
+  ): bigquery.RowMetadata {
+    const serializedChange = serializeChangeType(changeType);
+    return {
+      timestamp,
+      insertId,
+      key: key,
+      id,
+      operation: serializedChange,
+      data: JSON.stringify(data)
+    };
+  };
+
+  /**
+   * Insert a row of data into the BigQuery `raw` data table
+   */
+  async insertData(
+    datasetId: string,
+    tableName: string,
+    rows: bigquery.RowMetadata | bigquery.RowMetadata[]
+  ): Promise<void> {
+    const realTableName = rawTableName(tableName);
+    const dataset = this.bq.dataset(datasetId);
+    const table = dataset.table(realTableName);
+    const rowCount = Array.isArray(rows) ? rows.length : 1;
+
+    logs.dataInserting(rowCount);
+    await table.insert(rows);
+    logs.dataInserted(rowCount);
+  };
+
+  /**
+   * Check that the specified dataset exists, and create it if it doesn't.
+   */
+  async initializeDataset(datasetId: string) {
+    const dataset = this.bq.dataset(datasetId);
+    const [datasetExists] = await dataset.exists();
+    if (datasetExists) {
+      logs.bigQueryDatasetExists(datasetId);
+    } else {
+      logs.bigQueryDatasetCreating(datasetId);
+      await dataset.create();
+      logs.bigQueryDatasetCreated(datasetId);
+    }
+    return dataset;
+  };
+
+  /**
+   * Check that the table exists within the specified dataset, and create it
+   * if it doesn't.  If the table does exist, validate that the BigQuery schema
+   * is correct and add any missing fields.
+   */
+  async initializeTable(
+    datasetId: string,
+    tableName: string,
+  ): Promise<bigquery.Table> {
+    const dataset = this.bq.dataset(datasetId);
+    let table = dataset.table(tableName);
+    const [tableExists] = await table.exists();
+    if (!tableExists) {
+      logs.bigQueryTableCreating(tableName);
+      const options = {
+        // `friendlyName` needs to be here to satisfy TypeScript
+        friendlyName: tableName,
+        schema: firestoreToBQTable(),
+      };
+      await table.create(options);
+      logs.bigQueryTableCreated(tableName);
+    }
+    return table;
+  };
+
+  /**
+   * 
+   * @param datasetId 
+   * @param tableName 
+   */
+  async initializeLatestView(
+    datasetId: string,
+    tableName: string
+  ): Promise<bigquery.Table> {
+    let viewName = latestViewName(tableName);
+    const dataset = this.bq.dataset(datasetId);
+    let view = dataset.table(viewName);
+    const [viewExists] = await view.exists();
+
+    if (!viewExists) {
+      logs.bigQueryViewCreating(viewName);
+      const options = {
+        friendlyName: tableName,
+        view: latestConsistentSnapshotView(datasetId, tableName)
+      };
+      await view.create(options);
+      logs.bigQueryViewCreated(viewName);
+    }
+    return view;
+  };
+
 }
 
 /**
- * Ensure that the defined Firestore schema exists within BigQuery and
- * contains the correct information.
- *
- * This will check for the following:
- * 1) That the dataset exists
- * 2) That a `${tableName}_raw` data table exists to store how the data changes
- * over time
- * 3) That a `${tableName}` view exists to visualise the current state of the
- * data
- *
- * NOTE: This currently gets executed on every cold start of the function.
- * Ideally this would run once when the mod is installed if that were
- * possible in the future.
+ * Used in `buildDataRow` to convert between `ChangeType` and the 
+ * identifier that is stored in BigQuery.
+ * @param changeType 
  */
-export const initializeSchema = async (
-  datasetId: string,
-  tableName: string,
-  schema: FirestoreSchema,
-  idFieldNames: string[]
-) => {
-  logs.bigQuerySchemaInitializing();
-
-  const viewName = tableName;
-  const realTableName = rawTableName(tableName);
-
-  await intialiseDataset(datasetId);
-  await initializeTable(datasetId, realTableName, schema.fields, idFieldNames);
-  await initializeView(
-    datasetId,
-    realTableName,
-    viewName,
-    schema,
-    idFieldNames
-  );
-
-  logs.bigQuerySchemaInitialized();
-};
-
-export const buildDataRow = (
-  idFieldValues: { [fieldName: string]: string },
-  insertId: string,
-  operation: "DELETE" | "INSERT" | "UPDATE",
-  timestamp: string,
-  data?: Object
-): bigquery.RowMetadata => {
-  return {
-    data,
-    id: idFieldValues,
-    insertId,
-    operation,
-    timestamp,
-  };
-};
-
-/**
- * Insert a row of data into the BigQuery `raw` data table
- */
-export const insertData = async (
-  datasetId: string,
-  tableName: string,
-  rows: bigquery.RowMetadata | bigquery.RowMetadata[]
-): Promise<void> => {
-  const realTableName = rawTableName(tableName);
-  const dataset = bq.dataset(datasetId);
-  const table = dataset.table(realTableName);
-  const rowCount = Array.isArray(rows) ? rows.length : 1;
-
-  logs.dataInserting(rowCount);
-  await table.insert(rows);
-  logs.dataInserted(rowCount);
+const serializeChangeType = (
+  changeType: ChangeType
+): string => {
+  switch (changeType) {
+    case ChangeType.INSERT:
+      return "INSERT";
+    case ChangeType.UPDATE:
+      return "UPDATE";
+    case ChangeType.DELETE:
+      return "DELETE";
+    case ChangeType.IMPORT:
+      return "IMPORT";
+  }
 };
 
 const rawTableName = (tableName: string) => `${tableName}_raw`;
-
-/**
- * Check that the specified dataset exists, and create it if it doesn't.
- */
-const intialiseDataset = async (datasetId: string) => {
-  const dataset = bq.dataset(datasetId);
-  const [datasetExists] = await dataset.exists();
-  if (datasetExists) {
-    logs.bigQueryDatasetExists(datasetId);
-  } else {
-    logs.bigQueryDatasetCreating(datasetId);
-    await dataset.create();
-    logs.bigQueryDatasetCreated(datasetId);
-  }
-  return dataset;
-};
-
-/**
- * Check that the table exists within the specified dataset, and create it
- * if it doesn't.  If the table does exist, validate that the BigQuery schema
- * is correct and add any missing fields.
- */
-const initializeTable = async (
-  datasetId: string,
-  tableName: string,
-  fields: FirestoreField[],
-  idFieldNames: string[]
-): Promise<bigquery.Table> => {
-  const dataset = bq.dataset(datasetId);
-  let table = dataset.table(tableName);
-  const [tableExists] = await table.exists();
-  if (tableExists) {
-    table = await validateBQTable(table, fields, idFieldNames);
-  } else {
-    logs.bigQueryTableCreating(tableName);
-    const options = {
-      // `friendlyName` needs to be here to satisfy TypeScript
-      friendlyName: tableName,
-      schema: firestoreToBQTable(fields, idFieldNames),
-    };
-    await table.create(options);
-    logs.bigQueryTableCreated(tableName);
-  }
-  return table;
-};
-
-/**
- * Check that the view exists within the specified dataset, and create it if
- * it doesn't.
- *
- * The view is created over the `raw` data table and extracts the latest state
- * of the underlying data, whilst excluding any rows that have been delete.
- *
- * By default, the document ID is used as the row ID, but can be overriden
- * using the `idField` property in the schema definition.
- */
-const initializeView = async (
-  datasetId: string,
-  tableName: string,
-  viewName: string,
-  schema: FirestoreSchema,
-  idFieldNames: string[]
-): Promise<bigquery.Table> => {
-  const dataset = bq.dataset(datasetId);
-  let view = dataset.table(viewName);
-
-  const [viewExists] = await view.exists();
-  if (viewExists) {
-    view = await validateBQView(view, tableName, schema, idFieldNames);
-  } else {
-    logs.bigQueryViewCreating(viewName);
-    const options = {
-      // `friendlyName` needs to be here to satisfy TypeScript
-      friendlyName: tableName,
-      view: firestoreToBQView(datasetId, tableName, schema, idFieldNames),
-    };
-    await view.create(options);
-    logs.bigQueryViewCreated(viewName);
-  }
-  return view;
-};
+const latestViewName = (tableName: string) => `${tableName}_latest`;

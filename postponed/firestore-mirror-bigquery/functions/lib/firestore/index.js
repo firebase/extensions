@@ -61,6 +61,7 @@ exports.extractSnapshotData = (snapshot, fields) => {
  * Extract the Object data that matches the fields specifed in the schema.
  */
 const processData = (snapshotData, fields) => {
+    return snapshotData;
     const data = {};
     fields.forEach((field) => {
         const { name: fieldName } = field;

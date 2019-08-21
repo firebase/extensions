@@ -15,14 +15,16 @@
  */
 
 export enum ChangeType {
-  CREATE,
+  INSERT,
   DELETE,
-  UPDATE
+  UPDATE,
+  IMPORT
 }
 
 export interface FirestoreDocumentChangeEvent {
   timestamp: string;
   operation: ChangeType;
+  documentId: string;
   name: string;
   eventId: string;
   data: Object;

@@ -46,14 +46,9 @@ const bigQueryField = (
 });
 
 // These field types form the basis of the `raw` data table
-const dataField = (fields: BigQueryField[]) =>
-  bigQueryField("data", "RECORD", "NULLABLE", fields);
-const jsonDataField = bigQueryField("json_data", "STRING", "NULLABLE");
-const idField = (fields: BigQueryField[]) =>
-  bigQueryField("id", "RECORD", "REQUIRED", [
-    bigQueryField("id", "STRING", "REQUIRED"),
-    ...fields,
-  ]);
+const dataField = bigQueryField("data", "STRING", "NULLABLE");
+const keyField = bigQueryField("key", "STRING", "REQUIRED");
+const idField = bigQueryField("id", "STRING", "REQUIRED")
 const insertIdField = bigQueryField("insertId", "STRING", "REQUIRED");
 const operationField = bigQueryField("operation", "STRING", "REQUIRED");
 const timestampField = bigQueryField("timestamp", "TIMESTAMP", "REQUIRED");
@@ -121,18 +116,13 @@ export const firestoreToBQField = (field: FirestoreField): BigQueryField => {
  * in the schema
  */
 export const firestoreToBQTable = (
-  fields: FirestoreField[],
-  idFieldNames: string[]
 ): BigQueryField[] => [
-  idField(
-    idFieldNames.map((idFieldName) =>
-      bigQueryField(idFieldName, "STRING", "REQUIRED")
-    )
-  ),
-  insertIdField,
   timestampField,
+  insertIdField,
+  keyField,
+  idField,
   operationField,
-  dataField(fields.map((subField) => firestoreToBQField(subField))),
+  dataField
 ];
 
 /**
@@ -149,10 +139,19 @@ export const firestoreToBQView = (
   useLegacySql: false,
 });
 
+export const latestConsistentSnapshotView = (
+  datasetId: string,
+  tableName: string,
+) => ({
+  query: buildLatestSnapshotViewQuery(datasetId, tableName, firestoreToBQTable()),
+  useLegacySql: false,
+});
+
 /**
  * Checks that the BigQuery table schema matches the Firestore field
  * definitions and updates the BigQuery table scheme if necessary.
  */
+/*
 export const validateBQTable = async (
   table: bigquery.Table,
   fields: FirestoreField[],
@@ -164,13 +163,10 @@ export const validateBQTable = async (
 
   // Get the `data` and `id` fields from our schema, as this is what needs to be compared
   const idField: BigQueryField = metadata.schema.fields[0];
-  const dataField: BigQueryField = metadata.schema.fields[4];
   const idFieldsChanged = validateBQIdFields(idField.fields, idFieldNames);
-  const dataFieldsChanged = validateBQDataFields(dataField.fields, fields);
-  if (dataFieldsChanged || idFieldsChanged) {
+  if (idFieldsChanged) {
     logs.bigQueryTableUpdating(table.id);
     metadata.schema.fields[0] = idField;
-    metadata.schema.fields[4] = dataField;
     await table.setMetadata(metadata);
     logs.bigQueryTableUpdated(table.id);
   } else {
@@ -180,6 +176,7 @@ export const validateBQTable = async (
   logs.bigQueryTableValidated(table.id);
   return table;
 };
+*/
 
 /**
  * Checks that the BigQuery fields match the Firestore field definitions.
@@ -301,7 +298,7 @@ const buildViewQuery = (
     ? `${idFieldNames.map((idFieldName) => `id.${idFieldName}`).join(",")}`
     : undefined;
 
-  return `SELECT ${idField ? "" : "id.id,"} ${
+  const query = (`SELECT ${idField ? "" : "id.id,"} ${
     hasIdFields ? `${idFieldsString},` : ""
   } ${bqFieldNames.join(
     ","
@@ -309,8 +306,44 @@ const buildViewQuery = (
     idFieldsString ? `,${idFieldsString}` : ""
   }) AS max_timestamp FROM \`${
     process.env.PROJECT_ID
-  }.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`;
+  }.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`);
+  console.log("view query: " + query);
+  return query;
 };
+
+const buildLatestSnapshotViewQuery = (
+  datasetId: string,
+  tableName: string,
+  fields: BigQueryField[],
+) => {
+  fields = fields.filter(field => field.name != "key" && field.name != "id");
+  const stateFields = fields.map(field => "latest_" + field.name);
+  const zipped = fields.map((field, index) => [field.name, stateFields[index]]);
+  const query = (
+    `SELECT
+      key,
+      id,
+      ${stateFields.join(",")}
+     FROM (
+      SELECT
+        key,
+        id,
+        ${zipped.map(([stateField, latestStateField]) =>
+          `FIRST_VALUE(${stateField})
+            OVER(PARTITION BY key ORDER BY timestamp DESC)
+            AS ${latestStateField}`).join(',')},
+        FIRST_VALUE(operation)
+          OVER(PARTITION BY key ORDER BY timestamp DESC) = "DELETE"
+          AS is_deleted
+      FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`
+      ORDER BY key, timestamp DESC
+     )
+     WHERE NOT is_deleted
+     GROUP BY key, id, ${stateFields.join(",")}`
+  );
+  console.log("buildLatestSnapshotViewQuery: " + query);
+  return query;
+}
 
 /**
  * Converts a set of Firestore field definitions into the equivalent named

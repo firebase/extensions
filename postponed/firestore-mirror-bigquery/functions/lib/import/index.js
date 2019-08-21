@@ -28,6 +28,7 @@ const inquirer = require("inquirer");
 const bigquery_1 = require("../bigquery");
 const firestore_1 = require("../firestore");
 const util_1 = require("../util");
+const firestoreEventHistoryTracker_1 = require("../firestoreEventHistoryTracker");
 const schemaFile = require("../../schema.json");
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
@@ -81,10 +82,11 @@ const run = () => __awaiter(this, void 0, void 0, function* () {
     // Is the collection path for a sub-collection and does the collection path
     // contain any wildcard parameters
     const idFieldNames = util_1.extractIdFieldNames(collectionPath);
-    // This initialization should be moved to `mod install` if Mods adds support
-    // for executing code as part of the install process
-    // Currently it runs on every cold start of the function
-    yield bigquery_1.initializeSchema(datasetId, tableName, schema, idFieldNames);
+    const dataSink = new bigquery_1.FirestoreBigQueryEventHistoryTracker({
+        collectionPath: collectionPath,
+        datasetId: datasetId,
+        tableName: tableName
+    });
     console.log(`Mirroring data from Firestore Collection: ${collectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${tableName}`);
     const importTimestamp = new Date().toISOString();
     // Load all the data for the collection
@@ -95,8 +97,6 @@ const run = () => __awaiter(this, void 0, void 0, function* () {
     // Build the data rows to insert into BigQuery
     const rows = collectionSnapshot.docs.map((snapshot) => {
         const data = firestore_1.extractSnapshotData(snapshot, fields);
-        // Extract the values of any `idFieldNames` specifed in the collection path
-        const { id, idFieldValues } = util_1.extractIdFieldValues(snapshot, idFieldNames);
         let defaultTimestamp;
         if (snapshot.updateTime) {
             defaultTimestamp = snapshot.updateTime.toDate().toISOString();
@@ -110,9 +110,16 @@ const run = () => __awaiter(this, void 0, void 0, function* () {
         // Extract the timestamp, or use the import timestamp as default
         const timestamp = util_1.extractTimestamp(data, defaultTimestamp, timestampField);
         // Build the data row
-        return bigquery_1.buildDataRow(idFieldValues, id, "INSERT", timestamp, data);
+        return {
+            timestamp,
+            operation: firestoreEventHistoryTracker_1.ChangeType.IMPORT,
+            documentId: snapshot.ref.id,
+            name: snapshot.ref.path,
+            eventId: "",
+            data
+        };
     });
-    yield bigquery_1.insertData(datasetId, tableName, rows);
+    dataSink.record(rows);
     return rows.length;
 });
 run()

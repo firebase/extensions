@@ -17,7 +17,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var ChangeType;
 (function (ChangeType) {
-    ChangeType[ChangeType["CREATE"] = 0] = "CREATE";
+    ChangeType[ChangeType["INSERT"] = 0] = "INSERT";
     ChangeType[ChangeType["DELETE"] = 1] = "DELETE";
     ChangeType[ChangeType["UPDATE"] = 2] = "UPDATE";
+    ChangeType[ChangeType["IMPORT"] = 3] = "IMPORT";
 })(ChangeType = exports.ChangeType || (exports.ChangeType = {}));
