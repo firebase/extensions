@@ -76,3 +76,4 @@ params:
       What is the collection you want to store the user presence information in Firestore?
     example: user_presence
     required: true
+    
