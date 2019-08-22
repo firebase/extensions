@@ -223,7 +223,7 @@ const buildViewQuery = (datasetId, tableName, schema, idFieldNames) => {
     const idFieldsString = hasIdFields
         ? `${idFieldNames.map((idFieldName) => `id.${idFieldName}`).join(",")}`
         : undefined;
-    return (`SELECT ${idField ? "" : "id.id,"} ${hasIdFields ? `${idFieldsString},` : ""} ${bqFieldNames.join(",")} from ( SELECT *, MAX(timestamp) OVER (PARTITION BY id.id${idFieldsString ? `,${idFieldsString}` : ""}) AS max_timestamp FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`);
+    return `SELECT ${idField ? "" : "id.id,"} ${hasIdFields ? `${idFieldsString},` : ""} ${bqFieldNames.join(",")} from ( SELECT *, MAX(timestamp) OVER (PARTITION BY id.id${idFieldsString ? `,${idFieldsString}` : ""}) AS max_timestamp FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`;
 };
 const buildLatestSnapshotViewQuery = (datasetId, tableName, fields) => {
     fields = fields.filter(field => field.name != "key" && field.name != "id");
