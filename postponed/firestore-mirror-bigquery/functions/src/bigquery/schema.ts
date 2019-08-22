@@ -298,7 +298,7 @@ const buildViewQuery = (
     ? `${idFieldNames.map((idFieldName) => `id.${idFieldName}`).join(",")}`
     : undefined;
 
-  return (`SELECT ${idField ? "" : "id.id,"} ${
+  return `SELECT ${idField ? "" : "id.id,"} ${
     hasIdFields ? `${idFieldsString},` : ""
   } ${bqFieldNames.join(
     ","
@@ -306,7 +306,7 @@ const buildViewQuery = (
     idFieldsString ? `,${idFieldsString}` : ""
   }) AS max_timestamp FROM \`${
     process.env.PROJECT_ID
-  }.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`);
+  }.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`;
 };
 
 const buildLatestSnapshotViewQuery = (
