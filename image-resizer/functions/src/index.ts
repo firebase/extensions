@@ -79,10 +79,12 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       const bucket = admin.storage().bucket(object.bucket);
       const remoteFile = bucket.file(filePath);
       const remoteResizedFile = bucket.file(resizedFilePath);
-      const metadata = {
+      const metadata: any = {
         contentType: contentType,
-        "Cache-Control": config.cacheControlHeader,
       };
+      if (config.cacheControlHeader) {
+        metadata.cacheControl = config.cacheControlHeader;
+      }
 
       // Create the temp directory where the storage file will be downloaded.
       logs.tempDirectoryCreating(tempLocalDir);
