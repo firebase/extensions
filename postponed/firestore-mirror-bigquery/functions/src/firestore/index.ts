@@ -87,14 +87,13 @@ export const extractSnapshotData = (
   snapshot: firebase.firestore.DocumentSnapshot,
   fields: FirestoreField[]
 ): Object => {
-  return processData(snapshot.data(), fields);
+  return snapshot.data();
 };
 
 /**
  * Extract the Object data that matches the fields specifed in the schema.
  */
 const processData = (snapshotData: Object, fields: FirestoreField[]) => {
-  return snapshotData;
   const data = {};
   fields.forEach((field) => {
     const { name: fieldName } = field;
