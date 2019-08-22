@@ -151,7 +151,6 @@ export const latestConsistentSnapshotView = (
  * Checks that the BigQuery table schema matches the Firestore field
  * definitions and updates the BigQuery table scheme if necessary.
  */
-/*
 export const validateBQTable = async (
   table: bigquery.Table,
   fields: FirestoreField[],
@@ -163,8 +162,10 @@ export const validateBQTable = async (
 
   // Get the `data` and `id` fields from our schema, as this is what needs to be compared
   const idField: BigQueryField = metadata.schema.fields[0];
+  const dataField: BigQueryField = metadata.schema.fields[4];
   const idFieldsChanged = validateBQIdFields(idField.fields, idFieldNames);
-  if (idFieldsChanged) {
+  const dataFieldsChanged = validateBQDataFields(dataField.fields, fields);
+  if (dataFieldsChanged || idFieldsChanged) {
     logs.bigQueryTableUpdating(table.id);
     metadata.schema.fields[0] = idField;
     await table.setMetadata(metadata);
@@ -176,7 +177,6 @@ export const validateBQTable = async (
   logs.bigQueryTableValidated(table.id);
   return table;
 };
-*/
 
 /**
  * Checks that the BigQuery fields match the Firestore field definitions.
@@ -298,7 +298,7 @@ const buildViewQuery = (
     ? `${idFieldNames.map((idFieldName) => `id.${idFieldName}`).join(",")}`
     : undefined;
 
-  const query = (`SELECT ${idField ? "" : "id.id,"} ${
+  return (`SELECT ${idField ? "" : "id.id,"} ${
     hasIdFields ? `${idFieldsString},` : ""
   } ${bqFieldNames.join(
     ","
@@ -307,8 +307,6 @@ const buildViewQuery = (
   }) AS max_timestamp FROM \`${
     process.env.PROJECT_ID
   }.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`);
-  console.log("view query: " + query);
-  return query;
 };
 
 const buildLatestSnapshotViewQuery = (

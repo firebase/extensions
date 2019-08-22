@@ -123,32 +123,26 @@ exports.latestConsistentSnapshotView = (datasetId, tableName) => ({
  * Checks that the BigQuery table schema matches the Firestore field
  * definitions and updates the BigQuery table scheme if necessary.
  */
-/*
-export const validateBQTable = async (
-  table: bigquery.Table,
-  fields: FirestoreField[],
-  idFieldNames: string[]
-): Promise<bigquery.Table> => {
-  logs.bigQueryTableValidating(table.id);
-
-  const [metadata] = await table.getMetadata();
-
-  // Get the `data` and `id` fields from our schema, as this is what needs to be compared
-  const idField: BigQueryField = metadata.schema.fields[0];
-  const idFieldsChanged = validateBQIdFields(idField.fields, idFieldNames);
-  if (idFieldsChanged) {
-    logs.bigQueryTableUpdating(table.id);
-    metadata.schema.fields[0] = idField;
-    await table.setMetadata(metadata);
-    logs.bigQueryTableUpdated(table.id);
-  } else {
-    logs.bigQueryTableUpToDate(table.id);
-  }
-
-  logs.bigQueryTableValidated(table.id);
-  return table;
-};
-*/
+exports.validateBQTable = (table, fields, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
+    logs.bigQueryTableValidating(table.id);
+    const [metadata] = yield table.getMetadata();
+    // Get the `data` and `id` fields from our schema, as this is what needs to be compared
+    const idField = metadata.schema.fields[0];
+    const dataField = metadata.schema.fields[4];
+    const idFieldsChanged = validateBQIdFields(idField.fields, idFieldNames);
+    const dataFieldsChanged = validateBQDataFields(dataField.fields, fields);
+    if (dataFieldsChanged || idFieldsChanged) {
+        logs.bigQueryTableUpdating(table.id);
+        metadata.schema.fields[0] = idField;
+        yield table.setMetadata(metadata);
+        logs.bigQueryTableUpdated(table.id);
+    }
+    else {
+        logs.bigQueryTableUpToDate(table.id);
+    }
+    logs.bigQueryTableValidated(table.id);
+    return table;
+});
 /**
  * Checks that the BigQuery fields match the Firestore field definitions.
  * New fields are automatically added, whilst deleted fields are
@@ -229,9 +223,7 @@ const buildViewQuery = (datasetId, tableName, schema, idFieldNames) => {
     const idFieldsString = hasIdFields
         ? `${idFieldNames.map((idFieldName) => `id.${idFieldName}`).join(",")}`
         : undefined;
-    const query = (`SELECT ${idField ? "" : "id.id,"} ${hasIdFields ? `${idFieldsString},` : ""} ${bqFieldNames.join(",")} from ( SELECT *, MAX(timestamp) OVER (PARTITION BY id.id${idFieldsString ? `,${idFieldsString}` : ""}) AS max_timestamp FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`);
-    console.log("view query: " + query);
-    return query;
+    return (`SELECT ${idField ? "" : "id.id,"} ${hasIdFields ? `${idFieldsString},` : ""} ${bqFieldNames.join(",")} from ( SELECT *, MAX(timestamp) OVER (PARTITION BY id.id${idFieldsString ? `,${idFieldsString}` : ""}) AS max_timestamp FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`);
 };
 const buildLatestSnapshotViewQuery = (datasetId, tableName, fields) => {
     fields = fields.filter(field => field.name != "key" && field.name != "id");
