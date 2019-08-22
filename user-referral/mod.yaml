@@ -179,8 +179,6 @@ params:
       metadata for invitations?
     default: _invitations
     example: _invitations
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore Collection
     required: true
-    validationRegex: '[\w_.-]+'
-    validationErrorMessage: >
-      Path must be a simple alphanumeric field name, optionally with periods,
-      underscores, or dashes.

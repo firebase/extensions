@@ -101,6 +101,8 @@ params:
       What is the path to the collection that contains the strings that you want to translate?
     default: messages
     example: messages
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore Collection
     required: true
 
   - param: MESSAGE_FIELD_NAME
