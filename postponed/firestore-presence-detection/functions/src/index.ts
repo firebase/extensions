@@ -68,6 +68,7 @@ const getChangeType =
  * Handles new user sessions and updates to existing user sessions.
  * Adds a global timestamp to indicate last update (subject to race conditions)
  */
+// TODO include emulator unitTests OR just say no arrays/priorities
 const handleUpsert = async(
     change: functions.Change<admin.database.DataSnapshot>, userID: string,
     sessionID: string): Promise<admin.firestore.WriteResult> => {
@@ -76,16 +77,19 @@ const handleUpsert = async(
   if (config.firestore_path === undefined) {
     throw new Error('Undefined firestore path');
   } else {
+    const payload = JSON.parse(JSON.stringify(change.after.val()));
+    const fieldPath = [new admin.firestore.FieldPath("sessions", sessionID),
+      new admin.firestore.FieldPath("last_updated")];
     logs.handleUpsert(
         `${config.firestore_path}/${userID}/sessions/${sessionID}`,
-        change.after.val());
+        payload);
     return admin.firestore()
         .collection(config.firestore_path)
         .doc(userID)
         .set({
-      'sessions': {[sessionID]: change.after.val()},
+      'sessions': {[sessionID]: payload},
       'last_updated': admin.firestore.Timestamp.now()
-    }, {merge: true});
+    }, {mergeFields: fieldPath});
   }
 };
 
