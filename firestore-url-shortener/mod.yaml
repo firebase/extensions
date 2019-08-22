@@ -90,6 +90,8 @@ params:
       What is the path to the collection that contains the URLs that you want to shorten?
     default: urls
     example: urls
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore Collection
     required: true
 
   - param: URL_FIELD_NAME

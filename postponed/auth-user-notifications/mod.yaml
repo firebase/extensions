@@ -96,6 +96,8 @@ params:
       like to send?
     default: notifications
     example: notifications
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore Collection
     required: true
 
   - param: DEVICES_PATH
@@ -104,4 +106,6 @@ params:
       What is the path of the collection containing the user devices?
     default: user-devices
     example: user-devices
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore Collection
     required: true
