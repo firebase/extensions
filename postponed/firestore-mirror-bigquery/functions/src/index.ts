@@ -30,7 +30,7 @@ import {
 // TODO: How can we load a file dynamically?
 const schemaFile = require("../schema.json");
 
-let eventTracker: FirestoreEventHistoryTracker;
+let eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker(config);
 
 logs.init();
 

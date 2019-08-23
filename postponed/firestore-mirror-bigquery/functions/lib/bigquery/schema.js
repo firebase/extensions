@@ -35,7 +35,7 @@ const bigQueryField = (name, type, mode, fields) => ({
 const dataField = bigQueryField("data", "STRING", "NULLABLE");
 const keyField = bigQueryField("key", "STRING", "REQUIRED");
 const idField = bigQueryField("id", "STRING", "REQUIRED");
-const insertIdField = bigQueryField("insertId", "STRING", "REQUIRED");
+const eventIdField = bigQueryField("eventId", "STRING", "REQUIRED");
 const operationField = bigQueryField("operation", "STRING", "REQUIRED");
 const timestampField = bigQueryField("timestamp", "TIMESTAMP", "REQUIRED");
 // These field types are used for the Firestore GeoPoint data type
@@ -93,7 +93,8 @@ exports.firestoreToBQField = (field) => {
  *
  * The `raw` data table schema is:
  * - id: Stores the Firestore document ID
- * - insertId: The Firestore event ID to ensure uniqueness
+ * - eventId: The event ID of the function trigger invocation responsible for
+ *   the row
  * - timestamp: A timestamp to be used for update ordering
  * - operation: The type of operation: INSERT, UPDATE, DELETE
  * - data: A record to contain the Firestore document data fields specified
@@ -101,7 +102,7 @@ exports.firestoreToBQField = (field) => {
  */
 exports.firestoreToBQTable = () => [
     timestampField,
-    insertIdField,
+    eventIdField,
     keyField,
     idField,
     operationField,

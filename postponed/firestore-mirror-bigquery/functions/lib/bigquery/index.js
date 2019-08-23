@@ -36,7 +36,7 @@ class FirestoreBigQueryEventHistoryTracker {
     record(events) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.schemaInitialized) {
-                this.initializeSchema(this.config.datasetId, this.config.tableName);
+                this.initialize(this.config.datasetId, this.config.tableName);
                 this.schemaInitialized = true;
             }
             const rows = (Array.isArray(events) ? events : [events]).map(event => {
@@ -56,7 +56,7 @@ class FirestoreBigQueryEventHistoryTracker {
      * Ideally this would run once when the mod is installed if that were
      * possible in the future.
      */
-    initializeSchema(datasetId, tableName) {
+    initialize(datasetId, tableName) {
         return __awaiter(this, void 0, void 0, function* () {
             logs.bigQuerySchemaInitializing();
             const realTableName = rawTableName(tableName);
@@ -67,14 +67,13 @@ class FirestoreBigQueryEventHistoryTracker {
         });
     }
     ;
-    buildDataRow(insertId, changeType, timestamp, key, id, data) {
-        const serializedChange = serializeChangeType(changeType);
+    buildDataRow(eventId, changeType, timestamp, key, id, data) {
         return {
             timestamp,
-            insertId,
+            eventId,
             key: key,
             id,
-            operation: serializedChange,
+            operation: firestoreEventHistoryTracker_1.ChangeType[changeType],
             data: JSON.stringify(data)
         };
     }
@@ -138,7 +137,9 @@ class FirestoreBigQueryEventHistoryTracker {
     }
     ;
     /**
-     *
+     * Create a view over a table storing a change log of Firestore documents
+     * which contains only latest version of all live documents in the mirrored
+     * collection.
      * @param datasetId
      * @param tableName
      */
@@ -151,7 +152,7 @@ class FirestoreBigQueryEventHistoryTracker {
             if (!viewExists) {
                 logs.bigQueryViewCreating(viewName);
                 const options = {
-                    friendlyName: tableName,
+                    friendlyName: viewName,
                     view: schema_1.latestConsistentSnapshotView(datasetId, tableName)
                 };
                 yield view.create(options);
@@ -180,5 +181,7 @@ const serializeChangeType = (changeType) => {
             return "IMPORT";
     }
 };
-const rawTableName = (tableName) => `${tableName}_raw`;
-const latestViewName = (tableName) => `${tableName}_latest`;
+function rawTableName(tableName) { return `${tableName}_raw`; }
+;
+function latestViewName(tableName) { return `${tableName}_latest`; }
+;
