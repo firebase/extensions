@@ -176,9 +176,9 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
 }
 
 /**
- * Used in `buildDataRow` to convert between `ChangeType` and the 
+ * Used in `buildDataRow` to convert between `ChangeType` and the
  * identifier that is stored in BigQuery.
- * @param changeType 
+ * @param changeType
  */
 const serializeChangeType = (
   changeType: ChangeType
