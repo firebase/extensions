@@ -31,7 +31,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
 
   async record(events: FirestoreDocumentChangeEvent | FirestoreDocumentChangeEvent[]) {
     if (!this.schemaInitialized) {
-      this.initializeSchema(this.config.datasetId, this.config.tableName);
+      this.initialize(this.config.datasetId, this.config.tableName);
       this.schemaInitialized = true;
     }
     const rows = (Array.isArray(events) ? events : [events]).map(event => {
@@ -56,7 +56,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
    * Ideally this would run once when the mod is installed if that were
    * possible in the future.
    */
-  async initializeSchema(datasetId: string, tableName: string) {
+  async initialize(datasetId: string, tableName: string) {
     logs.bigQuerySchemaInitializing();
 
     const realTableName = rawTableName(tableName);
@@ -69,20 +69,19 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
   };
 
   buildDataRow(
-    insertId: string,
+    eventId: string,
     changeType: ChangeType,
     timestamp: string,
     key: string,
     id: string,
     data?: Object
   ): bigquery.RowMetadata {
-    const serializedChange = serializeChangeType(changeType);
     return {
       timestamp,
-      insertId,
+      eventId,
       key: key,
       id,
-      operation: serializedChange,
+      operation: ChangeType[changeType],
       data: JSON.stringify(data)
     };
   };
@@ -147,9 +146,11 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
   };
 
   /**
-   * 
-   * @param datasetId 
-   * @param tableName 
+   * Create a view over a table storing a change log of Firestore documents
+   * which contains only latest version of all live documents in the mirrored
+   * collection.
+   * @param datasetId
+   * @param tableName
    */
   async initializeLatestView(
     datasetId: string,
@@ -163,7 +164,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     if (!viewExists) {
       logs.bigQueryViewCreating(viewName);
       const options = {
-        friendlyName: tableName,
+        friendlyName: viewName,
         view: latestConsistentSnapshotView(datasetId, tableName)
       };
       await view.create(options);
@@ -194,5 +195,5 @@ const serializeChangeType = (
   }
 };
 
-const rawTableName = (tableName: string) => `${tableName}_raw`;
-const latestViewName = (tableName: string) => `${tableName}_latest`;
+function rawTableName(tableName: string): string { return `${tableName}_raw`; };
+function latestViewName(tableName: string): string { return `${tableName}_latest`; };

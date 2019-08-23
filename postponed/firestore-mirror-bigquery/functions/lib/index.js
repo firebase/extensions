@@ -32,7 +32,7 @@ const logs = require("./logs");
 const util_1 = require("./util");
 // TODO: How can we load a file dynamically?
 const schemaFile = require("../schema.json");
-let eventTracker;
+let eventTracker = new bigquery_1.FirestoreBigQueryEventHistoryTracker(config_1.default);
 logs.init();
 exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change, context) => __awaiter(this, void 0, void 0, function* () {
     logs.start();
@@ -40,9 +40,6 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
         // @ts-ignore string not assignable to enum
         const schema = schemaFile;
         const { fields, timestampField } = schema;
-        if (!eventTracker) {
-            eventTracker = new bigquery_1.FirestoreBigQueryEventHistoryTracker(config_1.default);
-        }
         // Identify the operation and data to be inserted
         let data;
         let defaultTimestamp;
