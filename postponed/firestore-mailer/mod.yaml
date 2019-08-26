@@ -1,0 +1,120 @@
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: firestore-mailer
+version: 0.1.0
+specVersion: v1beta1
+displayName: Send Email from Cloud Firestore
+
+description:
+  Deliver email by adding documents to a Cloud Firestore collection.
+
+license: Apache-2.0
+billingRequired: true
+sourceUrl: https://accounts.google.com/AccountChooser/signinchooser?service=gerritcodereview&continue=https%3A%2F%2Fdev-partners.googlesource.com%2Flogin%2Fsamples%2Ffirebase%2Fmods%2F%2B%2Fmaster%2Fmail-queue
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+
+contributors:
+  - authorName: Michael Bleigh
+    url: https://github.com/mbleigh
+
+roles:
+  - role: datastore.user
+    reason: Allows this extension access to Cloud Firestore to read and process queued mail documents.
+
+resources:
+  - name: processQueue
+    type: firebasemods.v1beta1.function
+    description:
+      Processes document changes in the specified mail queue collection,
+      delivering them and updating with delivery status information.
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${MAIL_COLLECTION}
+
+params:
+  - param: LOCATION
+    type: select
+    label: Deployment location
+    description: >-
+      Where should the extension be deployed?
+      For help selecting a location, refer to the
+      [location selection guide](https://firebase.google.com/docs/functions/locations).
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+    default: us-central1
+    required: true
+
+  - param: SMTP_CONNECTION_URI
+    type: string
+    label: SMTP Connection URI
+    description: >-
+      A URI representing an SMTP server that can be used to deliver mail.
+    example: smtps://username:password@smtp.hostname.com:465
+    required: true
+    validationRegex: ^smtps?://[^:]+:[^:]+@.*$
+    validationErrorMessage: Invalid SMTP Connection URI. Must be in form `smtp(s)://username:password@hostname:port`.
+
+  - param: MAIL_COLLECTION
+    type: string
+    label: Mail Collection
+    default: mail
+    required: true
+
+  - param: DEFAULT_FROM
+    type: string
+    label: Default "From" Address
+    description: >-
+      Email "From" address to use if none is provided with the message in the queue.
+
+  - param: DEFAULT_REPLY_TO
+    type: string
+    label: Default "Reply-To" Address
+    description: >-
+      Email "Reply-To" address to use if none is provided with the message in the queue.
+
+  - param: USERS_COLLECTION
+    type: string
+    label: Users Collection
+    description: >-
+      A collection of documents keyed by user UID. Mail will be delivered to the `email` field
+      based on lookups in this collection if `uids` are provided in the mail queue payload.
+
+  - param: TEMPLATES_COLLECTION
+    type: string
+    label: Templates Collection
+    description: >-
+      A collection of templates keyed by name. Each document in the templates collection may have
+      `subject`, `html`, `text`, and `amp` Handlebars template strings which will be rendered
+      using passed-in data.
