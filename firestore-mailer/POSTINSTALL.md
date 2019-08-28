@@ -13,7 +13,7 @@ admin.firestore().collection('${param:MAIL_COLLECTION}').add({
 }).then(() => console.log('Queued email for delivery!'));
 ```
 
-### Using the extension
+### Use this extension
 
 After its installation, this extension monitors all document writes to the `${param:MAIL_COLLECTION}` collection. Email is delivered based on the contents of the document's fields. The top-level fields specify the email's sender and recipients. The `message` field contains the details of the email to deliver, including the email body.
 
