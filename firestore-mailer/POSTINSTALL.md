@@ -85,7 +85,7 @@ This extension can be used to trigger email delivery directly from client applic
 
 Security rules will vary from application to application, but you should always make sure that emails are sent only to intended recipients and free-form content is kept to a minimum. Templates can help here -- you can use security rules to verify that the data being populated to the template matches your expectations for what a user should be allowed to trigger.
 
-#### Processing email delivery
+#### Email delivery processing
 
 After a document is added to the `${param:MAIL_COLLECTION}` collection, the extension will automatically pick it up for delivery. The extension will automatically create and update a `delivery` field in the document as the email is processed. The `delivery` field can be populated with the following fields:
 
