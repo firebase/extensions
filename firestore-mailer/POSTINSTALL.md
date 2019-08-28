@@ -87,7 +87,7 @@ Security rules will vary from application to application, but you should always 
 
 #### Email delivery processing
 
-After a document is added to the `${param:MAIL_COLLECTION}` collection, the extension will automatically pick it up for delivery. The extension will automatically create and update a `delivery` field in the document as the email is processed. The `delivery` field can be populated with the following fields:
+When a document is added to the `${param:MAIL_COLLECTION}` collection, the extension picks it up for email delivery processing. The extension creates and updates a `delivery` field in the document as it processes the email. The `delivery` field can be populated with the following fields:
 
 * **state:** One of `PENDING`, `PROCESSING`, `SUCCESS`, or `ERROR`.
 * **startTime:** Timestamp when email processing began.
