@@ -18,6 +18,6 @@ Because each email is built from a Cloud Firestore document, you can reference i
 
 You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
 
-When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery** and specify the Cloud Firestore collection where you'll add documents. If you want to use templates, you'll also specify the collection containing your template documents.
+When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery** and specify the Cloud Firestore collection where you'll add documents. If you want to use templates, you'll also need to specify the collection containing your template documents.
 
 When you use Firebase Extensions, you're only charged for the underlying resources that you use. Firebase Extensions themselves are free to use. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
