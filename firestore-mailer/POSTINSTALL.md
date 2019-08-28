@@ -10,12 +10,12 @@ admin.firestore().collection('${param:MAIL_COLLECTION}').add({
     text: 'This is the plaintext section of the email body.',
     html: 'This is the <code>HTML</code> section of the email body.',
   }
-}).then(() => console.log('Queued message for mail!'));
+}).then(() => console.log('Queued email for delivery!'));
 ```
 
 ### Using the extension
 
-After installation of the extension, all document writes to the `${param:MAIL_COLLECTION}` collection are monitored. Mail is delivered based on the contents of the document's fields. The top-level fields specify the email sender and recipients. The `message` field contains the details of the email to deliver, including the email body.
+After its installation, this extension monitors all document writes to the `${param:MAIL_COLLECTION}` collection. Email is delivered based on the contents of the document's fields. The top-level fields specify the email's sender and recipients. The `message` field contains the details of the email to deliver, including the email body.
 
 #### Sender and recipient fields
 
@@ -34,7 +34,7 @@ NOTE: The `toUids`, `ccUids`, and `bccUids` options deliver emails based on user
 
 #### Message field
 
-The `message` field of the document contains raw delivery information for the email. This field should generally only be populated by trusted code running in your own servers or Cloud Functions (refer to the "Security rules and sending mail" section below).
+The `message` field of the document contains raw delivery information for the email. This field should generally only be populated by trusted code running in your own servers or Cloud Functions (refer to the "Security rules and sending email" section below).
 
 Available properties for the `message` field are:
 
@@ -79,7 +79,7 @@ admin.firestore().collection('${param:MAIL_COLLECTION}').add({
 })
 ```
 
-#### Security rules and sending mail
+#### Security rules and sending email
 
 This extension can be used to trigger email delivery directly from client applications. However, you should carefully control client access to the `${param:MAIL_COLLECTION}` collection to avoid potential abuse (you don't want users able to send arbitrary emails from your company's address!).
 
@@ -110,7 +110,7 @@ There are instances in which email delivery fails in a recoverable fashion or th
 
 ### Monitoring
 
-As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.
 
 [mail_collection]: https://console.firebase.google.com/project/_/database/firestore/data~2F${param:MAIL_COLLECTION}
 [admin_sdk]: https://firebase.google.com/docs/admin/setup
