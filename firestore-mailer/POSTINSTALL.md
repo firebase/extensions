@@ -30,7 +30,7 @@ The top-level fields of the document supply the email sender and recipient infor
 * **bcc:** An array containing the BCC recipient email addresses.
 * **bccUids:** An array containing the BCC recipient UIDs.
 
-NOTE: The `toUids`, `ccUids`, and `bccUids` options deliver emails based on user UIDs keyed to email addresses within a Cloud Firestore document. To use these recipient options, you need to specify a Cloud Firestore collection for the extension's "Users collection" parameter. The extension can then read the `email` field for each UID specified in the `toUids`, `ccUids`, and/or `bccUids` fields.
+NOTE: The `toUids`, `ccUids`, and `bccUids` options deliver emails based on user UIDs keyed to email addresses within a Cloud Firestore document. To use these recipient options, you need to specify a Cloud Firestore collection for the extension's "User UIDs collection" parameter. The extension can then read the `email` field for each UID specified in the `toUids`, `ccUids`, and/or `bccUids` fields.
 
 #### Message field
 
