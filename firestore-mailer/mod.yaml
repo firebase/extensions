@@ -35,7 +35,7 @@ contributors:
 
 roles:
   - role: datastore.user
-    reason: Allows this extension to access Cloud Firestore to read and process queued email documents.
+    reason: Allows this extension to access Cloud Firestore to read and process added email documents.
 
 resources:
   - name: processQueue
@@ -98,26 +98,26 @@ params:
     type: string
     label: Default FROM address
     description: >-
-      The email address to use as the sender's address (if it's not specified in the document added to the collection).
+      The email address to use as the sender's address (if it's not specified in the added email document).
 
   - param: DEFAULT_REPLY_TO
     type: string
     label: Default REPLY-TO address
     description: >-
-      The email address to use as the reply-to address (if it's not specified in the document added to the collection).
+      The email address to use as the reply-to address (if it's not specified in the added email document).
 
   - param: USERS_COLLECTION
     type: string
     label: User UIDs collection
     description: >-
       A collection of documents keyed by user UID.
-      If the `toUids`, `ccUids`, and/or `bccUids` recipient options are used, the extension delivers email
-      to the `email` field based on lookups in this collection.
+      If the `toUids`, `ccUids`, and/or `bccUids` recipient options are used in the added email document,
+      this extension delivers email to the `email` field based on lookups in this collection.
 
   - param: TEMPLATES_COLLECTION
     type: string
     label: Templates collection
     description: >-
       A collection of email templates keyed by name.
-      The extension can render an email using a [Handlebar](https://handlebarsjs.com/) template,
-      if the template is specified in the document added to the collection.
+      This extension can render an email using a [Handlebar](https://handlebarsjs.com/) template,
+      if the template is specified in the added email document.
