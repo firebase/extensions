@@ -1,6 +1,6 @@
-### Using the mod
+### Using the extension
 
-Before you can use this mod, you'll need to update your security rules, set up a scheduled function, and add some code to your JavaScript app.
+Before you can use this extension, you'll need to update your security rules, set up a scheduled function, and add some code to your JavaScript app.
 
 1.  Update your Cloud Firestore security rules to allow reads and writes to the `_counter_shards_` subcollection of where you want to count, for example:
 
@@ -68,4 +68,4 @@ Before you can use this mod, you'll need to update your security rules, set up a
 
 ### Monitoring
 
-As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.

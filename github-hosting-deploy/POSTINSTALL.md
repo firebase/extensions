@@ -1,6 +1,6 @@
-### Using the mod
+### Using the extension
 
-To start using this installed mod, you need to first add your webhook address (`${function:deploy.url}`) into your repositories settings, as detailed below:
+To start using this installed extension, you need to first add your webhook address (`${function:deploy.url}`) into your repositories settings, as detailed below:
 
 1.  Go to the GitHub repository, click **Settings**, then click **Webhooks** (which brings you to something like `https://github.com/bkendall/my-website/settings/hooks`).
 
@@ -8,7 +8,7 @@ To start using this installed mod, you need to first add your webhook address (`
       + **Payload URL** is `${function:deploy.url}`.
       + **Content type** must be _application/json_.
       + **Secret** must remain empty.
-      + **Just the `push` event** is a sufficient trigger for this mod.
+      + **Just the `push` event** is a sufficient trigger for this extension.
 
 1.  Make sure the **Active** checkbox is selected.
 
@@ -28,4 +28,4 @@ Give this mod a try by making a commit to the `${param:BRANCH}` branch, push it 
 
 ### Monitoring
 
-As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.

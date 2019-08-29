@@ -90,6 +90,8 @@ params:
       What is the path of the the collection you would like to mirror?
     default: mods
     example: mods
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore Collection
     required: true
 
   - param: DATASET_ID
