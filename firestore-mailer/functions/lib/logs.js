@@ -1,7 +1,4 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const config_1 = require("./config");
-const safeConfig = Object.assign({}, config_1.default, { smtpConnectionUri: '<omitted>' });
 /**
  * Copyright 2019 Google LLC
  *
@@ -17,20 +14,25 @@ const safeConfig = Object.assign({}, config_1.default, { smtpConnectionUri: '<om
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+Object.defineProperty(exports, "__esModule", { value: true });
+const config_1 = require("./config");
+const safeConfig = Object.assign({}, config_1.default, {
+    smtpConnectionUri: "<omitted>",
+});
 function init() {
-    console.log('Initializing extension with configuration', safeConfig);
+    console.log("Initializing extension with configuration", safeConfig);
 }
 exports.init = init;
 function start() {
-    console.log('Started extension execution with configuration', safeConfig);
+    console.log("Started extension execution with configuration", safeConfig);
 }
 exports.start = start;
 function error(err) {
-    console.log('Unhandled error occurred during processing:', err);
+    console.log("Unhandled error occurred during processing:", err);
 }
 exports.error = error;
 function complete() {
-    console.log('Completed extension execution');
+    console.log("Completed extension execution");
 }
 exports.complete = complete;
 function attemptingDelivery(ref) {
