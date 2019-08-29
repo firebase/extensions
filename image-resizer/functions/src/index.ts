@@ -144,10 +144,12 @@ const resizeImage = async (
     resizedFile = path.join(os.tmpdir(), resizedFileName);
 
     // Cloud Storage files.
-    const metadata = {
+    const metadata: any = {
       contentType: contentType,
-      "Cache-Control": config.cacheControlHeader,
     };
+    if (config.cacheControlHeader) {
+      metadata.cacheControl = config.cacheControlHeader;
+    }
 
     // Generate a resized image using ImageMagick.
     logs.imageResizing(size);
