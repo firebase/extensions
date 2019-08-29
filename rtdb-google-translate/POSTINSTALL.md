@@ -26,7 +26,7 @@ When you go to the [Realtime Database tab](https://console.firebase.google.com/p
 
 ### Use this extension
 
-To trigger this extension, write strings to the database path: `${param:TRIGGER_PATH}/{sourceLanguageID}/{messageId}`. You can use any of the [Firebase Realtime Database SDKs](https://firebase.google.com/docs/database/). When triggered, the extension translates the string then writes the translated strings under new nodes within the same database path: `${param:TRIGGER_PATH}/{targetLanguageID}/{messageId}`.
+To trigger this extension, write strings to the database path: `${param:TRIGGER_PATH}/{sourceLanguageID}/{messageId}`. You can use any of the [Firebase Realtime Database SDKs](https://firebase.google.com/docs/database/). When triggered, the extension translates the strings then writes the translated strings under new nodes within the same database path: `${param:TRIGGER_PATH}/{targetLanguageID}/{messageId}`.
 
 The original, untranslated string must be a JSON resembling the following: `{"string": "This is your original, untranslated text."}`.
 
