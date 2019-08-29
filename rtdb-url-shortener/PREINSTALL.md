@@ -1,6 +1,6 @@
 Use this extension to create shortened URLs from URLs written to a Realtime Database path. These shortened URLs are useful as display URLs.
 
-This extension listens to your specified Realtime Database path. This extension shortens any URL written to that path then saves the shortened URL as a new field within the same database path.
+This extension listens to your specified Realtime Database path. When any URL is written to that path, this extension shortens the URL then saves the shortened URL as a new field within the same database path.
 
 For example, you can configure this extension to trigger upon writes to the database path `YOUR_PATH/`. If a URL is written to `YOUR_PATH/<urlId>/<url>`, this extension shortens the original URL then writes the shortened URL to `YOUR_PATH/<urlId>/<shortUrl>`, resulting in a data structure like so:
 
