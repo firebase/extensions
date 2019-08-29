@@ -18,9 +18,8 @@ specVersion: v1beta1
 version: 0.1.0
 
 description:
-  Automatically shorten URLs written to a specified collection in Realtime
-  Database using the Bitly API. Both the original and shortened URLs are stored
-  in the same document.
+  Automatically shorten URLs written to your database using the Bitly API.
+  Both the original and shortened URLs are stored in the same path.
 
 license: Apache-2.0
 billingRequired: true
@@ -40,15 +39,14 @@ contributors:
 
 roles:
   - role: firebasedatabase.admin
-    reason: Allows the mod to write shortened URLs to Realtime Database.
+    reason: Allows the mod to write shortened URLs to your Realtime Database.
 
 resources:
   - name: rtdburlshortener
     type: firebasemods.v1beta1.function
     description:
       Listens for writes of new URLs to your specified Realtime Database path,
-      shortens the URLs, then writes the shortened form back to the same
-      document.
+      shortens the URLs, then writes the shortened form back to the same path.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -61,10 +59,10 @@ params:
     type: select
     label: Deployment location
     description: >-
-      Where should the mod be deployed? You usually want a location close to
-      your database. For help selecting a location, refer to the [location
-      selection
-      guide](https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage).
+      Where should the extension be deployed? You usually want a location close to your database.
+      Realtime Database instances are located in us-central1.
+      For help selecting a location, refer to the
+      [location selection guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -86,16 +84,15 @@ params:
   - param: BITLY_ACCESS_TOKEN
     label: Bitly access token
     description: >
-      What is your Bitly access token? Generate this access token using
-      [Bitly](https://bitly.com/a/oauth_apps).
+      What is your Bitly access token? Generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
     example: a1b2c3d4e5f6g7
     required: true
 
   - param: TRIGGER_PATH
     label: Trigger path
     description: >
-      Path in the Realtime Database where URLs will be written to e.g. If you
-      input `links`, then the mod will trigger with writes to `links/{urlId}`.
+      To which database path will original URLs be written? For example, if you enter the path `links`,
+      then the extension will trigger upon writes to `links/{urlID}`.
     default: links
     example: links
     validationRegex: '^\S+$'
@@ -105,8 +102,7 @@ params:
   - param: URL_FIELD_NAME
     label: URL field name
     description: >
-      What is the name of the field that contains the original long URLs that
-      you want to shorten?
+      What is the name of the field that contains the original, long URLs that you want to shorten?
     default: url
     example: url
     required: true
