@@ -18,9 +18,9 @@ When you go to the [Realtime Database tab](https://console.firebase.google.com/p
 
 ### Use this extension
 
-To trigger this extension, write URLs to the database path: `${param:TRIGGER_PATH}/{urlID}/${param:URL_FIELD_NAME}`. You can use any of the [Firebase Realtime Database SDKs](https://firebase.google.com/docs/database/). When triggered, the extension writes the shortened URL to the database path: `${param:TRIGGER_PATH}/{urlID}/${param:SHORT_URL_FIELD_NAME}`.
+To trigger this extension, write URLs to the database path: `${param:TRIGGER_PATH}/{urlID}/${param:URL_FIELD_NAME}`. You can use any of the [Firebase Realtime Database SDKs](https://firebase.google.com/docs/database/). When triggered, the extension shortens the original URL then writes the shortened URL to the database path: `${param:TRIGGER_PATH}/{urlID}/${param:SHORT_URL_FIELD_NAME}`.
 
-If the original URL in the database path is updated, then the shortened URL will be automatically updated, too.
+Both the original URL and the shortened URL are stored in `${param:TRIGGER_PATH}/{urlID}/`. If the original URL in the database path is updated, then the shortened URL will be automatically updated, too.
 
 You can display a shortened URL by fetching `/${param:TRIGGER_PATH}/{urlID}/${param:SHORT_URL_FIELD_NAME}`.
 
