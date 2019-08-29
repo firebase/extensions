@@ -19,4 +19,6 @@ For example, you can configure this extension to trigger upon writes to the data
              string: "Este es su texto original no traducido.",  // target language of Spanish (es)
 ```
 
+If the original, untranslated string in the database path is updated, then the translated strings will be automatically updated, too.
+
 When you use Firebase Extensions, you're only charged for the underlying resources that you use. Firebase Extensions themselves are free to use. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
