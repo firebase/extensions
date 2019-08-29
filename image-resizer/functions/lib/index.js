@@ -113,8 +113,10 @@ const resizeImage = (bucket, originalFile, fileDir, fileNameWithoutExtension, fi
         // Cloud Storage files.
         const metadata = {
             contentType: contentType,
-            "Cache-Control": config_1.default.cacheControlHeader,
         };
+        if (config_1.default.cacheControlHeader) {
+            metadata.cacheControl = config_1.default.cacheControlHeader;
+        }
         // Generate a resized image using ImageMagick.
         logs.imageResizing(size);
         yield child_process_promise_1.spawn("convert", [originalFile, "-resize", `${size}>`, resizedFile], {
