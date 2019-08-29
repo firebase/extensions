@@ -43,7 +43,7 @@ apis:
 
 roles:
   - role: firebase.admin
-    reason: Allows the mod to deploy to Firebase Hosting. This mod will only interact with Firebase Hosting and Cloud Functions.
+    reason: Allows the extension to deploy to Firebase Hosting. This extension will only interact with Firebase Hosting and Cloud Functions.
 
 resources:
   - name: deploy
@@ -61,7 +61,7 @@ params:
     type: select
     label: Deployment location
     description: >-
-      Where should the mod be deployed?
+      Where should the extension be deployed?
       For help selecting a location, refer to the
       [location selection guide](https://firebase.google.com/docs/functions/locations).
     options:
@@ -88,7 +88,7 @@ params:
     required: true
     validationRegex: https://github.com.*
     validationErrorMessage:
-      This mod only supports GitHub URLs. Please enter a URL that starts with `https://github.com`.
+      This extension only supports GitHub URLs. Please enter a URL that starts with `https://github.com`.
     description: >-
       What is the full URL of the GitHub repository from which you want to deploy?
       For example: `https://github.com/firebase/firebase-tools`

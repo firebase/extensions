@@ -1,10 +1,10 @@
-### Using the mod
+### Using the extension
 
-This mod defines two callable functions - one that sends invitations via email and another that's triggered by the acceptance of an email invitation.
+This extension defines two callable functions - one that sends invitations via email and another that's triggered by the acceptance of an email invitation.
 
 #### Set up your iOS/Android/Web client
 
-The client-side API for this mod is a set of callable functions.
+The client-side API for this extension is a set of callable functions.
 
 Learn how to call functions from iOS, Android, or Web clients in the [callable functions documentation](https://firebase.google.com/docs/functions/callable#set_up_your_client_development_environment).
 
@@ -24,7 +24,7 @@ Here is a web sample of how to use this function:
 
 #### Accept invited users
 
-The invitation email will include an invitation token in the query string, as specified during mod configuration.
+The invitation email will include an invitation token in the query string, as specified during configuration of the extension.
 
 If the receiver clicks this link, you should authenticate them with Firebase Authentication. Then, once authenticated, your client should read this value then pass it to the `acceptInvitation` function.
 
@@ -49,4 +49,4 @@ Here is a web sample of how to use this function:
 
 ### Monitoring
 
-As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.

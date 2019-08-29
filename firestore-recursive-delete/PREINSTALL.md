@@ -1,8 +1,8 @@
-Use this mod to recursively delete Cloud Firestore data.
+Use this extension to recursively delete Cloud Firestore data.
 
-This mod creates an HTTPS-callable function that you can call in the client code to recursively delete data from a specified Cloud Firestore path. If the path represents a collection, then all of its documents and their subcollections will be deleted. If the path represents a document, then that document and all of its subcollections will be deleted.
+This extension creates an HTTPS-callable function that you can call in the client code to recursively delete data from a specified Cloud Firestore path. If the path represents a collection, then all of its documents and their subcollections will be deleted. If the path represents a document, then that document and all of its subcollections will be deleted.
 
-To use this mod, you need to configure the following:
+To use this extension, you need to configure the following:
 
 First, users that are allowed to delete data must have the `fsdelete` custom claim set to `true`:
 
@@ -34,4 +34,4 @@ deleteFn({
 });
 ```
 
-When you use Firebase Mods, you're only charged for the underlying resources that you use. Firebase Mods themselves are free to use. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
+When you use Firebase Extensions, you're only charged for the underlying resources that you use. Firebase Extensions themselves are free to use. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)

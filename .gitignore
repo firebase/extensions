@@ -4,3 +4,8 @@ node_modules/
 firebase-debug.log
 .DS_Store
 mods-test-data/key.json
+.gradle
+.idea
+build
+*.iml
+local.properties

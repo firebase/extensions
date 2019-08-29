@@ -20,9 +20,8 @@ license: Apache-2.0
 displayName: Resize images in Cloud Storage
 
 description:
-  Resize new images uploaded to a Cloud Storage bucket to a specified size. Both
-  the original and the resized images are stored in the same bucket.
-
+  Resize new images uploaded to a Cloud Storage bucket to a specified size. Both the original and the resized images
+  are stored in the same bucket.
 billingRequired: false
 sourceUrl: https://accounts.google.com/AccountChooser/signinchooser?service=gerritcodereview&continue=https%3A%2F%2Fdev-partners.googlesource.com%2Flogin%2Fsamples%2Ffirebase%2Fmods%2F%2B%2Fmaster%2Fimage-resizer
 releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
@@ -44,7 +43,7 @@ apis:
 
 roles:
   - role: storage.admin
-    reason: Allows the mod to store resized images in Cloud Storage
+    reason: Allows the extension to store resized images in Cloud Storage
 
 resources:
   - name: generateResizedImage
@@ -65,10 +64,10 @@ params:
     type: select
     label: Deployment location
     description: >-
-      Where should the mod be deployed? You usually want a location close to
-      your database. Realtime Database instances are located in us-central1. For
-      help selecting a location, refer to the [location selection
-      guide](https://firebase.google.com/docs/functions/locations).
+      Where should the extension be deployed? You usually want a location close to your database.
+      Realtime Database instances are located in us-central1.
+      For help selecting a location, refer to the
+      [location selection guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)
         value: us-central1
