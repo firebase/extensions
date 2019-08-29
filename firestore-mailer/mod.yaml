@@ -108,7 +108,7 @@ params:
 
   - param: USERS_COLLECTION
     type: string
-    label: User UIDs collection
+    label: User collection
     description: >-
       A collection of documents keyed by user UID.
       If the `toUids`, `ccUids`, and/or `bccUids` recipient options are used in the added email document,
