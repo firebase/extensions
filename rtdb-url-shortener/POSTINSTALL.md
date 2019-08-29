@@ -6,12 +6,12 @@ To test out this extension, run the following command using the Firebase CLI:
 firebase database:push /${param:TRIGGER_PATH} --data '{"${param:URL_FIELD_NAME}": "https://google.com"}'
 ```
 
-When you go to the [Realtime Database tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/${param:PROJECT_ID}/data), you'll see your database populated with both the original URL and the shortened URL, with a data structure like so:
+When you go to the [Realtime Database tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/${param:PROJECT_ID}/data), you'll see your database populated with both the original URL and the shortened URL, with a data structure similar to:
 
 ```
 /${param:PROJECT_ID}
    /${param:TRIGGER_PATH}
-       /<urlId>
+       /<urlID>
            ${param:URL_FIELD_NAME}: "https://google.com",
            ${param:SHORT_URL_FIELD_NAME}: "<shortened-URL>"
 ```
