@@ -1,7 +1,3 @@
-import config from "./config";
-
-const safeConfig = Object.assign({}, config, {smtpConnectionUri: '<omitted>'});
-
 /**
  * Copyright 2019 Google LLC
  *
@@ -18,20 +14,26 @@ const safeConfig = Object.assign({}, config, {smtpConnectionUri: '<omitted>'});
  * limitations under the License.
  */
 
+import config from "./config";
+
+const safeConfig = Object.assign({}, config, {
+  smtpConnectionUri: "<omitted>",
+});
+
 export function init() {
-  console.log('Initializing extension with configuration', safeConfig);
+  console.log("Initializing extension with configuration", safeConfig);
 }
 
 export function start() {
-  console.log('Started extension execution with configuration', safeConfig);
+  console.log("Started extension execution with configuration", safeConfig);
 }
 
 export function error(err: Error) {
-  console.log('Unhandled error occurred during processing:', err);
+  console.log("Unhandled error occurred during processing:", err);
 }
 
 export function complete() {
-  console.log('Completed extension execution');
+  console.log("Completed extension execution");
 }
 
 export function attemptingDelivery(ref: FirebaseFirestore.DocumentReference) {
@@ -48,11 +50,7 @@ export function delivered(
   }
 ) {
   console.log(
-    `Delivered message: ${ref.path} successfully. messageId: ${
-      info.messageId
-    } accepted: ${info.accepted.length} rejected: ${
-      info.rejected.length
-    } pending: ${info.pending.length}`
+    `Delivered message: ${ref.path} successfully. messageId: ${info.messageId} accepted: ${info.accepted.length} rejected: ${info.rejected.length} pending: ${info.pending.length}`
   );
 }
 
