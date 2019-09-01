@@ -1,6 +1,6 @@
 ### See it in action
 
-To test out this extension, run the following commands using the Firebase CLI:
+To test out this extension, run the following commands using the [Firebase CLI](https://firebase.google.com/docs/cli#rtdb-commands):
 
 ```
 firebase database:push /${param:TRIGGER_PATH}/en --data '{"string": "I like to eat cake"}'
@@ -26,13 +26,13 @@ When you go to the [Realtime Database tab](https://console.firebase.google.com/p
 
 ### Use this extension
 
-To trigger this extension, write strings to the database path: `${param:TRIGGER_PATH}/{sourceLanguageID}/{messageId}`. You can use any of the [Firebase Realtime Database SDKs](https://firebase.google.com/docs/database/). When triggered, the extension translates the strings then writes the translated strings under new nodes within the same database path: `${param:TRIGGER_PATH}/{targetLanguageID}/{messageId}`.
+To trigger this extension, write strings to the database path: `${param:TRIGGER_PATH}/{sourceLanguageCode}/{messageId}`. You can use any of the [Firebase Realtime Database SDKs](https://firebase.google.com/docs/database/). When triggered, the extension translates the strings then writes the translated strings under paths in the form: `${param:TRIGGER_PATH}/{targetLanguageCode}/{messageId}`.
 
 The original, untranslated string must be a JSON resembling the following: `{"string": "This is your original, untranslated text."}`.
 
-You specify the source language (and the target languages) using ISO-639-1 codes. You can find a list of valid languages and their corresponding codes in the [Cloud Translate API documentation](https://cloud.google.com/translate/docs/languages). The following are your configured desired target language(s): `${param:LANGUAGES}`.
+You specify the source language (and the target languages) using ISO-639-1 codes. You can find a list of valid languages and their corresponding codes in the [Cloud Translate API documentation](https://cloud.google.com/translate/docs/languages). You've configured the following target language(s) for this installed extension: `${param:LANGUAGES}`.
 
-If the original string in `${param:TRIGGER_PATH}/{sourceLanguageID}/{messageId}` is updated, then the translated strings will be automatically updated, too.
+If the original string in `${param:TRIGGER_PATH}/{sourceLanguageCode}/{messageId}` is updated, then the translated strings will be automatically updated, too.
 
 ### Monitoring
 
