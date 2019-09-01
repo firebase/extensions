@@ -107,7 +107,7 @@ params:
     description: >
       To which database path will new strings be written?
       For example, if you enter the path `messages`, then the extension will trigger
-      upon writes to `messages/{sourceLanguageCode}/{stringID}`.
+      upon writes to `messages/{sourceLanguageCode}/{messageId}`.
     default: messages
     example: messages
     required: true
