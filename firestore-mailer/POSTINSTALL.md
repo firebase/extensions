@@ -102,7 +102,7 @@ When a document is added to the `${param:MAIL_COLLECTION}` collection, the exten
   * **pending:** Array of email addresses that were temporarily rejected by SMTP.
   * **response:** The last response from the SMTP server.
 
-A email will typically go from `PENDING` to `PROCESSING` to either `SUCCESS` or `ERROR`. Once in the `SUCCESS` or `ERROR` state, additional changes to the document will not trigger additional computation.
+An email will typically go from `PENDING` to `PROCESSING` to either `SUCCESS` or `ERROR`. Once in the `SUCCESS` or `ERROR` state, additional changes to the document will not trigger the extension to send another email. To resend an email with document updates, you can change the `state` to `PENDING` or `RETRY`.
 
 #### Manual retries
 
