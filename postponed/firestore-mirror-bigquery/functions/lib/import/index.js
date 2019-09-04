@@ -86,7 +86,7 @@ const run = () => __awaiter(this, void 0, void 0, function* () {
         collectionPath: collectionPath,
         datasetId: datasetId,
         tableName: tableName,
-        schemaInitialized: false
+        schemaInitialized: false,
     });
     console.log(`Mirroring data from Firestore Collection: ${collectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${tableName}`);
     const importTimestamp = new Date().toISOString();

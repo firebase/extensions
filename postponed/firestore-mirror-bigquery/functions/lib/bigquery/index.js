@@ -62,7 +62,6 @@ class FirestoreBigQueryEventHistoryTracker {
             const realTableName = rawTableName(tableName);
             yield this.initializeDataset(datasetId);
             yield this.initializeTable(datasetId, realTableName);
-            logs.bigQuerySchemaInitialized();
         });
     }
     ;
@@ -85,7 +84,7 @@ class FirestoreBigQueryEventHistoryTracker {
             const realTableName = rawTableName(tableName);
             const dataset = this.bq.dataset(datasetId);
             const table = dataset.table(realTableName);
-            const rowCount = Array.isArray(rows) ? rows.length : 1;
+            const rowCount = rows.length;
             logs.dataInserting(rowCount);
             yield table.insert(rows);
             logs.dataInserted(rowCount);
