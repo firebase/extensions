@@ -74,21 +74,21 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
             }
         }
         const timestamp = util_1.extractTimestamp(data, defaultTimestamp, timestampField);
-        yield eventTracker.record({
-            timestamp: timestamp,
-            operation: changeType,
-            name: context.resource.name,
-            documentId: snapshot.ref.id,
-            eventId: context.eventId,
-            data: data
-        });
+        yield eventTracker.record([{
+                timestamp: timestamp,
+                operation: changeType,
+                name: context.resource.name,
+                documentId: snapshot.ref.id,
+                eventId: context.eventId,
+                data: data
+            }]);
         logs.complete();
     }
     catch (err) {
         logs.error(err);
     }
 }));
-const getChangeType = (change) => {
+function getChangeType(change) {
     if (!change.after.exists) {
         return firestoreEventHistoryTracker_1.ChangeType.DELETE;
     }
@@ -96,4 +96,5 @@ const getChangeType = (change) => {
         return firestoreEventHistoryTracker_1.ChangeType.INSERT;
     }
     return firestoreEventHistoryTracker_1.ChangeType.UPDATE;
-};
+}
+;
