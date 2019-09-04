@@ -9,7 +9,7 @@ export const start = () => {
 };
 
 export const handleUpsert = (path: string, payload: object) => {
-  console.log("Upserting data: "+ payload +" at path: " + path);
+  console.log("Upserting data: "+ JSON.stringify(payload) +" at path: " + path);
 };
 
 export const handleDelete = (path: string) => {
@@ -25,7 +25,7 @@ export const logTimestampComparison = (currentTimestamp: number, operationTimest
 };
 
 export const logFirestoreUpsert = (payload: object) => {
-  console.log("Updating Firestore document with payload: " + payload);
+  console.log("Updating Firestore document with payload: " + JSON.stringify(payload));
 };
 
 export const success = () => {
@@ -36,6 +36,6 @@ export const createDocument = (document: string, collection: string | undefined)
   console.log(`Creating document ${document} at Collection ${collection} `);
 };
 
-export const logRetry = (error: Error) => {
-  console.error('Error commiting RTDB changes, retrying. Error: ', error);
+export const logRetry = (err: Error) => {
+  console.error('Error commiting RTDB changes, retrying. Error: ', err);
 }
