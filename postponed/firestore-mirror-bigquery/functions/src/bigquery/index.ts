@@ -22,10 +22,10 @@ import { ChangeType, FirestoreEventHistoryTracker, FirestoreDocumentChangeEvent 
 import * as logs from "../logs";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
-  collectionPath: string,
-  datasetId: string,
-  tableName: string,
-  schemaInitialized: boolean
+  collectionPath: string;
+  datasetId: string;
+  tableName: string;
+  schemaInitialized: boolean;
 }
 
 export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHistoryTracker {
@@ -71,8 +71,6 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
 
     await this.initializeDataset(datasetId);
     await this.initializeTable(datasetId, realTableName);
-
-    logs.bigQuerySchemaInitialized();
   };
 
   buildDataRow(
@@ -99,12 +97,12 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
   async insertData(
     datasetId: string,
     tableName: string,
-    rows: bigquery.RowMetadata | bigquery.RowMetadata[]
+    rows: bigquery.RowMetadata[]
   ) {
     const realTableName = rawTableName(tableName);
     const dataset = this.bq.dataset(datasetId);
     const table = dataset.table(realTableName);
-    const rowCount = Array.isArray(rows) ? rows.length : 1;
+    const rowCount = rows.length;
 
     logs.dataInserting(rowCount);
     await table.insert(rows);

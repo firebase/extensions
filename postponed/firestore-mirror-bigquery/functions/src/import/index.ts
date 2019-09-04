@@ -103,7 +103,7 @@ const run = async (): Promise<number> => {
     collectionPath: collectionPath,
     datasetId: datasetId,
     tableName: tableName,
-    schemaInitialized: false
+    schemaInitialized: false,
   });
 
   console.log(
