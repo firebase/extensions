@@ -1,3 +1,4 @@
+"use strict";
 /*
  * Copyright 2019 Google LLC
  *
@@ -13,11 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-export default {
-  collectionPath: process.env.COLLECTION_PATH,
-  datasetId: process.env.DATASET_ID,
-  location: process.env.LOCATION,
-  tableName: process.env.TABLE_NAME,
-  schemaInitialized: false
-};
+Object.defineProperty(exports, "__esModule", { value: true });
+var ChangeType;
+(function (ChangeType) {
+    ChangeType[ChangeType["INSERT"] = 0] = "INSERT";
+    ChangeType[ChangeType["DELETE"] = 1] = "DELETE";
+    ChangeType[ChangeType["UPDATE"] = 2] = "UPDATE";
+    ChangeType[ChangeType["IMPORT"] = 3] = "IMPORT";
+})(ChangeType = exports.ChangeType || (exports.ChangeType = {}));

@@ -32,12 +32,10 @@ const bigQueryField = (name, type, mode, fields) => ({
     type,
 });
 // These field types form the basis of the `raw` data table
-const dataField = (fields) => bigQueryField("data", "RECORD", "NULLABLE", fields);
-const idField = (fields) => bigQueryField("id", "RECORD", "REQUIRED", [
-    bigQueryField("id", "STRING", "REQUIRED"),
-    ...fields,
-]);
-const insertIdField = bigQueryField("insertId", "STRING", "REQUIRED");
+const dataField = bigQueryField("data", "STRING", "NULLABLE");
+const keyField = bigQueryField("key", "STRING", "REQUIRED");
+const idField = bigQueryField("id", "STRING", "REQUIRED");
+const eventIdField = bigQueryField("eventId", "STRING", "REQUIRED");
 const operationField = bigQueryField("operation", "STRING", "REQUIRED");
 const timestampField = bigQueryField("timestamp", "TIMESTAMP", "REQUIRED");
 // These field types are used for the Firestore GeoPoint data type
@@ -95,18 +93,20 @@ exports.firestoreToBQField = (field) => {
  *
  * The `raw` data table schema is:
  * - id: Stores the Firestore document ID
- * - insertId: The Firestore event ID to ensure uniqueness
+ * - eventId: The event ID of the function trigger invocation responsible for
+ *   the row
  * - timestamp: A timestamp to be used for update ordering
  * - operation: The type of operation: INSERT, UPDATE, DELETE
  * - data: A record to contain the Firestore document data fields specified
  * in the schema
  */
-exports.firestoreToBQTable = (fields, idFieldNames) => [
-    idField(idFieldNames.map((idFieldName) => bigQueryField(idFieldName, "STRING", "REQUIRED"))),
-    insertIdField,
+exports.firestoreToBQTable = () => [
     timestampField,
+    eventIdField,
+    keyField,
+    idField,
     operationField,
-    dataField(fields.map((subField) => exports.firestoreToBQField(subField))),
+    dataField
 ];
 /**
  * Convert from a Firestore schema into a SQL query that will be used to build
@@ -131,7 +131,6 @@ exports.validateBQTable = (table, fields, idFieldNames) => __awaiter(this, void 
     if (dataFieldsChanged || idFieldsChanged) {
         logs.bigQueryTableUpdating(table.id);
         metadata.schema.fields[0] = idField;
-        metadata.schema.fields[4] = dataField;
         yield table.setMetadata(metadata);
         logs.bigQueryTableUpdated(table.id);
     }

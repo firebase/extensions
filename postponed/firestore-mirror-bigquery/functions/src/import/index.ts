@@ -18,13 +18,14 @@ import * as bigquery from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
 import * as inquirer from "inquirer";
 
-import { buildDataRow, initializeSchema, insertData } from "../bigquery";
+import { FirestoreBigQueryEventHistoryTracker } from "../bigquery";
 import { extractSnapshotData, FirestoreSchema } from "../firestore";
 import {
   extractIdFieldNames,
   extractIdFieldValues,
   extractTimestamp,
 } from "../util";
+import { ChangeType, FirestoreDocumentChangeEvent } from "../firestoreEventHistoryTracker";
 
 const schemaFile = require("../../schema.json");
 
@@ -98,10 +99,12 @@ const run = async (): Promise<number> => {
   // contain any wildcard parameters
   const idFieldNames = extractIdFieldNames(collectionPath);
 
-  // This initialization should be moved to `mod install` if Mods adds support
-  // for executing code as part of the install process
-  // Currently it runs on every cold start of the function
-  await initializeSchema(datasetId, tableName, schema, idFieldNames);
+  const dataSink = new FirestoreBigQueryEventHistoryTracker({
+    collectionPath: collectionPath,
+    datasetId: datasetId,
+    tableName: tableName,
+    schemaInitialized: false,
+  });
 
   console.log(
     `Mirroring data from Firestore Collection: ${collectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${tableName}`
@@ -115,15 +118,9 @@ const run = async (): Promise<number> => {
     .collection(collectionPath)
     .get();
   // Build the data rows to insert into BigQuery
-  const rows: bigquery.RowMetadata[] = collectionSnapshot.docs.map(
+  const rows: FirestoreDocumentChangeEvent[] = collectionSnapshot.docs.map(
     (snapshot) => {
       const data = extractSnapshotData(snapshot, fields);
-
-      // Extract the values of any `idFieldNames` specifed in the collection path
-      const { id, idFieldValues } = extractIdFieldValues(
-        snapshot,
-        idFieldNames
-      );
 
       let defaultTimestamp;
       if (snapshot.updateTime) {
@@ -141,10 +138,18 @@ const run = async (): Promise<number> => {
         timestampField
       );
       // Build the data row
-      return buildDataRow(idFieldValues, id, "INSERT", timestamp, data);
+      return {
+        timestamp,
+        operation: ChangeType.IMPORT,
+        documentId: snapshot.ref.id,
+        name: snapshot.ref.path,
+        eventId: "",
+        data
+      };
     }
   );
-  await insertData(datasetId, tableName, rows);
+
+  dataSink.record(rows);
 
   return rows.length;
 };
