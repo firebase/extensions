@@ -117,7 +117,9 @@ exports.firestoreToBQView = (datasetId, tableName, schema, idFieldNames) => ({
     useLegacySql: false,
 });
 exports.latestConsistentSnapshotView = (datasetId, tableName) => ({
-    query: buildLatestSnapshotViewQuery(datasetId, tableName, exports.firestoreToBQTable()),
+    query: buildLatestSnapshotViewQuery(datasetId, tableName, timestampField.name, exports.firestoreToBQTable()
+        .map(field => field.name)
+        .filter(name => name != "key" && name != "id")),
     useLegacySql: false,
 });
 /**
@@ -226,30 +228,27 @@ const buildViewQuery = (datasetId, tableName, schema, idFieldNames) => {
         : undefined;
     return `SELECT ${idField ? "" : "id.id,"} ${hasIdFields ? `${idFieldsString},` : ""} ${bqFieldNames.join(",")} from ( SELECT *, MAX(timestamp) OVER (PARTITION BY id.id${idFieldsString ? `,${idFieldsString}` : ""}) AS max_timestamp FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`;
 };
-const buildLatestSnapshotViewQuery = (datasetId, tableName, fields) => {
-    fields = fields.filter(field => field.name != "key" && field.name != "id");
-    const stateFields = fields.map(field => "latest_" + field.name);
-    const zipped = fields.map((field, index) => [field.name, stateFields[index]]);
+const buildLatestSnapshotViewQuery = (datasetId, tableName, timestampColumnName, groupByColumns) => {
     const query = (`SELECT
       key,
       id,
-      ${stateFields.join(",")}
+      ${groupByColumns.join(",")}
      FROM (
       SELECT
         key,
         id,
-        ${zipped.map(([stateField, latestStateField]) => `FIRST_VALUE(${stateField})
-            OVER(PARTITION BY key ORDER BY timestamp DESC)
-            AS ${latestStateField}`).join(',')},
+        ${groupByColumns.map(columnName => `FIRST_VALUE(${columnName})
+            OVER(PARTITION BY key ORDER BY ${timestampColumnName} DESC)
+            AS ${columnName}`).join(',')},
         FIRST_VALUE(operation)
-          OVER(PARTITION BY key ORDER BY timestamp DESC) = "DELETE"
+          OVER(PARTITION BY key ORDER BY ${timestampColumnName} DESC) = "DELETE"
           AS is_deleted
       FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`
-      ORDER BY key, timestamp DESC
+      ORDER BY key, ${timestampColumnName} DESC
      )
      WHERE NOT is_deleted
-     GROUP BY key, id, ${stateFields.join(",")}`);
-    console.log("buildLatestSnapshotViewQuery: " + query);
+     GROUP BY key, id, ${groupByColumns.join(",")}`);
+    logs.bigQueryLatestSnapshotViewQueryCreated(query);
     return query;
 };
 /**

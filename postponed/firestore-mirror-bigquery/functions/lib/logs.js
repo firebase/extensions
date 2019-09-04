@@ -28,6 +28,9 @@ exports.bigQueryDatasetCreating = (datasetId) => {
 exports.bigQueryDatasetExists = (datasetId) => {
     console.log(`BigQuery dataset already exists: ${datasetId}`);
 };
+exports.bigQueryLatestSnapshotViewQueryCreated = (query) => {
+    console.log(`BigQuery latest snapshot view query:\n${query}`);
+};
 exports.bigQuerySchemaInitialized = () => {
     console.log("Initialized BigQuery from schema file");
 };
