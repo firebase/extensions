@@ -32,7 +32,7 @@ export const writeToFirestore =
           case ChangeType.CREATE:
           case ChangeType.UPDATE:
             const payload = JSON.parse(JSON.stringify(change.after.val()));
-            logs.handleUpsert(path, payload)
+            logs.handleUpsert(path, payload);
             await firestoreTransaction(payload, operationTimestamp, userInfo['userID'], userInfo['sessionID']);
             break;
           case ChangeType.DELETE:
