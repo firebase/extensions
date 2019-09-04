@@ -144,7 +144,10 @@ export const latestConsistentSnapshotView = (
   datasetId: string,
   tableName: string,
 ) => ({
-  query: buildLatestSnapshotViewQuery(datasetId, tableName, firestoreToBQTable()),
+  query: buildLatestSnapshotViewQuery(datasetId, tableName, timestampField.name,
+    firestoreToBQTable()
+      .map(field => field.name)
+      .filter(name => name != "key" && name != "id")),
   useLegacySql: false,
 });
 
@@ -313,34 +316,32 @@ const buildViewQuery = (
 const buildLatestSnapshotViewQuery = (
   datasetId: string,
   tableName: string,
-  fields: BigQueryField[],
+  timestampColumnName: string,
+  groupByColumns: string[],
 ) => {
-  fields = fields.filter(field => field.name != "key" && field.name != "id");
-  const stateFields = fields.map(field => "latest_" + field.name);
-  const zipped = fields.map((field, index) => [field.name, stateFields[index]]);
   const query = (
     `SELECT
       key,
       id,
-      ${stateFields.join(",")}
+      ${groupByColumns.join(",")}
      FROM (
       SELECT
         key,
         id,
-        ${zipped.map(([stateField, latestStateField]) =>
-          `FIRST_VALUE(${stateField})
-            OVER(PARTITION BY key ORDER BY timestamp DESC)
-            AS ${latestStateField}`).join(',')},
+        ${groupByColumns.map(columnName =>
+          `FIRST_VALUE(${columnName})
+            OVER(PARTITION BY key ORDER BY ${timestampColumnName} DESC)
+            AS ${columnName}`).join(',')},
         FIRST_VALUE(operation)
-          OVER(PARTITION BY key ORDER BY timestamp DESC) = "DELETE"
+          OVER(PARTITION BY key ORDER BY ${timestampColumnName} DESC) = "DELETE"
           AS is_deleted
       FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`
-      ORDER BY key, timestamp DESC
+      ORDER BY key, ${timestampColumnName} DESC
      )
      WHERE NOT is_deleted
-     GROUP BY key, id, ${stateFields.join(",")}`
+     GROUP BY key, id, ${groupByColumns.join(",")}`
   );
-  console.log("buildLatestSnapshotViewQuery: " + query);
+  logs.bigQueryLatestSnapshotViewQueryCreated(query);
   return query;
 }
 
