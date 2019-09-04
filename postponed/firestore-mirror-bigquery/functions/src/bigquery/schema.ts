@@ -140,14 +140,6 @@ export const firestoreToBQView = (
   useLegacySql: false,
 });
 
-export const latestConsistentSnapshotView = (
-  datasetId: string,
-  tableName: string,
-) => ({
-  query: buildLatestSnapshotViewQuery(datasetId, tableName, firestoreToBQTable()),
-  useLegacySql: false,
-});
-
 /**
  * Checks that the BigQuery table schema matches the Firestore field
  * definitions and updates the BigQuery table scheme if necessary.
@@ -309,40 +301,6 @@ const buildViewQuery = (
     process.env.PROJECT_ID
   }.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`;
 };
-
-const buildLatestSnapshotViewQuery = (
-  datasetId: string,
-  tableName: string,
-  fields: BigQueryField[],
-) => {
-  fields = fields.filter(field => field.name != "key" && field.name != "id");
-  const stateFields = fields.map(field => "latest_" + field.name);
-  const zipped = fields.map((field, index) => [field.name, stateFields[index]]);
-  const query = (
-    `SELECT
-      key,
-      id,
-      ${stateFields.join(",")}
-     FROM (
-      SELECT
-        key,
-        id,
-        ${zipped.map(([stateField, latestStateField]) =>
-          `FIRST_VALUE(${stateField})
-            OVER(PARTITION BY key ORDER BY timestamp DESC)
-            AS ${latestStateField}`).join(',')},
-        FIRST_VALUE(operation)
-          OVER(PARTITION BY key ORDER BY timestamp DESC) = "DELETE"
-          AS is_deleted
-      FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`
-      ORDER BY key, timestamp DESC
-     )
-     WHERE NOT is_deleted
-     GROUP BY key, id, ${stateFields.join(",")}`
-  );
-  console.log("buildLatestSnapshotViewQuery: " + query);
-  return query;
-}
 
 /**
  * Converts a set of Firestore field definitions into the equivalent named
