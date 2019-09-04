@@ -85,7 +85,8 @@ const run = () => __awaiter(this, void 0, void 0, function* () {
     const dataSink = new bigquery_1.FirestoreBigQueryEventHistoryTracker({
         collectionPath: collectionPath,
         datasetId: datasetId,
-        tableName: tableName
+        tableName: tableName,
+        schemaInitialized: false
     });
     console.log(`Mirroring data from Firestore Collection: ${collectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${tableName}`);
     const importTimestamp = new Date().toISOString();

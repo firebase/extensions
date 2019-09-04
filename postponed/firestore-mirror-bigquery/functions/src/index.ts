@@ -43,10 +43,6 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
       const schema: FirestoreSchema = schemaFile;
       const { fields, timestampField } = schema;
 
-      if (!eventTracker) {
-        eventTracker = new FirestoreBigQueryEventHistoryTracker(config);
-      }
-
       // Identify the operation and data to be inserted
       let data;
       let defaultTimestamp: string;
@@ -88,14 +84,14 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
         timestampField
       );
 
-      await eventTracker.record({
+      await eventTracker.record([{
         timestamp: timestamp,
         operation: changeType,
         name: context.resource.name,
         documentId: snapshot.ref.id,
         eventId: context.eventId,
         data: data
-      });
+      }]);
 
       logs.complete();
     } catch (err) {
@@ -104,9 +100,9 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
   }
 );
 
-const getChangeType = (
+function getChangeType(
   change: functions.Change<firebase.firestore.DocumentSnapshot>
-) => {
+): ChangeType {
   if (!change.after.exists) {
     return ChangeType.DELETE;
   }

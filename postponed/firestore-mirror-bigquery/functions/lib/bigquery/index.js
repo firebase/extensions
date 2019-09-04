@@ -28,18 +28,18 @@ const schema_1 = require("./schema");
 const firestoreEventHistoryTracker_1 = require("../firestoreEventHistoryTracker");
 const logs = require("../logs");
 class FirestoreBigQueryEventHistoryTracker {
-    constructor(config, schemaInitialized = false) {
+    constructor(config) {
         this.config = config;
-        this.schemaInitialized = schemaInitialized;
         this.bq = new bigquery.BigQuery();
+        this.schemaInitialized = config.schemaInitialized;
     }
     record(events) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!this.schemaInitialized) {
-                this.initialize(this.config.datasetId, this.config.tableName);
+            if (!this.config.schemaInitialized) {
+                yield this.initialize(this.config.datasetId, this.config.tableName);
                 this.schemaInitialized = true;
             }
-            const rows = (Array.isArray(events) ? events : [events]).map(event => {
+            const rows = events.map(event => {
                 return this.buildDataRow(
                 // Use the function's event ID to protect against duplicate executions
                 event.eventId, event.operation, event.timestamp, event.name, event.documentId, event.data);
@@ -164,23 +164,6 @@ class FirestoreBigQueryEventHistoryTracker {
     ;
 }
 exports.FirestoreBigQueryEventHistoryTracker = FirestoreBigQueryEventHistoryTracker;
-/**
- * Used in `buildDataRow` to convert between `ChangeType` and the
- * identifier that is stored in BigQuery.
- * @param changeType
- */
-const serializeChangeType = (changeType) => {
-    switch (changeType) {
-        case firestoreEventHistoryTracker_1.ChangeType.INSERT:
-            return "INSERT";
-        case firestoreEventHistoryTracker_1.ChangeType.UPDATE:
-            return "UPDATE";
-        case firestoreEventHistoryTracker_1.ChangeType.DELETE:
-            return "DELETE";
-        case firestoreEventHistoryTracker_1.ChangeType.IMPORT:
-            return "IMPORT";
-    }
-};
 function rawTableName(tableName) { return `${tableName}_raw`; }
 ;
 function latestViewName(tableName) { return `${tableName}_latest`; }

@@ -22,19 +22,28 @@ import {
 import { ChangeType, FirestoreEventHistoryTracker, FirestoreDocumentChangeEvent } from "../firestoreEventHistoryTracker";
 import * as logs from "../logs";
 
+export interface FirestoreBigQueryEventHistoryTrackerConfig {
+  collectionPath: string,
+  datasetId: string,
+  tableName: string,
+  schemaInitialized: boolean
+}
+
 export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHistoryTracker {
   bq: bigquery.BigQuery;
+  schemaInitialized: boolean;
 
-  constructor(public config: any, public schemaInitialized: boolean = false) {
+  constructor(public config: FirestoreBigQueryEventHistoryTrackerConfig) {
     this.bq = new bigquery.BigQuery();
+    this.schemaInitialized = config.schemaInitialized;
   }
 
-  async record(events: FirestoreDocumentChangeEvent | FirestoreDocumentChangeEvent[]) {
-    if (!this.schemaInitialized) {
-      this.initialize(this.config.datasetId, this.config.tableName);
+  async record(events: FirestoreDocumentChangeEvent[]) {
+    if (!this.config.schemaInitialized) {
+      await this.initialize(this.config.datasetId, this.config.tableName);
       this.schemaInitialized = true;
     }
-    const rows = (Array.isArray(events) ? events : [events]).map(event => {
+    const rows = events.map(event => {
       return this.buildDataRow(
         // Use the function's event ID to protect against duplicate executions
         event.eventId,
@@ -93,7 +102,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     datasetId: string,
     tableName: string,
     rows: bigquery.RowMetadata | bigquery.RowMetadata[]
-  ): Promise<void> {
+  ) {
     const realTableName = rawTableName(tableName);
     const dataset = this.bq.dataset(datasetId);
     const table = dataset.table(realTableName);
@@ -107,7 +116,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
   /**
    * Check that the specified dataset exists, and create it if it doesn't.
    */
-  async initializeDataset(datasetId: string) {
+  async initializeDataset(datasetId: string): Promise<bigquery.Dataset> {
     const dataset = this.bq.dataset(datasetId);
     const [datasetExists] = await dataset.exists();
     if (datasetExists) {
@@ -174,26 +183,6 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
   };
 
 }
-
-/**
- * Used in `buildDataRow` to convert between `ChangeType` and the
- * identifier that is stored in BigQuery.
- * @param changeType
- */
-const serializeChangeType = (
-  changeType: ChangeType
-): string => {
-  switch (changeType) {
-    case ChangeType.INSERT:
-      return "INSERT";
-    case ChangeType.UPDATE:
-      return "UPDATE";
-    case ChangeType.DELETE:
-      return "DELETE";
-    case ChangeType.IMPORT:
-      return "IMPORT";
-  }
-};
 
 function rawTableName(tableName: string): string { return `${tableName}_raw`; };
 function latestViewName(tableName: string): string { return `${tableName}_latest`; };

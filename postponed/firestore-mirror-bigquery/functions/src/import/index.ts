@@ -102,7 +102,8 @@ const run = async (): Promise<number> => {
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
     collectionPath: collectionPath,
     datasetId: datasetId,
-    tableName: tableName
+    tableName: tableName,
+    schemaInitialized: false
   });
 
   console.log(

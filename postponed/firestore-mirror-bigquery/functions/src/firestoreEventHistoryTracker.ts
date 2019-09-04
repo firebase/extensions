@@ -31,5 +31,5 @@ export interface FirestoreDocumentChangeEvent {
 }
 
 export interface FirestoreEventHistoryTracker {
-  record(event: FirestoreDocumentChangeEvent);
+  record(event: FirestoreDocumentChangeEvent[]);
 }
