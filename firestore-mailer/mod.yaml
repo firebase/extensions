@@ -48,7 +48,7 @@ resources:
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/${MAIL_COLLECTION}
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${MAIL_COLLECTION}/{id}
 
 params:
   - param: LOCATION

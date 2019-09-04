@@ -94,7 +94,7 @@ When a document is added to the `${param:MAIL_COLLECTION}` collection, the exten
 * **endTime:** Timestamp when email processing completed (that is, ended in either a `SUCCESS` or `ERROR` state).
 * **error:** If there was an email delivery error, an error message will be populated here.
 * **attempts:** Number of delivery attempts for this email.
-* **leaseTimeExpires:** In case of a hang or timeout, the time at which a `PROCESSING` state should be considered an error.
+* **leaseExpireTime:** In case of a hang or timeout, the time at which a `PROCESSING` state should be considered an error.
 * **info:** After successful email delivery (to at least one address), this field will be populated with the following fields:
   * **messageId:** The message ID of the delivered email.
   * **accepted:** Array of email addresses to which the email was successfully delivered.
