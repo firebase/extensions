@@ -13,6 +13,7 @@ const functions = require("firebase-functions");
 const config_1 = require("./config");
 const logs = require("./logs");
 admin.initializeApp();
+const NUM_RETRIES = 20;
 var ChangeType;
 (function (ChangeType) {
     ChangeType[ChangeType["CREATE"] = 0] = "CREATE";
@@ -82,9 +83,14 @@ const getUserAndSessionID = (path) => {
     };
 };
 /**
- * Performs a transaction at the docRef given that the timestamp is greater than the timestamp read at the destination
- * @param operationTimestamp: the timestamp in milliseconds of the function invocation operation
+ * Performs an optimistic transaction at the docRef given the operation timestamp is more recent
+ * than the most recent operation applied at the destination. The function logic will try up to
+ * NUM_RETRIES times if the following occur:
+ *      1: Document Creation failed and document doesn't exist
+ *      2: Document update fails preconditions
+ *
  * @param payload: the payload to write at the destination (this may be a delete operation)
+ * @param operationTimestamp: the timestamp in milliseconds of the function invocation operation
  * @param userID: the userID to update
  * @param sessionID: the sessionID to update
  */
@@ -94,130 +100,65 @@ const firestoreTransaction = (payload, operationTimestamp, userID, sessionID) =>
         throw new Error('Undefined firestore path');
     }
     const docRef = admin.firestore().collection(config_1.default.firestore_path).doc(userID);
-    // Create the document if one does not exist
-    yield docRef.get().then((doc) => __awaiter(this, void 0, void 0, function* () {
-        if (!doc.exists) {
-            yield docRef.create({
-                'sessions': {},
-                'last_updated': {},
-            }).catch((error) => {
-                // TODO think of best way to use this error
-                logs.error(error);
-            });
-        }
-    }));
-    // Determine whether or not update the Firestore document
-    // TODO handle retries
-    yield docRef.get().then((doc) => {
-        const lastUpdated = doc.updateTime;
-        if (!doc.exists) {
-            throw new Error('Document does not exist! Should not happen');
-        }
-        // Check to see if the timestamp of the session exists
-        const data = doc.data();
-        // TODO handle if TS is wrong type
-        if (data !== undefined && data['last_updated'] !== undefined && data['last_updated'][sessionID] !== undefined) {
-            const currentTimestamp = data['last_updated'][sessionID];
-            logs.compareTimestamp(userID, sessionID);
-            logs.logTimestamp(currentTimestamp, operationTimestamp);
-            // Refuse to write the operation if the timestamp is earlier than the latest update
-            const errorMessage = `Current timestamp (${currentTimestamp}) is older than or equal to operation (${operationTimestamp}) will not commit operation.`;
-            if ((payload instanceof admin.firestore.FieldValue && currentTimestamp > operationTimestamp) &&
-                (currentTimestamp >= operationTimestamp)) {
-                throw new Error(errorMessage);
+    // Document creation (if applicable) and optimistic transaction
+    let numTries = 0;
+    let isSuccessful = false;
+    while (numTries < NUM_RETRIES && !isSuccessful) {
+        // Wait before retrying if applicable
+        yield new Promise(resolve => setTimeout(resolve, 1000 * numTries));
+        numTries += 1;
+        // Try to create the document if one does not exist
+        yield docRef.get().then((doc) => __awaiter(this, void 0, void 0, function* () {
+            if (!doc.exists) {
+                logs.createDocument(userID, config_1.default.firestore_path);
+                yield docRef.create({
+                    'sessions': {},
+                    'last_updated': {},
+                }).catch((error) => {
+                    logs.error(error);
+                });
             }
-        }
-        // Update the document with presence information and last updated timestamp
-        const firestorePayload = {
-            [`sessions.${sessionID}`]: payload,
-            [`last_updated.${sessionID}`]: operationTimestamp,
-        };
-        logs.logFirestoreUpsert(firestorePayload);
-        docRef.update(firestorePayload, { lastUpdateTime: lastUpdated });
-    });
+        }));
+        // Assuming the document exists, try to update it with presence information
+        yield docRef.get().then((doc) => __awaiter(this, void 0, void 0, function* () {
+            const lastUpdated = doc.updateTime;
+            // If the document creation failed, retry
+            if (!doc.exists) {
+                logs.logRetry(new Error("Document does not exist"));
+                return;
+            }
+            // Ensure the timestamp of operation is more recent
+            // Only compare timestamps if the timestamp is undefined and of the correct type
+            // Note that if it is not a number, it will assume the session is safe to write over
+            const currentData = doc.data();
+            if (currentData !== undefined &&
+                currentData['last_updated'] !== undefined &&
+                currentData['last_updated'][sessionID] !== undefined &&
+                typeof currentData['last_updated'][sessionID] === "number") {
+                const currentTimestamp = currentData['last_updated'][sessionID];
+                logs.logTimestampComparison(currentTimestamp, operationTimestamp, userID, sessionID);
+                // Refuse to write the operation if the timestamp is earlier than the latest update
+                if ((payload instanceof admin.firestore.FieldValue && currentTimestamp > operationTimestamp) &&
+                    (currentTimestamp >= operationTimestamp)) {
+                    throw new Error("Timestamp for operation is outdated, refusing to commit change.");
+                }
+            }
+            // Update the document with presence information and last updated timestamp
+            const firestorePayload = {
+                [`sessions.${sessionID}`]: payload,
+                [`last_updated.${sessionID}`]: operationTimestamp,
+            };
+            yield docRef.update(firestorePayload, { lastUpdateTime: lastUpdated }).then((result) => {
+                logs.logFirestoreUpsert(firestorePayload);
+                isSuccessful = true;
+            }).catch((error) => __awaiter(this, void 0, void 0, function* () {
+                logs.logRetry(error);
+            }));
+        }));
+    }
+    // Log a failure
+    if (!isSuccessful) {
+        throw new Error(`Failed to commit change after ${numTries}`);
+    }
 });
-// const firestorePessimisticTransaction = async (payload: any, operationTimestamp: number, userID: string, sessionID: string): Promise<void> => {
-//
-//   // Ensure path is defined and obtain database reference
-//   if (config.firestore_path === undefined) {
-//     throw new Error('Undefined firestore path');
-//   }
-//   const docRef = admin.firestore().collection(config.firestore_path).doc(userID);
-//
-//   return admin.firestore().runTransaction((transaction: admin.firestore.Transaction): Promise<void> => {
-//     return transaction.get(docRef).then((doc: DocumentSnapshot): void => {
-//
-//       // Check to see if the timestamp of the session exists
-//       if (doc.exists) {
-//       const data = doc.data();
-//       if (data !== undefined && data['last_updated'] !== undefined && data['last_updated'][sessionID] !== undefined) {
-//         const currentTimestamp = data['last_updated'][sessionID];
-//         logs.compareTimestamp(userID, sessionID);
-//         logs.logTimestamp(currentTimestamp, operationTimestamp);
-//
-//         // Refuse to write the operation if the timestamp is earlier than the latest update
-//         const errorMessage = `Current timestamp (${currentTimestamp}) is older than or equal to operation (${operationTimestamp}) will not commit operation.`;
-//         if ((payload instanceof admin.firestore.FieldValue && currentTimestamp > operationTimestamp) &&
-//             (currentTimestamp >= operationTimestamp)) {
-//           throw new Error(errorMessage)
-//         }
-//        }
-//       }
-//
-//       // Update the document with presence information and last updated timestamp
-//       const fieldPath = [new admin.firestore.FieldPath('sessions', sessionID),
-//         new admin.firestore.FieldPath('last_updated', sessionID)];
-//       const firestorePayload = {
-//         sessions: {[sessionID]: payload},
-//         'last_updated': {[sessionID]: {'timestamp': operationTimestamp}}
-//       };
-//       logs.logFirestoreUpsert(firestorePayload);
-//       transaction.set(docRef, firestorePayload, {mergeFields: fieldPath});
-//     });
-//   });
-// };
-// /**
-//  * TODO description, what if the normal entry still exists?
-//  * @param userID
-//  * @param sessionID
-//  */
-// const removeFirestoreTombstone = (userID: string, sessionID: string): Promise<admin.firestore.WriteResult> => {
-//   if (config.firestore_path === undefined) {
-//     throw new Error('Undefined firestore path');
-//   }
-//
-//   // Update the document with presence information and last updated timestamp
-//   const fieldPath = [new admin.firestore.FieldPath('last_updated', sessionID)];
-//   return admin.firestore().collection(config.firestore_path).doc(userID).set({
-//     'last_updated': {[sessionID]: admin.firestore.FieldValue.delete()}
-//   }, {mergeFields: fieldPath});
-// };
-//
-// /**
-//  * TODO implement the method
-//  * @param payload
-//  * @param userID
-//  */
-// const cleanUpStaleSessions = async (payload: any, userID: string): Promise<void> => {
-//   const path = `${config.rtdb_path}/${userID}`;
-//   const operationTimestamp = getTimestamp(payload.val());
-//   // TODO extract this log
-//   console.log(`Cleaning up stale sessions at: ${path}`);
-//
-//   admin.database().ref(path).once('value').then((snapshot: admin.database.DataSnapshot): void | Promise<void> => {
-//     if (snapshot.exists()) {
-//       const updateArr: { [s: string]: null; } = {};
-//       const data = snapshot.val();
-//       for (const sessionID of data) {
-//
-//         // Delete the session document if its timestamp is stale AND offline
-//         if (getTimestamp(data[sessionID]) + WEEK_SECONDS < operationTimestamp
-//             && data[sessionID]["connection"] === "offline") {
-//           updateArr[`${path}/${sessionID}`] = null
-//         }
-//       }
-//       return admin.database().ref(path).update(updateArr)
-//     }
-//   })
-// };
 //# sourceMappingURL=index.js.map

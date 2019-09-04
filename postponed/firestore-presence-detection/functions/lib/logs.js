@@ -16,16 +16,19 @@ exports.handleDelete = (path) => {
 exports.getSessionInfo = (path) => {
     console.log(`Obtaining sessionID and userID from path: ${path}`);
 };
-exports.compareTimestamp = (userID, sessionID) => {
-    console.log(`Comparing 'last_updated' timestamp of user: ${userID}, session: ${sessionID} with that of current operation.`);
-};
-exports.logTimestamp = (currentTimestamp, operationTimestamp) => {
-    console.log(`Current Timestamp: ${currentTimestamp}, Operation Timestamp: ${operationTimestamp}`);
+exports.logTimestampComparison = (currentTimestamp, operationTimestamp, userID, sessionID) => {
+    console.log(`Comparing timestamps of user: ${userID}, session: ${sessionID}. Current Timestamp: ${currentTimestamp}, Operation Timestamp: ${operationTimestamp}`);
 };
 exports.logFirestoreUpsert = (payload) => {
     console.log("Updating Firestore document with payload: " + payload);
 };
 exports.success = () => {
     console.log("User presence extension successfully executed.");
+};
+exports.createDocument = (document, collection) => {
+    console.log(`Creating document ${document} at Collection ${collection} `);
+};
+exports.logRetry = (error) => {
+    console.error('Error commiting RTDB changes, retrying. Error: ', error);
 };
 //# sourceMappingURL=logs.js.map
