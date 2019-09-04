@@ -17,7 +17,6 @@
 import * as bigquery from "@google-cloud/bigquery";
 import {
   firestoreToBQTable,
-  latestConsistentSnapshotView
 } from "./schema";
 import { ChangeType, FirestoreEventHistoryTracker, FirestoreDocumentChangeEvent } from "../firestoreEventHistoryTracker";
 import * as logs from "../logs";
@@ -72,7 +71,6 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
 
     await this.initializeDataset(datasetId);
     await this.initializeTable(datasetId, realTableName);
-    await this.initializeLatestView(datasetId, realTableName);
 
     logs.bigQuerySchemaInitialized();
   };
@@ -154,35 +152,6 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     return table;
   };
 
-  /**
-   * Create a view over a table storing a change log of Firestore documents
-   * which contains only latest version of all live documents in the mirrored
-   * collection.
-   * @param datasetId
-   * @param tableName
-   */
-  async initializeLatestView(
-    datasetId: string,
-    tableName: string
-  ): Promise<bigquery.Table> {
-    let viewName = latestViewName(tableName);
-    const dataset = this.bq.dataset(datasetId);
-    let view = dataset.table(viewName);
-    const [viewExists] = await view.exists();
-
-    if (!viewExists) {
-      logs.bigQueryViewCreating(viewName);
-      const options = {
-        friendlyName: viewName,
-        view: latestConsistentSnapshotView(datasetId, tableName)
-      };
-      await view.create(options);
-      logs.bigQueryViewCreated(viewName);
-    }
-    return view;
-  };
-
 }
 
 function rawTableName(tableName: string): string { return `${tableName}_raw`; };
-function latestViewName(tableName: string): string { return `${tableName}_latest`; };
