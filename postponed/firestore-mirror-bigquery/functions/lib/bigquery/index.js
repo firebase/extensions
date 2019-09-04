@@ -62,6 +62,8 @@ class FirestoreBigQueryEventHistoryTracker {
             const realTableName = rawTableName(tableName);
             yield this.initializeDataset(datasetId);
             yield this.initializeTable(datasetId, realTableName);
+            yield this.initializeLatestView(datasetId, realTableName);
+            logs.bigQuerySchemaInitialized();
         });
     }
     ;
@@ -134,7 +136,35 @@ class FirestoreBigQueryEventHistoryTracker {
         });
     }
     ;
+    /**
+     * Create a view over a table storing a change log of Firestore documents
+     * which contains only latest version of all live documents in the mirrored
+     * collection.
+     * @param datasetId
+     * @param tableName
+     */
+    initializeLatestView(datasetId, tableName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let viewName = latestViewName(tableName);
+            const dataset = this.bq.dataset(datasetId);
+            let view = dataset.table(viewName);
+            const [viewExists] = yield view.exists();
+            if (!viewExists) {
+                logs.bigQueryViewCreating(viewName);
+                const options = {
+                    friendlyName: viewName,
+                    view: schema_1.latestConsistentSnapshotView(datasetId, tableName)
+                };
+                yield view.create(options);
+                logs.bigQueryViewCreated(viewName);
+            }
+            return view;
+        });
+    }
+    ;
 }
 exports.FirestoreBigQueryEventHistoryTracker = FirestoreBigQueryEventHistoryTracker;
 function rawTableName(tableName) { return `${tableName}_raw`; }
+;
+function latestViewName(tableName) { return `${tableName}_latest`; }
 ;
