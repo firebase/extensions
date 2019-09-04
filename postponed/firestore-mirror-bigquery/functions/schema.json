@@ -1,96 +1,12 @@
 {
   "fields": [
-    {
-      "name": "boolean",
-      "type": "boolean"
-    },
-    {
-      "name": "geopoint",
-      "type": "geopoint"
-    },
-    {
-      "name": "number",
-      "type": "number"
-    },
-    {
-      "fields": [
-        {
-          "name": "boolean",
-          "type": "boolean"
-        },
-        {
-          "name": "geopoint",
-          "type": "geopoint"
-        },
-        {
-          "name": "number",
-          "type": "number"
-        },
-        {
-          "fields": [
-            {
-              "name": "boolean",
-              "type": "boolean"
-            },
-            {
-              "name": "geopoint",
-              "type": "geopoint"
-            },
-            {
-              "name": "number",
-              "type": "number"
-            },
-            {
-              "name": "reference",
-              "type": "reference"
-            },
-            {
-              "name": "string",
-              "type": "string"
-            },
-            {
-              "name": "timestamp",
-              "type": "timestamp"
-            },
-            {
-              "name": "nestedfieldl2",
-              "type": "string"
-            }
-          ],
-          "name": "map",
-          "type": "map"
-        },
-        {
-          "name": "reference",
-          "type": "reference"
-        },
-        {
-          "name": "string",
-          "type": "string"
-        },
-        {
-          "name": "timestamp",
-          "type": "timestamp"
-        },
-        {
-          "name": "nestedfieldl1",
-          "type": "string"
-        }
-      ],
-      "name": "map",
-      "type": "map"
-    },
-    {
-      "name": "reference",
-      "type": "reference"
-    },
-    {
-      "name": "string",
-      "type": "string"
-    },
-    {
-      "name": "timestamp",
-      "type": "timestamp"
-    }
+	  {
+		  "name": "key",
+		  "type": "string"
+	  },
+	  {
+		  "name": "data",
+		  "type": "string"
+	  }
   ]
 }

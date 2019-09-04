@@ -14,10 +14,22 @@
  * limitations under the License.
  */
 
-export default {
-  collectionPath: process.env.COLLECTION_PATH,
-  datasetId: process.env.DATASET_ID,
-  location: process.env.LOCATION,
-  tableName: process.env.TABLE_NAME,
-  schemaInitialized: false
-};
+export enum ChangeType {
+  INSERT,
+  DELETE,
+  UPDATE,
+  IMPORT
+}
+
+export interface FirestoreDocumentChangeEvent {
+  timestamp: string;
+  operation: ChangeType;
+  documentId: string;
+  name: string;
+  eventId: string;
+  data: Object;
+}
+
+export interface FirestoreEventHistoryTracker {
+  record(event: FirestoreDocumentChangeEvent[]);
+}

@@ -55,7 +55,7 @@ const validators = {
  * schema
  */
 exports.extractSnapshotData = (snapshot, fields) => {
-    return processData(snapshot.data(), fields);
+    return snapshot.data();
 };
 /**
  * Extract the Object data that matches the fields specifed in the schema.

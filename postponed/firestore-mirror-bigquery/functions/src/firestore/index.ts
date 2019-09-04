@@ -87,7 +87,7 @@ export const extractSnapshotData = (
   snapshot: firebase.firestore.DocumentSnapshot,
   fields: FirestoreField[]
 ): Object => {
-  return processData(snapshot.data(), fields);
+  return snapshot.data();
 };
 
 /**

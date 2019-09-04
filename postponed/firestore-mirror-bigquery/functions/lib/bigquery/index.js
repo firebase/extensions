@@ -25,120 +25,116 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const bigquery = require("@google-cloud/bigquery");
 const schema_1 = require("./schema");
+const firestoreEventHistoryTracker_1 = require("../firestoreEventHistoryTracker");
 const logs = require("../logs");
-const bq = new bigquery.BigQuery();
-/**
- * Ensure that the defined Firestore schema exists within BigQuery and
- * contains the correct information.
- *
- * This will check for the following:
- * 1) That the dataset exists
- * 2) That a `${tableName}_raw` data table exists to store how the data changes
- * over time
- * 3) That a `${tableName}` view exists to visualise the current state of the
- * data
- *
- * NOTE: This currently gets executed on every cold start of the function.
- * Ideally this would run once when the mod is installed if that were
- * possible in the future.
- */
-exports.initializeSchema = (datasetId, tableName, schema, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
-    logs.bigQuerySchemaInitializing();
-    const viewName = tableName;
-    const realTableName = rawTableName(tableName);
-    yield intialiseDataset(datasetId);
-    yield initializeTable(datasetId, realTableName, schema.fields, idFieldNames);
-    yield initializeView(datasetId, realTableName, viewName, schema, idFieldNames);
-    logs.bigQuerySchemaInitialized();
-});
-exports.buildDataRow = (idFieldValues, insertId, operation, timestamp, data) => {
-    return {
-        data,
-        id: idFieldValues,
-        insertId,
-        operation,
-        timestamp,
-    };
-};
-/**
- * Insert a row of data into the BigQuery `raw` data table
- */
-exports.insertData = (datasetId, tableName, rows) => __awaiter(this, void 0, void 0, function* () {
-    const realTableName = rawTableName(tableName);
-    const dataset = bq.dataset(datasetId);
-    const table = dataset.table(realTableName);
-    const rowCount = Array.isArray(rows) ? rows.length : 1;
-    logs.dataInserting(rowCount);
-    yield table.insert(rows);
-    logs.dataInserted(rowCount);
-});
-const rawTableName = (tableName) => `${tableName}_raw`;
-/**
- * Check that the specified dataset exists, and create it if it doesn't.
- */
-const intialiseDataset = (datasetId) => __awaiter(this, void 0, void 0, function* () {
-    const dataset = bq.dataset(datasetId);
-    const [datasetExists] = yield dataset.exists();
-    if (datasetExists) {
-        logs.bigQueryDatasetExists(datasetId);
+class FirestoreBigQueryEventHistoryTracker {
+    constructor(config) {
+        this.config = config;
+        this.bq = new bigquery.BigQuery();
+        this.schemaInitialized = config.schemaInitialized;
     }
-    else {
-        logs.bigQueryDatasetCreating(datasetId);
-        yield dataset.create();
-        logs.bigQueryDatasetCreated(datasetId);
+    record(events) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.config.schemaInitialized) {
+                yield this.initialize(this.config.datasetId, this.config.tableName);
+                this.schemaInitialized = true;
+            }
+            const rows = events.map(event => {
+                return this.buildDataRow(
+                // Use the function's event ID to protect against duplicate executions
+                event.eventId, event.operation, event.timestamp, event.name, event.documentId, event.data);
+            });
+            yield this.insertData(this.config.datasetId, this.config.tableName, rows);
+        });
     }
-    return dataset;
-});
-/**
- * Check that the table exists within the specified dataset, and create it
- * if it doesn't.  If the table does exist, validate that the BigQuery schema
- * is correct and add any missing fields.
- */
-const initializeTable = (datasetId, tableName, fields, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
-    const dataset = bq.dataset(datasetId);
-    let table = dataset.table(tableName);
-    const [tableExists] = yield table.exists();
-    if (tableExists) {
-        table = yield schema_1.validateBQTable(table, fields, idFieldNames);
+    /**
+     * Ensure that the defined Firestore schema exists within BigQuery and
+     * contains the correct information.
+     *
+     *
+     * NOTE: This currently gets executed on every cold start of the function.
+     * Ideally this would run once when the mod is installed if that were
+     * possible in the future.
+     */
+    initialize(datasetId, tableName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            logs.bigQuerySchemaInitializing();
+            const realTableName = rawTableName(tableName);
+            yield this.initializeDataset(datasetId);
+            yield this.initializeTable(datasetId, realTableName);
+        });
     }
-    else {
-        logs.bigQueryTableCreating(tableName);
-        const options = {
-            // `friendlyName` needs to be here to satisfy TypeScript
-            friendlyName: tableName,
-            schema: schema_1.firestoreToBQTable(fields, idFieldNames),
+    ;
+    buildDataRow(eventId, changeType, timestamp, key, id, data) {
+        return {
+            timestamp,
+            eventId,
+            key: key,
+            id,
+            operation: firestoreEventHistoryTracker_1.ChangeType[changeType],
+            data: JSON.stringify(data)
         };
-        yield table.create(options);
-        logs.bigQueryTableCreated(tableName);
     }
-    return table;
-});
-/**
- * Check that the view exists within the specified dataset, and create it if
- * it doesn't.
- *
- * The view is created over the `raw` data table and extracts the latest state
- * of the underlying data, whilst excluding any rows that have been delete.
- *
- * By default, the document ID is used as the row ID, but can be overriden
- * using the `idField` property in the schema definition.
- */
-const initializeView = (datasetId, tableName, viewName, schema, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
-    const dataset = bq.dataset(datasetId);
-    let view = dataset.table(viewName);
-    const [viewExists] = yield view.exists();
-    if (viewExists) {
-        view = yield schema_1.validateBQView(view, tableName, schema, idFieldNames);
+    ;
+    /**
+     * Insert a row of data into the BigQuery `raw` data table
+     */
+    insertData(datasetId, tableName, rows) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const realTableName = rawTableName(tableName);
+            const dataset = this.bq.dataset(datasetId);
+            const table = dataset.table(realTableName);
+            const rowCount = rows.length;
+            logs.dataInserting(rowCount);
+            yield table.insert(rows);
+            logs.dataInserted(rowCount);
+        });
     }
-    else {
-        logs.bigQueryViewCreating(viewName);
-        const options = {
-            // `friendlyName` needs to be here to satisfy TypeScript
-            friendlyName: tableName,
-            view: schema_1.firestoreToBQView(datasetId, tableName, schema, idFieldNames),
-        };
-        yield view.create(options);
-        logs.bigQueryViewCreated(viewName);
+    ;
+    /**
+     * Check that the specified dataset exists, and create it if it doesn't.
+     */
+    initializeDataset(datasetId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const dataset = this.bq.dataset(datasetId);
+            const [datasetExists] = yield dataset.exists();
+            if (datasetExists) {
+                logs.bigQueryDatasetExists(datasetId);
+            }
+            else {
+                logs.bigQueryDatasetCreating(datasetId);
+                yield dataset.create();
+                logs.bigQueryDatasetCreated(datasetId);
+            }
+            return dataset;
+        });
     }
-    return view;
-});
+    ;
+    /**
+     * Check that the table exists within the specified dataset, and create it
+     * if it doesn't.  If the table does exist, validate that the BigQuery schema
+     * is correct and add any missing fields.
+     */
+    initializeTable(datasetId, tableName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const dataset = this.bq.dataset(datasetId);
+            let table = dataset.table(tableName);
+            const [tableExists] = yield table.exists();
+            if (!tableExists) {
+                logs.bigQueryTableCreating(tableName);
+                const options = {
+                    // `friendlyName` needs to be here to satisfy TypeScript
+                    friendlyName: tableName,
+                    schema: schema_1.firestoreToBQTable(),
+                };
+                yield table.create(options);
+                logs.bigQueryTableCreated(tableName);
+            }
+            return table;
+        });
+    }
+    ;
+}
+exports.FirestoreBigQueryEventHistoryTracker = FirestoreBigQueryEventHistoryTracker;
+function rawTableName(tableName) { return `${tableName}_raw`; }
+;

@@ -46,14 +46,10 @@ const bigQueryField = (
 });
 
 // These field types form the basis of the `raw` data table
-const dataField = (fields: BigQueryField[]) =>
-  bigQueryField("data", "RECORD", "NULLABLE", fields);
-const idField = (fields: BigQueryField[]) =>
-  bigQueryField("id", "RECORD", "REQUIRED", [
-    bigQueryField("id", "STRING", "REQUIRED"),
-    ...fields,
-  ]);
-const insertIdField = bigQueryField("insertId", "STRING", "REQUIRED");
+const dataField = bigQueryField("data", "STRING", "NULLABLE");
+const keyField = bigQueryField("key", "STRING", "REQUIRED");
+const idField = bigQueryField("id", "STRING", "REQUIRED")
+const eventIdField = bigQueryField("eventId", "STRING", "REQUIRED");
 const operationField = bigQueryField("operation", "STRING", "REQUIRED");
 const timestampField = bigQueryField("timestamp", "TIMESTAMP", "REQUIRED");
 
@@ -113,25 +109,21 @@ export const firestoreToBQField = (field: FirestoreField): BigQueryField => {
  *
  * The `raw` data table schema is:
  * - id: Stores the Firestore document ID
- * - insertId: The Firestore event ID to ensure uniqueness
+ * - eventId: The event ID of the function trigger invocation responsible for
+ *   the row
  * - timestamp: A timestamp to be used for update ordering
  * - operation: The type of operation: INSERT, UPDATE, DELETE
  * - data: A record to contain the Firestore document data fields specified
  * in the schema
  */
 export const firestoreToBQTable = (
-  fields: FirestoreField[],
-  idFieldNames: string[]
 ): BigQueryField[] => [
-  idField(
-    idFieldNames.map((idFieldName) =>
-      bigQueryField(idFieldName, "STRING", "REQUIRED")
-    )
-  ),
-  insertIdField,
   timestampField,
+  eventIdField,
+  keyField,
+  idField,
   operationField,
-  dataField(fields.map((subField) => firestoreToBQField(subField))),
+  dataField
 ];
 
 /**
@@ -169,7 +161,6 @@ export const validateBQTable = async (
   if (dataFieldsChanged || idFieldsChanged) {
     logs.bigQueryTableUpdating(table.id);
     metadata.schema.fields[0] = idField;
-    metadata.schema.fields[4] = dataField;
     await table.setMetadata(metadata);
     logs.bigQueryTableUpdated(table.id);
   } else {
