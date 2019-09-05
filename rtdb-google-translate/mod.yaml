@@ -19,8 +19,8 @@ version: 0.1.0
 displayName: Translate text strings in Realtime Database
 
 description:
-  When a message is written to the database, translate the message in the
-  provided language to multiple destination languages as specified by mod user.
+  Automatically translate text strings written to the database into multiple target languages.
+  Both the untranslated and translated strings are stored in the same path.
 
 license: Apache-2.0
 billingRequired: true
@@ -42,20 +42,18 @@ contributors:
 apis:
   - apiName: translate.googleapis.com
     reason:
-      To use Google Translate to translate strings into your specified target
-      languages.
+      To use Google Translate to translate strings into your specified target languages.
 
 roles:
   - role: firebasedatabase.admin
-    reason: Allows the mod to write translated strings to Realtime Database.
+    reason: Allows the extension to write translated strings to your Realtime Database.
 
 resources:
   - name: rtdbtranslate
     type: firebasemods.v1beta1.function
     description:
-      Listens for writes of new strings to your specified Realtime Database
-      path, translates the strings, then writes the translated strings back to
-      the Realtime Database.
+      Listens for writes of new strings to your specified Realtime Database path,
+      translates the strings, then writes the translated strings back to your Realtime Database.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -68,10 +66,10 @@ params:
     type: select
     label: Deployment location
     description: >-
-      Where should the mod be deployed? You usually want a location close to
-      your database. For help selecting a location, refer to the [location
-      selection
-      guide](https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage).
+      Where should the extension be deployed? You usually want a location close to your database.
+      Realtime Database instances are located in us-central1.
+      For help selecting a location, refer to the
+      [location selection guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -107,8 +105,9 @@ params:
   - param: TRIGGER_PATH
     label: Trigger path
     description: >
-      What is the path that you want to listen for new messages and create new
-      message translations?
+      To which database path will new strings be written?
+      For example, if you enter the path `messages`, then the extension will trigger
+      upon writes to `messages/{sourceLanguageCode}/{messageId}`.
     default: messages
     example: messages
     required: true
