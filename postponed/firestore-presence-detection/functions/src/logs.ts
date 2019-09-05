@@ -13,28 +13,28 @@ export const start = () => {
 };
 
 export const handleCreate = (sessionID: string) => {
-  console.log("Detected new connection. Creating new path: " + sessionID)
+  console.log(`Detected new connection. Creating new path: ${sessionID}`);
 };
 
 export const handleUpdate = (sessionID: string, payload: object) => {
-  console.log("Detected metadata update for session: " + sessionID + " with payload: " + JSON.stringify(payload));
+  console.log(`Detected metadata update for session: ${sessionID} with payload: ${JSON.stringify(payload)}`);
 };
 
 export const handleDelete = (sessionID: string) => {
   console.log(`Detected disconnect. Removing connection: ${sessionID}`);
 };
 
-export const getSessionInfo = (sessionID: string, userID: string) => {
+export const sessionInfo = (sessionID: string, userID: string) => {
   console.log(`Mod executing for user: ${userID}, connection: ${sessionID}`);
 };
 
-export const logStaleTimestamp = (currentTimestamp: number, operationTimestamp: number, userID: string, sessionID: string) => {
+export const staleTimestamp = (currentTimestamp: number, operationTimestamp: number, userID: string, sessionID: string) => {
   console.log(`Timestamp of current operation is older than timestamp at destination. Refusing to commit change.` +
       `(user: ${userID}, session: ${sessionID} | Destination Timestamp: ${currentTimestamp}, Operation Timestamp: ${operationTimestamp})`);
 };
 
-export const logFirestoreUpsert = (payload: object) => {
-  console.log("Firestore document successfully updated with payload: " + JSON.stringify(payload));
+export const successfulFirestoreTransaction = (payload: object) => {
+  console.log(`Firestore document successfully updated with payload: ${JSON.stringify(payload)}`);
 };
 
 export const success = () => {
@@ -45,6 +45,14 @@ export const createDocument = (document: string, collection: string | undefined)
   console.log(`Creating document ${document} at Collection ${collection} `);
 };
 
-export const logRetry = (err: Error) => {
+export const retry = (err: Error) => {
   console.error('Error commiting changes to Firestore, retrying. Error: ', err);
+};
+
+export const tombstoneRemoval = (updateArr: object) => {
+  console.log(`Removing the following tombstones: ${JSON.stringify(updateArr)}`);
+};
+
+export const currentDocument = (document: string) => {
+  console.log(`Reading Document: ${document}`);
 };

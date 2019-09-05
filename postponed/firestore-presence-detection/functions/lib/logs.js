@@ -38,4 +38,7 @@ exports.createDocument = (document, collection) => {
 exports.logRetry = (err) => {
     console.error('Error commiting changes to Firestore, retrying. Error: ', err);
 };
+exports.logTombstoneRemoval = (updateArr) => {
+    console.log("Removing the following tombstones: " + JSON.stringify(updateArr));
+};
 //# sourceMappingURL=logs.js.map
