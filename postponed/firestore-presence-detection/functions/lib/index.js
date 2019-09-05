@@ -84,7 +84,7 @@ const getUserAndSessionID = (path) => {
         'userID': strArr[strArr.length - 3],
         'sessionID': strArr[strArr.length - 1],
     };
-    logs.getSessionInfo(data['userID'], data['sessionID']);
+    logs.getSessionInfo(data['sessionID'], data['userID']);
     return data;
 };
 /**
