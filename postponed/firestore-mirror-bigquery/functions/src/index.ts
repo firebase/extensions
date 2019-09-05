@@ -62,7 +62,6 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
         case ChangeType.DELETE:
           operation = "DELETE";
           snapshot = change.before;
-          data = extractSnapshotData(snapshot, fields);
           defaultTimestamp = context.timestamp;
           break;
         case ChangeType.UPDATE:
@@ -90,7 +89,7 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
         name: context.resource.name,
         documentId: snapshot.ref.id,
         eventId: context.eventId,
-        data: data
+        data: data,
       }]);
 
       logs.complete();

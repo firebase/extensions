@@ -33,14 +33,14 @@ class FirestoreBigQueryEventHistoryTracker {
     constructor(config) {
         this.config = config;
         this.bq = new bigquery.BigQuery();
-        this.schemaInitialized = config.schemaInitialized;
+        this.initialized = config.initialized;
     }
     record(events) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!this.config.schemaInitialized) {
+            if (!this.config.initialized) {
                 try {
                     yield this.initialize(this.config.datasetId, this.config.tableName);
-                    this.schemaInitialized = true;
+                    this.initialized = true;
                 }
                 catch (e) {
                     logs.bigQueryErrorRecordingDocumentChange(e);
@@ -49,7 +49,7 @@ class FirestoreBigQueryEventHistoryTracker {
             const rows = events.map(event => {
                 return this.buildDataRow(
                 // Use the function's event ID to protect against duplicate executions
-                event.eventId, event.operation, event.timestamp, event.name, event.documentId, event.data);
+                event.eventId, event.operation, event.timestamp, event.name, event.data);
             });
             yield this.insertData(this.config.datasetId, this.config.tableName, rows);
         });
@@ -71,14 +71,13 @@ class FirestoreBigQueryEventHistoryTracker {
         });
     }
     ;
-    buildDataRow(eventId, changeType, timestamp, key, id, data) {
+    buildDataRow(eventId, changeType, timestamp, document_name, data) {
         return {
             timestamp,
             eventId,
-            key: key,
-            id,
+            document_name: document_name,
             operation: firestoreEventHistoryTracker_1.ChangeType[changeType],
-            data: JSON.stringify(data)
+            data: JSON.stringify(data),
         };
     }
     ;

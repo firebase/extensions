@@ -37,7 +37,6 @@ describe("simple raw changelog schema generation", () => {
     it("should generate correct sql with no groupBy columns", () => __awaiter(void 0, void 0, void 0, function* () {
         const expectedQuery = yield readFormattedSQL(`${sqlDir}/latestConsistentSnapshotNoGroupBy.txt`);
         const query = snapshot_1.buildLatestSnapshotViewQuery(testDataset, testTable, "timestamp", []);
-        console.log(query);
         expect(query).to.equal(expectedQuery);
     }));
     it("should throw an error for empty group by columns", () => __awaiter(void 0, void 0, void 0, function* () {
