@@ -1,0 +1,3 @@
+--timeout=1000
+--recursive
+functions/src/test/**/*.spec.ts
