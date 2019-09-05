@@ -39,11 +39,11 @@ contributors:
 
 roles:
   - role: datastore.user
-    reason: Allows the mod to delete (user) data from Cloud Firestore.
+    reason: Allows the extension to delete (user) data from Cloud Firestore.
   - role: firebasedatabase.admin
-    reason: Allows the mod to delete (user) data from Realtime Database.
+    reason: Allows the extension to delete (user) data from Realtime Database.
   - role: storage.admin
-    reason: Allows the mod to delete (user) data from Cloud Storage.
+    reason: Allows the extension to delete (user) data from Cloud Storage.
 
 resources:
   - name: clearData
@@ -64,7 +64,7 @@ params:
     type: select
     label: Deployment location
     description: >-
-      Where should the mod be deployed? You usually want a location close to your database.
+      Where should the extension be deployed? You usually want a location close to your database.
       For help selecting a location, refer to the
       [location selection guide](https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage).
     options:

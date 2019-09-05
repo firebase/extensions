@@ -53,7 +53,7 @@ params:
     type: select
     label: Deployment location
     description: >-
-      Where should the mod be deployed?
+      Where should the extension be deployed?
       For help selecting a location, refer to the
       [location selection guide](https://firebase.google.com/docs/functions/locations).
     options:

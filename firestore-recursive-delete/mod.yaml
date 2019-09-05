@@ -18,7 +18,7 @@ specVersion: v1beta1
 version: 0.1.0
 
 description:
-  Call the HTTPS function created by this mod to delete a specified Cloud Firestore collection or document,
+  Call the HTTPS function created by this extension to delete a specified Cloud Firestore collection or document,
   as well as all its subcollections.
 
 license: Apache-2.0
@@ -38,7 +38,7 @@ contributors:
 
 roles:
   - role: datastore.user
-    reason: Allows the mod to delete data from Cloud Firestore
+    reason: Allows the extension to delete data from Cloud Firestore
   - role: firebase.viewer
     reason:
       Provides access to the `firebase.projects.get` permission required by
@@ -62,7 +62,7 @@ params:
     type: select
     label: Deployment location
     description: >-
-      Where should the mod be deployed? You usually want a location close to your database.
+      Where should the extension be deployed? You usually want a location close to your database.
       For help selecting a location, refer to the
       [location selection guide](https://firebase.google.com/docs/functions/locations).
     options:

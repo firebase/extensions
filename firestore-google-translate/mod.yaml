@@ -42,7 +42,7 @@ apis:
 
 roles:
   - role: datastore.user
-    reason: Allows the mod to write translated strings to Cloud Firestore.
+    reason: Allows the extension to write translated strings to Cloud Firestore.
 
 resources:
   - name: fstranslate
@@ -62,7 +62,7 @@ params:
     type: select
     label: Deployment location
     description: >-
-      Where should the mod be deployed? You usually want a location close to your database.
+      Where should the extension be deployed? You usually want a location close to your database.
       For help selecting a location, refer to the
       [location selection guide](https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage).
     options:
@@ -101,6 +101,8 @@ params:
       What is the path to the collection that contains the strings that you want to translate?
     default: messages
     example: messages
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore Collection
     required: true
 
   - param: MESSAGE_FIELD_NAME

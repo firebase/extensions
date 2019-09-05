@@ -59,6 +59,7 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
             case firestoreEventHistoryTracker_1.ChangeType.DELETE:
                 operation = "DELETE";
                 snapshot = change.before;
+                data = firestore_1.extractSnapshotData(snapshot, fields);
                 defaultTimestamp = context.timestamp;
                 break;
             case firestoreEventHistoryTracker_1.ChangeType.UPDATE:

@@ -1,6 +1,6 @@
 ### See it in action
 
-To test out this mod, follow these steps:
+To test out this extension, follow these steps:
 
 1. Go to the [PubSub tab of Google Cloud Console](https://console.cloud.google.com/cloudpubsub/topics/${param:MOD_INSTANCE_ID}-topic?project=${param:PROJECT_ID}).
 
@@ -11,7 +11,7 @@ To test out this mod, follow these steps:
 
 1. In a few seconds, the message will appear in your Slack channel.
 
-### Using the mod
+### Using the extension
 
 Publish messages to the Pub/Sub topic `${param:MOD_INSTANCE_ID}-topic`, then see them appear in your Slack channel!
 
@@ -19,4 +19,4 @@ You can publish messages using the [Google Cloud Console](https://console.cloud.
 
 ### Monitoring
 
-As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.

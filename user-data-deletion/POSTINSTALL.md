@@ -1,6 +1,6 @@
 ### See it in action
 
-To test out this mod, follow these steps:
+To test out this extension, follow these steps:
 
 1.  Go to the [Authentication tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/authentication/users).
 
@@ -14,7 +14,7 @@ To test out this mod, follow these steps:
 
 1.  In a few seconds, their data will be deleted from Realtime Database, Cloud Firestore, and/or Storage depending on what you configured.
 
-### Using the mod
+### Using the extension
 
 When a user's account is deleted from your project's authenticated users, their data will be automatically deleted from your specified Cloud Firestore instance, Realtime Database instance, and/or Cloud Storage bucket.
 
@@ -22,4 +22,4 @@ You can delete a user using the [Authentication Tab]((https://console.firebase.g
 
 ### Monitoring
 
-As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.
