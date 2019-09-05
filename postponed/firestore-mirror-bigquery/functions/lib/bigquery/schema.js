@@ -15,16 +15,18 @@
  * limitations under the License.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const errors = require("../errors");
 const logs = require("../logs");
+const sqlFormatter = require("sql-formatter");
 const bigQueryField = (name, type, mode, fields) => ({
     fields,
     mode: mode || "NULLABLE",
@@ -126,7 +128,7 @@ exports.latestConsistentSnapshotView = (datasetId, tableName) => ({
  * Checks that the BigQuery table schema matches the Firestore field
  * definitions and updates the BigQuery table scheme if necessary.
  */
-exports.validateBQTable = (table, fields, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
+exports.validateBQTable = (table, fields, idFieldNames) => __awaiter(void 0, void 0, void 0, function* () {
     logs.bigQueryTableValidating(table.id);
     const [metadata] = yield table.getMetadata();
     // Get the `data` and `id` fields from our schema, as this is what needs to be compared
@@ -197,7 +199,7 @@ const validateBQIdFields = (bqFields, idFieldNames) => {
  * Checks that the BigQuery table schema matches the Firestore field
  * definitions and updates the BigQuery table scheme if necessary.
  */
-exports.validateBQView = (view, tableName, schema, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
+exports.validateBQView = (view, tableName, schema, idFieldNames) => __awaiter(void 0, void 0, void 0, function* () {
     logs.bigQueryViewValidating(view.id);
     const [metadata] = yield view.getMetadata();
     // Get the `query` field in our schema, as this is what needs to be compared
@@ -228,10 +230,18 @@ const buildViewQuery = (datasetId, tableName, schema, idFieldNames) => {
         : undefined;
     return `SELECT ${idField ? "" : "id.id,"} ${hasIdFields ? `${idFieldsString},` : ""} ${bqFieldNames.join(",")} from ( SELECT *, MAX(timestamp) OVER (PARTITION BY id.id${idFieldsString ? `,${idFieldsString}` : ""}) AS max_timestamp FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`;
 };
-const buildLatestSnapshotViewQuery = (datasetId, tableName, timestampColumnName, groupByColumns) => {
-    const query = (`SELECT
+function buildLatestSnapshotViewQuery(datasetId, tableName, timestampColumnName, groupByColumns) {
+    if (datasetId === "" || tableName === "" || timestampColumnName === "") {
+        throw Error(`Missing some query parameters!`);
+    }
+    for (let columnName in groupByColumns) {
+        if (columnName === "") {
+            throw Error(`Found empty group by column!`);
+        }
+    }
+    const query = sqlFormatter.format(`SELECT
       key,
-      id,
+      id${groupByColumns.length > 0 ? `,` : ``}
       ${groupByColumns.join(",")}
      FROM (
       SELECT
@@ -239,7 +249,7 @@ const buildLatestSnapshotViewQuery = (datasetId, tableName, timestampColumnName,
         id,
         ${groupByColumns.map(columnName => `FIRST_VALUE(${columnName})
             OVER(PARTITION BY key ORDER BY ${timestampColumnName} DESC)
-            AS ${columnName}`).join(',')},
+            AS ${columnName}`).join(',')}${groupByColumns.length > 0 ? `,` : ``}
         FIRST_VALUE(operation)
           OVER(PARTITION BY key ORDER BY ${timestampColumnName} DESC) = "DELETE"
           AS is_deleted
@@ -247,10 +257,11 @@ const buildLatestSnapshotViewQuery = (datasetId, tableName, timestampColumnName,
       ORDER BY key, ${timestampColumnName} DESC
      )
      WHERE NOT is_deleted
-     GROUP BY key, id, ${groupByColumns.join(",")}`);
+     GROUP BY key, id${groupByColumns.length > 0 ? `, ` : ``}${groupByColumns.join(",")}`);
     logs.bigQueryLatestSnapshotViewQueryCreated(query);
     return query;
-};
+}
+exports.buildLatestSnapshotViewQuery = buildLatestSnapshotViewQuery;
 /**
  * Converts a set of Firestore field definitions into the equivalent named
  * BigQuery fields.

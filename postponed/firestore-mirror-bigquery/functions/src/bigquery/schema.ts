@@ -18,6 +18,7 @@ import * as bigquery from "@google-cloud/bigquery";
 import * as errors from "../errors";
 import { FirestoreField, FirestoreSchema } from "../firestore";
 import * as logs from "../logs";
+import * as sqlFormatter from "sql-formatter";
 
 export type BigQueryFieldMode = "NULLABLE" | "REPEATED" | "REQUIRED";
 export type BigQueryFieldType =
@@ -313,16 +314,24 @@ const buildViewQuery = (
   }.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`;
 };
 
-const buildLatestSnapshotViewQuery = (
+export function buildLatestSnapshotViewQuery(
   datasetId: string,
   tableName: string,
   timestampColumnName: string,
   groupByColumns: string[],
-) => {
-  const query = (
+): string {
+  if (datasetId === "" || tableName === "" || timestampColumnName === "") {
+    throw Error(`Missing some query parameters!`);
+  }
+  for (let columnName in groupByColumns) {
+    if (columnName === "") {
+      throw Error(`Found empty group by column!`);
+    }
+  }
+  const query = sqlFormatter.format(
     `SELECT
       key,
-      id,
+      id${groupByColumns.length > 0 ? `,`: ``}
       ${groupByColumns.join(",")}
      FROM (
       SELECT
@@ -331,7 +340,7 @@ const buildLatestSnapshotViewQuery = (
         ${groupByColumns.map(columnName =>
           `FIRST_VALUE(${columnName})
             OVER(PARTITION BY key ORDER BY ${timestampColumnName} DESC)
-            AS ${columnName}`).join(',')},
+            AS ${columnName}`).join(',')}${groupByColumns.length > 0 ? `,`: ``}
         FIRST_VALUE(operation)
           OVER(PARTITION BY key ORDER BY ${timestampColumnName} DESC) = "DELETE"
           AS is_deleted
@@ -339,7 +348,7 @@ const buildLatestSnapshotViewQuery = (
       ORDER BY key, ${timestampColumnName} DESC
      )
      WHERE NOT is_deleted
-     GROUP BY key, id, ${groupByColumns.join(",")}`
+     GROUP BY key, id${groupByColumns.length > 0 ? `, `: ``}${groupByColumns.join(",")}`
   );
   logs.bigQueryLatestSnapshotViewQueryCreated(query);
   return query;
