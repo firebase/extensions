@@ -15,10 +15,9 @@
  */
 
 import * as bigquery from "@google-cloud/bigquery";
-import {
-  firestoreToBQTable,
-  latestConsistentSnapshotView
-} from "./schema";
+import { firestoreToBQTable } from "./schema";
+import { latestConsistentSnapshotView } from "./snapshot";
+
 import { ChangeType, FirestoreEventHistoryTracker, FirestoreDocumentChangeEvent } from "../firestoreEventHistoryTracker";
 import * as logs from "../logs";
 
@@ -40,8 +39,12 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
 
   async record(events: FirestoreDocumentChangeEvent[]) {
     if (!this.config.schemaInitialized) {
-      await this.initialize(this.config.datasetId, this.config.tableName);
-      this.schemaInitialized = true;
+      try {
+        await this.initialize(this.config.datasetId, this.config.tableName);
+        this.schemaInitialized = true;
+      } catch (e) {
+        logs.bigQueryErrorRecordingDocumentChange(e);
+      }
     }
     const rows = events.map(event => {
       return this.buildDataRow(
@@ -60,21 +63,16 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
    * Ensure that the defined Firestore schema exists within BigQuery and
    * contains the correct information.
    *
-   *
    * NOTE: This currently gets executed on every cold start of the function.
    * Ideally this would run once when the mod is installed if that were
    * possible in the future.
    */
   async initialize(datasetId: string, tableName: string) {
-    logs.bigQuerySchemaInitializing();
-
     const realTableName = rawTableName(tableName);
 
     await this.initializeDataset(datasetId);
     await this.initializeTable(datasetId, realTableName);
     await this.initializeLatestView(datasetId, realTableName);
-
-    logs.bigQuerySchemaInitialized();
   };
 
   buildDataRow(
@@ -141,7 +139,10 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     const dataset = this.bq.dataset(datasetId);
     let table = dataset.table(tableName);
     const [tableExists] = await table.exists();
-    if (!tableExists) {
+
+    if (tableExists) {
+      logs.bigQueryTableAlreadyExists(table.id, dataset.id);
+    } else {
       logs.bigQueryTableCreating(tableName);
       const options = {
         // `friendlyName` needs to be here to satisfy TypeScript
@@ -170,7 +171,9 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     let view = dataset.table(viewName);
     const [viewExists] = await view.exists();
 
-    if (!viewExists) {
+    if (viewExists) {
+      logs.bigQueryViewAlreadyExists(view.id, dataset.id);
+    } else {
       logs.bigQueryViewCreating(viewName);
       const options = {
         friendlyName: viewName,
@@ -181,7 +184,6 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     }
     return view;
   };
-
 }
 
 function rawTableName(tableName: string): string { return `${tableName}_raw`; };

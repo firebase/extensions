@@ -26,7 +26,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const errors = require("../errors");
 const logs = require("../logs");
-const sqlFormatter = require("sql-formatter");
 const bigQueryField = (name, type, mode, fields) => ({
     fields,
     mode: mode || "NULLABLE",
@@ -34,15 +33,14 @@ const bigQueryField = (name, type, mode, fields) => ({
     type,
 });
 // These field types form the basis of the `raw` data table
-const dataField = bigQueryField("data", "STRING", "NULLABLE");
-const keyField = bigQueryField("key", "STRING", "REQUIRED");
-const idField = bigQueryField("id", "STRING", "REQUIRED");
-const eventIdField = bigQueryField("eventId", "STRING", "REQUIRED");
-const operationField = bigQueryField("operation", "STRING", "REQUIRED");
-const timestampField = bigQueryField("timestamp", "TIMESTAMP", "REQUIRED");
+exports.dataField = bigQueryField("data", "STRING", "NULLABLE");
+exports.documentNameField = bigQueryField("document_name", "STRING", "REQUIRED");
+exports.eventIdField = bigQueryField("eventId", "STRING", "REQUIRED");
+exports.operationField = bigQueryField("operation", "STRING", "REQUIRED");
+exports.timestampField = bigQueryField("timestamp", "TIMESTAMP", "REQUIRED");
 // These field types are used for the Firestore GeoPoint data type
-const latitudeField = bigQueryField("latitude", "NUMERIC");
-const longitudeField = bigQueryField("longitude", "NUMERIC");
+exports.latitudeField = bigQueryField("latitude", "NUMERIC");
+exports.longitudeField = bigQueryField("longitude", "NUMERIC");
 /**
  * Convert from a Firestore field definition into the equivalent BigQuery
  * mode.
@@ -63,8 +61,8 @@ exports.firestoreToBQField = (field) => {
     }
     else if (field.type === "geopoint") {
         return bigQueryField(field.name, "RECORD", firestoreToBQMode(field), [
-            latitudeField,
-            longitudeField,
+            exports.latitudeField,
+            exports.longitudeField,
         ]);
     }
     else if (field.type === "json") {
@@ -94,21 +92,20 @@ exports.firestoreToBQField = (field) => {
  * that will be used by the BigQuery `raw` data table.
  *
  * The `raw` data table schema is:
- * - id: Stores the Firestore document ID
  * - eventId: The event ID of the function trigger invocation responsible for
  *   the row
  * - timestamp: A timestamp to be used for update ordering
+ * - documentName: Stores the name of the Firestore document
  * - operation: The type of operation: INSERT, UPDATE, DELETE
  * - data: A record to contain the Firestore document data fields specified
  * in the schema
  */
 exports.firestoreToBQTable = () => [
-    timestampField,
-    eventIdField,
-    keyField,
-    idField,
-    operationField,
-    dataField
+    exports.timestampField,
+    exports.eventIdField,
+    exports.documentNameField,
+    exports.operationField,
+    exports.dataField
 ];
 /**
  * Convert from a Firestore schema into a SQL query that will be used to build
@@ -116,12 +113,6 @@ exports.firestoreToBQTable = () => [
  */
 exports.firestoreToBQView = (datasetId, tableName, schema, idFieldNames) => ({
     query: buildViewQuery(datasetId, tableName, schema, idFieldNames),
-    useLegacySql: false,
-});
-exports.latestConsistentSnapshotView = (datasetId, tableName) => ({
-    query: buildLatestSnapshotViewQuery(datasetId, tableName, timestampField.name, exports.firestoreToBQTable()
-        .map(field => field.name)
-        .filter(name => name != "key" && name != "id")),
     useLegacySql: false,
 });
 /**
@@ -230,38 +221,6 @@ const buildViewQuery = (datasetId, tableName, schema, idFieldNames) => {
         : undefined;
     return `SELECT ${idField ? "" : "id.id,"} ${hasIdFields ? `${idFieldsString},` : ""} ${bqFieldNames.join(",")} from ( SELECT *, MAX(timestamp) OVER (PARTITION BY id.id${idFieldsString ? `,${idFieldsString}` : ""}) AS max_timestamp FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`) WHERE timestamp = max_timestamp AND operation != 'DELETE';`;
 };
-function buildLatestSnapshotViewQuery(datasetId, tableName, timestampColumnName, groupByColumns) {
-    if (datasetId === "" || tableName === "" || timestampColumnName === "") {
-        throw Error(`Missing some query parameters!`);
-    }
-    for (let columnName in groupByColumns) {
-        if (columnName === "") {
-            throw Error(`Found empty group by column!`);
-        }
-    }
-    const query = sqlFormatter.format(`SELECT
-      key,
-      id${groupByColumns.length > 0 ? `,` : ``}
-      ${groupByColumns.join(",")}
-     FROM (
-      SELECT
-        key,
-        id,
-        ${groupByColumns.map(columnName => `FIRST_VALUE(${columnName})
-            OVER(PARTITION BY key ORDER BY ${timestampColumnName} DESC)
-            AS ${columnName}`).join(',')}${groupByColumns.length > 0 ? `,` : ``}
-        FIRST_VALUE(operation)
-          OVER(PARTITION BY key ORDER BY ${timestampColumnName} DESC) = "DELETE"
-          AS is_deleted
-      FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`
-      ORDER BY key, ${timestampColumnName} DESC
-     )
-     WHERE NOT is_deleted
-     GROUP BY key, id${groupByColumns.length > 0 ? `, ` : ``}${groupByColumns.join(",")}`);
-    logs.bigQueryLatestSnapshotViewQueryCreated(query);
-    return query;
-}
-exports.buildLatestSnapshotViewQuery = buildLatestSnapshotViewQuery;
 /**
  * Converts a set of Firestore field definitions into the equivalent named
  * BigQuery fields.
