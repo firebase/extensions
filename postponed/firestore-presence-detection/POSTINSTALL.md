@@ -2,13 +2,15 @@
 
 To test out this extension, follow these steps:
 
-1.  Go to RTDB and Firestore tab
+1.  Navigate to [RTDB](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/${param:PROJECT_ID}/database/data) and [Cloud Firestore](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data) tab.
 
-1.  Create the document in RTDB (TODO define path)
+1.  In RTDB, Create the document using the path you specified in the extension setup: `${param:RTDB_PATH}`
 
-1.  Insert a dummy session/user at the document path (e.g. `user0: {sessions: {session: true}}`). The key defined at `user0/sessions/` will be the ID for the session and all data at that node is considered to be metadata. Instead of inserting `true`, try putting in data of your own!
+1.  Insert a dummy session/user at the document path (e.g. `user0: {sessions: {session0: true}}`). The key defined at `${param:RTDB_PATH}/user0/sessions/` (i.e. `session0`) will be the ID for the session and all data at that node is considered to be metadata. Instead of inserting `true`, try putting in data of your own!
 
-1.  In a few seconds, the collection will be created in the Firestore collection (TODO collection here) with the mirrored information.
+1.  In a few seconds, the collection will be created in the Firestore collection `${param:FIRESTORE_PATH}` with the mirrored information. Note that IAM permissions may take a minute to propagate the permissions for the Cloud function to work properly.
+
+1.  To simulate a user logging off of the session, you can delete the document `${param:RTDB_PATH}/user0/sessions/session0`. The corresponding session in Firestore should be deleted shortly after.
 
 ### Using the extension
 
