@@ -13,7 +13,6 @@ const functions = require("firebase-functions");
 const config_1 = require("./config");
 const logs = require("./logs");
 admin.initializeApp();
-const NUM_RETRIES = 20; // Should be set such that timeout is not exceeded (for 540s timeout, max retries is approx 30)
 // const TIME_THRESHOLD = 7 * 24 * 60 * 60 * 1000;
 var ChangeType;
 (function (ChangeType) {
@@ -37,15 +36,15 @@ exports.writeToFirestore = functions.handler.database.ref.onWrite((change, conte
         switch (changeType) {
             case ChangeType.CREATE:
                 logs.handleCreate(userInfo['sessionID']);
-                yield firestoreTransaction(payload, operationTimestamp, userInfo['userID'], userInfo['sessionID']);
+                yield firestoreTransactionWithRetries(payload, operationTimestamp, userInfo['userID'], userInfo['sessionID']);
                 break;
             case ChangeType.UPDATE:
                 logs.handleUpdate(userInfo['sessionID'], payload);
-                yield firestoreTransaction(payload, operationTimestamp, userInfo['userID'], userInfo['sessionID']);
+                yield firestoreTransactionWithRetries(payload, operationTimestamp, userInfo['userID'], userInfo['sessionID']);
                 break;
             case ChangeType.DELETE:
                 logs.handleDelete(userInfo['sessionID']);
-                yield firestoreTransaction(admin.firestore.FieldValue.delete(), operationTimestamp, userInfo['userID'], userInfo['sessionID']);
+                yield firestoreTransactionWithRetries(admin.firestore.FieldValue.delete(), operationTimestamp, userInfo['userID'], userInfo['sessionID']);
                 break;
             default:
                 logs.error(new Error(`Invalid change type: ${changeType}`));
@@ -89,8 +88,62 @@ const getUserAndSessionID = (path) => {
 };
 /**
  * Performs an optimistic transaction at the docRef given the operation timestamp is more recent
- * than the most recent operation applied at the destination. The function logic will try up to
- * NUM_RETRIES times if the following occur:
+ * than the most recent operation applied at the destination.
+ *
+ * @param docRef: reference to the firestore document
+ * @param payload: the payload to write at the destination (this may be a delete operation)
+ * @param operationTimestamp: the timestamp in milliseconds of the function invocation operation
+ * @param userID: the userID to update
+ * @param sessionID: the sessionID to update
+ */
+const firestoreTransaction = (docRef, payload, operationTimestamp, userID, sessionID) => __awaiter(this, void 0, void 0, function* () {
+    // Try to create the document if one does not exist, error here is non-fatal
+    yield docRef.get().then((doc) => __awaiter(this, void 0, void 0, function* () {
+        if (!doc.exists) {
+            logs.createDocument(userID, config_1.default.firestore_path);
+            return docRef.create({
+                'sessions': {},
+                'last_updated': {},
+            });
+        }
+    })).catch((error) => {
+        logs.nonFatalError(error);
+    });
+    // Assuming the document exists, try to update it with presence information
+    return docRef.get().then((doc) => __awaiter(this, void 0, void 0, function* () {
+        const lastUpdated = doc.updateTime;
+        // If the document creation failed, retry
+        if (!doc.exists) {
+            throw new Error(`Document for ${userID} does not exist!`);
+        }
+        // Ensure the timestamp of operation is more recent
+        // Only compare timestamps if the timestamp is undefined and of the correct type
+        // Note that if it is not a number, it will assume the session is safe to write over
+        const currentData = doc.data();
+        if (currentData !== undefined &&
+            currentData['last_updated'] !== undefined &&
+            currentData['last_updated'][sessionID] !== undefined &&
+            typeof currentData['last_updated'][sessionID] === "number") {
+            const currentTimestamp = currentData['last_updated'][sessionID];
+            // Refuse to write the operation if the timestamp is earlier than the latest update
+            if ((payload instanceof admin.firestore.FieldValue && currentTimestamp > operationTimestamp) &&
+                (currentTimestamp >= operationTimestamp)) {
+                logs.logStaleTimestamp(currentTimestamp, operationTimestamp, userID, sessionID);
+                return;
+            }
+        }
+        // Update the document with presence information and last updated timestamp
+        const firestorePayload = {
+            [`sessions.${sessionID}`]: payload,
+            [`last_updated.${sessionID}`]: operationTimestamp,
+        };
+        return docRef.update(firestorePayload, { lastUpdateTime: lastUpdated }).then((result) => {
+            logs.logFirestoreUpsert(firestorePayload);
+        });
+    }));
+});
+/**
+ * The function logic will try until success or function timeout:
  *      1: Document Creation failed and document doesn't exist
  *      2: Document update fails preconditions
  *      3: Document is unable to be read
@@ -100,72 +153,25 @@ const getUserAndSessionID = (path) => {
  * @param userID: the userID to update
  * @param sessionID: the sessionID to update
  */
-const firestoreTransaction = (payload, operationTimestamp, userID, sessionID) => __awaiter(this, void 0, void 0, function* () {
+const firestoreTransactionWithRetries = (payload, operationTimestamp, userID, sessionID) => __awaiter(this, void 0, void 0, function* () {
     // Ensure path is defined and obtain database reference
     if (config_1.default.firestore_path === undefined) {
         throw new Error('Undefined firestore path');
     }
-    const docRef = admin.firestore().collection(config_1.default.firestore_path).doc(userID);
     // Document creation (if applicable) and optimistic transaction
+    // The function retries until it is successful or
     let numTries = 0;
     let isSuccessful = false;
-    // TODO maybe make this retry until the function timeout instead?
-    while (numTries < NUM_RETRIES && !isSuccessful) {
-        // Wait before retrying if applicable
+    while (!isSuccessful) {
+        // Wait before retrying (linear)
         yield new Promise(resolve => setTimeout(resolve, 1000 * numTries));
         numTries += 1;
-        // Try to create the document if one does not exist
-        yield docRef.get().then((doc) => __awaiter(this, void 0, void 0, function* () {
-            if (!doc.exists) {
-                logs.createDocument(userID, config_1.default.firestore_path);
-                return docRef.create({
-                    'sessions': {},
-                    'last_updated': {},
-                });
-            }
-        })).catch((error) => {
-            logs.nonFatalError(error);
-        });
-        // Assuming the document exists, try to update it with presence information
-        yield docRef.get().then((doc) => __awaiter(this, void 0, void 0, function* () {
-            const lastUpdated = doc.updateTime;
-            // If the document creation failed, retry
-            if (!doc.exists) {
-                throw new Error(`Document for ${userID} does not exist!`);
-            }
-            // Ensure the timestamp of operation is more recent
-            // Only compare timestamps if the timestamp is undefined and of the correct type
-            // Note that if it is not a number, it will assume the session is safe to write over
-            const currentData = doc.data();
-            if (currentData !== undefined &&
-                currentData['last_updated'] !== undefined &&
-                currentData['last_updated'][sessionID] !== undefined &&
-                typeof currentData['last_updated'][sessionID] === "number") {
-                const currentTimestamp = currentData['last_updated'][sessionID];
-                // Refuse to write the operation if the timestamp is earlier than the latest update
-                if ((payload instanceof admin.firestore.FieldValue && currentTimestamp > operationTimestamp) &&
-                    (currentTimestamp >= operationTimestamp)) {
-                    logs.logStaleTimestamp(currentTimestamp, operationTimestamp, userID, sessionID);
-                    isSuccessful = true;
-                    return;
-                }
-            }
-            // Update the document with presence information and last updated timestamp
-            const firestorePayload = {
-                [`sessions.${sessionID}`]: payload,
-                [`last_updated.${sessionID}`]: operationTimestamp,
-            };
-            return docRef.update(firestorePayload, { lastUpdateTime: lastUpdated }).then((result) => {
-                logs.logFirestoreUpsert(firestorePayload);
-                isSuccessful = true;
-            });
-        })).catch((error) => __awaiter(this, void 0, void 0, function* () {
+        // Try the transaction
+        yield firestoreTransaction(admin.firestore().collection(config_1.default.firestore_path).doc(userID), payload, operationTimestamp, userID, sessionID).then(() => {
+            isSuccessful = true;
+        }).catch((error) => __awaiter(this, void 0, void 0, function* () {
             logs.logRetry(error);
         }));
-    }
-    // Log a failure after attempting to retry
-    if (!isSuccessful) {
-        throw new Error(`Failed to commit change after ${numTries}`);
     }
 });
 // /**

@@ -2,7 +2,7 @@
 
 To test out this extension, follow these steps:
 
-1.  Navigate to [RTDB](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/${param:PROJECT_ID}/database/data) and [Cloud Firestore](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data) tab.
+1.  Navigate to [RTDB](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/data) and [Cloud Firestore](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data) tab.
 
 1.  In RTDB, Create the document using the path you specified in the extension setup: `${param:RTDB_PATH}`
 
