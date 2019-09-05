@@ -27,7 +27,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const bigquery = require("@google-cloud/bigquery");
 const schema_1 = require("./schema");
 const snapshot_1 = require("./snapshot");
-
 const firestoreEventHistoryTracker_1 = require("../firestoreEventHistoryTracker");
 const logs = require("../logs");
 class FirestoreBigQueryEventHistoryTracker {
