@@ -6,7 +6,6 @@ import * as logs from './logs';
 import {DocumentSnapshot} from 'firebase-functions/lib/providers/firestore';
 
 admin.initializeApp();
-const NUM_RETRIES = 20; // Should be set such that timeout is not exceeded (for 540s timeout, max retries is approx 30)
 // const TIME_THRESHOLD = 7 * 24 * 60 * 60 * 1000;
 enum ChangeType {
   CREATE,
@@ -32,15 +31,15 @@ export const writeToFirestore =
         switch (changeType) {
           case ChangeType.CREATE:
             logs.handleCreate(userInfo['sessionID']);
-            await firestoreTransaction(payload, operationTimestamp, userInfo['userID'], userInfo['sessionID']);
+            await firestoreTransactionWithRetries(payload, operationTimestamp, userInfo['userID'], userInfo['sessionID']);
             break;
           case ChangeType.UPDATE:
             logs.handleUpdate(userInfo['sessionID'], payload);
-            await firestoreTransaction(payload, operationTimestamp, userInfo['userID'], userInfo['sessionID']);
+            await firestoreTransactionWithRetries(payload, operationTimestamp, userInfo['userID'], userInfo['sessionID']);
             break;
           case ChangeType.DELETE:
             logs.handleDelete(userInfo['sessionID']);
-            await firestoreTransaction(admin.firestore.FieldValue.delete(), operationTimestamp, userInfo['userID'], userInfo['sessionID']);
+            await firestoreTransactionWithRetries(admin.firestore.FieldValue.delete(), operationTimestamp, userInfo['userID'], userInfo['sessionID']);
             break;
           default:
             logs.error(new Error(`Invalid change type: ${changeType}`));
@@ -89,36 +88,17 @@ const getUserAndSessionID = (path: string) => {
 
 /**
  * Performs an optimistic transaction at the docRef given the operation timestamp is more recent
- * than the most recent operation applied at the destination. The function logic will try up to
- * NUM_RETRIES times if the following occur:
- *      1: Document Creation failed and document doesn't exist
- *      2: Document update fails preconditions
- *      3: Document is unable to be read
+ * than the most recent operation applied at the destination.
  *
+ * @param docRef: reference to the firestore document
  * @param payload: the payload to write at the destination (this may be a delete operation)
  * @param operationTimestamp: the timestamp in milliseconds of the function invocation operation
  * @param userID: the userID to update
  * @param sessionID: the sessionID to update
  */
-const firestoreTransaction = async (payload: any, operationTimestamp: number, userID: string, sessionID: string): Promise<void> => {
+const firestoreTransaction = async (docRef: admin.firestore.DocumentReference, payload: any, operationTimestamp: number, userID: string, sessionID: string): Promise<void> => {
 
-  // Ensure path is defined and obtain database reference
-  if (config.firestore_path === undefined) {
-    throw new Error('Undefined firestore path');
-  }
-  const docRef = admin.firestore().collection(config.firestore_path).doc(userID);
-
-  // Document creation (if applicable) and optimistic transaction
-  let numTries = 0;
-  let isSuccessful = false;
-  // TODO maybe make this retry until the function timeout instead?
-  while (numTries < NUM_RETRIES && !isSuccessful) {
-
-    // Wait before retrying if applicable
-    await new Promise(resolve => setTimeout(resolve, 1000 * numTries));
-    numTries += 1;
-
-    // Try to create the document if one does not exist
+    // Try to create the document if one does not exist, error here is non-fatal
     await docRef.get().then(async (doc: DocumentSnapshot): Promise<admin.firestore.WriteResult | void> => {
         if (!doc.exists) {
           logs.createDocument(userID, config.firestore_path);
@@ -132,7 +112,7 @@ const firestoreTransaction = async (payload: any, operationTimestamp: number, us
     });
 
     // Assuming the document exists, try to update it with presence information
-    await docRef.get().then(async (doc): Promise<void> => {
+  return docRef.get().then(async (doc): Promise<void> => {
       const lastUpdated = doc.updateTime;
 
       // If the document creation failed, retry
@@ -155,7 +135,6 @@ const firestoreTransaction = async (payload: any, operationTimestamp: number, us
         if ((payload instanceof admin.firestore.FieldValue && currentTimestamp > operationTimestamp) &&
             (currentTimestamp >= operationTimestamp)) {
           logs.logStaleTimestamp(currentTimestamp, operationTimestamp, userID, sessionID);
-          isSuccessful = true;
           return;
         }
       }
@@ -167,16 +146,44 @@ const firestoreTransaction = async (payload: any, operationTimestamp: number, us
       };
       return docRef.update(firestorePayload, {lastUpdateTime: lastUpdated}).then((result) => {
         logs.logFirestoreUpsert(firestorePayload);
-        isSuccessful = true;
       })
-    }).catch( async (error) => {
-      logs.logRetry(error);
     });
+};
+
+/**
+ * The function logic will try until success or function timeout:
+ *      1: Document Creation failed and document doesn't exist
+ *      2: Document update fails preconditions
+ *      3: Document is unable to be read
+ *
+ * @param payload: the payload to write at the destination (this may be a delete operation)
+ * @param operationTimestamp: the timestamp in milliseconds of the function invocation operation
+ * @param userID: the userID to update
+ * @param sessionID: the sessionID to update
+ */
+const firestoreTransactionWithRetries = async (payload: any, operationTimestamp: number, userID: string, sessionID: string): Promise<void> => {
+
+  // Ensure path is defined and obtain database reference
+  if (config.firestore_path === undefined) {
+    throw new Error('Undefined firestore path');
   }
 
-  // Log a failure after attempting to retry
-  if (!isSuccessful) {
-    throw new Error(`Failed to commit change after ${numTries}`);
+  // Document creation (if applicable) and optimistic transaction
+  // The function retries until it is successful or
+  let numTries = 0;
+  let isSuccessful = false;
+  while (!isSuccessful) {
+
+    // Wait before retrying (linear)
+    await new Promise(resolve => setTimeout(resolve, 1000 * numTries));
+    numTries += 1;
+
+    // Try the transaction
+    await firestoreTransaction(admin.firestore().collection(config.firestore_path).doc(userID), payload, operationTimestamp, userID, sessionID).then(() => {
+      isSuccessful = true;
+    }).catch(async (error) => {
+      logs.logRetry(error);
+    });
   }
 };
 
