@@ -14,7 +14,7 @@ When you go to the [Realtime Database tab](https://console.firebase.google.com/p
    /${param:TRIGGER_PATH}
        /en
            /<stringID-1234>
-               "string": "https://google.com",
+               "string": "I like to eat cake",
            /<stringID-4321>
                "string": "Good morning! Good night.",
        /<targetLanguageCode>
@@ -26,9 +26,9 @@ When you go to the [Realtime Database tab](https://console.firebase.google.com/p
 
 ### Use this extension
 
-To trigger this extension, write strings to the database path: `${param:TRIGGER_PATH}/{sourceLanguageCode}/{messageId}`. You can use any of the [Firebase Realtime Database SDKs](https://firebase.google.com/docs/database/). When triggered, the extension translates the strings then writes the translated strings under paths in the form: `${param:TRIGGER_PATH}/{targetLanguageCode}/{messageId}`.
+To trigger this extension, write JSON string objects to the database path: `${param:TRIGGER_PATH}/{sourceLanguageCode}`. You can use any of the [Firebase Realtime Database SDKs](https://firebase.google.com/docs/database/). When triggered, the extension translates the strings then writes the translated strings under paths in the form: `${param:TRIGGER_PATH}/{targetLanguageCode}/{messageId}`.
 
-The original, untranslated string must be a JSON resembling the following: `{"string": "This is your original, untranslated text."}`.
+The original, untranslated string must be contained in a JSON object resembling the following: `{"string": "This is your original, untranslated text."}`.
 
 You specify the source language (and the target languages) using ISO-639-1 codes. You can find a list of valid languages and their corresponding codes in the [Cloud Translate API documentation](https://cloud.google.com/translate/docs/languages). You've configured the following target language(s) for this installed extension: `${param:LANGUAGES}`.
 
