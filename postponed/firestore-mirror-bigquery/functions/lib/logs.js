@@ -28,11 +28,15 @@ exports.bigQueryDatasetCreating = (datasetId) => {
 exports.bigQueryDatasetExists = (datasetId) => {
     console.log(`BigQuery dataset already exists: ${datasetId}`);
 };
-exports.bigQuerySchemaInitialized = () => {
-    console.log("Initialized BigQuery from schema file");
+exports.bigQueryErrorRecordingDocumentChange = (e) => {
+    console.error(`Error recording document changes.`, e);
 };
-exports.bigQuerySchemaInitializing = () => {
-    console.log("Initializing BigQuery from schema file");
+exports.bigQueryLatestSnapshotViewQueryCreated = (query) => {
+    console.log(`BigQuery latest snapshot view query:\n${query}`);
+};
+exports.bigQueryTableAlreadyExists = (tableName, datasetName) => {
+    console.log(`BigQuery table with name ${tableName} already ` +
+        `exists in dataset ${datasetName}!`);
 };
 exports.bigQueryTableCreated = (tableName) => {
     console.log(`Created BigQuery table: ${tableName}`);
@@ -60,6 +64,9 @@ exports.bigQueryViewCreated = (viewName) => {
 };
 exports.bigQueryViewCreating = (viewName) => {
     console.log(`Creating BigQuery view: ${viewName}`);
+};
+exports.bigQueryViewAlreadyExists = (viewName, datasetName) => {
+    console.log(`View with id ${viewName} already exists in dataset ${datasetName}.`);
 };
 exports.bigQueryViewUpdated = (viewName) => {
     console.log(`Updated existing BigQuery view: ${viewName}`);

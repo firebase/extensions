@@ -18,6 +18,7 @@ import * as bigquery from "@google-cloud/bigquery";
 import * as errors from "../errors";
 import { FirestoreField, FirestoreSchema } from "../firestore";
 import * as logs from "../logs";
+import * as sqlFormatter from "sql-formatter";
 
 export type BigQueryFieldMode = "NULLABLE" | "REPEATED" | "REQUIRED";
 export type BigQueryFieldType =
@@ -46,16 +47,15 @@ const bigQueryField = (
 });
 
 // These field types form the basis of the `raw` data table
-const dataField = bigQueryField("data", "STRING", "NULLABLE");
-const keyField = bigQueryField("key", "STRING", "REQUIRED");
-const idField = bigQueryField("id", "STRING", "REQUIRED")
-const eventIdField = bigQueryField("eventId", "STRING", "REQUIRED");
-const operationField = bigQueryField("operation", "STRING", "REQUIRED");
-const timestampField = bigQueryField("timestamp", "TIMESTAMP", "REQUIRED");
+export const dataField = bigQueryField("data", "STRING", "NULLABLE");
+export const documentNameField = bigQueryField("document_name", "STRING", "REQUIRED");
+export const eventIdField = bigQueryField("eventId", "STRING", "REQUIRED");
+export const operationField = bigQueryField("operation", "STRING", "REQUIRED");
+export const timestampField = bigQueryField("timestamp", "TIMESTAMP", "REQUIRED");
 
 // These field types are used for the Firestore GeoPoint data type
-const latitudeField = bigQueryField("latitude", "NUMERIC");
-const longitudeField = bigQueryField("longitude", "NUMERIC");
+export const latitudeField = bigQueryField("latitude", "NUMERIC");
+export const longitudeField = bigQueryField("longitude", "NUMERIC");
 
 /**
  * Convert from a Firestore field definition into the equivalent BigQuery
@@ -108,10 +108,10 @@ export const firestoreToBQField = (field: FirestoreField): BigQueryField => {
  * that will be used by the BigQuery `raw` data table.
  *
  * The `raw` data table schema is:
- * - id: Stores the Firestore document ID
  * - eventId: The event ID of the function trigger invocation responsible for
  *   the row
  * - timestamp: A timestamp to be used for update ordering
+ * - documentName: Stores the name of the Firestore document
  * - operation: The type of operation: INSERT, UPDATE, DELETE
  * - data: A record to contain the Firestore document data fields specified
  * in the schema
@@ -120,8 +120,7 @@ export const firestoreToBQTable = (
 ): BigQueryField[] => [
   timestampField,
   eventIdField,
-  keyField,
-  idField,
+  documentNameField,
   operationField,
   dataField
 ];

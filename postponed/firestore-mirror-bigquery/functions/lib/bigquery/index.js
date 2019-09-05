@@ -15,34 +15,41 @@
  * limitations under the License.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const bigquery = require("@google-cloud/bigquery");
 const schema_1 = require("./schema");
+const snapshot_1 = require("./snapshot");
 const firestoreEventHistoryTracker_1 = require("../firestoreEventHistoryTracker");
 const logs = require("../logs");
 class FirestoreBigQueryEventHistoryTracker {
     constructor(config) {
         this.config = config;
         this.bq = new bigquery.BigQuery();
-        this.schemaInitialized = config.schemaInitialized;
+        this.initialized = config.initialized;
     }
     record(events) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!this.config.schemaInitialized) {
-                yield this.initialize(this.config.datasetId, this.config.tableName);
-                this.schemaInitialized = true;
+            if (!this.config.initialized) {
+                try {
+                    yield this.initialize(this.config.datasetId, this.config.tableName);
+                    this.initialized = true;
+                }
+                catch (e) {
+                    logs.bigQueryErrorRecordingDocumentChange(e);
+                }
             }
             const rows = events.map(event => {
                 return this.buildDataRow(
                 // Use the function's event ID to protect against duplicate executions
-                event.eventId, event.operation, event.timestamp, event.name, event.documentId, event.data);
+                event.eventId, event.operation, event.timestamp, event.name, event.data);
             });
             yield this.insertData(this.config.datasetId, this.config.tableName, rows);
         });
@@ -51,28 +58,26 @@ class FirestoreBigQueryEventHistoryTracker {
      * Ensure that the defined Firestore schema exists within BigQuery and
      * contains the correct information.
      *
-     *
      * NOTE: This currently gets executed on every cold start of the function.
      * Ideally this would run once when the mod is installed if that were
      * possible in the future.
      */
     initialize(datasetId, tableName) {
         return __awaiter(this, void 0, void 0, function* () {
-            logs.bigQuerySchemaInitializing();
             const realTableName = rawTableName(tableName);
             yield this.initializeDataset(datasetId);
             yield this.initializeTable(datasetId, realTableName);
+            yield this.initializeLatestView(datasetId, realTableName);
         });
     }
     ;
-    buildDataRow(eventId, changeType, timestamp, key, id, data) {
+    buildDataRow(eventId, changeType, timestamp, document_name, data) {
         return {
             timestamp,
             eventId,
-            key: key,
-            id,
+            document_name: document_name,
             operation: firestoreEventHistoryTracker_1.ChangeType[changeType],
-            data: JSON.stringify(data)
+            data: JSON.stringify(data),
         };
     }
     ;
@@ -120,7 +125,10 @@ class FirestoreBigQueryEventHistoryTracker {
             const dataset = this.bq.dataset(datasetId);
             let table = dataset.table(tableName);
             const [tableExists] = yield table.exists();
-            if (!tableExists) {
+            if (tableExists) {
+                logs.bigQueryTableAlreadyExists(table.id, dataset.id);
+            }
+            else {
                 logs.bigQueryTableCreating(tableName);
                 const options = {
                     // `friendlyName` needs to be here to satisfy TypeScript
@@ -134,7 +142,38 @@ class FirestoreBigQueryEventHistoryTracker {
         });
     }
     ;
+    /**
+     * Create a view over a table storing a change log of Firestore documents
+     * which contains only latest version of all live documents in the mirrored
+     * collection.
+     * @param datasetId
+     * @param tableName
+     */
+    initializeLatestView(datasetId, tableName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let viewName = latestViewName(tableName);
+            const dataset = this.bq.dataset(datasetId);
+            let view = dataset.table(viewName);
+            const [viewExists] = yield view.exists();
+            if (viewExists) {
+                logs.bigQueryViewAlreadyExists(view.id, dataset.id);
+            }
+            else {
+                logs.bigQueryViewCreating(viewName);
+                const options = {
+                    friendlyName: viewName,
+                    view: snapshot_1.latestConsistentSnapshotView(datasetId, tableName)
+                };
+                yield view.create(options);
+                logs.bigQueryViewCreated(viewName);
+            }
+            return view;
+        });
+    }
+    ;
 }
 exports.FirestoreBigQueryEventHistoryTracker = FirestoreBigQueryEventHistoryTracker;
 function rawTableName(tableName) { return `${tableName}_raw`; }
+;
+function latestViewName(tableName) { return `${tableName}_latest`; }
 ;

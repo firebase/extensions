@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -32,15 +33,14 @@ const bigQueryField = (name, type, mode, fields) => ({
     type,
 });
 // These field types form the basis of the `raw` data table
-const dataField = bigQueryField("data", "STRING", "NULLABLE");
-const keyField = bigQueryField("key", "STRING", "REQUIRED");
-const idField = bigQueryField("id", "STRING", "REQUIRED");
-const eventIdField = bigQueryField("eventId", "STRING", "REQUIRED");
-const operationField = bigQueryField("operation", "STRING", "REQUIRED");
-const timestampField = bigQueryField("timestamp", "TIMESTAMP", "REQUIRED");
+exports.dataField = bigQueryField("data", "STRING", "NULLABLE");
+exports.documentNameField = bigQueryField("document_name", "STRING", "REQUIRED");
+exports.eventIdField = bigQueryField("eventId", "STRING", "REQUIRED");
+exports.operationField = bigQueryField("operation", "STRING", "REQUIRED");
+exports.timestampField = bigQueryField("timestamp", "TIMESTAMP", "REQUIRED");
 // These field types are used for the Firestore GeoPoint data type
-const latitudeField = bigQueryField("latitude", "NUMERIC");
-const longitudeField = bigQueryField("longitude", "NUMERIC");
+exports.latitudeField = bigQueryField("latitude", "NUMERIC");
+exports.longitudeField = bigQueryField("longitude", "NUMERIC");
 /**
  * Convert from a Firestore field definition into the equivalent BigQuery
  * mode.
@@ -61,8 +61,8 @@ exports.firestoreToBQField = (field) => {
     }
     else if (field.type === "geopoint") {
         return bigQueryField(field.name, "RECORD", firestoreToBQMode(field), [
-            latitudeField,
-            longitudeField,
+            exports.latitudeField,
+            exports.longitudeField,
         ]);
     }
     else if (field.type === "json") {
@@ -92,21 +92,20 @@ exports.firestoreToBQField = (field) => {
  * that will be used by the BigQuery `raw` data table.
  *
  * The `raw` data table schema is:
- * - id: Stores the Firestore document ID
  * - eventId: The event ID of the function trigger invocation responsible for
  *   the row
  * - timestamp: A timestamp to be used for update ordering
+ * - documentName: Stores the name of the Firestore document
  * - operation: The type of operation: INSERT, UPDATE, DELETE
  * - data: A record to contain the Firestore document data fields specified
  * in the schema
  */
 exports.firestoreToBQTable = () => [
-    timestampField,
-    eventIdField,
-    keyField,
-    idField,
-    operationField,
-    dataField
+    exports.timestampField,
+    exports.eventIdField,
+    exports.documentNameField,
+    exports.operationField,
+    exports.dataField
 ];
 /**
  * Convert from a Firestore schema into a SQL query that will be used to build
@@ -120,7 +119,7 @@ exports.firestoreToBQView = (datasetId, tableName, schema, idFieldNames) => ({
  * Checks that the BigQuery table schema matches the Firestore field
  * definitions and updates the BigQuery table scheme if necessary.
  */
-exports.validateBQTable = (table, fields, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
+exports.validateBQTable = (table, fields, idFieldNames) => __awaiter(void 0, void 0, void 0, function* () {
     logs.bigQueryTableValidating(table.id);
     const [metadata] = yield table.getMetadata();
     // Get the `data` and `id` fields from our schema, as this is what needs to be compared
@@ -191,7 +190,7 @@ const validateBQIdFields = (bqFields, idFieldNames) => {
  * Checks that the BigQuery table schema matches the Firestore field
  * definitions and updates the BigQuery table scheme if necessary.
  */
-exports.validateBQView = (view, tableName, schema, idFieldNames) => __awaiter(this, void 0, void 0, function* () {
+exports.validateBQView = (view, tableName, schema, idFieldNames) => __awaiter(void 0, void 0, void 0, function* () {
     logs.bigQueryViewValidating(view.id);
     const [metadata] = yield view.getMetadata();
     // Get the `query` field in our schema, as this is what needs to be compared
