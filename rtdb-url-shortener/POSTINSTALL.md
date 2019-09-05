@@ -1,34 +1,30 @@
-To trigger the mod, write URLs to the database path at:
-`${param:TRIGGER_PATH}/{urlID}/${param:URL_FIELD_NAME}` via one of the official Firebase SDKs (https://firebase.google.com/docs/database/).
-The shortened URL will be written to:
-`${param:TRIGGER_PATH}/{urlID}/${param:SHORT_URL_FIELD_NAME}`.
+### See it in action
 
-## Sample Realtime Database Structure
-
-This is the database structure based on your given path of: `${param:TRIGGER_PATH}`.
-
-```
-/${param:PROJECT_ID}
-   /${param:TRIGGER_PATH}
-       /url-123456
-           ${param:URL_FIELD_NAME}: "https://my.super.long-link.com/api/user/profile/-jEHitne10395-k3593085"
-```
-
-When a new URL (string) is pushed to `/${param:TRIGGER_PATH}`, it gets replaced with an object containing the original URL and a shortened one.
-This way, you can display a clean URL by fetching `/${param:TRIGGER_PATH}/{urlID}/${param:SHORT_URL_FIELD_NAME}`.
-
-```
-/${param:PROJECT_ID}
-   /${param:TRIGGER_PATH}
-       /url-123456
-           ${param:URL_FIELD_NAME}: "https://my.super.long-link.com/api/user/profile/-jEHitne10395-k3593085",
-           ${param:SHORT_URL_FIELD_NAME}: "https://bit.ly/EKDdza"
-```
-
-## Try it out
-
-To try out this mod right away for the Realtime Database, run the following command via the Firebase CLI:
+To test out this extension, run the following command using the Firebase CLI:
 
 ```
 firebase database:push /${param:TRIGGER_PATH} --data '{"${param:URL_FIELD_NAME}": "https://google.com"}'
 ```
+
+When you go to the [Realtime Database tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/${param:PROJECT_ID}/data), you'll see your database populated with both the original URL and the shortened URL, with a data structure similar to:
+
+```
+/${param:PROJECT_ID}
+   /${param:TRIGGER_PATH}
+       /<urlID>
+           ${param:URL_FIELD_NAME}: "https://google.com",
+           ${param:SHORT_URL_FIELD_NAME}: "<shortened-URL>"
+```
+
+### Use this extension
+
+To trigger this extension, write URLs to the database path: `${param:TRIGGER_PATH}/{urlID}/${param:URL_FIELD_NAME}`. You can use any of the [Firebase Realtime Database SDKs](https://firebase.google.com/docs/database/). When triggered, the extension shortens the original URL then writes the shortened URL to the database path: `${param:TRIGGER_PATH}/{urlID}/${param:SHORT_URL_FIELD_NAME}`.
+
+Both the original URL and the shortened URL are stored in `${param:TRIGGER_PATH}/{urlID}/`. If the original URL in the database path is updated, then the shortened URL will be automatically updated, too.
+
+You can display a shortened URL by fetching `/${param:TRIGGER_PATH}/{urlID}/${param:SHORT_URL_FIELD_NAME}`.
+
+
+### Monitoring
+
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.

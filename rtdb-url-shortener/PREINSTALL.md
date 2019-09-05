@@ -1,25 +1,19 @@
-If your trigger path is `example/path/` and you write URLs to the database path at:
-`example/path/{urlID}/{urlFieldName}` via one of the official Firebase SDKs (https://firebase.google.com/docs/database/), the shortened URL will be written to:
-`example/path/{urlID}/{shortUrlFieldName}`.
+Use this extension to create shortened URLs from URLs written to a Realtime Database path. These shortened URLs are useful as display URLs.
 
-## Sample Realtime Database Structure
+This extension listens to your specified Realtime Database path. When any URL is written to that path, this extension shortens the URL then saves the shortened URL as a new field within the same database path.
 
-Here is an example of the database structure with a sample trigger path of `example/path` and URL field name of `url`.
+For example, you can configure this extension to trigger upon writes to the database path `YOUR_PATH/`. If a URL is written to `YOUR_PATH/<urlId>/<url>`, this extension shortens the original URL then writes the shortened URL to `YOUR_PATH/<urlId>/<shortUrl>`, resulting in a data structure like so:
 
 ```
 /your-project-id-123
-   /example/path
-       /url-123456
-           url: "https://my.super.long-link.com/api/user/profile/-jEHitne10395-k3593085"
-```
-
-When a new URL (string) is pushed to `/example/path`, it gets replaced with an object containing the original URL and a shortened one.
-This way, you can display a clean URL by fetching `/example/path/{urlID}/{shortUrlName}`.
-
-```
-/your-project-id-123
-   /example/path
+   /YOUR_PATH
        /url-123456
            url: "https://my.super.long-link.com/api/user/profile/-jEHitne10395-k3593085",
            shortUrl: "https://bit.ly/EKDdza"
 ```
+
+If the original URL in the database path is updated, then the shortened URL will be automatically updated, too.
+
+This extension uses Bitly to shorten URLs, so you'll need to supply your Bitly access token as part of this extension's installation. You can generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
+
+When you use Firebase Extensions, you're only charged for the underlying resources that you use. Firebase Extensions themselves are free to use. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
