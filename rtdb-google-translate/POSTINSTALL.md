@@ -24,6 +24,8 @@ When you go to the [Realtime Database tab](https://console.firebase.google.com/p
                "string": "<translated-text-about-greetings>",
 ```
 
+You can also try out this extension directly in the Firebase console: go to your [Realtime Database tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/${param:PROJECT_ID}/data), recreate the data structure for the trigger path, then add a JSON string object to translate.
+
 ### Use this extension
 
 To trigger this extension, write JSON string objects to the database path: `${param:TRIGGER_PATH}/{sourceLanguageCode}`. You can use any of the [Firebase Realtime Database SDKs](https://firebase.google.com/docs/database/). When triggered, the extension translates the strings then writes the translated strings under paths in the form: `${param:TRIGGER_PATH}/{targetLanguageCode}/{messageId}`.
