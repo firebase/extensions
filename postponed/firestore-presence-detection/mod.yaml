@@ -34,6 +34,7 @@ resources:
     properties:
       sourceDirectory: .
       location: ${LOCATION}
+      timeout: 540s
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.write
         resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${RTDB_PATH}/{user_id}/sessions/{session_id}
