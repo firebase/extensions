@@ -13,7 +13,7 @@ const chai = require("chai");
 const fs = require("fs");
 const sqlFormatter = require("sql-formatter");
 const util = require("util");
-const schema_1 = require("../../bigquery/schema");
+const snapshot_1 = require("../../bigquery/snapshot");
 const fixturesDir = __dirname + "/../fixtures";
 const sqlDir = fixturesDir + "/sql";
 const testProjectId = "test";
@@ -31,19 +31,19 @@ function readFormattedSQL(file) {
 describe("simple raw changelog schema generation", () => {
     it("should generate the epxected sql", () => __awaiter(void 0, void 0, void 0, function* () {
         const expectedQuery = yield readFormattedSQL(`${sqlDir}/latestConsistentSnapshot.txt`);
-        const query = schema_1.buildLatestSnapshotViewQuery(testDataset, testTable, "timestamp", ["timestamp", "eventId", "operation", "data"]);
+        const query = snapshot_1.buildLatestSnapshotViewQuery(testDataset, testTable, "timestamp", ["timestamp", "eventId", "operation", "data"]);
         expect(query).to.equal(expectedQuery);
     }));
     it("should generate correct sql with no groupBy columns", () => __awaiter(void 0, void 0, void 0, function* () {
         const expectedQuery = yield readFormattedSQL(`${sqlDir}/latestConsistentSnapshotNoGroupBy.txt`);
-        const query = schema_1.buildLatestSnapshotViewQuery(testDataset, testTable, "timestamp", []);
+        const query = snapshot_1.buildLatestSnapshotViewQuery(testDataset, testTable, "timestamp", []);
         console.log(query);
         expect(query).to.equal(expectedQuery);
     }));
     it("should throw an error for empty group by columns", () => __awaiter(void 0, void 0, void 0, function* () {
-        expect(schema_1.buildLatestSnapshotViewQuery(testDataset, testTable, "timestamp", [""])).to.throw();
+        expect(snapshot_1.buildLatestSnapshotViewQuery.bind(testDataset, testTable, "timestamp", [""])).to.throw();
     }));
     it("should throw an error for empty timestamp field", () => __awaiter(void 0, void 0, void 0, function* () {
-        expect(schema_1.buildLatestSnapshotViewQuery(testDataset, testTable, "", [])).to.throw();
+        expect(snapshot_1.buildLatestSnapshotViewQuery.bind(null, testDataset, testTable, "", [])).to.throw();
     }));
 });

@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as sqlFormatter from "sql-formatter";
 import * as util from "util";
 
-import { buildLatestSnapshotViewQuery } from "../../bigquery/schema";
+import { buildLatestSnapshotViewQuery } from "../../bigquery/snapshot";
 
 const fixturesDir = __dirname + "/../fixtures";
 const sqlDir = fixturesDir + "/sql";
