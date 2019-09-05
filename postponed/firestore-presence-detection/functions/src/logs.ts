@@ -4,28 +4,37 @@ export const error = (err: Error) => {
   console.error('Error executing mod: ', err);
 };
 
+export const nonFatalError = (err: Error) => {
+  console.error('Non-fatal error encountered (continuing execution): ', err);
+};
+
 export const start = () => {
   console.log('Started mod execution with config \n', config);
 };
 
-export const handleUpsert = (path: string, payload: object) => {
-  console.log("Upserting data: "+ JSON.stringify(payload) +" at path: " + path);
+export const handleCreate = (sessionID: string) => {
+  console.log("Detected new connection. Creating new path: " + sessionID)
 };
 
-export const handleDelete = (path: string) => {
-  console.log(`Deleting user connection at: ${path}`);
+export const handleUpdate = (sessionID: string, payload: object) => {
+  console.log("Detected metadata update for session: " + sessionID + " with payload: " + JSON.stringify(payload));
 };
 
-export const getSessionInfo = (path: String) => {
-  console.log(`Obtaining sessionID and userID from path: ${path}`);
+export const handleDelete = (sessionID: string) => {
+  console.log(`Detected disconnect. Removing connection: ${sessionID}`);
 };
 
-export const logTimestampComparison = (currentTimestamp: number, operationTimestamp: number, userID: string, sessionID: string) => {
-  console.log(`Comparing timestamps of user: ${userID}, session: ${sessionID}. Current Timestamp: ${currentTimestamp}, Operation Timestamp: ${operationTimestamp}`);
+export const getSessionInfo = (sessionID: string, userID: string) => {
+  console.log(`Mod executing for user: ${userID}, connection: ${sessionID}`);
+};
+
+export const logStaleTimestamp = (currentTimestamp: number, operationTimestamp: number, userID: string, sessionID: string) => {
+  console.log(`Timestamp of current operation is older than timestamp at destination. Refusing to commit change.` +
+      `(user: ${userID}, session: ${sessionID} | Destination Timestamp: ${currentTimestamp}, Operation Timestamp: ${operationTimestamp})`);
 };
 
 export const logFirestoreUpsert = (payload: object) => {
-  console.log("Updating Firestore document with payload: " + JSON.stringify(payload));
+  console.log("Firestore document successfully updated with payload: " + JSON.stringify(payload));
 };
 
 export const success = () => {
@@ -37,5 +46,5 @@ export const createDocument = (document: string, collection: string | undefined)
 };
 
 export const logRetry = (err: Error) => {
-  console.error('Error commiting RTDB changes, retrying. Error: ', err);
-}
+  console.error('Error commiting changes to Firestore, retrying. Error: ', err);
+};
