@@ -19,5 +19,5 @@ export default {
   datasetId: process.env.DATASET_ID,
   location: process.env.LOCATION,
   tableName: process.env.TABLE_NAME,
-  schemaInitialized: false
+  initialized: false
 };

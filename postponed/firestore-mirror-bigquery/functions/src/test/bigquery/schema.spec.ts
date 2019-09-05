@@ -26,13 +26,11 @@ describe("simple raw changelog schema generation", () => {
   it("should generate the epxected sql", async () => {
     const expectedQuery = await readFormattedSQL(`${sqlDir}/latestConsistentSnapshot.txt`);
     const query = buildLatestSnapshotViewQuery(testDataset, testTable, "timestamp", ["timestamp", "eventId", "operation", "data"]);
-    console.log(query);
     expect(query).to.equal(expectedQuery);
   });
   it("should generate correct sql with no groupBy columns", async () => {
     const expectedQuery = await readFormattedSQL(`${sqlDir}/latestConsistentSnapshotNoGroupBy.txt`);
     const query = buildLatestSnapshotViewQuery(testDataset, testTable, "timestamp", []);
-    console.log(query);
     expect(query).to.equal(expectedQuery);
   });
   it("should throw an error for empty group by columns", async () => {

@@ -103,7 +103,7 @@ const run = async (): Promise<number> => {
     collectionPath: collectionPath,
     datasetId: datasetId,
     tableName: tableName,
-    schemaInitialized: false,
+    initialized: false,
   });
 
   console.log(
@@ -137,9 +137,10 @@ const run = async (): Promise<number> => {
         defaultTimestamp,
         timestampField
       );
-      // Build the data row
+      // Build the data row with a 0 timestamp. This ensures that all other
+      // operations supersede imports when listing the live documents.
       return {
-        timestamp,
+        timestamp: "0",
         operation: ChangeType.IMPORT,
         documentId: snapshot.ref.id,
         name: snapshot.ref.path,

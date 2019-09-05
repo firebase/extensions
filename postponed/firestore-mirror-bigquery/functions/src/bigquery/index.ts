@@ -25,23 +25,23 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   collectionPath: string;
   datasetId: string;
   tableName: string;
-  schemaInitialized: boolean;
+  initialized: boolean;
 }
 
 export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHistoryTracker {
   bq: bigquery.BigQuery;
-  schemaInitialized: boolean;
+  initialized: boolean;
 
   constructor(public config: FirestoreBigQueryEventHistoryTrackerConfig) {
     this.bq = new bigquery.BigQuery();
-    this.schemaInitialized = config.schemaInitialized;
+    this.initialized = config.initialized;
   }
 
   async record(events: FirestoreDocumentChangeEvent[]) {
-    if (!this.config.schemaInitialized) {
+    if (!this.config.initialized) {
       try {
         await this.initialize(this.config.datasetId, this.config.tableName);
-        this.schemaInitialized = true;
+        this.initialized = true;
       } catch (e) {
         logs.bigQueryErrorRecordingDocumentChange(e);
       }
@@ -53,7 +53,6 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
         event.operation,
         event.timestamp,
         event.name,
-        event.documentId,
         event.data);
     });
     await this.insertData(this.config.datasetId, this.config.tableName, rows);
@@ -79,17 +78,15 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     eventId: string,
     changeType: ChangeType,
     timestamp: string,
-    key: string,
-    id: string,
+    document_name: string,
     data?: Object
   ): bigquery.RowMetadata {
     return {
       timestamp,
       eventId,
-      key: key,
-      id,
+      document_name: document_name,
       operation: ChangeType[changeType],
-      data: JSON.stringify(data)
+      data: JSON.stringify(data),
     };
   };
 

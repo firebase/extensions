@@ -87,7 +87,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         collectionPath: collectionPath,
         datasetId: datasetId,
         tableName: tableName,
-        schemaInitialized: false,
+        initialized: false,
     });
     console.log(`Mirroring data from Firestore Collection: ${collectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${tableName}`);
     const importTimestamp = new Date().toISOString();
@@ -111,9 +111,10 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         }
         // Extract the timestamp, or use the import timestamp as default
         const timestamp = util_1.extractTimestamp(data, defaultTimestamp, timestampField);
-        // Build the data row
+        // Build the data row with a 0 timestamp. This ensures that all other
+        // operations supersede imports when listing the live documents.
         return {
-            timestamp,
+            timestamp: "0",
             operation: firestoreEventHistoryTracker_1.ChangeType.IMPORT,
             documentId: snapshot.ref.id,
             name: snapshot.ref.path,
