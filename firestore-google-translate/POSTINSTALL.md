@@ -1,6 +1,6 @@
 ### See it in action
 
-To test out this mod, follow these steps:
+To test out this extension, follow these steps:
 
 1.  Go to the [Cloud Firestore tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
 
@@ -10,9 +10,9 @@ To test out this mod, follow these steps:
 
 1.  In a few seconds, you'll see a new field called `${param:TRANSLATIONS_FIELD_NAME}` pop up in the same document you just created; it will contain the translations. 
 
-### Using the mod
+### Using the extension
 
-Whenever a string is written to the field `${param:MESSAGE_FIELD_NAME}` in `${param:COLLECTION_PATH}`, this mod translates the string into your specified target language(s). The source language of the string is automatically detected. This mod adds the translated string to `${param:TRANSLATIONS_FIELD_NAME}` in the same document using the following format:
+Whenever a string is written to the field `${param:MESSAGE_FIELD_NAME}` in `${param:COLLECTION_PATH}`, this extension translates the string into your specified target language(s). The source language of the string is automatically detected. This extension adds the translated string to `${param:TRANSLATIONS_FIELD_NAME}` in the same document using the following format:
 
 ```
 {
@@ -30,4 +30,4 @@ If the `${param:MESSAGE_FIELD_NAME}` field of the document is updated, then the 
 
 ### Monitoring
 
-As a best practice, you can [monitor the activity](https://firebase.google.com/docs/mods/manage-installed-mods#monitor) of your installed mod, including checks on its health, usage, and logs.
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.
