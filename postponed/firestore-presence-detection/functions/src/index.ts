@@ -6,7 +6,7 @@ import * as logs from './logs';
 import {DocumentSnapshot} from 'firebase-functions/lib/providers/firestore';
 
 admin.initializeApp();
-// const TIME_THRESHOLD = 7 * 24 * 60 * 60 * 1000;
+const TIME_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
 enum ChangeType {
   CREATE,
   DELETE,
@@ -51,6 +51,58 @@ export const writeToFirestore =
     });
 
 /**
+ * TODO design review
+ *
+ * Use pessimistic transactions to clean up old tombstones whose timestamp is older
+ * than TIME_THRESHOLD and is not currently online.
+ *
+ * The function is triggered when any message is triggered to the topic.
+ *
+ * @param userID: reference
+ */
+export const cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish(async () => {
+
+  if (config.firestore_path === undefined) {
+    throw new Error('Undefined firestore path');
+  }
+  const docRefArr = await admin.firestore().collection(config.firestore_path).listDocuments();
+  const currentTime = (new Date).getTime();
+
+  for (const docRef of docRefArr) {
+
+    // Run pessimistic transaction on each user document to remove tombstones
+    logs.currentDocument(docRef.id);
+    await admin.firestore().runTransaction(async (transaction): Promise<void> => {
+      await transaction.get(docRef).then( async (doc): Promise<void> => {
+        const docData = doc.data();
+
+        // Read tombstone data if available
+        if (docData !== undefined && docData["last_updated"] instanceof Object) {
+
+          // For each tombstone, determine which are old enough to delete (specified by TIME_THRESHOLD)
+          const updateArr: { [s: string]: admin.firestore.FieldValue; } = {};
+          for (const sessionID of Object.keys(docData["last_updated"])) {
+            if ((docData["sessions"] === undefined || docData["sessions"][sessionID] === undefined) &&
+                docData["last_updated"][sessionID] + TIME_THRESHOLD_MS < currentTime) {
+              updateArr[`last_updated.${sessionID}`] = admin.firestore.FieldValue.delete();
+            }
+          }
+
+          // Remove the documents if applicable
+          if (Object.keys(updateArr).length > 0) {
+            logs.tombstoneRemoval(Object.keys(updateArr));
+            await transaction.update(docRef, updateArr);
+          }
+        }
+      });
+    }).catch( (error) => {
+      logs.error(error);
+    });
+    console.log("Done reading document: " + docRef.id);
+  }
+});
+
+/**
  * Returns the operation performed on the document based on the before/after
  * data snapshot
  * @param change: the before/after datasnapshot
@@ -82,7 +134,7 @@ const getUserAndSessionID = (path: string) => {
     'userID': strArr[strArr.length - 3],
     'sessionID': strArr[strArr.length - 1],
   };
-  logs.getSessionInfo(data['sessionID'], data['userID']);
+  logs.sessionInfo(data['sessionID'], data['userID']);
   return data;
 };
 
@@ -134,7 +186,7 @@ const firestoreTransaction = async (docRef: admin.firestore.DocumentReference, p
         // Refuse to write the operation if the timestamp is earlier than the latest update
         if ((payload instanceof admin.firestore.FieldValue && currentTimestamp > operationTimestamp) &&
             (currentTimestamp >= operationTimestamp)) {
-          logs.logStaleTimestamp(currentTimestamp, operationTimestamp, userID, sessionID);
+          logs.staleTimestamp(currentTimestamp, operationTimestamp, userID, sessionID);
           return;
         }
       }
@@ -145,7 +197,7 @@ const firestoreTransaction = async (docRef: admin.firestore.DocumentReference, p
         [`last_updated.${sessionID}`]: operationTimestamp,
       };
       return docRef.update(firestorePayload, {lastUpdateTime: lastUpdated}).then((result) => {
-        logs.logFirestoreUpsert(firestorePayload);
+        logs.successfulFirestoreTransaction(firestorePayload);
       })
     });
 };
@@ -182,41 +234,8 @@ const firestoreTransactionWithRetries = async (payload: any, operationTimestamp:
     await firestoreTransaction(admin.firestore().collection(config.firestore_path).doc(userID), payload, operationTimestamp, userID, sessionID).then(() => {
       isSuccessful = true;
     }).catch(async (error) => {
-      logs.logRetry(error);
+      logs.retry(error);
     });
   }
 };
 
-// /**
-//  * TODO probably can use this as a function that needs to be manually triggered
-//  * @param collRef
-//  */
-// const cleanUpDeadSessions = async (collRef: admin.firestore.CollectionReference) => {
-//   const docRefArr = await collRef.listDocuments();
-//   const currentTime = (new Date).getTime();
-//
-//   docRefArr.forEach( async (docRef) => {
-//
-//     // TODO implement a retry for this document
-//     await docRef.get().then( async (doc) => {
-//       const docData = doc.data();
-//       const lastUpdated = doc.updateTime;
-//       if (docData !== undefined && docData["last_updated"] !== undefined) {
-//
-//         // For each tombstone, determine which are old enough to delete (specified by TIME_THRESHOLD)
-//         const updateArr: { [s: string]: admin.firestore.FieldValue; } = {};
-//         for (const sessionID of docData["last_updated"]) {
-//           if ((docData["sessions"] === undefined || docData["sessions"][sessionID] === undefined) &&
-//               docData["last_updated"][sessionID] + TIME_THRESHOLD < currentTime) {
-//             updateArr[`last_updated.${sessionID}`] = admin.firestore.FieldValue.delete();
-//           }
-//         }
-//
-//         // Remove the documents
-//         // TODO move out these logs
-//         console.log("Removing the following tombstones: " + JSON.stringify(updateArr));
-//         docRef.update(updateArr, {lastUpdateTime: lastUpdated});
-//       }
-//     });
-//   });
-// };

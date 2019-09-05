@@ -40,6 +40,15 @@ resources:
         resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${RTDB_PATH}/{user_id}/sessions/{session_id}
         failurePolicy:
           retry: {}
+  - name: cleanUpDeadSessions
+    type: firebasemods.v1beta1.function
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      timeout: 540s
+      eventTrigger:
+        eventType: google.pubsub.topic.publish
+        resource: projects/${PROJECT_ID}/topics/${PUBSUB_TOPIC}
 
 params:
   - param: LOCATION
@@ -82,4 +91,11 @@ params:
       What is the collection you want to store the user presence information in Firestore?
     example: user_presence
     required: true
-    
+
+  - param: PUBSUB_TOPIC
+    label: Pubsub topic for cleanup
+    description: >
+      What is the name of the topic to trigger the cleanup function?
+    default: cleanUpDeadSessions
+    example: cleanUpDeadSessions
+    required: true

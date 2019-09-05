@@ -13,7 +13,7 @@ const functions = require("firebase-functions");
 const config_1 = require("./config");
 const logs = require("./logs");
 admin.initializeApp();
-// const TIME_THRESHOLD = 7 * 24 * 60 * 60 * 1000;
+const TIME_THRESHOLD = 7 * 24 * 60 * 60 * 1000; // Defined in milliseconds
 var ChangeType;
 (function (ChangeType) {
     ChangeType[ChangeType["CREATE"] = 0] = "CREATE";
@@ -53,6 +53,47 @@ exports.writeToFirestore = functions.handler.database.ref.onWrite((change, conte
     }
     catch (err) {
         logs.error(err);
+    }
+}));
+/**
+ * TODO this should be pessimistic transaction
+ * TODO maybe do something with message and context
+ *
+ * @param userID: reference
+ */
+exports.cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish((message, context) => __awaiter(this, void 0, void 0, function* () {
+    if (config_1.default.firestore_path === undefined) {
+        throw new Error('Undefined firestore path');
+    }
+    const docRefArr = yield admin.firestore().collection(config_1.default.firestore_path).listDocuments();
+    const currentTime = (new Date).getTime();
+    for (const docRef of docRefArr) {
+        // Run pessimistic transaction on each user document to remove tombstones
+        console.log("Reading Document: " + docRef.id);
+        yield admin.firestore().runTransaction((transaction) => __awaiter(this, void 0, void 0, function* () {
+            yield transaction.get(docRef).then((doc) => __awaiter(this, void 0, void 0, function* () {
+                const docData = doc.data();
+                // Read tombstone data if available
+                if (docData !== undefined && docData["last_updated"] instanceof Object) {
+                    // For each tombstone, determine which are old enough to delete (specified by TIME_THRESHOLD)
+                    const updateArr = {};
+                    for (const sessionID of Object.keys(docData["last_updated"])) {
+                        if ((docData["sessions"] === undefined || docData["sessions"][sessionID] === undefined) &&
+                            docData["last_updated"][sessionID] + TIME_THRESHOLD < currentTime) {
+                            updateArr[`last_updated.${sessionID}`] = admin.firestore.FieldValue.delete();
+                        }
+                    }
+                    // Remove the documents if applicable
+                    if (Object.keys(updateArr).length > 0) {
+                        logs.logTombstoneRemoval(Object.keys(updateArr));
+                        yield transaction.update(docRef, updateArr);
+                    }
+                }
+            }));
+        })).catch((error) => {
+            logs.error(error);
+        });
+        console.log("Done reading document: " + docRef.id);
     }
 }));
 /**
@@ -174,37 +215,4 @@ const firestoreTransactionWithRetries = (payload, operationTimestamp, userID, se
         }));
     }
 });
-// /**
-//  * TODO probably can use this as a function that needs to be manually triggered
-//  * @param collRef
-//  */
-// const cleanUpDeadSessions = async (collRef: admin.firestore.CollectionReference) => {
-//   const docRefArr = await collRef.listDocuments();
-//   const currentTime = (new Date).getTime();
-//
-//   docRefArr.forEach( async (docRef) => {
-//
-//     // TODO implement a retry for this document
-//     await docRef.get().then( async (doc) => {
-//       const docData = doc.data();
-//       const lastUpdated = doc.updateTime;
-//       if (docData !== undefined && docData["last_updated"] !== undefined) {
-//
-//         // For each tombstone, determine which are old enough to delete (specified by TIME_THRESHOLD)
-//         const updateArr: { [s: string]: admin.firestore.FieldValue; } = {};
-//         for (const sessionID of docData["last_updated"]) {
-//           if ((docData["sessions"] === undefined || docData["sessions"][sessionID] === undefined) &&
-//               docData["last_updated"][sessionID] + TIME_THRESHOLD < currentTime) {
-//             updateArr[`last_updated.${sessionID}`] = admin.firestore.FieldValue.delete();
-//           }
-//         }
-//
-//         // Remove the documents
-//         // TODO move out these logs
-//         console.log("Removing the following tombstones: " + JSON.stringify(updateArr));
-//         docRef.update(updateArr, {lastUpdateTime: lastUpdated});
-//       }
-//     });
-//   });
-// };
 //# sourceMappingURL=index.js.map
