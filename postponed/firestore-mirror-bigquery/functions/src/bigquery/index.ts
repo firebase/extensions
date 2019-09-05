@@ -15,9 +15,9 @@
  */
 
 import * as bigquery from "@google-cloud/bigquery";
-import {
-  firestoreToBQTable,
-} from "./schema";
+import { firestoreToBQTable } from "./schema";
+import { latestConsistentSnapshotView } from "./snapshot";
+
 import { ChangeType, FirestoreEventHistoryTracker, FirestoreDocumentChangeEvent } from "../firestoreEventHistoryTracker";
 import * as logs from "../logs";
 
@@ -25,22 +25,26 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   collectionPath: string;
   datasetId: string;
   tableName: string;
-  schemaInitialized: boolean;
+  initialized: boolean;
 }
 
 export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHistoryTracker {
   bq: bigquery.BigQuery;
-  schemaInitialized: boolean;
+  initialized: boolean;
 
   constructor(public config: FirestoreBigQueryEventHistoryTrackerConfig) {
     this.bq = new bigquery.BigQuery();
-    this.schemaInitialized = config.schemaInitialized;
+    this.initialized = config.initialized;
   }
 
   async record(events: FirestoreDocumentChangeEvent[]) {
-    if (!this.config.schemaInitialized) {
-      await this.initialize(this.config.datasetId, this.config.tableName);
-      this.schemaInitialized = true;
+    if (!this.config.initialized) {
+      try {
+        await this.initialize(this.config.datasetId, this.config.tableName);
+        this.initialized = true;
+      } catch (e) {
+        logs.bigQueryErrorRecordingDocumentChange(e);
+      }
     }
     const rows = events.map(event => {
       return this.buildDataRow(
@@ -49,7 +53,6 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
         event.operation,
         event.timestamp,
         event.name,
-        event.documentId,
         event.data);
     });
     await this.insertData(this.config.datasetId, this.config.tableName, rows);
@@ -59,35 +62,31 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
    * Ensure that the defined Firestore schema exists within BigQuery and
    * contains the correct information.
    *
-   *
    * NOTE: This currently gets executed on every cold start of the function.
    * Ideally this would run once when the mod is installed if that were
    * possible in the future.
    */
   async initialize(datasetId: string, tableName: string) {
-    logs.bigQuerySchemaInitializing();
-
     const realTableName = rawTableName(tableName);
 
     await this.initializeDataset(datasetId);
     await this.initializeTable(datasetId, realTableName);
+    await this.initializeLatestView(datasetId, realTableName);
   };
 
   buildDataRow(
     eventId: string,
     changeType: ChangeType,
     timestamp: string,
-    key: string,
-    id: string,
+    document_name: string,
     data?: Object
   ): bigquery.RowMetadata {
     return {
       timestamp,
       eventId,
-      key: key,
-      id,
+      document_name: document_name,
       operation: ChangeType[changeType],
-      data: JSON.stringify(data)
+      data: JSON.stringify(data),
     };
   };
 
@@ -137,7 +136,10 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     const dataset = this.bq.dataset(datasetId);
     let table = dataset.table(tableName);
     const [tableExists] = await table.exists();
-    if (!tableExists) {
+
+    if (tableExists) {
+      logs.bigQueryTableAlreadyExists(table.id, dataset.id);
+    } else {
       logs.bigQueryTableCreating(tableName);
       const options = {
         // `friendlyName` needs to be here to satisfy TypeScript
@@ -150,6 +152,36 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     return table;
   };
 
+  /**
+   * Create a view over a table storing a change log of Firestore documents
+   * which contains only latest version of all live documents in the mirrored
+   * collection.
+   * @param datasetId
+   * @param tableName
+   */
+  async initializeLatestView(
+    datasetId: string,
+    tableName: string
+  ): Promise<bigquery.Table> {
+    let viewName = latestViewName(tableName);
+    const dataset = this.bq.dataset(datasetId);
+    let view = dataset.table(viewName);
+    const [viewExists] = await view.exists();
+
+    if (viewExists) {
+      logs.bigQueryViewAlreadyExists(view.id, dataset.id);
+    } else {
+      logs.bigQueryViewCreating(viewName);
+      const options = {
+        friendlyName: viewName,
+        view: latestConsistentSnapshotView(datasetId, tableName)
+      };
+      await view.create(options);
+      logs.bigQueryViewCreated(viewName);
+    }
+    return view;
+  };
 }
 
 function rawTableName(tableName: string): string { return `${tableName}_raw`; };
+function latestViewName(tableName: string): string { return `${tableName}_latest`; };
