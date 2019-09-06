@@ -66,6 +66,19 @@ sessionManager.setMetadata({foo: 'bar'});
 
 The data will be automatically deleted when a session ends (i.e. when this client goes offline). And when the client reconnects, the SDK will automaticallly create a new session with the same metadata. Metadata can be changed at any time by calling `setMetadata` again.
 
+#### RTDB Security Rules
+
+Secure read/writes to RTDB with security rules. Using the document path `${param:RTDB_PATH}`, you want to copy and paste the following:
+
+```json
+"$user_uid": {
+  ".read": "auth.uid == $user_uid",
+  ".write": "auth.uid == $user_uid",
+ }
+```
+
+This will only allow admins and authenticated users whose UUID matches the document key to read/write the location.
+
 #### Cleanup
 
 To cleanup tombstones (see "Preinstall"), publish a message to the topic `${param:PUBSUB_TOPIC}` to trigger the Cloud function. This can be done [programatically](https://cloud.google.com/pubsub/docs/publisher), manually through the [Cloud Console](https://cloud.google.com/pubsub/docs/quickstart-console#publish_a_message_to_the_topic), or automatically by using [Cloud Scheduler](https://cloud.google.com/scheduler/docs/tut-pub-sub) to schedule the cleanup to run periodically. The topic is created when the extension is installed so there is no need for setup.
