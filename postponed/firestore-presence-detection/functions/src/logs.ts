@@ -24,8 +24,16 @@ export const nonFatalError = (err: Error) => {
   console.error('Non-fatal error encountered (continuing execution): ', err);
 };
 
-export const start = () => {
-  console.log('Started mod execution with config \n', config);
+export const init = () => {
+  console.log("Initializing mod with configuration", config);
+};
+
+export const startPresence = () => {
+  console.log('Started mod execution (presence) with config \n', config);
+};
+
+export const startCleanup = () => {
+  console.log('Started mod execution (cleanup) with config \n', config);
 };
 
 export const handleCreate = (sessionID: string) => {
