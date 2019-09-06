@@ -50,6 +50,12 @@
               </span>
             </li>
           </ul>
+          <ul class="mdc-list">
+            <li class="mdc-list-item sup-sign-out" tabindex="0">
+              <span class="mdc-list-item__graphic material-icons" aria-hidden="true">exit_to_app</span>
+              <span class="mdc-list-item__text sup-uid">Sign Out</span>
+            </li>
+          </ul>
         </div>
         <div class="sup-online">
           <h3 class="mdc-typography--subtitle1">Online Users</h3>
@@ -66,18 +72,17 @@
       </div>
     </div>
 
-    <!-- update the version number as needed -->
     <script src="/__/firebase/6.4.1/firebase-app.js"></script>
-    <!-- include only the Firebase features as you need -->
+    <!-- The Auth and RTDB SDKs are required for presence. -->
     <script src="/__/firebase/6.4.1/firebase-auth.js"></script>
     <script src="/__/firebase/6.4.1/firebase-database.js"></script>
+    <!-- The Firestore SDK is required for querying presence in Firestore. -->
     <script src="/__/firebase/6.4.1/firebase-firestore.js"></script>
-    <!-- initialize the SDK after all desired features are loaded -->
     <script src="/__/firebase/init.js"></script>
     <script src="https://unpkg.com/material-components-web@v3.1.1/dist/material-components-web.min.js"></script>
     <script src="/sup-view.js"></script>
 
-    <!-- Important: Include the firebase-presence JS SDK first! -->
+    <!-- Important: Include the firebase-presence JS SDK before the logic! -->
     <script src="/firebase-presence.js"></script>
     <script>
       // -------------------------------------------------------------
@@ -91,10 +96,31 @@
       // the RTDB path specified in the extension settings.
       var rtdbRef = app.database().ref('_firebase_extensions/presence');
 
-      // Start tracking presence. In the most simple case, this is all we need.
+      // Initialize the Presence SDK.
       var sessionManager = new firebasePresence.SessionManager(auth, rtdbRef);
 
-      // The presence information is then automatically sync'd to Firestore.
+      // Start by signing in with Firebase Auth.
+      // The sample app just uses Anonymous Auth, but the SDK works with any
+      // sign-in method supported by Firebase Auth.
+      auth.signInAnonymously().then(function () {
+        // Then tell sessionManager to create sessions for the user.
+        // sessionManager automatically tracks disconnection and reconnection.
+        sessionManager.goOnline();
+      });
+
+      supView.onLogoutButtonClick = function () {
+        // When the user signs out, please make sure to always properly
+        // disconnect their session first:
+        sessionManager.goOffline().then(function () {
+          // AFTER that, sign the user out from Firebase Auth.
+          // The ordering is important for things to be properly cleaned up.
+          return auth.signOut();
+        }).then(function () {
+          console.log("We're fully logged out!");
+        });
+      };
+
+      // The presence information is automatically sync'd to Firestore.
       // For example, you can query for all users that are online using:
       // (Collection name MUST be the same as specified in extension settings.)
       app.firestore().collection('presence')

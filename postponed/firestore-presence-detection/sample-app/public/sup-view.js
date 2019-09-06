@@ -75,6 +75,11 @@ window.supView = {
         }
       }
     });
-    auth.signInAnonymously();
+      var signOutButton = document.querySelector('.sup-sign-out')
+      signOutButton.addEventListener('click', function() {
+        that.onLogoutButtonClick();
+        signOutButton.parentElement.removeChild(signOutButton);
+        document.querySelector('.sup-me .sup-uid').textContent = '(Signed out. RERESH to sign back in)';
+      }, false);
   },
 };
