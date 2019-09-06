@@ -14,14 +14,12 @@ To test out this extension, follow these steps:
 
 ### Using the extension
 
-// TODO define function, location, trigger. Define RTDB location and Firestore location (nguymichael@)
-
-// TODO define how to use the extension (i.e. use the SDK). (yuchenshi@)
+// TODO define how to use the extension via SDK. (yuchenshi@)
 1. How to use `SessionManager`
 1. How to use `setMetadata`
-1. Anything else to know?
+1. How to listen for user presence
 
-// TODO define how to clean up stale connections
+To cleanup tombstones (see "Preinstall"), publish a message to the topic `${param:PUBSUB_TOPIC}` to trigger the Cloud function. This can be done [programatically](https://cloud.google.com/pubsub/docs/publisher), manually through the [Cloud Console](https://cloud.google.com/pubsub/docs/quickstart-console#publish_a_message_to_the_topic), or automatically by using [Cloud Scheduler](https://cloud.google.com/scheduler/docs/tut-pub-sub) to schedule the cleanup to run periodically. The topic is created when the extension is installed so there is no need for setup.
 
 ### Monitoring
 
