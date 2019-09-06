@@ -2,9 +2,9 @@
   "name": "presence-detection",
   "scripts": {
     "lint": "node_modules/.bin/tslint --project tsconfig.json",
-    "build": "node_modules/.bin/tsc",
+    "build": "npm run clean && npm run compile",
     "clean": "rimraf functions/lib",
-    "logs": "firebase functions:log"
+    "compile": "tsc"
   },
   "main": "functions/lib/index.js",
   "dependencies": {
@@ -12,6 +12,7 @@
     "firebase-functions": "^2.2.0"
   },
   "devDependencies": {
+    "rimraf": "^2.6.3",
     "tslint": "^5.12.0",
     "typescript": "^3.2.2"
   },
