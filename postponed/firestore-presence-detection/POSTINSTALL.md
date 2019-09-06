@@ -14,10 +14,59 @@ To test out this extension, follow these steps:
 
 ### Using the extension
 
-// TODO define how to use the extension via SDK. (yuchenshi@)
-1. How to use `SessionManager`
-1. How to use `setMetadata`
-1. How to listen for user presence
+#### Client SDK
+
+First, [download](./sample-app/public/firebase-presence.js) the JavaScript SDK and include it on the web page:
+
+```html
+    <script src="/firebase-presence.js"></script>
+```
+
+Then, initialize the Presence SDK using JavaScript after:
+
+```javascript
+  var rtdbRef = app.database().ref('${param:RTDB_PATH}');
+  var sessionManager = new firebasePresence.SessionManager(auth, rtdbRef);
+```
+
+After user sign-in, call `sessionManager.goOnline()` to start tracking presence. The code snippet below uses a Anonymous Auth, but the SDK works with any sign-in method supported by Firebase Auth. Just don't forget to call `sessionManager.goOnline()` after the sign-in logic.
+
+```javascript
+  // TODO: Replace signInAnonymously() accordingly to your app.
+  auth.signInAnonymously().then(function () {
+    // Then tell sessionManager to create sessions for the user.
+    // sessionManager automatically tracks disconnection and reconnection.
+    sessionManager.goOnline();
+  });
+```
+
+And that's it! The presence should be automatically mirrored to Firestore, under the collection `${param:FIRESTORE_PATH}`. Each document there represents the presence status of one user. The document key is the User ID.
+Users who are online will have a non-empty `sessions` field. (Note that users who never come online may not have a presence document in Firestore.)
+
+For example, to query for ALL online users, the following query can be used:
+
+```javascript
+  app.firestore().collection('${param:FIRESTORE_PATH}')
+    .where('sessions', '>', {})
+    .onSnapshot(function (snap) {
+      // Do something with snap.docs() ...
+      // Please see the sample app for more information on accessing the session details.
+    });
+```
+
+For more information, please see the [sample app](./sample-app/public/index.html), which contains detailed description on how to use the extension.
+
+#### Advanced: Track session metadata
+
+Optionally, you can also associate some metadata to the sessions via:
+
+```javascript
+sessionManager.setMetadata({foo: 'bar'});
+```
+
+The data will be automatically deleted when a session ends (i.e. when this client goes offline). And when the client reconnects, the SDK will automaticallly create a new session with the same metadata. Metadata can be changed at any time by calling `setMetadata` again.
+
+#### Cleanup
 
 To cleanup tombstones (see "Preinstall"), publish a message to the topic `${param:PUBSUB_TOPIC}` to trigger the Cloud function. This can be done [programatically](https://cloud.google.com/pubsub/docs/publisher), manually through the [Cloud Console](https://cloud.google.com/pubsub/docs/quickstart-console#publish_a_message_to_the_topic), or automatically by using [Cloud Scheduler](https://cloud.google.com/scheduler/docs/tut-pub-sub) to schedule the cleanup to run periodically. The topic is created when the extension is installed so there is no need for setup.
 
