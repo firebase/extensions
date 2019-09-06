@@ -117,7 +117,6 @@ export const cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish(asyn
     }).catch( (error) => {
       logs.error(error);
     });
-    console.log("Done reading document: " + docRef.id);
   }
 });
 
