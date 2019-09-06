@@ -22,8 +22,14 @@ exports.error = (err) => {
 exports.nonFatalError = (err) => {
     console.error('Non-fatal error encountered (continuing execution): ', err);
 };
-exports.start = () => {
-    console.log('Started mod execution with config \n', config_1.default);
+exports.init = () => {
+    console.log("Initializing mod with configuration", config_1.default);
+};
+exports.startPresence = () => {
+    console.log('Started mod execution (presence) with config \n', config_1.default);
+};
+exports.startCleanup = () => {
+    console.log('Started mod execution (cleanup) with config \n', config_1.default);
 };
 exports.handleCreate = (sessionID) => {
     console.log(`Detected new connection. Creating new path: ${sessionID}`);
