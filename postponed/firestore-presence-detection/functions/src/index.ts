@@ -144,6 +144,7 @@ const validatePayload = (payload: any): any => {
 /**
  * Returns the operation performed on the document based on the before/after
  * data snapshot
+ *
  * @param change: the before/after datasnapshot
  */
 const getChangeType = (change: functions.Change<admin.database.DataSnapshot>): ChangeType => {
@@ -158,6 +159,7 @@ const getChangeType = (change: functions.Change<admin.database.DataSnapshot>): C
 
 /**
  * Grab the User and Session ID information from the RTDB path. Assumes {userID}/sessions/{sessionID} schema
+ *
  * @param path of the function trigger
  */
 const getUserAndSessionID = (path: string) => {
