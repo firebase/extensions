@@ -1,0 +1,37 @@
+SELECT
+  *
+FROM
+  (
+    SELECT
+      document_name,
+      timestamp,
+      operation,
+      JSON_EXTRACT_SCALAR(data, '$.friends.name') AS name,
+      `test.test_dataset.json2array`(JSON_EXTRACT(data, '$.favorite_numbers')) AS favorite_numbers,
+      TIMESTAMP_SECONDS(
+        CAST(
+          JSON_EXTRACT(data, '$.last_login._seconds') AS INT64
+        ) + CAST(
+          CAST(
+            JSON_EXTRACT(data, '$.last_login._nanoseconds') AS INT64
+          ) / 1E9 AS INT64
+        )
+      ) AS last_login,
+      ST_GEOGPOINT(
+        CAST(
+          JSON_EXTRACT(data, '$.last_location._latitude') AS NUMERIC
+        ),
+        CAST(
+          JSON_EXTRACT(data, '$.last_location._longitude') AS NUMERIC
+        )
+      ) AS last_location,
+      CAST(
+        JSON_EXTRACT(data, '$.last_location._latitude') AS NUMERIC
+      ) AS last_location_latitude,
+      CAST(
+        JSON_EXTRACT(data, '$.last_location._longitude') AS NUMERIC
+      ) AS last_location_longitude
+    FROM
+      `test.test_dataset.test_table`
+  ) test_table
+CROSS JOIN UNNEST(test_table.favorite_numbers) AS favorite_numbers_member WITH OFFSET favorite_numbers_index

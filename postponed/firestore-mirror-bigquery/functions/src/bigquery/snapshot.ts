@@ -17,7 +17,15 @@
 import * as sqlFormatter from "sql-formatter";
 
 import * as logs from "../logs";
-import * as schema from "./schema";
+import {
+  firestoreToBQTable,
+  processFirestoreSchema,
+  subSelectQuery,
+  timestampField,
+} from "./schema";
+
+import { FirestoreSchema } from "../firestore/index";
+
 
 const excludeFields: string[] = [
   "document_name",
@@ -27,8 +35,8 @@ export const latestConsistentSnapshotView = (
   datasetId: string,
   tableName: string,
 ) => ({
-  query: buildLatestSnapshotViewQuery(datasetId, tableName, schema.timestampField.name,
-    schema.firestoreToBQTable()
+  query: buildLatestSnapshotViewQuery(datasetId, tableName, timestampField.name,
+    firestoreToBQTable()
       .map(field => field.name)
       .filter(name => excludeFields.indexOf(name) == -1)),
   useLegacySql: false,
@@ -49,8 +57,7 @@ export function buildLatestSnapshotViewQuery(
     }
   }
   const query = sqlFormatter.format(
-    `
-    -- Retrieves the latest document change events for all live documents.
+    ` -- Retrieves the latest document change events for all live documents.
     --   timestamp: The Firestore timestamp at which the event took place.
     --   operation: One of INSERT, UPDATE, DELETE, IMPORT.
     --   eventId: The id of the event that triggered the cloud function mirrored the event.
@@ -74,6 +81,96 @@ export function buildLatestSnapshotViewQuery(
      WHERE NOT is_deleted
      GROUP BY document_name${groupByColumns.length > 0 ? `, `: ``}${groupByColumns.join(",")}`
   );
-  logs.bigQueryLatestSnapshotViewQueryCreated(query);
+  return query;
+}
+
+/**
+ * Given a view created with `userSchemaView` above, this function generates a
+ * query that returns the latest set of live documents according to that schema.
+ */
+export const latestConsistentSnapshotSchemaView = (
+  datasetId: string,
+  rawTableName: string,
+  schema: FirestoreSchema,
+) => ({
+  query: buildLatestSchemaSnapshotViewQuery(datasetId, rawTableName, schema),
+  useLegacySql: false,
+});
+
+export const buildLatestSchemaSnapshotViewQuery = (
+  datasetId: string,
+  rawTableName: string,
+  schema: FirestoreSchema
+): string => {
+  const firstValue = (selector: string) => {
+    return `FIRST_VALUE(${selector}) OVER(PARTITION BY document_name ORDER BY timestamp DESC)`;
+  };
+  // We need to pass the dataset id into the parser so that we can call the
+  // fully qualified json2array persistent user-defined function in the proper
+  // scope.
+  const [schemaFieldExtractors, schemaFieldArrays, schemaFieldGeopoints] = processFirestoreSchema(datasetId, "data", schema, firstValue);
+  const fieldNameSelectorClauses = Object.keys(schemaFieldExtractors).join(', ');
+  const fieldValueSelectorClauses = Object.values(schemaFieldExtractors).join(', ');
+  const schemaHasArrays = schemaFieldArrays.length > 0;
+  const schemaHasGeopoints = schemaFieldGeopoints.length > 0;
+  let query = `
+      SELECT
+        document_name,
+        timestamp,
+        operation${fieldNameSelectorClauses.length > 0 ? `,` : ``}
+        ${fieldNameSelectorClauses}
+      FROM (
+        SELECT
+          document_name,
+          ${firstValue(`timestamp`)} AS timestamp,
+          ${firstValue(`operation`)} AS operation,
+          ${firstValue(`operation`)} = "DELETE" AS is_deleted${fieldValueSelectorClauses.length > 0 ? `,`: ``}
+          ${fieldValueSelectorClauses}
+        FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawTableName}\`
+      )
+      WHERE NOT is_deleted
+  `;
+  const groupableExtractors = Object.keys(schemaFieldExtractors).filter(
+    name => schemaFieldArrays.indexOf(name) == -1 && schemaFieldGeopoints.indexOf(name) == -1);
+  const hasNonGroupableFields = schemaHasArrays || schemaHasGeopoints;
+  // BigQuery doesn't support grouping by array fields or geopoints.
+  const groupBy = `
+    GROUP BY
+      document_name,
+      timestamp,
+      operation${groupableExtractors.length > 0 ? `,`: ``}
+      ${groupableExtractors.length > 0 ? `${groupableExtractors.join(`, `)}` : ``}
+  `;
+  if (hasNonGroupableFields) {
+      query = `
+        ${subSelectQuery(query, /*except=*/schemaFieldArrays.concat(schemaFieldGeopoints))}
+        ${rawTableName}
+        ${schemaFieldArrays.map(arrayFieldName =>
+          `CROSS JOIN UNNEST(${rawTableName}.${arrayFieldName})
+            AS ${arrayFieldName}_member
+            WITH OFFSET ${arrayFieldName}_index`).join(' ')}
+      `;
+      query = `
+        ${query}
+        ${groupBy}
+        ${schemaHasArrays ? `, ${schemaFieldArrays.map(name => `${name}_index, ${name}_member`).join(', ')}`: ``}
+        ${schemaHasGeopoints ? `, ${schemaFieldGeopoints.map(name => `${name}_latitude, ${name}_longitude`).join(', ')}`: ``}
+      `;
+  } else {
+    query = `
+      ${query}
+      ${groupBy}
+    `;
+  }
+  query = sqlFormatter.format(`
+    -- Given a user-defined schema over a raw JSON changelog, returns the
+    -- schema elements of the latest set of live documents in the collection.
+    --   timestamp: The Firestore timestamp at which the event took place.
+    --   operation: One of INSERT, UPDATE, DELETE, IMPORT.
+    --   eventId: The event that wrote this row.
+    --   <schema-fields>: This can be one, many, or no typed-columns
+    --                    corresponding to fields defined in the schema.
+    ${query}
+  `);
   return query;
 }
