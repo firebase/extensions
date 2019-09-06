@@ -38,11 +38,11 @@ contributors:
 
 apis:
   - apiName: bigquery-json.googleapis.com
-    reason: This mod uses BigQuery to mirror data from your Firestore collection
+    reason: This extension uses BigQuery to mirror data from your Firestore collection
 
 roles:
   - role: bigquery.dataEditor
-    reason: To allow the mod to configure and insert data into BigQuery
+    reason: To allow the extension to configure and insert data into BigQuery
 
 resources:
   - name: fsmirrorbigquery
@@ -62,7 +62,7 @@ params:
     type: select
     label: Deployment Location
     description: >-
-      Where should the mod be deployed? Pick a location that is close to your
+      Where should the extension be deployed? Pick a location that is close to your
       Firestore database. See
       https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
     options:
@@ -88,8 +88,8 @@ params:
     label: Collection Path
     description: >-
       What is the path of the the collection you would like to mirror?
-    default: mods
-    example: mods
+    default: extension 
+    example: extension
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore Collection
     required: true
@@ -99,25 +99,25 @@ params:
     label: Dataset ID
     description: >-
       What is the ID of the BigQuery dataset that you would like to use? (The
-      mod will create the dataset if it doesn't already exist)
+      extension will create the dataset if it doesn't already exist)
     validationRegex: ^[a-zA-Z0-9_]+$
     validationErrorMessage: >
       Dataset IDs must be alphanumeric (plus underscores) and must be at most
       1024 characters long.
-    default: mods
-    example: mods
+    default: extensions
+    example: extensions
     required: true
 
   - param: TABLE_NAME
     type: string
     label: Table ID
     description: >-
-      What is the ID of the BigQuery table that you would like to use? (The mod
+      What is the ID of the BigQuery table that you would like to use? (The extension
       will create the table if it doesn't already exist)
     validationRegex: ^[a-zA-Z0-9_]+$
     validationErrorMessage: >
       Table IDs must be alphanumeric (plus underscores) and must be at most 1024
       characters long.
-    default: mods
-    example: mods
+    default: extensions
+    example: extensions
     required: true

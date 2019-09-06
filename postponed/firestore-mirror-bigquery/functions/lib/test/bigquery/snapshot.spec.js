@@ -13,7 +13,7 @@ const chai = require("chai");
 const fs = require("fs");
 const sqlFormatter = require("sql-formatter");
 const util = require("util");
-const schema_1 = require("../../bigquery/schema");
+const snapshot_1 = require("../../bigquery/snapshot");
 const fixturesDir = __dirname + "/../fixtures";
 const sqlDir = fixturesDir + "/sql";
 const schemaDir = fixturesDir + "/schemas";
@@ -34,15 +34,33 @@ function readBigQuerySchema(file) {
         return require(file);
     });
 }
+describe("latest snapshot view sql generation", () => {
+    it("should generate the epxected sql", () => __awaiter(void 0, void 0, void 0, function* () {
+        const expectedQuery = yield readFormattedSQL(`${sqlDir}/latestConsistentSnapshot.txt`);
+        const query = snapshot_1.buildLatestSnapshotViewQuery(testDataset, testTable, "timestamp", ["timestamp", "eventId", "operation", "data"]);
+        expect(query).to.equal(expectedQuery);
+    }));
+    it("should generate correct sql with no groupBy columns", () => __awaiter(void 0, void 0, void 0, function* () {
+        const expectedQuery = yield readFormattedSQL(`${sqlDir}/latestConsistentSnapshotNoGroupBy.txt`);
+        const query = snapshot_1.buildLatestSnapshotViewQuery(testDataset, testTable, "timestamp", []);
+        expect(query).to.equal(expectedQuery);
+    }));
+    it("should throw an error for empty group by columns", () => __awaiter(void 0, void 0, void 0, function* () {
+        expect(snapshot_1.buildLatestSnapshotViewQuery.bind(testDataset, testTable, "timestamp", [""])).to.throw();
+    }));
+    it("should throw an error for empty timestamp field", () => __awaiter(void 0, void 0, void 0, function* () {
+        expect(snapshot_1.buildLatestSnapshotViewQuery.bind(null, testDataset, testTable, "", [])).to.throw();
+    }));
+});
 describe("schema snapshot view sql generation", () => {
     it("should generate the expected sql", () => __awaiter(void 0, void 0, void 0, function* () {
-        const expectedQuery = yield readFormattedSQL(`${sqlDir}/fullSchemaChangeLog.txt`);
-        const query = schema_1.buildSchemaViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/fullSchema.json`));
+        const expectedQuery = yield readFormattedSQL(`${sqlDir}/fullSchemaLatest.txt`);
+        const query = snapshot_1.buildLatestSchemaSnapshotViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/fullSchema.json`));
         expect(query).to.equal(expectedQuery);
     }));
     it("should generate the expected sql for an empty schema", () => __awaiter(void 0, void 0, void 0, function* () {
-        const expectedQuery = yield readFormattedSQL(`${sqlDir}/emptySchemaChangeLog.txt`);
-        const query = schema_1.buildSchemaViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/emptySchema.json`));
+        const expectedQuery = yield readFormattedSQL(`${sqlDir}/emptySchemaLatest.txt`);
+        const query = snapshot_1.buildLatestSchemaSnapshotViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/emptySchema.json`));
         expect(query).to.equal(expectedQuery);
     }));
 });

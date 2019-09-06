@@ -15,11 +15,17 @@
  */
 
 import * as bigquery from "@google-cloud/bigquery";
-import { firestoreToBQTable } from "./schema";
-import { latestConsistentSnapshotView } from "./snapshot";
+import {
+  firestoreToBQTable,
+  jsonToArrayFunction,
+  userSchemaView,
+} from "./schema";
+import { FirestoreSchema } from "../firestore/index";
+import { latestConsistentSnapshotView, latestConsistentSnapshotSchemaView } from "./snapshot";
 
 import { ChangeType, FirestoreEventHistoryTracker, FirestoreDocumentChangeEvent } from "../firestoreEventHistoryTracker";
 import * as logs from "../logs";
+import { BigQuery } from "@google-cloud/bigquery";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   collectionPath: string;
@@ -67,11 +73,11 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
    * possible in the future.
    */
   async initialize(datasetId: string, tableName: string) {
-    const realTableName = rawTableName(tableName);
+    const rawTable = rawTableName(tableName);
 
     await this.initializeDataset(datasetId);
-    await this.initializeTable(datasetId, realTableName);
-    await this.initializeLatestView(datasetId, realTableName);
+    await this.initializeTable(datasetId, rawTable);
+    await this.initializeLatestView(datasetId, rawTable);
   };
 
   buildDataRow(
@@ -183,5 +189,5 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
   };
 }
 
-function rawTableName(tableName: string): string { return `${tableName}_raw`; };
-function latestViewName(tableName: string): string { return `${tableName}_latest`; };
+export function rawTableName(tableName: string): string { return `${tableName}_raw`; };
+export function latestViewName(tableName: string): string { return `${tableName}_latest`; };

@@ -51,7 +51,6 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
             case firestoreEventHistoryTracker_1.ChangeType.INSERT:
                 operation = "INSERT";
                 snapshot = change.after;
-                data = firestore_1.extractSnapshotData(snapshot, fields);
                 defaultTimestamp = snapshot.createTime
                     ? snapshot.createTime.toDate().toISOString()
                     : context.timestamp;

@@ -3,10 +3,11 @@ import * as fs from "fs";
 import * as sqlFormatter from "sql-formatter";
 import * as util from "util";
 
-import { buildLatestSnapshotViewQuery } from "../../bigquery/snapshot";
+import { buildSchemaViewQuery } from "../../bigquery/schema";
 
 const fixturesDir = __dirname + "/../fixtures";
 const sqlDir = fixturesDir + "/sql";
+const schemaDir = fixturesDir + "/schemas";
 
 const testProjectId = "test";
 const testDataset = "test_dataset";
@@ -22,21 +23,19 @@ async function readFormattedSQL(file: string): Promise<string> {
   return sqlFormatter.format(query);
 }
 
-describe("simple raw changelog schema generation", () => {
-  it("should generate the epxected sql", async () => {
-    const expectedQuery = await readFormattedSQL(`${sqlDir}/latestConsistentSnapshot.txt`);
-    const query = buildLatestSnapshotViewQuery(testDataset, testTable, "timestamp", ["timestamp", "eventId", "operation", "data"]);
+async function readBigQuerySchema(file: string): Promise<any> {
+  return require(file);
+}
+
+describe("schema snapshot view sql generation", () => {
+  it("should generate the expected sql", async () => {
+    const expectedQuery = await readFormattedSQL(`${sqlDir}/fullSchemaChangeLog.txt`);
+    const query = buildSchemaViewQuery(testDataset, testTable, await readBigQuerySchema(`${schemaDir}/fullSchema.json`));
     expect(query).to.equal(expectedQuery);
   });
-  it("should generate correct sql with no groupBy columns", async () => {
-    const expectedQuery = await readFormattedSQL(`${sqlDir}/latestConsistentSnapshotNoGroupBy.txt`);
-    const query = buildLatestSnapshotViewQuery(testDataset, testTable, "timestamp", []);
+  it("should generate the expected sql for an empty schema", async () => {
+    const expectedQuery = await readFormattedSQL(`${sqlDir}/emptySchemaChangeLog.txt`);
+    const query = buildSchemaViewQuery(testDataset, testTable, await readBigQuerySchema(`${schemaDir}/emptySchema.json`));
     expect(query).to.equal(expectedQuery);
-  });
-  it("should throw an error for empty group by columns", async () => {
-    expect(buildLatestSnapshotViewQuery.bind(testDataset, testTable, "timestamp", [""])).to.throw();
-  });
-  it("should throw an error for empty timestamp field", async () => {
-    expect(buildLatestSnapshotViewQuery.bind(null, testDataset, testTable, "", [])).to.throw();
   });
 });

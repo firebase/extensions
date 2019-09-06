@@ -64,10 +64,10 @@ class FirestoreBigQueryEventHistoryTracker {
      */
     initialize(datasetId, tableName) {
         return __awaiter(this, void 0, void 0, function* () {
-            const realTableName = rawTableName(tableName);
+            const rawTable = rawTableName(tableName);
             yield this.initializeDataset(datasetId);
-            yield this.initializeTable(datasetId, realTableName);
-            yield this.initializeLatestView(datasetId, realTableName);
+            yield this.initializeTable(datasetId, rawTable);
+            yield this.initializeLatestView(datasetId, rawTable);
         });
     }
     ;
@@ -174,6 +174,8 @@ class FirestoreBigQueryEventHistoryTracker {
 }
 exports.FirestoreBigQueryEventHistoryTracker = FirestoreBigQueryEventHistoryTracker;
 function rawTableName(tableName) { return `${tableName}_raw`; }
+exports.rawTableName = rawTableName;
 ;
 function latestViewName(tableName) { return `${tableName}_latest`; }
+exports.latestViewName = latestViewName;
 ;

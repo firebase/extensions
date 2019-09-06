@@ -23,10 +23,10 @@ import * as logs from "../logs";
 export type FirestoreFieldType =
   | "boolean"
   | "geopoint"
-  | "json"
   | "number"
   | "map"
-  | "reference"
+  | "array"
+  | "null"
   | "string"
   | "timestamp";
 
@@ -43,13 +43,16 @@ export type FirestoreSchema = {
   timestampField?: string;
 };
 
+/*
 type FieldProcessor = (fieldValue: any, fields?: FirestoreField[]) => any;
 type FieldValidator = (fieldValue: any) => boolean;
+*/
 
 /**
  * Map of field processors that convert from a Firestore value into a
  * BigQuery compatible value.
  */
+/*
 const processors: { [K in FirestoreFieldType]: FieldProcessor } = {
   boolean: (v: boolean) => v,
   geopoint: (v: firebase.firestore.GeoPoint) => ({
@@ -62,12 +65,13 @@ const processors: { [K in FirestoreFieldType]: FieldProcessor } = {
   reference: (v: firebase.firestore.DocumentReference) => v.path,
   string: (v: string) => v,
   timestamp: (v: firebase.firestore.Timestamp) => v.seconds,
-};
+};*/
 
 /**
  * Map of field validators that ensure the data matches the type specified
  * in the schema definition.
  */
+/*
 const validators: { [K in FirestoreFieldType]: FieldValidator } = {
   boolean: _.isBoolean,
   geopoint: (v) => v instanceof firebase.firestore.GeoPoint,
@@ -77,7 +81,7 @@ const validators: { [K in FirestoreFieldType]: FieldValidator } = {
   reference: (v) => v instanceof firebase.firestore.DocumentReference,
   string: _.isString,
   timestamp: (v) => v instanceof firebase.firestore.Timestamp,
-};
+};*/
 
 /**
  * Extract the DocumentSnapshot data that matches the fields specified in the
@@ -93,6 +97,7 @@ export const extractSnapshotData = (
 /**
  * Extract the Object data that matches the fields specifed in the schema.
  */
+/*
 const processData = (snapshotData: Object, fields: FirestoreField[]) => {
   const data = {};
   fields.forEach((field) => {
@@ -121,11 +126,13 @@ const processData = (snapshotData: Object, fields: FirestoreField[]) => {
   });
   return data;
 };
+*/
 
 /**
  * Extract the field data, ensure that it conforms to the specified Schema and
  * convert it into a Javascript primitive, Array or Object data type.
  */
+/*
 const processField = (field: FirestoreField, fieldValue: any): any => {
   const { type } = field;
   const process = processors[type];
@@ -146,3 +153,4 @@ const processField = (field: FirestoreField, fieldValue: any): any => {
     logs.dataTypeInvalid(field.name, field.type, typeof fieldValue);
   }
 };
+*/
