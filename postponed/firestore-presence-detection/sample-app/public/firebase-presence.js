@@ -39,7 +39,7 @@
         // allow a user to change their own sessions. Since they're already
         // logged out at this point, they won't have permission to even delete
         // the session. The session will then stay until network disconnection.
-        session.end()
+        session.end();
         session = null;
       }
       user = newUser;
@@ -56,7 +56,7 @@
 
     function onSessionError(err) {
       console.warn('Error updating presence', err);
-      session.end()
+      session.end();
       session = null;
       setTimeout(createSessionIfNeeded, 1000);
     }
