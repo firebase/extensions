@@ -1,4 +1,19 @@
 "use strict";
+/*
+ * Copyright 2019 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -13,7 +28,7 @@ const functions = require("firebase-functions");
 const config_1 = require("./config");
 const logs = require("./logs");
 admin.initializeApp();
-const TIME_THRESHOLD = 7 * 24 * 60 * 60 * 1000; // Defined in milliseconds
+const TIME_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
 var ChangeType;
 (function (ChangeType) {
     ChangeType[ChangeType["CREATE"] = 0] = "CREATE";
@@ -56,12 +71,16 @@ exports.writeToFirestore = functions.handler.database.ref.onWrite((change, conte
     }
 }));
 /**
- * TODO this should be pessimistic transaction
- * TODO maybe do something with message and context
+ * TODO design review
+ *
+ * Use pessimistic transactions to clean up old tombstones whose timestamp is older
+ * than TIME_THRESHOLD and is not currently online.
+ *
+ * The function is triggered when any message is triggered to the topic.
  *
  * @param userID: reference
  */
-exports.cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish((message, context) => __awaiter(this, void 0, void 0, function* () {
+exports.cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish(() => __awaiter(this, void 0, void 0, function* () {
     if (config_1.default.firestore_path === undefined) {
         throw new Error('Undefined firestore path');
     }
@@ -69,7 +88,7 @@ exports.cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish((message,
     const currentTime = (new Date).getTime();
     for (const docRef of docRefArr) {
         // Run pessimistic transaction on each user document to remove tombstones
-        console.log("Reading Document: " + docRef.id);
+        logs.currentDocument(docRef.id);
         yield admin.firestore().runTransaction((transaction) => __awaiter(this, void 0, void 0, function* () {
             yield transaction.get(docRef).then((doc) => __awaiter(this, void 0, void 0, function* () {
                 const docData = doc.data();
@@ -79,13 +98,13 @@ exports.cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish((message,
                     const updateArr = {};
                     for (const sessionID of Object.keys(docData["last_updated"])) {
                         if ((docData["sessions"] === undefined || docData["sessions"][sessionID] === undefined) &&
-                            docData["last_updated"][sessionID] + TIME_THRESHOLD < currentTime) {
+                            docData["last_updated"][sessionID] + TIME_THRESHOLD_MS < currentTime) {
                             updateArr[`last_updated.${sessionID}`] = admin.firestore.FieldValue.delete();
                         }
                     }
                     // Remove the documents if applicable
                     if (Object.keys(updateArr).length > 0) {
-                        logs.logTombstoneRemoval(Object.keys(updateArr));
+                        logs.tombstoneRemoval(Object.keys(updateArr));
                         yield transaction.update(docRef, updateArr);
                     }
                 }
@@ -124,7 +143,7 @@ const getUserAndSessionID = (path) => {
         'userID': strArr[strArr.length - 3],
         'sessionID': strArr[strArr.length - 1],
     };
-    logs.getSessionInfo(data['sessionID'], data['userID']);
+    logs.sessionInfo(data['sessionID'], data['userID']);
     return data;
 };
 /**
@@ -169,7 +188,7 @@ const firestoreTransaction = (docRef, payload, operationTimestamp, userID, sessi
             // Refuse to write the operation if the timestamp is earlier than the latest update
             if ((payload instanceof admin.firestore.FieldValue && currentTimestamp > operationTimestamp) &&
                 (currentTimestamp >= operationTimestamp)) {
-                logs.logStaleTimestamp(currentTimestamp, operationTimestamp, userID, sessionID);
+                logs.staleTimestamp(currentTimestamp, operationTimestamp, userID, sessionID);
                 return;
             }
         }
@@ -179,7 +198,7 @@ const firestoreTransaction = (docRef, payload, operationTimestamp, userID, sessi
             [`last_updated.${sessionID}`]: operationTimestamp,
         };
         return docRef.update(firestorePayload, { lastUpdateTime: lastUpdated }).then((result) => {
-            logs.logFirestoreUpsert(firestorePayload);
+            logs.successfulFirestoreTransaction(firestorePayload);
         });
     }));
 });
@@ -211,7 +230,7 @@ const firestoreTransactionWithRetries = (payload, operationTimestamp, userID, se
         yield firestoreTransaction(admin.firestore().collection(config_1.default.firestore_path).doc(userID), payload, operationTimestamp, userID, sessionID).then(() => {
             isSuccessful = true;
         }).catch((error) => __awaiter(this, void 0, void 0, function* () {
-            logs.logRetry(error);
+            logs.retry(error);
         }));
     }
 });
