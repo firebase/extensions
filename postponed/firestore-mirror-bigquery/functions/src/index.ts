@@ -54,6 +54,7 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
         case ChangeType.INSERT:
           operation = "INSERT";
           snapshot = change.after;
+          data = extractSnapshotData(snapshot, fields);
           defaultTimestamp = snapshot.createTime
             ? snapshot.createTime.toDate().toISOString()
             : context.timestamp;
@@ -61,7 +62,6 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
         case ChangeType.DELETE:
           operation = "DELETE";
           snapshot = change.before;
-          data = extractSnapshotData(snapshot, fields);
           defaultTimestamp = context.timestamp;
           break;
         case ChangeType.UPDATE:
