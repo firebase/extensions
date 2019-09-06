@@ -29,6 +29,8 @@ enum ChangeType {
   UPDATE,
 }
 
+logs.init();
+
 /**
  * Handler that listens to the document in RTDB containing user/session
  * information. The function calls the correct handler (upserts/deletes).
@@ -37,7 +39,7 @@ enum ChangeType {
  */
 export const writeToFirestore =
     functions.handler.database.ref.onWrite(async (change, context) => {
-      logs.start();
+      logs.startPresence();
       try {
         const changeType = getChangeType(change);
         const userInfo = getUserAndSessionID(context.resource.name);
@@ -77,6 +79,7 @@ export const writeToFirestore =
  * @param userID: reference
  */
 export const cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish(async () => {
+  logs.startCleanup();
 
   if (config.firestore_path === undefined) {
     throw new Error('Undefined firestore path');
