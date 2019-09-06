@@ -114,7 +114,6 @@ exports.cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish(() => __a
         })).catch((error) => {
             logs.error(error);
         });
-        console.log("Done reading document: " + docRef.id);
     }
 }));
 /**
@@ -141,6 +140,7 @@ const validatePayload = (payload) => {
 /**
  * Returns the operation performed on the document based on the before/after
  * data snapshot
+ *
  * @param change: the before/after datasnapshot
  */
 const getChangeType = (change) => {
@@ -154,6 +154,7 @@ const getChangeType = (change) => {
 };
 /**
  * Grab the User and Session ID information from the RTDB path. Assumes {userID}/sessions/{sessionID} schema
+ *
  * @param path of the function trigger
  */
 const getUserAndSessionID = (path) => {
