@@ -44,7 +44,7 @@ export const writeToFirestore =
         const changeType = getChangeType(change);
         const userInfo = getUserAndSessionID(context.resource.name);
         const operationTimestamp = Date.parse(context.timestamp);
-        const payload = JSON.parse(JSON.stringify(change.after.val()));
+        const payload = validatePayload(change.after.val());
 
         switch (changeType) {
           case ChangeType.CREATE:
@@ -120,6 +120,26 @@ export const cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish(asyn
     console.log("Done reading document: " + docRef.id);
   }
 });
+
+/**
+ * validatePayload recursively iterates through the payload to prepare it for
+ * Firestore. The main purpose is to convert all arrays to objects and undefined to null.
+ *
+ * @param payload: any arbitrary object
+ */
+const validatePayload = (payload: any): any => {
+  if (payload === undefined || payload === null) {
+    return null;
+  } else if (typeof payload === 'object') {
+    const validPayload: {[s: string]: object} = {};
+    for (const key of Object.keys(payload)) {
+      validPayload[key] = validatePayload(payload[key]);
+    }
+    return validPayload;
+  } else {
+    return payload;
+  }
+};
 
 /**
  * Returns the operation performed on the document based on the before/after

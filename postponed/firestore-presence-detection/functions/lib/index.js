@@ -35,6 +35,7 @@ var ChangeType;
     ChangeType[ChangeType["DELETE"] = 1] = "DELETE";
     ChangeType[ChangeType["UPDATE"] = 2] = "UPDATE";
 })(ChangeType || (ChangeType = {}));
+logs.init();
 /**
  * Handler that listens to the document in RTDB containing user/session
  * information. The function calls the correct handler (upserts/deletes).
@@ -42,12 +43,12 @@ var ChangeType;
  * The mod does not handle stale session deletes
  */
 exports.writeToFirestore = functions.handler.database.ref.onWrite((change, context) => __awaiter(this, void 0, void 0, function* () {
-    logs.start();
+    logs.startPresence();
     try {
         const changeType = getChangeType(change);
         const userInfo = getUserAndSessionID(context.resource.name);
         const operationTimestamp = Date.parse(context.timestamp);
-        const payload = JSON.parse(JSON.stringify(change.after.val()));
+        const payload = validatePayload(change.after.val());
         switch (changeType) {
             case ChangeType.CREATE:
                 logs.handleCreate(userInfo['sessionID']);
@@ -81,6 +82,7 @@ exports.writeToFirestore = functions.handler.database.ref.onWrite((change, conte
  * @param userID: reference
  */
 exports.cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish(() => __awaiter(this, void 0, void 0, function* () {
+    logs.startCleanup();
     if (config_1.default.firestore_path === undefined) {
         throw new Error('Undefined firestore path');
     }
@@ -115,6 +117,27 @@ exports.cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish(() => __a
         console.log("Done reading document: " + docRef.id);
     }
 }));
+/**
+ * validatePayload recursively iterates through the payload to prepare it for
+ * Firestore. The main purpose is to convert all arrays to objects and undefined to null.
+ *
+ * @param payload: any arbitrary object
+ */
+const validatePayload = (payload) => {
+    if (payload === undefined || payload === null) {
+        return null;
+    }
+    else if (typeof payload === 'object') {
+        const validPayload = {};
+        for (const key of Object.keys(payload)) {
+            validPayload[key] = validatePayload(payload[key]);
+        }
+        return validPayload;
+    }
+    else {
+        return payload;
+    }
+};
 /**
  * Returns the operation performed on the document based on the before/after
  * data snapshot
