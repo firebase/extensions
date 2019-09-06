@@ -11,6 +11,7 @@
     var databaseConnected = false;
     var user = null;
     var session = null;
+    var forceOffline = true;
 
     this.setMetadata = function (newMetadata) {
       if (newMetadata != null) {
@@ -21,6 +22,23 @@
       }
       if (session) {
         session.updateMetadata(metadata);
+      }
+    };
+
+    this.goOnline = function () {
+      forceOffline = false;
+      createSessionIfNeeded();
+      return Promise.resolve();
+    };
+
+    this.goOffline = function () {
+      forceOffline = true;
+      if (session) {
+        var promise = session.end();
+        session = null;
+        return promise;
+      } else {
+        return Promise.resolve();
       }
     };
 
@@ -35,11 +53,8 @@
 
     auth.onAuthStateChanged(function (newUser) {
       if (session && (!newUser || newUser.uid !== user.uid)) {
-        // TODO: This will stop working if we add RTDB security rules to only
-        // allow a user to change their own sessions. Since they're already
-        // logged out at this point, they won't have permission to even delete
-        // the session. The session will then stay until network disconnection.
-        session.end();
+        // Don't bother ending the session here since the client is no longer
+        // authenticated to RTDB as the original user. Writes would be denied.
         session = null;
       }
       user = newUser;
@@ -47,7 +62,7 @@
     });
 
     function createSessionIfNeeded() {
-      if (!session && databaseConnected && user) {
+      if (!session && !forceOffline && databaseConnected && user) {
         var sessionId = randomId();
         var sessionRef = ref.child(user.uid).child('sessions').child(sessionId);
         session = new Session(sessionRef, metadata, onSessionError);
