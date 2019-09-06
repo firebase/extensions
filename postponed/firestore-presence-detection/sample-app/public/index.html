@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sup!</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/reset-css@4.0.1/reset.css" media="all">
+    <link rel="stylesheet" href="https://unpkg.com/material-components-web@v3.1.1/dist/material-components-web.min.css" media="all">
+    <style>
+      .sup-layout { overflow: hidden; }
+      .sup-header { position: relative; text-align: center }
+
+      .sup-sup { display: inline-block; }
+      .sup-ack { display: block; position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity linear 1s; }
+      .sup-supd .sup-sup { animation: 1s linear 0s infinite alternate supd; }
+      .sup-supd .sup-ack { opacity: 1; }
+
+      .sup-main { margin: 1em 1em; }
+      .sup-sentiment, .sup-session { margin-right: 0; }
+      .sup-me .mdc-list-item__meta, .sup-online .mdc-list-item__meta { white-space: nowrap; }
+      .sup-sentiment-active { color: #66BB6A; }
+
+      @keyframes supd {
+        from { color: black; transform: scale(1); }
+        to { color: red; transform: translateY(200%) rotate(-30deg) scale(3); }
+      }
+    </style>
+
+  </head>
+  <body>
+    <div class="sup-layout">
+      <header class="sup-header">
+        <div class="sup-ack mdc-ripple-surface" title="ACK!" data-mdc-auto-init="MDCRipple"></div>
+        <h1 class="mdc-typography--headline1"><span class="sup-sup">SUP!</span></h1>
+      </header>
+      <div class="sup-main">
+        <div class="sup-me">
+          <h3 class="mdc-typography--subtitle1">Me</h3>
+          <ul class="mdc-list mdc-list--non-interactive">
+            <li class="mdc-list-item" tabindex="0">
+              <span class="mdc-list-item__graphic material-icons" aria-hidden="true">person</span>
+              <span class="mdc-list-item__text sup-uid">...</span>
+              <span class="mdc-list-item__meta">
+                <button class="sup-sentiment mdc-icon-button material-icons" data-mdc-auto-init="MDCRipple" data-mdc-ripple-is-unbounded>sentiment_very_dissatisfied</button>
+                <button class="sup-sentiment sup-sentiment-active mdc-icon-button material-icons" data-mdc-auto-init="MDCRipple" data-mdc-ripple-is-unbounded>sentiment_satisfied_alt</button>
+                <button class="sup-sentiment mdc-icon-button material-icons" data-mdc-auto-init="MDCRipple" data-mdc-ripple-is-unbounded>sentiment_very_satisfied</button>
+              </span>
+            </li>
+          </ul>
+        </div>
+        <div class="sup-online">
+          <h3 class="mdc-typography--subtitle1">Online Users</h3>
+          <ul class="mdc-list">
+            <li class="mdc-list-item" tabindex="0">
+              <span class="mdc-list-item__graphic material-icons" aria-hidden="true">person</span>
+              <span class="mdc-list-item__text sup-uid">Loading...</span>
+              <span class="sup-sessions mdc-list-item__meta">
+                <span class="sup-session mdc-list-item__graphic material-icons" aria-hidden="true">sentiment_satisfied_alt</span>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- update the version number as needed -->
+    <script src="/__/firebase/6.4.1/firebase-app.js"></script>
+    <!-- include only the Firebase features as you need -->
+    <script src="/__/firebase/6.4.1/firebase-auth.js"></script>
+    <script src="/__/firebase/6.4.1/firebase-database.js"></script>
+    <script src="/__/firebase/6.4.1/firebase-firestore.js"></script>
+    <!-- initialize the SDK after all desired features are loaded -->
+    <script src="/__/firebase/init.js"></script>
+    <script src="https://unpkg.com/material-components-web@v3.1.1/dist/material-components-web.min.js"></script>
+    <script src="/sup-view.js"></script>
+
+    <!-- Important: Include the firebase-presence JS SDK first! -->
+    <script src="/firebase-presence.js"></script>
+    <script>
+      // -------------------------------------------------------------
+      // Basic Usage
+      // -------------------------------------------------------------
+
+      var app = firebase.app();
+      var auth = app.auth();
+
+      // The RTDB path where the presence is stored. This MUST be the same as
+      // the RTDB path specified in the extension settings.
+      var rtdbRef = app.database().ref('_firebase_extensions/presence');
+
+      // Start tracking presence. In the most simple case, this is all we need.
+      var sessionManager = new firebasePresence.SessionManager(auth, rtdbRef);
+
+      // The presence information is then automatically sync'd to Firestore.
+      // For example, you can query for all users that are online using:
+      // (Collection name MUST be the same as specified in extension settings.)
+      app.firestore().collection('presence')
+        .where('sessions', '>', {})
+        .onSnapshot(function (snap) {
+          var userById = {};
+          snap.docs.forEach(function(doc) {
+            var uid = doc.id; // The User ID of a online user.
+
+            // If you want to know how many devices / tabs the user is using,
+            // you can also look at the current online sessions here.
+            var sessions = doc.data().sessions;
+
+            // sessions will be an object with the following structure:
+            //
+            //   {
+            //     "sessionId1": true,
+            //     "sessionId2": true,
+            //     /* ... */
+            //   }
+            //
+            // Session IDs are transient so please do not rely on them. They
+            // change frequently as user connect and disconnect.
+            // The value of the map is by default always the boolean `true`, but
+            // you can customize it by following the Advanced Usage section below.
+
+            userById[uid] = sessions; // For our sample app, we just put them in a dict.
+          });
+
+          // TODO: Replace with your own application logic.
+          supView.renderUsers(userById);
+        });
+
+      // -------------------------------------------------------------
+      // Advanced Usage
+      // -------------------------------------------------------------
+
+      // Optionally, you can also associate some metadata to the sessions via:
+      //
+      //   sessionManager.setMetadata({foo: 'bar'});
+      //
+      // The data will be automatically deleted when a session ends (i.e. when
+      // this client goes offline). And when the client reconnects, the SDK will
+      // automaticallly create a new session with the same metadata. Metadata
+      // can be changed at any time by calling setMetadata again.
+      //
+      // See the Firestore query above for how you can access metadata.
+
+      // In this sample app, we use metadata to track the emoji chosen by the
+      // user. Specifically, note that if the user opens multiple tabs, we allow
+      // them to choose a different emoji for each and the app shows all emojis.
+      supView.onUserSelectEmoji = function (emoji) {
+        sessionManager.setMetadata(emoji);
+      };
+
+      supView.render(app);
+    </script>
+  </body>
+</html>
