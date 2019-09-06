@@ -88,8 +88,8 @@ params:
     label: Collection Path
     description: >-
       What is the path of the the collection you would like to mirror?
-    default: extension 
-    example: extension
+    default: extensions
+    example: extensions
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore Collection
     required: true
