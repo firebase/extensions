@@ -25,18 +25,30 @@ First, [download](./sample-app/public/firebase-presence.js) the JavaScript SDK a
 Then, initialize the Presence SDK using JavaScript after:
 
 ```javascript
-  var rtdbRef = app.database().ref('${param:RTDB_PATH}');
-  var sessionManager = new firebasePresence.SessionManager(auth, rtdbRef);
+  var rtdbRef = firebase.database().ref('${param:RTDB_PATH}');
+  var sessionManager = new firebasePresence.SessionManager(firebase.auth(), rtdbRef);
 ```
 
 After user sign-in, call `sessionManager.goOnline()` to start tracking presence. The code snippet below uses a Anonymous Auth, but the SDK works with any sign-in method supported by Firebase Auth. Just don't forget to call `sessionManager.goOnline()` after the sign-in logic.
 
 ```javascript
   // TODO: Replace signInAnonymously() accordingly to your app.
-  auth.signInAnonymously().then(function () {
+  firebase.auth().signInAnonymously().then(function () {
     // Then tell sessionManager to create sessions for the user.
     // sessionManager automatically tracks disconnection and reconnection.
     sessionManager.goOnline();
+  });
+```
+
+BEFORE user sign-out, make sure to call `sessionManager.goOffline()`.
+
+```javascript
+  sessionManager.goOffline().then(function () {
+    // AFTER that, sign the user out from Firebase Auth.
+    // The ordering is important for things to be properly cleaned up.
+    return firebase.auth().signOut();
+  }).then(function () {
+    console.log("We're fully logged out!");
   });
 ```
 
