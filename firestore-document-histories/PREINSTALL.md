@@ -1,22 +1,28 @@
-This mod allows you to track the change histories of Firestore document in a Firestore collection.
+Use this mod to track the histories of all documents with a Firestore collection.
 
-The mod creates a Firestore-triggered cloud function that runs each time a Document is created, updated or deleted within the Firestore Collection that you have chosen to mirror.
+The extension creates a Firestore-triggered cloud function that runs each time a document is created, updated or deleted within the Firestore Collection of your choice.
 
-For each document in the specified collection will have a corresponding collection with its history.
-Each change document will be inserted at:
+For each document (`${config.COLLECTION_PATH}/${docId}`) has a corresponding history sub collection at
+
+```
   ${config.COLLECTION_PATH}/${docId}/${config.SUB_COLLECTION_ID}/${commitTimeSinceEpoch}
+```
 
-The document will contain the latest snasphot of the document. For deleted document, it would be empty.
+Each history record contains the latest snasphot of the document, empty for a deleted document, and a change diff at `__diff`.
 
-A diff will also be inserted at `__diff`, so it is easy to query for changes on a particular path. Array are treated as opague values.
+** Note Array are treated as opague values. **
 
 ```
 {
+  // The content of the new document
+  // Special change diff.
   __diff: {
-    operation: "insert", // one of insert, update and delete.
-    deleted: {...},  // The properties paths that are deleted.
-    added: {...},  // The properties paths that are added.
-  }
+    operation: "create", // one of create, update and delete.
+    deleted: {...},  // The properties deleted.
+    added: {...},  // The properties added.
+  },
 }
 ```
+
+You can easily query `__diff` to find writes that modified particular properties.
 
