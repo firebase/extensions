@@ -56,8 +56,8 @@ exports.success = () => {
 exports.createDocument = (document, collection) => {
     console.log(`Creating document ${document} at Collection ${collection} `);
 };
-exports.retry = (err) => {
-    console.error('Error commiting changes to Firestore, retrying. Error: ', err);
+exports.retry = (err, numRetries, delayMS) => {
+    console.error(`Error committing changes to Firestore, retrying (Attempt ${numRetries}, Waiting ${delayMS / 1000} seconds).\n Error: `, err);
 };
 exports.tombstoneRemoval = (updateArr) => {
     console.log(`Removing the following tombstones: ${JSON.stringify(updateArr)}`);
