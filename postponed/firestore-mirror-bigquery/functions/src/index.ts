@@ -25,7 +25,7 @@ import { ChangeType, getChangeType, FirestoreEventHistoryTracker, getTimestamp }
 import * as logs from "./logs";
 import { extractTimestamp } from "./util";
 
-let eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker(config);
+const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker(config);
 
 logs.init();
 
