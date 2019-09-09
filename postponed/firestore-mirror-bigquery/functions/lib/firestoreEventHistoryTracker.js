@@ -17,8 +17,34 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var ChangeType;
 (function (ChangeType) {
-    ChangeType[ChangeType["INSERT"] = 0] = "INSERT";
+    ChangeType[ChangeType["CREATE"] = 0] = "CREATE";
     ChangeType[ChangeType["DELETE"] = 1] = "DELETE";
     ChangeType[ChangeType["UPDATE"] = 2] = "UPDATE";
     ChangeType[ChangeType["IMPORT"] = 3] = "IMPORT";
 })(ChangeType = exports.ChangeType || (exports.ChangeType = {}));
+function getChangeType(change) {
+    if (!change.after.exists) {
+        return ChangeType.DELETE;
+    }
+    if (!change.before.exists) {
+        return ChangeType.CREATE;
+    }
+    return ChangeType.UPDATE;
+}
+exports.getChangeType = getChangeType;
+function getTimestamp(context, change) {
+    const changeType = getChangeType((change));
+    switch (changeType) {
+        case ChangeType.CREATE:
+            return change.after.updateTime.toDate();
+        case ChangeType.DELETE:
+            // Due to an internal bug (129264426), before.update_time is actually the commit timestamp.
+            return new Date(change.before.updateTime.toDate().getTime() + 1);
+        case ChangeType.UPDATE:
+            return change.after.updateTime.toDate();
+        default: {
+            throw new Error(`Invalid change type: ${changeType}`);
+        }
+    }
+}
+exports.getTimestamp = getTimestamp;

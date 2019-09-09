@@ -90,7 +90,7 @@ exports.dataInserted = (rowCount) => {
     console.log(`Inserted ${rowCount} row(s) of data into BigQuery`);
 };
 exports.dataInserting = (rowCount) => {
-    console.log(`Inserting ${rowCount} row(s) of data into BigQuery`);
+    console.log(`Inserted ${rowCount} row(s) of data into BigQuery`);
 };
 exports.dataTypeInvalid = (fieldName, fieldType, dataType) => {
     console.warn(`Field '${fieldName}' has invalid data. Expected: ${fieldType}, received: ${dataType}`);
