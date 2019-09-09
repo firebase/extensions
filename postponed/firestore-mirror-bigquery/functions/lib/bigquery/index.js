@@ -69,7 +69,7 @@ class FirestoreBigQueryEventHistoryTracker {
         return __awaiter(this, void 0, void 0, function* () {
             const rawTable = rawTableName(tableName);
             yield this.initializeDataset(datasetId);
-            yield this.initializeTable(datasetId, rawTable);
+            yield this.initializeChangelog(datasetId, rawTable);
             yield this.initializeLatestView(datasetId, rawTable);
         });
     }
@@ -90,9 +90,9 @@ class FirestoreBigQueryEventHistoryTracker {
      */
     insertData(datasetId, tableName, rows) {
         return __awaiter(this, void 0, void 0, function* () {
-            const realTableName = rawTableName(tableName);
+            const name = changelogTableName(rawTableName(tableName));
             const dataset = this.bq.dataset(datasetId);
-            const table = dataset.table(realTableName);
+            const table = dataset.table(name);
             const rowCount = rows.length;
             logs.dataInserting(rowCount);
             yield table.insert(rows);
@@ -124,22 +124,24 @@ class FirestoreBigQueryEventHistoryTracker {
      * if it doesn't.  If the table does exist, validate that the BigQuery schema
      * is correct and add any missing fields.
      */
-    initializeTable(datasetId, tableName) {
+    initializeChangelog(datasetId, tableName) {
         return __awaiter(this, void 0, void 0, function* () {
+            const changelogName = changelogTableName(tableName);
             const dataset = this.bq.dataset(datasetId);
-            let table = dataset.table(tableName);
+            let table = dataset.table(changelogName);
             const [tableExists] = yield table.exists();
             if (tableExists) {
                 logs.bigQueryTableAlreadyExists(table.id, dataset.id);
             }
             else {
-                logs.bigQueryTableCreating(tableName);
+                logs.bigQueryTableCreating(changelogName);
                 const options = {
-                    friendlyName: tableName,
+                    // `friendlyName` needs to be here to satisfy TypeScript
+                    friendlyName: changelogName,
                     schema: schema_1.firestoreToBQTable(),
                 };
                 yield table.create(options);
-                logs.bigQueryTableCreated(tableName);
+                logs.bigQueryTableCreated(changelogName);
             }
             return table;
         });
@@ -163,9 +165,14 @@ class FirestoreBigQueryEventHistoryTracker {
                 logs.bigQueryViewCreating(viewName);
                 const options = {
                     friendlyName: viewName,
-                    view: snapshot_1.latestConsistentSnapshotView(datasetId, tableName)
+                    view: snapshot_1.latestConsistentSnapshotView(datasetId, changelogTableName(tableName))
                 };
-                yield view.create(options);
+                try {
+                    yield view.create(options);
+                }
+                catch (e) {
+                    console.log(JSON.stringify(e));
+                }
                 logs.bigQueryViewCreated(viewName);
             }
             return view;
@@ -177,6 +184,8 @@ exports.FirestoreBigQueryEventHistoryTracker = FirestoreBigQueryEventHistoryTrac
 function rawTableName(tableName) { return `${tableName}_raw`; }
 exports.rawTableName = rawTableName;
 ;
+function changelogTableName(tableName) { return `${tableName}_changelog`; }
+exports.changelogTableName = changelogTableName;
 function latestViewName(tableName) { return `${tableName}_latest`; }
 exports.latestViewName = latestViewName;
 ;

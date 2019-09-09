@@ -18,7 +18,7 @@ import * as bigquery from "@google-cloud/bigquery";
 import * as errors from "../errors";
 import { FirestoreField, FirestoreSchema } from "../firestore";
 import * as logs from "../logs";
-import { rawTableName, latestViewName } from "../bigquery";
+import { changelogTableName, rawTableName, latestViewName } from "../bigquery";
 import { latestConsistentSnapshotSchemaView } from "../bigquery/snapshot";
 import * as sqlFormatter from "sql-formatter";
 
@@ -86,20 +86,16 @@ export class FirestoreBigQuerySchemaViewFactory {
    * with the schema type applied.
    *
    * This method will not create views if they already exist in BigQuery.
-   *
-   * @param datasetId
-   * @param tableName
-   * @param schemaName
-   * @param schema
    */
-  async initializeSchemaView(
+  async initializeSchemaViewResources(
     datasetId: string,
     tableName: string,
     schemaName: string,
     schema: FirestoreSchema,
   ): Promise<bigquery.Table> {
-    let rawTable = rawTableName(tableName);
-    let viewName = schemaViewName(tableName, schemaName);
+    const realTableName = changelogTableName(rawTableName(tableName));
+    const changelogSchemaViewName = changelogTableName(schemaViewName(tableName, schemaName));
+    const latestSchemaViewName = latestViewName(schemaViewName(tableName, schemaName));
     const dataset = this.bq.dataset(datasetId);
 
     for (let i = 0; i < udfs.length; i++) {
@@ -109,30 +105,30 @@ export class FirestoreBigQuerySchemaViewFactory {
       });
     }
 
-    let view = dataset.table(viewName);
+    let view = dataset.table(changelogSchemaViewName);
     const [viewExists] = await view.exists();
 
-    let latestView = dataset.table(latestViewName(viewName));
+    let latestView = dataset.table(latestSchemaViewName);
     const [latestViewExists] = await latestView.exists();
 
     if (!viewExists) {
-      logs.bigQueryViewCreating(viewName);
+      logs.bigQueryViewCreating(changelogSchemaViewName);
       const options = {
-        friendlyName: viewName,
-        view: userSchemaView(datasetId, rawTable, schema),
+        friendlyName: changelogSchemaViewName,
+        view: userSchemaView(datasetId, realTableName, schema),
       };
       await view.create(options);
-      logs.bigQueryViewCreated(viewName);
+      logs.bigQueryViewCreated(changelogSchemaViewName);
     }
 
     if (!latestViewExists) {
-      logs.bigQueryViewCreating(latestViewName(viewName));
+      logs.bigQueryViewCreating(latestSchemaViewName);
       const latestOptions = {
-        fiendlyName: latestViewName(viewName),
-        view: latestConsistentSnapshotSchemaView(datasetId, rawTable, schema),
+        fiendlyName: latestSchemaViewName,
+        view: latestConsistentSnapshotSchemaView(datasetId, realTableName, schema),
       };
       await latestView.create(latestOptions);
-      logs.bigQueryViewCreated(latestViewName(viewName));
+      logs.bigQueryViewCreated(latestSchemaViewName);
     }
 
     return view;
@@ -221,9 +217,6 @@ export const userSchemaView = (
  * Constructs a query for building a view over a raw changelog table name.
  * It is assumed that `rawTableName` is an existing table with a schema that
  * matches what is returned by `firestoreToBQTable()`.
- * @param datasetId
- * @param rawTableName
- * @param schema
  */
 export const buildSchemaViewQuery = (
   datasetId: string,
@@ -267,9 +260,9 @@ export const buildSchemaViewQuery = (
  * in the Firestore document proto, return a list of clauses that may be
  * used to extract schema values from a JSON string and convert them into
  * the corresponding BigQuery type.
- * @param datasetId
+ * @param datasetId the BigQuery dataset
  * @param dataFieldName the name of the columns storing raw JSON data
- * @param schema
+ * @param schema the Firestore Schema used to create selectors
  * @param transformer an optional BigQuery function to apply to each
  * select clause found during the search.
  */
@@ -391,4 +384,4 @@ const processLeafField = (
   return fieldNameToSelector;
 }
 
-function schemaViewName(tableName: string, schemaName: string): string { return `${tableName}_${schemaName}_schema`;  };
+function schemaViewName(tableName: string, schemaName: string): string { return `${tableName}_schema_${schemaName}`;  };
