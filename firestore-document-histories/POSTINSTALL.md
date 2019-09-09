@@ -36,7 +36,7 @@ Whenever a document with id of `id-xxx` is written with collection `${param:COLL
 
 As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.
 
-This function will retry `DeadlineExceeded` and `Aborted` to make sure temporary errors do not lead to missing histories.
+This extension will retry `DeadlineExceeded` and `Aborted` to make sure temporary errors do not lead to missing histories.
 
 ### How much does it costs?
 
