@@ -28,7 +28,7 @@ const functions = require("firebase-functions");
 const config_1 = require("./config");
 const logs = require("./logs");
 admin.initializeApp();
-const TIME_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
+const TIME_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in MS
 var ChangeType;
 (function (ChangeType) {
     ChangeType[ChangeType["CREATE"] = 0] = "CREATE";
@@ -39,8 +39,6 @@ logs.init();
 /**
  * Handler that listens to the document in RTDB containing user/session
  * information. The function calls the correct handler (upserts/deletes).
- *
- * The mod does not handle stale session deletes
  */
 exports.writeToFirestore = functions.handler.database.ref.onWrite((change, context) => __awaiter(this, void 0, void 0, function* () {
     logs.startPresence();
@@ -72,19 +70,15 @@ exports.writeToFirestore = functions.handler.database.ref.onWrite((change, conte
     }
 }));
 /**
- * TODO design review
- *
  * Use pessimistic transactions to clean up old tombstones whose timestamp is older
  * than TIME_THRESHOLD and is not currently online.
- *
- * The function is triggered when any message is triggered to the topic.
  *
  * @param userID: reference
  */
 exports.cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish(() => __awaiter(this, void 0, void 0, function* () {
     logs.startCleanup();
     if (config_1.default.firestore_path === undefined) {
-        throw new Error('Undefined firestore path');
+        throw new Error('Undefined firestore path. Please re-install and reconfigure the Firestore collection.');
     }
     const docRefArr = yield admin.firestore().collection(config_1.default.firestore_path).listDocuments();
     const currentTime = (new Date).getTime();
@@ -153,13 +147,13 @@ const getChangeType = (change) => {
     return ChangeType.UPDATE;
 };
 /**
- * Grab the User and Session ID information from the RTDB path. Assumes {userID}/sessions/{sessionID} schema
+ * Grab the User and Session ID information from the RTDB path. Assumes {RTDB_PATH}/{userID}/sessions/{sessionID} schema
  *
  * @param path of the function trigger
  */
 const getUserAndSessionID = (path) => {
     const strArr = path.split('/');
-    if (strArr.length < 3) {
+    if (strArr.length < 3 && strArr[strArr.length - 2] !== 'sessions') {
         throw new Error(`Error trying to get sessionID and userID. Assumes {RTDB_PATH}/{userID}/sessions/{sessionID} structure, got ${path}`);
     }
     // Assume the correct data structure when extracting session/user IDs
@@ -227,7 +221,7 @@ const firestoreTransaction = (docRef, payload, operationTimestamp, userID, sessi
     }));
 });
 /**
- * The function logic will try until success or function timeout:
+ * firestoreTransactionWithRetries will try until success or function timeout:
  *      1: Document Creation failed and document doesn't exist
  *      2: Document update fails preconditions
  *      3: Document is unable to be read
@@ -247,14 +241,15 @@ const firestoreTransactionWithRetries = (payload, operationTimestamp, userID, se
     let numTries = 0;
     let isSuccessful = false;
     while (!isSuccessful) {
-        // Wait before retrying (linear)
-        yield new Promise(resolve => setTimeout(resolve, 1000 * numTries));
-        numTries += 1;
         // Try the transaction
         yield firestoreTransaction(admin.firestore().collection(config_1.default.firestore_path).doc(userID), payload, operationTimestamp, userID, sessionID).then(() => {
             isSuccessful = true;
         }).catch((error) => __awaiter(this, void 0, void 0, function* () {
-            logs.retry(error);
+            // Keep in retrying with linear backoff if there is an error
+            numTries += 1;
+            const numMilliseconds = 1000 * numTries;
+            logs.retry(error, numTries, numMilliseconds);
+            yield new Promise(resolve => setTimeout(resolve, numMilliseconds));
         }));
     }
 });

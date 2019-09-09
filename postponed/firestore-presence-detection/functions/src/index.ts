@@ -151,14 +151,14 @@ const getChangeType = (change: functions.Change<admin.database.DataSnapshot>): C
 };
 
 /**
- * Grab the User and Session ID information from the RTDB path. Assumes {userID}/sessions/{sessionID} schema
+ * Grab the User and Session ID information from the RTDB path. Assumes {RTDB_PATH}/{userID}/sessions/{sessionID} schema
  *
  * @param path of the function trigger
  */
 const getUserAndSessionID = (path: string) => {
 
   const strArr = path.split('/');
-  if (strArr.length < 3) {
+  if (strArr.length < 3 && strArr[strArr.length - 2] !== 'sessions') {
     throw new Error(
         `Error trying to get sessionID and userID. Assumes {RTDB_PATH}/{userID}/sessions/{sessionID} structure, got ${path}`);
   }
@@ -237,7 +237,7 @@ const firestoreTransaction = async (docRef: admin.firestore.DocumentReference, p
 };
 
 /**
- * The function logic will try until success or function timeout:
+ * firestoreTransactionWithRetries will try until success or function timeout:
  *      1: Document Creation failed and document doesn't exist
  *      2: Document update fails preconditions
  *      3: Document is unable to be read
