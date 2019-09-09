@@ -19,9 +19,4 @@ exports.default = {
     collectionPath: process.env.COLLECTION_PATH,
     subCollectionId: process.env.SUB_COLLECTION_ID,
     location: process.env.LOCATION,
-<<<<<<< HEAD:firestore-document-histories/functions/lib/config.js
-=======
-    tableName: process.env.TABLE_NAME,
-    initialized: false
->>>>>>> master:postponed/firestore-mirror-bigquery/functions/lib/config.js
 };

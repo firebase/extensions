@@ -32,10 +32,10 @@ export const fsdocumenthistories = functions.handler.firestore.document.onWrite(
     async (change, context) => {
       logs.start();
       try {
-        const documentId = context.resource.name;
+        const documentId = change.after.id? change.after.id: change.before.id;
         const timestamp = getTimestamp(context, change);
         const data = getData(change);
-        const historyDocKey = `${config.collectionPath}/${documentId}/${config.subCollectionId}/${timestamp.getTime()}`
+        const historyDocKey = `${config.collectionPath}/${documentId}/${config.subCollectionId}/${timestamp.getTime()}`;
         logs.insertingHistory(historyDocKey, getChangeType(change));
         await firestore.doc(historyDocKey).set(data);
         logs.complete();

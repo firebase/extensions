@@ -36,7 +36,7 @@ logs.init();
 exports.fsdocumenthistories = functions.handler.firestore.document.onWrite((change, context) => __awaiter(this, void 0, void 0, function* () {
     logs.start();
     try {
-        const documentId = context.resource.name;
+        const documentId = change.after.id ? change.after.id : change.before.id;
         const timestamp = change_tracker_1.getTimestamp(context, change);
         const data = change_tracker_1.getData(change);
         const historyDocKey = `${config_1.default.collectionPath}/${documentId}/${config_1.default.subCollectionId}/${timestamp.getTime()}`;
