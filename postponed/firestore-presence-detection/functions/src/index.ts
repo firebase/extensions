@@ -69,7 +69,6 @@ export const writeToFirestore =
     });
 
 /**
- * TODO design review
  *
  * Use pessimistic transactions to clean up old tombstones whose timestamp is older
  * than TIME_THRESHOLD and is not currently online.
@@ -266,15 +265,15 @@ const firestoreTransactionWithRetries = async (payload: any, operationTimestamp:
   let isSuccessful = false;
   while (!isSuccessful) {
 
-    // Wait before retrying (linear)
-    await new Promise(resolve => setTimeout(resolve, 1000 * numTries));
-    numTries += 1;
-
     // Try the transaction
     await firestoreTransaction(admin.firestore().collection(config.firestore_path).doc(userID), payload, operationTimestamp, userID, sessionID).then(() => {
       isSuccessful = true;
     }).catch(async (error) => {
-      logs.retry(error);
+      // Keep in retrying with linear backoff if there is an error
+      numTries += 1;
+      const numMilliseconds = 1000 * numTries;
+      logs.retry(error, numTries, numMilliseconds);
+      await new Promise(resolve => setTimeout(resolve, numMilliseconds));
     });
   }
 };

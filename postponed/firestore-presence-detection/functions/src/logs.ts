@@ -69,8 +69,8 @@ export const createDocument = (document: string, collection: string | undefined)
   console.log(`Creating document ${document} at Collection ${collection} `);
 };
 
-export const retry = (err: Error) => {
-  console.error('Error commiting changes to Firestore, retrying. Error: ', err);
+export const retry = (err: Error, numRetries: number, delayMS: number) => {
+  console.error(`Error committing changes to Firestore, retrying (Attempt ${numRetries}, Waiting ${delayMS / 1000} seconds).\n Error: `, err);
 };
 
 export const tombstoneRemoval = (updateArr: object) => {
