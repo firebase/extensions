@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
+import { DocumentSnapshot } from 'firebase-functions/lib/providers/firestore';
+import {Change, EventContext, } from "firebase-functions";
+
 export enum ChangeType {
-  INSERT,
+  CREATE,
   DELETE,
   UPDATE,
-  IMPORT
+  IMPORT,
 }
 
 export interface FirestoreDocumentChangeEvent {
-  timestamp: string;
+  timestamp: Date;
   operation: ChangeType;
-  documentId: string;
-  name: string;
+  documentName: string;
   eventId: string;
   data: Object;
 }
@@ -33,3 +35,30 @@ export interface FirestoreDocumentChangeEvent {
 export interface FirestoreEventHistoryTracker {
   record(event: FirestoreDocumentChangeEvent[]);
 }
+
+export function getChangeType(change: Change<DocumentSnapshot>): ChangeType {
+  if (!change.after.exists) {
+    return ChangeType.DELETE;
+  }
+  if (!change.before.exists) {
+    return ChangeType.CREATE;
+  }
+  return ChangeType.UPDATE;
+}
+
+export function getTimestamp(context: EventContext, change: Change<DocumentSnapshot>): Date {
+  const changeType = getChangeType((change));
+  switch (changeType) {
+    case ChangeType.CREATE:
+      return change.after.updateTime.toDate();
+    case ChangeType.DELETE:
+      // Due to an internal bug (129264426), before.update_time is actually the commit timestamp.
+      return new Date(change.before.updateTime.toDate().getTime() + 1);
+    case ChangeType.UPDATE:
+      return change.after.updateTime.toDate();
+    default: {
+      throw new Error(`Invalid change type: ${changeType}`);
+    }
+  }
+}
+
