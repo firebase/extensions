@@ -29,6 +29,12 @@ const schema_1 = require("./schema");
 const snapshot_1 = require("./snapshot");
 const firestoreEventHistoryTracker_1 = require("../firestoreEventHistoryTracker");
 const logs = require("../logs");
+/**
+ * An interface to BigQuery which handles:
+ * - Iniitializing the raw changelog table when the first event gets recorded.
+ * - Initializing the latest view over the raw changelog.
+ * - Streaming writes into the raw changelog table.
+ */
 class FirestoreBigQueryEventHistoryTracker {
     constructor(config) {
         this.config = config;
@@ -56,11 +62,8 @@ class FirestoreBigQueryEventHistoryTracker {
     }
     /**
      * Ensure that the defined Firestore schema exists within BigQuery and
-     * contains the correct information.
-     *
-     * NOTE: This currently gets executed on every cold start of the function.
-     * Ideally this would run once when the mod is installed if that were
-     * possible in the future.
+     * contains the correct information. This is invoked for the first time when
+     * the first document change event is recorded.
      */
     initialize(datasetId, tableName) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -132,7 +135,6 @@ class FirestoreBigQueryEventHistoryTracker {
             else {
                 logs.bigQueryTableCreating(tableName);
                 const options = {
-                    // `friendlyName` needs to be here to satisfy TypeScript
                     friendlyName: tableName,
                     schema: schema_1.firestoreToBQTable(),
                 };
@@ -147,8 +149,6 @@ class FirestoreBigQueryEventHistoryTracker {
      * Create a view over a table storing a change log of Firestore documents
      * which contains only latest version of all live documents in the mirrored
      * collection.
-     * @param datasetId
-     * @param tableName
      */
     initializeLatestView(datasetId, tableName) {
         return __awaiter(this, void 0, void 0, function* () {

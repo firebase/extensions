@@ -104,6 +104,7 @@ run()
     process.exit();
 })
     .catch((error) => {
+    console.log(JSON.stringify(error));
     console.error(error.message);
     process.exit();
 });
