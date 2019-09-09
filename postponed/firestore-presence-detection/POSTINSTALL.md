@@ -93,7 +93,9 @@ This will only allow admins and authenticated users whose UUID matches the docum
 
 #### Cleanup
 
-To cleanup tombstones (see "Preinstall"), publish a message to the topic `${param:PUBSUB_TOPIC}` to trigger the Cloud function. This can be done [programatically](https://cloud.google.com/pubsub/docs/publisher), manually through the [Cloud Console](https://cloud.google.com/pubsub/docs/quickstart-console#publish_a_message_to_the_topic), or automatically by using [Cloud Scheduler](https://cloud.google.com/scheduler/docs/tut-pub-sub) to schedule the cleanup to run periodically. The topic is created when the extension is installed so there is no need for setup.
+The `last_updated` field in Firestore maintains the timestamp (i.e. tombstone) of the most recent transaction from the client for a given `sessionID`. For consistency, they are persisted even after the session is no longer connected. In most use-cases, these timestamps (or tombstones) leave a negligible footprint and so usage of this function is not required. However, if you wish to cleanup tombstones: 
+
+Publish a message to the topic `${param:PUBSUB_TOPIC}` to trigger the Cloud function. This can be done [programatically](https://cloud.google.com/pubsub/docs/publisher), manually through the [Cloud Console](https://cloud.google.com/pubsub/docs/quickstart-console#publish_a_message_to_the_topic), or automatically by using [Cloud Scheduler](https://cloud.google.com/scheduler/docs/tut-pub-sub) to schedule the cleanup to run periodically. The topic is created when the extension is installed so there is no need for setup.
 
 ### Monitoring
 

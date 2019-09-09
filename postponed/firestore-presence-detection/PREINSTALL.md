@@ -43,7 +43,7 @@ The extension is capable of tracking multiple connections (each with a unique `s
 ## Cleanup
 The `last_updated` field in Firestore maintains the timestamp of the most recent transaction from the client for a given `sessionID`. For consistency, they are persisted even after the session is no longer connected.
 
-If you wish to clean them up, the extension provides a cleanup function that is triggered by publishing to a PubSub topic. The function will cleanup all tombstones that have been offline for more than one week. The function/topic can be paired with Cloud Scheduler for periodic cleanups. The scheduler should only need to run **at most** once a week. In most use-cases, these timestamps (or tombstones) leave a negligible footprint and so usage of this function is not required.
+In most use-cases, these timestamps (or tombstones) leave a negligible footprint and so usage of this function is not required. However, if you wish to clean them up, the extension provides a cleanup function that is triggered by publishing to a PubSub topic. The function will cleanup all tombstones that have been offline for more than one week. The function/topic can be paired with Cloud Scheduler for periodic cleanups. The scheduler should only need to run **at most** once a week.
 
 ## Parameters
 You will need to specify the target collection in Firestore where the presence information will be stored, the document path in RTDB, and name of the PubSub topic for cleanup. All parameters have default values.
