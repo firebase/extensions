@@ -109,7 +109,7 @@ params:
   - param: PUBSUB_TOPIC
     label: Pubsub topic for cleanup
     description: >
-      What is the name of the topic to trigger the cleanup function?
+      What Pubsub topic to trigger the cleanup function?
     default: cleanUpDeadSessions
     example: cleanUpDeadSessions
     required: true
