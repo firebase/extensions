@@ -165,7 +165,7 @@ const run = async (): Promise<number> => {
     const rows: FirestoreDocumentChangeEvent[] = docs.map(
       (snapshot) => {
         return {
-          timestamp: new Date(0),
+          timestamp: new Date(0), // epoch
           operation: ChangeType.IMPORT,
           documentName: snapshot.ref.path,
           eventId: "",

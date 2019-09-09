@@ -1,10 +1,9 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -35,30 +34,30 @@ function readBigQuerySchema(file) {
     });
 }
 describe("latest snapshot view sql generation", () => {
-    it("should generate the epxected sql", () => __awaiter(void 0, void 0, void 0, function* () {
+    it("should generate the epxected sql", () => __awaiter(this, void 0, void 0, function* () {
         const expectedQuery = yield readFormattedSQL(`${sqlDir}/latestConsistentSnapshot.txt`);
         const query = snapshot_1.buildLatestSnapshotViewQuery(testDataset, testTable, "timestamp", ["timestamp", "eventId", "operation", "data"]);
         expect(query).to.equal(expectedQuery);
     }));
-    it("should generate correct sql with no groupBy columns", () => __awaiter(void 0, void 0, void 0, function* () {
+    it("should generate correct sql with no groupBy columns", () => __awaiter(this, void 0, void 0, function* () {
         const expectedQuery = yield readFormattedSQL(`${sqlDir}/latestConsistentSnapshotNoGroupBy.txt`);
         const query = snapshot_1.buildLatestSnapshotViewQuery(testDataset, testTable, "timestamp", []);
         expect(query).to.equal(expectedQuery);
     }));
-    it("should throw an error for empty group by columns", () => __awaiter(void 0, void 0, void 0, function* () {
+    it("should throw an error for empty group by columns", () => __awaiter(this, void 0, void 0, function* () {
         expect(snapshot_1.buildLatestSnapshotViewQuery.bind(testDataset, testTable, "timestamp", [""])).to.throw();
     }));
-    it("should throw an error for empty timestamp field", () => __awaiter(void 0, void 0, void 0, function* () {
+    it("should throw an error for empty timestamp field", () => __awaiter(this, void 0, void 0, function* () {
         expect(snapshot_1.buildLatestSnapshotViewQuery.bind(null, testDataset, testTable, "", [])).to.throw();
     }));
 });
 describe("schema snapshot view sql generation", () => {
-    it("should generate the expected sql", () => __awaiter(void 0, void 0, void 0, function* () {
+    it("should generate the expected sql", () => __awaiter(this, void 0, void 0, function* () {
         const expectedQuery = yield readFormattedSQL(`${sqlDir}/fullSchemaLatest.txt`);
         const query = snapshot_1.buildLatestSchemaSnapshotViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/fullSchema.json`));
         expect(query).to.equal(expectedQuery);
     }));
-    it("should generate the expected sql for an empty schema", () => __awaiter(void 0, void 0, void 0, function* () {
+    it("should generate the expected sql for an empty schema", () => __awaiter(this, void 0, void 0, function* () {
         const expectedQuery = yield readFormattedSQL(`${sqlDir}/emptySchemaLatest.txt`);
         const query = snapshot_1.buildLatestSchemaSnapshotViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/emptySchema.json`));
         expect(query).to.equal(expectedQuery);

@@ -44,7 +44,6 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
       logs.complete();
     } catch (err) {
       logs.error(err);
-      logs.error(err.errors[0]);
     }
   }
 );
