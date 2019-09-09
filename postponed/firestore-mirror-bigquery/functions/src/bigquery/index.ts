@@ -58,7 +58,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
         event.eventId,
         event.operation,
         event.timestamp,
-        event.name,
+        event.documentName,
         event.data);
     });
     await this.insertData(this.config.datasetId, this.config.tableName, rows);
@@ -83,13 +83,14 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
   buildDataRow(
     eventId: string,
     changeType: ChangeType,
-    timestamp: string,
+    timestamp: Date,
     document_name: string,
     data?: Object
   ): bigquery.RowMetadata {
+    // This must match firestoreToBQTable().
     return {
-      timestamp,
-      eventId,
+      timestamp: timestamp.toISOString(),
+      eventId: eventId,
       document_name: document_name,
       operation: ChangeType[changeType],
       data: JSON.stringify(data),

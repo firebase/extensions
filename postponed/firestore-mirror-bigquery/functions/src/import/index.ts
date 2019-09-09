@@ -126,7 +126,6 @@ const run = async (): Promise<number> => {
 
   // Build the data row with a 0 timestamp. This ensures that all other
   // operations supersede imports when listing the live documents.
-  const importTimestamp = new Date(0).toISOString();
   let cursor;
 
   let cursorPositionFile = __dirname + `/from-${collectionPath}-to-${projectId}\:${datasetId}\:${tableName}`;
@@ -165,29 +164,14 @@ const run = async (): Promise<number> => {
     cursor = docs[docs.length - 1];
     const rows: FirestoreDocumentChangeEvent[] = docs.map(
       (snapshot) => {
-        const data = snapshot.data();
-        let defaultTimestamp;
-        if (snapshot.updateTime) {
-          defaultTimestamp = snapshot.updateTime.toDate().toISOString();
-        } else if (snapshot.createTime) {
-          defaultTimestamp = snapshot.createTime.toDate().toISOString();
-        } else {
-          defaultTimestamp = importTimestamp;
-        }
-        const timestamp = extractTimestamp(
-          data,
-          defaultTimestamp,
-        );
         return {
-          timestamp: importTimestamp,
+          timestamp: new Date(0), // epoch
           operation: ChangeType.IMPORT,
-          documentId: snapshot.ref.id,
-          name: snapshot.ref.path,
+          documentName: snapshot.ref.path,
           eventId: "",
-          data
+          data: snapshot.data(),
         };
-      }
-    );
+      });
     await dataSink.record(rows);
     totalRowsImported += rows.length;
   } while (true);

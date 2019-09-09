@@ -29,7 +29,6 @@ const fs = require("fs");
 const inquirer = require("inquirer");
 const util = require("util");
 const bigquery_1 = require("../bigquery");
-const util_1 = require("../util");
 const firestoreEventHistoryTracker_1 = require("../firestoreEventHistoryTracker");
 const schemaFile = require("../../schema.json");
 // For reading cursor position.
@@ -102,7 +101,6 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     console.log(`Importing data from Firestore Collection: ${collectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${tableName}`);
     // Build the data row with a 0 timestamp. This ensures that all other
     // operations supersede imports when listing the live documents.
-    const importTimestamp = new Date(0).toISOString();
     let cursor;
     let cursorPositionFile = __dirname + `/from-${collectionPath}-to-${projectId}\:${datasetId}\:${tableName}`;
     if (yield exists(cursorPositionFile)) {
@@ -135,25 +133,12 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         totalDocsRead += docs.length;
         cursor = docs[docs.length - 1];
         const rows = docs.map((snapshot) => {
-            const data = snapshot.data();
-            let defaultTimestamp;
-            if (snapshot.updateTime) {
-                defaultTimestamp = snapshot.updateTime.toDate().toISOString();
-            }
-            else if (snapshot.createTime) {
-                defaultTimestamp = snapshot.createTime.toDate().toISOString();
-            }
-            else {
-                defaultTimestamp = importTimestamp;
-            }
-            const timestamp = util_1.extractTimestamp(data, defaultTimestamp);
             return {
-                timestamp: importTimestamp,
+                timestamp: new Date(0),
                 operation: firestoreEventHistoryTracker_1.ChangeType.IMPORT,
-                documentId: snapshot.ref.id,
-                name: snapshot.ref.path,
+                documentName: snapshot.ref.path,
                 eventId: "",
-                data
+                data: snapshot.data(),
             };
         });
         yield dataSink.record(rows);
