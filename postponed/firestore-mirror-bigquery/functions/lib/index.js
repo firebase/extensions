@@ -29,7 +29,6 @@ const bigquery_1 = require("./bigquery");
 const config_1 = require("./config");
 const firestoreEventHistoryTracker_1 = require("./firestoreEventHistoryTracker");
 const logs = require("./logs");
-
 const eventTracker = new bigquery_1.FirestoreBigQueryEventHistoryTracker(config_1.default);
 logs.init();
 exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change, context) => __awaiter(void 0, void 0, void 0, function* () {
