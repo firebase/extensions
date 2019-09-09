@@ -22,7 +22,7 @@ import * as logs from './logs';
 import {DocumentSnapshot} from 'firebase-functions/lib/providers/firestore';
 
 admin.initializeApp();
-const TIME_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
+const TIME_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in MS
 enum ChangeType {
   CREATE,
   DELETE,
@@ -34,8 +34,6 @@ logs.init();
 /**
  * Handler that listens to the document in RTDB containing user/session
  * information. The function calls the correct handler (upserts/deletes).
- *
- * The mod does not handle stale session deletes
  */
 export const writeToFirestore =
     functions.handler.database.ref.onWrite(async (change, context) => {
@@ -69,11 +67,8 @@ export const writeToFirestore =
     });
 
 /**
- *
  * Use pessimistic transactions to clean up old tombstones whose timestamp is older
  * than TIME_THRESHOLD and is not currently online.
- *
- * The function is triggered when any message is triggered to the topic.
  *
  * @param userID: reference
  */
@@ -81,7 +76,7 @@ export const cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish(asyn
   logs.startCleanup();
 
   if (config.firestore_path === undefined) {
-    throw new Error('Undefined firestore path');
+    throw new Error('Undefined firestore path. Please re-install and reconfigure the Firestore collection.');
   }
   const docRefArr = await admin.firestore().collection(config.firestore_path).listDocuments();
   const currentTime = (new Date).getTime();
