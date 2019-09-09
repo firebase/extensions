@@ -23,7 +23,7 @@ import { readdirSync } from "fs";
 
 import { FirestoreBigQueryEventHistoryTracker } from "../bigquery";
 import { FirestoreBigQuerySchemaViewFactory } from "../bigquery/schema";
-import { extractSnapshotData, FirestoreSchema } from "../firestore";
+import { FirestoreSchema } from "../firestore";
 import {
   extractIdFieldNames,
   extractTimestamp,
@@ -122,6 +122,7 @@ run()
     process.exit();
   })
   .catch((error) => {
+    console.log(JSON.stringify(error));
     console.error(error.message);
     process.exit();
   });

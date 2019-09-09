@@ -16,7 +16,11 @@
 
 import * as bigquery from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
+import * as fs from "fs";
 import * as inquirer from "inquirer";
+import * as util from "util";
+
+import * as generateSchema from "generate-schema";
 
 import { FirestoreBigQueryEventHistoryTracker } from "../bigquery";
 import { extractSnapshotData, FirestoreSchema } from "../firestore";
@@ -28,6 +32,11 @@ import {
 import { ChangeType, FirestoreDocumentChangeEvent } from "../firestoreEventHistoryTracker";
 
 const schemaFile = require("../../schema.json");
+
+// For reading cursor position.
+const exists = util.promisify(fs.exists);
+const write = util.promisify(fs.writeFile);
+const read = util.promisify(fs.readFile);
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
@@ -51,7 +60,7 @@ const questions = [
       validateInput(value, "project ID", FIRESTORE_VALID_CHARACTERS),
   },
   {
-    message: "What is the path of the the collection you would like to mirror?",
+    message: "What is the path of the the collection you would like to import from?",
     name: "collectionPath",
     type: "input",
     validate: (value) =>
@@ -67,21 +76,35 @@ const questions = [
   },
   {
     message:
-      "What is the ID of the BigQuery table that you would like to use? (The table will be created if it doesn't already exist)",
+      "What is the ID of the BigQuery table import into? (The table will be created if it doesn't already exist)",
     name: "tableName",
     type: "input",
     validate: (value) =>
       validateInput(value, "dataset", BIGQUERY_VALID_CHARACTERS),
   },
+  {
+    message:
+      "How many documents should the import stream into BigQuery at once?",
+    name: "batchSize",
+    type: "input",
+    default: 300,
+    validate: (value) => {
+      return parseInt(value, 10) > 0
+    }
+  },
+
 ];
 
 const run = async (): Promise<number> => {
   const {
+    projectId,
     collectionPath,
     datasetId,
-    projectId,
     tableName,
+    batchSize,
   } = await inquirer.prompt(questions);
+
+  const batch = parseInt(batchSize);
 
   // Initialize Firebase
   firebase.initializeApp({
@@ -90,14 +113,7 @@ const run = async (): Promise<number> => {
   });
   // Set project ID so it can be used in BigQuery intialization
   process.env.PROJECT_ID = projectId;
-
-  // @ts-ignore string not assignable to enum
-  const schema: FirestoreSchema = schemaFile;
-  const { fields, timestampField } = schema;
-
-  // Is the collection path for a sub-collection and does the collection path
-  // contain any wildcard parameters
-  const idFieldNames = extractIdFieldNames(collectionPath);
+  process.env.GOOGLE_CLOUD_PROJECT = projectId;
 
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
     collectionPath: collectionPath,
@@ -107,58 +123,68 @@ const run = async (): Promise<number> => {
   });
 
   console.log(
-    `Mirroring data from Firestore Collection: ${collectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${tableName}`
+    `Importing data from Firestore Collection: ${collectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${tableName}`
   );
 
-  const importTimestamp = new Date().toISOString();
+  // Build the data row with a 0 timestamp. This ensures that all other
+  // operations supersede imports when listing the live documents.
+  let cursor;
 
-  // Load all the data for the collection
-  const collectionSnapshot = await firebase
-    .firestore()
-    .collection(collectionPath)
-    .get();
-  // Build the data rows to insert into BigQuery
-  const rows: FirestoreDocumentChangeEvent[] = collectionSnapshot.docs.map(
-    (snapshot) => {
-      const data = extractSnapshotData(snapshot, fields);
+  let cursorPositionFile = __dirname + `/from-${collectionPath}-to-${projectId}\:${datasetId}\:${tableName}`;
+  if (await exists(cursorPositionFile)) {
+    let cursorDocumentId = (await read(cursorPositionFile)).toString();
+    cursor = await firebase
+      .firestore()
+      .collection(collectionPath)
+      .doc(cursorDocumentId)
+      .get();
+    console.log(
+      `Resuming import of collection ${collectionPath} from document ${cursorDocumentId}.`
+    );
+  }
 
-      let defaultTimestamp;
-      if (snapshot.updateTime) {
-        defaultTimestamp = snapshot.updateTime.toDate().toISOString();
-      } else if (snapshot.createTime) {
-        defaultTimestamp = snapshot.createTime.toDate().toISOString();
-      } else {
-        defaultTimestamp = importTimestamp;
-      }
+  let totalDocsRead = 0;
+  let totalRowsImported = 0;
 
-      // Extract the timestamp, or use the import timestamp as default
-      const timestamp = extractTimestamp(
-        data,
-        defaultTimestamp,
-        timestampField
-      );
-      // Build the data row with a 0 timestamp. This ensures that all other
-      // operations supersede imports when listing the live documents.
-      return {
-        timestamp: "0",
-        operation: ChangeType.IMPORT,
-        documentId: snapshot.ref.id,
-        name: snapshot.ref.path,
-        eventId: "",
-        data
-      };
+  do {
+    if (cursor) {
+      await write(cursorPositionFile, cursor.id);
     }
-  );
+    let query = firebase
+      .firestore()
+      .collection(collectionPath)
+      .limit(batch);
+    if (cursor) {
+      query = query.startAfter(cursor);
+    }
+    const snapshot = await query.get();
+    const docs = snapshot.docs;
+    if (docs.length === 0) {
+      break;
+    }
+    totalDocsRead += docs.length;
+    cursor = docs[docs.length - 1];
+    const rows: FirestoreDocumentChangeEvent[] = docs.map(
+      (snapshot) => {
+        return {
+          timestamp: new Date(0), // epoch
+          operation: ChangeType.IMPORT,
+          documentName: snapshot.ref.path,
+          eventId: "",
+          data: snapshot.data(),
+        };
+      });
+    await dataSink.record(rows);
+    totalRowsImported += rows.length;
+  } while (true);
 
-  dataSink.record(rows);
-
-  return rows.length;
+  return totalRowsImported;
 };
 
 run()
   .then((rowCount) => {
     console.log("---------------------------------------------------------");
-    console.log(`Finished mirroring ${rowCount} Firestore rows to BigQuery`);
+    console.log(`Finished importing ${rowCount} Firestore rows to BigQuery`);
     console.log("---------------------------------------------------------");
     process.exit();
   })

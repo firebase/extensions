@@ -40,49 +40,30 @@ FROM
             ORDER BY
               timestamp DESC
           ) = "DELETE" AS is_deleted,
-          FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.friends.name')) OVER(
+          FIRST_VALUE(JSON_EXTRACT(data, '$.friends.name')) OVER(
             PARTITION BY document_name
             ORDER BY
               timestamp DESC
           ) AS name,
-          `test.test_dataset.json2array`(
+          `test.test_dataset.firestoreArray`(
             FIRST_VALUE(JSON_EXTRACT(data, '$.favorite_numbers')) OVER(
               PARTITION BY document_name
               ORDER BY
                 timestamp DESC
             )
           ) AS favorite_numbers,
-          TIMESTAMP_SECONDS(
-            CAST(
-              FIRST_VALUE(JSON_EXTRACT(data, '$.last_login._seconds')) OVER(
-                PARTITION BY document_name
-                ORDER BY
-                  timestamp DESC
-              ) AS INT64
-            ) + CAST(
-              CAST(
-                FIRST_VALUE(JSON_EXTRACT(data, '$.last_login._nanoseconds')) OVER(
-                  PARTITION BY document_name
-                  ORDER BY
-                    timestamp DESC
-                ) AS INT64
-              ) / 1E9 AS INT64
+          `test.test_dataset.firestoreTimestamp`(
+            FIRST_VALUE(JSON_EXTRACT(data, '$.last_login')) OVER(
+              PARTITION BY document_name
+              ORDER BY
+                timestamp DESC
             )
           ) AS last_login,
-          ST_GEOGPOINT(
-            CAST(
-              FIRST_VALUE(JSON_EXTRACT(data, '$.last_location._latitude')) OVER(
-                PARTITION BY document_name
-                ORDER BY
-                  timestamp DESC
-              ) AS NUMERIC
-            ),
-            CAST(
-              FIRST_VALUE(JSON_EXTRACT(data, '$.last_location._longitude')) OVER(
-                PARTITION BY document_name
-                ORDER BY
-                  timestamp DESC
-              ) AS NUMERIC
+          `test.test_dataset.firestoreGeopoint`(
+            FIRST_VALUE(JSON_EXTRACT(data, '$.last_location')) OVER(
+              PARTITION BY document_name
+              ORDER BY
+                timestamp DESC
             )
           ) AS last_location,
           CAST(

@@ -22,6 +22,15 @@ import { rawTableName, latestViewName } from "../bigquery";
 import { latestConsistentSnapshotSchemaView } from "../bigquery/snapshot";
 import * as sqlFormatter from "sql-formatter";
 
+import {
+  firestoreArray,
+  firestoreBoolean,
+  firestoreNumber,
+  firestoreTimestamp,
+  firestoreGeopoint,
+  udfs
+} from "./udfs";
+
 export type BigQueryFieldMode = "NULLABLE" | "REPEATED" | "REQUIRED";
 export type BigQueryFieldType =
   | "BOOLEAN"
@@ -70,15 +79,35 @@ export class FirestoreBigQuerySchemaViewFactory {
     this.bq = new bigquery.BigQuery();
   }
 
+  /**
+   * Given the name of the raw changelog in BigQuery, constructs a changelog
+   * with schema fields extracted into their own BigQuery-typed columns. Also
+   * creates a view consisting of only the latest events for all live documents
+   * with the schema type applied.
+   *
+   * This method will not create views if they already exist in BigQuery.
+   *
+   * @param datasetId
+   * @param tableName
+   * @param schemaName
+   * @param schema
+   */
   async initializeSchemaView(
     datasetId: string,
     tableName: string,
     schemaName: string,
     schema: FirestoreSchema,
   ): Promise<bigquery.Table> {
-    let realTableName = rawTableName(tableName);
-    let viewName = schemaViewName(realTableName, schemaName);
+    let rawTable = rawTableName(tableName);
+    let viewName = schemaViewName(tableName, schemaName);
     const dataset = this.bq.dataset(datasetId);
+
+    for (let i = 0; i < udfs.length; i++) {
+      const udf = udfs[i](datasetId);
+      await this.bq.query({
+        query: udf.query,
+      });
+    }
 
     let view = dataset.table(viewName);
     const [viewExists] = await view.exists();
@@ -86,16 +115,11 @@ export class FirestoreBigQuerySchemaViewFactory {
     let latestView = dataset.table(latestViewName(viewName));
     const [latestViewExists] = await latestView.exists();
 
-    let persistentUDFQuery = jsonToArrayFunction(datasetId);
-    await this.bq.query({
-      query: persistentUDFQuery.query
-    });
-
     if (!viewExists) {
       logs.bigQueryViewCreating(viewName);
       const options = {
         friendlyName: viewName,
-        view: userSchemaView(datasetId, realTableName, schema),
+        view: userSchemaView(datasetId, rawTable, schema),
       };
       await view.create(options);
       logs.bigQueryViewCreated(viewName);
@@ -105,7 +129,7 @@ export class FirestoreBigQuerySchemaViewFactory {
       logs.bigQueryViewCreating(latestViewName(viewName));
       const latestOptions = {
         fiendlyName: latestViewName(viewName),
-        view: latestConsistentSnapshotSchemaView(datasetId, realTableName, schema),
+        view: latestConsistentSnapshotSchemaView(datasetId, rawTable, schema),
       };
       await latestView.create(latestOptions);
       logs.bigQueryViewCreated(latestViewName(viewName));
@@ -115,18 +139,6 @@ export class FirestoreBigQuerySchemaViewFactory {
   }
 
 }
-
-/**
- * Convert from a Firestore field definition into the equivalent BigQuery
- * mode.
- *
- * Fields are either:
- * 1) `REPEATED` - they are an array field
- * 2) `NULLABLE` - all other fields are NULLABLE to futureproof the schema
- * definition in case of column deletion in the future
- */
-const firestoreToBQMode = (field: FirestoreField) =>
-  field.repeated ? "REPEATED" : "NULLABLE";
 
 /**
  * Convert from a list of Firestore field definitions into the schema
@@ -150,31 +162,38 @@ export const firestoreToBQTable = (
   dataField
 ];
 
+/**
+ * Given a select query, $QUERY, return a query that wraps the result in an
+ * outer-select, optionally filtering some fields out using the SQL `EXCEPT`
+ * clause. This is used when generating the latest view of a schema change-log
+ * in order to omit BigQuery un-groupable columns.
+ *
+ * SELECT *, EXCEPT (cola, colb, ...) FROM (SELECT ...);
+ *
+ * @param query a SELECT query
+ * @param filter an array of field names to filter out from `query`
+ */
 export function subSelectQuery(query: string, filter?: string[]): string {
   return (`SELECT * ${(filter && filter.length > 0) ? `EXCEPT (${filter.join(', ')})` : ``} FROM (${query})`);
 }
 
-export function jsonToArrayFunction(datasetId: string): any {
-  const definition: string = jsonToArrayDefinition(datasetId);
-  return ({
-    query: definition,
-    useLegacySql: false
-  });
-}
-
-function jsonToArrayDefinition(datasetId: string): string {
-  return sqlFormatter.format(`
-    CREATE FUNCTION \`${process.env.PROJECT_ID}.${datasetId}.json2array\`(json STRING)
-    RETURNS ARRAY<STRING>
-    LANGUAGE js AS """
-      return json ? JSON.parse(json).map(x => JSON.stringify(x)) : [];
-    """`);
-}
-
-function jsonToArray(datasetId:string, selector: string): string {
-  return (`\`${process.env.PROJECT_ID}.${datasetId}.json2array\`(${selector})`);
-}
-
+/**
+ * Extract a field from a raw JSON string that lives in the column
+ * `dataFieldName`. The result of this function is a clause which can be used in
+ * the argument of a SELECT query to create a corresponding BigQuery-typed
+ * column in the result set.
+ *
+ * @param dataFieldName the source column containing raw JSON
+ * @param prefix the path we need to follow from the root of the JSON to arrive
+ * at the named field
+ * @param field the field we are extracting
+ * @param subselector the path we want to follow within the named field. As an
+ * example, this is useful when extracting latitude and longitude from a
+ * serialized geopoint field.
+ * @param transformer any transformation we want to apply to the result of
+ * JSON_EXTRACT. This is typically a BigQuery CAST, or an UNNEST (in the case
+ * where the result is an ARRAY).
+ */
 const jsonExtract = (
   dataFieldName: string,
   prefix: string,
@@ -185,16 +204,10 @@ const jsonExtract = (
   return (transformer(`JSON_EXTRACT(${dataFieldName}, \'\$.${prefix.length > 0 ? `${prefix}.`: ``}${field.name}${subselector}\')`));
 }
 
-const jsonExtractScalar = (
-  dataFieldName: string,
-  prefix: string,
-  field: FirestoreField,
-  subselector: string = "",
-  transformer: (selector: string) => string
-) => {
-  return (transformer(`JSON_EXTRACT_SCALAR(${dataFieldName}, \'\$.${prefix.length > 0 ? `${prefix}.`: ``}${field.name}${subselector}\')`));
-}
-
+/**
+ * A wrapper around `buildSchemaView` that can be passed into BigQuery's
+ * `table.create`.
+ */
 export const userSchemaView = (
   datasetId: string,
   tableName: string,
@@ -230,6 +243,16 @@ export const buildSchemaViewQuery = (
         \`${process.env.PROJECT_ID}.${datasetId}.${rawTableName}\`
   `;
   if (schemaHasArrays) {
+    /**
+     * If the schema we are generating has arrays, we perform a CROSS JOIN with
+     * the result of UNNESTing each array so that each document ends up with N
+     * rows, one for each of N members of it's contained array. Each of these
+     * rows contains an additional index column and a corresponding member
+     * column which can be used to investigate the historical values of various
+     * positions inside an array. If a document has multiple arrays, the number
+     * of additional rows added per document will be the product of the lengths
+     * of all the arrays.
+     */
     query = `${subSelectQuery(query)} ${rawTableName} ${fieldArrays.map(arrayFieldName =>
       `CROSS JOIN UNNEST(${rawTableName}.${arrayFieldName})
        AS ${arrayFieldName}_member
@@ -266,6 +289,19 @@ export function processFirestoreSchema(
   return [extractors, arrays, geopoints];
 }
 
+/**
+ * Searches the user-defined schema and generates a listing of all SELECT
+ * clauses which are necessary to generate a BigQuery-typed view over the
+ * raw data contained in `dataFieldName`. We keep track of arrays and
+ * geopoints separately because they require handling in a context that
+ * this function doesn't have access to:
+ *
+ * - Arrays must be unnested in the non-snapshot query (buildSchemaView) and
+ *   filtered out in the snapshot query (buildLatestSnapshotViewQuery) because
+ *   they are not groupable
+ * - Geopoints must be filtered out in the snapshot query
+ *   (buildLatestSnapshotViewQuery) because they are not groupable
+ */
 function processFirestoreSchemaHelper(
   datasetId: string,
   dataFieldName: string,
@@ -308,6 +344,11 @@ function processFirestoreSchemaHelper(
   });
 }
 
+/**
+ * Once we have reached the field in the JSON tree, we must determine what type
+ * it is in the schema and then perform any conversions needed to coerce it into
+ * the BigQuery type.
+ */
 const processLeafField = (
   datasetId: string,
   dataFieldName: string,
@@ -322,29 +363,26 @@ const processLeafField = (
     selector = transformer(`NULL`);
     break;
   case "string":
-    selector = jsonExtractScalar(dataFieldName, prefix, field, ``, transformer);
+    selector = jsonExtract(dataFieldName, prefix, field, ``, transformer);
     break;
   case "array":
-    selector = jsonToArray(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer));
+    selector = firestoreArray(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer));
     break;
   case "boolean":
-    selector = `CAST(${jsonExtract(dataFieldName, prefix, field, ``, transformer)} AS BOOLEAN)`;
+    selector = firestoreBoolean(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer));
     break;
   case "number":
-    selector = `CAST(${jsonExtract(dataFieldName, prefix, field, ``, transformer)} AS NUMERIC)`;
+    selector = firestoreNumber(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer));
     break;
   case "timestamp":
-    selector = `TIMESTAMP_SECONDS(
-      CAST(${jsonExtract(dataFieldName, prefix, field, `._seconds`, transformer)} AS INT64) +
-      CAST(CAST(${jsonExtract(dataFieldName, prefix, field, `._nanoseconds`, transformer)} AS INT64) / 1E9 AS INT64)
-    )`;
+    selector = firestoreTimestamp(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer));
     break;
   case "geopoint":
     const latitude = jsonExtract(dataFieldName, prefix, field, `._latitude`, transformer);
     const longitude = jsonExtract(dataFieldName, prefix, field, `._longitude`, transformer);
     // We return directly from this branch because it's the only one that
     // generates multiple selector clauses.
-    fieldNameToSelector[`${field.name}`] = `ST_GEOGPOINT(CAST(${latitude} AS NUMERIC), CAST(${longitude} AS NUMERIC)) AS ${field.name}`;
+    fieldNameToSelector[`${field.name}`] = `${firestoreGeopoint(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer))} AS last_location`;
     fieldNameToSelector[`${field.name}_latitude`] = `CAST(${latitude} AS NUMERIC) AS ${field.name}_latitude`;
     fieldNameToSelector[`${field.name}_longitude`] = `CAST(${longitude} AS NUMERIC) AS ${field.name}_longitude`;
     return fieldNameToSelector;
