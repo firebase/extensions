@@ -84,8 +84,8 @@ params:
     label: Collection Path
     description: >-
       What is the path of the the collection you would like to mirror?
-    default: mods
-    example: mods
+    default: extensions
+    example: extensions
     required: true
 
   - param: SUB_COLLECTION_ID
