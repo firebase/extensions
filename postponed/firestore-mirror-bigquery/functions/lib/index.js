@@ -27,60 +27,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const bigquery_1 = require("./bigquery");
 const config_1 = require("./config");
-const firestore_1 = require("./firestore");
 const firestoreEventHistoryTracker_1 = require("./firestoreEventHistoryTracker");
 const logs = require("./logs");
-const util_1 = require("./util");
-// TODO: How can we load a file dynamically?
-const schemaFile = require("../schema.json");
-let eventTracker = new bigquery_1.FirestoreBigQueryEventHistoryTracker(config_1.default);
+const eventTracker = new bigquery_1.FirestoreBigQueryEventHistoryTracker(config_1.default);
 logs.init();
 exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change, context) => __awaiter(void 0, void 0, void 0, function* () {
     logs.start();
     try {
-        // @ts-ignore string not assignable to enum
-        const schema = schemaFile;
-        const { fields, timestampField } = schema;
-        // Identify the operation and data to be inserted
-        let data;
-        let defaultTimestamp;
-        let snapshot;
-        let operation;
-        const changeType = getChangeType(change);
-        switch (changeType) {
-            case firestoreEventHistoryTracker_1.ChangeType.INSERT:
-                operation = "INSERT";
-                snapshot = change.after;
-                data = firestore_1.extractSnapshotData(snapshot, fields);
-                defaultTimestamp = snapshot.createTime
-                    ? snapshot.createTime.toDate().toISOString()
-                    : context.timestamp;
-                break;
-            case firestoreEventHistoryTracker_1.ChangeType.DELETE:
-                operation = "DELETE";
-                snapshot = change.before;
-                defaultTimestamp = context.timestamp;
-                break;
-            case firestoreEventHistoryTracker_1.ChangeType.UPDATE:
-                operation = "UPDATE";
-                snapshot = change.after;
-                data = firestore_1.extractSnapshotData(snapshot, fields);
-                defaultTimestamp = snapshot.updateTime
-                    ? snapshot.updateTime.toDate().toISOString()
-                    : context.timestamp;
-                break;
-            default: {
-                throw new Error(`Invalid change type: ${changeType}`);
-            }
-        }
-        const timestamp = util_1.extractTimestamp(data, defaultTimestamp, timestampField);
+        const changeType = firestoreEventHistoryTracker_1.getChangeType(change);
         yield eventTracker.record([{
-                timestamp: timestamp,
+                timestamp: firestoreEventHistoryTracker_1.getTimestamp(context, change),
                 operation: changeType,
-                name: context.resource.name,
-                documentId: snapshot.ref.id,
+                documentName: context.resource.name,
                 eventId: context.eventId,
-                data: data,
+                data: changeType == firestoreEventHistoryTracker_1.ChangeType.DELETE ? undefined : change.after.data(),
             }]);
         logs.complete();
     }
@@ -88,13 +48,3 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change,
         logs.error(err);
     }
 }));
-function getChangeType(change) {
-    if (!change.after.exists) {
-        return firestoreEventHistoryTracker_1.ChangeType.DELETE;
-    }
-    if (!change.before.exists) {
-        return firestoreEventHistoryTracker_1.ChangeType.INSERT;
-    }
-    return firestoreEventHistoryTracker_1.ChangeType.UPDATE;
-}
-;
