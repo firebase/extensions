@@ -121,22 +121,6 @@ const run = async (): Promise<number> => {
   const rows: FirestoreDocumentChangeEvent[] = collectionSnapshot.docs.map(
     (snapshot) => {
       const data = extractSnapshotData(snapshot, fields);
-
-      let defaultTimestamp;
-      if (snapshot.updateTime) {
-        defaultTimestamp = snapshot.updateTime.toDate().toISOString();
-      } else if (snapshot.createTime) {
-        defaultTimestamp = snapshot.createTime.toDate().toISOString();
-      } else {
-        defaultTimestamp = importTimestamp;
-      }
-
-      // Extract the timestamp, or use the import timestamp as default
-      const timestamp = extractTimestamp(
-        data,
-        defaultTimestamp,
-        timestampField
-      );
       // Build the data row with a 0 timestamp. This ensures that all other
       // operations supersede imports when listing the live documents.
       return {

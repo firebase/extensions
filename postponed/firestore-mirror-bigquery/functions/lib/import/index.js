@@ -99,18 +99,6 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
     // Build the data rows to insert into BigQuery
     const rows = collectionSnapshot.docs.map((snapshot) => {
         const data = firestore_1.extractSnapshotData(snapshot, fields);
-        let defaultTimestamp;
-        if (snapshot.updateTime) {
-            defaultTimestamp = snapshot.updateTime.toDate().toISOString();
-        }
-        else if (snapshot.createTime) {
-            defaultTimestamp = snapshot.createTime.toDate().toISOString();
-        }
-        else {
-            defaultTimestamp = importTimestamp;
-        }
-        // Extract the timestamp, or use the import timestamp as default
-        const timestamp = util_1.extractTimestamp(data, defaultTimestamp, timestampField);
         // Build the data row with a 0 timestamp. This ensures that all other
         // operations supersede imports when listing the live documents.
         return {
