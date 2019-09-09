@@ -58,9 +58,19 @@ describe("schema snapshot view sql generation", () => {
         const query = snapshot_1.buildLatestSchemaSnapshotViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/fullSchema.json`));
         expect(query).to.equal(expectedQuery);
     }));
+    it("should generate the expected sql", () => __awaiter(void 0, void 0, void 0, function* () {
+        const expectedQuery = yield readFormattedSQL(`${sqlDir}/fullSchemaLatestFromView.txt`);
+        const query = snapshot_1.buildLatestSchemaSnapshotViewQueryFromLatestView(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/fullSchema.json`));
+        expect(query).to.equal(expectedQuery);
+    }));
     it("should generate the expected sql for an empty schema", () => __awaiter(void 0, void 0, void 0, function* () {
         const expectedQuery = yield readFormattedSQL(`${sqlDir}/emptySchemaLatest.txt`);
         const query = snapshot_1.buildLatestSchemaSnapshotViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/emptySchema.json`));
+        expect(query).to.equal(expectedQuery);
+    }));
+    it("should generate the expected sql", () => __awaiter(void 0, void 0, void 0, function* () {
+        const expectedQuery = yield readFormattedSQL(`${sqlDir}/emptySchemaLatestFromView.txt`);
+        const query = snapshot_1.buildLatestSchemaSnapshotViewQueryFromLatestView(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/fullSchema.json`));
         expect(query).to.equal(expectedQuery);
     }));
 });
