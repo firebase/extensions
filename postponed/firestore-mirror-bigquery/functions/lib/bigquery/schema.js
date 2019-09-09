@@ -27,7 +27,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const bigquery = require("@google-cloud/bigquery");
 const logs = require("../logs");
 const bigquery_1 = require("../bigquery");
-const snapshot_1 = require("../bigquery/snapshot");
 const sqlFormatter = require("sql-formatter");
 const udfs_1 = require("./udfs");
 const bigQueryField = (name, type, mode, fields) => ({
@@ -63,7 +62,8 @@ class FirestoreBigQuerySchemaViewFactory {
      */
     initializeSchemaViewResources(datasetId, tableName, schemaName, schema) {
         return __awaiter(this, void 0, void 0, function* () {
-            const realTableName = bigquery_1.changelogTableName(bigquery_1.rawTableName(tableName));
+            const changelog = bigquery_1.changelogTableName(bigquery_1.rawTableName(tableName));
+            const latestRawViewName = bigquery_1.latestViewName(bigquery_1.rawTableName(tableName));
             const changelogSchemaViewName = bigquery_1.changelogTableName(schemaViewName(tableName, schemaName));
             const latestSchemaViewName = bigquery_1.latestViewName(schemaViewName(tableName, schemaName));
             const dataset = this.bq.dataset(datasetId);
@@ -81,7 +81,7 @@ class FirestoreBigQuerySchemaViewFactory {
                 logs.bigQueryViewCreating(changelogSchemaViewName);
                 const options = {
                     friendlyName: changelogSchemaViewName,
-                    view: exports.userSchemaView(datasetId, realTableName, schema),
+                    view: exports.userSchemaView(datasetId, changelog, schema),
                 };
                 yield view.create(options);
                 logs.bigQueryViewCreated(changelogSchemaViewName);
@@ -90,7 +90,7 @@ class FirestoreBigQuerySchemaViewFactory {
                 logs.bigQueryViewCreating(latestSchemaViewName);
                 const latestOptions = {
                     fiendlyName: latestSchemaViewName,
-                    view: snapshot_1.latestConsistentSnapshotSchemaView(datasetId, realTableName, schema),
+                    view: exports.buildSchemaViewQuery(datasetId, latestRawViewName, schema)
                 };
                 yield latestView.create(latestOptions);
                 logs.bigQueryViewCreated(latestSchemaViewName);

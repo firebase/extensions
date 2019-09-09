@@ -38,4 +38,10 @@ describe("schema snapshot view sql generation", () => {
     const query = buildSchemaViewQuery(testDataset, testTable, await readBigQuerySchema(`${schemaDir}/emptySchema.json`));
     expect(query).to.equal(expectedQuery);
   });
+  it("should handle nested maps", async () => {
+    const expectedQuery = await readFormattedSQL(`${sqlDir}/nestedMapSchemaChangeLog.txt`);
+    const query = buildSchemaViewQuery(testDataset, testTable, await readBigQuerySchema(`${schemaDir}/nestedMapSchema.json`));
+    expect(query).to.equal(expectedQuery);
+  });
 });
+

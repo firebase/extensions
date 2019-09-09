@@ -93,7 +93,8 @@ export class FirestoreBigQuerySchemaViewFactory {
     schemaName: string,
     schema: FirestoreSchema,
   ): Promise<bigquery.Table> {
-    const realTableName = changelogTableName(rawTableName(tableName));
+    const changelog = changelogTableName(rawTableName(tableName));
+    const latestRawViewName = latestViewName(rawTableName(tableName));
     const changelogSchemaViewName = changelogTableName(schemaViewName(tableName, schemaName));
     const latestSchemaViewName = latestViewName(schemaViewName(tableName, schemaName));
     const dataset = this.bq.dataset(datasetId);
@@ -115,7 +116,7 @@ export class FirestoreBigQuerySchemaViewFactory {
       logs.bigQueryViewCreating(changelogSchemaViewName);
       const options = {
         friendlyName: changelogSchemaViewName,
-        view: userSchemaView(datasetId, realTableName, schema),
+        view: userSchemaView(datasetId, changelog, schema),
       };
       await view.create(options);
       logs.bigQueryViewCreated(changelogSchemaViewName);
@@ -125,7 +126,7 @@ export class FirestoreBigQuerySchemaViewFactory {
       logs.bigQueryViewCreating(latestSchemaViewName);
       const latestOptions = {
         fiendlyName: latestSchemaViewName,
-        view: latestConsistentSnapshotSchemaView(datasetId, realTableName, schema),
+        view: buildSchemaViewQuery(datasetId, latestRawViewName, schema)
       };
       await latestView.create(latestOptions);
       logs.bigQueryViewCreated(latestSchemaViewName);
