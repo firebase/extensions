@@ -20,6 +20,8 @@ import * as fs from "fs";
 import * as inquirer from "inquirer";
 import * as util from "util";
 
+import * as generateSchema from "generate-schema";
+
 import { FirestoreBigQueryEventHistoryTracker } from "../bigquery";
 import { extractSnapshotData, FirestoreSchema } from "../firestore";
 import {

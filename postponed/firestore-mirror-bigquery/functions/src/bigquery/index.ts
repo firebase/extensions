@@ -17,7 +17,6 @@
 import * as bigquery from "@google-cloud/bigquery";
 import {
   firestoreToBQTable,
-  jsonToArrayFunction,
   userSchemaView,
 } from "./schema";
 import { FirestoreSchema } from "../firestore/index";
@@ -34,6 +33,12 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   initialized: boolean;
 }
 
+/**
+ * An interface to BigQuery which handles:
+ * - Iniitializing the raw changelog table when the first event gets recorded.
+ * - Initializing the latest view over the raw changelog.
+ * - Streaming writes into the raw changelog table.
+ */
 export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHistoryTracker {
   bq: bigquery.BigQuery;
   initialized: boolean;
@@ -66,11 +71,8 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
 
   /**
    * Ensure that the defined Firestore schema exists within BigQuery and
-   * contains the correct information.
-   *
-   * NOTE: This currently gets executed on every cold start of the function.
-   * Ideally this would run once when the mod is installed if that were
-   * possible in the future.
+   * contains the correct information. This is invoked for the first time when
+   * the first document change event is recorded.
    */
   async initialize(datasetId: string, tableName: string) {
     const rawTable = rawTableName(tableName);
@@ -149,7 +151,6 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     } else {
       logs.bigQueryTableCreating(tableName);
       const options = {
-        // `friendlyName` needs to be here to satisfy TypeScript
         friendlyName: tableName,
         schema: firestoreToBQTable(),
       };
@@ -163,8 +164,6 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
    * Create a view over a table storing a change log of Firestore documents
    * which contains only latest version of all live documents in the mirrored
    * collection.
-   * @param datasetId
-   * @param tableName
    */
   async initializeLatestView(
     datasetId: string,

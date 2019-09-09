@@ -47,4 +47,3 @@ exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
     }
   }
 );
-
