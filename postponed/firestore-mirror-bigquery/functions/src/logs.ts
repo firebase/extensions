@@ -116,7 +116,7 @@ export const dataInserted = (rowCount: number) => {
 };
 
 export const dataInserting = (rowCount: number) => {
-  console.log(`Inserting ${rowCount} row(s) of data into BigQuery`);
+  console.log(`Inserted ${rowCount} row(s) of data into BigQuery`);
 };
 
 export const dataTypeInvalid = (

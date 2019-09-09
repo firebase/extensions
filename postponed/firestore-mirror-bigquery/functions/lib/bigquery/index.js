@@ -49,7 +49,7 @@ class FirestoreBigQueryEventHistoryTracker {
             const rows = events.map(event => {
                 return this.buildDataRow(
                 // Use the function's event ID to protect against duplicate executions
-                event.eventId, event.operation, event.timestamp, event.name, event.data);
+                event.eventId, event.operation, event.timestamp, event.documentName, event.data);
             });
             yield this.insertData(this.config.datasetId, this.config.tableName, rows);
         });
@@ -72,9 +72,10 @@ class FirestoreBigQueryEventHistoryTracker {
     }
     ;
     buildDataRow(eventId, changeType, timestamp, document_name, data) {
+        // This must match firestoreToBQTable().
         return {
-            timestamp,
-            eventId,
+            timestamp: timestamp.toISOString(),
+            eventId: eventId,
             document_name: document_name,
             operation: firestoreEventHistoryTracker_1.ChangeType[changeType],
             data: JSON.stringify(data),
