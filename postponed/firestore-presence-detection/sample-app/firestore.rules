@@ -1,8 +1,17 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write;
+    match /presence/{uid} {
+      allow read;
+    }
+    match /sups/{supId} {
+      allow read: if request.auth.uid == resource.data.toUid;
+      allow create: if request.auth != null && request.resource.data.keys() == ['toUid'] && isOnline(request.resource.data.toUid);
+      allow delete: if request.auth.uid == resource.data.toUid;
+    }
+
+    function isOnline(uid) {
+      return get(/databases/$(database)/documents/presence/$(uid)).data.sessions != {};
     }
   }
 }

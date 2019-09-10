@@ -60,14 +60,15 @@ window.supView = {
     that._auth.onAuthStateChanged(function(user) {
       if (user) {
         document.querySelector('.sup-me .sup-uid').textContent = user.uid;
-        that._firestore.collection('sups').where('toUid', '==', user.uid).onSnapshot(function(snap) {
-          if (snap.docs.length > 0) {
-            document.querySelector('.sup-header').classList.add('sup-supd');
-            snap.docs.forEach(function (doc) {
-              doc.ref.delete();
-            });
-          }
-        });
+        unsubscribe = that._firestore.collection('sups').where('toUid', '==', user.uid)
+          .onSnapshot(function(snap) {
+            if (snap.docs.length > 0) {
+              document.querySelector('.sup-header').classList.add('sup-supd');
+              snap.docs.forEach(function (doc) {
+                doc.ref.delete();
+              });
+            }
+          });
       } else {
         if (unsubscribe) {
           unsubscribe();
