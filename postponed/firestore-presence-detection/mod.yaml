@@ -17,13 +17,10 @@ specVersion: v1beta1
 version: 0.0.1
 licesnse: Apache-2.0
 
-displayName: User Presence with Firestore
+displayName: Detect user presence
 
 description:
-  Detect the presence of authenticated users with Firestore. The extension uses RTDB to set up
-  onDisconnect triggers to accurately track user connections. Presence information is mirrored to
-  Firestore using Cloud Functions for Firebase. You can configure which document
-  path in RTDB and the collection in Firestore to store information.
+  Detects the online/offline status of users or devices. Updates the online presence in a specified Cloud Firestore document.
 
 billingRequired: false
 
