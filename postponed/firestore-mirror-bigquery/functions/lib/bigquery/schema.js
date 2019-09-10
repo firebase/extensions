@@ -217,7 +217,7 @@ function processFirestoreSchema(datasetId, dataFieldName, schema, transformer) {
     let extractors = {};
     let arrays = [];
     let geopoints = [];
-    processFirestoreSchemaHelper(datasetId, dataFieldName, /*prefix=*/ "", schema, arrays, geopoints, extractors, transformer);
+    processFirestoreSchemaHelper(datasetId, dataFieldName, /*prefix=*/ [], schema, arrays, geopoints, extractors, transformer);
     return [extractors, arrays, geopoints];
 }
 exports.processFirestoreSchema = processFirestoreSchema;
@@ -239,7 +239,7 @@ function processFirestoreSchemaHelper(datasetId, dataFieldName, prefix, schema, 
     return fields.map((field) => {
         if (field.type === "map") {
             const subschema = { fields: field.fields };
-            processFirestoreSchemaHelper(datasetId, dataFieldName, `${prefix.length > 0 ? `${prefix}.` : ``}${field.name}`, subschema, arrays, geopoints, extractors, transformer);
+            processFirestoreSchemaHelper(datasetId, dataFieldName, prefix.concat(field.name), subschema, arrays, geopoints, extractors, transformer);
             return;
         }
         const fieldNameToSelector = (processLeafField(datasetId, "data", prefix, field, transformer));
@@ -250,12 +250,15 @@ function processFirestoreSchemaHelper(datasetId, dataFieldName, prefix, schema, 
         // "GROUP BY" clauses. We keep track of them so they can be explicitly
         // transformed into groupable types later.
         if (field.type === "array") {
-            arrays.push(field.name);
+            arrays.push(qualifyFieldName(prefix, field.name));
         }
         if (field.type === "geopoint") {
-            geopoints.push(field.name);
+            geopoints.push(qualifyFieldName(prefix, field.name));
         }
     });
+}
+function qualifyFieldName(prefix, name) {
+    return prefix.concat(name).join("_");
 }
 /**
  * Once we have reached the field in the JSON tree, we must determine what type
@@ -263,6 +266,7 @@ function processFirestoreSchemaHelper(datasetId, dataFieldName, prefix, schema, 
  * the BigQuery type.
  */
 const processLeafField = (datasetId, dataFieldName, prefix, field, transformer) => {
+    let extractPrefix = `${prefix.join(".")}`;
     let fieldNameToSelector = {};
     let selector;
     switch (field.type) {
@@ -270,31 +274,36 @@ const processLeafField = (datasetId, dataFieldName, prefix, field, transformer) 
             selector = transformer(`NULL`);
             break;
         case "string":
-            selector = jsonExtract(dataFieldName, prefix, field, ``, transformer);
+            selector = jsonExtract(dataFieldName, extractPrefix, field, ``, transformer);
             break;
         case "array":
-            selector = udfs_1.firestoreArray(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer));
+            selector = udfs_1.firestoreArray(datasetId, jsonExtract(dataFieldName, extractPrefix, field, ``, transformer));
             break;
         case "boolean":
-            selector = udfs_1.firestoreBoolean(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer));
+            selector = udfs_1.firestoreBoolean(datasetId, jsonExtract(dataFieldName, extractPrefix, field, ``, transformer));
             break;
         case "number":
-            selector = udfs_1.firestoreNumber(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer));
+            selector = udfs_1.firestoreNumber(datasetId, jsonExtract(dataFieldName, extractPrefix, field, ``, transformer));
             break;
         case "timestamp":
-            selector = udfs_1.firestoreTimestamp(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer));
+            selector = udfs_1.firestoreTimestamp(datasetId, jsonExtract(dataFieldName, extractPrefix, field, ``, transformer));
             break;
         case "geopoint":
-            const latitude = jsonExtract(dataFieldName, prefix, field, `._latitude`, transformer);
-            const longitude = jsonExtract(dataFieldName, prefix, field, `._longitude`, transformer);
-            // We return directly from this branch because it's the only one that
-            // generates multiple selector clauses.
-            fieldNameToSelector[`${field.name}`] = `${udfs_1.firestoreGeopoint(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer))} AS last_location`;
-            fieldNameToSelector[`${field.name}_latitude`] = `CAST(${latitude} AS NUMERIC) AS ${field.name}_latitude`;
-            fieldNameToSelector[`${field.name}_longitude`] = `CAST(${longitude} AS NUMERIC) AS ${field.name}_longitude`;
+            const latitude = jsonExtract(dataFieldName, extractPrefix, field, `._latitude`, transformer);
+            const longitude = jsonExtract(dataFieldName, extractPrefix, field, `._longitude`, transformer);
+            /*
+             * We return directly from this branch because it's the only one that
+             * generate multiple selector clauses.
+             */
+            fieldNameToSelector[qualifyFieldName(prefix, field.name)] =
+                `${udfs_1.firestoreGeopoint(datasetId, jsonExtract(dataFieldName, extractPrefix, field, ``, transformer))} AS ${prefix.concat(field.name).join("_")}`;
+            fieldNameToSelector[qualifyFieldName(prefix, `${field.name}_latitude`)] =
+                `SAFE_CAST(${latitude} AS NUMERIC) AS ${qualifyFieldName(prefix, `${field.name}_latitude`)}`;
+            fieldNameToSelector[qualifyFieldName(prefix, `${field.name}_longitude`)] =
+                `SAFE_CAST(${longitude} AS NUMERIC) AS ${qualifyFieldName(prefix, `${field.name}_longitude`)}`;
             return fieldNameToSelector;
     }
-    fieldNameToSelector[field.name] = `${selector} AS ${field.name}`;
+    fieldNameToSelector[qualifyFieldName(prefix, field.name)] = `${selector} AS ${qualifyFieldName(prefix, field.name)}`;
     return fieldNameToSelector;
 };
 function schemaViewName(tableName, schemaName) { return `${tableName}_schema_${schemaName}`; }
