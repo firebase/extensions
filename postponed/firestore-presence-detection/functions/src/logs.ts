@@ -53,7 +53,7 @@ export const sessionInfo = (sessionID: string, userID: string) => {
 };
 
 export const overwriteOnline = (timestamp: number) => {
-  console.log(`Received a delete operation with timestamp equivalent to that of the destination. Committing the operation (offline win timestamp ties).`);
+  console.log(`Received a delete operation with timestamp equivalent to that of the destination (timestamp ${timestamp}). Committing the operation (offline win timestamp ties).`);
 };
 
 export const staleTimestamp = (currentTimestamp: number, operationTimestamp: number, userID: string, sessionID: string) => {
