@@ -100,3 +100,19 @@ Publish a message to the topic `${param:PUBSUB_TOPIC}` to trigger the Cloud func
 ### Monitoring
 
 As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.
+
+### How much does it cost?
+
+This extension uses RTDB, Firestore, and Cloud Functions together to track user presence. Each time a user logs in, logs out, or changes metadata:
+
+-   A write to RTDB will occur.
+    * The operation is billed based on outbound network traffic.
+    * In addition, active user sessions are stored in RTDB and billing is calculated daily.
+    * See [Understand Realtime Database Billing](https://firebase.google.com/docs/database/usage/billing) for details.
+-   A Cloud Function will trigger.
+    * See [Cloud Function Pricing](https://cloud.google.com/functions/pricing)
+-   The function will perform `2` read operations and `1` write operation to Firestore on average.
+    * Note that the function will retry in case of failure or conflicts, potentially performing more operations.
+    * Current active sessions and lightweight timestamps of the previous sessions are stored and billing is calculated daily. See the Cleanup section above on how to free up storage by deleting these timestamps.
+    * In addition, Firestore billing also includes network bandwidth.
+    * See [Understand Cloud Firestore billing](https://firebase.google.com/docs/firestore/pricing) for details.
