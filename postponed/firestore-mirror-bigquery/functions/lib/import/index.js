@@ -30,7 +30,6 @@ const inquirer = require("inquirer");
 const util = require("util");
 const bigquery_1 = require("../bigquery");
 const firestoreEventHistoryTracker_1 = require("../firestoreEventHistoryTracker");
-const schemaFile = require("../../schema.json");
 // For reading cursor position.
 const exists = util.promisify(fs.exists);
 const write = util.promisify(fs.writeFile);

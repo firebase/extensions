@@ -1,4 +1,19 @@
 "use strict";
+/*
+ * Copyright 2019 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -22,6 +37,7 @@ const testDataset = "test_dataset";
 const testTable = "test_table";
 const expect = chai.expect;
 const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
 process.env.PROJECT_ID = testProjectId;
 function readFormattedSQL(file) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -58,9 +74,20 @@ describe("schema snapshot view sql generation", () => {
         const query = snapshot_1.buildLatestSchemaSnapshotViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/fullSchema.json`));
         expect(query).to.equal(expectedQuery);
     }));
+    it("should generate the expected sql", () => __awaiter(void 0, void 0, void 0, function* () {
+        const expectedQuery = yield readFormattedSQL(`${sqlDir}/fullSchemaLatestFromView.txt`);
+        const query = snapshot_1.buildLatestSchemaSnapshotViewQueryFromLatestView(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/fullSchema.json`));
+        yield writeFile(`${sqlDir}/fullSchemaLatestFromView.txt`, query);
+        expect(query).to.equal(expectedQuery);
+    }));
     it("should generate the expected sql for an empty schema", () => __awaiter(void 0, void 0, void 0, function* () {
         const expectedQuery = yield readFormattedSQL(`${sqlDir}/emptySchemaLatest.txt`);
         const query = snapshot_1.buildLatestSchemaSnapshotViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/emptySchema.json`));
+        expect(query).to.equal(expectedQuery);
+    }));
+    it("should generate the expected sql", () => __awaiter(void 0, void 0, void 0, function* () {
+        const expectedQuery = yield readFormattedSQL(`${sqlDir}/emptySchemaLatestFromView.txt`);
+        const query = snapshot_1.buildLatestSchemaSnapshotViewQueryFromLatestView(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/fullSchema.json`));
         expect(query).to.equal(expectedQuery);
     }));
 });
