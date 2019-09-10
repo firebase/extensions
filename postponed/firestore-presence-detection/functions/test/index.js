@@ -164,6 +164,7 @@ mocha.describe('Permuted Operations', function() {
     3: admin.firestore.FieldValue.delete()
   };
 
+  // Get array of all permutations of the 4 operations
   const permutations = getPermutations(Object.keys(testArr));
 
   // Iterate over all possible permutations of operations. The most recent operation should persist correctly
