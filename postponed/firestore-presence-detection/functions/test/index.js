@@ -35,18 +35,12 @@ const docRef = admin.firestore().collection(testCollection).doc(testUser);
  * @param assertCallback: callback on a DocumentSnapshot, should be used to assert the state of the document
  */
 const testTransaction = (testName, payload, timestamp, assertCallback) => {
-  it(testName, function(done){
-    extension.firestoreTransaction(docRef, payload, timestamp, testUser, testSession)
+  it(testName, function(){
+    return extension.firestoreTransaction(docRef, payload, timestamp, testUser, testSession)
         .then(() => {
-          docRef.get().then((docSnap) => {
+          return docRef.get().then((docSnap) => {
             assertCallback(docSnap);
-            done();
-          }).catch((error) => {
-            done(error);
           });
-        })
-        .catch( (error) => {
-          done(error);
         });
   });
 };
@@ -55,12 +49,8 @@ const testTransaction = (testName, payload, timestamp, assertCallback) => {
  * Deletes the document, should be run prior to running any test
  */
 const resetTestEnvironment = () => {
-  it("Reset Environment: should succeed", function(done) {
-      docRef.delete().then(() => {
-        done();
-      }).catch((error) => {
-        done(error);
-      })
+  it("Reset Environment: should succeed", function() {
+      return docRef.delete();
     });
 };
 
