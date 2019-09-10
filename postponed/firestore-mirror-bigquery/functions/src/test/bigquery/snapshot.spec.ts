@@ -19,7 +19,11 @@ import * as fs from "fs";
 import * as sqlFormatter from "sql-formatter";
 import * as util from "util";
 
-import { buildLatestSnapshotViewQuery, buildLatestSchemaSnapshotViewQuery } from "../../bigquery/snapshot";
+import {
+  buildLatestSnapshotViewQuery,
+  buildLatestSchemaSnapshotViewQuery,
+  buildLatestSchemaSnapshotViewQueryFromLatestView,
+} from "../../bigquery/snapshot";
 
 const fixturesDir = __dirname + "/../fixtures";
 const sqlDir = fixturesDir + "/sql";
@@ -31,6 +35,7 @@ const testTable = "test_table";
 
 const expect = chai.expect;
 const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
 
 process.env.PROJECT_ID = testProjectId;
 
@@ -68,9 +73,21 @@ describe("schema snapshot view sql generation", () => {
     const query = buildLatestSchemaSnapshotViewQuery(testDataset, testTable, await readBigQuerySchema(`${schemaDir}/fullSchema.json`));
     expect(query).to.equal(expectedQuery);
   });
+  it("should generate the expected sql", async () => {
+    const expectedQuery = await readFormattedSQL(`${sqlDir}/fullSchemaLatestFromView.txt`);
+    const query = buildLatestSchemaSnapshotViewQueryFromLatestView(testDataset, testTable, await readBigQuerySchema(`${schemaDir}/fullSchema.json`));
+    await writeFile(`${sqlDir}/fullSchemaLatestFromView.txt`, query);
+    expect(query).to.equal(expectedQuery);
+  });
   it("should generate the expected sql for an empty schema", async () => {
     const expectedQuery = await readFormattedSQL(`${sqlDir}/emptySchemaLatest.txt`);
     const query = buildLatestSchemaSnapshotViewQuery(testDataset, testTable, await readBigQuerySchema(`${schemaDir}/emptySchema.json`));
     expect(query).to.equal(expectedQuery);
   });
+  it("should generate the expected sql", async () => {
+    const expectedQuery = await readFormattedSQL(`${sqlDir}/emptySchemaLatestFromView.txt`);
+    const query = buildLatestSchemaSnapshotViewQueryFromLatestView(testDataset, testTable, await readBigQuerySchema(`${schemaDir}/fullSchema.json`));
+    expect(query).to.equal(expectedQuery);
+  });
+
 });

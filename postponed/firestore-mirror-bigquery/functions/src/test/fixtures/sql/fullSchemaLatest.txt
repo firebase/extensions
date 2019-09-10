@@ -20,7 +20,8 @@ FROM
       last_login,
       last_location,
       last_location_latitude,
-      last_location_longitude
+      last_location_longitude,
+      friends_name
     FROM
       (
         SELECT
@@ -40,7 +41,7 @@ FROM
             ORDER BY
               timestamp DESC
           ) = "DELETE" AS is_deleted,
-          FIRST_VALUE(JSON_EXTRACT(data, '$.friends.name')) OVER(
+          FIRST_VALUE(JSON_EXTRACT(data, '$.name')) OVER(
             PARTITION BY document_name
             ORDER BY
               timestamp DESC
@@ -66,20 +67,25 @@ FROM
                 timestamp DESC
             )
           ) AS last_location,
-          CAST(
+          SAFE_CAST(
             FIRST_VALUE(JSON_EXTRACT(data, '$.last_location._latitude')) OVER(
               PARTITION BY document_name
               ORDER BY
                 timestamp DESC
             ) AS NUMERIC
           ) AS last_location_latitude,
-          CAST(
+          SAFE_CAST(
             FIRST_VALUE(JSON_EXTRACT(data, '$.last_location._longitude')) OVER(
               PARTITION BY document_name
               ORDER BY
                 timestamp DESC
             ) AS NUMERIC
-          ) AS last_location_longitude
+          ) AS last_location_longitude,
+          FIRST_VALUE(JSON_EXTRACT(data, '$.friends.name')) OVER(
+            PARTITION BY document_name
+            ORDER BY
+              timestamp DESC
+          ) AS friends_name
         FROM
           `test.test_dataset.test_table`
       )
@@ -95,6 +101,7 @@ GROUP BY
   last_login,
   last_location_latitude,
   last_location_longitude,
+  friends_name,
   favorite_numbers_index,
   favorite_numbers_member,
   last_location_latitude,

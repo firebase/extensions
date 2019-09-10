@@ -78,7 +78,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     const rawTable = rawTableName(tableName);
 
     await this.initializeDataset(datasetId);
-    await this.initializeTable(datasetId, rawTable);
+    await this.initializeChangelog(datasetId, rawTable);
     await this.initializeLatestView(datasetId, rawTable);
   };
 
@@ -107,9 +107,9 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     tableName: string,
     rows: bigquery.RowMetadata[]
   ) {
-    const realTableName = rawTableName(tableName);
+    const name = changelogTableName(rawTableName(tableName));
     const dataset = this.bq.dataset(datasetId);
-    const table = dataset.table(realTableName);
+    const table = dataset.table(name);
     const rowCount = rows.length;
 
     logs.dataInserting(rowCount);
@@ -138,24 +138,26 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
    * if it doesn't.  If the table does exist, validate that the BigQuery schema
    * is correct and add any missing fields.
    */
-  async initializeTable(
+  async initializeChangelog(
     datasetId: string,
     tableName: string,
   ): Promise<bigquery.Table> {
+    const changelogName = changelogTableName(tableName);
     const dataset = this.bq.dataset(datasetId);
-    let table = dataset.table(tableName);
+    let table = dataset.table(changelogName);
     const [tableExists] = await table.exists();
 
     if (tableExists) {
       logs.bigQueryTableAlreadyExists(table.id, dataset.id);
     } else {
-      logs.bigQueryTableCreating(tableName);
+      logs.bigQueryTableCreating(changelogName);
       const options = {
-        friendlyName: tableName,
+        // `friendlyName` needs to be here to satisfy TypeScript
+        friendlyName: changelogName,
         schema: firestoreToBQTable(),
       };
       await table.create(options);
-      logs.bigQueryTableCreated(tableName);
+      logs.bigQueryTableCreated(changelogName);
     }
     return table;
   };
@@ -180,9 +182,13 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
       logs.bigQueryViewCreating(viewName);
       const options = {
         friendlyName: viewName,
-        view: latestConsistentSnapshotView(datasetId, tableName)
+        view: latestConsistentSnapshotView(datasetId, changelogTableName(tableName))
       };
-      await view.create(options);
+      try {
+        await view.create(options);
+      } catch (e) {
+        console.log(JSON.stringify(e));
+      }
       logs.bigQueryViewCreated(viewName);
     }
     return view;
@@ -190,4 +196,5 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
 }
 
 export function rawTableName(tableName: string): string { return `${tableName}_raw`; };
+export function changelogTableName(tableName: string): string { return `${tableName}_changelog`; }
 export function latestViewName(tableName: string): string { return `${tableName}_latest`; };

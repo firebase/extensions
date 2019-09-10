@@ -18,6 +18,6 @@ FROM
       ) AS last_location_longitude,
       JSON_EXTRACT(data, '$.friends.name') AS friends_name
     FROM
-      `test.test_dataset.test_table`
-  ) test_table
-  CROSS JOIN UNNEST(test_table.favorite_numbers) AS favorite_numbers_member WITH OFFSET favorite_numbers_index
+      `test.test_dataset.test_table_latest`
+  ) test_table_latest
+  CROSS JOIN UNNEST(test_table_latest.favorite_numbers) AS favorite_numbers_member WITH OFFSET favorite_numbers_index

@@ -17,6 +17,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const sqlFormatter = require("sql-formatter");
 const schema_1 = require("./schema");
+const bigquery_1 = require("../bigquery");
 const excludeFields = [
     "document_name",
 ];
@@ -65,9 +66,12 @@ exports.buildLatestSnapshotViewQuery = buildLatestSnapshotViewQuery;
  * query that returns the latest set of live documents according to that schema.
  */
 exports.latestConsistentSnapshotSchemaView = (datasetId, rawTableName, schema) => ({
-    query: exports.buildLatestSchemaSnapshotViewQuery(datasetId, rawTableName, schema),
+    query: exports.buildLatestSchemaSnapshotViewQueryFromLatestView(datasetId, rawTableName, schema),
     useLegacySql: false,
 });
+exports.buildLatestSchemaSnapshotViewQueryFromLatestView = (datasetId, tableName, schema) => {
+    return schema_1.buildSchemaViewQuery(datasetId, bigquery_1.latestViewName(tableName), schema);
+};
 exports.buildLatestSchemaSnapshotViewQuery = (datasetId, rawTableName, schema) => {
     const firstValue = (selector) => {
         return `FIRST_VALUE(${selector}) OVER(PARTITION BY document_name ORDER BY timestamp DESC)`;

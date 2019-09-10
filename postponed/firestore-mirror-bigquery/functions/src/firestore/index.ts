@@ -28,7 +28,8 @@ export type FirestoreFieldType =
   | "array"
   | "null"
   | "string"
-  | "timestamp";
+  | "timestamp"
+  | "reference";
 
 export type FirestoreField = {
   fields?: FirestoreField[];
