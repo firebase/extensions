@@ -75,6 +75,14 @@ export const bigQueryTableValidating = (tableName: string) => {
   console.log(`Validating existing BigQuery table: ${tableName}`);
 };
 
+export const bigQueryUserDefinedFunctionCreating = (functionDefinition: string) => {
+  console.log(`Creating BigQuery User-defined Function:\n${functionDefinition}`);
+};
+
+export const bigQueryUserDefinedFunctionCreated = (functionDefinition: string) => {
+  console.log(`Created BigQuery User-defined Function:\n${functionDefinition}`);
+};
+
 export const bigQueryViewCreated = (viewName: string) => {
   console.log(`Created BigQuery view: ${viewName}`);
 };
