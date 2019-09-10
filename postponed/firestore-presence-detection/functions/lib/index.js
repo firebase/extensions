@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -40,7 +41,7 @@ logs.init();
  * Handler that listens to the document in RTDB containing user/session
  * information. The function calls the correct handler (upserts/deletes).
  */
-exports.writeToFirestore = functions.handler.database.ref.onWrite((change, context) => __awaiter(this, void 0, void 0, function* () {
+exports.writeToFirestore = functions.handler.database.ref.onWrite((change, context) => __awaiter(void 0, void 0, void 0, function* () {
     logs.startPresence();
     try {
         const changeType = getChangeType(change);
@@ -75,7 +76,7 @@ exports.writeToFirestore = functions.handler.database.ref.onWrite((change, conte
  *
  * @param userID: reference
  */
-exports.cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish(() => __awaiter(this, void 0, void 0, function* () {
+exports.cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish(() => __awaiter(void 0, void 0, void 0, function* () {
     logs.startCleanup();
     if (config_1.default.firestore_path === undefined) {
         throw new Error('Undefined firestore path. Please re-install and reconfigure the Firestore collection.');
@@ -85,8 +86,8 @@ exports.cleanUpDeadSessions = functions.handler.pubsub.topic.onPublish(() => __a
     for (const docRef of docRefArr) {
         // Run pessimistic transaction on each user document to remove tombstones
         logs.currentDocument(docRef.id);
-        yield admin.firestore().runTransaction((transaction) => __awaiter(this, void 0, void 0, function* () {
-            yield transaction.get(docRef).then((doc) => __awaiter(this, void 0, void 0, function* () {
+        yield admin.firestore().runTransaction((transaction) => __awaiter(void 0, void 0, void 0, function* () {
+            yield transaction.get(docRef).then((doc) => __awaiter(void 0, void 0, void 0, function* () {
                 const docData = doc.data();
                 // Read tombstone data if available
                 if (docData !== undefined && docData["last_updated"] instanceof Object) {
@@ -166,7 +167,8 @@ const getUserAndSessionID = (path) => {
 };
 /**
  * Performs an optimistic transaction at the docRef given the operation timestamp is more recent
- * than the most recent operation applied at the destination.
+ * than the most recent operation applied at the destination. This function is exported for the
+ * purpose of testing.
  *
  * @param docRef: reference to the firestore document
  * @param payload: the payload to write at the destination (this may be a delete operation)
@@ -174,11 +176,11 @@ const getUserAndSessionID = (path) => {
  * @param userID: the userID to update
  * @param sessionID: the sessionID to update
  */
-const firestoreTransaction = (docRef, payload, operationTimestamp, userID, sessionID) => __awaiter(this, void 0, void 0, function* () {
+exports.firestoreTransaction = (docRef, payload, operationTimestamp, userID, sessionID) => __awaiter(void 0, void 0, void 0, function* () {
     // Try to create the document if one does not exist, error here is non-fatal
-    yield docRef.get().then((doc) => __awaiter(this, void 0, void 0, function* () {
+    yield docRef.get().then((doc) => __awaiter(void 0, void 0, void 0, function* () {
         if (!doc.exists) {
-            logs.createDocument(userID, config_1.default.firestore_path);
+            logs.createDocument(docRef.id, docRef.parent.id);
             return docRef.create({
                 'sessions': {},
                 'last_updated': {},
@@ -188,7 +190,7 @@ const firestoreTransaction = (docRef, payload, operationTimestamp, userID, sessi
         logs.nonFatalError(error);
     });
     // Assuming the document exists, try to update it with presence information
-    return docRef.get().then((doc) => __awaiter(this, void 0, void 0, function* () {
+    return docRef.get().then((doc) => __awaiter(void 0, void 0, void 0, function* () {
         const lastUpdated = doc.updateTime;
         // If the document creation failed, retry
         if (!doc.exists) {
@@ -200,12 +202,16 @@ const firestoreTransaction = (docRef, payload, operationTimestamp, userID, sessi
         const currentData = doc.data();
         if (currentData !== undefined &&
             currentData['last_updated'] !== undefined &&
-            currentData['last_updated'][sessionID] !== undefined &&
-            typeof currentData['last_updated'][sessionID] === "number") {
-            const currentTimestamp = currentData['last_updated'][sessionID];
+            currentData['last_updated'][sessionID] !== undefined) {
+            let currentTimestamp = currentData['last_updated'][sessionID];
+            if (typeof currentTimestamp === "string") {
+                currentTimestamp = parseInt(currentTimestamp);
+            }
             // Refuse to write the operation if the timestamp is earlier than the latest update
-            if ((payload instanceof admin.firestore.FieldValue && currentTimestamp > operationTimestamp) &&
-                (currentTimestamp >= operationTimestamp)) {
+            if (payload === admin.firestore.FieldValue.delete() && currentTimestamp === operationTimestamp) {
+                logs.overwriteOnline(operationTimestamp);
+            }
+            else if (currentTimestamp >= operationTimestamp) {
                 logs.staleTimestamp(currentTimestamp, operationTimestamp, userID, sessionID);
                 return;
             }
@@ -231,10 +237,10 @@ const firestoreTransaction = (docRef, payload, operationTimestamp, userID, sessi
  * @param userID: the userID to update
  * @param sessionID: the sessionID to update
  */
-const firestoreTransactionWithRetries = (payload, operationTimestamp, userID, sessionID) => __awaiter(this, void 0, void 0, function* () {
+const firestoreTransactionWithRetries = (payload, operationTimestamp, userID, sessionID) => __awaiter(void 0, void 0, void 0, function* () {
     // Ensure path is defined and obtain database reference
     if (config_1.default.firestore_path === undefined) {
-        throw new Error('Undefined firestore path');
+        throw new Error('Undefined firestore path. Please re-install and reconfigure the Firestore collection.');
     }
     // Document creation (if applicable) and optimistic transaction
     // The function retries until it is successful or
@@ -242,9 +248,9 @@ const firestoreTransactionWithRetries = (payload, operationTimestamp, userID, se
     let isSuccessful = false;
     while (!isSuccessful) {
         // Try the transaction
-        yield firestoreTransaction(admin.firestore().collection(config_1.default.firestore_path).doc(userID), payload, operationTimestamp, userID, sessionID).then(() => {
+        yield exports.firestoreTransaction(admin.firestore().collection(config_1.default.firestore_path).doc(userID), payload, operationTimestamp, userID, sessionID).then(() => {
             isSuccessful = true;
-        }).catch((error) => __awaiter(this, void 0, void 0, function* () {
+        }).catch((error) => __awaiter(void 0, void 0, void 0, function* () {
             // Keep in retrying with linear backoff if there is an error
             numTries += 1;
             const numMilliseconds = 1000 * numTries;

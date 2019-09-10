@@ -174,7 +174,8 @@ const getUserAndSessionID = (path: string) => {
 
 /**
  * Performs an optimistic transaction at the docRef given the operation timestamp is more recent
- * than the most recent operation applied at the destination.
+ * than the most recent operation applied at the destination. This function is exported for the
+ * purpose of testing.
  *
  * @param docRef: reference to the firestore document
  * @param payload: the payload to write at the destination (this may be a delete operation)
@@ -182,12 +183,12 @@ const getUserAndSessionID = (path: string) => {
  * @param userID: the userID to update
  * @param sessionID: the sessionID to update
  */
-const firestoreTransaction = async (docRef: admin.firestore.DocumentReference, payload: any, operationTimestamp: number, userID: string, sessionID: string): Promise<void> => {
+export const firestoreTransaction = async (docRef: admin.firestore.DocumentReference, payload: any, operationTimestamp: number, userID: string, sessionID: string): Promise<void> => {
 
     // Try to create the document if one does not exist, error here is non-fatal
     await docRef.get().then(async (doc: DocumentSnapshot): Promise<admin.firestore.WriteResult | void> => {
         if (!doc.exists) {
-          logs.createDocument(userID, config.firestore_path);
+          logs.createDocument(docRef.id, docRef.parent.id);
           return docRef.create({
             'sessions': {},
             'last_updated': {},
@@ -212,14 +213,17 @@ const firestoreTransaction = async (docRef: admin.firestore.DocumentReference, p
       const currentData = doc.data();
       if (currentData !== undefined &&
           currentData['last_updated'] !== undefined &&
-          currentData['last_updated'][sessionID] !== undefined &&
-          typeof currentData['last_updated'][sessionID] === "number") {
+          currentData['last_updated'][sessionID] !== undefined) {
 
-        const currentTimestamp = currentData['last_updated'][sessionID];
+        let currentTimestamp = currentData['last_updated'][sessionID];
+        if (typeof currentTimestamp === "string") {
+          currentTimestamp = parseInt(currentTimestamp);
+        }
 
         // Refuse to write the operation if the timestamp is earlier than the latest update
-        if ((payload instanceof admin.firestore.FieldValue && currentTimestamp > operationTimestamp) &&
-            (currentTimestamp >= operationTimestamp)) {
+        if (payload === admin.firestore.FieldValue.delete() && currentTimestamp === operationTimestamp) {
+          logs.overwriteOnline(operationTimestamp);
+        } else if (currentTimestamp >= operationTimestamp) {
           logs.staleTimestamp(currentTimestamp, operationTimestamp, userID, sessionID);
           return;
         }
@@ -251,7 +255,7 @@ const firestoreTransactionWithRetries = async (payload: any, operationTimestamp:
 
   // Ensure path is defined and obtain database reference
   if (config.firestore_path === undefined) {
-    throw new Error('Undefined firestore path');
+    throw new Error('Undefined firestore path. Please re-install and reconfigure the Firestore collection.');
   }
 
   // Document creation (if applicable) and optimistic transaction
