@@ -22,6 +22,7 @@ const testDataset = "test_dataset";
 const testTable = "test_table";
 const expect = chai.expect;
 const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
 process.env.PROJECT_ID = testProjectId;
 function readFormattedSQL(file) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -61,6 +62,7 @@ describe("schema snapshot view sql generation", () => {
     it("should generate the expected sql", () => __awaiter(void 0, void 0, void 0, function* () {
         const expectedQuery = yield readFormattedSQL(`${sqlDir}/fullSchemaLatestFromView.txt`);
         const query = snapshot_1.buildLatestSchemaSnapshotViewQueryFromLatestView(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/fullSchema.json`));
+        yield writeFile(`${sqlDir}/fullSchemaLatestFromView.txt`, query);
         expect(query).to.equal(expectedQuery);
     }));
     it("should generate the expected sql for an empty schema", () => __awaiter(void 0, void 0, void 0, function* () {
