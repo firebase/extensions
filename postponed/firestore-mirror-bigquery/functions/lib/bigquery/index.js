@@ -40,12 +40,13 @@ class FirestoreBigQueryEventHistoryTracker {
         this.config = config;
         this.bq = new bigquery.BigQuery();
         this.initialized = config.initialized;
+        this.tableName = config.collectionPath.replace(/\//g, "_");
     }
     record(events) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.config.initialized) {
                 try {
-                    yield this.initialize(this.config.datasetId, this.config.tableName);
+                    yield this.initialize(this.config.datasetId, this.tableName);
                     this.initialized = true;
                 }
                 catch (e) {
@@ -57,7 +58,7 @@ class FirestoreBigQueryEventHistoryTracker {
                 // Use the function's event ID to protect against duplicate executions
                 event.eventId, event.operation, event.timestamp, event.documentName, event.data);
             });
-            yield this.insertData(this.config.datasetId, this.config.tableName, rows);
+            yield this.insertData(this.config.datasetId, this.tableName, rows);
         });
     }
     /**
@@ -67,7 +68,7 @@ class FirestoreBigQueryEventHistoryTracker {
      */
     initialize(datasetId, tableName) {
         return __awaiter(this, void 0, void 0, function* () {
-            const rawTable = rawTableName(tableName);
+            const rawTable = raw(tableName);
             yield this.initializeDataset(datasetId);
             yield this.initializeChangelog(datasetId, rawTable);
             yield this.initializeLatestView(datasetId, rawTable);
@@ -88,9 +89,9 @@ class FirestoreBigQueryEventHistoryTracker {
     /**
      * Insert a row of data into the BigQuery `raw` data table
      */
-    insertData(datasetId, tableName, rows) {
+    insertData(datasetId, collectionTableName, rows) {
         return __awaiter(this, void 0, void 0, function* () {
-            const name = changelogTableName(rawTableName(tableName));
+            const name = changeLog(raw(collectionTableName));
             const dataset = this.bq.dataset(datasetId);
             const table = dataset.table(name);
             const rowCount = rows.length;
@@ -126,7 +127,7 @@ class FirestoreBigQueryEventHistoryTracker {
      */
     initializeChangelog(datasetId, tableName) {
         return __awaiter(this, void 0, void 0, function* () {
-            const changelogName = changelogTableName(tableName);
+            const changelogName = changeLog(tableName);
             const dataset = this.bq.dataset(datasetId);
             let table = dataset.table(changelogName);
             const [tableExists] = yield table.exists();
@@ -154,7 +155,7 @@ class FirestoreBigQueryEventHistoryTracker {
      */
     initializeLatestView(datasetId, tableName) {
         return __awaiter(this, void 0, void 0, function* () {
-            let viewName = latestViewName(tableName);
+            let viewName = latest(tableName);
             const dataset = this.bq.dataset(datasetId);
             let view = dataset.table(viewName);
             const [viewExists] = yield view.exists();
@@ -165,14 +166,9 @@ class FirestoreBigQueryEventHistoryTracker {
                 logs.bigQueryViewCreating(viewName);
                 const options = {
                     friendlyName: viewName,
-                    view: snapshot_1.latestConsistentSnapshotView(datasetId, changelogTableName(tableName))
+                    view: snapshot_1.latestConsistentSnapshotView(datasetId, changeLog(tableName))
                 };
-                try {
-                    yield view.create(options);
-                }
-                catch (e) {
-                    console.log(JSON.stringify(e));
-                }
+                yield view.create(options);
                 logs.bigQueryViewCreated(viewName);
             }
             return view;
@@ -181,11 +177,11 @@ class FirestoreBigQueryEventHistoryTracker {
     ;
 }
 exports.FirestoreBigQueryEventHistoryTracker = FirestoreBigQueryEventHistoryTracker;
-function rawTableName(tableName) { return `${tableName}_raw`; }
-exports.rawTableName = rawTableName;
+function raw(tableName) { return `${tableName}_raw`; }
+exports.raw = raw;
 ;
-function changelogTableName(tableName) { return `${tableName}_changelog`; }
-exports.changelogTableName = changelogTableName;
-function latestViewName(tableName) { return `${tableName}_latest`; }
-exports.latestViewName = latestViewName;
+function changeLog(tableName) { return `${tableName}_changelog`; }
+exports.changeLog = changeLog;
+function latest(tableName) { return `${tableName}_latest`; }
+exports.latest = latest;
 ;

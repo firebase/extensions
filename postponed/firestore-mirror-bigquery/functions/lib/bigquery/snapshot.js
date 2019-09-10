@@ -66,12 +66,13 @@ exports.buildLatestSnapshotViewQuery = buildLatestSnapshotViewQuery;
  * query that returns the latest set of live documents according to that schema.
  */
 exports.latestConsistentSnapshotSchemaView = (datasetId, rawTableName, schema) => ({
-    query: exports.buildLatestSchemaSnapshotViewQueryFromLatestView(datasetId, rawTableName, schema),
+    query: buildLatestSchemaSnapshotViewQueryFromLatestView(datasetId, rawTableName, schema),
     useLegacySql: false,
 });
-exports.buildLatestSchemaSnapshotViewQueryFromLatestView = (datasetId, tableName, schema) => {
-    return schema_1.buildSchemaViewQuery(datasetId, bigquery_1.latestViewName(tableName), schema);
-};
+function buildLatestSchemaSnapshotViewQueryFromLatestView(datasetId, tableName, schema) {
+    return schema_1.buildSchemaViewQuery(datasetId, bigquery_1.latest(tableName), schema);
+}
+exports.buildLatestSchemaSnapshotViewQueryFromLatestView = buildLatestSchemaSnapshotViewQueryFromLatestView;
 exports.buildLatestSchemaSnapshotViewQuery = (datasetId, rawTableName, schema) => {
     const firstValue = (selector) => {
         return `FIRST_VALUE(${selector}) OVER(PARTITION BY document_name ORDER BY timestamp DESC)`;

@@ -22,7 +22,7 @@ import * as util from "util";
 
 import * as generateSchema from "generate-schema";
 
-import { FirestoreBigQueryEventHistoryTracker } from "../bigquery";
+import { raw, changeLog, FirestoreBigQueryEventHistoryTracker } from "../bigquery";
 import { extractSnapshotData, FirestoreSchema } from "../firestore";
 import {
   extractIdFieldNames,
@@ -35,6 +35,7 @@ import { ChangeType, FirestoreDocumentChangeEvent } from "../firestoreEventHisto
 const exists = util.promisify(fs.exists);
 const write = util.promisify(fs.writeFile);
 const read = util.promisify(fs.readFile);
+const unlink = util.promisify(fs.unlink);
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
@@ -58,8 +59,9 @@ const questions = [
       validateInput(value, "project ID", FIRESTORE_VALID_CHARACTERS),
   },
   {
-    message: "What is the path of the the collection you would like to import from?",
-    name: "collectionPath",
+    message: "What is the path of the the Cloud Firestore Collection you would like to import from? " +
+      "(This may, or may not, be the same Collection for which you plan to mirror changes.)",
+    name: "sourceCollectionPath",
     type: "input",
     validate: (value) =>
       validateInput(value, "collection path", FIRESTORE_VALID_CHARACTERS),
@@ -72,11 +74,15 @@ const questions = [
     validate: (value) =>
       validateInput(value, "dataset", BIGQUERY_VALID_CHARACTERS),
   },
-  {
+];
+
+const questionsRemaining = (sourceCollectionPath: string) => ([ {
     message:
-      "What is the ID of the BigQuery table import into? (The table will be created if it doesn't already exist)",
-    name: "tableName",
+      "What is the name of the Cloud Firestore Collection you are mirroring? " +
+        "(Documents in the source Collection will be written to the raw changelog for this Collection.)",
+    name: "destinationCollectionPath",
     type: "input",
+    default: sourceCollectionPath,
     validate: (value) =>
       validateInput(value, "dataset", BIGQUERY_VALID_CHARACTERS),
   },
@@ -90,19 +96,27 @@ const questions = [
       return parseInt(value, 10) > 0
     }
   },
-
-];
+]);
 
 const run = async (): Promise<number> => {
   const {
     projectId,
-    collectionPath,
+    sourceCollectionPath,
     datasetId,
-    tableName,
-    batchSize,
   } = await inquirer.prompt(questions);
+  /*
+   * We use a separate inquirer prompt so that we can treat the
+   * sourceCollectionPath as the default destinationCollectionPath. This
+   * corresponds to the common use case in which the caller is import documents
+   * from a collection that caller later plans to mirror changes for.
+   */
+  const {
+    destinationCollectionPath,
+    batchSize,
+  } = await inquirer.prompt(questionsRemaining(sourceCollectionPath));
 
   const batch = parseInt(batchSize);
+  const rawChangeLogName = changeLog(raw(destinationCollectionPath));
 
   // Initialize Firebase
   firebase.initializeApp({
@@ -114,30 +128,29 @@ const run = async (): Promise<number> => {
   process.env.GOOGLE_CLOUD_PROJECT = projectId;
 
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
-    collectionPath: collectionPath,
+    collectionPath: destinationCollectionPath,
     datasetId: datasetId,
-    tableName: tableName,
     initialized: false,
   });
 
   console.log(
-    `Importing data from Firestore Collection: ${collectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${tableName}`
+    `Importing data from Cloud Firestore Collection: ${sourceCollectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${rawChangeLogName}`
   );
 
   // Build the data row with a 0 timestamp. This ensures that all other
   // operations supersede imports when listing the live documents.
   let cursor;
 
-  let cursorPositionFile = __dirname + `/from-${collectionPath}-to-${projectId}\:${datasetId}\:${tableName}`;
+  let cursorPositionFile = __dirname + `/from-${sourceCollectionPath}-to-${projectId}\:${datasetId}\:${rawChangeLogName}`;
   if (await exists(cursorPositionFile)) {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
     cursor = await firebase
       .firestore()
-      .collection(collectionPath)
+      .collection(sourceCollectionPath)
       .doc(cursorDocumentId)
       .get();
     console.log(
-      `Resuming import of collection ${collectionPath} from document ${cursorDocumentId}.`
+      `Resuming import of Cloud Firestore Collection ${sourceCollectionPath} from document ${cursorDocumentId}.`
     );
   }
 
@@ -150,7 +163,7 @@ const run = async (): Promise<number> => {
     }
     let query = firebase
       .firestore()
-      .collection(collectionPath)
+      .collection(sourceCollectionPath)
       .limit(batch);
     if (cursor) {
       query = query.startAfter(cursor);
@@ -175,6 +188,12 @@ const run = async (): Promise<number> => {
     await dataSink.record(rows);
     totalRowsImported += rows.length;
   } while (true);
+
+  try {
+    await unlink(cursorPositionFile);
+  } catch (e) {
+    console.log(`Error unlinking journal file ${cursorPositionFile} after successful import: ${e.toString()}`);
+  }
 
   return totalRowsImported;
 };

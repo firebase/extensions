@@ -53,7 +53,7 @@ const questions = [
   },
   {
     message:
-      "What is the ID of the BigQuery dataset that you would like to use? (The dataset will be created if it doesn't already exist)",
+      "What is the ID of the BigQuery dataset the raw changelog lives in? (The dataset and the raw changelog must already exist!)",
     name: "datasetId",
     type: "input",
     validate: (value) =>
@@ -61,8 +61,8 @@ const questions = [
   },
   {
     message:
-      "What is the ID of the BigQuery table that you would like to generate a schema view for? (The table must already exist in your specified dataset.)",
-    name: "tableName",
+      "What is the name of the Cloud Firestore Collection that you would like to generate a schema view for?",
+    name: "collectionName",
     type: "input",
     validate: (value) =>
       validateInput(value, "dataset", BIGQUERY_VALID_CHARACTERS),
@@ -79,7 +79,7 @@ async function run(): Promise<number> {
   const {
     projectId,
     datasetId,
-    tableName,
+    collectionName,
     confirmed
   } = await inquirer.prompt(questions);
 
@@ -100,7 +100,7 @@ async function run(): Promise<number> {
   const viewFactory = new FirestoreBigQuerySchemaViewFactory();
 
   for (const schemaName in schemas) {
-    await viewFactory.initializeSchemaViewResources(datasetId, tableName, schemaName, schemas[schemaName]);
+    await viewFactory.initializeSchemaViewResources(datasetId, collectionName, schemaName, schemas[schemaName]);
   }
   return 0;
 };

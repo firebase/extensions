@@ -18,7 +18,7 @@ import * as bigquery from "@google-cloud/bigquery";
 import * as errors from "../errors";
 import { FirestoreField, FirestoreSchema } from "../firestore";
 import * as logs from "../logs";
-import { changelogTableName, rawTableName, latestViewName } from "../bigquery";
+import { changeLog, raw, latest } from "../bigquery";
 import { latestConsistentSnapshotSchemaView } from "../bigquery/snapshot";
 import * as sqlFormatter from "sql-formatter";
 
@@ -89,14 +89,14 @@ export class FirestoreBigQuerySchemaViewFactory {
    */
   async initializeSchemaViewResources(
     datasetId: string,
-    tableName: string,
+    collectionName: string,
     schemaName: string,
-    schema: FirestoreSchema,
+    firestoreSchema: FirestoreSchema,
   ): Promise<bigquery.Table> {
-    const changelog = changelogTableName(rawTableName(tableName));
-    const latestRawViewName = latestViewName(rawTableName(tableName));
-    const changelogSchemaViewName = changelogTableName(schemaViewName(tableName, schemaName));
-    const latestSchemaViewName = latestViewName(schemaViewName(tableName, schemaName));
+    const rawChangeLogTableName = changeLog(raw(collectionName));
+    const latestRawViewName = latest(raw(collectionName));
+    const changeLogSchemaViewName = changeLog(schema(collectionName, schemaName));
+    const latestSchemaViewName = latest(schema(collectionName, schemaName));
     const dataset = this.bq.dataset(datasetId);
 
     for (let i = 0; i < udfs.length; i++) {
@@ -108,27 +108,27 @@ export class FirestoreBigQuerySchemaViewFactory {
       logs.bigQueryUserDefinedFunctionCreated(udf.query);
     }
 
-    let view = dataset.table(changelogSchemaViewName);
+    let view = dataset.table(changeLogSchemaViewName);
     const [viewExists] = await view.exists();
 
     let latestView = dataset.table(latestSchemaViewName);
     const [latestViewExists] = await latestView.exists();
 
     if (!viewExists) {
-      logs.bigQueryViewCreating(changelogSchemaViewName);
+      logs.bigQueryViewCreating(changeLogSchemaViewName);
       const options = {
-        friendlyName: changelogSchemaViewName,
-        view: userSchemaView(datasetId, changelog, schema),
+        friendlyName: changeLogSchemaViewName,
+        view: userSchemaView(datasetId, rawChangeLogTableName, firestoreSchema),
       };
       await view.create(options);
-      logs.bigQueryViewCreated(changelogSchemaViewName);
+      logs.bigQueryViewCreated(changeLogSchemaViewName);
     }
 
     if (!latestViewExists) {
       logs.bigQueryViewCreating(latestSchemaViewName);
       const latestOptions = {
         fiendlyName: latestSchemaViewName,
-        view: buildSchemaViewQuery(datasetId, latestRawViewName, schema)
+        view: buildSchemaViewQuery(datasetId, latestRawViewName, firestoreSchema)
       };
       await latestView.create(latestOptions);
       logs.bigQueryViewCreated(latestSchemaViewName);
@@ -218,7 +218,7 @@ export const userSchemaView = (
 
 /**
  * Constructs a query for building a view over a raw changelog table name.
- * It is assumed that `rawTableName` is an existing table with a schema that
+ * It is assumed that `raw` is an existing table with a schema that
  * matches what is returned by `firestoreToBQTable()`.
  */
 export const buildSchemaViewQuery = (
@@ -401,4 +401,4 @@ const processLeafField = (
   return fieldNameToSelector;
 }
 
-function schemaViewName(tableName: string, schemaName: string): string { return `${tableName}_schema_${schemaName}`;  };
+function schema(tableName: string, schemaName: string): string { return `${tableName}_schema_${schemaName}`;  };

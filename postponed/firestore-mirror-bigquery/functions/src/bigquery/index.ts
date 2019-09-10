@@ -29,7 +29,6 @@ import { BigQuery } from "@google-cloud/bigquery";
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   collectionPath: string;
   datasetId: string;
-  tableName: string;
   initialized: boolean;
 }
 
@@ -41,17 +40,19 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
  */
 export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHistoryTracker {
   bq: bigquery.BigQuery;
+  tableName: string;
   initialized: boolean;
 
   constructor(public config: FirestoreBigQueryEventHistoryTrackerConfig) {
     this.bq = new bigquery.BigQuery();
     this.initialized = config.initialized;
+    this.tableName = config.collectionPath.replace(/\//g, "_");
   }
 
   async record(events: FirestoreDocumentChangeEvent[]) {
     if (!this.config.initialized) {
       try {
-        await this.initialize(this.config.datasetId, this.config.tableName);
+        await this.initialize(this.config.datasetId, this.tableName);
         this.initialized = true;
       } catch (e) {
         logs.bigQueryErrorRecordingDocumentChange(e);
@@ -66,7 +67,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
         event.documentName,
         event.data);
     });
-    await this.insertData(this.config.datasetId, this.config.tableName, rows);
+    await this.insertData(this.config.datasetId, this.tableName, rows);
   }
 
   /**
@@ -75,7 +76,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
    * the first document change event is recorded.
    */
   async initialize(datasetId: string, tableName: string) {
-    const rawTable = rawTableName(tableName);
+    const rawTable = raw(tableName);
 
     await this.initializeDataset(datasetId);
     await this.initializeChangelog(datasetId, rawTable);
@@ -104,10 +105,10 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
    */
   async insertData(
     datasetId: string,
-    tableName: string,
+    collectionTableName: string,
     rows: bigquery.RowMetadata[]
   ) {
-    const name = changelogTableName(rawTableName(tableName));
+    const name = changeLog(raw(collectionTableName));
     const dataset = this.bq.dataset(datasetId);
     const table = dataset.table(name);
     const rowCount = rows.length;
@@ -142,7 +143,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     datasetId: string,
     tableName: string,
   ): Promise<bigquery.Table> {
-    const changelogName = changelogTableName(tableName);
+    const changelogName = changeLog(tableName);
     const dataset = this.bq.dataset(datasetId);
     let table = dataset.table(changelogName);
     const [tableExists] = await table.exists();
@@ -171,7 +172,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     datasetId: string,
     tableName: string
   ): Promise<bigquery.Table> {
-    let viewName = latestViewName(tableName);
+    let viewName = latest(tableName);
     const dataset = this.bq.dataset(datasetId);
     let view = dataset.table(viewName);
     const [viewExists] = await view.exists();
@@ -182,19 +183,15 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
       logs.bigQueryViewCreating(viewName);
       const options = {
         friendlyName: viewName,
-        view: latestConsistentSnapshotView(datasetId, changelogTableName(tableName))
+        view: latestConsistentSnapshotView(datasetId, changeLog(tableName))
       };
-      try {
-        await view.create(options);
-      } catch (e) {
-        console.log(JSON.stringify(e));
-      }
+      await view.create(options);
       logs.bigQueryViewCreated(viewName);
     }
     return view;
   };
 }
 
-export function rawTableName(tableName: string): string { return `${tableName}_raw`; };
-export function changelogTableName(tableName: string): string { return `${tableName}_changelog`; }
-export function latestViewName(tableName: string): string { return `${tableName}_latest`; };
+export function raw(tableName: string): string { return `${tableName}_raw`; };
+export function changeLog(tableName: string): string { return `${tableName}_changelog`; }
+export function latest(tableName: string): string { return `${tableName}_latest`; };

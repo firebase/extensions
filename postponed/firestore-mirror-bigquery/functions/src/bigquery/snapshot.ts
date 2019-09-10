@@ -25,7 +25,7 @@ import {
   timestampField,
 } from "./schema";
 
-import { latestViewName } from "../bigquery";
+import { latest } from "../bigquery";
 
 import { FirestoreSchema } from "../firestore/index";
 
@@ -100,12 +100,12 @@ export const latestConsistentSnapshotSchemaView = (
   useLegacySql: false,
 });
 
-export const buildLatestSchemaSnapshotViewQueryFromLatestView = (
+export function buildLatestSchemaSnapshotViewQueryFromLatestView(
   datasetId: string,
   tableName: string,
   schema: FirestoreSchema
-): string => {
-  return buildSchemaViewQuery(datasetId, latestViewName(tableName), schema);
+): string {
+  return buildSchemaViewQuery(datasetId, latest(tableName), schema);
 }
 
 export const buildLatestSchemaSnapshotViewQuery = (
