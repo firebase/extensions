@@ -22,6 +22,7 @@ const testDataset = "test_dataset";
 const testTable = "test_table";
 const expect = chai.expect;
 const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
 process.env.PROJECT_ID = testProjectId;
 function readFormattedSQL(file) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -63,6 +64,12 @@ describe("schema snapshot view sql generation", () => {
     it("should handle a map with no key-value pairs", () => __awaiter(void 0, void 0, void 0, function* () {
         const expectedQuery = yield readFormattedSQL(`${sqlDir}/emptyMapSchema.txt`);
         const query = schema_1.buildSchemaViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/emptyMapSchema.json`));
+        expect(query).to.equal(expectedQuery);
+    }));
+    it("should handle references in schemas, and conflicting names at various nesting levels", () => __awaiter(void 0, void 0, void 0, function* () {
+        const expectedQuery = "null"; //await readFormattedSQL(`${sqlDir}/referenceSchema.txt`);
+        const query = schema_1.buildSchemaViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/referenceSchema.json`));
+        yield writeFile(`${sqlDir}/referenceSchema.txt`, query);
         expect(query).to.equal(expectedQuery);
     }));
 });

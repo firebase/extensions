@@ -362,6 +362,7 @@ const processLeafField = (
     selector = transformer(`NULL`);
     break;
   case "string":
+  case "reference":
     selector = jsonExtract(dataFieldName, extractPrefix, field, ``, transformer);
     break;
   case "array":

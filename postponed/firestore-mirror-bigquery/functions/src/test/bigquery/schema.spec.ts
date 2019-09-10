@@ -15,6 +15,7 @@ const testTable = "test_table";
 
 const expect = chai.expect;
 const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
 
 process.env.PROJECT_ID = testProjectId;
 
@@ -56,6 +57,11 @@ describe("schema snapshot view sql generation", () => {
   it("should handle a map with no key-value pairs", async () => {
     const expectedQuery = await readFormattedSQL(`${sqlDir}/emptyMapSchema.txt`);
     const query = buildSchemaViewQuery(testDataset, testTable, await readBigQuerySchema(`${schemaDir}/emptyMapSchema.json`));
+    expect(query).to.equal(expectedQuery);
+  });
+  it("should handle references in schemas, and conflicting names at various nesting levels", async () => {
+    const expectedQuery = await readFormattedSQL(`${sqlDir}/referenceSchema.txt`);
+    const query = buildSchemaViewQuery(testDataset, testTable, await readBigQuerySchema(`${schemaDir}/referenceSchema.json`));
     expect(query).to.equal(expectedQuery);
   });
 });

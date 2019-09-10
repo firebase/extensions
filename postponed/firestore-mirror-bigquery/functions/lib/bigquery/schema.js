@@ -274,6 +274,7 @@ const processLeafField = (datasetId, dataFieldName, prefix, field, transformer) 
             selector = transformer(`NULL`);
             break;
         case "string":
+        case "reference":
             selector = jsonExtract(dataFieldName, extractPrefix, field, ``, transformer);
             break;
         case "array":
