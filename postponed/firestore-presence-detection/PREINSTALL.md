@@ -1,4 +1,4 @@
-Use this extension to track user presence in a Cloud Firestore collection.
+Detects the online/offline status of users or devices. Updates the online presence in a specified Cloud Firestore document.
 
 ## Introduction
 Whenever a user is logged in using `SessionManager` provided by the SDK, the user's presence information is written to RTDB. The resulting RTDB document is mirrored to a Firestore collection using Cloud Functions for Firebase. Each authenticated user will have a document within the Firestore collection (keyed by their Firebase Authentication uuid) that contains two fields relevant to their active connections. The `sessions` field is a map of all active user connections (keyed by `sessionID`, see "User Connections" below). If metadata is set using the SDK, they can be found under `sessions/sessionID` (See "Custom Metadata"). The `last_updated` field contains timestamps of when a `sessionID` was last updated in RTDB.
