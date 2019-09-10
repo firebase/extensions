@@ -43,6 +43,9 @@ exports.handleDelete = (sessionID) => {
 exports.sessionInfo = (sessionID, userID) => {
     console.log(`Mod executing for user: ${userID}, connection: ${sessionID}`);
 };
+exports.overwriteOnline = (timestamp) => {
+    console.log(`Received a delete operation with timestamp equivalent to that of the destination. Committing the operation (offline win timestamp ties).`);
+};
 exports.staleTimestamp = (currentTimestamp, operationTimestamp, userID, sessionID) => {
     console.log(`Timestamp of current operation is older than timestamp at destination. Refusing to commit change.` +
         `(user: ${userID}, session: ${sessionID} | Destination Timestamp: ${currentTimestamp}, Operation Timestamp: ${operationTimestamp})`);
