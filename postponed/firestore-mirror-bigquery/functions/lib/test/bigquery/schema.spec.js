@@ -67,9 +67,8 @@ describe("schema snapshot view sql generation", () => {
         expect(query).to.equal(expectedQuery);
     }));
     it("should handle references in schemas, and conflicting names at various nesting levels", () => __awaiter(void 0, void 0, void 0, function* () {
-        const expectedQuery = "null"; //await readFormattedSQL(`${sqlDir}/referenceSchema.txt`);
+        const expectedQuery = yield readFormattedSQL(`${sqlDir}/referenceSchema.txt`);
         const query = schema_1.buildSchemaViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/referenceSchema.json`));
-        yield writeFile(`${sqlDir}/referenceSchema.txt`, query);
         expect(query).to.equal(expectedQuery);
     }));
 });
