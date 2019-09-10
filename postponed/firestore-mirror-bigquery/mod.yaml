@@ -107,17 +107,3 @@ params:
     default: extensions
     example: extensions
     required: true
-
-  - param: TABLE_NAME
-    type: string
-    label: Table ID
-    description: >-
-      What is the ID of the BigQuery table that you would like to use? (The extension
-      will create the table if it doesn't already exist)
-    validationRegex: ^[a-zA-Z0-9_]+$
-    validationErrorMessage: >
-      Table IDs must be alphanumeric (plus underscores) and must be at most 1024
-      characters long.
-    default: extensions
-    example: extensions
-    required: true

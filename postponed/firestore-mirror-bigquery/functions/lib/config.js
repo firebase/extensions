@@ -19,6 +19,5 @@ exports.default = {
     collectionPath: process.env.COLLECTION_PATH,
     datasetId: process.env.DATASET_ID,
     location: process.env.LOCATION,
-    tableName: process.env.TABLE_NAME,
     initialized: false
 };
