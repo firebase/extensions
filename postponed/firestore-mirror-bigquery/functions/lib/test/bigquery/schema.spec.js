@@ -37,6 +37,7 @@ const testDataset = "test_dataset";
 const testTable = "test_table";
 const expect = chai.expect;
 const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
 process.env.PROJECT_ID = testProjectId;
 function readFormattedSQL(file) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -58,6 +59,31 @@ describe("schema snapshot view sql generation", () => {
     it("should generate the expected sql for an empty schema", () => __awaiter(void 0, void 0, void 0, function* () {
         const expectedQuery = yield readFormattedSQL(`${sqlDir}/emptySchemaChangeLog.txt`);
         const query = schema_1.buildSchemaViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/emptySchema.json`));
+        expect(query).to.equal(expectedQuery);
+    }));
+    it("should handle nested maps", () => __awaiter(void 0, void 0, void 0, function* () {
+        const expectedQuery = yield readFormattedSQL(`${sqlDir}/nestedMapSchemaChangeLog.txt`);
+        const query = schema_1.buildSchemaViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/nestedMapSchema.json`));
+        expect(query).to.equal(expectedQuery);
+    }));
+    it("should handle arrays nested in maps with conflicting field names", () => __awaiter(void 0, void 0, void 0, function* () {
+        const expectedQuery = yield readFormattedSQL(`${sqlDir}/arraysNestedInMapsSchema.txt`);
+        const query = schema_1.buildSchemaViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/arraysNestedInMapsSchema.json`));
+        expect(query).to.equal(expectedQuery);
+    }));
+    it("should handle every possible type nested inside a map", () => __awaiter(void 0, void 0, void 0, function* () {
+        const expectedQuery = yield readFormattedSQL(`${sqlDir}/fullSchemaSquared.txt`);
+        const query = schema_1.buildSchemaViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/fullSchemaSquared.json`));
+        expect(query).to.equal(expectedQuery);
+    }));
+    it("should handle a map with no key-value pairs", () => __awaiter(void 0, void 0, void 0, function* () {
+        const expectedQuery = yield readFormattedSQL(`${sqlDir}/emptyMapSchema.txt`);
+        const query = schema_1.buildSchemaViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/emptyMapSchema.json`));
+        expect(query).to.equal(expectedQuery);
+    }));
+    it("should handle references in schemas, and conflicting names at various nesting levels", () => __awaiter(void 0, void 0, void 0, function* () {
+        const expectedQuery = yield readFormattedSQL(`${sqlDir}/referenceSchema.txt`);
+        const query = schema_1.buildSchemaViewQuery(testDataset, testTable, yield readBigQuerySchema(`${schemaDir}/referenceSchema.json`));
         expect(query).to.equal(expectedQuery);
     }));
 });

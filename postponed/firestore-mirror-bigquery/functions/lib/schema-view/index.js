@@ -55,7 +55,7 @@ const questions = [
     },
     {
         message: "What is the ID of the BigQuery table that you would like to generate a schema view for? (The table must already exist in your specified dataset.)",
-        name: "rawTableName",
+        name: "tableName",
         type: "input",
         validate: (value) => validateInput(value, "dataset", BIGQUERY_VALID_CHARACTERS),
     },
@@ -67,7 +67,7 @@ const questions = [
 ];
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const { projectId, datasetId, rawTableName, confirmed } = yield inquirer.prompt(questions);
+        const { projectId, datasetId, tableName, confirmed } = yield inquirer.prompt(questions);
         // Set project ID so it can be used in BigQuery intialization
         process.env.PROJECT_ID = projectId;
         // BigQuery aactually requires this variable to set the project correctly.
@@ -82,7 +82,7 @@ function run() {
         const schemas = readSchemas(schemaDirectory);
         const viewFactory = new schema_1.FirestoreBigQuerySchemaViewFactory();
         for (const schemaName in schemas) {
-            yield viewFactory.initializeSchemaView(datasetId, rawTableName, schemaName, schemas[schemaName]);
+            yield viewFactory.initializeSchemaViewResources(datasetId, tableName, schemaName, schemas[schemaName]);
         }
         return 0;
     });
