@@ -38,7 +38,7 @@ As a best practice, you can [monitor the activity](https://firebase.google.com/d
 
 This extension will retry `DeadlineExceeded` and `Aborted` to make sure temporary errors do not lead to missing histories.
 
-### How much does it costs?
+### How much does it cost?
 
-Every time a document is inserted, updated or deleted within the target collection, function will be triggered once and one Firestore document will be created.
+Every time a document is inserted, updated or deleted within the target collection, a function will be triggered once and one Firestore document will be created.
 
