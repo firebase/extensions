@@ -62,7 +62,7 @@ const questions = [
   {
     message:
       "What is the ID of the BigQuery table that you would like to generate a schema view for? (The table must already exist in your specified dataset.)",
-    name: "rawTableName",
+    name: "tableName",
     type: "input",
     validate: (value) =>
       validateInput(value, "dataset", BIGQUERY_VALID_CHARACTERS),
@@ -79,7 +79,7 @@ async function run(): Promise<number> {
   const {
     projectId,
     datasetId,
-    rawTableName,
+    tableName,
     confirmed
   } = await inquirer.prompt(questions);
 
@@ -100,7 +100,7 @@ async function run(): Promise<number> {
   const viewFactory = new FirestoreBigQuerySchemaViewFactory();
 
   for (const schemaName in schemas) {
-    await viewFactory.initializeSchemaView(datasetId, rawTableName, schemaName, schemas[schemaName]);
+    await viewFactory.initializeSchemaViewResources(datasetId, tableName, schemaName, schemas[schemaName]);
   }
   return 0;
 };

@@ -27,7 +27,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const bigquery = require("@google-cloud/bigquery");
 const logs = require("../logs");
 const bigquery_1 = require("../bigquery");
-const snapshot_1 = require("../bigquery/snapshot");
 const sqlFormatter = require("sql-formatter");
 const udfs_1 = require("./udfs");
 const bigQueryField = (name, type, mode, fields) => ({
@@ -60,44 +59,43 @@ class FirestoreBigQuerySchemaViewFactory {
      * with the schema type applied.
      *
      * This method will not create views if they already exist in BigQuery.
-     *
-     * @param datasetId
-     * @param tableName
-     * @param schemaName
-     * @param schema
      */
-    initializeSchemaView(datasetId, tableName, schemaName, schema) {
+    initializeSchemaViewResources(datasetId, tableName, schemaName, schema) {
         return __awaiter(this, void 0, void 0, function* () {
-            let rawTable = bigquery_1.rawTableName(tableName);
-            let viewName = schemaViewName(tableName, schemaName);
+            const changelog = bigquery_1.changelogTableName(bigquery_1.rawTableName(tableName));
+            const latestRawViewName = bigquery_1.latestViewName(bigquery_1.rawTableName(tableName));
+            const changelogSchemaViewName = bigquery_1.changelogTableName(schemaViewName(tableName, schemaName));
+            const latestSchemaViewName = bigquery_1.latestViewName(schemaViewName(tableName, schemaName));
             const dataset = this.bq.dataset(datasetId);
             for (let i = 0; i < udfs_1.udfs.length; i++) {
                 const udf = udfs_1.udfs[i](datasetId);
+                logs.bigQueryUserDefinedFunctionCreating(udf.query);
                 yield this.bq.query({
                     query: udf.query,
                 });
+                logs.bigQueryUserDefinedFunctionCreated(udf.query);
             }
-            let view = dataset.table(viewName);
+            let view = dataset.table(changelogSchemaViewName);
             const [viewExists] = yield view.exists();
-            let latestView = dataset.table(bigquery_1.latestViewName(viewName));
+            let latestView = dataset.table(latestSchemaViewName);
             const [latestViewExists] = yield latestView.exists();
             if (!viewExists) {
-                logs.bigQueryViewCreating(viewName);
+                logs.bigQueryViewCreating(changelogSchemaViewName);
                 const options = {
-                    friendlyName: viewName,
-                    view: exports.userSchemaView(datasetId, rawTable, schema),
+                    friendlyName: changelogSchemaViewName,
+                    view: exports.userSchemaView(datasetId, changelog, schema),
                 };
                 yield view.create(options);
-                logs.bigQueryViewCreated(viewName);
+                logs.bigQueryViewCreated(changelogSchemaViewName);
             }
             if (!latestViewExists) {
-                logs.bigQueryViewCreating(bigquery_1.latestViewName(viewName));
+                logs.bigQueryViewCreating(latestSchemaViewName);
                 const latestOptions = {
-                    fiendlyName: bigquery_1.latestViewName(viewName),
-                    view: snapshot_1.latestConsistentSnapshotSchemaView(datasetId, rawTable, schema),
+                    fiendlyName: latestSchemaViewName,
+                    view: exports.buildSchemaViewQuery(datasetId, latestRawViewName, schema)
                 };
                 yield latestView.create(latestOptions);
-                logs.bigQueryViewCreated(bigquery_1.latestViewName(viewName));
+                logs.bigQueryViewCreated(latestSchemaViewName);
             }
             return view;
         });
@@ -171,9 +169,6 @@ exports.userSchemaView = (datasetId, tableName, schema) => ({
  * Constructs a query for building a view over a raw changelog table name.
  * It is assumed that `rawTableName` is an existing table with a schema that
  * matches what is returned by `firestoreToBQTable()`.
- * @param datasetId
- * @param rawTableName
- * @param schema
  */
 exports.buildSchemaViewQuery = (datasetId, rawTableName, schema) => {
     const [fieldExtractors, fieldArrays] = processFirestoreSchema(datasetId, "data", schema);
@@ -211,9 +206,9 @@ exports.buildSchemaViewQuery = (datasetId, rawTableName, schema) => {
  * in the Firestore document proto, return a list of clauses that may be
  * used to extract schema values from a JSON string and convert them into
  * the corresponding BigQuery type.
- * @param datasetId
+ * @param datasetId the BigQuery dataset
  * @param dataFieldName the name of the columns storing raw JSON data
- * @param schema
+ * @param schema the Firestore Schema used to create selectors
  * @param transformer an optional BigQuery function to apply to each
  * select clause found during the search.
  */
@@ -224,7 +219,7 @@ function processFirestoreSchema(datasetId, dataFieldName, schema, transformer) {
     let extractors = {};
     let arrays = [];
     let geopoints = [];
-    processFirestoreSchemaHelper(datasetId, dataFieldName, /*prefix=*/ "", schema, arrays, geopoints, extractors, transformer);
+    processFirestoreSchemaHelper(datasetId, dataFieldName, /*prefix=*/ [], schema, arrays, geopoints, extractors, transformer);
     return [extractors, arrays, geopoints];
 }
 exports.processFirestoreSchema = processFirestoreSchema;
@@ -246,7 +241,7 @@ function processFirestoreSchemaHelper(datasetId, dataFieldName, prefix, schema, 
     return fields.map((field) => {
         if (field.type === "map") {
             const subschema = { fields: field.fields };
-            processFirestoreSchemaHelper(datasetId, dataFieldName, `${prefix.length > 0 ? `${prefix}.` : ``}${field.name}`, subschema, arrays, geopoints, extractors, transformer);
+            processFirestoreSchemaHelper(datasetId, dataFieldName, prefix.concat(field.name), subschema, arrays, geopoints, extractors, transformer);
             return;
         }
         const fieldNameToSelector = (processLeafField(datasetId, "data", prefix, field, transformer));
@@ -257,12 +252,15 @@ function processFirestoreSchemaHelper(datasetId, dataFieldName, prefix, schema, 
         // "GROUP BY" clauses. We keep track of them so they can be explicitly
         // transformed into groupable types later.
         if (field.type === "array") {
-            arrays.push(field.name);
+            arrays.push(qualifyFieldName(prefix, field.name));
         }
         if (field.type === "geopoint") {
-            geopoints.push(field.name);
+            geopoints.push(qualifyFieldName(prefix, field.name));
         }
     });
+}
+function qualifyFieldName(prefix, name) {
+    return prefix.concat(name).join("_");
 }
 /**
  * Once we have reached the field in the JSON tree, we must determine what type
@@ -270,6 +268,7 @@ function processFirestoreSchemaHelper(datasetId, dataFieldName, prefix, schema, 
  * the BigQuery type.
  */
 const processLeafField = (datasetId, dataFieldName, prefix, field, transformer) => {
+    let extractPrefix = `${prefix.join(".")}`;
     let fieldNameToSelector = {};
     let selector;
     switch (field.type) {
@@ -277,32 +276,38 @@ const processLeafField = (datasetId, dataFieldName, prefix, field, transformer) 
             selector = transformer(`NULL`);
             break;
         case "string":
-            selector = jsonExtract(dataFieldName, prefix, field, ``, transformer);
+        case "reference":
+            selector = jsonExtract(dataFieldName, extractPrefix, field, ``, transformer);
             break;
         case "array":
-            selector = udfs_1.firestoreArray(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer));
+            selector = udfs_1.firestoreArray(datasetId, jsonExtract(dataFieldName, extractPrefix, field, ``, transformer));
             break;
         case "boolean":
-            selector = udfs_1.firestoreBoolean(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer));
+            selector = udfs_1.firestoreBoolean(datasetId, jsonExtract(dataFieldName, extractPrefix, field, ``, transformer));
             break;
         case "number":
-            selector = udfs_1.firestoreNumber(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer));
+            selector = udfs_1.firestoreNumber(datasetId, jsonExtract(dataFieldName, extractPrefix, field, ``, transformer));
             break;
         case "timestamp":
-            selector = udfs_1.firestoreTimestamp(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer));
+            selector = udfs_1.firestoreTimestamp(datasetId, jsonExtract(dataFieldName, extractPrefix, field, ``, transformer));
             break;
         case "geopoint":
-            const latitude = jsonExtract(dataFieldName, prefix, field, `._latitude`, transformer);
-            const longitude = jsonExtract(dataFieldName, prefix, field, `._longitude`, transformer);
-            // We return directly from this branch because it's the only one that
-            // generates multiple selector clauses.
-            fieldNameToSelector[`${field.name}`] = `${udfs_1.firestoreGeopoint(datasetId, jsonExtract(dataFieldName, prefix, field, ``, transformer))} AS last_location`;
-            fieldNameToSelector[`${field.name}_latitude`] = `CAST(${latitude} AS NUMERIC) AS ${field.name}_latitude`;
-            fieldNameToSelector[`${field.name}_longitude`] = `CAST(${longitude} AS NUMERIC) AS ${field.name}_longitude`;
+            const latitude = jsonExtract(dataFieldName, extractPrefix, field, `._latitude`, transformer);
+            const longitude = jsonExtract(dataFieldName, extractPrefix, field, `._longitude`, transformer);
+            /*
+             * We return directly from this branch because it's the only one that
+             * generate multiple selector clauses.
+             */
+            fieldNameToSelector[qualifyFieldName(prefix, field.name)] =
+                `${udfs_1.firestoreGeopoint(datasetId, jsonExtract(dataFieldName, extractPrefix, field, ``, transformer))} AS ${prefix.concat(field.name).join("_")}`;
+            fieldNameToSelector[qualifyFieldName(prefix, `${field.name}_latitude`)] =
+                `SAFE_CAST(${latitude} AS NUMERIC) AS ${qualifyFieldName(prefix, `${field.name}_latitude`)}`;
+            fieldNameToSelector[qualifyFieldName(prefix, `${field.name}_longitude`)] =
+                `SAFE_CAST(${longitude} AS NUMERIC) AS ${qualifyFieldName(prefix, `${field.name}_longitude`)}`;
             return fieldNameToSelector;
     }
-    fieldNameToSelector[field.name] = `${selector} AS ${field.name}`;
+    fieldNameToSelector[qualifyFieldName(prefix, field.name)] = `${selector} AS ${qualifyFieldName(prefix, field.name)}`;
     return fieldNameToSelector;
 };
-function schemaViewName(tableName, schemaName) { return `${tableName}_${schemaName}_schema`; }
+function schemaViewName(tableName, schemaName) { return `${tableName}_schema_${schemaName}`; }
 ;

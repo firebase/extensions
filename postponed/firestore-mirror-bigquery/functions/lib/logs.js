@@ -59,6 +59,12 @@ exports.bigQueryTableValidated = (tableName) => {
 exports.bigQueryTableValidating = (tableName) => {
     console.log(`Validating existing BigQuery table: ${tableName}`);
 };
+exports.bigQueryUserDefinedFunctionCreating = (functionDefinition) => {
+    console.log(`Creating BigQuery User-defined Function:\n${functionDefinition}`);
+};
+exports.bigQueryUserDefinedFunctionCreated = (functionDefinition) => {
+    console.log(`Created BigQuery User-defined Function:\n${functionDefinition}`);
+};
 exports.bigQueryViewCreated = (viewName) => {
     console.log(`Created BigQuery view: ${viewName}`);
 };

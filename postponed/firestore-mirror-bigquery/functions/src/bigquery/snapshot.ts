@@ -18,11 +18,14 @@ import * as sqlFormatter from "sql-formatter";
 
 import * as logs from "../logs";
 import {
+  buildSchemaViewQuery,
   firestoreToBQTable,
   processFirestoreSchema,
   subSelectQuery,
   timestampField,
 } from "./schema";
+
+import { latestViewName } from "../bigquery";
 
 import { FirestoreSchema } from "../firestore/index";
 
@@ -93,9 +96,17 @@ export const latestConsistentSnapshotSchemaView = (
   rawTableName: string,
   schema: FirestoreSchema,
 ) => ({
-  query: buildLatestSchemaSnapshotViewQuery(datasetId, rawTableName, schema),
+  query: buildLatestSchemaSnapshotViewQueryFromLatestView(datasetId, rawTableName, schema),
   useLegacySql: false,
 });
+
+export const buildLatestSchemaSnapshotViewQueryFromLatestView = (
+  datasetId: string,
+  tableName: string,
+  schema: FirestoreSchema
+): string => {
+  return buildSchemaViewQuery(datasetId, latestViewName(tableName), schema);
+}
 
 export const buildLatestSchemaSnapshotViewQuery = (
   datasetId: string,
