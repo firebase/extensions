@@ -1,0 +1,99 @@
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: fs-document-histories
+displayName: Track the history of Firestore documents.
+specVersion: v1beta1
+version: 0.1.0
+
+description:
+  Track the histories of Firestore documents in a subcollection.
+
+license: Apache-2.0
+billingRequired: true
+sourceUrl: https://accounts.google.com/AccountChooser/signinchooser?service=gerritcodereview&continue=https%3A%2F%2Fdev-partners.googlesource.com%2Flogin%2Fsamples%2Ffirebase%2Fmods%2F%2B%2Fmaster%2Fauth-user-notifications
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+
+contributors:
+  - authorName: Fred Zhang
+    email: fredzqm@google.com
+    url: https://github.com/fredzqm
+
+roles:
+  - role: datastore.user
+    reason: Allows
+
+resources:
+  - name: fsdocumenthistories
+    type: firebasemods.v1beta1.function
+    description:
+      listen for changes to your Firestore collection and push the changes into
+      a subcollection.
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
+        failurePolicy:
+          retry: {}
+
+params:
+  - param: LOCATION
+    type: select
+    label: Deployment Location
+    description: >-
+      Where should the mod be deployed? Pick a location that is close to your
+      Firestore database. See
+      https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+    default: us-central1
+    required: true
+
+  - param: COLLECTION_PATH
+    type: string
+    label: Collection Path
+    description: >-
+      What is the path of the the collection you would like to mirror?
+    default: extensions
+    example: extensions
+    required: true
+
+  - param: SUB_COLLECTION_ID
+    type: string
+    label: Sub-collection ID
+    description: >-
+      What is the collection ID of the Firestore subcollection that you would like the history to be tracked in?
+    default: history
+    example: history
+    required: true
+
