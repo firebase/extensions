@@ -18,7 +18,7 @@ specVersion: v1beta1
 version: 0.1.0
 
 description:
-  Mirror data for a Firestore Collection to BigQuery. This mod creates an event
+  Mirror data for a Firestore Collection to BigQuery. This extension creates an event
   listener which triggers when Documents within a Collection are added, updated
   or deleted.
 
@@ -32,9 +32,9 @@ author:
   url: https://firebase.google.com
 
 contributors:
-  - authorName: Chris Bianca
-    email: chris@csfrequency.com
-    url: https://github.com/chrisbianca
+  - authorName: Jan Wyszynski
+    email: wyszynski@google.com
+    url: https://github.com/IanWyszynski
 
 apis:
   - apiName: bigquery-json.googleapis.com
