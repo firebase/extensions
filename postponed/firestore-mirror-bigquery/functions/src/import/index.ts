@@ -31,8 +31,6 @@ import {
 } from "../util";
 import { ChangeType, FirestoreDocumentChangeEvent } from "../firestoreEventHistoryTracker";
 
-const schemaFile = require("../../schema.json");
-
 // For reading cursor position.
 const exists = util.promisify(fs.exists);
 const write = util.promisify(fs.writeFile);

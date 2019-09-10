@@ -104,9 +104,11 @@ export class FirestoreBigQuerySchemaViewFactory {
 
     for (let i = 0; i < udfs.length; i++) {
       const udf = udfs[i](datasetId);
+      logs.bigQueryUserDefinedFunctionCreating(udf.query);
       await this.bq.query({
         query: udf.query,
       });
+      logs.bigQueryUserDefinedFunctionCreated(udf.query);
     }
 
     let view = dataset.table(viewName);
