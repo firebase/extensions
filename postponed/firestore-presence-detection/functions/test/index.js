@@ -26,35 +26,6 @@ const testSession = "sess0";
 const docRef = admin.firestore().collection(testCollection).doc(testUser);
 
 /**
- * testTransaction is a helper function that commits a transaction with a timestamp/payload pair.
- * The assertCallback is used to ensure the written data is correct.
- *
- * @param testName: describes the result expected (e.g. "should have an online session")
- * @param payload: payload (or delete field) to emulate online/offline/metadata operation
- * @param timestamp: timestamp of the operation
- * @param assertCallback: callback on a DocumentSnapshot, should be used to assert the state of the document
- */
-const testTransaction = (testName, payload, timestamp, assertCallback) => {
-  it(testName, function(){
-    return extension.firestoreTransaction(docRef, payload, timestamp, testUser, testSession)
-        .then(() => {
-          return docRef.get().then((docSnap) => {
-            assertCallback(docSnap);
-          });
-        });
-  });
-};
-
-/**
- * Deletes the document, should be run prior to running any test
- */
-const resetTestEnvironment = () => {
-  it("Reset Environment: should succeed", function() {
-      return docRef.delete();
-    });
-};
-
-/**
  * Takes an array of elements, returns an array of all array permutations
  * @param baseArr: arbitrary array of elements
  * @return {*[]|Array}: array of all permutations
@@ -86,39 +57,41 @@ const getPermutations = (baseArr) => {
 /**
  * Smoke tests for basic functionality (online/offline)
  */
-mocha.describe('Smoke Test', function() {
-  resetTestEnvironment();
-  testTransaction("Online: should have 1 active session", "test", 0, (docSnap) => {
-    assert.equal(0, docSnap.data()["last_updated"][testSession]);
-    assert.equal("test", docSnap.data()["sessions"][testSession]);
+mocha.describe('Smoke Test (Idempotency)', function() {
+  it("Reset Environment: should succeed", function() {
+    return docRef.delete();
   });
-  testTransaction("Online: should have 0 active sessions", admin.firestore.FieldValue.delete(), 1,(docSnap) => {
-    assert.equal(1, docSnap.data()["last_updated"][testSession]);
-    assert.equal(undefined, docSnap.data()["sessions"][testSession]);
+  it("Online: should have 1 active session", async () => {
+    const payload = "test";
+    const timestamp = 0;
+    await extension.firestoreTransaction(docRef, payload, timestamp, testUser, testSession);
+    const docSnap = await docRef.get();
+    assert.deepEqual(docSnap.data().sessions, {[testSession]: payload});
+    assert.deepEqual(docSnap.data().last_updated, {[testSession]: timestamp});
   });
-});
-
-/**
- * Tests for idempotency of online/offline calls
- */
-mocha.describe('Idempotency', function() {
-  resetTestEnvironment();
-  testTransaction("Online: should have 1 active session", "test", 0, (docSnap) => {
-    assert.equal(0, docSnap.data()["last_updated"][testSession]);
-    assert.equal("test", docSnap.data()["sessions"][testSession]);
+  it("Online: should have 1 active session (NOOP)", async () => {
+    const payload = "test";
+    const timestamp = 0;
+    await extension.firestoreTransaction(docRef, payload, timestamp, testUser, testSession);
+    const docSnap = await docRef.get();
+    assert.deepEqual(docSnap.data().sessions, {[testSession]: payload});
+    assert.deepEqual(docSnap.data().last_updated, {[testSession]: timestamp});
   });
-  testTransaction("Online: should have 1 active session (NOOP)", "test", 0, (docSnap) => {
-    assert.equal(0, docSnap.data()["last_updated"][testSession]);
-    assert.equal("test", docSnap.data()["sessions"][testSession]);
+  it("Offline: should have 0 active sessions", async () => {
+    const payload = admin.firestore.FieldValue.delete();
+    const timestamp = 1;
+    await extension.firestoreTransaction(docRef, payload, timestamp, testUser, testSession);
+    const docSnap = await docRef.get();
+    assert.deepEqual(docSnap.data().sessions, {});
+    assert.deepEqual(docSnap.data().last_updated, {[testSession]: timestamp});
   });
-
-  testTransaction("Online: should have 0 active sessions", admin.firestore.FieldValue.delete(), 1,(docSnap) => {
-    assert.equal(1, docSnap.data()["last_updated"][testSession]);
-    assert.equal(undefined, docSnap.data()["sessions"][testSession]);
-  });
-  testTransaction("Offline: should have 0 active sessions (NOOP)", admin.firestore.FieldValue.delete(), 1,(docSnap) => {
-    assert.equal(1, docSnap.data()["last_updated"][testSession]);
-    assert.equal(undefined, docSnap.data()["sessions"][testSession]);
+  it("Offline: should have 0 active sessions (NOOP)", async () => {
+    const payload = admin.firestore.FieldValue.delete();
+    const timestamp = 1;
+    await extension.firestoreTransaction(docRef, payload, timestamp, testUser, testSession);
+    const docSnap = await docRef.get();
+    assert.deepEqual(docSnap.data().sessions, {});
+    assert.deepEqual(docSnap.data().last_updated, {[testSession]: timestamp});
   });
 });
 
@@ -126,18 +99,32 @@ mocha.describe('Idempotency', function() {
  * Offline should overwrite a online state if timestamps are equivalent. Online will not overwrite.
  */
 mocha.describe('Equivalent timestamp tie-breaker (offline should always win)', function() {
-  resetTestEnvironment();
-  testTransaction("Online: should have 1 active session", "test", 0, (docSnap) => {
-    assert.equal(0, docSnap.data()["last_updated"][testSession]);
-    assert.equal("test", docSnap.data()["sessions"][testSession]);
+  it("Reset Environment: should succeed", function() {
+    return docRef.delete();
   });
-  testTransaction("Offline: should have 0 active sessions (overwrite)", admin.firestore.FieldValue.delete(), 0,(docSnap) => {
-    assert.equal(0, docSnap.data()["last_updated"][testSession]);
-    assert.equal(undefined, docSnap.data()["sessions"][testSession]);
+  it("Online: should have 1 active session", async () => {
+    const payload = "test";
+    const timestamp = 0;
+    await extension.firestoreTransaction(docRef, payload, timestamp, testUser, testSession);
+    const docSnap = await docRef.get();
+    assert.deepEqual(docSnap.data().sessions, {[testSession]: payload});
+    assert.deepEqual(docSnap.data().last_updated, {[testSession]: timestamp});
   });
-  testTransaction("Offline: online write should fail", "test", 0, (docSnap) => {
-    assert.equal(0, docSnap.data()["last_updated"][testSession]);
-    assert.equal(undefined, docSnap.data()["sessions"][testSession]);
+  it("Offline: should have 0 active sessions (overwrite)", async () => {
+    const payload = admin.firestore.FieldValue.delete();
+    const timestamp = 0;
+    await extension.firestoreTransaction(docRef, payload, timestamp, testUser, testSession);
+    const docSnap = await docRef.get();
+    assert.deepEqual(docSnap.data().sessions, {});
+    assert.deepEqual(docSnap.data().last_updated, {[testSession]: timestamp});
+  });
+  it("Offline: should have 0 active sessions (overwrite to online fail)", async () => {
+    const payload = admin.firestore.FieldValue.delete();
+    const timestamp = 0;
+    await extension.firestoreTransaction(docRef, payload, timestamp, testUser, testSession);
+    const docSnap = await docRef.get();
+    assert.deepEqual(docSnap.data().sessions, {});
+    assert.deepEqual(docSnap.data().last_updated, {[testSession]: timestamp});
   });
 });
 
@@ -158,14 +145,18 @@ mocha.describe('Permuted Operations', function() {
   const permutations = getPermutations(Object.keys(testArr));
 
   // Iterate over all possible permutations of operations. The most recent operation should persist correctly
-  // Keep track of the most recent operation per sequence.
+  // Keep track of the most recent operation per sequence (i.e. with greatest timestamp).
   permutations.forEach((operationSequence, index) => {
     const groupName = `Permutation ${index + 1}/${permutations.length}: ${JSON.stringify(operationSequence)}`;
     let recentOp = -1;
 
     // Group by different permutations
     mocha.describe(groupName, function() {
-      resetTestEnvironment();
+      it("Reset Environment: should succeed", function() {
+        return docRef.delete();
+      });
+
+      // Commit each operation and observe the result
       operationSequence.forEach((op) => {
         // Define a log that will describe what operation is occurring and what the expected result is
         let testName = `(Operation ${recentOp}) should still be operation: ${recentOp}, data: ${JSON.stringify(testArr[recentOp])}`;
@@ -175,15 +166,15 @@ mocha.describe('Permuted Operations', function() {
         }
 
         // Commit the transaction and compare the result from firestore
-        // The expectedOP needs to be copied over because of the nature of the callback.
-        let expectedOp = recentOp;
-        testTransaction(testName, testArr[op], op, (docSnap) => {
-          assert.equal(expectedOp, docSnap.data()["last_updated"][testSession]);
-          if (testArr[expectedOp] === admin.firestore.FieldValue.delete()) {
-            assert.equal(undefined, docSnap.data()["sessions"][testSession]);
+        it(testName, async () => {
+          await extension.firestoreTransaction(docRef, testArr[recentOp], recentOp, testUser, testSession);
+          const docSnap = await docRef.get();
+          if (testArr[recentOp] === admin.firestore.FieldValue.delete()) {
+            assert.deepEqual(docSnap.data().sessions, {});
           } else {
-            assert.equal(testArr[expectedOp], docSnap.data()["sessions"][testSession]);
+            assert.deepEqual(docSnap.data().sessions, {[testSession]: testArr[recentOp]});
           }
+          assert.deepEqual(docSnap.data().last_updated, {[testSession]: recentOp});
         });
       });
     });
