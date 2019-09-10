@@ -26,7 +26,8 @@ const testSession = "sess0";
 const docRef = admin.firestore().collection(testCollection).doc(testUser);
 
 /**
- * testTransaction is a helper function that
+ * testTransaction is a helper function that commits a transaction with a timestamp/payload pair.
+ * The assertCallback is used to ensure the written data is correct.
  *
  * @param testName: describes the result expected (e.g. "should have an online session")
  * @param payload: payload (or delete field) to emulate online/offline/metadata operation
@@ -64,14 +65,14 @@ const resetTestEnvironment = () => {
 };
 
 /**
- *
- * @param baseArr
- * @return {*[]|Array}
+ * Takes an array of elements, returns an array of all array permutations
+ * @param baseArr: arbitrary array of elements
+ * @return {*[]|Array}: array of all permutations
  */
 const getPermutations = (baseArr) => {
 
   // Return if there are no elements left to iterate over
-  if (baseArr.length === 1) {
+  if (baseArr.length <= 1) {
     return [baseArr];
   }
 
@@ -83,8 +84,7 @@ const getPermutations = (baseArr) => {
     baseArrCopy.splice(ind, 1);
 
     // Get the permutations of the remaining elements
-    const arr = getPermutations(baseArrCopy);
-    arr.forEach((singleArr) => {
+    getPermutations(baseArrCopy).forEach((singleArr) => {
       singleArr.push(el);
       permutationArr.push(singleArr);
     });
@@ -176,11 +176,11 @@ mocha.describe('Permuted Operations', function() {
     mocha.describe(groupName, function() {
       resetTestEnvironment();
       operationSequence.forEach((op) => {
-        // Define the group/test name for mocha and update the most recent op in the sequence so far
+        // Define a log that will describe what operation is occurring and what the expected result is
         let testName = `(Operation ${recentOp}) should still be operation: ${recentOp}, data: ${JSON.stringify(testArr[recentOp])}`;
         if (recentOp < parseInt(op)) {
           recentOp = parseInt(op);
-          testName = `(Operation ${recentOp}) should succeed`;
+          testName = `(Operation ${recentOp}) should succeed, data: ${JSON.stringify(testArr[recentOp])}`;
         }
 
         // Commit the transaction and compare the result from firestore
