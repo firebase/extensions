@@ -1,0 +1,23 @@
+{
+  "name": "presence-detection",
+  "scripts": {
+    "lint": "node_modules/.bin/tslint --project tsconfig.json",
+    "build": "npm run clean && npm run compile",
+    "clean": "rimraf functions/lib",
+    "test": "firebase emulators:exec --only firestore 'mocha functions/test --reporter spec'",
+    "compile": "tsc"
+  },
+  "main": "functions/lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^8.5.0",
+    "firebase-functions": "^2.2.0"
+  },
+  "devDependencies": {
+    "firebase-tools": "^7.3.1",
+    "mocha": "^6.2.0",
+    "rimraf": "^2.6.3",
+    "tslint": "^5.12.0",
+    "typescript": "^3.2.2"
+  },
+  "private": true
+}
