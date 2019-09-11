@@ -54,8 +54,8 @@ export const imageResized = (path: string) => {
   console.log(`Resized image created at '${path}'`);
 };
 
-export const imageResizing = (size: string) => {
-  console.log(`Resizing image file to size: ${size}`);
+export const imageResizing = (path: string, size: string) => {
+  console.log(`Resizing image at path '${path}' to size: ${size}`);
 };
 
 export const imageUploaded = (path: string) => {

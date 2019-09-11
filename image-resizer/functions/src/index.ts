@@ -156,7 +156,7 @@ const resizeImage = async ({
     }
 
     // Generate a resized image using ImageMagick.
-    logs.imageResizing(size);
+    logs.imageResizing(resizedFile, size);
     await spawn("convert", [originalFile, "-resize", `${size}>`, resizedFile], {
       capture: ["stdout", "stderr"],
     });
