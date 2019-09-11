@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { Bucket } from "@google-cloud/storage";
 import * as admin from "firebase-admin";
 import * as fs from "fs";
 import * as functions from "firebase-functions";
@@ -26,6 +27,11 @@ import config from "./config";
 import * as logs from "./logs";
 import * as validators from "./validators";
 
+interface ResizedImageResult {
+  size: string;
+  success: boolean;
+}
+
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 
@@ -34,8 +40,6 @@ logs.init();
 /**
  * When an image is uploaded in the Storage bucket We generate a resized image automatically using
  * ImageMagick which is installed by default on all Cloud Functions instances.
- * After the resized image has been generated and uploaded to Cloud Storage,
- * we write the public URL to the Firebase Realtime Database.
  */
 export const generateResizedImage = functions.storage.object().onFinalize(
   async (object): Promise<void> => {
@@ -48,12 +52,12 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       return;
     }
 
+    const bucket = admin.storage().bucket(object.bucket);
     const filePath = object.name; // File path in the bucket.
     const fileDir = path.dirname(filePath);
     const fileName = path.basename(filePath);
     const fileExtension = path.extname(filePath);
     const fileNameWithoutExtension = fileName.slice(0, -fileExtension.length);
-    const suffix = `_${config.maxWidth}x${config.maxHeight}`;
 
     const isResizedImage = validators.isResizedImage(fileNameWithoutExtension);
     if (isResizedImage) {
@@ -61,30 +65,10 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       return;
     }
 
-    let tempFile;
-    let tempResizedFile;
+    let originalFile;
     try {
-      // Path where resized image will be uploaded to in Storage.
-      const resizedFilePath = path.normalize(
-        path.join(
-          fileDir,
-          `${fileNameWithoutExtension}${suffix}${fileExtension}`
-        )
-      );
-      tempFile = path.join(os.tmpdir(), filePath);
-      const tempLocalDir = path.dirname(tempFile);
-      tempResizedFile = path.join(os.tmpdir(), resizedFilePath);
-
-      // Cloud Storage files.
-      const bucket = admin.storage().bucket(object.bucket);
-      const remoteFile = bucket.file(filePath);
-      const remoteResizedFile = bucket.file(resizedFilePath);
-      const metadata: any = {
-        contentType: contentType,
-      };
-      if (config.cacheControlHeader) {
-        metadata.cacheControl = config.cacheControlHeader;
-      }
+      originalFile = path.join(os.tmpdir(), filePath);
+      const tempLocalDir = path.dirname(originalFile);
 
       // Create the temp directory where the storage file will be downloaded.
       logs.tempDirectoryCreating(tempLocalDir);
@@ -92,79 +76,114 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       logs.tempDirectoryCreated(tempLocalDir);
 
       // Download file from bucket.
+      const remoteFile = bucket.file(filePath);
       logs.imageDownloading(filePath);
-      await remoteFile.download({ destination: tempFile });
-      logs.imageDownloaded(filePath, tempFile);
+      await remoteFile.download({ destination: originalFile });
+      logs.imageDownloaded(filePath, originalFile);
 
-      // Generate a resized image using ImageMagick.
-      logs.imageResizing(config.maxWidth, config.maxHeight);
-      await spawn(
-        "convert",
-        [
-          tempFile,
-          "-resize",
-          `${config.maxWidth}x${config.maxHeight}>`,
-          tempResizedFile,
-        ],
-        { capture: ["stdout", "stderr"] }
-      );
-      logs.imageResized(tempResizedFile);
-
-      // Uploading the resized image.
-      logs.imageUploading(resizedFilePath);
-      await bucket.upload(tempResizedFile, {
-        destination: resizedFilePath,
-        metadata: metadata,
+      // Convert to a set to remove any duplicate sizes
+      const imageSizes = new Set(config.imageSizes);
+      const tasks: Promise<ResizedImageResult>[] = [];
+      imageSizes.forEach((size) => {
+        tasks.push(
+          resizeImage({
+            bucket,
+            originalFile,
+            fileDir,
+            fileNameWithoutExtension,
+            fileExtension,
+            contentType,
+            size,
+          })
+        );
       });
-      logs.imageUploaded(resizedFilePath);
 
-      if (config.signedUrlsPath) {
-        // Get the Signed URLs for the resized image and original image. The signed URLs provide authenticated read access to
-        // the images. These URLs expire on the date set in the config object below.
-        const signedUrlConfig = {
-          action: "read",
-          expires: config.signedUrlsExpirationDate,
-        };
-        logs.signedUrlsGenerating();
-        const results = await Promise.all([
-          // @ts-ignore incorrectly seeing "read" as a string
-          remoteResizedFile.getSignedUrl(signedUrlConfig),
-          // @ts-ignore incorrectly seeing "read" as a string
-          remoteFile.getSignedUrl(signedUrlConfig),
-        ]);
-        logs.signedUrlsGenerated();
+      const results = await Promise.all(tasks);
 
-        const imgResult = results[0];
-        const originalResult = results[1];
-        const imgFileUrl = imgResult[0];
-        const fileUrl = originalResult[0];
-
-        // Add the URLs to the Database
-        logs.signedUrlsSaving(config.signedUrlsPath);
-        await admin
-          .database()
-          .ref(`${config.signedUrlsPath}`)
-          .push({ path: fileUrl, resizedImage: imgFileUrl });
-        logs.signedUrlsSaved(config.signedUrlsPath);
-      } else {
-        logs.signedUrlsNotConfigured();
+      const failed = results.some((result) => result.success === false);
+      if (failed) {
+        logs.failed();
+        return;
       }
+      logs.complete();
     } catch (err) {
       logs.error(err);
     } finally {
-      try {
-        // Make sure all local files are cleaned up to free up disk space.
-        logs.tempFilesDeleting();
-        if (tempFile) {
-          fs.unlinkSync(tempFile);
-        }
-        if (tempResizedFile) {
-          fs.unlinkSync(tempResizedFile);
-        }
-        logs.tempFilesDeleted();
-      } catch (err) {
-        logs.errorDeleting(err);
+      if (originalFile) {
+        logs.tempOriginalFileDeleting(filePath);
+        fs.unlinkSync(originalFile);
+        logs.tempOriginalFileDeleted(filePath);
       }
     }
   }
 );
+
+const resizeImage = async ({
+  bucket,
+  originalFile,
+  fileDir,
+  fileNameWithoutExtension,
+  fileExtension,
+  contentType,
+  size,
+}: {
+  bucket: Bucket;
+  originalFile: string;
+  fileDir: string;
+  fileNameWithoutExtension: string;
+  fileExtension: string;
+  contentType: string;
+  size: string;
+}): Promise<ResizedImageResult> => {
+  const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
+  // Path where resized image will be uploaded to in Storage.
+  const resizedFilePath = path.normalize(
+    config.resizedImagesPath
+      ? path.join(fileDir, config.resizedImagesPath, resizedFileName)
+      : path.join(fileDir, resizedFileName)
+  );
+  let resizedFile;
+
+  try {
+    resizedFile = path.join(os.tmpdir(), resizedFileName);
+
+    // Cloud Storage files.
+    const metadata: any = {
+      contentType: contentType,
+    };
+    if (config.cacheControlHeader) {
+      metadata.cacheControl = config.cacheControlHeader;
+    }
+
+    // Generate a resized image using ImageMagick.
+    logs.imageResizing(resizedFile, size);
+    await spawn("convert", [originalFile, "-resize", `${size}>`, resizedFile], {
+      capture: ["stdout", "stderr"],
+    });
+    logs.imageResized(resizedFile);
+
+    // Uploading the resized image.
+    logs.imageUploading(resizedFilePath);
+    await bucket.upload(resizedFile, {
+      destination: resizedFilePath,
+      metadata,
+    });
+    logs.imageUploaded(resizedFilePath);
+
+    return { size, success: true };
+  } catch (err) {
+    logs.error(err);
+    return { size, success: false };
+  } finally {
+    try {
+      // Make sure the local resized file is cleaned up to free up disk space.
+      if (resizedFile) {
+        logs.tempResizedFileDeleting(resizedFilePath);
+        fs.unlinkSync(resizedFile);
+        logs.tempResizedFileDeleted(resizedFilePath);
+      }
+    } catch (err) {
+      logs.errorDeleting(err);
+    }
+  }
+};

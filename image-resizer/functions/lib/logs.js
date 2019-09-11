@@ -16,6 +16,9 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const config_1 = require("./config");
+exports.complete = () => {
+    console.log("Completed mod execution");
+};
 exports.contentTypeInvalid = (contentType) => {
     console.log(`File of type '${contentType}' is not an image, no processing is required`);
 };
@@ -24,6 +27,9 @@ exports.error = (err) => {
 };
 exports.errorDeleting = (err) => {
     console.warn("There was a problem deleting temporary files", err);
+};
+exports.failed = () => {
+    console.log("Failed mod execution");
 };
 exports.imageAlreadyResized = () => {
     console.log("File is already a resized image, no processing is required");
@@ -37,8 +43,8 @@ exports.imageDownloading = (path) => {
 exports.imageResized = (path) => {
     console.log(`Resized image created at '${path}'`);
 };
-exports.imageResizing = (width, height) => {
-    console.log(`Resizing image file to size: ${width}x${height}`);
+exports.imageResizing = (path, size) => {
+    console.log(`Resizing image at path '${path}' to size: ${size}`);
 };
 exports.imageUploaded = (path) => {
     console.log(`Uploaded resized image to '${path}'`);
@@ -49,21 +55,6 @@ exports.imageUploading = (path) => {
 exports.init = () => {
     console.log("Initializing mod with configuration", config_1.default);
 };
-exports.signedUrlsGenerated = () => {
-    console.log("Generated Signed URLs");
-};
-exports.signedUrlsGenerating = () => {
-    console.log("Generating signed URLs");
-};
-exports.signedUrlsNotConfigured = () => {
-    console.log("Signed URLS are not configured, skipping");
-};
-exports.signedUrlsSaved = (path) => {
-    console.log(`Saved signed URLs to database at: '${path}'`);
-};
-exports.signedUrlsSaving = (path) => {
-    console.log(`Saving signed URLs in database at: '${path}'`);
-};
 exports.start = () => {
     console.log("Started mod execution with configuration", config_1.default);
 };
@@ -73,9 +64,15 @@ exports.tempDirectoryCreated = (directory) => {
 exports.tempDirectoryCreating = (directory) => {
     console.log(`Creating temporary directory: '${directory}'`);
 };
-exports.tempFilesDeleted = () => {
-    console.log("Deleted temporary files");
+exports.tempOriginalFileDeleted = (path) => {
+    console.log(`Deleted temporary original file: '${path}'`);
 };
-exports.tempFilesDeleting = () => {
-    console.log("Deleting temporary files");
+exports.tempOriginalFileDeleting = (path) => {
+    console.log(`Deleting temporary original file: '${path}'`);
+};
+exports.tempResizedFileDeleted = (path) => {
+    console.log(`Deleted temporary resized file: '${path}'`);
+};
+exports.tempResizedFileDeleting = (path) => {
+    console.log(`Deleting temporary resized file: '${path}'`);
 };
