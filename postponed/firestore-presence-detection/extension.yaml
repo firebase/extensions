@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: user-presence-detection
-specVersion: v1beta1
+specVersion: v1beta
 version: 0.0.1
 licesnse: Apache-2.0
 
@@ -41,7 +41,7 @@ roles:
 
 resources:
   - name: writeToFirestore
-    type: firebasemods.v1beta1.function
+    type: firebaseextensions.v1beta.function
     description:
       Listens for user connections and mirrors the information to the Firestore Collection.
       The function will retry on failure to maintain correctness.
@@ -55,7 +55,7 @@ resources:
         failurePolicy:
           retry: {}
   - name: cleanUpDeadSessions
-    type: firebasemods.v1beta1.function
+    type: firebaseextensions.v1beta.function
     description:
       Reads through the user connections in the Firestore Collection and removes all tombstones in
       `last_updated` that have timestamps > 1 week and are not currently online.
