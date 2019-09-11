@@ -73,7 +73,9 @@
       console.warn('Error updating presence', err);
       session.end();
       session = null;
-      setTimeout(createSessionIfNeeded, 1000);
+      if (err.code !== "PERMISSION_DENIED") {
+        setTimeout(createSessionIfNeeded, 1000);
+      }
     }
   }
 
