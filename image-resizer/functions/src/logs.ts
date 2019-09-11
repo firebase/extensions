@@ -16,6 +16,10 @@
 
 import config from "./config";
 
+export const complete = () => {
+  console.log("Completed mod execution");
+};
+
 export const contentTypeInvalid = (contentType: string) => {
   console.log(
     `File of type '${contentType}' is not an image, no processing is required`
@@ -28,6 +32,10 @@ export const error = (err: Error) => {
 
 export const errorDeleting = (err: Error) => {
   console.warn("There was a problem deleting temporary files", err);
+};
+
+export const failed = () => {
+  console.log("Failed mod execution");
 };
 
 export const imageAlreadyResized = () => {
@@ -46,8 +54,8 @@ export const imageResized = (path: string) => {
   console.log(`Resized image created at '${path}'`);
 };
 
-export const imageResizing = (width: string, height: string) => {
-  console.log(`Resizing image file to size: ${width}x${height}`);
+export const imageResizing = (path: string, size: string) => {
+  console.log(`Resizing image at path '${path}' to size: ${size}`);
 };
 
 export const imageUploaded = (path: string) => {
@@ -62,26 +70,6 @@ export const init = () => {
   console.log("Initializing mod with configuration", config);
 };
 
-export const signedUrlsGenerated = () => {
-  console.log("Generated Signed URLs");
-};
-
-export const signedUrlsGenerating = () => {
-  console.log("Generating signed URLs");
-};
-
-export const signedUrlsNotConfigured = () => {
-  console.log("Signed URLS are not configured, skipping");
-};
-
-export const signedUrlsSaved = (path: string) => {
-  console.log(`Saved signed URLs to database at: '${path}'`);
-};
-
-export const signedUrlsSaving = (path: string) => {
-  console.log(`Saving signed URLs in database at: '${path}'`);
-};
-
 export const start = () => {
   console.log("Started mod execution with configuration", config);
 };
@@ -94,10 +82,18 @@ export const tempDirectoryCreating = (directory: string) => {
   console.log(`Creating temporary directory: '${directory}'`);
 };
 
-export const tempFilesDeleted = () => {
-  console.log("Deleted temporary files");
+export const tempOriginalFileDeleted = (path: string) => {
+  console.log(`Deleted temporary original file: '${path}'`);
 };
 
-export const tempFilesDeleting = () => {
-  console.log("Deleting temporary files");
+export const tempOriginalFileDeleting = (path: string) => {
+  console.log(`Deleting temporary original file: '${path}'`);
+};
+
+export const tempResizedFileDeleted = (path: string) => {
+  console.log(`Deleted temporary resized file: '${path}'`);
+};
+
+export const tempResizedFileDeleting = (path: string) => {
+  console.log(`Deleting temporary resized file: '${path}'`);
 };
