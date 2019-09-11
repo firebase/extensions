@@ -40,8 +40,8 @@ export const handleCreate = (sessionID: string) => {
   console.log(`Detected new connection. Creating new path: ${sessionID}`);
 };
 
-export const handleUpdate = (sessionID: string, payload: object) => {
-  console.log(`Detected metadata update for session: ${sessionID} with payload: ${JSON.stringify(payload)}`);
+export const handleUpdate = (sessionID: string) => {
+  console.log(`Detected metadata update for session: ${sessionID}`);
 };
 
 export const handleDelete = (sessionID: string) => {
@@ -61,8 +61,8 @@ export const staleTimestamp = (currentTimestamp: number, operationTimestamp: num
       `(user: ${userID}, session: ${sessionID} | Destination Timestamp: ${currentTimestamp}, Operation Timestamp: ${operationTimestamp})`);
 };
 
-export const successfulFirestoreTransaction = (payload: object) => {
-  console.log(`Firestore document successfully updated with payload: ${JSON.stringify(payload)}`);
+export const successfulFirestoreTransaction = () => {
+  console.log(`Firestore document successfully updated.`);
 };
 
 export const success = () => {

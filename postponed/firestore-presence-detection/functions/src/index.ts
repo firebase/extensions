@@ -50,7 +50,7 @@ export const writeToFirestore =
             await firestoreTransactionWithRetries(payload, operationTimestamp, userInfo['userID'], userInfo['sessionID']);
             break;
           case ChangeType.UPDATE:
-            logs.handleUpdate(userInfo['sessionID'], payload);
+            logs.handleUpdate(userInfo['sessionID']);
             await firestoreTransactionWithRetries(payload, operationTimestamp, userInfo['userID'], userInfo['sessionID']);
             break;
           case ChangeType.DELETE:
@@ -235,7 +235,7 @@ export const firestoreTransaction = async (docRef: admin.firestore.DocumentRefer
         [`last_updated.${sessionID}`]: operationTimestamp,
       };
       return docRef.update(firestorePayload, {lastUpdateTime: lastUpdated}).then((result) => {
-        logs.successfulFirestoreTransaction(firestorePayload);
+        logs.successfulFirestoreTransaction();
       })
     });
 };
