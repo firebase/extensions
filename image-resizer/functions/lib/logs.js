@@ -43,8 +43,8 @@ exports.imageDownloading = (path) => {
 exports.imageResized = (path) => {
     console.log(`Resized image created at '${path}'`);
 };
-exports.imageResizing = (size) => {
-    console.log(`Resizing image file to size: ${size}`);
+exports.imageResizing = (path, size) => {
+    console.log(`Resizing image at path '${path}' to size: ${size}`);
 };
 exports.imageUploaded = (path) => {
     console.log(`Uploaded resized image to '${path}'`);

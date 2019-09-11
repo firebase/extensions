@@ -122,7 +122,7 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
             metadata.cacheControl = config_1.default.cacheControlHeader;
         }
         // Generate a resized image using ImageMagick.
-        logs.imageResizing(size);
+        logs.imageResizing(resizedFile, size);
         yield child_process_promise_1.spawn("convert", [originalFile, "-resize", `${size}>`, resizedFile], {
             capture: ["stdout", "stderr"],
         });
