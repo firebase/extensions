@@ -1,0 +1,24 @@
+{
+  /* Visit https://firebase.google.com/docs/database/security to learn more about security rules. */
+  "rules": {
+    // NOTE: The path MUST match be the same as specified in the SDK.
+    "_firebase_extensions": {
+      "presence": {
+        "$uid": {
+          "sessions": {
+            "$sessionId": {
+              ".read": false, // Disallow reading presence from RTDB, since we only query from Firestore.
+              ".write": "$uid === auth.uid",
+              // Validates the metadata of each session. This MUST be done here -- not in Firestore rules.
+              // In our sample app, the metadata must be one of the three valid emoji names.
+              ".validate": "newData.isString() && newData.val().matches(/^sentiment_(very_dissatisfied|satisfied_alt|very_satisfied)$/)"
+              // If your app does not specify metadata, just simply check for the default value `true`.
+              // In other words, just replace the line above with:
+              // ".validate": "newData.val() == true"
+            }
+          }
+        }
+      }
+    }
+  }
+}
