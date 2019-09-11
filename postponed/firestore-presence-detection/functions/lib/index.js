@@ -28,6 +28,7 @@ const admin = require("firebase-admin");
 const functions = require("firebase-functions");
 const config_1 = require("./config");
 const logs = require("./logs");
+const error_code_1 = require("./error_code");
 admin.initializeApp();
 const TIME_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in MS
 var ChangeType;
@@ -68,7 +69,7 @@ exports.writeToFirestore = functions.handler.database.ref.onWrite((change, conte
         logs.success();
     }
     catch (err) {
-        logs.error(err);
+        logs.error(err); // These caught errors will not cause Cloud Functions to retry
     }
 }));
 /**
@@ -193,10 +194,6 @@ exports.firestoreTransaction = (docRef, payload, operationTimestamp, userID, ses
     // Assuming the document exists, try to update it with presence information
     return docRef.get().then((doc) => __awaiter(void 0, void 0, void 0, function* () {
         const lastUpdated = doc.updateTime;
-        // If the document creation failed, retry
-        if (!doc.exists) {
-            throw new Error(`Document for ${userID} does not exist!`);
-        }
         // Ensure the timestamp of operation is more recent
         // Only compare timestamps if the timestamp is undefined and of the correct type
         // Note that if it is not a number, it will assume the session is safe to write over
@@ -218,6 +215,7 @@ exports.firestoreTransaction = (docRef, payload, operationTimestamp, userID, ses
             }
         }
         // Update the document with presence information and last updated timestamp
+        // If the document does not exist, the update will fail
         const firestorePayload = {
             [`sessions.${sessionID}`]: payload,
             [`last_updated.${sessionID}`]: operationTimestamp,
@@ -252,11 +250,23 @@ const firestoreTransactionWithRetries = (payload, operationTimestamp, userID, se
         yield exports.firestoreTransaction(admin.firestore().collection(config_1.default.firestore_path).doc(userID), payload, operationTimestamp, userID, sessionID).then(() => {
             isSuccessful = true;
         }).catch((error) => __awaiter(void 0, void 0, void 0, function* () {
-            // Keep in retrying with linear backoff if there is an error
-            numTries += 1;
-            const numMilliseconds = 1000 * numTries;
-            logs.retry(error, numTries, numMilliseconds);
-            yield new Promise(resolve => setTimeout(resolve, numMilliseconds));
+            switch (error.code) {
+                case error_code_1.Status.PERMISSION_DENIED: // usually IAM permissions not working properly
+                case error_code_1.Status.ALREADY_EXISTS: // handle race conditions on create
+                case error_code_1.Status.FAILED_PRECONDITION: // handle optimistic transactions
+                case error_code_1.Status.NOT_FOUND: // handle if document is not found
+                case error_code_1.Status.DEADLINE_EXCEEDED: // handles potential Firestore lock contention
+                case error_code_1.Status.ABORTED: // handles potential Firestore lock contention
+                    // Keep in retrying with linear backoff if there is an error
+                    numTries += 1;
+                    const numMilliseconds = 1000 * numTries;
+                    logs.retry(error, numTries, numMilliseconds);
+                    yield new Promise(resolve => setTimeout(resolve, numMilliseconds));
+                    break;
+                default:
+                    // Stop retrying on other conditions
+                    throw error;
+            }
         }));
     }
 });
