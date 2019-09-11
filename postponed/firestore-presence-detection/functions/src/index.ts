@@ -20,7 +20,8 @@ import * as functions from 'firebase-functions';
 import config from './config';
 import * as logs from './logs';
 import {DocumentSnapshot} from 'firebase-functions/lib/providers/firestore';
-import { Status } from "./error_code";
+import { Status } from './error_code';
+import * as _ from 'lodash';
 
 admin.initializeApp();
 const TIME_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in MS
@@ -208,15 +209,12 @@ export const firestoreTransaction = async (docRef: admin.firestore.DocumentRefer
       // Only compare timestamps if the timestamp is undefined and of the correct type
       // Note that if it is not a number, it will assume the session is safe to write over
       const currentData = doc.data();
-      if (currentData !== undefined &&
-          currentData['last_updated'] !== undefined &&
-          currentData['last_updated'][sessionID] !== undefined) {
-
-        let currentTimestamp = currentData['last_updated'][sessionID];
+      let currentTimestamp = _.get(currentData, 'last_updated.' + sessionID);
+      if (currentTimestamp !== undefined) {
         if (typeof currentTimestamp === "string") {
           currentTimestamp = parseInt(currentTimestamp);
         }
-
+        
         // Refuse to write the operation if the timestamp is earlier than the latest update
         if (payload === admin.firestore.FieldValue.delete() && currentTimestamp === operationTimestamp) {
           logs.overwriteOnline(operationTimestamp);
@@ -287,4 +285,3 @@ const firestoreTransactionWithRetries = async (payload: any, operationTimestamp:
     });
   }
 };
-

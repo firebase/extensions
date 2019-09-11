@@ -166,15 +166,16 @@ mocha.describe('Permuted Operations', function() {
         }
 
         // Commit the transaction and compare the result from firestore
+        let recentOpLocal = recentOp;
         it(testName, async () => {
-          await extension.firestoreTransaction(docRef, testArr[recentOp], recentOp, testUser, testSession);
+          await extension.firestoreTransaction(docRef, testArr[op], op, testUser, testSession);
           const docSnap = await docRef.get();
-          if (testArr[recentOp] === admin.firestore.FieldValue.delete()) {
+          if (testArr[recentOpLocal] === admin.firestore.FieldValue.delete()) {
             assert.deepEqual(docSnap.data().sessions, {});
           } else {
-            assert.deepEqual(docSnap.data().sessions, {[testSession]: testArr[recentOp]});
+            assert.deepEqual(docSnap.data().sessions, {[testSession]: testArr[recentOpLocal]});
           }
-          assert.deepEqual(docSnap.data().last_updated, {[testSession]: recentOp});
+          assert.deepEqual(docSnap.data().last_updated, {[testSession]: recentOpLocal});
         });
       });
     });
