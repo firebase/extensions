@@ -29,6 +29,7 @@ const functions = require("firebase-functions");
 const config_1 = require("./config");
 const logs = require("./logs");
 const error_code_1 = require("./error_code");
+const _ = require("lodash");
 admin.initializeApp();
 const TIME_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in MS
 var ChangeType;
@@ -198,10 +199,8 @@ exports.firestoreTransaction = (docRef, payload, operationTimestamp, userID, ses
         // Only compare timestamps if the timestamp is undefined and of the correct type
         // Note that if it is not a number, it will assume the session is safe to write over
         const currentData = doc.data();
-        if (currentData !== undefined &&
-            currentData['last_updated'] !== undefined &&
-            currentData['last_updated'][sessionID] !== undefined) {
-            let currentTimestamp = currentData['last_updated'][sessionID];
+        let currentTimestamp = _.get(currentData, 'last_updated.' + sessionID);
+        if (currentTimestamp !== undefined) {
             if (typeof currentTimestamp === "string") {
                 currentTimestamp = parseInt(currentTimestamp);
             }
