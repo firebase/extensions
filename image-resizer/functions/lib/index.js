@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -43,7 +42,7 @@ logs.init();
  * After the resized image has been generated and uploaded to Cloud Storage,
  * we write the public URL to the Firebase Realtime Database.
  */
-exports.generateResizedImage = functions.storage.object().onFinalize((object) => __awaiter(void 0, void 0, void 0, function* () {
+exports.generateResizedImage = functions.storage.object().onFinalize((object) => __awaiter(this, void 0, void 0, function* () {
     logs.start();
     const { contentType } = object; // This is the image MIME type
     const isImage = validators.isImage(contentType);
@@ -78,8 +77,16 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         // Convert to a set to remove any duplicate sizes
         const imageSizes = new Set(config_1.default.imageSizes);
         const tasks = [];
-        imageSizes.forEach((imageSize) => {
-            tasks.push(resizeImage(bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, imageSize));
+        imageSizes.forEach((size) => {
+            tasks.push(resizeImage({
+                bucket,
+                originalFile,
+                fileDir,
+                fileNameWithoutExtension,
+                fileExtension,
+                contentType,
+                size,
+            }));
         });
         const results = yield Promise.all(tasks);
         // If any of the image resizing tasks failed, then don't save the URLs
@@ -102,7 +109,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         }
     }
 }));
-const resizeImage = (bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size) => __awaiter(void 0, void 0, void 0, function* () {
+const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, }) => __awaiter(this, void 0, void 0, function* () {
     const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
     // Path where resized image will be uploaded to in Storage.
     const resizedFilePath = path.normalize(config_1.default.resizedImagesPath
