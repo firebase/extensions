@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: fs-document-histories
-displayName: Track the history of Firestore documents.
+displayName: Track the histories of Firestore documents.
 specVersion: v1beta1
 version: 0.1.0
 
@@ -22,7 +22,7 @@ description:
 
 license: Apache-2.0
 billingRequired: true
-sourceUrl: https://accounts.google.com/AccountChooser/signinchooser?service=gerritcodereview&continue=https%3A%2F%2Fdev-partners.googlesource.com%2Flogin%2Fsamples%2Ffirebase%2Fmods%2F%2B%2Fmaster%2Fauth-user-notifications
+sourceUrl: https://accounts.google.com/AccountChooser/signinchooser?service=gerritcodereview&continue=https%3A%2F%2Fdev-partners.googlesource.com%2Flogin%2Fsamples%2Ffirebase%2Fmods%2F%2B%2Fmaster%2firestore-document-histories
 releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
 
 author:
@@ -36,7 +36,7 @@ contributors:
 
 roles:
   - role: datastore.user
-    reason: Allows
+    reason: Allows the extension to create histories documents.
 
 resources:
   - name: fsdocumenthistories
@@ -92,7 +92,7 @@ params:
     type: string
     label: Sub-collection ID
     description: >-
-      What is the collection ID of the Firestore subcollection that you would like the history to be tracked in?
+      What is the collection ID of the Firestore subcollection that you would like the histories to be tracked in?
     default: history
     example: history
     required: true
