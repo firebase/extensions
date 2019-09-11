@@ -86,17 +86,17 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       // Convert to a set to remove any duplicate sizes
       const imageSizes = new Set(config.imageSizes);
       const tasks: Promise<ResizedImageResult>[] = [];
-      imageSizes.forEach((imageSize) => {
+      imageSizes.forEach((size) => {
         tasks.push(
-          resizeImage(
+          resizeImage({
             bucket,
             originalFile,
             fileDir,
             fileNameWithoutExtension,
             fileExtension,
             contentType,
-            imageSize
-          )
+            size,
+          })
         );
       });
 
@@ -122,15 +122,23 @@ export const generateResizedImage = functions.storage.object().onFinalize(
   }
 );
 
-const resizeImage = async (
-  bucket: Bucket,
-  originalFile: string,
-  fileDir: string,
-  fileNameWithoutExtension: string,
-  fileExtension: string,
-  contentType: string,
-  size: string
-): Promise<ResizedImageResult> => {
+const resizeImage = async ({
+  bucket,
+  originalFile,
+  fileDir,
+  fileNameWithoutExtension,
+  fileExtension,
+  contentType,
+  size,
+}: {
+  bucket: Bucket;
+  originalFile: string;
+  fileDir: string;
+  fileNameWithoutExtension: string;
+  fileExtension: string;
+  contentType: string;
+  size: string;
+}): Promise<ResizedImageResult> => {
   const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
   // Path where resized image will be uploaded to in Storage.
   const resizedFilePath = path.normalize(
