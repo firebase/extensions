@@ -131,7 +131,7 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         logs.imageUploading(resizedFilePath);
         yield bucket.upload(resizedFile, {
             destination: resizedFilePath,
-            metadata: metadata,
+            metadata,
         });
         logs.imageUploaded(resizedFilePath);
         return { size, success: true };
