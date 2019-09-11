@@ -36,6 +36,9 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
+  - authorName: Mike Diarmid
+    email: mike@invertase.io
+    url: https://github.com/salakar
 
 apis:
   - apiName: storage-component.googleapis.com
