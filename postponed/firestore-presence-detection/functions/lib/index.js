@@ -54,7 +54,7 @@ exports.writeToFirestore = functions.handler.database.ref.onWrite((change, conte
                 yield firestoreTransactionWithRetries(payload, operationTimestamp, userInfo['userID'], userInfo['sessionID']);
                 break;
             case ChangeType.UPDATE:
-                logs.handleUpdate(userInfo['sessionID'], payload);
+                logs.handleUpdate(userInfo['sessionID']);
                 yield firestoreTransactionWithRetries(payload, operationTimestamp, userInfo['userID'], userInfo['sessionID']);
                 break;
             case ChangeType.DELETE:
@@ -62,7 +62,8 @@ exports.writeToFirestore = functions.handler.database.ref.onWrite((change, conte
                 yield firestoreTransactionWithRetries(admin.firestore.FieldValue.delete(), operationTimestamp, userInfo['userID'], userInfo['sessionID']);
                 break;
             default:
-                logs.error(new Error(`Invalid change type: ${changeType}`));
+                // Throw error here to bypass success logging
+                throw new Error(`Invalid change type: ${changeType}`);
         }
         logs.success();
     }
@@ -154,7 +155,7 @@ const getChangeType = (change) => {
  */
 const getUserAndSessionID = (path) => {
     const strArr = path.split('/');
-    if (strArr.length < 3 && strArr[strArr.length - 2] !== 'sessions') {
+    if (strArr.length < 4 && strArr[strArr.length - 2] !== 'sessions') {
         throw new Error(`Error trying to get sessionID and userID. Assumes {RTDB_PATH}/{userID}/sessions/{sessionID} structure, got ${path}`);
     }
     // Assume the correct data structure when extracting session/user IDs
@@ -222,7 +223,7 @@ exports.firestoreTransaction = (docRef, payload, operationTimestamp, userID, ses
             [`last_updated.${sessionID}`]: operationTimestamp,
         };
         return docRef.update(firestorePayload, { lastUpdateTime: lastUpdated }).then((result) => {
-            logs.successfulFirestoreTransaction(firestorePayload);
+            logs.successfulFirestoreTransaction();
         });
     }));
 });

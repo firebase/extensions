@@ -34,8 +34,8 @@ exports.startCleanup = () => {
 exports.handleCreate = (sessionID) => {
     console.log(`Detected new connection. Creating new path: ${sessionID}`);
 };
-exports.handleUpdate = (sessionID, payload) => {
-    console.log(`Detected metadata update for session: ${sessionID} with payload: ${JSON.stringify(payload)}`);
+exports.handleUpdate = (sessionID) => {
+    console.log(`Detected metadata update for session: ${sessionID}`);
 };
 exports.handleDelete = (sessionID) => {
     console.log(`Detected disconnect. Removing connection: ${sessionID}`);
@@ -50,8 +50,8 @@ exports.staleTimestamp = (currentTimestamp, operationTimestamp, userID, sessionI
     console.log(`Timestamp of current operation is older than timestamp at destination. Refusing to commit change.` +
         `(user: ${userID}, session: ${sessionID} | Destination Timestamp: ${currentTimestamp}, Operation Timestamp: ${operationTimestamp})`);
 };
-exports.successfulFirestoreTransaction = (payload) => {
-    console.log(`Firestore document successfully updated with payload: ${JSON.stringify(payload)}`);
+exports.successfulFirestoreTransaction = () => {
+    console.log(`Firestore document successfully updated.`);
 };
 exports.success = () => {
     console.log("User presence extension successfully executed.");
