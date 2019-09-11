@@ -198,8 +198,7 @@ exports.firestoreTransaction = (docRef, payload, operationTimestamp, userID, ses
         // Ensure the timestamp of operation is more recent
         // Only compare timestamps if the timestamp is undefined and of the correct type
         // Note that if it is not a number, it will assume the session is safe to write over
-        const currentData = doc.data();
-        let currentTimestamp = _.get(currentData, 'last_updated.' + sessionID);
+        let currentTimestamp = _.get(doc.data(), 'last_updated.' + sessionID);
         if (currentTimestamp !== undefined) {
             if (typeof currentTimestamp === "string") {
                 currentTimestamp = parseInt(currentTimestamp);
