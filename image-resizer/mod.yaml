@@ -20,8 +20,8 @@ license: Apache-2.0
 displayName: Resize images in Cloud Storage
 
 description:
-  Resize new images uploaded to a Cloud Storage bucket to a specified size. Both the original and the resized images
-  are stored in the same bucket.
+  Resize new images uploaded to a Cloud Storage bucket to a specified size. Both
+  the original and the resized images are stored in the same bucket.
 billingRequired: false
 sourceUrl: https://accounts.google.com/AccountChooser/signinchooser?service=gerritcodereview&continue=https%3A%2F%2Fdev-partners.googlesource.com%2Flogin%2Fsamples%2Ffirebase%2Fmods%2F%2B%2Fmaster%2Fimage-resizer
 releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
@@ -64,8 +64,9 @@ params:
     type: select
     label: Deployment location
     description: >-
-      Where should the extension be deployed? For help selecting a location, refer to the
-      [location selection guide](https://firebase.google.com/docs/functions/locations).
+      Where should the extension be deployed? For help selecting a location,
+      refer to the [location selection
+      guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -112,11 +113,13 @@ params:
   - param: RESIZED_IMAGES_PATH
     label: (Optional) Cloud Storage path for resized images
     description: >
-      What is the Cloud Storage for Firebase path where you want to store the
-      resized images? Learn more about [how this parameter
-      works](https://firebase.google.com/products/extensions/image-resizer). If you
-      prefer to store resized images at the root of the bucket, leave this field
-      empty.
+      A relative path in which to store resized images. For example, a file
+      uploaded to `/images/original.jpg` with a path of `thumbs` would have its
+      resized images stored at `/images/thumbs/*`, e.g.
+      `/images/thumbs/original_200x200.jpg`. If you prefer to store resized
+      images at the root of the bucket, leave this field empty. Learn more about
+      [how this parameter
+      works](https://firebase.google.com/products/extensions/image-resizer).
     example: thumbnails
     required: false
 
