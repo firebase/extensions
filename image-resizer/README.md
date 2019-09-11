@@ -30,9 +30,6 @@ When you use Firebase Mods, you're only charged for the underlying resources tha
 * Maximum width of resized image: What do you want the maximum width of resized images to be (in pixels)? Learn more about [how this parameter works](https://firebase.google.com/products/mods/image-resizer).
 
 
-* (Optional) Realtime Database path for signed URLs for images: What is the Realtime Database path where you want to store signed URLs for the original and resized images? Learn more about [how this parameter works](https://firebase.google.com/products/mods/image-resizer). If you prefer to not use signed URLs, leave this field empty.
-
-
 * (Optional) Date after which signed URLs will expire (MM-DD-YYYY): After what date do you want the signed URLs to expire? Enter the date in MM-DD-YYYY format. If you prefer to not use signed URLs, leave this field as the default.
 
 
@@ -63,4 +60,3 @@ This mod will operate with the following project IAM roles:
 
 * iam.serviceAccountTokenCreator (Reason: Allows the mod to generate signed URLs)
 
-* firebasedatabase.admin (Reason: Allows the mod to store signed URLs in Realtime Database)

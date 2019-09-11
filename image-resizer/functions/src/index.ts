@@ -40,8 +40,6 @@ logs.init();
 /**
  * When an image is uploaded in the Storage bucket We generate a resized image automatically using
  * ImageMagick which is installed by default on all Cloud Functions instances.
- * After the resized image has been generated and uploaded to Cloud Storage,
- * we write the public URL to the Firebase Realtime Database.
  */
 export const generateResizedImage = functions.storage.object().onFinalize(
   async (object): Promise<void> => {
@@ -102,8 +100,6 @@ export const generateResizedImage = functions.storage.object().onFinalize(
 
       const results = await Promise.all(tasks);
 
-      // If any of the image resizing tasks failed, then don't save the URLs
-      // to RTDB and bail out the mod execution
       const failed = results.some((result) => result.success === false);
       if (failed) {
         logs.failed();
