@@ -166,7 +166,7 @@ const resizeImage = async ({
     logs.imageUploading(resizedFilePath);
     await bucket.upload(resizedFile, {
       destination: resizedFilePath,
-      metadata: metadata,
+      metadata,
     });
     logs.imageUploaded(resizedFilePath);
 
