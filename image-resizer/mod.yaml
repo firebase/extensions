@@ -114,7 +114,7 @@ params:
     description: >
       What is the Cloud Storage for Firebase path where you want to store the
       resized images? Learn more about [how this parameter
-      works](https://firebase.google.com/products/mods/image-resizer). If you
+      works](https://firebase.google.com/products/extensions/image-resizer). If you
       prefer to store resized images at the root of the bucket, leave this field
       empty.
     example: thumbnails
