@@ -58,7 +58,8 @@ export const writeToFirestore =
             await firestoreTransactionWithRetries(admin.firestore.FieldValue.delete(), operationTimestamp, userInfo['userID'], userInfo['sessionID']);
             break;
           default:
-            logs.error(new Error(`Invalid change type: ${changeType}`));
+            // Throw error here to bypass success logging
+            throw new Error(`Invalid change type: ${changeType}`);
         }
         logs.success();
       } catch (err) {
@@ -158,7 +159,7 @@ const getChangeType = (change: functions.Change<admin.database.DataSnapshot>): C
 const getUserAndSessionID = (path: string) => {
 
   const strArr = path.split('/');
-  if (strArr.length < 3 && strArr[strArr.length - 2] !== 'sessions') {
+  if (strArr.length < 4 && strArr[strArr.length - 2] !== 'sessions') {
     throw new Error(
         `Error trying to get sessionID and userID. Assumes {RTDB_PATH}/{userID}/sessions/{sessionID} structure, got ${path}`);
   }
