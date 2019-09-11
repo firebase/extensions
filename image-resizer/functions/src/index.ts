@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as storage from "@google-cloud/storage";
+import { Bucket } from "@google-cloud/storage";
 import * as admin from "firebase-admin";
 import * as fs from "fs";
 import * as functions from "firebase-functions";
@@ -123,7 +123,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
 );
 
 const resizeImage = async (
-  bucket: storage.Bucket,
+  bucket: Bucket,
   originalFile: string,
   fileDir: string,
   fileNameWithoutExtension: string,
