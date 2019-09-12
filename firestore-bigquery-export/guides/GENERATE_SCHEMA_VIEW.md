@@ -1,3 +1,7 @@
+This is a place holder.
+
+Its content is developed in go/firestore-bigquery-export-docs
+
 ### Firestore BigQuery collection Mirroring Extension
 
 Use this extension to mirror the contents of a Firestore collection in a BigQuery table. The extension creates a Firestore-triggered Cloud Function that runs each time a document is created, updated or deleted within the chosen Firestore collection to mirror.
