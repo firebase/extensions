@@ -5,7 +5,7 @@
     "url": "github.com/firebase/extensions.git",
     "directory": "firestore-bigquery-export/firestore-bigquery-change-tracker"
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Core change-tracker library for Cloud Firestore Collection BigQuery Exports",
   "main": "./lib/index.js",
   "scripts": {
@@ -16,6 +16,9 @@
     "test": "npm run mocha",
     "prepare": "npm run build"
   },
+  "files": [
+    "lib"
+  ],
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
   "dependencies": {
