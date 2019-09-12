@@ -30,12 +30,8 @@
     "ts-node": "^7.0.1",
     "typescript": "^3.4.5",
     "sql-formatter": "^2.3.3",
-    "generate-schema": "^2.6.0"
-  },
-  "devDependencies": {
+    "generate-schema": "^2.6.0",
     "inquirer": "^6.4.0",
-    "rimraf": "^2.6.3",
-    "sql-formatter": "^2.3.3",
-    "typescript": "^3.2.4"
+    "rimraf": "^2.6.3"
   }
 }
