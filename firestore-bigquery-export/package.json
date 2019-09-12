@@ -10,6 +10,7 @@
     "import": "node functions/lib/import/index.js",
     "gen-schema-view": "node functions/lib/schema-view/index.js",
     "mocha": "nyc mocha -r ts-node/register --opts mocha.opts",
+    "prepare": "npm run build",
     "test": "npm run mocha"
   },
   "author": "Jan Wyszynski <wyszynski@google.com>",

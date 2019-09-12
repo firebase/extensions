@@ -1,15 +1,19 @@
 {
   "name": "gen-schema-view",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Generate strongly-typed BigQuery Views based on raw JSON",
-  "main": "index.js",
+  "main": "./lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
     "clean": "rimraf ./lib",
     "compile": "tsc",
     "gen-schema-views": "node ./lib/index.js",
     "mocha": "nyc mocha -r ts-node/register --opts mocha.opts",
+    "prepare": "npm run build",
     "test": "npm run mocha"
+  },
+  "bin": {
+    "fs-bq-schema-views": "./lib/index.js"
   },
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
@@ -17,14 +21,16 @@
     "@google-cloud/bigquery": "^2.1.0",
     "firebase-admin": "^7.1.1",
     "firebase-functions": "^2.2.1",
-    "ts-node": "^7.0.1",
-    "typescript": "^3.4.5",
     "sql-formatter": "^2.3.3",
     "generate-schema": "^2.6.0",
-    "mocha": "^5.0.5",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "0.1.0",
+    "inquirer": "^6.4.0"
+  },
+  "devDependencies": {
+    "rimraf": "^2.6.3",
     "nyc": "^14.0.0",
-    "@firebaseextensions/firestore-bigquery-change-tracker": "file:../../firestore-bigquery-change-tracker",
-    "inquirer": "^6.4.0",
-    "rimraf": "^2.6.3"
+    "mocha": "^5.0.5",
+    "typescript": "^3.4.5",
+    "ts-node": "^7.0.1"
   }
 }

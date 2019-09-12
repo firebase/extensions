@@ -14,9 +14,11 @@
   "main": "lib/index.js",
   "dependencies": {
     "firebase-admin": "~7.0.0",
-    "firestore-bigquery-export-core": "file:../firestore-bigquery-export-core",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "0.1.0",
     "firebase-functions": "^2.3.0",
-    "sql-formatter": "^2.3.3",
+    "sql-formatter": "^2.3.3"
+  },
+  "devDependencies": {
     "typescript": "^3.2.2"
   },
   "private": true

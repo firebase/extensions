@@ -17,8 +17,6 @@
 export { FirestoreBigQueryEventHistoryTracker } from "./bigquery";
 export {
   ChangeType,
-  getChangeType,
-  getTimestamp,
   FirestoreDocumentChangeEvent,
   FirestoreEventHistoryTracker,
 } from "./tracker";
