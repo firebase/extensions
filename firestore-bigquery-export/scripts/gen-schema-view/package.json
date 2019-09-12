@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "description": "Generate strongly-typed BigQuery Views based on raw JSON",
   "main": "./lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "github.com/firebase/extensions.git",
+    "directory": "firestore-bigquery-export/scripts/gen-schema-view"
+  },
   "scripts": {
     "build": "npm run clean && npm run compile",
     "clean": "rimraf ./lib",
@@ -26,7 +31,7 @@
     "firebase-functions": "^2.2.1",
     "sql-formatter": "^2.3.3",
     "generate-schema": "^2.6.0",
-    "@firebaseextensions/firestore-bigquery-change-tracker": "0.1.0",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "^0.1.2",
     "inquirer": "^6.4.0"
   },
   "devDependencies": {

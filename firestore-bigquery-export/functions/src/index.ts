@@ -34,7 +34,7 @@ const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHis
 
 logs.init();
 
-exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite(
+exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
   async (change, context) => {
     logs.start();
     try {

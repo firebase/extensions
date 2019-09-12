@@ -94,7 +94,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     // This must match firestoreToBQTable().
     return {
       timestamp: timestamp.toISOString(),
-      eventId: eventId,
+      event_id: eventId,
       document_name: document_name,
       operation: ChangeType[changeType],
       data: JSON.stringify(data),
