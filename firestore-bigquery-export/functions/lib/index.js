@@ -31,7 +31,7 @@ const logs = require("./logs");
 const util_1 = require("./util");
 const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEventHistoryTracker(config_1.default);
 logs.init();
-exports.fsmirrorbigquery = functions.handler.firestore.document.onWrite((change, context) => __awaiter(void 0, void 0, void 0, function* () {
+exports.fsexportbigquery = functions.handler.firestore.document.onWrite((change, context) => __awaiter(void 0, void 0, void 0, function* () {
     logs.start();
     try {
         const changeType = util_1.getChangeType(change);

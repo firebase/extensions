@@ -183,7 +183,7 @@ const run = async (): Promise<number> => {
           eventId: "",
           data: snapshot.data(),
         };
-      });
+    });
     await dataSink.record(rows);
     totalRowsImported += rows.length;
   } while (true);
@@ -205,7 +205,6 @@ run()
     process.exit();
   })
   .catch((error) => {
-    console.error(error.message);
-    console.log("---------------------------------------------------------");
-    process.exit();
+    console.error(`Error importing Collection to BigQuery: ${error.toString())}`);
+    process.exit(1);
   });
