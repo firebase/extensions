@@ -20,7 +20,7 @@ import { Change, EventContext } from "firebase-functions";
 
 import {
   ChangeType
-} from "firestore-bigquery-change-tracker";
+} from "@firebaseextensions/firestore-bigquery-change-tracker";
 
 export function getChangeType(change: Change<DocumentSnapshot>): ChangeType {
   if (!change.after.exists) {
