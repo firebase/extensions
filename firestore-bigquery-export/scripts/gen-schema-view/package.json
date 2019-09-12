@@ -12,6 +12,9 @@
     "prepare": "npm run build",
     "test": "npm run mocha"
   },
+  "files": [
+    "lib"
+  ],
   "bin": {
     "fs-bq-schema-views": "./lib/index.js"
   },

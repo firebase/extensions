@@ -21,7 +21,7 @@ import * as firebase from "firebase-admin";
 import * as inquirer from "inquirer";
 import * as path from "path";
 
-import { readdirSync } from "fs";
+import { existsSync, readdirSync } from "fs";
 
 import {
   FirestoreBigQuerySchemaViewFactory,
@@ -74,6 +74,13 @@ const questions = [
 ];
 
 async function run(): Promise<number> {
+  const schemaDirectory = [process.cwd(), "schemas"].join('/');
+  const schemaDirExists = existsSync(schemaDirectory);
+  if (!schemaDirExists) {
+    console.log(`Expected directory "${schemaDirectory}" not found!`);
+    process.exit(1);
+  }
+
   const {
     projectId,
     datasetId,
@@ -93,8 +100,10 @@ async function run(): Promise<number> {
   });
 
   // @ts-ignore string not assignable to enum
-  const schemaDirectory = [__dirname, "..", "schemas"].join('/');
   const schemas: { [schemaName: string]: FirestoreSchema} = readSchemas(schemaDirectory);
+  if (Object.keys(schemas).length === 0) {
+    console.log(`Found no schemas in ${schemaDirectory}!`);
+  }
   const viewFactory = new FirestoreBigQuerySchemaViewFactory();
 
   for (const schemaName in schemas) {
