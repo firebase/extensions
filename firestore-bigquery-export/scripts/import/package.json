@@ -22,12 +22,7 @@
     "typescript": "^3.4.5",
     "sql-formatter": "^2.3.3",
     "generate-schema": "^2.6.0",
-    "firestore-bigquery-change-tracker": "file:../../firestore-bigquery-change-tracker"
-  },
-  "devDependencies": {
-    "inquirer": "^6.4.0",
-    "rimraf": "^2.6.3",
-    "sql-formatter": "^2.3.3",
-    "typescript": "^3.2.4"
+    "@firebaseextensions/firestore-bigquery-change-tracker": "file:../../firestore-bigquery-change-tracker",
+    "inquirer": "^6.4.0"
   }
 }

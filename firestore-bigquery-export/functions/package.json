@@ -16,9 +16,6 @@
     "firebase-admin": "~7.0.0",
     "firestore-bigquery-export-core": "file:../firestore-bigquery-export-core",
     "firebase-functions": "^2.3.0",
-    "sql-formatter": "^2.3.3"
-  },
-  "devDependencies": {
     "sql-formatter": "^2.3.3",
     "typescript": "^3.2.2"
   },
