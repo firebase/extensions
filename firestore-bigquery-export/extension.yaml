@@ -1,0 +1,107 @@
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: firestore-bigquery-export
+displayName: Export Collections to BigQuery
+specVersion: v1beta
+version: 0.1.0
+
+description:
+  Sends realtime, incremental updates from a specified Cloud Firestore collection to BigQuery.
+
+license: Apache-2.0
+billingRequired: true
+sourceUrl: https://accounts.google.com/AccountChooser/signinchooser?service=gerritcodereview&continue=https%3A%2F%2Fdev-partners.googlesource.com%2Flogin%2Fsamples%2Ffirebase%2Fmods%2F%2B%2Fmaster%2Fauth-user-notifications
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+
+contributors:
+  - authorName: Jan Wyszynski
+    email: wyszynski@google.com
+    url: https://github.com/IanWyszynski
+
+apis:
+  - apiName: bigquery-json.googleapis.com
+    reason: Mirrors data from your Cloud Firestore collection in BigQuery.
+
+roles:
+  - role: bigquery.dataEditor
+    reason: Allows the extension to configure and export data into BigQuery.
+
+resources:
+  - name: fsexportbigquery
+    type: firebaseextensions.v1beta.function
+    description:
+      Listens for document changes in your specified Cloud Firestore collection, then exports the changes into
+      BigQuery.
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
+
+params:
+  - param: LOCATION
+    type: select
+    label: Deployment location
+    description: >-
+      Where should the extension be deployed? You usually want a location close to your database.
+      For help selecting a location, refer to the
+      [location selection guide](https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage).
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+    default: us-central1
+    required: true
+
+  - param: COLLECTION_PATH
+    type: string
+    label: Collection path
+    description: >-
+      What is the path of the the collection that you would like to export?
+    default: extensions
+    example: extensions
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore collection
+    required: true
+
+  - param: DATASET_ID
+    type: string
+    label: Dataset ID
+    description: >-
+      What ID would you like to use for your BigQuery dataset? This
+      extension will create the dataset, if it doesn't already exist.
+    validationRegex: ^[a-zA-Z0-9_]+$
+    validationErrorMessage: >
+      Dataset IDs must be alphanumeric (plus underscores) and must be no more than
+      1024 characters.
+    default: exported_collection
+    example: exported_collection
+    required: true

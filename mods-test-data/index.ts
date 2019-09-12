@@ -95,7 +95,7 @@ const populateFirestoreRecursiveDeleteData = async (): Promise<void> => {
 const populateUserDataDeletionData = async (
   projectId: string
 ): Promise<void> => {
-  // user-data-deletion
+  // delete-user-data
   console.log("---------------------------------------------------------");
   console.log("Populating data for firestore-recursive-delete");
   console.log("---------------------------------------------------------");

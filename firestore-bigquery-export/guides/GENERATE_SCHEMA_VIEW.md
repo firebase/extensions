@@ -166,3 +166,12 @@ SELECT DISTINCT document_name, favorite_numbers_member FROM `wyszynski-extension
 
 You may, at any time, add additional schema files to the `./schemas` and re-run the schema view generation script to create additional schema views over your raw changelog. Once you settle on a fixed schema, you may create a [scheduled query](https://cloud.google.com/bigquery/docs/scheduling-queries) to transfer the columns reported by schema view to a persistent backup table.
 
+### Billing
+
+This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
+
+- Cloud Firestore
+- BigQuery
+- Cloud Functions
+
+When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)

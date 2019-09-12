@@ -1,93 +1,68 @@
-# fs-mirror-bigquery
+# firestore-bigquery-export
 
 **VERSION**: 0.1.0
 
-**DESCRIPTION**: Mirror data for a Firestore Collection to BigQuery. This mod creates an event listener which triggers when Documents within a Collection are added, updated or deleted.
+**DESCRIPTION**: Sends realtime, incremental updates from a specified Cloud Firestore collection to BigQuery.
 
 
 
 **CONFIGURATION PARAMETERS:**
 
-* Deployment Location: *Where should the mod be deployed? Pick a location that is close to your Firestore database. See https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage.*
+* Deployment location: *Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage).*
 
-* Collection Path: *What is the path of the the collection you would like to mirror?*
+* Collection path: *What is the path of the the collection that you would like to export?*
 
-* Dataset ID: *What is the ID of the BigQuery dataset that you would like to use? (The mod will create the dataset if it doesn't already exist)*
-
-* Table ID: *What is the ID of the BigQuery table that you would like to use? (The mod will create the table if it doesn't already exist)*
+* Dataset ID: *What ID would you like to use for your BigQuery dataset? This extension will create the dataset, if it doesn't already exist.*
 
 
 
-**CLOUD FUNCTIONS CREATED:**
+**NON-CLOUD FUNCTION RESOURCES CREATED**:
 
-* fsmirrorbigquery (providers/cloud.firestore/eventTypes/document.write)
+* fsexportbigquery (firebaseextensions.v1beta.function)
 
 
 
-**DETAILS**: This mod allows you to mirror the contents of a Firestore collection to BigQuery.
+**DETAILS**: Use this extension to export the documents in a Cloud Firestore collection to BigQuery. Exports are realtime and incremental, so the data in BigQuery is a mirror of your content in Firestore.
 
-The mod creates a Firestore-triggered cloud function that runs each time a Document is created, updated or deleted within the Firestore Collection that you have chosen to mirror.
+The extension creates and updates a [dataset](https://cloud.google.com/bigquery/docs/datasets-intro) containing the following two BigQuery resources:
 
-The mod relies on a `schema.json` file to describe the contents of your Firestore collection, and creates the following within BigQuery:
++   A [table](https://cloud.google.com/bigquery/docs/tables-intro) of raw data that stores a full change history of the documents within your collection. This table includes a number of metadata fields so that BigQuery can display the current state of your data. The principle metadata fields are `timestamp`, `document_name`, and the `operation` for the document change.
++   A [view](https://cloud.google.com/bigquery/docs/views-intro) which represents the current state of the data within your collection. It also shows a log of the latest `operation` for each document (`CREATE`, `UPDATE`, or `IMPORT`).
 
-1. A `{TABLE_NAME}_raw` table storing every change to documents within your Firestore collection. This table includes a number of metadata fields to allow the current state of your data to be displayed within BigQuery.
+Whenever a document is created, updated, deleted, or imported in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset.
 
-2. A `{TABLE_NAME}` view which represents the current state of the data within your Firestore collection.
+Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database.
 
-**You need to update the `schema.json` file in the `functions` directory before installing the mod.**
+### Additional setup
 
-## The Schema file
+Before installing this extension, you'll need to:
 
-The `schema.json` file is used to describe the structure of Documents within your Firestore Collection. This file allows you to specify which fields should be mirrored, as well as telling BigQuery what type of data to expect for each field. It consists of the following:
++   [Set up Cloud Firestore in your Firebase project.](https://firebase.google.com/docs/firestore/quickstart)
++   [Link your Firebase project to BigQuery.](https://support.google.com/firebase/answer/6318765)
 
-- `fields`: An array of `Field` objects (see below)
-- `idField`: An optional field to use as the ID for the Document. By default, the Firestore Document ID is used.
-- `timestampField`: An optional field to use as the timestamp for the update. By default, the Function Event timestamp is used.
+#### Import existing documents
 
-The `Field` object consists of the following:
+This extension only sends the content of documents that have been changed -- it does not export your full dataset of existing documents into BigQuery. So, to backfill your BigQuery dataset with all the documents in your collection, you can run the import script provided by this extension.
 
-- `fields`: An optional array of `Field` objects indicating the sub fields; only for `map` fields
-- `name`: The name of the field
-- `repeated`: An optional `boolean` to indicate this is an `array` field
-- `type`: The type of the field; one of: `boolean`, `geopoint`, `json`, `number`, `map`, `reference`, `string`, `timestamp`
+**Important:** Run the script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
 
-The special field type `json` can be used to write a Cloud Firestore `map` field to BigQuery as a serialized string of json rather than a structured record field. This is useful for dictionary fields which have variable keys.
+Learn more about using this script to [backfill your existing collection](https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
 
-**It is recommended that you specify a `timestampField` in your schema as Cloud Functions for Firebase does not guarantee the ordering of event triggers.**
+### Billing
 
-### Sample `schema.json`
+This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
 
-```
-{
-  "fields": [
-    {
-      "name": "stringField",
-      "type": "string",
-    }, {
-      "name": "numberArrayField",
-      "type": "number",
-      "repeated": true,
-    }, {
-      "name": "mapField",
-      "type": "map",
-      "fields": [{
-          "name": "subBooleanField",
-          "type": "boolean"
-      }]
-    }, {
-      "name": "lastUpdated",
-      "type": "timestamp",
-    }
-  ],
-  "timestampField": "lastUpdated"
-}
-```
++   Cloud Firestore
++   BigQuery
++   Cloud Functions
+
+When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
 
 
 
 **APIS USED**:
 
-* bigquery-json.googleapis.com (Reason: This mod uses BigQuery to mirror data from your Firestore collection)
+* bigquery-json.googleapis.com (Reason: Mirrors data from your Cloud Firestore collection in BigQuery.)
 
 
 
@@ -95,6 +70,6 @@ The special field type `json` can be used to write a Cloud Firestore `map` field
 
 
 
-This mod will operate with the following project IAM roles:
+This extension will operate with the following project IAM roles:
 
-* bigquery.dataEditor (Reason: To allow the mod to configure and insert data into BigQuery)
+* bigquery.dataEditor (Reason: Allows the extension to configure and export data into BigQuery.)

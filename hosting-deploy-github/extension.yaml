@@ -1,0 +1,125 @@
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: hosting-deploy-github
+displayName: Deploy to Hosting from GitHub
+specVersion: v1beta
+version: 0.1.1
+
+description:
+  Deploys assets in a specified GitHub directory to Firebase Hosting whenever a commit is made to a specified branch.
+
+license: Apache-2.0
+billingRequired: true
+sourceUrl: https://accounts.google.com/AccountChooser/signinchooser?service=gerritcodereview&continue=https%3A%2F%2Fdev-partners.googlesource.com%2Flogin%2Fsamples%2Ffirebase%2Fmods%2F%2B%2Fmaster%2Fhosting-deploy-github
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+
+contributors:
+  - authorName: Bryan Kendall
+    url: https://github.com/bkendall
+  - authorName: Chris Bianca
+    email: chris@csfrequency.com
+    url: https://github.com/chrisbianca
+
+apis:
+  - apiName: firebasehosting.googleapis.com
+    reason: Required to deploy to Firebase Hosting
+
+roles:
+  - role: firebase.admin
+    reason: Allows the extension to deploy to Firebase Hosting. This extension will only interact with Firebase Hosting and Cloud Functions.
+
+resources:
+  - name: deploy
+    type: firebaseextensions.v1beta.function
+    description: Triggers the deployment of your specified GitHub directory to Firebase Hosting.
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      httpsTrigger: {}
+      timeout: 300s
+      availableMemoryMb: 2048
+
+params:
+  - param: LOCATION
+    type: select
+    label: Deployment location
+    description: >-
+      Where should the extension be deployed?
+      For help selecting a location, refer to the
+      [location selection guide](https://firebase.google.com/docs/functions/locations).
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+    default: us-central1
+    required: true
+
+  - param: GITHUB_REPOSITORY
+    type: string
+    label: GitHub repository
+    required: true
+    validationRegex: https://github.com.*
+    validationErrorMessage:
+      This extension only supports GitHub URLs. Please enter a URL that starts with `https://github.com`.
+    description: >-
+      What is the full URL of the GitHub repository from which you want to deploy?
+      For example: `https://github.com/firebase/firebase-tools`
+    example: https://github.com/firebase/firebase-tools
+
+  - param: BRANCH
+    type: string
+    label: Deployment branch
+    default: master
+    example: master
+    description: >-
+      Which branch in your GitHub repository do you want to use for
+      triggering deploys to Firebase Hosting?
+    required: true
+
+  - param: DEPLOY_ROOT
+    type: string
+    label: Deployment root
+    default: public
+    example: public
+    description: >-
+      Which directory in your GitHub repository contains the assets
+      to be deployed to Firebase Hosting?
+    required: true
+
+  - param: SITE_NAME
+    type: string
+    label: Site name
+    default: ${PROJECT_ID}
+    example: my-project-12345
+    description: >-
+      What is the name of your site? If your Firebase project only has one site,
+      your site name is usually the same as your project ID.
+      View your [available site names](https://console.firebase.google.com/project/${PROJECT_ID}/hosting/main).
+    required: true
