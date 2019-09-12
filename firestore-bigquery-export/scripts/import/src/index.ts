@@ -205,6 +205,6 @@ run()
     process.exit();
   })
   .catch((error) => {
-    console.error(`Error importing Collection to BigQuery: ${error.toString())}`);
+    console.error(`Error importing Collection to BigQuery: ${error.toString()}`);
     process.exit(1);
   });
