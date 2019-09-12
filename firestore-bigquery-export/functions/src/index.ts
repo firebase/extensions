@@ -22,7 +22,7 @@ import {
   FirestoreBigQueryEventHistoryTracker,
   FirestoreEventHistoryTracker,
   FirestoreSchema,
-} from "firestore-bigquery-change-tracker";
+} from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as _ from "lodash";
 import * as logs from "./logs";
 import {

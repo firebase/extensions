@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: fs-mirror-bigquery
-displayName: Mirror data from Firestore to BigQuery
+name: firestore-bigquery-export
+displayName: Export data from Firestore to BigQuery
 specVersion: v1beta1
 version: 0.1.0
 
 description:
-  Mirror data for a Firestore Collection to BigQuery. This extension creates an event
+  Export data for a Firestore Collection to BigQuery. This extension creates an event
   listener which triggers when Documents within a Collection are added, updated
   or deleted.
 
@@ -38,14 +38,14 @@ contributors:
 
 apis:
   - apiName: bigquery-json.googleapis.com
-    reason: This extension uses BigQuery to mirror data from your Firestore collection
+    reason: This extension uses BigQuery to export data from your Firestore collection
 
 roles:
   - role: bigquery.dataEditor
     reason: To allow the extension to configure and insert data into BigQuery
 
 resources:
-  - name: fsmirrorbigquery
+  - name: fsexportbigquery
     type: firebasemods.v1beta1.function
     description:
       listen for changes to your Firestore collection and push the changes into
@@ -87,7 +87,7 @@ params:
     type: string
     label: Collection Path
     description: >-
-      What is the path of the the collection you would like to mirror?
+      What is the path of the the collection you would like to export?
     default: extensions
     example: extensions
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
