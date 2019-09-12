@@ -18,7 +18,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = {
     bucket: process.env.IMG_BUCKET,
     cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
-    location: process.env.LOCATION,
     imageSizes: process.env.IMG_SIZES.split(","),
     resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
 };

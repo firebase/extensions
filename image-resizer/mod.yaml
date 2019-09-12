@@ -58,6 +58,7 @@ resources:
     properties:
       sourceDirectory: .
       location: ${LOCATION}
+      availableMemoryMb: 1024
       eventTrigger:
         eventType: google.storage.object.finalize
         resource: projects/_/buckets/${IMG_BUCKET}
