@@ -1,112 +1,61 @@
-## See it in action
+### See it in action
 
-### Raw Change Mirroring
+You can test out this extension right away:
 
-1. Go to the [Cloud Firestore tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
+1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
 
-2. If one doesn't exist already, create a collection called `${param:COLLECTION_PATH}`.
+1.  If it doesn't already exist, create the collection you specified during installation: `${param:COLLECTION_PATH}`.
 
-3. Create a document called `bigquery-mirror-test`.
+1.  Create a document in the collection called `bigquery-mirror-test` that contains any fields with any values that you'd like.
 
-4. [Open](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:COLLECTION_PATH}_raw_changelog&page=table) up the raw changelog in BigQuery.
+1.  Go to the [BigQuery web UI](https://console.cloud.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}) in the Google Cloud Platform console.
 
-5. Run ```SELECT * FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:COLLECTION_PATH}_raw_changelog` ```, you should observe a single row with the contents of the `bigquery-mirror-test` document.
+1.  Query your **raw changelog table**, which should contain a single log of creating the `bigquery-mirror-test` document.
 
-6. Navigate to [latest view of the change log](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:COLLECTION_PATH}_raw_latest&page=table) and run ```SELECT * FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:COLLECTION_PATH}_raw_latest` ```.
+    ```  
+    SELECT * FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:COLLECTION_PATH}_raw_changelog`   
+    ```
 
-6. Delete the `bigquery-mirror-test` document from [Cloud Firestore](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
+1.  Query your **latest view**, which should return the latest change event for the only document present -- `bigquery-mirror-test`.
 
-7. The `bigquery-mirror-test` document will disappear from the latest view and you will see a `DELETE` event get added to ```${param:COLLECTION_PATH}_raw_changelog```.
+    ```  
+    SELECT * FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:COLLECTION_PATH}_raw_latest`
+    ```
 
-### Collection Imports
+1.  Delete the `bigquery-mirror-test` document from [Cloud Firestore](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).  
+The `bigquery-mirror-test` document will disappear from the **latest view** and a `DELETE` event will be added to the **raw changelog table**.
 
-**Please be aware that this process requires a Firestore read for every Document in your Collection.**
+1.  You can check the changelogs of a single document with this query:
 
-1. Go to the [Cloud Firestore tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data) and create a collection called `${param:COLLECTION_PATH}_import_from`.
+    ```  
+    SELECT * FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:COLLECTION_PATH}_raw_changelog` 
+       WHERE document_name = "bigquery-mirror-test" 
+       ORDER BY TIMESTAMP ASC  
+    ```
 
-2. Populate this collection with some data.
+### Using the extension
 
-3. Navigate to the root of the `export-firestore-bigquery` source in the extensions repository.
+Whenever a document is created, updated, imported, or deleted in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset which contains the following resources:
 
-4. Run ```npm run-script compile && npm run-script import``` and follow the prompts. When asked
++   **raw changelog table:** [`${param:DATASET_ID}_raw_changelog`](https://console.cloud.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:COLLECTION_PATH}_raw_changelog&page=table)
++   **latest view:** [`${param:DATASET_ID}_raw_latest`](https://console.cloud.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:COLLECTION_PATH}_raw_latest&page=table)
 
-```
-? What is the name of the Cloud Firestore Collection you are mirroring? (Documents in the source Collection will be written to the raw changelog for this Collection.)
-```
+To review the schema for these two resources, click the **Schema** tab for each resource in BigQuery.
 
-respond with ```${param:COLLECTION_PATH}```.
+Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database.
 
-5. If you want to pause the import, you may interrupt the import process with ```CTRL+C``` and re-run ```npm run-script import``` to resume the import from where you left off in the last run.
+### _(Optional)_ Import existing documents
 
-6. Navigate to the [target table](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:COLLECTION_PATH}_raw_changelog&page=table) in BigQuery and run ```SELECT COUNT(*) FROM `${param:PROJECT_ID}.${param:COLLECTION_PATH}.${param:COLLECTION_PATH}_raw_changelog` WHERE operation = "IMPORT"```. The result set will contain the number of documents in your source Collection.
+This extension only sends the content of documents that have been changed -- it does not export your full dataset of existing documents into BigQuery. So, to backfill your BigQuery dataset with all the documents in your collection, you can run the import script provided by this extension.
 
-**If you try to import the same collection multiple times, you will end up with redundant rows in your raw changelog.**
+The import script can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by this extension. The script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This is to ensure that any operation on an imported document supersedes the `IMPORT`
 
-### Schema Views
+**Important:** Run the script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
 
-1. Navigate to the root of the `export-firestore-bigquery` source in the extensions repository.
+You may pause and resume the script from the last batch at any point.
 
-2. Write the following schema to `./functions/schemas/test_schema.json`:
+Learn more about using this script to [backfill your existing collection](https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
 
-```
-{
-  "fields": [
-    {
-      "name": "name",
-      "type": "string"
-    },
-    {
-      "name": "age",
-      "type": "number"
-    }
-  ]
-}
-```
+### Monitoring
 
-3. Run ```npm run-script compile && npm run-script gen-schema-view```. When asked
-
-```
-? What is the name of the Cloud Firestore Collection that you would like to generate a schema view for?
-```
-
-respond with ```${param:COLLECTION_PATH}```.
-
-4. Navigate to the generated [schema changelog](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:COLLECTION_PATH}_schema_test_schema_changelog&page=table) in BigQuery. This view allows you to query document change events by fields specified in the schema.
-
-5. Go back to the [Cloud Firestore tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data), and create a document called `test-schema-document` with a string field called "name", and a number field called "age".
-
-6. Back in the [schema changelog](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:COLLECTION_PATH}_schema_test_schema_changelog&page=table) view, run the following query: ```SELECT document_name, name, age FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:COLLECTION_PATH}_schema_test_schema_changelog WHERE document_name = "test-schema-document"````.
-
-7. Now, in the [Cloud Firestore tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data), change the type of the "age" field to be a string and re-run the query from step 6. You'll see a new change with a `null` age column. **When you query documents that don't match the schema, the view will contain null values for the corresponding schema fields**.
-
-8. Delete the `test-schema-document` using the [Cloud Firestore tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
-
-9. As with the raw views, you may also query events on the set of live documents view using the [latest schema view](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:COLLECTION_PATH}_schema_test_schema_latest&page=table). If you run ```SELECT document_name, name, age FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:COLLECTION_PATH}_schema_test_schema_latest` WHERE document_name = "test-schema-document" ```, you'll receive no results because the document no longer exists in the Cloud Firestore Collection.
-
-## Other Queries
-
-There are a couple of queries you might be interested in running over the raw change log itself. For example, to generate a revision history for a single document:
-
-```
-SELECT * FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_NAME}_raw_changelog` WHERE document_name = "${DOCUMENT_NAME}" ORDER BY TIMESTAMP ASC LIMIT 1000
-```
-
-To extract the most up-to-date contents of a document:
-
-```
-SELECT data FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_NAME}_raw_changelog` WHERE document_name = "${DOCUMENT_NAME}" ORDER BY TIMESTAMP DESC LIMIT 1
-```
-
-**If DOCUMENT_NAME is deleted, this query will yield a single row with a null data column**.
-
-In addition to `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_NAME}_raw_changelog`, this extension also created a BigQuery [view](https://cloud.google.com/bigquery/docs/views) called `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_NAME}_raw_latest` which reports latest events for all live documents in the Firestore collection. This view may be used to query the current state of the Firestore Collection. For example, to generate a listing of all live documents, you could run:
-
-```
-SELECT document_name FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_NAME}_raw_latest` LIMIT 1000
-```
-
-To extract the latest data in a document from this view, simply run:
-
-```
-SELECT data FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_NAME}_raw_latest` WHERE document_name = "${DOCUMENT_NAME}"
-```
+As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.
