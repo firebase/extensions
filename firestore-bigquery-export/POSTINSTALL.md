@@ -8,7 +8,7 @@ You can test out this extension right away:
 
 1.  Create a document in the collection called `bigquery-mirror-test` that contains any fields with any values that you'd like.
 
-1.  Go to the [BigQuery web UI](https://console.cloud.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}) in the Google Cloud Platform console.
+1.  Go to the [BigQuery web UI](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}) in the Google Cloud Platform console.
 
 1.  Query your **raw changelog table**, which should contain a single log of creating the `bigquery-mirror-test` document.
 
@@ -37,8 +37,8 @@ The `bigquery-mirror-test` document will disappear from the **latest view** and 
 
 Whenever a document is created, updated, imported, or deleted in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset which contains the following resources:
 
-+   **raw changelog table:** [`${param:DATASET_ID}_raw_changelog`](https://console.cloud.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:COLLECTION_PATH}_raw_changelog&page=table)
-+   **latest view:** [`${param:DATASET_ID}_raw_latest`](https://console.cloud.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:COLLECTION_PATH}_raw_latest&page=table)
++   **raw changelog table:** [`${param:DATASET_ID}_raw_changelog`](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:COLLECTION_PATH}_raw_changelog&page=table)
++   **latest view:** [`${param:DATASET_ID}_raw_latest`](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:COLLECTION_PATH}_raw_latest&page=table)
 
 To review the schema for these two resources, click the **Schema** tab for each resource in BigQuery.
 
