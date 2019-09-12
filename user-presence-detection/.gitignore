@@ -1,8 +1,0 @@
-# Typescript v1 declaration files
-typings/
-
-node_modules/
-.idea/
-.firebaserc
-firebase.json
-firestore-debug.log
