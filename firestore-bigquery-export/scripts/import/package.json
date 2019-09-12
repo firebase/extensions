@@ -10,6 +10,9 @@
     "import": "node ./lib/index.js",
     "prepare": "npm run build"
   },
+  "files": [
+    "lib"
+  ],
   "bin": {
     "fs-bq-import-collection": "./lib/index.js"
   },
