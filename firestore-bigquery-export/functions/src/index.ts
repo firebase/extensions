@@ -15,20 +15,14 @@
  */
 
 import config from "./config";
-import * as firebase from "firebase-admin";
 import * as functions from "firebase-functions";
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreEventHistoryTracker,
-  FirestoreSchema,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
-import * as _ from "lodash";
 import * as logs from "./logs";
-import {
-  getChangeType,
-  getTimestamp,
-} from "./util";
+import { getChangeType } from "./util";
 
 const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker(config);
 
@@ -40,7 +34,7 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
     try {
       const changeType = getChangeType(change);
       await eventTracker.record([{
-        timestamp: getTimestamp(context, change),
+        timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
         operation: changeType,
         documentName: context.resource.name,
         eventId: context.eventId,
