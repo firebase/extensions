@@ -25,7 +25,10 @@ export enum ChangeType {
 }
 
 export interface FirestoreDocumentChangeEvent {
-  timestamp: Date;
+  // The timestamp represented in ISO format.
+  // Date is not appropriate because it only has millisecond precision.
+  // Cloud Firestore timestamps have microsecond precisions.
+  timestamp: string;
   operation: ChangeType;
   documentName: string;
   eventId: string;

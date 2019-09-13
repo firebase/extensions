@@ -40,7 +40,7 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
     try {
       const changeType = getChangeType(change);
       await eventTracker.record([{
-        timestamp: getTimestamp(context, change),
+        timestamp: context.timestamp,
         operation: changeType,
         documentName: context.resource.name,
         eventId: context.eventId,
