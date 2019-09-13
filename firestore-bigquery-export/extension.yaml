@@ -85,7 +85,7 @@ params:
     type: string
     label: Collection path
     description: >-
-      What is the path of the the collection that you would like to export?
+      What is the path of the collection that you would like to export?
     default: extensions
     example: extensions
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
