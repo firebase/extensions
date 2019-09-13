@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import * as firebase from "firebase-admin";
 import { DocumentSnapshot } from "firebase-functions/lib/providers/firestore";
-import { Change, EventContext } from "firebase-functions";
+import { Change } from "firebase-functions";
 
 import {
   ChangeType
@@ -30,20 +29,4 @@ export function getChangeType(change: Change<DocumentSnapshot>): ChangeType {
     return ChangeType.CREATE;
   }
   return ChangeType.UPDATE;
-}
-
-export function getTimestamp(context: EventContext, change: Change<DocumentSnapshot>): Date {
-  const changeType = getChangeType((change));
-  switch (changeType) {
-    case ChangeType.CREATE:
-      return change.after.updateTime.toDate();
-    case ChangeType.DELETE:
-      // Due to an internal bug (129264426), before.update_time is actually the commit timestamp.
-      return new Date(change.before.updateTime.toDate().getTime() + 1);
-    case ChangeType.UPDATE:
-      return change.after.updateTime.toDate();
-    default: {
-      throw new Error(`Invalid change type: ${changeType}`);
-    }
-  }
 }
