@@ -27,9 +27,14 @@ admin.initializeApp();
 const db = admin.firestore();
 
 const transport = nodemailer.createTransport(config.smtpConnectionUri);
-const templates = new Templates(
-  admin.firestore().collection(config.templatesCollection)
-);
+
+let templates;
+
+if (config.templatesCollection) {
+  templates = new Templates(
+    admin.firestore().collection(config.templatesCollection)
+  );
+}
 
 interface QueuePayload {
   delivery?: {
@@ -73,7 +78,7 @@ async function processCreate(snap: FirebaseFirestore.DocumentSnapshot) {
 }
 
 async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
-  if (config.templatesCollection && payload.template) {
+  if (templates && payload.template) {
     payload.message = Object.assign(
       payload.message || {},
       await templates.render(payload.template.name, payload.template.data)
