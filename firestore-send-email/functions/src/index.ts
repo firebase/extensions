@@ -78,10 +78,16 @@ async function processCreate(snap: FirebaseFirestore.DocumentSnapshot) {
 }
 
 async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
-  if (templates && payload.template) {
+  const { template } = payload;
+
+  if (templates && template) {
+    if (!template.name) {
+      throw new Error(`Template object is missing a "name" parameter.`);
+    }
+
     payload.message = Object.assign(
       payload.message || {},
-      await templates.render(payload.template.name, payload.template.data)
+      await templates.render(template.name, template.data)
     );
   }
 
