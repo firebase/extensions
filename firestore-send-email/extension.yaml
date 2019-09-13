@@ -101,6 +101,7 @@ params:
     label: Default FROM address
     validationRegex: "^\S+@\S+\.\S+$"
     validationErrorMessage: Must be a valid email address
+    required: true
     description: >-
       The email address to use as the sender's address (if it's not specified in the added email document).
 
