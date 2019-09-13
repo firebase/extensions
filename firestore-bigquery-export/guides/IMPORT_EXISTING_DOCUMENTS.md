@@ -44,7 +44,7 @@ This import script uses several values from your installation of the extension:
     ```  
     SELECT COUNT(*) FROM  
       `${PROJECT_ID}.${COLLECTION_PATH}.${COLLECTION_PATH}_raw_changelog`  
-      WHERE operation = "IMPORT"  
+      WHERE operation = "import"  
     ```
 
     The result set will contain the number of documents in your source collection.
