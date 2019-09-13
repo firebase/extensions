@@ -26,19 +26,3 @@ function getChangeType(change) {
     return firestore_bigquery_change_tracker_1.ChangeType.UPDATE;
 }
 exports.getChangeType = getChangeType;
-function getTimestamp(context, change) {
-    const changeType = getChangeType((change));
-    switch (changeType) {
-        case firestore_bigquery_change_tracker_1.ChangeType.CREATE:
-            return change.after.updateTime.toDate();
-        case firestore_bigquery_change_tracker_1.ChangeType.DELETE:
-            // Due to an internal bug (129264426), before.update_time is actually the commit timestamp.
-            return new Date(change.before.updateTime.toDate().getTime() + 1);
-        case firestore_bigquery_change_tracker_1.ChangeType.UPDATE:
-            return change.after.updateTime.toDate();
-        default: {
-            throw new Error(`Invalid change type: ${changeType}`);
-        }
-    }
-}
-exports.getTimestamp = getTimestamp;

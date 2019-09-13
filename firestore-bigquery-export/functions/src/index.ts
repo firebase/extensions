@@ -15,20 +15,14 @@
  */
 
 import config from "./config";
-import * as firebase from "firebase-admin";
 import * as functions from "firebase-functions";
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreEventHistoryTracker,
-  FirestoreSchema,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
-import * as _ from "lodash";
 import * as logs from "./logs";
-import {
-  getChangeType,
-  getTimestamp,
-} from "./util";
+import { getChangeType } from "./util";
 
 const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker(config);
 
