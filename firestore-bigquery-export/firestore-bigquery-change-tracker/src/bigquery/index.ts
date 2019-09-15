@@ -25,10 +25,8 @@ import * as logs from "../logs";
 import { BigQuery } from "@google-cloud/bigquery";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
-  collectionPath: string;
+  tableId: string;
   datasetId: string;
-  initialized: boolean;
-  suppressWarnings: boolean;
 }
 
 /**
@@ -39,122 +37,87 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
  */
 export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHistoryTracker {
   bq: bigquery.BigQuery;
-  tableName: string;
-  initialized: boolean;
-  suppressWarnings: boolean;
+  initialized: boolean = false;
 
   constructor(public config: FirestoreBigQueryEventHistoryTrackerConfig) {
     this.bq = new bigquery.BigQuery();
-    this.initialized = config.initialized;
-    this.tableName = config.collectionPath.replace(/\//g, "_");
-    this.suppressWarnings = config.suppressWarnings;
   }
 
   async record(events: FirestoreDocumentChangeEvent[]) {
-    if (!this.config.initialized) {
-      try {
-        await this.initialize(this.config.datasetId, this.tableName);
-        this.initialized = true;
-      } catch (e) {
-        logs.bigQueryErrorRecordingDocumentChange(e);
-      }
-    }
+    await this.initialize();
+
     const rows = events.map(event => {
-      return this.buildDataRow(
-        // Use the function's event ID to protect against duplicate executions
-        event.eventId,
-        event.operation,
-        event.timestamp,
-        event.documentName,
-        event.data);
+      // This must match firestoreToBQTable().
+      return {
+        timestamp: event.timestamp,
+        event_id: event.eventId,
+        document_name: event.documentName,
+        operation: ChangeType[event.operation],
+        data: JSON.stringify(event.data),
+      };
     });
-    await this.insertData(this.config.datasetId, this.tableName, rows);
+    await this.insertData(rows);
   }
 
   /**
-   * Ensure that the defined Firestore schema exists within BigQuery and
-   * contains the correct information. This is invoked for the first time when
-   * the first document change event is recorded.
+   * Inserts rows of data into the BigQuery raw change log table.
    */
-  async initialize(datasetId: string, tableName: string) {
-    const rawTable = raw(tableName);
-
-    await this.initializeDataset(datasetId);
-    await this.initializeChangelog(datasetId, rawTable);
-    await this.initializeLatestView(datasetId, rawTable);
-  };
-
-  buildDataRow(
-    eventId: string,
-    changeType: ChangeType,
-    timestamp: string,
-    document_name: string,
-    data?: Object
-  ): bigquery.RowMetadata {
-    // This must match firestoreToBQTable().
-    return {
-      timestamp: timestamp,
-      event_id: eventId,
-      document_name: document_name,
-      operation: ChangeType[changeType],
-      data: JSON.stringify(data),
-    };
-  };
+  async insertData(rows: bigquery.RowMetadata[]) {
+    try {
+      const dataset = this.bq.dataset(this.config.datasetId);
+      const table = dataset.table(this.rawChangeLogTableName());
+      logs.dataInserting(rows.length);
+      await table.insert(rows);
+      logs.dataInserted(rows.length);
+    } catch (e) {
+      // Reinitializing in case the destintation table is modified.
+      this.initialized = false;
+      throw e;
+    }
+  }
 
   /**
-   * Insert a row of data into the BigQuery `raw` data table
+   * Creates the BigQuery resources with the expected schema for {@link FirestoreEventHistoryTracker}.
+   * After the first invokation, it skips initialization assuming these resources are still there.
    */
-  async insertData(
-    datasetId: string,
-    collectionTableName: string,
-    rows: bigquery.RowMetadata[]
-  ) {
-    const name = changeLog(raw(collectionTableName));
-    const dataset = this.bq.dataset(datasetId);
-    const table = dataset.table(name);
-    const rowCount = rows.length;
-
-    logs.dataInserting(rowCount);
-    await table.insert(rows);
-    logs.dataInserted(rowCount);
-  };
+  async initialize() {
+    if (this.initialized) {
+      return;
+    }
+    await this.initializeDataset();
+    await this.initializeRawChangeLogTable();
+    await this.initializeLatestView();
+    this.initialized = true;
+  }
 
   /**
-   * Check that the specified dataset exists, and create it if it doesn't.
+   * Creates the specified dataset if it doesn't already exists.
    */
-  async initializeDataset(datasetId: string): Promise<bigquery.Dataset> {
-    const dataset = this.bq.dataset(datasetId);
+  async initializeDataset() {
+    const dataset = this.bq.dataset(this.config.datasetId);
     const [datasetExists] = await dataset.exists();
     if (datasetExists) {
-      if (!this.suppressWarnings) {
-        logs.bigQueryDatasetExists(datasetId);
-      }
+      logs.bigQueryDatasetExists(this.config.datasetId);
     } else {
-      logs.bigQueryDatasetCreating(datasetId);
+      logs.bigQueryDatasetCreating(this.config.datasetId);
       await dataset.create();
-      logs.bigQueryDatasetCreated(datasetId);
+      logs.bigQueryDatasetCreated(this.config.datasetId);
     }
     return dataset;
-  };
+  }
 
   /**
-   * Check that the table exists within the specified dataset, and create it
-   * if it doesn't.  If the table does exist, validate that the BigQuery schema
-   * is correct and add any missing fields.
+   * Creates the raw change log table if it it doesn't exist already.
+   * TODO: Validate that the BigQuery schema is correct if the table does exist,
    */
-  async initializeChangelog(
-    datasetId: string,
-    tableName: string,
-  ): Promise<bigquery.Table> {
-    const changelogName = changeLog(tableName);
-    const dataset = this.bq.dataset(datasetId);
-    let table = dataset.table(changelogName);
+  async initializeRawChangeLogTable() {
+    const changelogName = this.rawChangeLogTableName();
+    const dataset = this.bq.dataset(this.config.datasetId);
+    const table = dataset.table(changelogName);
     const [tableExists] = await table.exists();
 
     if (tableExists) {
-      if (!this.suppressWarnings) {
-        logs.bigQueryTableAlreadyExists(table.id, dataset.id);
-      }
+      logs.bigQueryTableAlreadyExists(table.id, dataset.id);
     } else {
       logs.bigQueryTableCreating(changelogName);
       const options = {
@@ -169,37 +132,35 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
   };
 
   /**
-   * Create a view over a table storing a change log of Firestore documents
-   * which contains only latest version of all live documents in the mirrored
-   * collection.
+   * Creates a view over the raw change log table that returns only latest operation of 
+   * all existing documents in the exported collection.
    */
-  async initializeLatestView(
-    datasetId: string,
-    tableName: string
-  ): Promise<bigquery.Table> {
-    let viewName = latest(tableName);
-    const dataset = this.bq.dataset(datasetId);
-    let view = dataset.table(viewName);
+  async initializeLatestView() {
+    const dataset = this.bq.dataset(this.config.datasetId);
+    const view = dataset.table(this.rawLatestView());
     const [viewExists] = await view.exists();
 
     if (viewExists) {
-      if (!this.suppressWarnings) {
-        logs.bigQueryViewAlreadyExists(view.id, dataset.id);
-      }
+      logs.bigQueryViewAlreadyExists(view.id, dataset.id);
     } else {
-      const latestSnapshot = latestConsistentSnapshotView(datasetId, changeLog(tableName));
-      logs.bigQueryViewCreating(viewName, latestSnapshot.query);
+      const latestSnapshot = latestConsistentSnapshotView(this.config.datasetId, this.rawChangeLogTableName());
+      logs.bigQueryViewCreating(this.rawLatestView(), latestSnapshot.query);
       const options = {
-        friendlyName: viewName,
+        friendlyName: this.rawLatestView(),
         view: latestSnapshot,
       };
       await view.create(options);
-      logs.bigQueryViewCreated(viewName);
+      logs.bigQueryViewCreated(this.rawLatestView());
     }
     return view;
-  };
+  }
+
+  private rawChangeLogTableName(): string {
+    return `${this.config.tableId}_raw_changelog`;
+  }
+
+  private rawLatestView(): string {
+    return `${this.config.tableId}_raw_latest`;
+  }
 }
 
-export function raw(tableName: string): string { return `${tableName}_raw`; };
-export function changeLog(tableName: string): string { return `${tableName}_changelog`; }
-export function latest(tableName: string): string { return `${tableName}_latest`; };
