@@ -25,18 +25,21 @@ import * as logs from "../logs";
 import { BigQuery } from "@google-cloud/bigquery";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
-  datasetId: string;
   tableId: string;
+  datasetId: string;
 }
 
 /**
  * An FirestoreEventHistoryTracker that exports data to BigQuery.
  *
  * When the first event is received, it creates necessary BigQuery resources:
- * - Dataset: {@link FirestoreBigQueryEventHistoryTrackerConfig#datasetId}.
- * - Raw change log BigQuery table: {@link FirestoreBigQueryEventHistoryTracker#rawChangeLogTableName}.
- * - Latest view: {@link FirestoreBigQueryEventHistoryTracker#rawLatestView}.
- * If any subsequent data export fail, it will attempt to reinitialize.
+ * - Dataset named {@link FirestoreBigQueryEventHistoryTrackerConfig#datasetId}.
+ * - Raw change log BigQuery table named {@link FirestoreBigQueryEventHistoryTracker#rawChangeLogTableName}.
+ * - Latest view named {@link FirestoreBigQueryEventHistoryTracker#rawChangeLogTableName}.
+ * the raw changelog table 
+ * - Initializing the latest view over the raw changelog.
+ *
+ * - Streaming writes into the raw changelog table.
  */
 export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHistoryTracker {
   bq: bigquery.BigQuery;
