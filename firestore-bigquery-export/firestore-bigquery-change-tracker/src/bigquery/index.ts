@@ -65,7 +65,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
   /**
    * Inserts rows of data into the BigQuery raw change log table.
    */
-  async insertData(rows: bigquery.RowMetadata[]) {
+  private async insertData(rows: bigquery.RowMetadata[]) {
     try {
       const dataset = this.bq.dataset(this.config.datasetId);
       const table = dataset.table(this.rawChangeLogTableName());
@@ -83,7 +83,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
    * Creates the BigQuery resources with the expected schema for {@link FirestoreEventHistoryTracker}.
    * After the first invokation, it skips initialization assuming these resources are still there.
    */
-  async initialize() {
+  private async initialize() {
     if (this.initialized) {
       return;
     }
@@ -96,7 +96,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
   /**
    * Creates the specified dataset if it doesn't already exists.
    */
-  async initializeDataset() {
+  private async initializeDataset() {
     const dataset = this.bq.dataset(this.config.datasetId);
     const [datasetExists] = await dataset.exists();
     if (datasetExists) {
@@ -113,7 +113,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
    * Creates the raw change log table if it doesn't already exist.
    * TODO: Validate that the BigQuery schema is correct if the table does exist,
    */
-  async initializeRawChangeLogTable() {
+  private async initializeRawChangeLogTable() {
     const changelogName = this.rawChangeLogTableName();
     const dataset = this.bq.dataset(this.config.datasetId);
     const table = dataset.table(changelogName);
@@ -138,7 +138,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
    * Creates the latest snapshot view, which returns only latest operations
    * of all existing documents over the raw change log table.
    */
-  async initializeLatestView() {
+  private async initializeLatestView() {
     const dataset = this.bq.dataset(this.config.datasetId);
     const view = dataset.table(this.rawLatestView());
     const [viewExists] = await view.exists();
