@@ -30,10 +30,8 @@ const firestore_bigquery_change_tracker_1 = require("@firebaseextensions/firesto
 const logs = require("./logs");
 const util_1 = require("./util");
 const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEventHistoryTracker({
-    collectionPath: config_1.default.tableId,
+    tableId: config_1.default.tableId,
     datasetId: config_1.default.datasetId,
-    initialized: false,
-    suppressWarnings: false,
 });
 logs.init();
 exports.fsexportbigquery = functions.handler.firestore.document.onWrite((change, context) => __awaiter(void 0, void 0, void 0, function* () {

@@ -25,10 +25,8 @@ import * as logs from "./logs";
 import { getChangeType } from "./util";
 
 const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker({
-  collectionPath: config.tableId, // TODO: rename collectionPath.
+  tableId: config.tableId,
   datasetId: config.datasetId,
-  initialized: false, // TODO: Remove this config.
-  suppressWarnings: false, // TODO: Remove this config.
 });
 
 logs.init();
