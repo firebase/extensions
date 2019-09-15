@@ -36,7 +36,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
  * - Dataset: {@link FirestoreBigQueryEventHistoryTrackerConfig#datasetId}.
  * - Table: Raw change log table {@link FirestoreBigQueryEventHistoryTracker#rawChangeLogTableName}.
  * - View: Latest view {@link FirestoreBigQueryEventHistoryTracker#rawLatestView}.
- * If any subsequent data export fail, it will attempt to reinitialize.
+ * If any subsequent data export fails, it will attempt to reinitialize.
  */
 export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHistoryTracker {
   bq: bigquery.BigQuery;
