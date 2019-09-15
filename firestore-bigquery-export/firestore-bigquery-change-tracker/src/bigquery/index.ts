@@ -110,7 +110,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
   }
 
   /**
-   * Creates the raw change log table if it it doesn't exist already.
+   * Creates the raw change log table if it doesn't already exist.
    * TODO: Validate that the BigQuery schema is correct if the table does exist,
    */
   async initializeRawChangeLogTable() {
@@ -135,8 +135,8 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
   };
 
   /**
-   * Creates a view over the raw change log table that returns only latest operation of 
-   * all existing documents in the exported collection.
+   * Creates the latest snapshot view, which returns only latest operations
+   * of all existing documents over the raw change log table.
    */
   async initializeLatestView() {
     const dataset = this.bq.dataset(this.config.datasetId);
