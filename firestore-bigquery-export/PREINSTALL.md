@@ -9,14 +9,12 @@ Whenever a document is created, updated, deleted, or imported in the specified c
 
 Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database.
 
-### Additional setup
+#### Additional setup
 
 Before installing this extension, you'll need to:
 
 +   [Set up Cloud Firestore in your Firebase project.](https://firebase.google.com/docs/firestore/quickstart)
 +   [Link your Firebase project to BigQuery.](https://support.google.com/firebase/answer/6318765)
-
-#### Import existing documents
 
 This extension only sends the content of documents that have been changed -- it does not export your full dataset of existing documents into BigQuery. So, to backfill your BigQuery dataset with all the documents in your collection, you can run the import script provided by this extension.
 
@@ -24,7 +22,7 @@ This extension only sends the content of documents that have been changed -- it 
 
 Learn more about using this script to [backfill your existing collection](https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
 
-### Billing
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
 
