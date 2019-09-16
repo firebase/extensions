@@ -104,8 +104,8 @@ params:
     validationErrorMessage: >
       BigQuery dataset IDs must be alphanumeric (plus underscores) and must be no more than
       1024 characters.
-    default: firestore_export
-    example: firestore_export
+    default: ext_exported_collection
+    example: ext_exported_collection
     required: true
 
   - param: TABLE_ID
@@ -118,6 +118,6 @@ params:
     validationErrorMessage: >
       BigQuery table IDs must be alphanumeric (plus underscores) and must be no more than
       1024 characters.
-    default: my_exported_firestore_collection
-    example: my_exported_firestore_collection
+    default: ext_exported_collection_table
+    example: ext_exported_collection_table
     required: true
