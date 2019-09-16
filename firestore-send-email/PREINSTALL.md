@@ -14,8 +14,6 @@ admin.firestore().collection('mail').add({
 })
 ```
 
-Because each email is built from a Cloud Firestore document, you can reference information stored in _other_ Cloud Firestore documents and fields, like image URLs.
-
 You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
 
 When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery** and specify the Cloud Firestore collection where you'll add documents. If you want to use templates, you'll also need to specify the collection containing your template documents.
