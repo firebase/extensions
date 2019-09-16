@@ -16,7 +16,7 @@ If the original URL in the database path is updated, then the shortened URL will
 
 This extension uses Bitly to shorten URLs, so you'll need to supply your Bitly access token as part of this extension's installation. You can generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
 
-### Billing
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
 
