@@ -6,13 +6,13 @@ This extension adds the email address of each new user to your specified Mailchi
 
 This extension uses Mailchimp, so you'll need to supply your Mailchimp API Key and Audience ID when installing this extension.
 
-### Additional setup
+#### Additional setup
 
 Make sure that you've set up [Firebase Authentication](https://firebase.google.com/docs/auth) to manage your users.
 
 You must also have a Mailchimp account before installing this extension.
 
-### Billing
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
 
