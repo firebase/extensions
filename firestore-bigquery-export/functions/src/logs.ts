@@ -116,7 +116,7 @@ export const bigQueryViewValidating = (viewName: string) => {
 };
 
 export const complete = () => {
-  console.log("Completed execution of the extension");
+  console.log("Completed execution of extension");
 };
 
 export const dataInserted = (rowCount: number) => {
