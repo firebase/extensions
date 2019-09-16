@@ -9,7 +9,6 @@ If the original non-translated field of the document is updated, then the transl
 #### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 - Cloud Translation API
 - Cloud Firestore
 - Cloud Functions
