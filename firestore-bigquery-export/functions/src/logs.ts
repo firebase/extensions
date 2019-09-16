@@ -146,7 +146,7 @@ export const init = () => {
 };
 
 export const start = () => {
-  console.log("Started execution of the extension with configuration", config);
+  console.log("Started execution of extension with configuration", config);
 };
 
 export const timestampMissingValue = (fieldName: string) => {
