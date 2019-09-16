@@ -6,7 +6,7 @@ You can test out this extension right away:
 
 1.  Click **Add User** to add a test user.
 
-1.  In a few seconds, go to your Mailchimp audience page, you'll see the test user's email appear in the list.
+1.  In a few seconds, go to your Mailchimp audience page, you'll see the test user's email appear.
 
 ### Using the extension
 
