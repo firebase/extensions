@@ -4,7 +4,7 @@ In your app, you specify a Cloud Firestore document path and increment a field v
 
 Note that this extension is for use with the JavaScript apps and requires the Firebase JavaScript SDK.
 
-### Additional setup
+#### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
 
@@ -12,7 +12,7 @@ After installation, you'll need to update your database security rules and set u
 
 This extension provides a Counter SDK that you need to install in your app. You can then use this library in your code to specify your document path and increment values. Detailed instructions to install this SDK and use it are provided after you install this extension.
 
-### Billing
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
 
