@@ -17,7 +17,6 @@ Before installing this extension, make sure that you've [set up a Cloud Storage 
 #### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 - Cloud Storage
 - Cloud Functions
 
