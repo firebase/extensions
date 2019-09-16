@@ -66,6 +66,20 @@ interface QueuePayload {
   replyTo?: string;
 }
 
+function validateFieldArray(field: string, array?: string[]) {
+  if (!Array.isArray(array)) {
+    throw new Error(`Invalid field "${field}". Expected an array of strings.`);
+  }
+
+  for (let i = 0; i < array.length; i++) {
+    if (typeof array[i] !== "string") {
+      throw new Error(
+        `Invalid field "${field}". Expected an array of strings.`
+      );
+    }
+  }
+}
+
 async function processCreate(snap: FirebaseFirestore.DocumentSnapshot) {
   return snap.ref.update({
     delivery: {
@@ -82,7 +96,7 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
 
   if (templates && template) {
     if (!template.name) {
-      throw new Error(`Template object is missing a "name" parameter.`);
+      throw new Error(`Template object is missing a 'name' parameter.`);
     }
 
     payload.message = Object.assign(
@@ -91,41 +105,94 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
     );
   }
 
-  if (
-    !config.usersCollection ||
-    (!payload.toUids && !payload.ccUids && !payload.bccUids)
-  ) {
+  let to: string[] = [];
+  let cc: string[] = [];
+  let bcc: string[] = [];
+  let uids: string[] = [];
+
+  if (payload.to) {
+    validateFieldArray("to", payload.to);
+    to = [...to, ...payload.to];
+  }
+
+  if (payload.cc) {
+    validateFieldArray("cc", payload.cc);
+    cc = [...cc, ...payload.cc];
+  }
+
+  if (payload.bcc) {
+    validateFieldArray("bcc", payload.bcc);
+    bcc = [...bcc, ...payload.bcc];
+  }
+
+  if (!payload.toUids && !payload.ccUids && !payload.bccUids) {
+    payload.to = to;
+    payload.cc = cc;
+    payload.bcc = bcc;
+
     return payload;
   }
 
-  const toFetch = {};
-  []
-    .concat(payload.toUids, payload.ccUids, payload.bccUids)
-    .forEach((uid) => (toFetch[uid] = null));
-  const docs = await db.getAll(
-    ...Object.keys(toFetch).map((uid) =>
-      db.collection(config.usersCollection).doc(uid)
-    ),
-    { fieldMask: ["email"] }
+  if (payload.toUids && config.usersCollection) {
+    validateFieldArray("toUids", payload.toUids);
+    uids = [...uids, ...payload.toUids];
+  } else if (payload.toUids && !config.usersCollection) {
+    throw new Error(
+      `'toUids' were provided, but no User collection was provided.`
+    );
+  }
+
+  if (payload.ccUids && config.usersCollection) {
+    validateFieldArray("ccUids", payload.ccUids);
+    uids = [...uids, ...payload.ccUids];
+  } else if (payload.ccUids && !config.usersCollection) {
+    throw new Error(
+      `'ccUids' were provided, but no User collection was provided.`
+    );
+  }
+
+  if (payload.bccUids && config.usersCollection) {
+    validateFieldArray("bccUids", payload.bccUids);
+    uids = [...uids, ...payload.bccUids];
+  } else if (payload.bccUids && !config.usersCollection) {
+    throw new Error(
+      `'bccUids' were provided, but no User collection was provided.`
+    );
+  }
+
+  const documents = await db.getAll(
+    ...uids.map((uid) => db.collection(config.usersCollection).doc(uid)),
+    {
+      fieldMask: ["email"],
+    }
   );
-  docs.forEach((doc) => {
-    if (doc.exists) {
-      toFetch[doc.id] = doc.get("email");
+
+  const userMap: { [key: string]: string } = {};
+  documents.forEach((documentSnapshot) => {
+    if (documentSnapshot.exists) {
+      const email = documentSnapshot.get("email");
+
+      if (email) {
+        userMap[documentSnapshot.id] = email;
+      }
     }
   });
 
   if (payload.toUids) {
-    payload.to = payload.toUids.map((uid) => toFetch[uid]);
-    delete payload.toUids;
+    const toUidsEmails: string[] = payload.toUids.map((uid) => userMap[uid]);
+    payload.to = [...to, ...toUidsEmails];
   }
+
   if (payload.ccUids) {
-    payload.cc = payload.ccUids.map((uid) => toFetch[uid]);
-    delete payload.ccUids;
+    const ccUidsEmails: string[] = payload.ccUids.map((uid) => userMap[uid]);
+    payload.cc = [...cc, ...ccUidsEmails];
   }
+
   if (payload.bccUids) {
-    payload.bcc = payload.bccUids.map((uid) => toFetch[uid]);
-    delete payload.bccUids;
+    const bccUidsEmails: string[] = payload.bccUids.map((uid) => userMap[uid]);
+    payload.bcc = [...cc, ...bccUidsEmails];
   }
+
   return payload;
 }
 
@@ -143,6 +210,11 @@ async function deliver(
 
   try {
     payload = await preparePayload(payload);
+
+    if (!payload.to.length && !payload.cc.length && !payload.bcc.length) {
+      throw new Error("Failed to deliver email. Expected at least 1 recipient.")
+    }
+
     const result = await transport.sendMail(
       Object.assign(payload.message, {
         from: payload.from || config.defaultFrom,
@@ -182,6 +254,7 @@ async function processWrite(change) {
   }
 
   const payload = change.after.data() as QueuePayload;
+
   if (!payload.delivery) {
     logs.missingDeliveryField(change.after.ref);
     return null;
@@ -211,14 +284,15 @@ async function processWrite(change) {
   }
 }
 
-export const processQueue = functions.handler.firestore.document.onWrite(async (change) => {
-  logs.start();
-  try {
-    await processWrite(change);
-  } catch (err) {
-    logs.error(err);
-    return null;
+export const processQueue = functions.handler.firestore.document.onWrite(
+  async (change) => {
+    logs.start();
+    try {
+      await processWrite(change);
+    } catch (err) {
+      logs.error(err);
+      return null;
+    }
+    logs.complete();
   }
-  logs.complete();
-}
 );

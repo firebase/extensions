@@ -99,7 +99,7 @@ params:
   - param: DEFAULT_FROM
     type: string
     label: Default FROM address
-    validationRegex: "^\S+@\S+\.\S+$"
+    validationRegex: ^\S+@\S+\.\S+$
     validationErrorMessage: Must be a valid email address
     required: true
     description: >-
@@ -108,7 +108,7 @@ params:
   - param: DEFAULT_REPLY_TO
     type: string
     label: Default REPLY-TO address
-    validationRegex: "^\S+@\S+\.\S+$"
+    validationRegex: ^\S+@\S+\.\S+$
     validationErrorMessage: Must be a valid email address
     description: >-
       The email address to use as the reply-to address (if it's not specified in the added email document).
