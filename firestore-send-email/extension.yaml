@@ -91,7 +91,7 @@ params:
     label: Email documents collection
     default: mail
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
-    validationErrorMessage: Must be a valid Cloud Firestore Collection
+    validationErrorMessage: Must be a valid Cloud Firestore collection
     required: true
     description: >-
       What is the path to the collection that contains the documents used to build and send the emails?
@@ -117,7 +117,7 @@ params:
     type: string
     label: Users collection
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
-    validationErrorMessage: Must be a valid Cloud Firestore Collection
+    validationErrorMessage: Must be a valid Cloud Firestore collection
     description: >-
       A collection of documents keyed by user UID.
       If the `toUids`, `ccUids`, and/or `bccUids` recipient options are used in the added email document,
@@ -127,7 +127,7 @@ params:
     type: string
     label: Templates collection
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
-    validationErrorMessage: Must be a valid Cloud Firestore Collection
+    validationErrorMessage: Must be a valid Cloud Firestore collection
     description: >-
       A collection of email templates keyed by name.
       This extension can render an email using a [Handlebar](https://handlebarsjs.com/) template,
