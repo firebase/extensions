@@ -85,9 +85,11 @@ params:
     type: string
     label: Collection path
     description: >-
-      What is the path of the the collection that you would like to export?
-    default: users/{uid}/posts
-    example: users/{uid}/posts
+      What is the path of the collection that you would like to export? 
+      You may use {wildcard} notation to match a subcollection of all documents in a collection
+      (for example: chatrooms/{chatid}/posts)
+    default: posts
+    example: posts
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore collection
     required: true
