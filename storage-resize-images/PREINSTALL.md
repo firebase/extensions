@@ -10,11 +10,11 @@ You can upload images using the [Cloud Storage for Firebase SDK](https://firebas
 
 Another optional feature of this extension is to specify a [`Cache-Control` header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control) for your resized image files.
 
-### Additional setup
+#### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Storage bucket](https://firebase.google.com/docs/storage) in your Firebase project.
 
-### Billing
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
 
