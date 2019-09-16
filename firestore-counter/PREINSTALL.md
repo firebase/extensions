@@ -15,7 +15,6 @@ This extension provides a Counter SDK that you need to install in your app. You 
 #### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 - Cloud Firestore
 - Cloud Functions
 
