@@ -86,8 +86,8 @@ params:
     label: Collection path
     description: >-
       What is the path of the the collection that you would like to export?
-    default: users/{uid}/extensions
-    example: users/{uid}/extensions
+    default: collection_path
+    example: collection_path
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore collection
     required: true
