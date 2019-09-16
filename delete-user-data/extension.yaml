@@ -122,7 +122,7 @@ params:
     example: "{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt"
     required: false
     validationRegex: '^\S+$'
-    validationErrorMessage: Invalid storage path.
+    validationErrorMessage: Invalid Storage path.
     description: >-
       Where in Google Cloud Storage do you store user data? Leave empty if you
       don't use Cloud Storage.
