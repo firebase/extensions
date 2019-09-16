@@ -90,6 +90,8 @@ params:
     label: Cloud Firestore paths
     example: users/{UID},admins/{UID}
     required: false
+    validationRegex: "^[^/]+(/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore path.
     description: >-
       Which paths in your Cloud Firestore instance contain user data? Leave empty if
       you don't use Cloud Firestore.
@@ -104,6 +106,8 @@ params:
     label: Realtime Database paths
     example: users/{UID},admins/{UID}
     required: false
+    validationRegex: "^\S+$"
+    validationErrorMessage: Database path(s) cannot contain spaces.
     description: >-
       Which paths in your Realtime Database instance contain user data? Leave empty if you
       don't use Realtime Database.
@@ -117,6 +121,8 @@ params:
     label: Cloud Storage paths
     example: "{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt"
     required: false
+    validationRegex: "^\S+$"
+    validationErrorMessage: Invalid storage path.
     description: >-
       Where in Google Cloud Storage do you store user data? Leave empty if you
       don't use Cloud Storage.
