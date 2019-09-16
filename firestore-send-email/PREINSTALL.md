@@ -23,7 +23,6 @@ When you configure this extension, you'll need to supply your **SMTP credentials
 #### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 - Cloud Firestore
 - Cloud Functions
 
