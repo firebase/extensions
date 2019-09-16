@@ -6,7 +6,7 @@ You specify the desired target languages using ISO-639-1 codes. You can find a l
 
 If the original non-translated field of the document is updated, then the translations will be automatically updated, as well.
 
-### Billing
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
 
