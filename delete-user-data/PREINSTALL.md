@@ -15,7 +15,6 @@ Also, make sure that you've set up [Firebase Authentication](https://firebase.go
 #### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 - Cloud Firestore
 - Firebase Realtime Database
 - Cloud Storage
