@@ -112,9 +112,6 @@ const clearStorageData = async (storagePaths: string, uid: string) => {
 };
 
 const clearFirestoreData = async (firestorePaths: string, uid: string) => {
-  // admin.firestore().settings({
-  //   timestampsInSnapshots: true,
-  // });
   logs.firestoreDeleting();
 
   const paths = extractUserPaths(firestorePaths, uid);

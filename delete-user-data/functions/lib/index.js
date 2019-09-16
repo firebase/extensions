@@ -109,9 +109,6 @@ const clearStorageData = (storagePaths, uid) => __awaiter(this, void 0, void 0, 
     logs.storageDeleted();
 });
 const clearFirestoreData = (firestorePaths, uid) => __awaiter(this, void 0, void 0, function* () {
-    // admin.firestore().settings({
-    //   timestampsInSnapshots: true,
-    // });
     logs.firestoreDeleting();
     const paths = extractUserPaths(firestorePaths, uid);
     const promises = paths.map((path) => __awaiter(this, void 0, void 0, function* () {
