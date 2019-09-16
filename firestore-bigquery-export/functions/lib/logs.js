@@ -90,7 +90,7 @@ exports.bigQueryViewValidating = (viewName) => {
     console.log(`Validating existing BigQuery view: ${viewName}`);
 };
 exports.complete = () => {
-    console.log("Completed execution of the extension");
+    console.log("Completed execution of extension");
 };
 exports.dataInserted = (rowCount) => {
     console.log(`Inserted ${rowCount} row(s) of data into BigQuery`);
