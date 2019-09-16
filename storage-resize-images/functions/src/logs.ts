@@ -17,7 +17,7 @@
 import config from "./config";
 
 export const complete = () => {
-  console.log("Completed mod execution");
+  console.log("Completed execution of extension");
 };
 
 export const contentTypeInvalid = (contentType: string) => {
@@ -35,7 +35,7 @@ export const errorDeleting = (err: Error) => {
 };
 
 export const failed = () => {
-  console.log("Failed mod execution");
+  console.log("Failed execution of extension");
 };
 
 export const imageAlreadyResized = () => {

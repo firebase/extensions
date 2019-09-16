@@ -116,7 +116,7 @@ export const bigQueryViewValidating = (viewName: string) => {
 };
 
 export const complete = () => {
-  console.log("Completed mod execution");
+  console.log("Completed execution of extension");
 };
 
 export const dataInserted = (rowCount: number) => {
@@ -142,11 +142,11 @@ export const error = (err: Error) => {
 };
 
 export const init = () => {
-  console.log("Initializing mod with configuration", config);
+  console.log("Initializing extension with configuration", config);
 };
 
 export const start = () => {
-  console.log("Started mod execution with configuration", config);
+  console.log("Started execution of extension with configuration", config);
 };
 
 export const timestampMissingValue = (fieldName: string) => {
