@@ -9,7 +9,6 @@ This extension uses Bitly to shorten URLs, so you'll need to supply your Bitly a
 #### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 - Cloud Firestore
 - Cloud Functions
 
