@@ -2,17 +2,17 @@
 
 To test out this extension, follow these steps:
 
-1.  Go to the [Cloud Firestore tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
+1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
 
 1.  If it doesn't exist already, create a collection called `${param:COLLECTION_PATH}`.
 
-1.  Create a document with a field named `${param:INPUT_FIELD_NAME}` and make its value a word or phrase that you want to translate.
+1.  Create a document with a field named `${param:INPUT_FIELD_NAME}`, then make its value a word or phrase that you want to translate.
 
-1.  In a few seconds, you'll see a new field called `${param:OUTPUT_FIELD_NAME}` pop up in the same document you just created; it will contain the translations for each language specified. 
+1.  In a few seconds, you'll see a new field called `${param:OUTPUT_FIELD_NAME}` pop up in the same document you just created. It will contain the translations for each language you specified during installation. 
 
 ### Using the extension
 
-Whenever a string is written to the field `${param:INPUT_FIELD_NAME}` in `${param:COLLECTION_PATH}`, this extension:
+Whenever you write a string to the field `${param:INPUT_FIELD_NAME}` in `${param:COLLECTION_PATH}`, this extension:
 - Translates the string into your specified target language(s); the source language of the string is automatically detected.
 - Adds the translated string to `${param:OUTPUT_FIELD_NAME}` in the same document using the following format:
 
