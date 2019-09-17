@@ -90,7 +90,7 @@ exports.bigQueryViewValidating = (viewName) => {
     console.log(`Validating existing BigQuery view: ${viewName}`);
 };
 exports.complete = () => {
-    console.log("Completed mod execution");
+    console.log("Completed execution of extension");
 };
 exports.dataInserted = (rowCount) => {
     console.log(`Inserted ${rowCount} row(s) of data into BigQuery`);
@@ -105,10 +105,10 @@ exports.error = (err) => {
     console.error("Error when mirroring data to BigQuery", err);
 };
 exports.init = () => {
-    console.log("Initializing mod with configuration", config_1.default);
+    console.log("Initializing extension with configuration", config_1.default);
 };
 exports.start = () => {
-    console.log("Started mod execution with configuration", config_1.default);
+    console.log("Started execution of extension with configuration", config_1.default);
 };
 exports.timestampMissingValue = (fieldName) => {
     console.warn(`Missing value for timestamp field: ${fieldName}, using default timestamp instead.`);

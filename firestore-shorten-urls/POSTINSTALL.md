@@ -1,6 +1,6 @@
 ### See it in action
 
-To test out this extension, follow these steps:
+You can test out this extension right away:
 
 1.  Go to the [Cloud Firestore tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
 
@@ -14,7 +14,7 @@ To test out this extension, follow these steps:
 
 This extension listens to the Cloud Firestore collection `${param:COLLECTION_PATH}`, then shortens any URL added to the field `${param:URL_FIELD_NAME}` in any document within that collection.
 
-This extension shortens the URL then saves it in the `${param:SHORT_URL_FIELD_NAME}` field of the same document like so:
+This extension saves the shortened URL in the `${param:SHORT_URL_FIELD_NAME}` field of the same document like so:
 
 ```
 {

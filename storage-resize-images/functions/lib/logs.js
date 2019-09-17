@@ -17,7 +17,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const config_1 = require("./config");
 exports.complete = () => {
-    console.log("Completed mod execution");
+    console.log("Completed execution of extension");
 };
 exports.contentTypeInvalid = (contentType) => {
     console.log(`File of type '${contentType}' is not an image, no processing is required`);
@@ -29,7 +29,7 @@ exports.errorDeleting = (err) => {
     console.warn("Error when deleting temporary files", err);
 };
 exports.failed = () => {
-    console.log("Failed mod execution");
+    console.log("Failed execution of extension");
 };
 exports.imageAlreadyResized = () => {
     console.log("File is already a resized image, no processing is required");

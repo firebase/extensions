@@ -24,7 +24,7 @@ import * as validators from "./validators";
 
 type Translation = {
   language: string;
-  message: string;
+  output: string;
 };
 
 enum ChangeType {
@@ -44,21 +44,21 @@ export const fstranslate = functions.handler.firestore.document.onWrite(
   async (change): Promise<void> => {
     logs.start();
 
-    const { languages, messageFieldName, translationsFieldName } = config;
+    const { languages, inputFieldName, outputFieldName } = config;
 
-    if (validators.fieldNamesMatch(messageFieldName, translationsFieldName)) {
+    if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
       logs.fieldNamesNotDifferent();
       return;
     }
 
     if (
       validators.fieldNameIsTranslationPath(
-        messageFieldName,
-        translationsFieldName,
+        inputFieldName,
+        outputFieldName,
         languages
       )
     ) {
-      logs.messageFieldNameIsTranslationPath();
+      logs.inputFieldNameIsOutputPath();
       return;
     }
 
@@ -86,8 +86,8 @@ export const fstranslate = functions.handler.firestore.document.onWrite(
   }
 );
 
-const extractMsg = (snapshot: admin.firestore.DocumentSnapshot): any => {
-  return snapshot.get(config.messageFieldName);
+const extractInput = (snapshot: admin.firestore.DocumentSnapshot): any => {
+  return snapshot.get(config.inputFieldName);
 };
 
 const getChangeType = (
@@ -105,12 +105,12 @@ const getChangeType = (
 const handleCreateDocument = async (
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
-  const msg = extractMsg(snapshot);
-  if (msg) {
-    logs.documentCreatedWithMsg();
+  const input = extractInput(snapshot);
+  if (input) {
+    logs.documentCreatedWithInput();
     await translateDocument(snapshot);
   } else {
-    logs.documentCreatedNoMsg();
+    logs.documentCreatedNoInput();
   }
 };
 
@@ -122,39 +122,38 @@ const handleUpdateDocument = async (
   before: admin.firestore.DocumentSnapshot,
   after: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
-  const msgAfter = extractMsg(after);
-  const msgBefore = extractMsg(before);
+  const inputAfter = extractInput(after);
+  const inputBefore = extractInput(before);
 
-  const msgHasChanged = msgAfter !== msgBefore;
-  if (!msgHasChanged) {
-    logs.documentUpdatedUnchangedMsg();
+  const inputHasChanged = inputAfter !== inputBefore;
+  if (!inputHasChanged) {
+    logs.documentUpdatedUnchangedInput();
     return;
   }
 
-  if (msgAfter) {
-    logs.documentUpdatedChangedMsg();
+  if (inputAfter) {
+    logs.documentUpdatedChangedInput();
     await translateDocument(after);
-  } else if (msgBefore) {
-    logs.documentUpdatedDeletedMsg();
+  } else if (inputBefore) {
+    logs.documentUpdatedDeletedInput();
     await updateTranslations(after, admin.firestore.FieldValue.delete());
   } else {
-    logs.documentUpdatedNoMsg();
+    logs.documentUpdatedNoInput();
   }
 };
 
 const translateDocument = async (
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
-  const message: string = extractMsg(snapshot);
+  const input: string = extractInput(snapshot);
 
-  logs.translateMsgAllLanguages(message, config.languages);
+  logs.translateInputStringToAllLanguages(input, config.languages);
 
   const tasks = config.languages.map(
     async (targetLanguage: string): Promise<Translation> => {
-      const translatedMsg = await translateMessage(message, targetLanguage);
       return {
         language: targetLanguage,
-        message: translatedMsg,
+        output: await translateString(input, targetLanguage),
       };
     }
   );
@@ -162,11 +161,11 @@ const translateDocument = async (
   try {
     const translations = await Promise.all(tasks);
 
-    logs.translateMsgAllLanguagesComplete(message);
+    logs.translateInputToAllLanguagesComplete(input);
 
     const translationsMap: { [language: string]: string } = translations.reduce(
       (output, translation) => {
-        output[translation.language] = translation.message;
+        output[translation.language] = translation.output;
         return output;
       },
       {}
@@ -174,25 +173,25 @@ const translateDocument = async (
 
     await updateTranslations(snapshot, translationsMap);
   } catch (err) {
-    logs.translateMsgAllLanguagesError(message, err);
+    logs.translateInputToAllLanguagesError(input, err);
     throw err;
   }
 };
 
-const translateMessage = async (
-  msg: string,
+const translateString = async (
+  string: string,
   targetLanguage: string
 ): Promise<string> => {
   try {
-    logs.translateMsg(msg, targetLanguage);
+    logs.translateInputString(string, targetLanguage);
 
-    const [translatedMsg] = await translate.translate(msg, targetLanguage);
+    const [translatedString] = await translate.translate(string, targetLanguage);
 
-    logs.translateMsgComplete(msg, targetLanguage);
+    logs.translateStringComplete(string, targetLanguage);
 
-    return translatedMsg;
+    return translatedString;
   } catch (err) {
-    logs.translateMsgError(msg, targetLanguage, err);
+    logs.translateStringError(string, targetLanguage, err);
     throw err;
   }
 };
@@ -203,7 +202,7 @@ const updateTranslations = async (
 ): Promise<void> => {
   logs.updateDocument(snapshot.ref.path);
 
-  await snapshot.ref.update(config.translationsFieldName, translations);
+  await snapshot.ref.update(config.outputFieldName, translations);
 
   logs.updateDocumentComplete(snapshot.ref.path);
 };
