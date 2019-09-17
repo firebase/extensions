@@ -16,10 +16,10 @@
 * Collection path: *What is the path to the collection that contains the strings that you want to translate?
 *
 
-* Message field name: *What is the name of the field that contains the strings that you want to translate?
+* Input field name: *What is the name of the field that contains the string that you want to translate?
 *
 
-* Translations field name: *What is the name of the field where you want to store your translations?
+* Output field name: *What is the name of the field where you want to store your translations?
 *
 
 
