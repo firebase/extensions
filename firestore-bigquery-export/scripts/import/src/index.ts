@@ -126,10 +126,8 @@ const run = async (): Promise<number> => {
   process.env.GOOGLE_CLOUD_PROJECT = projectId;
 
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
-    collectionPath: destinationCollectionPath,
+    tableId: destinationCollectionPath,
     datasetId: datasetId,
-    initialized: false,
-    suppressWarnings: true,
   });
 
   console.log(
