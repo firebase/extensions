@@ -8,7 +8,7 @@ Update your Cloud Firestore security rules to allow lookups and writes to the `_
 
 ```
 match /databases/{database}/documents/pages/{page} {
-  // Allow to increment only 'visits' field and only by 1.
+  // Allow to increment only the 'visits' field and only by 1.
   match /_counter_shards_/{shardId} {
     allow get;
     allow write: if request.resource.data.keys() == ["visits"]
@@ -20,9 +20,9 @@ match /databases/{database}/documents/pages/{page} {
 
 #### Set up a scheduled function
 
-Set up a [scheduled function](https://firebase.google.com/docs/functions/schedule-functions) to call `${function:controller.url}` every minute.
+Review the [scheduled function documentation](https://firebase.google.com/docs/functions/schedule-functions) to set up a call to `${function:controller.url}` every minute. You may need to enable some APIs in your Firebase project to use scheduled functions.
 
-For example, to set up a scheduled function, you can run the following [`gcloud`](https://cloud.google.com/sdk/gcloud/) commands:
+As an example, to set up a scheduled function, you can run the following [`gcloud`](https://cloud.google.com/sdk/gcloud/) commands:
 
 ```
 gcloud services enable cloudscheduler.googleapis.com
