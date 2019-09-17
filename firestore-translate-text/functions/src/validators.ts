@@ -18,12 +18,12 @@ export const fieldNamesMatch = (field1: string, field2: string): boolean =>
   field1 === field2;
 
 export const fieldNameIsTranslationPath = (
-  field: string,
-  translationsField: string,
+  inputFieldName: string,
+  outputFieldName: string,
   languages: string[]
 ): boolean => {
   for (const language of languages) {
-    if (field === `${translationsField}.${language}`) {
+    if (inputFieldName === `${outputFieldName}.${language}`) {
       return true;
     }
   }

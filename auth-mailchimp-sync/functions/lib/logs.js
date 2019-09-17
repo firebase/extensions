@@ -21,10 +21,10 @@ exports.complete = () => {
     console.log("Completed execution of extension");
 };
 exports.errorAddUser = (err) => {
-    console.error("Error when adding user to Mailchimp list", err);
+    console.error("Error when adding user to Mailchimp audience", err);
 };
 exports.errorRemoveUser = (err) => {
-    console.error("Error when removing user from Mailchimp list", err);
+    console.error("Error when removing user from Mailchimp audience", err);
 };
 exports.init = () => {
     console.log("Initializing extension with configuration", obfuscatedConfig);

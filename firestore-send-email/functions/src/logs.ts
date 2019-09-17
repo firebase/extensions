@@ -64,3 +64,7 @@ export function deliveryError(
 export function missingDeliveryField(ref: FirebaseFirestore.DocumentReference) {
   console.error(`message=${ref.path} is missing 'delivery' field`);
 }
+
+export function missingUids(uids: string[]) {
+  console.log(`The following uids were provided, however a document does not exist or has no 'email' field: ${uids.join(',')}`);
+}

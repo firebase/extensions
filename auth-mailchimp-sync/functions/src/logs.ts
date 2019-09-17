@@ -26,11 +26,11 @@ export const complete = () => {
 };
 
 export const errorAddUser = (err: Error) => {
-  console.error("Error when adding user to Mailchimp list", err);
+  console.error("Error when adding user to Mailchimp audience", err);
 };
 
 export const errorRemoveUser = (err: Error) => {
-  console.error("Error when removing user from Mailchimp list", err);
+  console.error("Error when removing user from Mailchimp audience", err);
 };
 
 export const init = () => {
