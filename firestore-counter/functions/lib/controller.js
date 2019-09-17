@@ -89,7 +89,6 @@ class ShardedCounterController {
                     }
                 }));
                 const shutdown = () => __awaiter(this, void 0, void 0, function* () {
-                    console.log("Time's up, shutting down.");
                     console.log("Successfully ran " +
                         rounds +
                         " rounds. Aggregated " +
