@@ -29,7 +29,12 @@ const functions = require("firebase-functions");
 const firestore_bigquery_change_tracker_1 = require("@firebaseextensions/firestore-bigquery-change-tracker");
 const logs = require("./logs");
 const util_1 = require("./util");
-const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEventHistoryTracker(config_1.default);
+const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEventHistoryTracker({
+    collectionPath: config_1.default.tableId,
+    datasetId: config_1.default.datasetId,
+    initialized: false,
+    suppressWarnings: false,
+});
 logs.init();
 exports.fsexportbigquery = functions.handler.firestore.document.onWrite((change, context) => __awaiter(void 0, void 0, void 0, function* () {
     logs.start();
