@@ -11,9 +11,9 @@ You can test out this extension right away:
 ### Using the extension
 
 When you upload an image file to `${param:IMG_BUCKET}`, this extension:
-- Creates resized image(s) with your specfied dimensions
-- Stores both the resized image(s) and the original image in the same bucket, `${param:IMG_BUCKET}`
-- Names resized image(s) using the same name as the original uploaded image, but suffixed with the specified width and height
+- Creates resized image(s) with your specfied dimensions.
+- Stores both the resized image(s) and the original image in the same bucket, `${param:IMG_BUCKET}`.
+- Names resized image(s) using the same name as the original uploaded image, but suffixed with the specified width and height.
 
 You can upload images using the [Cloud Storage for Firebase SDK](https://firebase.google.com/docs/storage/) for your platform (iOS, Android, or Web). Alternatively, you can upload images directly in the Firebase console's Storage dashboard.
 
