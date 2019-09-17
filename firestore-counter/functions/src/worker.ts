@@ -140,7 +140,7 @@ export class ShardedCounterWorker {
       unsubscribeMetadataListener = this.metadoc.ref.onSnapshot((snap) => {
         // if something's changed in the worker metadata since we were called, abort.
         if (!snap.exists || !deepEqual(snap.data(), this.metadata)) {
-          console.log("shutting down cause metadoc changed.");
+          console.log("Shutting down because metadoc changed.");
           shutdown()
             .then(resolve)
             .catch(reject);
