@@ -115,9 +115,9 @@ params:
     label: Contact status
     description: >-
       When the extension adds a new user to the Mailchimp audience, what is
-      their initial status? This value can be subscribed or pending. subscribed
-      means the user can receive campaigns; pending means the user still needs
-      to opt-in to receive campaigns.
+      their initial status? This value can be `subscribed` or `pending`.
+      `subscribed` means the user can receive campaigns; `pending` means the
+      user still needs to opt-in to receive campaigns.
     options:
       - label: Subscribed
         value: subscribed
