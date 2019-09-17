@@ -12,7 +12,9 @@ To test out this extension, follow these steps:
 
 ### Using the extension
 
-Whenever a string is written to the field `${param:INPUT_FIELD_NAME}` in `${param:COLLECTION_PATH}`, this extension translates the string into your specified target language(s). The source language of the string is automatically detected. This extension adds the translated string to `${param:OUTPUT_FIELD_NAME}` in the same document using the following format:
+Whenever a string is written to the field `${param:INPUT_FIELD_NAME}` in `${param:COLLECTION_PATH}`, this extension:
+- Translates the string into your specified target language(s); the source language of the string is automatically detected.
+- Adds the translated string to `${param:OUTPUT_FIELD_NAME}` in the same document using the following format:
 
 ```
 {
