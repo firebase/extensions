@@ -65,7 +65,7 @@ gcloud scheduler jobs create http firestore-sharded-counter-controller --schedul
                 // Alternatively, if you don't mind counter delays, you can listen to the document directly.
                 db.doc("pages/hello-world").onSnapshot((snap) => {
                     console.log("Eventually consistent view of visits: " + snap.get("stats.visits"));
-                })
+                });
             </script>
         </body>
     </html>
