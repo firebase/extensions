@@ -13,19 +13,6 @@ admin.firestore().collection('${param:MAIL_COLLECTION}').add({
 }).then(() => console.log('Queued email for delivery!'));
 ```
 
-To send an email to multiple email addresses at once, provide an array to the `to` field:
-
-```
-admin.firestore().collection('${param:MAIL_COLLECTION}').add({
-  to: ['someone@example.com', 'someone-else@example.com'],
-  message: {
-    subject: 'Hello from Firebase!',
-    text: 'This is the plaintext section of the email body.',
-    html: 'This is the <code>HTML</code> section of the email body.',
-  }
-}).then(() => console.log('Queued email for delivery!'));
-```
-
 ### Use this extension
 
 After its installation, this extension monitors all document writes to the `${param:MAIL_COLLECTION}` collection. Email is delivered based on the contents of the document's fields. The top-level fields specify the email's sender and recipients. The `message` field contains the details of the email to deliver, including the email body.
@@ -35,12 +22,12 @@ After its installation, this extension monitors all document writes to the `${pa
 The top-level fields of the document supply the email sender and recipient information. Available fields are:
 
 * **from:** The sender's email address. If not specified in the document, uses the configured "Default FROM address" parameter.
-* **replyTo:** The reply-to email address. If not specified in the document, uses the required configured "Default REPLY-TO address" parameter.
-* **to:** An email address or an array containing the recipient email addresses.
+* **replyTo:** The reply-to email address. If not specified in the document, uses the configured "Default REPLY-TO address" parameter.
+* **to:** A single recipient email address or an array containing multiple recipient email addresses.
 * **toUids:** An array containing the recipient UIDs.
-* **cc:** An email address or an array containing the CC recipient email addresses.
+* **cc:** A single recipient email address or an array containing multiple recipient email addresses.
 * **ccUids:** An array containing the CC recipient UIDs.
-* **bcc:** An email address or an array containing the BCC recipient email addresses.
+* **bcc:** A single recipient email address or an array containing multiple recipient email addresses.
 * **bccUids:** An array containing the BCC recipient UIDs.
 
 **NOTE:** The `toUids`, `ccUids`, and `bccUids` options deliver emails based on user UIDs keyed to email addresses within a Cloud Firestore document. To use these recipient options, you need to specify a Cloud Firestore collection for the extension's "Users collection" parameter. The extension can then read the `email` field for each UID specified in the `toUids`, `ccUids`, and/or `bccUids` fields.
