@@ -8,19 +8,21 @@
 
 **CONFIGURATION PARAMETERS:**
 
-* Deployment location: *Where should the extension be deployed? For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).*
+* Deployment location: Where should the extension be deployed? For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
-* Mailchimp API key: *What is your Mailchimp API key? To obtain a Mailchimp API key, go to your [Mailchimp account](https://admin.mailchimp.com/account/api/).*
+* Mailchimp API key: What is your Mailchimp API key? To obtain a Mailchimp API key, go to your [Mailchimp account](https://admin.mailchimp.com/account/api/).
 
-* Audience ID: *What is the Mailchimp Audience ID to which you want to subscribe new users? To find your Audience ID: visit https://admin.mailchimp.com/lists, click on the desired audience or create a new audience, then select **Settings**. Look for **Audience ID** (for example, `27735fc60a`).*
+* Audience ID: What is the Mailchimp Audience ID to which you want to subscribe new users? To find your Audience ID: visit https://admin.mailchimp.com/lists, click on the desired audience or create a new audience, then select **Settings**. Look for **Audience ID** (for example, `27735fc60a`).
+
+* Contact status: When a new contact is added to the Mailchimp list/audience, what is their initial status? If the status is `subscribed` the contact can immediately receive campaigns. If the status is `pending`, a double opt-in confirmation email will be sent to the user. Once accepted they will be set to a `subscribed` status.
 
 
 
-**NON-CLOUD FUNCTION RESOURCES CREATED**:
+**CLOUD FUNCTIONS CREATED:**
 
-* addUserToList (firebaseextensions.v1beta.function)
+* addUserToList (providers/firebase.auth/eventTypes/user.create)
 
-* removeUserFromList (firebaseextensions.v1beta.function)
+* removeUserFromList (providers/firebase.auth/eventTypes/user.delete)
 
 
 
