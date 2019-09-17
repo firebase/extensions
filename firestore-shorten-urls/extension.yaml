@@ -90,7 +90,7 @@ params:
     default: urls
     example: urls
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
-    validationErrorMessage: Must be a valid Cloud Firestore Collection
+    validationErrorMessage: Must be a valid Cloud Firestore collection
     required: true
 
   - param: URL_FIELD_NAME
