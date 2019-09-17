@@ -37,9 +37,15 @@ const unlink = util.promisify(fs.unlink);
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
 
-const validateInput = (value: any, name: string, regex: RegExp) => {
+const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
+const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
+
+const validateInput = (value: string, name: string, regex: RegExp, sizeLimit: number) => {
   if (!value || value === "" || value.trim() === "") {
     return `Please supply a ${name}`;
+  }
+  if (value.length >= sizeLimit) {
+    return `${name} must be at most ${sizeLimit} characters long`;
   }
   if (!value.match(regex)) {
     return `The ${name} must only contain letters or spaces`;
@@ -53,7 +59,7 @@ const questions = [
     name: "projectId",
     type: "input",
     validate: (value) =>
-      validateInput(value, "project ID", FIRESTORE_VALID_CHARACTERS),
+      validateInput(value, "project ID", FIRESTORE_VALID_CHARACTERS, FIRESTORE_COLLECTION_NAME_MAX_CHARS),
   },
   {
     message: "What is the path of the the Cloud Firestore Collection you would like to import from? " +
@@ -61,28 +67,23 @@ const questions = [
     name: "sourceCollectionPath",
     type: "input",
     validate: (value) =>
-      validateInput(value, "collection path", FIRESTORE_VALID_CHARACTERS),
+      validateInput(value, "collection path", FIRESTORE_VALID_CHARACTERS, FIRESTORE_COLLECTION_NAME_MAX_CHARS),
   },
   {
     message:
-      "What is the ID of the BigQuery dataset that you would like to use? (The dataset will be created if it doesn't already exist)",
+      "What is the ID of the BigQuery dataset that you would like to use? (A dataset will be created if it doesn't already exist)",
     name: "datasetId",
     type: "input",
     validate: (value) =>
-      validateInput(value, "dataset", BIGQUERY_VALID_CHARACTERS),
+      validateInput(value, "dataset", BIGQUERY_VALID_CHARACTERS, BIGQUERY_RESOURCE_NAME_MAX_CHARS),
   },
-];
-
-const questionsRemaining = (sourceCollectionPath: string) => ([
   {
     message:
-      "What is the name of the Cloud Firestore Collection you are mirroring? " +
-        "(Documents in the source Collection will be written to the raw changelog for this Collection.)",
-    name: "destinationCollectionPath",
+      "What is the identifying prefix of the BigQuery table that you would like to import to? (A table will be created if one doesn't already exist)",
+    name: "tableId",
     type: "input",
-    default: sourceCollectionPath,
     validate: (value) =>
-      validateInput(value, "dataset", BIGQUERY_VALID_CHARACTERS),
+      validateInput(value, "table", BIGQUERY_VALID_CHARACTERS, BIGQUERY_RESOURCE_NAME_MAX_CHARS),
   },
   {
     message:
@@ -94,27 +95,19 @@ const questionsRemaining = (sourceCollectionPath: string) => ([
       return parseInt(value, 10) > 0
     }
   },
-]);
+];
 
 const run = async (): Promise<number> => {
   const {
     projectId,
     sourceCollectionPath,
     datasetId,
-  } = await inquirer.prompt(questions);
-  /*
-   * We use a separate inquirer prompt so that we can treat the
-   * sourceCollectionPath as the default destinationCollectionPath. This
-   * corresponds to the common use case in which the caller is import documents
-   * from a collection that caller later plans to mirror changes for.
-   */
-  const {
-    destinationCollectionPath,
+    tableId,
     batchSize,
-  } = await inquirer.prompt(questionsRemaining(sourceCollectionPath));
+  } = await inquirer.prompt(questions);
 
   const batch = parseInt(batchSize);
-  const rawChangeLogName = `${destinationCollectionPath}_raw_changelog`;
+  const rawChangeLogName = `${tableId}_raw_changelog`;
 
   // Initialize Firebase
   firebase.initializeApp({
@@ -125,8 +118,10 @@ const run = async (): Promise<number> => {
   process.env.PROJECT_ID = projectId;
   process.env.GOOGLE_CLOUD_PROJECT = projectId;
 
+  // We pass in the application-level "tableId" here. The tracker determines
+  // the name of the raw changelog from this field.
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
-    tableId: destinationCollectionPath,
+    tableId: tableId,
     datasetId: datasetId,
   });
 
