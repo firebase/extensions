@@ -1,20 +1,8 @@
 Use this extension to add a highly scalable counter service to your app. This is ideal for applications that count viral actions or any very high-velocity action such as views, likes, or shares.
 
-Cloud Firestore has a limit of 1 sustained write per second, per document. This limit can make counting in Cloud Firestore challenging.
-This extension works around the concurrent document writes per second limitation and lets your app update any field in any document of your Cloud Firestore database at a high rate (security rules permitting). It accomplishes this by using numerous temporary shards in a `_counter_shards_` subcollection; allowing it to sustain high bursts of traffic. Each client only increments their own unique shard while the background workers (Cloud Functions for Firebase) continue to monitor and aggregate these shards onto the master document.
+In your app, you specify a Cloud Firestore document path and increment a field value by any amount you choose. The extension then creates a subcollection in that document to help track the counter in a scalable way.
 
-Here are some of the important features of this extension:
-
-- Minimal configuration, one extension for all your app needs.
-- Automatically scales from 0 updates per second to at least 10 thousand per second.
-- Supports an arbitrary number of counters in your app with no additional configuration.
-- Works well offline and provides latency compensation, i.e. counter updates are immediately visible locally even though the main counter is eventually updated.
-- Resource efficient.
-  - `worker` functions will scale down to 0 for low workloads if needed.
-  - `onWrite` function is [limted to 1 instance](https://cloud.google.com/functions/docs/max-instances#using_max_instances).
-  - `controller` is the only function that runs every minute regardless of the workload.
-
-This mod can work on any platform. However there's only [JavaScript SDK](https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-sharded-counter/clients/web/src/index.ts) included at this time. This will change in the future.
+Note that this extension is for use with the JavaScript apps and requires the Firebase JavaScript SDK.
 
 #### Additional setup
 
