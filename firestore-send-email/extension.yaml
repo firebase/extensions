@@ -32,6 +32,9 @@ author:
 contributors:
   - authorName: Michael Bleigh
     url: https://github.com/mbleigh
+  - authorName: Elliot Hesp
+    email: elliot@invertase.io
+    url: https://github.com/ehesp
 
 roles:
   - role: datastore.user
@@ -90,6 +93,8 @@ params:
     type: string
     label: Email documents collection
     default: mail
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore collection
     required: true
     description: >-
       What is the path to the collection that contains the documents used to build and send the emails?
@@ -97,18 +102,25 @@ params:
   - param: DEFAULT_FROM
     type: string
     label: Default FROM address
+    validationRegex: ^\S+@\S+\.\S+$
+    validationErrorMessage: Must be a valid email address
+    required: true
     description: >-
       The email address to use as the sender's address (if it's not specified in the added email document).
 
   - param: DEFAULT_REPLY_TO
     type: string
     label: Default REPLY-TO address
+    validationRegex: ^\S+@\S+\.\S+$
+    validationErrorMessage: Must be a valid email address
     description: >-
       The email address to use as the reply-to address (if it's not specified in the added email document).
 
   - param: USERS_COLLECTION
     type: string
     label: Users collection
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore collection
     description: >-
       A collection of documents keyed by user UID.
       If the `toUids`, `ccUids`, and/or `bccUids` recipient options are used in the added email document,
@@ -117,6 +129,8 @@ params:
   - param: TEMPLATES_COLLECTION
     type: string
     label: Templates collection
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore collection
     description: >-
       A collection of email templates keyed by name.
       This extension can render an email using a [Handlebar](https://handlebarsjs.com/) template,

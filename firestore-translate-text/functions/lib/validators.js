@@ -16,9 +16,9 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fieldNamesMatch = (field1, field2) => field1 === field2;
-exports.fieldNameIsTranslationPath = (field, translationsField, languages) => {
+exports.fieldNameIsTranslationPath = (inputFieldName, outputFieldName, languages) => {
     for (const language of languages) {
-        if (field === `${translationsField}.${language}`) {
+        if (inputFieldName === `${outputFieldName}.${language}`) {
             return true;
         }
     }

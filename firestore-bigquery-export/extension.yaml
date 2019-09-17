@@ -85,9 +85,11 @@ params:
     type: string
     label: Collection path
     description: >-
-      What is the path of the collection that you would like to export?
-    default: extensions
-    example: extensions
+      What is the path of the collection that you would like to export? 
+      You may use `{wildcard}` notation to match a subcollection of all documents in a collection
+      (for example: `chatrooms/{chatid}/posts`).
+    default: posts
+    example: posts
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore collection
     required: true
@@ -98,10 +100,25 @@ params:
     description: >-
       What ID would you like to use for your BigQuery dataset? This
       extension will create the dataset, if it doesn't already exist.
-    validationRegex: ^[a-zA-Z0-9_]+$
+    validationRegex: "^[a-zA-Z0-9_]+$"
     validationErrorMessage: >
-      Dataset IDs must be alphanumeric (plus underscores) and must be no more than
+      BigQuery dataset IDs must be alphanumeric (plus underscores) and must be no more than
       1024 characters.
-    default: exported_collection
-    example: exported_collection
+    default: firestore_export
+    example: firestore_export
+    required: true
+
+  - param: TABLE_ID
+    type: string
+    label: Table ID
+    description: >-
+      What identifying prefix would you like to use for your table and view
+      inside your BigQuery dataset? This extension will create the table and view,
+      if they don't already exist.
+    validationRegex: "^[a-zA-Z0-9_]+$"
+    validationErrorMessage: >
+      BigQuery table IDs must be alphanumeric (plus underscores) and must be no more than
+      1024 characters.
+    default: posts
+    example: posts
     required: true
