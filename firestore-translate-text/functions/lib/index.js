@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -39,15 +40,15 @@ const translate = new translate_1.Translate({ projectId: process.env.PROJECT_ID 
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 logs.init();
-exports.fstranslate = functions.handler.firestore.document.onWrite((change) => __awaiter(this, void 0, void 0, function* () {
+exports.fstranslate = functions.handler.firestore.document.onWrite((change) => __awaiter(void 0, void 0, void 0, function* () {
     logs.start();
-    const { languages, messageFieldName, translationsFieldName } = config_1.default;
-    if (validators.fieldNamesMatch(messageFieldName, translationsFieldName)) {
+    const { languages, inputFieldName, outputFieldName } = config_1.default;
+    if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
         logs.fieldNamesNotDifferent();
         return;
     }
-    if (validators.fieldNameIsTranslationPath(messageFieldName, translationsFieldName, languages)) {
-        logs.messageFieldNameIsTranslationPath();
+    if (validators.fieldNameIsTranslationPath(inputFieldName, outputFieldName, languages)) {
+        logs.inputFieldNameIsOutputPath();
         return;
     }
     const changeType = getChangeType(change);
@@ -71,8 +72,8 @@ exports.fstranslate = functions.handler.firestore.document.onWrite((change) => _
         logs.error(err);
     }
 }));
-const extractMsg = (snapshot) => {
-    return snapshot.get(config_1.default.messageFieldName);
+const extractInput = (snapshot) => {
+    return snapshot.get(config_1.default.inputFieldName);
 };
 const getChangeType = (change) => {
     if (!change.after.exists) {
@@ -83,77 +84,76 @@ const getChangeType = (change) => {
     }
     return ChangeType.UPDATE;
 };
-const handleCreateDocument = (snapshot) => __awaiter(this, void 0, void 0, function* () {
-    const msg = extractMsg(snapshot);
-    if (msg) {
-        logs.documentCreatedWithMsg();
+const handleCreateDocument = (snapshot) => __awaiter(void 0, void 0, void 0, function* () {
+    const input = extractInput(snapshot);
+    if (input) {
+        logs.documentCreatedWithInput();
         yield translateDocument(snapshot);
     }
     else {
-        logs.documentCreatedNoMsg();
+        logs.documentCreatedNoInput();
     }
 });
 const handleDeleteDocument = () => {
     logs.documentDeleted();
 };
-const handleUpdateDocument = (before, after) => __awaiter(this, void 0, void 0, function* () {
-    const msgAfter = extractMsg(after);
-    const msgBefore = extractMsg(before);
-    const msgHasChanged = msgAfter !== msgBefore;
-    if (!msgHasChanged) {
-        logs.documentUpdatedUnchangedMsg();
+const handleUpdateDocument = (before, after) => __awaiter(void 0, void 0, void 0, function* () {
+    const inputAfter = extractInput(after);
+    const inputBefore = extractInput(before);
+    const inputHasChanged = inputAfter !== inputBefore;
+    if (!inputHasChanged) {
+        logs.documentUpdatedUnchangedInput();
         return;
     }
-    if (msgAfter) {
-        logs.documentUpdatedChangedMsg();
+    if (inputAfter) {
+        logs.documentUpdatedChangedInput();
         yield translateDocument(after);
     }
-    else if (msgBefore) {
-        logs.documentUpdatedDeletedMsg();
+    else if (inputBefore) {
+        logs.documentUpdatedDeletedInput();
         yield updateTranslations(after, admin.firestore.FieldValue.delete());
     }
     else {
-        logs.documentUpdatedNoMsg();
+        logs.documentUpdatedNoInput();
     }
 });
-const translateDocument = (snapshot) => __awaiter(this, void 0, void 0, function* () {
-    const message = extractMsg(snapshot);
-    logs.translateMsgAllLanguages(message, config_1.default.languages);
-    const tasks = config_1.default.languages.map((targetLanguage) => __awaiter(this, void 0, void 0, function* () {
-        const translatedMsg = yield translateMessage(message, targetLanguage);
+const translateDocument = (snapshot) => __awaiter(void 0, void 0, void 0, function* () {
+    const input = extractInput(snapshot);
+    logs.translateInputStringToAllLanguages(input, config_1.default.languages);
+    const tasks = config_1.default.languages.map((targetLanguage) => __awaiter(void 0, void 0, void 0, function* () {
         return {
             language: targetLanguage,
-            message: translatedMsg,
+            output: yield translateString(input, targetLanguage),
         };
     }));
     try {
         const translations = yield Promise.all(tasks);
-        logs.translateMsgAllLanguagesComplete(message);
+        logs.translateInputToAllLanguagesComplete(input);
         const translationsMap = translations.reduce((output, translation) => {
-            output[translation.language] = translation.message;
+            output[translation.language] = translation.output;
             return output;
         }, {});
         yield updateTranslations(snapshot, translationsMap);
     }
     catch (err) {
-        logs.translateMsgAllLanguagesError(message, err);
+        logs.translateInputToAllLanguagesError(input, err);
         throw err;
     }
 });
-const translateMessage = (msg, targetLanguage) => __awaiter(this, void 0, void 0, function* () {
+const translateString = (string, targetLanguage) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        logs.translateMsg(msg, targetLanguage);
-        const [translatedMsg] = yield translate.translate(msg, targetLanguage);
-        logs.translateMsgComplete(msg, targetLanguage);
-        return translatedMsg;
+        logs.translateInputString(string, targetLanguage);
+        const [translatedString] = yield translate.translate(string, targetLanguage);
+        logs.translateStringComplete(string, targetLanguage);
+        return translatedString;
     }
     catch (err) {
-        logs.translateMsgError(msg, targetLanguage, err);
+        logs.translateStringError(string, targetLanguage, err);
         throw err;
     }
 });
-const updateTranslations = (snapshot, translations) => __awaiter(this, void 0, void 0, function* () {
+const updateTranslations = (snapshot, translations) => __awaiter(void 0, void 0, void 0, function* () {
     logs.updateDocument(snapshot.ref.path);
-    yield snapshot.ref.update(config_1.default.translationsFieldName, translations);
+    yield snapshot.ref.update(config_1.default.outputFieldName, translations);
     logs.updateDocumentComplete(snapshot.ref.path);
 });
