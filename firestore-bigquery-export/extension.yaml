@@ -86,8 +86,8 @@ params:
     label: Collection path
     description: >-
       What is the path of the collection that you would like to export? 
-      You may use {wildcard} notation to match a subcollection of all documents in a collection
-      (for example: chatrooms/{chatid}/posts).
+      You may use `{wildcard}` notation to match a subcollection of all documents in a collection
+      (for example: `chatrooms/{chatid}/posts`).
     default: posts
     example: posts
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
@@ -112,7 +112,7 @@ params:
     type: string
     label: Table ID
     description: >-
-      What ID would you like to use for your BigQuery table inside that dataset? This
+      What ID would you like to use for your BigQuery raw changelog table inside your dataset? This
       extension will create the table, if it doesn't already exist.
     validationRegex: "^[a-zA-Z0-9_]+$"
     validationErrorMessage: >
