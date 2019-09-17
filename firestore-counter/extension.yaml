@@ -52,7 +52,7 @@ resources:
   - name: onWrite
     type: firebaseextensions.v1beta.function
     description:
-      Listens for changes on documents that may need incrementing.
+      Listens for changes on counter shards that may need aggregating. This function is limited to max 1 instance.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
