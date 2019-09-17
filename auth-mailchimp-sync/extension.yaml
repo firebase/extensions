@@ -54,8 +54,9 @@ resources:
   - name: removeUserFromList
     type: firebaseextensions.v1beta.function
     description:
-      Listens for existing user accounts to be deleted (as managed by Firebase Authentication),
-      then automatically removes them from your specified MailChimp audience.
+      Listens for existing user accounts to be deleted (as managed by Firebase
+      Authentication), then automatically removes them from your specified
+      MailChimp audience.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -68,9 +69,9 @@ params:
     type: select
     label: Deployment location
     description: >-
-      Where should the extension be deployed?
-      For help selecting a location, refer to the
-      [location selection guide](https://firebase.google.com/docs/functions/locations).
+      Where should the extension be deployed? For help selecting a location,
+      refer to the [location selection
+      guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -93,8 +94,8 @@ params:
     type: string
     label: Mailchimp API key
     description: >-
-      What is your Mailchimp API key?
-      To obtain a Mailchimp API key, go to your [Mailchimp account](https://admin.mailchimp.com/account/api/).
+      What is your Mailchimp API key? To obtain a Mailchimp API key, go to your
+      [Mailchimp account](https://admin.mailchimp.com/account/api/).
     example: a1b2c3d4e5f6g7
     required: true
 
@@ -102,10 +103,10 @@ params:
     type: string
     label: Audience ID
     description: >-
-      What is the Mailchimp Audience ID to which you want to subscribe new users?
-      To find your Audience ID: visit https://admin.mailchimp.com/lists,
-      click on the desired audience or create a new audience, then select **Settings**.
-      Look for **Audience ID** (for example, `27735fc60a`).
+      What is the Mailchimp Audience ID to which you want to subscribe new
+      users? To find your Audience ID: visit https://admin.mailchimp.com/lists,
+      click on the desired audience or create a new audience, then select
+      **Settings**. Look for **Audience ID** (for example, `27735fc60a`).
     example: 1ab2345c67
     required: true
 
@@ -113,10 +114,11 @@ params:
     type: select
     label: Contact status
     description: >-
-      When a new contact is added to the Mailchimp list/audience, what is their initial status?
-      `subscribed`: The contact has subscribed and can receive campaigns.
-      `pending`: A double opt-in confirmation email will be sent to the user. Once accepted they will be set to
-      `subscribed`.
+      When a new contact is added to the Mailchimp list/audience, what is their
+      initial status? If the status is `subscribed` the contact can immediately
+      receive campaigns. If the status is `pending`, a double opt-in
+      confirmation email will be sent to the user. Once accepted they will be
+      set to a `subscribed` status.
     options:
       - label: Subscribed
         value: subscribed
