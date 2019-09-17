@@ -10,7 +10,7 @@
 
 * Deployment location: *Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage).*
 
-* Collection path: *What is the path of collection that you would like to export?*
+* Collection path: *What is the path of the the collection that you would like to export?*
 
 * Dataset ID: *What ID would you like to use for your BigQuery dataset? This extension will create the dataset, if it doesn't already exist.*
 
