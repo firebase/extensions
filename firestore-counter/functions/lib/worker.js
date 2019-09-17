@@ -118,7 +118,6 @@ class ShardedCounterWorker {
                 .then(resolve)
                 .catch(reject), WORKER_TIMEOUT_MS);
             unsubscribeMetadataListener = this.metadoc.ref.onSnapshot((snap) => {
-                console.log("metadoc update");
                 // if something's changed in the worker metadata since we were called, abort.
                 if (!snap.exists || !deepEqual(snap.data(), this.metadata)) {
                     console.log("shutting down cause metadoc changed.");
@@ -283,11 +282,9 @@ function isEmptyPartial(data) {
         return false;
     if (Object.keys(data).length === 0)
         return true;
-    //console.log("Checking is empty partial: " + JSON.stringify(data));
     const update = new aggregator_1.NumericUpdate();
     data["_updates_"].forEach((u) => {
         update.mergeFrom(u["_data_"]);
     });
-    //console.log("Result: " + update.isNoop());
     return update.isNoop();
 }

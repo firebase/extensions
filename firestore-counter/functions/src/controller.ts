@@ -109,7 +109,6 @@ export class ShardedCounterController {
       });
 
       const shutdown = async () => {
-        console.log("Time's up, shutting down.");
         console.log(
           "Successfully ran " +
             rounds +
