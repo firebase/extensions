@@ -71,12 +71,10 @@ function validateFieldArray(field: string, array?: string[]) {
     throw new Error(`Invalid field "${field}". Expected an array of strings.`);
   }
 
-  for (let i = 0; i < array.length; i++) {
-    if (typeof array[i] !== "string") {
-      throw new Error(
-        `Invalid field "${field}". Expected an array of strings.`
-      );
-    }
+  if (array.find(item => typeof item !== 'string')) {
+    throw new Error(
+      `Invalid field "${field}". Expected an array of strings.`
+    );
   }
 }
 
@@ -108,7 +106,6 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
   let to: string[] = [];
   let cc: string[] = [];
   let bcc: string[] = [];
-  let uids: string[] = [];
 
   if (payload.to) {
     validateFieldArray("to", payload.to);
@@ -133,65 +130,87 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
     return payload;
   }
 
-  if (payload.toUids && config.usersCollection) {
+  if (!config.usersCollection) {
+    throw new Error("Must specify a users collection to send using uids.");
+  }
+
+  let uids: string[] = [];
+
+  if (payload.toUids) {
     validateFieldArray("toUids", payload.toUids);
-    uids = [...uids, ...payload.toUids];
-  } else if (payload.toUids && !config.usersCollection) {
-    throw new Error(
-      `'toUids' were provided, but no User collection was provided.`
-    );
+    uids = uids.concat(payload.toUids);
   }
 
-  if (payload.ccUids && config.usersCollection) {
+  if (payload.ccUids) {
     validateFieldArray("ccUids", payload.ccUids);
-    uids = [...uids, ...payload.ccUids];
-  } else if (payload.ccUids && !config.usersCollection) {
-    throw new Error(
-      `'ccUids' were provided, but no User collection was provided.`
-    );
+    uids = uids.concat(payload.ccUids);
   }
 
-  if (payload.bccUids && config.usersCollection) {
+  if (payload.bccUids) {
     validateFieldArray("bccUids", payload.bccUids);
-    uids = [...uids, ...payload.bccUids];
-  } else if (payload.bccUids && !config.usersCollection) {
-    throw new Error(
-      `'bccUids' were provided, but no User collection was provided.`
-    );
+    uids = uids.concat(payload.bccUids);
   }
+
+  const toFetch = {};
+  uids.forEach(uid => toFetch[uid] = null);
 
   const documents = await db.getAll(
-    ...uids.map((uid) => db.collection(config.usersCollection).doc(uid)),
+    ...Object.keys(toFetch).map((uid) => db.collection(config.usersCollection).doc(uid)),
     {
       fieldMask: ["email"],
     }
   );
 
-  const userMap: { [key: string]: string } = {};
+  const missingUids = [];
+
   documents.forEach((documentSnapshot) => {
     if (documentSnapshot.exists) {
       const email = documentSnapshot.get("email");
 
       if (email) {
-        userMap[documentSnapshot.id] = email;
+        toFetch[documentSnapshot.id] = email;
+      } else {
+        missingUids.push(documentSnapshot.id);
       }
+    } else {
+      missingUids.push(documentSnapshot.id);
     }
   });
 
+  logs.missingUids(missingUids);
+
   if (payload.toUids) {
-    const toUidsEmails: string[] = payload.toUids.map((uid) => userMap[uid]);
-    payload.to = [...to, ...toUidsEmails];
+    payload.toUids.forEach((uid) => {
+      const email = toFetch[uid];
+      if (email) {
+        to.push(email);
+      }
+    });
   }
+
+  payload.to = to;
 
   if (payload.ccUids) {
-    const ccUidsEmails: string[] = payload.ccUids.map((uid) => userMap[uid]);
-    payload.cc = [...cc, ...ccUidsEmails];
+    payload.ccUids.forEach((uid) => {
+      const email = toFetch[uid];
+      if (email) {
+        cc.push(email);
+      }
+    });
   }
 
+  payload.cc = cc;
+
   if (payload.bccUids) {
-    const bccUidsEmails: string[] = payload.bccUids.map((uid) => userMap[uid]);
-    payload.bcc = [...cc, ...bccUidsEmails];
+    payload.bccUids.forEach((uid) => {
+      const email = toFetch[uid];
+      if (email) {
+        bcc.push(email);
+      }
+    });
   }
+
+  payload.bcc = bcc;
 
   return payload;
 }
