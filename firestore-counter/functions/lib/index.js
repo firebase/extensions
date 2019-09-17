@@ -39,7 +39,7 @@ const WORKERS_COLLECTION_ID = "_counter_workers_";
  * workers to do the aggregation.
  */
 exports.controller = functions.https.onRequest((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const metadocRef = firestore.doc(process.env.MOD_METADATA_DOC);
+    const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new controller_1.ShardedCounterController(metadocRef, SHARDS_COLLECTION_ID);
     let status = yield controller.aggregateOnce({ start: "", end: "" }, 200);
     if (status === controller_1.ControllerStatus.WORKERS_RUNNING ||
@@ -58,7 +58,7 @@ exports.controller = functions.https.onRequest((req, res) => __awaiter(void 0, v
  * resharding and to detect failed workers that need poking.
  */
 exports.worker = functions.firestore
-    .document(process.env.MOD_METADATA_DOC + WORKERS_COLLECTION_ID + "/{workerId}")
+    .document(process.env.INTERNAL_STATE_PATH + WORKERS_COLLECTION_ID + "/{workerId}")
     .onWrite((change, context) => __awaiter(void 0, void 0, void 0, function* () {
     // stop worker if document got deleted
     if (!change.after.exists)
@@ -74,7 +74,7 @@ exports.worker = functions.firestore
 exports.onWrite = functions.firestore
     .document("/{collection}/{**}/_counter_shards_/{shardId}")
     .onWrite((change, context) => __awaiter(void 0, void 0, void 0, function* () {
-    const metadocRef = firestore.doc(process.env.MOD_METADATA_DOC);
+    const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new controller_1.ShardedCounterController(metadocRef, SHARDS_COLLECTION_ID);
     yield controller.aggregateContinuously({ start: "", end: "" }, 200, 60000);
 }));
