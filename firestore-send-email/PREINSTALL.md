@@ -1,4 +1,4 @@
-Use this extension to render and send emails that contain the information from documents added to Cloud Firestore.
+Use this extension to render and send emails that contain the information from documents added to a specified Cloud Firestore collection.
 
 Adding a document triggers this extension to send an email built from the document's fields. The document's top-level fields specify the email sender and recipients, including `to`, `cc`, and `bcc` options (each supporting UIDs). The document's `message` field specifies the other email elements, like subject line and email body (either plaintext or HTML)
 
@@ -16,14 +16,17 @@ admin.firestore().collection('mail').add({
 
 Because each email is built from a Cloud Firestore document, you can reference information stored in _other_ Cloud Firestore documents and fields, like image URLs.
 
-You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
+You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template must be a document stored in a Cloud Firestore collection that you specify when configuring this extension.
 
-When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery** and specify the Cloud Firestore collection where you'll add documents. If you want to use templates, you'll also need to specify the collection containing your template documents.
+When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**.
 
-### Billing
+#### Additional setup
+
+Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
+
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 - Cloud Firestore
 - Cloud Functions
 
