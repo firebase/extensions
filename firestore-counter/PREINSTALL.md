@@ -1,7 +1,7 @@
 Use this extension to add a highly scalable counter service to your app. This is ideal for applications that count viral actions or any very high-velocity action such as views, likes, or shares.
 
 Firestore has a restrictive limit of 1 per second of sustained write rate to a document. That makes counting in Firestore very challenging.
-This extension works around this limitation and lets your app update any field in any document of your Firestore database at high rate (security rules permitting). It accomplishes that by using numerous temporary shards in `_counter_shards_` subcollection to sustain even the highest bursts of traffic. Each client is incrementing their own unique shard and only background workers running as Cloud Functions for Firebase are continuously monitoring and aggregating these shards to the master document.
+This extension works around the concurrent document writes per second limitation and lets your app update any field in any document of your Cloud Firestore database at a high rate (security rules permitting). It accomplishes this by using numerous temporary shards in a `_counter_shards_` subcollection; allowing it to sustain high bursts of traffic. Each client only increments their own unique shard while the background workers (Cloud Functions for Firebase) continue to monitor and aggregate these shards onto the master document.
 
 Here are some of the important features of this extension:
 
