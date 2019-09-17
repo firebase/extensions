@@ -1,6 +1,9 @@
 Use this extension to create resized versions of an image uploaded to a Cloud Storage bucket.
 
-When you upload an image file to your specified Cloud Storage bucket, this extension creates a resized image with your specified dimensions. It stores both the resized image and the original image in the same Storage bucket. The extension names the resized image using the same name as the original uploaded image, but suffixed with your specified width and height.
+When you upload an image file to your specified Cloud Storage bucket, this extension:
+- Creates a resized image with your specified dimensions
+- Stores both the resized image and the original image in the same Storage bucket
+- Names the resized image using the same name as the original uploaded image, but suffixed with your specified width and height.
 
 You can even configure the extension to create resized images of different dimensions for each original image upload. For example, you might want images that are 200x200, 400x400, and 680x680 - this extension can create these three resized images then store them in your bucket.
 
