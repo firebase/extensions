@@ -1,0 +1,12 @@
+{
+	"fields": [
+		{
+			"name": "testing",
+			"type": "string"
+		},
+		{
+			"name": "testing_two",
+			"type": "number"
+		}
+	]
+}
