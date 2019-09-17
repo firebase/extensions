@@ -32,7 +32,7 @@ const WORKERS_COLLECTION_ID = "_counter_workers_";
  * workers to do the aggregation.
  */
 export const controller = functions.https.onRequest(async (req, res) => {
-  const metadocRef = firestore.doc(process.env.MOD_METADATA_DOC);
+  const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
   const controller = new ShardedCounterController(
     metadocRef,
     SHARDS_COLLECTION_ID
@@ -58,7 +58,7 @@ export const controller = functions.https.onRequest(async (req, res) => {
  */
 export const worker = functions.firestore
   .document(
-    process.env.MOD_METADATA_DOC + WORKERS_COLLECTION_ID + "/{workerId}"
+    process.env.INTERNAL_STATE_PATH + WORKERS_COLLECTION_ID + "/{workerId}"
   )
   .onWrite(async (change, context) => {
     // stop worker if document got deleted
@@ -76,7 +76,7 @@ export const worker = functions.firestore
 export const onWrite = functions.firestore
   .document("/{collection}/{**}/_counter_shards_/{shardId}")
   .onWrite(async (change, context) => {
-    const metadocRef = firestore.doc(process.env.MOD_METADATA_DOC);
+    const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new ShardedCounterController(
       metadocRef,
       SHARDS_COLLECTION_ID

@@ -55,7 +55,7 @@ gcloud scheduler jobs create http firestore-sharded-counter-controller --schedul
                 // Initialize the sharded counter.
                 var views = new sharded.Counter(db.doc("pages/hello-world"), "stats.views");
 
-                // Increment by 3 the field "stats.views" of the document: ${param:MOD_METADATA_DOC}.
+                // Increment by 3 the field "stats.views" of the document: ${param:INTERNAL_STATE_PATH}.
                 // (use your desired increment amount)
                 views.incrementBy(3);
 
