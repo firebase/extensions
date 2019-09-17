@@ -26,10 +26,9 @@ If the original, untranslated string in the database path is updated, then the t
 
 This extension uses the Google Translate API for translations, which requires a billing account to use. Make sure to review the [pricing structure](https://cloud.google.com/translate/#pricing) for the Google Translate API.
 
-### Billing
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 - Cloud Translation API
 - Firebase Realtime Database
 - Cloud Functions

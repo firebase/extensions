@@ -6,16 +6,15 @@ You can configure this extension to delete user data from any or all of the foll
 
 This extension is useful in respecting user privacy and fulfilling compliance requirements. However, using this extension does not guarantee compliance with government and industry regulations.
 
-### Additional setup
+#### Additional setup
 
 Depending on where you'd like to delete user data from, make sure that you've set up [Cloud Firestore](https://firebase.google.com/docs/firestore), [Realtime Database](https://firebase.google.com/docs/database), or [Cloud Storage](https://firebase.google.com/docs/storage) in your Firebase project before installing this extension.
 
 Also, make sure that you've set up [Firebase Authentication](https://firebase.google.com/docs/auth) to manage your users.
 
-### Billing
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 - Cloud Firestore
 - Firebase Realtime Database
 - Cloud Storage

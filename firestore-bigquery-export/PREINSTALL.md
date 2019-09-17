@@ -1,7 +1,6 @@
 Use this extension to export the documents in a Cloud Firestore collection to BigQuery. Exports are realtime and incremental, so the data in BigQuery is a mirror of your content in Cloud Firestore.
 
 The extension creates and updates a [dataset](https://cloud.google.com/bigquery/docs/datasets-intro) containing the following two BigQuery resources:
-
 +   A [table](https://cloud.google.com/bigquery/docs/tables-intro) of raw data that stores a full change history of the documents within your collection. This table includes a number of metadata fields so that BigQuery can display the current state of your data. The principle metadata fields are `timestamp`, `document_name`, and the `operation` for the document change.
 +   A [view](https://cloud.google.com/bigquery/docs/views-intro) which represents the current state of the data within your collection. It also shows a log of the latest `operation` for each document (`CREATE`, `UPDATE`, or `IMPORT`).
 
@@ -9,14 +8,11 @@ Whenever a document is created, updated, deleted, or imported in the specified c
 
 Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`).
 
-### Additional setup
+#### Additional setup
 
 Before installing this extension, you'll need to:
-
 +   [Set up Cloud Firestore in your Firebase project.](https://firebase.google.com/docs/firestore/quickstart)
 +   [Link your Firebase project to BigQuery.](https://support.google.com/firebase/answer/6318765)
-
-#### Import existing documents
 
 This extension only sends the content of documents that have been changed -- it does not export your full dataset of existing documents into BigQuery. So, to backfill your BigQuery dataset with all the documents in your collection, you can run the import script provided by this extension.
 
@@ -24,10 +20,9 @@ This extension only sends the content of documents that have been changed -- it 
 
 Learn more about using this script to [backfill your existing collection](https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
 
-### Billing
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 +   Cloud Firestore
 +   BigQuery
 +   Cloud Functions
