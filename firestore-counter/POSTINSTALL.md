@@ -22,9 +22,10 @@ match /databases/{database}/documents/pages/{page} {
 
 Set up a [scheduled function](https://firebase.google.com/docs/functions/schedule-functions) to call `${function:controller.url}` every minute.
 
-For example, to set up a scheduled function, you can run the following [`gcloud`](https://cloud.google.com/sdk/gcloud/) command:
+For example, to set up a scheduled function, you can run the following [`gcloud`](https://cloud.google.com/sdk/gcloud/) commands:
 
 ```
+gcloud services enable cloudscheduler.googleapis.com
 gcloud scheduler jobs create http firestore-sharded-counter-controller --schedule="* * * * *" --uri=${function:controller.url} --project=${param:PROJECT_ID}
 ```
 
