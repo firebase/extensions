@@ -54,7 +54,7 @@ exports.addUserToList = functions.handler.auth.user.onCreate((user) => __awaiter
             email_address: email,
             status: config_1.default.mailchimpContactStatus,
         });
-        logs.userAdded(uid, config_1.default.mailchimpAudienceId, results.id);
+        logs.userAdded(uid, config_1.default.mailchimpAudienceId, results.id, config_1.default.mailchimpContactStatus);
         logs.complete();
     }
     catch (err) {
