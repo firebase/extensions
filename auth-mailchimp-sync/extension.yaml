@@ -35,6 +35,9 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
+  - authorName: Elliot Hesp
+    email: elliot@invertase.io
+    url: https://github.com/ehesp
 
 resources:
   - name: addUserToList
@@ -104,4 +107,20 @@ params:
       click on the desired audience or create a new audience, then select **Settings**.
       Look for **Audience ID** (for example, `27735fc60a`).
     example: 1ab2345c67
+    required: true
+
+  - param: MAILCHIMP_CONTACT_STATUS
+    type: select
+    label: Contact status
+    description: >-
+      When a new contact is added to the Mailchimp list/audience, what is their initial status?
+      `subscribed`: The contact has subscribed and can receive campaigns.
+      `pending`: A double opt-in confirmation email will be sent to the user. Once accepted they will be set to
+      `subscribed`.
+    options:
+      - label: Subscribed
+        value: subscribed
+      - label: Pending
+        value: pending
+    default: subscribed
     required: true

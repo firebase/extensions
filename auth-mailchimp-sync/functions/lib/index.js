@@ -52,7 +52,7 @@ exports.addUserToList = functions.handler.auth.user.onCreate((user) => __awaiter
         logs.userAdding(uid, config_1.default.mailchimpAudienceId);
         const results = yield mailchimp.post(`/lists/${config_1.default.mailchimpAudienceId}/members`, {
             email_address: email,
-            status: "subscribed",
+            status: config_1.default.mailchimpContactStatus,
         });
         logs.userAdded(uid, config_1.default.mailchimpAudienceId, results.id);
         logs.complete();
