@@ -87,13 +87,13 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
   buildDataRow(
     eventId: string,
     changeType: ChangeType,
-    timestamp: Date,
+    timestamp: string,
     document_name: string,
     data?: Object
   ): bigquery.RowMetadata {
     // This must match firestoreToBQTable().
     return {
-      timestamp: timestamp.toISOString(),
+      timestamp: timestamp,
       event_id: eventId,
       document_name: document_name,
       operation: ChangeType[changeType],
