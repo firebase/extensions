@@ -22,7 +22,7 @@ You can test out this extension right away:
 **Note:** You can also use the [Firebase Admin SDK][admin_sdk] to add a document:
 ```
 admin.firestore().collection('${param:MAIL_COLLECTION}').add({
-  to: ['someone@example.com'],
+  to: 'someone@example.com',
   message: {
     subject: 'Hello from Firebase!',
     text: 'This is the plaintext section of the email body.',
@@ -41,11 +41,11 @@ The top-level fields of the document supply the email sender and recipient infor
 
 * **from:** The sender's email address. If not specified in the document, uses the configured "Default FROM address" parameter.
 * **replyTo:** The reply-to email address. If not specified in the document, uses the configured "Default REPLY-TO address" parameter.
-* **to:** An array containing the recipient email addresses.
+* **to:** A single recipient email address or an array containing multiple recipient email addresses.
 * **toUids:** An array containing the recipient UIDs.
-* **cc:** An array containing the CC recipient email addresses.
+* **cc:** A single recipient email address or an array containing multiple recipient email addresses.
 * **ccUids:** An array containing the CC recipient UIDs.
-* **bcc:** An array containing the BCC recipient email addresses.
+* **bcc:** A single recipient email address or an array containing multiple recipient email addresses.
 * **bccUids:** An array containing the BCC recipient UIDs.
 
 **NOTE:** The `toUids`, `ccUids`, and `bccUids` options deliver emails based on user UIDs keyed to email addresses within a Cloud Firestore document. To use these recipient options, you need to specify a Cloud Firestore collection for the extension's "Users collection" parameter. The extension can then read the `email` field for each UID specified in the `toUids`, `ccUids`, and/or `bccUids` fields.
