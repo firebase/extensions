@@ -1,10 +1,28 @@
 ### See it in action
 
-To test out this extension, add a document with a `to` field and a `message` field to the `${param:MAIL_COLLECTION}` collection in the [Firebase console][mail_collection] or using the [Firebase Admin SDK][admin_sdk]:
+You can test out this extension right away:
 
+1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
+
+1.  If it doesn't already exist, create the collection you specified during installation: `${param:MAIL_COLLECTION}`.
+
+1.  Add a document with a `to` field and a `message` field with the following content:
+
+    ```
+    to: ['someone@example.com'],
+    message: {
+      subject: 'Hello from Firebase!',
+      text: 'This is the plaintext section of the email body.',
+      html: 'This is the <code>HTML</code> section of the email body.',
+    }
+    ```
+
+1.  In a few seconds, you'll see a `delivery` field appear in the document. The field will update as the extension processes the email.
+
+**Note:** You can also use the [Firebase Admin SDK][admin_sdk] to add a document:
 ```
 admin.firestore().collection('${param:MAIL_COLLECTION}').add({
-  to: ['someone@example.com'],
+  to: 'someone@example.com',
   message: {
     subject: 'Hello from Firebase!',
     text: 'This is the plaintext section of the email body.',
@@ -13,7 +31,7 @@ admin.firestore().collection('${param:MAIL_COLLECTION}').add({
 }).then(() => console.log('Queued email for delivery!'));
 ```
 
-### Use this extension
+### Using this extension
 
 After its installation, this extension monitors all document writes to the `${param:MAIL_COLLECTION}` collection. Email is delivered based on the contents of the document's fields. The top-level fields specify the email's sender and recipients. The `message` field contains the details of the email to deliver, including the email body.
 
@@ -23,11 +41,11 @@ The top-level fields of the document supply the email sender and recipient infor
 
 * **from:** The sender's email address. If not specified in the document, uses the configured "Default FROM address" parameter.
 * **replyTo:** The reply-to email address. If not specified in the document, uses the configured "Default REPLY-TO address" parameter.
-* **to:** An array containing the recipient email addresses.
+* **to:** A single recipient email address or an array containing multiple recipient email addresses.
 * **toUids:** An array containing the recipient UIDs.
-* **cc:** An array containing the CC recipient email addresses.
+* **cc:** A single recipient email address or an array containing multiple recipient email addresses.
 * **ccUids:** An array containing the CC recipient UIDs.
-* **bcc:** An array containing the BCC recipient email addresses.
+* **bcc:** A single recipient email address or an array containing multiple recipient email addresses.
 * **bccUids:** An array containing the BCC recipient UIDs.
 
 **NOTE:** The `toUids`, `ccUids`, and `bccUids` options deliver emails based on user UIDs keyed to email addresses within a Cloud Firestore document. To use these recipient options, you need to specify a Cloud Firestore collection for the extension's "Users collection" parameter. The extension can then read the `email` field for each UID specified in the `toUids`, `ccUids`, and/or `bccUids` fields.
@@ -49,7 +67,6 @@ Available properties for the `message` field are:
 If you specified a "Templates collection" parameter during configuration of the extension, you can create and manage [Handlebars][handlebars] templates for your emails. Each document for a template should have a memorable ID that you use as the *template name* in the document that's written to your `${param:MAIL_COLLECTION}` collection.
 
 The template document can include any of the following fields:
-
 * **subject:** A template string for the subject of the email.
 * **text:** A template string for the plaintext content of the email.
 * **html:** A template string for the HTML content of the email.

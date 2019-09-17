@@ -18,6 +18,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = {
     collectionPath: process.env.COLLECTION_PATH,
     datasetId: process.env.DATASET_ID,
+    tableId: process.env.TABLE_ID,
     location: process.env.LOCATION,
     initialized: false
 };

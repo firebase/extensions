@@ -17,7 +17,6 @@
 import * as bigquery from "@google-cloud/bigquery";
 import * as errors from "../errors";
 import * as logs from "../logs";
-import { changeLog, raw, latest } from "../bigquery";
 import * as sqlFormatter from "sql-formatter";
 
 export type BigQueryFieldMode = "NULLABLE" | "REPEATED" | "REQUIRED";

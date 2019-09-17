@@ -20,37 +20,37 @@ export const complete = () => {
   console.log("Completed execution of extension");
 };
 
-export const documentCreatedNoMsg = () => {
+export const documentCreatedNoInput = () => {
   console.log(
-    "Document was created without a string, no processing is required"
+    "Document was created without an input string, no processing is required"
   );
 };
 
-export const documentCreatedWithMsg = () => {
-  console.log("Document was created with a string");
+export const documentCreatedWithInput = () => {
+  console.log("Document was created with an input string");
 };
 
 export const documentDeleted = () => {
   console.log("Document was deleted, no processing is required");
 };
 
-export const documentUpdatedChangedMsg = () => {
-  console.log("Document was updated, string has changed");
+export const documentUpdatedChangedInput = () => {
+  console.log("Document was updated, input string has changed");
 };
 
-export const documentUpdatedDeletedMsg = () => {
-  console.log("Document was updated, string was deleted");
+export const documentUpdatedDeletedInput = () => {
+  console.log("Document was updated, input string was deleted");
 };
 
-export const documentUpdatedNoMsg = () => {
+export const documentUpdatedNoInput = () => {
   console.log(
-    "Document was updated, no string exists, no processing is required"
+    "Document was updated, no input string exists, no processing is required"
   );
 };
 
-export const documentUpdatedUnchangedMsg = () => {
+export const documentUpdatedUnchangedInput = () => {
   console.log(
-    "Document was updated, string has not changed, no processing is required"
+    "Document was updated, input string has not changed, no processing is required"
   );
 };
 
@@ -60,7 +60,7 @@ export const error = (err: Error) => {
 
 export const fieldNamesNotDifferent = () => {
   console.error(
-    "The `Message` and `Translations` field names must be different for this extension to function correctly"
+    "The `Input` and `Output` field names must be different for this extension to function correctly"
   );
 };
 
@@ -68,9 +68,9 @@ export const init = () => {
   console.log("Initializing extension with configuration", config);
 };
 
-export const messageFieldNameIsTranslationPath = () => {
+export const inputFieldNameIsOutputPath = () => {
   console.error(
-    "The `Message` field name must not be the same as a `Translation` path for this extension to function correctly"
+    "The `Input` field name must not be the same as an `Output` path for this extension to function correctly"
   );
 };
 
@@ -78,39 +78,39 @@ export const start = () => {
   console.log("Started execution of extension with configuration", config);
 };
 
-export const translateMsg = (msg: string, language: string) => {
-  console.log(`Translating msg: '${msg}' into language(s): '${language}'`);
+export const translateInputString = (string: string, language: string) => {
+  console.log(`Translating string: '${string}' into language(s): '${language}'`);
 };
 
-export const translateMsgComplete = (msg: string, language: string) => {
+export const translateStringComplete = (string: string, language: string) => {
   console.log(
-    `Finished translating msg: '${msg}' into language(s): '${language}'`
+    `Finished translating string: '${string}' into language(s): '${language}'`
   );
 };
 
-export const translateMsgError = (
-  msg: string,
+export const translateStringError = (
+  string: string,
   language: string,
   err: Error
 ) => {
   console.error(
-    `Error when translating msg: '${msg}' into language(s): '${language}'`,
+    `Error when translating string: '${string}' into language(s): '${language}'`,
     err
   );
 };
 
-export const translateMsgAllLanguages = (msg: string, languages: string[]) => {
+export const translateInputStringToAllLanguages = (string: string, languages: string[]) => {
   console.log(
-    `Translating msg: '${msg}' into language(s): '${languages.join(",")}'`
+    `Translating string: '${string}' into language(s): '${languages.join(",")}'`
   );
 };
 
-export const translateMsgAllLanguagesComplete = (msg: string) => {
-  console.log(`Finished translating msg: '${msg}'`);
+export const translateInputToAllLanguagesComplete = (string: string) => {
+  console.log(`Finished translating string: '${string}'`);
 };
 
-export const translateMsgAllLanguagesError = (msg: string, err: Error) => {
-  console.error(`Error when translating msg: '${msg}'`, err);
+export const translateInputToAllLanguagesError = (string: string, err: Error) => {
+  console.error(`Error when translating string: '${string}'`, err);
 };
 
 export const updateDocument = (path: string) => {

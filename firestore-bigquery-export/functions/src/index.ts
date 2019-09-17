@@ -24,7 +24,10 @@ import {
 import * as logs from "./logs";
 import { getChangeType } from "./util";
 
-const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker(config);
+const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker({
+  tableId: config.tableId,
+  datasetId: config.datasetId,
+});
 
 logs.init();
 
