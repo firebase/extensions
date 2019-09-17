@@ -2,7 +2,7 @@ Use this extension to render and send emails that contain the information from d
 
 Adding a document triggers this extension to send an email built from the document's fields. The document's top-level fields specify the email sender and recipients, including `to`, `cc`, and `bcc` options (each supporting UIDs). The document's `message` field specifies the other email elements, like subject line and email body (either plaintext or HTML)
 
-Here's a basic example documment write that would trigger this extension:
+Here's a basic example document write that would trigger this extension:
 
 ```js
 admin.firestore().collection('mail').add({
