@@ -32,6 +32,9 @@ author:
 contributors:
   - authorName: Michael Bleigh
     url: https://github.com/mbleigh
+  - authorName: Elliot Hesp
+    email: elliot@invertase.io
+    url: https://github.com/ehesp
 
 roles:
   - role: datastore.user
