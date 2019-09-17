@@ -1,0 +1,121 @@
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: firestore-translate-text
+specVersion: v1beta
+version: 0.1.0
+
+displayName: Translate Text
+
+description:
+  Translates strings written to a Cloud Firestore collection into multiple languages (uses Cloud Translation API).
+
+license: Apache-2.0
+billingRequired: true
+sourceUrl: https://accounts.google.com/AccountChooser/signinchooser?service=gerritcodereview&continue=https%3A%2F%2Fdev-partners.googlesource.com%2Flogin%2Fsamples%2Ffirebase%2Fmods%2F%2B%2Fmaster%2Ffirestore-translate-text
+releaseNotesUrl: https://dev-partners.googlesource.com/samples/firebase/mods/+log
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+
+contributors:
+  - authorName: Chris Bianca
+    email: chris@csfrequency.com
+    url: https://github.com/chrisbianca
+
+apis:
+  - apiName: translate.googleapis.com
+    reason: To use Google Translate to translate strings into your specified target languages.
+
+roles:
+  - role: datastore.user
+    reason: Allows the extension to write translated strings to Cloud Firestore.
+
+resources:
+  - name: fstranslate
+    type: firebaseextensions.v1beta.function
+    description:
+      Listens for writes of new strings to your specified Cloud Firestore collection, translates the strings,
+      then writes the translated strings back to the same document.
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{messageId}
+
+params:
+  - param: LOCATION
+    type: select
+    label: Deployment location
+    description: >-
+      Where should the extension be deployed? You usually want a location close to your database.
+      For help selecting a location, refer to the
+      [location selection guide](https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage).
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+    default: us-central1
+    required: true
+  - param: LANGUAGES
+    label: Target languages for translations, as a comma-separated list
+    description: >
+      Into which target languages do you want to translate new strings?
+      The languages are identifed using ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr.
+      For these codes, visit the [supported languages list](https://cloud.google.com/translate/docs/languages).
+    default: en,es,de,fr
+    example: en,es,de,fr
+    validationRegex: "^[a-zA-Z,-]+$"
+    validationErrorMessage:
+      Languages must be a comma-separated list of ISO-639-1 language codes.
+    required: true
+
+  - param: COLLECTION_PATH
+    label: Collection path
+    description: >
+      What is the path to the collection that contains the strings that you want to translate?
+    default: messages
+    example: messages
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore Collection
+    required: true
+
+  - param: MESSAGE_FIELD_NAME
+    label: Message field name
+    description: >
+      What is the name of the field that contains the strings that you want to translate?
+    default: message
+    example: message
+    required: true
+
+  - param: TRANSLATIONS_FIELD_NAME
+    label: Translations field name
+    description: >
+      What is the name of the field where you want to store your translations?
+    default: translations
+    example: translations
+    required: true
