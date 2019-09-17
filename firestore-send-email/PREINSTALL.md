@@ -6,7 +6,7 @@ Here's a basic example document write that would trigger this extension:
 
 ```js
 admin.firestore().collection('mail').add({
-  to: ['someone@example.com'],
+  to: 'someone@example.com',
   message: {
     subject: 'Hello from Firebase!',
     html: 'This is an <code>HTML</code> email body.',
