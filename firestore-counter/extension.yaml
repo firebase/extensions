@@ -73,7 +73,7 @@ resources:
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/${MOD_METADATA_DOC}/workers/{workerId}
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${INTERNAL_STATE_PATH}/workers/{workerId}
 
 params:
   - param: LOCATION
@@ -101,7 +101,7 @@ params:
     default: us-central1
     required: true
 
-  - param: MOD_METADATA_DOC
+  - param: INTERNAL_STATE_PATH
     label: Document path for internal state
     description: >-
       What is the path to the document where the extension can keep its internal state?
