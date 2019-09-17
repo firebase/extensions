@@ -4,7 +4,7 @@ Before you can use this extension, you'll need to update your security rules, se
 
 #### Update security rules
 
-Update your Cloud Firestore security rules to allow lookups and writes to the `_counter_shards_` subcollection where you want the extension to count. For example, to allow clients to increments `visits` field on any document in `pages` collection, you can write rules like this:
+Update your Cloud Firestore security rules to allow lookups and writes to the `_counter_shards_` subcollection where you want the extension to count. For example, to allow clients to increment the `visits` field on any document in the `pages` collection, you can write rules like this:
 
 ```
 match /databases/{database}/documents/pages/{page} {
