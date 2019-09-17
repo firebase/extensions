@@ -68,17 +68,26 @@ function preparePayload(payload) {
         let to = [];
         let cc = [];
         let bcc = [];
-        if (payload.to) {
+        if (typeof payload.to === 'string') {
+            to = [payload.to];
+        }
+        else if (payload.to) {
             validateFieldArray("to", payload.to);
-            to = [...to, ...payload.to];
+            to = to.concat(payload.to);
         }
-        if (payload.cc) {
+        if (typeof payload.cc === 'string') {
+            cc = [payload.cc];
+        }
+        else if (payload.cc) {
             validateFieldArray("cc", payload.cc);
-            cc = [...cc, ...payload.cc];
+            cc = cc.concat(payload.cc);
         }
-        if (payload.bcc) {
+        if (typeof payload.bcc === 'string') {
+            bcc = [payload.bcc];
+        }
+        else if (payload.bcc) {
             validateFieldArray("bcc", payload.bcc);
-            bcc = [...bcc, ...payload.bcc];
+            bcc = bcc.concat(payload.bcc);
         }
         if (!payload.toUids && !payload.ccUids && !payload.bccUids) {
             payload.to = to;
