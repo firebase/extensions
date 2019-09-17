@@ -112,8 +112,9 @@ params:
     type: string
     label: Table ID
     description: >-
-      What ID would you like to use for your BigQuery raw changelog table inside your dataset? This
-      extension will create the table, if it doesn't already exist.
+      What identifying prefix would you like to use for your table and view
+      inside your BigQuery dataset? This extension will create the table and view,
+      if they don't already exist.
     validationRegex: "^[a-zA-Z0-9_]+$"
     validationErrorMessage: >
       BigQuery table IDs must be alphanumeric (plus underscores) and must be no more than
