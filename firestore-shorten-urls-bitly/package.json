@@ -1,8 +1,8 @@
 {
-  "name": "rtdb-shorten-urls",
+  "name": "firestore-shorten-urls-bitly",
   "version": "0.1.0",
   "description": "Automatically shorten url links",
-  "author": "Firebase",
+  "author": "Chris Bianca <chris@csfrequency.com>",
   "license": "Apache-2.0",
   "main": "functions/lib/index.js",
   "scripts": {
