@@ -82,22 +82,12 @@ const uploadFile = async (
   console.log(`Uploaded file to path: '${bucketPath}/${destinationPath}'`);
 };
 
-const populateFirestoreRecursiveDeleteData = async (): Promise<void> => {
-  console.log("---------------------------------------------------------");
-  console.log("Populating data for firestore-recursive-delete");
-  console.log("---------------------------------------------------------");
-  await createFirestoreDocument("nested/doc");
-  await createFirestoreDocument("nested/doc/path/doc");
-  console.log("Created nested collection in Firestore under path: '/nested'");
-  console.log();
-};
-
 const populateUserDataDeletionData = async (
   projectId: string
 ): Promise<void> => {
   // delete-user-data
   console.log("---------------------------------------------------------");
-  console.log("Populating data for firestore-recursive-delete");
+  console.log("Populating data for delete-user-data");
   console.log("---------------------------------------------------------");
   // 1) Create some users
   await createUser("1", "User 1");
@@ -129,20 +119,19 @@ const run = async (): Promise<void> => {
     databaseURL: `https://${projectId}.firebaseio.com`,
   });
 
-  await populateFirestoreRecursiveDeleteData();
   await populateUserDataDeletionData(projectId);
 };
 
 run()
   .then(() => {
     console.log("---------------------------------------------------------");
-    console.log("Finished creating mods test data");
+    console.log("Finished creating extensions test data");
     console.log("---------------------------------------------------------");
     process.exit();
   })
   .catch((error) => {
     console.log("---------------------------------------------------------");
-    console.error("Error creating mods test data:");
+    console.error("Error creating extensions test data:");
     console.error(error);
     console.log("---------------------------------------------------------");
     process.exit();

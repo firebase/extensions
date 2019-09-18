@@ -152,7 +152,7 @@ const publishFiles = async (
     "POST",
     `sites/${config.siteName}/releases?version_name=${version.name}`,
     token,
-    { message: "released by Firebase Mods CI" }
+    { message: "released by Firebase Extensions CI" }
   );
   logs.released(version.name);
 };
