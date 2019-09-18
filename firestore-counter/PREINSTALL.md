@@ -7,7 +7,7 @@ Here are some features of this extension:
 - Supports an arbitrary number of counters in your app.
 - Works offline and provides latency compensation for the main counter.
 
-Note that this extension is currently fully resourced for use with JavaScript apps (we provide the required [JS SDK](https://github.com/firebase/extensions/firestore-counter/clients/web/src/index.ts)). You can, however, use this extension on other platforms if you'd like to develop your own API based on the provided JS SDK.
+Note that this extension is currently fully resourced for use with JavaScript apps (we provide the required [JS SDK](https://github.com/firebase/extensions/tree/master/firestore-counter/clients/web/src/index.ts)). You can, however, use this extension on other platforms if you'd like to develop your own API based on the provided JS SDK.
 
 
 #### Additional setup
@@ -17,7 +17,7 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 After installing this extension, you'll need to:
 - Update your [database security rules](https://firebase.google.com/docs/rules).
 - Set up a [scheduled function](https://firebase.google.com/docs/functions/schedule-functions) to regularly call the controller function, which is created by this extension and monitors the extension's workload.
-- Install the provided [Counter SDK](https://github.com/firebase/extensions/firestore-counter/clients/web/src/index.ts) in your app. You can then use this library in your code to specify your document path and increment values.
+- Install the provided [Counter SDK](https://github.com/firebase/extensions/tree/master/firestore-counter/clients/web/src/index.ts) in your app. You can then use this library in your code to specify your document path and increment values.
 
 Detailed information for these post-installation tasks are provided after you install this extension.
 
