@@ -1,6 +1,7 @@
 Use this extension to export the documents in a Cloud Firestore collection to BigQuery. Exports are realtime and incremental, so the data in BigQuery is a mirror of your content in Cloud Firestore.
 
 The extension creates and updates a [dataset](https://cloud.google.com/bigquery/docs/datasets-intro) containing the following two BigQuery resources:
+
 +   A [table](https://cloud.google.com/bigquery/docs/tables-intro) of raw data that stores a full change history of the documents within your collection. This table includes a number of metadata fields so that BigQuery can display the current state of your data. The principle metadata fields are `timestamp`, `document_name`, and the `operation` for the document change.
 +   A [view](https://cloud.google.com/bigquery/docs/views-intro) which represents the current state of the data within your collection. It also shows a log of the latest `operation` for each document (`CREATE`, `UPDATE`, or `IMPORT`).
 
@@ -11,6 +12,7 @@ Note that this extension only listens for _document_ changes in the collection, 
 #### Additional setup
 
 Before installing this extension, you'll need to:
+
 +   [Set up Cloud Firestore in your Firebase project.](https://firebase.google.com/docs/firestore/quickstart)
 +   [Link your Firebase project to BigQuery.](https://support.google.com/firebase/answer/6318765)
 
@@ -23,6 +25,7 @@ Learn more about using this script to [backfill your existing collection](https:
 #### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
+
 +   Cloud Firestore
 +   BigQuery
 +   Cloud Functions

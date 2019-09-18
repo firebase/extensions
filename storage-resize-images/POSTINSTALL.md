@@ -13,6 +13,7 @@ You can test out this extension right away:
 ### Using the extension
 
 When you upload an image file to `${param:IMG_BUCKET}`, this extension:
+
 - Creates resized image(s) with your specfied dimensions.
 - Stores the resized image(s) in the bucket `${param:IMG_BUCKET}` (and, if configured, under the path `${param:RESIZED_IMAGES_PATH}`).
 - Names resized image(s) using the same name as the original uploaded image, but suffixed with the specified width and height.

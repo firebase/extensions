@@ -1,6 +1,7 @@
 Use this extension to translate strings (for example, text messages) written to a Cloud Firestore collection.
 
 This extension listens to your specified Cloud Firestore collection. If you add a string to a specified field in any document within that collection, this extension:
+
 - Translates the string into your specified target language(s); the source language of the string is automatically detected.
 - Adds the translation(s) of the string to a separate specified field in the same document.
 
@@ -15,6 +16,7 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 #### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
+
 - Cloud Translation API
 - Cloud Firestore
 - Cloud Functions

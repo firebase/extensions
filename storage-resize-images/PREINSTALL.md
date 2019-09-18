@@ -1,6 +1,7 @@
 Use this extension to create resized versions of an image uploaded to a Cloud Storage bucket.
 
 When you upload an image file to your specified Cloud Storage bucket, this extension:
+
 - Creates a resized image with your specified dimensions.
 - Stores the resized image in the same Storage bucket as the original uploaded image.
 - Names the resized image using the same name as the original uploaded image, but suffixed with your specified width and height.
@@ -22,6 +23,7 @@ Before installing this extension, make sure that you've [set up a Cloud Storage 
 #### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
+
 - Cloud Storage
 - Cloud Functions
 
