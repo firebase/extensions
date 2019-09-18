@@ -1,6 +1,8 @@
 Use this extension to create shortened URLs from URLs written to Cloud Firestore. These shortened URLs are useful as display URLs.
 
-This extension listens to your specified Cloud Firestore collection, then shortens any URL added to a specified field in any document within that collection. This extension saves the shortened URL in a new field in the same document.
+This extension listens to your specified Cloud Firestore collection. If you add a URL to a specified field in any document within that collection, this extension:
+- Shortens the URL.
+- Saves the shortened URL in a new specified field in the same document.
 
 If the original URL in a document is updated, then the shortened URL will be automatically updated, too.
 
