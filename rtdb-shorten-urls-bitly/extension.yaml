@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: firestore-shorten-urls-bitly
+name: rtdb-shorten-urls-bitly
 displayName: Shorten URLs
 specVersion: v1beta
 version: 0.1.0
 
 description:
-  Shortens URLs written to a specified Cloud Firestore collection (uses Bitly).
+  Shortens URLs written to a specified Realtime Database path (uses Bitly).
 
 license: Apache-2.0
 billingRequired: true
-sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-shorten-urls
+sourceUrl: https://github.com/firebase/extensions/tree/master/rtdb-shorten-urls-bitly
 releaseNotesUrl: https://github.com/firebase/extensions/commits/master
 
 author:
@@ -30,26 +30,28 @@ author:
   url: https://firebase.google.com
 
 contributors:
+  - authorName: Brian Chen
+    url: https://github.com/thebrianchen
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
 
 roles:
-  - role: datastore.user
-    reason: Allows the extension to write shortened URLs to Cloud Firestore.
+  - role: firebasedatabase.admin
+    reason: Allows the extension to write shortened URLs to your Realtime Database.
 
 resources:
-  - name: fsurlshortener
+  - name: rtdburlshortener
     type: firebaseextensions.v1beta.function
     description:
-      Listens for writes of new URLs to your specified Cloud Firestore collection, shortens the URLs,
-      then writes the shortened form back to the same document.
+      Listens for writes of new URLs to your specified Realtime Database path,
+      shortens the URLs, then writes the shortened form back to the same path.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
-        eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
+        eventType: providers/google.firebase.database/eventTypes/ref.write
+        resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${TRIGGER_PATH}/{linkId}
 
 params:
   - param: LOCATION
@@ -57,8 +59,9 @@ params:
     label: Deployment location
     description: >-
       Where should the extension be deployed? You usually want a location close to your database.
+      Realtime Database instances are located in us-central1.
       For help selecting a location, refer to the
-      [location selection guide](https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage).
+      [location selection guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -76,6 +79,7 @@ params:
         value: asia-northeast1
     default: us-central1
     required: true
+
   - param: BITLY_ACCESS_TOKEN
     label: Bitly access token
     description: >
@@ -83,20 +87,21 @@ params:
     example: a1b2c3d4e5f6g7
     required: true
 
-  - param: COLLECTION_PATH
-    label: Collection path
+  - param: TRIGGER_PATH
+    label: Trigger path
     description: >
-      What is the path to the collection that contains the URLs that you want to shorten?
-    default: urls
-    example: urls
-    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
-    validationErrorMessage: Must be a valid Cloud Firestore collection
+      To which database path will original URLs be written? For example, if you enter the path `links`,
+      then the extension will trigger upon writes to `links/{urlID}`.
+    default: links
+    example: links
+    validationRegex: '^\S+$'
+    validationErrorMessage: Database path cannot contain spaces.
     required: true
 
   - param: URL_FIELD_NAME
     label: URL field name
     description: >
-      What is the name of the field that contains the original long URLs that you want to shorten?
+      What is the name of the field that contains the original, long URLs that you want to shorten?
     default: url
     example: url
     required: true
