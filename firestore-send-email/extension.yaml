@@ -111,16 +111,12 @@ params:
   - param: DEFAULT_REPLY_TO
     type: string
     label: Default REPLY-TO address
-    validationRegex: ^\S+@\S+\.\S+$
-    validationErrorMessage: Must be a valid email address
     description: >-
       The email address to use as the reply-to address (if it's not specified in the added email document).
 
   - param: USERS_COLLECTION
     type: string
     label: Users collection
-    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
-    validationErrorMessage: Must be a valid Cloud Firestore collection
     description: >-
       A collection of documents keyed by user UID.
       If the `toUids`, `ccUids`, and/or `bccUids` recipient options are used in the added email document,
@@ -129,8 +125,6 @@ params:
   - param: TEMPLATES_COLLECTION
     type: string
     label: Templates collection
-    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
-    validationErrorMessage: Must be a valid Cloud Firestore collection
     description: >-
       A collection of email templates keyed by name.
       This extension can render an email using a [Handlebar](https://handlebarsjs.com/) template,

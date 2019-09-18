@@ -90,8 +90,6 @@ params:
       (for example: `chatrooms/{chatid}/posts`).
     default: posts
     example: posts
-    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
-    validationErrorMessage: Must be a valid Cloud Firestore collection
     required: true
 
   - param: DATASET_ID
