@@ -1,7 +1,7 @@
 {
-  "name": "mods-test-data",
+  "name": "exts-test-data",
   "version": "0.1.0",
-  "description": "Populate a Firebase project with users and data needed to test mods",
+  "description": "Populate a Firebase project with users and data needed to test extensions",
   "main": "index.js",
   "scripts": {
     "populate": "ts-node index.ts"

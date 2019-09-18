@@ -126,7 +126,7 @@ const publishFiles = (basedir, paths, token) => __awaiter(this, void 0, void 0, 
     });
     logs.uploadFinalized();
     logs.releasing(version.name);
-    yield api("POST", `sites/${config_1.default.siteName}/releases?version_name=${version.name}`, token, { message: "released by Firebase Mods CI" });
+    yield api("POST", `sites/${config_1.default.siteName}/releases?version_name=${version.name}`, token, { message: "released by Firebase Extensions CI" });
     logs.released(version.name);
 });
 const buildManifest = (basedir, paths) => {
