@@ -1,6 +1,6 @@
 {
   "name": "hosting-deploy-github",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Automatically deploy to Firebase Hosting on Git commit",
   "author": "Firebase",
   "license": "Apache-2.0",
