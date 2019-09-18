@@ -12,9 +12,9 @@ You can test out this extension right away:
 
 ### Using the extension
 
-This extension listens to the Cloud Firestore collection `${param:COLLECTION_PATH}`, then shortens any URL added to the field `${param:URL_FIELD_NAME}` in any document within that collection.
-
-This extension saves the shortened URL in the `${param:SHORT_URL_FIELD_NAME}` field of the same document like so:
+This extension listens to the Cloud Firestore collection `${param:COLLECTION_PATH}`. If you add a URL to the field `${param:URL_FIELD_NAME}` in any document within that collection, this extension:
+- Shortens the URL.
+- Saves the shortened URL in the `${param:SHORT_URL_FIELD_NAME}` field of the same document like so:
 
 ```
 {
