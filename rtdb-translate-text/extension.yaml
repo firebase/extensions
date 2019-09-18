@@ -96,7 +96,7 @@ params:
       list](https://cloud.google.com/translate/docs/languages).
     default: en,es,de,fr
     example: en,es,de,fr
-    validationRegex: "^[a-zA-Z,-]+$"
+    validationRegex: "^[a-zA-Z,-]+[a-zA-Z-]{2,}$"
     validationErrorMessage:
       Languages must be a comma-separated list of ISO-639-1 language codes.
     required: true
