@@ -18,7 +18,7 @@ This extension only sends the content of documents that have been changed -- it 
 
 **Important:** Run the script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
 
-Learn more about using this script to [backfill your existing collection](https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
+Learn more about using this script to [backfill your existing collection](https://github.com/FirebasePrivate/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
 
 #### Billing
 
