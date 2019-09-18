@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "format": "prettier --write {,**/}*.{yaml,js,md}",
-    "test": "prettier --list-different {,**/}*.{yaml,js,md}"
+    "test": "prettier --list-different {,**/}*.{yaml,js,md}",
+    "postinstall": "lerna bootstrap"
   },
   "repository": "",
   "author": "Firebase (https://firebase.google.com/)",
@@ -14,6 +15,7 @@
     "url": ""
   },
   "devDependencies": {
+    "lerna": "^3.4.3",
     "prettier": "1.15.3"
   }
 }
