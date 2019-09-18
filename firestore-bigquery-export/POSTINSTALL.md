@@ -54,7 +54,7 @@ The import script can read all existing documents in a Cloud Firestore collectio
 
 You may pause and resume the script from the last batch at any point.
 
-Learn more about using this script to [backfill your existing collection](https://github.com/firebase/extensions/tree/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
+Learn more about using this script to [backfill your existing collection](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
 
 ### Monitoring
 
