@@ -22,7 +22,7 @@ You can test out this extension right away:
     SELECT * FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_latest`
     ```
 
-1.  Delete the `bigquery-mirror-test` document from [Cloud Firestore](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).  
+1.  Delete the `bigquery-mirror-test` document from [Cloud Firestore](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
 The `bigquery-mirror-test` document will disappear from the **latest view** and a `DELETE` event will be added to the **raw changelog table**.
 
 1.  You can check the changelogs of a single document with this query:
@@ -54,7 +54,7 @@ The import script can read all existing documents in a Cloud Firestore collectio
 
 You may pause and resume the script from the last batch at any point.
 
-Learn more about using this script to [backfill your existing collection](https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
+Learn more about using this script to [backfill your existing collection](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
 
 ### Monitoring
 
