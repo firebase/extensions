@@ -31,7 +31,7 @@ gcloud scheduler jobs create http firestore-sharded-counter-controller --schedul
 
 #### Specify a document path and increment value in your app
 
-1.  Download and copy the [Counter SDK](https://dev-partners.googlesource.com/samples/firebase/mods/+/master/firestore-counter/clients/web/dist/sharded-counter.js) into your application project.
+1.  Download and copy the [Counter SDK](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/dist/sharded-counter.js) into your application project.
 
     Note: You might get a "Permission denied" error for the source repository. If you do, locate the **Sign in** button on the error page, then sign in to access to the repo.
 
