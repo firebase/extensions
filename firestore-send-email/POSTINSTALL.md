@@ -67,6 +67,7 @@ Available properties for the `message` field are:
 If you specified a "Templates collection" parameter during configuration of the extension, you can create and manage [Handlebars][handlebars] templates for your emails. Each document for a template should have a memorable ID that you use as the *template name* in the document that's written to your `${param:MAIL_COLLECTION}` collection.
 
 The template document can include any of the following fields:
+
 * **subject:** A template string for the subject of the email.
 * **text:** A template string for the plaintext content of the email.
 * **html:** A template string for the HTML content of the email.

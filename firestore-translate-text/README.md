@@ -8,37 +8,44 @@
 
 **CONFIGURATION PARAMETERS:**
 
-* Deployment location: *Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage).*
+* Deployment location: Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage).
 
-* Target languages for translations, as a comma-separated list: *Into which target languages do you want to translate new strings? The languages are identifed using ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr. For these codes, visit the [supported languages list](https://cloud.google.com/translate/docs/languages).
-*
-
-* Collection path: *What is the path to the collection that contains the strings that you want to translate?
-*
-
-* Input field name: *What is the name of the field that contains the string that you want to translate?
-*
-
-* Output field name: *What is the name of the field where you want to store your translations?
-*
+* Target languages for translations, as a comma-separated list: Into which target languages do you want to translate new strings? The languages are identified using ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr. For these codes, visit the [supported languages list](https://cloud.google.com/translate/docs/languages).
 
 
+* Collection path: What is the path to the collection that contains the strings that you want to translate?
 
-**NON-CLOUD FUNCTION RESOURCES CREATED**:
 
-* fstranslate (firebaseextensions.v1beta.function)
+* Input field name: What is the name of the field that contains the string that you want to translate?
+
+
+* Translations output field name: What is the name of the field where you want to store your translations?
+
+
+
+
+**CLOUD FUNCTIONS CREATED:**
+
+* fstranslate (providers/cloud.firestore/eventTypes/document.write)
 
 
 
 **DETAILS**: Use this extension to translate strings (for example, text messages) written to a Cloud Firestore collection.
 
-Whenever a string is written to a specified field in any document within your specified Cloud Firestore collection, this extension translates the string into your specified target language(s). The source language of the string is automatically detected. This extension adds the translated string to a separate specified field in the same document.
+This extension listens to your specified Cloud Firestore collection. If you add a string to a specified field in any document within that collection, this extension:
+
+- Translates the string into your specified target language(s); the source language of the string is automatically detected.
+- Adds the translation(s) of the string to a separate specified field in the same document.
 
 You specify the desired target languages using ISO-639-1 codes. You can find a list of valid languages and their corresponding codes in the [Cloud Translate API documentation](https://cloud.google.com/translate/docs/languages).
 
 If the original non-translated field of the document is updated, then the translations will be automatically updated, as well.
 
-### Billing
+#### Additional setup
+
+Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
+
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
 
