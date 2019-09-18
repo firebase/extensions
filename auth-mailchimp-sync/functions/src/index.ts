@@ -52,10 +52,15 @@ export const addUserToList = functions.handler.auth.user.onCreate(
         `/lists/${config.mailchimpAudienceId}/members`,
         {
           email_address: email,
-          status: "subscribed",
+          status: config.mailchimpContactStatus,
         }
       );
-      logs.userAdded(uid, config.mailchimpAudienceId, results.id);
+      logs.userAdded(
+        uid,
+        config.mailchimpAudienceId,
+        results.id,
+        config.mailchimpContactStatus
+      );
       logs.complete();
     } catch (err) {
       logs.errorAddUser(err);
