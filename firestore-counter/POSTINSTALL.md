@@ -31,9 +31,9 @@ gcloud scheduler jobs create http firestore-sharded-counter-controller --schedul
 
 #### Specify a document path and increment value in your app
 
-1.  Download and copy the [Counter SDK](https://github.com/firebase/extensions/tree/master/firestore-counter/clients/web/dist/sharded-counter.js) into your application project.
+1.  Download and copy the [Counter SDK](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/dist/sharded-counter.js) into your application project.
 
-1.  Use the Counter SDK library in your code to increment counters. The code snippet below shows an example of how to use the library. For more comprehensive API documentation, refer to the [source code](https://github.com/firebase/extensions/tree/master/firestore-counter/clients/web/src/index.ts).
+1.  Use the Counter SDK library in your code to increment counters. The code snippet below shows an example of how to use the library. For more comprehensive API documentation, refer to the [source code](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts).
 
   ```html
   <html>
