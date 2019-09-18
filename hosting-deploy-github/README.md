@@ -8,21 +8,21 @@
 
 **CONFIGURATION PARAMETERS:**
 
-* Deployment location: *Where should the extension be deployed? For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).*
+* Deployment location: Where should the extension be deployed? For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
-* GitHub repository: *What is the full URL of the GitHub repository from which you want to deploy? For example: `https://github.com/firebase/firebase-tools`*
+* GitHub repository: What is the full URL of the GitHub repository from which you want to deploy? For example: `https://github.com/firebase/firebase-tools`
 
-* Deployment branch: *Which branch in your GitHub repository do you want to use for triggering deploys to Firebase Hosting?*
+* Deployment branch: Which branch in your GitHub repository do you want to use for triggering deploys to Firebase Hosting?
 
-* Deployment root: *Which directory in your GitHub repository contains the assets to be deployed to Firebase Hosting?*
+* Deployment root: Which directory in your GitHub repository contains the assets to be deployed to Firebase Hosting?
 
-* Site name: *What is the name of your site? If your Firebase project only has one site, your site name is usually the same as your project ID. View your [available site names](https://console.firebase.google.com/project/${PROJECT_ID}/hosting/main).*
+* Site name: What is the name of your site? If your Firebase project only has one site, your site name is usually the same as your project ID. View your [available site names](https://console.firebase.google.com/project/${PROJECT_ID}/hosting/main).
 
 
 
-**NON-CLOUD FUNCTION RESOURCES CREATED**:
+**CLOUD FUNCTIONS CREATED:**
 
-* deploy (firebaseextensions.v1beta.function)
+* deploy (HTTPS)
 
 
 

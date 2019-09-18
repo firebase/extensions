@@ -8,17 +8,17 @@
 
 **CONFIGURATION PARAMETERS:**
 
-* Deployment location: *Where should the extension be deployed? You usually want a location close to your database. Realtime Database instances are located in us-central1. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).*
+* Deployment location: Where should the extension be deployed? You usually want a location close to your database. Realtime Database instances are located in us-central1. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
-* Realtime Database path: *What is the Realtime Database path for which you want to limit the number of child nodes?*
+* Realtime Database path: What is the Realtime Database path for which you want to limit the number of child nodes?
 
-* Maximum count of nodes to keep: *What is the maximum count of nodes to keep in your specified database path? The oldest nodes will be deleted first to maintain this max count.*
+* Maximum count of nodes to keep: What is the maximum count of nodes to keep in your specified database path? The oldest nodes will be deleted first to maintain this max count.
 
 
 
-**NON-CLOUD FUNCTION RESOURCES CREATED**:
+**CLOUD FUNCTIONS CREATED:**
 
-* rtdblimit (firebaseextensions.v1beta.function)
+* rtdblimit (providers/google.firebase.database/eventTypes/ref.create)
 
 
 
@@ -26,14 +26,13 @@
 
 If the number of nodes in your specified Realtime Database path exceeds the specified max count, this extension deletes the oldest nodes first until there are the max count number of nodes remaining.
 
-### Additional setup
+#### Additional setup
 
 Before installing this extension, make sure that you've [set up a Realtime Database instance](https://firebase.google.com/docs/database) in your Firebase project.
 
-### Billing
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 - Firebase Realtime Database
 - Cloud Functions
 

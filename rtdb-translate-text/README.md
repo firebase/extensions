@@ -8,19 +8,19 @@
 
 **CONFIGURATION PARAMETERS:**
 
-* Deployment location: *Where should the extension be deployed? You usually want a location close to your database. Realtime Database instances are located in us-central1. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).*
+* Deployment location: Where should the extension be deployed? You usually want a location close to your database. Realtime Database instances are located in us-central1. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
-* Target languages for translations, as a comma-separated list: *Into which target languages do you want to translate new strings? The languages are identifed using ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr. For these codes, visit the [supported languages list](https://cloud.google.com/translate/docs/languages).
-*
-
-* Trigger path: *To which database path will new strings be written? For example, if you enter the path `messages`, then the extension will trigger upon writes to `messages/{sourceLanguageCode}/{messageId}`.
-*
+* Target languages for translations, as a comma-separated list: Into which target languages do you want to translate new strings? The languages are identifed using ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr. For these codes, visit the [supported languages list](https://cloud.google.com/translate/docs/languages).
 
 
+* Trigger path: To which database path will new strings be written? For example, if you enter the path `messages`, then the extension will trigger upon writes to `messages/{sourceLanguageCode}/{messageId}`.
 
-**NON-CLOUD FUNCTION RESOURCES CREATED**:
 
-* rtdbtranslate (firebaseextensions.v1beta.function)
+
+
+**CLOUD FUNCTIONS CREATED:**
+
+* rtdbtranslate (providers/google.firebase.database/eventTypes/ref.write)
 
 
 
@@ -52,10 +52,9 @@ If the original, untranslated string in the database path is updated, then the t
 
 This extension uses the Google Translate API for translations, which requires a billing account to use. Make sure to review the [pricing structure](https://cloud.google.com/translate/#pricing) for the Google Translate API.
 
-### Billing
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 - Cloud Translation API
 - Firebase Realtime Database
 - Cloud Functions

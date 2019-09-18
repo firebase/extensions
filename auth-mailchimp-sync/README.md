@@ -14,7 +14,7 @@
 
 * Audience ID: What is the Mailchimp Audience ID to which you want to subscribe new users? To find your Audience ID: visit https://admin.mailchimp.com/lists, click on the desired audience or create a new audience, then select **Settings**. Look for **Audience ID** (for example, `27735fc60a`).
 
-* Contact status: When a new contact is added to the Mailchimp list/audience, what is their initial status? If the status is `subscribed` the contact can immediately receive campaigns. If the status is `pending`, a double opt-in confirmation email will be sent to the user. Once accepted they will be set to a `subscribed` status.
+* Contact status: When the extension adds a new user to the Mailchimp audience, what is their initial status? This value can be `subscribed` or `pending`. `subscribed` means the user can receive campaigns; `pending` means the user still needs to opt-in to receive campaigns.
 
 
 
@@ -34,16 +34,15 @@ This extension adds the email address of each new user to your specified Mailchi
 
 This extension uses Mailchimp, so you'll need to supply your Mailchimp API Key and Audience ID when installing this extension.
 
-### Additional setup
+#### Additional setup
 
 Make sure that you've set up [Firebase Authentication](https://firebase.google.com/docs/auth) to manage your users.
 
 You must also have a Mailchimp account before installing this extension.
 
-### Billing
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 - Firebase Realtime Database
 - Cloud Functions
 
