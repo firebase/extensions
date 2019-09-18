@@ -8,40 +8,49 @@
 
 **CONFIGURATION PARAMETERS:**
 
-* Deployment location: *Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).*
+* Deployment location: Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
-* Document path for internal state: *What is the path to the document where the extension can keep its internal state?*
+* Document path for internal state: What is the path to the document where the extension can keep its internal state?
 
 
 
-**NON-CLOUD FUNCTION RESOURCES CREATED**:
+**CLOUD FUNCTIONS CREATED:**
 
-* controller (firebaseextensions.v1beta.function)
+* controller (HTTPS)
 
-* onWrite (firebaseextensions.v1beta.function)
+* onWrite (providers/cloud.firestore/eventTypes/document.write)
 
-* worker (firebaseextensions.v1beta.function)
+* worker (providers/cloud.firestore/eventTypes/document.write)
 
 
 
 **DETAILS**: Use this extension to add a highly scalable counter service to your app. This is ideal for applications that count viral actions or any very high-velocity action such as views, likes, or shares.
 
-In your app, you specify a Cloud Firestore document path and increment a field value by any amount you choose. The extension then creates a subcollection in that document to help track the counter in a scalable way.
+Since Cloud Firestore has a limit of one sustained write per second, per document, this extension instead shards your writes across documents in a `_counter_shards_` subcollection. Each client only increments their own unique shard while the background workers (provided by this extension) monitor and aggregate these shards into a main document.
 
-Note that this extension is for use with the JavaScript apps and requires the Firebase JavaScript SDK.
+Here are some features of this extension:
+- Scales from 0 updates per second to at least 10,000 per second.
+- Supports an arbitrary number of counters in your app.
+- Works offline and provides latency compensation for the main counter.
 
-### Additional setup
+Note that this extension is currently fully resourced for use with JavaScript apps (we provide the required [JS SDK](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts)). You can, however, use this extension on other platforms if you'd like to develop your own API based on the provided JS SDK.
+
+
+#### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
 
-After installation, you'll need to update your database security rules and set up a [scheduled function](https://firebase.google.com/docs/functions/schedule-functions) to regularly call one of the functions created by this extension. Detailed information for these post-installation tasks are provided after you install this extension.
+After installing this extension, you'll need to:
+- Update your [database security rules](https://firebase.google.com/docs/rules).
+- Set up a [scheduled function](https://firebase.google.com/docs/functions/schedule-functions) to regularly call the controller function, which is created by this extension and monitors the extension's workload.
+- Install the provided [Counter SDK](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts) in your app. You can then use this library in your code to specify your document path and increment values.
 
-This extension provides a Counter SDK that you need to install in your app. You can then use this library in your code to specify your document path and increment values. Detailed instructions to install this SDK and use it are provided after you install this extension.
+Detailed information for these post-installation tasks are provided after you install this extension.
 
-### Billing
+
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 - Cloud Firestore
 - Cloud Functions
 

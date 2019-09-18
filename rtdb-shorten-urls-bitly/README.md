@@ -8,25 +8,25 @@
 
 **CONFIGURATION PARAMETERS:**
 
-* Deployment location: *Where should the extension be deployed? You usually want a location close to your database. Realtime Database instances are located in us-central1. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).*
+* Deployment location: Where should the extension be deployed? You usually want a location close to your database. Realtime Database instances are located in us-central1. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
-* Bitly access token: *What is your Bitly access token? Generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
-*
-
-* Trigger path: *To which database path will original URLs be written? For example, if you enter the path `links`, then the extension will trigger upon writes to `links/{urlID}`.
-*
-
-* URL field name: *What is the name of the field that contains the original, long URLs that you want to shorten?
-*
-
-* Short URL field name: *What is the name of the field where you want to store your shortened URLs?
-*
+* Bitly access token: What is your Bitly access token? Generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
 
 
+* Trigger path: To which database path will original URLs be written? For example, if you enter the path `links`, then the extension will trigger upon writes to `links/{urlID}`.
 
-**NON-CLOUD FUNCTION RESOURCES CREATED**:
 
-* rtdburlshortener (firebaseextensions.v1beta.function)
+* URL field name: What is the name of the field that contains the original, long URLs that you want to shorten?
+
+
+* Short URL field name: What is the name of the field where you want to store your shortened URLs?
+
+
+
+
+**CLOUD FUNCTIONS CREATED:**
+
+* rtdburlshortener (providers/google.firebase.database/eventTypes/ref.write)
 
 
 
@@ -48,10 +48,9 @@ If the original URL in the database path is updated, then the shortened URL will
 
 This extension uses Bitly to shorten URLs, so you'll need to supply your Bitly access token as part of this extension's installation. You can generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
 
-### Billing
+#### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
 - Firebase Realtime Database
 - Cloud Functions
 
