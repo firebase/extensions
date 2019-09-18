@@ -48,16 +48,20 @@ export const mailchimpNotInitialized = () => {
 };
 
 export const start = () => {
-  console.log("Started execution of extension with configuration", obfuscatedConfig);
+  console.log(
+    "Started execution of extension with configuration",
+    obfuscatedConfig
+  );
 };
 
 export const userAdded = (
   userId: string,
   audienceId: string,
-  mailchimpId: string
+  mailchimpId: string,
+  status: string
 ) => {
   console.log(
-    `Added user: ${userId} to Mailchimp audience: ${audienceId} with Mailchimp ID: ${mailchimpId}`
+    `Added user: ${userId} with status '${status}' to Mailchimp audience: ${audienceId} with Mailchimp ID: ${mailchimpId}`
   );
 };
 
