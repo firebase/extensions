@@ -9,7 +9,7 @@
     "extensions:clean": "lerna run clean",
     "extensions:build": "lerna run build",
     "extensions:test": "lerna run test",
-    "postinstall": "lerna bootstrap"
+    "postinstall": "lerna bootstrap && npm run extensions:clean && npm run extensions:build"
   },
   "repository": "",
   "author": "Firebase (https://firebase.google.com/)",
