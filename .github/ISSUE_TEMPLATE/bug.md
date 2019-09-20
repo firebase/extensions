@@ -19,7 +19,7 @@ other category use one of these other channels:
 - For general Firebase discussion, use the [firebase-talk](https://groups.google.com/forum/#!forum/firebase-talk)
   google group.
 - To file a bug against the Firebase Extensions platform, or for an issue affecting multiple extensions, please reach out to
-  [Firebase support](https://firebase.google.com/support/) directly.
+  [Firebase support](https://firebase.google.com/support/troubleshooter/contact/) directly.
 
 ### [REQUIRED] Step 2: Describe your configuration
 
