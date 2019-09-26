@@ -114,6 +114,20 @@ params:
       Invalid sizes, must be a comma-separated list of WIDTHxHEIGHT values.
     required: true
 
+  - param: DELETE_ORIGINAL_FILE
+      type: select
+      label: Delete Original File? (Yes/No)
+      description: >-
+        Delete the original file from the Cloud Storage bucket? This may be useful if you wish to store
+        the thumbnail only and remove the full resolution image to save bucket storage space.
+      options:
+        - label: Yes
+          value: true
+        - label: No
+          value: false
+      default: false
+      required: true
+
   - param: RESIZED_IMAGES_PATH
     label: Cloud Storage path for resized images
     description: >

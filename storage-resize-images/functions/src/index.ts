@@ -115,13 +115,16 @@ export const generateResizedImage = functions.storage.object().onFinalize(
         fs.unlinkSync(originalFile);
         logs.tempOriginalFileDeleted(filePath);
       }
-      if (remoteFile) {
-        try {
-          logs.remoteFileDeleting(filePath);
-          await remoteFile.delete();
-          logs.remoteFileDeleted(filePath);
-        } catch (err) {
-          logs.errorDeleting(err);
+      if (config.deleteOriginalFile) {
+        // Remove the original file
+        if (remoteFile) {
+          try {
+            logs.remoteFileDeleting(filePath);
+            await remoteFile.delete();
+            logs.remoteFileDeleted(filePath);
+          } catch (err) {
+            logs.errorDeleting(err);
+          }
         }
       }
     }
