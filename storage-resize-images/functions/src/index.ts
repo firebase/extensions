@@ -66,6 +66,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
     }
 
     let originalFile;
+    let remoteFile;
     try {
       originalFile = path.join(os.tmpdir(), filePath);
       const tempLocalDir = path.dirname(originalFile);
@@ -76,7 +77,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       logs.tempDirectoryCreated(tempLocalDir);
 
       // Download file from bucket.
-      const remoteFile = bucket.file(filePath);
+      remoteFile = bucket.file(filePath);
       logs.imageDownloading(filePath);
       await remoteFile.download({ destination: originalFile });
       logs.imageDownloaded(filePath, originalFile);
@@ -113,6 +114,15 @@ export const generateResizedImage = functions.storage.object().onFinalize(
         logs.tempOriginalFileDeleting(filePath);
         fs.unlinkSync(originalFile);
         logs.tempOriginalFileDeleted(filePath);
+      }
+      if (remoteFile) {
+        try {
+          logs.remoteFileDeleting(filePath);
+          await remoteFile.delete();
+          logs.remoteFileDeleted(filePath);
+        } catch (err) {
+          logs.errorDeleting(err);
+        }
       }
     }
   }
