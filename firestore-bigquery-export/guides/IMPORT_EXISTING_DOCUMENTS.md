@@ -1,6 +1,6 @@
 ### Overview
 
-The import script (`fs-bq-import-collection`) can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by the Export Collections to BigQuery extension. The script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This ensures that any operation on an imported document supersedes the import record.
+The import script (`firestore-bigquery-change-tracker`) can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by the Export Collections to BigQuery extension. The script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This ensures that any operation on an imported document supersedes the import record.
 
 You may pause and resume the script from the last batch at any point.
 
@@ -21,7 +21,7 @@ This import script uses several values from your installation of the extension:
 +   `${COLLECTION_PATH}`: the collection path that you specified during extension installation
 +   `${DATASET_ID}`: the ID that you specified for your dataset during extension installation
 
-1.  Run `npx @firebaseextensions/fs-bq-import-collection`.
+1.  Run `npx @firebaseextensions/firestore-bigquery-change-tracker`.
 
 1.  When prompted, enter the Cloud Firestore collection path that you specified during extension installation, `${COLLECTION_PATH}`.
 
@@ -32,7 +32,7 @@ This import script uses several values from your installation of the extension:
     `from-${COLLECTION_PATH}-to-${PROJECT_ID}:${DATASET_ID}:${rawChangeLogName}`,
     which lives in the directory from which you invoked the import script.
 
-    +   **Resume the import from where you left off:** re-run `npx @firebaseextensions/fs-bq-import-collection`
+    +   **Resume the import from where you left off:** re-run `npx @firebaseextensions/firestore-bigquery-change-tracker`
     _from the same directory that you previously invoked the script_
 
         Note that when an import completes successfully, the import script automatically cleans up the cursor file it was using to keep track of its progress.
