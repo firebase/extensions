@@ -36,9 +36,12 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
+  - authorName: Elliot Hesp
+    email: elliot@invertase.io
+    url: https://github.com/ehesp
 
 roles:
-  - role: datastore.user
+  - role: datastore.owner
     reason: Allows the extension to delete (user) data from Cloud Firestore.
   - role: firebasedatabase.admin
     reason: Allows the extension to delete (user) data from Realtime Database.
@@ -98,6 +101,20 @@ params:
 
       For example, if you have the collections `users` and `admins`, and each collection
       has documents with User ID as document IDs, then you can enter `users/{UID},admins/{UID}`.
+
+  - param: FIRESTORE_DELETE_MODE
+    type: select
+    label: Cloud Firestore delete mode
+    description: >-
+      How would you like Firestore to delete documents? Set to `recursive` to also delete nested Collections and
+      Subcollections.
+    options:
+      - label: Shallow
+        value: shallow
+      - label: Recursive
+        value: recursive
+    default: shallow
+    required: true
 
   - param: RTDB_PATHS
     type: string
