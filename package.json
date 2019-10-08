@@ -4,8 +4,8 @@
   "description": "Repository of sample Firebase Extensions.",
   "private": true,
   "scripts": {
-    "format": "prettier --write {,**/}*.{yaml,js,md}",
-    "test": "prettier --list-different {,**/}*.{yaml,js,md}",
+    "prettier:format": "prettier --write {,**/}*.{yaml,js,md}",
+    "prettier:test": "prettier --list-different {,**/}*.{yaml,js,md}",
     "extensions:clean": "lerna run clean",
     "extensions:build": "lerna run build",
     "extensions:test": "lerna run test",
