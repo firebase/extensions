@@ -1,9 +1,8 @@
-# Mods Test Data
+# Extensions Test Data
 
-This package will populate some test data for the following mods:
+This package will populate some test data for the following extensions:
 
-- firestore-recursive-delete
-- user-data-deletion
+- delete-user-data
 
 To run the package, you'll need:
 

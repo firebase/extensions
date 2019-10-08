@@ -1,7 +1,7 @@
 {
-  "name": "firebase-mods",
+  "name": "firebase-extensions",
   "version": "1.0.0",
-  "description": "Repository of sample Firebase Mods.",
+  "description": "Repository of sample Firebase Extensions.",
   "private": true,
   "scripts": {
     "format": "prettier --write {,**/}*.{yaml,js,md}",
