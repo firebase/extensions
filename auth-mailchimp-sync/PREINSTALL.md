@@ -15,6 +15,7 @@ You must also have a Mailchimp account before installing this extension.
 #### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
+
 - Firebase Realtime Database
 - Cloud Functions
 

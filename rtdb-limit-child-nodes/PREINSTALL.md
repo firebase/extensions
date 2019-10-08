@@ -9,6 +9,7 @@ Before installing this extension, make sure that you've [set up a Realtime Datab
 #### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
+
 - Firebase Realtime Database
 - Cloud Functions
 

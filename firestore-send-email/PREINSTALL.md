@@ -25,6 +25,7 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 #### Billing
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
+
 - Cloud Firestore
 - Cloud Functions
 
