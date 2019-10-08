@@ -130,7 +130,7 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
       } else {
         logs.firestorePathDeleting(path, true);
         await firebase_tools.firestore.delete(path, {
-          project: process.env.GCLOUD_PROJECT,
+          project: process.env.PROJECT_ID,
           recursive: true,
           yes: true, // auto-confirmation
         });
