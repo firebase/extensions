@@ -36,10 +36,12 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
     logs.start();
     try {
       const changeType = getChangeType(change);
+      // set documentName to "<collection_name>/<document_id>" to match documentName from backfill rows
+      const documentName = context.resource.name.split("/").slice(-2).join("/");
       await eventTracker.record([{
         timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
         operation: changeType,
-        documentName: context.resource.name,
+        documentName: documentName,
         eventId: context.eventId,
         data: changeType == ChangeType.DELETE ? undefined: change.after.data(),
       }]);
