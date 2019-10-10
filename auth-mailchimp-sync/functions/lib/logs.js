@@ -16,7 +16,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const config_1 = require("./config");
-const obfuscatedConfig = Object.assign({}, config_1.default, { mailchimpApiKey: "********" });
+exports.obfuscatedConfig = Object.assign({}, config_1.default, { mailchimpApiKey: "<omitted>" });
 exports.complete = () => {
     console.log("Completed execution of extension");
 };
@@ -27,7 +27,7 @@ exports.errorRemoveUser = (err) => {
     console.error("Error when removing user from Mailchimp audience", err);
 };
 exports.init = () => {
-    console.log("Initializing extension with configuration", obfuscatedConfig);
+    console.log("Initializing extension with configuration", exports.obfuscatedConfig);
 };
 exports.initError = (err) => {
     console.error("Error when initializing extension", err);
@@ -36,7 +36,7 @@ exports.mailchimpNotInitialized = () => {
     console.error("Mailchimp was not initialized correctly, check for errors in the logs");
 };
 exports.start = () => {
-    console.log("Started execution of extension with configuration", obfuscatedConfig);
+    console.log("Started execution of extension with configuration", exports.obfuscatedConfig);
 };
 exports.userAdded = (userId, audienceId, mailchimpId, status) => {
     console.log(`Added user: ${userId} with status '${status}' to Mailchimp audience: ${audienceId} with Mailchimp ID: ${mailchimpId}`);
