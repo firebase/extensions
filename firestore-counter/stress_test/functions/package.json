@@ -1,5 +1,5 @@
 {
-  "name": "functions",
+  "name": "firestore-counter-stress-test-functions",
   "scripts": {
     "lint": "tslint --project tsconfig.json",
     "build": "tsc",

@@ -16,15 +16,15 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const config_1 = require("./config");
-const safeConfig = Object.assign({}, config_1.default, {
+exports.obfuscatedConfig = Object.assign({}, config_1.default, {
     smtpConnectionUri: "<omitted>",
 });
 function init() {
-    console.log("Initializing extension with configuration", safeConfig);
+    console.log("Initializing extension with configuration", exports.obfuscatedConfig);
 }
 exports.init = init;
 function start() {
-    console.log("Started execution of extension with configuration", safeConfig);
+    console.log("Started execution of extension with configuration", exports.obfuscatedConfig);
 }
 exports.start = start;
 function error(err) {

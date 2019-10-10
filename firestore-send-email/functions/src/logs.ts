@@ -16,16 +16,16 @@
 
 import config from "./config";
 
-const safeConfig = Object.assign({}, config, {
+export const obfuscatedConfig = Object.assign({}, config, {
   smtpConnectionUri: "<omitted>",
 });
 
 export function init() {
-  console.log("Initializing extension with configuration", safeConfig);
+  console.log("Initializing extension with configuration", obfuscatedConfig);
 }
 
 export function start() {
-  console.log("Started execution of extension with configuration", safeConfig);
+  console.log("Started execution of extension with configuration", obfuscatedConfig);
 }
 
 export function error(err: Error) {
