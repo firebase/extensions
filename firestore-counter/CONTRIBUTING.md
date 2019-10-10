@@ -2,7 +2,6 @@
 
 **DESCRIPTION**: Auto-scalable counters for your app.
 
-
 **FEATURES**:
 
 - Zero configuration, one mod for all your app needs
@@ -13,17 +12,18 @@
 - Works well offline and provides latency compensation
   - Counter updates are immediately visible locally even though the main counter is eventually updated
 
-
 **DETAILS**: This mod allows you to increment any fields in your documents at arbitrary rate.
 
 Client SDK, instead of incrementing the field directly, increments their own shard in `_counter_shards_` subcollection. A background task is periodically aggregating these shards and eventually rolling them up to the main counters.
 
 There are three cloud functions that orchestrate shard aggregations:
-1. A `worker` function is responsible for monitoring and aggregating a range of shards. There may be 0 or hundreds of  workers running concurrently to scale up to large workloads
+
+1. A `worker` function is responsible for monitoring and aggregating a range of shards. There may be 0 or hundreds of workers running concurrently to scale up to large workloads
 2. A `controller` function runs every minute and monitors the health of the workers. It can scale up and down the number of workers as needed and recover a worker on failure.
 3. A `onWrite` function triggers every time a shard is written and runs one-time aggregation. This improves latency for low workloads where no workers is running. To improve efficiency there's only one instance of this function running at any given time (`maxInstances` is set to 1).
 
 # Installation
+
 ```
 firebase mods:install . --project=<my-project-id>
 
@@ -31,6 +31,7 @@ Please check the post-install message for the final step to set up your mod.
 ```
 
 # Web SDK
+
 ```
 <html>
     <head>
@@ -47,7 +48,7 @@ Please check the post-install message for the final step to set up your mod.
 
             // Initialize the sharded counter.
             var views = new sharded.Counter(db.doc("pages/hello-world"), "stats.views");
-            
+
             // This will increment a field "stats.views" of the "pages/hello-world" document by 3.
             views.incrementBy(3);
 
@@ -66,6 +67,7 @@ Please check the post-install message for the final step to set up your mod.
 ```
 
 # Building from source
+
 ```
     cd functions/
     npm install
