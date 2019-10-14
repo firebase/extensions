@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-const firestore_shorten_urls_common_1 = require("firestore-shorten-urls-common");
-const config_1 = require("./config");
-const obfuscatedConfig = Object.assign(Object.assign({}, config_1.default), { bitlyAccessToken: "********" });
-exports.logs = new firestore_shorten_urls_common_1.FirestoreUrlShortenerLogger(obfuscatedConfig);
+exports.default = {
+    collectionPath: process.env.COLLECTION_PATH,
+    urlFieldName: process.env.URL_FIELD_NAME,
+    shortUrlFieldName: process.env.SHORT_URL_FIELD_NAME,
+    location: process.env.LOCATION,
+};

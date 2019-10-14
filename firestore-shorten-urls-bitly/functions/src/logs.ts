@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { FirestoreUrlShortenerLogger } from "firestore-shorten-urls-common";
+
 import config from "./config";
 
 const obfuscatedConfig = {
@@ -21,70 +23,4 @@ const obfuscatedConfig = {
   bitlyAccessToken: "********",
 };
 
-export const complete = () => {
-  console.log("Completed execution of extension");
-};
-
-export const documentCreatedNoUrl = () => {
-  console.log("Document was created without a URL, no processing is required");
-};
-
-export const documentCreatedWithUrl = () => {
-  console.log("Document was created with a URL");
-};
-
-export const documentDeleted = () => {
-  console.log("Document was deleted, no processing is required");
-};
-
-export const documentUpdatedChangedUrl = () => {
-  console.log("Document was updated, URL has changed");
-};
-
-export const documentUpdatedDeletedUrl = () => {
-  console.log("Document was updated, URL was deleted");
-};
-
-export const documentUpdatedNoUrl = () => {
-  console.log("Document was updated, no URL exists, no processing is required");
-};
-
-export const documentUpdatedUnchangedUrl = () => {
-  console.log(
-    "Document was updated, URL has not changed, no processing is required"
-  );
-};
-
-export const error = (err: Error) => {
-  console.error("Error when shortening URL", err);
-};
-
-export const fieldNamesNotDifferent = () => {
-  console.error(
-    "The `URL` and `Short URL` field names must be different for this extension to function correctly"
-  );
-};
-
-export const init = () => {
-  console.log("Initializing extension with configuration", obfuscatedConfig);
-};
-
-export const shortenUrl = (url: string) => {
-  console.log(`Shortening URL: '${url}'`);
-};
-
-export const shortenUrlComplete = (shortUrl: string) => {
-  console.log(`Finished shortening URL to: '${shortUrl}'`);
-};
-
-export const start = () => {
-  console.log("Started execution of extension with configuration", obfuscatedConfig);
-};
-
-export const updateDocument = (path: string) => {
-  console.log(`Updating Cloud Firestore document: '${path}'`);
-};
-
-export const updateDocumentComplete = (path: string) => {
-  console.log(`Finished updating Cloud Firestore document: '${path}'`);
-};
+export const logs = new FirestoreUrlShortenerLogger(obfuscatedConfig);

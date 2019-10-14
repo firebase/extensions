@@ -1,23 +1,28 @@
 {
   "name": "firestore-shorten-urls-bitly",
-  "version": "0.1.0",
-  "description": "Automatically shorten url links",
+  "version": "0.1.1",
+  "description": "Automatically shorten URLs with bit.ly",
   "author": "Chris Bianca <chris@csfrequency.com>",
   "license": "Apache-2.0",
   "main": "functions/lib/index.js",
   "scripts": {
-    "build": "npm run clean && npm run compile",
+    "copydeps": "ncp ../firestore-shorten-urls-common ./functions/firestore-shorten-urls-common",
+    "build": "npm run clean && npm run copydeps && npm run compile",
     "clean": "rimraf functions/lib",
     "compile": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "bitly": "^6.0.8",
-    "firebase-admin": "^8.0.0",
-    "firebase-functions": "^2.3.1"
+    "bitly": "^6.1.0",
+    "firebase-admin": "^8.6.0",
+    "firebase-functions": "^3.3.0"
+  },
+  "optionalDependencies": {
+    "firestore-shorten-urls-common": "file:functions/firestore-shorten-urls-common"
   },
   "devDependencies": {
-    "rimraf": "^2.6.3",
-    "typescript": "^3.2.4"
+    "ncp": "^2.0.0",
+    "rimraf": "^3.0.0",
+    "typescript": "^3.6.4"
   }
 }

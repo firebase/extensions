@@ -1,0 +1,26 @@
+{
+  "name": "firestore-shorten-urls-common",
+  "version": "0.1.1",
+  "description": "Common files for Firestore URL shorteners",
+  "license": "Apache-2.0",
+  "author": "Chris Bianca <chris@csfrequency.com>",
+  "contributors": [
+    "Kevin Cheung <kevincheung@google.com>"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "npm run clean && npm run compile",
+    "clean": "rimraf lib",
+    "compile": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "firebase-admin": "^8.6.0",
+    "firebase-functions": "^3.3.0"
+  },
+  "devDependencies": {
+    "rimraf": "^3.0.0",
+    "typescript": "^3.6.4"
+  }
+}
