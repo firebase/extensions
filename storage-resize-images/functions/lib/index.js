@@ -54,6 +54,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
     const fileName = path.basename(filePath);
     const fileExtension = path.extname(filePath);
     const fileNameWithoutExtension = fileName.slice(0, -fileExtension.length);
+    const originalMetadata = object.metadata;
     const isResizedImage = validators.isResizedImage(fileNameWithoutExtension);
     if (isResizedImage) {
         logs.imageAlreadyResized();
@@ -84,6 +85,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
                 fileExtension,
                 contentType,
                 size,
+                originalMetadata
             }));
         });
         const results = yield Promise.all(tasks);
@@ -105,7 +107,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         }
     }
 }));
-const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, }) => __awaiter(this, void 0, void 0, function* () {
+const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, originalMetadata }) => __awaiter(this, void 0, void 0, function* () {
     const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
     // Path where resized image will be uploaded to in Storage.
     const resizedFilePath = path.normalize(config_1.default.resizedImagesPath
@@ -118,6 +120,12 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         const metadata = {
             contentType: contentType,
         };
+        if (config_1.default.keepFileMetadata) {
+            // Check if the original file actually has custom metadata
+            if (originalMetadata) {
+                metadata.metadata = originalMetadata;
+            }
+        }
         if (config_1.default.cacheControlHeader) {
             metadata.cacheControl = config_1.default.cacheControlHeader;
         }

@@ -114,6 +114,19 @@ params:
       Invalid sizes, must be a comma-separated list of WIDTHxHEIGHT values.
     required: true
 
+  - param: KEEP_FILE_METADATA
+      type: select
+      label: Keep Original Custom Metadata? (Yes/No)
+      description: >-
+        Copy the custom metadata from the original image to the resized image?
+      options:
+        - label: Yes
+          value: true
+        - label: No
+          value: false
+      default: false
+      required: true
+
   - param: RESIZED_IMAGES_PATH
     label: Cloud Storage path for resized images
     description: >
