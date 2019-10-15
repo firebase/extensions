@@ -14,10 +14,5 @@
  * limitations under the License.
  */
 
-const suffixRegex = /_\d+x\d+$/;
-
 export const isImage = (contentType: string): boolean =>
   contentType.startsWith("image/");
-
-export const isResizedImage = (fileName: string): boolean =>
-  suffixRegex.test(fileName);
