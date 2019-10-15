@@ -119,7 +119,8 @@ params:
       label: Delete Original File? (Yes/No)
       description: >-
         Delete the original file from the Cloud Storage bucket? This may be useful if you wish to store
-        the thumbnail only and remove the full resolution image to save bucket storage space.
+        the thumbnail only and remove the full resolution image to save bucket storage space. Please note
+        that this deletion cant be undone.
       options:
         - label: Yes
           value: true
