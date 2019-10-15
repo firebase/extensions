@@ -5,7 +5,13 @@
   "private": true,
   "scripts": {
     "format": "prettier --write {,**/}*.{yaml,js,md}",
-    "test": "prettier --list-different {,**/}*.{yaml,js,md}"
+    "lint": "prettier --list-different {,**/}*.{yaml,js,md}",
+    "clean": "lerna run clean",
+    "build": "lerna run build",
+    "test": "jest",
+    "test-watch": "jest --watch",
+    "test-coverage": "jest --coverage",
+    "postinstall": "lerna bootstrap && npm run clean && npm run build"
   },
   "repository": "",
   "author": "Firebase (https://firebase.google.com/)",
@@ -14,6 +20,11 @@
     "url": ""
   },
   "devDependencies": {
+    "jest": "^24.9.0",
+    "ts-jest": "^24.1.0",
+    "@types/jest": "^24.0.18",
+    "typescript": "^3.6.3",
+    "lerna": "^3.4.3",
     "prettier": "1.15.3"
   }
 }

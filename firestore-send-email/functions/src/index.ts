@@ -21,19 +21,28 @@ import * as nodemailer from "nodemailer";
 import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
-import { logger } from "handlebars";
 
-admin.initializeApp();
-const db = admin.firestore();
+logs.init();
 
-const transport = nodemailer.createTransport(config.smtpConnectionUri);
-
+let db;
+let transport;
 let templates;
+let initialized = false;
 
-if (config.templatesCollection) {
-  templates = new Templates(
-    admin.firestore().collection(config.templatesCollection)
-  );
+/**
+ * Initializes Admin SDK & SMTP connection if not already initialized.
+ */
+function initialize() {
+  if (initialized === true) return;
+  initialized = true;
+  admin.initializeApp();
+  db = admin.firestore();
+  transport = nodemailer.createTransport(config.smtpConnectionUri);
+  if (config.templatesCollection) {
+    templates = new Templates(
+      admin.firestore().collection(config.templatesCollection)
+    );
+  }
 }
 
 interface QueuePayload {
@@ -71,10 +80,8 @@ function validateFieldArray(field: string, array?: string[]) {
     throw new Error(`Invalid field "${field}". Expected an array of strings.`);
   }
 
-  if (array.find(item => typeof item !== 'string')) {
-    throw new Error(
-      `Invalid field "${field}". Expected an array of strings.`
-    );
+  if (array.find((item) => typeof item !== "string")) {
+    throw new Error(`Invalid field "${field}". Expected an array of strings.`);
   }
 }
 
@@ -107,21 +114,21 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
   let cc: string[] = [];
   let bcc: string[] = [];
 
-  if (typeof payload.to === 'string') {
+  if (typeof payload.to === "string") {
     to = [payload.to];
   } else if (payload.to) {
     validateFieldArray("to", payload.to);
     to = to.concat(payload.to);
   }
 
-  if (typeof payload.cc === 'string') {
+  if (typeof payload.cc === "string") {
     cc = [payload.cc];
   } else if (payload.cc) {
     validateFieldArray("cc", payload.cc);
     cc = cc.concat(payload.cc);
   }
 
-  if (typeof payload.bcc === 'string') {
+  if (typeof payload.bcc === "string") {
     bcc = [payload.bcc];
   } else if (payload.bcc) {
     validateFieldArray("bcc", payload.bcc);
@@ -158,10 +165,12 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
   }
 
   const toFetch = {};
-  uids.forEach(uid => toFetch[uid] = null);
+  uids.forEach((uid) => (toFetch[uid] = null));
 
   const documents = await db.getAll(
-    ...Object.keys(toFetch).map((uid) => db.collection(config.usersCollection).doc(uid)),
+    ...Object.keys(toFetch).map((uid) =>
+      db.collection(config.usersCollection).doc(uid)
+    ),
     {
       fieldMask: ["email"],
     }
@@ -237,7 +246,9 @@ async function deliver(
     payload = await preparePayload(payload);
 
     if (!payload.to.length && !payload.cc.length && !payload.bcc.length) {
-      throw new Error("Failed to deliver email. Expected at least 1 recipient.")
+      throw new Error(
+        "Failed to deliver email. Expected at least 1 recipient."
+      );
     }
 
     const result = await transport.sendMail(
@@ -311,6 +322,7 @@ async function processWrite(change) {
 
 export const processQueue = functions.handler.firestore.document.onWrite(
   async (change) => {
+    initialize();
     logs.start();
     try {
       await processWrite(change);

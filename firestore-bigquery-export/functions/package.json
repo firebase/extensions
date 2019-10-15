@@ -1,5 +1,5 @@
 {
-  "name": "functions",
+  "name": "firestore-bigquery-export-functions",
   "scripts": {
     "build": "tsc",
     "serve": "npm run build && firebase serve --only functions",

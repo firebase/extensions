@@ -9,3 +9,4 @@ mods-test-data/key.json
 build
 *.iml
 local.properties
+coverage

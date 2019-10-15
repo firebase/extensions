@@ -1,12 +1,9 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "lib": ["es6"],
-    "module": "commonjs",
-    "noImplicitReturns": true,
-    "outDir": "functions/lib",
-    "sourceMap": false,
-    "target": "es6"
+    "outDir": "functions/lib"
   },
-  "compileOnSave": true,
-  "include": ["functions/src"]
+  "include": [
+    "functions/src"
+  ]
 }

@@ -29,18 +29,30 @@ const nodemailer = require("nodemailer");
 const logs = require("./logs");
 const config_1 = require("./config");
 const templates_1 = require("./templates");
-admin.initializeApp();
-const db = admin.firestore();
-const transport = nodemailer.createTransport(config_1.default.smtpConnectionUri);
+logs.init();
+let db;
+let transport;
 let templates;
-if (config_1.default.templatesCollection) {
-    templates = new templates_1.default(admin.firestore().collection(config_1.default.templatesCollection));
+let initialized = false;
+/**
+ * Initializes Admin SDK & SMTP connection if not already initialized.
+ */
+function initialize() {
+    if (initialized === true)
+        return;
+    initialized = true;
+    admin.initializeApp();
+    db = admin.firestore();
+    transport = nodemailer.createTransport(config_1.default.smtpConnectionUri);
+    if (config_1.default.templatesCollection) {
+        templates = new templates_1.default(admin.firestore().collection(config_1.default.templatesCollection));
+    }
 }
 function validateFieldArray(field, array) {
     if (!Array.isArray(array)) {
         throw new Error(`Invalid field "${field}". Expected an array of strings.`);
     }
-    if (array.find(item => typeof item !== 'string')) {
+    if (array.find((item) => typeof item !== "string")) {
         throw new Error(`Invalid field "${field}". Expected an array of strings.`);
     }
 }
@@ -68,21 +80,21 @@ function preparePayload(payload) {
         let to = [];
         let cc = [];
         let bcc = [];
-        if (typeof payload.to === 'string') {
+        if (typeof payload.to === "string") {
             to = [payload.to];
         }
         else if (payload.to) {
             validateFieldArray("to", payload.to);
             to = to.concat(payload.to);
         }
-        if (typeof payload.cc === 'string') {
+        if (typeof payload.cc === "string") {
             cc = [payload.cc];
         }
         else if (payload.cc) {
             validateFieldArray("cc", payload.cc);
             cc = cc.concat(payload.cc);
         }
-        if (typeof payload.bcc === 'string') {
+        if (typeof payload.bcc === "string") {
             bcc = [payload.bcc];
         }
         else if (payload.bcc) {
@@ -112,7 +124,7 @@ function preparePayload(payload) {
             uids = uids.concat(payload.bccUids);
         }
         const toFetch = {};
-        uids.forEach(uid => toFetch[uid] = null);
+        uids.forEach((uid) => (toFetch[uid] = null));
         const documents = yield db.getAll(...Object.keys(toFetch).map((uid) => db.collection(config_1.default.usersCollection).doc(uid)), {
             fieldMask: ["email"],
         });
@@ -238,6 +250,7 @@ function processWrite(change) {
     });
 }
 exports.processQueue = functions.handler.firestore.document.onWrite((change) => __awaiter(this, void 0, void 0, function* () {
+    initialize();
     logs.start();
     try {
         yield processWrite(change);

@@ -1,0 +1,11 @@
+package.json
+extension.yaml
+webpack.config.js
+**/node_modules/**
+
+# generated files
+README.md
+POSTINSTALL.md
+PREINSTALL.md
+**/functions/lib/**
+**/dist/**
