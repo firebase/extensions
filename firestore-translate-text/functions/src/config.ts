@@ -15,7 +15,7 @@
  */
 
 export default {
-  languages: process.env.LANGUAGES.split(","),
+  languages: new Set(process.env.LANGUAGES.split(",")),
   location: process.env.LOCATION,
   inputFieldName: process.env.INPUT_FIELD_NAME,
   outputFieldName: process.env.OUTPUT_FIELD_NAME,

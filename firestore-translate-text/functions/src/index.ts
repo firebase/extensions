@@ -55,7 +55,7 @@ export const fstranslate = functions.handler.firestore.document.onWrite(
       validators.fieldNameIsTranslationPath(
         inputFieldName,
         outputFieldName,
-        languages
+        Array.from(languages)
       )
     ) {
       logs.inputFieldNameIsOutputPath();
@@ -147,9 +147,10 @@ const translateDocument = async (
 ): Promise<void> => {
   const input: string = extractInput(snapshot);
 
-  logs.translateInputStringToAllLanguages(input, config.languages);
+  const languages = Array.from(config.languages);
+  logs.translateInputStringToAllLanguages(input, languages);
 
-  const tasks = config.languages.map(
+  const tasks = languages.map(
     async (targetLanguage: string): Promise<Translation> => {
       return {
         language: targetLanguage,
