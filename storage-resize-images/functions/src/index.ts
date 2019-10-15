@@ -52,6 +52,11 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       return;
     }
 
+    if (object.metadata && object.metadata.resizedImage === "true") {
+      logs.imageAlreadyResized();
+      return;
+    }
+
     const bucket = admin.storage().bucket(object.bucket);
     const filePath = object.name; // File path in the bucket.
     const fileDir = path.dirname(filePath);
@@ -59,12 +64,6 @@ export const generateResizedImage = functions.storage.object().onFinalize(
     const fileExtension = path.extname(filePath);
     const fileNameWithoutExtension = fileName.slice(0, -fileExtension.length);
     const originalMetadata = object.metadata;
-
-    const isResizedImage = validators.isResizedImage(fileNameWithoutExtension);
-    if (isResizedImage) {
-      logs.imageAlreadyResized();
-      return;
-    }
 
     let originalFile;
     try {
@@ -154,6 +153,9 @@ const resizeImage = async ({
     // Cloud Storage files.
     const metadata: any = {
       contentType: contentType,
+      metadata: {
+        resizedImage: "true",
+      },
     };
     if (config.keepFileMetadata) {
       // Check if the original file actually has custom metadata
