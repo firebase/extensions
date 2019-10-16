@@ -31,7 +31,7 @@ const WORKERS_COLLECTION_ID = "_counter_workers_";
  * there's less than 200 of them. Otherwise it is scheduling and monitoring
  * workers to do the aggregation.
  */
-export const controller = functions.https.onRequest(async (req, res) => {
+export const controller = functions.pubsub.topic("firestore-counter").onPublish(async () => {
   const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
   const controller = new ShardedCounterController(
     metadocRef,
@@ -45,7 +45,7 @@ export const controller = functions.https.onRequest(async (req, res) => {
   ) {
     await controller.rescheduleWorkers();
   }
-  res.status(200).send("OK");
+  return null;
 });
 
 /**
