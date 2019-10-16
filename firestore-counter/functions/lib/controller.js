@@ -191,7 +191,7 @@ class ShardedCounterController {
                     yield t.get(this.controllerDocRef);
                 }
                 catch (err) {
-                    console.log("Failed to read controler doc " + this.controllerDocRef.path);
+                    console.log("Failed to read controller doc " + this.controllerDocRef.path);
                     throw Error("Failed to read controller doc.");
                 }
                 // Read all workers' metadata and construct sharding info based on collected stats.

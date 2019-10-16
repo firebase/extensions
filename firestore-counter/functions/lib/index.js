@@ -69,7 +69,7 @@ exports.worker = functions.firestore
 /**
  * This is an additional function that is triggered for every shard write. It is
  * limited to one concurrent run at the time. This helps reduce latency for workloads
- * that are below the theshold for workers.
+ * that are below the threshold for workers.
  */
 exports.onWrite = functions.firestore
     .document("/{collection}/{**}/_counter_shards_/{shardId}")
