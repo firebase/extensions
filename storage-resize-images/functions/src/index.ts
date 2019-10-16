@@ -155,11 +155,8 @@ const resizeImage = async ({
     const metadata: any = {
       contentType: contentType,
     };
-    if (config.keepFileMetadata) {
-      // Check if the original file actually has custom metadata
-      if (originalMetadata) {
-        metadata.metadata = originalMetadata;
-      }
+    if (config.keepFileMetadata && originalMetadata) {
+      metadata.metadata = originalMetadata;
     }
     if (config.cacheControlHeader) {
       metadata.cacheControl = config.cacheControlHeader;

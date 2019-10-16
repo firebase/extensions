@@ -120,11 +120,8 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         const metadata = {
             contentType: contentType,
         };
-        if (config_1.default.keepFileMetadata) {
-            // Check if the original file actually has custom metadata
-            if (originalMetadata) {
-                metadata.metadata = originalMetadata;
-            }
+        if (config_1.default.keepFileMetadata && originalMetadata) {
+            metadata.metadata = originalMetadata;
         }
         if (config_1.default.cacheControlHeader) {
             metadata.cacheControl = config_1.default.cacheControlHeader;

@@ -20,4 +20,5 @@ exports.default = {
     cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
     imageSizes: process.env.IMG_SIZES.split(","),
     resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
+    keepFileMetadata: process.env.KEEP_FILE_METADATA === "true",
 };
