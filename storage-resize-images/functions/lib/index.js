@@ -105,7 +105,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
             logs.tempOriginalFileDeleted(filePath);
         }
         if (config_1.default.deleteOriginalFile) {
-            // Remove the original file
+            // Delete the original file
             if (remoteFile) {
                 try {
                     logs.remoteFileDeleting(filePath);
