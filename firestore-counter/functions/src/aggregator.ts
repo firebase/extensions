@@ -15,7 +15,7 @@
  */
 
 import { firestore } from "firebase-admin";
-import { FieldPath, FieldValue } from "@google-cloud/firestore";
+import { FieldValue } from "@google-cloud/firestore";
 import * as uuid from "uuid";
 
 export class NumericUpdate {
