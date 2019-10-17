@@ -16,7 +16,7 @@
 * Sizes of resized images: What sizes of images would you like (in pixels)? Enter the sizes as a comma-separated list of WIDTHxHEIGHT values.
 
 
-* Cloud Storage path for resized images: A relative path in which to store resized images. For example, if you specify a path here of `thumbs` and you upload an image to `/images/original.jpg`, then the resized image is stored at `/images/thumbs/original_200x200.jpg`. If you prefer to store resized images at the root of your bucket, leave this field empty. Learn more about [how this parameter works](https://firebase.google.com/products/extensions/storage-resize-image).
+* Cloud Storage path for resized images: A relative path in which to store resized images. For example, if you specify a path here of `thumbs` and you upload an image to `/images/original.jpg`, then the resized image is stored at `/images/thumbs/original_200x200.jpg`. If you prefer to store resized images at the root of your bucket, leave this field empty. Learn more about [how this parameter works](https://firebase.google.com/products/extensions/storage-resize-images).
 
 
 * Cache-Control header for resized images: Do you want to specify a `Cache-Control` header for the resized image files? Learn more about [`Cache-Control` headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control). If you prefer not to use a `Cache-Control` header, leave this field empty.
