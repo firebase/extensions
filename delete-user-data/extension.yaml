@@ -106,7 +106,8 @@ params:
     type: select
     label: Cloud Firestore delete mode
     description: >-
-      How would you like Firestore to delete documents? Set to `recursive` to also delete documents in subcollections.
+      How do you want to delete Cloud Firestore documents? To also delete documents in
+      subcollections, set this parameter to `recursive`.
     options:
       - label: Recursive
         value: recursive
