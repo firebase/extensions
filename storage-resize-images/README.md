@@ -1,6 +1,6 @@
 # storage-resize-images
 
-**VERSION**: 0.1.0
+**VERSION**: 0.1.1
 
 **DESCRIPTION**: Resizes images uploaded to Cloud Storage to a specified size, and stores both the original and resized images.
 
