@@ -106,14 +106,13 @@ params:
     type: select
     label: Cloud Firestore delete mode
     description: >-
-      How would you like Firestore to delete documents? Set to `shallow` to delete only parent documents
-      and ignore documents in subcollections.
+      How would you like Firestore to delete documents? Set to `recursive` to also delete documents in subcollections.
     options:
       - label: Recursive
         value: recursive
       - label: Shallow
         value: shallow
-    default: recursive
+    default: shallow
     required: true
 
   - param: RTDB_PATHS
