@@ -16,9 +16,9 @@
 
 import config from "./config";
 
-const obfuscatedConfig = {
+export const obfuscatedConfig = {
   ...config,
-  mailchimpApiKey: "********",
+  mailchimpApiKey: "<omitted>",
 };
 
 export const complete = () => {
