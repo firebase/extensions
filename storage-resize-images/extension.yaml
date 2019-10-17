@@ -115,6 +115,20 @@ params:
       Invalid sizes, must be a comma-separated list of WIDTHxHEIGHT values.
     required: true
 
+  - param: DELETE_ORIGINAL_FILE
+      type: select
+      label: Deletion of original file
+      description: >-
+        Do you want to automatically delete the original file from the Cloud Storage
+        bucket? Note that these deletions cannot be undone.
+      options:
+        - label: Yes
+          value: true
+        - label: No
+          value: false
+      default: false
+      required: true
+
   - param: RESIZED_IMAGES_PATH
     label: Cloud Storage path for resized images
     description: >
