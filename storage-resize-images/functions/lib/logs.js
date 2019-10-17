@@ -76,3 +76,9 @@ exports.tempResizedFileDeleted = (path) => {
 exports.tempResizedFileDeleting = (path) => {
     console.log(`Deleting temporary resized file: '${path}'`);
 };
+exports.remoteFileDeleted = (path) => {
+    console.log(`Deleted original file from storage bucket: '${path}'`);
+};
+exports.remoteFileDeleting = (path) => {
+    console.log(`Deleting original file from storage bucket: '${path}'`);
+};
