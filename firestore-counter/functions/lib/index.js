@@ -38,7 +38,7 @@ const WORKERS_COLLECTION_ID = "_counter_workers_";
  * there's less than 200 of them. Otherwise it is scheduling and monitoring
  * workers to do the aggregation.
  */
-exports.controller = functions.pubsub.topic("firestore-counter").onPublish(() => __awaiter(void 0, void 0, void 0, function* () {
+exports.controller = functions.handler.pubsub.topic.onPublish(() => __awaiter(void 0, void 0, void 0, function* () {
     const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new controller_1.ShardedCounterController(metadocRef, SHARDS_COLLECTION_ID);
     let status = yield controller.aggregateOnce({ start: "", end: "" }, 200);
