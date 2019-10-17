@@ -25,6 +25,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
+const firebase_tools = require("firebase-tools");
 const config_1 = require("./config");
 const logs = require("./logs");
 // Initialize the Firebase Admin SDK
@@ -113,12 +114,24 @@ const clearFirestoreData = (firestorePaths, uid) => __awaiter(this, void 0, void
     const paths = extractUserPaths(firestorePaths, uid);
     const promises = paths.map((path) => __awaiter(this, void 0, void 0, function* () {
         try {
-            logs.firestorePathDeleting(path);
-            yield admin
-                .firestore()
-                .doc(path)
-                .delete();
-            logs.firestorePathDeleted(path);
+            const isRecursive = config_1.default.firestoreDeleteMode === 'recursive';
+            if (!isRecursive) {
+                logs.firestorePathDeleting(path, false);
+                yield admin
+                    .firestore()
+                    .doc(path)
+                    .delete();
+                logs.firestorePathDeleted(path, false);
+            }
+            else {
+                logs.firestorePathDeleting(path, true);
+                yield firebase_tools.firestore.delete(path, {
+                    project: process.env.PROJECT_ID,
+                    recursive: true,
+                    yes: true,
+                });
+                logs.firestorePathDeleted(path, true);
+            }
         }
         catch (err) {
             logs.firestorePathError(path, err);

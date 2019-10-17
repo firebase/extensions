@@ -16,6 +16,7 @@
 
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
+import * as firebase_tools from "firebase-tools";
 
 import config from "./config";
 import * as logs from "./logs";
@@ -117,12 +118,24 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
   const paths = extractUserPaths(firestorePaths, uid);
   const promises = paths.map(async (path) => {
     try {
-      logs.firestorePathDeleting(path);
-      await admin
-        .firestore()
-        .doc(path)
-        .delete();
-      logs.firestorePathDeleted(path);
+      const isRecursive = config.firestoreDeleteMode === 'recursive';
+
+      if (!isRecursive) {
+        logs.firestorePathDeleting(path, false);
+        await admin
+          .firestore()
+          .doc(path)
+          .delete();
+        logs.firestorePathDeleted(path, false);
+      } else {
+        logs.firestorePathDeleting(path, true);
+        await firebase_tools.firestore.delete(path, {
+          project: process.env.PROJECT_ID,
+          recursive: true,
+          yes: true, // auto-confirmation
+        });
+        logs.firestorePathDeleted(path, true);
+      }
     } catch (err) {
       logs.firestorePathError(path, err);
     }
