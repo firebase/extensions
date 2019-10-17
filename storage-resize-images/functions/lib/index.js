@@ -59,12 +59,8 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
     const fileExtension = path.extname(filePath);
     const fileNameWithoutExtension = fileName.slice(0, -fileExtension.length);
     const originalMetadata = object.metadata;
-    const isResizedImage = validators.isResizedImage(fileNameWithoutExtension);
-    if (isResizedImage) {
-        logs.imageAlreadyResized();
-        return;
-    }
     let originalFile;
+    let remoteFile;
     try {
         originalFile = path.join(os.tmpdir(), filePath);
         const tempLocalDir = path.dirname(originalFile);
@@ -73,7 +69,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         yield mkdirp(tempLocalDir);
         logs.tempDirectoryCreated(tempLocalDir);
         // Download file from bucket.
-        const remoteFile = bucket.file(filePath);
+        remoteFile = bucket.file(filePath);
         logs.imageDownloading(filePath);
         yield remoteFile.download({ destination: originalFile });
         logs.imageDownloaded(filePath, originalFile);
@@ -108,6 +104,19 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
             logs.tempOriginalFileDeleting(filePath);
             fs.unlinkSync(originalFile);
             logs.tempOriginalFileDeleted(filePath);
+        }
+        if (config_1.default.deleteOriginalFile) {
+            // Delete the original file
+            if (remoteFile) {
+                try {
+                    logs.remoteFileDeleting(filePath);
+                    yield remoteFile.delete();
+                    logs.remoteFileDeleted(filePath);
+                }
+                catch (err) {
+                    logs.errorDeleting(err);
+                }
+            }
         }
     }
 }));

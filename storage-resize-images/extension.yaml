@@ -14,7 +14,7 @@
 
 name: storage-resize-images
 specVersion: v1beta
-version: 0.1.0
+version: 0.1.1
 license: Apache-2.0
 
 displayName: Resize Images
@@ -24,7 +24,7 @@ description:
 
 billingRequired: false
 sourceUrl: https://github.com/firebase/extensions/tree/master/storage-resize-images
-releaseNotesUrl: https://github.com/firebase/extensions/commits/master
+releaseNotesUrl: https://github.com/firebase/extensions/releases
 
 author:
   authorName: Firebase
@@ -106,13 +106,28 @@ params:
     label: Sizes of resized images
     description: >
       What sizes of images would you like (in pixels)? Enter the sizes as a
-      comma-separated list of WIDTHxHEIGHT values.
+      comma-separated list of WIDTHxHEIGHT values. Learn more about
+      [how this parameter works](https://firebase.google.com/products/extensions/storage-resize-images).
     default: "200x200"
     example: "200x200"
     validationRegex: ^\d+x(\d+,\d+x)*\d+$
     validationErrorMessage:
       Invalid sizes, must be a comma-separated list of WIDTHxHEIGHT values.
     required: true
+
+  - param: DELETE_ORIGINAL_FILE
+      type: select
+      label: Deletion of original file
+      description: >-
+        Do you want to automatically delete the original file from the Cloud Storage
+        bucket? Note that these deletions cannot be undone.
+      options:
+        - label: Yes
+          value: true
+        - label: No
+          value: false
+      default: false
+      required: true
 
   - param: KEEP_FILE_METADATA
       type: select
@@ -134,8 +149,7 @@ params:
       if you specify a path here of `thumbs` and you upload an image to
       `/images/original.jpg`, then the resized image is stored at
       `/images/thumbs/original_200x200.jpg`. If you prefer to store resized
-      images at the root of your bucket, leave this field empty. Learn more about
-      [how this parameter works](https://firebase.google.com/products/extensions/storage-resize-images).
+      images at the root of your bucket, leave this field empty.
     example: thumbnails
     required: false
 
