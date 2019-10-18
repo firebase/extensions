@@ -6,8 +6,8 @@
   "license": "Apache-2.0",
   "main": "functions/lib/index.js",
   "scripts": {
-    "copydeps": "ncp ../firestore-shorten-urls-common ./functions/firestore-shorten-urls-common",
-    "build": "npm run clean && npm run copydeps && npm run compile",
+    "postinstall": "ncp ../firestore-shorten-urls-common ./functions/firestore-shorten-urls-common",
+    "build": "npm run clean && npm run compile",
     "clean": "rimraf functions/lib",
     "compile": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
