@@ -26,11 +26,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const grpc = require("grpc");
 const worker_1 = require("./worker");
 const controller_1 = require("./controller");
 admin.initializeApp();
 const firestore = admin.firestore();
-firestore.settings({ timestampsInSnapshots: true });
+firestore.settings({
+    timestampsInSnapshots: true,
+    grpc,
+});
 const SHARDS_COLLECTION_ID = "_counter_shards_";
 const WORKERS_COLLECTION_ID = "_counter_workers_";
 /**

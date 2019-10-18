@@ -25,6 +25,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
+const grpc = require("grpc");
 const nodemailer = require("nodemailer");
 const logs = require("./logs");
 const config_1 = require("./config");
@@ -43,6 +44,9 @@ function initialize() {
     initialized = true;
     admin.initializeApp();
     db = admin.firestore();
+    // Workaround for cold start issue (https://github.com/firebase/extensions/issues/48).
+    // Remove this line when INTERNAL BUG 138705198 is resolved.
+    db.settings({ grpc });
     transport = nodemailer.createTransport(config_1.default.smtpConnectionUri);
     if (config_1.default.templatesCollection) {
         templates = new templates_1.default(admin.firestore().collection(config_1.default.templatesCollection));

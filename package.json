@@ -1,6 +1,5 @@
 {
   "name": "firebase-extensions",
-  "version": "1.0.0",
   "description": "Repository of sample Firebase Extensions.",
   "private": true,
   "scripts": {
@@ -13,11 +12,11 @@
     "test-coverage": "jest --coverage",
     "postinstall": "lerna bootstrap && npm run clean && npm run build"
   },
-  "repository": "",
+  "repository": "https://github.com/firebase/extensions",
   "author": "Firebase (https://firebase.google.com/)",
   "license": "Apache-2.0",
   "bugs": {
-    "url": ""
+    "url": "https://github.com/firebase/extensions/issues"
   },
   "devDependencies": {
     "jest": "^24.9.0",

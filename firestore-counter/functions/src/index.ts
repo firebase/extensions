@@ -16,12 +16,16 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import * as grpc from "grpc";
 import { ShardedCounterWorker } from "./worker";
 import { ShardedCounterController, ControllerStatus } from "./controller";
 
 admin.initializeApp();
 const firestore = admin.firestore();
-firestore.settings({ timestampsInSnapshots: true });
+firestore.settings({
+  timestampsInSnapshots: true,
+  grpc, // Workaround for issue #48, remove when INTERNAL BUG 138705198 is resolved.
+});
 
 const SHARDS_COLLECTION_ID = "_counter_shards_";
 const WORKERS_COLLECTION_ID = "_counter_workers_";

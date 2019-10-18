@@ -17,12 +17,17 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as firebase_tools from "firebase-tools";
+import * as grpc from "grpc";
 
 import config from "./config";
 import * as logs from "./logs";
 
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
+
+// Workaround for cold start issue (https://github.com/firebase/extensions/issues/48).
+// Remove this line when INTERNAL BUG 138705198 is resolved.
+admin.firestore().settings({ grpc });
 
 logs.init();
 

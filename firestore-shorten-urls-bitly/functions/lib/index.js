@@ -25,6 +25,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
+const grpc = require("grpc");
 const bitly_1 = require("bitly");
 const config_1 = require("./config");
 const logs = require("./logs");
@@ -37,6 +38,9 @@ var ChangeType;
 const bitly = new bitly_1.BitlyClient(config_1.default.bitlyAccessToken);
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
+// Workaround for cold start issue (https://github.com/firebase/extensions/issues/48).
+// Remove this line when INTERNAL BUG 138705198 is resolved.
+admin.firestore().settings({ grpc });
 logs.init();
 exports.fsurlshortener = functions.handler.firestore.document.onWrite((change) => __awaiter(this, void 0, void 0, function* () {
     logs.start();

@@ -10,6 +10,7 @@
     "deep-equal": "^1.0.1",
     "firebase-admin": "^7.3.0",
     "firebase-functions": "^2.3.1",
+    "grpc": "^1.24.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

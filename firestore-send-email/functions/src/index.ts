@@ -16,6 +16,7 @@
 
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
+import * as grpc from "grpc";
 import * as nodemailer from "nodemailer";
 
 import * as logs from "./logs";
@@ -37,6 +38,11 @@ function initialize() {
   initialized = true;
   admin.initializeApp();
   db = admin.firestore();
+  
+  // Workaround for cold start issue (https://github.com/firebase/extensions/issues/48).
+  // Remove this line when INTERNAL BUG 138705198 is resolved.
+  db.settings({ grpc });
+
   transport = nodemailer.createTransport(config.smtpConnectionUri);
   if (config.templatesCollection) {
     templates = new Templates(
