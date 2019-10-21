@@ -139,7 +139,9 @@ const updateShortUrl = async (
 ): Promise<void> => {
   logs.updateDocument(snapshot.ref.path);
 
-  await snapshot.ref.update(config.shortUrlFieldName, url);
+  await admin.firestore().runTransaction((async transaction => {
+    return transaction.update(snapshot.ref, config.shortUrlFieldName, url);
+  }));
 
   logs.updateDocumentComplete(snapshot.ref.path);
 };
