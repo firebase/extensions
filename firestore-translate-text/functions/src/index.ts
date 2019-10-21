@@ -202,7 +202,9 @@ const updateTranslations = async (
 ): Promise<void> => {
   logs.updateDocument(snapshot.ref.path);
 
-  await snapshot.ref.update(config.outputFieldName, translations);
+  await admin.firestore().runTransaction((async transaction => {
+    return transaction.update(snapshot.ref, config.outputFieldName, translations);
+  }));
 
   logs.updateDocumentComplete(snapshot.ref.path);
 };

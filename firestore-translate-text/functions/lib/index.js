@@ -153,6 +153,8 @@ const translateString = (string, targetLanguage) => __awaiter(this, void 0, void
 });
 const updateTranslations = (snapshot, translations) => __awaiter(this, void 0, void 0, function* () {
     logs.updateDocument(snapshot.ref.path);
-    yield snapshot.ref.update(config_1.default.outputFieldName, translations);
+    yield admin.firestore().runTransaction(((transaction) => __awaiter(this, void 0, void 0, function* () {
+        return transaction.update(snapshot.ref, config_1.default.outputFieldName, translations);
+    })));
     logs.updateDocumentComplete(snapshot.ref.path);
 });
