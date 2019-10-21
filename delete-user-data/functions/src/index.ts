@@ -122,10 +122,9 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
 
       if (!isRecursive) {
         logs.firestorePathDeleting(path, false);
-        await admin
-          .firestore()
-          .doc(path)
-          .delete();
+        await admin.firestore().runTransaction((async transaction => {
+          return transaction.delete(admin.firestore().doc(path));
+        }));
         logs.firestorePathDeleted(path, false);
       } else {
         logs.firestorePathDeleting(path, true);
