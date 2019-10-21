@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { config as baseConfig } from "firestore-shorten-urls-common"
-
 export default {
-  ...baseConfig,
   bitlyAccessToken: process.env.BITLY_ACCESS_TOKEN,
+  collectionPath: process.env.COLLECTION_PATH,
+  location: process.env.LOCATION,
+  shortUrlFieldName: process.env.SHORT_URL_FIELD_NAME,
+  urlFieldName: process.env.URL_FIELD_NAME,
 };

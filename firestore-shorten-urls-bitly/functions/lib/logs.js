@@ -15,7 +15,53 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-const firestore_shorten_urls_common_1 = require("firestore-shorten-urls-common");
 const config_1 = require("./config");
 const obfuscatedConfig = Object.assign(Object.assign({}, config_1.default), { bitlyAccessToken: "********" });
-exports.logs = new firestore_shorten_urls_common_1.FirestoreUrlShortenerLogger(obfuscatedConfig);
+exports.complete = () => {
+    console.log("Completed execution of extension");
+};
+exports.documentCreatedNoUrl = () => {
+    console.log("Document was created without a URL, no processing is required");
+};
+exports.documentCreatedWithUrl = () => {
+    console.log("Document was created with a URL");
+};
+exports.documentDeleted = () => {
+    console.log("Document was deleted, no processing is required");
+};
+exports.documentUpdatedChangedUrl = () => {
+    console.log("Document was updated, URL has changed");
+};
+exports.documentUpdatedDeletedUrl = () => {
+    console.log("Document was updated, URL was deleted");
+};
+exports.documentUpdatedNoUrl = () => {
+    console.log("Document was updated, no URL exists, no processing is required");
+};
+exports.documentUpdatedUnchangedUrl = () => {
+    console.log("Document was updated, URL has not changed, no processing is required");
+};
+exports.error = (err) => {
+    console.error("Error when shortening URL", err);
+};
+exports.fieldNamesNotDifferent = () => {
+    console.error("The `URL` and `Short URL` field names must be different for this extension to function correctly");
+};
+exports.init = () => {
+    console.log("Initializing extension with configuration", obfuscatedConfig);
+};
+exports.shortenUrl = (url) => {
+    console.log(`Shortening URL: '${url}'`);
+};
+exports.shortenUrlComplete = (shortUrl) => {
+    console.log(`Finished shortening URL to: '${shortUrl}'`);
+};
+exports.start = () => {
+    console.log("Started execution of extension with configuration", obfuscatedConfig);
+};
+exports.updateDocument = (path) => {
+    console.log(`Updating Cloud Firestore document: '${path}'`);
+};
+exports.updateDocumentComplete = (path) => {
+    console.log(`Finished updating Cloud Firestore document: '${path}'`);
+};

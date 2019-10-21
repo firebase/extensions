@@ -18,10 +18,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 
 import config from "./config";
-import { FirestoreUrlShortenerLogger, logs } from "./logs";
-
-export { config };
-export { FirestoreUrlShortenerLogger };
+import * as logs from "./logs";
 
 enum ChangeType {
   CREATE,

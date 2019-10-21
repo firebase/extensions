@@ -25,10 +25,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const admin = require("firebase-admin");
-const config_1 = require("./config");
-exports.config = config_1.default;
-const logs_1 = require("./logs");
-exports.FirestoreUrlShortenerLogger = logs_1.FirestoreUrlShortenerLogger;
+const logs = require("./logs");
 var ChangeType;
 (function (ChangeType) {
     ChangeType[ChangeType["CREATE"] = 0] = "CREATE";
@@ -39,7 +36,7 @@ class FirestoreUrlShortener {
     constructor(urlFieldName, shortUrlFieldName) {
         this.urlFieldName = urlFieldName;
         this.shortUrlFieldName = shortUrlFieldName;
-        this.logs = logs_1.logs;
+        this.logs = logs;
         this.urlFieldName = urlFieldName;
         this.shortUrlFieldName = shortUrlFieldName;
         // Initialize the Firebase Admin SDK

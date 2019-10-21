@@ -26,28 +26,27 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const bitly_1 = require("bitly");
-const firestore_shorten_urls_common_1 = require("firestore-shorten-urls-common");
+const abstract_shortener_1 = require("./abstract-shortener");
 const config_1 = require("./config");
-const logs_1 = require("./logs");
-class FirestoreBitlyUrlShortener extends firestore_shorten_urls_common_1.FirestoreUrlShortener {
+const logs = require("./logs");
+class FirestoreBitlyUrlShortener extends abstract_shortener_1.FirestoreUrlShortener {
     constructor(urlFieldName, shortUrlFieldName, bitlyAccessToken) {
         super(urlFieldName, shortUrlFieldName);
-        this.logs = logs_1.logs;
         this.bitly = new bitly_1.BitlyClient(bitlyAccessToken);
-        this.logs.init();
+        logs.init();
     }
     shortenUrl(snapshot) {
         return __awaiter(this, void 0, void 0, function* () {
             const url = this.extractUrl(snapshot);
-            this.logs.shortenUrl(url);
+            logs.shortenUrl(url);
             try {
                 const response = yield this.bitly.shorten(url);
                 const { url: shortUrl } = response;
-                this.logs.shortenUrlComplete(shortUrl);
+                logs.shortenUrlComplete(shortUrl);
                 yield this.updateShortUrl(snapshot, shortUrl);
             }
             catch (err) {
-                this.logs.error(err);
+                logs.error(err);
             }
         });
     }

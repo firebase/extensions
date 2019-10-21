@@ -1,4 +1,0 @@
-firestore-shorten-urls-common/*
-!firestore-shorten-urls-common/lib/
-!firestore-shorten-urls-common/package.json
-!firestore-shorten-urls-common/package-lock.json

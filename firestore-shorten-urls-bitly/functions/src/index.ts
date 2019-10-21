@@ -18,10 +18,9 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { BitlyClient } from "bitly";
 
-import { FirestoreUrlShortener } from "firestore-shorten-urls-common"
-
+import { FirestoreUrlShortener } from "./abstract-shortener";
 import config from "./config";
-import { logs } from "./logs";
+import * as logs from "./logs";
 
 class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
 
@@ -33,27 +32,25 @@ class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
     bitlyAccessToken: string
   ) {
     super(urlFieldName, shortUrlFieldName);
-    this.logs = logs;
     this.bitly = new BitlyClient(bitlyAccessToken);
-    
-    this.logs.init();
+    logs.init();
   }
 
   protected async shortenUrl(
     snapshot: admin.firestore.DocumentSnapshot
   ): Promise<void> {
     const url = this.extractUrl(snapshot);
-    this.logs.shortenUrl(url);
+    logs.shortenUrl(url);
   
     try {
       const response: any = await this.bitly.shorten(url);
       const { url: shortUrl } = response;
 
-      this.logs.shortenUrlComplete(shortUrl);
+      logs.shortenUrlComplete(shortUrl);
   
       await this.updateShortUrl(snapshot, shortUrl);
     } catch (err) {
-      this.logs.error(err);
+      logs.error(err);
     }
   } 
 }
