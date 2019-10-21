@@ -40,6 +40,8 @@ const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
 const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
 const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
 
+const FIRESTORE_DEFAULT_DATABASE = "(default)";
+
 const validateInput = (value: string, name: string, regex: RegExp, sizeLimit: number) => {
   if (!value || value === "" || value.trim() === "") {
     return `Please supply a ${name}`;
@@ -172,7 +174,7 @@ const run = async (): Promise<number> => {
         return {
           timestamp: new Date(0).toISOString(), // epoch
           operation: ChangeType.IMPORT,
-          documentName: snapshot.ref.path,
+          documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${snapshot.ref.path}`,
           eventId: "",
           data: snapshot.data(),
         };
