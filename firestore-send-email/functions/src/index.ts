@@ -86,14 +86,16 @@ function validateFieldArray(field: string, array?: string[]) {
 }
 
 async function processCreate(snap: FirebaseFirestore.DocumentSnapshot) {
-  return snap.ref.update({
-    delivery: {
-      startTime: admin.firestore.FieldValue.serverTimestamp(),
-      state: "PENDING",
-      attempts: 0,
-      error: null,
-    },
-  });
+  return admin.firestore().runTransaction((async transaction => {
+    return transaction.update(snap.ref, {
+      delivery: {
+        startTime: admin.firestore.FieldValue.serverTimestamp(),
+        state: "PENDING",
+        attempts: 0,
+        error: null,
+      },
+    });
+  }));
 }
 
 async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
@@ -277,7 +279,9 @@ async function deliver(
     logs.deliveryError(ref, e);
   }
 
-  return ref.update(update);
+  return admin.firestore().runTransaction((async transaction => {
+    return transaction.update(ref, update);
+  }));
 }
 
 async function processWrite(change) {
@@ -302,20 +306,24 @@ async function processWrite(change) {
       return null;
     case "PROCESSING":
       if (payload.delivery.leaseExpireTime.toMillis() < Date.now()) {
-        return change.after.ref.update({
-          "delivery.state": "ERROR",
-          error: "Message processing lease expired.",
-        });
+        return admin.firestore().runTransaction((async transaction => {
+          return transaction.update(change.after.ref, {
+            "delivery.state": "ERROR",
+            error: "Message processing lease expired.",
+          });
+        }));
       }
       return null;
     case "PENDING":
     case "RETRY":
-      await change.after.ref.update({
-        "delivery.state": "PROCESSING",
-        "delivery.leaseExpireTime": admin.firestore.Timestamp.fromMillis(
-          Date.now() + 60000
-        ),
-      });
+      await admin.firestore().runTransaction((async transaction => {
+        return transaction.update(change.after.ref, {
+          "delivery.state": "PROCESSING",
+          "delivery.leaseExpireTime": admin.firestore.Timestamp.fromMillis(
+            Date.now() + 60000
+          ),
+        });
+      }));
       return deliver(payload, change.after.ref);
   }
 }
