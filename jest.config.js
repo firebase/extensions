@@ -1,5 +1,3 @@
-
-
 module.exports = {
   projects: ["<rootDir>/*/jest.config.js"],
   testPathIgnorePatterns: [
@@ -18,4 +16,5 @@ module.exports = {
     "!**/node_modules/**",
     "!**/exts-test-data/**",
   ],
+  maxConcurrency: 10,
 };

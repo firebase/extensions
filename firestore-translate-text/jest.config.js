@@ -4,5 +4,5 @@ module.exports = {
   name: packageJson.name,
   displayName: packageJson.name,
   rootDir: "./",
-  preset: "ts-jest"
+  preset: "ts-jest",
 };

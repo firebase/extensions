@@ -1,23 +1,22 @@
 import { readFileSync } from "fs";
 import { resolve as pathResolve } from "path";
+import * as functionsTestInit from "firebase-functions-test";
 
 import * as yaml from "js-yaml";
 import mockedEnv from "mocked-env";
-import * as functionsTestInit from "firebase-functions-test";
-
 
 let restoreEnv;
 let extensionYaml;
 let extensionParams;
 const environment = {
   LOCATION: "us-central1",
-  LANGUAGES: "en,es,de,fr",
+  LANGUAGES: "en,es,de,fr,en", // double en to test no duplicates
   COLLECTION_PATH: "translations",
   INPUT_FIELD_NAME: "input",
   OUTPUT_FIELD_NAME: "translated",
 };
-const functionsTest = functionsTestInit();
 const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+functionsTestInit();
 
 describe("extension config", () => {
   beforeAll(() => {
@@ -46,7 +45,8 @@ describe("extension config", () => {
   test("config is logged on initialize", () => {
     jest.requireActual("../functions/src");
 
-    const functionsConfig = jest.requireActual("../functions/src/config").default;
+    const functionsConfig = jest.requireActual("../functions/src/config")
+      .default;
     expect(consoleLogSpy).toBeCalledWith(
       "Initializing extension with configuration",
       functionsConfig
@@ -60,6 +60,11 @@ describe("extension config", () => {
     test("param exists", () => {
       const extensionParam = extensionParams["LANGUAGES"];
       expect(extensionParam).toMatchSnapshot();
+    });
+
+    test("removes duplicated any duplicated languages from user input", () => {
+      const functionsConfig = require("../functions/src/config").default;
+      expect(functionsConfig.languages).toEqual(["en", "es", "de", "fr"]);
     });
 
     describe("validationRegex", () => {
