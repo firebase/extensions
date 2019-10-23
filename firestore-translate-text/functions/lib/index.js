@@ -62,8 +62,6 @@ exports.fstranslate = functions.handler.firestore.document.onWrite((change) => _
             case ChangeType.UPDATE:
                 yield handleUpdateDocument(change.before, change.after);
                 break;
-            default:
-                throw new Error(`Invalid change type: ${changeType}`);
         }
         logs.complete();
     }
