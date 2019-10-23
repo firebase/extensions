@@ -48,18 +48,18 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         logs.contentTypeInvalid(contentType);
         return;
     }
+    if (object.metadata && object.metadata.resizedImage === "true") {
+        logs.imageAlreadyResized();
+        return;
+    }
     const bucket = admin.storage().bucket(object.bucket);
     const filePath = object.name; // File path in the bucket.
     const fileDir = path.dirname(filePath);
     const fileName = path.basename(filePath);
     const fileExtension = path.extname(filePath);
     const fileNameWithoutExtension = fileName.slice(0, -fileExtension.length);
-    const isResizedImage = validators.isResizedImage(fileNameWithoutExtension);
-    if (isResizedImage) {
-        logs.imageAlreadyResized();
-        return;
-    }
     let originalFile;
+    let remoteFile;
     try {
         originalFile = path.join(os.tmpdir(), filePath);
         const tempLocalDir = path.dirname(originalFile);
@@ -68,7 +68,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         yield mkdirp(tempLocalDir);
         logs.tempDirectoryCreated(tempLocalDir);
         // Download file from bucket.
-        const remoteFile = bucket.file(filePath);
+        remoteFile = bucket.file(filePath);
         logs.imageDownloading(filePath);
         yield remoteFile.download({ destination: originalFile });
         logs.imageDownloaded(filePath, originalFile);
@@ -103,6 +103,19 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
             fs.unlinkSync(originalFile);
             logs.tempOriginalFileDeleted(filePath);
         }
+        if (config_1.default.deleteOriginalFile) {
+            // Delete the original file
+            if (remoteFile) {
+                try {
+                    logs.remoteFileDeleting(filePath);
+                    yield remoteFile.delete();
+                    logs.remoteFileDeleted(filePath);
+                }
+                catch (err) {
+                    logs.errorDeleting(err);
+                }
+            }
+        }
     }
 }));
 const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, }) => __awaiter(this, void 0, void 0, function* () {
@@ -117,6 +130,9 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         // Cloud Storage files.
         const metadata = {
             contentType: contentType,
+            metadata: {
+                resizedImage: "true",
+            },
         };
         if (config_1.default.cacheControlHeader) {
             metadata.cacheControl = config_1.default.cacheControlHeader;
