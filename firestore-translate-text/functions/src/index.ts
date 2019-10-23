@@ -75,8 +75,6 @@ export const fstranslate = functions.handler.firestore.document.onWrite(
         case ChangeType.UPDATE:
           await handleUpdateDocument(change.before, change.after);
           break;
-        default:
-          throw new Error(`Invalid change type: ${changeType}`);
       }
 
       logs.complete();
