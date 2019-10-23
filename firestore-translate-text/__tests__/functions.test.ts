@@ -28,7 +28,7 @@ const mockTranslateClassMethod = jest
   });
 
 // new Translate(opts);
-const mockTranslateClass = jest.fn().mockImplementation((...args) => {
+const mockTranslateClass = jest.fn().mockImplementation(() => {
   return { translate: mockTranslateClassMethod };
 });
 
@@ -233,20 +233,48 @@ describe("extension", () => {
 
       // confirm logs were printed
       Object.keys(testTranslations).forEach((language) => {
+        // logs.translateInputString
         expect(mockConsoleLog).toBeCalledWith(
           `Translating string: 'hello' into language(s): '${language}'`
         );
+        // logs.translateStringComplete
         expect(mockConsoleLog).toBeCalledWith(
           `Finished translating string: 'hello' into language(s): '${language}'`
         );
       });
+      // logs.translateInputStringToAllLanguages
       expect(mockConsoleLog).toBeCalledWith(
         `Translating string: 'hello' into language(s): '${
           defaultEnvironment.LANGUAGES
         }'`
       );
+      // logs.translateInputToAllLanguagesComplete
       expect(mockConsoleLog).toBeCalledWith(
         "Finished translating string: 'hello'"
+      );
+    });
+
+    test("function handles Google Translate API errors", async () => {
+      mockFirestoreUpdate.mockClear();
+      mockConsoleLog.mockClear();
+
+      const error = new Error("Test Translate API Error");
+      mockTranslateClassMethod.mockImplementationOnce(() =>
+        Promise.reject(error)
+      );
+
+      await wrappedFunction(documentChange);
+
+      // logs.translateStringError
+      expect(mockConsoleError).toBeCalledWith(
+        "Error when translating string: 'hello' into language(s): 'en'",
+        error
+      );
+
+      // logs.translateInputToAllLanguagesError
+      expect(mockConsoleError).toBeCalledWith(
+        "Error when translating string: 'hello'",
+        error
       );
     });
   });
