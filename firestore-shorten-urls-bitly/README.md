@@ -1,36 +1,10 @@
-# firestore-shorten-urls-bitly
+# Shorten URLs
 
-**VERSION**: 0.1.0
-
-**DESCRIPTION**: Shortens URLs written to a specified Cloud Firestore collection (uses Bitly).
+**Description**: Shortens URLs written to a specified Cloud Firestore collection (uses Bitly).
 
 
 
-**CONFIGURATION PARAMETERS:**
-
-* Deployment location: Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage).
-
-* Bitly access token: What is your Bitly access token? Generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
-
-
-* Collection path: What is the path to the collection that contains the URLs that you want to shorten?
-
-
-* URL field name: What is the name of the field that contains the original long URLs that you want to shorten?
-
-
-* Short URL field name: What is the name of the field where you want to store your shortened URLs?
-
-
-
-
-**CLOUD FUNCTIONS CREATED:**
-
-* fsurlshortener (providers/cloud.firestore/eventTypes/document.write)
-
-
-
-**DETAILS**: Use this extension to create shortened URLs from URLs written to Cloud Firestore. These shortened URLs are useful as display URLs.
+**Details**: Use this extension to create shortened URLs from URLs written to Cloud Firestore. These shortened URLs are useful as display URLs.
 
 This extension listens to your specified Cloud Firestore collection. If you add a URL to a specified field in any document within that collection, this extension:
 
@@ -60,7 +34,32 @@ Usage of this extension also requires you to have a Bit.ly account. You are resp
 
 
 
-**ACCESS REQUIRED**:
+
+**Configuration Parameters:**
+
+* Deployment location: Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+
+* Bitly access token: What is your Bitly access token? Generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
+
+
+* Collection path: What is the path to the collection that contains the URLs that you want to shorten?
+
+
+* URL field name: What is the name of the field that contains the original long URLs that you want to shorten?
+
+
+* Short URL field name: What is the name of the field where you want to store your shortened URLs?
+
+
+
+
+**Cloud Functions:**
+
+* **fsurlshortener:** Listens for writes of new URLs to your specified Cloud Firestore collection, shortens the URLs, then writes the shortened form back to the same document.
+
+
+
+**Access Required**:
 
 
 
