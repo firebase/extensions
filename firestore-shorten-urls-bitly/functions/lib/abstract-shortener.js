@@ -122,7 +122,11 @@ class FirestoreUrlShortener {
     updateShortUrl(snapshot, url) {
         return __awaiter(this, void 0, void 0, function* () {
             this.logs.updateDocument(snapshot.ref.path);
-            yield snapshot.ref.update(this.shortUrlFieldName, url);
+            // Wrapping in transaction to allow for automatic retries (#48)
+            yield admin.firestore().runTransaction((transaction => {
+                transaction.update(snapshot.ref, this.shortUrlFieldName, url);
+                return Promise.resolve();
+            }));
             this.logs.updateDocumentComplete(snapshot.ref.path);
         });
     }

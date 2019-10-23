@@ -132,9 +132,12 @@ export abstract class FirestoreUrlShortener {
     url: any
   ): Promise<void> {
     this.logs.updateDocument(snapshot.ref.path);
-  
-    await snapshot.ref.update(this.shortUrlFieldName, url);
-  
+
+    // Wrapping in transaction to allow for automatic retries (#48)
+    await admin.firestore().runTransaction((transaction => {
+      transaction.update(snapshot.ref, this.shortUrlFieldName, url);
+      return Promise.resolve();
+    }));  
     this.logs.updateDocumentComplete(snapshot.ref.path);
   };  
 }

@@ -15,7 +15,7 @@
 name: delete-user-data
 displayName: Delete User Data
 specVersion: v1beta
-version: 0.1.1
+version: 0.2.0
 
 description:
   Deletes data keyed on a userId from Cloud Firestore, Realtime
@@ -36,9 +36,12 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
+  - authorName: Elliot Hesp
+    email: elliot@invertase.io
+    url: https://github.com/ehesp
 
 roles:
-  - role: datastore.user
+  - role: datastore.owner
     reason: Allows the extension to delete (user) data from Cloud Firestore.
   - role: firebasedatabase.admin
     reason: Allows the extension to delete (user) data from Realtime Database.
@@ -98,6 +101,21 @@ params:
 
       For example, if you have the collections `users` and `admins`, and each collection
       has documents with User ID as document IDs, then you can enter `users/{UID},admins/{UID}`.
+
+  - param: FIRESTORE_DELETE_MODE
+    type: select
+    label: Cloud Firestore delete mode
+    description: >-
+      (Only applicable if you use the `Cloud Firestore paths` parameter.) How do you want
+      to delete Cloud Firestore documents? To also delete documents in subcollections,
+      set this parameter to `recursive`.
+    options:
+      - label: Recursive
+        value: recursive
+      - label: Shallow
+        value: shallow
+    default: shallow
+    required: true
 
   - param: RTDB_PATHS
     type: string

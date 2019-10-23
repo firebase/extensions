@@ -52,6 +52,11 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       return;
     }
 
+    if (object.metadata && object.metadata.resizedImage === "true") {
+      logs.imageAlreadyResized();
+      return;
+    }
+
     const bucket = admin.storage().bucket(object.bucket);
     const filePath = object.name; // File path in the bucket.
     const fileDir = path.dirname(filePath);
@@ -59,13 +64,8 @@ export const generateResizedImage = functions.storage.object().onFinalize(
     const fileExtension = path.extname(filePath);
     const fileNameWithoutExtension = fileName.slice(0, -fileExtension.length);
 
-    const isResizedImage = validators.isResizedImage(fileNameWithoutExtension);
-    if (isResizedImage) {
-      logs.imageAlreadyResized();
-      return;
-    }
-
     let originalFile;
+    let remoteFile;
     try {
       originalFile = path.join(os.tmpdir(), filePath);
       const tempLocalDir = path.dirname(originalFile);
@@ -76,7 +76,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       logs.tempDirectoryCreated(tempLocalDir);
 
       // Download file from bucket.
-      const remoteFile = bucket.file(filePath);
+      remoteFile = bucket.file(filePath);
       logs.imageDownloading(filePath);
       await remoteFile.download({ destination: originalFile });
       logs.imageDownloaded(filePath, originalFile);
@@ -114,6 +114,18 @@ export const generateResizedImage = functions.storage.object().onFinalize(
         fs.unlinkSync(originalFile);
         logs.tempOriginalFileDeleted(filePath);
       }
+      if (config.deleteOriginalFile) {
+        // Delete the original file
+        if (remoteFile) {
+          try {
+            logs.remoteFileDeleting(filePath);
+            await remoteFile.delete();
+            logs.remoteFileDeleted(filePath);
+          } catch (err) {
+            logs.errorDeleting(err);
+          }
+        }
+      }
     }
   }
 );
@@ -150,6 +162,9 @@ const resizeImage = async ({
     // Cloud Storage files.
     const metadata: any = {
       contentType: contentType,
+      metadata: {
+        resizedImage: "true",
+      },
     };
     if (config.cacheControlHeader) {
       metadata.cacheControl = config.cacheControlHeader;
