@@ -25,7 +25,7 @@ Review the [scheduled function documentation](https://firebase.google.com/docs/f
 As an example, to set up a scheduled function, you can run the following [`gcloud`](https://cloud.google.com/sdk/gcloud/) commands:
 
 ```
-gcloud services enable cloudscheduler.googleapis.com
+gcloud --project=${param:PROJECT_ID} services enable cloudscheduler.googleapis.com
 gcloud --project=${param:PROJECT_ID} scheduler jobs create pubsub firestore-sharded-counter-controller --schedule="* * * * *" --topic=${param:EXT_INSTANCE_ID} --message-body="{}"
 ```
 
