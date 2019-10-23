@@ -26,7 +26,7 @@ As an example, to set up a scheduled function, you can run the following [`gclou
 
 ```
 gcloud --project=${param:PROJECT_ID} services enable cloudscheduler.googleapis.com
-gcloud --project=${param:PROJECT_ID} scheduler jobs create pubsub firestore-sharded-counter-controller --schedule="* * * * *" --topic=${param:EXT_INSTANCE_ID} --message-body="{}"
+gcloud --project=${param:PROJECT_ID} scheduler jobs create pubsub ${param:EXT_INSTANCE_ID} --schedule="* * * * *" --topic=${param:EXT_INSTANCE_ID} --message-body="{}"
 ```
 
 #### Specify a document path and increment value in your app
