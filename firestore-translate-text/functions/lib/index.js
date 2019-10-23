@@ -98,7 +98,9 @@ const handleUpdateDocument = (before, after) => __awaiter(this, void 0, void 0, 
     const inputAfter = extractInput(after);
     const inputBefore = extractInput(before);
     const inputHasChanged = inputAfter !== inputBefore;
-    if (!inputHasChanged) {
+    if (!inputHasChanged &&
+        inputAfter !== undefined &&
+        inputBefore !== undefined) {
         logs.documentUpdatedUnchangedInput();
         return;
     }

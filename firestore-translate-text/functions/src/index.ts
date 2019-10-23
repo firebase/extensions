@@ -124,7 +124,11 @@ const handleUpdateDocument = async (
   const inputBefore = extractInput(before);
 
   const inputHasChanged = inputAfter !== inputBefore;
-  if (!inputHasChanged) {
+  if (
+    !inputHasChanged &&
+    inputAfter !== undefined &&
+    inputBefore !== undefined
+  ) {
     logs.documentUpdatedUnchangedInput();
     return;
   }
@@ -183,7 +187,10 @@ const translateString = async (
   try {
     logs.translateInputString(string, targetLanguage);
 
-    const [translatedString] = await translate.translate(string, targetLanguage);
+    const [translatedString] = await translate.translate(
+      string,
+      targetLanguage
+    );
 
     logs.translateStringComplete(string, targetLanguage);
 
