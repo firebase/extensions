@@ -116,10 +116,13 @@ const clearFirestoreData = (firestorePaths, uid) => __awaiter(this, void 0, void
         try {
             const isRecursive = config_1.default.firestoreDeleteMode === 'recursive';
             if (!isRecursive) {
+                const firestore = admin.firestore();
                 logs.firestorePathDeleting(path, false);
-                yield admin.firestore().runTransaction(((transaction) => __awaiter(this, void 0, void 0, function* () {
-                    return transaction.delete(admin.firestore().doc(path));
-                })));
+                // Wrapping in transaction to allow for automatic retries (#48)
+                yield firestore.runTransaction((transaction => {
+                    transaction.delete(firestore.doc(path));
+                    return Promise.resolve();
+                }));
                 logs.firestorePathDeleted(path, false);
             }
             else {

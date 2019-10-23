@@ -119,8 +119,10 @@ const shortenUrl = (snapshot) => __awaiter(this, void 0, void 0, function* () {
 });
 const updateShortUrl = (snapshot, url) => __awaiter(this, void 0, void 0, function* () {
     logs.updateDocument(snapshot.ref.path);
-    yield admin.firestore().runTransaction(((transaction) => __awaiter(this, void 0, void 0, function* () {
-        return transaction.update(snapshot.ref, config_1.default.shortUrlFieldName, url);
-    })));
+    // Wrapping in transaction to allow for automatic retries (#48)
+    yield admin.firestore().runTransaction((transaction => {
+        transaction.update(snapshot.ref, config_1.default.shortUrlFieldName, url);
+        return Promise.resolve();
+    }));
     logs.updateDocumentComplete(snapshot.ref.path);
 });

@@ -58,8 +58,9 @@ function validateFieldArray(field, array) {
 }
 function processCreate(snap) {
     return __awaiter(this, void 0, void 0, function* () {
-        return admin.firestore().runTransaction(((transaction) => __awaiter(this, void 0, void 0, function* () {
-            return transaction.update(snap.ref, {
+        // Wrapping in transaction to allow for automatic retries (#48)
+        return admin.firestore().runTransaction((transaction => {
+            transaction.update(snap.ref, {
                 delivery: {
                     startTime: admin.firestore.FieldValue.serverTimestamp(),
                     state: "PENDING",
@@ -67,7 +68,8 @@ function processCreate(snap) {
                     error: null,
                 },
             });
-        })));
+            return Promise.resolve();
+        }));
     });
 }
 function preparePayload(payload) {
@@ -213,9 +215,11 @@ function deliver(payload, ref) {
             update["delivery.error"] = e.toString();
             logs.deliveryError(ref, e);
         }
-        return admin.firestore().runTransaction(((transaction) => __awaiter(this, void 0, void 0, function* () {
-            return transaction.update(ref, update);
-        })));
+        // Wrapping in transaction to allow for automatic retries (#48)
+        return admin.firestore().runTransaction((transaction => {
+            transaction.update(ref, update);
+            return Promise.resolve();
+        }));
     });
 }
 function processWrite(change) {
@@ -237,22 +241,26 @@ function processWrite(change) {
                 return null;
             case "PROCESSING":
                 if (payload.delivery.leaseExpireTime.toMillis() < Date.now()) {
-                    return admin.firestore().runTransaction(((transaction) => __awaiter(this, void 0, void 0, function* () {
-                        return transaction.update(change.after.ref, {
+                    // Wrapping in transaction to allow for automatic retries (#48)
+                    return admin.firestore().runTransaction((transaction => {
+                        transaction.update(change.after.ref, {
                             "delivery.state": "ERROR",
                             error: "Message processing lease expired.",
                         });
-                    })));
+                        return Promise.resolve();
+                    }));
                 }
                 return null;
             case "PENDING":
             case "RETRY":
-                yield admin.firestore().runTransaction(((transaction) => __awaiter(this, void 0, void 0, function* () {
-                    return transaction.update(change.after.ref, {
+                // Wrapping in transaction to allow for automatic retries (#48)
+                yield admin.firestore().runTransaction((transaction => {
+                    transaction.update(change.after.ref, {
                         "delivery.state": "PROCESSING",
                         "delivery.leaseExpireTime": admin.firestore.Timestamp.fromMillis(Date.now() + 60000),
                     });
-                })));
+                    return Promise.resolve();
+                }));
                 return deliver(payload, change.after.ref);
         }
     });
