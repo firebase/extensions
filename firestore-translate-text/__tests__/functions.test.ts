@@ -1,5 +1,6 @@
 import mockedEnv from "mocked-env";
 import * as functionsTestInit from "firebase-functions-test";
+import * as admin from "firebase-admin";
 
 const testTranslations = {
   de: "hallo",
@@ -37,6 +38,19 @@ function mockTranslateModuleFactory() {
   return {
     Translate: mockTranslateClass,
   };
+}
+
+function mockDocumentSnapshotFactory(documentSnapshot) {
+  return jest.fn().mockImplementation(() => {
+    return {
+      exists: true,
+      get: documentSnapshot.get.bind(documentSnapshot),
+      ref: {
+        path: documentSnapshot.ref.path,
+        update: mockFirestoreUpdate,
+      },
+    };
+  })();
 }
 
 jest.mock("@google-cloud/translate", mockTranslateModuleFactory);
@@ -82,32 +96,26 @@ describe("extension", () => {
       );
       documentChange = functionsTest.makeChange(
         beforeSnapshot,
-        jest.fn().mockImplementation(() => {
-          return {
-            exists: true,
-            get: afterSnapshot.get.bind(afterSnapshot),
-            ref: {
-              path: afterSnapshot.ref.path,
-              update: mockFirestoreUpdate,
-            },
-          };
-        })()
+        mockDocumentSnapshotFactory(afterSnapshot)
       );
     });
 
-    test("initializes Google Translate API on start", () => {
+    test("initializes Google Translate API with PROJECT_ID on function load", () => {
       jest.resetModules();
       mockTranslateClass.mockClear();
 
       require("../functions/src");
 
       expect(mockTranslateClass).toHaveBeenCalledTimes(1);
-      expect(mockTranslateClass).toBeCalledWith({
+      expect(mockTranslateClass).toHaveBeenCalledWith({
         projectId: defaultEnvironment.PROJECT_ID,
       });
     });
 
     test("function skips deleted document change events", async () => {
+      mockFirestoreUpdate.mockClear();
+      mockTranslateClassMethod.mockClear();
+
       documentChange.after.exists = false;
       const callResult = await wrappedFunction(documentChange);
 
@@ -115,9 +123,15 @@ describe("extension", () => {
       expect(mockConsoleLog).toHaveBeenCalledWith(
         "Document was deleted, no processing is required"
       );
+
+      expect(mockTranslateClassMethod).not.toHaveBeenCalled();
+      expect(mockFirestoreUpdate).not.toHaveBeenCalled();
     });
 
     test("function skips 'update' document change events if the input is unchanged", async () => {
+      mockFirestoreUpdate.mockClear();
+      mockTranslateClassMethod.mockClear();
+
       beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
         { input: "hello" },
         "translations/id1"
@@ -135,27 +149,15 @@ describe("extension", () => {
       expect(mockConsoleLog).toHaveBeenCalledWith(
         "Document was updated, input string has not changed, no processing is required"
       );
-    });
 
-    test("function skips document 'update' document change events without any input", async () => {
-      beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
-        { changed: 123 },
-        "translations/id1"
-      );
-      afterSnapshot = functionsTest.firestore.makeDocumentSnapshot(
-        { changed: 123 },
-        "translations/id1"
-      );
-      documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
-
-      const callResult = await wrappedFunction(documentChange);
-      expect(callResult).toBeUndefined();
-      expect(mockConsoleLog).toHaveBeenCalledWith(
-        "Document was updated, input string has not changed, no processing is required"
-      );
+      expect(mockTranslateClassMethod).not.toHaveBeenCalled();
+      expect(mockFirestoreUpdate).not.toHaveBeenCalled();
     });
 
     test("function skips document 'created' document change events without any input", async () => {
+      mockFirestoreUpdate.mockClear();
+      mockTranslateClassMethod.mockClear();
+
       afterSnapshot = functionsTest.firestore.makeDocumentSnapshot(
         { changed: 123 },
         "translations/id1"
@@ -163,10 +165,15 @@ describe("extension", () => {
       documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
 
       const callResult = await wrappedFunction(documentChange);
+
       expect(callResult).toBeUndefined();
+
       expect(mockConsoleLog).toHaveBeenCalledWith(
         "Document was created without an input string, no processing is required"
       );
+
+      expect(mockTranslateClassMethod).not.toHaveBeenCalled();
+      expect(mockFirestoreUpdate).not.toHaveBeenCalled();
     });
 
     test("function exits early if input & output fields are the same", async () => {
@@ -226,7 +233,7 @@ describe("extension", () => {
       expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "de");
 
       // confirm document update was called
-      expect(mockFirestoreUpdate).toBeCalledWith(
+      expect(mockFirestoreUpdate).toHaveBeenCalledWith(
         defaultEnvironment.OUTPUT_FIELD_NAME,
         testTranslations
       );
@@ -234,23 +241,109 @@ describe("extension", () => {
       // confirm logs were printed
       Object.keys(testTranslations).forEach((language) => {
         // logs.translateInputString
-        expect(mockConsoleLog).toBeCalledWith(
+        expect(mockConsoleLog).toHaveBeenCalledWith(
           `Translating string: 'hello' into language(s): '${language}'`
         );
         // logs.translateStringComplete
-        expect(mockConsoleLog).toBeCalledWith(
+        expect(mockConsoleLog).toHaveBeenCalledWith(
           `Finished translating string: 'hello' into language(s): '${language}'`
         );
       });
       // logs.translateInputStringToAllLanguages
-      expect(mockConsoleLog).toBeCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         `Translating string: 'hello' into language(s): '${
           defaultEnvironment.LANGUAGES
         }'`
       );
       // logs.translateInputToAllLanguagesComplete
-      expect(mockConsoleLog).toBeCalledWith(
+      expect(mockConsoleLog).toHaveBeenCalledWith(
         "Finished translating string: 'hello'"
+      );
+    });
+
+    test("function updates translation document when previous input changes", async () => {
+      mockFirestoreUpdate.mockClear();
+      mockConsoleLog.mockClear();
+
+      beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { input: "goodbye" },
+        "translations/id1"
+      );
+
+      documentChange.before = beforeSnapshot;
+
+      await wrappedFunction(documentChange);
+
+      // logs.documentUpdatedChangedInput
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        "Document was updated, input string has changed"
+      );
+
+      // confirm Google Translate API was called
+      expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "en");
+      expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "es");
+      expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "fr");
+      expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "de");
+
+      // confirm document update was called
+      expect(mockFirestoreUpdate).toHaveBeenCalledWith(
+        defaultEnvironment.OUTPUT_FIELD_NAME,
+        testTranslations
+      );
+    });
+
+    test("function deletes translations if input field is removed", async () => {
+      mockFirestoreUpdate.mockClear();
+      mockConsoleLog.mockClear();
+
+      beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { input: "hello" },
+        "translations/id1"
+      );
+      afterSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        {},
+        "translations/id1"
+      );
+      documentChange = functionsTest.makeChange(
+        beforeSnapshot,
+        mockDocumentSnapshotFactory(afterSnapshot)
+      );
+
+      await wrappedFunction(documentChange);
+
+      expect(mockFirestoreUpdate).toHaveBeenCalledWith(
+        defaultEnvironment.OUTPUT_FIELD_NAME,
+        admin.firestore.FieldValue.delete()
+      );
+
+      // logs.documentUpdatedDeletedInput
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        "Document was updated, input string was deleted"
+      );
+    });
+
+    test("function skips processing if no input string on before & after snapshots", async () => {
+      mockFirestoreUpdate.mockClear();
+      mockTranslateClassMethod.mockClear();
+      mockConsoleLog.mockClear();
+
+      const snapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { notTheInput: "hello" },
+        "translations/id1"
+      );
+      documentChange = functionsTest.makeChange(
+        snapshot,
+        mockDocumentSnapshotFactory(snapshot)
+      );
+
+      await wrappedFunction(documentChange);
+
+      expect(mockFirestoreUpdate).not.toHaveBeenCalled();
+      expect(mockTranslateClassMethod).not.toHaveBeenCalled();
+
+      // logs.documentUpdatedNoInput
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        "Document was updated, no input string exists, no processing is required"
       );
     });
 
@@ -266,13 +359,13 @@ describe("extension", () => {
       await wrappedFunction(documentChange);
 
       // logs.translateStringError
-      expect(mockConsoleError).toBeCalledWith(
+      expect(mockConsoleError).toHaveBeenCalledWith(
         "Error when translating string: 'hello' into language(s): 'en'",
         error
       );
 
       // logs.translateInputToAllLanguagesError
-      expect(mockConsoleError).toBeCalledWith(
+      expect(mockConsoleError).toHaveBeenCalledWith(
         "Error when translating string: 'hello'",
         error
       );
