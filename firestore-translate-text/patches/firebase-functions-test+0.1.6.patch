@@ -1,0 +1,13 @@
+diff --git a/node_modules/firebase-functions-test/lib/main.js b/node_modules/firebase-functions-test/lib/main.js
+index 3fc8d8d..2a6531b 100644
+--- a/node_modules/firebase-functions-test/lib/main.js
++++ b/node_modules/firebase-functions-test/lib/main.js
+@@ -58,7 +58,7 @@ function wrap(cloudFunction) {
+                 timestamp: (new Date()).toISOString(),
+                 params: {},
+             };
+-            if (lodash_1.has(defaultContext, 'eventType') &&
++            if (lodash_1.has(defaultContext, 'eventType') && defaultContext.eventType != undefined &&
+                 defaultContext.eventType.match(/firebase.database/)) {
+                 defaultContext.authType = 'UNAUTHENTICATED';
+                 defaultContext.auth = null;
