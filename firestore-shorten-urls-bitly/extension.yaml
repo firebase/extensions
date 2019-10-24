@@ -15,7 +15,7 @@
 name: firestore-shorten-urls-bitly
 displayName: Shorten URLs
 specVersion: v1beta
-version: 0.1.1
+version: 0.1.0
 
 description:
   Shortens URLs written to a specified Cloud Firestore collection (uses Bitly).
