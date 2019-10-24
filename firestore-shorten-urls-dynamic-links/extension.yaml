@@ -1,0 +1,129 @@
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: firestore-shorten-urls-dynamic-links
+displayName: Shorten URLs with Dynamic Links
+specVersion: v1beta
+version: 0.1.0
+
+description: >
+  Shortens URLs written to a specified Cloud Firestore collection using
+  Firebase Dynamic Links.
+
+license: Apache-2.0
+billingRequired: false
+sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-shorten-urls-dynamic-links
+releaseNotesUrl: https://github.com/firebase/extensions/commits/master
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+
+contributors:
+  - authorName: Kevin Cheung
+    email: kevincheung@google.com
+    url: https://github.com/kevinthecheung
+
+roles:
+  - role: datastore.user
+    reason: Allows the extension to write shortened URLs to Cloud Firestore.
+
+resources:
+  - name: fsurlshortener
+    type: firebaseextensions.v1beta.function
+    description:
+      Listens for writes of new URLs to your specified Cloud Firestore collection, shortens the URLs,
+      then writes the shortened form back to the same document.
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
+
+params:
+  - param: LOCATION
+    type: select
+    label: Deployment location
+    description: >-
+      Where should the extension be deployed? You usually want a location close to your database.
+      For help selecting a location, refer to the
+      [location selection guide](https://firebase.google.com/docs/functions/locations).
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+    default: us-central1
+    required: true
+
+  - param: DYNAMIC_LINKS_URL_PREFIX
+    label: Dynamic Links URL prefix
+    description: >
+      What URL prefix do you want for your shortened links? You will need to
+      set up this prefix in the [Dynamic Links](https://console.firebase.google.com/project/${PROJECT_ID}/durablelinks)
+      section of the console.
+    example: "https://yourapp.page.link"
+    required: true
+
+  - param: DYNAMIC_LINKS_SUFFIX_LENGTH
+    label: Dynamic Links suffix length
+    type: select
+    description: >
+      Do you want your short links to end with the shortest possible suffix or
+      longer suffixes that are unlikely to be guessable? In general, you can use
+      short suffixes as long as there's no harm in someone successfuly guessing
+      a short link.
+    options:
+    - label: Short
+      value: SHORT
+    - label: Unguessable
+      value: UNGUESSABLE
+    required: true
+
+  - param: COLLECTION_PATH
+    label: Collection path
+    description: >
+      What is the path to the collection that contains the URLs that you want to shorten?
+    default: urls
+    example: urls
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore collection
+    required: true
+
+  - param: URL_FIELD_NAME
+    label: URL field name
+    description: >
+      What is the name of the field that contains the original long URLs that you want to shorten?
+    default: url
+    example: url
+    required: true
+
+  - param: SHORT_URL_FIELD_NAME
+    label: Short URL field name
+    description: >
+      What is the name of the field where you want to store your shortened URLs?
+    default: shortUrl
+    example: shortUrl
+    required: true
