@@ -28,8 +28,8 @@ class ServiceAccountCredential {
   private readonly metadataServiceUri = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
   private readonly requiredScopes = "https://www.googleapis.com/auth/firebase";
 
-  private accessToken: string | undefined;
-  private tokenExpiration: number | undefined;
+  private accessToken: string;
+  private tokenExpiration: number;
 
   public async getAccessToken() {
     const now = Math.floor(Date.now() / 1000)
@@ -112,6 +112,10 @@ const urlShortener = new FirestoreDynamicLinksUrlShortener(
   config.dynamicLinkSuffixLength
 );
 
-export const fsurlshortener = functions.handler.firestore.document.onWrite(async (change) => {
-  return urlShortener.onDocumentWrite(change);
+export const shorten_create = functions.handler.firestore.document.onCreate(async (snapshot) => {
+  return urlShortener.onDocumentCreate(snapshot);
+});
+
+export const shorten_update = functions.handler.firestore.document.onUpdate(async (change) => {
+  return urlShortener.onDocumentUpdate(change);
 });

@@ -17,14 +17,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 
-import config from "./config";
 import * as logs from "./logs";
-
-enum ChangeType {
-  CREATE,
-  DELETE,
-  UPDATE,
-}
 
 export abstract class FirestoreUrlShortener {
 
@@ -41,7 +34,22 @@ export abstract class FirestoreUrlShortener {
     admin.initializeApp();
   }
 
-  public async onDocumentWrite (
+  public async onDocumentCreate (
+    snapshot: admin.firestore.DocumentSnapshot
+  ) {
+    this.logs.start();
+
+    if (this.urlFieldName === this.shortUrlFieldName) {
+      this.logs.fieldNamesNotDifferent();
+      return;
+    }
+
+    await this.handleCreateDocument(snapshot);
+
+    this.logs.complete();
+  }
+
+  public async onDocumentUpdate (
     change: functions.Change<admin.firestore.DocumentSnapshot>
   ) {
     this.logs.start();
@@ -51,40 +59,13 @@ export abstract class FirestoreUrlShortener {
       return;
     }
 
-    const changeType = this.getChangeType(change);
-
-    switch (changeType) {
-      case ChangeType.CREATE:
-        await this.handleCreateDocument(change.after);
-        break;
-      case ChangeType.DELETE:
-        this.handleDeleteDocument();
-        break;
-      case ChangeType.UPDATE:
-        await this.handleUpdateDocument(change.before, change.after);
-        break;
-      default: {
-        throw new Error(`Invalid change type: ${changeType}`);
-      }
-    }
+    await this.handleUpdateDocument(change.before, change.after);
 
     this.logs.complete();
   }
 
   protected extractUrl(snapshot: admin.firestore.DocumentSnapshot) {
     return snapshot.get(this.urlFieldName);
-  };
-  
-  private getChangeType(
-    change: functions.Change<admin.firestore.DocumentSnapshot>
-  ) {
-    if (!change.after.exists) {
-      return ChangeType.DELETE;
-    }
-    if (!change.before.exists) {
-      return ChangeType.CREATE;
-    }
-    return ChangeType.UPDATE;
   };
   
   private async handleCreateDocument(
@@ -97,10 +78,6 @@ export abstract class FirestoreUrlShortener {
     } else {
       this.logs.documentCreatedNoUrl();
     }
-  };
-  
-  private handleDeleteDocument() {
-    this.logs.documentDeleted();
   };
   
   private async handleUpdateDocument(

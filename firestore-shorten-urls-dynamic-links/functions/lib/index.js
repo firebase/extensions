@@ -99,6 +99,9 @@ class FirestoreDynamicLinksUrlShortener extends abstract_shortener_1.FirestoreUr
     }
 }
 const urlShortener = new FirestoreDynamicLinksUrlShortener(config_1.default.urlFieldName, config_1.default.shortUrlFieldName, config_1.default.dynamicLinkUrlPrefix, config_1.default.dynamicLinkSuffixLength);
-exports.fsurlshortener = functions.handler.firestore.document.onWrite((change) => __awaiter(void 0, void 0, void 0, function* () {
-    return urlShortener.onDocumentWrite(change);
+exports.shorten_create = functions.handler.firestore.document.onCreate((snapshot) => __awaiter(void 0, void 0, void 0, function* () {
+    return urlShortener.onDocumentCreate(snapshot);
+}));
+exports.shorten_update = functions.handler.firestore.document.onUpdate((change) => __awaiter(void 0, void 0, void 0, function* () {
+    return urlShortener.onDocumentUpdate(change);
 }));

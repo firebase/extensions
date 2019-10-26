@@ -28,10 +28,6 @@ export const documentCreatedWithUrl = () => {
   console.log("Document was created with a URL");
 };
 
-export const documentDeleted = () => {
-  console.log("Document was deleted, no processing is required");
-};
-
 export const documentUpdatedChangedUrl = () => {
   console.log("Document was updated, URL has changed");
 };

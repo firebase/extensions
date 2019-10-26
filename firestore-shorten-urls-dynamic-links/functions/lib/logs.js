@@ -25,9 +25,6 @@ exports.documentCreatedNoUrl = () => {
 exports.documentCreatedWithUrl = () => {
     console.log("Document was created with a URL");
 };
-exports.documentDeleted = () => {
-    console.log("Document was deleted, no processing is required");
-};
 exports.documentUpdatedChangedUrl = () => {
     console.log("Document was updated, URL has changed");
 };

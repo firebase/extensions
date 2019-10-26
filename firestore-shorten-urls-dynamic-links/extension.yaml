@@ -40,7 +40,19 @@ roles:
     reason: Allows the extension to write shortened URLs to Cloud Firestore.
 
 resources:
-  - name: fsurlshortener
+  - name: shorten_create
+    type: firebaseextensions.v1beta.function
+    description:
+      Listens for new documents in your specified Cloud Firestore collection,
+      and if they contain URLs, shortens the URLs, then writes the shortened
+      form back to the same document.
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.create
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
+  - name: shorten_update
     type: firebaseextensions.v1beta.function
     description:
       Listens for writes of new URLs to your specified Cloud Firestore collection, shortens the URLs,
@@ -49,7 +61,7 @@ resources:
       sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
-        eventType: providers/cloud.firestore/eventTypes/document.write
+        eventType: providers/cloud.firestore/eventTypes/document.update
         resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
 
 params:

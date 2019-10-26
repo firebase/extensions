@@ -26,12 +26,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const admin = require("firebase-admin");
 const logs = require("./logs");
-var ChangeType;
-(function (ChangeType) {
-    ChangeType[ChangeType["CREATE"] = 0] = "CREATE";
-    ChangeType[ChangeType["DELETE"] = 1] = "DELETE";
-    ChangeType[ChangeType["UPDATE"] = 2] = "UPDATE";
-})(ChangeType || (ChangeType = {}));
 class FirestoreUrlShortener {
     constructor(urlFieldName, shortUrlFieldName) {
         this.urlFieldName = urlFieldName;
@@ -42,43 +36,30 @@ class FirestoreUrlShortener {
         // Initialize the Firebase Admin SDK
         admin.initializeApp();
     }
-    onDocumentWrite(change) {
+    onDocumentCreate(snapshot) {
         return __awaiter(this, void 0, void 0, function* () {
             this.logs.start();
             if (this.urlFieldName === this.shortUrlFieldName) {
                 this.logs.fieldNamesNotDifferent();
                 return;
             }
-            const changeType = this.getChangeType(change);
-            switch (changeType) {
-                case ChangeType.CREATE:
-                    yield this.handleCreateDocument(change.after);
-                    break;
-                case ChangeType.DELETE:
-                    this.handleDeleteDocument();
-                    break;
-                case ChangeType.UPDATE:
-                    yield this.handleUpdateDocument(change.before, change.after);
-                    break;
-                default: {
-                    throw new Error(`Invalid change type: ${changeType}`);
-                }
+            yield this.handleCreateDocument(snapshot);
+            this.logs.complete();
+        });
+    }
+    onDocumentUpdate(change) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.logs.start();
+            if (this.urlFieldName === this.shortUrlFieldName) {
+                this.logs.fieldNamesNotDifferent();
+                return;
             }
+            yield this.handleUpdateDocument(change.before, change.after);
             this.logs.complete();
         });
     }
     extractUrl(snapshot) {
         return snapshot.get(this.urlFieldName);
-    }
-    ;
-    getChangeType(change) {
-        if (!change.after.exists) {
-            return ChangeType.DELETE;
-        }
-        if (!change.before.exists) {
-            return ChangeType.CREATE;
-        }
-        return ChangeType.UPDATE;
     }
     ;
     handleCreateDocument(snapshot) {
@@ -92,10 +73,6 @@ class FirestoreUrlShortener {
                 this.logs.documentCreatedNoUrl();
             }
         });
-    }
-    ;
-    handleDeleteDocument() {
-        this.logs.documentDeleted();
     }
     ;
     handleUpdateDocument(before, after) {
