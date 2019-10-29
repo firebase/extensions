@@ -17,11 +17,13 @@ You may pause and resume the script from the last batch at any point.
 
 ### Install and run the script
 
-Install the import script using `npm` (the Node Package Manager). Note that the import script uses several values from your installation of the extension:
+The import script uses several values from your installation of the extension:
 
 +   `${PROJECT_ID}`: the project ID for the Firebase project in which you installed the extension
 +   `${COLLECTION_PATH}`: the collection path that you specified during extension installation
 +   `${DATASET_ID}`: the ID that you specified for your dataset during extension installation
+
+Install the import script using `npm` (the Node Package Manager).
 
 1.  Make sure that you have [Node.js](https://www.nodejs.org/) installed in order to access the `npm` command tools.
 
