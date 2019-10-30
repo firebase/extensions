@@ -72,14 +72,14 @@ export class FirestoreBigQuerySchemaViewFactory {
    */
   async initializeSchemaViewResources(
     datasetId: string,
-    collectionName: string,
+    tableNamePrefix: string,
     schemaName: string,
     firestoreSchema: FirestoreSchema,
   ): Promise<bigquery.Table> {
-    const rawChangeLogTableName = changeLog(raw(collectionName));
-    const latestRawViewName = latest(raw(collectionName));
-    const changeLogSchemaViewName = changeLog(schema(collectionName, schemaName));
-    const latestSchemaViewName = latest(schema(collectionName, schemaName));
+    const rawChangeLogTableName = changeLog(raw(tableNamePrefix));
+    const latestRawViewName = latest(raw(tableNamePrefix));
+    const changeLogSchemaViewName = changeLog(schema(tableNamePrefix, schemaName));
+    const latestSchemaViewName = latest(schema(tableNamePrefix, schemaName));
     const dataset = this.bq.dataset(datasetId);
 
     const udfNames = Object.keys(udfs);
