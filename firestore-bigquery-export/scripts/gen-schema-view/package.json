@@ -18,7 +18,12 @@
     "test": "npm run mocha"
   },
   "files": [
-    "lib"
+    "lib/index.js",
+    "lib/logs.js",
+    "lib/snapshot.js",
+    "lib/schema-loader-utils.js",
+    "lib/schema.js",
+    "lib/udf.js"
   ],
   "bin": {
     "fs-bq-schema-views": "./lib/index.js"
