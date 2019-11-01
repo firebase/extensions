@@ -72,14 +72,14 @@ export class FirestoreBigQuerySchemaViewFactory {
    */
   async initializeSchemaViewResources(
     datasetId: string,
-    collectionName: string,
+    tableNamePrefix: string,
     schemaName: string,
     firestoreSchema: FirestoreSchema,
   ): Promise<bigquery.Table> {
-    const rawChangeLogTableName = changeLog(raw(collectionName));
-    const latestRawViewName = latest(raw(collectionName));
-    const changeLogSchemaViewName = changeLog(schema(collectionName, schemaName));
-    const latestSchemaViewName = latest(schema(collectionName, schemaName));
+    const rawChangeLogTableName = changeLog(raw(tableNamePrefix));
+    const latestRawViewName = latest(raw(tableNamePrefix));
+    const changeLogSchemaViewName = changeLog(schema(tableNamePrefix, schemaName));
+    const latestSchemaViewName = latest(schema(tableNamePrefix, schemaName));
     const dataset = this.bq.dataset(datasetId);
 
     const udfNames = Object.keys(udfs);
@@ -181,7 +181,7 @@ export const buildSchemaViewQuery = (
 }
 
 /**
- * Given a firestore schema which may contain values for any type present
+ * Given a Cloud Firestore schema which may contain values for any type present
  * in the Firestore document proto, return a list of clauses that may be
  * used to extract schema values from a JSON string and convert them into
  * the corresponding BigQuery type.
@@ -302,7 +302,7 @@ const processLeafField = (
     const longitude = jsonExtract(dataFieldName, extractPrefix, field, `._longitude`, transformer);
      /*
       * We return directly from this branch because it's the only one that
-      * generate multiple selector clauses.
+      * generates multiple selector clauses.
       */
     fieldNameToSelector[qualifyFieldName(prefix, field.name)] =
       `${firestoreGeopoint(
