@@ -154,7 +154,7 @@ async function parseConfig(): Promise<CliConfig> {
       projectId: program.project,
       datasetId: program.dataset,
       tableNamePrefix: program.tableNamePrefix,
-      schemas: readSchemas(program.schemaFiles)
+      schemas: readSchemas(program.schemaFiles),
     };
   }
   const {
@@ -168,7 +168,7 @@ async function parseConfig(): Promise<CliConfig> {
     datasetId: dataset,
     tableNamePrefix: tableNamePrefix,
     schemas: readSchemas(
-      schemaFiles.split(",").map((schemaFileName) => schemaFileName.trim()),
+      schemaFiles.split(",").map((schemaFileName) => schemaFileName.trim())
     ),
   };
 }
