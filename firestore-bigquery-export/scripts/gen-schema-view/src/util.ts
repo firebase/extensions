@@ -50,7 +50,7 @@ export function readSchemas(
 
 function warnDuplicateSchemaName(schemaName: string) {
   console.log(
-    `Found multiple schema files named ${schemaName}! Only the last one will be created!`
+    `Found multiple schema files named ${schemaName}! Only the last one will be used to create a schema view!`
   );
 }
 

@@ -63,7 +63,7 @@ program
   )
   .option(
     "-f, --schema-files <schema-files>",
-    "A path in the filesystem specifying a globbed collection of files to read schemas from.",
+    "A collection of files from which to read schemas.",
     collect,
     []
   );
@@ -86,7 +86,7 @@ const questions = [
   },
   {
     message:
-      "What is the name of the Cloud Firestore Collection that you would like to generate a schema view for?",
+      "What is the name of the Cloud Firestore collection for which you want to generate a schema view?",
     name: "tableNamePrefix",
     type: "input",
     validate: (value) =>
@@ -109,11 +109,11 @@ interface CliConfig {
 
 async function run(): Promise<number> {
   // Get all configuration options via inquirer prompt or commander flags.
-  const config: CliConfig = await getConfig();
+  const config: CliConfig = await parseConfig();
 
   // Set project ID so it can be used in BigQuery intialization
   process.env.PROJECT_ID = config.projectId;
-  // BigQuery aactually requires this variable to set the project correctly.
+  // BigQuery actually requires this variable to set the project correctly.
   process.env.GOOGLE_CLOUD_PROJECT = config.projectId;
 
   // Initialize Firebase
@@ -127,7 +127,7 @@ async function run(): Promise<number> {
     console.log(`No schema files found!`);
   }
   const viewFactory = new FirestoreBigQuerySchemaViewFactory();
-  for (let schemaName in config.schemas) {
+  for (const schemaName in config.schemas) {
     await viewFactory.initializeSchemaViewResources(
       config.datasetId,
       config.tableNamePrefix,
@@ -138,13 +138,7 @@ async function run(): Promise<number> {
   return 0;
 }
 
-async function getConfig(): Promise<CliConfig> {
-  let config: CliConfig = {
-    projectId: undefined,
-    datasetId: undefined,
-    tableNamePrefix: undefined,
-    schemas: undefined,
-  };
+async function parseConfig(): Promise<CliConfig> {
   program.parse(process.argv);
   if (program.nonInteractive) {
     if (
@@ -156,25 +150,27 @@ async function getConfig(): Promise<CliConfig> {
       program.outputHelp();
       process.exit(1);
     }
-    config.projectId = program.project;
-    config.datasetId = program.dataset;
-    config.tableNamePrefix = program.tableNamePrefix;
-    config.schemas = readSchemas(program.schemaFiles);
-  } else {
-    const {
-      project,
-      dataset,
-      tableNamePrefix,
-      schemaFiles,
-    } = await inquirer.prompt(questions);
-    config.projectId = project;
-    config.datasetId = dataset;
-    config.tableNamePrefix = tableNamePrefix;
-    config.schemas = readSchemas(
-      schemaFiles.split(",").map((schemaFileName) => schemaFileName.trim())
-    );
+    return {
+      projectId: program.project,
+      datasetId: program.dataset,
+      tableNamePrefix: program.tableNamePrefix,
+      schemas: readSchemas(program.schemaFiles)
+    };
   }
-  return config;
+  const {
+    project,
+    dataset,
+    tableNamePrefix,
+    schemaFiles,
+  } = await inquirer.prompt(questions);
+  return {
+    projectId: project,
+    datasetId: dataset,
+    tableNamePrefix: tableNamePrefix,
+    schemas: readSchemas(
+      schemaFiles.split(",").map((schemaFileName) => schemaFileName.trim()),
+    ),
+  };
 }
 
 run()
