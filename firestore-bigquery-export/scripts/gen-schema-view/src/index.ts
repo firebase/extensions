@@ -23,7 +23,7 @@ import * as inquirer from "inquirer";
 
 import { FirestoreBigQuerySchemaViewFactory, FirestoreSchema } from "./schema";
 
-import { readSchemas } from "./util";
+import { readSchemas } from "./schema-loader-utils";
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;

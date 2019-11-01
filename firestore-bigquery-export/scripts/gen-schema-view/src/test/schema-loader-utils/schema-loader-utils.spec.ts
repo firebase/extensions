@@ -20,7 +20,7 @@ import { dirname } from "path";
 import { promisify } from "util";
 
 import * as chai from "chai";
-import * as util from "../../util";
+import * as schema_loader_utils from "../../schema-loader-utils";
 
 const expect = chai.expect;
 
@@ -34,36 +34,36 @@ console.log(schemaDir);
 
 describe("filesystem schema loading", () => {
   it("should load no schemas from an empty directory", () => {
-    const schemas = util.readSchemas([`${schemaDir}/empty-directory`]);
+    const schemas = schema_loader_utils.readSchemas([`${schemaDir}/empty-directory`]);
     expect(Object.keys(schemas).length).to.equal(0);
   });
   it("should load one schema from a single file", () => {
     const schemaFile = `${schemaDir}/full-directory/schema-1.json`;
-    const schemas = Object.keys(util.readSchemas([schemaFile]));
+    const schemas = Object.keys(schema_loader_utils.readSchemas([schemaFile]));
     expect(schemas.length).to.equal(1);
-    expect(schemas[0]).to.equal(util.filePathToSchemaName(schemaFile));
+    expect(schemas[0]).to.equal(schema_loader_utils.filePathToSchemaName(schemaFile));
   });
   it("should load many schemas from a full directory, but dedup overlapping names", () => {
     const directoryPath = `${schemaDir}/full-directory`;
     const expectedSchemaNames = [...new Set(readdirSync(directoryPath)
-      .map(schemaFile => util.filePathToSchemaName(schemaFile)))];
-    const schemas = util.readSchemas([directoryPath]);
+      .map(schemaFile => schema_loader_utils.filePathToSchemaName(schemaFile)))];
+    const schemas = schema_loader_utils.readSchemas([directoryPath]);
     expect(Object.keys(schemas)).to.have.members(expectedSchemaNames);
   });
   it("should load only schemas with names matching glob pattern", () => {
     const globPattern = `${schemaDir}/full-directory/*.json`;
     const expectedSchemaNames = readdirSync(dirname(globPattern))
       .filter(schemaName => schemaName.endsWith(".json"))
-      .map(schemaFile => util.filePathToSchemaName(schemaFile));
-    const schemas = util.readSchemas([globPattern]);
+      .map(schemaFile => schema_loader_utils.filePathToSchemaName(schemaFile));
+    const schemas = schema_loader_utils.readSchemas([globPattern]);
     expect(Object.keys(schemas)).to.have.members(expectedSchemaNames);
   });
   it("should load all schemas with multiple hierarchy levels", async () => {
     const globPattern = `${schemaDir}/**/*.json`;
     const results: string[] = (await find(schemaDir))
       .filter(schemaFileInfo => schemaFileInfo.file.endsWith(".json"))
-      .map(schemaFileInfo => util.filePathToSchemaName(schemaFileInfo.file));
-    const schemas = util.readSchemas([globPattern]);
+      .map(schemaFileInfo => schema_loader_utils.filePathToSchemaName(schemaFileInfo.file));
+    const schemas = schema_loader_utils.readSchemas([globPattern]);
     expect(Object.keys(schemas)).to.have.members(results);
   });
 });

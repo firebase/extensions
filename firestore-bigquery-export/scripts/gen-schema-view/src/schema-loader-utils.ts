@@ -25,20 +25,20 @@ export function readSchemas(
   globs: string[]
 ): { [schemaName: string]: FirestoreSchema } {
   let schemas = {};
-  let expanded = expandGlobs(globs);
+  const expanded = expandGlobs(globs);
   for (var i = 0; i < expanded.length; i++) {
-    let dirent = resolveFilePath(expanded[i]);
-    let stats = lstatSync(dirent);
+    const dirent = resolveFilePath(expanded[i]);
+    const stats = lstatSync(dirent);
     if (stats.isDirectory()) {
-      let directorySchemas = readSchemasFromDirectory(dirent);
-      for (let schemaName in directorySchemas) {
+      const directorySchemas = readSchemasFromDirectory(dirent);
+      for (const schemaName in directorySchemas) {
         if (schemas.hasOwnProperty(schemaName)) {
           warnDuplicateSchemaName(schemaName);
         }
         schemas[schemaName] = directorySchemas[schemaName];
       }
     } else {
-      let schemaName = filePathToSchemaName(dirent);
+      const schemaName = filePathToSchemaName(dirent);
       if (schemas.hasOwnProperty(schemaName)) {
         warnDuplicateSchemaName(schemaName);
       }
@@ -64,7 +64,7 @@ function resolveFilePath(filePath: string): string {
 function expandGlobs(globs: string[]): string[] {
   let results = [];
   for (var i = 0; i < globs.length; i++) {
-    let globResults = glob.sync(globs[i]);
+    const globResults = glob.sync(globs[i]);
     results = results.concat(globResults);
   }
   return results;
@@ -74,7 +74,7 @@ function readSchemasFromDirectory(
   directory: string
 ): { [schemaName: string]: FirestoreSchema } {
   let results = {};
-  let files = readdirSync(directory);
+  const files = readdirSync(directory);
   const schemaNames = files.map((fileName) => filePathToSchemaName(fileName));
   for (var i = 0; i < files.length; i++) {
     const schema: FirestoreSchema = readSchemaFromFile(
