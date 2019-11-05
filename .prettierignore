@@ -8,3 +8,8 @@ package-lock.json
 README.md
 **/functions/lib/**
 **/dist/**
+
+# extension install md files
+#   - excluded as prettier escapes variables e.g. `${PROJECT_ID}` becomes `\${PROJECT_ID}`
+POSTINSTALL.md
+PREINSTALL.md
