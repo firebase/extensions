@@ -166,13 +166,9 @@ const resizeImage = async ({
     // Cloud Storage files.
     const metadata: any = {
       contentType: contentType,
-      metadata: {
-        resizedImage: "true",
-      },
+      metadata: originalMetadata,
     };
-    if (config.keepFileMetadata && originalMetadata) {
-      metadata.metadata = originalMetadata;
-    }
+    metadata.metadata.resizedImage = true;
     if (config.cacheControlHeader) {
       metadata.cacheControl = config.cacheControlHeader;
     }

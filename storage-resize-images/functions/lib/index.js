@@ -132,13 +132,9 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         // Cloud Storage files.
         const metadata = {
             contentType: contentType,
-            metadata: {
-                resizedImage: "true",
-            },
+            metadata: originalMetadata,
         };
-        if (config_1.default.keepFileMetadata && originalMetadata) {
-            metadata.metadata = originalMetadata;
-        }
+        metadata.metadata.resizedImage = true;
         if (config_1.default.cacheControlHeader) {
             metadata.cacheControl = config_1.default.cacheControlHeader;
         }
