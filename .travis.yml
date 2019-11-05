@@ -5,6 +5,11 @@ node_js:
   - 10
   - 12
 
+stages:
+  - build
+  - prettier
+  - test
+
 jobs:
   include:
     - stage: prettier
