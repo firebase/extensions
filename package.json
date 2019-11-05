@@ -11,7 +11,9 @@
     "test": "jest",
     "test-watch": "jest --watch",
     "test-coverage": "jest --coverage",
-    "postinstall": "lerna bootstrap && npm run clean && npm run build"
+    "postinstall": "lerna bootstrap && npm run clean && npm run build",
+    "generate-readmes": "lerna run --parallel --ignore delete-user-data generate-readme",
+    "precommit": "npm run clean && npm run build && npm run generate-readmes"
   },
   "repository": "",
   "author": "Firebase (https://firebase.google.com/)",
@@ -25,6 +27,12 @@
     "@types/jest": "^24.0.18",
     "typescript": "^3.6.3",
     "lerna": "^3.4.3",
-    "prettier": "1.15.3"
+    "prettier": "1.15.3",
+    "husky": "^3.0.9"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run precommit"
+    }
   }
 }

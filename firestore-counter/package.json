@@ -27,7 +27,8 @@
     "clean": "rimraf functions/lib",
     "compile": "tsc",
     "format": "prettier --write {,**/}*.{yaml,ts,md}",
-    "test": "mocha --require ts-node/register test/**/*.ts"
+    "test": "mocha --require ts-node/register test/**/*.ts",
+    "generate-readme": "firebase ext:info . --markdown > README.md"
   },
   "private": true
 }
