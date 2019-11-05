@@ -12,7 +12,6 @@
     "build": "npm run clean && npm run compile",
     "clean": "rimraf ./lib",
     "compile": "tsc",
-    "format": "prettier --write **/*.ts",
     "gen-schema-views": "node ./lib/index.js",
     "mocha": "nyc mocha -r ts-node/register --opts mocha.opts",
     "prepare": "npm run build",
@@ -48,7 +47,6 @@
     "nyc": "^14.0.0",
     "mocha": "^5.2.0",
     "mocha-typescript": "*",
-    "prettier": "1.15.2",
     "typescript": "^3.5.2",
     "ts-node": "^7.0.1"
   }
