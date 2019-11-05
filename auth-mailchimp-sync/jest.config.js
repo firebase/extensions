@@ -6,7 +6,5 @@ module.exports = {
   rootDir: "./",
   preset: "ts-jest",
   globalSetup: "./jest.setup.js",
-  globalTeardown: "./jest.teardown.js"
+  globalTeardown: "./jest.teardown.js",
 };
-
-

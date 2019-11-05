@@ -33,9 +33,13 @@ import {
 export const latestConsistentSnapshotSchemaView = (
   datasetId: string,
   rawTableName: string,
-  schema: FirestoreSchema,
+  schema: FirestoreSchema
 ) => ({
-  query: buildLatestSchemaSnapshotViewQueryFromLatestView(datasetId, rawTableName, schema),
+  query: buildLatestSchemaSnapshotViewQueryFromLatestView(
+    datasetId,
+    rawTableName,
+    schema
+  ),
   useLegacySql: false,
 });
 
@@ -58,9 +62,17 @@ export const buildLatestSchemaSnapshotViewQuery = (
   // We need to pass the dataset id into the parser so that we can call the
   // fully qualified json2array persistent user-defined function in the proper
   // scope.
-  const [schemaFieldExtractors, schemaFieldArrays, schemaFieldGeopoints] = processFirestoreSchema(datasetId, "data", schema, firstValue);
-  const fieldNameSelectorClauses = Object.keys(schemaFieldExtractors).join(', ');
-  const fieldValueSelectorClauses = Object.values(schemaFieldExtractors).join(', ');
+  const [
+    schemaFieldExtractors,
+    schemaFieldArrays,
+    schemaFieldGeopoints,
+  ] = processFirestoreSchema(datasetId, "data", schema, firstValue);
+  const fieldNameSelectorClauses = Object.keys(schemaFieldExtractors).join(
+    ", "
+  );
+  const fieldValueSelectorClauses = Object.values(schemaFieldExtractors).join(
+    ", "
+  );
   const schemaHasArrays = schemaFieldArrays.length > 0;
   const schemaHasGeopoints = schemaFieldGeopoints.length > 0;
   let query = `
@@ -74,37 +86,65 @@ export const buildLatestSchemaSnapshotViewQuery = (
           document_name,
           ${firstValue(`timestamp`)} AS timestamp,
           ${firstValue(`operation`)} AS operation,
-          ${firstValue(`operation`)} = "DELETE" AS is_deleted${fieldValueSelectorClauses.length > 0 ? `,`: ``}
+          ${firstValue(`operation`)} = "DELETE" AS is_deleted${
+    fieldValueSelectorClauses.length > 0 ? `,` : ``
+  }
           ${fieldValueSelectorClauses}
         FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawTableName}\`
       )
       WHERE NOT is_deleted
   `;
   const groupableExtractors = Object.keys(schemaFieldExtractors).filter(
-    name => schemaFieldArrays.indexOf(name) == -1 && schemaFieldGeopoints.indexOf(name) == -1);
+    (name) =>
+      schemaFieldArrays.indexOf(name) == -1 &&
+      schemaFieldGeopoints.indexOf(name) == -1
+  );
   const hasNonGroupableFields = schemaHasArrays || schemaHasGeopoints;
   // BigQuery doesn't support grouping by array fields or geopoints.
   const groupBy = `
     GROUP BY
       document_name,
       timestamp,
-      operation${groupableExtractors.length > 0 ? `,`: ``}
-      ${groupableExtractors.length > 0 ? `${groupableExtractors.join(`, `)}` : ``}
+      operation${groupableExtractors.length > 0 ? `,` : ``}
+      ${
+        groupableExtractors.length > 0
+          ? `${groupableExtractors.join(`, `)}`
+          : ``
+      }
   `;
   if (hasNonGroupableFields) {
-      query = `
-        ${subSelectQuery(query, /*except=*/schemaFieldArrays.concat(schemaFieldGeopoints))}
+    query = `
+        ${subSelectQuery(
+          query,
+          /*except=*/ schemaFieldArrays.concat(schemaFieldGeopoints)
+        )}
         ${rawTableName}
-        ${schemaFieldArrays.map(arrayFieldName =>
-          `CROSS JOIN UNNEST(${rawTableName}.${arrayFieldName})
+        ${schemaFieldArrays
+          .map(
+            (arrayFieldName) =>
+              `CROSS JOIN UNNEST(${rawTableName}.${arrayFieldName})
             AS ${arrayFieldName}_member
-            WITH OFFSET ${arrayFieldName}_index`).join(' ')}
+            WITH OFFSET ${arrayFieldName}_index`
+          )
+          .join(" ")}
       `;
-      query = `
+    query = `
         ${query}
         ${groupBy}
-        ${schemaHasArrays ? `, ${schemaFieldArrays.map(name => `${name}_index, ${name}_member`).join(', ')}`: ``}
-        ${schemaHasGeopoints ? `, ${schemaFieldGeopoints.map(name => `${name}_latitude, ${name}_longitude`).join(', ')}`: ``}
+        ${
+          schemaHasArrays
+            ? `, ${schemaFieldArrays
+                .map((name) => `${name}_index, ${name}_member`)
+                .join(", ")}`
+            : ``
+        }
+        ${
+          schemaHasGeopoints
+            ? `, ${schemaFieldGeopoints
+                .map((name) => `${name}_latitude, ${name}_longitude`)
+                .join(", ")}`
+            : ``
+        }
       `;
   } else {
     query = `
@@ -123,4 +163,4 @@ export const buildLatestSchemaSnapshotViewQuery = (
     ${query}
   `);
   return query;
-}
+};

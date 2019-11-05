@@ -24,7 +24,7 @@ description:
 license: Apache-2.0
 billingRequired: false
 sourceUrl: https://github.com/firebase/extensions/tree/master/delete-user-data
-releaseNotesUrl: https://github.com/firebase/extensions/commits/master
+releaseNotesUrl: https://github.com/firebase/extensions/releases
 
 author:
   authorName: Firebase
@@ -106,8 +106,9 @@ params:
     type: select
     label: Cloud Firestore delete mode
     description: >-
-      How do you want to delete Cloud Firestore documents? To also delete documents in
-      subcollections, set this parameter to `recursive`.
+      (Only applicable if you use the `Cloud Firestore paths` parameter.) How do you want
+      to delete Cloud Firestore documents? To also delete documents in subcollections,
+      set this parameter to `recursive`.
     options:
       - label: Recursive
         value: recursive

@@ -86,13 +86,17 @@ function validateFieldArray(field: string, array?: string[]) {
 }
 
 async function processCreate(snap: FirebaseFirestore.DocumentSnapshot) {
-  return snap.ref.update({
-    delivery: {
-      startTime: admin.firestore.FieldValue.serverTimestamp(),
-      state: "PENDING",
-      attempts: 0,
-      error: null,
-    },
+  // Wrapping in transaction to allow for automatic retries (#48)
+  return admin.firestore().runTransaction((transaction) => {
+    transaction.update(snap.ref, {
+      delivery: {
+        startTime: admin.firestore.FieldValue.serverTimestamp(),
+        state: "PENDING",
+        attempts: 0,
+        error: null,
+      },
+    });
+    return Promise.resolve();
   });
 }
 
@@ -277,7 +281,11 @@ async function deliver(
     logs.deliveryError(ref, e);
   }
 
-  return ref.update(update);
+  // Wrapping in transaction to allow for automatic retries (#48)
+  return admin.firestore().runTransaction((transaction) => {
+    transaction.update(ref, update);
+    return Promise.resolve();
+  });
 }
 
 async function processWrite(change) {
@@ -302,19 +310,27 @@ async function processWrite(change) {
       return null;
     case "PROCESSING":
       if (payload.delivery.leaseExpireTime.toMillis() < Date.now()) {
-        return change.after.ref.update({
-          "delivery.state": "ERROR",
-          error: "Message processing lease expired.",
+        // Wrapping in transaction to allow for automatic retries (#48)
+        return admin.firestore().runTransaction((transaction) => {
+          transaction.update(change.after.ref, {
+            "delivery.state": "ERROR",
+            error: "Message processing lease expired.",
+          });
+          return Promise.resolve();
         });
       }
       return null;
     case "PENDING":
     case "RETRY":
-      await change.after.ref.update({
-        "delivery.state": "PROCESSING",
-        "delivery.leaseExpireTime": admin.firestore.Timestamp.fromMillis(
-          Date.now() + 60000
-        ),
+      // Wrapping in transaction to allow for automatic retries (#48)
+      await admin.firestore().runTransaction((transaction) => {
+        transaction.update(change.after.ref, {
+          "delivery.state": "PROCESSING",
+          "delivery.leaseExpireTime": admin.firestore.Timestamp.fromMillis(
+            Date.now() + 60000
+          ),
+        });
+        return Promise.resolve();
       });
       return deliver(payload, change.after.ref);
   }

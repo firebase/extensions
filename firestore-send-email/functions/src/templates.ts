@@ -67,7 +67,7 @@ export default class Templates {
       console.log(`loaded template '${doc.id}'`);
     });
     this.ready = true;
-    this.waits.forEach(wait => wait());
+    this.waits.forEach((wait) => wait());
   }
 
   async render(
