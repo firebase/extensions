@@ -95,7 +95,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
             fileExtension,
             contentType,
             size,
-            originalMetadata
+            originalMetadata,
           })
         );
       });
@@ -140,7 +140,7 @@ const resizeImage = async ({
   fileExtension,
   contentType,
   size,
-  originalMetadata
+  originalMetadata,
 }: {
   bucket: Bucket;
   originalFile: string;
@@ -149,7 +149,7 @@ const resizeImage = async ({
   fileExtension: string;
   contentType: string;
   size: string;
-  originalMetadata: { [key: string]: string; };
+  originalMetadata: { [key: string]: string };
 }): Promise<ResizedImageResult> => {
   const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
   // Path where resized image will be uploaded to in Storage.
