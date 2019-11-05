@@ -23,7 +23,7 @@ description:
 license: Apache-2.0
 billingRequired: true
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-shorten-urls-bitly
-releaseNotesUrl: https://github.com/firebase/extensions/commits/master
+releaseNotesUrl: https://github.com/firebase/extensions/releases
 
 author:
   authorName: Firebase
@@ -33,6 +33,9 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
+  - authorName: Kevin Cheung
+    email: kevincheung@google.com
+    url: https://github.com/kevinthecheung
 
 roles:
   - role: datastore.user
