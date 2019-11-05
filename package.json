@@ -11,7 +11,7 @@
     "test": "jest",
     "test-watch": "jest --watch",
     "test-coverage": "jest --coverage",
-    "postinstall": "lerna bootstrap && npm run clean && npm run build"
+    "postinstall": "lerna bootstrap --no-ci && npm run clean && npm run build"
   },
   "repository": "",
   "author": "Firebase (https://firebase.google.com/)",
