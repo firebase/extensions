@@ -94,7 +94,7 @@ params:
     label: Cloud Storage bucket for images
     description: >
       To which Cloud Storage bucket will you upload images that you want to resize?
-      Resized images will be stored in this bucket, original images can either be stored or deleted.
+      Resized images will be stored in this bucket. Original images can either be stored or deleted.
     default: ${STORAGE_BUCKET}
     validationRegex: (.)+\.(.)+\.(.)+
     validationErrorMessage: Invalid storage bucket
