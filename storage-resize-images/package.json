@@ -1,6 +1,5 @@
 {
   "name": "storage-resize-images",
-  "version": "0.1.0",
   "description": "Resized Image Generator for Firebase",
   "author": "Firebase",
   "license": "Apache-2.0",
@@ -21,5 +20,6 @@
   "devDependencies": {
     "rimraf": "^2.6.3",
     "typescript": "^3.5.2"
-  }
+  },
+  "private": true
 }

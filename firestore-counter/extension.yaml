@@ -23,7 +23,7 @@ description:
 license: Apache-2.0
 billingRequired: false
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-counter
-releaseNotesUrl: https://github.com/firebase/extensions/commits/master
+releaseNotesUrl: https://github.com/firebase/extensions/releases
 
 author:
   authorName: Firebase
