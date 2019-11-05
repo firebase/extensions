@@ -1,11 +1,15 @@
 package.json
 extension.yaml
-webpack.config.js
+package-lock.json
+
 **/node_modules/**
 
 # generated files
 README.md
-POSTINSTALL.md
-PREINSTALL.md
 **/functions/lib/**
 **/dist/**
+
+# extension install md files
+#   - excluded as prettier escapes variables e.g. `${PROJECT_ID}` becomes `\${PROJECT_ID}`
+POSTINSTALL.md
+PREINSTALL.md

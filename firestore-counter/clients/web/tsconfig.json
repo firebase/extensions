@@ -5,6 +5,6 @@
     "outDir": "./dist/",
     "sourceMap": true,
     "noImplicitAny": true,
-    "types": [ "firebase", "uuid" ]
+    "types": ["firebase", "uuid"]
   }
 }
