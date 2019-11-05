@@ -1,7 +1,6 @@
 language: node_js
 
 node_js:
-  - 8
   - 10
   - 12
 
@@ -19,5 +18,4 @@ jobs:
       name: "Build"
       script: npm run clean && npm run build
     - stage: test
-      name: "Test (+coverage)"
       script: npm run test-coverage
