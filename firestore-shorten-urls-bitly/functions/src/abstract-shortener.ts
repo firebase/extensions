@@ -27,12 +27,11 @@ enum ChangeType {
 }
 
 export abstract class FirestoreUrlShortener {
-
   protected logs = logs;
 
   constructor(
     protected urlFieldName: string,
-    protected shortUrlFieldName: string,
+    protected shortUrlFieldName: string
   ) {
     this.urlFieldName = urlFieldName;
     this.shortUrlFieldName = shortUrlFieldName;
@@ -41,7 +40,7 @@ export abstract class FirestoreUrlShortener {
     admin.initializeApp();
   }
 
-  public async onDocumentWrite (
+  public async onDocumentWrite(
     change: functions.Change<admin.firestore.DocumentSnapshot>
   ) {
     this.logs.start();
@@ -73,8 +72,8 @@ export abstract class FirestoreUrlShortener {
 
   protected extractUrl(snapshot: admin.firestore.DocumentSnapshot) {
     return snapshot.get(this.urlFieldName);
-  };
-  
+  }
+
   private getChangeType(
     change: functions.Change<admin.firestore.DocumentSnapshot>
   ) {
@@ -85,8 +84,8 @@ export abstract class FirestoreUrlShortener {
       return ChangeType.CREATE;
     }
     return ChangeType.UPDATE;
-  };
-  
+  }
+
   private async handleCreateDocument(
     snapshot: admin.firestore.DocumentSnapshot
   ) {
@@ -97,19 +96,19 @@ export abstract class FirestoreUrlShortener {
     } else {
       this.logs.documentCreatedNoUrl();
     }
-  };
-  
+  }
+
   private handleDeleteDocument() {
     this.logs.documentDeleted();
-  };
-  
+  }
+
   private async handleUpdateDocument(
     before: admin.firestore.DocumentSnapshot,
     after: admin.firestore.DocumentSnapshot
   ) {
     const urlAfter = this.extractUrl(after);
     const urlBefore = this.extractUrl(before);
-  
+
     if (urlAfter === urlBefore) {
       this.logs.documentUpdatedUnchangedUrl();
     } else if (urlAfter) {
@@ -121,12 +120,12 @@ export abstract class FirestoreUrlShortener {
     } else {
       this.logs.documentUpdatedNoUrl();
     }
-  };
-  
+  }
+
   protected abstract async shortenUrl(
     snapshot: admin.firestore.DocumentSnapshot
   ): Promise<void>;
-  
+
   protected async updateShortUrl(
     snapshot: admin.firestore.DocumentSnapshot,
     url: any
@@ -134,10 +133,10 @@ export abstract class FirestoreUrlShortener {
     this.logs.updateDocument(snapshot.ref.path);
 
     // Wrapping in transaction to allow for automatic retries (#48)
-    await admin.firestore().runTransaction((transaction => {
+    await admin.firestore().runTransaction((transaction) => {
       transaction.update(snapshot.ref, this.shortUrlFieldName, url);
       return Promise.resolve();
-    }));  
+    });
     this.logs.updateDocumentComplete(snapshot.ref.path);
-  };  
+  }
 }

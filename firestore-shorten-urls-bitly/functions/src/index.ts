@@ -23,7 +23,6 @@ import config from "./config";
 import * as logs from "./logs";
 
 class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
-
   private bitly: BitlyClient;
 
   constructor(
@@ -41,18 +40,18 @@ class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
   ): Promise<void> {
     const url = this.extractUrl(snapshot);
     logs.shortenUrl(url);
-  
+
     try {
       const response: any = await this.bitly.shorten(url);
       const { url: shortUrl } = response;
 
       logs.shortenUrlComplete(shortUrl);
-  
+
       await this.updateShortUrl(snapshot, shortUrl);
     } catch (err) {
       logs.error(err);
     }
-  } 
+  }
 }
 
 const urlShortener = new FirestoreBitlyUrlShortener(
@@ -61,6 +60,8 @@ const urlShortener = new FirestoreBitlyUrlShortener(
   config.bitlyAccessToken
 );
 
-export const fsurlshortener = functions.handler.firestore.document.onWrite(async (change) => {
-  return urlShortener.onDocumentWrite(change);
-});
+export const fsurlshortener = functions.handler.firestore.document.onWrite(
+  async (change) => {
+    return urlShortener.onDocumentWrite(change);
+  }
+);
