@@ -1,0 +1,18 @@
+language: node_js
+
+node_js:
+  - 8
+  - 10
+  - 12
+
+jobs:
+  include:
+    - stage: prettier
+      name: "Prettier Formatting Check"
+      script: npm run lint
+    - stage: build
+      name: "Build"
+      script: npm run clean && npm run build
+    - stage: test
+      name: "Test (+coverage)"
+      script: npm run test-coverage
