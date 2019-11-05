@@ -3,7 +3,5 @@
   "compilerOptions": {
     "outDir": "functions/lib"
   },
-  "include": [
-    "functions/src"
-  ]
+  "include": ["functions/src"]
 }

@@ -78,7 +78,10 @@ export const shortenUrlComplete = (shortUrl: string) => {
 };
 
 export const start = () => {
-  console.log("Started execution of extension with configuration", obfuscatedConfig);
+  console.log(
+    "Started execution of extension with configuration",
+    obfuscatedConfig
+  );
 };
 
 export const updateDocument = (path: string) => {
