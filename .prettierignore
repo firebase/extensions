@@ -1,11 +1,10 @@
 package.json
 extension.yaml
-webpack.config.js
+package-lock.json
+
 **/node_modules/**
 
 # generated files
 README.md
-POSTINSTALL.md
-PREINSTALL.md
 **/functions/lib/**
 **/dist/**
