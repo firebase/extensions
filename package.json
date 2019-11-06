@@ -6,8 +6,8 @@
   "scripts": {
     "format": "prettier --write \"**/*.{js,md,yml,ts,json,yaml}\"",
     "lint": "prettier --list-different \"**/*.{js,md,yml,ts,json,yaml}\"",
-    "clean": "lerna run clean",
-    "build": "lerna run build",
+    "clean": "lerna run --parallel clean",
+    "build": "lerna run --parallel build",
     "test": "jest",
     "test-watch": "jest --watch",
     "test-coverage": "jest --coverage",
@@ -23,8 +23,8 @@
     "jest": "^24.9.0",
     "ts-jest": "^24.1.0",
     "@types/jest": "^24.0.18",
-    "typescript": "^3.6.3",
-    "lerna": "^3.4.3",
-    "prettier": "1.15.3"
+    "typescript": "^3.6.4",
+    "lerna": "^3.18.3",
+    "prettier": "1.18.2"
   }
 }
