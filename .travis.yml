@@ -1,5 +1,8 @@
 language: node_js
 
+install:
+  - npm install -g codecov
+
 node_js:
   - 8
   - 10
@@ -17,5 +20,7 @@ jobs:
     - stage: validate
       name: "Prettier Format Check"
       script: npm run lint
-    - stage: test
-      script: npm run test-coverage
+
+script:
+  - npm run test-coverage
+  - codecov
