@@ -1,6 +1,6 @@
 # Resize Images
 
-**Description**: Resizes images uploaded to Cloud Storage to a specified size. Original images can either be stored or deleted.
+**Description**: Resizes images uploaded to Cloud Storage to a specified size, and optionally keeps or deletes the original image.
 
 
 

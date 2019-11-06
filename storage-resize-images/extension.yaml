@@ -20,7 +20,7 @@ license: Apache-2.0
 displayName: Resize Images
 
 description:
-  Resizes images uploaded to Cloud Storage to a specified size. Original images can either be stored or deleted.
+  Resizes images uploaded to Cloud Storage to a specified size, and optionally keeps or deletes the original image.
 
 billingRequired: false
 sourceUrl: https://github.com/firebase/extensions/tree/master/storage-resize-images
