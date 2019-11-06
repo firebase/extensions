@@ -1,6 +1,5 @@
 {
   "name": "firestore-translate-text",
-  "version": "0.1.0",
   "description": "Translate messages into multiple languages, provided by user",
   "author": "Chris Bianca <chris@csfrequency.com>",
   "license": "Apache-2.0",
@@ -8,9 +7,7 @@
   "scripts": {
     "build": "npm run clean && npm run compile",
     "clean": "rimraf functions/lib",
-    "compile": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "patch-package"
+    "compile": "tsc"
   },
   "dependencies": {
     "@google-cloud/translate": "^4.0.1",
@@ -22,7 +19,7 @@
     "typescript": "^3.2.4",
     "mocked-env": "^1.3.1",
     "js-yaml": "^3.13.1",
-    "firebase-functions-test": "^0.1.6",
-    "patch-package": "^6.1.2"
-  }
+    "firebase-functions-test": "^0.1.6"
+  },
+  "private": true
 }

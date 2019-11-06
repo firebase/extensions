@@ -1,6 +1,5 @@
 {
   "name": "firestore-shorten-urls-bitly",
-  "version": "0.1.0",
   "description": "Automatically shorten url links",
   "author": "Chris Bianca <chris@csfrequency.com>",
   "license": "Apache-2.0",
@@ -19,5 +18,6 @@
   "devDependencies": {
     "rimraf": "^2.6.3",
     "typescript": "^3.2.4"
-  }
+  },
+  "private": true
 }

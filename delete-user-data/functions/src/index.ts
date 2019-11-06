@@ -118,14 +118,17 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
   const paths = extractUserPaths(firestorePaths, uid);
   const promises = paths.map(async (path) => {
     try {
-      const isRecursive = config.firestoreDeleteMode === 'recursive';
+      const isRecursive = config.firestoreDeleteMode === "recursive";
 
       if (!isRecursive) {
+        const firestore = admin.firestore();
         logs.firestorePathDeleting(path, false);
-        await admin
-          .firestore()
-          .doc(path)
-          .delete();
+
+        // Wrapping in transaction to allow for automatic retries (#48)
+        await firestore.runTransaction((transaction) => {
+          transaction.delete(firestore.doc(path));
+          return Promise.resolve();
+        });
         logs.firestorePathDeleted(path, false);
       } else {
         logs.firestorePathDeleting(path, true);

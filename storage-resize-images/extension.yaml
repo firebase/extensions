@@ -20,7 +20,7 @@ license: Apache-2.0
 displayName: Resize Images
 
 description:
-  Resizes images uploaded to Cloud Storage to a specified size, and stores both the original and resized images.
+  Resizes images uploaded to Cloud Storage to a specified size. Original images can either be stored or deleted.
 
 billingRequired: false
 sourceUrl: https://github.com/firebase/extensions/tree/master/storage-resize-images
@@ -94,7 +94,7 @@ params:
     label: Cloud Storage bucket for images
     description: >
       To which Cloud Storage bucket will you upload images that you want to resize?
-      This bucket will store both the original and resized images.
+      Resized images will be stored in this bucket. Original images can either be stored or deleted.
     default: ${STORAGE_BUCKET}
     validationRegex: (.)+\.(.)+\.(.)+
     validationErrorMessage: Invalid storage bucket
@@ -116,18 +116,18 @@ params:
     required: true
 
   - param: DELETE_ORIGINAL_FILE
-      type: select
-      label: Deletion of original file
-      description: >-
-        Do you want to automatically delete the original file from the Cloud Storage
-        bucket? Note that these deletions cannot be undone.
-      options:
-        - label: Yes
-          value: true
-        - label: No
-          value: false
-      default: false
-      required: true
+    type: select
+    label: Deletion of original file
+    description: >-
+      Do you want to automatically delete the original file from the Cloud Storage
+      bucket? Note that these deletions cannot be undone.
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+    default: false
+    required: true
 
   - param: RESIZED_IMAGES_PATH
     label: Cloud Storage path for resized images

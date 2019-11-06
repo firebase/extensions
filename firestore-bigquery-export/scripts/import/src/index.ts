@@ -42,7 +42,12 @@ const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
 
 const FIRESTORE_DEFAULT_DATABASE = "(default)";
 
-const validateInput = (value: string, name: string, regex: RegExp, sizeLimit: number) => {
+const validateInput = (
+  value: string,
+  name: string,
+  regex: RegExp,
+  sizeLimit: number
+) => {
   if (!value || value === "" || value.trim() === "") {
     return `Please supply a ${name}`;
   }
@@ -61,15 +66,26 @@ const questions = [
     name: "projectId",
     type: "input",
     validate: (value) =>
-      validateInput(value, "project ID", FIRESTORE_VALID_CHARACTERS, FIRESTORE_COLLECTION_NAME_MAX_CHARS),
+      validateInput(
+        value,
+        "project ID",
+        FIRESTORE_VALID_CHARACTERS,
+        FIRESTORE_COLLECTION_NAME_MAX_CHARS
+      ),
   },
   {
-    message: "What is the path of the the Cloud Firestore Collection you would like to import from? " +
+    message:
+      "What is the path of the the Cloud Firestore Collection you would like to import from? " +
       "(This may, or may not, be the same Collection for which you plan to mirror changes.)",
     name: "sourceCollectionPath",
     type: "input",
     validate: (value) =>
-      validateInput(value, "collection path", FIRESTORE_VALID_CHARACTERS, FIRESTORE_COLLECTION_NAME_MAX_CHARS),
+      validateInput(
+        value,
+        "collection path",
+        FIRESTORE_VALID_CHARACTERS,
+        FIRESTORE_COLLECTION_NAME_MAX_CHARS
+      ),
   },
   {
     message:
@@ -77,7 +93,12 @@ const questions = [
     name: "datasetId",
     type: "input",
     validate: (value) =>
-      validateInput(value, "dataset", BIGQUERY_VALID_CHARACTERS, BIGQUERY_RESOURCE_NAME_MAX_CHARS),
+      validateInput(
+        value,
+        "dataset",
+        BIGQUERY_VALID_CHARACTERS,
+        BIGQUERY_RESOURCE_NAME_MAX_CHARS
+      ),
   },
   {
     message:
@@ -85,7 +106,12 @@ const questions = [
     name: "tableId",
     type: "input",
     validate: (value) =>
-      validateInput(value, "table", BIGQUERY_VALID_CHARACTERS, BIGQUERY_RESOURCE_NAME_MAX_CHARS),
+      validateInput(
+        value,
+        "table",
+        BIGQUERY_VALID_CHARACTERS,
+        BIGQUERY_RESOURCE_NAME_MAX_CHARS
+      ),
   },
   {
     message:
@@ -94,8 +120,8 @@ const questions = [
     type: "input",
     default: 300,
     validate: (value) => {
-      return parseInt(value, 10) > 0
-    }
+      return parseInt(value, 10) > 0;
+    },
   },
 ];
 
@@ -135,7 +161,9 @@ const run = async (): Promise<number> => {
   // operations supersede imports when listing the live documents.
   let cursor;
 
-  let cursorPositionFile = __dirname + `/from-${sourceCollectionPath}-to-${projectId}\:${datasetId}\:${rawChangeLogName}`;
+  let cursorPositionFile =
+    __dirname +
+    `/from-${sourceCollectionPath}-to-${projectId}\:${datasetId}\:${rawChangeLogName}`;
   if (await exists(cursorPositionFile)) {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
     cursor = await firebase
@@ -169,15 +197,16 @@ const run = async (): Promise<number> => {
     }
     totalDocsRead += docs.length;
     cursor = docs[docs.length - 1];
-    const rows: FirestoreDocumentChangeEvent[] = docs.map(
-      (snapshot) => {
-        return {
-          timestamp: new Date(0).toISOString(), // epoch
-          operation: ChangeType.IMPORT,
-          documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${snapshot.ref.path}`,
-          eventId: "",
-          data: snapshot.data(),
-        };
+    const rows: FirestoreDocumentChangeEvent[] = docs.map((snapshot) => {
+      return {
+        timestamp: new Date(0).toISOString(), // epoch
+        operation: ChangeType.IMPORT,
+        documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${
+          snapshot.ref.path
+        }`,
+        eventId: "",
+        data: snapshot.data(),
+      };
     });
     await dataSink.record(rows);
     totalRowsImported += rows.length;
@@ -186,7 +215,9 @@ const run = async (): Promise<number> => {
   try {
     await unlink(cursorPositionFile);
   } catch (e) {
-    console.log(`Error unlinking journal file ${cursorPositionFile} after successful import: ${e.toString()}`);
+    console.log(
+      `Error unlinking journal file ${cursorPositionFile} after successful import: ${e.toString()}`
+    );
   }
 
   return totalRowsImported;
@@ -200,6 +231,8 @@ run()
     process.exit();
   })
   .catch((error) => {
-    console.error(`Error importing Collection to BigQuery: ${error.toString()}`);
+    console.error(
+      `Error importing Collection to BigQuery: ${error.toString()}`
+    );
     process.exit(1);
   });

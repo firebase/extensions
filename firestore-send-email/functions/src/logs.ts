@@ -25,7 +25,10 @@ export function init() {
 }
 
 export function start() {
-  console.log("Started execution of extension with configuration", obfuscatedConfig);
+  console.log(
+    "Started execution of extension with configuration",
+    obfuscatedConfig
+  );
 }
 
 export function error(err: Error) {
@@ -50,7 +53,11 @@ export function delivered(
   }
 ) {
   console.log(
-    `Delivered message: ${ref.path} successfully. messageId: ${info.messageId} accepted: ${info.accepted.length} rejected: ${info.rejected.length} pending: ${info.pending.length}`
+    `Delivered message: ${ref.path} successfully. messageId: ${
+      info.messageId
+    } accepted: ${info.accepted.length} rejected: ${
+      info.rejected.length
+    } pending: ${info.pending.length}`
   );
 }
 
@@ -66,5 +73,9 @@ export function missingDeliveryField(ref: FirebaseFirestore.DocumentReference) {
 }
 
 export function missingUids(uids: string[]) {
-  console.log(`The following uids were provided, however a document does not exist or has no 'email' field: ${uids.join(',')}`);
+  console.log(
+    `The following uids were provided, however a document does not exist or has no 'email' field: ${uids.join(
+      ","
+    )}`
+  );
 }
