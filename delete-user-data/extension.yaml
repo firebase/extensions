@@ -15,7 +15,7 @@
 name: delete-user-data
 displayName: Delete User Data
 specVersion: v1beta
-version: 0.2.0
+version: 0.1.2
 
 description:
   Deletes data keyed on a userId from Cloud Firestore, Realtime
