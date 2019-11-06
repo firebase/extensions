@@ -4,14 +4,14 @@
   "description": "Repository of sample Firebase Extensions.",
   "private": true,
   "scripts": {
-    "format": "prettier --write {,**/}*.{yaml,js,md}",
-    "lint": "prettier --list-different {,**/}*.{yaml,js,md}",
+    "format": "prettier --write \"**/*.{js,md,yml,ts,json,yaml}\"",
+    "lint": "prettier --list-different \"**/*.{js,md,yml,ts,json,yaml}\"",
     "clean": "lerna run clean",
     "build": "lerna run build",
     "test": "jest",
     "test-watch": "jest --watch",
     "test-coverage": "jest --coverage",
-    "postinstall": "lerna bootstrap && npm run clean && npm run build",
+    "postinstall": "lerna bootstrap --no-ci && npm run clean && npm run build",
     "generate-readmes": "lerna run --parallel --ignore delete-user-data generate-readme",
     "precommit": "npm run clean && npm run build && npm run generate-readmes"
   },
