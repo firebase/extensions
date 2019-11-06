@@ -60,7 +60,7 @@ When you use Firebase Extensions, you're only charged for the underlying resourc
 
 **Cloud Functions:**
 
-* **generateResizedImage:** Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images, then stores the resized image in the same bucket. Optionally keeps or deletes the original image.
+* **generateResizedImage:** Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images, then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
 
 
 
