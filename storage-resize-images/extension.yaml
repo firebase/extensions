@@ -51,10 +51,9 @@ roles:
 resources:
   - name: generateResizedImage
     type: firebaseextensions.v1beta.function
-    description:
-      Listens for new images uploaded to your specified Cloud Storage bucket,
-      resizes the images, then stores both images in the same Cloud Storage
-      bucket.
+    description: >-
+      Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images,
+      then stores the resized image in the same bucket. Optionally keeps or deletes the original image.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -94,7 +93,8 @@ params:
     label: Cloud Storage bucket for images
     description: >
       To which Cloud Storage bucket will you upload images that you want to resize?
-      Resized images will be stored in this bucket. Original images can either be stored or deleted.
+      Resized images will be stored in this bucket. Depending on your extension configuration,
+      original images are either kept or deleted.
     default: ${STORAGE_BUCKET}
     validationRegex: (.)+\.(.)+\.(.)+
     validationErrorMessage: Invalid storage bucket
