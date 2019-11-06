@@ -1,6 +1,5 @@
 import mockedEnv from "mocked-env";
 import * as functionsTestInit from "firebase-functions-test";
-import * as admin from "firebase-admin";
 
 const testTranslations = {
   de: "hallo",
@@ -47,7 +46,6 @@ function mockDocumentSnapshotFactory(documentSnapshot) {
       get: documentSnapshot.get.bind(documentSnapshot),
       ref: {
         path: documentSnapshot.ref.path,
-        update: mockFirestoreUpdate,
       },
     };
   })();
@@ -75,6 +73,7 @@ describe("extension", () => {
   });
 
   describe("functions.fstranslate", () => {
+    let admin;
     let wrappedFunction;
     let beforeSnapshot;
     let afterSnapshot;
@@ -83,9 +82,11 @@ describe("extension", () => {
     beforeEach(() => {
       jest.resetModules();
       functionsTest = functionsTestInit();
+      admin = require("firebase-admin");
       wrappedFunction = functionsTest.wrap(
         require("../functions/src").fstranslate
       );
+
       beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
         {},
         "translations/id1"
@@ -98,6 +99,15 @@ describe("extension", () => {
         beforeSnapshot,
         mockDocumentSnapshotFactory(afterSnapshot)
       );
+      admin.firestore().runTransaction = jest.fn().mockImplementation(() => {
+        return (transactionHandler) => {
+          transactionHandler({
+            update(ref, field, data) {
+              mockFirestoreUpdate(field, data);
+            },
+          });
+        };
+      })();
     });
 
     test("initializes Google Translate API with PROJECT_ID on function load", () => {
