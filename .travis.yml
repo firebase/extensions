@@ -16,9 +16,6 @@ stages:
 jobs:
   include:
     - stage: validate
-      name: "TypeScript Compile"
-      script: npm run clean && npm run build
-    - stage: validate
       name: "Prettier Format Check"
       script: npm run lint
 
