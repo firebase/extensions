@@ -64,12 +64,6 @@ When you use Firebase Extensions, you're only charged for the underlying resourc
 
 
 
-**APIs Used**:
-
-* storage-component.googleapis.com (Reason: Needed to use Cloud Storage)
-
-
-
 **Access Required**:
 
 
