@@ -1,5 +1,6 @@
 # All documentation changes, e.g. changelogs & readmes.
-*.md             @rachelsaunders
+*.md             @rachelsaunders @annie-ryan
+*/extension.yaml @rachelsaunders @annie-ryan
 
 # Dependencies, package.json and mono-repo files
 package.json     @Salakar @Ehesp
