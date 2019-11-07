@@ -14,13 +14,13 @@
 
 name: storage-resize-images
 specVersion: v1beta
-version: 0.1.1
+version: 0.1.2
 license: Apache-2.0
 
 displayName: Resize Images
 
 description:
-  Resizes images uploaded to Cloud Storage to a specified size, and stores both the original and resized images.
+  Resizes images uploaded to Cloud Storage to a specified size, and optionally keeps or deletes the original image.
 
 billingRequired: false
 sourceUrl: https://github.com/firebase/extensions/tree/master/storage-resize-images
@@ -51,10 +51,9 @@ roles:
 resources:
   - name: generateResizedImage
     type: firebaseextensions.v1beta.function
-    description:
-      Listens for new images uploaded to your specified Cloud Storage bucket,
-      resizes the images, then stores both images in the same Cloud Storage
-      bucket.
+    description: >-
+      Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images,
+      then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -94,7 +93,8 @@ params:
     label: Cloud Storage bucket for images
     description: >
       To which Cloud Storage bucket will you upload images that you want to resize?
-      This bucket will store both the original and resized images.
+      Resized images will be stored in this bucket. Depending on your extension configuration,
+      original images are either kept or deleted.
     default: ${STORAGE_BUCKET}
     validationRegex: (.)+\.(.)+\.(.)+
     validationErrorMessage: Invalid storage bucket
@@ -106,12 +106,27 @@ params:
     label: Sizes of resized images
     description: >
       What sizes of images would you like (in pixels)? Enter the sizes as a
-      comma-separated list of WIDTHxHEIGHT values.
+      comma-separated list of WIDTHxHEIGHT values. Learn more about
+      [how this parameter works](https://firebase.google.com/products/extensions/storage-resize-images).
     default: "200x200"
     example: "200x200"
     validationRegex: ^\d+x(\d+,\d+x)*\d+$
     validationErrorMessage:
       Invalid sizes, must be a comma-separated list of WIDTHxHEIGHT values.
+    required: true
+
+  - param: DELETE_ORIGINAL_FILE
+    type: select
+    label: Deletion of original file
+    description: >-
+      Do you want to automatically delete the original file from the Cloud Storage
+      bucket? Note that these deletions cannot be undone.
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+    default: false
     required: true
 
   - param: RESIZED_IMAGES_PATH
@@ -121,8 +136,7 @@ params:
       if you specify a path here of `thumbs` and you upload an image to
       `/images/original.jpg`, then the resized image is stored at
       `/images/thumbs/original_200x200.jpg`. If you prefer to store resized
-      images at the root of your bucket, leave this field empty. Learn more about
-      [how this parameter works](https://firebase.google.com/products/extensions/storage-resize-images).
+      images at the root of your bucket, leave this field empty.
     example: thumbnails
     required: false
 

@@ -1,36 +1,10 @@
-# storage-resize-images
+# Resize Images
 
-**VERSION**: 0.1.1
-
-**DESCRIPTION**: Resizes images uploaded to Cloud Storage to a specified size, and stores both the original and resized images.
+**Description**: Resizes images uploaded to Cloud Storage to a specified size, and optionally keeps or deletes the original image.
 
 
 
-**CONFIGURATION PARAMETERS:**
-
-* Deployment location: Where should the extension be deployed? You usually want a location close to your Storage bucket. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
-
-* Cloud Storage bucket for images: To which Cloud Storage bucket will you upload images that you want to resize? This bucket will store both the original and resized images.
-
-
-* Sizes of resized images: What sizes of images would you like (in pixels)? Enter the sizes as a comma-separated list of WIDTHxHEIGHT values.
-
-
-* Cloud Storage path for resized images: A relative path in which to store resized images. For example, if you specify a path here of `thumbs` and you upload an image to `/images/original.jpg`, then the resized image is stored at `/images/thumbs/original_200x200.jpg`. If you prefer to store resized images at the root of your bucket, leave this field empty. Learn more about [how this parameter works](https://firebase.google.com/products/extensions/storage-resize-images).
-
-
-* Cache-Control header for resized images: Do you want to specify a `Cache-Control` header for the resized image files? Learn more about [`Cache-Control` headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control). If you prefer not to use a `Cache-Control` header, leave this field empty.
-
-
-
-
-**CLOUD FUNCTIONS CREATED:**
-
-* generateResizedImage (google.storage.object.finalize)
-
-
-
-**DETAILS**: Use this extension to create resized versions of an image uploaded to a Cloud Storage bucket.
+**Details**: Use this extension to create resized versions of an image uploaded to a Cloud Storage bucket.
 
 When you upload an image file to your specified Cloud Storage bucket, this extension:
 
@@ -63,13 +37,40 @@ When you use Firebase Extensions, you're only charged for the underlying resourc
 
 
 
-**APIS USED**:
+
+**Configuration Parameters:**
+
+* Deployment location: Where should the extension be deployed? You usually want a location close to your Storage bucket. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+
+* Cloud Storage bucket for images: To which Cloud Storage bucket will you upload images that you want to resize? Resized images will be stored in this bucket. Depending on your extension configuration, original images are either kept or deleted.
+
+
+* Sizes of resized images: What sizes of images would you like (in pixels)? Enter the sizes as a comma-separated list of WIDTHxHEIGHT values. Learn more about [how this parameter works](https://firebase.google.com/products/extensions/storage-resize-images).
+
+
+* Deletion of original file: Do you want to automatically delete the original file from the Cloud Storage bucket? Note that these deletions cannot be undone.
+
+* Cloud Storage path for resized images: A relative path in which to store resized images. For example, if you specify a path here of `thumbs` and you upload an image to `/images/original.jpg`, then the resized image is stored at `/images/thumbs/original_200x200.jpg`. If you prefer to store resized images at the root of your bucket, leave this field empty.
+
+
+* Cache-Control header for resized images: Do you want to specify a `Cache-Control` header for the resized image files? Learn more about [`Cache-Control` headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control). If you prefer not to use a `Cache-Control` header, leave this field empty.
+
+
+
+
+**Cloud Functions:**
+
+* **generateResizedImage:** Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images, then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
+
+
+
+**APIs Used**:
 
 * storage-component.googleapis.com (Reason: Needed to use Cloud Storage)
 
 
 
-**ACCESS REQUIRED**:
+**Access Required**:
 
 
 

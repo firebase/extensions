@@ -15,12 +15,14 @@
  */
 
 import * as bigquery from "@google-cloud/bigquery";
-import {
-  firestoreToBQTable,
-} from "./schema";
+import { firestoreToBQTable } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 
-import { ChangeType, FirestoreEventHistoryTracker, FirestoreDocumentChangeEvent } from "../tracker";
+import {
+  ChangeType,
+  FirestoreEventHistoryTracker,
+  FirestoreDocumentChangeEvent,
+} from "../tracker";
 import * as logs from "../logs";
 import { BigQuery } from "@google-cloud/bigquery";
 
@@ -38,7 +40,8 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
  * - View: Latest view {@link FirestoreBigQueryEventHistoryTracker#rawLatestView}.
  * If any subsequent data export fails, it will attempt to reinitialize.
  */
-export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHistoryTracker {
+export class FirestoreBigQueryEventHistoryTracker
+  implements FirestoreEventHistoryTracker {
   bq: bigquery.BigQuery;
   initialized: boolean = false;
 
@@ -49,7 +52,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
   async record(events: FirestoreDocumentChangeEvent[]) {
     await this.initialize();
 
-    const rows = events.map(event => {
+    const rows = events.map((event) => {
       // This must match firestoreToBQTable().
       return {
         timestamp: event.timestamp,
@@ -132,7 +135,7 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
       logs.bigQueryTableCreated(changelogName);
     }
     return table;
-  };
+  }
 
   /**
    * Creates the latest snapshot view, which returns only latest operations
@@ -146,7 +149,10 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     if (viewExists) {
       logs.bigQueryViewAlreadyExists(view.id, dataset.id);
     } else {
-      const latestSnapshot = latestConsistentSnapshotView(this.config.datasetId, this.rawChangeLogTableName());
+      const latestSnapshot = latestConsistentSnapshotView(
+        this.config.datasetId,
+        this.rawChangeLogTableName()
+      );
       logs.bigQueryViewCreating(this.rawLatestView(), latestSnapshot.query);
       const options = {
         friendlyName: this.rawLatestView(),
@@ -166,4 +172,3 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
     return `${this.config.tableId}_raw_latest`;
   }
 }
-
