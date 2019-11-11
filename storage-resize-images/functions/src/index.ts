@@ -166,6 +166,9 @@ const resizeImage = async ({
 
     // Cloud Storage files.
     const metadata: any = {
+      contentDisposition: objectMetadata.contentDisposition,
+      contentEncoding: objectMetadata.contentEncoding,
+      contentLanguage: objectMetadata.contentLanguage,
       contentType: contentType,
       metadata: objectMetadata.metadata,
     };

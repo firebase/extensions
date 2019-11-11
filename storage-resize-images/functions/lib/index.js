@@ -131,6 +131,9 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         resizedFile = path.join(os.tmpdir(), resizedFileName);
         // Cloud Storage files.
         const metadata = {
+            contentDisposition: objectMetadata.contentDisposition,
+            contentEncoding: objectMetadata.contentEncoding,
+            contentLanguage: objectMetadata.contentLanguage,
             contentType: contentType,
             metadata: objectMetadata.metadata,
         };
