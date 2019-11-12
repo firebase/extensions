@@ -97,6 +97,8 @@ admin.firestore().collection('${param:MAIL_COLLECTION}').add({
 })
 ```
 
+By default, the extension HTML-escapes values returned by a `{{expression}}`. If you don't want to escape a value, use the "triple-stash", `{{{`.
+
 #### Security rules and sending email
 
 This extension can be used to trigger email delivery directly from client applications. However, you should carefully control client access to the `${param:MAIL_COLLECTION}` collection to avoid potential abuse (you don't want users able to send arbitrary emails from your company's address!).
