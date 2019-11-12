@@ -178,6 +178,7 @@ const resizeImage = async ({
     } else {
       metadata.cacheControl = objectMetadata.cacheControl;
     }
+    delete metadata.metadata.firebaseStorageDownloadTokens;
 
     // Generate a resized image using ImageMagick.
     logs.imageResizing(resizedFile, size);

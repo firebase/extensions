@@ -144,6 +144,7 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         else {
             metadata.cacheControl = objectMetadata.cacheControl;
         }
+        delete metadata.metadata.firebaseStorageDownloadTokens;
         // Generate a resized image using ImageMagick.
         logs.imageResizing(resizedFile, size);
         yield child_process_promise_1.spawn("convert", [originalFile, "-resize", `${size}>`, resizedFile], {
