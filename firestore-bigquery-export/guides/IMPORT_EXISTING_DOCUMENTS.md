@@ -15,7 +15,7 @@ You may pause and resume the script from the last batch at any point.
     +   If document changes occur in the time between installing the extension and running this import script.
     +   If you run the import script multiple times over the same collection.
 
-### Install and run the script
+### Run the script
 
 The import script uses several values from your installation of the extension:
 
@@ -23,11 +23,11 @@ The import script uses several values from your installation of the extension:
 +   `${COLLECTION_PATH}`: the collection path that you specified during extension installation
 +   `${DATASET_ID}`: the ID that you specified for your dataset during extension installation
 
-Install the import script using `npm` (the Node Package Manager).
+Run the import script using `npm` (the Node Package Manager).
 
 1.  Make sure that you have [Node.js](https://www.nodejs.org/) installed in order to access the `npm` command tools.
 
-1.  Install the import script via `npm` by running the following command:
+1.  Run the import script via `npm` by running the following command:
 
     ```
     npx @firebaseextensions/fs-bq-import-collection
