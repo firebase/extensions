@@ -23,11 +23,13 @@ The import script uses several values from your installation of the extension:
 +   `${COLLECTION_PATH}`: the collection path that you specified during extension installation
 +   `${DATASET_ID}`: the ID that you specified for your dataset during extension installation
 
-Run the import script using `npm` (the Node Package Manager).
+Run the import script using [`npx` (the Node Package Runner)](https://www.npmjs.com/package/npx) via `npm` (the Node Package Manager).
 
-1.  Make sure that you have [Node.js](https://www.nodejs.org/) installed in order to access the `npm` command tools.
+1.  Make sure that you have the required tools installed:
+    * To access the `npm` command tools, you need to install [Node.js](https://www.nodejs.org/).
+    * If you use `npm` v5.1 or earlier, you need to explicitly install `npx`. Run `npm install --global npx`.
 
-1.  Run the import script via `npm` by running the following command:
+1.  Run the import script via `npx` by running the following command:
 
     ```
     npx @firebaseextensions/fs-bq-import-collection
