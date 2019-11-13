@@ -25,7 +25,7 @@ The import script uses several values from your installation of the extension:
 
 Run the import script using [`npx` (the Node Package Runner)](https://www.npmjs.com/package/npx) via `npm` (the Node Package Manager).
 
-1.  Make sure that you have the required tools installed:
+1.  Make sure that you've installed the required tools to run the script:
     * To access the `npm` command tools, you need to install [Node.js](https://www.nodejs.org/).
     * If you use `npm` v5.1 or earlier, you need to explicitly install `npx`. Run `npm install --global npx`.
 
