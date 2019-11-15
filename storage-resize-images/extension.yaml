@@ -148,6 +148,5 @@ params:
       `Cache-Control` header metadata? Learn more about
       [`Cache-Control` headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control).
       If you prefer not to overwrite or add `Cache-Control` header metadata, leave this field empty.
-      TODO: @rachelsaunders
     example: max-age=86400
     required: false
