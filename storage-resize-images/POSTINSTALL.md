@@ -12,15 +12,24 @@ You can test out this extension right away:
 
 ### Using the extension
 
+You can upload images using the [Cloud Storage for Firebase SDK](https://firebase.google.com/docs/storage/) for your platform (iOS, Android, or Web). Alternatively, you can upload images directly in the Firebase console's Storage dashboard.
+
 When you upload an image file to `${param:IMG_BUCKET}`, this extension:
 
 - Creates resized image(s) with your specfied dimensions.
-- Stores the resized image(s) in the bucket `${param:IMG_BUCKET}` (and, if configured, under the path `${param:RESIZED_IMAGES_PATH}`).
 - Names resized image(s) using the same name as the original uploaded image, but suffixed with the specified width and height.
+- Stores the resized image(s) in the bucket `${param:IMG_BUCKET}` (and, if configured, under the path `${param:RESIZED_IMAGES_PATH}`).
 
-<!-- TODO: update this to account for changes made in #42 -->
+The extension also copies over to the resized image(s) the following [metadata](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON) associated with the original image:
 
-You can upload images using the [Cloud Storage for Firebase SDK](https://firebase.google.com/docs/storage/) for your platform (iOS, Android, or Web). Alternatively, you can upload images directly in the Firebase console's Storage dashboard.
+- content disposition
+- content encoding
+- content language
+- content type
+- user-provided metadata (except Firebase storage download tokens)
+- Cache-Control header
+
+Note that if you configured the `Cache-Control header for resized images` param, the specified value will overwrite the value copied over with the original image.
 
 ### Monitoring
 
