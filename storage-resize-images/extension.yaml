@@ -143,10 +143,11 @@ params:
   - param: CACHE_CONTROL_HEADER
     label: Cache-Control header for resized images
     description: >
-      Do you want to specify a `Cache-Control` header for the resized image
-      files? Learn more about
+      This extension copies over to the resized images any `Cache-Control` header metadata from the original image.
+      For the resized images, do you want to overwrite this `Cache-Control` header metadata or add
+      `Cache-Control` header metadata? Learn more about
       [`Cache-Control` headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control).
-      If you prefer not to use a `Cache-Control` header, leave this field empty.
+      If you prefer not to overwrite or add `Cache-Control` header metadata, leave this field empty.
       TODO: @rachelsaunders
     example: max-age=86400
     required: false
