@@ -147,5 +147,6 @@ params:
       files? Learn more about
       [`Cache-Control` headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control).
       If you prefer not to use a `Cache-Control` header, leave this field empty.
+      TODO: @rachelsaunders
     example: max-age=86400
     required: false
