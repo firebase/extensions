@@ -18,6 +18,8 @@ When you upload an image file to `${param:IMG_BUCKET}`, this extension:
 - Stores the resized image(s) in the bucket `${param:IMG_BUCKET}` (and, if configured, under the path `${param:RESIZED_IMAGES_PATH}`).
 - Names resized image(s) using the same name as the original uploaded image, but suffixed with the specified width and height.
 
+<!-- TODO: update this to account for changes made in #42 -->
+
 You can upload images using the [Cloud Storage for Firebase SDK](https://firebase.google.com/docs/storage/) for your platform (iOS, Android, or Web). Alternatively, you can upload images directly in the Firebase console's Storage dashboard.
 
 ### Monitoring

@@ -10,6 +10,8 @@ You can even configure the extension to create resized images of different dimen
 
 Another optional feature of this extension is to specify a [`Cache-Control` header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control) for your resized image files.
 
+<!-- TODO: update this to account for changes made in #42 -->
+
 #### Detailed configuration information
 
 To configure this extension, you specify a maximum width and a maximum height (in pixels, px). This extension keeps the aspect ratio of uploaded images constant and shrinks the image until the resized image's dimensions are at or under your specified max width and height.
