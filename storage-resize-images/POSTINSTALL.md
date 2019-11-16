@@ -22,11 +22,11 @@ When you upload an image file to `${param:IMG_BUCKET}`, this extension:
 
 The extension also copies the following metadata, if present, from the original image to the resized image(s):
 
-- [Cache-Control](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control)
-- [Content-Disposition](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Disposition)
-- [Content-Encoding](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Encoding)
-- [Content-Language](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Language)
-- [Content-Type](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Type)
+- [`Cache-Control`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control)
+- [`Content-Disposition`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Disposition)
+- [`Content-Encoding`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Encoding)
+- [`Content-Language`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Language)
+- [`Content-Type`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Type)
 - user-provided metadata (except Firebase storage download tokens)
 
 Note that if you configured the `Cache-Control header for resized images` param, the specified value will overwrite the value copied from the original image. Learn more about image metadata in the [Cloud Storage documentation](https://firebase.google.com/docs/storage/).
