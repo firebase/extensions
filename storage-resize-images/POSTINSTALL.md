@@ -20,7 +20,7 @@ When you upload an image file to `${param:IMG_BUCKET}`, this extension:
 - Names resized image(s) using the same name as the original uploaded image, but suffixed with the specified width and height.
 - Stores the resized image(s) in the bucket `${param:IMG_BUCKET}` (and, if configured, under the path `${param:RESIZED_IMAGES_PATH}`).
 
-The extension also copies over to the resized image(s) the following metadata associated with the original image:
+The extension also copies the following metadata, if present, from the original image to the resized image(s):
 
 - [Cache-Control](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control)
 - [Content-Disposition](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Disposition)
@@ -29,7 +29,7 @@ The extension also copies over to the resized image(s) the following metadata as
 - [Content-Type](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Type)
 - user-provided metadata (except Firebase storage download tokens)
 
-Note that if you configured the `Cache-Control header for resized images` param, the specified value will overwrite the value copied over with the original image. Learn more about image metadata in the [Cloud Storage documentation](https://firebase.google.com/docs/storage/).
+Note that if you configured the `Cache-Control header for resized images` param, the specified value will overwrite the value copied from the original image. Learn more about image metadata in the [Cloud Storage documentation](https://firebase.google.com/docs/storage/).
 
 ### Monitoring
 
