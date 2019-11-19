@@ -51,29 +51,33 @@ export class FirestoreBigQueryEventHistoryTracker
 
   async record(events: FirestoreDocumentChangeEvent[]) {
     await this.initialize();
-
+    const options = {
+      raw: true
+    };
     const rows = events.map((event) => {
-      // This must match firestoreToBQTable().
       return {
-        timestamp: event.timestamp,
-        event_id: event.eventId,
-        document_name: event.documentName,
-        operation: ChangeType[event.operation],
-        data: JSON.stringify(event.data),
+        insertId: event.eventId,
+        json: {
+          timestamp: event.timestamp,
+          event_id: event.eventId,
+          document_name: event.documentName,
+          operation: ChangeType[event.operation],
+          data: JSON.stringify(event.data),
+        },
       };
     });
-    await this.insertData(rows);
+    await this.insertData(rows, options);
   }
 
   /**
    * Inserts rows of data into the BigQuery raw change log table.
    */
-  private async insertData(rows: bigquery.RowMetadata[]) {
+  private async insertData(rows: bigquery.RowMetadata[], options: object) {
     try {
       const dataset = this.bq.dataset(this.config.datasetId);
       const table = dataset.table(this.rawChangeLogTableName());
       logs.dataInserting(rows.length);
-      await table.insert(rows);
+      await table.insert(rows, options);
       logs.dataInserted(rows.length);
     } catch (e) {
       // Reinitializing in case the destintation table is modified.
