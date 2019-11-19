@@ -1,0 +1,21 @@
+language: node_js
+
+node_js:
+  - 8
+  - 10
+  - 12
+
+stages:
+  - validate
+  - test
+
+jobs:
+  include:
+    - stage: validate
+      name: "TypeScript Compile"
+      script: npm run clean && npm run build
+    - stage: validate
+      name: "Prettier Format Check"
+      script: npm run lint
+    - stage: test
+      script: npm run test-coverage

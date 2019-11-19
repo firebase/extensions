@@ -3,12 +3,12 @@ Use this extension to create resized versions of an image uploaded to a Cloud St
 When you upload an image file to your specified Cloud Storage bucket, this extension:
 
 - Creates a resized image with your specified dimensions.
-- Stores the resized image in the same Storage bucket as the original uploaded image.
 - Names the resized image using the same name as the original uploaded image, but suffixed with your specified width and height.
+- Stores the resized image in the same Storage bucket as the original uploaded image.
 
 You can even configure the extension to create resized images of different dimensions for each original image upload. For example, you might want images that are 200x200, 400x400, and 680x680 - this extension can create these three resized images then store them in your bucket.
 
-Another optional feature of this extension is to specify a [`Cache-Control` header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control) for your resized image files.
+The extension automatically copies the following metadata, if present, from the original image to the resized image(s): `Cache-Control`, `Content-Disposition`, `Content-Encoding`, `Content-Language`, `Content-Type`, and user-provided metadata (except Firebase storage download tokens). Note that you can optionally configure the extension to overwrite the [`Cache-Control`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control) value for the resized image(s).
 
 #### Detailed configuration information
 

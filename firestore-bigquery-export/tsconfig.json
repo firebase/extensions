@@ -2,12 +2,8 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "functions/lib",
-    "types" : ["node", "mocha", "chai"]
+    "types": ["node", "mocha", "chai"]
   },
-  "include": [
-    "functions/src"
-  ],
-  "exclude": [
-    "**/node_modules/@types/jest/**"
-  ]
+  "include": ["functions/src"],
+  "exclude": ["**/node_modules/@types/jest/**"]
 }
