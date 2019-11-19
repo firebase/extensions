@@ -2,19 +2,19 @@ The `fs-bq-import-collection` script is for use with the official Firebase Exten
 
 ### Overview
 
-The import script (`fs-bq-import-collection`) can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by the Export Collections to BigQuery extension. The script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This ensures that any operation on an imported document supersedes the import record.
+The import script (`fs-bq-import-collection`) can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by the Export Collections to BigQuery extension. The import script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This ensures that any operation on an imported document supersedes the import record.
 
-You may pause and resume the script from the last batch at any point.
+You may pause and resume the import script from the last batch at any point.
 
 #### Important notes
 
-- You must run the script over the entire collection **_after_** installing the Export Collections to BigQuery extension; otherwise the writes to your database during the import might not be exported to the dataset.
+- You must run the import script over the entire collection **_after_** installing the Export Collections to BigQuery extension; otherwise the writes to your database during the import might not be exported to the dataset.
 
 - The import script can take up to _O(collection size)_ time to finish. If your collection is large, you might want to consider [loading data from a Cloud Firestore export into BigQuery](https://cloud.google.com/bigquery/docs/loading-data-cloud-firestore).
 
 - You will see redundant rows in your raw changelog table if either of the following happen:
 
-    - If document changes occur in the time between installing the extension and running this import script.
+    - If document changes occur in the time between installing the extension and running the import script.
     - If you run the import script multiple times over the same collection.
 
 ### Run the script
@@ -27,7 +27,7 @@ The import script uses several values from your installation of the extension:
 
 Run the import script using [`npx` (the Node Package Runner)](https://www.npmjs.com/package/npx) via `npm` (the Node Package Manager).
 
-1.  Make sure that you've installed the required tools to run the script:
+1.  Make sure that you've installed the required tools to run the import script:
     * To access the `npm` command tools, you need to install [Node.js](https://www.nodejs.org/).
     * If you use `npm` v5.1 or earlier, you need to explicitly install `npx`. Run `npm install --global npx`.
 
