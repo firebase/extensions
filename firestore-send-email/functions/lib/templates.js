@@ -60,7 +60,7 @@ class Templates {
             console.log(`loaded template '${doc.id}'`);
         });
         this.ready = true;
-        this.waits.forEach(wait => wait());
+        this.waits.forEach((wait) => wait());
     }
     render(name, data) {
         return __awaiter(this, void 0, void 0, function* () {
