@@ -6,6 +6,7 @@
   "scripts": {
     "format": "prettier --write \"**/*.{js,md,yml,ts,json,yaml}\"",
     "lint": "prettier --list-different \"**/*.{js,md,yml,ts,json,yaml}\"",
+    "generate-changelogs": "lerna exec --parallel -- conventional-changelog -p angular -i CHANGELOG.md -s -u -t \"$LERNA_PACKAGE_NAME-v\" -l $LERNA_PACKAGE_NAME",
     "clean": "lerna run clean",
     "build": "lerna run build",
     "test": "jest",
@@ -21,6 +22,7 @@
   },
   "devDependencies": {
     "jest": "^24.9.0",
+    "conventional-changelog-cli": "^2.0.28",
     "ts-jest": "^24.1.0",
     "@types/jest": "^24.0.18",
     "typescript": "^3.6.3",
