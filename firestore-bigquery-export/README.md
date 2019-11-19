@@ -1,4 +1,3 @@
-[1m[36mi  extensions:[39m[22m reading extension from directory: .
 # Export Collections to BigQuery
 
 **Description**: Sends realtime, incremental updates from a specified Cloud Firestore collection to BigQuery.

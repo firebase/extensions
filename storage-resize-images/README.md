@@ -1,4 +1,3 @@
-[1m[36mi  extensions:[39m[22m reading extension from directory: .
 # Resize Images
 
 **Description**: Resizes images uploaded to Cloud Storage to a specified size, and optionally keeps or deletes the original image.
