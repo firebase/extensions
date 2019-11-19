@@ -1,12 +1,12 @@
 {
-	"fields": [
-		{
-			"name": "last_login",
-			"type": "timestamp"
-		},
-		{
-			"name": "version",
-			"type": "number"
-		}
-	]
+  "fields": [
+    {
+      "name": "last_login",
+      "type": "timestamp"
+    },
+    {
+      "name": "version",
+      "type": "number"
+    }
+  ]
 }

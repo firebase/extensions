@@ -26,6 +26,7 @@ import * as path from "path";
 import config from "./config";
 import * as logs from "./logs";
 import * as validators from "./validators";
+import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
 
 interface ResizedImageResult {
   size: string;
@@ -63,6 +64,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
     const fileName = path.basename(filePath);
     const fileExtension = path.extname(filePath);
     const fileNameWithoutExtension = fileName.slice(0, -fileExtension.length);
+    const objectMetadata = object;
 
     let originalFile;
     let remoteFile;
@@ -94,6 +96,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
             fileExtension,
             contentType,
             size,
+            objectMetadata: objectMetadata,
           })
         );
       });
@@ -138,6 +141,7 @@ const resizeImage = async ({
   fileExtension,
   contentType,
   size,
+  objectMetadata,
 }: {
   bucket: Bucket;
   originalFile: string;
@@ -146,6 +150,7 @@ const resizeImage = async ({
   fileExtension: string;
   contentType: string;
   size: string;
+  objectMetadata: ObjectMetadata;
 }): Promise<ResizedImageResult> => {
   const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
   // Path where resized image will be uploaded to in Storage.
@@ -161,14 +166,19 @@ const resizeImage = async ({
 
     // Cloud Storage files.
     const metadata: any = {
+      contentDisposition: objectMetadata.contentDisposition,
+      contentEncoding: objectMetadata.contentEncoding,
+      contentLanguage: objectMetadata.contentLanguage,
       contentType: contentType,
-      metadata: {
-        resizedImage: "true",
-      },
+      metadata: objectMetadata.metadata,
     };
+    metadata.metadata.resizedImage = true;
     if (config.cacheControlHeader) {
       metadata.cacheControl = config.cacheControlHeader;
+    } else {
+      metadata.cacheControl = objectMetadata.cacheControl;
     }
+    delete metadata.metadata.firebaseStorageDownloadTokens;
 
     // Generate a resized image using ImageMagick.
     logs.imageResizing(resizedFile, size);

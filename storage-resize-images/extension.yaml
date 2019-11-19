@@ -14,13 +14,13 @@
 
 name: storage-resize-images
 specVersion: v1beta
-version: 0.1.1
+version: 0.1.2
 license: Apache-2.0
 
 displayName: Resize Images
 
 description:
-  Resizes images uploaded to Cloud Storage to a specified size, and stores both the original and resized images.
+  Resizes images uploaded to Cloud Storage to a specified size, and optionally keeps or deletes the original image.
 
 billingRequired: false
 sourceUrl: https://github.com/firebase/extensions/tree/master/storage-resize-images
@@ -51,10 +51,9 @@ roles:
 resources:
   - name: generateResizedImage
     type: firebaseextensions.v1beta.function
-    description:
-      Listens for new images uploaded to your specified Cloud Storage bucket,
-      resizes the images, then stores both images in the same Cloud Storage
-      bucket.
+    description: >-
+      Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images,
+      then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -88,13 +87,15 @@ params:
         value: asia-northeast1
     default: us-central1
     required: true
+    immutable: true
 
   - param: IMG_BUCKET
     type: string
     label: Cloud Storage bucket for images
     description: >
       To which Cloud Storage bucket will you upload images that you want to resize?
-      This bucket will store both the original and resized images.
+      Resized images will be stored in this bucket. Depending on your extension configuration,
+      original images are either kept or deleted.
     default: ${STORAGE_BUCKET}
     validationRegex: (.)+\.(.)+\.(.)+
     validationErrorMessage: Invalid storage bucket
@@ -143,9 +144,10 @@ params:
   - param: CACHE_CONTROL_HEADER
     label: Cache-Control header for resized images
     description: >
-      Do you want to specify a `Cache-Control` header for the resized image
-      files? Learn more about
-      [`Cache-Control` headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control).
-      If you prefer not to use a `Cache-Control` header, leave this field empty.
+      This extension automatically copies any `Cache-Control` metadata from the original image
+      to the resized images. For the resized images, do you want to overwrite this copied
+      `Cache-Control` metadata or add `Cache-Control` metadata? Learn more about
+      [`Cache-Control` headers](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control).
+      If you prefer not to overwrite or add `Cache-Control` metadata, leave this field empty.
     example: max-age=86400
     required: false

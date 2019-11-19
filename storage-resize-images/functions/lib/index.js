@@ -58,6 +58,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
     const fileName = path.basename(filePath);
     const fileExtension = path.extname(filePath);
     const fileNameWithoutExtension = fileName.slice(0, -fileExtension.length);
+    const objectMetadata = object;
     let originalFile;
     let remoteFile;
     try {
@@ -84,6 +85,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
                 fileExtension,
                 contentType,
                 size,
+                objectMetadata: objectMetadata,
             }));
         });
         const results = yield Promise.all(tasks);
@@ -118,7 +120,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         }
     }
 }));
-const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, }) => __awaiter(this, void 0, void 0, function* () {
+const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => __awaiter(this, void 0, void 0, function* () {
     const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
     // Path where resized image will be uploaded to in Storage.
     const resizedFilePath = path.normalize(config_1.default.resizedImagesPath
@@ -129,14 +131,20 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         resizedFile = path.join(os.tmpdir(), resizedFileName);
         // Cloud Storage files.
         const metadata = {
+            contentDisposition: objectMetadata.contentDisposition,
+            contentEncoding: objectMetadata.contentEncoding,
+            contentLanguage: objectMetadata.contentLanguage,
             contentType: contentType,
-            metadata: {
-                resizedImage: "true",
-            },
+            metadata: objectMetadata.metadata,
         };
+        metadata.metadata.resizedImage = true;
         if (config_1.default.cacheControlHeader) {
             metadata.cacheControl = config_1.default.cacheControlHeader;
         }
+        else {
+            metadata.cacheControl = objectMetadata.cacheControl;
+        }
+        delete metadata.metadata.firebaseStorageDownloadTokens;
         // Generate a resized image using ImageMagick.
         logs.imageResizing(resizedFile, size);
         yield child_process_promise_1.spawn("convert", [originalFile, "-resize", `${size}>`, resizedFile], {

@@ -79,7 +79,9 @@ export const start = () => {
 };
 
 export const translateInputString = (string: string, language: string) => {
-  console.log(`Translating string: '${string}' into language(s): '${language}'`);
+  console.log(
+    `Translating string: '${string}' into language(s): '${language}'`
+  );
 };
 
 export const translateStringComplete = (string: string, language: string) => {
@@ -99,7 +101,10 @@ export const translateStringError = (
   );
 };
 
-export const translateInputStringToAllLanguages = (string: string, languages: string[]) => {
+export const translateInputStringToAllLanguages = (
+  string: string,
+  languages: string[]
+) => {
   console.log(
     `Translating string: '${string}' into language(s): '${languages.join(",")}'`
   );
@@ -109,7 +114,10 @@ export const translateInputToAllLanguagesComplete = (string: string) => {
   console.log(`Finished translating string: '${string}'`);
 };
 
-export const translateInputToAllLanguagesError = (string: string, err: Error) => {
+export const translateInputToAllLanguagesError = (
+  string: string,
+  err: Error
+) => {
   console.error(`Error when translating string: '${string}'`, err);
 };
 

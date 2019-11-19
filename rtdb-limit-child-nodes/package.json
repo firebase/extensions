@@ -1,6 +1,5 @@
 {
   "name": "rtdb-limit-child-nodes",
-  "version": "0.1.0",
   "description": "Limit number of child nodes Firebase Functions sample",
   "main": "functions/lib/index.js",
   "scripts": {
@@ -17,5 +16,6 @@
   "devDependencies": {
     "rimraf": "^2.6.3",
     "typescript": "^3.5.2"
-  }
+  },
+  "private": true
 }

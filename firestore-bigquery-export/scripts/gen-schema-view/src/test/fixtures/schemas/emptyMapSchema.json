@@ -1,9 +1,9 @@
 {
-	"fields": [
-		{
-			"name": "map",
-			"type": "map",
-			"fields": []
-		}
-	]
+  "fields": [
+    {
+      "name": "map",
+      "type": "map",
+      "fields": []
+    }
+  ]
 }
