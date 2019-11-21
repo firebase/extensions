@@ -79,6 +79,8 @@ params:
         value: asia-northeast1
     default: us-central1
     required: true
+    immutable: true
+
   - param: BITLY_ACCESS_TOKEN
     label: Bitly access token
     description: >
