@@ -14,7 +14,7 @@
 
 name: storage-resize-images
 specVersion: v1beta
-version: 0.1.2
+version: 0.1.3
 license: Apache-2.0
 
 displayName: Resize Images
@@ -87,6 +87,7 @@ params:
         value: asia-northeast1
     default: us-central1
     required: true
+    immutable: true
 
   - param: IMG_BUCKET
     type: string
@@ -143,9 +144,10 @@ params:
   - param: CACHE_CONTROL_HEADER
     label: Cache-Control header for resized images
     description: >
-      Do you want to specify a `Cache-Control` header for the resized image
-      files? Learn more about
-      [`Cache-Control` headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control).
-      If you prefer not to use a `Cache-Control` header, leave this field empty.
+      This extension automatically copies any `Cache-Control` metadata from the original image
+      to the resized images. For the resized images, do you want to overwrite this copied
+      `Cache-Control` metadata or add `Cache-Control` metadata? Learn more about
+      [`Cache-Control` headers](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control).
+      If you prefer not to overwrite or add `Cache-Control` metadata, leave this field empty.
     example: max-age=86400
     required: false

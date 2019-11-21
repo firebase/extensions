@@ -87,6 +87,7 @@ params:
         value: asia-northeast1
     default: us-central1
     required: true
+    immutable: true
 
   - param: FIRESTORE_PATHS
     type: string
