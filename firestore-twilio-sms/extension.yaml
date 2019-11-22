@@ -1,0 +1,137 @@
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: firestore-twilio-sms
+version: 0.1.1
+specVersion: v1beta
+displayName: Send SMS with Twilio
+
+description:
+  Composes and sends SMS based on the contents of a document written to a
+  specified Cloud Firestore collection.
+
+license: Apache-2.0
+billingRequired: true
+sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-twilio-sms
+releaseNotesUrl: https://github.com/firebase/extensions/releases
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+
+contributors:
+  - authorName: Michael Bleigh
+    url: https://github.com/mbleigh
+  - authorName: Elliot Hesp
+    email: elliot@invertase.io
+    url: https://github.com/ehesp
+
+roles:
+  - role: datastore.user
+    reason:
+      Allows this extension to access Cloud Firestore to read and process added
+      SMS documents.
+
+resources:
+  - name: processQueue
+    type: firebaseextensions.v1beta.function
+    description:
+      Processes document changes in the specified Cloud Firestore collection,
+      delivers SMS messages, and updates the document with delivery status
+      information.
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${MAIL_COLLECTION}/{id}
+
+params:
+  - param: LOCATION
+    type: select
+    label: Deployment location
+    description: >-
+      Where should the extension be deployed? You usually want a location close
+      to your database. For help selecting a location, refer to the [location
+      selection guide](https://firebase.google.com/docs/functions/locations).
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+    default: us-central1
+    required: true
+    immutable: true
+
+  - param: TWILIO_ACCOUNT_SID
+    type: string
+    label: Twilio Account SID
+    description: >-
+      The SID of your Twilio account.
+    example: ACXXXXXXXXX
+    required: true
+
+  - param: TWILIO_AUTH_TOKEN
+    type: string
+    label: Twilio Auth Token
+    description: >-
+      An auth token for your Twilio account.
+
+  - param: SMS_COLLECTION
+    type: string
+    label: SMS documents collection
+    default: sms
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore collection
+    required: true
+    description: >-
+      What is the path to the collection that contains the documents used to
+      build and send the SMS messages?
+
+  - param: DEFAULT_FROM
+    type: string
+    label: Default from number
+    validationRegex: ^\+[1-9]\d{1,14}$
+    validationErrorMessage:
+      Must be a phone number in E.164 format e.g. +14155551212
+    required: true
+    description: >-
+      The Twilio number from which to send SMS (if it's not specified in the
+      added SMS document).
+
+  - param: USERS_COLLECTION
+    type: string
+    label: Users collection
+    description: >-
+      A collection of documents keyed by user UID. If the `toUid` is used in the
+      added SMS document, this extension delivers SMS to the `tel` field based
+      on lookups in this collection.
+
+  - param: TEMPLATES_COLLECTION
+    type: string
+    label: Templates collection
+    description: >-
+      A collection of email templates keyed by name. This extension can render
+      an email using a [Handlebars](https://handlebarsjs.com/) template, if the
+      template is specified in the added email document.

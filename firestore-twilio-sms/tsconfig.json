@@ -1,0 +1,8 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "functions/lib",
+    "skipLibCheck": true
+  },
+  "include": ["functions/src"]
+}
