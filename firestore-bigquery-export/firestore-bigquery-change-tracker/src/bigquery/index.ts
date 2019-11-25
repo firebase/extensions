@@ -52,7 +52,7 @@ export class FirestoreBigQueryEventHistoryTracker
   async record(events: FirestoreDocumentChangeEvent[]) {
     await this.initialize();
     const options = {
-      raw: true
+      raw: true,
     };
     const rows = events.map((event) => {
       return {
