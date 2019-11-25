@@ -73,11 +73,16 @@ export class FirestoreBigQueryEventHistoryTracker
    * Inserts rows of data into the BigQuery raw change log table.
    */
   private async insertData(rows: bigquery.RowMetadata[], options: object) {
+    const payload = {
+      skipInvalidRows: false,
+      ignoreUnkownValues: false,
+      rows: rows,
+    };
     try {
       const dataset = this.bq.dataset(this.config.datasetId);
       const table = dataset.table(this.rawChangeLogTableName());
       logs.dataInserting(rows.length);
-      await table.insert(rows, options);
+      await table.insert(payload, options);
       logs.dataInserted(rows.length);
     } catch (e) {
       // Reinitializing in case the destintation table is modified.
