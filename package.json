@@ -13,7 +13,6 @@
     "test-coverage": "jest --coverage",
     "postinstall": "lerna bootstrap --no-ci && npm run clean && npm run build",
     "generate-readmes": "lerna run --parallel --ignore delete-user-data generate-readme",
-    "pre-commit": "npm run clean && npm run build && npm run generate-readmes",
     "pre-commit-lint": "commitlint -E HUSKY_GIT_PARAMS"
   },
   "repository": "",
