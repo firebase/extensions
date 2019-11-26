@@ -38,7 +38,7 @@ roles:
     reason: Allows the extension to aggregate Cloud Firestore counter shards.
 
 resources:
-  - name: controller
+  - name: aggregator
     type: firebaseextensions.v1beta.function
     description:
       Scheduled to run every minute.

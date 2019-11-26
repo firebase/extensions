@@ -20,7 +20,7 @@ match /databases/{database}/documents/pages/{page} {
 
 #### Set up a scheduled function
 
-Review the [scheduled function documentation](https://firebase.google.com/docs/functions/schedule-functions) to set up a call to `${function:controller.url}` every minute. You may need to enable some APIs in your Firebase project to use scheduled functions.
+Review the [scheduled function documentation](https://firebase.google.com/docs/functions/schedule-functions) to set up a call to `${function:aggregator.url}` every minute. You may need to enable some APIs in your Firebase project to use scheduled functions.
 
 As an example, to set up a scheduled function, you can run the following [`gcloud`](https://cloud.google.com/sdk/gcloud/) commands:
 
