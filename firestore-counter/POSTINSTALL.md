@@ -20,9 +20,9 @@ match /databases/{database}/documents/pages/{page} {
 
 #### Set up a scheduled function
 
-Set up a scheduled function to regularly trigger the controller function. The controller function is created by the extension and monitors the extension's workload.
+**IMPORTANT:** If you updated your extension from v1.0.0 to v1.1.0, you can keep using your existing scheduled function that triggers the HTTP callable function `${function:controller.url}`. However, we recommend that you update your scheduled function to instead send a message to a Pub/Sub topic as described in this section. For more information about this change, refer to the [changelog](link-to-entry).
 
-IMPORTANT: If you updated your extension from v1.0.0 to v1.1.0, you can keep using your existing scheduled function that triggers the HTTP callable function `${function:controller.url}`. However, we recommend that you update your scheduled function to instead send a message to a Pub/Sub topic as described in this section. For more information about this change, refer to the [changelog](link-to-entry).
+Set up a scheduled function to regularly trigger the controller function. The controller function is created by the extension and monitors the extension's workload.
 
 Review the [scheduled function documentation](https://firebase.google.com/docs/functions/schedule-functions) to set up a scheduled function that sends a message to the Pub/Sub topic `${param:EXT_INSTANCE_ID}`. This Pub/Sub topic then automatically triggers the controller function. You may need to enable some APIs in your Firebase project to use scheduled functions.
 
