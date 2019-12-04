@@ -36,6 +36,8 @@ contributors:
 roles:
   - role: datastore.user
     reason: Allows the extension to aggregate Cloud Firestore counter shards.
+  - role: pubsub.publisher
+    reason: Allows the HTTPS function to trigger the PubSub handler.
 
 resources:
   - name: coreController

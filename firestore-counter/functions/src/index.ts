@@ -34,29 +34,33 @@ const WORKERS_COLLECTION_ID = "_counter_workers_";
  * there's less than 200 of them. Otherwise it is scheduling and monitoring
  * workers to do the aggregation.
  */
-export const coreController = functions.handler.pubsub.topic.onPublish(async () => {
-  const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
-  const controller = new ShardedCounterController(
-    metadocRef,
-    SHARDS_COLLECTION_ID
-  );
-  let status = await controller.aggregateOnce({ start: "", end: "" }, 200);
-  if (
-    status === ControllerStatus.WORKERS_RUNNING ||
-    status === ControllerStatus.TOO_MANY_SHARDS ||
-    status === ControllerStatus.FAILURE
-  ) {
-    await controller.rescheduleWorkers();
+export const coreController = functions.handler.pubsub.topic.onPublish(
+  async () => {
+    const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
+    const controller = new ShardedCounterController(
+      metadocRef,
+      SHARDS_COLLECTION_ID
+    );
+    let status = await controller.aggregateOnce({ start: "", end: "" }, 200);
+    if (
+      status === ControllerStatus.WORKERS_RUNNING ||
+      status === ControllerStatus.TOO_MANY_SHARDS ||
+      status === ControllerStatus.FAILURE
+    ) {
+      await controller.rescheduleWorkers();
+    }
+    return null;
   }
-  return null;
-});
+);
 
+/**
+ * Backwards compatible HTTPS function
+ */
 export const controller = functions.https.onRequest(async (req, res) => {
-  const topic = pubsub.topic(process.env.EXT_INSTANCE_ID);
-
-  await topic.publish(null);
-
-  res.status(200).send('Ok');
+  await pubsub
+    .topic(process.env.EXT_INSTANCE_ID)
+    .publish(Buffer.from(JSON.stringify({})));
+  res.status(200).send("Ok");
 });
 
 /**

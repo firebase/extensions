@@ -26,11 +26,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const pubsub_1 = require("@google-cloud/pubsub");
 const worker_1 = require("./worker");
 const controller_1 = require("./controller");
 admin.initializeApp();
 const firestore = admin.firestore();
 firestore.settings({ timestampsInSnapshots: true });
+const pubsub = new pubsub_1.PubSub();
 const SHARDS_COLLECTION_ID = "_counter_shards_";
 const WORKERS_COLLECTION_ID = "_counter_workers_";
 /**
@@ -38,7 +40,7 @@ const WORKERS_COLLECTION_ID = "_counter_workers_";
  * there's less than 200 of them. Otherwise it is scheduling and monitoring
  * workers to do the aggregation.
  */
-exports.aggregator = functions.handler.pubsub.topic.onPublish(() => __awaiter(void 0, void 0, void 0, function* () {
+exports.coreController = functions.handler.pubsub.topic.onPublish(() => __awaiter(void 0, void 0, void 0, function* () {
     const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new controller_1.ShardedCounterController(metadocRef, SHARDS_COLLECTION_ID);
     let status = yield controller.aggregateOnce({ start: "", end: "" }, 200);
@@ -48,6 +50,15 @@ exports.aggregator = functions.handler.pubsub.topic.onPublish(() => __awaiter(vo
         yield controller.rescheduleWorkers();
     }
     return null;
+}));
+/**
+ * Backwards compatible HTTPS function
+ */
+exports.controller = functions.https.onRequest((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    yield pubsub
+        .topic(process.env.EXT_INSTANCE_ID)
+        .publish(Buffer.from(JSON.stringify({})));
+    res.status(200).send("Ok");
 }));
 /**
  * Worker is responsible for aggregation of a defined range of shards. It is controlled
