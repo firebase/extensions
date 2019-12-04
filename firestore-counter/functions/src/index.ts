@@ -16,12 +16,15 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import { PubSub } from "@google-cloud/pubsub";
 import { ShardedCounterWorker } from "./worker";
 import { ShardedCounterController, ControllerStatus } from "./controller";
 
 admin.initializeApp();
 const firestore = admin.firestore();
 firestore.settings({ timestampsInSnapshots: true });
+
+const pubsub = new PubSub();
 
 const SHARDS_COLLECTION_ID = "_counter_shards_";
 const WORKERS_COLLECTION_ID = "_counter_workers_";
@@ -46,6 +49,14 @@ export const coreController = functions.handler.pubsub.topic.onPublish(async () 
     await controller.rescheduleWorkers();
   }
   return null;
+});
+
+export const controller = functions.https.onRequest(async (req, res) => {
+  const topic = pubsub.topic(process.env.EXT_INSTANCE_ID);
+
+  await topic.publish(null);
+
+  res.status(200).send('Ok');
 });
 
 /**
