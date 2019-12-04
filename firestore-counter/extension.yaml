@@ -51,6 +51,17 @@ resources:
         eventType: google.pubsub.topic.publish
         resource: projects/${PROJECT_ID}/topics/${EXT_INSTANCE_ID}
 
+  - name: controller
+    type: firebaseextensions.v1beta.function
+    description:
+      Scheduled to run every minute.
+      This function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      maxInstances: 1
+      httpsTrigger: {}
+
   - name: onWrite
     type: firebaseextensions.v1beta.function
     description:
