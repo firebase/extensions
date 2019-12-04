@@ -54,8 +54,8 @@ resources:
   - name: controller
     type: firebaseextensions.v1beta.function
     description:
-      Scheduled to run every minute.
-      This function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
+      Maintained for backwards compatibility.
+      This function will relay the message to the onPublish function.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
