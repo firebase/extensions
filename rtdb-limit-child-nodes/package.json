@@ -10,8 +10,8 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "firebase-admin": "^8.0.0",
-    "firebase-functions": "^2.3.1"
+    "firebase-admin": "^8.8.0",
+    "firebase-functions": "^3.3.0"
   },
   "devDependencies": {
     "rimraf": "^2.6.3",
