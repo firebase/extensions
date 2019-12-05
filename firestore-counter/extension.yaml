@@ -122,4 +122,8 @@ params:
       What is the path to the document where the extension can keep its internal state?
     default: _firebase_ext_/sharded_counter
     example: _firebase_ext_/sharded_counter
+    validationRegex: "^[^/]+/[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage:
+      Please enter a document path, not a collection path. It should have an even
+      number of segments (i.e. `my_collection/doc` or `my_collection/doc/subcollection/doc`, not `my_collection`).
     required: true

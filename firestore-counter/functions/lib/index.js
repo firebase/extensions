@@ -32,7 +32,7 @@ const controller_1 = require("./controller");
 admin.initializeApp();
 const firestore = admin.firestore();
 firestore.settings({ timestampsInSnapshots: true });
-const pubsub = new pubsub_1.PubSub();
+let pubsub;
 const SHARDS_COLLECTION_ID = "_counter_shards_";
 const WORKERS_COLLECTION_ID = "_counter_workers_";
 /**
@@ -55,6 +55,9 @@ exports.controllerCore = functions.handler.pubsub.topic.onPublish(() => __awaite
  * Backwards compatible HTTPS function
  */
 exports.controller = functions.https.onRequest((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!pubsub) {
+        pubsub = new pubsub_1.PubSub();
+    }
     yield pubsub
         .topic(process.env.EXT_INSTANCE_ID)
         .publish(Buffer.from(JSON.stringify({})));

@@ -24,7 +24,7 @@ admin.initializeApp();
 const firestore = admin.firestore();
 firestore.settings({ timestampsInSnapshots: true });
 
-const pubsub = new PubSub();
+let pubsub;
 
 const SHARDS_COLLECTION_ID = "_counter_shards_";
 const WORKERS_COLLECTION_ID = "_counter_workers_";
@@ -57,6 +57,9 @@ export const controllerCore = functions.handler.pubsub.topic.onPublish(
  * Backwards compatible HTTPS function
  */
 export const controller = functions.https.onRequest(async (req, res) => {
+  if (!pubsub) {
+    pubsub = new PubSub();
+  }
   await pubsub
     .topic(process.env.EXT_INSTANCE_ID)
     .publish(Buffer.from(JSON.stringify({})));
