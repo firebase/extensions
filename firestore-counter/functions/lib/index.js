@@ -36,11 +36,11 @@ const pubsub = new pubsub_1.PubSub();
 const SHARDS_COLLECTION_ID = "_counter_shards_";
 const WORKERS_COLLECTION_ID = "_counter_workers_";
 /**
- * The aggregator is scheduled every minute. It tries to aggregate shards if
+ * The controllerCore is scheduled every minute. It tries to aggregate shards if
  * there's less than 200 of them. Otherwise it is scheduling and monitoring
  * workers to do the aggregation.
  */
-exports.coreController = functions.handler.pubsub.topic.onPublish(() => __awaiter(void 0, void 0, void 0, function* () {
+exports.controllerCore = functions.handler.pubsub.topic.onPublish(() => __awaiter(void 0, void 0, void 0, function* () {
     const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new controller_1.ShardedCounterController(metadocRef, SHARDS_COLLECTION_ID);
     let status = yield controller.aggregateOnce({ start: "", end: "" }, 200);
@@ -65,7 +65,7 @@ exports.controller = functions.https.onRequest((req, res) => __awaiter(void 0, v
  * by a worker metadata document. At the end of its run (that lasts for 45s) it writes
  * back stats that kicks off another run at the same time.
  *
- * Controller is monitoring these metadata documents to detect overload that requires
+ * ControllerCore is monitoring these metadata documents to detect overload that requires
  * resharding and to detect failed workers that need poking.
  */
 exports.worker = functions.firestore
