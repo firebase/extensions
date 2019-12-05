@@ -40,7 +40,7 @@ roles:
     reason: Allows the HTTPS function to trigger the PubSub handler.
 
 resources:
-  - name: coreController
+  - name: controllerCore
     type: firebaseextensions.v1beta.function
     description:
       Scheduled to run every minute.
@@ -82,7 +82,7 @@ resources:
     description:
       Monitors a range of shards and aggregates them, as needed.
       There may be 0 or more worker functions running at any point in time.
-      The controller function is responsible for scheduling and monitoring these workers.
+      The controllerCore function is responsible for scheduling and monitoring these workers.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
