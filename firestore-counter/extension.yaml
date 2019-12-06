@@ -60,7 +60,7 @@ resources:
     type: firebaseextensions.v1beta.function
     description:
       Maintained for backwards compatibility.
-      This function will relay the message to the onPublish function.
+      This function relays a message to the extension's Pub/Sub topic to trigger the controllerCore function.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
