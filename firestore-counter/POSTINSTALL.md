@@ -80,7 +80,7 @@ gcloud --project=${param:PROJECT_ID} scheduler jobs create pubsub ${param:EXT_IN
 
 ### Using the extension
 
-After you complete the post-installation configuration above, your extension will create subcollections in all the documents that your app uses as counters. The client SDK will write to these subcollections to distribute the write load, and the scheduled function you deployed will sum the subcollections' values into the single `visits` field (or whichever field you configured).
+After you complete the post-installation configuration above, your extension will create subcollections in all the documents that your app uses as counters. The client SDK will write to these subcollections to distribute the write load, and the controllerCore function will sum the subcollections' values into the single `visits` field (or whichever field you configured).
 
 ### Monitoring
 
