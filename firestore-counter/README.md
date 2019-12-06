@@ -1,30 +1,10 @@
-# firestore-counter
+# Distributed Counter
 
-**VERSION**: 0.1.0
-
-**DESCRIPTION**: Records event counters at scale to accommodate high-velocity writes to Cloud Firestore.
+**Description**: Records event counters at scale to accommodate high-velocity writes to Cloud Firestore.
 
 
 
-**CONFIGURATION PARAMETERS:**
-
-* Deployment location: Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
-
-* Document path for internal state: What is the path to the document where the extension can keep its internal state?
-
-
-
-**CLOUD FUNCTIONS CREATED:**
-
-* controller (HTTPS)
-
-* onWrite (providers/cloud.firestore/eventTypes/document.write)
-
-* worker (providers/cloud.firestore/eventTypes/document.write)
-
-
-
-**DETAILS**: Use this extension to add a highly scalable counter service to your app. This is ideal for applications that count viral actions or any very high-velocity action such as views, likes, or shares.
+**Details**: Use this extension to add a highly scalable counter service to your app. This is ideal for applications that count viral actions or any very high-velocity action such as views, likes, or shares.
 
 Since Cloud Firestore has a limit of one sustained write per second, per document, this extension instead shards your writes across documents in a `_counter_shards_` subcollection. Each client only increments their own unique shard while the background workers (provided by this extension) monitor and aggregate these shards into a main document.
 
@@ -61,7 +41,26 @@ When you use Firebase Extensions, you're only charged for the underlying resourc
 
 
 
-**ACCESS REQUIRED**:
+
+**Configuration Parameters:**
+
+* Deployment location: Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+
+* Document path for internal state: What is the path to the document where the extension can keep its internal state?
+
+
+
+**Cloud Functions:**
+
+* **controller:** Scheduled to run every minute. This function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
+
+* **onWrite:** Listens for changes on counter shards that may need aggregating. This function is limited to max 1 instance.
+
+* **worker:** Monitors a range of shards and aggregates them, as needed. There may be 0 or more worker functions running at any point in time. The controller function is responsible for scheduling and monitoring these workers.
+
+
+
+**Access Required**:
 
 
 

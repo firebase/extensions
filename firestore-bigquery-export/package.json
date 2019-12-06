@@ -1,6 +1,5 @@
 {
   "name": "firestore-bigquery-export",
-  "version": "0.1.0",
   "description": "Export a Cloud Firestore collection to BigQuery",
   "main": "functions/lib/index.js",
   "scripts": {
@@ -30,5 +29,6 @@
     "generate-schema": "^2.6.0",
     "rimraf": "^2.6.3",
     "inquirer": "^6.4.0"
-  }
+  },
+  "private": true
 }

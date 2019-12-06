@@ -52,6 +52,6 @@ function missingDeliveryField(ref) {
 }
 exports.missingDeliveryField = missingDeliveryField;
 function missingUids(uids) {
-    console.log(`The following uids were provided, however a document does not exist or has no 'email' field: ${uids.join(',')}`);
+    console.log(`The following uids were provided, however a document does not exist or has no 'email' field: ${uids.join(",")}`);
 }
 exports.missingUids = missingUids;

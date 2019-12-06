@@ -32,12 +32,20 @@ export const firestoreNotConfigured = () => {
   console.log("Cloud Firestore paths are not configured, skipping");
 };
 
-export const firestorePathDeleted = (path: string) => {
-  console.log(`Deleted: '${path}' from Cloud Firestore`);
+export const firestorePathDeleted = (path: string, recursive: boolean) => {
+  console.log(
+    `Deleted: '${path}' from Cloud Firestore ${
+      recursive ? "with recursive delete" : ""
+    }`
+  );
 };
 
-export const firestorePathDeleting = (path: string) => {
-  console.log(`Deleting: '${path}' from Cloud Firestore`);
+export const firestorePathDeleting = (path: string, recursive: boolean) => {
+  console.log(
+    `Deleting: '${path}' from Cloud Firestore ${
+      recursive ? "with recursive delete" : ""
+    }`
+  );
 };
 
 export const firestorePathError = (path: string, err: Error) => {
@@ -69,7 +77,10 @@ export const rtdbPathDeleting = (path: string) => {
 };
 
 export const rtdbPathError = (path: string, err: Error) => {
-  console.error(`Error when deleting: '${path}' from the Realtime Database`, err);
+  console.error(
+    `Error when deleting: '${path}' from the Realtime Database`,
+    err
+  );
 };
 
 export const start = () => {

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-send-email
-version: 0.1.0
+version: 0.1.1
 specVersion: v1beta
 displayName: Trigger Email
 
@@ -23,7 +23,7 @@ description:
 license: Apache-2.0
 billingRequired: true
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-send-email
-releaseNotesUrl: https://github.com/firebase/extensions/commits/master
+releaseNotesUrl: https://github.com/firebase/extensions/releases
 
 author:
   authorName: Firebase
@@ -78,6 +78,7 @@ params:
         value: asia-northeast1
     default: us-central1
     required: true
+    immutable: true
 
   - param: SMTP_CONNECTION_URI
     type: string

@@ -23,7 +23,7 @@ description:
 license: Apache-2.0
 billingRequired: true
 sourceUrl: https://github.com/firebase/extensions/tree/master/auth-mailchimp-sync
-releaseNotesUrl: https://github.com/firebase/extensions/commits/master
+releaseNotesUrl: https://github.com/firebase/extensions/releases
 
 author:
   authorName: Firebase
@@ -89,6 +89,7 @@ params:
         value: asia-northeast1
     default: us-central1
     required: true
+    immutable: true
 
   - param: MAILCHIMP_API_KEY
     type: string

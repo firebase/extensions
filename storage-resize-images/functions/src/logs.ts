@@ -97,3 +97,11 @@ export const tempResizedFileDeleted = (path: string) => {
 export const tempResizedFileDeleting = (path: string) => {
   console.log(`Deleting temporary resized file: '${path}'`);
 };
+
+export const remoteFileDeleted = (path: string) => {
+  console.log(`Deleted original file from storage bucket: '${path}'`);
+};
+
+export const remoteFileDeleting = (path: string) => {
+  console.log(`Deleting original file from storage bucket: '${path}'`);
+};

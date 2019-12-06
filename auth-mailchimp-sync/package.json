@@ -1,6 +1,5 @@
 {
   "name": "auth-mailchimp-sync",
-  "version": "0.1.0",
   "description": "Add new users to a Mailchimp list, and delete them from the list when they delete their account.",
   "main": "functions/lib/index.js",
   "scripts": {
@@ -19,5 +18,6 @@
   "devDependencies": {
     "rimraf": "^2.6.3",
     "typescript": "^3.2.4"
-  }
+  },
+  "private": true
 }

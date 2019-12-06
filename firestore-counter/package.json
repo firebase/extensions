@@ -1,6 +1,5 @@
 {
   "name": "firestore-counter",
-  "version": "0.1.0",
   "main": "functions/lib/index.js",
   "author": "patryk@google.com",
   "license": "Apache-2.0",
@@ -30,5 +29,6 @@
     "compile": "tsc",
     "format": "prettier --write {,**/}*.{yaml,ts,md}",
     "test": "mocha --require ts-node/register test/**/*.ts"
-  }
+  },
+  "private": true
 }

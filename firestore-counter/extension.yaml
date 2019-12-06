@@ -23,7 +23,7 @@ description:
 license: Apache-2.0
 billingRequired: false
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-counter
-releaseNotesUrl: https://github.com/firebase/extensions/commits/master
+releaseNotesUrl: https://github.com/firebase/extensions/releases
 
 author:
   authorName: Firebase
@@ -118,6 +118,7 @@ params:
         value: asia-northeast1
     default: us-central1
     required: true
+    immutable: true
 
   - param: INTERNAL_STATE_PATH
     label: Document path for internal state

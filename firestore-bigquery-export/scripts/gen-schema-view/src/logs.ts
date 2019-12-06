@@ -16,19 +16,25 @@
 
 import { FirestoreSchema } from "./schema";
 
-export const bigQuerySchemaViewCreating = (name: string, schema: FirestoreSchema, query) => {
-  console.log(`BigQuery creating schema view ${name}:\nSchema:\n` +
-    `${JSON.stringify(schema)}\nQuery:\n${query}`);
-}
+export const bigQuerySchemaViewCreating = (
+  name: string,
+  schema: FirestoreSchema,
+  query
+) => {
+  console.log(
+    `BigQuery creating schema view ${name}:\nSchema:\n` +
+      `${JSON.stringify(schema)}\nQuery:\n${query}`
+  );
+};
 
 export const bigQuerySchemaViewCreated = (name: string) => {
   console.log(`BigQuery created schema view ${name}\n`);
-}
+};
 
 export const bigQueryViewCreating = (view: string) => {
   console.log(`BigQuery created view ${view}`);
-}
+};
 
 export const bigQueryViewCreated = (view: string) => {
   console.log(`BigQuery created view ${view}`);
-}
+};

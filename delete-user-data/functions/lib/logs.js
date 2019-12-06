@@ -28,11 +28,11 @@ exports.firestoreDeleting = () => {
 exports.firestoreNotConfigured = () => {
     console.log("Cloud Firestore paths are not configured, skipping");
 };
-exports.firestorePathDeleted = (path) => {
-    console.log(`Deleted: '${path}' from Cloud Firestore`);
+exports.firestorePathDeleted = (path, recursive) => {
+    console.log(`Deleted: '${path}' from Cloud Firestore ${recursive ? "with recursive delete" : ""}`);
 };
-exports.firestorePathDeleting = (path) => {
-    console.log(`Deleting: '${path}' from Cloud Firestore`);
+exports.firestorePathDeleting = (path, recursive) => {
+    console.log(`Deleting: '${path}' from Cloud Firestore ${recursive ? "with recursive delete" : ""}`);
 };
 exports.firestorePathError = (path, err) => {
     console.error(`Error when deleting: '${path}' from Cloud Firestore`, err);

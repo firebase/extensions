@@ -12,13 +12,24 @@ You can test out this extension right away:
 
 ### Using the extension
 
+You can upload images using the [Cloud Storage for Firebase SDK](https://firebase.google.com/docs/storage/) for your platform (iOS, Android, or Web). Alternatively, you can upload images directly in the Firebase console's Storage dashboard.
+
 When you upload an image file to `${param:IMG_BUCKET}`, this extension:
 
 - Creates resized image(s) with your specfied dimensions.
-- Stores the resized image(s) in the bucket `${param:IMG_BUCKET}` (and, if configured, under the path `${param:RESIZED_IMAGES_PATH}`).
 - Names resized image(s) using the same name as the original uploaded image, but suffixed with the specified width and height.
+- Stores the resized image(s) in the bucket `${param:IMG_BUCKET}` (and, if configured, under the path `${param:RESIZED_IMAGES_PATH}`).
 
-You can upload images using the [Cloud Storage for Firebase SDK](https://firebase.google.com/docs/storage/) for your platform (iOS, Android, or Web). Alternatively, you can upload images directly in the Firebase console's Storage dashboard.
+The extension also copies the following metadata, if present, from the original image to the resized image(s):
+
+- [`Cache-Control`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control)
+- [`Content-Disposition`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Disposition)
+- [`Content-Encoding`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Encoding)
+- [`Content-Language`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Language)
+- [`Content-Type`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Type)
+- [user-provided metadata](https://cloud.google.com/storage/docs/metadata#custom-metadata) (except Firebase storage download tokens)
+
+Note that if you configured the `Cache-Control header for resized images` param, the specified value will overwrite the value copied from the original image. Learn more about image metadata in the [Cloud Storage documentation](https://firebase.google.com/docs/storage/).
 
 ### Monitoring
 

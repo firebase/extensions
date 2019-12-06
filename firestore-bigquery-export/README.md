@@ -1,30 +1,10 @@
-# firestore-bigquery-export
+# Export Collections to BigQuery
 
-**VERSION**: 0.1.0
-
-**DESCRIPTION**: Sends realtime, incremental updates from a specified Cloud Firestore collection to BigQuery.
+**Description**: Sends realtime, incremental updates from a specified Cloud Firestore collection to BigQuery.
 
 
 
-**CONFIGURATION PARAMETERS:**
-
-* Deployment location: Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations#selecting_regions_for_firestore_and_storage).
-
-* Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`).
-
-* Dataset ID: What ID would you like to use for your BigQuery dataset? This extension will create the dataset, if it doesn't already exist.
-
-* Table ID: What identifying prefix would you like to use for your table and view inside your BigQuery dataset? This extension will create the table and view, if they don't already exist.
-
-
-
-**CLOUD FUNCTIONS CREATED:**
-
-* fsexportbigquery (providers/cloud.firestore/eventTypes/document.write)
-
-
-
-**DETAILS**: Use this extension to export the documents in a Cloud Firestore collection to BigQuery. Exports are realtime and incremental, so the data in BigQuery is a mirror of your content in Cloud Firestore.
+**Details**: Use this extension to export the documents in a Cloud Firestore collection to BigQuery. Exports are realtime and incremental, so the data in BigQuery is a mirror of your content in Cloud Firestore.
 
 The extension creates and updates a [dataset](https://cloud.google.com/bigquery/docs/datasets-intro) containing the following two BigQuery resources:
 
@@ -52,21 +32,40 @@ Learn more about using this script to [backfill your existing collection](https:
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
 
++   BigQuery (this extension writes to BigQuery with [streaming inserts](https://cloud.google.com/bigquery/pricing#streaming_pricing))
 +   Cloud Firestore
-+   BigQuery
 +   Cloud Functions
 
 When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
 
 
 
-**APIS USED**:
+
+**Configuration Parameters:**
+
+* Deployment location: Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+
+* Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`).
+
+* Dataset ID: What ID would you like to use for your BigQuery dataset? This extension will create the dataset, if it doesn't already exist.
+
+* Table ID: What identifying prefix would you like to use for your table and view inside your BigQuery dataset? This extension will create the table and view, if they don't already exist.
+
+
+
+**Cloud Functions:**
+
+* **fsexportbigquery:** Listens for document changes in your specified Cloud Firestore collection, then exports the changes into BigQuery.
+
+
+
+**APIs Used**:
 
 * bigquery-json.googleapis.com (Reason: Mirrors data from your Cloud Firestore collection in BigQuery.)
 
 
 
-**ACCESS REQUIRED**:
+**Access Required**:
 
 
 

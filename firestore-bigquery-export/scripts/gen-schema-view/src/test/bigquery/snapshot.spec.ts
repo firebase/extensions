@@ -49,25 +49,48 @@ async function readBigQuerySchema(file: string): Promise<any> {
 
 describe("schema snapshot view sql generation", () => {
   it("should generate the expected sql", async () => {
-    const expectedQuery = await readFormattedSQL(`${sqlDir}/fullSchemaLatest.txt`);
-    const query = buildLatestSchemaSnapshotViewQuery(testDataset, testTable, await readBigQuerySchema(`${schemaDir}/fullSchema.json`));
+    const expectedQuery = await readFormattedSQL(
+      `${sqlDir}/fullSchemaLatest.txt`
+    );
+    const query = buildLatestSchemaSnapshotViewQuery(
+      testDataset,
+      testTable,
+      await readBigQuerySchema(`${schemaDir}/fullSchema.json`)
+    );
     expect(query).to.equal(expectedQuery);
   });
   it("should generate the expected sql", async () => {
-    const expectedQuery = await readFormattedSQL(`${sqlDir}/fullSchemaLatestFromView.txt`);
-    const query = buildLatestSchemaSnapshotViewQueryFromLatestView(testDataset, testTable, await readBigQuerySchema(`${schemaDir}/fullSchema.json`));
+    const expectedQuery = await readFormattedSQL(
+      `${sqlDir}/fullSchemaLatestFromView.txt`
+    );
+    const query = buildLatestSchemaSnapshotViewQueryFromLatestView(
+      testDataset,
+      testTable,
+      await readBigQuerySchema(`${schemaDir}/fullSchema.json`)
+    );
     await writeFile(`${sqlDir}/fullSchemaLatestFromView.txt`, query);
     expect(query).to.equal(expectedQuery);
   });
   it("should generate the expected sql for an empty schema", async () => {
-    const expectedQuery = await readFormattedSQL(`${sqlDir}/emptySchemaLatest.txt`);
-    const query = buildLatestSchemaSnapshotViewQuery(testDataset, testTable, await readBigQuerySchema(`${schemaDir}/emptySchema.json`));
+    const expectedQuery = await readFormattedSQL(
+      `${sqlDir}/emptySchemaLatest.txt`
+    );
+    const query = buildLatestSchemaSnapshotViewQuery(
+      testDataset,
+      testTable,
+      await readBigQuerySchema(`${schemaDir}/emptySchema.json`)
+    );
     expect(query).to.equal(expectedQuery);
   });
   it("should generate the expected sql", async () => {
-    const expectedQuery = await readFormattedSQL(`${sqlDir}/emptySchemaLatestFromView.txt`);
-    const query = buildLatestSchemaSnapshotViewQueryFromLatestView(testDataset, testTable, await readBigQuerySchema(`${schemaDir}/fullSchema.json`));
+    const expectedQuery = await readFormattedSQL(
+      `${sqlDir}/emptySchemaLatestFromView.txt`
+    );
+    const query = buildLatestSchemaSnapshotViewQueryFromLatestView(
+      testDataset,
+      testTable,
+      await readBigQuerySchema(`${schemaDir}/fullSchema.json`)
+    );
     expect(query).to.equal(expectedQuery);
   });
-
 });
