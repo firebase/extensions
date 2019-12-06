@@ -26,11 +26,11 @@ match /databases/{database}/documents/pages/{page} {
 - **If you installed this extension for the first time at v0.1.1:** Follow the instructions as described in this section.
 
 
-Set up a [Cloud Scheduler job](https://firebase.google.com/docs/functions/schedule-functions) to regularly send a message to the extension's Pub/Sub topic (`${param:EXT_INSTANCE_ID}`). This Pub/Sub topic then automatically triggers the Pub/Sub controller function (`${function:controllerPubSub}`). This Pub/Sub controller function is created by the extension and monitors the extension's workload.
+Set up a [Cloud Scheduler job](https://firebase.google.com/docs/functions/schedule-functions) to regularly send a message to the extension's Pub/Sub topic (`${param:EXT_INSTANCE_ID}`). This Pub/Sub topic then automatically triggers the controllerCore function (`${function:controllerCore}`). This controllerCore function is created by the extension and monitors the extension's workload.
 
 You may need to enable some APIs in your Firebase project to use Cloud Scheduler.
 
-As an example, to set up the required Cloud Scheduler job, you can run the following gcloud commands:
+As an example, to set up the required Cloud Scheduler job, you can run the following `gcloud` commands:
 
 ```
 gcloud --project=${param:PROJECT_ID} services enable cloudscheduler.googleapis.com
