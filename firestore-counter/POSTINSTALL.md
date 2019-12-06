@@ -22,7 +22,7 @@ match /databases/{database}/documents/pages/{page} {
 #### Set up a Cloud Scheduler job
 
 **IMPORTANT:** Note the following about v0.1.1 of this extension:
-- **If you updated your extension from v0.1.0 to v0.1.1:**  We recommend that you edit your Cloud Scheduler job to instead send a message to the extension's Pub/Sub topic, as described in this section. Although it's not recommended, if you leave your Cloud Scheduler job calling `${function:controller.url}`, your extension will continue to run as expected. For more information about the changes for v0.1.1, refer to the [changelog](https://github.com/firebase/extensions/blob/next/firestore-counter/CHANGELOG.md).
+- **If you updated your extension from v0.1.0 to v0.1.1:**  We recommend that you edit your Cloud Scheduler job to instead send a message to the extension's Pub/Sub topic, as described in this section. Although it's not recommended, if you leave your Cloud Scheduler job calling `${function:controller.url}`, your extension will continue to run as expected. For more information about the changes for v0.1.1, refer to the [changelog](https://github.com/firebase/extensions/blob/master/firestore-counter/CHANGELOG.md).
 - **If you installed this extension for the first time at v0.1.1:** Follow the instructions as described in this section.
 
 
