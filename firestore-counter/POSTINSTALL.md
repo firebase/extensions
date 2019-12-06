@@ -1,6 +1,6 @@
 ### Post-installation configuration
 
-Before you can use this extension, you'll need to update your security rules, set up a scheduled function, and add some code to your JavaScript app.
+Before you can use this extension, you'll need to update your security rules, set up a Cloud Scheduler job, and add some code to your JavaScript app.
 
 #### Update security rules
 
@@ -18,16 +18,25 @@ match /databases/{database}/documents/pages/{page} {
 }
 ```
 
-#### Set up a scheduled function
 
-Review the [scheduled function documentation](https://firebase.google.com/docs/functions/schedule-functions) to set up a call to `${function:controllerCore.url}` every minute. You may need to enable some APIs in your Firebase project to use scheduled functions.
+#### Set up a Cloud Scheduler job
 
-As an example, to set up a scheduled function, you can run the following [`gcloud`](https://cloud.google.com/sdk/gcloud/) commands:
+**IMPORTANT:** Note the following about v0.1.1 of this extension:
+- **If you updated your extension from v0.1.0 to v0.1.1:**  We recommend that you edit your Cloud Scheduler job to instead send a message to the extension's Pub/Sub topic, as described in this section. Although it's not recommended, if you leave your Cloud Scheduler job calling `${function:controller.url}`, your extension will continue to run as expected. For more information about the changes for v0.1.1, refer to the [changelog](https://github.com/firebase/extensions/blob/next/firestore-counter/CHANGELOG.md).
+- **If you installed this extension for the first time at v0.1.1:** Follow the instructions as described in this section.
+
+
+Set up a [Cloud Scheduler job](https://firebase.google.com/docs/functions/schedule-functions) to regularly send a message to the extension's Pub/Sub topic (`${param:EXT_INSTANCE_ID}`). This Pub/Sub topic then automatically triggers the Pub/Sub controller function (`${function:controllerPubSub}`). This Pub/Sub controller function is created by the extension and monitors the extension's workload.
+
+You may need to enable some APIs in your Firebase project to use Cloud Scheduler.
+
+As an example, to set up the required Cloud Scheduler job, you can run the following gcloud commands:
 
 ```
 gcloud --project=${param:PROJECT_ID} services enable cloudscheduler.googleapis.com
 gcloud --project=${param:PROJECT_ID} scheduler jobs create pubsub ${param:EXT_INSTANCE_ID} --schedule="* * * * *" --topic=${param:EXT_INSTANCE_ID} --message-body="{}"
 ```
+
 
 #### Specify a document path and increment value in your app
 
