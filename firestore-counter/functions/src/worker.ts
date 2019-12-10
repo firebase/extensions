@@ -50,7 +50,7 @@ interface WorkerMetadata {
  *
  * Workers avoid double scheduling and overruns by including their metadata documents in every
  * aggregation transaction. If metadata changes underneath, transaction fails, worker detects that
- * and terminates immmediately.
+ * and terminates immediately.
  */
 export class ShardedCounterWorker {
   private db: firestore.Firestore;
