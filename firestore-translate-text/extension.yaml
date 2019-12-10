@@ -81,6 +81,7 @@ params:
         value: asia-northeast1
     default: us-central1
     required: true
+    immutable: true
 
   - param: LANGUAGES
     label: Target languages for translations, as a comma-separated list
@@ -94,7 +95,6 @@ params:
     validationErrorMessage:
       Languages must be a comma-separated list of ISO-639-1 language codes.
     required: true
-    immutable: true
 
   - param: COLLECTION_PATH
     label: Collection path
