@@ -18,7 +18,7 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 After installing this extension, you'll need to:
 
 - Update your [database security rules](https://firebase.google.com/docs/rules).
-- Set up a [Cloud Scheduler job](https://cloud.google.com/scheduler/docs/quickstart) to regularly call the controllerCore function, which is created by this extension and monitors the extension's workload.
+- Set up a [Cloud Scheduler job](https://cloud.google.com/scheduler/docs/quickstart) to regularly call the controllerCore function, which is created by this extension. It works by either aggregating shards itself or scheduling and monitoring workers to aggregate shards.
 - Install the provided [Counter SDK](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts) in your app. You can then use this library in your code to specify your document path and increment values.
 
 Detailed information for these post-installation tasks are provided after you install this extension.
