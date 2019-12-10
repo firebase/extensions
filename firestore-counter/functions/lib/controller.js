@@ -201,7 +201,7 @@ class ShardedCounterController {
                 }
                 catch (err) {
                     console.log("Failed to read worker docs.", err);
-                    throw Error("Failed to reqad worker docs.");
+                    throw Error("Failed to read worker docs.");
                 }
                 let shardingInfo = yield Promise.all(query.docs.map((worker) => __awaiter(this, void 0, void 0, function* () {
                     const slice = worker.get("slice");
