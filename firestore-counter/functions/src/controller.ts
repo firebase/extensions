@@ -228,7 +228,7 @@ export class ShardedCounterController {
         await t.get(this.controllerDocRef);
       } catch (err) {
         console.log(
-          "Failed to read controler doc " + this.controllerDocRef.path
+          "Failed to read controller doc " + this.controllerDocRef.path
         );
         throw Error("Failed to read controller doc.");
       }
