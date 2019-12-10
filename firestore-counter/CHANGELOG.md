@@ -1,0 +1,5 @@
+## Version 0.1.1
+
+changed - Moves the logic for monitoring the extension's workload from the existing HTTP function to a new Pub/Sub controllerCore function. Now, if called, the HTTP function triggers the new `controllerCore` function instead.  This change was made to accommodate a [change in the way Google Cloud Functions handles HTTP functions](https://cloud.google.com/functions/docs/securing/managing-access#allowing_unauthenticated_function_invocation).
+
+We recommend that you edit your existing Cloud Scheduler job to instead send a message to the extension's Pub/Sub topic which triggers the new `controllerCore` function (detailed instructions provided in the [POSTINSTALL file](https://github.com/firebase/extensions/blob/master/firestore-counter/POSTINSTALL.md). Although it's not recommended, if you leave your Cloud Scheduler job calling the HTTP function, your extension will continue to run as expected.
