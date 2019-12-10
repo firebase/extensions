@@ -198,6 +198,7 @@ function deliver(payload, ref) {
                 to: payload.to,
                 cc: payload.cc,
                 bcc: payload.bcc,
+                headers: payload.headers || {},
             }));
             const info = {
                 messageId: result.messageId || null,
