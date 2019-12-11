@@ -24,6 +24,7 @@ other category use one of these other channels:
 ### [REQUIRED] Step 2: Describe your configuration
 
 - Extension name: **\_** (`storage-resize-images`, `firestore-send-email`, etc)
+- Extension version: **\_**
 - Configuration values (redact info where appropriate):
   - **\_**
   - **\_**
