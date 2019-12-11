@@ -163,7 +163,7 @@ const run = async (): Promise<number> => {
 
   let cursorPositionFile =
     __dirname +
-    `/from-${sourceCollectionPath}-to-${projectId}\:${datasetId}\:${rawChangeLogName}`;
+    `/from-${sourceCollectionPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
   if (await exists(cursorPositionFile)) {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
     cursor = await firebase
