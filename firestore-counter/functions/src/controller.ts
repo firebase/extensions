@@ -228,7 +228,7 @@ export class ShardedCounterController {
         await t.get(this.controllerDocRef);
       } catch (err) {
         console.log(
-          "Failed to read controler doc " + this.controllerDocRef.path
+          "Failed to read controller doc " + this.controllerDocRef.path
         );
         throw Error("Failed to read controller doc.");
       }
@@ -240,7 +240,7 @@ export class ShardedCounterController {
         );
       } catch (err) {
         console.log("Failed to read worker docs.", err);
-        throw Error("Failed to reqad worker docs.");
+        throw Error("Failed to read worker docs.");
       }
       let shardingInfo: WorkerShardingInfo[] = await Promise.all(
         query.docs.map(async (worker) => {
