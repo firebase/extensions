@@ -27,6 +27,7 @@ import config from "./config";
 import * as logs from "./logs";
 import * as validators from "./validators";
 import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
+import { extractFileNameWithoutExtension } from "./util";
 
 interface ResizedImageResult {
   size: string;
@@ -61,9 +62,11 @@ export const generateResizedImage = functions.storage.object().onFinalize(
     const bucket = admin.storage().bucket(object.bucket);
     const filePath = object.name; // File path in the bucket.
     const fileDir = path.dirname(filePath);
-    const fileName = path.basename(filePath);
     const fileExtension = path.extname(filePath);
-    const fileNameWithoutExtension = fileName.slice(0, -fileExtension.length);
+    const fileNameWithoutExtension = extractFileNameWithoutExtension(
+      filePath,
+      fileExtension
+    );
     const objectMetadata = object;
 
     let originalFile;
