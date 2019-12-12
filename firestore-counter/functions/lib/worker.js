@@ -44,7 +44,7 @@ const WORKER_TIMEOUT_MS = 45000;
  *
  * Workers avoid double scheduling and overruns by including their metadata documents in every
  * aggregation transaction. If metadata changes underneath, transaction fails, worker detects that
- * and terminates immmediately.
+ * and terminates immediately.
  */
 class ShardedCounterWorker {
     constructor(metadoc, shardCollection, singleRun = false) {

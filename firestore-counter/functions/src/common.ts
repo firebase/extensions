@@ -15,9 +15,6 @@
  */
 
 import { firestore } from "firebase-admin";
-import * as path from "path";
-import { FieldPath } from "@google-cloud/firestore";
-import { ShardedCounterController } from "./controller";
 
 /**
  * Represents a document range that a single worker is responsible for.
@@ -80,8 +77,4 @@ export function queryRange(
 
   query = query.limit(limit);
   return query;
-}
-
-export async function delay(ms: number): Promise<void> {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }

@@ -15,7 +15,7 @@
  */
 
 import { firestore } from "firebase-admin";
-import { FieldPath, FieldValue } from "@google-cloud/firestore";
+import { FieldValue } from "@google-cloud/firestore";
 import * as uuid from "uuid";
 
 export class NumericUpdate {
@@ -24,7 +24,7 @@ export class NumericUpdate {
   /**
    * Merges numeric values from an arbitrary deep json into the NumericUpdate object.
    *  - it ignores non-numeric leaves
-   *  - if there's a type mismatch ('number' vs 'object') current data will be overriden
+   *  - if there's a type mismatch ('number' vs 'object') current data will be overridden
    * @param from An object with numeric values to merge from.
    */
   public mergeFrom(from: { [key: string]: any }) {
@@ -33,7 +33,7 @@ export class NumericUpdate {
   /**
    * Subtracts numeric values in an arbitrary deep json from the NumericUpdate object.
    *  - it ignores non-numeric leaves
-   *  - if there's a type mismatch ('number' vs 'object') current data will be overriden
+   *  - if there's a type mismatch ('number' vs 'object') current data will be overridden
    * @param from An object with numeric values to merge from.
    */
   public subtractFrom(from: { [key: string]: any }) {

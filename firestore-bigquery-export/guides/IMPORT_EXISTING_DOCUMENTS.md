@@ -59,7 +59,7 @@ Run the import script using [`npx` (the Node Package Runner)](https://www.npmjs.
     ```
     SELECT COUNT(*) FROM
       `${PROJECT_ID}.${COLLECTION_PATH}.${COLLECTION_PATH}_raw_changelog`
-      WHERE operation = "import"
+      WHERE operation = "IMPORT"
     ```
 
     The result set will contain the number of documents in your source collection.
