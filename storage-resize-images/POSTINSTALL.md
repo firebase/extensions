@@ -1,3 +1,4 @@
+storage-resize-images/POSTINSTALL.md
 ### See it in action
 
 You can test out this extension right away:
