@@ -42,7 +42,6 @@ Run the import script using [`npx` (the Node Package Runner)](https://www.npmjs.
 
     Alternatively, you can [create and use a service account](https://cloud.google.com/docs/authentication/production#obtaining_and_providing_service_account_credentials_manually). This service account must be assigned a role that grants the `bigquery.datasets.create` [permission](https://cloud.google.com/bigquery/docs/access-control#bq-permissions).
 
-
 1.  Run the import script via `npx` by running the following command:
 
     ```
