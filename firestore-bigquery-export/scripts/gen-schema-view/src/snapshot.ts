@@ -16,6 +16,8 @@
 
 import * as sqlFormatter from "sql-formatter";
 
+import { RawChangelogSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
+
 import {
   buildSchemaViewQuery,
   latest,
@@ -26,47 +28,81 @@ import {
   subSelectQuery,
 } from "./schema";
 
-/**
- * Given a view created with `userSchemaView` above, this function generates a
- * query that returns the latest set of live documents according to that schema.
- */
-export const latestConsistentSnapshotSchemaView = (
+export function latestConsistentSnapshotSchemaView(
   datasetId: string,
   rawTableName: string,
   schema: FirestoreSchema
-) => ({
-  query: buildLatestSchemaSnapshotViewQueryFromLatestView(
+): any {
+  const result = buildLatestSchemaSnapshotViewQuery(
     datasetId,
     rawTableName,
     schema
-  ),
-  useLegacySql: false,
-});
+  );
+  return {
+    queryInfo: {
+      query: result.query,
+      useLegacySql: false,
+    },
+    fields: result.fields,
+  };
+}
 
 export function buildLatestSchemaSnapshotViewQueryFromLatestView(
   datasetId: string,
   tableName: string,
   schema: FirestoreSchema
 ): string {
-  return buildSchemaViewQuery(datasetId, latest(tableName), schema);
+  return buildSchemaViewQuery(datasetId, latest(tableName), schema).query;
 }
 
 export const buildLatestSchemaSnapshotViewQuery = (
   datasetId: string,
   rawTableName: string,
   schema: FirestoreSchema
-): string => {
+): any => {
   const firstValue = (selector: string) => {
     return `FIRST_VALUE(${selector}) OVER(PARTITION BY document_name ORDER BY timestamp DESC)`;
   };
   // We need to pass the dataset id into the parser so that we can call the
   // fully qualified json2array persistent user-defined function in the proper
   // scope.
+  const result = processFirestoreSchema(datasetId, "data", schema, firstValue);
   const [
     schemaFieldExtractors,
     schemaFieldArrays,
     schemaFieldGeopoints,
-  ] = processFirestoreSchema(datasetId, "data", schema, firstValue);
+  ] = result.queryInfo;
+  const bigQueryFields = result.fields;
+  /*
+   * Include applicable raw changelog column schemas.
+   */
+  const changelogSchemaFields: any[] = RawChangelogSchema.fields;
+  for (let i = 0; i < changelogSchemaFields.length; i++) {
+    if (
+      changelogSchemaFields[i].name == "event_id" ||
+      changelogSchemaFields[i].name == "data"
+    ) {
+      continue;
+    }
+    bigQueryFields.push(changelogSchemaFields[i]);
+  }
+  /*
+   * Include additional array schema fields.
+   */
+  for (let arrayFieldName in schemaFieldArrays) {
+    bigQueryFields.push({
+      name: `${arrayFieldName}_index`,
+      mode: "NULLABLE",
+      type: "NUMERIC",
+      description: `Index of ${arrayFieldName}_member in ${arrayFieldName}.`,
+    });
+    bigQueryFields.push({
+      name: `${arrayFieldName}_member`,
+      mode: "NULLABLE",
+      type: "STRING",
+      description: `String representation of ${arrayFieldName}_member at index ${arrayFieldName}_index in ${arrayFieldName}.`,
+    });
+  }
   const fieldNameSelectorClauses = Object.keys(schemaFieldExtractors).join(
     ", "
   );
