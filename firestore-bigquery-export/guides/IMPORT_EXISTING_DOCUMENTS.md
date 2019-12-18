@@ -32,6 +32,17 @@ Run the import script using [`npx` (the Node Package Runner)](https://www.npmjs.
     - To access the `npm` command tools, you need to install [Node.js](https://www.nodejs.org/).
     - If you use `npm` v5.1 or earlier, you need to explicitly install `npx`. Run `npm install --global npx`.
 
+1.  Set up credentials. The import script uses Application Default Credentials to communicate with BigQuery.
+
+    One way to set up these credentials is to run the following command using the [gcloud CLI](https://cloud.google.com/sdk/gcloud/):
+
+    ```shell
+    gcloud auth application-default login
+    ```
+
+    Alternatively, you can [create and use a service account](https://cloud.google.com/docs/authentication/production#obtaining_and_providing_service_account_credentials_manually). This service account must be assigned a role that grants the `bigquery.datasets.create` [permission](https://cloud.google.com/bigquery/docs/access-control#bq-permissions).
+
+
 1.  Run the import script via `npx` by running the following command:
 
     ```
