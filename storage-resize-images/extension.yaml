@@ -24,7 +24,7 @@ description:
 
 billingRequired: false
 sourceUrl: https://github.com/firebase/extensions/tree/master/storage-resize-images
-releaseNotesUrl: https://github.com/firebase/extensions/releases
+releaseNotesUrl: https://github.com/firebase/extensions/blob/master/storage-resize-images/CHANGELOG.md
 
 author:
   authorName: Firebase

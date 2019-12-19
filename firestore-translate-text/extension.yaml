@@ -24,7 +24,7 @@ description:
 license: Apache-2.0
 billingRequired: true
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-translate-text
-releaseNotesUrl: https://github.com/firebase/extensions/releases
+releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-translate-text/CHANGELOG.md
 
 author:
   authorName: Firebase
