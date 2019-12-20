@@ -39,7 +39,7 @@ export function latestConsistentSnapshotSchemaView(
     schema
   );
   return {
-    queryInfo: {
+    viewInfo: {
       query: result.query,
       useLegacySql: false,
     },
@@ -52,7 +52,7 @@ export function buildLatestSchemaSnapshotViewQueryFromLatestView(
   tableName: string,
   schema: FirestoreSchema
 ): string {
-  return buildSchemaViewQuery(datasetId, latest(tableName), schema).query;
+  return buildSchemaViewQuery(datasetId, latest(tableName), schema);
 }
 
 export const buildLatestSchemaSnapshotViewQuery = (
@@ -72,28 +72,21 @@ export const buildLatestSchemaSnapshotViewQuery = (
     schemaFieldArrays,
     schemaFieldGeopoints,
   ] = result.queryInfo;
-  const bigQueryFields = result.fields;
-  /*
-   * Include applicable raw changelog column schemas.
-   */
-  const changelogSchemaFields: any[] = RawChangelogSchema.fields;
-  for (let i = 0; i < changelogSchemaFields.length; i++) {
-    if (
-      changelogSchemaFields[i].name == "event_id" ||
-      changelogSchemaFields[i].name == "data"
-    ) {
-      continue;
-    }
-    bigQueryFields.push(changelogSchemaFields[i]);
-  }
+  let bigQueryFields = result.fields;
   /*
    * Include additional array schema fields.
    */
-  for (let arrayFieldName in schemaFieldArrays) {
+  for (let arrayFieldName of schemaFieldArrays) {
+    /*
+     * Non-groupable arrays will not be included in the view.
+     */
+    bigQueryFields = bigQueryFields.filter(
+      (field) => field.name != `${arrayFieldName}`
+    );
     bigQueryFields.push({
       name: `${arrayFieldName}_index`,
       mode: "NULLABLE",
-      type: "NUMERIC",
+      type: "INTEGER",
       description: `Index of ${arrayFieldName}_member in ${arrayFieldName}.`,
     });
     bigQueryFields.push({
@@ -102,6 +95,15 @@ export const buildLatestSchemaSnapshotViewQuery = (
       type: "STRING",
       description: `String representation of ${arrayFieldName}_member at index ${arrayFieldName}_index in ${arrayFieldName}.`,
     });
+  }
+  /*
+   * latitude and longitude component fields have already been added
+   * during firestore schema processing.
+   */
+  for (let geopointFieldName of schemaFieldGeopoints) {
+    bigQueryFields = bigQueryFields.filter(
+      (field) => field.name != `${geopointFieldName}`
+    );
   }
   const fieldNameSelectorClauses = Object.keys(schemaFieldExtractors).join(
     ", "
@@ -198,5 +200,8 @@ export const buildLatestSchemaSnapshotViewQuery = (
     --                    corresponding to fields defined in the schema.
     ${query}
   `);
-  return query;
+  return {
+    query: query,
+    fields: bigQueryFields,
+  };
 };

@@ -20,11 +20,13 @@
       "fields": [
         {
           "name": "name",
-          "type": "string"
+          "type": "string",
+	  "description": "This is a nested name!"
         }
       ],
       "name": "friends",
-      "type": "map"
+      "type": "map",
+      "description": "Sorry, can't describe a map. What is that?"
     }
   ]
 }

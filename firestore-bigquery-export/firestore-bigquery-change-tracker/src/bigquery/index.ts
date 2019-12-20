@@ -15,7 +15,7 @@
  */
 
 import * as bigquery from "@google-cloud/bigquery";
-import { firestoreToBQTable } from "./schema";
+import { RawChangelogSchema, RawChangelogLatestViewSchema } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 
 import {
@@ -26,49 +26,12 @@ import {
 import * as logs from "../logs";
 import { BigQuery } from "@google-cloud/bigquery";
 
+export { RawChangelogSchema, RawChangelogLatestViewSchema } from "./schema";
+
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
   tableId: string;
 }
-
-export const RawChangelogSchema: any = {
-  fields: [
-    {
-      name: "timestamp",
-      mode: "REQUIRED",
-      type: "TIMESTAMP",
-      description:
-        "The commit timestamp of this change in Cloud Firestore. If the operation is IMPORT, this timestamp is epoch to ensure that any operation on an imported document supersedes the IMPORT.",
-    },
-    {
-      name: "event_id",
-      mode: "REQUIRED",
-      type: "STRING",
-      description:
-        "The ID of the document change event that triggered the Cloud Function created by the extension. Empty for imports.",
-    },
-    {
-      name: "document_name",
-      mode: "REQUIRED",
-      type: "STRING",
-      description:
-        "The full name of the changed document, for example, projects/collection/databases/(default)/documents/users/me).",
-    },
-    {
-      name: "operation",
-      mode: "REQUIRED",
-      type: "STRING",
-      description: "One of CREATE, UPDATE, IMPORT, or DELETE.",
-    },
-    {
-      name: "data",
-      mode: "NULLABLE",
-      type: "STRING",
-      description:
-        "The full JSON representation of the document state after the indicated operation is applied. This field will be null for DELETE operations.",
-    },
-  ],
-};
 
 /**
  * An FirestoreEventHistoryTracker that exports data to BigQuery.
@@ -92,7 +55,6 @@ export class FirestoreBigQueryEventHistoryTracker
     await this.initialize();
     const options = {
       raw: true,
-      schema: RawChangelogSchema,
     };
     const rows = events.map((event) => {
       return {
@@ -125,6 +87,7 @@ export class FirestoreBigQueryEventHistoryTracker
       await table.insert(payload, options);
       logs.dataInserted(rows.length);
     } catch (e) {
+      console.log("Stringified insertion error: " + JSON.stringify(e));
       // Reinitializing in case the destintation table is modified.
       this.initialized = false;
       throw e;
@@ -178,7 +141,7 @@ export class FirestoreBigQueryEventHistoryTracker
       const options = {
         // `friendlyName` needs to be here to satisfy TypeScript
         friendlyName: changelogName,
-        schema: firestoreToBQTable(),
+        schema: RawChangelogSchema,
       };
       await table.create(options);
       logs.bigQueryTableCreated(changelogName);
@@ -208,6 +171,7 @@ export class FirestoreBigQueryEventHistoryTracker
         view: latestSnapshot,
       };
       await view.create(options);
+      await view.setMetadata({ schema: RawChangelogLatestViewSchema });
       logs.bigQueryViewCreated(this.rawLatestView());
     }
     return view;

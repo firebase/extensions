@@ -16,6 +16,7 @@
 
 import * as bigquery from "@google-cloud/bigquery";
 import * as logs from "./logs";
+import { RawChangelogSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import { latestConsistentSnapshotSchemaView } from "./snapshot";
 import * as sqlFormatter from "sql-formatter";
 import {
@@ -74,7 +75,7 @@ const firestoreToBigQueryFieldType: {
   string: "STRING",
   timestamp: "TIMESTAMP",
   reference: "STRING",
-  array: null,
+  array: null /* mode: REPEATED type: STRING */,
   map: null,
 };
 
@@ -127,53 +128,80 @@ export class FirestoreBigQuerySchemaViewFactory {
     let latestView = dataset.table(latestSchemaViewName);
     const [latestViewExists] = await latestView.exists();
 
+    let result = userSchemaView(
+      datasetId,
+      rawChangeLogTableName,
+      firestoreSchema
+    );
+    let bigQueryFields = result.fields;
+    const options = {
+      friendlyName: changeLogSchemaViewName,
+      view: result.viewInfo,
+    };
     if (!viewExists) {
-      const result = userSchemaView(
-        datasetId,
-        rawChangeLogTableName,
-        firestoreSchema
-      );
       logs.bigQuerySchemaViewCreating(
         changeLogSchemaViewName,
         firestoreSchema,
         result.viewInfo.query
       );
-      const options = {
-        friendlyName: changeLogSchemaViewName,
-        view: result.viewInfo,
-        schema: {
-          fields: result.fields,
-        },
-      };
       await view.create(options);
       logs.bigQuerySchemaViewCreated(changeLogSchemaViewName);
     }
 
+    await view.setMetadata({
+      schema: decorateSchemaWithChangelogFields({
+        fields: bigQueryFields,
+      }),
+    });
+
+    result = latestConsistentSnapshotSchemaView(
+      datasetId,
+      latestRawViewName,
+      firestoreSchema
+    );
+    bigQueryFields = result.fields;
+    const latestOptions = {
+      fiendlyName: latestSchemaViewName,
+      view: result.viewInfo,
+    };
     if (!latestViewExists) {
-      const result = latestConsistentSnapshotSchemaView(
-        datasetId,
-        latestRawViewName,
-        firestoreSchema
-      );
-      const latestSchemaView = result.query;
       logs.bigQuerySchemaViewCreating(
         latestSchemaViewName,
         firestoreSchema,
-        latestSchemaView
+        result.viewInfo.query
       );
-      const latestOptions = {
-        fiendlyName: latestSchemaViewName,
-        view: latestSchemaView,
-        schema: {
-          fields: result.fields,
-        },
-      };
       await latestView.create(latestOptions);
       logs.bigQueryViewCreated(latestSchemaViewName);
     }
+    await latestView.setMetadata({
+      schema: decorateSchemaWithChangelogFields({
+        fields: bigQueryFields,
+      }),
+    });
 
     return view;
   }
+}
+
+/**
+ * Given a BigQuery schema returned from either `userSchemaView` or
+ * `latestConsistentSnapshotSchemaView`, inherit the appropriate
+ * fields from the raw changelog schema and return the combined schemas.
+ */
+function decorateSchemaWithChangelogFields(schema: any): any {
+  let decorated: any = { fields: schema.fields };
+  const changelogSchemaFields: any[] = RawChangelogSchema.fields;
+  for (let i = 0; i < changelogSchemaFields.length; i++) {
+    if (
+      changelogSchemaFields[i].name == "event_id" ||
+      changelogSchemaFields[i].name == "data"
+    ) {
+      continue;
+    }
+    changelogSchemaFields[i].mode = "NULLABLE";
+    decorated.fields.push(changelogSchemaFields[i]);
+  }
+  return decorated;
 }
 
 /**
@@ -238,10 +266,10 @@ export const buildSchemaViewQuery = (
       )
       .join(" ")}`;
 
-    for (const arrayFieldName in fieldArrays) {
+    for (const arrayFieldName of fieldArrays) {
       bigQueryFields.push({
         name: `${arrayFieldName}_index`,
-        type: "NUMERIC",
+        type: "INTEGER",
         mode: "NULLABLE",
         description: `Index of the corresponding ${arrayFieldName}_member cell in ${arrayFieldName}.`,
       });
@@ -461,8 +489,8 @@ const processLeafField = (
 
       bigQueryFields.push({
         name: qualifyFieldName(prefix, `${field.name}_latitude`),
-        mode: "NUMERIC",
-        type: firestoreToBigQueryFieldType[field.type],
+        mode: "NULLABLE",
+        type: "NUMERIC",
         description: `Numeric latitude component of ${field.name}.`,
       });
 
@@ -475,8 +503,8 @@ const processLeafField = (
 
       bigQueryFields.push({
         name: qualifyFieldName(prefix, `${field.name}_longitude`),
-        mode: "NUMERIC",
-        type: firestoreToBigQueryFieldType[field.type],
+        mode: "NULLABLE",
+        type: "NUMERIC",
         description: `Numeric longitude component of ${field.name}.`,
       });
       return fieldNameToSelector;
@@ -484,12 +512,21 @@ const processLeafField = (
   fieldNameToSelector[
     qualifyFieldName(prefix, field.name)
   ] = `${selector} AS ${qualifyFieldName(prefix, field.name)}`;
-  bigQueryFields.push({
-    name: qualifyFieldName(prefix, field.name),
-    mode: "NULLABLE",
-    type: firestoreToBigQueryFieldType[field.type],
-    description: field.description,
-  });
+  if (field.type == "array") {
+    bigQueryFields.push({
+      name: qualifyFieldName(prefix, field.name),
+      mode: "REPEATED",
+      type: "STRING",
+      description: field.description,
+    });
+  } else {
+    bigQueryFields.push({
+      name: qualifyFieldName(prefix, field.name),
+      mode: "NULLABLE",
+      type: firestoreToBigQueryFieldType[field.type],
+      description: field.description,
+    });
+  }
   return fieldNameToSelector;
 };
 
