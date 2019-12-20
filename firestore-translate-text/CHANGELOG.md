@@ -6,3 +6,7 @@ fixed - Fixed bug where target languages could not be reconfigured.
 
 fixed - Fixed bug where param validation failed when a single language was entered.
 fixed - Fixed "cold start" errors experienced when the extension runs after a period of inactivity (issue #48).
+
+## Version 0.1.0
+
+Initial release of the *Translate Text* extension.
