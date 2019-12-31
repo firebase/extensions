@@ -97,7 +97,7 @@ params:
       Resized images will be stored in this bucket. Depending on your extension configuration,
       original images are either kept or deleted.
     default: ${STORAGE_BUCKET}
-    validationRegex: ^([0-9a-zA-Z_.-]*)$
+    validationRegex: ^([0-9a-z_.-]*)$
     validationErrorMessage: Invalid storage bucket
     example: my-project-12345.appspot.com
     required: true
