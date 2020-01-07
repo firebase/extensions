@@ -1,3 +1,9 @@
+## Version 0.1.4
+
+fixed - Fix bug where name of resized file was missing original name if there was no file extension (issue #20).
+fixed - Fix "TypeError: Cannot set property 'resizedImage' of undefined" (issue #130).
+fixed - Fix bug where some valid bucket names were rejected during configuration (issue #27).
+
 ## Version 0.1.3
 
 feature - Automatically copy the following metadata, if present, from the original image to the resized image(s): `Cache-Control`, `Content-Disposition`, `Content-Encoding`, `Content-Language`, `Content-Type`, and user-provided metadata (except Firebase storage download tokens). Note that you can configure your extension to overwrite the Cache-Control value for the resized image(s).
