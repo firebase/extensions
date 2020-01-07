@@ -170,7 +170,7 @@ const resizeImage = async ({
       contentEncoding: objectMetadata.contentEncoding,
       contentLanguage: objectMetadata.contentLanguage,
       contentType: contentType,
-      metadata: objectMetadata.metadata,
+      metadata: objectMetadata.metadata || {},
     };
     metadata.metadata.resizedImage = true;
     if (config.cacheControlHeader) {
