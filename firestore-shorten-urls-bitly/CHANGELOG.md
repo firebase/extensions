@@ -4,4 +4,4 @@ fixed - Fixed "cold start" errors experienced when the extension runs after a pe
 
 ## Version 0.1.0
 
-Initial release of the *Shorten URLs* extension.
+Initial release of the _Shorten URLs_ extension.

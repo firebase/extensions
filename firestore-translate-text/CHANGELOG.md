@@ -9,4 +9,4 @@ fixed - Fixed "cold start" errors experienced when the extension runs after a pe
 
 ## Version 0.1.0
 
-Initial release of the *Translate Text* extension.
+Initial release of the _Translate Text_ extension.

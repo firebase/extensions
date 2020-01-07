@@ -12,4 +12,4 @@ fixed - Fixed bug where certain edge cases led to already resized image being re
 
 ## Version 0.1.0
 
-Initial release of the *Resize Images* extension.
+Initial release of the _Resize Images_ extension.

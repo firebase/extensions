@@ -5,4 +5,4 @@ fixed - Fixed "cold start" errors experienced when the extension runs after a pe
 
 ## Version 0.1.1
 
-Initial release of the *Delete User Data* extension.
+Initial release of the _Delete User Data_ extension.

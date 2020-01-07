@@ -6,4 +6,4 @@ We recommend that you edit your existing Cloud Scheduler job to instead send a m
 
 ## Version 0.1.0
 
-Initial release of the *Distributed Counter* extension.
+Initial release of the _Distributed Counter_ extension.

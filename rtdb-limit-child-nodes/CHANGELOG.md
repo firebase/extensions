@@ -1,3 +1,3 @@
 ## Version 0.1.0
 
-Initial release of the *Limit Child Nodes* extension.
+Initial release of the _Limit Child Nodes_ extension.

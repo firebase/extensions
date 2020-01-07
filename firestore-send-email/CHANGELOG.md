@@ -8,4 +8,4 @@ fixed - Fixed "cold start" errors experienced when the extension runs after a pe
 
 ## Version 0.1.0
 
-Initial release of the *Trigger Email* extension.
+Initial release of the _Trigger Email_ extension.

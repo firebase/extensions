@@ -4,4 +4,4 @@ fixed - Fixed occasional duplicate rows created in the BigQuery backup table (is
 
 ## Version 0.1.0
 
-Initial release of the *Export Collections to BigQuery* extension.
+Initial release of the _Export Collections to BigQuery_ extension.
