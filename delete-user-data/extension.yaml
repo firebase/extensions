@@ -144,14 +144,14 @@ params:
       Where in Google Cloud Storage do you store user data? Leave empty if you
       don't use Cloud Storage.
 
-      Enter the full paths to a file or directory, separated by commas. You can
-      represent the User ID of the deleted user with `{UID}`. You can use
-      `{DEFAULT}` to represent your default bucket.
+      Enter the full paths to files or directories in your Storage buckets,
+      separated by commas. Use `{UID}` to represent the User ID of the deleted
+      user, and use `{DEFAULT}` to represent your default Storage bucket.
 
-      For example, if you are using your default bucket, and the bucket has
-      files with the naming scheme `{UID}-pic.png`, then you can enter
-      `{DEFAULT}/{UID}-pic.png`. If you also have files in another bucket called
-      `my-awesome-app-logs`, and that bucket has files with the naming scheme
-      `{UID}-logs.txt`, then you can enter
-      `{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt`. You can
-      delete a directory by proving the full path, for example `{DEFAULT}/media/{UID}`.
+      Here's a series of examples. To delete all the files in your default
+      bucket with the file naming scheme `{UID}-pic.png`, enter
+      `{DEFAULT}/{UID}-pic.png`. To also delete all the files in another bucket
+      called my-app-logs with the file naming scheme `{UID}-logs.txt`, enter
+      `{DEFAULT}/{UID}-pic.png,my-app-logs/{UID}-logs.txt`. To *also* delete a User
+      ID-labeled directory and all its files (like `media/{UID}`), enter
+      `{DEFAULT}/{UID}-pic.png,my-app-logs/{UID}-logs.txt,{DEFAULT}/media/{UID}`.
