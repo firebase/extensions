@@ -1,8 +1,8 @@
 ## Version 0.1.4
 
-fixed - Fix bug where name of resized file was missing original name if there was no file extension (issue #20).
-fixed - Fix "TypeError: Cannot set property 'resizedImage' of undefined" (issue #130).
-fixed - Fix bug where some valid bucket names were rejected during configuration (issue #27).
+fixed - Fixes bug where name of resized file was missing original name if there was no file extension (issue #20).
+fixed - Fixes "TypeError: Cannot set property 'resizedImage' of undefined" (issue #130).
+fixed - Fixes bug where some valid bucket names were rejected during configuration (issue #27).
 
 ## Version 0.1.3
 
@@ -10,11 +10,11 @@ feature - Automatically copy the following metadata, if present, from the origin
 
 ## Version 0.1.2
 
-feature - Add new param for deleting the original image.
+feature - Adds new param for deleting the original image.
 
 ## Version 0.1.1
 
-fixed - Fixed bug where certain edge cases led to already resized image being resized again (issue #7).
+fixed - Fixes bug where certain edge cases led to already resized image being resized again (issue #7).
 
 ## Version 0.1.0
 
