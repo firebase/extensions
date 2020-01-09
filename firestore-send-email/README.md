@@ -23,6 +23,7 @@ admin.firestore().collection('mail').add({
 To send email attachments, you have to include an `attachments` array to the `message` map: 
 
 *Please note that the* `pathname` *property requires a URL path to the file you wish to attach.*
+*For further options, please consult [nodemailer attachment options](https://nodemailer.com/message/attachments/), bearing in mind you have no access to the file system.*
 
 ```js
 admin.firestore().collection('mail').add({
@@ -33,11 +34,18 @@ admin.firestore().collection('mail').add({
     attachments:[
       {
         filename: 'file attachment one',
-        pathname: 'https://url-path-to-file/file.txt'
+        path: 'https://url-path-to-file/cat.png'
       },
       {
         filename: 'file attachment two',
-        pathname: 'https://url-path-to-file/cat.png'
+        path: 'https://url-path-to-file/file.txt'
+      },
+      {
+        filename: 'newFileName.txt', //it is recommended to be explicit with the file extension i.e. `.txt`
+        path: 'https://url-path-to-file/file.txt'
+      },
+      {
+        path: 'https://url-path-to-file/file.txt'
       },
     ]
   },
