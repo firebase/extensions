@@ -14,7 +14,7 @@
 
 name: storage-resize-images
 specVersion: v1beta
-version: 0.1.3
+version: 0.1.4
 license: Apache-2.0
 
 displayName: Resize Images
@@ -24,7 +24,7 @@ description:
 
 billingRequired: false
 sourceUrl: https://github.com/firebase/extensions/tree/master/storage-resize-images
-releaseNotesUrl: https://github.com/firebase/extensions/releases
+releaseNotesUrl: https://github.com/firebase/extensions/blob/master/storage-resize-images/CHANGELOG.md
 
 author:
   authorName: Firebase
@@ -97,7 +97,7 @@ params:
       Resized images will be stored in this bucket. Depending on your extension configuration,
       original images are either kept or deleted.
     default: ${STORAGE_BUCKET}
-    validationRegex: (.)+\.(.)+\.(.)+
+    validationRegex: ^([0-9a-z_.-]*)$
     validationErrorMessage: Invalid storage bucket
     example: my-project-12345.appspot.com
     required: true
