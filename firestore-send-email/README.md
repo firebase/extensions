@@ -20,6 +20,30 @@ admin.firestore().collection('mail').add({
 })
 ```
 
+To send email attachments, you have to include an `attachments` array to the `message` map: 
+
+*Please note that the* `pathname` *property requires a URL path to the file you wish to attach.*
+
+```js
+admin.firestore().collection('mail').add({
+  to: 'someone@example.com',
+  message: {
+    subject: 'Hello from Firebase!',
+    html: 'This is an <code>HTML</code> email body.',
+    attachments:[
+      {
+        filename: 'file attachment one',
+        pathname: 'https://url-path-to-file/file.txt'
+      },
+      {
+        filename: 'file attachment two',
+        pathname: 'https://url-path-to-file/cat.png'
+      },
+    ]
+  },
+})
+```
+
 You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
 
 When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**.
