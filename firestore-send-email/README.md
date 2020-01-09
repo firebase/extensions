@@ -33,18 +33,10 @@ admin.firestore().collection('mail').add({
     html: 'This is an <code>HTML</code> email body.',
     attachments:[
       {
-        filename: 'file attachment one',
         path: 'https://url-path-to-file/cat.png'
       },
       {
-        filename: 'file attachment two',
-        path: 'https://url-path-to-file/file.txt'
-      },
-      {
-        filename: 'newFileName.txt', //it is recommended to be explicit with the file extension i.e. `.txt`
-        path: 'https://url-path-to-file/file.txt'
-      },
-      {
+        filename: 'newFileName.txt',
         path: 'https://url-path-to-file/file.txt'
       },
     ]
