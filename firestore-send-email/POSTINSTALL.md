@@ -8,7 +8,7 @@ You can test out this extension right away:
 
 1.  Add a document with a `to` field and a `message` field with the following content:
 
-    ```
+    ```js
     to: ['someone@example.com'],
     message: {
       subject: 'Hello from Firebase!',
@@ -20,7 +20,7 @@ You can test out this extension right away:
 1.  In a few seconds, you'll see a `delivery` field appear in the document. The field will update as the extension processes the email.
 
 **Note:** You can also use the [Firebase Admin SDK][admin_sdk] to add a document:
-```
+```js
 admin.firestore().collection('${param:MAIL_COLLECTION}').add({
   to: 'someone@example.com',
   message: {
@@ -62,6 +62,30 @@ Available properties for the `message` field are:
 * **text:** The plaintext content of the email.
 * **html:** The HTML content of the email.
 * **amp:** The [AMP4EMAIL][amp4email] content of the email.
+* **attachments:** An array containing attachment(s) as noted below.
+
+To send email attachments, you have to include an `attachments` array to the `message` map: 
+
+*Please note that the* `pathname` *property requires a URL path to the file you wish to attach.*
+*For further options, please consult [nodemailer attachment options](https://nodemailer.com/message/attachments/), bearing in mind you have no access to the file system.*
+
+```js
+admin.firestore().collection('mail').add({
+  to: 'someone@example.com',
+  message: {
+    subject: 'Hello from Firebase!',
+    attachments:[
+      {
+        path: 'https://url-path-to-file/cat.png'
+      },
+      {
+        filename: 'newFileName.txt',
+        path: 'https://url-path-to-file/file.txt'
+      },
+    ]
+  },
+})
+```
 
 #### Using templates
 

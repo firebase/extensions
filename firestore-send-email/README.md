@@ -20,30 +20,6 @@ admin.firestore().collection('mail').add({
 })
 ```
 
-To send email attachments, you have to include an `attachments` array to the `message` map: 
-
-*Please note that the* `pathname` *property requires a URL path to the file you wish to attach.*
-*For further options, please consult [nodemailer attachment options](https://nodemailer.com/message/attachments/), bearing in mind you have no access to the file system.*
-
-```js
-admin.firestore().collection('mail').add({
-  to: 'someone@example.com',
-  message: {
-    subject: 'Hello from Firebase!',
-    html: 'This is an <code>HTML</code> email body.',
-    attachments:[
-      {
-        path: 'https://url-path-to-file/cat.png'
-      },
-      {
-        filename: 'newFileName.txt',
-        path: 'https://url-path-to-file/file.txt'
-      },
-    ]
-  },
-})
-```
-
 You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
 
 When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**.
