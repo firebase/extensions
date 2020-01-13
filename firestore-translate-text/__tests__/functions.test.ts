@@ -9,7 +9,7 @@ const testTranslations = {
 };
 
 const defaultEnvironment = {
-  PROJECT_ID: "extensions-testing",
+  PROJECT_ID: "fake-project",
   LOCATION: "us-central1",
   // values from extension.yaml param defaults
   LANGUAGES: "en,es,de,fr",
@@ -86,15 +86,11 @@ describe("extension", () => {
       wrappedFunction = functionsTest.wrap(
         require("../functions/src").fstranslate
       );
+      
+      beforeSnapshot = snapshot({});
+      
+      afterSnapshot = snapshot();
 
-      beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
-        {},
-        "translations/id1"
-      );
-      afterSnapshot = functionsTest.firestore.makeDocumentSnapshot(
-        { input: "hello" },
-        "translations/id1"
-      );
       documentChange = functionsTest.makeChange(
         beforeSnapshot,
         mockDocumentSnapshotFactory(afterSnapshot)
@@ -141,16 +137,11 @@ describe("extension", () => {
     test("function skips 'update' document change events if the input is unchanged", async () => {
       mockFirestoreUpdate.mockClear();
       mockTranslateClassMethod.mockClear();
+      
+      beforeSnapshot = snapshot();
 
-      beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
-        { input: "hello" },
-        "translations/id1"
-      );
-
-      afterSnapshot = functionsTest.firestore.makeDocumentSnapshot(
-        { input: "hello", changed: 123 },
-        "translations/id1"
-      );
+      
+      afterSnapshot = snapshot({ input: "hello", changed: 123 });
 
       documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
 
@@ -168,10 +159,9 @@ describe("extension", () => {
       mockFirestoreUpdate.mockClear();
       mockTranslateClassMethod.mockClear();
 
-      afterSnapshot = functionsTest.firestore.makeDocumentSnapshot(
-        { changed: 123 },
-        "translations/id1"
-      );
+      
+      afterSnapshot = snapshot({ changed: 123 });
+
       documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
 
       const callResult = await wrappedFunction(documentChange);
@@ -189,7 +179,6 @@ describe("extension", () => {
     test("function exits early if input & output fields are the same", async () => {
       jest.resetModules();
 
-      restoreEnv();
       restoreEnv = mockedEnv({
         ...defaultEnvironment,
         INPUT_FIELD_NAME: "input",
@@ -211,7 +200,6 @@ describe("extension", () => {
     test("function exits early if input field is a translation output path", async () => {
       jest.resetModules();
 
-      restoreEnv();
       restoreEnv = mockedEnv({
         ...defaultEnvironment,
         INPUT_FIELD_NAME: "output.en",
@@ -275,10 +263,8 @@ describe("extension", () => {
       mockFirestoreUpdate.mockClear();
       mockConsoleLog.mockClear();
 
-      beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
-        { input: "goodbye" },
-        "translations/id1"
-      );
+      
+      beforeSnapshot = snapshot({ input: "goodbye" });
 
       documentChange.before = beforeSnapshot;
 
@@ -306,14 +292,11 @@ describe("extension", () => {
       mockFirestoreUpdate.mockClear();
       mockConsoleLog.mockClear();
 
-      beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
-        { input: "hello" },
-        "translations/id1"
-      );
-      afterSnapshot = functionsTest.firestore.makeDocumentSnapshot(
-        {},
-        "translations/id1"
-      );
+      
+      beforeSnapshot = snapshot();
+      
+      afterSnapshot = snapshot({});
+
       documentChange = functionsTest.makeChange(
         beforeSnapshot,
         mockDocumentSnapshotFactory(afterSnapshot)
@@ -337,13 +320,12 @@ describe("extension", () => {
       mockTranslateClassMethod.mockClear();
       mockConsoleLog.mockClear();
 
-      const snapshot = functionsTest.firestore.makeDocumentSnapshot(
-        { notTheInput: "hello" },
-        "translations/id1"
-      );
+      
+      const snap = snapshot({ notTheInput: "hello" });
+      
       documentChange = functionsTest.makeChange(
-        snapshot,
-        mockDocumentSnapshotFactory(snapshot)
+        snap,
+        mockDocumentSnapshotFactory(snap)
       );
 
       await wrappedFunction(documentChange);

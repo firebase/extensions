@@ -3,5 +3,5 @@
   "compilerOptions": {
     "outDir": "functions/lib"
   },
-  "include": ["functions/src"]
+  "include": ["functions/src", "__tests__/jest.setup.js"]
 }

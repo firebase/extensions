@@ -15,6 +15,7 @@ const environment = {
   INPUT_FIELD_NAME: "input",
   OUTPUT_FIELD_NAME: "translated",
 };
+
 const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
 functionsTestInit();
 
@@ -39,6 +40,7 @@ describe("extension config", () => {
 
   test("config loaded from environment variables", () => {
     const functionsConfig = require("../functions/src/config").default;
+
     expect(functionsConfig).toMatchSnapshot({});
   });
 
