@@ -87,9 +87,9 @@ describe("extension", () => {
         require("../functions/src").fstranslate
       );
       
-      beforeSnapshot = snapshot({});
+      beforeSnapshot = global.snapshot({});
       
-      afterSnapshot = snapshot();
+      afterSnapshot = global.snapshot();
 
       documentChange = functionsTest.makeChange(
         beforeSnapshot,
@@ -138,10 +138,10 @@ describe("extension", () => {
       mockFirestoreUpdate.mockClear();
       mockTranslateClassMethod.mockClear();
       
-      beforeSnapshot = snapshot();
+      beforeSnapshot = global.snapshot();
 
       
-      afterSnapshot = snapshot({ input: "hello", changed: 123 });
+      afterSnapshot = global.snapshot({ input: "hello", changed: 123 });
 
       documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
 
@@ -160,7 +160,7 @@ describe("extension", () => {
       mockTranslateClassMethod.mockClear();
 
       
-      afterSnapshot = snapshot({ changed: 123 });
+      afterSnapshot = global.snapshot({ changed: 123 });
 
       documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
 
@@ -264,7 +264,7 @@ describe("extension", () => {
       mockConsoleLog.mockClear();
 
       
-      beforeSnapshot = snapshot({ input: "goodbye" });
+      beforeSnapshot = global.snapshot({ input: "goodbye" });
 
       documentChange.before = beforeSnapshot;
 
@@ -293,9 +293,9 @@ describe("extension", () => {
       mockConsoleLog.mockClear();
 
       
-      beforeSnapshot = snapshot();
+      beforeSnapshot = global.snapshot();
       
-      afterSnapshot = snapshot({});
+      afterSnapshot = global.snapshot({});
 
       documentChange = functionsTest.makeChange(
         beforeSnapshot,
@@ -321,7 +321,7 @@ describe("extension", () => {
       mockConsoleLog.mockClear();
 
       
-      const snap = snapshot({ notTheInput: "hello" });
+      const snap = global.snapshot({ notTheInput: "hello" });
       
       documentChange = functionsTest.makeChange(
         snap,

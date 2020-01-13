@@ -2,6 +2,8 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "functions/lib"
+    // "typeRoots": ["@types/global.d.ts", "node_modules/@types/*"]
   },
-  "include": ["functions/src", "__tests__/jest.setup.js"]
+  // "files": ["@types/index.d.ts"],
+  "include": ["functions/src"]
 }
