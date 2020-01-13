@@ -29,7 +29,7 @@ import { Aggregator, NumericUpdate } from "./aggregator";
 import { FieldValue } from "@google-cloud/firestore";
 import * as uuid from "uuid";
 
-const SHARDS_LIMIT = 100;
+const SHARDS_LIMIT = 499;
 const WORKER_TIMEOUT_MS = 45000;
 
 interface WorkerMetadata {
