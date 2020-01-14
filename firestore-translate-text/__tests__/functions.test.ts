@@ -38,7 +38,7 @@ let restoreEnv;
 let functionsTest = functionsTestInit();
 
 describe("extension", () => {
-  beforeEach(() => {  
+  beforeEach(() => {
     restoreEnv = mockedEnv(defaultEnvironment);
     clearMocks();
   });
@@ -56,6 +56,7 @@ describe("extension", () => {
     let documentChange;
 
     beforeEach(() => {
+      // this is best thought of as default environment for each test which might be reset subject to test's needs
       jest.resetModules();
       functionsTest = functionsTestInit();
       admin = require("firebase-admin");
@@ -73,10 +74,9 @@ describe("extension", () => {
     });
 
     test("initializes Google Translate API with PROJECT_ID on function load", () => {
-      // NOTE: need to reset modules again so we can require clean ../function/src that has not been called
+      // need to reset modules again so we can require clean ../function/src that has not been called
       jest.resetModules();
       require("../functions/src");
-
 
       expect(mockTranslateClass).toHaveBeenCalledTimes(1);
       expect(mockTranslateClass).toHaveBeenCalledWith({
@@ -143,6 +143,7 @@ describe("extension", () => {
     });
 
     test("function exits early if input & output fields are the same", async () => {
+      // reset modules again so ENV variables can be reset
       jest.resetModules();
 
       restoreEnv = mockedEnv({
