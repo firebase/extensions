@@ -1,6 +1,6 @@
 These example queries are for use with the official Firebase Extension
 [_Export Collections to BigQuery_](https://github.com/firebase/extensions/tree/master/firestore-bigquery-export)
-and its associated [`fs-bq-schema-views` script](TODO) (referred to as the "schema-views script").
+and its associated [`fs-bq-schema-views` script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/GENERATE_SCHEMA_VIEWS.md) (referred to as the "schema-views script").
 
 The queries use the following parameter values from your installation of the extension:
 
