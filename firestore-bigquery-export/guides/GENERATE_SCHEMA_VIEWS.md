@@ -27,8 +27,8 @@ configuring a schema file and reviewing the resulting schema views.
 ### Step 1: Create a schema file
 
 The schema-views script runs against "schema files" which specify your schema
-configurations in a JSON format.  
-  
+configurations in a JSON format.
+
 In any directory, create a schema file called `test_schema.json`
 that contains the following:
 
@@ -53,7 +53,7 @@ later in this guide.
 ### Step 2: Set up credentials
 
 The schema-views script uses Application Default Credentials to communicate with
-BigQuery. 
+BigQuery.
 
 One way to set up these credentials is to run the following command using the
 [gcloud](https://cloud.google.com/sdk/gcloud/) CLI:
@@ -72,11 +72,11 @@ This service account must be assigned a role that grants the permission of
 The schema-views script uses the following parameter values from your
 installation of the extension:
 
-+   `${param:PROJECT_ID}`: the project ID for the Firebase project in
-    which you installed the extension
-+   `${param:DATASET_ID}`: the ID that you specified for your dataset during
-    extension installation
-+   `${param:TABLE_ID}`: the common prefix of BigQuery views to generate
+- `${param:PROJECT_ID}`: the project ID for the Firebase project in
+  which you installed the extension
+- `${param:DATASET_ID}`: the ID that you specified for your dataset during
+  extension installation
+- `${param:TABLE_ID}`: the common prefix of BigQuery views to generate
 
 Run the schema-views script using
 [`npx` (the Node Package Runner)](https://github.com/npm/npx#npx1----execute-npm-package-binaries)
@@ -84,10 +84,11 @@ via `npm` (the Node Package Manager).
 
 1.  Make sure that you've installed the required tools to run the
     schema-views script:
-    +   To access the `npm` command tools, you need to install
-        [Node.js](https://www.nodejs.org/).
-    +   If you use npm v5.1 or earlier, you need to explicitly install `npx`.
-        Run `npm install --global npx`.
+
+    - To access the `npm` command tools, you need to install
+      [Node.js](https://www.nodejs.org/).
+    - If you use npm v5.1 or earlier, you need to explicitly install `npx`.
+      Run `npm install --global npx`.
 
 1.  Run the schema-views script via `npx` by running the following command:
 
@@ -110,17 +111,17 @@ via `npm` (the Node Package Manager).
 
 1.  In the [BigQuery web UI](https://console.cloud.google.com/bigquery),
     navigate to the generated schema changelog view:
-`https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:TABLE_ID}_schema_test_schema_changelog&page=table`.  
-  
-    This view allows you to query document change events by fields specified in
-    the schema.
+    `https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:TABLE_ID}_schema_test_schema_changelog&page=table`.
+
+        This view allows you to query document change events by fields specified in
+        the schema.
 
 1.  In the [Firebase console](https://console.firebase.google.com/),
     go to the Cloud Firestore section,
     then create a document called `test-schema-document` with two fields:
 
-    +   A field of type `string` called "name"
-    +   A field of type `number` called "age"
+    - A field of type `string` called "name"
+    - A field of type `number` called "age"
 
 1.  Back in BigQuery, run the following query in the schema changelog
     view (that is, `https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:TABLE_ID}_schema_test_schema_changelog&page=table`):
@@ -166,11 +167,10 @@ via `npm` (the Node Package Manager).
 
 ### Next Steps
 
-+   [Create your own schema files](#how-to-configure-schema-files)
-+   [Troubleshoot common issues](#common-schema-file-configuration-mistakes)
-+   [Learn about the columns in a schema view](#columns-in-a-schema-view)
-+   [Take a look at more SQL examples](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/EXAMPLE_QUERIES.md)
-
+- [Create your own schema files](#how-to-configure-schema-files)
+- [Troubleshoot common issues](#common-schema-file-configuration-mistakes)
+- [Learn about the columns in a schema view](#columns-in-a-schema-view)
+- [Take a look at more SQL examples](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/EXAMPLE_QUERIES.md)
 
 ## How to configure schema files
 
@@ -219,14 +219,14 @@ map.
 
 Each `fields` array must contain _at least one_ of the following types:
 
-+   `string`
-+   `array`
-+   `map`
-+   `boolean`
-+   `number`
-+   `timestamp`
-+   `geopoint`
-+   `null`
+- `string`
+- `array`
+- `map`
+- `boolean`
+- `number`
+- `timestamp`
+- `geopoint`
+- `null`
 
 These types correspond with Cloud Firestore's
 [supported data types](https://firebase.google.com/docs/firestore/manage-data/data-types).
@@ -236,8 +236,8 @@ Cloud Firestore collection.
 You may create any number of schema files to use with the schema-views script.
 The schema-views script generates the following views for _each_ schema file:
 
-+   `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_${SCHEMA_FILE_NAME}_changelog`
-+   `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_${SCHEMA_FILE_NAME}_latest`
+- `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_${SCHEMA_FILE_NAME}_changelog`
+- `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_${SCHEMA_FILE_NAME}_latest`
 
 Here, `${SCHEMA_FILE_NAME}` is the name of each schema file that you provided as
 an argument to run the schema-views script.
@@ -285,32 +285,32 @@ re-running the schema-views script against an updated schema file.
 
 ### Views created by the script
 
-+   `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_${SCHEMA_FILE_NAME}_changelog`
+- `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_${SCHEMA_FILE_NAME}_changelog`
 
-    This view is a table which contains all rows present in the raw changelog.
-    This view is analogous to the raw change-log, only it has typed columns
-    corresponding to fields of the schema.
+  This view is a table which contains all rows present in the raw changelog.
+  This view is analogous to the raw change-log, only it has typed columns
+  corresponding to fields of the schema.
 
-+   `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_${SCHEMA_FILE_NAME}_latest`  
-  
-    This view stores typed rows for the documents currently in the collection.
-    This view is analogous to the "latest" view on the raw changelog, only it
-    includes the typed columns corresponding to fields in the corresponding
-    schema file.
+- `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_${SCHEMA_FILE_NAME}_latest`
 
-    Since `GEOGRAPHY` fields are not groupable entities in BigQuery (and the
-    query which builds the latest view of a collection of documents requires
-    grouping on the schema columns), the latest schema omits any `GEOGRAPHY`
-    columns and, instead, splits them out into two `NUMERIC` columns called
-    `${FIRESTORE_GEOPOINT}_latitude` and `${FIRESTORE_GEOPOINT}_longitude`.
+  This view stores typed rows for the documents currently in the collection.
+  This view is analogous to the "latest" view on the raw changelog, only it
+  includes the typed columns corresponding to fields in the corresponding
+  schema file.
+
+  Since `GEOGRAPHY` fields are not groupable entities in BigQuery (and the
+  query which builds the latest view of a collection of documents requires
+  grouping on the schema columns), the latest schema omits any `GEOGRAPHY`
+  columns and, instead, splits them out into two `NUMERIC` columns called
+  `${FIRESTORE_GEOPOINT}_latitude` and `${FIRESTORE_GEOPOINT}_longitude`.
 
 ### Columns in a schema view
 
 Each schema view carries with it the following fields from the raw changelog:
 
-+   `document_name STRING REQUIRED`
-+   `timestamp TIMESTAMP REQUIRED`
-+   `operation STRING REQUIRED`
+- `document_name STRING REQUIRED`
+- `timestamp TIMESTAMP REQUIRED`
+- `operation STRING REQUIRED`
 
 The remaining columns correspond to fields of the schema and are assigned types
 based on the corresponding Cloud Firestore types those fields have. With the
