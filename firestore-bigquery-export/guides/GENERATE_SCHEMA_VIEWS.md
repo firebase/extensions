@@ -226,6 +226,7 @@ Each `fields` array must contain _at least one_ of the following types:
 - `number`
 - `timestamp`
 - `geopoint`
+- `reference`
 - `null`
 
 These types correspond with Cloud Firestore's
