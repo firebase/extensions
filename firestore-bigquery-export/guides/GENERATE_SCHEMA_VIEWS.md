@@ -65,7 +65,7 @@ $ gcloud auth application-default login
 Alternatively, you can
 [create and use a service account](https://cloud.google.com/docs/authentication/production#obtaining_and_providing_service_account_credentials_manually).
 This service account must be assigned a role that grants the permission of
-`bigquery.jobs.create`.
+`bigquery.jobs.create`, like the ["BigQuery Job User" role](https://cloud.google.com/iam/docs/understanding-roles#bigquery-roles).
 
 ### Step 3: Run the script
 
