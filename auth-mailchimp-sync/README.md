@@ -1,4 +1,3 @@
-[1m[36mi  extensions:[39m[22m reading extension from directory: .
 # Sync with Mailchimp
 
 **Description**: Adds new users from Firebase Authentication to a specified Mailchimp audience.

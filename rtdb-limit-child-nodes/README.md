@@ -1,4 +1,3 @@
-[1m[36mi  extensions:[39m[22m reading extension from directory: .
 # Limit Child Nodes
 
 **Description**: Limits the number of nodes to a specified maximum count in a specified Realtime Database path.

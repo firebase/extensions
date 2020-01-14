@@ -1,4 +1,3 @@
-[1m[36mi  extensions:[39m[22m reading extension from directory: .
 # Trigger Email
 
 **Description**: Composes and sends an email based on the contents of a document written to a specified Cloud Firestore collection.

@@ -1,4 +1,3 @@
-[1m[36mi  extensions:[39m[22m reading extension from directory: .
 # Shorten URLs
 
 **Description**: Shortens URLs written to a specified Cloud Firestore collection (uses Bitly).
