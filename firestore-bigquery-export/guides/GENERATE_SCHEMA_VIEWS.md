@@ -14,9 +14,9 @@ The schema-views script creates a BigQuery view, based on a JSON schema
 configuration file, using
 [BigQuery's built-in JSON functions](https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions).
 The _Export Collections to BigQuery_ extension also provides some BigQuery
-[user-defined functions](https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/scripts/gen-schema-view/src/udf.ts)
+[user-defined functions](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/scripts/gen-schema-view/src/udf.ts)
 that are helpful in converting Firestore document properties to richly-typed
-BigQuery cells.  
+BigQuery cells.
 
 ## Use the script
 
@@ -169,7 +169,7 @@ via `npm` (the Node Package Manager).
 +   [Create your own schema files](#how-to-configure-schema-files)
 +   [Troubleshoot common issues](#common-schema-file-configuration-mistakes)
 +   [Learn about the columns in a schema view](#columns-in-a-schema-view)
-+   [Take a look at more SQL examples](TODO)
++   [Take a look at more SQL examples](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/EXAMPLE_QUERIES.md)
 
 
 ## How to configure schema files
@@ -360,7 +360,7 @@ ignored by the schema-views script.
 
 #### Cloud Firestore arrays
 
-Review [this example](TODO) for querying an array.
+Review [this example](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/EXAMPLE_QUERIES.md) for querying an array.
 
 Cloud Firestore arrays are
 [unnested](https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax#unnest),
