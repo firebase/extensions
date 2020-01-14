@@ -1,4 +1,3 @@
-[1m[36mi  extensions:[39m[22m reading extension from directory: .
 # Distributed Counter
 
 **Description**: Records event counters at scale to accommodate high-velocity writes to Cloud Firestore.

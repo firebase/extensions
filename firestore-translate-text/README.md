@@ -1,4 +1,3 @@
-[1m[36mi  extensions:[39m[22m reading extension from directory: .
 # Translate Text
 
 **Description**: Translates strings written to a Cloud Firestore collection into multiple languages (uses Cloud Translation API).
