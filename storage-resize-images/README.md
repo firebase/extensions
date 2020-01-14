@@ -1,3 +1,4 @@
+[1m[36mi  extensions:[39m[22m reading extension from directory: .
 # Resize Images
 
 **Description**: Resizes images uploaded to Cloud Storage to a specified size, and optionally keeps or deletes the original image.
@@ -40,7 +41,7 @@ When you use Firebase Extensions, you're only charged for the underlying resourc
 
 **Configuration Parameters:**
 
-* Deployment location: Where should the extension be deployed? You usually want a location close to your Storage bucket. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your Storage bucket. For help selecting a  location, refer to the [location selection  guide](https://firebase.google.com/docs/functions/locations).
 
 * Cloud Storage bucket for images: To which Cloud Storage bucket will you upload images that you want to resize? Resized images will be stored in this bucket. Depending on your extension configuration, original images are either kept or deleted.
 
