@@ -1,13 +1,6 @@
 import mockedEnv from "mocked-env";
 import * as functionsTestInit from "firebase-functions-test";
 
-const testTranslations = {
-  de: "hallo",
-  en: "hello",
-  es: "hola",
-  fr: "salut",
-};
-
 const defaultEnvironment = {
   PROJECT_ID: "fake-project",
   LOCATION: "us-central1",
@@ -18,19 +11,19 @@ const defaultEnvironment = {
   OUTPUT_FIELD_NAME: "translated",
 };
 
-const mockFirestoreUpdate = jest.fn();
-
-// await translate.translate('hello', 'de');
-const mockTranslateClassMethod = jest
-  .fn()
-  .mockImplementation((string: string, targetLanguage: string) => {
-    return Promise.resolve([testTranslations[targetLanguage]]);
-  });
-
-// new Translate(opts);
-const mockTranslateClass = jest.fn().mockImplementation(() => {
-  return { translate: mockTranslateClassMethod };
-});
+const {
+  snapshot,
+  testTranslations,
+  mockDocumentSnapshotFactory,
+  mockTranslate,
+  mockTranslateClassMethod,
+  mockTranslateClass,
+  mockConsoleError,
+  mockConsoleLog,
+  mockFirestoreUpdate,
+  mockFirestoreTransaction,
+  clearMocks,
+} = global;
 
 // import { Translate } from "@google-cloud/translate";
 function mockTranslateModuleFactory() {
@@ -39,33 +32,16 @@ function mockTranslateModuleFactory() {
   };
 }
 
-function mockDocumentSnapshotFactory(documentSnapshot) {
-  return jest.fn().mockImplementation(() => {
-    return {
-      exists: true,
-      get: documentSnapshot.get.bind(documentSnapshot),
-      ref: {
-        path: documentSnapshot.ref.path,
-      },
-    };
-  })();
-}
-
 jest.mock("@google-cloud/translate", mockTranslateModuleFactory);
 
 let restoreEnv;
 let functionsTest = functionsTestInit();
-const mockConsoleLog = jest.spyOn(console, "log").mockImplementation();
-const mockConsoleError = jest.spyOn(console, "error").mockImplementation();
 
 describe("extension", () => {
   beforeEach(() => {
     restoreEnv = mockedEnv(defaultEnvironment);
-    mockConsoleLog.mockClear();
-    mockConsoleError.mockClear();
+    clearMocks();
   });
-
-  afterEach(() => restoreEnv());
 
   test("functions are exported", () => {
     const exportedFunctions = jest.requireActual("../functions/src");
@@ -83,30 +59,21 @@ describe("extension", () => {
       jest.resetModules();
       functionsTest = functionsTestInit();
       admin = require("firebase-admin");
-      wrappedFunction = functionsTest.wrap(
-        require("../functions/src").fstranslate
-      );
-      
-      beforeSnapshot = global.snapshot({});
-      
-      afterSnapshot = global.snapshot();
+      wrappedFunction = mockTranslate();
+
+      beforeSnapshot = snapshot({});
+
+      afterSnapshot = snapshot();
 
       documentChange = functionsTest.makeChange(
         beforeSnapshot,
         mockDocumentSnapshotFactory(afterSnapshot)
       );
-      admin.firestore().runTransaction = jest.fn().mockImplementation(() => {
-        return (transactionHandler) => {
-          transactionHandler({
-            update(ref, field, data) {
-              mockFirestoreUpdate(field, data);
-            },
-          });
-        };
-      })();
+      admin.firestore().runTransaction = mockFirestoreTransaction();
     });
 
     test("initializes Google Translate API with PROJECT_ID on function load", () => {
+      // NOTE: need to reset modules again so we can require clean ../function/src
       jest.resetModules();
       mockTranslateClass.mockClear();
 
@@ -119,8 +86,7 @@ describe("extension", () => {
     });
 
     test("function skips deleted document change events", async () => {
-      mockFirestoreUpdate.mockClear();
-      mockTranslateClassMethod.mockClear();
+      clearMocks();
 
       documentChange.after.exists = false;
       const callResult = await wrappedFunction(documentChange);
@@ -135,13 +101,14 @@ describe("extension", () => {
     });
 
     test("function skips 'update' document change events if the input is unchanged", async () => {
-      mockFirestoreUpdate.mockClear();
-      mockTranslateClassMethod.mockClear();
-      
-      beforeSnapshot = global.snapshot();
+      clearMocks();
 
-      
-      afterSnapshot = global.snapshot({ input: "hello", changed: 123 });
+      beforeSnapshot = snapshot();
+
+      afterSnapshot = snapshot({
+        input: "hello",
+        changed: 123,
+      });
 
       documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
 
@@ -156,11 +123,11 @@ describe("extension", () => {
     });
 
     test("function skips document 'created' document change events without any input", async () => {
-      mockFirestoreUpdate.mockClear();
-      mockTranslateClassMethod.mockClear();
+      clearMocks();
 
-      
-      afterSnapshot = global.snapshot({ changed: 123 });
+      afterSnapshot = snapshot({
+        changed: 123,
+      });
 
       documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
 
@@ -185,9 +152,7 @@ describe("extension", () => {
         OUTPUT_FIELD_NAME: "input",
       });
 
-      wrappedFunction = functionsTest.wrap(
-        require("../functions/src").fstranslate
-      );
+      wrappedFunction = mockTranslate();
 
       const callResult = await wrappedFunction(documentChange);
 
@@ -206,9 +171,7 @@ describe("extension", () => {
         OUTPUT_FIELD_NAME: "output",
       });
 
-      wrappedFunction = functionsTest.wrap(
-        require("../functions/src").fstranslate
-      );
+      wrappedFunction = mockTranslate();
 
       const callResult = await wrappedFunction(documentChange);
 
@@ -219,8 +182,7 @@ describe("extension", () => {
     });
 
     test("function updates translation document with translations", async () => {
-      mockFirestoreUpdate.mockClear();
-      mockConsoleLog.mockClear();
+      clearMocks();
 
       await wrappedFunction(documentChange);
 
@@ -260,11 +222,11 @@ describe("extension", () => {
     });
 
     test("function updates translation document when previous input changes", async () => {
-      mockFirestoreUpdate.mockClear();
-      mockConsoleLog.mockClear();
+      clearMocks();
 
-      
-      beforeSnapshot = global.snapshot({ input: "goodbye" });
+      beforeSnapshot = snapshot({
+        input: "goodbye",
+      });
 
       documentChange.before = beforeSnapshot;
 
@@ -289,13 +251,11 @@ describe("extension", () => {
     });
 
     test("function deletes translations if input field is removed", async () => {
-      mockFirestoreUpdate.mockClear();
-      mockConsoleLog.mockClear();
+      clearMocks();
 
-      
-      beforeSnapshot = global.snapshot();
-      
-      afterSnapshot = global.snapshot({});
+      beforeSnapshot = snapshot();
+
+      afterSnapshot = snapshot({});
 
       documentChange = functionsTest.makeChange(
         beforeSnapshot,
@@ -316,13 +276,12 @@ describe("extension", () => {
     });
 
     test("function skips processing if no input string on before & after snapshots", async () => {
-      mockFirestoreUpdate.mockClear();
-      mockTranslateClassMethod.mockClear();
-      mockConsoleLog.mockClear();
+      clearMocks();
 
-      
-      const snap = global.snapshot({ notTheInput: "hello" });
-      
+      const snap = snapshot({
+        notTheInput: "hello",
+      });
+
       documentChange = functionsTest.makeChange(
         snap,
         mockDocumentSnapshotFactory(snap)
@@ -340,8 +299,7 @@ describe("extension", () => {
     });
 
     test("function handles Google Translate API errors", async () => {
-      mockFirestoreUpdate.mockClear();
-      mockConsoleLog.mockClear();
+      clearMocks();
 
       const error = new Error("Test Translate API Error");
       mockTranslateClassMethod.mockImplementationOnce(() =>
