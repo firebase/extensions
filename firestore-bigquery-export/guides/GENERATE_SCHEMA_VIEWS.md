@@ -93,10 +93,10 @@ via `npm` (the Node Package Manager).
 
     ```
     $ npx @firebaseextensions/fs-bq-schema-views \
-      --non-interactive
-      --project=${param:PROJECT_ID}
-      --dataset=${param:DATASET_ID}
-      --table-name-prefix=${param:TABLE_ID}
+      --non-interactive \
+      --project=${param:PROJECT_ID} \
+      --dataset=${param:DATASET_ID} \
+      --table-name-prefix=${param:TABLE_ID} \
       --schema-files=./test_schema.json
     ```
 
