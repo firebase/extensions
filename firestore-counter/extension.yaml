@@ -96,11 +96,12 @@ resources:
 params:
   - param: LOCATION
     type: select
-    label: Deployment location
+    label: Cloud Functions location
     description: >-
-      Where should the extension be deployed? You usually want a location close to your database.
-      For help selecting a location, refer to the
-      [location selection guide](https://firebase.google.com/docs/functions/locations).
+      Where do you want to deploy the functions created for this extension? 
+      You usually want a location close to your database. For help selecting a 
+      location, refer to the [location selection 
+      guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)
         value: us-central1

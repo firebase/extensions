@@ -1,3 +1,4 @@
+[1m[36mi  extensions:[39m[22m reading extension from directory: .
 # Shorten URLs
 
 **Description**: Shortens URLs written to a specified Cloud Firestore collection (uses Bitly).
@@ -37,7 +38,7 @@ Usage of this extension also requires you to have a Bit.ly account. You are resp
 
 **Configuration Parameters:**
 
-* Deployment location: Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your database. For help selecting a  location, refer to the [location selection  guide](https://firebase.google.com/docs/functions/locations).
 
 * Bitly access token: What is your Bitly access token? Generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
 

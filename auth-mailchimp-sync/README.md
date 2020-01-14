@@ -1,3 +1,4 @@
+[1m[36mi  extensions:[39m[22m reading extension from directory: .
 # Sync with Mailchimp
 
 **Description**: Adds new users from Firebase Authentication to a specified Mailchimp audience.
@@ -35,7 +36,7 @@ Usage of this extension also requires you to have a Mailchimp account. You are r
 
 **Configuration Parameters:**
 
-* Deployment location: Where should the extension be deployed? For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+* Cloud Functions location: Where do you want to deploy the functions created for this extension?
 
 * Mailchimp API key: What is your Mailchimp API key? To obtain a Mailchimp API key, go to your [Mailchimp account](https://admin.mailchimp.com/account/api/).
 

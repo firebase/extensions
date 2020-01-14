@@ -1,3 +1,4 @@
+[1m[36mi  extensions:[39m[22m reading extension from directory: .
 # Limit Child Nodes
 
 **Description**: Limits the number of nodes to a specified maximum count in a specified Realtime Database path.
@@ -26,7 +27,7 @@ When you use Firebase Extensions, you're only charged for the underlying resourc
 
 **Configuration Parameters:**
 
-* Deployment location: Where should the extension be deployed? You usually want a location close to your database. Realtime Database instances are located in us-central1. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your database. Realtime Database  instances are located in `us-central1`. For help selecting a  location, refer to the [location selection  guide](https://firebase.google.com/docs/functions/locations).
 
 * Realtime Database path: What is the Realtime Database path for which you want to limit the number of child nodes?
 
