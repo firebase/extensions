@@ -15,7 +15,7 @@
 name: firestore-counter
 displayName: Distributed Counter
 specVersion: v1beta
-version: 0.1.1
+version: 0.1.2
 
 description:
   Records event counters at scale to accommodate high-velocity writes to Cloud Firestore.
