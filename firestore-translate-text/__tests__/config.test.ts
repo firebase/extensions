@@ -8,6 +8,7 @@ import mockedEnv from "mocked-env";
 let restoreEnv;
 let extensionYaml;
 let extensionParams;
+
 const environment = {
   LOCATION: "us-central1",
   LANGUAGES: "en,es,de,fr,en", // double en to test no duplicates

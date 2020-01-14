@@ -1,6 +1,8 @@
 import mockedEnv from "mocked-env";
 import * as functionsTestInit from "firebase-functions-test";
 
+import { messages } from "../functions/src/logs/messages";
+
 const defaultEnvironment = {
   PROJECT_ID: "fake-project",
   LOCATION: "us-central1",
@@ -56,7 +58,7 @@ describe("extension", () => {
     let documentChange;
 
     beforeEach(() => {
-      // this is best thought of as default environment for each test which might be reset subject to test's needs
+      // this is best thought of as default environment for each test which might be altered subject to test's needs
       jest.resetModules();
       functionsTest = functionsTestInit();
       admin = require("firebase-admin");
@@ -183,6 +185,7 @@ describe("extension", () => {
 
     test("function updates translation document with translations", async () => {
       clearMocks();
+      restoreEnv = mockedEnv(defaultEnvironment);
 
       await wrappedMockTranslate(documentChange);
 
@@ -202,22 +205,23 @@ describe("extension", () => {
       Object.keys(testTranslations).forEach((language) => {
         // logs.translateInputString
         expect(mockConsoleLog).toHaveBeenCalledWith(
-          `Translating string: 'hello' into language(s): '${language}'`
+          messages.translateInputString("hello", language)
         );
         // logs.translateStringComplete
         expect(mockConsoleLog).toHaveBeenCalledWith(
-          `Finished translating string: 'hello' into language(s): '${language}'`
+          messages.translateStringComplete("hello", language)
         );
       });
       // logs.translateInputStringToAllLanguages
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        `Translating string: 'hello' into language(s): '${
-          defaultEnvironment.LANGUAGES
-        }'`
+        messages.translateInputStringToAllLanguages(
+          "hello",
+          defaultEnvironment.LANGUAGES.split(",")
+        )
       );
       // logs.translateInputToAllLanguagesComplete
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        "Finished translating string: 'hello'"
+        messages.translateInputToAllLanguagesComplete("hello")
       );
     });
 
@@ -234,7 +238,7 @@ describe("extension", () => {
 
       // logs.documentUpdatedChangedInput
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        "Document was updated, input string has changed"
+        messages.documentUpdatedChangedInput()
       );
 
       // confirm Google Translate API was called
@@ -271,7 +275,7 @@ describe("extension", () => {
 
       // logs.documentUpdatedDeletedInput
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        "Document was updated, input string was deleted"
+        messages.documentUpdatedDeletedInput()
       );
     });
 
@@ -294,7 +298,7 @@ describe("extension", () => {
 
       // logs.documentUpdatedNoInput
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        "Document was updated, no input string exists, no processing is required"
+        messages.documentUpdatedNoInput()
       );
     });
 
@@ -310,14 +314,12 @@ describe("extension", () => {
 
       // logs.translateStringError
       expect(mockConsoleError).toHaveBeenCalledWith(
-        "Error when translating string: 'hello' into language(s): 'en'",
-        error
+        ...messages.translateStringError('hello', 'en', error)
       );
 
       // logs.translateInputToAllLanguagesError
       expect(mockConsoleError).toHaveBeenCalledWith(
-        "Error when translating string: 'hello'",
-        error
+        ...messages.translateInputToAllLanguagesError("hello", error)
       );
     });
   });
