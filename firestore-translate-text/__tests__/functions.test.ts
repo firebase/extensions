@@ -38,7 +38,7 @@ let restoreEnv;
 let functionsTest = functionsTestInit();
 
 describe("extension", () => {
-  beforeEach(() => {
+  beforeEach(() => {  
     restoreEnv = mockedEnv(defaultEnvironment);
     clearMocks();
   });
@@ -50,7 +50,7 @@ describe("extension", () => {
 
   describe("functions.fstranslate", () => {
     let admin;
-    let wrappedFunction;
+    let wrappedMockTranslate;
     let beforeSnapshot;
     let afterSnapshot;
     let documentChange;
@@ -59,7 +59,7 @@ describe("extension", () => {
       jest.resetModules();
       functionsTest = functionsTestInit();
       admin = require("firebase-admin");
-      wrappedFunction = mockTranslate();
+      wrappedMockTranslate = mockTranslate();
 
       beforeSnapshot = snapshot({});
 
@@ -73,11 +73,10 @@ describe("extension", () => {
     });
 
     test("initializes Google Translate API with PROJECT_ID on function load", () => {
-      // NOTE: need to reset modules again so we can require clean ../function/src
+      // NOTE: need to reset modules again so we can require clean ../function/src that has not been called
       jest.resetModules();
-      mockTranslateClass.mockClear();
-
       require("../functions/src");
+
 
       expect(mockTranslateClass).toHaveBeenCalledTimes(1);
       expect(mockTranslateClass).toHaveBeenCalledWith({
@@ -89,7 +88,7 @@ describe("extension", () => {
       clearMocks();
 
       documentChange.after.exists = false;
-      const callResult = await wrappedFunction(documentChange);
+      const callResult = await wrappedMockTranslate(documentChange);
 
       expect(callResult).toBeUndefined();
       expect(mockConsoleLog).toHaveBeenCalledWith(
@@ -112,7 +111,7 @@ describe("extension", () => {
 
       documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
 
-      const callResult = await wrappedFunction(documentChange);
+      const callResult = await wrappedMockTranslate(documentChange);
       expect(callResult).toBeUndefined();
       expect(mockConsoleLog).toHaveBeenCalledWith(
         "Document was updated, input string has not changed, no processing is required"
@@ -131,7 +130,7 @@ describe("extension", () => {
 
       documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
 
-      const callResult = await wrappedFunction(documentChange);
+      const callResult = await wrappedMockTranslate(documentChange);
 
       expect(callResult).toBeUndefined();
 
@@ -152,9 +151,9 @@ describe("extension", () => {
         OUTPUT_FIELD_NAME: "input",
       });
 
-      wrappedFunction = mockTranslate();
+      wrappedMockTranslate = mockTranslate();
 
-      const callResult = await wrappedFunction(documentChange);
+      const callResult = await wrappedMockTranslate(documentChange);
 
       expect(callResult).toBeUndefined();
       expect(mockConsoleError).toHaveBeenCalledWith(
@@ -171,9 +170,9 @@ describe("extension", () => {
         OUTPUT_FIELD_NAME: "output",
       });
 
-      wrappedFunction = mockTranslate();
+      wrappedMockTranslate = mockTranslate();
 
-      const callResult = await wrappedFunction(documentChange);
+      const callResult = await wrappedMockTranslate(documentChange);
 
       expect(callResult).toBeUndefined();
       expect(mockConsoleError).toHaveBeenCalledWith(
@@ -184,7 +183,7 @@ describe("extension", () => {
     test("function updates translation document with translations", async () => {
       clearMocks();
 
-      await wrappedFunction(documentChange);
+      await wrappedMockTranslate(documentChange);
 
       // confirm Google Translate API was called
       expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "en");
@@ -230,7 +229,7 @@ describe("extension", () => {
 
       documentChange.before = beforeSnapshot;
 
-      await wrappedFunction(documentChange);
+      await wrappedMockTranslate(documentChange);
 
       // logs.documentUpdatedChangedInput
       expect(mockConsoleLog).toHaveBeenCalledWith(
@@ -262,7 +261,7 @@ describe("extension", () => {
         mockDocumentSnapshotFactory(afterSnapshot)
       );
 
-      await wrappedFunction(documentChange);
+      await wrappedMockTranslate(documentChange);
 
       expect(mockFirestoreUpdate).toHaveBeenCalledWith(
         defaultEnvironment.OUTPUT_FIELD_NAME,
@@ -287,7 +286,7 @@ describe("extension", () => {
         mockDocumentSnapshotFactory(snap)
       );
 
-      await wrappedFunction(documentChange);
+      await wrappedMockTranslate(documentChange);
 
       expect(mockFirestoreUpdate).not.toHaveBeenCalled();
       expect(mockTranslateClassMethod).not.toHaveBeenCalled();
@@ -306,7 +305,7 @@ describe("extension", () => {
         Promise.reject(error)
       );
 
-      await wrappedFunction(documentChange);
+      await wrappedMockTranslate(documentChange);
 
       // logs.translateStringError
       expect(mockConsoleError).toHaveBeenCalledWith(
