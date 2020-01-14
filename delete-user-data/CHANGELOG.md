@@ -1,3 +1,7 @@
+## Version 0.1.3
+
+feature - Support deletion of directories (issue #148).
+
 ## Version 0.1.2
 
 feature - Add a new param for recursively deleting subcollections in Cloud Firestore (issue #14).
