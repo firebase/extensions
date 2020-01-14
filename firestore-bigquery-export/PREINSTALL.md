@@ -24,7 +24,7 @@ This extension only sends the content of documents that have been changed -- it 
 
 ##### Generate schema views
 
-After exporting data to BigQuery using this extension, you can run the [schema-views script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/GENERATE_SCHEMA_VIEWS.md) (provided by this extension) to create BigQuery views, based on JSON schema configuration files that you create, using BigQuery’s built-in JSON functions.
+After your data is in BigQuery, you can run the [schema-views script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/GENERATE_SCHEMA_VIEWS.md) (provided by this extension) to create views that make it easier to query relevant data. You only need to provide a JSON schema file that describes your data structure, and the schema-views script will create the views.
 
 #### Billing
 
