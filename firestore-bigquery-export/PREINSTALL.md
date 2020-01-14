@@ -16,11 +16,11 @@ Before installing this extension, you'll need to:
 +   [Set up Cloud Firestore in your Firebase project.](https://firebase.google.com/docs/firestore/quickstart)
 +   [Link your Firebase project to BigQuery.](https://support.google.com/firebase/answer/6318765)
 
-This extension only sends the content of documents that have been changed -- it does not export your full dataset of existing documents into BigQuery. So, to backfill your BigQuery dataset with all the documents in your collection, you can run the import script provided by this extension.
+This extension only sends the content of documents that have been changed -- it does not export your full dataset of existing documents into BigQuery. So, to backfill your BigQuery dataset with all the documents in your collection, you can run the [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md) provided by this extension.
 
-**Important:** Run the script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
+**Important:** Run the import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
 
-Learn more about using this script to [backfill your existing collection](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
+After exporting data to BigQuery using this extension, you can run the [schema-views script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/GENERATE_SCHEMA_VIEWS.md) (provided by this extension) to create BigQuery views, based on JSON schema configuration files, using BigQuery’s built-in JSON functions.
 
 #### Billing
 
