@@ -10,7 +10,7 @@ The queries use the following parameter values from your installation of the ext
     extension installation
 +   `${param:TABLE_ID}`: the common prefix of BigQuery views to generate
 
-**NOTE:** You can, at any time, run the schema-views script against additional schema files
+**Note:** You can, at any time, run the schema-views script against additional schema files
 to create different schema views over your raw changelog. When you settle on a fixed schema,
 you can create a [scheduled query](https://cloud.google.com/bigquery/docs/scheduling-queries)
 to transfer the columns reported by the schema view to a persistent backup table.
