@@ -345,6 +345,10 @@ exception of `map` and `array`, the type conversion scheme is as follows:
       <td>GEOGRAPHY</td>
     </tr>
     <tr>
+      <td>reference</td>
+      <td>STRING<br>(containing the path to the referenced document)</td>
+    </tr>
+    <tr>
       <td>null</td>
       <td>NULL</td>
     </tr>
