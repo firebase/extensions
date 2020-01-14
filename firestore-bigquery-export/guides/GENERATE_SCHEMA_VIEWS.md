@@ -126,7 +126,9 @@ via `npm` (the Node Package Manager).
     view (that is, `https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:TABLE_ID}_schema_test_schema_changelog&page=table`):
 
     ```
-    SELECT document_name, name, age FROM ${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_test_schema_changelog WHERE document_name = "test-schema-document"
+    SELECT document_name, name, age
+    FROM ${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_test_schema_changelog
+    WHERE document_name = "test-schema-document"
     ```
 
 1.  Go back to the Cloud Firestore section of the console, then change
@@ -135,7 +137,9 @@ via `npm` (the Node Package Manager).
 1.  Back in BigQuery, re-run the following query:
 
     ```
-    SELECT document_name, name, age FROM ${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_test_schema_changelog WHERE document_name = "test-schema-document"
+    SELECT document_name, name, age
+    FROM ${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_test_schema_changelog
+    WHERE document_name = "test-schema-document"
     ```
 
     You'll see a new change with a `null` age column. If you query documents
@@ -155,7 +159,9 @@ via `npm` (the Node Package Manager).
     collection.
 
     ```
-    SELECT document_name, name, age FROM ${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_test_schema_latest WHERE document_name = "test-schema-document"
+    SELECT document_name, name, age
+    FROM ${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_test_schema_latest
+    WHERE document_name = "test-schema-document"
     ```
 
 ### Next Steps
