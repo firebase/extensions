@@ -51,13 +51,17 @@ Note that this extension only listens for _document_ changes in the collection, 
 
 This extension only sends the content of documents that have been changed -- it does not export your full dataset of existing documents into BigQuery. So, to backfill your BigQuery dataset with all the documents in your collection, you can run the import script provided by this extension.
 
-The import script can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by this extension. The script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This is to ensure that any operation on an imported document supersedes the `IMPORT`
+The import script can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by this extension. The script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This is to ensure that any operation on an imported document supersedes the `IMPORT`.
 
-**Important:** Run the script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
+**Important:** Run the import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
 
-You may pause and resume the script from the last batch at any point.
+Learn more about using the import script to [backfill your existing collection](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
 
-Learn more about using this script to [backfill your existing collection](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
+### _(Optional)_ Generate schema views
+
+After exporting data to BigQuery using this extension, you can run the schema-views script (provided by this extension) to create BigQuery views, based on JSON schema configuration files that you create, using BigQuery’s built-in JSON functions.
+
+Learn more about using the schema-views script to [generate schema views](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/GENERATE_SCHEMA_VIEWS.md).
 
 ### Monitoring
 
