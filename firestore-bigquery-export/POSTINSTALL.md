@@ -13,13 +13,15 @@ You can test out this extension right away:
 1.  Query your **raw changelog table**, which should contain a single log of creating the `bigquery-mirror-test` document.
 
     ```  
-    SELECT * FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog`   
+    SELECT *
+    FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog`   
     ```
 
 1.  Query your **latest view**, which should return the latest change event for the only document present -- `bigquery-mirror-test`.
 
     ```  
-    SELECT * FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_latest`
+    SELECT *
+    FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_latest`
     ```
 
 1.  Delete the `bigquery-mirror-test` document from [Cloud Firestore](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
@@ -28,9 +30,10 @@ The `bigquery-mirror-test` document will disappear from the **latest view** and 
 1.  You can check the changelogs of a single document with this query:
 
     ```  
-    SELECT * FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog` 
-       WHERE document_name = "bigquery-mirror-test" 
-       ORDER BY TIMESTAMP ASC  
+    SELECT *
+    FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog` 
+    WHERE document_name = "bigquery-mirror-test" 
+    ORDER BY TIMESTAMP ASC  
     ```
 
 ### Using the extension
