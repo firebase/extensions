@@ -58,7 +58,8 @@ describe("extension", () => {
     let documentChange;
 
     beforeEach(() => {
-      // this is best thought of as default environment for each test which might be altered subject to test's needs
+      // this is best thought of as default environment for each test which might be altered within
+      // each test subject to test's needs
       jest.resetModules();
       functionsTest = functionsTestInit();
       admin = require("firebase-admin");
@@ -314,7 +315,7 @@ describe("extension", () => {
 
       // logs.translateStringError
       expect(mockConsoleError).toHaveBeenCalledWith(
-        ...messages.translateStringError('hello', 'en', error)
+        ...messages.translateStringError("hello", "en", error)
       );
 
       // logs.translateInputToAllLanguagesError
