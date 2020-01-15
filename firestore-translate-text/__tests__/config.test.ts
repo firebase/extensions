@@ -5,6 +5,8 @@ import * as functionsTestInit from "firebase-functions-test";
 import * as yaml from "js-yaml";
 import mockedEnv from "mocked-env";
 
+import { messages } from "../functions/src/logs/messages";
+
 let restoreEnv;
 let extensionYaml;
 let extensionParams;
@@ -17,7 +19,8 @@ const environment = {
   OUTPUT_FIELD_NAME: "translated",
 };
 
-const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+const { mockConsoleLog, config } = global;
+
 functionsTestInit();
 
 describe("extension config", () => {
@@ -34,13 +37,13 @@ describe("extension config", () => {
 
   beforeEach(() => {
     restoreEnv = mockedEnv(environment);
-    consoleLogSpy.mockClear();
+    mockConsoleLog.mockClear();
   });
 
   afterEach(() => restoreEnv());
 
   test("config loaded from environment variables", () => {
-    const functionsConfig = require("../functions/src/config").default;
+    const functionsConfig = config();
 
     expect(functionsConfig).toMatchSnapshot({});
   });
@@ -48,14 +51,9 @@ describe("extension config", () => {
   test("config is logged on initialize", () => {
     jest.requireActual("../functions/src");
 
-    const functionsConfig = jest.requireActual("../functions/src/config")
-      .default;
-    expect(consoleLogSpy).toBeCalledWith(
-      "Initializing extension with configuration",
-      functionsConfig
-    );
+    const functionsConfig = config();
 
-    consoleLogSpy.mockRestore();
+    expect(mockConsoleLog).toBeCalledWith(...messages.init(functionsConfig));
   });
 
   // LANGUAGES
