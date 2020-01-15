@@ -24,17 +24,11 @@ const {
   mockConsoleLog,
   mockFirestoreUpdate,
   mockFirestoreTransaction,
+  mockTranslateModule,
   clearMocks,
 } = global;
 
-// import { Translate } from "@google-cloud/translate";
-function mockTranslateModuleFactory() {
-  return {
-    Translate: mockTranslateClass,
-  };
-}
-
-jest.mock("@google-cloud/translate", mockTranslateModuleFactory);
+mockTranslateModule();
 
 let restoreEnv;
 let functionsTest = functionsTestInit();

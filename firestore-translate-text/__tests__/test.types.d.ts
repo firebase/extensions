@@ -17,7 +17,7 @@ declare namespace NodeJS {
     mockTranslate: () => jest.MockedFunction<any>;
     mockTranslateClassMethod: jest.MockedFunction<any>;
     mockTranslateClass: jest.MockedClass<any>;
-    mockTranslateModuleFactory: jest.ModuleMocker;
+    mockTranslateModule: () => jest.ModuleMocker;
     mockConsoleLog: jest.MockedFunction<any>;
     mockConsoleError: jest.MockedFunction<any>;
     mockFirestoreUpdate: jest.MockedFunction<any>;

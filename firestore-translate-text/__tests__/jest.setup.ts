@@ -27,7 +27,8 @@ global.mockTranslateClassMethod = mockTranslateClassMethod;
 
 global.mockTranslateClass = mockTranslateClass;
 
-global.mockTranslateModuleFactory = mockTranslateModuleFactory;
+global.mockTranslateModule = () =>
+  jest.mock("@google-cloud/translate", mockTranslateModuleFactory);
 
 global.mockConsoleError = mockConsoleError;
 
