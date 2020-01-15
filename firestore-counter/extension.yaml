@@ -15,7 +15,7 @@
 name: firestore-counter
 displayName: Distributed Counter
 specVersion: v1beta
-version: 0.1.0
+version: 0.1.2
 
 description:
   Records event counters at scale to accommodate high-velocity writes to Cloud Firestore.
@@ -23,7 +23,7 @@ description:
 license: Apache-2.0
 billingRequired: false
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-counter
-releaseNotesUrl: https://github.com/firebase/extensions/releases
+releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-counter/CHANGELOG.md
 
 author:
   authorName: Firebase
@@ -35,14 +35,32 @@ contributors:
 
 roles:
   - role: datastore.user
-    reason: Allows the extension to aggregate Cloud Firestore counter shards.
+    reason:
+      Allows the extension to aggregate Cloud Firestore counter shards.
+  - role: pubsub.publisher
+    reason:
+      Allows the HTTPS controller function to publish a message to the extension's Pub/Sub topic,
+      which triggers the controllerCore function.
 
 resources:
-  - name: controller
+  - name: controllerCore
     type: firebaseextensions.v1beta.function
     description:
       Scheduled to run every minute.
       This function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
+    properties:
+      sourceDirectory: .
+      location: ${LOCATION}
+      maxInstances: 1
+      eventTrigger:
+        eventType: google.pubsub.topic.publish
+        resource: projects/${PROJECT_ID}/topics/${EXT_INSTANCE_ID}
+
+  - name: controller
+    type: firebaseextensions.v1beta.function
+    description:
+      Maintained for backwards compatibility.
+      This function relays a message to the extension's Pub/Sub topic to trigger the controllerCore function.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -67,7 +85,7 @@ resources:
     description:
       Monitors a range of shards and aggregates them, as needed.
       There may be 0 or more worker functions running at any point in time.
-      The controller function is responsible for scheduling and monitoring these workers.
+      The controllerCore function is responsible for scheduling and monitoring these workers.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -78,11 +96,12 @@ resources:
 params:
   - param: LOCATION
     type: select
-    label: Deployment location
+    label: Cloud Functions location
     description: >-
-      Where should the extension be deployed? You usually want a location close to your database.
-      For help selecting a location, refer to the
-      [location selection guide](https://firebase.google.com/docs/functions/locations).
+      Where do you want to deploy the functions created for this extension? 
+      You usually want a location close to your database. For help selecting a 
+      location, refer to the [location selection 
+      guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -100,6 +119,7 @@ params:
         value: asia-northeast1
     default: us-central1
     required: true
+    immutable: true
 
   - param: INTERNAL_STATE_PATH
     label: Document path for internal state
@@ -107,4 +127,8 @@ params:
       What is the path to the document where the extension can keep its internal state?
     default: _firebase_ext_/sharded_counter
     example: _firebase_ext_/sharded_counter
+    validationRegex: "^[^/]+/[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage:
+      Enter a document path, not a collection path. The path must have an even number of segments,
+      for example, `my_collection/doc` or `my_collection/doc/subcollection/doc`, but not `my_collection`.
     required: true

@@ -73,6 +73,7 @@ interface QueuePayload {
   bccUids?: string[];
   from?: string;
   replyTo?: string;
+  headers?: any;
 }
 
 function validateFieldArray(field: string, array?: string[]) {
@@ -262,6 +263,7 @@ async function deliver(
         to: payload.to,
         cc: payload.cc,
         bcc: payload.bcc,
+        headers: payload.headers || {},
       })
     );
     const info = {

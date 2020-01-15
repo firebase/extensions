@@ -7,6 +7,7 @@ package-lock.json
 # generated files
 README.md
 **/functions/lib/**
+**/lib/**
 **/dist/**
 coverage
 

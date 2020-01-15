@@ -23,7 +23,7 @@ description:
 license: Apache-2.0
 billingRequired: false
 sourceUrl: https://github.com/firebase/extensions/tree/master/rtdb-limit-child-nodes
-releaseNotesUrl: https://github.com/firebase/extensions/releases
+releaseNotesUrl: https://github.com/firebase/extensions/blob/master/rtdb-limit-child-nodes/CHANGELOG.md
 
 author:
   authorName: Firebase
@@ -54,12 +54,13 @@ resources:
 params:
   - param: LOCATION
     type: select
-    label: Deployment location
+    label: Cloud Functions location
     description: >-
-      Where should the extension be deployed? You usually want a location close to your database.
-      Realtime Database instances are located in us-central1.
-      For help selecting a location, refer to the
-      [location selection guide](https://firebase.google.com/docs/functions/locations).
+      Where do you want to deploy the functions created for this extension? 
+      You usually want a location close to your database. Realtime Database 
+      instances are located in `us-central1`. For help selecting a 
+      location, refer to the [location selection 
+      guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -77,6 +78,7 @@ params:
         value: asia-northeast1
     default: us-central1
     required: true
+    immutable: true
 
   - param: NODE_PATH
     type: string

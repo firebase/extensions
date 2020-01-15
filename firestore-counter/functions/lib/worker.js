@@ -30,7 +30,7 @@ const planner_1 = require("./planner");
 const aggregator_1 = require("./aggregator");
 const firestore_1 = require("@google-cloud/firestore");
 const uuid = require("uuid");
-const SHARDS_LIMIT = 499;
+const SHARDS_LIMIT = 100;
 const WORKER_TIMEOUT_MS = 45000;
 /**
  * Worker is controlled by WorkerMetadata document stored at process.env.MODS_INTERNAL_COLLECTION
@@ -44,7 +44,7 @@ const WORKER_TIMEOUT_MS = 45000;
  *
  * Workers avoid double scheduling and overruns by including their metadata documents in every
  * aggregation transaction. If metadata changes underneath, transaction fails, worker detects that
- * and terminates immmediately.
+ * and terminates immediately.
  */
 class ShardedCounterWorker {
     constructor(metadoc, shardCollection, singleRun = false) {
