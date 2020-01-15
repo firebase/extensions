@@ -62,30 +62,7 @@ Available properties for the `message` field are:
 * **text:** The plaintext content of the email.
 * **html:** The HTML content of the email.
 * **amp:** The [AMP4EMAIL][amp4email] content of the email.
-* **attachments:** An array containing attachment(s) as noted below.
-
-To send email attachments, you have to include an `attachments` array to the `message` map: 
-
-*Please note that the* `pathname` *property requires a URL path to the file you wish to attach.*
-*For further options, please consult [nodemailer attachment options](https://nodemailer.com/message/attachments/), bearing in mind you have no access to the file system.*
-
-```js
-admin.firestore().collection('mail').add({
-  to: 'someone@example.com',
-  message: {
-    subject: 'Hello from Firebase!',
-    attachments:[
-      {
-        path: 'https://url-path-to-file/cat.png'
-      },
-      {
-        filename: 'newFileName.txt',
-        path: 'https://url-path-to-file/file.txt'
-      },
-    ]
-  },
-})
-```
+* **attachments:** An array containing attachment(s); supports [Nodemailer options](https://nodemailer.com/message/attachments/) (be aware that your email has no access to the cloud server's file system)
 
 #### Using templates
 
