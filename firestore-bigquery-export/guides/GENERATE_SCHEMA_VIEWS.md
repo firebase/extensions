@@ -226,6 +226,7 @@ Each `fields` array must contain _at least one_ of the following types:
 - `number`
 - `timestamp`
 - `geopoint`
+- `reference`
 - `null`
 
 These types correspond with Cloud Firestore's
@@ -343,6 +344,10 @@ exception of `map` and `array`, the type conversion scheme is as follows:
     <tr>
       <td>geopoint</td>
       <td>GEOGRAPHY</td>
+    </tr>
+    <tr>
+      <td>reference</td>
+      <td>STRING<br>(containing the path to the referenced document)</td>
     </tr>
     <tr>
       <td>null</td>
