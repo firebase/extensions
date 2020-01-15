@@ -74,13 +74,6 @@ describe("extension config", () => {
         expect(Boolean("".match(new RegExp(validationRegex)))).toBeFalsy();
       });
 
-      // TODO(@Salakar): Broken in https://github.com/firebase/extensions/pull/46
-      //                 will follow up in later PR
-      xtest("does not allow leading delimiter", () => {
-        const { validationRegex } = extensionParams["LANGUAGES"];
-        expect(Boolean(",en".match(new RegExp(validationRegex)))).toBeFalsy();
-      });
-
       test("does not allow trailing delimiter", () => {
         const { validationRegex } = extensionParams["LANGUAGES"];
         expect(Boolean("en,".match(new RegExp(validationRegex)))).toBeFalsy();
