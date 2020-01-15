@@ -18,19 +18,19 @@ export const mockDocumentSnapshotFactory = (documentSnapshot) => {
   })();
 };
 
-
 export const makeChange = (before, after) => {
   let functionsTest = functionsTestInit();
   return functionsTest.makeChange(before, after);
-}
+};
 
 export const mockFirestoreTransaction = jest.fn().mockImplementation(() => {
-    return (transactionHandler) => {
-      transactionHandler({ update(ref, field, data) {
-          mockFirestoreUpdate(field, data);
-        } });
-    };
-  });
-
+  return (transactionHandler) => {
+    transactionHandler({
+      update(ref, field, data) {
+        mockFirestoreUpdate(field, data);
+      },
+    });
+  };
+});
 
 export const mockFirestoreUpdate = jest.fn();

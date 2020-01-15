@@ -19,7 +19,6 @@ export const mockTranslateClassMethod = jest
     return Promise.resolve([testTranslations[targetLanguage]]);
   });
 
-
 // new Translate(opts);
 export const mockTranslateClass = jest.fn().mockImplementation(() => {
   return { translate: mockTranslateClassMethod };

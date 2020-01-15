@@ -4,7 +4,5 @@
     "outDir": "lib"
   },
   "files": ["test.types.d.ts"],
-  "include": [
-    "**/*"
-  ]
+  "include": ["**/*"]
 }
