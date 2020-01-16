@@ -226,6 +226,7 @@ Each `fields` array must contain _at least one_ of the following types:
 - `number`
 - `timestamp`
 - `geopoint`
+- `reference`
 - `null`
 
 These types correspond with Cloud Firestore's
@@ -345,6 +346,10 @@ exception of `map` and `array`, the type conversion scheme is as follows:
       <td>GEOGRAPHY</td>
     </tr>
     <tr>
+      <td>reference</td>
+      <td>STRING<br>(containing the path to the referenced document)</td>
+    </tr>
+    <tr>
       <td>null</td>
       <td>NULL</td>
     </tr>
@@ -360,7 +365,7 @@ ignored by the schema-views script.
 
 #### Cloud Firestore arrays
 
-Review [this example](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/EXAMPLE_QUERIES.md) for querying an array.
+Review [these examples](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/EXAMPLE_QUERIES.md#example-queries-for-an-array) for querying an array.
 
 Cloud Firestore arrays are
 [unnested](https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax#unnest),
