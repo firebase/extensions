@@ -71,8 +71,9 @@ describe("extension", () => {
     });
 
     test("initializes Google Translate API with PROJECT_ID on function load", () => {
-      // need to reset modules again so we can require clean ../function/src that has not been called
+      // need to reset modules
       jest.resetModules();
+      // so we can require clean ../function/src that has not been called
       require("../functions/src");
 
       expect(mockTranslateClass).toHaveBeenCalledTimes(1);
@@ -82,8 +83,6 @@ describe("extension", () => {
     });
 
     test("function skips deleted document change events", async () => {
-      clearMocks();
-
       documentChange.after.exists = false;
       const callResult = await wrappedMockTranslate(documentChange);
 
@@ -97,8 +96,6 @@ describe("extension", () => {
     });
 
     test("function skips 'update' document change events if the input is unchanged", async () => {
-      clearMocks();
-
       beforeSnapshot = snapshot();
 
       afterSnapshot = snapshot({
@@ -119,8 +116,6 @@ describe("extension", () => {
     });
 
     test("function skips document 'created' document change events without any input", async () => {
-      clearMocks();
-
       afterSnapshot = snapshot({
         changed: 123,
       });
@@ -140,9 +135,9 @@ describe("extension", () => {
     });
 
     test("function exits early if input & output fields are the same", async () => {
-      // reset modules again so ENV variables can be reset
+      // reset modules again
       jest.resetModules();
-
+      // so ENV variables can be reset
       restoreEnv = mockedEnv({
         ...defaultEnvironment,
         INPUT_FIELD_NAME: "input",
@@ -160,8 +155,9 @@ describe("extension", () => {
     });
 
     test("function exits early if input field is a translation output path", async () => {
+      // reset modules again
       jest.resetModules();
-
+      // so ENV variables can be reset
       restoreEnv = mockedEnv({
         ...defaultEnvironment,
         INPUT_FIELD_NAME: "output.en",
@@ -179,9 +175,6 @@ describe("extension", () => {
     });
 
     test("function updates translation document with translations", async () => {
-      clearMocks();
-      restoreEnv = mockedEnv(defaultEnvironment);
-
       await wrappedMockTranslate(documentChange);
 
       // confirm Google Translate API was called
@@ -221,8 +214,6 @@ describe("extension", () => {
     });
 
     test("function updates translation document when previous input changes", async () => {
-      clearMocks();
-
       beforeSnapshot = snapshot({
         input: "goodbye",
       });
@@ -250,8 +241,6 @@ describe("extension", () => {
     });
 
     test("function deletes translations if input field is removed", async () => {
-      clearMocks();
-
       beforeSnapshot = snapshot();
 
       afterSnapshot = snapshot({});
@@ -275,8 +264,6 @@ describe("extension", () => {
     });
 
     test("function skips processing if no input string on before & after snapshots", async () => {
-      clearMocks();
-
       const snap = snapshot({
         notTheInput: "hello",
       });
@@ -298,8 +285,6 @@ describe("extension", () => {
     });
 
     test("function handles Google Translate API errors", async () => {
-      clearMocks();
-
       const error = new Error("Test Translate API Error");
       mockTranslateClassMethod.mockImplementationOnce(() =>
         Promise.reject(error)
