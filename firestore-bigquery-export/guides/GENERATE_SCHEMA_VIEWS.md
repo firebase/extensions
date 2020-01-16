@@ -365,7 +365,7 @@ ignored by the schema-views script.
 
 #### Cloud Firestore arrays
 
-Review [this example](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/EXAMPLE_QUERIES.md#example-queries-for-an-array) for querying an array.
+Review [these examples](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/EXAMPLE_QUERIES.md#example-queries-for-an-array) for querying an array.
 
 Cloud Firestore arrays are
 [unnested](https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax#unnest),
