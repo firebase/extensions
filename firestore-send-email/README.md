@@ -44,7 +44,7 @@ Usage of this extension also requires you to have SMTP credentials for mail deli
 
 **Configuration Parameters:**
 
-* Deployment location: Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your database. For help selecting a  location, refer to the [location selection  guide](https://firebase.google.com/docs/functions/locations).
 
 * SMTP connection URI: A URI representing an SMTP server that this extension can use to deliver email.
 

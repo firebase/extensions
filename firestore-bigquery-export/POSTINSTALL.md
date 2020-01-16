@@ -13,13 +13,15 @@ You can test out this extension right away:
 1.  Query your **raw changelog table**, which should contain a single log of creating the `bigquery-mirror-test` document.
 
     ```  
-    SELECT * FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog`   
+    SELECT *
+    FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog`   
     ```
 
 1.  Query your **latest view**, which should return the latest change event for the only document present -- `bigquery-mirror-test`.
 
     ```  
-    SELECT * FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_latest`
+    SELECT *
+    FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_latest`
     ```
 
 1.  Delete the `bigquery-mirror-test` document from [Cloud Firestore](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
@@ -28,9 +30,10 @@ The `bigquery-mirror-test` document will disappear from the **latest view** and 
 1.  You can check the changelogs of a single document with this query:
 
     ```  
-    SELECT * FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog` 
-       WHERE document_name = "bigquery-mirror-test" 
-       ORDER BY TIMESTAMP ASC  
+    SELECT *
+    FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog` 
+    WHERE document_name = "bigquery-mirror-test" 
+    ORDER BY TIMESTAMP ASC  
     ```
 
 ### Using the extension
@@ -48,13 +51,17 @@ Note that this extension only listens for _document_ changes in the collection, 
 
 This extension only sends the content of documents that have been changed -- it does not export your full dataset of existing documents into BigQuery. So, to backfill your BigQuery dataset with all the documents in your collection, you can run the import script provided by this extension.
 
-The import script can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by this extension. The script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This is to ensure that any operation on an imported document supersedes the `IMPORT`
+The import script can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by this extension. The script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This is to ensure that any operation on an imported document supersedes the `IMPORT`.
 
-**Important:** Run the script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
+**Important:** Run the import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
 
-You may pause and resume the script from the last batch at any point.
+Learn more about using the import script to [backfill your existing collection](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
 
-Learn more about using this script to [backfill your existing collection](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
+### _(Optional)_ Generate schema views
+
+After your data is in BigQuery, you can use the schema-views script (provided by this extension) to create views that make it easier to query relevant data. You only need to provide a JSON schema file that describes your data structure, and the schema-views script will create the views.
+
+Learn more about using the schema-views script to [generate schema views](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/GENERATE_SCHEMA_VIEWS.md).
 
 ### Monitoring
 
