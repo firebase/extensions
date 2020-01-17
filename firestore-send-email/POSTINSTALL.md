@@ -62,7 +62,7 @@ Available properties for the `message` field are:
 * **text:** The plaintext content of the email.
 * **html:** The HTML content of the email.
 * **amp:** The [AMP4EMAIL][amp4email] content of the email.
-* **attachments:** An array containing attachment(s); supports [Nodemailer options](https://nodemailer.com/message/attachments/) (be aware that your email has no access to the cloud server's file system)
+* **attachments:** An array containing attachment(s); supports [Nodemailer options](https://nodemailer.com/message/attachments/) of utf-8 string, custom content type, URL, encoded string, data uri, and pregenerated MIME node (be aware that your email has no access to the cloud server's file system)
 
 #### Using templates
 
