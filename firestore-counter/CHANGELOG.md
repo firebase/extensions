@@ -1,3 +1,7 @@
+## Version 0.1.2
+
+feature - Limit shards to 100 documents, to optimize performance.
+
 ## Version 0.1.1
 
 changed - Moves the logic for monitoring the extension's workload from the existing HTTP function to a new Pub/Sub controllerCore function. Now, if called, the HTTP function triggers the new `controllerCore` function instead. This change was made to accommodate a [change in the way Google Cloud Functions handles HTTP functions](https://cloud.google.com/functions/docs/securing/managing-access#allowing_unauthenticated_function_invocation).

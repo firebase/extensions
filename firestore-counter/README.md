@@ -24,7 +24,7 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 After installing this extension, you'll need to:
 
 - Update your [database security rules](https://firebase.google.com/docs/rules).
-- Set up a [scheduled function](https://firebase.google.com/docs/functions/schedule-functions) to regularly call the controller function, which is created by this extension and monitors the extension's workload.
+- Set up a [Cloud Scheduler job](https://cloud.google.com/scheduler/docs/quickstart) to regularly call the controllerCore function, which is created by this extension. It works by either aggregating shards itself or scheduling and monitoring workers to aggregate shards.
 - Install the provided [Counter SDK](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts) in your app. You can then use this library in your code to specify your document path and increment values.
 
 Detailed information for these post-installation tasks are provided after you install this extension.
@@ -44,7 +44,7 @@ When you use Firebase Extensions, you're only charged for the underlying resourc
 
 **Configuration Parameters:**
 
-* Deployment location: Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your database. For help selecting a  location, refer to the [location selection  guide](https://firebase.google.com/docs/functions/locations).
 
 * Document path for internal state: What is the path to the document where the extension can keep its internal state?
 
@@ -52,11 +52,13 @@ When you use Firebase Extensions, you're only charged for the underlying resourc
 
 **Cloud Functions:**
 
-* **controller:** Scheduled to run every minute. This function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
+* **controllerCore:** Scheduled to run every minute. This function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
+
+* **controller:** Maintained for backwards compatibility. This function relays a message to the extension's Pub/Sub topic to trigger the controllerCore function.
 
 * **onWrite:** Listens for changes on counter shards that may need aggregating. This function is limited to max 1 instance.
 
-* **worker:** Monitors a range of shards and aggregates them, as needed. There may be 0 or more worker functions running at any point in time. The controller function is responsible for scheduling and monitoring these workers.
+* **worker:** Monitors a range of shards and aggregates them, as needed. There may be 0 or more worker functions running at any point in time. The controllerCore function is responsible for scheduling and monitoring these workers.
 
 
 
@@ -67,3 +69,5 @@ When you use Firebase Extensions, you're only charged for the underlying resourc
 This extension will operate with the following project IAM roles:
 
 * datastore.user (Reason: Allows the extension to aggregate Cloud Firestore counter shards.)
+
+* pubsub.publisher (Reason: Allows the HTTPS controller function to publish a message to the extension's Pub/Sub topic, which triggers the controllerCore function.)
