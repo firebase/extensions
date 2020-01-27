@@ -35,11 +35,11 @@ gcloud --project=${param:PROJECT_ID} scheduler jobs create pubsub ${param:EXT_IN
 ```
 
 
-#### Specify a document path and increment value in your app
+#### Specify a document path and increment value in your web app
 
-1.  Download and copy the [Counter SDK](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/dist/sharded-counter.js) into your application project.
+1.  Download and copy the [compiled client sample](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/dist/sharded-counter.js) into your application project.
 
-1.  Use the Counter SDK library in your code to increment counters. The code snippet below shows an example of how to use the library. For more comprehensive API documentation, refer to the [source code](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts).
+1.  Use the client sample in your code to increment counters. The code snippet below shows an example of how to use it. To see the full reference implementation, refer to the sample's TypeScript [source code](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts).
 
   ```html
   <html>
@@ -81,7 +81,7 @@ After you complete the post-installation configuration above, the process runs a
 
 1. Your extension creates subcollections in all the documents that your app uses as counters.
 
-1. The client SDK writes to these subcollections to distribute the write load.
+1. The client sample writes to these subcollections to distribute the write load.
 
 1. The controllerCore function sums the subcollections' values into the single `visits` field (or whichever field you configured in your master document).
 
