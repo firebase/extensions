@@ -8,7 +8,7 @@ Here are some features of this extension:
 - Supports an arbitrary number of counters in your app.
 - Works offline and provides latency compensation for the main counter.
 
-Note that this extension requires client-side logic to work. A TypeScript client sample implementationt [is provided in Github](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts) and is compiled to minified JavaScript [here](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/dist/sharded-counter.js). You can use this extension on other platforms if you'd like to develop your own client code based on the provided client sample.
+Note that this extension requires client-side logic to work. We provide a [TypeScript client sample implementation](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts) and its [compiled minified JavaScript](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/dist/sharded-counter.js). You can use this extension on other platforms if you'd like to develop your own client code based on the provided client sample.
 
 
 #### Additional setup
