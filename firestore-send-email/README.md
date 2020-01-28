@@ -22,7 +22,7 @@ admin.firestore().collection('mail').add({
 
 You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
 
-When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**.
+When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**. Note that this extension is for use with bulk email service providers, like SendGrid, Mailgun, etc.
 
 #### Additional setup
 
