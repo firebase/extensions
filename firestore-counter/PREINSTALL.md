@@ -4,7 +4,7 @@ Since Cloud Firestore has a limit of one sustained write per second, per documen
 
 Here are some features of this extension:
 
-- Scales from 0 updates per second to at least 10,000 per second.
+- Scales from 0 updates per second to a maximum of 10,000 per second.
 - Supports an arbitrary number of counters in your app.
 - Works offline and provides latency compensation for the main counter.
 
