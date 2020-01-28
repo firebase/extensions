@@ -85,6 +85,8 @@ params:
         value: asia-east2
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
+      - label: Seoul (asia-northeast3)
+        value: asia-northeast3
     default: us-central1
     required: true
     immutable: true
