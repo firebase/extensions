@@ -8,7 +8,7 @@ You can test out this extension right away:
 
 1.  Add a document with a `to` field and a `message` field with the following content:
 
-    ```
+    ```js
     to: ['someone@example.com'],
     message: {
       subject: 'Hello from Firebase!',
@@ -20,7 +20,7 @@ You can test out this extension right away:
 1.  In a few seconds, you'll see a `delivery` field appear in the document. The field will update as the extension processes the email.
 
 **Note:** You can also use the [Firebase Admin SDK][admin_sdk] to add a document:
-```
+```js
 admin.firestore().collection('${param:MAIL_COLLECTION}').add({
   to: 'someone@example.com',
   message: {
@@ -62,6 +62,7 @@ Available properties for the `message` field are:
 * **text:** The plaintext content of the email.
 * **html:** The HTML content of the email.
 * **amp:** The [AMP4EMAIL][amp4email] content of the email.
+* **attachments:** An array containing attachment(s); [Nodemailer options](https://nodemailer.com/message/attachments/) supported: utf-8 string, custom content type, URL, encoded string, data URI, and pregenerated MIME node (be aware that your email has no access to the cloud server's file system).
 
 #### Using templates
 
