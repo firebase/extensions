@@ -16,7 +16,6 @@
 
 import { firestore } from "firebase-admin";
 import { Slice, WorkerStats, queryRange } from "./common";
-import { FieldValue } from "@google-cloud/firestore";
 import { Planner } from "./planner";
 import { Aggregator } from "./aggregator";
 
@@ -203,7 +202,7 @@ export class ShardedCounterController {
         }
         t.set(
           this.controllerDocRef,
-          { timestamp: FieldValue.serverTimestamp() },
+          { timestamp: firestore.FieldValue.serverTimestamp() },
           { merge: true }
         );
         console.log("Aggregated " + plans.length + " counters.");
@@ -301,13 +300,13 @@ export class ShardedCounterController {
             ),
             {
               slice: slice,
-              timestamp: FieldValue.serverTimestamp(),
+              timestamp: firestore.FieldValue.serverTimestamp(),
             }
           );
         });
         t.set(this.controllerDocRef, {
           workers: slices,
-          timestamp: FieldValue.serverTimestamp(),
+          timestamp: firestore.FieldValue.serverTimestamp(),
         });
       } else {
         // Check workers that haven't updated stats for over 90s - they most likely failed.
@@ -316,7 +315,7 @@ export class ShardedCounterController {
           if (timestamp / 1000 - snap.updateTime.seconds > 90) {
             t.set(
               snap.ref,
-              { timestamp: FieldValue.serverTimestamp() },
+              { timestamp: firestore.FieldValue.serverTimestamp() },
               { merge: true }
             );
             failures++;
@@ -325,7 +324,7 @@ export class ShardedCounterController {
         console.log("Detected " + failures + " failed workers.");
         t.set(
           this.controllerDocRef,
-          { timestamp: FieldValue.serverTimestamp() },
+          { timestamp: firestore.FieldValue.serverTimestamp() },
           { merge: true }
         );
       }
