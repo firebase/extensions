@@ -4,7 +4,7 @@ You can test out this extension right away:
 
 1.  Go to your [Storage dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/storage).
 
-1.  Upload an image file to the bucket: `${param:IMG_BUCKET}`
+1.  Upload an image file to the bucket: `${param:IMG_BUCKET}`. The file must have a valid [image MIME Type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types#Image_types), for example `image/png`.
 
 1.  In a few seconds, the resized image(s) appear in the same bucket.
 

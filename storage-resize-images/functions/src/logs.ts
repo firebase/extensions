@@ -20,6 +20,10 @@ export const complete = () => {
   console.log("Completed execution of extension");
 };
 
+export const noContentType = () => {
+  console.log(`File has no Content-Type, no processing is required`);
+};
+
 export const contentTypeInvalid = (contentType: string) => {
   console.log(
     `File of type '${contentType}' is not an image, no processing is required`
