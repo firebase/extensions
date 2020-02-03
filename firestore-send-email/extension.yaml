@@ -104,7 +104,7 @@ params:
   - param: DEFAULT_FROM
     type: string
     label: Default FROM address
-    validationRegex: ^\S+@\S+\.\S+$
+    validationRegex: ^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$|^.*<(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})>$
     validationErrorMessage: Must be a valid email address
     required: true
     description: >-
