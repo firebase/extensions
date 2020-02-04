@@ -14,7 +14,7 @@
 
 name: storage-resize-images
 specVersion: v1beta
-version: 0.1.3
+version: 0.1.4
 license: Apache-2.0
 
 displayName: Resize Images
@@ -24,7 +24,7 @@ description:
 
 billingRequired: false
 sourceUrl: https://github.com/firebase/extensions/tree/master/storage-resize-images
-releaseNotesUrl: https://github.com/firebase/extensions/releases
+releaseNotesUrl: https://github.com/firebase/extensions/blob/master/storage-resize-images/CHANGELOG.md
 
 author:
   authorName: Firebase
@@ -65,11 +65,12 @@ resources:
 params:
   - param: LOCATION
     type: select
-    label: Deployment location
+    label: Cloud Functions location
     description: >-
-      Where should the extension be deployed? You usually want a location close to your Storage bucket.
-      For help selecting a location, refer to the
-      [location selection guide](https://firebase.google.com/docs/functions/locations).
+      Where do you want to deploy the functions created for this extension? 
+      You usually want a location close to your Storage bucket. For help selecting a 
+      location, refer to the [location selection 
+      guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -97,7 +98,7 @@ params:
       Resized images will be stored in this bucket. Depending on your extension configuration,
       original images are either kept or deleted.
     default: ${STORAGE_BUCKET}
-    validationRegex: (.)+\.(.)+\.(.)+
+    validationRegex: ^([0-9a-z_.-]*)$
     validationErrorMessage: Invalid storage bucket
     example: my-project-12345.appspot.com
     required: true

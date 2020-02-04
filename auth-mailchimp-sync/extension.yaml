@@ -23,7 +23,7 @@ description:
 license: Apache-2.0
 billingRequired: true
 sourceUrl: https://github.com/firebase/extensions/tree/master/auth-mailchimp-sync
-releaseNotesUrl: https://github.com/firebase/extensions/releases
+releaseNotesUrl: https://github.com/firebase/extensions/blob/master/auth-mailchimp-sync/CHANGELOG.md
 
 author:
   authorName: Firebase
@@ -67,11 +67,9 @@ resources:
 params:
   - param: LOCATION
     type: select
-    label: Deployment location
+    label: Cloud Functions location
     description: >-
-      Where should the extension be deployed? For help selecting a location,
-      refer to the [location selection
-      guide](https://firebase.google.com/docs/functions/locations).
+      Where do you want to deploy the functions created for this extension?
     options:
       - label: Iowa (us-central1)
         value: us-central1
