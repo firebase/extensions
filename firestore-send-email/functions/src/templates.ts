@@ -52,13 +52,13 @@ export default class Templates {
       const data = doc.data();
       const templates: TemplateGroup = {};
       if (data.subject) {
-        templates.subject = compile(data.subject);
+        templates.subject = compile(data.subject, { noEscape: true });
       }
       if (data.html) {
         templates.html = compile(data.html);
       }
       if (data.text) {
-        templates.text = compile(data.text);
+        templates.text = compile(data.text, { noEscape: true });
       }
       if (data.amp) {
         templates.amp = compile(data.amp);
