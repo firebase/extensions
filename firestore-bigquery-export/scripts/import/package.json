@@ -33,6 +33,10 @@
     "sql-formatter": "^2.3.3"
   },
   "devDependencies": {
+    "@types/mocha": "^5.2.5",
+    "@types/chai": "^4.2.0",
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
     "rimraf": "^2.6.3",
     "typescript": "^3.4.5",
     "ts-node": "^7.0.1"

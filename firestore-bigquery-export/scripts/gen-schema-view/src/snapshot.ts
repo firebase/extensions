@@ -51,7 +51,7 @@ export function buildLatestSchemaSnapshotViewQueryFromLatestView(
   datasetId: string,
   tableName: string,
   schema: FirestoreSchema
-): string {
+): any {
   return buildSchemaViewQuery(datasetId, latest(tableName), schema);
 }
 
