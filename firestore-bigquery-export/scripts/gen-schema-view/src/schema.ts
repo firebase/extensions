@@ -147,7 +147,6 @@ export class FirestoreBigQuerySchemaViewFactory {
       await view.create(options);
       logs.bigQuerySchemaViewCreated(changeLogSchemaViewName);
     }
-
     await view.setMetadata({
       schema: decorateSchemaWithChangelogFields({
         fields: bigQueryFields,
@@ -224,14 +223,12 @@ export function userSchemaView(
 
 /**
  * Constructs a query for building a view over a raw changelog table name.
- * It is assumed that `raw` is an existing table with a schema that
- * matches what is returned by `firestoreToBQTable()`.
  */
-export const buildSchemaViewQuery = (
+export function buildSchemaViewQuery(
   datasetId: string,
   rawTableName: string,
   schema: FirestoreSchema
-): any => {
+): any {
   const result = processFirestoreSchema(datasetId, "data", schema);
   const [fieldExtractors, fieldArrays] = result.queryInfo;
   const bigQueryFields = result.fields;

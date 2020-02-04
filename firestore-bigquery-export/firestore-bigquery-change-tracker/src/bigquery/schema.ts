@@ -64,27 +64,6 @@ export const timestampField = bigQueryField(
 export const latitudeField = bigQueryField("latitude", "NUMERIC");
 export const longitudeField = bigQueryField("longitude", "NUMERIC");
 
-/**
- * Convert from a list of Firestore field definitions into the schema
- * that will be used by the BigQuery `raw` data table.
- *
- * The `raw` data table schema is:
- * - event_id: The event ID of the function trigger invocation responsible for
- *   the row
- * - timestamp: A timestamp to be used for update ordering
- * - documentName: Stores the name of the Firestore document
- * - operation: The type of operation: CREATE, UPDATE, DELETE
- * - data: A record to contain the Firestore document data fields specified
- * in the schema
- */
-export const firestoreToBQTable = (): BigQueryField[] => [
-  timestampField,
-  eventIdField,
-  documentNameField,
-  operationField,
-  dataField,
-];
-
 /*
  * We cannot specify a schema for view creation, and all view columns default
  * to the NULLABLE mode.

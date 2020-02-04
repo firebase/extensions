@@ -87,7 +87,6 @@ export class FirestoreBigQueryEventHistoryTracker
       await table.insert(payload, options);
       logs.dataInserted(rows.length);
     } catch (e) {
-      console.log("Stringified insertion error: " + JSON.stringify(e));
       // Reinitializing in case the destintation table is modified.
       this.initialized = false;
       throw e;

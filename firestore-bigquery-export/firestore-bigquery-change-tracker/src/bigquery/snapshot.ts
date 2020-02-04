@@ -33,7 +33,7 @@ export const latestConsistentSnapshotView = (
     datasetId,
     tableName,
     timestampField.name,
-    RawChangelogLatestViewSchema.fields
+    RawChangelogLatestViewSchema["fields"]
       .map((field) => field.name)
       .filter((name) => excludeFields.indexOf(name) == -1)
   ),
