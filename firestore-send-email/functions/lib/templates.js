@@ -45,13 +45,13 @@ class Templates {
             const data = doc.data();
             const templates = {};
             if (data.subject) {
-                templates.subject = handlebars_1.compile(data.subject);
+                templates.subject = handlebars_1.compile(data.subject, { noEscape: true });
             }
             if (data.html) {
                 templates.html = handlebars_1.compile(data.html);
             }
             if (data.text) {
-                templates.text = handlebars_1.compile(data.text);
+                templates.text = handlebars_1.compile(data.text, { noEscape: true });
             }
             if (data.amp) {
                 templates.amp = handlebars_1.compile(data.amp);
