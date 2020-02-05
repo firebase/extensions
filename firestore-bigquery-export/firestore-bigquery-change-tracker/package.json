@@ -17,7 +17,8 @@
     "prepare": "npm run build"
   },
   "files": [
-    "lib"
+    "lib/*.js",
+    "lib/bigquery/*.js"
   ],
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
