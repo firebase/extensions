@@ -1,6 +1,6 @@
 ## Version 0.1.3
 
-fixed - Disables HTML excaping for plain text fields when using the `templates` option.
+fixed - Disables HTML escaping for plain text fields when using the `templates` option.
 
 ## Version 0.1.2
 
