@@ -134,8 +134,8 @@ export const buildLatestSchemaSnapshotViewQuery = (
   `;
   const groupableExtractors = Object.keys(schemaFieldExtractors).filter(
     (name) =>
-      schemaFieldArrays.indexOf(name) == -1 &&
-      schemaFieldGeopoints.indexOf(name) == -1
+      schemaFieldArrays.indexOf(name) === -1 &&
+      schemaFieldGeopoints.indexOf(name) === -1
   );
   const hasNonGroupableFields = schemaHasArrays || schemaHasGeopoints;
   // BigQuery doesn't support grouping by array fields or geopoints.

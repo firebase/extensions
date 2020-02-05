@@ -19,7 +19,7 @@ import * as sqlFormatter from "sql-formatter";
 import * as logs from "../logs";
 import {
   RawChangelogSchema,
-  RawChangelogLatestViewSchema,
+  RawChangelogViewSchema,
   timestampField,
 } from "./schema";
 
@@ -33,9 +33,9 @@ export const latestConsistentSnapshotView = (
     datasetId,
     tableName,
     timestampField.name,
-    RawChangelogLatestViewSchema["fields"]
+    RawChangelogViewSchema["fields"]
       .map((field) => field.name)
-      .filter((name) => excludeFields.indexOf(name) == -1)
+      .filter((name) => excludeFields.indexOf(name) === -1)
   ),
   useLegacySql: false,
 });

@@ -68,7 +68,7 @@ export const longitudeField = bigQueryField("longitude", "NUMERIC");
  * We cannot specify a schema for view creation, and all view columns default
  * to the NULLABLE mode.
  */
-export const RawChangelogLatestViewSchema: any = {
+export const RawChangelogViewSchema: any = {
   fields: [
     {
       name: "timestamp",

@@ -16,7 +16,7 @@
 
 import * as bigquery from "@google-cloud/bigquery";
 import * as logs from "./logs";
-import { RawChangelogSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import { RawChangelogViewSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import { latestConsistentSnapshotSchemaView } from "./snapshot";
 import * as sqlFormatter from "sql-formatter";
 import {
@@ -147,6 +147,7 @@ export class FirestoreBigQuerySchemaViewFactory {
       await view.create(options);
       logs.bigQuerySchemaViewCreated(changeLogSchemaViewName);
     }
+
     await view.setMetadata({
       schema: decorateSchemaWithChangelogFields({
         fields: bigQueryFields,
@@ -189,15 +190,14 @@ export class FirestoreBigQuerySchemaViewFactory {
  */
 function decorateSchemaWithChangelogFields(schema: any): any {
   let decorated: any = { fields: schema.fields };
-  const changelogSchemaFields: any[] = RawChangelogSchema.fields;
+  const changelogSchemaFields: any[] = RawChangelogViewSchema.fields;
   for (let i = 0; i < changelogSchemaFields.length; i++) {
     if (
-      changelogSchemaFields[i].name == "event_id" ||
-      changelogSchemaFields[i].name == "data"
+      changelogSchemaFields[i].name === "event_id" ||
+      changelogSchemaFields[i].name === "data"
     ) {
       continue;
     }
-    changelogSchemaFields[i].mode = "NULLABLE";
     decorated.fields.push(changelogSchemaFields[i]);
   }
   return decorated;
@@ -224,11 +224,11 @@ export function userSchemaView(
 /**
  * Constructs a query for building a view over a raw changelog table name.
  */
-export function buildSchemaViewQuery(
+export const buildSchemaViewQuery = (
   datasetId: string,
   rawTableName: string,
   schema: FirestoreSchema
-): any {
+): any => {
   const result = processFirestoreSchema(datasetId, "data", schema);
   const [fieldExtractors, fieldArrays] = result.queryInfo;
   const bigQueryFields = result.fields;
@@ -509,7 +509,7 @@ const processLeafField = (
   fieldNameToSelector[
     qualifyFieldName(prefix, field.name)
   ] = `${selector} AS ${qualifyFieldName(prefix, field.name)}`;
-  if (field.type == "array") {
+  if (field.type === "array") {
     bigQueryFields.push({
       name: qualifyFieldName(prefix, field.name),
       mode: "REPEATED",

@@ -15,7 +15,7 @@
  */
 
 import * as bigquery from "@google-cloud/bigquery";
-import { RawChangelogSchema, RawChangelogLatestViewSchema } from "./schema";
+import { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 
 import {
@@ -26,7 +26,7 @@ import {
 import * as logs from "../logs";
 import { BigQuery } from "@google-cloud/bigquery";
 
-export { RawChangelogSchema, RawChangelogLatestViewSchema } from "./schema";
+export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
@@ -170,7 +170,7 @@ export class FirestoreBigQueryEventHistoryTracker
         view: latestSnapshot,
       };
       await view.create(options);
-      await view.setMetadata({ schema: RawChangelogLatestViewSchema });
+      await view.setMetadata({ schema: RawChangelogViewSchema });
       logs.bigQueryViewCreated(this.rawLatestView());
     }
     return view;
