@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-send-email
-version: 0.1.2
+version: 0.1.3
 specVersion: v1beta
 displayName: Trigger Email
 
@@ -58,9 +58,9 @@ params:
     type: select
     label: Cloud Functions location
     description: >-
-      Where do you want to deploy the functions created for this extension? 
-      You usually want a location close to your database. For help selecting a 
-      location, refer to the [location selection 
+      Where do you want to deploy the functions created for this extension?
+      You usually want a location close to your database. For help selecting a
+      location, refer to the [location selection
       guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)
