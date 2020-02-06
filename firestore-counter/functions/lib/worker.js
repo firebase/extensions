@@ -24,11 +24,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const firebase_admin_1 = require("firebase-admin");
 const deepEqual = require("deep-equal");
 const common_1 = require("./common");
 const planner_1 = require("./planner");
 const aggregator_1 = require("./aggregator");
-const firestore_1 = require("@google-cloud/firestore");
 const uuid = require("uuid");
 const SHARDS_LIMIT = 100;
 const WORKER_TIMEOUT_MS = 45000;
@@ -96,7 +96,7 @@ class ShardedCounterWorker {
                             const snap = yield t.get(this.metadoc.ref);
                             if (snap.exists && deepEqual(snap.data(), this.metadata)) {
                                 t.update(snap.ref, {
-                                    timestamp: firestore_1.FieldValue.serverTimestamp(),
+                                    timestamp: firebase_admin_1.firestore.FieldValue.serverTimestamp(),
                                     stats: stats,
                                 });
                             }

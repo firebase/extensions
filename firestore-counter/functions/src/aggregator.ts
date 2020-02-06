@@ -15,7 +15,6 @@
  */
 
 import { firestore } from "firebase-admin";
-import { FieldValue } from "@google-cloud/firestore";
 import * as uuid from "uuid";
 
 export class NumericUpdate {
@@ -59,7 +58,7 @@ export class NumericUpdate {
   public toPartialUpdate(uuidv4: (() => string)): { [key: string]: any } {
     if (this.isNoop()) return {};
     return {
-      _updates_: FieldValue.arrayUnion({
+      _updates_: firestore.FieldValue.arrayUnion({
         _id_: uuidv4(),
         _data_: this.data,
       }),
