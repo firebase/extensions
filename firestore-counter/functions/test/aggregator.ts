@@ -19,7 +19,6 @@ import { suite, test } from "mocha-typescript";
 import { firestore } from "firebase-admin";
 
 import { Aggregator, NumericUpdate } from "../src/aggregator";
-import { FieldValue } from "@google-cloud/firestore";
 
 @suite
 class AggregatorTest extends Aggregator {
@@ -176,7 +175,7 @@ class NumericUpdateTest extends NumericUpdate {
     });
 
     expect(update.toPartialUpdate(() => "0000")).deep.equal({
-      _updates_: FieldValue.arrayUnion({
+      _updates_: firestore.FieldValue.arrayUnion({
         _id_: "0000",
         _data_: {
           a: { aa: 1, ab: 2 },
