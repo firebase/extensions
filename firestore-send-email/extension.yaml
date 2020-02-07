@@ -109,7 +109,7 @@ params:
     required: true
     description: >-
       The email address to use as the sender's address (if it's not specified in the added email document).
-    example: foobar <foobar@example.com>  
+    example: Friendly Firebaser <foobar@example.com>  
 
   - param: DEFAULT_REPLY_TO
     type: string
