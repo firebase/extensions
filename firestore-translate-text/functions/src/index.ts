@@ -25,8 +25,8 @@ import * as validators from "./validators";
 type Translation = {
   language: string;
   output: {
-    string: string,
-    language: string
+    string: string;
+    language: string;
   };
 };
 
@@ -163,13 +163,13 @@ const translateDocument = async (
 
   try {
     const translations = (await Promise.all(tasks)).filter(
-      ({language, output}): boolean => {
+      ({ language, output }): boolean => {
         if (config.shouldUpdate) {
-          return true
+          return true;
         }
-        return output.language === language
+        return output.language === language;
       }
-    )
+    );
 
     logs.translateInputToAllLanguagesComplete(input);
 
@@ -202,8 +202,8 @@ const translateString = async (
 
     logs.translateStringComplete(string, targetLanguage);
 
-    const [prediction] = await translate.detect(string)
-    return {string: translatedString, language: prediction.language};
+    const [prediction] = await translate.detect(string);
+    return { string: translatedString, language: prediction.language };
   } catch (err) {
     logs.translateStringError(string, targetLanguage, err);
     throw err;

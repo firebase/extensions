@@ -19,5 +19,5 @@ export default {
   location: process.env.LOCATION,
   inputFieldName: process.env.INPUT_FIELD_NAME,
   outputFieldName: process.env.OUTPUT_FIELD_NAME,
-  shouldUpdate: process.env.SHOULD_UPDATE
+  shouldUpdate: process.env.SHOULD_UPDATE,
 };
