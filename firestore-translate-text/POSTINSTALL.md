@@ -29,7 +29,7 @@ Whenever you write a string to the field `${param:INPUT_FIELD_NAME}` in `${param
 }
 ```
 
-If the `${param:INPUT_FIELD_NAME}` field of the document is updated, then the translations will be automatically updated, as well.
+By default, if the `${param:INPUT_FIELD_NAME}` field of the document is updated, then the translations will be automatically updated, as well. To skip re-translating the translations, set `${param:SHOULD_UPDATE}` to `false`.
 
 ### Monitoring
 
