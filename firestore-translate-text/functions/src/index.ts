@@ -24,7 +24,10 @@ import * as validators from "./validators";
 
 type Translation = {
   language: string;
-  output: string;
+  output: {
+    string: string,
+    language: string
+  };
 };
 
 enum ChangeType {
@@ -159,7 +162,14 @@ const translateDocument = async (
   );
 
   try {
-    const translations = await Promise.all(tasks);
+    const translations = (await Promise.all(tasks)).filter(
+      ({language, output}): boolean => {
+        if (config.shouldUpdate) {
+          return true
+        }
+        return output.language === language
+      }
+    )
 
     logs.translateInputToAllLanguagesComplete(input);
 
@@ -181,18 +191,19 @@ const translateDocument = async (
 const translateString = async (
   string: string,
   targetLanguage: string
-): Promise<string> => {
+): Promise<Translation["output"]> => {
   try {
     logs.translateInputString(string, targetLanguage);
 
     const [translatedString] = await translate.translate(
       string,
       targetLanguage
-    );
+      );
 
     logs.translateStringComplete(string, targetLanguage);
 
-    return translatedString;
+    const [prediction] = await translate.detect(string)
+    return {string: translatedString, language: prediction.language};
   } catch (err) {
     logs.translateStringError(string, targetLanguage, err);
     throw err;

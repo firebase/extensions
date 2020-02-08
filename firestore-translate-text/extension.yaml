@@ -122,3 +122,16 @@ params:
     default: translated
     example: translated
     required: true
+
+  - param: SHOULD_UPDATE
+    label: Re-translate on update
+    description: >
+      Should updating the input be reflected on the translations after creation?
+    options:
+      - label: Yes, update every time
+        value: true
+      - label: No, only initial translation
+        value: false
+    default: true
+    example: false
+    required: true

@@ -111,7 +111,11 @@ export const translateInputStringToAllLanguages = (
 };
 
 export const translateInputToAllLanguagesComplete = (string: string) => {
-  console.log(`Finished translating string: '${string}'`);
+  if (config.shouldUpdate) {
+    console.log(`Finished translating string: '${string}'`);
+  } else {
+    console.log(`Finished syncing string: '${string}'`);
+  }
 };
 
 export const translateInputToAllLanguagesError = (
