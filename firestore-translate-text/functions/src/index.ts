@@ -198,7 +198,7 @@ const translateString = async (
     const [translatedString] = await translate.translate(
       string,
       targetLanguage
-      );
+    );
 
     logs.translateStringComplete(string, targetLanguage);
 
