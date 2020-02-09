@@ -25,7 +25,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@firebaseextensions/firestore-bigquery-change-tracker": "^1.0.1",
-    "@google-cloud/bigquery": "^2.1.0",
     "firebase-admin": "^7.1.1",
     "firebase-functions": "^2.2.1",
     "generate-schema": "^2.6.0",
