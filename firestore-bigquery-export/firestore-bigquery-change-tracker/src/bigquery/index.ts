@@ -24,7 +24,6 @@ import {
   FirestoreDocumentChangeEvent,
 } from "../tracker";
 import * as logs from "../logs";
-import { InsertRowsOptions } from "@google-cloud/bigquery/build/src/table";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
@@ -73,8 +72,8 @@ export class FirestoreBigQueryEventHistoryTracker
     const options = {
       skipInvalidRows: false,
       ignoreUnkownValues: false,
-      raw: true
-    } as InsertRowsOptions;
+      raw: true,
+    };
     try {
       const dataset = this.bq.dataset(this.config.datasetId);
       const table = dataset.table(this.rawChangeLogTableName());
