@@ -108,8 +108,9 @@ params:
     validationErrorMessage: Must be a valid email address
     required: true
     description: >-
-      The email address to use as the sender's address (if it's not specified in the added email document).
-    example: Friendly Firebaser <foobar@example.com>  
+      The email address to use as the sender's address (if it's not specified in the added email document). 
+      You can optionally include a name with the email address (Friendly Firebaser <foobar@example.com>).
+    example: foobar@example.com  
 
   - param: DEFAULT_REPLY_TO
     type: string
