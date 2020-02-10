@@ -24,7 +24,6 @@ import {
   FirestoreDocumentChangeEvent,
 } from "../tracker";
 import * as logs from "../logs";
-import { BigQuery } from "@google-cloud/bigquery";
 import { InsertRowsOptions } from "@google-cloud/bigquery/build/src/table";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
