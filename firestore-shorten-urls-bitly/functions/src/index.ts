@@ -37,6 +37,9 @@ class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
       },
       baseURL: "https://api-ssl.bitly.com/v4/",
     });
+    
+    this.instance.defaults.headers["Content-Type"] = "application/json";
+
     logs.init();
   }
 
@@ -51,7 +54,7 @@ class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
         long_url: url,
       });
 
-      const { link } = response;
+      const { link } = response.data;
 
       logs.shortenUrlComplete(link);
 
