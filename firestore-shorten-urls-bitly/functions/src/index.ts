@@ -34,12 +34,11 @@ class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
     this.instance = axios.create({
       headers: {
         Authorization: `Bearer ${bitlyAccessToken}`,
+        "Content-Type": "application/json",
       },
       baseURL: "https://api-ssl.bitly.com/v4/",
     });
     
-    this.instance.defaults.headers["Content-Type"] = "application/json";
-
     logs.init();
   }
 
