@@ -38,7 +38,7 @@ class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
       },
       baseURL: "https://api-ssl.bitly.com/v4/",
     });
-    
+
     logs.init();
   }
 
