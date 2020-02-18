@@ -1,3 +1,7 @@
+## Version 0.1.3
+
+fix - Fix 406 HTTP error code from Bit.ly API due to "Content-Type" not being set.  (#202)
+
 ## Version 0.1.2
 
 fixed - Migrates Bitly API to v4 since v3 will be deactivated on March 1, 2020 (Issue #170).
