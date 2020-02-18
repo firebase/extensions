@@ -1,6 +1,6 @@
 ## Version 0.1.3
 
-fix - Fix 406 HTTP error code from Bit.ly API due to "Content-Type" not being set.  (#202)
+fix - Fix 406 HTTP error code from Bit.ly API due to "Content-Type" not being set.
 
 ## Version 0.1.2
 
