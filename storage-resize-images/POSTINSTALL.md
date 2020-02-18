@@ -4,7 +4,7 @@ You can test out this extension right away:
 
 1.  Go to your [Storage dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/storage).
 
-1.  Upload an image file to the bucket: `${param:IMG_BUCKET}`. The file must have a valid [image MIME Type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types#Image_types), for example `image/png`.
+1.  Upload an image file to the bucket: `${param:IMG_BUCKET}`
 
 1.  In a few seconds, the resized image(s) appear in the same bucket.
 
@@ -29,7 +29,11 @@ The extension also copies the following metadata, if present, from the original 
 - [`Content-Type`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Type)
 - [user-provided metadata](https://cloud.google.com/storage/docs/metadata#custom-metadata) (except Firebase storage download tokens)
 
-Note that if you configured the `Cache-Control header for resized images` param, the specified value will overwrite the value copied from the original image. Learn more about image metadata in the [Cloud Storage documentation](https://firebase.google.com/docs/storage/).
+Be aware of the following when using this extension:
+
+- Each original image must have a valid [image MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types#Image_types) specified in its [`Content-Type` metadata](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Type) (for example, `image/png`).
+
+- If you configured the `Cache-Control header for resized images` param, the specified value will overwrite the value copied from the original image. Learn more about image metadata in the [Cloud Storage documentation](https://firebase.google.com/docs/storage/).
 
 ### Monitoring
 
