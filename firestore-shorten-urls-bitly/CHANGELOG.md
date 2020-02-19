@@ -1,6 +1,6 @@
 ## Version 0.1.3
 
-fixed - Fixed 406 HTTP error code from Bitly API due to `Content-Type` metadata not being set (#202).
+fixed - Fixed 406 HTTP error code from Bitly API due to `Content-Type` header not being set (#202).
 
 ## Version 0.1.2
 
