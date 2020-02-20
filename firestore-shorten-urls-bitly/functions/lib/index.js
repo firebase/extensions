@@ -34,6 +34,7 @@ class FirestoreBitlyUrlShortener extends abstract_shortener_1.FirestoreUrlShorte
         this.instance = axios_1.default.create({
             headers: {
                 Authorization: `Bearer ${bitlyAccessToken}`,
+                "Content-Type": "application/json",
             },
             baseURL: "https://api-ssl.bitly.com/v4/",
         });
@@ -47,7 +48,7 @@ class FirestoreBitlyUrlShortener extends abstract_shortener_1.FirestoreUrlShorte
                 const response = yield this.instance.post("bitlinks", {
                     long_url: url,
                 });
-                const { link } = response;
+                const { link } = response.data;
                 logs.shortenUrlComplete(link);
                 yield this.updateShortUrl(snapshot, link);
             }
