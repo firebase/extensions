@@ -53,6 +53,7 @@ resources:
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.create
         resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${NODE_PATH}/{messageid}
+
 params:
   - param: LOCATION
     type: select
