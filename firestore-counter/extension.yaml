@@ -21,7 +21,7 @@ description:
   Records event counters at scale to accommodate high-velocity writes to Cloud Firestore.
 
 license: Apache-2.0
-billingRequired: false
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-counter
 releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-counter/CHANGELOG.md
 
@@ -32,6 +32,8 @@ author:
 contributors:
   - authorName: Patryk Lesiewicz
     url: https://github.com/lepatryk
+
+billingRequired: false
 
 roles:
   - role: datastore.user
