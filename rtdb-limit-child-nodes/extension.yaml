@@ -13,10 +13,10 @@
 # limitations under the License.
 
 name: rtdb-limit-child-nodes
-displayName: Limit Child Nodes
-specVersion: v1beta
 version: 0.1.0
+specVersion: v1beta
 
+displayName: Limit Child Nodes
 description:
   Limits the number of nodes to a specified maximum count in a specified Realtime Database path.
 
