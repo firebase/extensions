@@ -21,7 +21,7 @@ description:
   Sends realtime, incremental updates from a specified Cloud Firestore collection to BigQuery.
 
 license: Apache-2.0
-billingRequired: true
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-bigquery-export
 releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/CHANGELOG.md
 
@@ -33,6 +33,8 @@ contributors:
   - authorName: Jan Wyszynski
     email: wyszynski@google.com
     url: https://github.com/IanWyszynski
+
+billingRequired: true
 
 apis:
   - apiName: bigquery-json.googleapis.com
