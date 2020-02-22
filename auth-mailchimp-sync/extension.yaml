@@ -21,7 +21,7 @@ description:
   Adds new users from Firebase Authentication to a specified Mailchimp audience.
 
 license: Apache-2.0
-billingRequired: true
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/auth-mailchimp-sync
 releaseNotesUrl: https://github.com/firebase/extensions/blob/master/auth-mailchimp-sync/CHANGELOG.md
 
@@ -38,6 +38,8 @@ contributors:
   - authorName: Elliot Hesp
     email: elliot@invertase.io
     url: https://github.com/ehesp
+
+billingRequired: true
 
 resources:
   - name: addUserToList
