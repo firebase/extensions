@@ -15,8 +15,8 @@
 name: firestore-send-email
 version: 0.1.3
 specVersion: v1beta
-displayName: Trigger Email
 
+displayName: Trigger Email
 description:
   Composes and sends an email based on the contents of a document written to a specified Cloud Firestore collection.
 
