@@ -21,7 +21,7 @@ description:
   Limits the number of nodes to a specified maximum count in a specified Realtime Database path.
 
 license: Apache-2.0
-billingRequired: false
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/rtdb-limit-child-nodes
 releaseNotesUrl: https://github.com/firebase/extensions/blob/master/rtdb-limit-child-nodes/CHANGELOG.md
 
@@ -33,6 +33,8 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
+
+billingRequired: false
 
 roles:
   - role: firebasedatabase.admin
