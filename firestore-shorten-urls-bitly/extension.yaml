@@ -21,7 +21,7 @@ description:
   Shortens URLs written to a specified Cloud Firestore collection (uses Bitly).
 
 license: Apache-2.0
-billingRequired: true
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-shorten-urls-bitly
 releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-shorten-urls-bitly/CHANGELOG.md
 
@@ -36,6 +36,8 @@ contributors:
   - authorName: Kevin Cheung
     email: kevincheung@google.com
     url: https://github.com/kevinthecheung
+
+billingRequired: true
 
 roles:
   - role: datastore.user
