@@ -21,7 +21,7 @@ description:
   Composes and sends an email based on the contents of a document written to a specified Cloud Firestore collection.
 
 license: Apache-2.0
-billingRequired: true
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-send-email
 releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-send-email/CHANGELOG.md
 
@@ -35,6 +35,8 @@ contributors:
   - authorName: Elliot Hesp
     email: elliot@invertase.io
     url: https://github.com/ehesp
+
+billingRequired: true
 
 roles:
   - role: datastore.user
