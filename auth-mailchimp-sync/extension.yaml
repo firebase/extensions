@@ -53,6 +53,7 @@ resources:
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.create
         resource: projects/${PROJECT_ID}
+
   - name: removeUserFromList
     type: firebaseextensions.v1beta.function
     description:
