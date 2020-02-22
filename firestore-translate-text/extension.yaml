@@ -22,7 +22,7 @@ description:
   Translates strings written to a Cloud Firestore collection into multiple languages (uses Cloud Translation API).
 
 license: Apache-2.0
-billingRequired: true
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-translate-text
 releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-translate-text/CHANGELOG.md
 
@@ -34,6 +34,8 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
+
+billingRequired: true
 
 apis:
   - apiName: translate.googleapis.com
