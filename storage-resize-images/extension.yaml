@@ -55,7 +55,6 @@ resources:
       Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images,
       then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
     properties:
-      sourceDirectory: .
       location: ${LOCATION}
       availableMemoryMb: 1024
       eventTrigger:
