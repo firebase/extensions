@@ -51,9 +51,10 @@ When making pull requests to the repository, make sure to follow these guideline
 - For commit messages, follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format.
   - For example, if you update documentation for a specific extension, your commit message might be: `docs(extension-name) updated installation documentation`.
 - For your PR to be merged:
+
   - You must sign the [Google Contributor License Agreement](https://cla.developers.google.com/clas).
   - All tests must pass.
-  
+
 ### Features
 
 Before creating pull requests for new features, first file a GitHub Issue describing the reasoning and motivation for the feature. This gives maintainers and the community the opportunity to provide feedback on your idea before implementing it.
