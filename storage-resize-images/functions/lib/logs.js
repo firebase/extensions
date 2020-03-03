@@ -19,6 +19,9 @@ const config_1 = require("./config");
 exports.complete = () => {
     console.log("Completed execution of extension");
 };
+exports.noContentType = () => {
+    console.log(`File has no Content-Type, no processing is required`);
+};
 exports.contentTypeInvalid = (contentType) => {
     console.log(`File of type '${contentType}' is not an image, no processing is required`);
 };
