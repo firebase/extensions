@@ -63,7 +63,7 @@ describe("extension config", () => {
       expect(extensionParam).toMatchSnapshot();
     });
 
-    test("removes duplicated any duplicated languages from user input", () => {
+    test("removes any duplicated languages from user input", () => {
       const functionsConfig = require("../functions/src/config").default;
       expect(functionsConfig.languages).toEqual(["en", "es", "de", "fr"]);
     });
