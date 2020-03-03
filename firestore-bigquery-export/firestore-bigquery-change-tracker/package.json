@@ -22,13 +22,13 @@
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@google-cloud/bigquery": "^2.1.0",
+    "@google-cloud/bigquery": "^4.7.0",
     "firebase-admin": "^7.1.1",
     "firebase-functions": "^2.2.1",
-    "lodash": "^4.17.14",
-    "sql-formatter": "^2.3.3",
     "generate-schema": "^2.6.0",
-    "inquirer": "^6.4.0"
+    "inquirer": "^6.4.0",
+    "lodash": "^4.17.14",
+    "sql-formatter": "^2.3.3"
   },
   "devDependencies": {
     "chai": "^4.2.0",
