@@ -106,11 +106,13 @@ params:
   - param: DEFAULT_FROM
     type: string
     label: Default FROM address
-    validationRegex: ^\S+@\S+\.\S+$
-    validationErrorMessage: Must be a valid email address
+    validationRegex: ^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$|^.*<(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})>$
+    validationErrorMessage: Must be a valid email address or valid name plus email address
     required: true
     description: >-
-      The email address to use as the sender's address (if it's not specified in the added email document).
+      The email address to use as the sender's address (if it's not specified in the added email document). 
+      You can optionally include a name with the email address (Friendly Firebaser <foobar@example.com>).
+    example: foobar@example.com  
 
   - param: DEFAULT_REPLY_TO
     type: string
