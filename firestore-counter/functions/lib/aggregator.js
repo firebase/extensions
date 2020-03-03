@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-const firestore_1 = require("@google-cloud/firestore");
+const firebase_admin_1 = require("firebase-admin");
 const uuid = require("uuid");
 class NumericUpdate {
     constructor() {
@@ -56,7 +56,7 @@ class NumericUpdate {
         if (this.isNoop())
             return {};
         return {
-            _updates_: firestore_1.FieldValue.arrayUnion({
+            _updates_: firebase_admin_1.firestore.FieldValue.arrayUnion({
                 _id_: uuidv4(),
                 _data_: this.data,
             }),
