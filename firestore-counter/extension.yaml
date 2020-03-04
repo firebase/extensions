@@ -13,15 +13,15 @@
 # limitations under the License.
 
 name: firestore-counter
-displayName: Distributed Counter
+version: 0.1.3
 specVersion: v1beta
-version: 0.1.2
 
+displayName: Distributed Counter
 description:
   Records event counters at scale to accommodate high-velocity writes to Cloud Firestore.
 
 license: Apache-2.0
-billingRequired: false
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-counter
 releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-counter/CHANGELOG.md
 
@@ -32,6 +32,8 @@ author:
 contributors:
   - authorName: Patryk Lesiewicz
     url: https://github.com/lepatryk
+
+billingRequired: false
 
 roles:
   - role: datastore.user
@@ -98,9 +100,9 @@ params:
     type: select
     label: Cloud Functions location
     description: >-
-      Where do you want to deploy the functions created for this extension? 
-      You usually want a location close to your database. For help selecting a 
-      location, refer to the [location selection 
+      Where do you want to deploy the functions created for this extension?
+      You usually want a location close to your database. For help selecting a
+      location, refer to the [location selection
       guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)

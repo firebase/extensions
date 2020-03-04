@@ -1,3 +1,7 @@
+## Version 0.1.3
+
+build - Updates the firebase-admin and firebase-functions packages to the latest versions (issue #181).
+
 ## Version 0.1.2
 
 feature - Limit shards to 100 documents, to optimize performance.

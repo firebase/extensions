@@ -15,13 +15,13 @@
 name: auth-mailchimp-sync
 version: 0.1.0
 specVersion: v1beta
-displayName: Sync with Mailchimp
 
+displayName: Sync with Mailchimp
 description:
   Adds new users from Firebase Authentication to a specified Mailchimp audience.
 
 license: Apache-2.0
-billingRequired: true
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/auth-mailchimp-sync
 releaseNotesUrl: https://github.com/firebase/extensions/blob/master/auth-mailchimp-sync/CHANGELOG.md
 
@@ -39,6 +39,8 @@ contributors:
     email: elliot@invertase.io
     url: https://github.com/ehesp
 
+billingRequired: true
+
 resources:
   - name: addUserToList
     type: firebaseextensions.v1beta.function
@@ -51,6 +53,7 @@ resources:
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.create
         resource: projects/${PROJECT_ID}
+
   - name: removeUserFromList
     type: firebaseextensions.v1beta.function
     description:
