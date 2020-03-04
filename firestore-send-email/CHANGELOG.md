@@ -1,6 +1,6 @@
 ## Version 0.1.4
 
-feature - Updated "Default FROM address" parameter to accept either an email address _or_ a name plus email address (issue #167).
+feature - Updated "Default FROM address" parameter to accept either an email address (`foobar@example.com`) _or_ a name plus email address (`Friendly Firebaser <foobar@example.com>`). (issue #167)
 
 ## Version 0.1.3
 
