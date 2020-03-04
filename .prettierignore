@@ -9,6 +9,7 @@ README.md
 **/functions/lib/**
 **/lib/**
 **/dist/**
+coverage
 
 # extension install md files
 #   - excluded as prettier escapes variables e.g. `${PROJECT_ID}` becomes `\${PROJECT_ID}`

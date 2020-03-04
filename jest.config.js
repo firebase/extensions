@@ -16,4 +16,5 @@ module.exports = {
     "!**/node_modules/**",
     "!**/exts-test-data/**",
   ],
+  maxConcurrency: 10,
 };
