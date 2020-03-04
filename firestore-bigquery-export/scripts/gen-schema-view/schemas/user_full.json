@@ -26,7 +26,7 @@
       ],
       "name": "friends",
       "type": "map",
-      "description": "Sorry, can't describe a map. What is that?"
+      "description": "Maps don't need a description because a column is not created for a map. Instead, their fields are added as columns to the resulting dataset."
     }
   ]
 }
