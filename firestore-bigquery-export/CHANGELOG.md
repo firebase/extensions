@@ -1,7 +1,7 @@
 ## Version 0.1.2
 
 fixed - Added "IF NOT EXISTS" to safely run `fs-bq-schema-views` script multiple times (PR #193).
-fixed - Updated BigQuery library (issue #192 and PR #197).
+fixed - Updated BigQuery dependency in `package.json` for the `fs-bq-import-collection` script (issue #192 and PR #197).
 
 ## Version 0.1.1
 
