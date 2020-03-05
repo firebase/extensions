@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`extension config config loaded from environment variables 1`] = `
+Object {
+  "inputFieldName": "input",
+  "languages": Array [
+    "en",
+    "es",
+    "de",
+    "fr",
+  ],
+  "location": "us-central1",
+  "outputFieldName": "translated",
+}
+`;
+
+exports[`extension config config.LANGUAGES param exists 1`] = `
+Object {
+  "default": "en,es,de,fr",
+  "description": "Into which target languages do you want to translate new strings? The languages are identified using ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr. For these codes, visit the [supported languages list](https://cloud.google.com/translate/docs/languages).
+",
+  "example": "en,es,de,fr",
+  "label": "Target languages for translations, as a comma-separated list",
+  "param": "LANGUAGES",
+  "required": true,
+  "validationErrorMessage": "Languages must be a comma-separated list of ISO-639-1 language codes.",
+  "validationRegex": "^[a-zA-Z,-]*[a-zA-Z-]{2,}$",
+}
+`;

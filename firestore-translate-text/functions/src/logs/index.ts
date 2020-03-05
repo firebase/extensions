@@ -14,80 +14,67 @@
  * limitations under the License.
  */
 
-import config from "./config";
+import config from "../config";
+import { messages } from "./messages";
 
 export const complete = () => {
-  console.log("Completed execution of extension");
+  console.log(messages.complete());
 };
 
 export const documentCreatedNoInput = () => {
-  console.log(
-    "Document was created without an input string, no processing is required"
-  );
+  console.log(messages.documentCreatedNoInput());
 };
 
 export const documentCreatedWithInput = () => {
-  console.log("Document was created with an input string");
+  console.log(messages.documentCreatedWithInput());
 };
 
 export const documentDeleted = () => {
-  console.log("Document was deleted, no processing is required");
+  console.log(messages.documentDeleted());
 };
 
 export const documentUpdatedChangedInput = () => {
-  console.log("Document was updated, input string has changed");
+  console.log(messages.documentUpdatedChangedInput());
 };
 
 export const documentUpdatedDeletedInput = () => {
-  console.log("Document was updated, input string was deleted");
+  console.log(messages.documentUpdatedDeletedInput());
 };
 
 export const documentUpdatedNoInput = () => {
-  console.log(
-    "Document was updated, no input string exists, no processing is required"
-  );
+  console.log(messages.documentUpdatedNoInput());
 };
 
 export const documentUpdatedUnchangedInput = () => {
-  console.log(
-    "Document was updated, input string has not changed, no processing is required"
-  );
+  console.log(messages.documentUpdatedUnchangedInput());
 };
 
 export const error = (err: Error) => {
-  console.error("Failed execution of extension", err);
+  console.error(...messages.error(err));
 };
 
 export const fieldNamesNotDifferent = () => {
-  console.error(
-    "The `Input` and `Output` field names must be different for this extension to function correctly"
-  );
+  console.error(messages.fieldNamesNotDifferent());
 };
 
 export const init = () => {
-  console.log("Initializing extension with configuration", config);
+  console.log(...messages.init(config));
 };
 
 export const inputFieldNameIsOutputPath = () => {
-  console.error(
-    "The `Input` field name must not be the same as an `Output` path for this extension to function correctly"
-  );
+  console.error(messages.inputFieldNameIsOutputPath());
 };
 
 export const start = () => {
-  console.log("Started execution of extension with configuration", config);
+  console.log(...messages.start(config));
 };
 
 export const translateInputString = (string: string, language: string) => {
-  console.log(
-    `Translating string: '${string}' into language(s): '${language}'`
-  );
+  console.log(messages.translateInputString(string, language));
 };
 
 export const translateStringComplete = (string: string, language: string) => {
-  console.log(
-    `Finished translating string: '${string}' into language(s): '${language}'`
-  );
+  console.log(messages.translateStringComplete(string, language));
 };
 
 export const translateStringError = (
@@ -95,36 +82,31 @@ export const translateStringError = (
   language: string,
   err: Error
 ) => {
-  console.error(
-    `Error when translating string: '${string}' into language(s): '${language}'`,
-    err
-  );
+  console.error(...messages.translateStringError(string, language, err));
 };
 
 export const translateInputStringToAllLanguages = (
   string: string,
   languages: string[]
 ) => {
-  console.log(
-    `Translating string: '${string}' into language(s): '${languages.join(",")}'`
-  );
+  console.log(messages.translateInputStringToAllLanguages(string, languages));
 };
 
 export const translateInputToAllLanguagesComplete = (string: string) => {
-  console.log(`Finished translating string: '${string}'`);
+  console.log(messages.translateInputToAllLanguagesComplete(string));
 };
 
 export const translateInputToAllLanguagesError = (
   string: string,
   err: Error
 ) => {
-  console.error(`Error when translating string: '${string}'`, err);
+  console.error(...messages.translateInputToAllLanguagesError(string, err));
 };
 
 export const updateDocument = (path: string) => {
-  console.log(`Updating Cloud Firestore document: '${path}'`);
+  console.log(...messages.updateDocument(path));
 };
 
 export const updateDocumentComplete = (path: string) => {
-  console.log(`Finished updating Cloud Firestore document: '${path}'`);
+  console.log(...messages.updateDocumentComplete(path));
 };

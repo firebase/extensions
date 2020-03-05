@@ -68,7 +68,7 @@ function firestoreArrayFunction(datasetId: string): any {
 
 function firestoreArrayDefinition(datasetId: string): string {
   return sqlFormatter.format(`
-    CREATE FUNCTION \`${
+    CREATE FUNCTION IF NOT EXISTS \`${
       process.env.PROJECT_ID
     }.${datasetId}.firestoreArray\`(json STRING)
     RETURNS ARRAY<STRING>
@@ -87,7 +87,7 @@ function firestoreBooleanFunction(datasetId: string): any {
 
 function firestoreBooleanDefinition(datasetId: string): string {
   return sqlFormatter.format(`
-    CREATE FUNCTION \`${
+    CREATE FUNCTION IF NOT EXISTS \`${
       process.env.PROJECT_ID
     }.${datasetId}.firestoreBoolean\`(json STRING)
     RETURNS BOOLEAN AS (SAFE_CAST(json AS BOOLEAN));`);
@@ -103,7 +103,7 @@ function firestoreNumberFunction(datasetId: string): any {
 
 function firestoreNumberDefinition(datasetId: string): string {
   return sqlFormatter.format(`
-    CREATE FUNCTION \`${
+    CREATE FUNCTION IF NOT EXISTS \`${
       process.env.PROJECT_ID
     }.${datasetId}.firestoreNumber\`(json STRING)
     RETURNS NUMERIC AS (SAFE_CAST(json AS NUMERIC));`);
@@ -119,7 +119,7 @@ function firestoreTimestampFunction(datasetId: string): any {
 
 function firestoreTimestampDefinition(datasetId: string): string {
   return sqlFormatter.format(`
-    CREATE FUNCTION \`${
+    CREATE FUNCTION IF NOT EXISTS \`${
       process.env.PROJECT_ID
     }.${datasetId}.firestoreTimestamp\`(json STRING)
     RETURNS TIMESTAMP AS
@@ -136,7 +136,7 @@ function firestoreGeopointFunction(datasetId: string): any {
 
 function firestoreGeopointDefinition(datasetId: string): string {
   return sqlFormatter.format(`
-    CREATE FUNCTION \`${
+    CREATE FUNCTION IF NOT EXISTS \`${
       process.env.PROJECT_ID
     }.${datasetId}.firestoreGeopoint\`(json STRING)
     RETURNS GEOGRAPHY AS
