@@ -1,6 +1,6 @@
 ## Version 0.1.5
 
-fixed -  The original, uploaded image's MIME type must now always be specified in the `Content-Type` header. (issue #175)
+fixed - The original, uploaded image's MIME type must now always be specified in the `Content-Type` header. (issue #175)
 
 ## Version 0.1.4
 
