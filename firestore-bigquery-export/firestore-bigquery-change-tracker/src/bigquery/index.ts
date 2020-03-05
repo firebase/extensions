@@ -24,7 +24,6 @@ import {
   FirestoreDocumentChangeEvent,
 } from "../tracker";
 import * as logs from "../logs";
-import { BigQuery } from "@google-cloud/bigquery";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
@@ -51,9 +50,6 @@ export class FirestoreBigQueryEventHistoryTracker
 
   async record(events: FirestoreDocumentChangeEvent[]) {
     await this.initialize();
-    const options = {
-      raw: true,
-    };
     const rows = events.map((event) => {
       return {
         insertId: event.eventId,
@@ -66,23 +62,23 @@ export class FirestoreBigQueryEventHistoryTracker
         },
       };
     });
-    await this.insertData(rows, options);
+    await this.insertData(rows);
   }
 
   /**
    * Inserts rows of data into the BigQuery raw change log table.
    */
-  private async insertData(rows: bigquery.RowMetadata[], options: object) {
-    const payload = {
+  private async insertData(rows: bigquery.RowMetadata[]) {
+    const options = {
       skipInvalidRows: false,
       ignoreUnkownValues: false,
-      rows: rows,
+      raw: true,
     };
     try {
       const dataset = this.bq.dataset(this.config.datasetId);
       const table = dataset.table(this.rawChangeLogTableName());
       logs.dataInserting(rows.length);
-      await table.insert(payload, options);
+      await table.insert(rows, options);
       logs.dataInserted(rows.length);
     } catch (e) {
       // Reinitializing in case the destintation table is modified.
