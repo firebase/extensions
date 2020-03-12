@@ -54,7 +54,6 @@ resources:
       Listens for writes of new strings to your specified Cloud Firestore collection, translates the strings,
       then writes the translated strings back to the same document.
     properties:
-      sourceDirectory: functions
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
