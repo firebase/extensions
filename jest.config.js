@@ -1,5 +1,8 @@
 module.exports = {
-  projects: ["<rootDir>/*/jest.config.js", "<rootDir>/*/functions/jest.config.js"],
+  projects: [
+    "<rootDir>/*/jest.config.js",
+    "<rootDir>/*/functions/jest.config.js",
+  ],
   testPathIgnorePatterns: [
     ".*/bin/",
     ".*/lib/",
