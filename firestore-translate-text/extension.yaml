@@ -33,6 +33,9 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
 
 billingRequired: true
 
@@ -51,7 +54,7 @@ resources:
       Listens for writes of new strings to your specified Cloud Firestore collection, translates the strings,
       then writes the translated strings back to the same document.
     properties:
-      sourceDirectory: .
+      sourceDirectory: functions
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
@@ -62,9 +65,9 @@ params:
     type: select
     label: Cloud Functions location
     description: >-
-      Where do you want to deploy the functions created for this extension? 
-      You usually want a location close to your database. For help selecting a 
-      location, refer to the [location selection 
+      Where do you want to deploy the functions created for this extension?
+      You usually want a location close to your database. For help selecting a
+      location, refer to the [location selection
       guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)
