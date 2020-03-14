@@ -15,7 +15,10 @@ export const messages = {
   error: (err: Error) => ["Failed execution of extension", err],
   fieldNamesNotDifferent: () =>
     "The `Input` and `Output` field names must be different for this extension to function correctly",
-  init: (config = {}) => ["Initializing extension with the parameter values", config],
+  init: (config = {}) => [
+    "Initializing extension with the parameter values",
+    config
+  ],
   inputFieldNameIsOutputPath: () =>
     "The `Input` field name must not be the same as an `Output` path for this extension to function correctly",
   start: (config = {}) => [
