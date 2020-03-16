@@ -76,28 +76,28 @@ export const controller = functions.handler.https.onRequest(
  * ControllerCore is monitoring these metadata documents to detect overload that requires
  * resharding and to detect failed workers that need poking.
  */
-export const worker = functions.handler.firestore
-  .document
-  .onWrite(async (change, context) => {
+export const worker = functions.handler.firestore.document.onWrite(
+  async (change, context) => {
     // stop worker if document got deleted
     if (!change.after.exists) return;
 
     const worker = new ShardedCounterWorker(change.after, SHARDS_COLLECTION_ID);
     await worker.run();
-  });
+  }
+);
 
 /**
  * This is an additional function that is triggered for every shard write. It is
  * limited to one concurrent run at the time. This helps reduce latency for workloads
  * that are below the threshold for workers.
  */
-export const onWrite = functions.handler.firestore
-  .document
-  .onWrite(async (change, context) => {
+export const onWrite = functions.handler.firestore.document.onWrite(
+  async (change, context) => {
     const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new ShardedCounterController(
       metadocRef,
       SHARDS_COLLECTION_ID
     );
     await controller.aggregateContinuously({ start: "", end: "" }, 200, 60000);
-  });
+  }
+);
