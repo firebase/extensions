@@ -56,15 +56,17 @@ export const controllerCore = functions.handler.pubsub.topic.onPublish(
 /**
  * Backwards compatible HTTPS function
  */
-export const controller = functions.https.onRequest(async (req, res) => {
-  if (!pubsub) {
-    pubsub = new PubSub();
+export const controller = functions.handler.https.onRequest(
+  async (req, res) => {
+    if (!pubsub) {
+      pubsub = new PubSub();
+    }
+    await pubsub
+      .topic(process.env.EXT_INSTANCE_ID)
+      .publish(Buffer.from(JSON.stringify({})));
+    res.status(200).send("Ok");
   }
-  await pubsub
-    .topic(process.env.EXT_INSTANCE_ID)
-    .publish(Buffer.from(JSON.stringify({})));
-  res.status(200).send("Ok");
-});
+);
 
 /**
  * Worker is responsible for aggregation of a defined range of shards. It is controlled
@@ -74,10 +76,8 @@ export const controller = functions.https.onRequest(async (req, res) => {
  * ControllerCore is monitoring these metadata documents to detect overload that requires
  * resharding and to detect failed workers that need poking.
  */
-export const worker = functions.firestore
-  .document(
-    process.env.INTERNAL_STATE_PATH + WORKERS_COLLECTION_ID + "/{workerId}"
-  )
+export const worker = functions.handler.firestore
+  .document
   .onWrite(async (change, context) => {
     // stop worker if document got deleted
     if (!change.after.exists) return;
@@ -91,8 +91,8 @@ export const worker = functions.firestore
  * limited to one concurrent run at the time. This helps reduce latency for workloads
  * that are below the threshold for workers.
  */
-export const onWrite = functions.firestore
-  .document("/{collection}/{**}/_counter_shards_/{shardId}")
+export const onWrite = functions.handler.firestore
+  .document
   .onWrite(async (change, context) => {
     const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new ShardedCounterController(
