@@ -1,7 +1,7 @@
 import mockedEnv from "mocked-env";
 import * as functionsTestInit from "firebase-functions-test";
 
-import { messages } from "../functions/src/logs/messages";
+import { messages } from "../src/logs/messages";
 
 const defaultEnvironment = {
   PROJECT_ID: "fake-project",
@@ -40,7 +40,7 @@ describe("extension", () => {
   });
 
   test("functions are exported", () => {
-    const exportedFunctions = jest.requireActual("../functions/src");
+    const exportedFunctions = jest.requireActual("../src");
     expect(exportedFunctions.fstranslate).toBeInstanceOf(Function);
   });
 
@@ -74,7 +74,7 @@ describe("extension", () => {
       // need to reset modules
       jest.resetModules();
       // so we can require clean ../function/src that has not been called
-      require("../functions/src");
+      require("../src");
 
       expect(mockTranslateClass).toHaveBeenCalledTimes(1);
       expect(mockTranslateClass).toHaveBeenCalledWith({
