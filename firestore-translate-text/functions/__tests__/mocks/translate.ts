@@ -9,7 +9,7 @@ export const testTranslations = {
 
 export const mockTranslate = () => {
   let functionsTest = functionsTestInit();
-  return functionsTest.wrap(require("../../functions/src").fstranslate);
+  return functionsTest.wrap(require("../../src").fstranslate);
 };
 
 // await translate.translate('hello', 'de');

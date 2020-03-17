@@ -13,7 +13,7 @@ import {
   mockTranslateModuleFactory,
 } from "./mocks/translate";
 
-global.config = () => require("../functions/src/config").default;
+global.config = () => require("../src/config").default;
 
 global.snapshot = snapshot;
 
