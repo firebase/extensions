@@ -1,3 +1,7 @@
+## Version 0.2.0
+
+No changes.
+
 ## Version 0.1.3
 
 feature - Support deletion of directories (issue #148).
