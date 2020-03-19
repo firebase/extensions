@@ -5,7 +5,7 @@ import * as functionsTestInit from "firebase-functions-test";
 import * as yaml from "js-yaml";
 import mockedEnv from "mocked-env";
 
-import { messages } from "../functions/src/logs/messages";
+import { messages } from "../src/logs/messages";
 
 let restoreEnv;
 let extensionYaml;
@@ -26,7 +26,7 @@ functionsTestInit();
 describe("extension config", () => {
   beforeAll(() => {
     extensionYaml = yaml.safeLoad(
-      readFileSync(pathResolve(__dirname, "../extension.yaml"), "utf8")
+      readFileSync(pathResolve(__dirname, "../../extension.yaml"), "utf8")
     );
 
     extensionParams = extensionYaml.params.reduce((obj, param) => {
@@ -49,7 +49,7 @@ describe("extension config", () => {
   });
 
   test("config is logged on initialize", () => {
-    jest.requireActual("../functions/src");
+    jest.requireActual("../src");
 
     const functionsConfig = config();
 
@@ -64,7 +64,7 @@ describe("extension config", () => {
     });
 
     test("removes any duplicated languages from user input", () => {
-      const functionsConfig = require("../functions/src/config").default;
+      const functionsConfig = require("../src/config").default;
       expect(functionsConfig.languages).toEqual(["en", "es", "de", "fr"]);
     });
 

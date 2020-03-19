@@ -19,7 +19,7 @@ This extension uses Bitly to shorten URLs, so you'll need to supply your Bitly a
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
 
-You must also have a Bit.ly account and access token before installing this extension.
+You must also have a Bitly account and access token before installing this extension.
 
 #### Billing
 
@@ -30,14 +30,14 @@ This extension uses other Firebase or Google Cloud Platform services which may h
 
 When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
 
-Usage of this extension also requires you to have a Bit.ly account. You are responsible for any associated costs with your usage of Bit.ly.
+Usage of this extension also requires you to have a Bitly account. You are responsible for any associated costs with your usage of Bitly.
 
 
 
 
 **Configuration Parameters:**
 
-* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your database. For help selecting a  location, refer to the [location selection  guide](https://firebase.google.com/docs/functions/locations).
+* Cloud Functions location: Where do you want to deploy the functions created for this extension? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
 * Bitly access token: What is your Bitly access token? Generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
 
