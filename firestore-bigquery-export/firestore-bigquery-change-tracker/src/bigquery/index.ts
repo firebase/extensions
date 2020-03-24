@@ -15,6 +15,8 @@
  */
 
 import * as bigquery from "@google-cloud/bigquery";
+import * as firebase from "firebase-admin";
+import traverse from "traverse";
 import { firestoreToBQTable } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 
@@ -50,6 +52,7 @@ export class FirestoreBigQueryEventHistoryTracker
 
   async record(events: FirestoreDocumentChangeEvent[]) {
     await this.initialize();
+
     const rows = events.map((event) => {
       return {
         insertId: event.eventId,
@@ -58,11 +61,28 @@ export class FirestoreBigQueryEventHistoryTracker
           event_id: event.eventId,
           document_name: event.documentName,
           operation: ChangeType[event.operation],
-          data: JSON.stringify(event.data),
+          data: JSON.stringify(this.serializeData(event.data)),
         },
       };
     });
     await this.insertData(rows);
+  }
+
+  serializeData(eventData: any) {
+    if (typeof eventData === "undefined") {
+      return undefined;
+    }
+
+    const data = traverse(eventData).map((property) => {
+      
+      if (property instanceof firebase.firestore.DocumentReference) {
+        return property.path;
+      }
+
+      return property;
+    });
+
+    return data;
   }
 
   /**
@@ -71,7 +91,7 @@ export class FirestoreBigQueryEventHistoryTracker
   private async insertData(rows: bigquery.RowMetadata[]) {
     const options = {
       skipInvalidRows: false,
-      ignoreUnkownValues: false,
+      ignoreUnknownValues: false,
       raw: true,
     };
     try {
