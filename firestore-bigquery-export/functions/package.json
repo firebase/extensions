@@ -19,6 +19,9 @@
     "sql-formatter": "^2.3.3"
   },
   "devDependencies": {
+    "firebase-functions-test": "^0.2.0",
+    "jest": "^24.9.0",
+    "mocked-env": "^1.3.2",
     "typescript": "^3.2.2"
   },
   "private": true

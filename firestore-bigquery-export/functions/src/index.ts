@@ -26,8 +26,8 @@ import { getChangeType } from "./util";
 
 const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker(
   {
-    tableId: config.tableId,
-    datasetId: config.datasetId,
+    tableId: config().tableId,
+    datasetId: config().datasetId,
   }
 );
 
