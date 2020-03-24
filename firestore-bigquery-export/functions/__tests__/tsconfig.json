@@ -1,9 +1,7 @@
 {
-    "extends": "../tsconfig.json",
-    "compilerOptions": {
-      "outDir": "lib"
-    },
-    "files": ["test.types.d.ts"],
-    "include": ["**/*"]
-  }
-  
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "lib"
+  },
+  "include": ["**/*"]
+}

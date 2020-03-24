@@ -4,7 +4,9 @@ import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracke
 import { DocumentSnapshot } from "firebase-functions/lib/providers/firestore";
 
 const functionsTest = functionsTestInit();
-const { firestore: { makeDocumentSnapshot } } = functionsTest;
+const {
+  firestore: { makeDocumentSnapshot },
+} = functionsTest;
 
 export const makeChange = (before, after) => {
   return functionsTest.makeChange(before, after);
@@ -16,25 +18,19 @@ describe("util.getChangeType", () => {
       { foo: "bar" },
       "docs/1"
     );
-    const after: DocumentSnapshot = makeDocumentSnapshot(
-      null,
-      "docs/1"
-    );
+    const after: DocumentSnapshot = makeDocumentSnapshot(null, "docs/1");
     const changeType: ChangeType = getChangeType(makeChange(before, after));
 
     expect(changeType === ChangeType.DELETE).toBeTruthy();
   });
 
   test("return a create change type", () => {
-    const before: DocumentSnapshot = makeDocumentSnapshot(
-       null,
-      "docs/1"
-    );
+    const before: DocumentSnapshot = makeDocumentSnapshot(null, "docs/1");
     const after: DocumentSnapshot = makeDocumentSnapshot(
-      {foo: 'bar'},
+      { foo: "bar" },
       "docs/1"
     );
-    
+
     const changeType: ChangeType = getChangeType(makeChange(before, after));
 
     expect(changeType === ChangeType.CREATE).toBeTruthy();
@@ -55,5 +51,3 @@ describe("util.getChangeType", () => {
     expect(changeType === ChangeType.UPDATE).toBeTruthy();
   });
 });
-
-

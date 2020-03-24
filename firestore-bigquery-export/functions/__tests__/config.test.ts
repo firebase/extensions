@@ -1,8 +1,10 @@
 import { readFileSync } from "fs";
+
 import { resolve as pathResolve } from "path";
 
 import * as yaml from "js-yaml";
 import mockedEnv from "mocked-env";
+import config from "../src/config";
 
 let restoreEnv;
 let extensionYaml;
@@ -13,8 +15,6 @@ const environment = {
   DATASET_ID: "my_dataset",
   TABLE_ID: "my_table",
 };
-
-const { config } = global;
 
 describe("extension config", () => {
   beforeAll(() => {
@@ -40,7 +40,6 @@ describe("extension config", () => {
     expect(functionsConfig).toMatchSnapshot({});
   });
 
-
   // DATASET_ID
   describe("config.datasetId", () => {
     test("param exists", () => {
@@ -56,12 +55,16 @@ describe("extension config", () => {
 
       test("does not allow spaces", () => {
         const { validationRegex } = extensionParams["DATASET_ID"];
-        expect(Boolean("foo bar,".match(new RegExp(validationRegex)))).toBeFalsy();
+        expect(
+          Boolean("foo bar,".match(new RegExp(validationRegex)))
+        ).toBeFalsy();
       });
 
       test("allows a alphanumeric underscore ids", () => {
         const { validationRegex } = extensionParams["DATASET_ID"];
-        expect(Boolean("my_dataset".match(new RegExp(validationRegex)))).toBeTruthy();
+        expect(
+          Boolean("my_dataset".match(new RegExp(validationRegex)))
+        ).toBeTruthy();
       });
     });
   });
@@ -80,12 +83,16 @@ describe("extension config", () => {
       });
       test("does not allow spaces", () => {
         const { validationRegex } = extensionParams["TABLE_ID"];
-        expect(Boolean("foo bar,".match(new RegExp(validationRegex)))).toBeFalsy();
+        expect(
+          Boolean("foo bar,".match(new RegExp(validationRegex)))
+        ).toBeFalsy();
       });
-      
+
       test("allows a alphanumeric underscore ids", () => {
         const { validationRegex } = extensionParams["TABLE_ID"];
-        expect(Boolean("my_table".match(new RegExp(validationRegex)))).toBeTruthy();
+        expect(
+          Boolean("my_table".match(new RegExp(validationRegex)))
+        ).toBeTruthy();
       });
     });
   });

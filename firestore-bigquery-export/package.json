@@ -31,5 +31,8 @@
     "rimraf": "^2.6.3",
     "inquirer": "^6.4.0"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "jest": "^25.1.0"
+  }
 }

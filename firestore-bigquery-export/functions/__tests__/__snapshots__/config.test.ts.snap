@@ -1,6 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`extension config config loaded from environment variables 1`] = `Object {}`;
+exports[`extension config config loaded from environment variables 1`] = `
+Object {
+  "datasetId": "my_dataset",
+  "tableId": "my_table",
+}
+`;
 
 exports[`extension config config.datasetId param exists 1`] = `
 Object {

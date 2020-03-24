@@ -13,6 +13,7 @@ module.exports = {
     ".*/__tests__/.*.ts",
   ],
   preset: "ts-jest",
+
   testEnvironment: "node",
   collectCoverageFrom: [
     "**/*.{ts,tsx}",
