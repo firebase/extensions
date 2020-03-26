@@ -36,8 +36,10 @@ logs.init();
 exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
   async (change, context) => {
     logs.start();
+
     try {
       const changeType = getChangeType(change);
+
       await eventTracker.record([
         {
           timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
