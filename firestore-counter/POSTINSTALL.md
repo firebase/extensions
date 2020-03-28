@@ -51,7 +51,7 @@ gcloud --project=${param:PROJECT_ID} scheduler jobs create pubsub ${param:EXT_IN
     <body>
       <script>
         // Initialize Firebase.
-        var firebaseConfig = { projectId: "${PROJECT_ID}" };
+        var firebaseConfig = { projectId: "${param:PROJECT_ID}" };
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
