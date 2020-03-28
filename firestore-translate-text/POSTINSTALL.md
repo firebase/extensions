@@ -2,7 +2,7 @@
 
 You can test out this extension right away!
 
-1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
+1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data) in the Firebase console.
 
 1.  If it doesn't exist already, create a collection called `${param:COLLECTION_PATH}`.
 
