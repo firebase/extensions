@@ -1,10 +1,10 @@
 ### See it in action
 
-You can test out this extension right away:
+You can test out this extension right away!
 
 1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
 
-1.  If it doesn't already exist, create the collection you specified during installation: `${param:COLLECTION_PATH}`.
+1.  If it doesn't already exist, create the collection you specified during installation: `${param:COLLECTION_PATH}`
 
 1.  Create a document in the collection called `bigquery-mirror-test` that contains any fields with any values that you'd like.
 
