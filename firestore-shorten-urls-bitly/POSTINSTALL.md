@@ -1,6 +1,6 @@
 ### See it in action
 
-You can test out this extension right away:
+You can test out this extension right away!
 
 1.  Go to the [Cloud Firestore tab](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
 
