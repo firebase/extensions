@@ -2,7 +2,7 @@
 
 You can test out this extension right away!
 
-1.  Go to your [Realtime Database dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/${param:PROJECT_ID}/data).
+1.  Go to your [Realtime Database dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/${param:PROJECT_ID}/data) in the Firebase console.
 
 1.  In the path `${param:NODE_PATH}`, add more than ${param:MAX_COUNT} child nodes.
 
