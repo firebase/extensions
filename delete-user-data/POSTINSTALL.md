@@ -2,11 +2,9 @@
 
 You can test out this extension right away!
 
-1.  Go to your [Authentication dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/authentication/users).
+1.  Go to your [Authentication dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/authentication/users) in the Firebase console.
 
-1.  Click **Add User** to add a test user.
-
-1.  Copy the test user's UID to your clipboard.
+1.  Click **Add User** to add a test user, then copy the test user's UID to your clipboard.
 
 1.  Create a new Cloud Firestore document, a new Realtime Database entry, or upload a new file to Storage - incorporating the user's UID into the path according to the schema that you configured.
 
