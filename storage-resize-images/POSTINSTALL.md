@@ -2,7 +2,7 @@
 
 You can test out this extension right away!
 
-1.  Go to your [Storage dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/storage).
+1.  Go to your [Storage dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/storage) in the Firebase console.
 
 1.  Upload an image file to the bucket: `${param:IMG_BUCKET}`
 
