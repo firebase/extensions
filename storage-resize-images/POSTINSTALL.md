@@ -1,6 +1,6 @@
 ### See it in action
 
-You can test out this extension right away:
+You can test out this extension right away!
 
 1.  Go to your [Storage dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/storage).
 
@@ -14,7 +14,7 @@ You can test out this extension right away:
 
 You can upload images using the [Cloud Storage for Firebase SDK](https://firebase.google.com/docs/storage/) for your platform (iOS, Android, or Web). Alternatively, you can upload images directly in the Firebase console's Storage dashboard.
 
-When you upload an image file to `${param:IMG_BUCKET}`, this extension:
+Whenever you upload an image file to `${param:IMG_BUCKET}`, this extension does the following:
 
 - Creates resized image(s) with your specfied dimensions.
 - Names resized image(s) using the same name as the original uploaded image, but suffixed with the specified width and height.
