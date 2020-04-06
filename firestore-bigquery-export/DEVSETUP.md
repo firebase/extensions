@@ -23,4 +23,4 @@ The function constructs the relevant change event and calls the API in
 
 ## Dependency Diagram
 
-![](docs/images/firestore-bigquery-export-dep-diagram.svg)
+![](./docs/images/firestore-bigquery-export-dep-diagram.svg)
