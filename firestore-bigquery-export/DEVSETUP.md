@@ -33,32 +33,6 @@ extensions repo.
 
 ## Building Locally
 
-### Environment Setup
-
-Install [node.js v8.14.0](https://nodejs.org/download/release/v8.14.0/).
-
-On OSX/Linux, install the [Node version manager](https://github.com/nvm-sh/nvm#install--update-script).
-Then run:
-```
-nvm install 8.14.0
-nvm alias default 8.14.0
-```
-
-On Windows: Install
-[nvm-windows](https://github.com/coreybutler/nvm-windows#node-version-manager-nvm-for-windows). Then run:
-```
-nvm install 8.14.0
-nvm use 8.14.0
-```
-
-Install the latest version of the Firebase CLI and enable extension development
-commands:
-```
-npm install -g firebase-tools
-
-firebase --open-sesame extdev
-```
-
 ### Clean up any local changes (optional)
 
 Make sure you've cleaned up and partial builds:
@@ -80,8 +54,8 @@ dependencies](https://docs.npmjs.com/files/package.json#local-paths) in package.
 You'll need to update the following package.json files with local pointers to
 the firestore-bigquery-change-tracker package:
 
-1. https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/package.json
-1. https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/scripts/import/package.json
+1. firestore-bigquery-export/package.json
+1. firestore-bigquery-export/scripts/import/package.json
 
 This can be done with jq from the root of this extension's folder:
 
@@ -111,22 +85,17 @@ done;
 Finally, you can install the extension you just built onto a Firebase-enabled
 GCP project with:
 ```
-firebase ext:install firestore-bigquery-export --project=wyszynski-prod
+firebase ext:install ./firestore-bigquery-export --project=project-id
 ```
-run from the extensions repo root.
 
 ## Publishing
+
+* The following instructions are for Firebase team members only.*
 
 We publish 3 separate npm packages for this extension. Each follows semver, so
 make sure to update the version numbers and corresponding dependencies.
 
-For each package, `cd` into the appropriate directory. This will be one of:
-
-1. https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/scripts/import
-1. https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/scripts/gen-schema-view
-1. https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/firestore-bigquery-change-tracker
-
-Then run:
+For each package, `cd` into the appropriate directory, then run:
 ```
 npm pack 
 npm publish
