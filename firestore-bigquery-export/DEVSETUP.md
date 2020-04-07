@@ -3,24 +3,114 @@
 The firestore-bigquery-export extension is split out into 4 node.js packages, three of
 which are hosted on [npm](https://www.npmjs.com/search?q=firebaseextensions).
 
-**firestore-bigquery-change-tracker**: Contains the core interface defintions
-for document changes. Also exposes an API for uploading changes to BigQuery.
-The business-logic associated with creating the raw changelog and the latest
-snapshot of live documents in the changelog also lives in this package.
+**[firestore-bigquery-change-tracker](https://www.npmjs.com/package/@firebaseextensions/firestore-bigquery-change-tracker)**:
+Contains the core interface defintions for document changes. Also exposes an
+API for uploading changes to BigQuery. The business-logic associated with
+creating the raw changelog and the latest snapshot of live documents in the
+changelog also lives in this package.
 
-**fs-bq-import-collection**: Contains a script for resumably importing a
-firestore collection into BigQuery using the interface definitions in
-`firestore-bigquery-change-tracker`.
+**[fs-bq-import-collection](https://www.npmjs.com/package/@firebaseextensions/fs-bq-import-collection)**:
+Contains a script for resumably importing a firestore collection into BigQuery
+using the interface definitions in `firestore-bigquery-change-tracker`.
 
-**fs-bq-schema-views**: Contains a script for generating BigQuery views that
-provide typed-checked access to the changelog created in
-`firestore-bigquery-change-tracker`.
+**[fs-bq-schema-views](https://www.npmjs.com/package/@firebaseextensions/fs-bq-schema-views)**:
+Contains a script for generating BigQuery views that provide typed-checked
+access to the changelog created in `firestore-bigquery-change-tracker`.
 
 **firestore-bigquery-export-functions (not hosted)**: Contains the definition
 for a Google Cloud function that is called on each write to some collection.
 The function constructs the relevant change event and calls the API in
 `firestore-bigquery-change-tracker` to upload the change to BigQuery.
 
-## Dependency Diagram
+Here are the dependency edges:
 
-![](./docs/images/firestore-bigquery-export-dep-diagram.svg)
+1. [fs-bq-import-collection -> firestore-bigquery-change-tracker](https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/functions/package.json#L17)
+1. [firestore-bigquery-export-functions -> firestore-bigquery-change-tracker](https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/scripts/import/package.json#L27)
+
+Note that `fs-bq-schema-views` is a standalone package, and all of these
+packages are included at the root of this extension's folder in the firebase
+extensions repo.
+
+## Building Locally
+
+### Environment Setup
+
+Install [node.js v8.14.0](https://nodejs.org/download/release/v8.14.0/).
+
+On OSX/Linux, install the [Node version manager](https://github.com/nvm-sh/nvm#install--update-script).
+Then run:
+```
+nvm install 8.14.0
+nvm alias default 8.14.0
+```
+
+On Windows: Install
+[nvm-windows](https://github.com/coreybutler/nvm-windows#node-version-manager-nvm-for-windows). Then run:
+```
+nvm install 8.14.0
+nvm use 8.14.0
+```
+
+Install the latest version of the Firebase CLI and enable extension development
+commands:
+```
+npm install -g firebase-tools
+
+firebase --open-sesame extdev
+```
+
+### Clean up any local changes (optional)
+
+Make sure you've cleaned up and partial builds:
+
+```
+export PKGS="firestore-bigquery-change-tracker scripts/gen-schema-view scripts/import functions ."
+
+for pkg in $PKGS;
+do
+  pushd . && cd $pkg && npm run clean && rm -rf node_modules
+  popd
+done;
+```
+
+### Local package.json file pointers
+
+Npm supports using [local paths as
+dependencies](https://docs.npmjs.com/files/package.json#local-paths) in package.json.
+You'll need to update the following package.json files with local pointers to
+the firestore-bigquery-change-tracker package:
+
+1. https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/functions/package.json
+1. https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/scripts/import/package.json
+
+This can be done with jq from the root of this extension's folder:
+
+```
+jq '.dependencies."@firebaseextensions/firestore-bigquery-change-tracker" = "file:./firestore-bigquery-change-tracker"' package.json > package.local.json
+jq '.dependencies."@firebaseextensions/firestore-bigquery-change-tracker" = "file:../../firestore-bigquery-change-tracker"' scripts/import/package.json > scripts/import/package.local.json
+
+mv package.json package.json.bak
+mv scripts/import/package.json scripts/import/package.remote.json.bak
+
+mv package.local.json package.json
+mv scripts/import/package.local.json scripts/import/package.json
+```
+
+Now, build the components according to the dependency order.
+
+```
+export PKGS="firestore-bigquery-change-tracker scripts/import . scripts/gen-schema-view"
+
+for pkg in $PKGS;
+do
+ pushd . && cd $pkg && npm install && npm run build
+ popd
+done;
+```
+
+Finally, you can install the extension you just built onto a Firebase-enabled
+GCP project with:
+```
+firebase ext:install firestore-bigquery-export --project=wyszynski-prod
+```
+run from the extensions repo root.
