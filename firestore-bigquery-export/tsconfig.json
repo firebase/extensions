@@ -4,5 +4,5 @@
     "outDir": "functions/lib",
     "types": ["node", "jest", "chai"]
   },
-  "include": ["functions/src"],
+  "include": ["functions/src"]
 }
