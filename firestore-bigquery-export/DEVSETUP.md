@@ -24,8 +24,8 @@ The function constructs the relevant change event and calls the API in
 
 Here are the dependency edges:
 
-1. [fs-bq-import-collection -> firestore-bigquery-change-tracker](https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/functions/package.json#L17)
-1. [firestore-bigquery-export-functions -> firestore-bigquery-change-tracker](https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/scripts/import/package.json#L27)
+1. [fs-bq-import-collection -> firestore-bigquery-change-tracker](https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/scripts/import/package.json#L27)
+1. [firestore-bigquery-export-functions -> firestore-bigquery-change-tracker](https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/package.json#L17)
 
 Note that `fs-bq-schema-views` is a standalone package, and all of these
 packages are included at the root of this extension's folder in the firebase
@@ -80,7 +80,7 @@ dependencies](https://docs.npmjs.com/files/package.json#local-paths) in package.
 You'll need to update the following package.json files with local pointers to
 the firestore-bigquery-change-tracker package:
 
-1. https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/functions/package.json
+1. https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/package.json
 1. https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/scripts/import/package.json
 
 This can be done with jq from the root of this extension's folder:
