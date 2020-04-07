@@ -91,7 +91,7 @@ firebase ext:install ./firestore-bigquery-export --project=project-id
 
 ## Publishing
 
-- The following instructions are for Firebase team members only.\*
+_The following instructions are for Firebase team members only._
 
 We publish 3 separate npm packages for this extension. Each follows semver, so
 make sure to update the version numbers and corresponding dependencies.
