@@ -114,3 +114,25 @@ GCP project with:
 firebase ext:install firestore-bigquery-export --project=wyszynski-prod
 ```
 run from the extensions repo root.
+
+## Publishing
+
+We publish 3 separate npm packages for this extension. Each follows semver, so
+make sure to update the version numbers and corresponding dependencies.
+
+For each package, `cd` into the appropriate directory. This will be one of:
+
+1. https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/scripts/import
+1. https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/scripts/gen-schema-view
+1. https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/firestore-bigquery-change-tracker
+
+Then run:
+```
+npm pack 
+npm publish
+```
+
+In general, you should publish `firestore-bigquery-change-tracker` first, since
+it doesn't depend on anything else. You should also only publish _after_ your
+changes have been merged into the `next` branch (and before the extension is
+released).
