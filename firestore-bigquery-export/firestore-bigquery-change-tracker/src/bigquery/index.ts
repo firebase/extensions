@@ -16,7 +16,7 @@
 
 import * as bigquery from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
-import traverse from "traverse";
+import * as traverse from "traverse";
 import { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 
