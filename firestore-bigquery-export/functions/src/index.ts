@@ -45,7 +45,7 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
           documentName: context.resource.name,
           eventId: context.eventId,
           data:
-            changeType == ChangeType.DELETE ? undefined : change.after.data(),
+            changeType === ChangeType.DELETE ? undefined : change.after.data(),
         },
       ]);
       logs.complete();
