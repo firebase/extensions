@@ -1,7 +1,7 @@
 ## Version 0.1.3
 
 feature - Support explicit BigQuery schemas for raw changelog and schema views (#138)
-fixed - Updated @firebaseextensions/firestore-bigquery-change-tracker dependency (fixes issues #192, #235, and #225).
+fixed - Updated @firebaseextensions/firestore-bigquery-change-tracker dependency (fixes issues #235 and #225).
 
 ## Version 0.1.2
 
