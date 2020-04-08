@@ -5,9 +5,9 @@
     "noImplicitReturns": true,
     "outDir": "lib",
     "sourceMap": false,
-    "target": "es6"
+    "target": "es6",
+    "types": ["node", "jest", "chai"]
   },
   "compileOnSave": true,
-  "include": ["src"],
-  "exclude": ["**/node_modules/@types/jest/**"]
+  "include": ["src"]
 }

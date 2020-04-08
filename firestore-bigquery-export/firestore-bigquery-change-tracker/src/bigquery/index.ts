@@ -17,7 +17,7 @@
 import * as bigquery from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
 import traverse from "traverse";
-import { firestoreToBQTable } from "./schema";
+import { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 
 import {
@@ -26,6 +26,8 @@ import {
   FirestoreDocumentChangeEvent,
 } from "../tracker";
 import * as logs from "../logs";
+
+export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
@@ -153,7 +155,7 @@ export class FirestoreBigQueryEventHistoryTracker
       const options = {
         // `friendlyName` needs to be here to satisfy TypeScript
         friendlyName: changelogName,
-        schema: firestoreToBQTable(),
+        schema: RawChangelogSchema,
       };
       await table.create(options);
       logs.bigQueryTableCreated(changelogName);
@@ -183,6 +185,7 @@ export class FirestoreBigQueryEventHistoryTracker
         view: latestSnapshot,
       };
       await view.create(options);
+      await view.setMetadata({ schema: RawChangelogViewSchema });
       logs.bigQueryViewCreated(this.rawLatestView());
     }
     return view;

@@ -2,11 +2,13 @@
   "fields": [
     {
       "name": "testing",
-      "type": "string"
+      "type": "string",
+      "description": "A testing field!"
     },
     {
       "name": "testing_two",
-      "type": "number"
+      "type": "number",
+      "description": "A second testing field!"
     }
   ]
 }
