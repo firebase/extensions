@@ -75,8 +75,6 @@ export const fstranslate = functions.handler.firestore.document.onWrite(
         case ChangeType.UPDATE:
           await handleUpdateDocument(change.before, change.after);
           break;
-        default:
-          throw new Error(`Invalid change type: ${changeType}`);
       }
 
       logs.complete();
@@ -126,7 +124,11 @@ const handleUpdateDocument = async (
   const inputBefore = extractInput(before);
 
   const inputHasChanged = inputAfter !== inputBefore;
-  if (!inputHasChanged) {
+  if (
+    !inputHasChanged &&
+    inputAfter !== undefined &&
+    inputBefore !== undefined
+  ) {
     logs.documentUpdatedUnchangedInput();
     return;
   }

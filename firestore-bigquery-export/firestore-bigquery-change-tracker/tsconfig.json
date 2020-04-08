@@ -9,6 +9,5 @@
     "types": ["node", "mocha", "chai"]
   },
   "compileOnSave": true,
-  "include": ["src"],
-  "exclude": ["**/node_modules/@types/jest/**"]
+  "include": ["src"]
 }

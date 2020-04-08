@@ -1,5 +1,8 @@
 module.exports = {
-  projects: ["<rootDir>/*/jest.config.js"],
+  projects: [
+    "<rootDir>/*/jest.config.js",
+    "<rootDir>/*/functions/jest.config.js",
+  ],
   testPathIgnorePatterns: [
     ".*/bin/",
     ".*/lib/",
@@ -16,4 +19,5 @@ module.exports = {
     "!**/node_modules/**",
     "!**/exts-test-data/**",
   ],
+  maxConcurrency: 10,
 };

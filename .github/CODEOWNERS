@@ -1,13 +1,9 @@
-# All documentation changes, e.g. changelogs & readmes.
-*.md             @rachelsaunders
-*/extension.yaml @rachelsaunders
-
 # Dependencies, package.json and mono-repo files
-package.json     @Salakar @Ehesp
-*/package.json   @Salakar @Ehesp
-lerna.json       @Salakar @Ehesp
+package.json     @firebase/invertase
+*/package.json   @firebase/invertase
+lerna.json       @firebase/invertase
 
 # Tests
-jest.config.js    @Salakar @Ehesp
-*/jest.config.js  @Salakar @Ehesp
-__tests__/*      @Salakar @Ehesp
+jest.config.js   @firebase/invertase
+*/jest.config.js @firebase/invertase
+__tests__/*      @firebase/invertase

@@ -44,13 +44,13 @@ Usage of this extension also requires you to have SMTP credentials for mail deli
 
 **Configuration Parameters:**
 
-* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your database. For help selecting a  location, refer to the [location selection  guide](https://firebase.google.com/docs/functions/locations).
+* Cloud Functions location: Where do you want to deploy the functions created for this extension? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
 * SMTP connection URI: A URI representing an SMTP server that this extension can use to deliver email.
 
 * Email documents collection: What is the path to the collection that contains the documents used to build and send the emails?
 
-* Default FROM address: The email address to use as the sender's address (if it's not specified in the added email document).
+* Default FROM address: The email address to use as the sender's address (if it's not specified in the added email document).  You can optionally include a name with the email address (`Friendly Firebaser <foobar@example.com>`).
 
 * Default REPLY-TO address: The email address to use as the reply-to address (if it's not specified in the added email document).
 
