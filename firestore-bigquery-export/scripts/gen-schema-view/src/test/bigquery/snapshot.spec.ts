@@ -52,45 +52,44 @@ describe("schema snapshot view sql generation", () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/fullSchemaLatest.txt`
     );
-    const query = buildLatestSchemaSnapshotViewQuery(
+    const result = buildLatestSchemaSnapshotViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/fullSchema.json`)
     );
-    expect(query).to.equal(expectedQuery);
+    expect(result.query).to.equal(expectedQuery);
   });
   it("should generate the expected sql", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/fullSchemaLatestFromView.txt`
     );
-    const query = buildLatestSchemaSnapshotViewQueryFromLatestView(
+    const result = buildLatestSchemaSnapshotViewQueryFromLatestView(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/fullSchema.json`)
     );
-    await writeFile(`${sqlDir}/fullSchemaLatestFromView.txt`, query);
-    expect(query).to.equal(expectedQuery);
+    expect(result.query).to.equal(expectedQuery);
   });
   it("should generate the expected sql for an empty schema", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/emptySchemaLatest.txt`
     );
-    const query = buildLatestSchemaSnapshotViewQuery(
+    const result = buildLatestSchemaSnapshotViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/emptySchema.json`)
     );
-    expect(query).to.equal(expectedQuery);
+    expect(result.query).to.equal(expectedQuery);
   });
   it("should generate the expected sql", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/emptySchemaLatestFromView.txt`
     );
-    const query = buildLatestSchemaSnapshotViewQueryFromLatestView(
+    const result = buildLatestSchemaSnapshotViewQueryFromLatestView(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/fullSchema.json`)
     );
-    expect(query).to.equal(expectedQuery);
+    expect(result.query).to.equal(expectedQuery);
   });
 });
