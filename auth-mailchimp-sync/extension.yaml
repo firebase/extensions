@@ -35,9 +35,9 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
-  - authorName: Elliot Hesp
-    email: elliot@invertase.io
-    url: https://github.com/ehesp
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
 
 billingRequired: true
 
@@ -61,7 +61,6 @@ resources:
       Authentication), then automatically removes them from your specified
       MailChimp audience.
     properties:
-      sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
