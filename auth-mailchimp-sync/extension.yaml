@@ -48,7 +48,7 @@ resources:
       Listens for new user accounts (as managed by Firebase Authentication),
       then automatically adds the new user to your specified MailChimp audience.
     properties:
-      sourceDirectory: .
+      sourceDirectory: functions
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.create
@@ -61,7 +61,7 @@ resources:
       Authentication), then automatically removes them from your specified
       MailChimp audience.
     properties:
-      sourceDirectory: .
+      sourceDirectory: functions
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
