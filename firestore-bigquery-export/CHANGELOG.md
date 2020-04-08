@@ -1,6 +1,7 @@
 ## Version 0.1.3
 
 feature - Interpret data more easily with column descriptions in the exported BigQuery data (#138).
+
 - The raw changelog now includes column descriptions.
 - The schema-views script allows you to specify custom column descriptions.
 
