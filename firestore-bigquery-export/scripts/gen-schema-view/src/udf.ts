@@ -26,26 +26,36 @@ export const udfs: { [name: string]: (dataset: string) => any } = {
 };
 
 export function firestoreArray(datasetId: string, selector: string): string {
-  return `\`${process.env.PROJECT_ID}.${datasetId}.firestoreArray\`(${selector})`;
+  return `\`${
+    process.env.PROJECT_ID
+  }.${datasetId}.firestoreArray\`(${selector})`;
 }
 
 export function firestoreBoolean(datasetId: string, selector: string): string {
-  return `\`${process.env.PROJECT_ID}.${datasetId}.firestoreBoolean\`(${selector})`;
+  return `\`${
+    process.env.PROJECT_ID
+  }.${datasetId}.firestoreBoolean\`(${selector})`;
 }
 
 export function firestoreNumber(datasetId: string, selector: string): string {
-  return `\`${process.env.PROJECT_ID}.${datasetId}.firestoreNumber\`(${selector})`;
+  return `\`${
+    process.env.PROJECT_ID
+  }.${datasetId}.firestoreNumber\`(${selector})`;
 }
 
 export function firestoreTimestamp(
   datasetId: string,
   selector: string
 ): string {
-  return `\`${process.env.PROJECT_ID}.${datasetId}.firestoreTimestamp\`(${selector})`;
+  return `\`${
+    process.env.PROJECT_ID
+  }.${datasetId}.firestoreTimestamp\`(${selector})`;
 }
 
 export function firestoreGeopoint(datasetId: string, selector: string): string {
-  return `\`${process.env.PROJECT_ID}.${datasetId}.firestoreGeopoint\`(${selector})`;
+  return `\`${
+    process.env.PROJECT_ID
+  }.${datasetId}.firestoreGeopoint\`(${selector})`;
 }
 
 function firestoreArrayFunction(datasetId: string): any {

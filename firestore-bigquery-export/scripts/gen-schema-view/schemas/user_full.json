@@ -21,7 +21,7 @@
         {
           "name": "name",
           "type": "string",
-	  "description": "This is a nested name!"
+          "description": "This is a nested name!"
         }
       ],
       "name": "friends",
