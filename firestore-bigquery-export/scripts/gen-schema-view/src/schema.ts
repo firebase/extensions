@@ -16,6 +16,7 @@
 
 import * as bigquery from "@google-cloud/bigquery";
 import * as logs from "./logs";
+import { RawChangelogViewSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import { latestConsistentSnapshotSchemaView } from "./snapshot";
 import * as sqlFormatter from "sql-formatter";
 import {
@@ -38,10 +39,19 @@ export type FirestoreFieldType =
   | "timestamp"
   | "reference";
 
+type BigQueryFieldType =
+  | "BOOLEAN"
+  | "GEOGRAPHY"
+  | "NUMERIC"
+  | "NULL"
+  | "STRING"
+  | "TIMESTAMP";
+
 export type FirestoreField = {
   fields?: FirestoreField[];
   name: string;
   repeated?: boolean;
+  description?: string;
   type: FirestoreFieldType;
 };
 
@@ -49,6 +59,24 @@ export type FirestoreSchema = {
   idField?: string;
   fields: FirestoreField[];
   timestampField?: string;
+};
+
+/*
+ * A static mapping from Firestore types to BigQuery column types. We generate
+ * a BigQuery schema in the same pass that generates the view generation query.
+ */
+const firestoreToBigQueryFieldType: {
+  [f in FirestoreFieldType]: BigQueryFieldType
+} = {
+  boolean: "BOOLEAN",
+  geopoint: "GEOGRAPHY",
+  number: "NUMERIC",
+  null: "STRING",
+  string: "STRING",
+  timestamp: "TIMESTAMP",
+  reference: "STRING",
+  array: null /* mode: REPEATED type: STRING */,
+  map: null,
 };
 
 /**
@@ -100,76 +128,110 @@ export class FirestoreBigQuerySchemaViewFactory {
     let latestView = dataset.table(latestSchemaViewName);
     const [latestViewExists] = await latestView.exists();
 
+    let result = userSchemaView(
+      datasetId,
+      rawChangeLogTableName,
+      firestoreSchema
+    );
+    let bigQueryFields = result.fields;
+    const options = {
+      friendlyName: changeLogSchemaViewName,
+      view: result.viewInfo,
+    };
     if (!viewExists) {
-      const schemaView = userSchemaView(
-        datasetId,
-        rawChangeLogTableName,
-        firestoreSchema
-      );
       logs.bigQuerySchemaViewCreating(
         changeLogSchemaViewName,
         firestoreSchema,
-        schemaView.query
+        result.viewInfo.query
       );
-      const options = {
-        friendlyName: changeLogSchemaViewName,
-        view: schemaView,
-      };
       await view.create(options);
       logs.bigQuerySchemaViewCreated(changeLogSchemaViewName);
     }
 
+    await view.setMetadata({
+      schema: decorateSchemaWithChangelogFields({
+        fields: bigQueryFields,
+      }),
+    });
+
+    result = latestConsistentSnapshotSchemaView(
+      datasetId,
+      latestRawViewName,
+      firestoreSchema
+    );
+    bigQueryFields = result.fields;
+    const latestOptions = {
+      fiendlyName: latestSchemaViewName,
+      view: result.viewInfo,
+    };
     if (!latestViewExists) {
-      const latestSchemaView = buildSchemaViewQuery(
-        datasetId,
-        latestRawViewName,
-        firestoreSchema
-      );
       logs.bigQuerySchemaViewCreating(
         latestSchemaViewName,
         firestoreSchema,
-        latestSchemaView
+        result.viewInfo.query
       );
-      const latestOptions = {
-        fiendlyName: latestSchemaViewName,
-        view: latestSchemaView,
-      };
       await latestView.create(latestOptions);
       logs.bigQueryViewCreated(latestSchemaViewName);
     }
+    await latestView.setMetadata({
+      schema: decorateSchemaWithChangelogFields({
+        fields: bigQueryFields,
+      }),
+    });
 
     return view;
   }
 }
 
 /**
- * A wrapper around `buildSchemaView` that can be passed into BigQuery's
- * `table.create`.
+ * Given a BigQuery schema returned from either `userSchemaView` or
+ * `latestConsistentSnapshotSchemaView`, inherit the appropriate
+ * fields from the raw changelog schema and return the combined schemas.
  */
-export const userSchemaView = (
+function decorateSchemaWithChangelogFields(schema: any): any {
+  let decorated: any = { fields: schema.fields };
+  const changelogSchemaFields: any[] = RawChangelogViewSchema.fields;
+  for (let i = 0; i < changelogSchemaFields.length; i++) {
+    if (
+      changelogSchemaFields[i].name === "event_id" ||
+      changelogSchemaFields[i].name === "data"
+    ) {
+      continue;
+    }
+    decorated.fields.push(changelogSchemaFields[i]);
+  }
+  return decorated;
+}
+
+/**
+ * A wrapper around `buildSchemaView`.
+ */
+export function userSchemaView(
   datasetId: string,
   tableName: string,
   schema: FirestoreSchema
-) => ({
-  query: buildSchemaViewQuery(datasetId, tableName, schema),
-  useLegacySql: false,
-});
+): any {
+  let result = buildSchemaViewQuery(datasetId, tableName, schema);
+  return {
+    viewInfo: {
+      query: result.query,
+      useLegacySql: false,
+    },
+    fields: result.fields,
+  };
+}
 
 /**
  * Constructs a query for building a view over a raw changelog table name.
- * It is assumed that `raw` is an existing table with a schema that
- * matches what is returned by `firestoreToBQTable()`.
  */
 export const buildSchemaViewQuery = (
   datasetId: string,
   rawTableName: string,
   schema: FirestoreSchema
-): string => {
-  const [fieldExtractors, fieldArrays] = processFirestoreSchema(
-    datasetId,
-    "data",
-    schema
-  );
+): any => {
+  const result = processFirestoreSchema(datasetId, "data", schema);
+  const [fieldExtractors, fieldArrays] = result.queryInfo;
+  const bigQueryFields = result.fields;
   const fieldValueSelectorClauses = Object.values(fieldExtractors).join(", ");
   const schemaHasArrays = fieldArrays.length > 0;
   let query = `
@@ -200,9 +262,27 @@ export const buildSchemaViewQuery = (
        WITH OFFSET ${arrayFieldName}_index`
       )
       .join(" ")}`;
+
+    for (const arrayFieldName of fieldArrays) {
+      bigQueryFields.push({
+        name: `${arrayFieldName}_index`,
+        type: "INTEGER",
+        mode: "NULLABLE",
+        description: `Index of the corresponding ${arrayFieldName}_member cell in ${arrayFieldName}.`,
+      });
+      bigQueryFields.push({
+        name: `${arrayFieldName}_member`,
+        type: "STRING",
+        mode: "NULLABLE",
+        description: `String representation of the member of ${arrayFieldName}[${arrayFieldName}_index].`,
+      });
+    }
   }
   query = sqlFormatter.format(query);
-  return query;
+  return {
+    query: query,
+    fields: bigQueryFields,
+  };
 };
 
 /**
@@ -221,13 +301,14 @@ export function processFirestoreSchema(
   dataFieldName: string,
   schema: FirestoreSchema,
   transformer?: (selector: string) => string
-): [{ [fieldName: string]: string }, string[], string[]] {
+): any {
   if (!transformer) {
     transformer = (selector: string) => selector;
   }
   let extractors: { [fieldName: string]: string } = {};
   let arrays: string[] = [];
   let geopoints: string[] = [];
+  let bigQueryFields: { [property: string]: string }[] = [];
   processFirestoreSchemaHelper(
     datasetId,
     dataFieldName,
@@ -236,9 +317,13 @@ export function processFirestoreSchema(
     arrays,
     geopoints,
     extractors,
-    transformer
+    transformer,
+    bigQueryFields
   );
-  return [extractors, arrays, geopoints];
+  return {
+    queryInfo: [extractors, arrays, geopoints],
+    fields: bigQueryFields,
+  };
 }
 
 /**
@@ -262,7 +347,8 @@ function processFirestoreSchemaHelper(
   arrays: string[],
   geopoints: string[],
   extractors: { [fieldName: string]: string },
-  transformer: (selector: string) => string
+  transformer: (selector: string) => string,
+  bigQueryFields: { [property: string]: string }[]
 ) {
   const { fields, idField } = schema;
   return fields.map((field) => {
@@ -276,7 +362,8 @@ function processFirestoreSchemaHelper(
         arrays,
         geopoints,
         extractors,
-        transformer
+        transformer,
+        bigQueryFields
       );
       return;
     }
@@ -285,7 +372,8 @@ function processFirestoreSchemaHelper(
       "data",
       prefix,
       field,
-      transformer
+      transformer,
+      bigQueryFields
     );
     for (let fieldName in fieldNameToSelector) {
       extractors[fieldName] = fieldNameToSelector[fieldName];
@@ -312,7 +400,8 @@ const processLeafField = (
   dataFieldName: string,
   prefix: string[],
   field: FirestoreField,
-  transformer: (selector: string) => string
+  transformer: (selector: string) => string,
+  bigQueryFields: { [property: string]: string }[]
 ) => {
   let extractPrefix = `${prefix.join(".")}`;
   let fieldNameToSelector = {};
@@ -380,23 +469,61 @@ const processLeafField = (
         datasetId,
         jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
       )} AS ${prefix.concat(field.name).join("_")}`;
+
+      bigQueryFields.push({
+        name: qualifyFieldName(prefix, field.name),
+        mode: "NULLABLE",
+        type: firestoreToBigQueryFieldType[field.type],
+        description: field.description,
+      });
+
       fieldNameToSelector[
         qualifyFieldName(prefix, `${field.name}_latitude`)
       ] = `SAFE_CAST(${latitude} AS NUMERIC) AS ${qualifyFieldName(
         prefix,
         `${field.name}_latitude`
       )}`;
+
+      bigQueryFields.push({
+        name: qualifyFieldName(prefix, `${field.name}_latitude`),
+        mode: "NULLABLE",
+        type: "NUMERIC",
+        description: `Numeric latitude component of ${field.name}.`,
+      });
+
       fieldNameToSelector[
         qualifyFieldName(prefix, `${field.name}_longitude`)
       ] = `SAFE_CAST(${longitude} AS NUMERIC) AS ${qualifyFieldName(
         prefix,
         `${field.name}_longitude`
       )}`;
+
+      bigQueryFields.push({
+        name: qualifyFieldName(prefix, `${field.name}_longitude`),
+        mode: "NULLABLE",
+        type: "NUMERIC",
+        description: `Numeric longitude component of ${field.name}.`,
+      });
       return fieldNameToSelector;
   }
   fieldNameToSelector[
     qualifyFieldName(prefix, field.name)
   ] = `${selector} AS ${qualifyFieldName(prefix, field.name)}`;
+  if (field.type === "array") {
+    bigQueryFields.push({
+      name: qualifyFieldName(prefix, field.name),
+      mode: "REPEATED",
+      type: "STRING",
+      description: field.description,
+    });
+  } else {
+    bigQueryFields.push({
+      name: qualifyFieldName(prefix, field.name),
+      mode: "NULLABLE",
+      type: firestoreToBigQueryFieldType[field.type],
+      description: field.description,
+    });
+  }
   return fieldNameToSelector;
 };
 

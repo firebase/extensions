@@ -29,9 +29,6 @@ const schemaDir = fixturesDir + "/schema-files";
 
 const find = promisify(fs_find);
 
-console.log(fixturesDir);
-console.log(schemaDir);
-
 describe("filesystem schema loading", () => {
   it("should load no schemas from an empty directory", () => {
     const schemas = schema_loader_utils.readSchemas([
