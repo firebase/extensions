@@ -1,5 +1,5 @@
 {
-  "name": "auth-mailchimp-sync",
+  "name": "auth-mailchimp-sync-functions",
   "description": "Add new users to a Mailchimp list, and delete them from the list when they delete their account.",
   "main": "lib/index.js",
   "scripts": {
