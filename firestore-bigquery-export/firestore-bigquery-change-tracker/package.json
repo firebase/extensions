@@ -10,7 +10,7 @@
   "main": "./lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
-    "clean": "rimraf lib/",
+    "clean": "rimraf lib",
     "compile": "tsc",
     "test": "jest",
     "prepare": "npm run build"
