@@ -1,10 +1,10 @@
 {
   "name": "rtdb-limit-child-nodes",
   "description": "Limit number of child nodes Firebase Functions sample",
-  "main": "functions/lib/index.js",
+  "main": "lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
-    "clean": "rimraf functions/lib",
+    "clean": "rimraf lib",
     "compile": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "generate-readme": "firebase ext:info . --markdown > README.md"
