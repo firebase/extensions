@@ -1,4 +1,4 @@
-const packageJson = require("./package.json");
+const packageJson = require("./functions/package.json");
 
 module.exports = {
   name: packageJson.name,
