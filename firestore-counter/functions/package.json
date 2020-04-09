@@ -1,5 +1,5 @@
 {
-  "name": "firestore-counter",
+  "name": "firestore-counter-functions",
   "main": "lib/index.js",
   "author": "patryk@google.com",
   "license": "Apache-2.0",
@@ -28,7 +28,7 @@
     "compile": "tsc",
     "format": "prettier --write {,**/}*.{yaml,ts,md}",
     "test": "mocha --require ts-node/register test/**/*.ts",
-    "generate-readme": "firebase ext:info . --markdown > README.md"
+    "generate-readme": "firebase ext:info .. --markdown > README.md"
   },
   "private": true
 }
