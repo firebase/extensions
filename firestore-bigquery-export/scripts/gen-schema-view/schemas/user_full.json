@@ -20,11 +20,13 @@
       "fields": [
         {
           "name": "name",
-          "type": "string"
+          "type": "string",
+          "description": "This is a nested name!"
         }
       ],
       "name": "friends",
-      "type": "map"
+      "type": "map",
+      "description": "Maps don't need a description because a column is not created for a map. Instead, their fields are added as columns to the resulting dataset."
     }
   ]
 }

@@ -17,7 +17,11 @@
 import * as sqlFormatter from "sql-formatter";
 
 import * as logs from "../logs";
-import { firestoreToBQTable, timestampField } from "./schema";
+import {
+  RawChangelogSchema,
+  RawChangelogViewSchema,
+  timestampField,
+} from "./schema";
 
 const excludeFields: string[] = ["document_name"];
 
@@ -29,9 +33,9 @@ export const latestConsistentSnapshotView = (
     datasetId,
     tableName,
     timestampField.name,
-    firestoreToBQTable()
+    RawChangelogViewSchema["fields"]
       .map((field) => field.name)
-      .filter((name) => excludeFields.indexOf(name) == -1)
+      .filter((name) => excludeFields.indexOf(name) === -1)
   ),
   useLegacySql: false,
 });

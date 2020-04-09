@@ -44,7 +44,7 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite((change,
                 operation: changeType,
                 documentName: context.resource.name,
                 eventId: context.eventId,
-                data: changeType == firestore_bigquery_change_tracker_1.ChangeType.DELETE ? undefined : change.after.data(),
+                data: changeType === firestore_bigquery_change_tracker_1.ChangeType.DELETE ? undefined : change.after.data(),
             },
         ]);
         logs.complete();

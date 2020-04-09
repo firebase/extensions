@@ -16,6 +16,8 @@
 
 import * as sqlFormatter from "sql-formatter";
 
+import { RawChangelogSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
+
 import {
   buildSchemaViewQuery,
   latest,
@@ -26,28 +28,30 @@ import {
   subSelectQuery,
 } from "./schema";
 
-/**
- * Given a view created with `userSchemaView` above, this function generates a
- * query that returns the latest set of live documents according to that schema.
- */
-export const latestConsistentSnapshotSchemaView = (
+export function latestConsistentSnapshotSchemaView(
   datasetId: string,
   rawTableName: string,
   schema: FirestoreSchema
-) => ({
-  query: buildLatestSchemaSnapshotViewQueryFromLatestView(
+): any {
+  const result = buildLatestSchemaSnapshotViewQuery(
     datasetId,
     rawTableName,
     schema
-  ),
-  useLegacySql: false,
-});
+  );
+  return {
+    viewInfo: {
+      query: result.query,
+      useLegacySql: false,
+    },
+    fields: result.fields,
+  };
+}
 
 export function buildLatestSchemaSnapshotViewQueryFromLatestView(
   datasetId: string,
   tableName: string,
   schema: FirestoreSchema
-): string {
+): any {
   return buildSchemaViewQuery(datasetId, latest(tableName), schema);
 }
 
@@ -55,18 +59,52 @@ export const buildLatestSchemaSnapshotViewQuery = (
   datasetId: string,
   rawTableName: string,
   schema: FirestoreSchema
-): string => {
+): any => {
   const firstValue = (selector: string) => {
     return `FIRST_VALUE(${selector}) OVER(PARTITION BY document_name ORDER BY timestamp DESC)`;
   };
   // We need to pass the dataset id into the parser so that we can call the
   // fully qualified json2array persistent user-defined function in the proper
   // scope.
+  const result = processFirestoreSchema(datasetId, "data", schema, firstValue);
   const [
     schemaFieldExtractors,
     schemaFieldArrays,
     schemaFieldGeopoints,
-  ] = processFirestoreSchema(datasetId, "data", schema, firstValue);
+  ] = result.queryInfo;
+  let bigQueryFields = result.fields;
+  /*
+   * Include additional array schema fields.
+   */
+  for (let arrayFieldName of schemaFieldArrays) {
+    /*
+     * Non-groupable arrays will not be included in the view.
+     */
+    bigQueryFields = bigQueryFields.filter(
+      (field) => field.name != `${arrayFieldName}`
+    );
+    bigQueryFields.push({
+      name: `${arrayFieldName}_index`,
+      mode: "NULLABLE",
+      type: "INTEGER",
+      description: `Index of ${arrayFieldName}_member in ${arrayFieldName}.`,
+    });
+    bigQueryFields.push({
+      name: `${arrayFieldName}_member`,
+      mode: "NULLABLE",
+      type: "STRING",
+      description: `String representation of ${arrayFieldName}_member at index ${arrayFieldName}_index in ${arrayFieldName}.`,
+    });
+  }
+  /*
+   * latitude and longitude component fields have already been added
+   * during firestore schema processing.
+   */
+  for (let geopointFieldName of schemaFieldGeopoints) {
+    bigQueryFields = bigQueryFields.filter(
+      (field) => field.name != `${geopointFieldName}`
+    );
+  }
   const fieldNameSelectorClauses = Object.keys(schemaFieldExtractors).join(
     ", "
   );
@@ -96,8 +134,8 @@ export const buildLatestSchemaSnapshotViewQuery = (
   `;
   const groupableExtractors = Object.keys(schemaFieldExtractors).filter(
     (name) =>
-      schemaFieldArrays.indexOf(name) == -1 &&
-      schemaFieldGeopoints.indexOf(name) == -1
+      schemaFieldArrays.indexOf(name) === -1 &&
+      schemaFieldGeopoints.indexOf(name) === -1
   );
   const hasNonGroupableFields = schemaHasArrays || schemaHasGeopoints;
   // BigQuery doesn't support grouping by array fields or geopoints.
@@ -162,5 +200,8 @@ export const buildLatestSchemaSnapshotViewQuery = (
     --                    corresponding to fields defined in the schema.
     ${query}
   `);
-  return query;
+  return {
+    query: query,
+    fields: bigQueryFields,
+  };
 };
