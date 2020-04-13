@@ -200,7 +200,9 @@ const run = async (): Promise<number> => {
       return {
         timestamp: new Date(0).toISOString(), // epoch
         operation: ChangeType.IMPORT,
-        documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${snapshot.ref.path}`,
+        documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${
+          snapshot.ref.path
+        }`,
         eventId: "",
         data: snapshot.data(),
       };

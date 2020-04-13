@@ -8,8 +8,7 @@
     "compile": "tsc",
     "prepare": "npm run build",
     "test": "jest",
-    "generate-readme": "firebase ext:info . --markdown > README.md",
-    "format": "prettier --write {,**/}*.{js,md,yml,ts,json,yaml}"
+    "generate-readme": "firebase ext:info . --markdown > README.md"
   },
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
@@ -28,9 +27,6 @@
     "sql-formatter": "^2.3.3",
     "ts-node": "^7.0.1",
     "typescript": "^3.4.5"
-  },
-  "devDependencies": {
-    "prettier": "2.0.4"
   },
   "private": true
 }
