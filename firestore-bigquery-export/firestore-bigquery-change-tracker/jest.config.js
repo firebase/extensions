@@ -10,5 +10,5 @@ module.exports = {
     },
   },
   preset: "ts-jest",
-  testMatch: ["**/src/test/bigquery/*.spec.ts"],
+  testMatch: ["**/src/__test__/bigquery/*.test.ts"],
 };

@@ -11,7 +11,7 @@
   "scripts": {
     "build": "npm run clean && npm run compile",
     "clean": "rimraf ./lib",
-    "compile": "tsc && cp -r src/test/fixtures lib/test",
+    "compile": "tsc && cp -r src/__test__/fixtures lib/__test__",
     "gen-schema-views": "node ./lib/index.js",
     "prepare": "npm run build",
     "test": "jest"

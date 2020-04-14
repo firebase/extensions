@@ -11,7 +11,7 @@ module.exports = {
   },
   preset: "ts-jest",
   testMatch: [
-    "<rootDir>/src/test/bigquery/*.spec.ts",
-    "<rootDir>/src/test/schema-loader-utils/*.spec.ts",
+    "<rootDir>/src/__test__/bigquery/*.test.ts",
+    "<rootDir>/src/__test__/schema-loader-utils/*.test.ts",
   ],
 };
