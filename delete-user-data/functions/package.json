@@ -1,13 +1,13 @@
 {
-  "name": "delete-user-data",
+  "name": "delete-user-data-functions",
   "description": "Automatically delete a user's data when they delete their account.",
   "main": "lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
     "clean": "rimraf lib",
     "compile": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "generate-readme": "firebase ext:info . --markdown > README.md"
+    "test": "jest",
+    "generate-readme": "firebase ext:info .. --markdown > README.md"
   },
   "author": "Lauren Long <longlauren@google.com>",
   "license": "Apache-2.0",
