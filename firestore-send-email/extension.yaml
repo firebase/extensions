@@ -49,7 +49,6 @@ resources:
       Processes document changes in the specified Cloud Firestore collection,
       delivers emails, and updates the document with delivery status information.
     properties:
-      sourceDirectory: functions
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
