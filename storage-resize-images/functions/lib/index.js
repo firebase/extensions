@@ -38,10 +38,7 @@ const util_1 = require("./util");
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 logs.init();
-/**
- * When an image is uploaded in the Storage bucket We generate a resized image automatically using
- * ImageMagick which is installed by default on all Cloud Functions instances.
- */
+
 exports.generateResizedImage = functions.storage.object().onFinalize((object) => __awaiter(void 0, void 0, void 0, function* () {
     logs.start();
     const { contentType } = object; // This is the image MIME type

@@ -39,10 +39,6 @@ admin.initializeApp();
 
 logs.init();
 
-/**
- * When an image is uploaded in the Storage bucket We generate a resized image automatically using
- * ImageMagick which is installed by default on all Cloud Functions instances.
- */
 export const generateResizedImage = functions.storage.object().onFinalize(
   async (object): Promise<void> => {
     logs.start();
