@@ -45,6 +45,10 @@ logs.init();
 exports.generateResizedImage = functions.storage.object().onFinalize((object) => __awaiter(void 0, void 0, void 0, function* () {
     logs.start();
     const { contentType } = object; // This is the image MIME type
+    if (!contentType) {
+        logs.noContentType();
+        return;
+    }
     const isImage = validators.isImage(contentType);
     if (!isImage) {
         logs.contentTypeInvalid(contentType);

@@ -15,7 +15,9 @@
  */
 
 import * as bigquery from "@google-cloud/bigquery";
-import { firestoreToBQTable } from "./schema";
+import * as firebase from "firebase-admin";
+import * as traverse from "traverse";
+import { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 
 import {
@@ -24,7 +26,8 @@ import {
   FirestoreDocumentChangeEvent,
 } from "../tracker";
 import * as logs from "../logs";
-import { BigQuery } from "@google-cloud/bigquery";
+
+export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
@@ -51,9 +54,7 @@ export class FirestoreBigQueryEventHistoryTracker
 
   async record(events: FirestoreDocumentChangeEvent[]) {
     await this.initialize();
-    const options = {
-      raw: true,
-    };
+
     const rows = events.map((event) => {
       return {
         insertId: event.eventId,
@@ -62,27 +63,43 @@ export class FirestoreBigQueryEventHistoryTracker
           event_id: event.eventId,
           document_name: event.documentName,
           operation: ChangeType[event.operation],
-          data: JSON.stringify(event.data),
+          data: JSON.stringify(this.serializeData(event.data)),
         },
       };
     });
-    await this.insertData(rows, options);
+    await this.insertData(rows);
+  }
+
+  serializeData(eventData: any) {
+    if (typeof eventData === "undefined") {
+      return undefined;
+    }
+
+    const data = traverse(eventData).map((property) => {
+      if (property instanceof firebase.firestore.DocumentReference) {
+        return property.path;
+      }
+
+      return property;
+    });
+
+    return data;
   }
 
   /**
    * Inserts rows of data into the BigQuery raw change log table.
    */
-  private async insertData(rows: bigquery.RowMetadata[], options: object) {
-    const payload = {
+  private async insertData(rows: bigquery.RowMetadata[]) {
+    const options = {
       skipInvalidRows: false,
-      ignoreUnkownValues: false,
-      rows: rows,
+      ignoreUnknownValues: false,
+      raw: true,
     };
     try {
       const dataset = this.bq.dataset(this.config.datasetId);
       const table = dataset.table(this.rawChangeLogTableName());
       logs.dataInserting(rows.length);
-      await table.insert(payload, options);
+      await table.insert(rows, options);
       logs.dataInserted(rows.length);
     } catch (e) {
       // Reinitializing in case the destintation table is modified.
@@ -138,7 +155,7 @@ export class FirestoreBigQueryEventHistoryTracker
       const options = {
         // `friendlyName` needs to be here to satisfy TypeScript
         friendlyName: changelogName,
-        schema: firestoreToBQTable(),
+        schema: RawChangelogSchema,
       };
       await table.create(options);
       logs.bigQueryTableCreated(changelogName);
@@ -168,6 +185,7 @@ export class FirestoreBigQueryEventHistoryTracker
         view: latestSnapshot,
       };
       await view.create(options);
+      await view.setMetadata({ schema: RawChangelogViewSchema });
       logs.bigQueryViewCreated(this.rawLatestView());
     }
     return view;

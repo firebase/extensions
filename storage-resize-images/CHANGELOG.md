@@ -1,8 +1,12 @@
+## Version 0.1.5
+
+fixed - The original, uploaded image's MIME type must now always be specified in the `Content-Type` header. (issue #175)
+
 ## Version 0.1.4
 
-fixed - Fixed bug where name of resized file was missing original name if there was no file extension (issue #20).
-fixed - Fixed "TypeError: Cannot set property 'resizedImage' of undefined" (issue #130).
-fixed - Fixed bug where some valid bucket names were rejected during configuration (issue #27).
+fixed - Fixed bug where name of resized file was missing original name if there was no file extension. (issue #20)
+fixed - Fixed "TypeError: Cannot set property 'resizedImage' of undefined". (issue #130)
+fixed - Fixed bug where some valid bucket names were rejected during configuration. (issue #27)
 
 ## Version 0.1.3
 
@@ -14,7 +18,7 @@ feature - Added new param for deleting the original image.
 
 ## Version 0.1.1
 
-fixed - Fixed bug where certain edge cases led to already resized image being resized again (issue #7).
+fixed - Fixed bug where certain edge cases led to already resized image being resized again. (issue #7)
 
 ## Version 0.1.0
 

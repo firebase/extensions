@@ -1,8 +1,8 @@
 ### See it in action
 
-You can test out this extension right away:
+You can test out this extension right away!
 
-1.  Go to your [Authentication dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/authentication/users).
+1.  Go to your [Authentication dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/authentication/users) in the Firebase console.
 
 1.  Click **Add User** to add a test user.
 

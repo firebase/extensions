@@ -13,16 +13,16 @@
 # limitations under the License.
 
 name: delete-user-data
-displayName: Delete User Data
+version: 0.1.4
 specVersion: v1beta
-version: 0.1.3
 
+displayName: Delete User Data
 description:
   Deletes data keyed on a userId from Cloud Firestore, Realtime Database, and/or
   Cloud Storage when a user deletes their account.
 
 license: Apache-2.0
-billingRequired: false
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/delete-user-data
 releaseNotesUrl: https://github.com/firebase/extensions/blob/master/delete-user-data/CHANGELOG.md
 
@@ -39,6 +39,8 @@ contributors:
   - authorName: Elliot Hesp
     email: elliot@invertase.io
     url: https://github.com/ehesp
+
+billingRequired: false
 
 roles:
   - role: datastore.owner

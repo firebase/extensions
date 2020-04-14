@@ -13,16 +13,15 @@
 # limitations under the License.
 
 name: firestore-translate-text
-specVersion: v1beta
 version: 0.1.2
+specVersion: v1beta
 
 displayName: Translate Text
-
 description:
   Translates strings written to a Cloud Firestore collection into multiple languages (uses Cloud Translation API).
 
 license: Apache-2.0
-billingRequired: true
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-translate-text
 releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-translate-text/CHANGELOG.md
 
@@ -34,6 +33,11 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
+
+billingRequired: true
 
 apis:
   - apiName: translate.googleapis.com
@@ -50,7 +54,6 @@ resources:
       Listens for writes of new strings to your specified Cloud Firestore collection, translates the strings,
       then writes the translated strings back to the same document.
     properties:
-      sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
@@ -61,9 +64,9 @@ params:
     type: select
     label: Cloud Functions location
     description: >-
-      Where do you want to deploy the functions created for this extension? 
-      You usually want a location close to your database. For help selecting a 
-      location, refer to the [location selection 
+      Where do you want to deploy the functions created for this extension?
+      You usually want a location close to your database. For help selecting a
+      location, refer to the [location selection
       guide](https://firebase.google.com/docs/functions/locations).
     options:
       - label: Iowa (us-central1)

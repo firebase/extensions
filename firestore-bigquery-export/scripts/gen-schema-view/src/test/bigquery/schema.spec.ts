@@ -49,77 +49,77 @@ describe("schema snapshot view sql generation", () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/fullSchemaChangeLog.txt`
     );
-    const query = buildSchemaViewQuery(
+    const result = buildSchemaViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/fullSchema.json`)
     );
-    expect(query).to.equal(expectedQuery);
+    expect(result.query).to.equal(expectedQuery);
   });
   it("should generate the expected sql for an empty schema", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/emptySchemaChangeLog.txt`
     );
-    const query = buildSchemaViewQuery(
+    const result = buildSchemaViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/emptySchema.json`)
     );
-    expect(query).to.equal(expectedQuery);
+    expect(result.query).to.equal(expectedQuery);
   });
   it("should handle nested maps", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/nestedMapSchemaChangeLog.txt`
     );
-    const query = buildSchemaViewQuery(
+    const result = buildSchemaViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/nestedMapSchema.json`)
     );
-    expect(query).to.equal(expectedQuery);
+    expect(result.query).to.equal(expectedQuery);
   });
   it("should handle arrays nested in maps with conflicting field names", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/arraysNestedInMapsSchema.txt`
     );
-    const query = buildSchemaViewQuery(
+    const result = buildSchemaViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/arraysNestedInMapsSchema.json`)
     );
-    expect(query).to.equal(expectedQuery);
+    expect(result.query).to.equal(expectedQuery);
   });
   it("should handle every possible type nested inside a map", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/fullSchemaSquared.txt`
     );
-    const query = buildSchemaViewQuery(
+    const result = buildSchemaViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/fullSchemaSquared.json`)
     );
-    expect(query).to.equal(expectedQuery);
+    expect(result.query).to.equal(expectedQuery);
   });
   it("should handle a map with no key-value pairs", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/emptyMapSchema.txt`
     );
-    const query = buildSchemaViewQuery(
+    const result = buildSchemaViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/emptyMapSchema.json`)
     );
-    expect(query).to.equal(expectedQuery);
+    expect(result.query).to.equal(expectedQuery);
   });
   it("should handle references in schemas, and conflicting names at various nesting levels", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/referenceSchema.txt`
     );
-    const query = buildSchemaViewQuery(
+    const result = buildSchemaViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/referenceSchema.json`)
     );
-    expect(query).to.equal(expectedQuery);
+    expect(result.query).to.equal(expectedQuery);
   });
 });

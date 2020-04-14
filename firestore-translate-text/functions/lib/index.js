@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -39,7 +40,7 @@ const translate = new translate_1.Translate({ projectId: process.env.PROJECT_ID 
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 logs.init();
-exports.fstranslate = functions.handler.firestore.document.onWrite((change) => __awaiter(this, void 0, void 0, function* () {
+exports.fstranslate = functions.handler.firestore.document.onWrite((change) => __awaiter(void 0, void 0, void 0, function* () {
     logs.start();
     const { languages, inputFieldName, outputFieldName } = config_1.default;
     if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
@@ -62,8 +63,6 @@ exports.fstranslate = functions.handler.firestore.document.onWrite((change) => _
             case ChangeType.UPDATE:
                 yield handleUpdateDocument(change.before, change.after);
                 break;
-            default:
-                throw new Error(`Invalid change type: ${changeType}`);
         }
         logs.complete();
     }
@@ -83,7 +82,7 @@ const getChangeType = (change) => {
     }
     return ChangeType.UPDATE;
 };
-const handleCreateDocument = (snapshot) => __awaiter(this, void 0, void 0, function* () {
+const handleCreateDocument = (snapshot) => __awaiter(void 0, void 0, void 0, function* () {
     const input = extractInput(snapshot);
     if (input) {
         logs.documentCreatedWithInput();
@@ -96,11 +95,13 @@ const handleCreateDocument = (snapshot) => __awaiter(this, void 0, void 0, funct
 const handleDeleteDocument = () => {
     logs.documentDeleted();
 };
-const handleUpdateDocument = (before, after) => __awaiter(this, void 0, void 0, function* () {
+const handleUpdateDocument = (before, after) => __awaiter(void 0, void 0, void 0, function* () {
     const inputAfter = extractInput(after);
     const inputBefore = extractInput(before);
     const inputHasChanged = inputAfter !== inputBefore;
-    if (!inputHasChanged) {
+    if (!inputHasChanged &&
+        inputAfter !== undefined &&
+        inputBefore !== undefined) {
         logs.documentUpdatedUnchangedInput();
         return;
     }
@@ -116,10 +117,10 @@ const handleUpdateDocument = (before, after) => __awaiter(this, void 0, void 0, 
         logs.documentUpdatedNoInput();
     }
 });
-const translateDocument = (snapshot) => __awaiter(this, void 0, void 0, function* () {
+const translateDocument = (snapshot) => __awaiter(void 0, void 0, void 0, function* () {
     const input = extractInput(snapshot);
     logs.translateInputStringToAllLanguages(input, config_1.default.languages);
-    const tasks = config_1.default.languages.map((targetLanguage) => __awaiter(this, void 0, void 0, function* () {
+    const tasks = config_1.default.languages.map((targetLanguage) => __awaiter(void 0, void 0, void 0, function* () {
         return {
             language: targetLanguage,
             output: yield translateString(input, targetLanguage),
@@ -139,7 +140,7 @@ const translateDocument = (snapshot) => __awaiter(this, void 0, void 0, function
         throw err;
     }
 });
-const translateString = (string, targetLanguage) => __awaiter(this, void 0, void 0, function* () {
+const translateString = (string, targetLanguage) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         logs.translateInputString(string, targetLanguage);
         const [translatedString] = yield translate.translate(string, targetLanguage);
@@ -151,7 +152,7 @@ const translateString = (string, targetLanguage) => __awaiter(this, void 0, void
         throw err;
     }
 });
-const updateTranslations = (snapshot, translations) => __awaiter(this, void 0, void 0, function* () {
+const updateTranslations = (snapshot, translations) => __awaiter(void 0, void 0, void 0, function* () {
     logs.updateDocument(snapshot.ref.path);
     // Wrapping in transaction to allow for automatic retries (#48)
     yield admin.firestore().runTransaction((transaction) => {
