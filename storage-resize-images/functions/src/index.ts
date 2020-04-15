@@ -19,9 +19,9 @@ import * as admin from "firebase-admin";
 import * as fs from "fs";
 import * as functions from "firebase-functions";
 import * as mkdirp from "mkdirp-promise";
-import { spawn } from "child-process-promise";
 import * as os from "os";
 import * as path from "path";
+import * as sharp from "sharp";
 
 import config from "./config";
 import * as logs from "./logs";
@@ -38,10 +38,9 @@ interface ResizedImageResult {
 admin.initializeApp();
 
 logs.init();
-
 /**
- * When an image is uploaded in the Storage bucket We generate a resized image automatically using
- * ImageMagick which is installed by default on all Cloud Functions instances.
+ * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
+ * the Sharp image converting library.
  */
 export const generateResizedImage = functions.storage.object().onFinalize(
   async (object): Promise<void> => {
@@ -141,6 +140,21 @@ export const generateResizedImage = functions.storage.object().onFinalize(
   }
 );
 
+function resize(originalFile, resizedFile, size) {
+  let height, width;
+  if (size.indexOf(",") !== -1) {
+    [width, height] = size.split(",");
+  } else if (size.indexOf("x") !== -1) {
+    [width, height] = size.split("x");
+  } else {
+    throw new Error("height and width are not delimited by a ',' or a 'x'");
+  }
+
+  return sharp(originalFile)
+    .resize(parseInt(width, 10), parseInt(height, 10), { fit: "inside" })
+    .toFile(resizedFile);
+}
+
 const resizeImage = async ({
   bucket,
   originalFile,
@@ -188,11 +202,11 @@ const resizeImage = async ({
     }
     delete metadata.metadata.firebaseStorageDownloadTokens;
 
-    // Generate a resized image using ImageMagick.
+    // Generate a resized image using Sharp.
     logs.imageResizing(resizedFile, size);
-    await spawn("convert", [originalFile, "-resize", `${size}>`, resizedFile], {
-      capture: ["stdout", "stderr"],
-    });
+
+    await resize(originalFile, resizedFile, size);
+
     logs.imageResized(resizedFile);
 
     // Uploading the resized image.
