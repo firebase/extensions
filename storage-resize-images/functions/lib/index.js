@@ -27,7 +27,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const admin = require("firebase-admin");
 const fs = require("fs");
 const functions = require("firebase-functions");
-const mkdirp = require("mkdirp-promise");
+const mkdirp = require("mkdirp");
 const os = require("os");
 const path = require("path");
 const sharp = require("sharp");

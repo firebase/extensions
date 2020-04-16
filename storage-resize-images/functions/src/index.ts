@@ -18,7 +18,7 @@ import { Bucket } from "@google-cloud/storage";
 import * as admin from "firebase-admin";
 import * as fs from "fs";
 import * as functions from "firebase-functions";
-import * as mkdirp from "mkdirp-promise";
+import * as mkdirp from "mkdirp";
 import * as os from "os";
 import * as path from "path";
 import * as sharp from "sharp";
