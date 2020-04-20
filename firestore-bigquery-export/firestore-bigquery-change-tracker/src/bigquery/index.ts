@@ -74,8 +74,10 @@ export class FirestoreBigQueryEventHistoryTracker
     if (typeof eventData === "undefined") {
       return undefined;
     }
-    const data = traverse(eventData).map((property) => { 
-      if (property.constructor.name === firebase.firestore.DocumentReference.name) {
+    const data = traverse(eventData).map((property) => {
+      if (
+        property.constructor.name === firebase.firestore.DocumentReference.name
+      ) {
         return property.path;
       }
 
