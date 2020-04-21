@@ -1,6 +1,6 @@
 ## Version 0.1.6
 
-fixed - Switched ImageMagick for Sharp library to support webp format. (issue #199)
+fixed - Switched ImageMagick for Sharp library to support webp format. (Issue #199)
 
 ## Version 0.1.5
 
