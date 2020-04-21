@@ -7,7 +7,7 @@ which are hosted on [npm](https://www.npmjs.com/search?q=firebaseextensions).
 Contains the core interface defintions for document changes. Also exposes an
 API for uploading changes to BigQuery. The business-logic associated with
 creating the raw changelog and the latest snapshot of live documents in the
-changelog also lives in this package.
+changelog also lives in this package. This package is a dependency for all 3 other packages.
 
 **[fs-bq-import-collection](https://www.npmjs.com/package/@firebaseextensions/fs-bq-import-collection)**:
 Contains a script for resumably importing a firestore collection into BigQuery
@@ -17,19 +17,10 @@ using the interface definitions in `firestore-bigquery-change-tracker`.
 Contains a script for generating BigQuery views that provide typed-checked
 access to the changelog created in `firestore-bigquery-change-tracker`.
 
-**firestore-bigquery-export-functions (not hosted)**: Contains the definition
+**firestore-bigquery-export-functions (a part of the extension)**: Contains the definition
 for a Google Cloud function that is called on each write to some collection.
 The function constructs the relevant change event and calls the API in
 `firestore-bigquery-change-tracker` to upload the change to BigQuery.
-
-Here are the dependency edges:
-
-1. [fs-bq-import-collection -> firestore-bigquery-change-tracker](https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/scripts/import/package.json#L27)
-1. [firestore-bigquery-export-functions -> firestore-bigquery-change-tracker](https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/package.json#L17)
-
-Note that `fs-bq-schema-views` is a standalone package, and all of these
-packages are included at the root of this extension's folder in the firebase
-extensions repo.
 
 ## Building Locally
 
@@ -96,7 +87,9 @@ npm pack
 npm publish
 ```
 
-In general, you should publish `firestore-bigquery-change-tracker` first, since
-it doesn't depend on anything else. You should also only publish _after_ your
-changes have been merged into the `next` branch (and before the extension is
-released).
+In general, you should publish `firestore-bigquery-change-tracker` first, since it doesn't depend on anything else, and all other packages depend on it. Follow these steps:
+
+1. Publish the package to NPM once the PR has been approved, by checking out the branch.
+1. If a critical bug fix has been made to `firestore-bigquery-change-tracker`, update the dependency version in all 3 other packages. Publish `fs-bq-import-collection` and `fs-bq-schema-views` to NPM.
+1. Merge the PR to `next` branch
+1. If `firestore-bigquery-export-functions` had any changes in code or `package.json`, an extension release is required.
