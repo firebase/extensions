@@ -3,7 +3,7 @@
 fixed - Converted circular structure to JSON error. (Issue #236)
 fixed - Fixed bug where modules were not sharing the same Cloud Firestore
 DocumentReference. (Issue #265)
-fixed - Updated @firebaseextensions/firestore-bigquery-change-tracker dependency (fixes issues #250 and #196).
+fixed - Updated @firebaseextensions/firestore-bigquery-change-tracker dependency. (Issues #250 and #196)
 
 ## Version 0.1.3
 
