@@ -1,3 +1,10 @@
+## Version 0.1.4
+
+fixed - Converting circular structure to JSON error (fixes issue #236).
+fixed - Fixed bug where modules were not sharing the same Firestore
+DocumentReference. (fixes issue #265)
+fixed - Updated @firebaseextensions/firestore-bigquery-change-tracker dependency (fixes issues #250 and #196).
+
 ## Version 0.1.3
 
 feature - Interpret data more easily with column descriptions in the exported BigQuery data (#138).
