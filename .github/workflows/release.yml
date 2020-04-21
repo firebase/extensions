@@ -12,5 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Release Script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./.github/workflows/scripts/release.sh
