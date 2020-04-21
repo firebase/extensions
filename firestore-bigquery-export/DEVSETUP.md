@@ -82,13 +82,6 @@ do
 done;
 ```
 
-Finally, you can install the extension you just built onto a Firebase-enabled
-GCP project with:
-
-```
-firebase ext:install ./firestore-bigquery-export --project=project-id
-```
-
 ## Publishing
 
 _The following instructions are for Firebase team members only._

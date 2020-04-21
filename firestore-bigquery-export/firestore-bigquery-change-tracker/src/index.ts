@@ -17,6 +17,7 @@
 export {
   FirestoreBigQueryEventHistoryTracker,
   RawChangelogSchema,
+  RawChangelogViewSchema,
 } from "./bigquery";
 export {
   ChangeType,
