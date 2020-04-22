@@ -146,7 +146,6 @@ params:
     default: true
     required: true
 
-
   - param: RESIZED_IMAGES_PATH
     label: Cloud Storage path for resized images
     description: >

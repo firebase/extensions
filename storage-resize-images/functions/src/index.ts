@@ -201,7 +201,7 @@ const resizeImage = async ({
       metadata.cacheControl = objectMetadata.cacheControl;
     }
 
-    if (config.deleteDownloadTokensForNewFiles) {
+    if (config.deleteTokensForNewFiles) {
       delete metadata.metadata.firebaseStorageDownloadTokens;
     }
 
