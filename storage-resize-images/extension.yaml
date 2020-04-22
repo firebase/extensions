@@ -132,6 +132,21 @@ params:
     default: false
     required: true
 
+  - param: DELETE_DOWNLOAD_TOKENS
+    type: select
+    label: Deletion of download tokens for new images
+    description: >-
+      Would you like to delete the download tokens for the newly generated images
+      after creation?
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+    default: true
+    required: true
+
+
   - param: RESIZED_IMAGES_PATH
     label: Cloud Storage path for resized images
     description: >
