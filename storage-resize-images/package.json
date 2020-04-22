@@ -16,7 +16,7 @@
     "firebase-functions": "^3.3.0",
     "mkdirp": "^0.5.1",
     "mkdirp-promise": "^4.0.0",
-    "sharp": "^0.24.1"
+    "sharp": "0.23.4"
   },
   "devDependencies": {
     "rimraf": "^2.6.3",
