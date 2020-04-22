@@ -21,5 +21,4 @@ exports.default = {
     imageSizes: process.env.IMG_SIZES.split(","),
     resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
     deleteOriginalFile: process.env.DELETE_ORIGINAL_FILE === "true",
-    deleteTokensForNewFiles: process.env.DELETE_DOWNLOAD_TOKENS === "true"
 };

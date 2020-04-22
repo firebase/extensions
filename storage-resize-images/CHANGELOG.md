@@ -1,7 +1,3 @@
-## Version 0.1.7
-
-feature - Made deletion of the new thumbnail access tokens configurable. (Issue #140)
-
 ## Version 0.1.6
 
 fixed - Switched ImageMagick for Sharp library to support webp format. (Issue #199)

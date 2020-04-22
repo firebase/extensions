@@ -164,9 +164,6 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         else {
             metadata.cacheControl = objectMetadata.cacheControl;
         }
-        if (config_1.default.deleteDownloadTokensForNewFiles) {
-            delete metadata.metadata.firebaseStorageDownloadTokens;
-        }
         // Generate a resized image using Sharp.
         logs.imageResizing(resizedFile, size);
         yield resize(originalFile, resizedFile, size);
