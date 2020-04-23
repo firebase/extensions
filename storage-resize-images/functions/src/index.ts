@@ -200,7 +200,6 @@ const resizeImage = async ({
     } else {
       metadata.cacheControl = objectMetadata.cacheControl;
     }
-    delete metadata.metadata.firebaseStorageDownloadTokens;
 
     // Generate a resized image using Sharp.
     logs.imageResizing(resizedFile, size);
