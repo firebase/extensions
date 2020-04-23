@@ -200,7 +200,7 @@ const resizeImage = async ({
     } else {
       metadata.cacheControl = objectMetadata.cacheControl;
     }
-    
+
     // Generate a resized image using Sharp.
     logs.imageResizing(resizedFile, size);
 
