@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-export { FirestoreBigQueryEventHistoryTracker } from "./bigquery";
+export {
+  FirestoreBigQueryEventHistoryTracker,
+  RawChangelogSchema,
+  RawChangelogViewSchema,
+} from "./bigquery";
 export {
   ChangeType,
   FirestoreDocumentChangeEvent,

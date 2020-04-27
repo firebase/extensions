@@ -23,7 +23,7 @@ match /databases/{database}/documents/pages/{page} {
 
 **IMPORTANT:** Note the following about v0.1.1 of this extension:
 - **If you updated your extension from v0.1.0 to v0.1.1:**  We recommend that you edit your Cloud Scheduler job to instead send a message to the extension's Pub/Sub topic, as described in this section. Although it's not recommended, if you leave your Cloud Scheduler job calling `${function:controller.url}`, your extension will continue to run as expected. For more information about the changes for v0.1.1, refer to the [changelog](https://github.com/firebase/extensions/blob/master/firestore-counter/CHANGELOG.md).
-- **If you installed this extension for the first time at v0.1.1:** Follow the instructions as described in this section.
+- **If you installed this extension for the first time at v0.1.1 or later:** Follow the instructions as described in this section.
 
 Set up a [Cloud Scheduler job](https://cloud.google.com/scheduler/docs/quickstart) to regularly send a message to the extension's Pub/Sub topic (`${param:EXT_INSTANCE_ID}`). This Pub/Sub topic then automatically triggers the controllerCore function (`${function:controllerCore.name}`). This controllerCore function is created by the extension. It works by either aggregating shards itself or scheduling and monitoring workers to aggregate shards.
 
@@ -51,7 +51,7 @@ gcloud --project=${param:PROJECT_ID} scheduler jobs create pubsub ${param:EXT_IN
     <body>
       <script>
         // Initialize Firebase.
-        var firebaseConfig = { projectId: "${PROJECT_ID}" };
+        var firebaseConfig = { projectId: "${param:PROJECT_ID}" };
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 

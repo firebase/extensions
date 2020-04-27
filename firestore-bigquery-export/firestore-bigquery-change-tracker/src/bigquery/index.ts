@@ -15,7 +15,9 @@
  */
 
 import * as bigquery from "@google-cloud/bigquery";
-import { firestoreToBQTable } from "./schema";
+import * as firebase from "firebase-admin";
+import * as traverse from "traverse";
+import { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 
 import {
@@ -24,6 +26,8 @@ import {
   FirestoreDocumentChangeEvent,
 } from "../tracker";
 import * as logs from "../logs";
+
+export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
@@ -50,6 +54,7 @@ export class FirestoreBigQueryEventHistoryTracker
 
   async record(events: FirestoreDocumentChangeEvent[]) {
     await this.initialize();
+
     const rows = events.map((event) => {
       return {
         insertId: event.eventId,
@@ -58,11 +63,29 @@ export class FirestoreBigQueryEventHistoryTracker
           event_id: event.eventId,
           document_name: event.documentName,
           operation: ChangeType[event.operation],
-          data: JSON.stringify(event.data),
+          data: JSON.stringify(this.serializeData(event.data)),
         },
       };
     });
     await this.insertData(rows);
+  }
+
+  serializeData(eventData: any) {
+    if (typeof eventData === "undefined") {
+      return undefined;
+    }
+    const data = traverse(eventData).map((property) => {
+      if (
+        property.constructor &&
+        property.constructor.name === firebase.firestore.DocumentReference.name
+      ) {
+        return property.path;
+      }
+
+      return property;
+    });
+
+    return data;
   }
 
   /**
@@ -71,7 +94,7 @@ export class FirestoreBigQueryEventHistoryTracker
   private async insertData(rows: bigquery.RowMetadata[]) {
     const options = {
       skipInvalidRows: false,
-      ignoreUnkownValues: false,
+      ignoreUnknownValues: false,
       raw: true,
     };
     try {
@@ -134,7 +157,7 @@ export class FirestoreBigQueryEventHistoryTracker
       const options = {
         // `friendlyName` needs to be here to satisfy TypeScript
         friendlyName: changelogName,
-        schema: firestoreToBQTable(),
+        schema: RawChangelogSchema,
       };
       await table.create(options);
       logs.bigQueryTableCreated(changelogName);
@@ -164,6 +187,7 @@ export class FirestoreBigQueryEventHistoryTracker
         view: latestSnapshot,
       };
       await view.create(options);
+      await view.setMetadata({ schema: RawChangelogViewSchema });
       logs.bigQueryViewCreated(this.rawLatestView());
     }
     return view;

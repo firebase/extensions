@@ -1,3 +1,19 @@
+## Version 0.1.4
+
+fixed - Converted circular structure to JSON error. (Issue #236)
+fixed - Fixed bug where modules were not sharing the same Cloud Firestore
+DocumentReference. (Issue #265)
+fixed - Updated @firebaseextensions/firestore-bigquery-change-tracker dependency. (Issues #250 and #196)
+
+## Version 0.1.3
+
+feature - Interpret data more easily with column descriptions in the exported BigQuery data. (PR #138)
+
+- The raw changelog now includes column descriptions.
+- The schema-views script allows you to specify custom column descriptions.
+
+fixed - Updated `@firebaseextensions/firestore-bigquery-change-tracker` dependency (fixes issues #235 and #225).
+
 ## Version 0.1.2
 
 fixed - Added "IF NOT EXISTS" to safely run `fs-bq-schema-views` script multiple times (PR #193).
