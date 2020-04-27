@@ -1,5 +1,5 @@
-import * as functionsTestInit from "firebase-functions-test";
-import mockedEnv from "mocked-env";
+import * as functionsTestInit from "../node_modules/firebase-functions-test";
+import mockedEnv from "../node_modules/mocked-env";
 
 import { mockConsoleLog } from "./__mocks__/console";
 
