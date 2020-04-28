@@ -97,13 +97,13 @@ resources:
 
 params:
   - param: LOCATION
-    type: select
     label: Cloud Functions location
     description: >-
       Where do you want to deploy the functions created for this extension?
       You usually want a location close to your database. For help selecting a
       location, refer to the [location selection
       guide](https://firebase.google.com/docs/functions/locations).
+    type: select
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -129,10 +129,10 @@ params:
     label: Document path for internal state
     description: >-
       What is the path to the document where the extension can keep its internal state?
-    default: _firebase_ext_/sharded_counter
     example: _firebase_ext_/sharded_counter
     validationRegex: "^[^/]+/[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage:
       Enter a document path, not a collection path. The path must have an even number of segments,
       for example, `my_collection/doc` or `my_collection/doc/subcollection/doc`, but not `my_collection`.
+    default: _firebase_ext_/sharded_counter
     required: true
