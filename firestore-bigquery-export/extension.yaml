@@ -13,12 +13,13 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.3
+version: 0.1.4
 specVersion: v1beta
 
 displayName: Export Collections to BigQuery
 description:
-  Sends realtime, incremental updates from a specified Cloud Firestore collection to BigQuery.
+  Sends realtime, incremental updates from a specified Cloud Firestore
+  collection to BigQuery.
 
 license: Apache-2.0
 
@@ -48,8 +49,8 @@ resources:
   - name: fsexportbigquery
     type: firebaseextensions.v1beta.function
     description:
-      Listens for document changes in your specified Cloud Firestore collection, then exports the changes into
-      BigQuery.
+      Listens for document changes in your specified Cloud Firestore collection,
+      then exports the changes into BigQuery.
     properties:
       sourceDirectory: .
       location: ${LOCATION}
@@ -62,11 +63,11 @@ params:
     type: select
     label: Cloud Functions location
     description: >-
-      Where do you want to deploy the functions created for this extension? 
-      You usually want a location close to your database. For help selecting a 
-      location, refer to the [location selection 
-      guide](https://firebase.google.com/docs/functions/locations). 
-      Note that this extension locates your BigQuery dataset in `us-central1`.
+      Where do you want to deploy the functions created for this extension?  You
+      usually want a location close to your database. For help selecting a
+      location, refer to the [location selection
+      guide](https://firebase.google.com/docs/functions/locations).  Note that
+      this extension locates your BigQuery dataset in `us-central1`.
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -90,9 +91,9 @@ params:
     type: string
     label: Collection path
     description: >-
-      What is the path of the collection that you would like to export?
-      You may use `{wildcard}` notation to match a subcollection of all documents in a collection
-      (for example: `chatrooms/{chatid}/posts`).
+      What is the path of the collection that you would like to export? You may
+      use `{wildcard}` notation to match a subcollection of all documents in a
+      collection (for example: `chatrooms/{chatid}/posts`).
     default: posts
     example: posts
     required: true
@@ -101,12 +102,12 @@ params:
     type: string
     label: Dataset ID
     description: >-
-      What ID would you like to use for your BigQuery dataset? This
-      extension will create the dataset, if it doesn't already exist.
+      What ID would you like to use for your BigQuery dataset? This extension
+      will create the dataset, if it doesn't already exist.
     validationRegex: "^[a-zA-Z0-9_]+$"
     validationErrorMessage: >
-      BigQuery dataset IDs must be alphanumeric (plus underscores) and must be no more than
-      1024 characters.
+      BigQuery dataset IDs must be alphanumeric (plus underscores) and must be
+      no more than 1024 characters.
     default: firestore_export
     example: firestore_export
     required: true
@@ -116,12 +117,12 @@ params:
     label: Table ID
     description: >-
       What identifying prefix would you like to use for your table and view
-      inside your BigQuery dataset? This extension will create the table and view,
-      if they don't already exist.
+      inside your BigQuery dataset? This extension will create the table and
+      view, if they don't already exist.
     validationRegex: "^[a-zA-Z0-9_]+$"
     validationErrorMessage: >
-      BigQuery table IDs must be alphanumeric (plus underscores) and must be no more than
-      1024 characters.
+      BigQuery table IDs must be alphanumeric (plus underscores) and must be no
+      more than 1024 characters.
     default: posts
     example: posts
     required: true

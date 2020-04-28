@@ -12,36 +12,36 @@ You can test out this extension right away!
 
 1.  Query your **raw changelog table**, which should contain a single log of creating the `bigquery-mirror-test` document.
 
-    ```  
+    ```
     SELECT *
-    FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog`   
+    FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog`
     ```
 
 1.  Query your **latest view**, which should return the latest change event for the only document present -- `bigquery-mirror-test`.
 
-    ```  
+    ```
     SELECT *
     FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_latest`
     ```
 
 1.  Delete the `bigquery-mirror-test` document from [Cloud Firestore](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
-The `bigquery-mirror-test` document will disappear from the **latest view** and a `DELETE` event will be added to the **raw changelog table**.
+    The `bigquery-mirror-test` document will disappear from the **latest view** and a `DELETE` event will be added to the **raw changelog table**.
 
 1.  You can check the changelogs of a single document with this query:
 
-    ```  
+    ```
     SELECT *
-    FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog` 
-    WHERE document_name = "bigquery-mirror-test" 
-    ORDER BY TIMESTAMP ASC  
+    FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog`
+    WHERE document_name = "bigquery-mirror-test"
+    ORDER BY TIMESTAMP ASC
     ```
 
 ### Using the extension
 
 Whenever a document is created, updated, imported, or deleted in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset which contains the following resources:
 
-+   **raw changelog table:** [`${param:TABLE_ID}_raw_changelog`](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:TABLE_ID}_raw_changelog&page=table)
-+   **latest view:** [`${param:TABLE_ID}_raw_latest`](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:TABLE_ID}_raw_latest&page=table)
+- **raw changelog table:** [`${param:TABLE_ID}_raw_changelog`](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:TABLE_ID}_raw_changelog&page=table)
+- **latest view:** [`${param:TABLE_ID}_raw_latest`](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:TABLE_ID}_raw_latest&page=table)
 
 To review the schema for these two resources, click the **Schema** tab for each resource in BigQuery.
 

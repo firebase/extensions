@@ -16,7 +16,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const config_1 = require("./config");
-const obfuscatedConfig = Object.assign(Object.assign({}, config_1.default), { bitlyAccessToken: "********" });
+const obfuscatedConfig = Object.assign({}, config_1.default, { bitlyAccessToken: "********" });
 exports.complete = () => {
     console.log("Completed execution of extension");
 };
