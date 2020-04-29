@@ -23,6 +23,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@google-cloud/bigquery": "^4.7.0",
+    "@types/traverse": "^0.6.32",
     "firebase-admin": "^7.1.1",
     "firebase-functions": "^2.2.1",
     "generate-schema": "^2.6.0",
