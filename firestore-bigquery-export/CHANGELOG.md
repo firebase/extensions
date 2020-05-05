@@ -1,8 +1,7 @@
 ## Version 0.2.0
 
 fixed - TypeError: Cannot read property 'constructor' of null. (Issue #284)
-fixed - Filter out Blob (Buffer) data types from being stored as strings in
-BigQuery.
+fixed - Filtered out blob (buffer) data types from being stored as strings in BigQuery.
 
 ## Version 0.1.4
 
