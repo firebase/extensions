@@ -1,4 +1,4 @@
-## Version 0.2.0
+## Version 0.1.7
 
 fixed - Resized images now render in the Firebase console. (Issue #140)
 fixed - The Sharp cache is now cleared so that the latest image with a given
