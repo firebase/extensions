@@ -1,7 +1,8 @@
 ## Version 0.2.0
 
-fixed - REsized image doesn't render in console. (Issue #140)
-fixed - Generating wrong image when uploading with the same name. (Issue #286)
+fixed - Resized images now render in the Firebase console. (Issue #140)
+fixed - Fixed bug that was generating the wrong image when another image was
+uploaded with the same name. (Issue #286)
 
 ## Version 0.1.6
 
