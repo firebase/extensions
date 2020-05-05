@@ -1,4 +1,4 @@
-## Version 0.2.0
+## Version 0.1.5
 
 fixed - TypeError: Cannot read property 'constructor' of null. (Issue #284)
 fixed - Filtered out blob (buffer) data types from being stored as strings in BigQuery.
