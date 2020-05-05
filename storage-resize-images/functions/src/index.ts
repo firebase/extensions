@@ -34,6 +34,8 @@ interface ResizedImageResult {
   success: boolean;
 }
 
+sharp.cache(false);
+
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 

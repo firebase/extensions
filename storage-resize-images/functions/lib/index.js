@@ -35,6 +35,7 @@ const config_1 = require("./config");
 const logs = require("./logs");
 const validators = require("./validators");
 const util_1 = require("./util");
+sharp.cache(false);
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 logs.init();
