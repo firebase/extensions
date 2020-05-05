@@ -1,8 +1,8 @@
 ## Version 0.2.0
 
 fixed - Resized images now render in the Firebase console. (Issue #140)
-fixed - Fixed bug that was generating the wrong image when another image was
-uploaded with the same name. (Issue #286)
+fixed - The Sharp cache is now cleared so that the latest image with a given
+file name is retrieved from the Storage bucket. (Issue #286)
 
 ## Version 0.1.6
 
