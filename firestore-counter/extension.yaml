@@ -33,6 +33,11 @@ contributors:
   - authorName: Patryk Lesiewicz
     url: https://github.com/lepatryk
 
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
+    
+
 billingRequired: false
 
 roles:
@@ -51,7 +56,6 @@ resources:
       Scheduled to run every minute.
       This function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
     properties:
-      sourceDirectory: .
       location: ${LOCATION}
       maxInstances: 1
       eventTrigger:
@@ -64,7 +68,6 @@ resources:
       Maintained for backwards compatibility.
       This function relays a message to the extension's Pub/Sub topic to trigger the controllerCore function.
     properties:
-      sourceDirectory: .
       location: ${LOCATION}
       maxInstances: 1
       httpsTrigger: {}
@@ -74,7 +77,6 @@ resources:
     description:
       Listens for changes on counter shards that may need aggregating. This function is limited to max 1 instance.
     properties:
-      sourceDirectory: .
       location: ${LOCATION}
       maxInstances: 1
       timeout: 120s
@@ -89,7 +91,6 @@ resources:
       There may be 0 or more worker functions running at any point in time.
       The controllerCore function is responsible for scheduling and monitoring these workers.
     properties:
-      sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
