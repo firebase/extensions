@@ -1,3 +1,8 @@
+## Version 0.2.0
+
+fixed - REsized image doesn't render in console. (Issue #140)
+fixed - Generating wrong image when uploading with the same name. (Issue #286)
+
 ## Version 0.1.6
 
 fixed - Switched ImageMagick for Sharp library to support webp format. (Issue #199)
