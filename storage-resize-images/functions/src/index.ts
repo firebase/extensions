@@ -34,6 +34,8 @@ interface ResizedImageResult {
   success: boolean;
 }
 
+sharp.cache(false);
+
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 
@@ -200,7 +202,6 @@ const resizeImage = async ({
     } else {
       metadata.cacheControl = objectMetadata.cacheControl;
     }
-    delete metadata.metadata.firebaseStorageDownloadTokens;
 
     // Generate a resized image using Sharp.
     logs.imageResizing(resizedFile, size);

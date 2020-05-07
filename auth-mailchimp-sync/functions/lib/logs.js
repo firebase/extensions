@@ -16,7 +16,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const config_1 = require("./config");
-exports.obfuscatedConfig = Object.assign({}, config_1.default, { mailchimpApiKey: "<omitted>" });
+exports.obfuscatedConfig = Object.assign(Object.assign({}, config_1.default), { mailchimpApiKey: "<omitted>" });
 exports.complete = () => {
     console.log("Completed execution of extension");
 };
