@@ -67,13 +67,13 @@ resources:
 
 params:
   - param: LOCATION
-    type: select
     label: Cloud Functions location
     description: >-
       Where do you want to deploy the functions created for this extension? 
       You usually want a location close to your database or Storage bucket.
       For help selecting a location, refer to the [location selection 
       guide](https://firebase.google.com/docs/functions/locations).
+    type: select
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -85,6 +85,8 @@ params:
         value: europe-west1
       - label: London (europe-west2)
         value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
@@ -94,10 +96,7 @@ params:
     immutable: true
 
   - param: FIRESTORE_PATHS
-    type: string
     label: Cloud Firestore paths
-    example: users/{UID},admins/{UID}
-    required: false
     description: >-
       Which paths in your Cloud Firestore instance contain user data? Leave
       empty if you don't use Cloud Firestore.
@@ -108,14 +107,17 @@ params:
       For example, if you have the collections `users` and `admins`, and each
       collection has documents with User ID as document IDs, then you can enter
       `users/{UID},admins/{UID}`.
+    type: string
+    example: users/{UID},admins/{UID}
+    required: false
 
   - param: FIRESTORE_DELETE_MODE
-    type: select
     label: Cloud Firestore delete mode
     description: >-
       (Only applicable if you use the `Cloud Firestore paths` parameter.) How do
       you want to delete Cloud Firestore documents? To also delete documents in
       subcollections, set this parameter to `recursive`.
+    type: select
     options:
       - label: Recursive
         value: recursive
@@ -125,10 +127,7 @@ params:
     required: true
 
   - param: RTDB_PATHS
-    type: string
     label: Realtime Database paths
-    example: users/{UID},admins/{UID}
-    required: false
     description: >-
       Which paths in your Realtime Database instance contain user data? Leave
       empty if you don't use Realtime Database.
@@ -137,12 +136,12 @@ params:
       of the deleted user with `{UID}`.
 
       For example: `users/{UID},admins/{UID}`.
+    type: string
+    example: users/{UID},admins/{UID}
+    required: false
 
   - param: STORAGE_PATHS
-    type: string
     label: Cloud Storage paths
-    example: "{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt"
-    required: false
     description: >-
       Where in Google Cloud Storage do you store user data? Leave empty if you
       don't use Cloud Storage.
@@ -158,3 +157,6 @@ params:
       `{DEFAULT}/{UID}-pic.png,my-app-logs/{UID}-logs.txt`. To *also* delete a User
       ID-labeled directory and all its files (like `media/{UID}`), enter
       `{DEFAULT}/{UID}-pic.png,my-app-logs/{UID}-logs.txt,{DEFAULT}/media/{UID}`.
+    type: string
+    example: "{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt"
+    required: false
