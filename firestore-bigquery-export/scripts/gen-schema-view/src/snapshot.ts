@@ -15,11 +15,10 @@
  */
 
 import * as sqlFormatter from "sql-formatter";
-
 import {
   buildSchemaViewQuery,
-  latest,
   FirestoreSchema,
+  latest,
   processFirestoreSchema,
   subSelectQuery,
 } from "./schema";
@@ -67,6 +66,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
     schemaFieldExtractors,
     schemaFieldArrays,
     schemaFieldGeopoints,
+    schemaFieldTimestamps,
   ] = result.queryInfo;
   let bigQueryFields = result.fields;
   /*
@@ -101,6 +101,15 @@ export const buildLatestSchemaSnapshotViewQuery = (
       (field) => field.name != `${geopointFieldName}`
     );
   }
+  /*
+   * second and nanosecond fields have already been added
+   * during firestore schema processing.
+   */
+  for (let timestampFieldName of schemaFieldTimestamps) {
+    bigQueryFields = bigQueryFields.filter(
+      (field) => field.name != `${timestampFieldName}`
+    );
+  }
   const fieldNameSelectorClauses = Object.keys(schemaFieldExtractors).join(
     ", "
   );
@@ -109,6 +118,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
   );
   const schemaHasArrays = schemaFieldArrays.length > 0;
   const schemaHasGeopoints = schemaFieldGeopoints.length > 0;
+  const schemaHasTimestamps = schemaFieldTimestamps.length > 0;
   let query = `
       SELECT
         document_name,
@@ -131,9 +141,11 @@ export const buildLatestSchemaSnapshotViewQuery = (
   const groupableExtractors = Object.keys(schemaFieldExtractors).filter(
     (name) =>
       schemaFieldArrays.indexOf(name) === -1 &&
-      schemaFieldGeopoints.indexOf(name) === -1
+      schemaFieldGeopoints.indexOf(name) === -1 &&
+      schemaFieldTimestamps.indexOf(name) === -1
   );
-  const hasNonGroupableFields = schemaHasArrays || schemaHasGeopoints;
+  const hasNonGroupableFields =
+    schemaHasArrays || schemaHasGeopoints || schemaHasTimestamps;
   // BigQuery doesn't support grouping by array fields or geopoints.
   const groupBy = `
     GROUP BY
@@ -150,13 +162,16 @@ export const buildLatestSchemaSnapshotViewQuery = (
     query = `
         ${subSelectQuery(
           query,
-          /*except=*/ schemaFieldArrays.concat(schemaFieldGeopoints)
+          /*except=*/ schemaFieldArrays
+            .concat(schemaFieldGeopoints)
+            .concat(schemaFieldTimestamps)
         )}
         ${rawTableName}
         ${schemaFieldArrays
           .map(
-            (arrayFieldName) =>
-              `CROSS JOIN UNNEST(${rawTableName}.${arrayFieldName})
+            (
+              arrayFieldName
+            ) => `CROSS JOIN UNNEST(${rawTableName}.${arrayFieldName})
             AS ${arrayFieldName}_member
             WITH OFFSET ${arrayFieldName}_index`
           )
@@ -179,6 +194,13 @@ export const buildLatestSchemaSnapshotViewQuery = (
                 .join(", ")}`
             : ``
         }
+        ${
+          schemaHasTimestamps
+            ? `, ${schemaFieldTimestamps
+                .map((name) => `${name}_seconds, ${name}_nanoseconds`)
+                .join(", ")}`
+            : ``
+        }
       `;
   } else {
     query = `
@@ -196,8 +218,5 @@ export const buildLatestSchemaSnapshotViewQuery = (
     --                    corresponding to fields defined in the schema.
     ${query}
   `);
-  return {
-    query: query,
-    fields: bigQueryFields,
-  };
+  return { query: query, fields: bigQueryFields };
 };
