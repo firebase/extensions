@@ -16,14 +16,10 @@
 
 import * as sqlFormatter from "sql-formatter";
 
-import { RawChangelogSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
-
 import {
   buildSchemaViewQuery,
   latest,
   FirestoreSchema,
-  FirestoreFieldType,
-  FirestoreField,
   processFirestoreSchema,
   subSelectQuery,
 } from "./schema";
