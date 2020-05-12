@@ -140,7 +140,11 @@ export class FirestoreBigQuerySchemaViewFactory {
       view: result.viewInfo,
     };
     if (!changeLogSchemaViewExists) {
-      logs.bigQuerySchemaViewCreating(changeLogSchemaViewName, firestoreSchema, result.viewInfo.query);
+      logs.bigQuerySchemaViewCreating(
+        changeLogSchemaViewName,
+        firestoreSchema,
+        result.viewInfo.query
+      );
       await changeLogSchemaView.create(changelogOptions);
       logs.bigQuerySchemaViewCreated(changeLogSchemaViewName);
     }
@@ -163,7 +167,11 @@ export class FirestoreBigQuerySchemaViewFactory {
       view: result.viewInfo,
     };
     if (!latestSchemaViewExists) {
-      logs.bigQuerySchemaViewCreating(latestSchemaViewName, firestoreSchema, result.viewInfo.query);
+      logs.bigQuerySchemaViewCreating(
+        latestSchemaViewName,
+        firestoreSchema,
+        result.viewInfo.query
+      );
       await latestSchemaView.create(latestOptions);
       logs.bigQueryViewCreated(latestSchemaViewName);
     }
@@ -431,43 +439,66 @@ const processLeafField = (
       );
       break;
     case "timestamp":
-        const seconds = jsonExtract(dataFieldName, extractPrefix, field, `._seconds`, transformer);
-        const nanoseconds = jsonExtract(dataFieldName, extractPrefix, field, `._nanoseconds`, transformer);
-        /*
-         * We return directly from this branch because it's the only one that
-         * generates multiple selector clauses.
-         */
-        fieldNameToSelector[qualifyFieldName(prefix, field.name)] = `${firestoreTimestamp(datasetId, jsonExtract(dataFieldName, extractPrefix, field, ``, transformer))} AS ${prefix
-          .concat(field.name)
-          .join("_")}`;
+      const seconds = jsonExtract(
+        dataFieldName,
+        extractPrefix,
+        field,
+        `._seconds`,
+        transformer
+      );
+      const nanoseconds = jsonExtract(
+        dataFieldName,
+        extractPrefix,
+        field,
+        `._nanoseconds`,
+        transformer
+      );
+      /*
+       * We return directly from this branch because it's the only one that
+       * generates multiple selector clauses.
+       */
+      fieldNameToSelector[
+        qualifyFieldName(prefix, field.name)
+      ] = `${firestoreTimestamp(
+        datasetId,
+        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
+      )} AS ${prefix.concat(field.name).join("_")}`;
 
-        bigQueryFields.push({
-          name: qualifyFieldName(prefix, field.name),
-          mode: "NULLABLE",
-          type: firestoreToBigQueryFieldType[field.type],
-          description: field.description,
-        });
+      bigQueryFields.push({
+        name: qualifyFieldName(prefix, field.name),
+        mode: "NULLABLE",
+        type: firestoreToBigQueryFieldType[field.type],
+        description: field.description,
+      });
 
-        fieldNameToSelector[qualifyFieldName(prefix, `${field.name}_seconds`)] = `SAFE_CAST(${seconds} AS NUMERIC) AS ${qualifyFieldName(prefix, `${field.name}_seconds`)}`;
+      fieldNameToSelector[
+        qualifyFieldName(prefix, `${field.name}_seconds`)
+      ] = `SAFE_CAST(${seconds} AS NUMERIC) AS ${qualifyFieldName(
+        prefix,
+        `${field.name}_seconds`
+      )}`;
 
-        bigQueryFields.push({
-          name: qualifyFieldName(prefix, `${field.name}_seconds`),
-          mode: "NULLABLE",
-          type: "NUMERIC",
-          description: `Numeric seconds component of ${field.name}.`,
-        });
+      bigQueryFields.push({
+        name: qualifyFieldName(prefix, `${field.name}_seconds`),
+        mode: "NULLABLE",
+        type: "NUMERIC",
+        description: `Numeric seconds component of ${field.name}.`,
+      });
 
-        fieldNameToSelector[qualifyFieldName(prefix, `${field.name}_nanoseconds`)] = `SAFE_CAST(${nanoseconds} AS NUMERIC) AS ${qualifyFieldName(prefix, `${field.name}_nanoseconds`)}`;
+      fieldNameToSelector[
+        qualifyFieldName(prefix, `${field.name}_nanoseconds`)
+      ] = `SAFE_CAST(${nanoseconds} AS NUMERIC) AS ${qualifyFieldName(
+        prefix,
+        `${field.name}_nanoseconds`
+      )}`;
 
-        bigQueryFields.push({
-          name: qualifyFieldName(prefix, `${field.name}_nanoseconds`),
-          mode: "NULLABLE",
-          type: "NUMERIC",
-          description: `Numeric nanoseconds component of ${
-            field.name
-          }.`,
-        });
-        return fieldNameToSelector;
+      bigQueryFields.push({
+        name: qualifyFieldName(prefix, `${field.name}_nanoseconds`),
+        mode: "NULLABLE",
+        type: "NUMERIC",
+        description: `Numeric nanoseconds component of ${field.name}.`,
+      });
+      return fieldNameToSelector;
     case "geopoint":
       const latitude = jsonExtract(
         dataFieldName,
