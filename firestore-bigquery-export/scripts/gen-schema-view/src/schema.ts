@@ -19,7 +19,14 @@ import * as bigquery from "@google-cloud/bigquery";
 import * as sqlFormatter from "sql-formatter";
 import * as logs from "./logs";
 import { latestConsistentSnapshotSchemaView } from "./snapshot";
-import { firestoreArray, firestoreBoolean, firestoreGeopoint, firestoreNumber, firestoreTimestamp, udfs } from "./udf";
+import {
+  firestoreArray,
+  firestoreBoolean,
+  firestoreGeopoint,
+  firestoreNumber,
+  firestoreTimestamp,
+  udfs,
+} from "./udf";
 
 export type FirestoreFieldType =
   | "boolean"
@@ -313,7 +320,7 @@ export function processFirestoreSchema(
     extractors,
     transformer,
     bigQueryFields,
-    timestamps,
+    timestamps
   );
   return {
     queryInfo: [extractors, arrays, geopoints, timestamps],
@@ -344,7 +351,7 @@ function processFirestoreSchemaHelper(
   extractors: { [fieldName: string]: string },
   transformer: (selector: string) => string,
   bigQueryFields: { [property: string]: string }[],
-  timestamps: string[],
+  timestamps: string[]
 ) {
   const { fields } = schema;
   return fields.map((field) => {
@@ -360,7 +367,7 @@ function processFirestoreSchemaHelper(
         extractors,
         transformer,
         bigQueryFields,
-        timestamps,
+        timestamps
       );
       return;
     }
@@ -381,11 +388,11 @@ function processFirestoreSchemaHelper(
     if (field.type === "array") {
       arrays.push(qualifyFieldName(prefix, field.name));
     }
-    if (field.type === "geopoint" ) {
+    if (field.type === "geopoint") {
       geopoints.push(qualifyFieldName(prefix, field.name));
     }
-    
-    if (field.type === 'timestamp') {
+
+    if (field.type === "timestamp") {
       timestamps.push(qualifyFieldName(prefix, field.name));
     }
   });
