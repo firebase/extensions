@@ -138,6 +138,7 @@ function resize(originalFile, resizedFile, size) {
         throw new Error("height and width are not delimited by a ',' or a 'x'");
     }
     return sharp(originalFile)
+        .rotate()
         .resize(parseInt(width, 10), parseInt(height, 10), { fit: "inside" })
         .toFile(resizedFile);
 }
