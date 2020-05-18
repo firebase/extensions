@@ -45,9 +45,9 @@ create_github_release(){
 
 	created=$(echo "$response" | python -c "import sys, json; data = json.load(sys.stdin); print(data.get('id', sys.stdin))")
 	if [ "$created" != "$response" ]; then
-    echo "release created successfully"
+    printf "release created successfully!\n"
   else
-    echo "release failed to create; "
+    printf "release failed to create; "
     printf "\n%s\n" "$body"
     printf "\n%s\n" "$response"
     exit 1;
@@ -87,9 +87,9 @@ update_github_release(){
 
 	updated=$(echo "$response" | python -c "import sys, json; data = json.load(sys.stdin); print(data.get('id', sys.stdin))")
 	if [ "$updated" != "$response" ]; then
-    echo "release updated successfully"
+    printf "release updated successfully!\n"
   else
-    echo "release failed to update; "
+    printf "release failed to update; "
     printf "\n%s\n" "$body"
     printf "\n%s\n" "$response"
     exit 1;
@@ -119,16 +119,24 @@ create_or_update_github_release() {
 
   release_id=$(echo "$response" | python -c "import sys, json; data = json.load(sys.stdin); print(data.get('id', 'Not Found'))")
   if [ "$release_id" != "Not Found" ]; then
-    echo "Existing release (${release_id}) found for $release_tag - updating it ... "
-    update_github_release "$release_name" "$release_body" "$release_tag" "$release_id"
+    existing_release_body=$(echo "$response" | python -c "import sys, json; data = json.load(sys.stdin); print(data.get('body', ''))")
+    existing_release_body=$(json_escape "$existing_release_body")
+    # Only update it if the release body is different (this can happen if a change log is manually updated)
+    printf "Existing release (%s) found for %s - " "$release_id" "$release_tag"
+    if [ "$existing_release_body" != "$release_body" ]; then
+      printf "updating it with updated release body ... "
+      update_github_release "$release_name" "$release_body" "$release_tag" "$release_id"
+    else
+      printf "skipping it as release body is already up to date.\n"
+    fi
   else
-    response_message=$(echo "$response" | python -c "import sys, json; data = json.load(sys.stdin); print(data.get('message', 'OK'))")
-    if [ "$response_message" != "OK" ]; then
-      echo "Failed to create/update release '$release_name' -> GitHub API request failed with response: $response_message"
+    response_message=$(echo "$response" | python -c "import sys, json; data = json.load(sys.stdin); print(data.get('message'))")
+    if [ "$response_message" != "Not Found" ]; then
+      echo "Failed to query release '$release_name' -> GitHub API request failed with response: $response_message"
       echo "$response"
       exit 1;
     else
-      echo "Creating new release '$release_tag' ... "
+      printf "Creating new release '%s' ... " "$release_tag"
       create_github_release "$release_name" "$release_body" "$release_tag"
     fi
   fi

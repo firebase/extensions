@@ -35,6 +35,7 @@ const config_1 = require("./config");
 const logs = require("./logs");
 const validators = require("./validators");
 const util_1 = require("./util");
+sharp.cache(false);
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 logs.init();
@@ -164,7 +165,6 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         else {
             metadata.cacheControl = objectMetadata.cacheControl;
         }
-        delete metadata.metadata.firebaseStorageDownloadTokens;
         // Generate a resized image using Sharp.
         logs.imageResizing(resizedFile, size);
         yield resize(originalFile, resizedFile, size);
