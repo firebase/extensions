@@ -32,9 +32,9 @@ author:
 contributors:
   - authorName: Michael Bleigh
     url: https://github.com/mbleigh
-  - authorName: Elliot Hesp
-    email: elliot@invertase.io
-    url: https://github.com/ehesp
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
 
 billingRequired: true
 
@@ -49,7 +49,6 @@ resources:
       Processes document changes in the specified Cloud Firestore collection,
       delivers emails, and updates the document with delivery status information.
     properties:
-      sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
