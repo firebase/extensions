@@ -1,9 +1,9 @@
 const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
 const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation();
 
-import functionsConfig from "../functions/src/config";
-import { obfuscatedConfig } from "../functions/src/logs";
-import * as exportedFunctions from "../functions/src";
+import functionsConfig from "../src/config";
+import { obfuscatedConfig } from "../src/logs";
+import * as exportedFunctions from "../src";
 
 describe("extension", () => {
   beforeEach(() => {});
