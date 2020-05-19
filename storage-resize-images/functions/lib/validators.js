@@ -15,4 +15,5 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isImage = void 0;
 exports.isImage = (contentType) => contentType.startsWith("image/");
