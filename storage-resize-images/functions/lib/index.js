@@ -28,19 +28,20 @@ const admin = require("firebase-admin");
 const fs = require("fs");
 const functions = require("firebase-functions");
 const mkdirp = require("mkdirp-promise");
-const child_process_promise_1 = require("child-process-promise");
 const os = require("os");
 const path = require("path");
+const sharp = require("sharp");
 const config_1 = require("./config");
 const logs = require("./logs");
 const validators = require("./validators");
 const util_1 = require("./util");
+sharp.cache(false);
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 logs.init();
 /**
- * When an image is uploaded in the Storage bucket We generate a resized image automatically using
- * ImageMagick which is installed by default on all Cloud Functions instances.
+ * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
+ * the Sharp image converting library.
  */
 exports.generateResizedImage = functions.storage.object().onFinalize((object) => __awaiter(void 0, void 0, void 0, function* () {
     logs.start();
@@ -125,6 +126,22 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         }
     }
 }));
+function resize(originalFile, resizedFile, size) {
+    let height, width;
+    if (size.indexOf(",") !== -1) {
+        [width, height] = size.split(",");
+    }
+    else if (size.indexOf("x") !== -1) {
+        [width, height] = size.split("x");
+    }
+    else {
+        throw new Error("height and width are not delimited by a ',' or a 'x'");
+    }
+    return sharp(originalFile)
+        .rotate()
+        .resize(parseInt(width, 10), parseInt(height, 10), { fit: "inside" })
+        .toFile(resizedFile);
+}
 const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => __awaiter(void 0, void 0, void 0, function* () {
     const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
     // Path where resized image will be uploaded to in Storage.
@@ -149,12 +166,9 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         else {
             metadata.cacheControl = objectMetadata.cacheControl;
         }
-        delete metadata.metadata.firebaseStorageDownloadTokens;
-        // Generate a resized image using ImageMagick.
+        // Generate a resized image using Sharp.
         logs.imageResizing(resizedFile, size);
-        yield child_process_promise_1.spawn("convert", [originalFile, "-resize", `${size}>`, resizedFile], {
-            capture: ["stdout", "stderr"],
-        });
+        yield resize(originalFile, resizedFile, size);
         logs.imageResized(resizedFile);
         // Uploading the resized image.
         logs.imageUploading(resizedFilePath);

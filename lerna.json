@@ -2,7 +2,8 @@
   "packages": [
     "*",
     "firestore-translate-text/functions",
-    "rtdb-limit-child-nodes/functions"
+    "rtdb-limit-child-nodes/functions",
+    "firestore-counter/functions"
   ],
   "version": "0.0.0"
 }
