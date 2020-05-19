@@ -33,6 +33,9 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
 
 billingRequired: false
 
@@ -48,7 +51,6 @@ resources:
       checks if the max count has been exceeded,
       then deletes the oldest nodes first, as needed to maintain the max count.
     properties:
-      sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.create
