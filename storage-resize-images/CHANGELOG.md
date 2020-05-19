@@ -1,3 +1,10 @@
+## Version 0.1.8
+
+fixed - fix bug where resized image did not keep orientation of original image (Issue #290
+fixed - release automation script for Github release (#302)
+fixed - clear cache so that image names can be reused (Issue #286) (#297)
+fixed - switched ImageMagick for Sharp library (#207)
+
 ## Version 0.1.7
 
 fixed - Resized images now render in the Firebase console. (Issue #140)
