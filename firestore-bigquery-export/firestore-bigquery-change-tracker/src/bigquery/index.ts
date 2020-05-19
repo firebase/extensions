@@ -15,6 +15,8 @@
  */
 
 import * as bigquery from "@google-cloud/bigquery";
+import * as firebase from "firebase-admin";
+import * as traverse from "traverse";
 import { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 
@@ -52,6 +54,7 @@ export class FirestoreBigQueryEventHistoryTracker
 
   async record(events: FirestoreDocumentChangeEvent[]) {
     await this.initialize();
+
     const rows = events.map((event) => {
       return {
         insertId: event.eventId,
@@ -60,11 +63,36 @@ export class FirestoreBigQueryEventHistoryTracker
           event_id: event.eventId,
           document_name: event.documentName,
           operation: ChangeType[event.operation],
-          data: JSON.stringify(event.data),
+          data: JSON.stringify(this.serializeData(event.data)),
         },
       };
     });
     await this.insertData(rows);
+  }
+
+  serializeData(eventData: any) {
+    if (typeof eventData === "undefined") {
+      return undefined;
+    }
+
+    const data = traverse<traverse.Traverse<any>>(eventData).map(function(
+      property
+    ) {
+      if (property && property.constructor) {
+        if (property.constructor.name === "Buffer") {
+          this.remove();
+        }
+
+        if (
+          property.constructor.name ===
+          firebase.firestore.DocumentReference.name
+        ) {
+          this.update(property.path);
+        }
+      }
+    });
+
+    return data;
   }
 
   /**
@@ -73,7 +101,7 @@ export class FirestoreBigQueryEventHistoryTracker
   private async insertData(rows: bigquery.RowMetadata[]) {
     const options = {
       skipInvalidRows: false,
-      ignoreUnkownValues: false,
+      ignoreUnknownValues: false,
       raw: true,
     };
     try {
