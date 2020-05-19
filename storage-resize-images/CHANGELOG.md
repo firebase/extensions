@@ -1,6 +1,16 @@
+## Version 0.1.7
+
+fixed - Resized images now render in the Firebase console. (Issue #140)
+fixed - The Sharp cache is now cleared so that the latest image with a given
+file name is retrieved from the Storage bucket. (Issue #286)
+
+## Version 0.1.6
+
+fixed - Switched ImageMagick for Sharp library to support webp format. (Issue #199)
+
 ## Version 0.1.5
 
-fixed - The original, uploaded image's MIME type must now always be specified in the `Content-Type` header. (issue #175)
+fixed - The original, uploaded image's MIME type must now always be specified in the `Content-Type` header. (Issue #175)
 
 ## Version 0.1.4
 
