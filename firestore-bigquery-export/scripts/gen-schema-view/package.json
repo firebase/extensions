@@ -1,6 +1,6 @@
 {
   "name": "@firebaseextensions/fs-bq-schema-views",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Generate strongly-typed BigQuery Views based on raw JSON",
   "main": "./lib/index.js",
   "repository": {
@@ -32,7 +32,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.5",
-    "@google-cloud/bigquery": "^2.1.0",
+    "@google-cloud/bigquery": "^4.7.0",
     "commander": "5.0.0",
     "firebase-admin": "^7.1.1",
     "firebase-functions": "^2.2.1",
