@@ -1,15 +1,15 @@
 {
-  "name": "firestore-shorten-urls-bitly",
+  "name": "firestore-shorten-urls-bitly-functions",
   "description": "Automatically shorten url links",
   "author": "Chris Bianca <chris@csfrequency.com>",
   "license": "Apache-2.0",
-  "main": "functions/lib/index.js",
+  "main": "lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
-    "clean": "rimraf functions/lib",
+    "clean": "rimraf lib",
     "compile": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "generate-readme": "firebase ext:info . --markdown > README.md"
+    "generate-readme": "firebase ext:info .. --markdown > README.md"
   },
   "dependencies": {
     "axios": "^0.19.1",
