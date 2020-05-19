@@ -1,6 +1,6 @@
 ## Version 0.1.8
 
-fixed - fix bug where resized image did not keep orientation of original image (Issue #290
+fixed - Resized images now maintain the same orientation as the original image. (Issue #290)
 
 ## Version 0.1.7
 
