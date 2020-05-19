@@ -2,7 +2,8 @@
   "packages": [
     "*",
     "firestore-translate-text/functions",
-    "auth-mailchimp-sync/functions"
+    "auth-mailchimp-sync/functions",
+    "firestore-counter/functions"
   ],
   "version": "0.0.0"
 }
