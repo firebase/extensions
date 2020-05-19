@@ -1,6 +1,6 @@
 {
   "name": "@firebaseextensions/fs-bq-schema-views",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "description": "Generate strongly-typed BigQuery Views based on raw JSON",
   "main": "./lib/index.js",
   "repository": {
@@ -11,7 +11,7 @@
   "scripts": {
     "build": "npm run clean && npm run compile",
     "clean": "rimraf ./lib",
-    "compile": "tsc && cp -r src/test/fixtures lib/test",
+    "compile": "tsc && cp -r src/__tests__/fixtures lib/__tests__",
     "gen-schema-views": "node ./lib/index.js",
     "prepare": "npm run build",
     "test": "jest"
@@ -31,6 +31,7 @@
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
   "dependencies": {
+    "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.5",
     "@google-cloud/bigquery": "^2.1.0",
     "commander": "5.0.0",
     "firebase-admin": "^7.1.1",
