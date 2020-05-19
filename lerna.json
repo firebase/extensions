@@ -3,6 +3,7 @@
     "*",
     "firestore-translate-text/functions",
     "auth-mailchimp-sync/functions",
+    "firestore-send-email/functions",
     "firestore-counter/functions"
   ],
   "version": "0.0.0"
