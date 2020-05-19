@@ -1,3 +1,7 @@
+## Version 0.1.8
+
+fixed - Resized images now maintain the same orientation as the original image. (Issue #290)
+
 ## Version 0.1.7
 
 fixed - Resized images now render in the Firebase console. (Issue #140)
