@@ -2,7 +2,8 @@
   "packages": [
     "*",
     "firestore-translate-text/functions",
-    "firestore-counter/functions"
+    "firestore-counter/functions",
+    "delete-user-data/functions"
   ],
   "version": "0.0.0"
 }
