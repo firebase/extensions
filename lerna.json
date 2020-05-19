@@ -2,6 +2,7 @@
   "packages": [
     "*",
     "firestore-translate-text/functions",
+    "firestore-shorten-urls-bitly/functions",
     "auth-mailchimp-sync/functions",
     "firestore-send-email/functions",
     "firestore-counter/functions"
