@@ -576,8 +576,8 @@ export function subSelectQuery(query: string, filter?: string[]): string {
 }
 
 function qualifyFieldName(prefix: string[], name: string): string {
-  const notAlphaDigitUnderscore = /([^a-zA-Z0-9_])/;
-  const cleanName = name.replace(notAlphaDigitUnderscore, "_");
+  const notAlphanumericUnderscore = /([^a-zA-Z0-9_])/g;
+  const cleanName = name.replace(notAlphanumericUnderscore, "_");
 
   return prefix.concat(cleanName).join("_");
 }
