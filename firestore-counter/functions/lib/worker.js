@@ -24,6 +24,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ShardedCounterWorker = void 0;
 const firebase_admin_1 = require("firebase-admin");
 const deepEqual = require("deep-equal");
 const common_1 = require("./common");

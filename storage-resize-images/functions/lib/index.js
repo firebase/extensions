@@ -24,6 +24,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateResizedImage = void 0;
 const admin = require("firebase-admin");
 const fs = require("fs");
 const functions = require("firebase-functions");
@@ -138,6 +139,7 @@ function resize(originalFile, resizedFile, size) {
         throw new Error("height and width are not delimited by a ',' or a 'x'");
     }
     return sharp(originalFile)
+        .rotate()
         .resize(parseInt(width, 10), parseInt(height, 10), { fit: "inside" })
         .toFile(resizedFile);
 }
