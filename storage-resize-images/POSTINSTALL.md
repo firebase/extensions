@@ -27,7 +27,7 @@ The extension also copies the following [metadata](https://cloud.google.com/stor
 - `Content-Encoding`
 - `Content-Language`
 - `Content-Type`
-- [user-provided metadata](https://cloud.google.com/storage/docs/metadata#custom-metadata) (except Firebase storage download tokens)
+- [user-provided metadata](https://cloud.google.com/storage/docs/metadata#custom-metadata)
 
 Be aware of the following when using this extension:
 
