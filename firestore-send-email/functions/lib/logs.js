@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.missingUids = exports.missingDeliveryField = exports.deliveryError = exports.delivered = exports.attemptingDelivery = exports.complete = exports.error = exports.start = exports.init = exports.obfuscatedConfig = void 0;
 const config_1 = require("./config");
 exports.obfuscatedConfig = Object.assign({}, config_1.default, {
     smtpConnectionUri: "<omitted>",

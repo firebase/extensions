@@ -24,7 +24,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FirestoreUrlShortener = void 0;
 const admin = require("firebase-admin");
 const logs = require("./logs");
 var ChangeType;

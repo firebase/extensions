@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Aggregator = exports.NumericUpdate = void 0;
 const firebase_admin_1 = require("firebase-admin");
 const uuid = require("uuid");
 class NumericUpdate {

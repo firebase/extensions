@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userRemoving = exports.userRemoved = exports.userNoEmail = exports.userAdding = exports.userAdded = exports.start = exports.mailchimpNotInitialized = exports.initError = exports.init = exports.errorRemoveUser = exports.errorAddUser = exports.complete = exports.obfuscatedConfig = void 0;
 const config_1 = require("./config");
 exports.obfuscatedConfig = Object.assign(Object.assign({}, config_1.default), { mailchimpApiKey: "<omitted>" });
 exports.complete = () => {
