@@ -25,7 +25,6 @@ import * as sharp from "sharp";
 
 import config from "./config";
 import * as logs from "./logs";
-import * as validators from "./validators";
 import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
 import { extractFileNameWithoutExtension } from "./util";
 
@@ -54,9 +53,13 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       return;
     }
 
-    const isImage = validators.isImage(contentType);
-    if (!isImage) {
+    if (!contentType.startsWith("image/")) {
       logs.contentTypeInvalid(contentType);
+      return;
+    }
+
+    if (contentType.includes("svg")) {
+      logs.svgType(contentType);
       return;
     }
 

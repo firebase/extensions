@@ -30,6 +30,10 @@ export const contentTypeInvalid = (contentType: string) => {
   );
 };
 
+export const svgType = (contentType: string) => {
+  console.log(`image type '${contentType}' is already scalable, no processing is required`);
+};
+
 export const error = (err: Error) => {
   console.error("Error when resizing image", err);
 };

@@ -24,7 +24,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateResizedImage = void 0;
 const admin = require("firebase-admin");
 const fs = require("fs");
 const functions = require("firebase-functions");
@@ -34,7 +33,6 @@ const path = require("path");
 const sharp = require("sharp");
 const config_1 = require("./config");
 const logs = require("./logs");
-const validators = require("./validators");
 const util_1 = require("./util");
 sharp.cache(false);
 // Initialize the Firebase Admin SDK
@@ -51,9 +49,12 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         logs.noContentType();
         return;
     }
-    const isImage = validators.isImage(contentType);
-    if (!isImage) {
+    if (!contentType.startsWith("image/")) {
         logs.contentTypeInvalid(contentType);
+        return;
+    }
+    if (contentType.includes("svg")) {
+        logs.svgType(contentType);
         return;
     }
     if (object.metadata && object.metadata.resizedImage === "true") {

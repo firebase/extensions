@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remoteFileDeleting = exports.remoteFileDeleted = exports.tempResizedFileDeleting = exports.tempResizedFileDeleted = exports.tempOriginalFileDeleting = exports.tempOriginalFileDeleted = exports.tempDirectoryCreating = exports.tempDirectoryCreated = exports.start = exports.init = exports.imageUploading = exports.imageUploaded = exports.imageResizing = exports.imageResized = exports.imageDownloading = exports.imageDownloaded = exports.imageAlreadyResized = exports.failed = exports.errorDeleting = exports.error = exports.contentTypeInvalid = exports.noContentType = exports.complete = void 0;
 const config_1 = require("./config");
 exports.complete = () => {
     console.log("Completed execution of extension");
@@ -25,6 +24,9 @@ exports.noContentType = () => {
 };
 exports.contentTypeInvalid = (contentType) => {
     console.log(`File of type '${contentType}' is not an image, no processing is required`);
+};
+exports.svgType = (contentType) => {
+    console.log(`image type '${contentType}' is already scalable, no processing is required`);
 };
 exports.error = (err) => {
     console.error("Error when resizing image", err);
