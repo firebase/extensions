@@ -469,13 +469,7 @@ const processLeafField = (
         qualifyFieldName(prefix, field.name)
       ] = `${firestoreTimestamp(
         datasetId,
-        jsonExtract(
-          dataFieldName,
-          extractPrefix,
-          field,
-          ``,
-          transformer
-        )
+        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
       )} AS ${prefix.concat(field.name).join("_")}`;
 
       bigQueryFields.push({
@@ -536,13 +530,7 @@ const processLeafField = (
         qualifyFieldName(prefix, field.name)
       ] = `${firestoreGeopoint(
         datasetId,
-        jsonExtract(
-          dataFieldName,
-          extractPrefix,
-          field,
-          ``,
-          transformer
-        )
+        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
       )} AS ${prefix.concat(field.name).join("_")}`;
 
       bigQueryFields.push({

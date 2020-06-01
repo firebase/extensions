@@ -136,7 +136,9 @@ function firestoreGeopointFunction(datasetId: string): any {
 
 function firestoreGeopointDefinition(datasetId: string): string {
   return sqlFormatter.format(`
-    CREATE FUNCTION IF NOT EXISTS \`${process.env.PROJECT_ID}.${datasetId}.firestoreGeopoint\`(json STRING)
+    CREATE FUNCTION IF NOT EXISTS \`${
+      process.env.PROJECT_ID
+    }.${datasetId}.firestoreGeopoint\`(json STRING)
     RETURNS GEOGRAPHY AS
     (ST_GEOGPOINT(SAFE_CAST(JSON_EXTRACT(json, '$._longitude') AS NUMERIC), SAFE_CAST(JSON_EXTRACT(json, '$._latitude') AS NUMERIC)));`);
 }
