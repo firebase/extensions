@@ -420,7 +420,7 @@ const processLeafField = (
       break;
     case "string":
     case "reference":
-      selector = jsonExtract(
+      selector = jsonExtractScalar(
         dataFieldName,
         extractPrefix,
         field,
@@ -431,30 +431,30 @@ const processLeafField = (
     case "array":
       selector = firestoreArray(
         datasetId,
-        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtractScalar(dataFieldName, extractPrefix, field, ``, transformer)
       );
       break;
     case "boolean":
       selector = firestoreBoolean(
         datasetId,
-        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtractScalar(dataFieldName, extractPrefix, field, ``, transformer)
       );
       break;
     case "number":
       selector = firestoreNumber(
         datasetId,
-        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtractScalar(dataFieldName, extractPrefix, field, ``, transformer)
       );
       break;
     case "timestamp":
-      const seconds = jsonExtract(
+      const seconds = jsonExtractScalar(
         dataFieldName,
         extractPrefix,
         field,
         `._seconds`,
         transformer
       );
-      const nanoseconds = jsonExtract(
+      const nanoseconds = jsonExtractScalar(
         dataFieldName,
         extractPrefix,
         field,
@@ -469,7 +469,13 @@ const processLeafField = (
         qualifyFieldName(prefix, field.name)
       ] = `${firestoreTimestamp(
         datasetId,
-        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtract(
+          dataFieldName,
+          extractPrefix,
+          field,
+          ``,
+          transformer
+        )
       )} AS ${prefix.concat(field.name).join("_")}`;
 
       bigQueryFields.push({
@@ -508,14 +514,14 @@ const processLeafField = (
       });
       return fieldNameToSelector;
     case "geopoint":
-      const latitude = jsonExtract(
+      const latitude = jsonExtractScalar(
         dataFieldName,
         extractPrefix,
         field,
         `._latitude`,
         transformer
       );
-      const longitude = jsonExtract(
+      const longitude = jsonExtractScalar(
         dataFieldName,
         extractPrefix,
         field,
@@ -530,7 +536,13 @@ const processLeafField = (
         qualifyFieldName(prefix, field.name)
       ] = `${firestoreGeopoint(
         datasetId,
-        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtract(
+          dataFieldName,
+          extractPrefix,
+          field,
+          ``,
+          transformer
+        )
       )} AS ${prefix.concat(field.name).join("_")}`;
 
       bigQueryFields.push({
@@ -607,7 +619,7 @@ const processLeafField = (
  * JSON_EXTRACT. This is typically a BigQuery CAST, or an UNNEST (in the case
  * where the result is an ARRAY).
  */
-const jsonExtract = (
+const jsonExtractScalar = (
   dataFieldName: string,
   prefix: string,
   field: FirestoreField,
@@ -616,6 +628,20 @@ const jsonExtract = (
 ) => {
   return transformer(
     `JSON_EXTRACT_SCALAR(${dataFieldName}, \'\$.${
+      prefix.length > 0 ? `${prefix}.` : ``
+    }${field.name}${subselector}\')`
+  );
+};
+
+const jsonExtract = (
+  dataFieldName: string,
+  prefix: string,
+  field: FirestoreField,
+  subselector: string = "",
+  transformer: (selector: string) => string
+) => {
+  return transformer(
+    `JSON_EXTRACT(${dataFieldName}, \'\$.${
       prefix.length > 0 ? `${prefix}.` : ``
     }${field.name}${subselector}\')`
   );
