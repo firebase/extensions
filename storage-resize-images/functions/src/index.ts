@@ -51,7 +51,6 @@ const supportedContentTypes = [
   "image/webp",
 ];
 
-
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
@@ -70,8 +69,8 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       logs.contentTypeInvalid(contentType);
       return;
     }
-    
-    if(!supportedContentTypes.includes(contentType)) {
+
+    if (!supportedContentTypes.includes(contentType)) {
       logs.unsupportedType(supportedContentTypes, contentType);
       return;
     }
