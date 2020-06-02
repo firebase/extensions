@@ -25,8 +25,8 @@ exports.noContentType = () => {
 exports.contentTypeInvalid = (contentType) => {
     console.log(`File of type '${contentType}' is not an image, no processing is required`);
 };
-exports.svgType = (contentType) => {
-    console.log(`image type '${contentType}' is already scalable, no processing is required`);
+exports.unsupportedType = (unsupportedTypes, contentType) => {
+    console.log(`image type '${contentType}' is not supported, here are the supported file types: ${unsupportedTypes.join(", ")}`);
 };
 exports.error = (err) => {
     console.error("Error when resizing image", err);

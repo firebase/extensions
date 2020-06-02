@@ -39,6 +39,16 @@ sharp.cache(false);
 admin.initializeApp();
 logs.init();
 /**
+ * Supported file types
+ */
+const supportedContentTypes = [
+    "image/gif",
+    "image/jpeg",
+    "image/png",
+    "image/tiff",
+    "image/webp",
+];
+/**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
  */
@@ -53,8 +63,8 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         logs.contentTypeInvalid(contentType);
         return;
     }
-    if (contentType.includes("svg")) {
-        logs.svgType(contentType);
+    if (!supportedContentTypes.includes(contentType)) {
+        logs.unsupportedType(supportedContentTypes, contentType);
         return;
     }
     if (object.metadata && object.metadata.resizedImage === "true") {
