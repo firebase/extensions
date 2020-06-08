@@ -42,7 +42,6 @@ logs.init();
  * Supported file types
  */
 const supportedContentTypes = [
-    "image/gif",
     "image/jpeg",
     "image/png",
     "image/tiff",
