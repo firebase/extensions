@@ -150,7 +150,10 @@ function resize(originalFile, resizedFile, size) {
     }
     return sharp(originalFile)
         .rotate()
-        .resize(parseInt(width, 10), parseInt(height, 10), { fit: "inside", withoutEnlargement: true })
+        .resize(parseInt(width, 10), parseInt(height, 10), {
+        fit: "inside",
+        withoutEnlargement: true,
+    })
         .toFile(resizedFile);
 }
 const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => __awaiter(void 0, void 0, void 0, function* () {
