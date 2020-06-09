@@ -1,6 +1,6 @@
 ## Version 0.1.9
 
-feature - skip resizing of vector images (Fixes #326). (#329)
+changed - If the original image is a vector image, the extension does not resize it. (Issue #326, PR #329)
 build - replace `mkdirp-promise` with `mkdirp` because `mkdirp-promise` has been deprecated. (#266)
 fixed - stop images from getting enlarged if they were smaller than max width and height (Issue #337). (#338)
 
