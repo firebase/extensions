@@ -154,7 +154,10 @@ function resize(originalFile, resizedFile, size) {
 
   return sharp(originalFile)
     .rotate()
-    .resize(parseInt(width, 10), parseInt(height, 10), { fit: "inside" })
+    .resize(parseInt(width, 10), parseInt(height, 10), {
+      fit: "inside",
+      withoutEnlargement: true,
+    })
     .toFile(resizedFile);
 }
 
