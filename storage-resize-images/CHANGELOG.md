@@ -1,3 +1,9 @@
+## Version 0.1.9
+
+feature - skip resizing of vector images (Fixes #326). (#329)
+build - replace `mkdirp-promise` with `mkdirp` because `mkdirp-promise` has been deprecated. (#266)
+fixed - stop images from getting enlarged if they were smaller than max width and height (Issue #337). (#338)
+
 ## Version 0.1.8
 
 fixed - Resized images now maintain the same orientation as the original image. (Issue #290)
