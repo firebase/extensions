@@ -24,6 +24,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ShardedCounterController = exports.ControllerStatus = void 0;
 const firebase_admin_1 = require("firebase-admin");
 const common_1 = require("./common");
 const planner_1 = require("./planner");

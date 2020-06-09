@@ -24,6 +24,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.removeUserFromList = exports.addUserToList = void 0;
 const crypto = require("crypto");
 const functions = require("firebase-functions");
 // @ts-ignore incorrect typescript typings

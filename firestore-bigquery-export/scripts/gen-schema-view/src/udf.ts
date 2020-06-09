@@ -140,5 +140,5 @@ function firestoreGeopointDefinition(datasetId: string): string {
       process.env.PROJECT_ID
     }.${datasetId}.firestoreGeopoint\`(json STRING)
     RETURNS GEOGRAPHY AS
-    (ST_GEOGPOINT(SAFE_CAST(JSON_EXTRACT(json, '$._latitude') AS NUMERIC), SAFE_CAST(JSON_EXTRACT(json, '$._longitude') AS NUMERIC)));`);
+    (ST_GEOGPOINT(SAFE_CAST(JSON_EXTRACT(json, '$._longitude') AS NUMERIC), SAFE_CAST(JSON_EXTRACT(json, '$._latitude') AS NUMERIC)));`);
 }
