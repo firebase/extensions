@@ -30,11 +30,11 @@ const SHARDS_COLLECTION_ID = "_counter_shards_";
 const WORKERS_COLLECTION_ID = "_counter_workers_";
 
 /**
- * The controllerCore is scheduled every minute. It tries to aggregate shards if
+ * The controllerCore is scheduled to run automatically. It tries to aggregate shards if
  * there's less than 200 of them. Otherwise it is scheduling and monitoring
  * workers to do the aggregation.
  */
-export const controllerCore = functions.handler.pubsub.topic.onPublish(
+export const controllerCore = functions.handler.pubsub.schedule.onRun(
   async () => {
     const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new ShardedCounterController(
