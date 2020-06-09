@@ -35,7 +35,7 @@ export const unsupportedType = (
   contentType: string
 ) => {
   console.log(
-    `image type '${contentType}' is not supported, here are the supported file types: ${unsupportedTypes.join(
+    `Image type '${contentType}' is not supported, here are the supported file types: ${unsupportedTypes.join(
       ", "
     )}`
   );
