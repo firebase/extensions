@@ -25,7 +25,6 @@ import * as sharp from "sharp";
 
 import config from "./config";
 import * as logs from "./logs";
-import * as validators from "./validators";
 import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
 import { extractFileNameWithoutExtension } from "./util";
 
@@ -40,6 +39,17 @@ sharp.cache(false);
 admin.initializeApp();
 
 logs.init();
+
+/**
+ * Supported file types
+ */
+const supportedContentTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/tiff",
+  "image/webp",
+];
+
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
@@ -54,9 +64,13 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       return;
     }
 
-    const isImage = validators.isImage(contentType);
-    if (!isImage) {
+    if (!contentType.startsWith("image/")) {
       logs.contentTypeInvalid(contentType);
+      return;
+    }
+
+    if (!supportedContentTypes.includes(contentType)) {
+      logs.unsupportedType(supportedContentTypes, contentType);
       return;
     }
 
