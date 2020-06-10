@@ -4,10 +4,11 @@ FROM
   (
     SELECT
       document_name,
+      document_id,
       timestamp,
       operation,
-      `test.test_dataset.firestoreArray`(JSON_EXTRACT(data, '$.map.array')) AS map_array,
-      `test.test_dataset.firestoreArray`(JSON_EXTRACT(data, '$.map2.array')) AS map2_array
+      `test.test_dataset.firestoreArray`(JSON_EXTRACT_SCALAR(data, '$.map.array')) AS map_array,
+      `test.test_dataset.firestoreArray`(JSON_EXTRACT_SCALAR(data, '$.map2.array')) AS map2_array
     FROM
       `test.test_dataset.test_table`
   ) test_table

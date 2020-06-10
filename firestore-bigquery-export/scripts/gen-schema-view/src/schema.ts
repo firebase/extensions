@@ -237,6 +237,7 @@ export const buildSchemaViewQuery = (
   let query = `
     SELECT
       document_name,
+      document_id,
       timestamp,
       operation${fieldValueSelectorClauses.length > 0 ? `,` : ``}
       ${fieldValueSelectorClauses}

@@ -48,7 +48,7 @@ async function readBigQuerySchema(file: string): Promise<any> {
 }
 
 describe("schema snapshot view sql generation", () => {
-  it("should generate the expected sql", async () => {
+  it("should generate the expected sql for full schema latest", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/fullSchemaLatest.txt`
     );
@@ -59,7 +59,7 @@ describe("schema snapshot view sql generation", () => {
     );
     expect(result.query).to.equal(expectedQuery);
   });
-  it("should generate the expected sql", async () => {
+  it("should generate the expected sql for full schema latest view", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/fullSchemaLatestFromView.txt`
     );
@@ -81,7 +81,7 @@ describe("schema snapshot view sql generation", () => {
     );
     expect(result.query).to.equal(expectedQuery);
   });
-  it("should generate the expected sql", async () => {
+  it("should generate the expected sql for empty schema latest view", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/emptySchemaLatestFromView.txt`
     );

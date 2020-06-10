@@ -122,12 +122,14 @@ export const buildLatestSchemaSnapshotViewQuery = (
   let query = `
       SELECT
         document_name,
+        document_id,
         timestamp,
         operation${fieldNameSelectorClauses.length > 0 ? `,` : ``}
         ${fieldNameSelectorClauses}
       FROM (
         SELECT
           document_name,
+          document_id,
           ${firstValue(`timestamp`)} AS timestamp,
           ${firstValue(`operation`)} AS operation,
           ${firstValue(`operation`)} = "DELETE" AS is_deleted${
