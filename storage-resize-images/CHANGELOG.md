@@ -1,3 +1,9 @@
+## Version 0.1.9
+
+changed - If the original image is a vector image, the extension does not resize it. (Issue #326, PR #329)
+fixed - Replaced `mkdirp-promise` with `mkdirp` because `mkdirp-promise` is deprecated. (PR #266)
+fixed - If the original image is smaller than the specified max width and height, the extension does not enlarge it or resize it. (Issue #337, PR #338)
+
 ## Version 0.1.8
 
 fixed - Resized images now maintain the same orientation as the original image. (Issue #290)
