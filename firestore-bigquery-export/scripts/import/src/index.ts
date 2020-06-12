@@ -34,7 +34,7 @@ const read = util.promisify(fs.readFile);
 const unlink = util.promisify(fs.unlink);
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
-const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
+const FIRESTORE_VALID_CHARACTERS = /^.+$/;
 
 const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
 const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
@@ -160,9 +160,10 @@ const run = async (): Promise<number> => {
   // operations supersede imports when listing the live documents.
   let cursor;
 
+  let sanitizedSourceCollectionPath = sourceCollectionPath.replace(/\//g, '_');
   let cursorPositionFile =
     __dirname +
-    `/from-${sourceCollectionPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
+    `/from-${sanitizedSourceCollectionPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
   if (await exists(cursorPositionFile)) {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
     cursor = await firebase
