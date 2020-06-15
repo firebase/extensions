@@ -17,8 +17,7 @@ version: 0.1.3
 specVersion: v1beta
 
 displayName: Distributed Counter
-description:
-  Records event counters at scale to accommodate high-velocity writes to Cloud Firestore.
+description: Records event counters at scale to accommodate high-velocity writes to Cloud Firestore.
 
 license: Apache-2.0
 
@@ -36,14 +35,12 @@ contributors:
   - authorName: Invertase
     email: oss@invertase.io
     url: https://github.com/invertase
-    
 
 billingRequired: false
 
 roles:
   - role: datastore.user
-    reason:
-      Allows the extension to aggregate Cloud Firestore counter shards.
+    reason: Allows the extension to aggregate Cloud Firestore counter shards.
   - role: pubsub.publisher
     reason:
       Allows the HTTPS controller function to publish a message to the extension's Pub/Sub topic,
@@ -52,19 +49,16 @@ roles:
 resources:
   - name: controllerCore
     type: firebaseextensions.v1beta.function
-    description:
-      Scheduled to run every minute.
-      This function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
+    description: This scheduled function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
     properties:
       location: ${LOCATION}
       maxInstances: 1
       scheduleTrigger:
-        schedule: ${SCHEDULE_FREQUENCY}
+        schedule: "every ${SCHEDULE_FREQUENCY} minutes"
 
   - name: controller
     type: firebaseextensions.v1beta.function
-    description:
-      Maintained for backwards compatibility.
+    description: Maintained for backwards compatibility.
       This function relays a message to the extension's Pub/Sub topic to trigger the controllerCore function.
     properties:
       location: ${LOCATION}
@@ -73,8 +67,7 @@ resources:
 
   - name: onWrite
     type: firebaseextensions.v1beta.function
-    description:
-      Listens for changes on counter shards that may need aggregating. This function is limited to max 1 instance.
+    description: Listens for changes on counter shards that may need aggregating. This function is limited to max 1 instance.
     properties:
       location: ${LOCATION}
       maxInstances: 1
@@ -85,8 +78,7 @@ resources:
 
   - name: worker
     type: firebaseextensions.v1beta.function
-    description:
-      Monitors a range of shards and aggregates them, as needed.
+    description: Monitors a range of shards and aggregates them, as needed.
       There may be 0 or more worker functions running at any point in time.
       The controllerCore function is responsible for scheduling and monitoring these workers.
     properties:
@@ -140,13 +132,8 @@ params:
   - param: SCHEDULE_FREQUENCY
     label: Frequency for controllerCore function to be run
     description: >-
-      How often should the function to aggregatte shards be run?
-    options:
-      - label: every 1 minutes
-        value: every 1 minutes
-      - label: every 2 minutes
-        value: every 2 minutes
-      - label: every 5 minutes
-        value: every 5 minutes
-    default: every 1 minutes
+      In minutes, how often should the function to aggregatte shards be run?
+    validationRegex: "^[1-9][0-9]*$"
+    validationErrorMessage: The number of minutes must be an integer value greater than zero.
+    default: "1"
     required: true
