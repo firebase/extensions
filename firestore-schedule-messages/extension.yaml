@@ -1,0 +1,122 @@
+# Learn detailed information about the fields of an extension.yaml file in the docs:
+# https://firebase.google.com/docs/extensions/alpha/ref-extension-yaml
+
+name: firestore-schedule-messages # Identifier for your extension
+version: 0.0.1 # Follow semver versioning
+specVersion: v1beta # Version of the Firebase Extensions specification
+
+# Friendly display name for your extension (~3-5 words)
+displayName: Schedule Messages
+
+# Brief description of the task your extension performs (~1 sentence)
+description: >-
+  Deliver messages via PubSub at an arbitrary time in the future.
+
+license: Apache-2.0 # https://spdx.org/licenses/
+
+# Public URL for the source code of your extension
+sourceUrl: https://github.com/firebase/firebase-tools/tree/master/firestore-schedule-messages
+
+# Specify whether a paid-tier billing plan is required to use your extension.
+# Learn more in the docs: https://firebase.google.com/docs/extensions/alpha/ref-extension-yaml#billing-required-field
+billingRequired: true
+
+# In an `apis` field, list any Google APIs (like Cloud Translation, BigQuery, etc.)
+# required for your extension to operate.
+# Learn more in the docs: https://firebase.google.com/docs/extensions/alpha/ref-extension-yaml#apis-field
+apis:
+  - apiName: pubsub.googleapis.com
+    description: Used to publish PubSub messages at the scheduled time.
+
+# In a `roles` field, list any IAM access roles required for your extension to operate.
+# Learn more in the docs: https://firebase.google.com/docs/extensions/alpha/ref-extension-yaml#roles-field
+roles:
+  - role: datastore.user
+    reason: Allows this extension to fetch and process messages in the queue.
+  - role: pubsub.editor
+    reason:
+      Allows this extension to publish PubSub messages and create topics as
+      needed.
+
+# In the `resources` field, list each of your extension's functions, including the trigger for each function.
+# Learn more in the docs: https://firebase.google.com/docs/extensions/alpha/ref-extension-yaml#resources-field
+resources:
+  - name: deliverMessages
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Function that runs periodically to find queued messages and deliver them
+      to PubSub topics.
+    properties:
+      # LOCATION is a user-configured parameter value specified by the user during installation.
+      location: ${LOCATION}
+      scheduleTrigger:
+        schedule: "${SCHEDULE}"
+      runtime: "nodejs8"
+
+# In the `params` field, set up your extension's user-configured parameters.
+# Learn more in the docs: https://firebase.google.com/docs/extensions/alpha/ref-extension-yaml#params-field
+params:
+  - param: LOCATION
+    label: Cloud Functions location
+    description: >-
+      Where do you want to deploy the functions created for this extension? For
+      help selecting a location, refer to the [location selection
+      guide](https://firebase.google.com/docs/functions/locations).
+    type: select
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+    default: us-central1
+    required: true
+    immutable: true
+  - param: QUEUE_COLLECTION
+    label: Message Queue Collection
+    description: >-
+      The name of the Firestore collection in which queued messages will be
+      stored.
+    type: string
+    default: queued_messages
+  - param: PUBSUB_TOPIC
+    label: PubSub Topic
+    description: >-
+      The name of the PubSub topic into which messages should be delivered when
+      processed. If blank, may be specified in each queued message.
+  - param: STALENESS_THRESHOLD_SECONDS
+    label: Staleness Threshold (in seconds)
+    description: >-
+      The duration (in minutes) after which a scheduled message should be
+      abandoned as stale. Considered indefinite if "0" or blank.
+    type: string
+    default: "0"
+  - param: CLEANUP
+    label: Cleanup Policy
+    description: >-
+      How to handle messages in the queue collection once successfully
+      delivered.
+    type: select
+    options:
+      - label: Delete after processing
+        value: DELETE
+      - label: Keep after processing
+        value: KEEP
+    default: DELETE
+  - param: SCHEDULE
+    label: Processing Schedule
+    description: >-
+      The schedule (in cron syntax) at which messages should be evaluated for
+      delivery. Defaults to every minute.
+    default: "* * * * *"

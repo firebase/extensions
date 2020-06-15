@@ -1,0 +1,21 @@
+{
+  "name": "functions",
+  "scripts": {
+    "lint": "tslint --project tsconfig.json",
+    "build": "tsc"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "@google-cloud/pubsub": "^2.1.0",
+    "@types/promise.allsettled": "^1.0.3",
+    "firebase-admin": "^8.6.0",
+    "firebase-functions": "^3.6.1",
+    "promise.allsettled": "^1.0.2"
+  },
+  "devDependencies": {
+    "prettier": "^2.0.5",
+    "tslint": "^5.12.0",
+    "typescript": "^3.8.0"
+  },
+  "private": true
+}
