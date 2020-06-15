@@ -22,7 +22,7 @@ import * as mkdirp from "mkdirp";
 import * as os from "os";
 import * as path from "path";
 import * as sharp from "sharp";
-import { uuid } from 'uuidv4';
+import { uuid } from "uuidv4";
 
 import config from "./config";
 import * as logs from "./logs";
@@ -222,7 +222,7 @@ const resizeImage = async ({
       metadata.cacheControl = objectMetadata.cacheControl;
     }
 
-    // If the original image has a download token, add a 
+    // If the original image has a download token, add a
     // new token to the image being resized #323
     if (metadata.metadata.firebaseStorageDownloadTokens) {
       metadata.metadata.firebaseStorageDownloadTokens = uuid();
