@@ -46,85 +46,85 @@ const validateInput = (
   name: string,
   regex: RegExp,
   sizeLimit: number
-) => {
-  if (!value || value === "" || value.trim() === "") {
-    return `Please supply a ${name}`;
-  }
-  if (value.length >= sizeLimit) {
-    return `${name} must be at most ${sizeLimit} characters long`;
-  }
-  if (!value.match(regex)) {
-    return `The ${name} must only contain letters or spaces`;
-  }
-  return true;
-};
-
-const questions = [
-  {
-    message: "What is your Firebase project ID?",
-    name: "projectId",
-    type: "input",
-    validate: (value) =>
+  ) => {
+    if (!value || value === "" || value.trim() === "") {
+      return `Please supply a ${name}`;
+    }
+    if (value.length >= sizeLimit) {
+      return `${name} must be at most ${sizeLimit} characters long`;
+    }
+    if (!value.match(regex)) {
+      return `The ${name} must only contain letters or spaces`;
+    }
+    return true;
+  };
+  
+  const questions = [
+    {
+      message: "What is your Firebase project ID?",
+      name: "projectId",
+      type: "input",
+      validate: (value) =>
       validateInput(
         value,
         "project ID",
         FIRESTORE_VALID_CHARACTERS,
         FIRESTORE_COLLECTION_NAME_MAX_CHARS
-      ),
-  },
-  {
-    message:
-      "What is the path of the the Cloud Firestore Collection you would like to import from? " +
-      "(This may, or may not, be the same Collection for which you plan to mirror changes.)",
-    name: "sourceCollectionPath",
-    type: "input",
-    validate: (value) =>
-      validateInput(
-        value,
-        "collection path",
-        FIRESTORE_VALID_CHARACTERS,
-        FIRESTORE_COLLECTION_NAME_MAX_CHARS
-      ),
-  },
-  {
-    message:
-      "What is the ID of the BigQuery dataset that you would like to use? (A dataset will be created if it doesn't already exist)",
-    name: "datasetId",
-    type: "input",
-    validate: (value) =>
-      validateInput(
-        value,
-        "dataset",
-        BIGQUERY_VALID_CHARACTERS,
-        BIGQUERY_RESOURCE_NAME_MAX_CHARS
-      ),
-  },
-  {
-    message:
-      "What is the identifying prefix of the BigQuery table that you would like to import to? (A table will be created if one doesn't already exist)",
-    name: "tableId",
-    type: "input",
-    validate: (value) =>
-      validateInput(
-        value,
-        "table",
-        BIGQUERY_VALID_CHARACTERS,
-        BIGQUERY_RESOURCE_NAME_MAX_CHARS
-      ),
-  },
-  {
-    message:
-      "How many documents should the import stream into BigQuery at once?",
-    name: "batchSize",
-    type: "input",
-    default: 300,
-    validate: (value) => {
-      return parseInt(value, 10) > 0;
-    },
-  },
-];
+        ),
+      },
+      {
+        message:
+        "What is the path of the the Cloud Firestore Collection you would like to import from? " +
+        "(This may, or may not, be the same Collection for which you plan to mirror changes.)",
+        name: "sourceCollectionPath",
+        type: "input",
+        validate: (value) =>
+        validateInput(
+          value,
+          "collection path",
+          FIRESTORE_VALID_CHARACTERS,
+          FIRESTORE_COLLECTION_NAME_MAX_CHARS
+          ),
+        },
+        {
+          message:
+          "What is the ID of the BigQuery dataset that you would like to use? (A dataset will be created if it doesn't already exist)",
+          name: "datasetId",
+          type: "input",
+          validate: (value) =>
+          validateInput(
+            value,
+            "dataset",
+            BIGQUERY_VALID_CHARACTERS,
+            BIGQUERY_RESOURCE_NAME_MAX_CHARS
+            ),
+          },
+          {
+            message:
+            "What is the identifying prefix of the BigQuery table that you would like to import to? (A table will be created if one doesn't already exist)",
+            name: "tableId",
+            type: "input",
+            validate: (value) =>
+            validateInput(
+              value,
+              "table",
+              BIGQUERY_VALID_CHARACTERS,
+              BIGQUERY_RESOURCE_NAME_MAX_CHARS
+              ),
+            },
+            {
+              message:
+              "How many documents should the import stream into BigQuery at once?",
+              name: "batchSize",
+              type: "input",
+              default: 300,
+              validate: (value) => {
+                return parseInt(value, 10) > 0;
+              },
+            },
+          ];
 
-const run = async (): Promise<number> => {
+          const run = async (): Promise<number> => {
   const {
     projectId,
     sourceCollectionPath,
@@ -132,10 +132,10 @@ const run = async (): Promise<number> => {
     tableId,
     batchSize,
   } = await inquirer.prompt(questions);
-
+  
   const batch = parseInt(batchSize);
   const rawChangeLogName = `${tableId}_raw_changelog`;
-
+  
   // Initialize Firebase
   firebase.initializeApp({
     credential: firebase.credential.applicationDefault(),
@@ -144,14 +144,14 @@ const run = async (): Promise<number> => {
   // Set project ID so it can be used in BigQuery intialization
   process.env.PROJECT_ID = projectId;
   process.env.GOOGLE_CLOUD_PROJECT = projectId;
-
+  
   // We pass in the application-level "tableId" here. The tracker determines
   // the name of the raw changelog from this field.
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
     tableId: tableId,
     datasetId: datasetId,
   });
-
+  
   console.log(
     `Importing data from Cloud Firestore Collection: ${sourceCollectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${rawChangeLogName}`
   );
@@ -167,7 +167,6 @@ const run = async (): Promise<number> => {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
     cursor = await firebase
       .firestore()
-      .collection(sourceCollectionPath)
       .doc(cursorDocumentId)
       .get();
     console.log(
@@ -180,11 +179,11 @@ const run = async (): Promise<number> => {
 
   do {
     if (cursor) {
-      await write(cursorPositionFile, cursor.id);
+      await write(cursorPositionFile, cursor.ref.path);
     }
     let query = firebase
       .firestore()
-      .collection(sourceCollectionPath)
+      .collectionGroup(sourceCollectionPath)
       .limit(batch);
     if (cursor) {
       query = query.startAfter(cursor);
