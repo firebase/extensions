@@ -318,7 +318,7 @@ export function processFirestoreSchema(
     geopoints,
     extractors,
     transformer,
-    bigQueryFields,
+    bigQueryFields
   );
   return {
     queryInfo: [extractors, arrays, geopoints],
@@ -363,7 +363,7 @@ function processFirestoreSchemaHelper(
         geopoints,
         extractors,
         transformer,
-        bigQueryFields,
+        bigQueryFields
       );
       return;
     }
