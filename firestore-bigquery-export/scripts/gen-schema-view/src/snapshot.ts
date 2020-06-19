@@ -100,7 +100,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
       (field) => field.name != `${geopointFieldName}`
     );
   }
-  
+
   const fieldNameSelectorClauses = Object.keys(schemaFieldExtractors).join(
     ", "
   );
@@ -109,7 +109,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
   );
   const schemaHasArrays = schemaFieldArrays.length > 0;
   const schemaHasGeopoints = schemaFieldGeopoints.length > 0;
-  
+
   let query = `
       SELECT
         document_name,
@@ -132,10 +132,9 @@ export const buildLatestSchemaSnapshotViewQuery = (
   const groupableExtractors = Object.keys(schemaFieldExtractors).filter(
     (name) =>
       schemaFieldArrays.indexOf(name) === -1 &&
-      schemaFieldGeopoints.indexOf(name) === -1 
+      schemaFieldGeopoints.indexOf(name) === -1
   );
-  const hasNonGroupableFields =
-    schemaHasArrays || schemaHasGeopoints
+  const hasNonGroupableFields = schemaHasArrays || schemaHasGeopoints;
   // BigQuery doesn't support grouping by array fields or geopoints.
   const groupBy = `
     GROUP BY
@@ -152,8 +151,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
     query = `
         ${subSelectQuery(
           query,
-          /*except=*/ schemaFieldArrays
-            .concat(schemaFieldGeopoints)
+          /*except=*/ schemaFieldArrays.concat(schemaFieldGeopoints)
         )}
         ${rawTableName}
         ${schemaFieldArrays
