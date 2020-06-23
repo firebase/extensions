@@ -1,3 +1,7 @@
+## Version 0.1.10
+
+fixed - generate fresh token for resized image (Issue #323). (#351)
+
 ## Version 0.1.9
 
 changed - If the original image is a vector image, the extension does not resize it. (Issue #326, PR #329)
