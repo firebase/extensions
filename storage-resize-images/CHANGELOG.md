@@ -1,6 +1,6 @@
 ## Version 0.1.10
 
-fixed - generate fresh token for resized image (Issue #323). (#351)
+fixed - A fresh token is now generated for each resized image. (Issue #323, PR #351)
 
 ## Version 0.1.9
 
