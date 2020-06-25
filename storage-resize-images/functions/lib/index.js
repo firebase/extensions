@@ -31,6 +31,7 @@ const mkdirp = require("mkdirp");
 const os = require("os");
 const path = require("path");
 const sharp = require("sharp");
+const uuidv4_1 = require("uuidv4");
 const config_1 = require("./config");
 const logs = require("./logs");
 const util_1 = require("./util");
@@ -179,6 +180,11 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         }
         else {
             metadata.cacheControl = objectMetadata.cacheControl;
+        }
+        // If the original image has a download token, add a
+        // new token to the image being resized #323
+        if (metadata.metadata.firebaseStorageDownloadTokens) {
+            metadata.metadata.firebaseStorageDownloadTokens = uuidv4_1.uuid();
         }
         // Generate a resized image using Sharp.
         logs.imageResizing(resizedFile, size);
