@@ -13,7 +13,7 @@ The extension creates and updates a [dataset](https://cloud.google.com/bigquery/
 
 If you create, update, delete, or import a document in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset.
 
-Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`).
+Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_ nested within. You can, though, install additional instances of this extension to specifically listen to a sub-collection or other collections in your database.
 
 #### Additional setup
 
@@ -49,7 +49,7 @@ When you use Firebase Extensions, you're only charged for the underlying resourc
 
 * Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).  Note that this extension locates your BigQuery dataset in `us-central1`.
 
-* Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`).
+* Collection path: What is the path of the collection or sub-collection that you would like to export?
 
 * Dataset ID: What ID would you like to use for your BigQuery dataset? This extension will create the dataset, if it doesn't already exist.
 
