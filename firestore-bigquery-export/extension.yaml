@@ -92,9 +92,7 @@ params:
   - param: COLLECTION_PATH
     label: Collection path
     description: >-
-      What is the path of the collection that you would like to export? You may
-      use `{wildcard}` notation to match a subcollection of all documents in a
-      collection (for example: `chatrooms/{chatid}/posts`).
+      What is the path of the collection or sub-collection that you would like to export?
     type: string
     example: posts
     default: posts
