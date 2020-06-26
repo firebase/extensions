@@ -431,7 +431,7 @@ const processLeafField = (
     case "array":
       selector = firestoreArray(
         datasetId,
-        jsonExtractScalar(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
       );
       break;
     case "boolean":
@@ -614,11 +614,7 @@ const jsonExtractScalar = (
   subselector: string = "",
   transformer: (selector: string) => string
 ) => {
-  return transformer(
-    `JSON_EXTRACT_SCALAR(${dataFieldName}, \'\$.${
-      prefix.length > 0 ? `${prefix}.` : ``
-    }${field.name}${subselector}\')`
-  );
+  return transformer(`JSON_EXTRACT_SCALAR(${dataFieldName}, \'\$.${prefix.length > 0 ? `${prefix}.` : ``}${field.name}${subselector}\')`);
 };
 
 const jsonExtract = (
