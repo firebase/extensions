@@ -70,7 +70,7 @@ describe("extension", () => {
       admin.firestore().runTransaction = mockFirestoreTransaction();
     });
 
-    test("initializes Google Translate API with PROJECT_ID on function load", () => {
+    test("initializes Google Translation API with PROJECT_ID on function load", () => {
       // need to reset modules
       jest.resetModules();
       // so we can require clean ../function/src that has not been called
@@ -177,7 +177,7 @@ describe("extension", () => {
     test("function updates translation document with translations", async () => {
       await wrappedMockTranslate(documentChange);
 
-      // confirm Google Translate API was called
+      // confirm Google Translation API was called
       expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "en");
       expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "es");
       expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "fr");
@@ -227,7 +227,7 @@ describe("extension", () => {
         messages.documentUpdatedChangedInput()
       );
 
-      // confirm Google Translate API was called
+      // confirm Google Translation API was called
       expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "en");
       expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "es");
       expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "fr");
@@ -284,8 +284,8 @@ describe("extension", () => {
       );
     });
 
-    test("function handles Google Translate API errors", async () => {
-      const error = new Error("Test Translate API Error");
+    test("function handles Google Translation API errors", async () => {
+      const error = new Error("Test Translation API Error");
       mockTranslateClassMethod.mockImplementationOnce(() =>
         Promise.reject(error)
       );
