@@ -87,6 +87,12 @@ const questions = [
       ),
   },
   {
+    message: "Would you like to import documents via a Collection Group query?",
+    name: "queryCollectionGroup",
+    type: "confirm",
+    default: false,
+  },
+  {
     message:
       "What is the ID of the BigQuery dataset that you would like to use? (A dataset will be created if it doesn't already exist)",
     name: "datasetId",
@@ -128,6 +134,7 @@ const run = async (): Promise<number> => {
   const {
     projectId,
     sourceCollectionPath,
+    queryCollectionGroup,
     datasetId,
     tableId,
     batchSize,
@@ -151,7 +158,9 @@ const run = async (): Promise<number> => {
   });
 
   console.log(
-    `Importing data from Cloud Firestore Collection: ${sourceCollectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${rawChangeLogName}`
+    `Importing data from Cloud Firestore Collection${
+      queryCollectionGroup ? " (via a Colletion Group query)" : ""
+    }: ${sourceCollectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${rawChangeLogName}`
   );
 
   // Build the data row with a 0 timestamp. This ensures that all other
@@ -178,10 +187,17 @@ const run = async (): Promise<number> => {
     if (cursor) {
       await write(cursorPositionFile, cursor.ref.path);
     }
-    let query = firebase
-      .firestore()
-      .collectionGroup(sourceCollectionPath)
-      .limit(batch);
+
+    let query: firebase.firestore.Query;
+
+    if (queryCollectionGroup) {
+      query = firebase.firestore().collectionGroup(sourceCollectionPath);
+    } else {
+      query = firebase.firestore().collection(sourceCollectionPath);
+    }
+
+    query = query.limit(batch);
+
     if (cursor) {
       query = query.startAfter(cursor);
     }
