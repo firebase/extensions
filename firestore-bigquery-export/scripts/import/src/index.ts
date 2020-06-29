@@ -159,7 +159,7 @@ const run = async (): Promise<number> => {
 
   console.log(
     `Importing data from Cloud Firestore Collection${
-      queryCollectionGroup ? " (via a Colletion Group query)" : ""
+      queryCollectionGroup ? " (via a Collection Group query)" : ""
     }: ${sourceCollectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${rawChangeLogName}`
   );
 
@@ -177,7 +177,9 @@ const run = async (): Promise<number> => {
       .doc(cursorDocumentId)
       .get();
     console.log(
-      `Resuming import of Cloud Firestore Collection ${sourceCollectionPath} from document ${cursorDocumentId}.`
+      `Resuming import of Cloud Firestore Collection ${sourceCollectionPath} ${
+        queryCollectionGroup ? " (via a Collection Group query)" : ""
+      } from document ${cursorDocumentId}.`
     );
   }
 
