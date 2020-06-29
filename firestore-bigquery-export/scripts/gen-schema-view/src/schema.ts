@@ -614,7 +614,11 @@ const jsonExtractScalar = (
   subselector: string = "",
   transformer: (selector: string) => string
 ) => {
-  return transformer(`JSON_EXTRACT_SCALAR(${dataFieldName}, \'\$.${prefix.length > 0 ? `${prefix}.` : ``}${field.name}${subselector}\')`);
+  return transformer(
+    `JSON_EXTRACT_SCALAR(${dataFieldName}, \'\$.${
+      prefix.length > 0 ? `${prefix}.` : ``
+    }${field.name}${subselector}\')`
+  );
 };
 
 const jsonExtract = (
