@@ -73,8 +73,7 @@ const questions = [
     name: "project",
     type: "input",
     validate: (value) =>
-      validateInput(value, "project ID", 
-      FIRESTORE_VALID_CHARACTERS),
+      validateInput(value, "project ID", FIRESTORE_VALID_CHARACTERS),
   },
   {
     message:
