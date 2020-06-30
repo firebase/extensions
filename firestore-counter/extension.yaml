@@ -132,7 +132,7 @@ params:
   - param: SCHEDULE_FREQUENCY
     label: Frequency for controllerCore function to be run
     description: >-
-      In minutes, how often should the function to aggregatte shards be run?
+      In minutes, how often should the function to aggregate shards be run?
     validationRegex: "^[1-9][0-9]*$"
     validationErrorMessage: The number of minutes must be an integer value greater than zero.
     default: "1"
