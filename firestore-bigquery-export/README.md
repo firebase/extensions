@@ -13,7 +13,7 @@ The extension creates and updates a [dataset](https://cloud.google.com/bigquery/
 
 If you create, update, delete, or import a document in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset.
 
-Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_ nested within. You can, though, install additional instances of this extension to specifically listen to a sub-collection or other collections in your database.
+Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_ nested within. You can, though, install additional instances of this extension to listen to a specific sub-collection or other collection in your database. You can only listen on one specific collection or sub-collection at once (wildcards sub-collections are not supported).
 
 #### Additional setup
 
