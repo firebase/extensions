@@ -16,10 +16,7 @@
 
 import * as sqlFormatter from "sql-formatter";
 
-import {
-  RawChangelogViewSchema,
-  timestampField,
-} from "./schema";
+import { RawChangelogViewSchema, timestampField } from "./schema";
 
 const excludeFields: string[] = ["document_name", "document_id"];
 
