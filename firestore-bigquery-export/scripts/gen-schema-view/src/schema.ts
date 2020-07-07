@@ -237,6 +237,7 @@ export const buildSchemaViewQuery = (
   let query = `
     SELECT
       document_name,
+      document_id,
       timestamp,
       operation${fieldValueSelectorClauses.length > 0 ? `,` : ``}
       ${fieldValueSelectorClauses}
@@ -423,7 +424,7 @@ const processLeafField = (
     case "array":
       selector = firestoreArray(
         datasetId,
-        jsonExtractScalar(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
       );
       break;
     case "boolean":

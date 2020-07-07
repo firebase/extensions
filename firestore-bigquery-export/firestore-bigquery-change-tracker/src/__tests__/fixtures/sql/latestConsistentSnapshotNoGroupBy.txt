@@ -9,6 +9,7 @@ FROM
   (
     SELECT
       document_name,
+      document_id,
       FIRST_VALUE(operation) OVER(
         PARTITION BY document_name
         ORDER BY
