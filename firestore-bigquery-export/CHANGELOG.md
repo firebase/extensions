@@ -1,8 +1,8 @@
 ## Version 0.1.6
 
-fixed - Record document id in schema view and revert timestamp change (#357)
-feature - Record document id of changes tracked by firestore-bigquery-change-tracker package (#374)
-feature - Add document id column in changelog table and snapshot view (#376)
+fixed - Fixed issue with timestamp values not showing up in the latest view (#357)
+feature - Record document ID of changes tracked by firestore-bigquery-change-tracker package (#374)
+feature - Add document ID column to changelog table and snapshot view (#376)
 
 ## Version 0.1.5
 
