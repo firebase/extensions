@@ -5,6 +5,7 @@
 --   data: A raw JSON payload of the current state of the document.
 SELECT
   document_name,
+  document_id,
   timestamp,
   event_id,
   operation,
