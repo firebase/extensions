@@ -7,12 +7,14 @@
 --                    corresponding to fields defined in the schema.
 SELECT
   document_name,
+  document_id,
   timestamp,
   operation
 FROM
   (
     SELECT
       document_name,
+      document_id,
       FIRST_VALUE(timestamp) OVER(
         PARTITION BY document_name
         ORDER BY
