@@ -25,4 +25,5 @@ FROM
 WHERE
   NOT is_deleted
 GROUP BY
-  document_name
+  document_name,
+  document_id

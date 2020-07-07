@@ -97,6 +97,7 @@ FROM
   CROSS JOIN UNNEST(test_table.favorite_numbers) AS favorite_numbers_member WITH OFFSET favorite_numbers_index
 GROUP BY
   document_name,
+  document_id,
   timestamp,
   operation,
   name,
