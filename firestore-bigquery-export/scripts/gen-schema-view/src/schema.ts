@@ -237,6 +237,7 @@ export const buildSchemaViewQuery = (
   let query = `
     SELECT
       document_name,
+      document_id,
       timestamp,
       operation${fieldValueSelectorClauses.length > 0 ? `,` : ``}
       ${fieldValueSelectorClauses}
@@ -308,7 +309,6 @@ export function processFirestoreSchema(
   let extractors: { [fieldName: string]: string } = {};
   let arrays: string[] = [];
   let geopoints: string[] = [];
-  let timestamps: string[] = [];
   let bigQueryFields: { [property: string]: string }[] = [];
   processFirestoreSchemaHelper(
     datasetId,
@@ -319,11 +319,10 @@ export function processFirestoreSchema(
     geopoints,
     extractors,
     transformer,
-    bigQueryFields,
-    timestamps
+    bigQueryFields
   );
   return {
-    queryInfo: [extractors, arrays, geopoints, timestamps],
+    queryInfo: [extractors, arrays, geopoints],
     fields: bigQueryFields,
   };
 }
@@ -350,8 +349,7 @@ function processFirestoreSchemaHelper(
   geopoints: string[],
   extractors: { [fieldName: string]: string },
   transformer: (selector: string) => string,
-  bigQueryFields: { [property: string]: string }[],
-  timestamps: string[]
+  bigQueryFields: { [property: string]: string }[]
 ) {
   const { fields } = schema;
   return fields.map((field) => {
@@ -366,8 +364,7 @@ function processFirestoreSchemaHelper(
         geopoints,
         extractors,
         transformer,
-        bigQueryFields,
-        timestamps
+        bigQueryFields
       );
       return;
     }
@@ -390,10 +387,6 @@ function processFirestoreSchemaHelper(
     }
     if (field.type === "geopoint") {
       geopoints.push(qualifyFieldName(prefix, field.name));
-    }
-
-    if (field.type === "timestamp") {
-      timestamps.push(qualifyFieldName(prefix, field.name));
     }
   });
 }
@@ -431,7 +424,7 @@ const processLeafField = (
     case "array":
       selector = firestoreArray(
         datasetId,
-        jsonExtractScalar(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
       );
       break;
     case "boolean":
@@ -447,66 +440,11 @@ const processLeafField = (
       );
       break;
     case "timestamp":
-      const seconds = jsonExtractScalar(
-        dataFieldName,
-        extractPrefix,
-        field,
-        `._seconds`,
-        transformer
-      );
-      const nanoseconds = jsonExtractScalar(
-        dataFieldName,
-        extractPrefix,
-        field,
-        `._nanoseconds`,
-        transformer
-      );
-      /*
-       * We return directly from this branch because it's the only one that
-       * generates multiple selector clauses.
-       */
-      fieldNameToSelector[
-        qualifyFieldName(prefix, field.name)
-      ] = `${firestoreTimestamp(
+      selector = firestoreTimestamp(
         datasetId,
         jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
-      )} AS ${prefix.concat(field.name).join("_")}`;
-
-      bigQueryFields.push({
-        name: qualifyFieldName(prefix, field.name),
-        mode: "NULLABLE",
-        type: firestoreToBigQueryFieldType[field.type],
-        description: field.description,
-      });
-
-      fieldNameToSelector[
-        qualifyFieldName(prefix, `${field.name}_seconds`)
-      ] = `SAFE_CAST(${seconds} AS NUMERIC) AS ${qualifyFieldName(
-        prefix,
-        `${field.name}_seconds`
-      )}`;
-
-      bigQueryFields.push({
-        name: qualifyFieldName(prefix, `${field.name}_seconds`),
-        mode: "NULLABLE",
-        type: "NUMERIC",
-        description: `Numeric seconds component of ${field.name}.`,
-      });
-
-      fieldNameToSelector[
-        qualifyFieldName(prefix, `${field.name}_nanoseconds`)
-      ] = `SAFE_CAST(${nanoseconds} AS NUMERIC) AS ${qualifyFieldName(
-        prefix,
-        `${field.name}_nanoseconds`
-      )}`;
-
-      bigQueryFields.push({
-        name: qualifyFieldName(prefix, `${field.name}_nanoseconds`),
-        mode: "NULLABLE",
-        type: "NUMERIC",
-        description: `Numeric nanoseconds component of ${field.name}.`,
-      });
-      return fieldNameToSelector;
+      );
+      break;
     case "geopoint":
       const latitude = jsonExtractScalar(
         dataFieldName,

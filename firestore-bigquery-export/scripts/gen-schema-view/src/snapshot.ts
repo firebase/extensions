@@ -66,7 +66,6 @@ export const buildLatestSchemaSnapshotViewQuery = (
     schemaFieldExtractors,
     schemaFieldArrays,
     schemaFieldGeopoints,
-    schemaFieldTimestamps,
   ] = result.queryInfo;
   let bigQueryFields = result.fields;
   /*
@@ -101,15 +100,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
       (field) => field.name != `${geopointFieldName}`
     );
   }
-  /*
-   * second and nanosecond fields have already been added
-   * during firestore schema processing.
-   */
-  for (let timestampFieldName of schemaFieldTimestamps) {
-    bigQueryFields = bigQueryFields.filter(
-      (field) => field.name != `${timestampFieldName}`
-    );
-  }
+
   const fieldNameSelectorClauses = Object.keys(schemaFieldExtractors).join(
     ", "
   );
@@ -118,16 +109,18 @@ export const buildLatestSchemaSnapshotViewQuery = (
   );
   const schemaHasArrays = schemaFieldArrays.length > 0;
   const schemaHasGeopoints = schemaFieldGeopoints.length > 0;
-  const schemaHasTimestamps = schemaFieldTimestamps.length > 0;
+
   let query = `
       SELECT
         document_name,
+        document_id,
         timestamp,
         operation${fieldNameSelectorClauses.length > 0 ? `,` : ``}
         ${fieldNameSelectorClauses}
       FROM (
         SELECT
           document_name,
+          document_id,
           ${firstValue(`timestamp`)} AS timestamp,
           ${firstValue(`operation`)} AS operation,
           ${firstValue(`operation`)} = "DELETE" AS is_deleted${
@@ -141,15 +134,14 @@ export const buildLatestSchemaSnapshotViewQuery = (
   const groupableExtractors = Object.keys(schemaFieldExtractors).filter(
     (name) =>
       schemaFieldArrays.indexOf(name) === -1 &&
-      schemaFieldGeopoints.indexOf(name) === -1 &&
-      schemaFieldTimestamps.indexOf(name) === -1
+      schemaFieldGeopoints.indexOf(name) === -1
   );
-  const hasNonGroupableFields =
-    schemaHasArrays || schemaHasGeopoints || schemaHasTimestamps;
+  const hasNonGroupableFields = schemaHasArrays || schemaHasGeopoints;
   // BigQuery doesn't support grouping by array fields or geopoints.
   const groupBy = `
     GROUP BY
       document_name,
+      document_id,
       timestamp,
       operation${groupableExtractors.length > 0 ? `,` : ``}
       ${
@@ -162,9 +154,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
     query = `
         ${subSelectQuery(
           query,
-          /*except=*/ schemaFieldArrays
-            .concat(schemaFieldGeopoints)
-            .concat(schemaFieldTimestamps)
+          /*except=*/ schemaFieldArrays.concat(schemaFieldGeopoints)
         )}
         ${rawTableName}
         ${schemaFieldArrays
@@ -191,13 +181,6 @@ export const buildLatestSchemaSnapshotViewQuery = (
           schemaHasGeopoints
             ? `, ${schemaFieldGeopoints
                 .map((name) => `${name}_latitude, ${name}_longitude`)
-                .join(", ")}`
-            : ``
-        }
-        ${
-          schemaHasTimestamps
-            ? `, ${schemaFieldTimestamps
-                .map((name) => `${name}_seconds, ${name}_nanoseconds`)
                 .join(", ")}`
             : ``
         }
