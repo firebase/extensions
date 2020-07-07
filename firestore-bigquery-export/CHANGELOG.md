@@ -1,3 +1,9 @@
+## Version 0.1.6
+
+fixed - Record document id in schema view and revert timestamp change (#357)
+feature - Record document id of changes tracked by firestore-bigquery-change-tracker package (#374)
+feature - Add document id column in changelog table and snapshot view (#376)
+
 ## Version 0.1.5
 
 fixed - TypeError: Cannot read property 'constructor' of null. (Issue #284)
