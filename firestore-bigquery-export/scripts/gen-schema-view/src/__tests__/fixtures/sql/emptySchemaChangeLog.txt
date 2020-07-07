@@ -1,5 +1,6 @@
 SELECT
   document_name,
+  document_id,
   timestamp,
   operation
 FROM
