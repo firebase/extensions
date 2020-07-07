@@ -24,6 +24,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.fstranslate = void 0;
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
 const translate_1 = require("@google-cloud/translate");
