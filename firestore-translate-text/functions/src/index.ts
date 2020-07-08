@@ -38,7 +38,7 @@ const translate = new Translate({ projectId: process.env.PROJECT_ID });
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 
-logs.init();
+logs.init(config);
 
 export const fstranslate = functions.handler.firestore.document.onWrite(
   async (change): Promise<void> => {

@@ -24,6 +24,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.fstranslate = void 0;
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
 const translate_1 = require("@google-cloud/translate");
@@ -39,7 +40,7 @@ var ChangeType;
 const translate = new translate_1.Translate({ projectId: process.env.PROJECT_ID });
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
-logs.init();
+logs.init(config_1.default);
 exports.fstranslate = functions.handler.firestore.document.onWrite((change) => __awaiter(void 0, void 0, void 0, function* () {
     logs.start();
     const { languages, inputFieldName, outputFieldName } = config_1.default;
