@@ -22,7 +22,9 @@ export const complete = () => {
 };
 
 export const documentCreatedNoInput = () => {
-  logger.log("Document was created without an input string, no processing is required");
+  logger.log(
+    "Document was created without an input string, no processing is required"
+  );
 };
 
 export const documentCreatedWithInput = () => {
@@ -42,11 +44,15 @@ export const documentUpdatedDeletedInput = () => {
 };
 
 export const documentUpdatedNoInput = () => {
-  logger.log("Document was updated, no input string exists, no processing is required");
+  logger.log(
+    "Document was updated, no input string exists, no processing is required"
+  );
 };
 
 export const documentUpdatedUnchangedInput = () => {
-  logger.log("Document was updated, input string has not changed, no processing is required");
+  logger.log(
+    "Document was updated, input string has not changed, no processing is required"
+  );
 };
 
 export const error = (err: Error) => {
@@ -54,7 +60,9 @@ export const error = (err: Error) => {
 };
 
 export const fieldNamesNotDifferent = () => {
-  logger.error("The `Input` and `Output` field names must be different for this extension to function correctly");
+  logger.error(
+    "The `Input` and `Output` field names must be different for this extension to function correctly"
+  );
 };
 
 export const init = (config = {}) => {
@@ -62,7 +70,9 @@ export const init = (config = {}) => {
 };
 
 export const inputFieldNameIsOutputPath = () => {
-  logger.error("The `Input` field name must not be the same as an `Output` path for this extension to function correctly");
+  logger.error(
+    "The `Input` field name must not be the same as an `Output` path for this extension to function correctly"
+  );
 };
 
 export const start = () => {
@@ -74,7 +84,9 @@ export const translateInputString = (string: string, language: string) => {
 };
 
 export const translateStringComplete = (string: string, language: string) => {
-  logger.log(`Finished translating string: '${string}' into language(s): '${language}'`);
+  logger.log(
+    `Finished translating string: '${string}' into language(s): '${language}'`
+  );
 };
 
 export const translateStringError = (
@@ -82,16 +94,19 @@ export const translateStringError = (
   language: string,
   err: Error
 ) => {
-  logger.error(`Error when translating string: '${string}' into language(s): '${language}'`, err);
+  logger.error(
+    `Error when translating string: '${string}' into language(s): '${language}'`,
+    err
+  );
 };
 
 export const translateInputStringToAllLanguages = (
   string: string,
   languages: string[]
 ) => {
-  logger.log(`Translating string: '${string}' into language(s): '${languages.join(
-    ","
-  )}'`);
+  logger.log(
+    `Translating string: '${string}' into language(s): '${languages.join(",")}'`
+  );
 };
 
 export const translateInputToAllLanguagesComplete = (string: string) => {
