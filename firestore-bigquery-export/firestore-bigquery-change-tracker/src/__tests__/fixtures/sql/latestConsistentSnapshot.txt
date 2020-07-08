@@ -3,8 +3,10 @@
 --   operation: One of INSERT, UPDATE, DELETE, IMPORT.
 --   event_id: The id of the event that triggered the cloud function mirrored the event.
 --   data: A raw JSON payload of the current state of the document.
+--   document_id: The document id as defined in the Firestore database
 SELECT
   document_name,
+  document_id,
   timestamp,
   event_id,
   operation,
@@ -13,6 +15,7 @@ FROM
   (
     SELECT
       document_name,
+      document_id,
       FIRST_VALUE(timestamp) OVER(
         PARTITION BY document_name
         ORDER BY
@@ -48,6 +51,7 @@ WHERE
   NOT is_deleted
 GROUP BY
   document_name,
+  document_id,
   timestamp,
   event_id,
   operation,
