@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.fieldNameIsTranslationPath = exports.fieldNamesMatch = void 0;
 exports.fieldNamesMatch = (field1, field2) => field1 === field2;
 exports.fieldNameIsTranslationPath = (inputFieldName, outputFieldName, languages) => {
     for (const language of languages) {
