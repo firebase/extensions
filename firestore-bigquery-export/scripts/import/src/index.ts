@@ -17,6 +17,7 @@
  */
 
 import * as firebase from "firebase-admin";
+import * as program from "commander";
 import * as fs from "fs";
 import * as inquirer from "inquirer";
 import * as util from "util";
@@ -59,10 +60,44 @@ const validateInput = (
   return true;
 };
 
+const validateBatchSize = (value: string) => {
+  return parseInt(value, 10) > 0;
+};
+
+program
+  .name("fs-bq-import-collection")
+  .option(
+    "--non-interactive",
+    "Parse all input from command line flags instead of prompting the caller.",
+    false
+  )
+  .option(
+    "-P, --project <project>",
+    "Firebase Project ID for project containing the Cloud Firestore database."
+  )
+  .option(
+    "-s, --source-collection-path <source-collection-path>",
+    "The path of the the Cloud Firestore Collection to import from. (This may, or may not, be the same Collection for which you plan to mirror changes.)"
+  )
+  .option(
+    "-d, --dataset <dataset>",
+    "The ID of the BigQuery dataset to import to. (A dataset will be created if it doesn't already exist.)"
+  )
+  .option(
+    "-t, --table-name-prefix <table-name-prefix>",
+    "The identifying prefix of the BigQuery table to import to. (A table will be created if one doesn't already exist.)"
+  )
+  .option(
+    "-b, --batch-size [batch-size]",
+    "Number of documents to stream into BigQuery at once.",
+    (value) => parseInt(value, 10),
+    300
+  );
+
 const questions = [
   {
     message: "What is your Firebase project ID?",
-    name: "projectId",
+    name: "project",
     type: "input",
     validate: (value) =>
       validateInput(
@@ -89,7 +124,7 @@ const questions = [
   {
     message:
       "What is the ID of the BigQuery dataset that you would like to use? (A dataset will be created if it doesn't already exist)",
-    name: "datasetId",
+    name: "dataset",
     type: "input",
     validate: (value) =>
       validateInput(
@@ -102,7 +137,7 @@ const questions = [
   {
     message:
       "What is the identifying prefix of the BigQuery table that you would like to import to? (A table will be created if one doesn't already exist)",
-    name: "tableId",
+    name: "table",
     type: "input",
     validate: (value) =>
       validateInput(
@@ -118,11 +153,17 @@ const questions = [
     name: "batchSize",
     type: "input",
     default: 300,
-    validate: (value) => {
-      return parseInt(value, 10) > 0;
-    },
+    validate: validateBatchSize,
   },
 ];
+
+interface CliConfig {
+  projectId: string;
+  sourceCollectionPath: string;
+  datasetId: string;
+  tableId: string;
+  batchSize: string;
+}
 
 const run = async (): Promise<number> => {
   const {
@@ -131,7 +172,7 @@ const run = async (): Promise<number> => {
     datasetId,
     tableId,
     batchSize,
-  } = await inquirer.prompt(questions);
+  }: CliConfig = await parseConfig();
 
   const batch = parseInt(batchSize);
   const rawChangeLogName = `${tableId}_raw_changelog`;
@@ -222,6 +263,44 @@ const run = async (): Promise<number> => {
 
   return totalRowsImported;
 };
+
+async function parseConfig(): Promise<CliConfig> {
+  program.parse(process.argv);
+  if (program.nonInteractive) {
+    if (
+      program.project === undefined ||
+      program.sourceCollectionPath === undefined ||
+      program.dataset === undefined ||
+      program.tableNamePrefix === undefined ||
+      program.batchSize === undefined ||
+      !validateBatchSize(program.batchSize)
+    ) {
+      program.outputHelp();
+      process.exit(1);
+    }
+    return {
+      projectId: program.project,
+      sourceCollectionPath: program.sourceCollectionPath,
+      datasetId: program.dataset,
+      tableId: program.tableNamePrefix,
+      batchSize: program.batchSize,
+    };
+  }
+  const {
+    project,
+    sourceCollectionPath,
+    dataset,
+    table,
+    batchSize,
+  } = await inquirer.prompt(questions);
+  return {
+    projectId: project,
+    sourceCollectionPath: sourceCollectionPath,
+    datasetId: dataset,
+    tableId: table,
+    batchSize: batchSize,
+  };
+}
 
 run()
   .then((rowCount) => {
