@@ -42,28 +42,26 @@ logs.init(config);
 
 export const fstranslate = functions.handler.firestore.document.onWrite(
   async (change): Promise<void> => {
-    logs.start();
-
+    
     const { languages, inputFieldName, outputFieldName } = config;
-
+    
     if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
       logs.fieldNamesNotDifferent();
       return;
     }
-
     if (
       validators.fieldNameIsTranslationPath(
         inputFieldName,
         outputFieldName,
         languages
-      )
-    ) {
-      logs.inputFieldNameIsOutputPath();
-      return;
-    }
-
+        )
+        ) {
+          logs.inputFieldNameIsOutputPath();
+          return;
+        }
+        
     const changeType = getChangeType(change);
-
+  
     try {
       switch (changeType) {
         case ChangeType.CREATE:
@@ -124,6 +122,7 @@ const handleUpdateDocument = async (
   const inputBefore = extractInput(before);
 
   const inputHasChanged = inputAfter !== inputBefore;
+  
   if (
     !inputHasChanged &&
     inputAfter !== undefined &&

@@ -1,6 +1,4 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateDocumentComplete = exports.updateDocument = exports.translateInputToAllLanguagesError = exports.translateInputToAllLanguagesComplete = exports.translateInputStringToAllLanguages = exports.translateStringError = exports.translateStringComplete = exports.translateInputString = exports.start = exports.inputFieldNameIsOutputPath = exports.init = exports.fieldNamesNotDifferent = exports.error = exports.documentUpdatedUnchangedInput = exports.documentUpdatedNoInput = exports.documentUpdatedDeletedInput = exports.documentUpdatedChangedInput = exports.documentDeleted = exports.documentCreatedWithInput = exports.documentCreatedNoInput = exports.complete = void 0;
 /*
  * Copyright 2019 Google LLC
  *
@@ -16,68 +14,71 @@ exports.updateDocumentComplete = exports.updateDocument = exports.translateInput
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const functions = require("firebase-functions");
-const logger = functions.logger;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateDocumentComplete = exports.updateDocument = exports.translateInputToAllLanguagesError = exports.translateInputToAllLanguagesComplete = exports.translateInputStringToAllLanguages = exports.translateStringError = exports.translateStringComplete = exports.translateInputString = exports.start = exports.inputFieldNameIsOutputPath = exports.init = exports.fieldNamesNotDifferent = exports.error = exports.documentUpdatedUnchangedInput = exports.documentUpdatedNoInput = exports.documentUpdatedDeletedInput = exports.documentUpdatedChangedInput = exports.documentDeleted = exports.documentCreatedWithInput = exports.documentCreatedNoInput = exports.complete = void 0;
+const firebase_functions_1 = require("firebase-functions");
+const messages_1 = require("./messages");
 exports.complete = () => {
-    logger.log("Completed execution of extension");
+    firebase_functions_1.logger.log(messages_1.messages.complete());
 };
 exports.documentCreatedNoInput = () => {
-    logger.log("Document was created without an input string, no processing is required");
+    firebase_functions_1.logger.log(messages_1.messages.documentCreatedNoInput());
 };
 exports.documentCreatedWithInput = () => {
-    logger.log("Document was created with an input string");
+    firebase_functions_1.logger.log(messages_1.messages.documentCreatedWithInput());
 };
 exports.documentDeleted = () => {
-    logger.log("Document was deleted, no processing is required");
+    firebase_functions_1.logger.log('stuff');
 };
 exports.documentUpdatedChangedInput = () => {
-    logger.log("Document was updated, input string has changed");
+    firebase_functions_1.logger.log(messages_1.messages.documentUpdatedChangedInput());
 };
 exports.documentUpdatedDeletedInput = () => {
-    logger.log("Document was updated, input string was deleted");
+    firebase_functions_1.logger.log(messages_1.messages.documentUpdatedDeletedInput());
 };
 exports.documentUpdatedNoInput = () => {
-    logger.log("Document was updated, no input string exists, no processing is required");
+    firebase_functions_1.logger.log(messages_1.messages.documentUpdatedNoInput());
 };
 exports.documentUpdatedUnchangedInput = () => {
-    logger.log("Document was updated, input string has not changed, no processing is required");
+    console.log(messages_1.messages.documentUpdatedUnchangedInput());
 };
 exports.error = (err) => {
-    logger.error("Failed execution of extension", err);
+    firebase_functions_1.logger.error(...messages_1.messages.error(err));
 };
 exports.fieldNamesNotDifferent = () => {
-    logger.error("The `Input` and `Output` field names must be different for this extension to function correctly");
+    firebase_functions_1.logger.error(messages_1.messages.fieldNamesNotDifferent());
 };
-exports.init = (config = {}) => {
-    logger.log("Initializing extension with the parameter values", config);
+exports.init = (config) => {
+    firebase_functions_1.logger.log(...messages_1.messages.init(config));
 };
 exports.inputFieldNameIsOutputPath = () => {
-    logger.error("The `Input` field name must not be the same as an `Output` path for this extension to function correctly");
+    firebase_functions_1.logger.error(messages_1.messages.inputFieldNameIsOutputPath());
 };
 exports.start = () => {
-    logger.log("Started execution of extension with configuration");
+    firebase_functions_1.logger.log("stuff");
+    // logger.log(...messages.start());
 };
 exports.translateInputString = (string, language) => {
-    logger.log(`Translating string: '${string}' into language(s): '${language}'`);
+    firebase_functions_1.logger.log(messages_1.messages.translateInputString(string, language));
 };
 exports.translateStringComplete = (string, language) => {
-    logger.log(`Finished translating string: '${string}' into language(s): '${language}'`);
+    firebase_functions_1.logger.log(messages_1.messages.translateStringComplete(string, language));
 };
 exports.translateStringError = (string, language, err) => {
-    logger.error(`Error when translating string: '${string}' into language(s): '${language}'`, err);
+    firebase_functions_1.logger.error(...messages_1.messages.translateStringError(string, language, err));
 };
 exports.translateInputStringToAllLanguages = (string, languages) => {
-    logger.log(`Translating string: '${string}' into language(s): '${languages.join(",")}'`);
+    firebase_functions_1.logger.log(messages_1.messages.translateInputStringToAllLanguages(string, languages));
 };
 exports.translateInputToAllLanguagesComplete = (string) => {
-    logger.log(`Finished translating string: '${string}'`);
+    firebase_functions_1.logger.log(messages_1.messages.translateInputToAllLanguagesComplete(string));
 };
 exports.translateInputToAllLanguagesError = (string, err) => {
-    logger.error(`Error when translating string: '${string}'`, err);
+    firebase_functions_1.logger.error(...messages_1.messages.translateInputToAllLanguagesError(string, err));
 };
 exports.updateDocument = (path) => {
-    logger.log(`Updating Cloud Firestore document: '${path}'`);
+    firebase_functions_1.logger.log(...messages_1.messages.updateDocument(path));
 };
 exports.updateDocumentComplete = (path) => {
-    logger.log(`Finished updating Cloud Firestore document: '${path}'`);
+    firebase_functions_1.logger.log(...messages_1.messages.updateDocumentComplete(path));
 };
