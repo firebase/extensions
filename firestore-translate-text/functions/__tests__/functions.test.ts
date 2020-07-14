@@ -149,20 +149,18 @@ describe("extension", () => {
 
       expect(callResult).toBeUndefined();
     });
-    
+
     test("function exits early if input field is a translation output path", async () => {
-      restoreEnv = mockedEnv(
-        {
-          ...defaultEnvironment,
-          INPUT_FIELD_NAME: "output.en",
-          OUTPUT_FIELD_NAME: "output",
-        }
-        );
-        
-        wrappedMockTranslate = mockTranslate();
-        
-        const callResult = await wrappedMockTranslate(documentChange);
-        expect(callResult).toBeUndefined();
+      restoreEnv = mockedEnv({
+        ...defaultEnvironment,
+        INPUT_FIELD_NAME: "output.en",
+        OUTPUT_FIELD_NAME: "output",
+      });
+
+      wrappedMockTranslate = mockTranslate();
+
+      const callResult = await wrappedMockTranslate(documentChange);
+      expect(callResult).toBeUndefined();
     });
 
     test("function updates translation document with translations", async () => {

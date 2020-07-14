@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {logger} from 'firebase-functions';
+import { logger } from "firebase-functions";
 import { messages } from "./messages";
 
 export const complete = () => {
