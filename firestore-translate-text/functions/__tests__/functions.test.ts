@@ -137,8 +137,6 @@ describe("extension", () => {
     });
 
     test("function exits early if input & output fields are the same", async () => {
-
-      // so ENV variables can be reset
       restoreEnv = mockedEnv({
         ...defaultEnvironment,
         INPUT_FIELD_NAME: "input",
@@ -153,9 +151,6 @@ describe("extension", () => {
     });
     
     test("function exits early if input field is a translation output path", async () => {
-      // reset modules again
-      jest.resetModules();
-      // so ENV variables can be reset
       restoreEnv = mockedEnv(
         {
           ...defaultEnvironment,

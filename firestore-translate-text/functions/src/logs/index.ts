@@ -66,7 +66,7 @@ export const inputFieldNameIsOutputPath = () => {
 };
 
 export const start = () => {
-  logger.log(...messages.start());
+  logger.log(messages.start());
 };
 
 export const translateInputString = (string: string, language: string) => {
@@ -104,9 +104,9 @@ export const translateInputToAllLanguagesError = (
 };
 
 export const updateDocument = (path: string) => {
-  logger.log(...messages.updateDocument(path));
+  logger.log(messages.updateDocument(path));
 };
 
 export const updateDocumentComplete = (path: string) => {
-  logger.log(...messages.updateDocumentComplete(path));
+  logger.log(messages.updateDocumentComplete(path));
 };

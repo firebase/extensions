@@ -28,7 +28,7 @@ exports.documentCreatedWithInput = () => {
     firebase_functions_1.logger.log(messages_1.messages.documentCreatedWithInput());
 };
 exports.documentDeleted = () => {
-    firebase_functions_1.logger.log('stuff');
+    firebase_functions_1.logger.log(messages_1.messages.documentDeleted());
 };
 exports.documentUpdatedChangedInput = () => {
     firebase_functions_1.logger.log(messages_1.messages.documentUpdatedChangedInput());
@@ -40,7 +40,7 @@ exports.documentUpdatedNoInput = () => {
     firebase_functions_1.logger.log(messages_1.messages.documentUpdatedNoInput());
 };
 exports.documentUpdatedUnchangedInput = () => {
-    console.log(messages_1.messages.documentUpdatedUnchangedInput());
+    firebase_functions_1.logger.log(messages_1.messages.documentUpdatedUnchangedInput());
 };
 exports.error = (err) => {
     firebase_functions_1.logger.error(...messages_1.messages.error(err));
@@ -55,8 +55,7 @@ exports.inputFieldNameIsOutputPath = () => {
     firebase_functions_1.logger.error(messages_1.messages.inputFieldNameIsOutputPath());
 };
 exports.start = () => {
-    firebase_functions_1.logger.log("stuff");
-    // logger.log(...messages.start());
+    firebase_functions_1.logger.log(messages_1.messages.start());
 };
 exports.translateInputString = (string, language) => {
     firebase_functions_1.logger.log(messages_1.messages.translateInputString(string, language));
@@ -77,8 +76,8 @@ exports.translateInputToAllLanguagesError = (string, err) => {
     firebase_functions_1.logger.error(...messages_1.messages.translateInputToAllLanguagesError(string, err));
 };
 exports.updateDocument = (path) => {
-    firebase_functions_1.logger.log(...messages_1.messages.updateDocument(path));
+    firebase_functions_1.logger.log(messages_1.messages.updateDocument(path));
 };
 exports.updateDocumentComplete = (path) => {
-    firebase_functions_1.logger.log(...messages_1.messages.updateDocumentComplete(path));
+    firebase_functions_1.logger.log(messages_1.messages.updateDocumentComplete(path));
 };
