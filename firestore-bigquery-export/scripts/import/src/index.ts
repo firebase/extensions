@@ -304,7 +304,7 @@ async function parseConfig(): Promise<CliConfig> {
       datasetId: program.dataset,
       tableId: program.tableNamePrefix,
       batchSize: program.batchSize,
-      queryCollectionGroup: program.queryCollectionGroup === 'true',
+      queryCollectionGroup: program.queryCollectionGroup === "true",
     };
   }
   const {
@@ -313,7 +313,7 @@ async function parseConfig(): Promise<CliConfig> {
     dataset,
     table,
     batchSize,
-    queryCollectionGroup
+    queryCollectionGroup,
   } = await inquirer.prompt(questions);
   return {
     projectId: project,
@@ -321,7 +321,7 @@ async function parseConfig(): Promise<CliConfig> {
     datasetId: dataset,
     tableId: table,
     batchSize: batchSize,
-    queryCollectionGroup:queryCollectionGroup,
+    queryCollectionGroup: queryCollectionGroup,
   };
 }
 
