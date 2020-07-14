@@ -80,6 +80,10 @@ program
     "The path of the the Cloud Firestore Collection to import from. (This may, or may not, be the same Collection for which you plan to mirror changes.)"
   )
   .option(
+    "-q, --query-collection-group <query-collection-group>",
+    "A boolean value indicating whether you'd prefer a collection group query (true) or a collection query (false)"
+  )
+  .option(
     "-d, --dataset <dataset>",
     "The ID of the BigQuery dataset to import to. (A dataset will be created if it doesn't already exist.)"
   )
@@ -300,7 +304,7 @@ async function parseConfig(): Promise<CliConfig> {
       datasetId: program.dataset,
       tableId: program.tableNamePrefix,
       batchSize: program.batchSize,
-      queryCollectionGroup: program.queryCollectionGroup,
+      queryCollectionGroup: program.queryCollectionGroup === 'true',
     };
   }
   const {
