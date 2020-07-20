@@ -14,22 +14,27 @@
  * limitations under the License.
  */
 
-import { URLSearchParams } from "url";
+import { URL, URLSearchParams } from "url";
 
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import * as got from "got";
+import fetch from "node-fetch";
 
 import { FirestoreUrlShortener } from "./abstract-shortener"
 import config from "./config";
 import * as logs from "./logs";
 
 class ServiceAccountCredential {
-  private readonly metadataServiceUri = "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token";
+  private readonly metadataServiceUri = new URL("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token");
   private readonly requiredScopes = "https://www.googleapis.com/auth/firebase";
 
-  private accessToken: string;
-  private tokenExpiration: number;
+  private accessToken: string|undefined;
+  private tokenExpiration: number|undefined;
+
+  constructor() {
+    const searchParams = new URLSearchParams({scopes: this.requiredScopes});
+    this.metadataServiceUri.search = searchParams.toString();
+  }
 
   public async getAccessToken() {
     const now = Math.floor(Date.now() / 1000)
@@ -38,14 +43,12 @@ class ServiceAccountCredential {
     if (typeof this.accessToken === "undefined"
         || typeof this.tokenExpiration === "undefined"
         || this.tokenExpiration < nowish) {
-      const metadataResponse = await got(this.metadataServiceUri, {
-        query: new URLSearchParams({scopes: this.requiredScopes}),
+      const metadataResponse = await fetch(this.metadataServiceUri, {
         headers: {
           "Metadata-Flavor": "Google"
         },
-        json: true
       });
-      const { access_token, expires_in } = metadataResponse.body;
+      const { access_token, expires_in } = await metadataResponse.json();
       this.accessToken = access_token;
       this.tokenExpiration = now + expires_in;
     }
@@ -86,15 +89,14 @@ class FirestoreDynamicLinksUrlShortener extends FirestoreUrlShortener {
         },
         suffix: {option: this.dynamicLinkSuffixLength}
       };
-      const response = await got(this.dynamicLinksApiUrl, {
+      const response = await fetch(this.dynamicLinksApiUrl, {
         headers: {
           "Authorization": `Bearer ${accessToken}`
         },
         method: 'POST',
-        json: true,
-        body: requestBody
+        body: JSON.stringify(requestBody),
       });
-      const { shortLink: shortUrl } = response.body;      
+      const { shortLink: shortUrl } = await response.json();      
 
       this.logs.shortenUrlComplete(shortUrl);
   

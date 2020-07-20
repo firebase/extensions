@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateDocumentComplete = exports.updateDocument = exports.start = exports.shortenUrlComplete = exports.shortenUrl = exports.init = exports.fieldNamesNotDifferent = exports.error = exports.documentUpdatedUnchangedUrl = exports.documentUpdatedNoUrl = exports.documentUpdatedDeletedUrl = exports.documentUpdatedChangedUrl = exports.documentCreatedWithUrl = exports.documentCreatedNoUrl = exports.complete = void 0;
 const config_1 = require("./config");
 exports.complete = () => {
     console.log("Completed execution of extension");
