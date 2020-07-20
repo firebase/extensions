@@ -23,7 +23,7 @@ export const messages = {
     "The `Input` field name must not be the same as an `Output` path for this extension to function correctly",
   start: (config = {}) => [
     "Started execution of extension with configuration",
-    config
+    config,
   ],
   translateInputString: (string: string, language: string) =>
     `Translating string: '${string}' into language(s): '${language}'`,
