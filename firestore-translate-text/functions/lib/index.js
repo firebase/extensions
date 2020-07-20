@@ -42,7 +42,7 @@ const translate = new translate_1.Translate({ projectId: process.env.PROJECT_ID 
 admin.initializeApp();
 logs.init(config_1.default);
 exports.fstranslate = functions.handler.firestore.document.onWrite((change) => __awaiter(void 0, void 0, void 0, function* () {
-    logs.start();
+    logs.start(config_1.default);
     const { languages, inputFieldName, outputFieldName } = config_1.default;
     if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
         logs.fieldNamesNotDifferent();

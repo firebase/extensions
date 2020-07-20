@@ -65,8 +65,8 @@ export const inputFieldNameIsOutputPath = () => {
   logger.error(messages.inputFieldNameIsOutputPath());
 };
 
-export const start = () => {
-  logger.log(messages.start());
+export const start = (config) => {
+  logger.log(...messages.start(config));
 };
 
 export const translateInputString = (string: string, language: string) => {

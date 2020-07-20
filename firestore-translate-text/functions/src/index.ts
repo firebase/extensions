@@ -42,7 +42,7 @@ logs.init(config);
 
 export const fstranslate = functions.handler.firestore.document.onWrite(
   async (change): Promise<void> => {
-    logs.start();
+    logs.start(config);
     const { languages, inputFieldName, outputFieldName } = config;
 
     if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {

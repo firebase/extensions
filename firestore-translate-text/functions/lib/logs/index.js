@@ -54,8 +54,8 @@ exports.init = (config) => {
 exports.inputFieldNameIsOutputPath = () => {
     firebase_functions_1.logger.error(messages_1.messages.inputFieldNameIsOutputPath());
 };
-exports.start = () => {
-    firebase_functions_1.logger.log(messages_1.messages.start());
+exports.start = (config) => {
+    firebase_functions_1.logger.log(...messages_1.messages.start(config));
 };
 exports.translateInputString = (string, language) => {
     firebase_functions_1.logger.log(messages_1.messages.translateInputString(string, language));

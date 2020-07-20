@@ -21,7 +21,10 @@ export const messages = {
   ],
   inputFieldNameIsOutputPath: () =>
     "The `Input` field name must not be the same as an `Output` path for this extension to function correctly",
-  start: () => "Started execution of extension with configuration",
+  start: (config = {}) => [
+    "Started execution of extension with configuration",
+    config
+  ],
   translateInputString: (string: string, language: string) =>
     `Translating string: '${string}' into language(s): '${language}'`,
   translateStringComplete: (string: string, language: string) =>
