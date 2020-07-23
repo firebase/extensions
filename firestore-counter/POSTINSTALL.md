@@ -1,6 +1,7 @@
 ### Post-installation configuration
 
-Before you can use this extension, you'll need to update your security rules, set up a Cloud Scheduler job, and add some code to your JavaScript app.
+Before you can use this extension, you'll need to update your security rules and add some code to your JavaScript app.
+
 
 #### Update security rules
 
@@ -16,22 +17,6 @@ match /databases/{database}/documents/pages/{page} {
                    resource.data.visits + 1);
   }
 }
-```
-
-
-#### Set up a Cloud Scheduler job
-
-**IMPORTANT:** Note the following about v0.1.1 of this extension:
-- **If you updated your extension from v0.1.0 to v0.1.1:**  We recommend that you edit your Cloud Scheduler job to instead send a message to the extension's Pub/Sub topic, as described in this section. Although it's not recommended, if you leave your Cloud Scheduler job calling `${function:controller.url}`, your extension will continue to run as expected. For more information about the changes for v0.1.1, refer to the [changelog](https://github.com/firebase/extensions/blob/master/firestore-counter/CHANGELOG.md).
-- **If you installed this extension for the first time at v0.1.1 or later:** Follow the instructions as described in this section.
-
-Set up a [Cloud Scheduler job](https://cloud.google.com/scheduler/docs/quickstart) to regularly send a message to the extension's Pub/Sub topic (`${param:EXT_INSTANCE_ID}`). This Pub/Sub topic then automatically triggers the controllerCore function (`${function:controllerCore.name}`). This controllerCore function is created by the extension. It works by either aggregating shards itself or scheduling and monitoring workers to aggregate shards.
-
-As an example, to set up the required Cloud Scheduler job, you can run the following `gcloud` commands:
-
-```
-gcloud --project=${param:PROJECT_ID} services enable cloudscheduler.googleapis.com
-gcloud --project=${param:PROJECT_ID} scheduler jobs create pubsub ${param:EXT_INSTANCE_ID} --schedule="* * * * *" --topic=${param:EXT_INSTANCE_ID} --message-body="{}"
 ```
 
 
@@ -74,6 +59,14 @@ gcloud --project=${param:PROJECT_ID} scheduler jobs create pubsub ${param:EXT_IN
     </body>
   </html>
   ```
+
+
+#### Upgrading from v0.1.3 and earlier
+
+If you installed v0.1.3 or an earlier version of this extension, you set up a Cloud Scheduler job that either sent messages to the extension's Pub/Sub topic (`${param:EXT_INSTANCE_ID}`) or called the extension's controller function. Starting in v0.1.4, the controllerCore function (`${function:controllerCore.name}`) has a configurable schedule, so the manually-created Cloud Scheduler job is no longer required and will start to fail.
+
+Delete the old Cloud Scheduler job on the [Cloud Scheduler](https://console.cloud.google.com/cloudscheduler?project=_) page of the Cloud console.
+
 
 ### Using the extension
 
