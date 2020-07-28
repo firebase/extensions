@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+import * as bigquery from "@google-cloud/bigquery";
 import * as program from "commander";
 import * as firebase from "firebase-admin";
 import * as inquirer from "inquirer";

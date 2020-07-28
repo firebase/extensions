@@ -24,31 +24,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateResizedImage = void 0;
 const admin = require("firebase-admin");
 const fs = require("fs");
 const functions = require("firebase-functions");
-const mkdirp = require("mkdirp");
+const mkdirp = require("mkdirp-promise");
 const os = require("os");
 const path = require("path");
 const sharp = require("sharp");
-const uuidv4_1 = require("uuidv4");
 const config_1 = require("./config");
 const logs = require("./logs");
+const validators = require("./validators");
 const util_1 = require("./util");
-sharp.cache(false);
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 logs.init();
-/**
- * Supported file types
- */
-const supportedContentTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/tiff",
-    "image/webp",
-];
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
@@ -60,12 +49,9 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         logs.noContentType();
         return;
     }
-    if (!contentType.startsWith("image/")) {
+    const isImage = validators.isImage(contentType);
+    if (!isImage) {
         logs.contentTypeInvalid(contentType);
-        return;
-    }
-    if (!supportedContentTypes.includes(contentType)) {
-        logs.unsupportedType(supportedContentTypes, contentType);
         return;
     }
     if (object.metadata && object.metadata.resizedImage === "true") {
@@ -151,11 +137,7 @@ function resize(originalFile, resizedFile, size) {
         throw new Error("height and width are not delimited by a ',' or a 'x'");
     }
     return sharp(originalFile)
-        .rotate()
-        .resize(parseInt(width, 10), parseInt(height, 10), {
-        fit: "inside",
-        withoutEnlargement: true,
-    })
+        .resize(parseInt(width, 10), parseInt(height, 10), { fit: "inside" })
         .toFile(resizedFile);
 }
 const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => __awaiter(void 0, void 0, void 0, function* () {
@@ -181,11 +163,6 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         }
         else {
             metadata.cacheControl = objectMetadata.cacheControl;
-        }
-        // If the original image has a download token, add a
-        // new token to the image being resized #323
-        if (metadata.metadata.firebaseStorageDownloadTokens) {
-            metadata.metadata.firebaseStorageDownloadTokens = uuidv4_1.uuid();
         }
         // Generate a resized image using Sharp.
         logs.imageResizing(resizedFile, size);

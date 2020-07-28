@@ -61,13 +61,13 @@ resources:
 
 params:
   - param: LOCATION
+    type: select
     label: Cloud Functions location
     description: >-
       Where do you want to deploy the functions created for this extension?
       You usually want a location close to your database. For help selecting a
       location, refer to the [location selection
       guide](https://firebase.google.com/docs/functions/locations).
-    type: select
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -79,8 +79,6 @@ params:
         value: europe-west1
       - label: London (europe-west2)
         value: europe-west2
-      - label: Frankfurt (europe-west3)
-        value: europe-west3
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
@@ -95,35 +93,35 @@ params:
       Into which target languages do you want to translate new strings?
       The languages are identified using ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr.
       For these codes, visit the [supported languages list](https://cloud.google.com/translate/docs/languages).
+    default: en,es,de,fr
     example: en,es,de,fr
     validationRegex: "^[a-zA-Z,-]*[a-zA-Z-]{2,}$"
     validationErrorMessage:
       Languages must be a comma-separated list of ISO-639-1 language codes.
-    default: en,es,de,fr
     required: true
 
   - param: COLLECTION_PATH
     label: Collection path
     description: >
       What is the path to the collection that contains the strings that you want to translate?
+    default: translations
     example: translations
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore Collection
-    default: translations
     required: true
 
   - param: INPUT_FIELD_NAME
     label: Input field name
     description: >
       What is the name of the field that contains the string that you want to translate?
-    example: input
     default: input
+    example: input
     required: true
 
   - param: OUTPUT_FIELD_NAME
     label: Translations output field name
     description: >
       What is the name of the field where you want to store your translations?
-    example: translated
     default: translated
+    example: translated
     required: true

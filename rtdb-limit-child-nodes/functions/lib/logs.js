@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.start = exports.pathTruncating = exports.pathTruncated = exports.pathSkipped = exports.init = exports.error = exports.complete = exports.childCount = void 0;
 const config_1 = require("./config");
 exports.childCount = (path, childCount) => {
     console.log(`Node: '${path}' has: ${childCount} children`);

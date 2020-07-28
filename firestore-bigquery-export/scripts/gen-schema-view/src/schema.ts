@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-import { RawChangelogViewSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as bigquery from "@google-cloud/bigquery";
-import * as sqlFormatter from "sql-formatter";
 import * as logs from "./logs";
+import { RawChangelogViewSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import { latestConsistentSnapshotSchemaView } from "./snapshot";
+import * as sqlFormatter from "sql-formatter";
 import {
+  udfs,
   firestoreArray,
   firestoreBoolean,
-  firestoreGeopoint,
   firestoreNumber,
   firestoreTimestamp,
-  udfs,
+  firestoreGeopoint,
 } from "./udf";
 
 export type FirestoreFieldType =
@@ -103,7 +103,7 @@ export class FirestoreBigQuerySchemaViewFactory {
     tableNamePrefix: string,
     schemaName: string,
     firestoreSchema: FirestoreSchema
-  ): Promise<void> {
+  ): Promise<bigquery.Table> {
     const rawChangeLogTableName = changeLog(raw(tableNamePrefix));
     const latestRawViewName = latest(raw(tableNamePrefix));
     const changeLogSchemaViewName = changeLog(
@@ -122,11 +122,11 @@ export class FirestoreBigQuerySchemaViewFactory {
       });
     }
 
-    let changeLogSchemaView = dataset.table(changeLogSchemaViewName);
-    const [changeLogSchemaViewExists] = await changeLogSchemaView.exists();
+    let view = dataset.table(changeLogSchemaViewName);
+    const [viewExists] = await view.exists();
 
-    let latestSchemaView = dataset.table(latestSchemaViewName);
-    const [latestSchemaViewExists] = await latestSchemaView.exists();
+    let latestView = dataset.table(latestSchemaViewName);
+    const [latestViewExists] = await latestView.exists();
 
     let result = userSchemaView(
       datasetId,
@@ -134,22 +134,21 @@ export class FirestoreBigQuerySchemaViewFactory {
       firestoreSchema
     );
     let bigQueryFields = result.fields;
-
-    const changelogOptions = {
+    const options = {
       friendlyName: changeLogSchemaViewName,
       view: result.viewInfo,
     };
-    if (!changeLogSchemaViewExists) {
+    if (!viewExists) {
       logs.bigQuerySchemaViewCreating(
         changeLogSchemaViewName,
         firestoreSchema,
         result.viewInfo.query
       );
-      await changeLogSchemaView.create(changelogOptions);
+      await view.create(options);
       logs.bigQuerySchemaViewCreated(changeLogSchemaViewName);
     }
 
-    await changeLogSchemaView.setMetadata({
+    await view.setMetadata({
       schema: decorateSchemaWithChangelogFields({
         fields: bigQueryFields,
       }),
@@ -160,26 +159,27 @@ export class FirestoreBigQuerySchemaViewFactory {
       latestRawViewName,
       firestoreSchema
     );
-
     bigQueryFields = result.fields;
     const latestOptions = {
-      friendlyName: latestSchemaViewName,
+      fiendlyName: latestSchemaViewName,
       view: result.viewInfo,
     };
-    if (!latestSchemaViewExists) {
+    if (!latestViewExists) {
       logs.bigQuerySchemaViewCreating(
         latestSchemaViewName,
         firestoreSchema,
         result.viewInfo.query
       );
-      await latestSchemaView.create(latestOptions);
+      await latestView.create(latestOptions);
       logs.bigQueryViewCreated(latestSchemaViewName);
     }
-    await latestSchemaView.setMetadata({
+    await latestView.setMetadata({
       schema: decorateSchemaWithChangelogFields({
         fields: bigQueryFields,
       }),
     });
+
+    return view;
   }
 }
 
@@ -237,7 +237,6 @@ export const buildSchemaViewQuery = (
   let query = `
     SELECT
       document_name,
-      document_id,
       timestamp,
       operation${fieldValueSelectorClauses.length > 0 ? `,` : ``}
       ${fieldValueSelectorClauses}
@@ -351,7 +350,7 @@ function processFirestoreSchemaHelper(
   transformer: (selector: string) => string,
   bigQueryFields: { [property: string]: string }[]
 ) {
-  const { fields } = schema;
+  const { fields, idField } = schema;
   return fields.map((field) => {
     if (field.type === "map") {
       const subschema: FirestoreSchema = { fields: field.fields };
@@ -413,7 +412,7 @@ const processLeafField = (
       break;
     case "string":
     case "reference":
-      selector = jsonExtractScalar(
+      selector = jsonExtract(
         dataFieldName,
         extractPrefix,
         field,
@@ -430,13 +429,13 @@ const processLeafField = (
     case "boolean":
       selector = firestoreBoolean(
         datasetId,
-        jsonExtractScalar(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
       );
       break;
     case "number":
       selector = firestoreNumber(
         datasetId,
-        jsonExtractScalar(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
       );
       break;
     case "timestamp":
@@ -446,14 +445,14 @@ const processLeafField = (
       );
       break;
     case "geopoint":
-      const latitude = jsonExtractScalar(
+      const latitude = jsonExtract(
         dataFieldName,
         extractPrefix,
         field,
         `._latitude`,
         transformer
       );
-      const longitude = jsonExtractScalar(
+      const longitude = jsonExtract(
         dataFieldName,
         extractPrefix,
         field,
@@ -545,20 +544,6 @@ const processLeafField = (
  * JSON_EXTRACT. This is typically a BigQuery CAST, or an UNNEST (in the case
  * where the result is an ARRAY).
  */
-const jsonExtractScalar = (
-  dataFieldName: string,
-  prefix: string,
-  field: FirestoreField,
-  subselector: string = "",
-  transformer: (selector: string) => string
-) => {
-  return transformer(
-    `JSON_EXTRACT_SCALAR(${dataFieldName}, \'\$.${
-      prefix.length > 0 ? `${prefix}.` : ``
-    }${field.name}${subselector}\')`
-  );
-};
-
 const jsonExtract = (
   dataFieldName: string,
   prefix: string,
@@ -591,10 +576,7 @@ export function subSelectQuery(query: string, filter?: string[]): string {
 }
 
 function qualifyFieldName(prefix: string[], name: string): string {
-  const notAlphanumericUnderscore = /([^a-zA-Z0-9_])/g;
-  const cleanName = name.replace(notAlphanumericUnderscore, "_");
-
-  return prefix.concat(cleanName).join("_");
+  return prefix.concat(name).join("_");
 }
 
 export function latest(tableName: string): string {

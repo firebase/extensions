@@ -24,7 +24,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fsurlshortener = void 0;
 const functions = require("firebase-functions");
 const axios_1 = require("axios");
 const abstract_shortener_1 = require("./abstract-shortener");

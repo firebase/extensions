@@ -15,10 +15,15 @@
  */
 
 import * as sqlFormatter from "sql-formatter";
+
+import { RawChangelogSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
+
 import {
   buildSchemaViewQuery,
-  FirestoreSchema,
   latest,
+  FirestoreSchema,
+  FirestoreFieldType,
+  FirestoreField,
   processFirestoreSchema,
   subSelectQuery,
 } from "./schema";
@@ -100,7 +105,6 @@ export const buildLatestSchemaSnapshotViewQuery = (
       (field) => field.name != `${geopointFieldName}`
     );
   }
-
   const fieldNameSelectorClauses = Object.keys(schemaFieldExtractors).join(
     ", "
   );
@@ -109,18 +113,15 @@ export const buildLatestSchemaSnapshotViewQuery = (
   );
   const schemaHasArrays = schemaFieldArrays.length > 0;
   const schemaHasGeopoints = schemaFieldGeopoints.length > 0;
-
   let query = `
       SELECT
         document_name,
-        document_id,
         timestamp,
         operation${fieldNameSelectorClauses.length > 0 ? `,` : ``}
         ${fieldNameSelectorClauses}
       FROM (
         SELECT
           document_name,
-          document_id,
           ${firstValue(`timestamp`)} AS timestamp,
           ${firstValue(`operation`)} AS operation,
           ${firstValue(`operation`)} = "DELETE" AS is_deleted${
@@ -141,7 +142,6 @@ export const buildLatestSchemaSnapshotViewQuery = (
   const groupBy = `
     GROUP BY
       document_name,
-      document_id,
       timestamp,
       operation${groupableExtractors.length > 0 ? `,` : ``}
       ${
@@ -159,9 +159,8 @@ export const buildLatestSchemaSnapshotViewQuery = (
         ${rawTableName}
         ${schemaFieldArrays
           .map(
-            (
-              arrayFieldName
-            ) => `CROSS JOIN UNNEST(${rawTableName}.${arrayFieldName})
+            (arrayFieldName) =>
+              `CROSS JOIN UNNEST(${rawTableName}.${arrayFieldName})
             AS ${arrayFieldName}_member
             WITH OFFSET ${arrayFieldName}_index`
           )
@@ -201,5 +200,8 @@ export const buildLatestSchemaSnapshotViewQuery = (
     --                    corresponding to fields defined in the schema.
     ${query}
   `);
-  return { query: query, fields: bigQueryFields };
+  return {
+    query: query,
+    fields: bigQueryFields,
+  };
 };

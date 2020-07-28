@@ -4,7 +4,6 @@ FROM
   (
     SELECT
       document_name,
-      document_id,
       timestamp,
       operation,
       `test.test_dataset.firestoreArray`(JSON_EXTRACT(data, '$.map.array')) AS map_array,

@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDocumentId = exports.getChangeType = void 0;
 const firestore_bigquery_change_tracker_1 = require("@firebaseextensions/firestore-bigquery-change-tracker");
 function getChangeType(change) {
     if (!change.after.exists) {
@@ -27,10 +26,3 @@ function getChangeType(change) {
     return firestore_bigquery_change_tracker_1.ChangeType.UPDATE;
 }
 exports.getChangeType = getChangeType;
-function getDocumentId(change) {
-    if (change.after.exists) {
-        return change.after.id;
-    }
-    return change.before.id;
-}
-exports.getDocumentId = getDocumentId;

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.6
+version: 0.1.4
 specVersion: v1beta
 
 displayName: Export Collections to BigQuery
@@ -60,6 +60,7 @@ resources:
 
 params:
   - param: LOCATION
+    type: select
     label: Cloud Functions location
     description: >-
       Where do you want to deploy the functions created for this extension?  You
@@ -67,7 +68,6 @@ params:
       location, refer to the [location selection
       guide](https://firebase.google.com/docs/functions/locations).  Note that
       this extension locates your BigQuery dataset in `us-central1`.
-    type: select
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -79,8 +79,6 @@ params:
         value: europe-west1
       - label: London (europe-west2)
         value: europe-west2
-      - label: Frankfurt (europe-west3)
-        value: europe-west3
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
@@ -90,41 +88,41 @@ params:
     immutable: true
 
   - param: COLLECTION_PATH
+    type: string
     label: Collection path
     description: >-
       What is the path of the collection that you would like to export? You may
       use `{wildcard}` notation to match a subcollection of all documents in a
       collection (for example: `chatrooms/{chatid}/posts`).
-    type: string
-    example: posts
     default: posts
+    example: posts
     required: true
 
   - param: DATASET_ID
+    type: string
     label: Dataset ID
     description: >-
       What ID would you like to use for your BigQuery dataset? This extension
       will create the dataset, if it doesn't already exist.
-    type: string
-    example: firestore_export
     validationRegex: "^[a-zA-Z0-9_]+$"
     validationErrorMessage: >
       BigQuery dataset IDs must be alphanumeric (plus underscores) and must be
       no more than 1024 characters.
     default: firestore_export
+    example: firestore_export
     required: true
 
   - param: TABLE_ID
+    type: string
     label: Table ID
     description: >-
       What identifying prefix would you like to use for your table and view
       inside your BigQuery dataset? This extension will create the table and
       view, if they don't already exist.
-    type: string
-    example: posts
     validationRegex: "^[a-zA-Z0-9_]+$"
     validationErrorMessage: >
       BigQuery table IDs must be alphanumeric (plus underscores) and must be no
       more than 1024 characters.
     default: posts
+    example: posts
     required: true

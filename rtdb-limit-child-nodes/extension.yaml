@@ -33,9 +33,6 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
-  - authorName: Invertase
-    email: oss@invertase.io
-    url: https://github.com/invertase
 
 billingRequired: false
 
@@ -51,6 +48,7 @@ resources:
       checks if the max count has been exceeded,
       then deletes the oldest nodes first, as needed to maintain the max count.
     properties:
+      sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.create
@@ -58,6 +56,7 @@ resources:
 
 params:
   - param: LOCATION
+    type: select
     label: Cloud Functions location
     description: >-
       Where do you want to deploy the functions created for this extension? 
@@ -65,7 +64,6 @@ params:
       instances are located in `us-central1`. For help selecting a 
       location, refer to the [location selection 
       guide](https://firebase.google.com/docs/functions/locations).
-    type: select
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -77,8 +75,6 @@ params:
         value: europe-west1
       - label: London (europe-west2)
         value: europe-west2
-      - label: Frankfurt (europe-west3)
-        value: europe-west3
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
@@ -88,22 +84,22 @@ params:
     immutable: true
 
   - param: NODE_PATH
+    type: string
     label: Realtime Database path
     description: >-
       What is the Realtime Database path for which you want to limit the number of child nodes?
-    type: string
-    example: path/to/limit
     validationRegex: ^\S+$
     validationErrorMessage: Path cannot have spaces.
+    example: path/to/limit
     required: true
 
   - param: MAX_COUNT
+    type: string
     label: Maximum count of nodes to keep
     description: >-
       What is the maximum count of nodes to keep in your specified database path?
       The oldest nodes will be deleted first to maintain this max count.
-    type: string
-    example: 10
     validationRegex: ^\d+$
     validationErrorMessage: Invalid MAX_COUNT, must be a positive integer.
+    example: 10
     required: true

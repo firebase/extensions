@@ -1,23 +1,3 @@
-## Version 0.1.10
-
-fixed - A fresh token is now generated for each resized image. (Issue #323, PR #351)
-
-## Version 0.1.9
-
-changed - If the original image is a vector image, the extension does not resize it. (Issue #326, PR #329)
-fixed - Replaced `mkdirp-promise` with `mkdirp` because `mkdirp-promise` is deprecated. (PR #266)
-fixed - If the original image is smaller than the specified max width and height, the extension does not enlarge it or resize it. (Issue #337, PR #338)
-
-## Version 0.1.8
-
-fixed - Resized images now maintain the same orientation as the original image. (Issue #290)
-
-## Version 0.1.7
-
-fixed - Resized images now render in the Firebase console. (Issue #140)
-fixed - The Sharp cache is now cleared so that the latest image with a given
-file name is retrieved from the Storage bucket. (Issue #286)
-
 ## Version 0.1.6
 
 fixed - Switched ImageMagick for Sharp library to support webp format. (Issue #199)

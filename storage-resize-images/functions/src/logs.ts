@@ -30,17 +30,6 @@ export const contentTypeInvalid = (contentType: string) => {
   );
 };
 
-export const unsupportedType = (
-  unsupportedTypes: string[],
-  contentType: string
-) => {
-  console.log(
-    `Image type '${contentType}' is not supported, here are the supported file types: ${unsupportedTypes.join(
-      ", "
-    )}`
-  );
-};
-
 export const error = (err: Error) => {
   console.error("Error when resizing image", err);
 };

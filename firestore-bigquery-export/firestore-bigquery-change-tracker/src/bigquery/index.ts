@@ -62,7 +62,6 @@ export class FirestoreBigQueryEventHistoryTracker
           timestamp: event.timestamp,
           event_id: event.eventId,
           document_name: event.documentName,
-          document_id: event.documentId,
           operation: ChangeType[event.operation],
           data: JSON.stringify(this.serializeData(event.data)),
         },
@@ -75,22 +74,15 @@ export class FirestoreBigQueryEventHistoryTracker
     if (typeof eventData === "undefined") {
       return undefined;
     }
-
-    const data = traverse<traverse.Traverse<any>>(eventData).map(function(
-      property
-    ) {
-      if (property && property.constructor) {
-        if (property.constructor.name === "Buffer") {
-          this.remove();
-        }
-
-        if (
-          property.constructor.name ===
-          firebase.firestore.DocumentReference.name
-        ) {
-          this.update(property.path);
-        }
+    const data = traverse(eventData).map((property) => {
+      if (
+        property.constructor &&
+        property.constructor.name === firebase.firestore.DocumentReference.name
+      ) {
+        return property.path;
       }
+
+      return property;
     });
 
     return data;

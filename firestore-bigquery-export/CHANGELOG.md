@@ -1,14 +1,3 @@
-## Version 0.1.6
-
-fixed - Fixed issue with timestamp values not showing up in the latest view (#357)
-feature - Record document ID of changes tracked by firestore-bigquery-change-tracker package (#374)
-feature - Add document ID column to changelog table and snapshot view (#376)
-
-## Version 0.1.5
-
-fixed - TypeError: Cannot read property 'constructor' of null. (Issue #284)
-fixed - Filtered out blob (buffer) data types from being stored as strings in BigQuery.
-
 ## Version 0.1.4
 
 fixed - Converted circular structure to JSON error. (Issue #236)

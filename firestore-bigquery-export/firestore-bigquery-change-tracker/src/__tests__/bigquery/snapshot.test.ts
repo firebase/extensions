@@ -31,6 +31,7 @@ const testTable = "test_table";
 
 const expect = chai.expect;
 const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
 
 process.env.PROJECT_ID = testProjectId;
 
@@ -39,8 +40,12 @@ async function readFormattedSQL(file: string): Promise<string> {
   return sqlFormatter.format(query);
 }
 
+async function readBigQuerySchema(file: string): Promise<any> {
+  return require(file);
+}
+
 describe("latest snapshot view sql generation", () => {
-  it("should generate the expected sql", async () => {
+  it("should generate the epxected sql", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/latestConsistentSnapshot.txt`
     );

@@ -13,7 +13,6 @@ FROM
   (
     SELECT
       document_name,
-      document_id,
       timestamp,
       operation,
       name,
@@ -27,7 +26,6 @@ FROM
       (
         SELECT
           document_name,
-          document_id,
           FIRST_VALUE(timestamp) OVER(
             PARTITION BY document_name
             ORDER BY
@@ -43,7 +41,7 @@ FROM
             ORDER BY
               timestamp DESC
           ) = "DELETE" AS is_deleted,
-          FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.name')) OVER(
+          FIRST_VALUE(JSON_EXTRACT(data, '$.name')) OVER(
             PARTITION BY document_name
             ORDER BY
               timestamp DESC
@@ -70,20 +68,20 @@ FROM
             )
           ) AS last_location,
           SAFE_CAST(
-            FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.last_location._latitude')) OVER(
+            FIRST_VALUE(JSON_EXTRACT(data, '$.last_location._latitude')) OVER(
               PARTITION BY document_name
               ORDER BY
                 timestamp DESC
             ) AS NUMERIC
           ) AS last_location_latitude,
           SAFE_CAST(
-            FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.last_location._longitude')) OVER(
+            FIRST_VALUE(JSON_EXTRACT(data, '$.last_location._longitude')) OVER(
               PARTITION BY document_name
               ORDER BY
                 timestamp DESC
             ) AS NUMERIC
           ) AS last_location_longitude,
-          FIRST_VALUE(JSON_EXTRACT_SCALAR(data, '$.friends.name')) OVER(
+          FIRST_VALUE(JSON_EXTRACT(data, '$.friends.name')) OVER(
             PARTITION BY document_name
             ORDER BY
               timestamp DESC
@@ -97,7 +95,6 @@ FROM
   CROSS JOIN UNNEST(test_table.favorite_numbers) AS favorite_numbers_member WITH OFFSET favorite_numbers_index
 GROUP BY
   document_name,
-  document_id,
   timestamp,
   operation,
   name,
