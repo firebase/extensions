@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.queryRange = exports.containsManyUpdates = exports.isUpdatedFrequently = void 0;
 function isUpdatedFrequently(shard) {
     if (!shard.exists)
         return false;

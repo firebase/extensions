@@ -36,6 +36,9 @@ contributors:
   - authorName: Kevin Cheung
     email: kevincheung@google.com
     url: https://github.com/kevinthecheung
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
 
 billingRequired: true
 
@@ -50,7 +53,6 @@ resources:
       Listens for writes of new URLs to your specified Cloud Firestore collection, shortens the URLs,
       then writes the shortened form back to the same document.
     properties:
-      sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
@@ -58,13 +60,13 @@ resources:
 
 params:
   - param: LOCATION
-    type: select
     label: Cloud Functions location
     description: >-
       Where do you want to deploy the functions created for this extension?
       You usually want a location close to your database. For help selecting a
       location, refer to the [location selection
       guide](https://firebase.google.com/docs/functions/locations).
+    type: select
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -76,6 +78,8 @@ params:
         value: europe-west1
       - label: London (europe-west2)
         value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
@@ -95,24 +99,24 @@ params:
     label: Collection path
     description: >
       What is the path to the collection that contains the URLs that you want to shorten?
-    default: urls
     example: urls
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore collection
+    default: urls
     required: true
 
   - param: URL_FIELD_NAME
     label: URL field name
     description: >
       What is the name of the field that contains the original long URLs that you want to shorten?
-    default: url
     example: url
+    default: url
     required: true
 
   - param: SHORT_URL_FIELD_NAME
     label: Short URL field name
     description: >
       What is the name of the field where you want to store your shortened URLs?
-    default: shortUrl
     example: shortUrl
+    default: shortUrl
     required: true

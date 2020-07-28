@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-import * as bigquery from "@google-cloud/bigquery";
-import * as errors from "../errors";
-import * as logs from "../logs";
-import * as sqlFormatter from "sql-formatter";
-
 export type BigQueryFieldMode = "NULLABLE" | "REPEATED" | "REQUIRED";
 export type BigQueryFieldType =
   | "BOOLEAN"
@@ -104,6 +99,12 @@ export const RawChangelogViewSchema: any = {
       description:
         "The full JSON representation of the current document state.",
     },
+    {
+      name: "document_id",
+      mode: "NULLABLE",
+      type: "STRING",
+      description: "The document id as defined in the firestore database.",
+    },
   ],
 };
 
@@ -142,6 +143,12 @@ export const RawChangelogSchema: any = {
       type: "STRING",
       description:
         "The full JSON representation of the document state after the indicated operation is applied. This field will be null for DELETE operations.",
+    },
+    {
+      name: "document_id",
+      mode: "NULLABLE",
+      type: "STRING",
+      description: "The document id as defined in the firestore database.",
     },
   ],
 };
