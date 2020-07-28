@@ -14,3 +14,4 @@ Simply run the command below and follow the prompts:
 ```
 npm run populate
 ```
+delete-user-data/functions/lib/index.js
