@@ -158,3 +158,7 @@ export const timestampMissingValue = (fieldName: string) => {
     `Missing value for timestamp field: ${fieldName}, using default timestamp instead.`
   );
 };
+
+export const addDocumentIdColumn = (table) => {
+  console.log(`Updated '${table}' table with a 'document_id' column`);
+};

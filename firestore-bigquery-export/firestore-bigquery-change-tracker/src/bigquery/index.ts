@@ -17,7 +17,11 @@
 import * as bigquery from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
 import * as traverse from "traverse";
-import { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
+import {
+  RawChangelogSchema,
+  RawChangelogViewSchema,
+  documentIdField,
+} from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 
 import {
@@ -160,6 +164,19 @@ export class FirestoreBigQueryEventHistoryTracker
 
     if (tableExists) {
       logs.bigQueryTableAlreadyExists(table.id, dataset.id);
+
+      const [metadata] = await table.getMetadata();
+      const fields = metadata.schema.fields;
+
+      const documentIdColExists = fields.find(
+        (column) => column.name === "document_id"
+      );
+
+      if (!documentIdColExists) {
+        fields.push(documentIdField);
+        await table.setMetadata(metadata);
+        logs.addDocumentIdColumn(this.rawChangeLogTableName());
+      }
     } else {
       logs.bigQueryTableCreating(changelogName);
       const options = {
@@ -184,6 +201,22 @@ export class FirestoreBigQueryEventHistoryTracker
 
     if (viewExists) {
       logs.bigQueryViewAlreadyExists(view.id, dataset.id);
+      const [metadata] = await view.getMetadata();
+      const fields = metadata.schema.fields;
+
+      const documentIdColExists = fields.find(
+        (column) => column.name === "document_id"
+      );
+
+      if (!documentIdColExists) {
+        metadata.view = latestConsistentSnapshotView(
+          this.config.datasetId,
+          this.rawChangeLogTableName()
+        );
+
+        await view.setMetadata(metadata);
+        logs.addDocumentIdColumn(this.rawLatestView());
+      }
     } else {
       const latestSnapshot = latestConsistentSnapshotView(
         this.config.datasetId,
