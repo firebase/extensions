@@ -30,6 +30,7 @@ import {
   FirestoreDocumentChangeEvent,
 } from "../tracker";
 import * as logs from "../logs";
+import { InsertRowsOptions } from "@google-cloud/bigquery/build/src/table";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
@@ -101,13 +102,56 @@ export class FirestoreBigQueryEventHistoryTracker
   }
 
   /**
+   * Check whether a failed operation is retryable or not.
+   * Reasons for retrying:
+   * 1) We added a new column to our schema. Sometimes BQ is not ready to stream insertion records immediately
+   *    after adding a new column to an existing table (https://issuetracker.google.com/35905247)
+   */
+  private async isRetryableInsertionError(e) {
+    let isRetryable = true;
+    const expectedErrors = [
+      {
+        message: "no such field.",
+        location: "document_id",
+      },
+    ];
+    if (
+      e.response &&
+      e.response.insertErrors &&
+      e.response.insertErrors.errors
+    ) {
+      const errors = e.response.insertErrors.errors;
+      errors.forEach((error) => {
+        let isExpected = false;
+        expectedErrors.forEach((expectedError) => {
+          if (
+            error.message === expectedError.message &&
+            error.location === expectedError.location
+          ) {
+            isExpected = true;
+          }
+        });
+        if (!isExpected) {
+          isRetryable = false;
+        }
+      });
+    }
+    return isRetryable;
+  }
+
+  /**
    * Inserts rows of data into the BigQuery raw change log table.
    */
-  private async insertData(rows: bigquery.RowMetadata[]) {
+  private async insertData(
+    rows: bigquery.RowMetadata[],
+    overrideOptions: InsertRowsOptions = {},
+    retry: boolean = true
+  ) {
     const options = {
       skipInvalidRows: false,
       ignoreUnknownValues: false,
       raw: true,
+      ...overrideOptions,
     };
     try {
       const dataset = this.bq.dataset(this.config.datasetId);
@@ -116,6 +160,15 @@ export class FirestoreBigQueryEventHistoryTracker
       await table.insert(rows, options);
       logs.dataInserted(rows.length);
     } catch (e) {
+      if (retry && this.isRetryableInsertionError(e)) {
+        retry = false;
+        logs.dataInsertRetried(rows.length);
+        return this.insertData(
+          rows,
+          { ...overrideOptions, ignoreUnknownValues: true },
+          retry
+        );
+      }
       // Reinitializing in case the destintation table is modified.
       this.initialized = false;
       throw e;
