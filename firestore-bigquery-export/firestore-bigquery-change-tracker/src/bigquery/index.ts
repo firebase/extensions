@@ -207,14 +207,20 @@ export class FirestoreBigQueryEventHistoryTracker
 
       const [metadata] = await table.getMetadata();
       const fields = metadata.schema.fields;
-      const schemaFields = RawChangelogSchema.fields.map((field) => field.name);
-      for (const field in schemaFields) {
-        if (fields.indexOf(field) === -1) {
-          fields.push(documentIdField);
-          await table.setMetadata(metadata);
-          logs.addDocumentIdColumn(this.rawChangeLogTableName());
+      const fieldNames = fields.map((field) => field.name);
+      const schemaFields = RawChangelogSchema.fields;
+      const addedFields = [];
+      for (var c=0;c<schemaFields.length; c++) {
+        const field = schemaFields[c];
+        if (fieldNames.indexOf(field.name) === -1) {
+          fields.push(field);
+          addedFields.push(field);
         }
       }
+      console.log("added fields", addedFields)
+      console.log("existin fields", fields)
+      await table.setMetadata(metadata);
+      logs.addColumns(this.rawChangeLogTableName(), addedFields);
     } else {
       logs.bigQueryTableCreating(changelogName);
       const options = {
@@ -253,7 +259,7 @@ export class FirestoreBigQueryEventHistoryTracker
         );
 
         await view.setMetadata(metadata);
-        logs.addDocumentIdColumn(this.rawLatestView());
+        logs.addColumns(this.rawLatestView(), ["document_id"]);
       }
     } else {
       const latestSnapshot = latestConsistentSnapshotView(

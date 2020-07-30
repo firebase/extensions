@@ -165,6 +165,7 @@ export const timestampMissingValue = (fieldName: string) => {
   );
 };
 
-export const addDocumentIdColumn = (table) => {
-  console.log(`Updated '${table}' table with a 'document_id' column`);
+export const addColumns = (table, columns) => {
+  const columnsStr = columns.join(", ")
+  console.log(`Updated '${table}' table with new columns: ${columnsStr}`);
 };
