@@ -18,7 +18,6 @@ import * as bigquery from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
 import * as traverse from "traverse";
 import {
-  MigratedChangelogFields,
   RawChangelogSchema,
   RawChangelogViewSchema,
   documentIdField,
@@ -109,6 +108,12 @@ export class FirestoreBigQueryEventHistoryTracker
    */
   private async isRetryableInsertionError(e) {
     let isRetryable = true;
+    const expectedErrors = [
+      {
+        "message": "no such field.",
+        "location": "document_id"
+      }
+    ]
     if (
       e.response &&
       e.response.insertErrors &&
@@ -116,10 +121,13 @@ export class FirestoreBigQueryEventHistoryTracker
     ) {
       const errors = e.response.insertErrors.errors;
       errors.map((error) => {
-        if (
-          MigratedChangelogFields.indexOf(error.location) != -1 ||
-          error.message != "no such field."
-        ) {
+        let isExpected = false;
+        expectedErrors.map(expectedError => {
+          if (error.message === expectedError.message && error.location === expectedError.location) {
+            isExpected = true;
+          }
+        })
+        if (!isExpected) {
           isRetryable = false;
         }
       });
