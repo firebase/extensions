@@ -30,6 +30,7 @@ import {
   FirestoreDocumentChangeEvent,
 } from "../tracker";
 import * as logs from "../logs";
+import { InsertRowsOptions } from "@google-cloud/bigquery/build/src/table";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
@@ -72,7 +73,7 @@ export class FirestoreBigQueryEventHistoryTracker
         },
       };
     });
-    await this.insertData(rows, {}, true);
+    await this.insertData(rows);
   }
 
   serializeData(eventData: any) {
@@ -104,7 +105,7 @@ export class FirestoreBigQueryEventHistoryTracker
    * Check whether a failed operation is retryable or not.
    * Reasons for retrying:
    * 1) We added a new column to our schema. Sometimes BQ is not ready to stream insertion records immediately
-   *    with the new column.
+   *    after adding a new column to an existing table (https://issuetracker.google.com/35905247)
    */
   private async isRetryableInsertionError(e) {
     let isRetryable = true;
@@ -120,9 +121,9 @@ export class FirestoreBigQueryEventHistoryTracker
       e.response.insertErrors.errors
     ) {
       const errors = e.response.insertErrors.errors;
-      errors.map((error) => {
+      errors.forEach((error) => {
         let isExpected = false;
-        expectedErrors.map(expectedError => {
+        expectedErrors.forEach(expectedError => {
           if (error.message === expectedError.message && error.location === expectedError.location) {
             isExpected = true;
           }
@@ -140,17 +141,15 @@ export class FirestoreBigQueryEventHistoryTracker
    */
   private async insertData(
     rows: bigquery.RowMetadata[],
-    overrideOptions: any,
-    retry: boolean
+    overrideOptions: InsertRowsOptions = {},
+    retry: boolean = true
   ) {
     const options = {
       skipInvalidRows: false,
       ignoreUnknownValues: false,
       raw: true,
+      ...overrideOptions
     };
-    for (const key in overrideOptions) {
-      options[key] = overrideOptions[key];
-    }
     try {
       const dataset = this.bq.dataset(this.config.datasetId);
       const table = dataset.table(this.rawChangeLogTableName());
@@ -162,8 +161,7 @@ export class FirestoreBigQueryEventHistoryTracker
       if (retry && this.isRetryableInsertionError(e)) {
         retry = false;
         logs.dataInsertRetried(rows.length);
-        const optionsOverride = { ignoreUnknownValues: true };
-        return this.insertData(rows, optionsOverride, retry);
+        return this.insertData(rows, {...overrideOptions, ignoreUnknownValues: true}, retry);
       }
       // Reinitializing in case the destintation table is modified.
       this.initialized = false;
