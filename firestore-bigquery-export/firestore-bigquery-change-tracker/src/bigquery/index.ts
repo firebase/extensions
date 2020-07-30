@@ -111,10 +111,10 @@ export class FirestoreBigQueryEventHistoryTracker
     let isRetryable = true;
     const expectedErrors = [
       {
-        "message": "no such field.",
-        "location": "document_id"
-      }
-    ]
+        message: "no such field.",
+        location: "document_id",
+      },
+    ];
     if (
       e.response &&
       e.response.insertErrors &&
@@ -123,11 +123,14 @@ export class FirestoreBigQueryEventHistoryTracker
       const errors = e.response.insertErrors.errors;
       errors.forEach((error) => {
         let isExpected = false;
-        expectedErrors.forEach(expectedError => {
-          if (error.message === expectedError.message && error.location === expectedError.location) {
+        expectedErrors.forEach((expectedError) => {
+          if (
+            error.message === expectedError.message &&
+            error.location === expectedError.location
+          ) {
             isExpected = true;
           }
-        })
+        });
         if (!isExpected) {
           isRetryable = false;
         }
@@ -148,7 +151,7 @@ export class FirestoreBigQueryEventHistoryTracker
       skipInvalidRows: false,
       ignoreUnknownValues: false,
       raw: true,
-      ...overrideOptions
+      ...overrideOptions,
     };
     try {
       const dataset = this.bq.dataset(this.config.datasetId);
@@ -157,11 +160,14 @@ export class FirestoreBigQueryEventHistoryTracker
       await table.insert(rows, options);
       logs.dataInserted(rows.length);
     } catch (e) {
-      console.log("this is error", JSON.stringify(e, null, 2));
       if (retry && this.isRetryableInsertionError(e)) {
         retry = false;
         logs.dataInsertRetried(rows.length);
-        return this.insertData(rows, {...overrideOptions, ignoreUnknownValues: true}, retry);
+        return this.insertData(
+          rows,
+          { ...overrideOptions, ignoreUnknownValues: true },
+          retry
+        );
       }
       // Reinitializing in case the destintation table is modified.
       this.initialized = false;
@@ -218,7 +224,7 @@ export class FirestoreBigQueryEventHistoryTracker
       const documentIdColExists = fields.find(
         (column) => column.name === "document_id"
       );
-      
+
       if (!documentIdColExists) {
         fields.push(documentIdField);
         await table.setMetadata(metadata);
