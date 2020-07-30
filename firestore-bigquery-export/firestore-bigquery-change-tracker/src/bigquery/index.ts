@@ -212,6 +212,7 @@ export class FirestoreBigQueryEventHistoryTracker
       const documentIdColExists = fields.find(
         (column) => column.name === "document_id"
       );
+      
       if (!documentIdColExists) {
         fields.push(documentIdField);
         await table.setMetadata(metadata);
