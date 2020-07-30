@@ -59,6 +59,13 @@ export const timestampField = bigQueryField(
 export const latitudeField = bigQueryField("latitude", "NUMERIC");
 export const longitudeField = bigQueryField("longitude", "NUMERIC");
 
+export const documentIdField = {
+  name: "document_id",
+  mode: "NULLABLE",
+  type: "STRING",
+  description: "The document id as defined in the firestore database.",
+};
+
 /*
  * We cannot specify a schema for view creation, and all view columns default
  * to the NULLABLE mode.
@@ -99,12 +106,7 @@ export const RawChangelogViewSchema: any = {
       description:
         "The full JSON representation of the current document state.",
     },
-    {
-      name: "document_id",
-      mode: "NULLABLE",
-      type: "STRING",
-      description: "The document id as defined in the firestore database.",
-    },
+    documentIdField,
   ],
 };
 
@@ -144,11 +146,6 @@ export const RawChangelogSchema: any = {
       description:
         "The full JSON representation of the document state after the indicated operation is applied. This field will be null for DELETE operations.",
     },
-    {
-      name: "document_id",
-      mode: "NULLABLE",
-      type: "STRING",
-      description: "The document id as defined in the firestore database.",
-    },
+    documentIdField,
   ],
 };

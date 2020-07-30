@@ -135,6 +135,12 @@ export const dataInserted = (rowCount: number) => {
   console.log(`Inserted ${rowCount} row(s) of data into BigQuery`);
 };
 
+export const dataInsertRetried = (rowCount: number) => {
+  console.log(
+    `Retried to insert ${rowCount} row(s) of data into BigQuery (ignoring uknown columns)`
+  );
+};
+
 export const dataInserting = (rowCount: number) => {
   console.log(`Inserting ${rowCount} row(s) of data into BigQuery`);
 };
@@ -157,4 +163,8 @@ export const timestampMissingValue = (fieldName: string) => {
   console.warn(
     `Missing value for timestamp field: ${fieldName}, using default timestamp instead.`
   );
+};
+
+export const addDocumentIdColumn = (table) => {
+  console.log(`Updated '${table}' table with a 'document_id' column`);
 };
