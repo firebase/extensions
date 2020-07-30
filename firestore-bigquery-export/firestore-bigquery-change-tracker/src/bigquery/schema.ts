@@ -149,3 +149,5 @@ export const RawChangelogSchema: any = {
     documentIdField,
   ],
 };
+
+export const MigratedChangelogFields: Array<string> = ["document_id"];

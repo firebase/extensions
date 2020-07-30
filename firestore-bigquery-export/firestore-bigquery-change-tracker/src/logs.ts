@@ -135,6 +135,12 @@ export const dataInserted = (rowCount: number) => {
   console.log(`Inserted ${rowCount} row(s) of data into BigQuery`);
 };
 
+export const dataInsertRetried = (rowCount: number) => {
+  console.log(
+    `Retrying to insert ${rowCount} row(s) of data into BigQuery (ignoring uknown columns)`
+  );
+};
+
 export const dataInserting = (rowCount: number) => {
   console.log(`Inserting ${rowCount} row(s) of data into BigQuery`);
 };

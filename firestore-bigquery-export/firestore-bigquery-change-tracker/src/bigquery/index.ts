@@ -18,6 +18,7 @@ import * as bigquery from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
 import * as traverse from "traverse";
 import {
+  MigratedChangelogFields,
   RawChangelogSchema,
   RawChangelogViewSchema,
   documentIdField,
@@ -72,7 +73,7 @@ export class FirestoreBigQueryEventHistoryTracker
         },
       };
     });
-    await this.insertData(rows);
+    await this.insertData(rows, {}, true);
   }
 
   serializeData(eventData: any) {
@@ -101,21 +102,60 @@ export class FirestoreBigQueryEventHistoryTracker
   }
 
   /**
+   * Check whether a failed operation is retryable or not.
+   * Reasons for retrying:
+   * 1) We added a new column to our schema. Sometimes BQ is not ready to stream insertion records immediately
+   *    with the new column.
+   */
+  private async isRetryableInsertionError(e) {
+    let isRetryable = true;
+    if (
+      e.response &&
+      e.response.insertErrors &&
+      e.response.insertErrors.errors
+    ) {
+      const errors = e.response.insertErrors.errors;
+      errors.map((error) => {
+        if (
+          MigratedChangelogFields.indexOf(error.location) != -1 ||
+          error.message != "no such field."
+        ) {
+          isRetryable = false;
+        }
+      });
+    }
+    return isRetryable;
+  }
+
+  /**
    * Inserts rows of data into the BigQuery raw change log table.
    */
-  private async insertData(rows: bigquery.RowMetadata[]) {
+  private async insertData(
+    rows: bigquery.RowMetadata[],
+    overrideOptions: any,
+    retry: boolean
+  ) {
     const options = {
       skipInvalidRows: false,
       ignoreUnknownValues: false,
       raw: true,
     };
+    for (const key in overrideOptions) {
+      options[key] = overrideOptions[key];
+    }
     try {
       const dataset = this.bq.dataset(this.config.datasetId);
       const table = dataset.table(this.rawChangeLogTableName());
       logs.dataInserting(rows.length);
-      await table.insert(rows, options);
+      await table.insert(rows, overrideOptions);
       logs.dataInserted(rows.length);
     } catch (e) {
+      if (retry && this.isRetryableInsertionError(e)) {
+        retry = false;
+        logs.dataInsertRetried(rows.length);
+        const optionsOverride = { ignoreUnknownValues: true };
+        return this.insertData(rows, optionsOverride, retry);
+      }
       // Reinitializing in case the destintation table is modified.
       this.initialized = false;
       throw e;
@@ -167,15 +207,13 @@ export class FirestoreBigQueryEventHistoryTracker
 
       const [metadata] = await table.getMetadata();
       const fields = metadata.schema.fields;
-
-      const documentIdColExists = fields.find(
-        (column) => column.name === "document_id"
-      );
-
-      if (!documentIdColExists) {
-        fields.push(documentIdField);
-        await table.setMetadata(metadata);
-        logs.addDocumentIdColumn(this.rawChangeLogTableName());
+      const schemaFields = RawChangelogSchema.fields.map((field) => field.name);
+      for (const field in schemaFields) {
+        if (fields.indexOf(field) === -1) {
+          fields.push(documentIdField);
+          await table.setMetadata(metadata);
+          logs.addDocumentIdColumn(this.rawChangeLogTableName());
+        }
       }
     } else {
       logs.bigQueryTableCreating(changelogName);

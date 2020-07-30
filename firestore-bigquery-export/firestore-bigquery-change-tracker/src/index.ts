@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+console.log("calling local version!");
+
 export {
   FirestoreBigQueryEventHistoryTracker,
   RawChangelogSchema,
