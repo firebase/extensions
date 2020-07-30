@@ -147,9 +147,10 @@ export class FirestoreBigQueryEventHistoryTracker
       const dataset = this.bq.dataset(this.config.datasetId);
       const table = dataset.table(this.rawChangeLogTableName());
       logs.dataInserting(rows.length);
-      await table.insert(rows, overrideOptions);
+      await table.insert(rows, options);
       logs.dataInserted(rows.length);
     } catch (e) {
+      console.log("this is error", JSON.stringify(e, null, 2));
       if (retry && this.isRetryableInsertionError(e)) {
         retry = false;
         logs.dataInsertRetried(rows.length);
@@ -207,20 +208,15 @@ export class FirestoreBigQueryEventHistoryTracker
 
       const [metadata] = await table.getMetadata();
       const fields = metadata.schema.fields;
-      const fieldNames = fields.map((field) => field.name);
-      const schemaFields = RawChangelogSchema.fields;
-      const addedFields = [];
-      for (var c=0;c<schemaFields.length; c++) {
-        const field = schemaFields[c];
-        if (fieldNames.indexOf(field.name) === -1) {
-          fields.push(field);
-          addedFields.push(field);
-        }
+
+      const documentIdColExists = fields.find(
+        (column) => column.name === "document_id"
+      );
+      if (!documentIdColExists) {
+        fields.push(documentIdField);
+        await table.setMetadata(metadata);
+        logs.addDocumentIdColumn(this.rawChangeLogTableName());
       }
-      console.log("added fields", addedFields)
-      console.log("existin fields", fields)
-      await table.setMetadata(metadata);
-      logs.addColumns(this.rawChangeLogTableName(), addedFields);
     } else {
       logs.bigQueryTableCreating(changelogName);
       const options = {
@@ -259,7 +255,7 @@ export class FirestoreBigQueryEventHistoryTracker
         );
 
         await view.setMetadata(metadata);
-        logs.addColumns(this.rawLatestView(), ["document_id"]);
+        logs.addDocumentIdColumn(this.rawLatestView());
       }
     } else {
       const latestSnapshot = latestConsistentSnapshotView(

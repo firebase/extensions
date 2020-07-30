@@ -136,10 +136,9 @@ export const dataInserted = (rowCount: number) => {
 };
 
 export const dataInsertRetried = (rowCount: number) => {
-  console.log(
-    `Retrying to insert ${rowCount} row(s) of data into BigQuery (ignoring uknown columns)`
-  );
+  console.log(`Retried to insert ${rowCount} row(s) of data into BigQuery (ignoring uknown columns)`);
 };
+
 
 export const dataInserting = (rowCount: number) => {
   console.log(`Inserting ${rowCount} row(s) of data into BigQuery`);
@@ -165,7 +164,6 @@ export const timestampMissingValue = (fieldName: string) => {
   );
 };
 
-export const addColumns = (table, columns) => {
-  const columnsStr = columns.join(", ")
-  console.log(`Updated '${table}' table with new columns: ${columnsStr}`);
+export const addDocumentIdColumn = (table) => {
+  console.log(`Updated '${table}' table with a 'document_id' column`);
 };
