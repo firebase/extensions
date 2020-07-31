@@ -41,6 +41,15 @@ export const unsupportedType = (
   );
 };
 
+export const unsupportedImageType = (
+  unsupportedType: string,
+  contentType: string
+) => {
+  console.log(
+    `Image type ${unsupportedType} is not supported. Using ${contentType} to continue`
+  );
+};
+
 export const error = (err: Error) => {
   console.error("Error when resizing image", err);
 };
@@ -65,12 +74,25 @@ export const imageDownloading = (path: string) => {
   console.log(`Downloading image file: '${path}'`);
 };
 
-export const imageResized = (path: string) => {
-  console.log(`Resized image created at '${path}'`);
+export const imageConverting = (
+  originalImageType: string,
+  imageType: string
+) => {
+  console.log(
+    `Converting image from type, ${originalImageType}, to type ${imageType}`
+  );
+};
+
+export const imageConverted = (imageType: string) => {
+  console.log(`Converted image to ${imageType}`);
 };
 
 export const imageResizing = (path: string, size: string) => {
   console.log(`Resizing image at path '${path}' to size: ${size}`);
+};
+
+export const imageResized = (path: string) => {
+  console.log(`Resized image created at '${path}'`);
 };
 
 export const imageUploaded = (path: string) => {

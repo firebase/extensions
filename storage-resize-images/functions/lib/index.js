@@ -49,6 +49,13 @@ const supportedContentTypes = [
     "image/tiff",
     "image/webp",
 ];
+const supportedImageContentTypeMap = {
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    tiff: "image/tiff",
+    webp: "image/webp",
+};
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
@@ -139,7 +146,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         }
     }
 }));
-function resize(originalFile, resizedFile, size) {
+function resize(file, size) {
     let height, width;
     if (size.indexOf(",") !== -1) {
         [width, height] = size.split(",");
@@ -150,29 +157,56 @@ function resize(originalFile, resizedFile, size) {
     else {
         throw new Error("height and width are not delimited by a ',' or a 'x'");
     }
-    return sharp(originalFile)
+    return sharp(file)
         .rotate()
         .resize(parseInt(width, 10), parseInt(height, 10), {
         fit: "inside",
         withoutEnlargement: true,
     })
-        .toFile(resizedFile);
+        .toBuffer();
+}
+function convertFormat(buffer) {
+    const { imageType } = config_1.default;
+    if (imageType === "jpg" || imageType === "jpeg") {
+        return sharp(buffer).jpeg().toBuffer();
+    }
+    else if (imageType === "png") {
+        return sharp(buffer).png().toBuffer();
+    }
+    else if (imageType === "webp") {
+        return sharp(buffer).webp().toBuffer();
+    }
+    else if (imageType === "tiff") {
+        return sharp(buffer).tiff().toBuffer();
+    }
+    else if (imageType === "raw") {
+        return sharp(buffer).raw().toBuffer();
+    }
+    return buffer;
 }
 const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => __awaiter(void 0, void 0, void 0, function* () {
-    const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
-    // Path where resized image will be uploaded to in Storage.
-    const resizedFilePath = path.normalize(config_1.default.resizedImagesPath
-        ? path.join(fileDir, config_1.default.resizedImagesPath, resizedFileName)
-        : path.join(fileDir, resizedFileName));
-    let resizedFile;
+    const { imageType } = config_1.default;
+    let imageContentType = supportedImageContentTypeMap[imageType];
+    const hasValidImageType = imageType && supportedImageContentTypeMap.hasOwnProperty(imageType);
+    if (!hasValidImageType) {
+        logs.unsupportedImageType(imageType, contentType);
+        imageContentType = contentType;
+    }
+    const modifiedExtensionName = fileExtension && hasValidImageType ? `.${imageType}` : fileExtension;
+    const modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
+    // Path where modified image will be uploaded to in Storage.
+    const modifiedFilePath = path.normalize(config_1.default.resizedImagesPath
+        ? path.join(fileDir, config_1.default.resizedImagesPath, modifiedFileName)
+        : path.join(fileDir, modifiedFileName));
+    let modifiedFile;
     try {
-        resizedFile = path.join(os.tmpdir(), resizedFileName);
+        modifiedFile = path.join(os.tmpdir(), modifiedFileName);
         // Cloud Storage files.
         const metadata = {
             contentDisposition: objectMetadata.contentDisposition,
             contentEncoding: objectMetadata.contentEncoding,
             contentLanguage: objectMetadata.contentLanguage,
-            contentType: contentType,
+            contentType: imageContentType,
             metadata: objectMetadata.metadata || {},
         };
         metadata.metadata.resizedImage = true;
@@ -188,16 +222,20 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
             metadata.metadata.firebaseStorageDownloadTokens = uuidv4_1.uuid();
         }
         // Generate a resized image using Sharp.
-        logs.imageResizing(resizedFile, size);
-        yield resize(originalFile, resizedFile, size);
-        logs.imageResized(resizedFile);
+        logs.imageResizing(modifiedFile, size);
+        const resizedImageBuffer = yield resize(originalFile, size);
+        logs.imageResized(modifiedFile);
+        logs.imageConverting(fileExtension, config_1.default.imageType);
+        const convertedFormatImageBuffer = yield convertFormat(resizedImageBuffer);
+        logs.imageConverted(config_1.default.imageType);
+        yield sharp(convertedFormatImageBuffer).toFile(modifiedFile);
         // Uploading the resized image.
-        logs.imageUploading(resizedFilePath);
-        yield bucket.upload(resizedFile, {
-            destination: resizedFilePath,
+        logs.imageUploading(modifiedFilePath);
+        yield bucket.upload(modifiedFile, {
+            destination: modifiedFilePath,
             metadata,
         });
-        logs.imageUploaded(resizedFilePath);
+        logs.imageUploaded(modifiedFilePath);
         return { size, success: true };
     }
     catch (err) {
@@ -207,10 +245,10 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
     finally {
         try {
             // Make sure the local resized file is cleaned up to free up disk space.
-            if (resizedFile) {
-                logs.tempResizedFileDeleting(resizedFilePath);
-                fs.unlinkSync(resizedFile);
-                logs.tempResizedFileDeleted(resizedFilePath);
+            if (modifiedFile) {
+                logs.tempResizedFileDeleting(modifiedFilePath);
+                fs.unlinkSync(modifiedFile);
+                logs.tempResizedFileDeleted(modifiedFilePath);
             }
         }
         catch (err) {

@@ -51,6 +51,14 @@ const supportedContentTypes = [
   "image/webp",
 ];
 
+const supportedImageContentTypeMap = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  tiff: "image/tiff",
+  webp: "image/webp",
+};
+
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
@@ -157,7 +165,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
   }
 );
 
-function resize(originalFile, resizedFile, size) {
+function resize(file, size) {
   let height, width;
   if (size.indexOf(",") !== -1) {
     [width, height] = size.split(",");
@@ -167,13 +175,29 @@ function resize(originalFile, resizedFile, size) {
     throw new Error("height and width are not delimited by a ',' or a 'x'");
   }
 
-  return sharp(originalFile)
+  return sharp(file)
     .rotate()
     .resize(parseInt(width, 10), parseInt(height, 10), {
       fit: "inside",
       withoutEnlargement: true,
     })
-    .toFile(resizedFile);
+    .toBuffer();
+}
+
+function convertFormat(buffer) {
+  const { imageType } = config;
+  if (imageType === "jpg" || imageType === "jpeg") {
+    return sharp(buffer).jpeg().toBuffer();
+  } else if (imageType === "png") {
+    return sharp(buffer).png().toBuffer();
+  } else if (imageType === "webp") {
+    return sharp(buffer).webp().toBuffer();
+  } else if (imageType === "tiff") {
+    return sharp(buffer).tiff().toBuffer();
+  } else if (imageType === "raw") {
+    return sharp(buffer).raw().toBuffer();
+  }
+  return buffer;
 }
 
 const resizeImage = async ({
@@ -195,24 +219,35 @@ const resizeImage = async ({
   size: string;
   objectMetadata: ObjectMetadata;
 }): Promise<ResizedImageResult> => {
-  const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
-  // Path where resized image will be uploaded to in Storage.
-  const resizedFilePath = path.normalize(
+  const { imageType } = config;
+  let imageContentType = supportedImageContentTypeMap[imageType];
+  const hasValidImageType =
+    imageType && supportedImageContentTypeMap.hasOwnProperty(imageType);
+  if (!hasValidImageType) {
+    logs.unsupportedImageType(imageType, contentType);
+    imageContentType = contentType;
+  }
+
+  const modifiedExtensionName =
+    fileExtension && hasValidImageType ? `.${imageType}` : fileExtension;
+  const modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
+  // Path where modified image will be uploaded to in Storage.
+  const modifiedFilePath = path.normalize(
     config.resizedImagesPath
-      ? path.join(fileDir, config.resizedImagesPath, resizedFileName)
-      : path.join(fileDir, resizedFileName)
+      ? path.join(fileDir, config.resizedImagesPath, modifiedFileName)
+      : path.join(fileDir, modifiedFileName)
   );
-  let resizedFile: string;
+  let modifiedFile: string;
 
   try {
-    resizedFile = path.join(os.tmpdir(), resizedFileName);
+    modifiedFile = path.join(os.tmpdir(), modifiedFileName);
 
     // Cloud Storage files.
     const metadata: { [key: string]: any } = {
       contentDisposition: objectMetadata.contentDisposition,
       contentEncoding: objectMetadata.contentEncoding,
       contentLanguage: objectMetadata.contentLanguage,
-      contentType: contentType,
+      contentType: imageContentType,
       metadata: objectMetadata.metadata || {},
     };
     metadata.metadata.resizedImage = true;
@@ -229,19 +264,23 @@ const resizeImage = async ({
     }
 
     // Generate a resized image using Sharp.
-    logs.imageResizing(resizedFile, size);
+    logs.imageResizing(modifiedFile, size);
+    const resizedImageBuffer = await resize(originalFile, size);
+    logs.imageResized(modifiedFile);
 
-    await resize(originalFile, resizedFile, size);
+    logs.imageConverting(fileExtension, config.imageType);
+    const convertedFormatImageBuffer = await convertFormat(resizedImageBuffer);
+    logs.imageConverted(config.imageType);
 
-    logs.imageResized(resizedFile);
+    await sharp(convertedFormatImageBuffer).toFile(modifiedFile);
 
     // Uploading the resized image.
-    logs.imageUploading(resizedFilePath);
-    await bucket.upload(resizedFile, {
-      destination: resizedFilePath,
+    logs.imageUploading(modifiedFilePath);
+    await bucket.upload(modifiedFile, {
+      destination: modifiedFilePath,
       metadata,
     });
-    logs.imageUploaded(resizedFilePath);
+    logs.imageUploaded(modifiedFilePath);
 
     return { size, success: true };
   } catch (err) {
@@ -250,10 +289,10 @@ const resizeImage = async ({
   } finally {
     try {
       // Make sure the local resized file is cleaned up to free up disk space.
-      if (resizedFile) {
-        logs.tempResizedFileDeleting(resizedFilePath);
-        fs.unlinkSync(resizedFile);
-        logs.tempResizedFileDeleted(resizedFilePath);
+      if (modifiedFile) {
+        logs.tempResizedFileDeleting(modifiedFilePath);
+        fs.unlinkSync(modifiedFile);
+        logs.tempResizedFileDeleted(modifiedFilePath);
       }
     } catch (err) {
       logs.errorDeleting(err);

@@ -67,9 +67,9 @@ params:
   - param: LOCATION
     label: Cloud Functions location
     description: >-
-      Where do you want to deploy the functions created for this extension? 
-      You usually want a location close to your Storage bucket. For help selecting a 
-      location, refer to the [location selection 
+      Where do you want to deploy the functions created for this extension?
+      You usually want a location close to your Storage bucket. For help selecting a
+      location, refer to the [location selection
       guide](https://firebase.google.com/docs/functions/locations).
     type: select
     options:
@@ -154,4 +154,13 @@ params:
       [`Cache-Control` headers](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control).
       If you prefer not to overwrite or add `Cache-Control` metadata, leave this field empty.
     example: max-age=86400
+    required: false
+
+  - param: IMAGE_TYPE
+    label: Image type to convert to
+    description: >
+      The image type you'd like your source image to convert to. The default for this option will be to keep the original file type.
+    example: jpg
+    validationRegex: ^(jpg|jpeg|png|tiff|webp)$
+    validationErrorMessage: Invalid image type
     required: false
