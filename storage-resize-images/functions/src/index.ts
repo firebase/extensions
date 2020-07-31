@@ -120,7 +120,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       const tasks: Promise<ResizedImageResult>[] = [];
       imageSizes.forEach((size) => {
         tasks.push(
-          resizeImage({
+          modifyImage({
             bucket,
             originalFile,
             fileDir,
@@ -184,7 +184,7 @@ function resize(file, size) {
     .toBuffer();
 }
 
-function convertFormat(buffer) {
+function convertType(buffer) {
   const { imageType } = config;
   if (imageType === "jpg" || imageType === "jpeg") {
     return sharp(buffer).jpeg().toBuffer();
@@ -200,7 +200,7 @@ function convertFormat(buffer) {
   return buffer;
 }
 
-const resizeImage = async ({
+const modifyImage = async ({
   bucket,
   originalFile,
   fileDir,
@@ -263,18 +263,20 @@ const resizeImage = async ({
       metadata.metadata.firebaseStorageDownloadTokens = uuid();
     }
 
-    // Generate a resized image using Sharp.
+    // Generate a resized image buffer using Sharp.
     logs.imageResizing(modifiedFile, size);
     const resizedImageBuffer = await resize(originalFile, size);
     logs.imageResized(modifiedFile);
 
+    // Generate a converted image type buffer using Sharp.
     logs.imageConverting(fileExtension, config.imageType);
-    const convertedFormatImageBuffer = await convertFormat(resizedImageBuffer);
+    const convertedFormatImageBuffer = await convertType(resizedImageBuffer);
     logs.imageConverted(config.imageType);
 
+    // Generate a image file using Sharp.
     await sharp(convertedFormatImageBuffer).toFile(modifiedFile);
 
-    // Uploading the resized image.
+    // Uploading the modified image.
     logs.imageUploading(modifiedFilePath);
     await bucket.upload(modifiedFile, {
       destination: modifiedFilePath,
