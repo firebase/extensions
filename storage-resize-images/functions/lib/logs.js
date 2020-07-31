@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remoteFileDeleting = exports.remoteFileDeleted = exports.tempResizedFileDeleting = exports.tempResizedFileDeleted = exports.tempOriginalFileDeleting = exports.tempOriginalFileDeleted = exports.tempDirectoryCreating = exports.tempDirectoryCreated = exports.start = exports.init = exports.imageUploading = exports.imageUploaded = exports.imageResized = exports.imageResizing = exports.imageConverted = exports.imageConverting = exports.imageDownloading = exports.imageDownloaded = exports.imageAlreadyResized = exports.failed = exports.errorDeleting = exports.error = exports.unsupportedImageType = exports.unsupportedType = exports.contentTypeInvalid = exports.noContentType = exports.complete = void 0;
+exports.remoteFileDeleting = exports.remoteFileDeleted = exports.tempResizedFileDeleting = exports.tempResizedFileDeleted = exports.tempOriginalFileDeleting = exports.tempOriginalFileDeleted = exports.tempDirectoryCreating = exports.tempDirectoryCreated = exports.start = exports.init = exports.imageUploading = exports.imageUploaded = exports.imageResizing = exports.imageResized = exports.imageConverted = exports.imageConverting = exports.imageDownloading = exports.imageDownloaded = exports.imageAlreadyResized = exports.failed = exports.errorDeleting = exports.error = exports.unsupportedImageType = exports.unsupportedType = exports.contentTypeInvalid = exports.noContentType = exports.complete = void 0;
 const config_1 = require("./config");
 exports.complete = () => {
     console.log("Completed execution of extension");
@@ -30,7 +30,7 @@ exports.unsupportedType = (unsupportedTypes, contentType) => {
     console.log(`Image type '${contentType}' is not supported, here are the supported file types: ${unsupportedTypes.join(", ")}`);
 };
 exports.unsupportedImageType = (unsupportedType, contentType) => {
-    console.log(`Image type ${unsupportedType} is not supported. Using ${contentType} to continue`);
+    console.log(`Image type ${unsupportedType} is not supported. Using ${contentType} to continue.`);
 };
 exports.error = (err) => {
     console.error("Error when resizing image", err);
@@ -51,16 +51,16 @@ exports.imageDownloading = (path) => {
     console.log(`Downloading image file: '${path}'`);
 };
 exports.imageConverting = (originalImageType, imageType) => {
-    console.log(`Converting image from type, ${originalImageType}, to type ${imageType}`);
+    console.log(`Converting image from type, ${originalImageType}, to type ${imageType}.`);
 };
 exports.imageConverted = (imageType) => {
     console.log(`Converted image to ${imageType}`);
 };
-exports.imageResizing = (path, size) => {
-    console.log(`Resizing image at path '${path}' to size: ${size}`);
-};
 exports.imageResized = (path) => {
     console.log(`Resized image created at '${path}'`);
+};
+exports.imageResizing = (path, size) => {
+    console.log(`Resizing image at path '${path}' to size: ${size}`);
 };
 exports.imageUploaded = (path) => {
     console.log(`Uploaded resized image to '${path}'`);

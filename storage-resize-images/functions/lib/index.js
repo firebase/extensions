@@ -103,7 +103,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         const imageSizes = new Set(config_1.default.imageSizes);
         const tasks = [];
         imageSizes.forEach((size) => {
-            tasks.push(resizeImage({
+            tasks.push(modifyImage({
                 bucket,
                 originalFile,
                 fileDir,
@@ -165,7 +165,7 @@ function resize(file, size) {
     })
         .toBuffer();
 }
-function convertFormat(buffer) {
+function convertType(buffer) {
     const { imageType } = config_1.default;
     if (imageType === "jpg" || imageType === "jpeg") {
         return sharp(buffer).jpeg().toBuffer();
@@ -184,7 +184,7 @@ function convertFormat(buffer) {
     }
     return buffer;
 }
-const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => __awaiter(void 0, void 0, void 0, function* () {
+const modifyImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => __awaiter(void 0, void 0, void 0, function* () {
     const { imageType } = config_1.default;
     let imageContentType = supportedImageContentTypeMap[imageType];
     const hasValidImageType = imageType && supportedImageContentTypeMap.hasOwnProperty(imageType);
@@ -221,15 +221,17 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         if (metadata.metadata.firebaseStorageDownloadTokens) {
             metadata.metadata.firebaseStorageDownloadTokens = uuidv4_1.uuid();
         }
-        // Generate a resized image using Sharp.
+        // Generate a resized image buffer using Sharp.
         logs.imageResizing(modifiedFile, size);
         const resizedImageBuffer = yield resize(originalFile, size);
         logs.imageResized(modifiedFile);
+        // Generate a converted image type buffer using Sharp.
         logs.imageConverting(fileExtension, config_1.default.imageType);
-        const convertedFormatImageBuffer = yield convertFormat(resizedImageBuffer);
+        const convertedFormatImageBuffer = yield convertType(resizedImageBuffer);
         logs.imageConverted(config_1.default.imageType);
+        // Generate a image file using Sharp.
         yield sharp(convertedFormatImageBuffer).toFile(modifiedFile);
-        // Uploading the resized image.
+        // Uploading the modified image.
         logs.imageUploading(modifiedFilePath);
         yield bucket.upload(modifiedFile, {
             destination: modifiedFilePath,
