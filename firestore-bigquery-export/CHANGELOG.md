@@ -1,6 +1,6 @@
 ## Version 0.1.7
 
-fixed - Updated `@firebaseextensions/firestore-bigquery-change-tracker` dependency (fixes issues #225).
+fixed - Updated `@firebaseextensions/firestore-bigquery-change-tracker` dependency (fixes issues #235).
 
 
 ## Version 0.1.6
