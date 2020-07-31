@@ -1,3 +1,8 @@
+## Version 0.1.7
+
+fixed - Updated `@firebaseextensions/firestore-bigquery-change-tracker` dependency (fixes issues #225).
+
+
 ## Version 0.1.6
 
 fixed - Fixed issue with timestamp values not showing up in the latest view (#357)
