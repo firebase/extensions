@@ -90,6 +90,12 @@ params:
         value: asia-northeast1
       - label: Osaka (asia-northeast2)
         value: asia-northeast2
+      - label: Seoul (asia-northeast3)
+        value: asia-northeast3
+      - label: Mumbai (asia-south1)
+        value: asia-south1
+      - label: Jakarta (asia-southeast2)
+        value: asia-southeast2
       - label: Montreal (northamerica-northeast1)
         value: northamerica-northeast1
       - label: Sao Paulo (southamerica-east1)
