@@ -4,11 +4,12 @@ codecov:
 coverage:
   precision: 2
   round: down
-  range: "25...100"
+  range: "40...100"
 
   status:
     project:
       default: true
+    patch: off
 
 comment:
   layout: "reach, diff, files"
