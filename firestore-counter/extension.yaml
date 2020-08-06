@@ -38,7 +38,7 @@ contributors:
     url: https://github.com/invertase
     
 
-billingRequired: false
+billingRequired: true
 
 roles:
   - role: datastore.user
