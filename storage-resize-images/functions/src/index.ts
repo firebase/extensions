@@ -187,15 +187,25 @@ function resize(file, size) {
 function convertType(buffer) {
   const { imageType } = config;
   if (imageType === "jpg" || imageType === "jpeg") {
-    return sharp(buffer).jpeg().toBuffer();
+    return sharp(buffer)
+      .jpeg()
+      .toBuffer();
   } else if (imageType === "png") {
-    return sharp(buffer).png().toBuffer();
+    return sharp(buffer)
+      .png()
+      .toBuffer();
   } else if (imageType === "webp") {
-    return sharp(buffer).webp().toBuffer();
+    return sharp(buffer)
+      .webp()
+      .toBuffer();
   } else if (imageType === "tiff") {
-    return sharp(buffer).tiff().toBuffer();
+    return sharp(buffer)
+      .tiff()
+      .toBuffer();
   } else if (imageType === "raw") {
-    return sharp(buffer).raw().toBuffer();
+    return sharp(buffer)
+      .raw()
+      .toBuffer();
   }
   return buffer;
 }
