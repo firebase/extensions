@@ -2,4 +2,4 @@ The `fs-bq-import-collection` script is for use with the official Firebase Exten
 
 This script reads all existing documents in a specified Firestore Collection, and updates the changelog table used by the `firestore-bigquery-export` extension.
 
-A guide on how to use the script can be found [here](https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md)
+A guide on how to use the script can be found [here](https://github.com/firebase/extensions/blob/next/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
