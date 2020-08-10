@@ -14,68 +14,67 @@
  * limitations under the License.
  */
 
-import { logger } from "firebase-functions";
 import config from "../config";
 import { messages } from "./messages";
 
 export const complete = () => {
-  logger.log(messages.complete());
+  console.log(messages.complete());
 };
 
 export const documentCreatedNoInput = () => {
-  logger.log(messages.documentCreatedNoInput());
+  console.log(messages.documentCreatedNoInput());
 };
 
 export const documentCreatedWithInput = () => {
-  logger.log(messages.documentCreatedWithInput());
+  console.log(messages.documentCreatedWithInput());
 };
 
 export const documentDeleted = () => {
-  logger.log(messages.documentDeleted());
+  console.log(messages.documentDeleted());
 };
 
 export const documentUpdatedChangedInput = () => {
-  logger.log(messages.documentUpdatedChangedInput());
+  console.log(messages.documentUpdatedChangedInput());
 };
 
 export const documentUpdatedDeletedInput = () => {
-  logger.log(messages.documentUpdatedDeletedInput());
+  console.log(messages.documentUpdatedDeletedInput());
 };
 
 export const documentUpdatedNoInput = () => {
-  logger.log(messages.documentUpdatedNoInput());
+  console.log(messages.documentUpdatedNoInput());
 };
 
 export const documentUpdatedUnchangedInput = () => {
-  logger.log(messages.documentUpdatedUnchangedInput());
+  console.log(messages.documentUpdatedUnchangedInput());
 };
 
 export const error = (err: Error) => {
-  logger.error(...messages.error(err));
+  console.error(...messages.error(err));
 };
 
 export const fieldNamesNotDifferent = () => {
-  logger.error(messages.fieldNamesNotDifferent());
+  console.error(messages.fieldNamesNotDifferent());
 };
 
 export const init = () => {
-  logger.log(...messages.init(config));
+  console.log(...messages.init(config));
 };
 
 export const inputFieldNameIsOutputPath = () => {
-  logger.error(messages.inputFieldNameIsOutputPath());
+  console.error(messages.inputFieldNameIsOutputPath());
 };
 
 export const start = () => {
-  logger.log(...messages.start(config));
+  console.log(...messages.start(config));
 };
 
 export const translateInputString = (string: string, language: string) => {
-  logger.log(messages.translateInputString(string, language));
+  console.log(messages.translateInputString(string, language));
 };
 
 export const translateStringComplete = (string: string, language: string) => {
-  logger.log(messages.translateStringComplete(string, language));
+  console.log(messages.translateStringComplete(string, language));
 };
 
 export const translateStringError = (
@@ -83,31 +82,31 @@ export const translateStringError = (
   language: string,
   err: Error
 ) => {
-  logger.error(...messages.translateStringError(string, language, err));
+  console.error(...messages.translateStringError(string, language, err));
 };
 
 export const translateInputStringToAllLanguages = (
   string: string,
   languages: string[]
 ) => {
-  logger.log(messages.translateInputStringToAllLanguages(string, languages));
+  console.log(messages.translateInputStringToAllLanguages(string, languages));
 };
 
 export const translateInputToAllLanguagesComplete = (string: string) => {
-  logger.log(messages.translateInputToAllLanguagesComplete(string));
+  console.log(messages.translateInputToAllLanguagesComplete(string));
 };
 
 export const translateInputToAllLanguagesError = (
   string: string,
   err: Error
 ) => {
-  logger.error(...messages.translateInputToAllLanguagesError(string, err));
+  console.error(...messages.translateInputToAllLanguagesError(string, err));
 };
 
 export const updateDocument = (path: string) => {
-  logger.log(...messages.updateDocument(path));
+  console.log(...messages.updateDocument(path));
 };
 
 export const updateDocumentComplete = (path: string) => {
-  logger.log(...messages.updateDocumentComplete(path));
+  console.log(...messages.updateDocumentComplete(path));
 };
