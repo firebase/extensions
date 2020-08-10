@@ -25,6 +25,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const handlebars_1 = require("handlebars");
+const subjHandlebars = handlebars_1.create();
+const htmlHandlebars = handlebars_1.create();
+const textHandlebars = handlebars_1.create();
+const ampHandlebars = handlebars_1.create();
 class Templates {
     constructor(collection) {
         this.collection = collection;
@@ -42,23 +46,40 @@ class Templates {
         });
     }
     updateTemplates(snap) {
-        snap.docs.forEach((doc) => {
-            const data = doc.data();
-            const templates = {};
-            if (data.subject) {
-                templates.subject = handlebars_1.compile(data.subject, { noEscape: true });
+        const all = snap.docs.map((doc) => Object.assign({ name: doc.id }, doc.data()));
+        const partials = all.filter((t) => t.partial);
+        const templates = all.filter((t) => !t.partial);
+        partials.forEach((p) => {
+            if (p.subject) {
+                subjHandlebars.registerPartial(p.name, p.subject);
             }
-            if (data.html) {
-                templates.html = handlebars_1.compile(data.html);
+            if (p.html) {
+                htmlHandlebars.registerPartial(p.name, p.html);
             }
-            if (data.text) {
-                templates.text = handlebars_1.compile(data.text, { noEscape: true });
+            if (p.text) {
+                textHandlebars.registerPartial(p.name, p.text);
             }
-            if (data.amp) {
-                templates.amp = handlebars_1.compile(data.amp);
+            if (p.amp) {
+                ampHandlebars.registerPartial(p.name, p.amp);
             }
-            this.templateMap[doc.id] = templates;
-            console.log(`loaded template '${doc.id}'`);
+            console.log(`registered partial '${p.name}'`);
+        });
+        templates.forEach((t) => {
+            const tgroup = {};
+            if (t.subject) {
+                tgroup.subject = subjHandlebars.compile(t.subject, { noEscape: true });
+            }
+            if (t.html) {
+                tgroup.html = htmlHandlebars.compile(t.html);
+            }
+            if (t.text) {
+                tgroup.text = textHandlebars.compile(t.text, { noEscape: true });
+            }
+            if (t.amp) {
+                tgroup.amp = ampHandlebars.compile(t.amp);
+            }
+            this.templateMap[t.name] = tgroup;
+            console.log(`loaded template '${t.name}'`);
         });
         this.ready = true;
         this.waits.forEach((wait) => wait());
