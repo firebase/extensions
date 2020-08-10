@@ -97,6 +97,8 @@ params:
       collection (for example: `chatrooms/{chatid}/posts`).
     type: string
     example: posts
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore Collection
     default: posts
     required: true
 
