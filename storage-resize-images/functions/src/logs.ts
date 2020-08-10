@@ -24,6 +24,10 @@ export const noContentType = () => {
   console.log(`File has no Content-Type, no processing is required`);
 };
 
+export const gzipContentEncoding = () => {
+  console.log("Images encoded with 'gzip' are not supported by this extension");
+};
+
 export const contentTypeInvalid = (contentType: string) => {
   console.log(
     `File of type '${contentType}' is not an image, no processing is required`

@@ -64,6 +64,10 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         logs.contentTypeInvalid(contentType);
         return;
     }
+    if (object.contentEncoding === "gzip") {
+        logs.gzipContentEncoding();
+        return;
+    }
     if (!supportedContentTypes.includes(contentType)) {
         logs.unsupportedType(supportedContentTypes, contentType);
         return;
