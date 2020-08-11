@@ -19,6 +19,7 @@ import { suite, test, timeout } from "mocha-typescript";
 import { ShardedCounterWorker } from "../src/worker";
 import { initializeApp, credential } from "firebase-admin";
 import * as uuid from "uuid";
+import { logger } from "firebase-functions";
 
 let serviceAccount = require("../../test-project-key.json");
 
@@ -53,7 +54,7 @@ class StateTracker {
         this.scheduleLog();
         this.partialSum = 0;
         this.shardsSum = 0;
-        console.log("ts1: " + snap.readTime.toMillis());
+        logger.log("ts1: " + snap.readTime.toMillis());
         snap.forEach((doc) => {
           if (doc.id.startsWith("\t")) {
             doc.data()._updates_.forEach((u) => {
@@ -66,14 +67,14 @@ class StateTracker {
       });
 
     this.counterUnsubscribe = db.doc(counterPath).onSnapshot((snap) => {
-      console.log("ts2: " + snap.readTime.toMillis());
+      logger.log("ts2: " + snap.readTime.toMillis());
       this.scheduleLog();
       this.counterVal = snap.get("counter") || 0;
     });
   }
 
   async stop() {
-    console.log("Stoppping state tracker.");
+    logger.log("Stoppping state tracker.");
     this.shardsUnsubscribe();
     this.counterUnsubscribe();
     if (this.logPromise) await this.logPromise;
@@ -83,7 +84,7 @@ class StateTracker {
     if (this.logPromise !== null) return;
     this.logPromise = new Promise((resolve, reject) => {
       setTimeout(() => {
-        console.log(
+        logger.log(
           "counter: " +
             this.counterVal +
             ", partials: " +
@@ -134,7 +135,7 @@ class WorkerTest {
     await shards2Ref.doc("123456789").set({ stats: { cnt: 2 } });
 
     let metadoc = await metadocRef.get();
-    console.log("Single run: " + JSON.stringify(metadoc.data()));
+    logger.log("Single run: " + JSON.stringify(metadoc.data()));
 
     const worker = new ShardedCounterWorker(
       metadoc,
@@ -153,7 +154,7 @@ class WorkerTest {
       stats: { cnt: 3 },
     });
     metadoc = await metadocRef.get();
-    console.log("Single run done: " + JSON.stringify(metadoc.data()));
+    logger.log("Single run done: " + JSON.stringify(metadoc.data()));
 
     await metadocRef.delete();
     await counterRef.delete();

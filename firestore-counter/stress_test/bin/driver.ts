@@ -16,6 +16,7 @@
 
 import { initializeApp, credential } from "firebase-admin";
 import * as uuid from "uuid";
+import { logger } from "firebase-functions";
 
 let serviceAccount = require("../../test-project-key.json");
 
@@ -51,7 +52,7 @@ async function main() {
       batch.set(taskRef, taskInfo);
     });
     await batch.commit();
-    console.log("Scheduled 1000 increments to counter: " + i);
+    logger.log("Scheduled 1000 increments to counter: " + i);
     const sleepTime = timestamp + 1000 - Date.now();
     if (sleepTime > 0) await delay(sleepTime);
   }

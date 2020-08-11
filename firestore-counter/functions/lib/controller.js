@@ -20,6 +20,7 @@ const firebase_admin_1 = require("firebase-admin");
 const common_1 = require("./common");
 const planner_1 = require("./planner");
 const aggregator_1 = require("./aggregator");
+const firebase_functions_1 = require("firebase-functions");
 const EMPTY_CONTROLLER_DATA = { workers: [], timestamp: 0 };
 var ControllerStatus;
 (function (ControllerStatus) {
@@ -79,12 +80,12 @@ class ShardedCounterController {
                 }
             });
             const shutdown = async () => {
-                console.log("Successfully ran " +
+                firebase_functions_1.logger.log("Successfully ran " +
                     rounds +
                     " rounds. Aggregated " +
                     shardsCount +
                     " shards.");
-                console.log("Skipped " +
+                firebase_functions_1.logger.log("Skipped " +
                     skippedRoundsDueToWorkers +
                     " rounds due to workers running.");
                 unsubscribeControllerListener();
@@ -108,7 +109,7 @@ class ShardedCounterController {
                     controllerDoc = await t.get(this.controllerDocRef);
                 }
                 catch (err) {
-                    console.log("Failed to read controller doc: " + this.controllerDocRef.path);
+                    firebase_functions_1.logger.log("Failed to read controller doc: " + this.controllerDocRef.path);
                     throw Error("Failed to read controller doc.");
                 }
                 const controllerData = controllerDoc.exists
@@ -121,7 +122,7 @@ class ShardedCounterController {
                     shards = await t.get(common_1.queryRange(this.db, this.shardCollectionId, slice.start, slice.end, limit));
                 }
                 catch (err) {
-                    console.log("Query to find shards to aggregate failed.", err);
+                    firebase_functions_1.logger.log("Query to find shards to aggregate failed.", err);
                     throw Error("Query to find shards to aggregate failed.");
                 }
                 if (shards.docs.length == 200)
@@ -137,7 +138,7 @@ class ShardedCounterController {
                         counter = await t.get(this.db.doc(plan.aggregate));
                     }
                     catch (err) {
-                        console.log("Failed to read document: " + plan.aggregate, err);
+                        firebase_functions_1.logger.log("Failed to read document: " + plan.aggregate, err);
                         throw Error("Failed to read counter " + plan.aggregate);
                     }
                     // Calculate aggregated value and save to aggregate shard.
@@ -152,17 +153,17 @@ class ShardedCounterController {
                     await Promise.all(promises);
                 }
                 catch (err) {
-                    console.log("Some counter aggregation failed, bailing out.");
+                    firebase_functions_1.logger.log("Some counter aggregation failed, bailing out.");
                     throw Error("Some counter aggregation failed, bailing out.");
                 }
                 t.set(this.controllerDocRef, { timestamp: firebase_admin_1.firestore.FieldValue.serverTimestamp() }, { merge: true });
-                console.log("Aggregated " + plans.length + " counters.");
+                firebase_functions_1.logger.log("Aggregated " + plans.length + " counters.");
                 return ControllerStatus.SUCCESS;
             });
             return status;
         }
         catch (err) {
-            console.log("Transaction to aggregate shards failed.", err);
+            firebase_functions_1.logger.log("Transaction to aggregate shards failed.", err);
             return ControllerStatus.FAILURE;
         }
     }
@@ -177,7 +178,7 @@ class ShardedCounterController {
                 await t.get(this.controllerDocRef);
             }
             catch (err) {
-                console.log("Failed to read controller doc " + this.controllerDocRef.path);
+                firebase_functions_1.logger.log("Failed to read controller doc " + this.controllerDocRef.path);
                 throw Error("Failed to read controller doc.");
             }
             // Read all workers' metadata and construct sharding info based on collected stats.
@@ -186,7 +187,7 @@ class ShardedCounterController {
                 query = await t.get(this.workersRef.orderBy(firebase_admin_1.firestore.FieldPath.documentId()));
             }
             catch (err) {
-                console.log("Failed to read worker docs.", err);
+                firebase_functions_1.logger.log("Failed to read worker docs.", err);
                 throw Error("Failed to read worker docs.");
             }
             let shardingInfo = await Promise.all(query.docs.map(async (worker) => {
@@ -215,13 +216,13 @@ class ShardedCounterController {
                     }
                 }
                 catch (err) {
-                    console.log("Failed to calculate additional splits for worker: " + worker.id);
+                    firebase_functions_1.logger.log("Failed to calculate additional splits for worker: " + worker.id);
                 }
                 return { slice, hasData, overloaded, splits };
             }));
             let [reshard, slices] = ShardedCounterController.balanceWorkers(shardingInfo);
             if (reshard) {
-                console.log("Resharding workers, new workers: " +
+                firebase_functions_1.logger.log("Resharding workers, new workers: " +
                     slices.length +
                     " prev num workers: " +
                     query.docs.length);
@@ -246,7 +247,7 @@ class ShardedCounterController {
                         failures++;
                     }
                 });
-                console.log("Detected " + failures + " failed workers.");
+                firebase_functions_1.logger.log("Detected " + failures + " failed workers.");
                 t.set(this.controllerDocRef, { timestamp: firebase_admin_1.firestore.FieldValue.serverTimestamp() }, { merge: true });
             }
         });
