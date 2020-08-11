@@ -31,9 +31,9 @@ var ChangeType;
 const translate = new translate_1.Translate({ projectId: process.env.PROJECT_ID });
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
-logs.init();
+logs.init(config_1.default);
 exports.fstranslate = functions.handler.firestore.document.onWrite(async (change) => {
-    logs.start();
+    logs.start(config_1.default);
     const { languages, inputFieldName, outputFieldName } = config_1.default;
     if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
         logs.fieldNamesNotDifferent();
