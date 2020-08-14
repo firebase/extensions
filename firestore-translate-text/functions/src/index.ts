@@ -148,6 +148,8 @@ const translateSingle = async (
   input: string,
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
+  logs.translateInputStringToAllLanguages(input, config.languages);
+
   const tasks = config.languages.map(
     async (targetLanguage: string): Promise<Translation> => {
       return {
@@ -206,8 +208,6 @@ const translateMultiple = async (
     if (fn) await fn();
   }
 
-  console.warn("translations >>>", translations);
-
   return updateTranslations(snapshot, translations);
 };
 
@@ -215,8 +215,6 @@ const translateDocument = async (
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
   const input: string = extractInput(snapshot);
-
-  logs.translateInputStringToAllLanguages(input, config.languages);
 
   if (typeof input === "object") {
     await translateMultiple(input, snapshot);

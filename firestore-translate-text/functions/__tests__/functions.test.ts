@@ -200,6 +200,7 @@ describe("extension", () => {
           messages.translateStringComplete("hello", language)
         );
       });
+
       // logs.translateInputStringToAllLanguages
       expect(mockConsoleLog).toHaveBeenCalledWith(
         messages.translateInputStringToAllLanguages(
@@ -248,20 +249,20 @@ describe("extension", () => {
         expect(mockConsoleLog).toHaveBeenCalledWith(
           messages.translateInputString(value, key)
         );
+
+        // logs.translateInputStringToAllLanguages
+        expect(mockConsoleLog).toHaveBeenCalledWith(
+          messages.translateInputStringToAllLanguages(
+            key,
+            defaultEnvironment.LANGUAGES.split(",")
+          )
+        );
+
+        // logs.translateInputToAllLanguagesComplete
+        expect(mockConsoleLog).toHaveBeenCalledWith(
+          messages.translateInputToAllLanguagesComplete(value)
+        );
       });
-
-      // // logs.translateInputStringToAllLanguages
-      // expect(mockConsoleLog).toHaveBeenCalledWith(
-      //   messages.translateInputStringToAllLanguages(
-      //     "hello",
-      //     defaultEnvironment.LANGUAGES.split(",")
-      //   )
-      // );
-
-      // // logs.translateInputToAllLanguagesComplete
-      // expect(mockConsoleLog).toHaveBeenCalledWith(
-      //   messages.translateInputToAllLanguagesComplete("hello")
-      // );
     });
 
     test("function updates translation document when previous input changes", async () => {
