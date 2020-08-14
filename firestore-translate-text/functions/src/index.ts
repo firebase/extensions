@@ -144,13 +144,10 @@ const handleUpdateDocument = async (
   }
 };
 
-const translateDocument = async (
+const translateSingle = async (
+  input: string,
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
-  const input: string = extractInput(snapshot);
-
-  logs.translateInputStringToAllLanguages(input, config.languages);
-
   const tasks = config.languages.map(
     async (targetLanguage: string): Promise<Translation> => {
       return {
@@ -173,11 +170,60 @@ const translateDocument = async (
       {}
     );
 
-    await updateTranslations(snapshot, translationsMap);
+    return updateTranslations(snapshot, translationsMap);
   } catch (err) {
     logs.translateInputToAllLanguagesError(input, err);
     throw err;
   }
+};
+
+const translateMultiple = async (
+  input: object,
+  snapshot: admin.firestore.DocumentSnapshot
+): Promise<void> => {
+  let translations = {};
+  let promises = [];
+
+  Object.keys(input).forEach((input) => {
+    config.languages.forEach((language) => {
+      promises.push(
+        () =>
+          new Promise(async (resolve) => {
+            logs.translateInputStringToAllLanguages(input, config.languages);
+
+            const output = await translateString(input, language);
+
+            if (!translations[input]) translations[input] = {};
+            translations[input][language] = output;
+
+            return resolve();
+          })
+      );
+    });
+  });
+
+  for (const fn of promises) {
+    if (fn) await fn();
+  }
+
+  console.warn("translations >>>", translations);
+
+  return updateTranslations(snapshot, translations);
+};
+
+const translateDocument = async (
+  snapshot: admin.firestore.DocumentSnapshot
+): Promise<void> => {
+  const input: string = extractInput(snapshot);
+
+  logs.translateInputStringToAllLanguages(input, config.languages);
+
+  if (typeof input === "object") {
+    await translateMultiple(input, snapshot);
+    return Promise.resolve();
+  }
+
+  await translateSingle(input, snapshot);
 };
 
 const translateString = async (

@@ -213,6 +213,57 @@ describe("extension", () => {
       );
     });
 
+    test("function updates translation document with multiple translations", async () => {
+      beforeSnapshot = snapshot();
+
+      afterSnapshot = snapshot({
+        input: {
+          one: "hello",
+          two: "hello",
+        },
+      });
+
+      documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
+
+      await wrappedMockTranslate(documentChange);
+
+      // confirm document update was called
+      expect(mockFirestoreUpdate).toHaveBeenCalledWith("translated", {
+        one: {
+          de: "hallo",
+          en: "hello",
+          es: "hola",
+          fr: "salut",
+        },
+        two: {
+          de: "hallo",
+          en: "hello",
+          es: "hola",
+          fr: "salut",
+        },
+      });
+
+      // confirm logs were printed
+      Object.entries((key, value) => {
+        expect(mockConsoleLog).toHaveBeenCalledWith(
+          messages.translateInputString(value, key)
+        );
+      });
+
+      // // logs.translateInputStringToAllLanguages
+      // expect(mockConsoleLog).toHaveBeenCalledWith(
+      //   messages.translateInputStringToAllLanguages(
+      //     "hello",
+      //     defaultEnvironment.LANGUAGES.split(",")
+      //   )
+      // );
+
+      // // logs.translateInputToAllLanguagesComplete
+      // expect(mockConsoleLog).toHaveBeenCalledWith(
+      //   messages.translateInputToAllLanguagesComplete("hello")
+      // );
+    });
+
     test("function updates translation document when previous input changes", async () => {
       beforeSnapshot = snapshot({
         input: "goodbye",
