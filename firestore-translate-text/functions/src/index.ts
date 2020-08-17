@@ -186,14 +186,14 @@ const translateMultiple = async (
   let translations = {};
   let promises = [];
 
-  Object.keys(input).forEach((input) => {
+  Object.entries(input).forEach(([input, value]) => {
     config.languages.forEach((language) => {
       promises.push(
         () =>
           new Promise(async (resolve) => {
-            logs.translateInputStringToAllLanguages(input, config.languages);
+            logs.translateInputStringToAllLanguages(value, config.languages);
 
-            const output = await translateString(input, language);
+            const output = await translateString(value, language);
 
             if (!translations[input]) translations[input] = {};
             translations[input][language] = output;

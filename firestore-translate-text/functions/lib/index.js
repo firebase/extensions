@@ -118,8 +118,7 @@ const handleUpdateDocument = (before, after) => __awaiter(void 0, void 0, void 0
         logs.documentUpdatedNoInput();
     }
 });
-const translateDocument = (snapshot) => __awaiter(void 0, void 0, void 0, function* () {
-    const input = extractInput(snapshot);
+const translateSingle = (input, snapshot) => __awaiter(void 0, void 0, void 0, function* () {
     logs.translateInputStringToAllLanguages(input, config_1.default.languages);
     const tasks = config_1.default.languages.map((targetLanguage) => __awaiter(void 0, void 0, void 0, function* () {
         return {
@@ -134,12 +133,41 @@ const translateDocument = (snapshot) => __awaiter(void 0, void 0, void 0, functi
             output[translation.language] = translation.output;
             return output;
         }, {});
-        yield updateTranslations(snapshot, translationsMap);
+        return updateTranslations(snapshot, translationsMap);
     }
     catch (err) {
         logs.translateInputToAllLanguagesError(input, err);
         throw err;
     }
+});
+const translateMultiple = (input, snapshot) => __awaiter(void 0, void 0, void 0, function* () {
+    let translations = {};
+    let promises = [];
+    Object.entries(input).forEach(([input, value]) => {
+        config_1.default.languages.forEach((language) => {
+            promises.push(() => new Promise((resolve) => __awaiter(void 0, void 0, void 0, function* () {
+                logs.translateInputStringToAllLanguages(value, config_1.default.languages);
+                const output = yield translateString(value, language);
+                if (!translations[input])
+                    translations[input] = {};
+                translations[input][language] = output;
+                return resolve();
+            })));
+        });
+    });
+    for (const fn of promises) {
+        if (fn)
+            yield fn();
+    }
+    return updateTranslations(snapshot, translations);
+});
+const translateDocument = (snapshot) => __awaiter(void 0, void 0, void 0, function* () {
+    const input = extractInput(snapshot);
+    if (typeof input === "object") {
+        yield translateMultiple(input, snapshot);
+        return Promise.resolve();
+    }
+    yield translateSingle(input, snapshot);
 });
 const translateString = (string, targetLanguage) => __awaiter(void 0, void 0, void 0, function* () {
     try {
