@@ -1,5 +1,7 @@
 # Distributed Counter
 
+**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
+
 **Description**: Records event counters at scale to accommodate high-velocity writes to Cloud Firestore.
 
 
