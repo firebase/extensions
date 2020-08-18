@@ -1,3 +1,7 @@
+## Version 0.1.8
+
+feature - Add validation regex for collection path parameter (#418)
+
 ## Version 0.1.6
 
 fixed - Fixed issue with timestamp values not showing up in the latest view (#357)
