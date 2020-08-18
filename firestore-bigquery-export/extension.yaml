@@ -98,7 +98,7 @@ params:
     type: string
     example: posts
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
-    validationErrorMessage: Must be a valid Cloud Firestore Collection.
+    validationErrorMessage: Firestore collection paths must be an odd number of segments separated by slashes, e.g. "path/to/collection".
     default: posts
     required: true
 
