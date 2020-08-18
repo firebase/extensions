@@ -63,6 +63,7 @@ resources:
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${PROJECT_ID}
+      runtime: nodejs10
 
 params:
   - param: LOCATION
