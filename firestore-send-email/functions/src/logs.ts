@@ -15,32 +15,38 @@
  */
 
 import config from "./config";
+import { logger } from "firebase-functions";
 
 export const obfuscatedConfig = Object.assign({}, config, {
   smtpConnectionUri: "<omitted>",
 });
 
 export function init() {
-  console.log("Initializing extension with configuration", obfuscatedConfig);
+  console.log(
+    "Here >>>>>>",
+    "Initializing extension with configuration",
+    obfuscatedConfig
+  );
+  logger.log("Initializing extension with configuration", obfuscatedConfig);
 }
 
 export function start() {
-  console.log(
+  logger.log(
     "Started execution of extension with configuration",
     obfuscatedConfig
   );
 }
 
 export function error(err: Error) {
-  console.log("Unhandled error occurred during processing:", err);
+  logger.log("Unhandled error occurred during processing:", err);
 }
 
 export function complete() {
-  console.log("Completed execution of extension");
+  logger.log("Completed execution of extension");
 }
 
 export function attemptingDelivery(ref: FirebaseFirestore.DocumentReference) {
-  console.log(`Attempting delivery for message: ${ref.path}`);
+  logger.log(`Attempting delivery for message: ${ref.path}`);
 }
 
 export function delivered(
@@ -52,7 +58,7 @@ export function delivered(
     pending: string[];
   }
 ) {
-  console.log(
+  logger.log(
     `Delivered message: ${ref.path} successfully. messageId: ${
       info.messageId
     } accepted: ${info.accepted.length} rejected: ${
@@ -65,15 +71,15 @@ export function deliveryError(
   ref: FirebaseFirestore.DocumentReference,
   e: Error
 ) {
-  console.error(`Error when delivering message=${ref.path}: ${e.toString()}`);
+  logger.error(`Error when delivering message=${ref.path}: ${e.toString()}`);
 }
 
 export function missingDeliveryField(ref: FirebaseFirestore.DocumentReference) {
-  console.error(`message=${ref.path} is missing 'delivery' field`);
+  logger.error(`message=${ref.path} is missing 'delivery' field`);
 }
 
 export function missingUids(uids: string[]) {
-  console.log(
+  logger.log(
     `The following uids were provided, however a document does not exist or has no 'email' field: ${uids.join(
       ","
     )}`

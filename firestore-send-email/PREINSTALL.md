@@ -29,6 +29,8 @@ This extension uses other Firebase or Google Cloud Platform services which may h
 - Cloud Firestore
 - Cloud Functions
 
-When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
+When you use Firebase Extensions, you're only charged for the underlying resources that you use. Due to the services used by this extension, the Blaze plan is required. This extension’s Cloud functions will run on Node.js 10. You will be charged a small amount (less than $0.10) when you deploy this extension, including when you make configuration changes and apply future updates. [Read FAQs](https://firebase.google.com/support/faq#functions-pricing).
+
+The Blaze plan also allows you to extend your project with paid Google Cloud Platform features. You pay only for the resources that you consume, allowing you to scale with demand. The Blaze plan also offers a generous [free tier](https://firebase.google.com/pricing) of usage.
 
 Usage of this extension also requires you to have SMTP credentials for mail delivery. You are responsible for any associated costs with your usage of your SMTP provider.
