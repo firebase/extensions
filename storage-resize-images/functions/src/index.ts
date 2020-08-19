@@ -27,7 +27,7 @@ import { uuid } from "uuidv4";
 import config from "./config";
 import * as logs from "./logs";
 import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
-import { extractFileNameWithoutExtension } from "./util";
+import { extractFileNameWithoutExtension, startsWithArray } from "./util";
 
 interface ResizedImageResult {
   size: string;
