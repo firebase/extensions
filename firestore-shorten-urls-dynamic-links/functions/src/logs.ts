@@ -73,7 +73,10 @@ export const shortenUrlComplete = (shortUrl: string) => {
 };
 
 export const start = () => {
-  functions.logger.log("Started execution of extension with configuration", config);
+  functions.logger.log(
+    "Started execution of extension with configuration",
+    config
+  );
 };
 
 export const updateDocument = (path: string) => {

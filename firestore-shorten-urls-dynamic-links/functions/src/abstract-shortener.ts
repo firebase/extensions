@@ -20,12 +20,11 @@ import * as functions from "firebase-functions";
 import * as logs from "./logs";
 
 export abstract class FirestoreUrlShortener {
-
   protected logs = logs;
 
   constructor(
     protected urlFieldName: string,
-    protected shortUrlFieldName: string,
+    protected shortUrlFieldName: string
   ) {
     this.urlFieldName = urlFieldName;
     this.shortUrlFieldName = shortUrlFieldName;
@@ -34,9 +33,7 @@ export abstract class FirestoreUrlShortener {
     admin.initializeApp();
   }
 
-  public async onDocumentCreate (
-    snapshot: admin.firestore.DocumentSnapshot
-  ) {
+  public async onDocumentCreate(snapshot: admin.firestore.DocumentSnapshot) {
     this.logs.start();
 
     if (this.urlFieldName === this.shortUrlFieldName) {
@@ -49,7 +46,7 @@ export abstract class FirestoreUrlShortener {
     this.logs.complete();
   }
 
-  public async onDocumentUpdate (
+  public async onDocumentUpdate(
     change: functions.Change<admin.firestore.DocumentSnapshot>
   ) {
     this.logs.start();
@@ -66,8 +63,8 @@ export abstract class FirestoreUrlShortener {
 
   protected extractUrl(snapshot: admin.firestore.DocumentSnapshot) {
     return snapshot.get(this.urlFieldName);
-  };
-  
+  }
+
   private async handleCreateDocument(
     snapshot: admin.firestore.DocumentSnapshot
   ) {
@@ -78,15 +75,15 @@ export abstract class FirestoreUrlShortener {
     } else {
       this.logs.documentCreatedNoUrl();
     }
-  };
-  
+  }
+
   private async handleUpdateDocument(
     before: admin.firestore.DocumentSnapshot,
     after: admin.firestore.DocumentSnapshot
   ) {
     const urlAfter = this.extractUrl(after);
     const urlBefore = this.extractUrl(before);
-  
+
     if (urlAfter === urlBefore) {
       this.logs.documentUpdatedUnchangedUrl();
     } else if (urlAfter) {
@@ -98,20 +95,20 @@ export abstract class FirestoreUrlShortener {
     } else {
       this.logs.documentUpdatedNoUrl();
     }
-  };
-  
+  }
+
   protected abstract async shortenUrl(
     snapshot: admin.firestore.DocumentSnapshot
   ): Promise<void>;
-  
+
   protected async updateShortUrl(
     snapshot: admin.firestore.DocumentSnapshot,
     url: any
   ): Promise<void> {
     this.logs.updateDocument(snapshot.ref.path);
-  
+
     await snapshot.ref.update(this.shortUrlFieldName, url);
-  
+
     this.logs.updateDocumentComplete(snapshot.ref.path);
-  };  
+  }
 }

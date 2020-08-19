@@ -20,32 +20,36 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import fetch from "node-fetch";
 
-import { FirestoreUrlShortener } from "./abstract-shortener"
+import { FirestoreUrlShortener } from "./abstract-shortener";
 import config from "./config";
 import * as logs from "./logs";
 
 class ServiceAccountCredential {
-  private readonly metadataServiceUri = new URL("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token");
+  private readonly metadataServiceUri = new URL(
+    "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token"
+  );
   private readonly requiredScopes = "https://www.googleapis.com/auth/firebase";
 
-  private accessToken: string|undefined;
-  private tokenExpiration: number|undefined;
+  private accessToken: string | undefined;
+  private tokenExpiration: number | undefined;
 
   constructor() {
-    const searchParams = new URLSearchParams({scopes: this.requiredScopes});
+    const searchParams = new URLSearchParams({ scopes: this.requiredScopes });
     this.metadataServiceUri.search = searchParams.toString();
   }
 
   public async getAccessToken() {
-    const now = Math.floor(Date.now() / 1000)
-    const nowish = now + 30;  // 30s leeway
+    const now = Math.floor(Date.now() / 1000);
+    const nowish = now + 30; // 30s leeway
 
-    if (typeof this.accessToken === "undefined"
-        || typeof this.tokenExpiration === "undefined"
-        || this.tokenExpiration < nowish) {
+    if (
+      typeof this.accessToken === "undefined" ||
+      typeof this.tokenExpiration === "undefined" ||
+      this.tokenExpiration < nowish
+    ) {
       const metadataResponse = await fetch(this.metadataServiceUri, {
         headers: {
-          "Metadata-Flavor": "Google"
+          "Metadata-Flavor": "Google",
         },
       });
       const { access_token, expires_in } = await metadataResponse.json();
@@ -58,8 +62,8 @@ class ServiceAccountCredential {
 }
 
 class FirestoreDynamicLinksUrlShortener extends FirestoreUrlShortener {
-
-  private readonly dynamicLinksApiUrl = "https://firebasedynamiclinks.googleapis.com/v1/shortLinks";
+  private readonly dynamicLinksApiUrl =
+    "https://firebasedynamiclinks.googleapis.com/v1/shortLinks";
   private credentials = new ServiceAccountCredential();
 
   constructor(
@@ -80,31 +84,31 @@ class FirestoreDynamicLinksUrlShortener extends FirestoreUrlShortener {
     this.logs.shortenUrl(url);
 
     const accessToken = await this.credentials.getAccessToken();
-  
+
     try {
       const requestBody = {
         dynamicLinkInfo: {
           domainUriPrefix: this.dynamicLinkUrlPrefix,
           link: url,
         },
-        suffix: {option: this.dynamicLinkSuffixLength}
+        suffix: { option: this.dynamicLinkSuffixLength },
       };
       const response = await fetch(this.dynamicLinksApiUrl, {
         headers: {
-          "Authorization": `Bearer ${accessToken}`
+          Authorization: `Bearer ${accessToken}`,
         },
-        method: 'POST',
+        method: "POST",
         body: JSON.stringify(requestBody),
       });
-      const { shortLink: shortUrl } = await response.json();      
+      const { shortLink: shortUrl } = await response.json();
 
       this.logs.shortenUrlComplete(shortUrl);
-  
+
       await this.updateShortUrl(snapshot, shortUrl);
     } catch (err) {
       this.logs.error(err.body);
     }
-  } 
+  }
 }
 
 const urlShortener = new FirestoreDynamicLinksUrlShortener(
@@ -114,10 +118,14 @@ const urlShortener = new FirestoreDynamicLinksUrlShortener(
   config.dynamicLinkSuffixLength
 );
 
-export const shorten_create = functions.handler.firestore.document.onCreate(async (snapshot) => {
-  return urlShortener.onDocumentCreate(snapshot);
-});
+export const shorten_create = functions.handler.firestore.document.onCreate(
+  async (snapshot) => {
+    return urlShortener.onDocumentCreate(snapshot);
+  }
+);
 
-export const shorten_update = functions.handler.firestore.document.onUpdate(async (change) => {
-  return urlShortener.onDocumentUpdate(change);
-});
+export const shorten_update = functions.handler.firestore.document.onUpdate(
+  async (change) => {
+    return urlShortener.onDocumentUpdate(change);
+  }
+);

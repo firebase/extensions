@@ -42,12 +42,12 @@ class ServiceAccountCredential {
         return __awaiter(this, void 0, void 0, function* () {
             const now = Math.floor(Date.now() / 1000);
             const nowish = now + 30; // 30s leeway
-            if (typeof this.accessToken === "undefined"
-                || typeof this.tokenExpiration === "undefined"
-                || this.tokenExpiration < nowish) {
+            if (typeof this.accessToken === "undefined" ||
+                typeof this.tokenExpiration === "undefined" ||
+                this.tokenExpiration < nowish) {
                 const metadataResponse = yield node_fetch_1.default(this.metadataServiceUri, {
                     headers: {
-                        "Metadata-Flavor": "Google"
+                        "Metadata-Flavor": "Google",
                     },
                 });
                 const { access_token, expires_in } = yield metadataResponse.json();
@@ -79,13 +79,13 @@ class FirestoreDynamicLinksUrlShortener extends abstract_shortener_1.FirestoreUr
                         domainUriPrefix: this.dynamicLinkUrlPrefix,
                         link: url,
                     },
-                    suffix: { option: this.dynamicLinkSuffixLength }
+                    suffix: { option: this.dynamicLinkSuffixLength },
                 };
                 const response = yield node_fetch_1.default(this.dynamicLinksApiUrl, {
                     headers: {
-                        "Authorization": `Bearer ${accessToken}`
+                        Authorization: `Bearer ${accessToken}`,
                     },
-                    method: 'POST',
+                    method: "POST",
                     body: JSON.stringify(requestBody),
                 });
                 const { shortLink: shortUrl } = yield response.json();
@@ -98,19 +98,10 @@ class FirestoreDynamicLinksUrlShortener extends abstract_shortener_1.FirestoreUr
         });
     }
 }
-// const urlShortener = new FirestoreDynamicLinksUrlShortener(
-//   config.urlFieldName,
-//   config.shortUrlFieldName,
-//   config.dynamicLinkUrlPrefix,
-//   config.dynamicLinkSuffixLength
-// );
-const urlShortener = new FirestoreDynamicLinksUrlShortener('url', 'shortUrl', 'https://kevinext.page.link', 'SHORT');
-config_1.default;
-exports.shorten_create = functions.firestore.document('urls/{docId}').onCreate((snapshot) => __awaiter(void 0, void 0, void 0, function* () {
-    //export const shorten_create = functions.handler.firestore.document.onCreate(async (snapshot) => {
+const urlShortener = new FirestoreDynamicLinksUrlShortener(config_1.default.urlFieldName, config_1.default.shortUrlFieldName, config_1.default.dynamicLinkUrlPrefix, config_1.default.dynamicLinkSuffixLength);
+exports.shorten_create = functions.handler.firestore.document.onCreate((snapshot) => __awaiter(void 0, void 0, void 0, function* () {
     return urlShortener.onDocumentCreate(snapshot);
 }));
-exports.shorten_update = functions.firestore.document('urls/{docId}').onUpdate((change) => __awaiter(void 0, void 0, void 0, function* () {
-    //export const shorten_update = functions.handler.firestore.document.onUpdate(async (change) => {
+exports.shorten_update = functions.handler.firestore.document.onUpdate((change) => __awaiter(void 0, void 0, void 0, function* () {
     return urlShortener.onDocumentUpdate(change);
 }));

@@ -62,7 +62,6 @@ class FirestoreUrlShortener {
     extractUrl(snapshot) {
         return snapshot.get(this.urlFieldName);
     }
-    ;
     handleCreateDocument(snapshot) {
         return __awaiter(this, void 0, void 0, function* () {
             const url = this.extractUrl(snapshot);
@@ -75,7 +74,6 @@ class FirestoreUrlShortener {
             }
         });
     }
-    ;
     handleUpdateDocument(before, after) {
         return __awaiter(this, void 0, void 0, function* () {
             const urlAfter = this.extractUrl(after);
@@ -96,7 +94,6 @@ class FirestoreUrlShortener {
             }
         });
     }
-    ;
     updateShortUrl(snapshot, url) {
         return __awaiter(this, void 0, void 0, function* () {
             this.logs.updateDocument(snapshot.ref.path);
@@ -104,6 +101,5 @@ class FirestoreUrlShortener {
             this.logs.updateDocumentComplete(snapshot.ref.path);
         });
     }
-    ;
 }
 exports.FirestoreUrlShortener = FirestoreUrlShortener;
