@@ -145,6 +145,21 @@ params:
     example: thumbnails
     required: false
 
+  - param: ABSOLUTE_PATH_LIST
+    label: List of absolute paths for resized images
+    description: >
+      A comma-separated list of absolute paths to restrict the 
+      images to be resized. For instance, if you want to resize only 
+      the images stored in `/users/pictures`, then other images uploaded 
+      outside that specific path will not be resized. If you prefer to 
+      resize whole the images uploaded to the bucket, leave this field empty.
+    type: string
+    example: "/users/avatars,/design/pictures"
+    validationRegex: ^(\/[^\s\/\,]+)+(\,(\/[^\s\/\,]+)+)*$
+    validationErrorMessage:
+      Invalid paths, must be a comma-separated list of absolute path values.
+    required: false
+
   - param: CACHE_CONTROL_HEADER
     label: Cache-Control header for resized images
     description: >
