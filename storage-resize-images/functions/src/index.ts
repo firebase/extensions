@@ -77,6 +77,11 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       return;
     }
 
+    if (!startsWithArray(absolutePathList, tmpFilePath)) {
+      logs.imageOutsideOfPaths(absolutePathList, tmpFilePath);
+      return;
+    }
+
     if (object.metadata && object.metadata.resizedImage === "true") {
       logs.imageAlreadyResized();
       return;
