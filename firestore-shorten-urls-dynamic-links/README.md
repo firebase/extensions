@@ -6,15 +6,7 @@
 
 **Public Alpha**: This extension is available for testing as a _public alpha_ release. It has not been as thoroughly tested as the officially released extensions, and future updates might introduce breaking changes.
 
-To install this extension, do one of the following:
-
-- Open the extension's [installation page](https://console.firebase.google.com/project/_/extensions/install?sourceName=projects/firebasemods/sources/FIXME) in the Firebase console.
-
-- Install the extension using the [Firebase CLI tool](https://firebase.google.com/docs/cli):
-
-  ```
-  firebase ext:install https://github.com/firebase/extensions/tree/next/firestore-shorten-urls-dynamic-links --project=YOUR_PROJECT_ID
-  ```
+To install this extension, open the [installation page](https://console.firebase.google.com/project/_/extensions/install?sourceName=projects/firebasemods/sources/FIXME) in the Firebase console.
 
 If you use this extension, please [report bugs and make feature requests](https://github.com/firebase/extensions/issues/new/choose) in our GitHub repository.
 
