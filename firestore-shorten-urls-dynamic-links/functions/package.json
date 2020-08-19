@@ -8,11 +8,11 @@
   "main": "lib/index.js",
   "dependencies": {
     "firebase-admin": "^8.6.0",
-    "firebase-functions": "^3.6.1",
+    "firebase-functions": "^3.9.1",
     "node-fetch": "^2.6.0"
   },
   "devDependencies": {
-    "@types/node": "10.x.x",
+    "@types/node": "^10.17.28",
     "@types/node-fetch": "^2.5.7",
     "rimraf": "^3.0.2",
     "tslint": "^5.12.0",
