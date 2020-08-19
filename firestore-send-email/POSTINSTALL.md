@@ -1,14 +1,14 @@
 ### See it in action
 
-You can test out this extension right away:
+You can test out this extension right away!
 
-1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
+1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/firestore/data) in the Firebase console.
 
 1.  If it doesn't already exist, create the collection you specified during installation: `${param:MAIL_COLLECTION}`.
 
 1.  Add a document with a `to` field and a `message` field with the following content:
 
-    ```
+    ```js
     to: ['someone@example.com'],
     message: {
       subject: 'Hello from Firebase!',
@@ -20,7 +20,7 @@ You can test out this extension right away:
 1.  In a few seconds, you'll see a `delivery` field appear in the document. The field will update as the extension processes the email.
 
 **Note:** You can also use the [Firebase Admin SDK][admin_sdk] to add a document:
-```
+```js
 admin.firestore().collection('${param:MAIL_COLLECTION}').add({
   to: 'someone@example.com',
   message: {
@@ -47,6 +47,7 @@ The top-level fields of the document supply the email sender and recipient infor
 * **ccUids:** An array containing the CC recipient UIDs.
 * **bcc:** A single recipient email address or an array containing multiple recipient email addresses.
 * **bccUids:** An array containing the BCC recipient UIDs.
+* **headers:** An object of additional header fields (for example, `{"X-Custom-Header": "value", "X-Second-Custom-Header": "value"}`).
 
 **NOTE:** The `toUids`, `ccUids`, and `bccUids` options deliver emails based on user UIDs keyed to email addresses within a Cloud Firestore document. To use these recipient options, you need to specify a Cloud Firestore collection for the extension's "Users collection" parameter. The extension can then read the `email` field for each UID specified in the `toUids`, `ccUids`, and/or `bccUids` fields.
 
@@ -61,6 +62,7 @@ Available properties for the `message` field are:
 * **text:** The plaintext content of the email.
 * **html:** The HTML content of the email.
 * **amp:** The [AMP4EMAIL][amp4email] content of the email.
+* **attachments:** An array containing attachment(s); [Nodemailer options](https://nodemailer.com/message/attachments/) supported: utf-8 string, custom content type, URL, encoded string, data URI, and pregenerated MIME node (be aware that your email has no access to the cloud server's file system).
 
 #### Using templates
 
@@ -130,7 +132,7 @@ There are instances in which email delivery fails in a recoverable fashion or th
 
 As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.
 
-[mail_collection]: https://console.firebase.google.com/project/_/database/firestore/data~2F${param:MAIL_COLLECTION}
+[mail_collection]: https://console.firebase.google.com/project/_/firestore/data~2F${param:MAIL_COLLECTION}
 [admin_sdk]: https://firebase.google.com/docs/admin/setup
 [amp4email]: https://amp.dev/documentation/guides-and-tutorials/learn/email-spec/amp-email-format/
 [handlebars]: https://handlebarsjs.com/

@@ -1,6 +1,6 @@
 {
   "name": "@firebaseextensions/fs-bq-schema-views",
-  "version": "0.1.1",
+  "version": "0.1.11",
   "description": "Generate strongly-typed BigQuery Views based on raw JSON",
   "main": "./lib/index.js",
   "repository": {
@@ -11,14 +11,19 @@
   "scripts": {
     "build": "npm run clean && npm run compile",
     "clean": "rimraf ./lib",
-    "compile": "tsc",
+    "compile": "tsc && cp -r src/__tests__/fixtures lib/__tests__",
     "gen-schema-views": "node ./lib/index.js",
-    "mocha": "nyc mocha -r ts-node/register --opts mocha.opts",
     "prepare": "npm run build",
-    "test": "npm run mocha"
+    "test": "jest"
   },
   "files": [
-    "lib"
+    "lib",
+    "lib/index.js",
+    "lib/logs.js",
+    "lib/snapshot.js",
+    "lib/schema-loader-utils.js",
+    "lib/schema.js",
+    "lib/udf.js"
   ],
   "bin": {
     "fs-bq-schema-views": "./lib/index.js"
@@ -26,19 +31,26 @@
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@google-cloud/bigquery": "^2.1.0",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.5",
+    "@google-cloud/bigquery": "^4.7.0",
+    "commander": "5.0.0",
     "firebase-admin": "^7.1.1",
     "firebase-functions": "^2.2.1",
-    "sql-formatter": "^2.3.3",
+    "fs-find": "^0.4.0",
     "generate-schema": "^2.6.0",
-    "@firebaseextensions/firestore-bigquery-change-tracker": "^0.1.3",
-    "inquirer": "^6.4.0"
+    "glob": "7.1.5",
+    "inquirer": "^6.4.0",
+    "sql-formatter": "^2.3.3"
   },
   "devDependencies": {
-    "rimraf": "^2.6.3",
+    "chai": "^4.2.0",
+    "jest": "^24.9.0",
     "nyc": "^14.0.0",
-    "mocha": "^5.0.5",
-    "typescript": "^3.4.5",
-    "ts-node": "^7.0.1"
+    "rimraf": "^2.6.3",
+    "ts-jest": "^24.1.0",
+    "ts-node": "^7.0.1",
+    "typescript": "^3.5.2",
+    "@types/chai": "^4.1.6",
+    "@types/jest": "^24.9.1"
   }
 }

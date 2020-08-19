@@ -15,14 +15,16 @@
  * limitations under the License.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.processQueue = void 0;
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
 const nodemailer = require("nodemailer");
@@ -59,7 +61,7 @@ function validateFieldArray(field, array) {
 function processCreate(snap) {
     return __awaiter(this, void 0, void 0, function* () {
         // Wrapping in transaction to allow for automatic retries (#48)
-        return admin.firestore().runTransaction((transaction => {
+        return admin.firestore().runTransaction((transaction) => {
             transaction.update(snap.ref, {
                 delivery: {
                     startTime: admin.firestore.FieldValue.serverTimestamp(),
@@ -69,7 +71,7 @@ function processCreate(snap) {
                 },
             });
             return Promise.resolve();
-        }));
+        });
     });
 }
 function preparePayload(payload) {
@@ -198,6 +200,7 @@ function deliver(payload, ref) {
                 to: payload.to,
                 cc: payload.cc,
                 bcc: payload.bcc,
+                headers: payload.headers || {},
             }));
             const info = {
                 messageId: result.messageId || null,
@@ -216,10 +219,10 @@ function deliver(payload, ref) {
             logs.deliveryError(ref, e);
         }
         // Wrapping in transaction to allow for automatic retries (#48)
-        return admin.firestore().runTransaction((transaction => {
+        return admin.firestore().runTransaction((transaction) => {
             transaction.update(ref, update);
             return Promise.resolve();
-        }));
+        });
     });
 }
 function processWrite(change) {
@@ -242,30 +245,30 @@ function processWrite(change) {
             case "PROCESSING":
                 if (payload.delivery.leaseExpireTime.toMillis() < Date.now()) {
                     // Wrapping in transaction to allow for automatic retries (#48)
-                    return admin.firestore().runTransaction((transaction => {
+                    return admin.firestore().runTransaction((transaction) => {
                         transaction.update(change.after.ref, {
                             "delivery.state": "ERROR",
                             error: "Message processing lease expired.",
                         });
                         return Promise.resolve();
-                    }));
+                    });
                 }
                 return null;
             case "PENDING":
             case "RETRY":
                 // Wrapping in transaction to allow for automatic retries (#48)
-                yield admin.firestore().runTransaction((transaction => {
+                yield admin.firestore().runTransaction((transaction) => {
                     transaction.update(change.after.ref, {
                         "delivery.state": "PROCESSING",
                         "delivery.leaseExpireTime": admin.firestore.Timestamp.fromMillis(Date.now() + 60000),
                     });
                     return Promise.resolve();
-                }));
+                });
                 return deliver(payload, change.after.ref);
         }
     });
 }
-exports.processQueue = functions.handler.firestore.document.onWrite((change) => __awaiter(this, void 0, void 0, function* () {
+exports.processQueue = functions.handler.firestore.document.onWrite((change) => __awaiter(void 0, void 0, void 0, function* () {
     initialize();
     logs.start();
     try {

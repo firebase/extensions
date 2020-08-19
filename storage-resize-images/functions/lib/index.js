@@ -15,37 +15,57 @@
  * limitations under the License.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateResizedImage = void 0;
 const admin = require("firebase-admin");
 const fs = require("fs");
 const functions = require("firebase-functions");
-const mkdirp = require("mkdirp-promise");
-const child_process_promise_1 = require("child-process-promise");
+const mkdirp = require("mkdirp");
 const os = require("os");
 const path = require("path");
+const sharp = require("sharp");
+const uuidv4_1 = require("uuidv4");
 const config_1 = require("./config");
 const logs = require("./logs");
-const validators = require("./validators");
+const util_1 = require("./util");
+sharp.cache(false);
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 logs.init();
 /**
- * When an image is uploaded in the Storage bucket We generate a resized image automatically using
- * ImageMagick which is installed by default on all Cloud Functions instances.
+ * Supported file types
  */
-exports.generateResizedImage = functions.storage.object().onFinalize((object) => __awaiter(this, void 0, void 0, function* () {
+const supportedContentTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/tiff",
+    "image/webp",
+];
+/**
+ * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
+ * the Sharp image converting library.
+ */
+exports.generateResizedImage = functions.storage.object().onFinalize((object) => __awaiter(void 0, void 0, void 0, function* () {
     logs.start();
     const { contentType } = object; // This is the image MIME type
-    const isImage = validators.isImage(contentType);
-    if (!isImage) {
+    if (!contentType) {
+        logs.noContentType();
+        return;
+    }
+    if (!contentType.startsWith("image/")) {
         logs.contentTypeInvalid(contentType);
+        return;
+    }
+    if (!supportedContentTypes.includes(contentType)) {
+        logs.unsupportedType(supportedContentTypes, contentType);
         return;
     }
     if (object.metadata && object.metadata.resizedImage === "true") {
@@ -55,9 +75,9 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
     const bucket = admin.storage().bucket(object.bucket);
     const filePath = object.name; // File path in the bucket.
     const fileDir = path.dirname(filePath);
-    const fileName = path.basename(filePath);
     const fileExtension = path.extname(filePath);
-    const fileNameWithoutExtension = fileName.slice(0, -fileExtension.length);
+    const fileNameWithoutExtension = util_1.extractFileNameWithoutExtension(filePath, fileExtension);
+    const objectMetadata = object;
     let originalFile;
     let remoteFile;
     try {
@@ -84,6 +104,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
                 fileExtension,
                 contentType,
                 size,
+                objectMetadata: objectMetadata,
             }));
         });
         const results = yield Promise.all(tasks);
@@ -118,7 +139,26 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         }
     }
 }));
-const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, }) => __awaiter(this, void 0, void 0, function* () {
+function resize(originalFile, resizedFile, size) {
+    let height, width;
+    if (size.indexOf(",") !== -1) {
+        [width, height] = size.split(",");
+    }
+    else if (size.indexOf("x") !== -1) {
+        [width, height] = size.split("x");
+    }
+    else {
+        throw new Error("height and width are not delimited by a ',' or a 'x'");
+    }
+    return sharp(originalFile)
+        .rotate()
+        .resize(parseInt(width, 10), parseInt(height, 10), {
+        fit: "inside",
+        withoutEnlargement: true,
+    })
+        .toFile(resizedFile);
+}
+const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => __awaiter(void 0, void 0, void 0, function* () {
     const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
     // Path where resized image will be uploaded to in Storage.
     const resizedFilePath = path.normalize(config_1.default.resizedImagesPath
@@ -129,19 +169,27 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         resizedFile = path.join(os.tmpdir(), resizedFileName);
         // Cloud Storage files.
         const metadata = {
+            contentDisposition: objectMetadata.contentDisposition,
+            contentEncoding: objectMetadata.contentEncoding,
+            contentLanguage: objectMetadata.contentLanguage,
             contentType: contentType,
-            metadata: {
-                resizedImage: "true",
-            },
+            metadata: objectMetadata.metadata || {},
         };
+        metadata.metadata.resizedImage = true;
         if (config_1.default.cacheControlHeader) {
             metadata.cacheControl = config_1.default.cacheControlHeader;
         }
-        // Generate a resized image using ImageMagick.
+        else {
+            metadata.cacheControl = objectMetadata.cacheControl;
+        }
+        // If the original image has a download token, add a
+        // new token to the image being resized #323
+        if (metadata.metadata.firebaseStorageDownloadTokens) {
+            metadata.metadata.firebaseStorageDownloadTokens = uuidv4_1.uuid();
+        }
+        // Generate a resized image using Sharp.
         logs.imageResizing(resizedFile, size);
-        yield child_process_promise_1.spawn("convert", [originalFile, "-resize", `${size}>`, resizedFile], {
-            capture: ["stdout", "stderr"],
-        });
+        yield resize(originalFile, resizedFile, size);
         logs.imageResized(resizedFile);
         // Uploading the resized image.
         logs.imageUploading(resizedFilePath);

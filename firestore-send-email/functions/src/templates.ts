@@ -52,13 +52,13 @@ export default class Templates {
       const data = doc.data();
       const templates: TemplateGroup = {};
       if (data.subject) {
-        templates.subject = compile(data.subject);
+        templates.subject = compile(data.subject, { noEscape: true });
       }
       if (data.html) {
         templates.html = compile(data.html);
       }
       if (data.text) {
-        templates.text = compile(data.text);
+        templates.text = compile(data.text, { noEscape: true });
       }
       if (data.amp) {
         templates.amp = compile(data.amp);
@@ -67,7 +67,7 @@ export default class Templates {
       console.log(`loaded template '${doc.id}'`);
     });
     this.ready = true;
-    this.waits.forEach(wait => wait());
+    this.waits.forEach((wait) => wait());
   }
 
   async render(

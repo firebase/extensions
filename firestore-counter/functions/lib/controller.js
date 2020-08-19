@@ -24,9 +24,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ShardedCounterController = exports.ControllerStatus = void 0;
 const firebase_admin_1 = require("firebase-admin");
 const common_1 = require("./common");
-const firestore_1 = require("@google-cloud/firestore");
 const planner_1 = require("./planner");
 const aggregator_1 = require("./aggregator");
 const EMPTY_CONTROLLER_DATA = { workers: [], timestamp: 0 };
@@ -167,7 +167,7 @@ class ShardedCounterController {
                         console.log("Some counter aggregation failed, bailing out.");
                         throw Error("Some counter aggregation failed, bailing out.");
                     }
-                    t.set(this.controllerDocRef, { timestamp: firestore_1.FieldValue.serverTimestamp() }, { merge: true });
+                    t.set(this.controllerDocRef, { timestamp: firebase_admin_1.firestore.FieldValue.serverTimestamp() }, { merge: true });
                     console.log("Aggregated " + plans.length + " counters.");
                     return ControllerStatus.SUCCESS;
                 }));
@@ -191,7 +191,7 @@ class ShardedCounterController {
                     yield t.get(this.controllerDocRef);
                 }
                 catch (err) {
-                    console.log("Failed to read controler doc " + this.controllerDocRef.path);
+                    console.log("Failed to read controller doc " + this.controllerDocRef.path);
                     throw Error("Failed to read controller doc.");
                 }
                 // Read all workers' metadata and construct sharding info based on collected stats.
@@ -201,7 +201,7 @@ class ShardedCounterController {
                 }
                 catch (err) {
                     console.log("Failed to read worker docs.", err);
-                    throw Error("Failed to reqad worker docs.");
+                    throw Error("Failed to read worker docs.");
                 }
                 let shardingInfo = yield Promise.all(query.docs.map((worker) => __awaiter(this, void 0, void 0, function* () {
                     const slice = worker.get("slice");
@@ -243,12 +243,12 @@ class ShardedCounterController {
                     slices.forEach((slice, index) => {
                         t.set(this.workersRef.doc(ShardedCounterController.encodeWorkerKey(index)), {
                             slice: slice,
-                            timestamp: firestore_1.FieldValue.serverTimestamp(),
+                            timestamp: firebase_admin_1.firestore.FieldValue.serverTimestamp(),
                         });
                     });
                     t.set(this.controllerDocRef, {
                         workers: slices,
-                        timestamp: firestore_1.FieldValue.serverTimestamp(),
+                        timestamp: firebase_admin_1.firestore.FieldValue.serverTimestamp(),
                     });
                 }
                 else {
@@ -256,12 +256,12 @@ class ShardedCounterController {
                     let failures = 0;
                     query.docs.forEach((snap) => {
                         if (timestamp / 1000 - snap.updateTime.seconds > 90) {
-                            t.set(snap.ref, { timestamp: firestore_1.FieldValue.serverTimestamp() }, { merge: true });
+                            t.set(snap.ref, { timestamp: firebase_admin_1.firestore.FieldValue.serverTimestamp() }, { merge: true });
                             failures++;
                         }
                     });
                     console.log("Detected " + failures + " failed workers.");
-                    t.set(this.controllerDocRef, { timestamp: firestore_1.FieldValue.serverTimestamp() }, { merge: true });
+                    t.set(this.controllerDocRef, { timestamp: firebase_admin_1.firestore.FieldValue.serverTimestamp() }, { merge: true });
                 }
             }));
         });

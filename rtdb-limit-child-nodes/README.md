@@ -1,28 +1,10 @@
-# rtdb-limit-child-nodes
+# Limit Child Nodes
 
-**VERSION**: 0.1.0
-
-**DESCRIPTION**: Limits the number of nodes to a specified maximum count in a specified Realtime Database path.
+**Description**: Limits the number of nodes to a specified maximum count in a specified Realtime Database path.
 
 
 
-**CONFIGURATION PARAMETERS:**
-
-* Deployment location: Where should the extension be deployed? You usually want a location close to your database. Realtime Database instances are located in us-central1. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
-
-* Realtime Database path: What is the Realtime Database path for which you want to limit the number of child nodes?
-
-* Maximum count of nodes to keep: What is the maximum count of nodes to keep in your specified database path? The oldest nodes will be deleted first to maintain this max count.
-
-
-
-**CLOUD FUNCTIONS CREATED:**
-
-* rtdblimit (providers/google.firebase.database/eventTypes/ref.create)
-
-
-
-**DETAILS**: Use this extension to control the maximum number of nodes stored in a Firebase Realtime Database path.
+**Details**: Use this extension to control the maximum number of nodes stored in a Firebase Realtime Database path.
 
 If the number of nodes in your specified Realtime Database path exceeds the specified max count, this extension deletes the oldest nodes first until there are the max count number of nodes remaining.
 
@@ -41,7 +23,24 @@ When you use Firebase Extensions, you're only charged for the underlying resourc
 
 
 
-**ACCESS REQUIRED**:
+
+**Configuration Parameters:**
+
+* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your database. Realtime Database  instances are located in `us-central1`. For help selecting a  location, refer to the [location selection  guide](https://firebase.google.com/docs/functions/locations).
+
+* Realtime Database path: What is the Realtime Database path for which you want to limit the number of child nodes?
+
+* Maximum count of nodes to keep: What is the maximum count of nodes to keep in your specified database path? The oldest nodes will be deleted first to maintain this max count.
+
+
+
+**Cloud Functions:**
+
+* **rtdblimit:** Listens for new child nodes in your specified Realtime Database path, checks if the max count has been exceeded, then deletes the oldest nodes first, as needed to maintain the max count.
+
+
+
+**Access Required**:
 
 
 

@@ -26,3 +26,10 @@ function getChangeType(change) {
     return firestore_bigquery_change_tracker_1.ChangeType.UPDATE;
 }
 exports.getChangeType = getChangeType;
+function getDocumentId(change) {
+    if (change.after.exists) {
+        return change.after.id;
+    }
+    return change.before.id;
+}
+exports.getDocumentId = getDocumentId;

@@ -16,24 +16,22 @@
 
 import * as sqlFormatter from "sql-formatter";
 
-import * as logs from "../logs";
-import {
-  firestoreToBQTable,
-  timestampField,
-} from "./schema";
+import { RawChangelogViewSchema, timestampField } from "./schema";
 
-const excludeFields: string[] = [
-  "document_name",
-];
+const excludeFields: string[] = ["document_name", "document_id"];
 
 export const latestConsistentSnapshotView = (
   datasetId: string,
-  tableName: string,
+  tableName: string
 ) => ({
-  query: buildLatestSnapshotViewQuery(datasetId, tableName, timestampField.name,
-    firestoreToBQTable()
-      .map(field => field.name)
-      .filter(name => excludeFields.indexOf(name) == -1)),
+  query: buildLatestSnapshotViewQuery(
+    datasetId,
+    tableName,
+    timestampField.name,
+    RawChangelogViewSchema["fields"]
+      .map((field) => field.name)
+      .filter((name) => excludeFields.indexOf(name) === -1)
+  ),
   useLegacySql: false,
 });
 
@@ -41,7 +39,7 @@ export function buildLatestSnapshotViewQuery(
   datasetId: string,
   tableName: string,
   timestampColumnName: string,
-  groupByColumns: string[],
+  groupByColumns: string[]
 ): string {
   if (datasetId === "" || tableName === "" || timestampColumnName === "") {
     throw Error(`Missing some query parameters!`);
@@ -57,24 +55,33 @@ export function buildLatestSnapshotViewQuery(
     --   operation: One of INSERT, UPDATE, DELETE, IMPORT.
     --   event_id: The id of the event that triggered the cloud function mirrored the event.
     --   data: A raw JSON payload of the current state of the document.
+    --   document_id: The document id as defined in the Firestore database
     SELECT
-      document_name${groupByColumns.length > 0 ? `,`: ``}
+    document_name,
+    document_id${groupByColumns.length > 0 ? `,` : ``}
       ${groupByColumns.join(",")}
-     FROM (
+    FROM (
       SELECT
         document_name,
-        ${groupByColumns.map(columnName =>
-          `FIRST_VALUE(${columnName})
+        document_id,
+        ${groupByColumns
+          .map(
+            (columnName) =>
+              `FIRST_VALUE(${columnName})
             OVER(PARTITION BY document_name ORDER BY ${timestampColumnName} DESC)
-            AS ${columnName}`).join(',')}${groupByColumns.length > 0 ? `,`: ``}
+            AS ${columnName}`
+          )
+          .join(",")}${groupByColumns.length > 0 ? `,` : ``}
         FIRST_VALUE(operation)
           OVER(PARTITION BY document_name ORDER BY ${timestampColumnName} DESC) = "DELETE"
           AS is_deleted
       FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`
       ORDER BY document_name, ${timestampColumnName} DESC
-     )
-     WHERE NOT is_deleted
-     GROUP BY document_name${groupByColumns.length > 0 ? `, `: ``}${groupByColumns.join(",")}`
+    )
+    WHERE NOT is_deleted
+    GROUP BY document_name, document_id${
+      groupByColumns.length > 0 ? `, ` : ``
+    }${groupByColumns.join(",")}`
   );
   return query;
 }

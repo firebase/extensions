@@ -1,6 +1,0 @@
-SELECT
-  document_name,
-  timestamp,
-  operation
-FROM
-  `test.test_dataset.test_table`

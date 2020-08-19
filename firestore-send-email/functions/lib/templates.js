@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -45,13 +46,13 @@ class Templates {
             const data = doc.data();
             const templates = {};
             if (data.subject) {
-                templates.subject = handlebars_1.compile(data.subject);
+                templates.subject = handlebars_1.compile(data.subject, { noEscape: true });
             }
             if (data.html) {
                 templates.html = handlebars_1.compile(data.html);
             }
             if (data.text) {
-                templates.text = handlebars_1.compile(data.text);
+                templates.text = handlebars_1.compile(data.text, { noEscape: true });
             }
             if (data.amp) {
                 templates.amp = handlebars_1.compile(data.amp);
@@ -60,7 +61,7 @@ class Templates {
             console.log(`loaded template '${doc.id}'`);
         });
         this.ready = true;
-        this.waits.forEach(wait => wait());
+        this.waits.forEach((wait) => wait());
     }
     render(name, data) {
         return __awaiter(this, void 0, void 0, function* () {

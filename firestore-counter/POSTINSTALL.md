@@ -1,6 +1,6 @@
 ### Post-installation configuration
 
-Before you can use this extension, you'll need to update your security rules, set up a scheduled function, and add some code to your JavaScript app.
+Before you can use this extension, you'll need to update your security rules, set up a Cloud Scheduler job, and add some code to your JavaScript app.
 
 #### Update security rules
 
@@ -18,22 +18,28 @@ match /databases/{database}/documents/pages/{page} {
 }
 ```
 
-#### Set up a scheduled function
 
-Review the [scheduled function documentation](https://firebase.google.com/docs/functions/schedule-functions) to set up a call to `${function:controller.url}` every minute. You may need to enable some APIs in your Firebase project to use scheduled functions.
+#### Set up a Cloud Scheduler job
 
-As an example, to set up a scheduled function, you can run the following [`gcloud`](https://cloud.google.com/sdk/gcloud/) commands:
+**IMPORTANT:** Note the following about v0.1.1 of this extension:
+- **If you updated your extension from v0.1.0 to v0.1.1:**  We recommend that you edit your Cloud Scheduler job to instead send a message to the extension's Pub/Sub topic, as described in this section. Although it's not recommended, if you leave your Cloud Scheduler job calling `${function:controller.url}`, your extension will continue to run as expected. For more information about the changes for v0.1.1, refer to the [changelog](https://github.com/firebase/extensions/blob/master/firestore-counter/CHANGELOG.md).
+- **If you installed this extension for the first time at v0.1.1 or later:** Follow the instructions as described in this section.
+
+Set up a [Cloud Scheduler job](https://cloud.google.com/scheduler/docs/quickstart) to regularly send a message to the extension's Pub/Sub topic (`${param:EXT_INSTANCE_ID}`). This Pub/Sub topic then automatically triggers the controllerCore function (`${function:controllerCore.name}`). This controllerCore function is created by the extension. It works by either aggregating shards itself or scheduling and monitoring workers to aggregate shards.
+
+As an example, to set up the required Cloud Scheduler job, you can run the following `gcloud` commands:
 
 ```
-gcloud services enable cloudscheduler.googleapis.com
-gcloud scheduler jobs create http firestore-sharded-counter-controller --schedule="* * * * *" --uri=${function:controller.url} --project=${param:PROJECT_ID}
+gcloud --project=${param:PROJECT_ID} services enable cloudscheduler.googleapis.com
+gcloud --project=${param:PROJECT_ID} scheduler jobs create pubsub ${param:EXT_INSTANCE_ID} --schedule="* * * * *" --topic=${param:EXT_INSTANCE_ID} --message-body="{}"
 ```
 
-#### Specify a document path and increment value in your app
 
-1.  Download and copy the [Counter SDK](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/dist/sharded-counter.js) into your application project.
+#### Specify a document path and increment value in your web app
 
-1.  Use the Counter SDK library in your code to increment counters. The code snippet below shows an example of how to use the library. For more comprehensive API documentation, refer to the [source code](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts).
+1.  Download and copy the [compiled client sample](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/dist/sharded-counter.js) into your application project.
+
+1.  Use the client sample in your code to increment counters. The code snippet below shows an example of how to use it. To see the full reference implementation, refer to the sample's TypeScript [source code](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts).
 
   ```html
   <html>
@@ -45,7 +51,7 @@ gcloud scheduler jobs create http firestore-sharded-counter-controller --schedul
     <body>
       <script>
         // Initialize Firebase.
-        var firebaseConfig = { projectId: "${PROJECT_ID}" };
+        var firebaseConfig = { projectId: "${param:PROJECT_ID}" };
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
 
@@ -75,9 +81,9 @@ After you complete the post-installation configuration above, the process runs a
 
 1. Your extension creates subcollections in all the documents that your app uses as counters.
 
-1. The client SDK writes to these subcollections to distribute the write load.
+1. The client sample writes to these subcollections to distribute the write load.
 
-1. The scheduled function that you deployed sums the subcollections' values into the single `visits` field (or whichever field you configured in your master document).
+1. The controllerCore function sums the subcollections' values into the single `visits` field (or whichever field you configured in your master document).
 
 1. After each summation, the extension deletes the subcollections, leaving only the count in the master document. This is the document field to which you should listen for the count.
 

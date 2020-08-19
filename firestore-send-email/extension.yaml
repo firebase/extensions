@@ -13,17 +13,17 @@
 # limitations under the License.
 
 name: firestore-send-email
-version: 0.1.0
+version: 0.1.4
 specVersion: v1beta
-displayName: Trigger Email
 
+displayName: Trigger Email
 description:
   Composes and sends an email based on the contents of a document written to a specified Cloud Firestore collection.
 
 license: Apache-2.0
-billingRequired: true
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-send-email
-releaseNotesUrl: https://github.com/firebase/extensions/commits/master
+releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-send-email/CHANGELOG.md
 
 author:
   authorName: Firebase
@@ -32,9 +32,11 @@ author:
 contributors:
   - authorName: Michael Bleigh
     url: https://github.com/mbleigh
-  - authorName: Elliot Hesp
-    email: elliot@invertase.io
-    url: https://github.com/ehesp
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
+
+billingRequired: true
 
 roles:
   - role: datastore.user
@@ -47,7 +49,6 @@ resources:
       Processes document changes in the specified Cloud Firestore collection,
       delivers emails, and updates the document with delivery status information.
     properties:
-      sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
@@ -55,12 +56,13 @@ resources:
 
 params:
   - param: LOCATION
-    type: select
-    label: Deployment location
+    label: Cloud Functions location
     description: >-
-      Where should the extension be deployed? You usually want a location close to your database.
-      For help selecting a location, refer to the
-      [location selection guide](https://firebase.google.com/docs/functions/locations).
+      Where do you want to deploy the functions created for this extension?
+      You usually want a location close to your database. For help selecting a
+      location, refer to the [location selection
+      guide](https://firebase.google.com/docs/functions/locations).
+    type: select
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -72,60 +74,65 @@ params:
         value: europe-west1
       - label: London (europe-west2)
         value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
     default: us-central1
     required: true
+    immutable: true
 
   - param: SMTP_CONNECTION_URI
-    type: string
     label: SMTP connection URI
     description: >-
       A URI representing an SMTP server that this extension can use to deliver email.
+    type: string
     example: smtps://username:password@smtp.hostname.com:465
-    required: true
     validationRegex: ^smtps?://[^:]+:[^:]+@.*$
     validationErrorMessage: Invalid SMTP connection URI. Must be in the form `smtp(s)://username:password@hostname:port`.
+    required: true
 
   - param: MAIL_COLLECTION
-    type: string
     label: Email documents collection
+    description: >-
+      What is the path to the collection that contains the documents used to build and send the emails?
+    type: string
     default: mail
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore collection
     required: true
-    description: >-
-      What is the path to the collection that contains the documents used to build and send the emails?
 
   - param: DEFAULT_FROM
-    type: string
     label: Default FROM address
-    validationRegex: ^\S+@\S+\.\S+$
-    validationErrorMessage: Must be a valid email address
-    required: true
     description: >-
-      The email address to use as the sender's address (if it's not specified in the added email document).
+      The email address to use as the sender's address (if it's not specified in the added email document). 
+      You can optionally include a name with the email address (`Friendly Firebaser <foobar@example.com>`).
+    type: string
+    example: foobar@example.com
+    validationRegex: ^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$|^.*<(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})>$
+    validationErrorMessage: Must be a valid email address or valid name plus email address
+    required: true
 
   - param: DEFAULT_REPLY_TO
-    type: string
     label: Default REPLY-TO address
     description: >-
       The email address to use as the reply-to address (if it's not specified in the added email document).
+    type: string
 
   - param: USERS_COLLECTION
-    type: string
     label: Users collection
     description: >-
       A collection of documents keyed by user UID.
       If the `toUids`, `ccUids`, and/or `bccUids` recipient options are used in the added email document,
       this extension delivers email to the `email` field based on lookups in this collection.
+    type: string
 
   - param: TEMPLATES_COLLECTION
-    type: string
     label: Templates collection
     description: >-
       A collection of email templates keyed by name.
       This extension can render an email using a [Handlebar](https://handlebarsjs.com/) template,
       if the template is specified in the added email document.
+    type: string

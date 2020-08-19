@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.storagePathError = exports.storagePath404 = exports.storagePathDeleting = exports.storagePathDeleted = exports.storageNotConfigured = exports.storageDeleting = exports.storageDeleted = exports.start = exports.rtdbPathError = exports.rtdbPathDeleting = exports.rtdbNotConfigured = exports.rtdbPathDeleted = exports.rtdbDeleting = exports.rtdbDeleted = exports.init = exports.firestorePathError = exports.firestorePathDeleting = exports.firestorePathDeleted = exports.firestoreNotConfigured = exports.firestoreDeleting = exports.firestoreDeleted = exports.complete = void 0;
 const config_1 = require("./config");
 exports.complete = (uid) => {
     console.log(`Successfully removed data for user: ${uid}`);
@@ -29,10 +30,10 @@ exports.firestoreNotConfigured = () => {
     console.log("Cloud Firestore paths are not configured, skipping");
 };
 exports.firestorePathDeleted = (path, recursive) => {
-    console.log(`Deleted: '${path}' from Cloud Firestore ${recursive ? 'with recursive delete' : ''}`);
+    console.log(`Deleted: '${path}' from Cloud Firestore ${recursive ? "with recursive delete" : ""}`);
 };
 exports.firestorePathDeleting = (path, recursive) => {
-    console.log(`Deleting: '${path}' from Cloud Firestore ${recursive ? 'with recursive delete' : ''}`);
+    console.log(`Deleting: '${path}' from Cloud Firestore ${recursive ? "with recursive delete" : ""}`);
 };
 exports.firestorePathError = (path, err) => {
     console.error(`Error when deleting: '${path}' from Cloud Firestore`, err);

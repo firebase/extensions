@@ -16,15 +16,14 @@
 
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import { BitlyClient } from "bitly";
+import axios, { AxiosInstance } from "axios";
 
 import { FirestoreUrlShortener } from "./abstract-shortener";
 import config from "./config";
 import * as logs from "./logs";
 
 class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
-
-  private bitly: BitlyClient;
+  private instance: AxiosInstance;
 
   constructor(
     urlFieldName: string,
@@ -32,7 +31,14 @@ class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
     bitlyAccessToken: string
   ) {
     super(urlFieldName, shortUrlFieldName);
-    this.bitly = new BitlyClient(bitlyAccessToken);
+    this.instance = axios.create({
+      headers: {
+        Authorization: `Bearer ${bitlyAccessToken}`,
+        "Content-Type": "application/json",
+      },
+      baseURL: "https://api-ssl.bitly.com/v4/",
+    });
+
     logs.init();
   }
 
@@ -41,18 +47,21 @@ class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
   ): Promise<void> {
     const url = this.extractUrl(snapshot);
     logs.shortenUrl(url);
-  
-    try {
-      const response: any = await this.bitly.shorten(url);
-      const { url: shortUrl } = response;
 
-      logs.shortenUrlComplete(shortUrl);
-  
-      await this.updateShortUrl(snapshot, shortUrl);
+    try {
+      const response: any = await this.instance.post("bitlinks", {
+        long_url: url,
+      });
+
+      const { link } = response.data;
+
+      logs.shortenUrlComplete(link);
+
+      await this.updateShortUrl(snapshot, link);
     } catch (err) {
       logs.error(err);
     }
-  } 
+  }
 }
 
 const urlShortener = new FirestoreBitlyUrlShortener(
@@ -61,6 +70,8 @@ const urlShortener = new FirestoreBitlyUrlShortener(
   config.bitlyAccessToken
 );
 
-export const fsurlshortener = functions.handler.firestore.document.onWrite(async (change) => {
-  return urlShortener.onDocumentWrite(change);
-});
+export const fsurlshortener = functions.handler.firestore.document.onWrite(
+  async (change) => {
+    return urlShortener.onDocumentWrite(change);
+  }
+);

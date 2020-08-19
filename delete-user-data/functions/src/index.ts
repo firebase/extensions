@@ -92,17 +92,18 @@ const clearStorageData = async (storagePaths: string, uid: string) => {
       bucketName === "{DEFAULT}"
         ? admin.storage().bucket()
         : admin.storage().bucket(bucketName);
-    const file = bucket.file(parts.slice(1).join("/"));
-    const bucketFilePath = `${bucket.name}/${file.name}`;
+    const prefix = parts.slice(1).join("/");
     try {
-      logs.storagePathDeleting(bucketFilePath);
-      await file.delete();
-      logs.storagePathDeleted(bucketFilePath);
+      logs.storagePathDeleting(prefix);
+      await bucket.deleteFiles({
+        prefix,
+      });
+      logs.storagePathDeleted(prefix);
     } catch (err) {
       if (err.code === 404) {
-        logs.storagePath404(bucketFilePath);
+        logs.storagePath404(prefix);
       } else {
-        logs.storagePathError(bucketFilePath, err);
+        logs.storagePathError(prefix, err);
       }
     }
   });
@@ -118,17 +119,17 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
   const paths = extractUserPaths(firestorePaths, uid);
   const promises = paths.map(async (path) => {
     try {
-      const isRecursive = config.firestoreDeleteMode === 'recursive';
+      const isRecursive = config.firestoreDeleteMode === "recursive";
 
       if (!isRecursive) {
         const firestore = admin.firestore();
         logs.firestorePathDeleting(path, false);
 
         // Wrapping in transaction to allow for automatic retries (#48)
-        await firestore.runTransaction((transaction => {
+        await firestore.runTransaction((transaction) => {
           transaction.delete(firestore.doc(path));
           return Promise.resolve();
-        }));
+        });
         logs.firestorePathDeleted(path, false);
       } else {
         logs.firestorePathDeleting(path, true);

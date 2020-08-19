@@ -24,6 +24,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.FirestoreUrlShortener = void 0;
 const admin = require("firebase-admin");
 const logs = require("./logs");
 var ChangeType;
@@ -70,7 +71,6 @@ class FirestoreUrlShortener {
     extractUrl(snapshot) {
         return snapshot.get(this.urlFieldName);
     }
-    ;
     getChangeType(change) {
         if (!change.after.exists) {
             return ChangeType.DELETE;
@@ -80,7 +80,6 @@ class FirestoreUrlShortener {
         }
         return ChangeType.UPDATE;
     }
-    ;
     handleCreateDocument(snapshot) {
         return __awaiter(this, void 0, void 0, function* () {
             const url = this.extractUrl(snapshot);
@@ -93,11 +92,9 @@ class FirestoreUrlShortener {
             }
         });
     }
-    ;
     handleDeleteDocument() {
         this.logs.documentDeleted();
     }
-    ;
     handleUpdateDocument(before, after) {
         return __awaiter(this, void 0, void 0, function* () {
             const urlAfter = this.extractUrl(after);
@@ -118,18 +115,16 @@ class FirestoreUrlShortener {
             }
         });
     }
-    ;
     updateShortUrl(snapshot, url) {
         return __awaiter(this, void 0, void 0, function* () {
             this.logs.updateDocument(snapshot.ref.path);
             // Wrapping in transaction to allow for automatic retries (#48)
-            yield admin.firestore().runTransaction((transaction => {
+            yield admin.firestore().runTransaction((transaction) => {
                 transaction.update(snapshot.ref, this.shortUrlFieldName, url);
                 return Promise.resolve();
-            }));
+            });
             this.logs.updateDocumentComplete(snapshot.ref.path);
         });
     }
-    ;
 }
 exports.FirestoreUrlShortener = FirestoreUrlShortener;

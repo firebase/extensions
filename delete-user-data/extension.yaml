@@ -13,18 +13,18 @@
 # limitations under the License.
 
 name: delete-user-data
-displayName: Delete User Data
+version: 0.1.4
 specVersion: v1beta
-version: 0.2.0
 
+displayName: Delete User Data
 description:
-  Deletes data keyed on a userId from Cloud Firestore, Realtime
-  Database, and/or Cloud Storage when a user deletes their account.
+  Deletes data keyed on a userId from Cloud Firestore, Realtime Database, and/or
+  Cloud Storage when a user deletes their account.
 
 license: Apache-2.0
-billingRequired: false
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/delete-user-data
-releaseNotesUrl: https://github.com/firebase/extensions/commits/master
+releaseNotesUrl: https://github.com/firebase/extensions/blob/master/delete-user-data/CHANGELOG.md
 
 author:
   authorName: Firebase
@@ -36,9 +36,11 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
-  - authorName: Elliot Hesp
-    email: elliot@invertase.io
-    url: https://github.com/ehesp
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
+
+billingRequired: false
 
 roles:
   - role: datastore.owner
@@ -52,24 +54,26 @@ resources:
   - name: clearData
     type: firebaseextensions.v1beta.function
     description:
-      Listens for user accounts to be deleted from your project's authenticated users,
-      then removes any associated user data (based on Firebase Authentication's User ID) from
-      Realtime Database, Cloud Firestore, and/or Cloud Storage.
+      Listens for user accounts to be deleted from your project's authenticated
+      users, then removes any associated user data (based on Firebase
+      Authentication's User ID) from Realtime Database, Cloud Firestore, and/or
+      Cloud Storage.
     properties:
-      sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${PROJECT_ID}
+      runtime: nodejs10
 
 params:
   - param: LOCATION
-    type: select
-    label: Deployment location
+    label: Cloud Functions location
     description: >-
-      Where should the extension be deployed? You usually want a location close to your database.
-      For help selecting a location, refer to the
-      [location selection guide](https://firebase.google.com/docs/functions/locations).
+      Where do you want to deploy the functions created for this extension? 
+      You usually want a location close to your database or Storage bucket.
+      For help selecting a location, refer to the [location selection 
+      guide](https://firebase.google.com/docs/functions/locations).
+    type: select
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -81,34 +85,39 @@ params:
         value: europe-west1
       - label: London (europe-west2)
         value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
     default: us-central1
     required: true
+    immutable: true
 
   - param: FIRESTORE_PATHS
-    type: string
     label: Cloud Firestore paths
+    description: >-
+      Which paths in your Cloud Firestore instance contain user data? Leave
+      empty if you don't use Cloud Firestore.
+
+      Enter the full paths, separated by commas. You can represent the User ID
+      of the deleted user with `{UID}`.
+
+      For example, if you have the collections `users` and `admins`, and each
+      collection has documents with User ID as document IDs, then you can enter
+      `users/{UID},admins/{UID}`.
+    type: string
     example: users/{UID},admins/{UID}
     required: false
-    description: >-
-      Which paths in your Cloud Firestore instance contain user data? Leave empty if
-      you don't use Cloud Firestore.
-
-      Enter the full paths, separated by commas. You can represent the User ID of the deleted user with `{UID}`.
-
-      For example, if you have the collections `users` and `admins`, and each collection
-      has documents with User ID as document IDs, then you can enter `users/{UID},admins/{UID}`.
 
   - param: FIRESTORE_DELETE_MODE
-    type: select
     label: Cloud Firestore delete mode
     description: >-
-      (Only applicable if you use the `Cloud Firestore paths` parameter.) How do you want
-      to delete Cloud Firestore documents? To also delete documents in subcollections,
-      set this parameter to `recursive`.
+      (Only applicable if you use the `Cloud Firestore paths` parameter.) How do
+      you want to delete Cloud Firestore documents? To also delete documents in
+      subcollections, set this parameter to `recursive`.
+    type: select
     options:
       - label: Recursive
         value: recursive
@@ -118,33 +127,36 @@ params:
     required: true
 
   - param: RTDB_PATHS
-    type: string
     label: Realtime Database paths
-    example: users/{UID},admins/{UID}
-    required: false
     description: >-
-      Which paths in your Realtime Database instance contain user data? Leave empty if you
-      don't use Realtime Database.
+      Which paths in your Realtime Database instance contain user data? Leave
+      empty if you don't use Realtime Database.
 
-      Enter the full paths, separated by commas. You can represent the User ID of the deleted user with `{UID}`.
+      Enter the full paths, separated by commas. You can represent the User ID
+      of the deleted user with `{UID}`.
 
       For example: `users/{UID},admins/{UID}`.
+    type: string
+    example: users/{UID},admins/{UID}
+    required: false
 
   - param: STORAGE_PATHS
-    type: string
     label: Cloud Storage paths
-    example: "{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt"
-    required: false
     description: >-
       Where in Google Cloud Storage do you store user data? Leave empty if you
       don't use Cloud Storage.
 
-      Enter the full paths, separated by commas. You can represent the User ID of the deleted user with `{UID}`.
-      You can use `{DEFAULT}` to represent your default bucket.
+      Enter the full paths to files or directories in your Storage buckets,
+      separated by commas. Use `{UID}` to represent the User ID of the deleted
+      user, and use `{DEFAULT}` to represent your default Storage bucket.
 
-      For example, if you are using your default bucket,
-      and the bucket has files with the naming scheme `{UID}-pic.png`,
-      then you can enter `{DEFAULT}/{UID}-pic.png`.
-      If you also have files in another bucket called `my-awesome-app-logs`,
-      and that bucket has files with the naming scheme `{UID}-logs.txt`,
-      then you can enter `{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt`.
+      Here's a series of examples. To delete all the files in your default
+      bucket with the file naming scheme `{UID}-pic.png`, enter
+      `{DEFAULT}/{UID}-pic.png`. To also delete all the files in another bucket
+      called my-app-logs with the file naming scheme `{UID}-logs.txt`, enter
+      `{DEFAULT}/{UID}-pic.png,my-app-logs/{UID}-logs.txt`. To *also* delete a User
+      ID-labeled directory and all its files (like `media/{UID}`), enter
+      `{DEFAULT}/{UID}-pic.png,my-app-logs/{UID}-logs.txt,{DEFAULT}/media/{UID}`.
+    type: string
+    example: "{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt"
+    required: false

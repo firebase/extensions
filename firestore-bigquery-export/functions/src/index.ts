@@ -22,12 +22,14 @@ import {
   FirestoreEventHistoryTracker,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as logs from "./logs";
-import { getChangeType } from "./util";
+import { getChangeType, getDocumentId } from "./util";
 
-const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker({
-  tableId: config.tableId,
-  datasetId: config.datasetId,
-});
+const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker(
+  {
+    tableId: config.tableId,
+    datasetId: config.datasetId,
+  }
+);
 
 logs.init();
 
@@ -36,13 +38,18 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
     logs.start();
     try {
       const changeType = getChangeType(change);
-      await eventTracker.record([{
-        timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
-        operation: changeType,
-        documentName: context.resource.name,
-        eventId: context.eventId,
-        data: changeType == ChangeType.DELETE ? undefined: change.after.data(),
-      }]);
+      const documentId = getDocumentId(change);
+      await eventTracker.record([
+        {
+          timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
+          operation: changeType,
+          documentName: context.resource.name,
+          documentId: documentId,
+          eventId: context.eventId,
+          data:
+            changeType === ChangeType.DELETE ? undefined : change.after.data(),
+        },
+      ]);
       logs.complete();
     } catch (err) {
       logs.error(err);

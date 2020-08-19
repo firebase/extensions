@@ -4,14 +4,15 @@
   "description": "Repository of sample Firebase Extensions.",
   "private": true,
   "scripts": {
-    "format": "prettier --write {,**/}*.{yaml,js,md}",
-    "lint": "prettier --list-different {,**/}*.{yaml,js,md}",
-    "clean": "lerna run clean",
-    "build": "lerna run build",
+    "format": "prettier --write \"**/*.{js,md,yml,ts,json,yaml}\"",
+    "lint": "prettier --list-different \"**/*.{js,md,yml,ts,json,yaml}\"",
+    "clean": "lerna run --parallel clean",
+    "build": "lerna run --parallel build",
     "test": "jest",
     "test-watch": "jest --watch",
     "test-coverage": "jest --coverage",
-    "postinstall": "lerna bootstrap && npm run clean && npm run build"
+    "postinstall": "lerna bootstrap --no-ci && npm run clean && npm run build",
+    "generate-readmes": "lerna run --parallel --ignore delete-user-data generate-readme"
   },
   "repository": "",
   "author": "Firebase (https://firebase.google.com/)",
@@ -20,11 +21,11 @@
     "url": ""
   },
   "devDependencies": {
-    "jest": "^24.9.0",
-    "ts-jest": "^24.1.0",
     "@types/jest": "^24.0.18",
-    "typescript": "^3.6.3",
+    "jest": "^24.9.0",
     "lerna": "^3.4.3",
-    "prettier": "1.15.3"
+    "prettier": "1.15.3",
+    "ts-jest": "^24.1.0",
+    "typescript": "^3.6.3"
   }
 }

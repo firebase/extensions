@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-const firestore_1 = require("@google-cloud/firestore");
+exports.Aggregator = exports.NumericUpdate = void 0;
+const firebase_admin_1 = require("firebase-admin");
 const uuid = require("uuid");
 class NumericUpdate {
     constructor() {
@@ -24,7 +25,7 @@ class NumericUpdate {
     /**
      * Merges numeric values from an arbitrary deep json into the NumericUpdate object.
      *  - it ignores non-numeric leaves
-     *  - if there's a type mismatch ('number' vs 'object') current data will be overriden
+     *  - if there's a type mismatch ('number' vs 'object') current data will be overridden
      * @param from An object with numeric values to merge from.
      */
     mergeFrom(from) {
@@ -33,7 +34,7 @@ class NumericUpdate {
     /**
      * Subtracts numeric values in an arbitrary deep json from the NumericUpdate object.
      *  - it ignores non-numeric leaves
-     *  - if there's a type mismatch ('number' vs 'object') current data will be overriden
+     *  - if there's a type mismatch ('number' vs 'object') current data will be overridden
      * @param from An object with numeric values to merge from.
      */
     subtractFrom(from) {
@@ -56,7 +57,7 @@ class NumericUpdate {
         if (this.isNoop())
             return {};
         return {
-            _updates_: firestore_1.FieldValue.arrayUnion({
+            _updates_: firebase_admin_1.firestore.FieldValue.arrayUnion({
                 _id_: uuidv4(),
                 _data_: this.data,
             }),

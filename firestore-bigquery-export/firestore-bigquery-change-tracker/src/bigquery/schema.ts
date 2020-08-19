@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-import * as bigquery from "@google-cloud/bigquery";
-import * as errors from "../errors";
-import * as logs from "../logs";
-import * as sqlFormatter from "sql-formatter";
-
 export type BigQueryFieldMode = "NULLABLE" | "REPEATED" | "REQUIRED";
 export type BigQueryFieldType =
   | "BOOLEAN"
@@ -47,32 +42,110 @@ const bigQueryField = (
 
 // These field types form the basis of the `raw` data table
 export const dataField = bigQueryField("data", "STRING", "NULLABLE");
-export const documentNameField = bigQueryField("document_name", "STRING", "REQUIRED");
+export const documentNameField = bigQueryField(
+  "document_name",
+  "STRING",
+  "REQUIRED"
+);
 export const eventIdField = bigQueryField("event_id", "STRING", "REQUIRED");
 export const operationField = bigQueryField("operation", "STRING", "REQUIRED");
-export const timestampField = bigQueryField("timestamp", "TIMESTAMP", "REQUIRED");
+export const timestampField = bigQueryField(
+  "timestamp",
+  "TIMESTAMP",
+  "REQUIRED"
+);
 
 // These field types are used for the Firestore GeoPoint data type
 export const latitudeField = bigQueryField("latitude", "NUMERIC");
 export const longitudeField = bigQueryField("longitude", "NUMERIC");
 
-/**
- * Convert from a list of Firestore field definitions into the schema
- * that will be used by the BigQuery `raw` data table.
- *
- * The `raw` data table schema is:
- * - event_id: The event ID of the function trigger invocation responsible for
- *   the row
- * - timestamp: A timestamp to be used for update ordering
- * - documentName: Stores the name of the Firestore document
- * - operation: The type of operation: CREATE, UPDATE, DELETE
- * - data: A record to contain the Firestore document data fields specified
- * in the schema
+export const documentIdField = {
+  name: "document_id",
+  mode: "NULLABLE",
+  type: "STRING",
+  description: "The document id as defined in the firestore database.",
+};
+
+/*
+ * We cannot specify a schema for view creation, and all view columns default
+ * to the NULLABLE mode.
  */
-export const firestoreToBQTable = (): BigQueryField[] => [
-  timestampField,
-  eventIdField,
-  documentNameField,
-  operationField,
-  dataField
-];
+export const RawChangelogViewSchema: any = {
+  fields: [
+    {
+      name: "timestamp",
+      mode: "NULLABLE",
+      type: "TIMESTAMP",
+      description:
+        "The commit timestamp of this change in Cloud Firestore. If the operation is IMPORT, this timestamp is epoch to ensure that any operation on an imported document supersedes the IMPORT.",
+    },
+    {
+      name: "event_id",
+      mode: "NULLABLE",
+      type: "STRING",
+      description:
+        "The ID of the most-recent document change event that triggered the Cloud Function created by the extension. Empty for imports.",
+    },
+    {
+      name: "document_name",
+      mode: "NULLABLE",
+      type: "STRING",
+      description:
+        "The full name of the changed document, for example, projects/collection/databases/(default)/documents/users/me).",
+    },
+    {
+      name: "operation",
+      mode: "NULLABLE",
+      type: "STRING",
+      description: "One of CREATE, UPDATE, IMPORT.",
+    },
+    {
+      name: "data",
+      mode: "NULLABLE",
+      type: "STRING",
+      description:
+        "The full JSON representation of the current document state.",
+    },
+    documentIdField,
+  ],
+};
+
+export const RawChangelogSchema: any = {
+  fields: [
+    {
+      name: "timestamp",
+      mode: "REQUIRED",
+      type: "TIMESTAMP",
+      description:
+        "The commit timestamp of this change in Cloud Firestore. If the operation is IMPORT, this timestamp is epoch to ensure that any operation on an imported document supersedes the IMPORT.",
+    },
+    {
+      name: "event_id",
+      mode: "REQUIRED",
+      type: "STRING",
+      description:
+        "The ID of the document change event that triggered the Cloud Function created by the extension. Empty for imports.",
+    },
+    {
+      name: "document_name",
+      mode: "REQUIRED",
+      type: "STRING",
+      description:
+        "The full name of the changed document, for example, projects/collection/databases/(default)/documents/users/me).",
+    },
+    {
+      name: "operation",
+      mode: "REQUIRED",
+      type: "STRING",
+      description: "One of CREATE, UPDATE, IMPORT, or DELETE.",
+    },
+    {
+      name: "data",
+      mode: "NULLABLE",
+      type: "STRING",
+      description:
+        "The full JSON representation of the document state after the indicated operation is applied. This field will be null for DELETE operations.",
+    },
+    documentIdField,
+  ],
+};

@@ -4,11 +4,11 @@ Since Cloud Firestore has a limit of one sustained write per second, per documen
 
 Here are some features of this extension:
 
-- Scales from 0 updates per second to at least 10,000 per second.
+- Scales from 0 updates per second to a maximum of 10,000 per second.
 - Supports an arbitrary number of counters in your app.
 - Works offline and provides latency compensation for the main counter.
 
-Note that this extension is currently fully resourced for use with JavaScript apps (we provide the required [JS SDK](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts)). You can, however, use this extension on other platforms if you'd like to develop your own API based on the provided JS SDK.
+Note that this extension requires client-side logic to work. We provide a [TypeScript client sample implementation](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts) and its [compiled minified JavaScript](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/dist/sharded-counter.js). You can use this extension on other platforms if you'd like to develop your own client code based on the provided client sample.
 
 
 #### Additional setup
@@ -18,8 +18,8 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 After installing this extension, you'll need to:
 
 - Update your [database security rules](https://firebase.google.com/docs/rules).
-- Set up a [scheduled function](https://firebase.google.com/docs/functions/schedule-functions) to regularly call the controller function, which is created by this extension and monitors the extension's workload.
-- Install the provided [Counter SDK](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts) in your app. You can then use this library in your code to specify your document path and increment values.
+- Set up a [Cloud Scheduler job](https://cloud.google.com/scheduler/docs/quickstart) to regularly call the controllerCore function, which is created by this extension. It works by either aggregating shards itself or scheduling and monitoring workers to aggregate shards.
+- Use the provided [client sample](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts) or your own client code to specify your document path and increment values.
 
 Detailed information for these post-installation tasks are provided after you install this extension.
 

@@ -1,0 +1,68 @@
+{
+  "fields": [
+    {
+      "name": "schema1",
+      "type": "map",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "favorite_numbers",
+          "type": "array"
+        },
+        {
+          "name": "last_login",
+          "type": "timestamp"
+        },
+        {
+          "name": "last_location",
+          "type": "geopoint"
+        },
+        {
+          "fields": [
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ],
+          "name": "friends",
+          "type": "map"
+        }
+      ]
+    },
+    {
+      "name": "schema2",
+      "type": "map",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "favorite_numbers",
+          "type": "array"
+        },
+        {
+          "name": "last_login",
+          "type": "timestamp"
+        },
+        {
+          "name": "last_location",
+          "type": "geopoint"
+        },
+        {
+          "fields": [
+            {
+              "name": "name",
+              "type": "string"
+            }
+          ],
+          "name": "friends",
+          "type": "map"
+        }
+      ]
+    }
+  ]
+}

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { DocumentSnapshot } from 'firebase-functions/lib/providers/firestore';
+import { DocumentSnapshot } from "firebase-functions/lib/providers/firestore";
 import { Change, EventContext } from "firebase-functions";
 
 export enum ChangeType {
@@ -32,6 +32,7 @@ export interface FirestoreDocumentChangeEvent {
   operation: ChangeType;
   documentName: string;
   eventId: string;
+  documentId: string;
   data: Object;
 }
 

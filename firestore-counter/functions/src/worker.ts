@@ -26,10 +26,9 @@ import {
 } from "./common";
 import { Planner } from "./planner";
 import { Aggregator, NumericUpdate } from "./aggregator";
-import { FieldValue } from "@google-cloud/firestore";
 import * as uuid from "uuid";
 
-const SHARDS_LIMIT = 499;
+const SHARDS_LIMIT = 100;
 const WORKER_TIMEOUT_MS = 45000;
 
 interface WorkerMetadata {
@@ -50,7 +49,7 @@ interface WorkerMetadata {
  *
  * Workers avoid double scheduling and overruns by including their metadata documents in every
  * aggregation transaction. If metadata changes underneath, transaction fails, worker detects that
- * and terminates immmediately.
+ * and terminates immediately.
  */
 export class ShardedCounterWorker {
   private db: firestore.Firestore;
@@ -111,7 +110,7 @@ export class ShardedCounterWorker {
               const snap = await t.get(this.metadoc.ref);
               if (snap.exists && deepEqual(snap.data(), this.metadata)) {
                 t.update(snap.ref, {
-                  timestamp: FieldValue.serverTimestamp(),
+                  timestamp: firestore.FieldValue.serverTimestamp(),
                   stats: stats,
                 });
               }

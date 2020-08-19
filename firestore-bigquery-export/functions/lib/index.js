@@ -38,13 +38,17 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite((change,
     logs.start();
     try {
         const changeType = util_1.getChangeType(change);
-        yield eventTracker.record([{
+        const documentId = util_1.getDocumentId(change);
+        yield eventTracker.record([
+            {
                 timestamp: context.timestamp,
                 operation: changeType,
                 documentName: context.resource.name,
+                documentId: documentId,
                 eventId: context.eventId,
-                data: changeType == firestore_bigquery_change_tracker_1.ChangeType.DELETE ? undefined : change.after.data(),
-            }]);
+                data: changeType === firestore_bigquery_change_tracker_1.ChangeType.DELETE ? undefined : change.after.data(),
+            },
+        ]);
         logs.complete();
     }
     catch (err) {

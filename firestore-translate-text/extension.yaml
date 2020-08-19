@@ -13,18 +13,17 @@
 # limitations under the License.
 
 name: firestore-translate-text
+version: 0.1.2
 specVersion: v1beta
-version: 0.1.0
 
 displayName: Translate Text
-
 description:
   Translates strings written to a Cloud Firestore collection into multiple languages (uses Cloud Translation API).
 
 license: Apache-2.0
-billingRequired: true
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-translate-text
-releaseNotesUrl: https://github.com/firebase/extensions/commits/master
+releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-translate-text/CHANGELOG.md
 
 author:
   authorName: Firebase
@@ -34,6 +33,11 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
+
+billingRequired: true
 
 apis:
   - apiName: translate.googleapis.com
@@ -50,7 +54,6 @@ resources:
       Listens for writes of new strings to your specified Cloud Firestore collection, translates the strings,
       then writes the translated strings back to the same document.
     properties:
-      sourceDirectory: .
       location: ${LOCATION}
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
@@ -58,12 +61,13 @@ resources:
 
 params:
   - param: LOCATION
-    type: select
-    label: Deployment location
+    label: Cloud Functions location
     description: >-
-      Where should the extension be deployed? You usually want a location close to your database.
-      For help selecting a location, refer to the
-      [location selection guide](https://firebase.google.com/docs/functions/locations).
+      Where do you want to deploy the functions created for this extension?
+      You usually want a location close to your database. For help selecting a
+      location, refer to the [location selection
+      guide](https://firebase.google.com/docs/functions/locations).
+    type: select
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -75,12 +79,15 @@ params:
         value: europe-west1
       - label: London (europe-west2)
         value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
     default: us-central1
     required: true
+    immutable: true
 
   - param: LANGUAGES
     label: Target languages for translations, as a comma-separated list
@@ -88,35 +95,35 @@ params:
       Into which target languages do you want to translate new strings?
       The languages are identified using ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr.
       For these codes, visit the [supported languages list](https://cloud.google.com/translate/docs/languages).
-    default: en,es,de,fr
     example: en,es,de,fr
     validationRegex: "^[a-zA-Z,-]*[a-zA-Z-]{2,}$"
     validationErrorMessage:
       Languages must be a comma-separated list of ISO-639-1 language codes.
+    default: en,es,de,fr
     required: true
 
   - param: COLLECTION_PATH
     label: Collection path
     description: >
       What is the path to the collection that contains the strings that you want to translate?
-    default: translations
     example: translations
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore Collection
+    default: translations
     required: true
 
   - param: INPUT_FIELD_NAME
     label: Input field name
     description: >
       What is the name of the field that contains the string that you want to translate?
-    default: input
     example: input
+    default: input
     required: true
 
   - param: OUTPUT_FIELD_NAME
     label: Translations output field name
     description: >
       What is the name of the field where you want to store your translations?
-    default: translated
     example: translated
+    default: translated
     required: true

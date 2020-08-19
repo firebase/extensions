@@ -1,8 +1,8 @@
 ### See it in action
 
-To test out this extension, follow these steps:
+You can test out this extension right away!
 
-1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data).
+1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/firestore/data) in the Firebase console.
 
 1.  If it doesn't exist already, create a collection called `${param:COLLECTION_PATH}`.
 
@@ -12,7 +12,7 @@ To test out this extension, follow these steps:
 
 ### Using the extension
 
-Whenever you write a string to the field `${param:INPUT_FIELD_NAME}` in `${param:COLLECTION_PATH}`, this extension:
+Whenever you write a string to the field `${param:INPUT_FIELD_NAME}` in `${param:COLLECTION_PATH}`, this extension does the following:
 
 - Translates the string into your specified target language(s); the source language of the string is automatically detected.
 - Adds the translated string to `${param:OUTPUT_FIELD_NAME}` in the same document using the following format:

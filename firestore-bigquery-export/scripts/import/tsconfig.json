@@ -5,8 +5,10 @@
     "noImplicitReturns": true,
     "outDir": "lib",
     "sourceMap": false,
-    "target": "es6"
+    "target": "es6",
+    "types": ["node", "mocha", "chai"]
   },
   "compileOnSave": true,
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["**/node_modules/@types/jest/**"]
 }
