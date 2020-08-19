@@ -27,7 +27,7 @@ import { uuid } from "uuidv4";
 import config from "./config";
 import * as logs from "./logs";
 import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
-import { extractFileNameWithoutExtension, startsWithArray } from "./util";
+import { extractFileNameWithoutExtension } from "./util";
 
 interface ResizedImageResult {
   size: string;
@@ -59,6 +59,8 @@ export const generateResizedImage = functions.storage.object().onFinalize(
   async (object): Promise<void> => {
     logs.start();
     const { contentType } = object; // This is the image MIME type
+    const absolutePathList = config.absolutePathList.split(',');  // Convert list to an array
+    const tmpFilePath = path.dirname(object.name)
 
     if (!contentType) {
       logs.noContentType();
