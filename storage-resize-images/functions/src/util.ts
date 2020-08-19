@@ -6,3 +6,15 @@ export const extractFileNameWithoutExtension = (
 ) => {
   return path.basename(filePath, ext);
 };
+
+export const startsWithArray = (
+  arraySearch: string[],
+  text: string
+) => {
+  for (let search of arraySearch) {
+    if (text.startsWith(search)) {
+      return true;
+    }
+  }
+  return false;
+};
