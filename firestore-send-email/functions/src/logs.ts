@@ -22,11 +22,6 @@ export const obfuscatedConfig = Object.assign({}, config, {
 });
 
 export function init() {
-  console.log(
-    "Here >>>>>>",
-    "Initializing extension with configuration",
-    obfuscatedConfig
-  );
   logger.log("Initializing extension with configuration", obfuscatedConfig);
 }
 

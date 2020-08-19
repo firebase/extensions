@@ -22,7 +22,6 @@ exports.obfuscatedConfig = Object.assign({}, config_1.default, {
     smtpConnectionUri: "<omitted>",
 });
 function init() {
-    console.log("Here >>>>>>", "Initializing extension with configuration", exports.obfuscatedConfig);
     firebase_functions_1.logger.log("Initializing extension with configuration", exports.obfuscatedConfig);
 }
 exports.init = init;
