@@ -6,7 +6,7 @@
 
 **Public Alpha**: This extension is available for testing as a _public alpha_ release. It has not been as thoroughly tested as the officially released extensions, and future updates might introduce breaking changes.
 
-To install this extension, open the [installation page](https://console.firebase.google.com/project/_/extensions/install?sourceName=projects/firebasemods/sources/FIXME) in the Firebase console.
+To install this extension, open the [installation page](https://console.firebase.google.com/project/_/extensions/install?sourceName=projects/firebasemods/sources/b085f422-e03a-4f89-9868-e8b692c72cb3) in the Firebase console.
 
 If you use this extension, please [report bugs and make feature requests](https://github.com/firebase/extensions/issues/new/choose) in our GitHub repository.
 
