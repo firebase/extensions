@@ -22,7 +22,7 @@ description: >
   Firebase Dynamic Links.
 
 license: Apache-2.0
-billingRequired: false
+billingRequired: true
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-shorten-urls-dynamic-links
 releaseNotesUrl: https://github.com/firebase/extensions/commits/master
 
@@ -49,6 +49,7 @@ resources:
     properties:
       sourceDirectory: .
       location: ${LOCATION}
+      runtime: nodejs10
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.create
         resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
@@ -60,6 +61,7 @@ resources:
     properties:
       sourceDirectory: .
       location: ${LOCATION}
+      runtime: nodejs10
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.update
         resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
