@@ -29,3 +29,11 @@ If the original URL in a document is updated, then the shortened URL will be aut
 ### Monitoring
 
 As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.
+
+### Even shorter links
+
+If the `https://yourapp.page.link/WXYZ` links are still too long for you, or if
+you want short links with your own branding, you can use your own domain for
+your Dynamic Links. See [Set up a custom domain for Dynamic Links][custom-doc].
+
+[custom-doc]: https://firebase.google.com/docs/dynamic-links/custom-domains

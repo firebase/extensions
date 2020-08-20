@@ -33,10 +33,11 @@ in your Firebase project.
 You must also have a Dynamic Links URL prefix set up before installing this
 extension. You can do so on the [Dynamic Links][dyn-links] section of the
 console. A Dynamic Links URL prefix can use a free Google-hosted subdomain,
-such as in `https://yourapp.page.link` or your own domain, such as in
-`https://example.com/link`.
+such as in `https://yourapp.page.link` or [your own domain][custom-domain],
+such as in `https://example.com/link`.
 
 [dyn-links]: https://console.firebase.google.com/project/${param:PROJECT_ID}/durablelinks
+[custom-domain]: https://firebase.google.com/docs/dynamic-links/custom-domains
 
 #### Billing
 
