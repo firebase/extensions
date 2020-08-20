@@ -22,9 +22,6 @@ If the original non-translated field of the document is updated, then the transl
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
 
 #### Billing
-
-
-#### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](http://firebase.google.com/pricing)
 
 - You will be charged around $0.01/month for each instance of this extension you install.
