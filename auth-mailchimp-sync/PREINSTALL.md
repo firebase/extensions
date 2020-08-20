@@ -21,3 +21,5 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
   - Firebase Realtime Database
   - Firestore
   - Cloud Functions (Node.js 10+ runtime. See FAQs)
+
+Usage of this extension also requires you to have a Mailchimp account. You are responsible for any associated costs with your usage of Mailchimp.
