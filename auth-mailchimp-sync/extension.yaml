@@ -49,6 +49,7 @@ resources:
       then automatically adds the new user to your specified MailChimp audience.
     properties:
       location: ${LOCATION}
+      runtime: nodejs10
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.create
         resource: projects/${PROJECT_ID}
@@ -61,6 +62,7 @@ resources:
       MailChimp audience.
     properties:
       location: ${LOCATION}
+      runtime: nodejs10
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${PROJECT_ID}

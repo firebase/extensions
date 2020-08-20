@@ -1,5 +1,6 @@
-const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
-const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation();
+const { logger } = require("firebase-functions");
+
+const consoleLogSpy = jest.spyOn(logger, "log").mockImplementation();
 
 import functionsConfig from "../src/config";
 import { obfuscatedConfig } from "../src/logs";
