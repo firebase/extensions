@@ -14,7 +14,7 @@ Also, make sure that you've set up [Firebase Authentication](https://firebase.go
 
 #### Billing
  
-To install an extension, your project must be on the [Blaze (pay as you go) plan](http://firebase.google.com/pricing)
+To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
  
 - You will be charged around $0.01/month for each instance of this extension you install.
 - This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
