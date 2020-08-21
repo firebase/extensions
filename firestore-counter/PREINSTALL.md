@@ -25,13 +25,10 @@ Detailed information for these post-installation tasks are provided after you in
 
 
 #### Billing
-
-This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
-- Cloud Firestore
-- Cloud Functions
-
-When you use Firebase Extensions, you're only charged for the underlying resources that you use. Due to the services used by this extension, the Blaze plan is required. This extension’s Cloud functions will run on Node.js 10. You will be charged a small amount (less than $0.10) when you deploy this extension, including when you make configuration changes and apply future updates. [Read FAQs](https://firebase.google.com/support/faq#functions-pricing).
-
-The Blaze plan also allows you to extend your project with paid Google Cloud Platform features. You pay only for the resources that you consume, allowing you to scale with demand. The Blaze plan also offers a generous [free tier](https://firebase.google.com/pricing) of usage.
-
+ 
+To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
+ 
+- You will be charged around $0.01/month for each instance of this extension you install.
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
+ - Cloud Firestore
+ - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#expandable-24))
