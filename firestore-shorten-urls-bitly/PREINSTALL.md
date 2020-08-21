@@ -24,4 +24,4 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
   - Cloud Firestore
   - Cloud Functions (Node.js 10+ runtime. See FAQs)
 - This extension also uses these services:
-  - Bitly. You must have a Bitly account and you're responsible for any associated charges.
+  - [Bitly](https://bitly.com/). You must have a Bitly account and you're responsible for any associated charges.
