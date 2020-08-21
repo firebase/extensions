@@ -97,6 +97,8 @@ params:
       collection (for example: `chatrooms/{chatid}/posts`).
     type: string
     example: posts
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Firestore collection paths must be an odd number of segments separated by slashes, e.g. "path/to/collection".
     default: posts
     required: true
 
