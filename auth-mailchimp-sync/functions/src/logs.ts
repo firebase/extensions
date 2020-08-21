@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const { logger } = require("firebase-functions");
+import { logger } from "firebase-functions";
 import config from "./config";
 
 export const obfuscatedConfig = {
