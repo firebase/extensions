@@ -21,17 +21,14 @@ Make sure that you've set up [Firebase Authentication](https://firebase.google.c
 You must also have a Mailchimp account before installing this extension.
 
 #### Billing
-
-This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
-- Firebase Realtime Database
-- Cloud Functions
-
-When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
+ 
+To install an extension, your project must be on the [Blaze (pay as you go) plan](http://firebase.google.com/pricing)
+ 
+- You will be charged around $0.01/month for each instance of this extension you install.
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
+  - Cloud Functions (Node.js 10+ runtime. See [FAQs](https://firebase.google.com/support/faq#expandable-24))
 
 Usage of this extension also requires you to have a Mailchimp account. You are responsible for any associated costs with your usage of Mailchimp.
-
-
 
 
 
