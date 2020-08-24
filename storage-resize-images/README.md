@@ -29,13 +29,13 @@ For example, say that you specify a max width of 200px and a max height of 100px
 Before installing this extension, make sure that you've [set up a Cloud Storage bucket](https://firebase.google.com/docs/storage) in your Firebase project.
 
 #### Billing
-
-This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
-- Cloud Storage
-- Cloud Functions
-
-When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
+ 
+To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
+ 
+- You will be charged around $0.01/month for each instance of this extension you install.
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
+ - Cloud Storage
+ - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#expandable-24))
 
 
 
