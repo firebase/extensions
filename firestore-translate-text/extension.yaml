@@ -55,6 +55,7 @@ resources:
       then writes the translated strings back to the same document.
     properties:
       location: ${LOCATION}
+      runtime: nodejs10
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{messageId}
