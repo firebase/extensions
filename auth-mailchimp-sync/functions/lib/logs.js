@@ -16,41 +16,45 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userRemoving = exports.userRemoved = exports.userNoEmail = exports.userAdding = exports.userAdded = exports.start = exports.mailchimpNotInitialized = exports.initError = exports.init = exports.errorRemoveUser = exports.errorAddUser = exports.complete = exports.obfuscatedConfig = void 0;
+const { logger } = require("firebase-functions");
 const config_1 = require("./config");
-exports.obfuscatedConfig = Object.assign(Object.assign({}, config_1.default), { mailchimpApiKey: "<omitted>" });
+exports.obfuscatedConfig = {
+    ...config_1.default,
+    mailchimpApiKey: "<omitted>",
+};
 exports.complete = () => {
-    console.log("Completed execution of extension");
+    logger.log("Completed execution of extension");
 };
 exports.errorAddUser = (err) => {
-    console.error("Error when adding user to Mailchimp audience", err);
+    logger.error("Error when adding user to Mailchimp audience", err);
 };
 exports.errorRemoveUser = (err) => {
-    console.error("Error when removing user from Mailchimp audience", err);
+    logger.error("Error when removing user from Mailchimp audience", err);
 };
 exports.init = () => {
-    console.log("Initializing extension with configuration", exports.obfuscatedConfig);
+    logger.log("Initializing extension with configuration", exports.obfuscatedConfig);
 };
 exports.initError = (err) => {
-    console.error("Error when initializing extension", err);
+    logger.error("Error when initializing extension", err);
 };
 exports.mailchimpNotInitialized = () => {
-    console.error("Mailchimp was not initialized correctly, check for errors in the logs");
+    logger.error("Mailchimp was not initialized correctly, check for errors in the logs");
 };
 exports.start = () => {
-    console.log("Started execution of extension with configuration", exports.obfuscatedConfig);
+    logger.log("Started execution of extension with configuration", exports.obfuscatedConfig);
 };
 exports.userAdded = (userId, audienceId, mailchimpId, status) => {
-    console.log(`Added user: ${userId} with status '${status}' to Mailchimp audience: ${audienceId} with Mailchimp ID: ${mailchimpId}`);
+    logger.log(`Added user: ${userId} with status '${status}' to Mailchimp audience: ${audienceId} with Mailchimp ID: ${mailchimpId}`);
 };
 exports.userAdding = (userId, audienceId) => {
-    console.log(`Adding user: ${userId} to Mailchimp audience: ${audienceId}`);
+    logger.log(`Adding user: ${userId} to Mailchimp audience: ${audienceId}`);
 };
 exports.userNoEmail = () => {
-    console.log("User does not have an email");
+    logger.log("User does not have an email");
 };
 exports.userRemoved = (userId, hashedEmail, audienceId) => {
-    console.log(`Removed user: ${userId} with hashed email: ${hashedEmail} from Mailchimp audience: ${audienceId}`);
+    logger.log(`Removed user: ${userId} with hashed email: ${hashedEmail} from Mailchimp audience: ${audienceId}`);
 };
 exports.userRemoving = (userId, hashedEmail, audienceId) => {
-    console.log(`Removing user: ${userId} with hashed email: ${hashedEmail} from Mailchimp audience: ${audienceId}`);
+    logger.log(`Removing user: ${userId} with hashed email: ${hashedEmail} from Mailchimp audience: ${audienceId}`);
 };
