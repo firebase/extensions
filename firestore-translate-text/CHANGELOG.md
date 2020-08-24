@@ -1,3 +1,7 @@
+## Version 0.1.3
+
+feature - Update Cloud Functions runtime to Node.js 10.
+
 ## Version 0.1.2
 
 fixed - Fixed bug where target languages could not be reconfigured.

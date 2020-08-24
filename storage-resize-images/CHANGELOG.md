@@ -1,3 +1,7 @@
+## Version 0.1.11
+
+feature - Update Cloud Functions runtime to Node.js 10.
+
 ## Version 0.1.10
 
 fixed - A fresh token is now generated for each resized image. (Issue #323, PR #351)

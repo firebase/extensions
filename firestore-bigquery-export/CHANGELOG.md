@@ -1,3 +1,8 @@
+## Version 0.1.8
+
+feature - Update Cloud Functions runtime to Node.js 10.
+feature - Add validation regex for collection path parameter. (#418)
+
 ## Version 0.1.7
 
 fixed - Updated `@firebaseextensions/firestore-bigquery-change-tracker` dependency (fixes issues #235).

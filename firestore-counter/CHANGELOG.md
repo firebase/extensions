@@ -1,3 +1,7 @@
+## Version 0.1.4
+
+feature - Update Cloud Functions runtime to Node.js 10.
+
 ## Version 0.1.3
 
 build - Updates the firebase-admin and firebase-functions packages to the latest versions (issue #181).
