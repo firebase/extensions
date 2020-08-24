@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.fstranslate = void 0;
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
 const translate_1 = require("@google-cloud/translate");
