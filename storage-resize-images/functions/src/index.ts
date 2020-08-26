@@ -79,7 +79,10 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       return;
     }
 
-    if (config.absolutePathList && !startsWithArray(absolutePathList, tmpFilePath)) {
+    if (
+      config.absolutePathList &&
+      !startsWithArray(absolutePathList, tmpFilePath)
+    ) {
       logs.imageOutsideOfPaths(absolutePathList, tmpFilePath);
       return;
     }
