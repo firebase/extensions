@@ -56,6 +56,10 @@ const supportedContentTypes = [
 exports.generateResizedImage = functions.storage.object().onFinalize((object) => __awaiter(void 0, void 0, void 0, function* () {
     logs.start();
     const { contentType } = object; // This is the image MIME type
+    const absolutePathList = config_1.default.absolutePathList
+        ? config_1.default.absolutePathList.split(",")
+        : [""]; // Convert list to an array
+    const tmpFilePath = path.resolve("/", path.dirname(object.name)); // Absolute path to dirname
     if (!contentType) {
         logs.noContentType();
         return;
@@ -66,6 +70,11 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
     }
     if (!supportedContentTypes.includes(contentType)) {
         logs.unsupportedType(supportedContentTypes, contentType);
+        return;
+    }
+    if (config_1.default.absolutePathList &&
+        !util_1.startsWithArray(absolutePathList, tmpFilePath)) {
+        logs.imageOutsideOfPaths(absolutePathList, tmpFilePath);
         return;
     }
     if (object.metadata && object.metadata.resizedImage === "true") {

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remoteFileDeleting = exports.remoteFileDeleted = exports.tempResizedFileDeleting = exports.tempResizedFileDeleted = exports.tempOriginalFileDeleting = exports.tempOriginalFileDeleted = exports.tempDirectoryCreating = exports.tempDirectoryCreated = exports.start = exports.init = exports.imageUploading = exports.imageUploaded = exports.imageResizing = exports.imageResized = exports.imageDownloading = exports.imageDownloaded = exports.imageAlreadyResized = exports.failed = exports.errorDeleting = exports.error = exports.unsupportedType = exports.contentTypeInvalid = exports.noContentType = exports.complete = void 0;
+exports.remoteFileDeleting = exports.remoteFileDeleted = exports.tempResizedFileDeleting = exports.tempResizedFileDeleted = exports.tempOriginalFileDeleting = exports.tempOriginalFileDeleted = exports.tempDirectoryCreating = exports.tempDirectoryCreated = exports.start = exports.init = exports.imageUploading = exports.imageUploaded = exports.imageResizing = exports.imageResized = exports.imageDownloading = exports.imageDownloaded = exports.imageOutsideOfPaths = exports.imageAlreadyResized = exports.failed = exports.errorDeleting = exports.error = exports.unsupportedType = exports.contentTypeInvalid = exports.noContentType = exports.complete = void 0;
 const config_1 = require("./config");
 exports.complete = () => {
     console.log("Completed execution of extension");
@@ -40,6 +40,9 @@ exports.failed = () => {
 };
 exports.imageAlreadyResized = () => {
     console.log("File is already a resized image, no processing is required");
+};
+exports.imageOutsideOfPaths = (absolutePaths, imagePath) => {
+    console.log(`Image path '${imagePath}' is not supported, these are the supported absolute paths: ${absolutePaths.join(", ")}`);
 };
 exports.imageDownloaded = (remotePath, localPath) => {
     console.log(`Downloaded image file: '${remotePath}' to '${localPath}'`);
