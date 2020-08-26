@@ -1,6 +1,6 @@
 ## Version 0.1.1
 
-- **Feature**: Update Cloud Functions runtime to Node.js 10.
+- feature: Update Cloud Functions runtime to Node.js 10.
 
 ## Version 0.1.0
 
