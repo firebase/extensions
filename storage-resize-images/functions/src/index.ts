@@ -60,7 +60,8 @@ export const generateResizedImage = functions.storage.object().onFinalize(
     logs.start();
     const { contentType } = object; // This is the image MIME type
     const absolutePathList = config.absolutePathList.split(","); // Convert list to an array
-    const tmpFilePath = path.dirname(object.name);
+    const tmpFilePath = path.resolve('/', path.dirname(object.name)); // Absolute path to dirname
+
 
     if (!contentType) {
       logs.noContentType();
