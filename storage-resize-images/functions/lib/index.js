@@ -196,7 +196,6 @@ const modifyImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         ? supportedImageContentTypeMap[imageType]
         : contentType;
     const modifiedExtensionName = fileExtension && hasImageTypeConfigSet ? `.${imageType}` : fileExtension;
-    console.log("imageType: ", imageType, "imageContentType: ", imageContentType, typeof imageType, "modifiedExtensionName: ", modifiedExtensionName);
     const modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
     // Path where modified image will be uploaded to in Storage.
     const modifiedFilePath = path.normalize(config_1.default.resizedImagesPath
