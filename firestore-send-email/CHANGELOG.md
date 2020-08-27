@@ -1,3 +1,7 @@
+## Version 0.1.5
+
+feature - Update Cloud Functions runtime to Node.js 10.
+
 ## Version 0.1.4
 
 feature - Updated "Default FROM address" parameter to accept either an email address (`foobar@example.com`) _or_ a name plus email address (`Friendly Firebaser <foobar@example.com>`). (issue #167)
