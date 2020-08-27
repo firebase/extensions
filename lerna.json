@@ -7,7 +7,8 @@
     "auth-mailchimp-sync/functions",
     "firestore-send-email/functions",
     "firestore-counter/functions",
-    "delete-user-data/functions"
+    "delete-user-data/functions",
+    "firestore-bigquery-export/scripts/gen-schema-view"
   ],
   "version": "0.0.0"
 }
