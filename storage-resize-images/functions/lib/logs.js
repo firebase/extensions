@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remoteFileDeleting = exports.remoteFileDeleted = exports.tempResizedFileDeleting = exports.tempResizedFileDeleted = exports.tempOriginalFileDeleting = exports.tempOriginalFileDeleted = exports.tempDirectoryCreating = exports.tempDirectoryCreated = exports.start = exports.init = exports.imageUploading = exports.imageUploaded = exports.imageResizing = exports.imageResized = exports.imageConverted = exports.imageConverting = exports.imageDownloading = exports.imageDownloaded = exports.imageAlreadyResized = exports.failed = exports.errorDeleting = exports.error = exports.unsupportedImageType = exports.unsupportedType = exports.contentTypeInvalid = exports.noContentType = exports.complete = void 0;
+exports.remoteFileDeleting = exports.remoteFileDeleted = exports.tempResizedFileDeleting = exports.tempResizedFileDeleted = exports.tempOriginalFileDeleting = exports.tempOriginalFileDeleted = exports.tempDirectoryCreating = exports.tempDirectoryCreated = exports.start = exports.init = exports.imageUploading = exports.imageUploaded = exports.imageResizing = exports.imageResized = exports.imageConverted = exports.imageConverting = exports.imageDownloading = exports.imageDownloaded = exports.imageAlreadyResized = exports.failed = exports.errorDeleting = exports.error = exports.unsupportedType = exports.contentTypeInvalid = exports.noContentType = exports.complete = void 0;
 const config_1 = require("./config");
 exports.complete = () => {
     console.log("Completed execution of extension");
@@ -28,9 +28,6 @@ exports.contentTypeInvalid = (contentType) => {
 };
 exports.unsupportedType = (unsupportedTypes, contentType) => {
     console.log(`Image type '${contentType}' is not supported, here are the supported file types: ${unsupportedTypes.join(", ")}`);
-};
-exports.unsupportedImageType = (unsupportedType, contentType) => {
-    console.log(`Image type ${unsupportedType} is not supported. Using ${contentType} to continue.`);
 };
 exports.error = (err) => {
     console.error("Error when resizing image", err);

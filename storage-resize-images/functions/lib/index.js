@@ -168,31 +168,35 @@ function resize(file, size) {
 function convertType(buffer) {
     const { imageType } = config_1.default;
     if (imageType === "jpg" || imageType === "jpeg") {
-        return sharp(buffer).jpeg().toBuffer();
+        return sharp(buffer)
+            .jpeg()
+            .toBuffer();
     }
     else if (imageType === "png") {
-        return sharp(buffer).png().toBuffer();
+        return sharp(buffer)
+            .png()
+            .toBuffer();
     }
     else if (imageType === "webp") {
-        return sharp(buffer).webp().toBuffer();
+        return sharp(buffer)
+            .webp()
+            .toBuffer();
     }
     else if (imageType === "tiff") {
-        return sharp(buffer).tiff().toBuffer();
-    }
-    else if (imageType === "raw") {
-        return sharp(buffer).raw().toBuffer();
+        return sharp(buffer)
+            .tiff()
+            .toBuffer();
     }
     return buffer;
 }
 const modifyImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => __awaiter(void 0, void 0, void 0, function* () {
     const { imageType } = config_1.default;
-    let imageContentType = supportedImageContentTypeMap[imageType];
-    const hasValidImageType = imageType && supportedImageContentTypeMap.hasOwnProperty(imageType);
-    if (!hasValidImageType) {
-        logs.unsupportedImageType(imageType, contentType);
-        imageContentType = contentType;
-    }
-    const modifiedExtensionName = fileExtension && hasValidImageType ? `.${imageType}` : fileExtension;
+    const hasImageTypeConfigSet = imageType !== "false";
+    const imageContentType = hasImageTypeConfigSet
+        ? supportedImageContentTypeMap[imageType]
+        : contentType;
+    const modifiedExtensionName = fileExtension && hasImageTypeConfigSet ? `.${imageType}` : fileExtension;
+    console.log("imageType: ", imageType, "imageContentType: ", imageContentType, typeof imageType, "modifiedExtensionName: ", modifiedExtensionName);
     const modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
     // Path where modified image will be uploaded to in Storage.
     const modifiedFilePath = path.normalize(config_1.default.resizedImagesPath
@@ -223,14 +227,16 @@ const modifyImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         }
         // Generate a resized image buffer using Sharp.
         logs.imageResizing(modifiedFile, size);
-        const resizedImageBuffer = yield resize(originalFile, size);
+        let modifiedImageBuffer = yield resize(originalFile, size);
         logs.imageResized(modifiedFile);
         // Generate a converted image type buffer using Sharp.
-        logs.imageConverting(fileExtension, config_1.default.imageType);
-        const convertedFormatImageBuffer = yield convertType(resizedImageBuffer);
-        logs.imageConverted(config_1.default.imageType);
+        if (hasImageTypeConfigSet) {
+            logs.imageConverting(fileExtension, config_1.default.imageType);
+            modifiedImageBuffer = yield convertType(modifiedImageBuffer);
+            logs.imageConverted(config_1.default.imageType);
+        }
         // Generate a image file using Sharp.
-        yield sharp(convertedFormatImageBuffer).toFile(modifiedFile);
+        yield sharp(modifiedImageBuffer).toFile(modifiedFile);
         // Uploading the modified image.
         logs.imageUploading(modifiedFilePath);
         yield bucket.upload(modifiedFile, {

@@ -158,9 +158,18 @@ params:
 
   - param: IMAGE_TYPE
     label: Image type to convert to
+    type: select
+    options:
+      - label: jpg
+        value: jpg
+      - label: png
+        value: png
+      - label: webp
+        value: webp
+      - label: tiff
+        value: tiff
+      - label: Do not convert
+        value: false
     description: >
       The image type you'd like your source image to convert to. The default for this option will be to keep the original file type.
-    example: jpg
-    validationRegex: ^(jpg|jpeg|png|tiff|webp)$
-    validationErrorMessage: Invalid image type
     required: false

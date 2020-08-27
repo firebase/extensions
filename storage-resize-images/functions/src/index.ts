@@ -202,10 +202,6 @@ function convertType(buffer) {
     return sharp(buffer)
       .tiff()
       .toBuffer();
-  } else if (imageType === "raw") {
-    return sharp(buffer)
-      .raw()
-      .toBuffer();
   }
   return buffer;
 }
@@ -230,16 +226,21 @@ const modifyImage = async ({
   objectMetadata: ObjectMetadata;
 }): Promise<ResizedImageResult> => {
   const { imageType } = config;
-  let imageContentType = supportedImageContentTypeMap[imageType];
-  const hasValidImageType =
-    imageType && supportedImageContentTypeMap.hasOwnProperty(imageType);
-  if (!hasValidImageType) {
-    logs.unsupportedImageType(imageType, contentType);
-    imageContentType = contentType;
-  }
-
+  const hasImageTypeConfigSet = imageType !== "false";
+  const imageContentType = hasImageTypeConfigSet
+    ? supportedImageContentTypeMap[imageType]
+    : contentType;
   const modifiedExtensionName =
-    fileExtension && hasValidImageType ? `.${imageType}` : fileExtension;
+    fileExtension && hasImageTypeConfigSet ? `.${imageType}` : fileExtension;
+  console.log(
+    "imageType: ",
+    imageType,
+    "imageContentType: ",
+    imageContentType,
+    typeof imageType,
+    "modifiedExtensionName: ",
+    modifiedExtensionName
+  );
   const modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
   // Path where modified image will be uploaded to in Storage.
   const modifiedFilePath = path.normalize(
@@ -275,16 +276,18 @@ const modifyImage = async ({
 
     // Generate a resized image buffer using Sharp.
     logs.imageResizing(modifiedFile, size);
-    const resizedImageBuffer = await resize(originalFile, size);
+    let modifiedImageBuffer = await resize(originalFile, size);
     logs.imageResized(modifiedFile);
 
     // Generate a converted image type buffer using Sharp.
-    logs.imageConverting(fileExtension, config.imageType);
-    const convertedFormatImageBuffer = await convertType(resizedImageBuffer);
-    logs.imageConverted(config.imageType);
+    if (hasImageTypeConfigSet) {
+      logs.imageConverting(fileExtension, config.imageType);
+      modifiedImageBuffer = await convertType(modifiedImageBuffer);
+      logs.imageConverted(config.imageType);
+    }
 
     // Generate a image file using Sharp.
-    await sharp(convertedFormatImageBuffer).toFile(modifiedFile);
+    await sharp(modifiedImageBuffer).toFile(modifiedFile);
 
     // Uploading the modified image.
     logs.imageUploading(modifiedFilePath);

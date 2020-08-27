@@ -41,15 +41,6 @@ export const unsupportedType = (
   );
 };
 
-export const unsupportedImageType = (
-  unsupportedType: string,
-  contentType: string
-) => {
-  console.log(
-    `Image type ${unsupportedType} is not supported. Using ${contentType} to continue.`
-  );
-};
-
 export const error = (err: Error) => {
   console.error("Error when resizing image", err);
 };
