@@ -16,28 +16,29 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.start = exports.pathTruncating = exports.pathTruncated = exports.pathSkipped = exports.init = exports.error = exports.complete = exports.childCount = void 0;
+const firebase_functions_1 = require("firebase-functions");
 const config_1 = require("./config");
 exports.childCount = (path, childCount) => {
-    console.log(`Node: '${path}' has: ${childCount} children`);
+    firebase_functions_1.logger.log(`Node: '${path}' has: ${childCount} children`);
 };
 exports.complete = () => {
-    console.log("Completed execution of extension");
+    firebase_functions_1.logger.log("Completed execution of extension");
 };
 exports.error = (err) => {
-    console.error("Error when truncating the database node", err);
+    firebase_functions_1.logger.error("Error when truncating the database node", err);
 };
 exports.init = () => {
-    console.log("Initializing extension with configuration", config_1.default);
+    firebase_functions_1.logger.log("Initializing extension with configuration", config_1.default);
 };
 exports.pathSkipped = (path) => {
-    console.log(`Path: '${path}' does not need to be truncated`);
+    firebase_functions_1.logger.log(`Path: '${path}' does not need to be truncated`);
 };
 exports.pathTruncated = (path, count) => {
-    console.log(`Truncated path: '${path}' to ${count} items`);
+    firebase_functions_1.logger.log(`Truncated path: '${path}' to ${count} items`);
 };
 exports.pathTruncating = (path, count) => {
-    console.log(`Truncating path: '${path}' to ${count} items`);
+    firebase_functions_1.logger.log(`Truncating path: '${path}' to ${count} items`);
 };
 exports.start = () => {
-    console.log("Started execution of extension with configuration", config_1.default);
+    firebase_functions_1.logger.log("Started execution of extension with configuration", config_1.default);
 };

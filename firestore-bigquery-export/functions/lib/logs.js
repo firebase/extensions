@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.timestampMissingValue = exports.start = exports.init = exports.error = exports.dataTypeInvalid = exports.dataInserting = exports.dataInserted = exports.complete = exports.bigQueryViewValidating = exports.bigQueryViewValidated = exports.bigQueryViewUpToDate = exports.bigQueryViewUpdating = exports.bigQueryViewUpdated = exports.bigQueryViewAlreadyExists = exports.bigQueryViewCreating = exports.bigQueryViewCreated = exports.bigQueryUserDefinedFunctionCreated = exports.bigQueryUserDefinedFunctionCreating = exports.bigQueryTableValidating = exports.bigQueryTableValidated = exports.bigQueryTableUpToDate = exports.bigQueryTableUpdating = exports.bigQueryTableUpdated = exports.bigQueryTableCreating = exports.bigQueryTableCreated = exports.bigQueryTableAlreadyExists = exports.bigQueryLatestSnapshotViewQueryCreated = exports.bigQueryErrorRecordingDocumentChange = exports.bigQueryDatasetExists = exports.bigQueryDatasetCreating = exports.bigQueryDatasetCreated = exports.arrayFieldInvalid = void 0;
 const config_1 = require("./config");
 exports.arrayFieldInvalid = (fieldName) => {
     console.warn(`Array field '${fieldName}' does not contain an array, skipping`);

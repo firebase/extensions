@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.10
+version: 0.1.11
 specVersion: v1beta
 
 displayName: Resize Images
@@ -39,7 +39,7 @@ contributors:
     email: mike@invertase.io
     url: https://github.com/salakar
 
-billingRequired: false
+billingRequired: true
 
 apis:
   - apiName: storage-component.googleapis.com
@@ -58,6 +58,7 @@ resources:
     properties:
       sourceDirectory: .
       location: ${LOCATION}
+      runtime: nodejs10
       availableMemoryMb: 1024
       eventTrigger:
         eventType: google.storage.object.finalize
