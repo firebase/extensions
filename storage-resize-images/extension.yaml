@@ -158,7 +158,7 @@ params:
     required: false
 
   - param: IMAGE_TYPE
-    label: Image type to convert to
+    label: Convert image to preferred type
     type: select
     options:
       - label: jpg
