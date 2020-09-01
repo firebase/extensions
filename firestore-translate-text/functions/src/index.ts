@@ -38,19 +38,17 @@ const translate = new Translate({ projectId: process.env.PROJECT_ID });
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 
-logs.init();
+logs.init(config);
 
 export const fstranslate = functions.handler.firestore.document.onWrite(
   async (change): Promise<void> => {
-    logs.start();
-
+    logs.start(config);
     const { languages, inputFieldName, outputFieldName } = config;
 
     if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
       logs.fieldNamesNotDifferent();
       return;
     }
-
     if (
       validators.fieldNameIsTranslationPath(
         inputFieldName,
@@ -236,7 +234,7 @@ const translateMultiple = async (
 const translateDocument = async (
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
-  const input: string = extractInput(snapshot);
+  const input: any = extractInput(snapshot);
 
   if (typeof input === "object") {
     await translateMultiple(input, snapshot);

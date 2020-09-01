@@ -17,42 +17,43 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.missingUids = exports.missingDeliveryField = exports.deliveryError = exports.delivered = exports.attemptingDelivery = exports.complete = exports.error = exports.start = exports.init = exports.obfuscatedConfig = void 0;
 const config_1 = require("./config");
+const firebase_functions_1 = require("firebase-functions");
 exports.obfuscatedConfig = Object.assign({}, config_1.default, {
     smtpConnectionUri: "<omitted>",
 });
 function init() {
-    console.log("Initializing extension with configuration", exports.obfuscatedConfig);
+    firebase_functions_1.logger.log("Initializing extension with configuration", exports.obfuscatedConfig);
 }
 exports.init = init;
 function start() {
-    console.log("Started execution of extension with configuration", exports.obfuscatedConfig);
+    firebase_functions_1.logger.log("Started execution of extension with configuration", exports.obfuscatedConfig);
 }
 exports.start = start;
 function error(err) {
-    console.log("Unhandled error occurred during processing:", err);
+    firebase_functions_1.logger.log("Unhandled error occurred during processing:", err);
 }
 exports.error = error;
 function complete() {
-    console.log("Completed execution of extension");
+    firebase_functions_1.logger.log("Completed execution of extension");
 }
 exports.complete = complete;
 function attemptingDelivery(ref) {
-    console.log(`Attempting delivery for message: ${ref.path}`);
+    firebase_functions_1.logger.log(`Attempting delivery for message: ${ref.path}`);
 }
 exports.attemptingDelivery = attemptingDelivery;
 function delivered(ref, info) {
-    console.log(`Delivered message: ${ref.path} successfully. messageId: ${info.messageId} accepted: ${info.accepted.length} rejected: ${info.rejected.length} pending: ${info.pending.length}`);
+    firebase_functions_1.logger.log(`Delivered message: ${ref.path} successfully. messageId: ${info.messageId} accepted: ${info.accepted.length} rejected: ${info.rejected.length} pending: ${info.pending.length}`);
 }
 exports.delivered = delivered;
 function deliveryError(ref, e) {
-    console.error(`Error when delivering message=${ref.path}: ${e.toString()}`);
+    firebase_functions_1.logger.error(`Error when delivering message=${ref.path}: ${e.toString()}`);
 }
 exports.deliveryError = deliveryError;
 function missingDeliveryField(ref) {
-    console.error(`message=${ref.path} is missing 'delivery' field`);
+    firebase_functions_1.logger.error(`message=${ref.path} is missing 'delivery' field`);
 }
 exports.missingDeliveryField = missingDeliveryField;
 function missingUids(uids) {
-    console.log(`The following uids were provided, however a document does not exist or has no 'email' field: ${uids.join(",")}`);
+    firebase_functions_1.logger.log(`The following uids were provided, however a document does not exist or has no 'email' field: ${uids.join(",")}`);
 }
 exports.missingUids = missingUids;

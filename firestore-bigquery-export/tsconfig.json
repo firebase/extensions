@@ -2,7 +2,8 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "functions/lib",
-    "types": ["node", "jest", "chai"]
+    "types": ["node", "jest", "chai"],
+    "target": "es2018"
   },
   "include": ["functions/src"]
 }

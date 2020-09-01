@@ -14,15 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const config_1 = require("./config");
 const functions = require("firebase-functions");
@@ -34,12 +25,12 @@ const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEv
     datasetId: config_1.default.datasetId,
 });
 logs.init();
-exports.fsexportbigquery = functions.handler.firestore.document.onWrite((change, context) => __awaiter(void 0, void 0, void 0, function* () {
+exports.fsexportbigquery = functions.handler.firestore.document.onWrite(async (change, context) => {
     logs.start();
     try {
         const changeType = util_1.getChangeType(change);
         const documentId = util_1.getDocumentId(change);
-        yield eventTracker.record([
+        await eventTracker.record([
             {
                 timestamp: context.timestamp,
                 operation: changeType,
@@ -54,4 +45,4 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite((change,
     catch (err) {
         logs.error(err);
     }
-}));
+});
