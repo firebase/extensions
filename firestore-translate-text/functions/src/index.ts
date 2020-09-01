@@ -38,19 +38,17 @@ const translate = new Translate({ projectId: process.env.PROJECT_ID });
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 
-logs.init();
+logs.init(config);
 
 export const fstranslate = functions.handler.firestore.document.onWrite(
   async (change): Promise<void> => {
-    logs.start();
-
+    logs.start(config);
     const { languages, inputFieldName, outputFieldName } = config;
 
     if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
       logs.fieldNamesNotDifferent();
       return;
     }
-
     if (
       validators.fieldNameIsTranslationPath(
         inputFieldName,
@@ -124,6 +122,7 @@ const handleUpdateDocument = async (
   const inputBefore = extractInput(before);
 
   const inputHasChanged = inputAfter !== inputBefore;
+
   if (
     !inputHasChanged &&
     inputAfter !== undefined &&

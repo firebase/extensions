@@ -15,6 +15,7 @@
  */
 
 import { compile } from "handlebars";
+import { logger } from "firebase-functions";
 
 interface TemplateGroup {
   subject?: HandlebarsTemplateDelegate;
@@ -64,7 +65,7 @@ export default class Templates {
         templates.amp = compile(data.amp);
       }
       this.templateMap[doc.id] = templates;
-      console.log(`loaded template '${doc.id}'`);
+      logger.log(`loaded template '${doc.id}'`);
     });
     this.ready = true;
     this.waits.forEach((wait) => wait());
