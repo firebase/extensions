@@ -14,15 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.clearData = void 0;
 const admin = require("firebase-admin");
@@ -38,7 +29,7 @@ logs.init();
  * Storage, and Firestore. It waits for all deletions to complete, and then
  * returns a success message.
  */
-exports.clearData = functions.auth.user().onDelete((user) => __awaiter(void 0, void 0, void 0, function* () {
+exports.clearData = functions.auth.user().onDelete(async (user) => {
     logs.start();
     const { firestorePaths, rtdbPaths, storagePaths } = config_1.default;
     const { uid } = user;
@@ -61,16 +52,16 @@ exports.clearData = functions.auth.user().onDelete((user) => __awaiter(void 0, v
     else {
         logs.storageNotConfigured();
     }
-    yield Promise.all(promises);
+    await Promise.all(promises);
     logs.complete(uid);
-}));
-const clearDatabaseData = (databasePaths, uid) => __awaiter(void 0, void 0, void 0, function* () {
+});
+const clearDatabaseData = async (databasePaths, uid) => {
     logs.rtdbDeleting();
     const paths = extractUserPaths(databasePaths, uid);
-    const promises = paths.map((path) => __awaiter(void 0, void 0, void 0, function* () {
+    const promises = paths.map(async (path) => {
         try {
             logs.rtdbPathDeleting(path);
-            yield admin
+            await admin
                 .database()
                 .ref(path)
                 .remove();
@@ -79,14 +70,14 @@ const clearDatabaseData = (databasePaths, uid) => __awaiter(void 0, void 0, void
         catch (err) {
             logs.rtdbPathError(path, err);
         }
-    }));
-    yield Promise.all(promises);
+    });
+    await Promise.all(promises);
     logs.rtdbDeleted();
-});
-const clearStorageData = (storagePaths, uid) => __awaiter(void 0, void 0, void 0, function* () {
+};
+const clearStorageData = async (storagePaths, uid) => {
     logs.storageDeleting();
     const paths = extractUserPaths(storagePaths, uid);
-    const promises = paths.map((path) => __awaiter(void 0, void 0, void 0, function* () {
+    const promises = paths.map(async (path) => {
         const parts = path.split("/");
         const bucketName = parts[0];
         const bucket = bucketName === "{DEFAULT}"
@@ -95,7 +86,7 @@ const clearStorageData = (storagePaths, uid) => __awaiter(void 0, void 0, void 0
         const prefix = parts.slice(1).join("/");
         try {
             logs.storagePathDeleting(prefix);
-            yield bucket.deleteFiles({
+            await bucket.deleteFiles({
                 prefix,
             });
             logs.storagePathDeleted(prefix);
@@ -108,21 +99,21 @@ const clearStorageData = (storagePaths, uid) => __awaiter(void 0, void 0, void 0
                 logs.storagePathError(prefix, err);
             }
         }
-    }));
-    yield Promise.all(promises);
+    });
+    await Promise.all(promises);
     logs.storageDeleted();
-});
-const clearFirestoreData = (firestorePaths, uid) => __awaiter(void 0, void 0, void 0, function* () {
+};
+const clearFirestoreData = async (firestorePaths, uid) => {
     logs.firestoreDeleting();
     const paths = extractUserPaths(firestorePaths, uid);
-    const promises = paths.map((path) => __awaiter(void 0, void 0, void 0, function* () {
+    const promises = paths.map(async (path) => {
         try {
             const isRecursive = config_1.default.firestoreDeleteMode === "recursive";
             if (!isRecursive) {
                 const firestore = admin.firestore();
                 logs.firestorePathDeleting(path, false);
                 // Wrapping in transaction to allow for automatic retries (#48)
-                yield firestore.runTransaction((transaction) => {
+                await firestore.runTransaction((transaction) => {
                     transaction.delete(firestore.doc(path));
                     return Promise.resolve();
                 });
@@ -130,7 +121,7 @@ const clearFirestoreData = (firestorePaths, uid) => __awaiter(void 0, void 0, vo
             }
             else {
                 logs.firestorePathDeleting(path, true);
-                yield firebase_tools.firestore.delete(path, {
+                await firebase_tools.firestore.delete(path, {
                     project: process.env.PROJECT_ID,
                     recursive: true,
                     yes: true,
@@ -141,10 +132,10 @@ const clearFirestoreData = (firestorePaths, uid) => __awaiter(void 0, void 0, vo
         catch (err) {
             logs.firestorePathError(path, err);
         }
-    }));
-    yield Promise.all(promises);
+    });
+    await Promise.all(promises);
     logs.firestoreDeleted();
-});
+};
 const extractUserPaths = (paths, uid) => {
     return paths.split(",").map((path) => replaceUID(path, uid));
 };

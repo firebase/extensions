@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: delete-user-data
-version: 0.1.4
+version: 0.1.5
 specVersion: v1beta
 
 displayName: Delete User Data
@@ -40,7 +40,7 @@ contributors:
     email: oss@invertase.io
     url: https://github.com/invertase
 
-billingRequired: false
+billingRequired: true
 
 roles:
   - role: datastore.owner
@@ -60,10 +60,10 @@ resources:
       Cloud Storage.
     properties:
       location: ${LOCATION}
+      runtime: nodejs10
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${PROJECT_ID}
-      runtime: nodejs10
 
 params:
   - param: LOCATION
