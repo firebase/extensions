@@ -14,15 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeUserFromList = exports.addUserToList = void 0;
 const crypto = require("crypto");
@@ -39,7 +30,7 @@ try {
 catch (err) {
     logs.initError(err);
 }
-exports.addUserToList = functions.handler.auth.user.onCreate((user) => __awaiter(void 0, void 0, void 0, function* () {
+exports.addUserToList = functions.handler.auth.user.onCreate(async (user) => {
     logs.start();
     if (!mailchimp) {
         logs.mailchimpNotInitialized();
@@ -52,7 +43,7 @@ exports.addUserToList = functions.handler.auth.user.onCreate((user) => __awaiter
     }
     try {
         logs.userAdding(uid, config_1.default.mailchimpAudienceId);
-        const results = yield mailchimp.post(`/lists/${config_1.default.mailchimpAudienceId}/members`, {
+        const results = await mailchimp.post(`/lists/${config_1.default.mailchimpAudienceId}/members`, {
             email_address: email,
             status: config_1.default.mailchimpContactStatus,
         });
@@ -62,8 +53,8 @@ exports.addUserToList = functions.handler.auth.user.onCreate((user) => __awaiter
     catch (err) {
         logs.errorAddUser(err);
     }
-}));
-exports.removeUserFromList = functions.handler.auth.user.onDelete((user) => __awaiter(void 0, void 0, void 0, function* () {
+});
+exports.removeUserFromList = functions.handler.auth.user.onDelete(async (user) => {
     logs.start();
     if (!mailchimp) {
         logs.mailchimpNotInitialized();
@@ -80,11 +71,11 @@ exports.removeUserFromList = functions.handler.auth.user.onDelete((user) => __aw
             .update(email)
             .digest("hex");
         logs.userRemoving(uid, hashed, config_1.default.mailchimpAudienceId);
-        yield mailchimp.delete(`/lists/${config_1.default.mailchimpAudienceId}/members/${hashed}`);
+        await mailchimp.delete(`/lists/${config_1.default.mailchimpAudienceId}/members/${hashed}`);
         logs.userRemoved(uid, hashed, config_1.default.mailchimpAudienceId);
         logs.complete();
     }
     catch (err) {
         logs.errorRemoveUser(err);
     }
-}));
+});

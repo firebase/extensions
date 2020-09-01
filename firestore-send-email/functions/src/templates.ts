@@ -21,6 +21,8 @@ const htmlHandlebars = create();
 const textHandlebars = create();
 const ampHandlebars = create();
 
+import { logger } from "firebase-functions";
+
 interface TemplateGroup {
   subject?: HandlebarsTemplateDelegate;
   html?: HandlebarsTemplateDelegate;
@@ -99,7 +101,7 @@ export default class Templates {
         tgroup.amp = ampHandlebars.compile(t.amp);
       }
       this.templateMap[t.name] = tgroup;
-      console.log(`loaded template '${t.name}'`);
+      logger.log(`loaded template '${t.name}'`);
     });
     this.ready = true;
     this.waits.forEach((wait) => wait());

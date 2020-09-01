@@ -2,7 +2,7 @@
 
 You can test out this extension right away!
 
-1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/database/firestore/data) in the Firebase console.
+1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/firestore/data) in the Firebase console.
 
 1.  If it doesn't already exist, create the collection you specified during installation: `${param:MAIL_COLLECTION}`.
 
@@ -160,7 +160,7 @@ There are instances in which email delivery fails in a recoverable fashion or th
 
 As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.
 
-[mail_collection]: https://console.firebase.google.com/project/_/database/firestore/data~2F${param:MAIL_COLLECTION}
+[mail_collection]: https://console.firebase.google.com/project/_/firestore/data~2F${param:MAIL_COLLECTION}
 [admin_sdk]: https://firebase.google.com/docs/admin/setup
 [amp4email]: https://amp.dev/documentation/guides-and-tutorials/learn/email-spec/amp-email-format/
 [handlebars]: https://handlebarsjs.com/
