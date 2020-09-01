@@ -97,25 +97,45 @@ const handleDeleteDocument = () => {
     logs.documentDeleted();
 };
 const handleUpdateDocument = (before, after) => __awaiter(void 0, void 0, void 0, function* () {
-    const inputAfter = extractInput(after);
     const inputBefore = extractInput(before);
-    const inputHasChanged = inputAfter !== inputBefore;
-    if (!inputHasChanged &&
-        inputAfter !== undefined &&
-        inputBefore !== undefined) {
-        logs.documentUpdatedUnchangedInput();
+    const inputAfter = extractInput(after);
+    // If previous and updated documents have no input, skip.
+    if (inputBefore === undefined && inputAfter === undefined) {
+        logs.documentUpdatedNoInput();
         return;
     }
-    if (inputAfter) {
+    // If updated document has no input, delete any existing translations.
+    if (inputAfter === undefined) {
+        yield updateTranslations(after, admin.firestore.FieldValue.delete());
+        logs.documentUpdatedNoInput();
+        return;
+    }
+    // If document types do not match, force a translation.
+    if (typeof inputBefore !== typeof inputAfter) {
         logs.documentUpdatedChangedInput();
         yield translateDocument(after);
+        return;
     }
-    else if (inputBefore) {
-        logs.documentUpdatedDeletedInput();
-        yield updateTranslations(after, admin.firestore.FieldValue.delete());
+    let beforeValues = [];
+    let afterValues = [];
+    if (typeof inputBefore === "string") {
+        beforeValues.push(inputBefore);
+    }
+    else if (typeof inputBefore === "object") {
+        beforeValues = Object.values(inputBefore);
+    }
+    if (typeof inputAfter === "string") {
+        afterValues.push(inputAfter);
+    }
+    else if (typeof inputAfter === "object") {
+        afterValues = Object.values(inputAfter);
+    }
+    if (JSON.stringify(beforeValues) === JSON.stringify(afterValues)) {
+        logs.documentUpdatedUnchangedInput();
     }
     else {
-        logs.documentUpdatedNoInput();
+        logs.documentUpdatedChangedInput();
+        yield translateDocument(after);
     }
 });
 const translateSingle = (input, snapshot) => __awaiter(void 0, void 0, void 0, function* () {

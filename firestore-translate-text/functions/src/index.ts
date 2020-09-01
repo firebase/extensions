@@ -120,27 +120,49 @@ const handleUpdateDocument = async (
   before: admin.firestore.DocumentSnapshot,
   after: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
-  const inputAfter = extractInput(after);
   const inputBefore = extractInput(before);
+  const inputAfter = extractInput(after);
 
-  const inputHasChanged = inputAfter !== inputBefore;
-  if (
-    !inputHasChanged &&
-    inputAfter !== undefined &&
-    inputBefore !== undefined
-  ) {
-    logs.documentUpdatedUnchangedInput();
+  // If previous and updated documents have no input, skip.
+  if (inputBefore === undefined && inputAfter === undefined) {
+    logs.documentUpdatedNoInput();
     return;
   }
 
-  if (inputAfter) {
+  // If updated document has no input, delete any existing translations.
+  if (inputAfter === undefined) {
+    await updateTranslations(after, admin.firestore.FieldValue.delete());
+    logs.documentUpdatedNoInput();
+    return;
+  }
+
+  // If document types do not match, force a translation.
+  if (typeof inputBefore !== typeof inputAfter) {
     logs.documentUpdatedChangedInput();
     await translateDocument(after);
-  } else if (inputBefore) {
-    logs.documentUpdatedDeletedInput();
-    await updateTranslations(after, admin.firestore.FieldValue.delete());
+    return;
+  }
+
+  let beforeValues = [];
+  let afterValues = [];
+
+  if (typeof inputBefore === "string") {
+    beforeValues.push(inputBefore);
+  } else if (typeof inputBefore === "object") {
+    beforeValues = Object.values(inputBefore);
+  }
+
+  if (typeof inputAfter === "string") {
+    afterValues.push(inputAfter);
+  } else if (typeof inputAfter === "object") {
+    afterValues = Object.values(inputAfter);
+  }
+
+  if (JSON.stringify(beforeValues) === JSON.stringify(afterValues)) {
+    logs.documentUpdatedUnchangedInput();
   } else {
-    logs.documentUpdatedNoInput();
+    logs.documentUpdatedChangedInput();
+    await translateDocument(after);
   }
 };
 
