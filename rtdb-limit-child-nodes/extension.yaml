@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: rtdb-limit-child-nodes
-version: 0.1.0
+version: 0.1.1
 specVersion: v1beta
 
 displayName: Limit Child Nodes
@@ -37,7 +37,7 @@ contributors:
     email: oss@invertase.io
     url: https://github.com/invertase
 
-billingRequired: false
+billingRequired: true
 
 roles:
   - role: firebasedatabase.admin
@@ -52,6 +52,7 @@ resources:
       then deletes the oldest nodes first, as needed to maintain the max count.
     properties:
       location: ${LOCATION}
+      runtime: nodejs10
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.create
         resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${NODE_PATH}/{messageid}

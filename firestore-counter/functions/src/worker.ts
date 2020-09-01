@@ -16,6 +16,7 @@
 
 import { firestore } from "firebase-admin";
 import * as deepEqual from "deep-equal";
+import { logger } from "firebase-functions";
 
 import {
   Slice,
@@ -115,11 +116,11 @@ export class ShardedCounterWorker {
                 });
               }
             } catch (err) {
-              console.log("Failed to save writer stats.", err);
+              logger.log("Failed to save writer stats.", err);
             }
           });
         } catch (err) {
-          console.log("Failed to save writer stats.", err);
+          logger.log("Failed to save writer stats.", err);
         }
       };
 
@@ -139,7 +140,7 @@ export class ShardedCounterWorker {
       unsubscribeMetadataListener = this.metadoc.ref.onSnapshot((snap) => {
         // if something's changed in the worker metadata since we were called, abort.
         if (!snap.exists || !deepEqual(snap.data(), this.metadata)) {
-          console.log("Shutting down because metadoc changed.");
+          logger.log("Shutting down because metadoc changed.");
           shutdown()
             .then(resolve)
             .catch(reject);
@@ -155,7 +156,7 @@ export class ShardedCounterWorker {
       ).onSnapshot((snap) => {
         this.shards = snap.docs;
         if (this.singleRun && this.shards.length === 0) {
-          console.log("Shutting down, single run mode.");
+          logger.log("Shutting down, single run mode.");
           shutdown()
             .then(writeStats)
             .then(resolve)
@@ -217,7 +218,7 @@ export class ShardedCounterWorker {
               metadocPromise,
             ]);
           } catch (err) {
-            console.log(
+            logger.log(
               "Unable to read shards during aggregation round, skipping...",
               err
             );
@@ -226,7 +227,7 @@ export class ShardedCounterWorker {
 
           // Check that we still own the slice.
           if (!metadoc.exists || !deepEqual(metadoc.data(), this.metadata)) {
-            console.log("Metadata has changed, bailing out...");
+            logger.log("Metadata has changed, bailing out...");
             return [];
           }
 
@@ -254,7 +255,7 @@ export class ShardedCounterWorker {
         });
         this.allPaths.push(...paths);
       } catch (err) {
-        console.log(
+        logger.log(
           "transaction to: " + plan.aggregate + " failed, skipping...",
           err
         );
@@ -321,11 +322,11 @@ export class ShardedCounterWorker {
               t.set(snap.ref, update.toPartialShard(() => uuid.v4()));
             }
           } catch (err) {
-            console.log("Partial cleanup failed: " + partial.ref.path);
+            logger.log("Partial cleanup failed: " + partial.ref.path);
           }
         });
       } catch (err) {
-        console.log(
+        logger.log(
           "transaction to delete: " + partial.ref.path + " failed, skipping",
           err
         );
