@@ -235,12 +235,12 @@ describe("extension", () => {
 
       // confirm logs were printed
       Object.entries((key, value) => {
-        expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect(logMock).toHaveBeenCalledWith(
           messages.translateInputString(value, key)
         );
 
         // logs.translateInputStringToAllLanguages
-        expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect(logMock).toHaveBeenCalledWith(
           messages.translateInputStringToAllLanguages(
             key,
             defaultEnvironment.LANGUAGES.split(",")
@@ -248,7 +248,7 @@ describe("extension", () => {
         );
 
         // logs.translateInputToAllLanguagesComplete
-        expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect(logMock).toHaveBeenCalledWith(
           messages.translateInputToAllLanguagesComplete(value)
         );
       });

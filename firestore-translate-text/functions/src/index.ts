@@ -130,7 +130,7 @@ const handleUpdateDocument = async (
   // If updated document has no input, delete any existing translations.
   if (inputAfter === undefined) {
     await updateTranslations(after, admin.firestore.FieldValue.delete());
-    logs.documentUpdatedNoInput();
+    logs.documentUpdatedDeletedInput();
     return;
   }
 
@@ -240,7 +240,7 @@ const translateDocument = async (
     return translateMultiple(input, snapshot);
   }
 
-  return translateSingle(input, snapshot);
+  await translateSingle(input, snapshot);
 };
 
 const translateString = async (
