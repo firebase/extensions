@@ -237,11 +237,10 @@ const translateDocument = async (
   const input: any = extractInput(snapshot);
 
   if (typeof input === "object") {
-    await translateMultiple(input, snapshot);
-    return Promise.resolve();
+    return translateMultiple(input, snapshot);
   }
 
-  await translateSingle(input, snapshot);
+  return translateSingle(input, snapshot);
 };
 
 const translateString = async (

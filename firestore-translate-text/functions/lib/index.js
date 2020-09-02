@@ -175,10 +175,9 @@ const translateMultiple = async (input, snapshot) => {
 const translateDocument = async (snapshot) => {
     const input = extractInput(snapshot);
     if (typeof input === "object") {
-        await translateMultiple(input, snapshot);
-        return Promise.resolve();
+        return translateMultiple(input, snapshot);
     }
-    await translateSingle(input, snapshot);
+    return translateSingle(input, snapshot);
 };
 const translateString = async (string, targetLanguage) => {
     try {
