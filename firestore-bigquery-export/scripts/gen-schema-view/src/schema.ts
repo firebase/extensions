@@ -406,7 +406,7 @@ function processFirestoreSchemaHelper(
     // "GROUP BY" clauses. We keep track of them so they can be explicitly
     // transformed into groupable types later.
 
-    const updatedPrefix = mapProps.length ? mapProps: prefix;
+    const updatedPrefix = mapProps.length ? mapProps : prefix;
 
     if (field.type === "array") {
       arrays.push(qualifyFieldName(updatedPrefix, field.name));
@@ -432,7 +432,7 @@ const processLeafField = (
   mapProps: string[]
 ) => {
   const extractPrefix = `${prefix.join(".")}`;
- const updatedPrefix = mapProps.length ? mapProps : prefix;
+  const updatedPrefix = mapProps.length ? mapProps : prefix;
 
   let fieldNameToSelector = {};
   let selector;
