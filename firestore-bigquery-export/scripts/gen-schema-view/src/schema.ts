@@ -50,7 +50,7 @@ type BigQueryFieldType =
 export type FirestoreField = {
   fields?: FirestoreField[];
   extractor?: string;
-  column_name: string;
+  column_name?: string;
   name: string;
   repeated?: boolean;
   description?: string;
