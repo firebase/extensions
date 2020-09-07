@@ -134,5 +134,4 @@ describe("changelog schema snapshot view sql generation", () => {
     );
     expect(result.query).to.equal(expectedQuery);
   });
-
 });

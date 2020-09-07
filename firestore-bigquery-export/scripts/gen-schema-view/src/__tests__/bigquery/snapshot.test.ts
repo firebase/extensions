@@ -22,7 +22,7 @@ import * as util from "util";
 import {
   buildLatestSchemaSnapshotViewQuery,
   buildLatestSchemaSnapshotViewQueryFromLatestView,
-  testBuildLatestSchemaSnapshotViewQuery
+  testBuildLatestSchemaSnapshotViewQuery,
 } from "../../snapshot";
 
 const fixturesDir = __dirname + "/../fixtures";
