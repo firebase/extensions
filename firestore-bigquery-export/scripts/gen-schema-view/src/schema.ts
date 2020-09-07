@@ -191,7 +191,7 @@ export class FirestoreBigQuerySchemaViewFactory {
   }
 }
 
-function updateFirestoreSchemaFields(fields: FirestoreField[]) {
+export function updateFirestoreSchemaFields(fields: FirestoreField[]) {
   return fields.map((field) => {
     return {
       ...field,
@@ -238,6 +238,15 @@ export function userSchemaView(
     fields: result.fields,
   };
 }
+
+export const testBuildSchemaViewQuery = (
+  datasetId: string,
+  rawTableName: string,
+  schema: FirestoreSchema
+) => {
+  schema.fields = updateFirestoreSchemaFields(schema.fields);
+  return buildSchemaViewQuery(datasetId, rawTableName, schema);
+};
 
 /**
  * Constructs a query for building a view over a raw changelog table name.
@@ -337,7 +346,8 @@ export function processFirestoreSchema(
     geopoints,
     extractors,
     transformer,
-    bigQueryFields
+    bigQueryFields,
+    []
   );
   return {
     queryInfo: [extractors, arrays, geopoints],
@@ -368,7 +378,7 @@ function processFirestoreSchemaHelper(
   extractors: { [fieldName: string]: string },
   transformer: (selector: string) => string,
   bigQueryFields: { [property: string]: string }[],
-  mapProps: string[] = []
+  extractPrefix: string[]
 ) {
   const { fields } = schema;
   return fields.map((field) => {
@@ -379,14 +389,14 @@ function processFirestoreSchemaHelper(
       processFirestoreSchemaHelper(
         datasetId,
         dataFieldName,
-        prefix.concat(field.extractor),
+        prefix.concat(field.name),
         subschema,
         arrays,
         geopoints,
         extractors,
         transformer,
         bigQueryFields,
-        [field.name]
+        extractPrefix.concat(field.extractor)
       );
       return;
     }
@@ -397,7 +407,7 @@ function processFirestoreSchemaHelper(
       field,
       transformer,
       bigQueryFields,
-      mapProps
+      extractPrefix
     );
     for (let fieldName in fieldNameToSelector) {
       extractors[fieldName] = fieldNameToSelector[fieldName];
@@ -406,13 +416,11 @@ function processFirestoreSchemaHelper(
     // "GROUP BY" clauses. We keep track of them so they can be explicitly
     // transformed into groupable types later.
 
-    const updatedPrefix = mapProps.length ? mapProps : prefix;
-
     if (field.type === "array") {
-      arrays.push(qualifyFieldName(updatedPrefix, field.name));
+      arrays.push(qualifyFieldName(prefix, field.name));
     }
     if (field.type === "geopoint") {
-      geopoints.push(qualifyFieldName(updatedPrefix, field.name));
+      geopoints.push(qualifyFieldName(prefix, field.name));
     }
   });
 }
@@ -429,10 +437,9 @@ const processLeafField = (
   field: FirestoreField,
   transformer: (selector: string) => string,
   bigQueryFields: { [property: string]: string }[],
-  mapProps: string[]
+  extractPrefix: string[]
 ) => {
-  const extractPrefix = `${prefix.join(".")}`;
-  const updatedPrefix = mapProps.length ? mapProps : prefix;
+  const extractPrefixJoined = `${extractPrefix.join(".")}`;
 
   let fieldNameToSelector = {};
   let selector;
@@ -444,7 +451,7 @@ const processLeafField = (
     case "reference":
       selector = jsonExtractScalar(
         dataFieldName,
-        extractPrefix,
+        extractPrefixJoined,
         field,
         ``,
         transformer
@@ -453,38 +460,50 @@ const processLeafField = (
     case "array":
       selector = firestoreArray(
         datasetId,
-        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtract(dataFieldName, extractPrefixJoined, field, ``, transformer)
       );
       break;
     case "boolean":
       selector = firestoreBoolean(
         datasetId,
-        jsonExtractScalar(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtractScalar(
+          dataFieldName,
+          extractPrefixJoined,
+          field,
+          ``,
+          transformer
+        )
       );
       break;
     case "number":
       selector = firestoreNumber(
         datasetId,
-        jsonExtractScalar(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtractScalar(
+          dataFieldName,
+          extractPrefixJoined,
+          field,
+          ``,
+          transformer
+        )
       );
       break;
     case "timestamp":
       selector = firestoreTimestamp(
         datasetId,
-        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtract(dataFieldName, extractPrefixJoined, field, ``, transformer)
       );
       break;
     case "geopoint":
       const latitude = jsonExtractScalar(
         dataFieldName,
-        extractPrefix,
+        extractPrefixJoined,
         field,
         `._latitude`,
         transformer
       );
       const longitude = jsonExtractScalar(
         dataFieldName,
-        extractPrefix,
+        extractPrefixJoined,
         field,
         `._longitude`,
         transformer
@@ -494,42 +513,42 @@ const processLeafField = (
        * generates multiple selector clauses.
        */
       fieldNameToSelector[
-        qualifyFieldName(updatedPrefix, field.name)
+        qualifyFieldName(prefix, field.name)
       ] = `${firestoreGeopoint(
         datasetId,
-        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
-      )} AS ${updatedPrefix.concat(field.name).join("_")}`;
+        jsonExtract(dataFieldName, extractPrefixJoined, field, ``, transformer)
+      )} AS ${prefix.concat(field.name).join("_")}`;
 
       bigQueryFields.push({
-        name: qualifyFieldName(updatedPrefix, field.name),
+        name: qualifyFieldName(prefix, field.name),
         mode: "NULLABLE",
         type: firestoreToBigQueryFieldType[field.type],
         description: field.description,
       });
 
       fieldNameToSelector[
-        qualifyFieldName(updatedPrefix, `${field.name}_latitude`)
+        qualifyFieldName(prefix, `${field.name}_latitude`)
       ] = `SAFE_CAST(${latitude} AS NUMERIC) AS ${qualifyFieldName(
-        updatedPrefix,
+        prefix,
         `${field.name}_latitude`
       )}`;
 
       bigQueryFields.push({
-        name: qualifyFieldName(updatedPrefix, `${field.name}_latitude`),
+        name: qualifyFieldName(prefix, `${field.name}_latitude`),
         mode: "NULLABLE",
         type: "NUMERIC",
         description: `Numeric latitude component of ${field.name}.`,
       });
 
       fieldNameToSelector[
-        qualifyFieldName(updatedPrefix, `${field.name}_longitude`)
+        qualifyFieldName(prefix, `${field.name}_longitude`)
       ] = `SAFE_CAST(${longitude} AS NUMERIC) AS ${qualifyFieldName(
-        updatedPrefix,
+        prefix,
         `${field.name}_longitude`
       )}`;
 
       bigQueryFields.push({
-        name: qualifyFieldName(updatedPrefix, `${field.name}_longitude`),
+        name: qualifyFieldName(prefix, `${field.name}_longitude`),
         mode: "NULLABLE",
         type: "NUMERIC",
         description: `Numeric longitude component of ${field.name}.`,
@@ -537,18 +556,18 @@ const processLeafField = (
       return fieldNameToSelector;
   }
   fieldNameToSelector[
-    qualifyFieldName(updatedPrefix, field.name)
-  ] = `${selector} AS ${qualifyFieldName(updatedPrefix, field.name)}`;
+    qualifyFieldName(prefix, field.name)
+  ] = `${selector} AS ${qualifyFieldName(prefix, field.name)}`;
   if (field.type === "array") {
     bigQueryFields.push({
-      name: qualifyFieldName(updatedPrefix, field.name),
+      name: qualifyFieldName(prefix, field.name),
       mode: "REPEATED",
       type: "STRING",
       description: field.description,
     });
   } else {
     bigQueryFields.push({
-      name: qualifyFieldName(updatedPrefix, field.name),
+      name: qualifyFieldName(prefix, field.name),
       mode: "NULLABLE",
       type: firestoreToBigQueryFieldType[field.type],
       description: field.description,

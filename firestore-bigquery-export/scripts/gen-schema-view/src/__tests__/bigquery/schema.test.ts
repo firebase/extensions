@@ -19,7 +19,7 @@ import * as fs from "fs";
 import * as sqlFormatter from "sql-formatter";
 import * as util from "util";
 
-import { buildSchemaViewQuery } from "../../schema";
+import { testBuildSchemaViewQuery } from "../../schema";
 
 const fixturesDir = __dirname + "/../fixtures";
 const sqlDir = fixturesDir + "/sql";
@@ -44,12 +44,12 @@ async function readBigQuerySchema(file: string): Promise<any> {
   return require(file);
 }
 
-describe("schema snapshot view sql generation", () => {
-  it("should generate the expected sql", async () => {
+describe("changelog schema snapshot view sql generation", () => {
+  it("should generate the expected sql for fullSchemaChangeLog.txt", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/fullSchemaChangeLog.txt`
     );
-    const result = buildSchemaViewQuery(
+    const result = testBuildSchemaViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/fullSchema.json`)
@@ -60,7 +60,7 @@ describe("schema snapshot view sql generation", () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/emptySchemaChangeLog.txt`
     );
-    const result = buildSchemaViewQuery(
+    const result = testBuildSchemaViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/emptySchema.json`)
@@ -71,7 +71,7 @@ describe("schema snapshot view sql generation", () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/nestedMapSchemaChangeLog.txt`
     );
-    const result = buildSchemaViewQuery(
+    const result = testBuildSchemaViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/nestedMapSchema.json`)
@@ -82,7 +82,7 @@ describe("schema snapshot view sql generation", () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/arraysNestedInMapsSchema.txt`
     );
-    const result = buildSchemaViewQuery(
+    const result = testBuildSchemaViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/arraysNestedInMapsSchema.json`)
@@ -93,7 +93,7 @@ describe("schema snapshot view sql generation", () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/fullSchemaSquared.txt`
     );
-    const result = buildSchemaViewQuery(
+    const result = testBuildSchemaViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/fullSchemaSquared.json`)
@@ -104,7 +104,7 @@ describe("schema snapshot view sql generation", () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/emptyMapSchema.txt`
     );
-    const result = buildSchemaViewQuery(
+    const result = testBuildSchemaViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/emptyMapSchema.json`)
@@ -115,11 +115,24 @@ describe("schema snapshot view sql generation", () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/referenceSchema.txt`
     );
-    const result = buildSchemaViewQuery(
+    const result = testBuildSchemaViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/referenceSchema.json`)
     );
     expect(result.query).to.equal(expectedQuery);
   });
+
+  it("should handle renaming properties extracted from JSON data", async () => {
+    const expectedQuery = await readFormattedSQL(
+      `${sqlDir}/changelogColumnRenameSchema.txt`
+    );
+    const result = testBuildSchemaViewQuery(
+      testDataset,
+      testTable,
+      await readBigQuerySchema(`${schemaDir}/columnRename.json`)
+    );
+    expect(result.query).to.equal(expectedQuery);
+  });
+
 });
