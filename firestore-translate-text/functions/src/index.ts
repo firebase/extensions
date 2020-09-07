@@ -127,7 +127,7 @@ const handleUpdateDocument = async (
     return;
   }
 
-  // If updated document has no input, delete any existing translations.
+  // If updated document has no string input, delete any existing translations.
   if (inputAfter === undefined) {
     await updateTranslations(after, admin.firestore.FieldValue.delete());
     logs.documentUpdatedDeletedInput();
@@ -141,22 +141,7 @@ const handleUpdateDocument = async (
     return;
   }
 
-  let beforeValues = [];
-  let afterValues = [];
-
-  if (typeof inputBefore === "string") {
-    beforeValues.push(inputBefore);
-  } else if (typeof inputBefore === "object") {
-    beforeValues = Object.values(inputBefore);
-  }
-
-  if (typeof inputAfter === "string") {
-    afterValues.push(inputAfter);
-  } else if (typeof inputAfter === "object") {
-    afterValues = Object.values(inputAfter);
-  }
-
-  if (JSON.stringify(beforeValues) === JSON.stringify(afterValues)) {
+  if (JSON.stringify(inputBefore) === JSON.stringify(inputAfter)) {
     logs.documentUpdatedUnchangedInput();
   } else {
     logs.documentUpdatedChangedInput();
