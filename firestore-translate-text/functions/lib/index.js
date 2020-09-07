@@ -144,7 +144,9 @@ const translateMultiple = async (input, snapshot) => {
         config_1.default.languages.forEach((language) => {
             promises.push(() => new Promise(async (resolve) => {
                 logs.translateInputStringToAllLanguages(value, config_1.default.languages);
-                const output = await translateString(value, language);
+                const output = !!value
+                    ? await translateString(value, language)
+                    : null;
                 if (!translations[input])
                     translations[input] = {};
                 translations[input][language] = output;
