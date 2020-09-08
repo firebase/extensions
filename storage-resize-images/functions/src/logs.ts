@@ -26,7 +26,7 @@ export const noContentType = () => {
 };
 
 export const gzipContentEncoding = () => {
-  console.log("Images encoded with 'gzip' are not supported by this extension");
+  logger.log("Images encoded with 'gzip' are not supported by this extension");
 };
 
 export const contentTypeInvalid = (contentType: string) => {
@@ -47,11 +47,11 @@ export const unsupportedType = (
 };
 
 export const error = (err: Error) => {
-  console.error("Error when resizing image", err);
+  logger.error("Error when resizing image", err);
 };
 
 export const errorDeleting = (err: Error) => {
-  console.warn("Error when deleting temporary files", err);
+  logger.warn("Error when deleting temporary files", err);
 };
 
 export const failed = () => {
