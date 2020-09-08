@@ -14,15 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fsurlshortener = void 0;
 const functions = require("firebase-functions");
@@ -42,25 +33,23 @@ class FirestoreBitlyUrlShortener extends abstract_shortener_1.FirestoreUrlShorte
         });
         logs.init();
     }
-    shortenUrl(snapshot) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const url = this.extractUrl(snapshot);
-            logs.shortenUrl(url);
-            try {
-                const response = yield this.instance.post("bitlinks", {
-                    long_url: url,
-                });
-                const { link } = response.data;
-                logs.shortenUrlComplete(link);
-                yield this.updateShortUrl(snapshot, link);
-            }
-            catch (err) {
-                logs.error(err);
-            }
-        });
+    async shortenUrl(snapshot) {
+        const url = this.extractUrl(snapshot);
+        logs.shortenUrl(url);
+        try {
+            const response = await this.instance.post("bitlinks", {
+                long_url: url,
+            });
+            const { link } = response.data;
+            logs.shortenUrlComplete(link);
+            await this.updateShortUrl(snapshot, link);
+        }
+        catch (err) {
+            logs.error(err);
+        }
     }
 }
 const urlShortener = new FirestoreBitlyUrlShortener(config_1.default.urlFieldName, config_1.default.shortUrlFieldName, config_1.default.bitlyAccessToken);
-exports.fsurlshortener = functions.handler.firestore.document.onWrite((change) => __awaiter(void 0, void 0, void 0, function* () {
+exports.fsurlshortener = functions.handler.firestore.document.onWrite(async (change) => {
     return urlShortener.onDocumentWrite(change);
-}));
+});

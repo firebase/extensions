@@ -1,3 +1,7 @@
+## Version 0.1.4
+
+feature - Update Cloud Functions runtime to Node.js 10.
+
 ## Version 0.1.3
 
 fixed - Fixed 406 HTTP error code from Bitly API due to `Content-Type` header not being set (#202).

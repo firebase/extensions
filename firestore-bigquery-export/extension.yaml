@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.6
+version: 0.1.8
 specVersion: v1beta
 
 displayName: Export Collections to BigQuery
@@ -54,6 +54,7 @@ resources:
     properties:
       sourceDirectory: .
       location: ${LOCATION}
+      runtime: nodejs10
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
@@ -119,6 +120,8 @@ params:
       collection (for example: `chatrooms/{chatid}/posts`).
     type: string
     example: posts
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Firestore collection paths must be an odd number of segments separated by slashes, e.g. "path/to/collection".
     default: posts
     required: true
 
