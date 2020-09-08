@@ -189,6 +189,7 @@ describe("extension", () => {
           messages.translateStringComplete("hello", language)
         );
       });
+
       // logs.translateInputStringToAllLanguages
       expect(logMock).toHaveBeenCalledWith(
         messages.translateInputStringToAllLanguages(
@@ -200,6 +201,57 @@ describe("extension", () => {
       expect(logMock).toHaveBeenCalledWith(
         messages.translateInputToAllLanguagesComplete("hello")
       );
+    });
+
+    test("function updates translation document with multiple translations", async () => {
+      beforeSnapshot = snapshot();
+
+      afterSnapshot = snapshot({
+        input: {
+          one: "hello",
+          two: "hello",
+        },
+      });
+
+      documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
+
+      await wrappedMockTranslate(documentChange);
+
+      // confirm document update was called
+      expect(mockFirestoreUpdate).toHaveBeenCalledWith("translated", {
+        one: {
+          de: "hallo",
+          en: "hello",
+          es: "hola",
+          fr: "salut",
+        },
+        two: {
+          de: "hallo",
+          en: "hello",
+          es: "hola",
+          fr: "salut",
+        },
+      });
+
+      // confirm logs were printed
+      Object.entries((key, value) => {
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateInputString(value, key)
+        );
+
+        // logs.translateInputStringToAllLanguages
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateInputStringToAllLanguages(
+            key,
+            defaultEnvironment.LANGUAGES.split(",")
+          )
+        );
+
+        // logs.translateInputToAllLanguagesComplete
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateInputToAllLanguagesComplete(value)
+        );
+      });
     });
 
     test("function updates translation document when previous input changes", async () => {
