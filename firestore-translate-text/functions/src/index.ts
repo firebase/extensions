@@ -127,17 +127,10 @@ const handleUpdateDocument = async (
     return;
   }
 
-  // If updated document has no string input, delete any existing translations.
-  if (inputAfter === undefined) {
+  // If updated document has no string or object input, delete any existing translations.
+  if (typeof inputAfter !== "string" && typeof inputAfter !== "object") {
     await updateTranslations(after, admin.firestore.FieldValue.delete());
     logs.documentUpdatedDeletedInput();
-    return;
-  }
-
-  // If document types do not match, force a translation.
-  if (typeof inputBefore !== typeof inputAfter) {
-    logs.documentUpdatedChangedInput();
-    await translateDocument(after);
     return;
   }
 
@@ -198,9 +191,10 @@ const translateMultiple = async (
           new Promise(async (resolve) => {
             logs.translateInputStringToAllLanguages(value, config.languages);
 
-            const output = !!value
-              ? await translateString(value, language)
-              : null;
+            const output =
+              typeof value === "string"
+                ? await translateString(value, language)
+                : null;
 
             if (!translations[input]) translations[input] = {};
             translations[input][language] = output;
