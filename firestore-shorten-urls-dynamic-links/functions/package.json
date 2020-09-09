@@ -2,7 +2,8 @@
   "name": "firestore-shorten-urls-dynamic-links",
   "scripts": {
     "clean": "rimraf lib",
-    "build": "npm run clean && tsc"
+    "build": "npm run clean && tsc",
+    "generate-readme": "exit 0"
   },
   "main": "lib/index.js",
   "dependencies": {
