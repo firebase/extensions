@@ -1,0 +1,21 @@
+{
+  "name": "firestore-shorten-urls-dynamic-links",
+  "scripts": {
+    "clean": "rimraf lib",
+    "build": "npm run clean && tsc",
+    "generate-readme": "exit 0"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^8.6.0",
+    "firebase-functions": "^3.9.1",
+    "node-fetch": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^10.17.28",
+    "@types/node-fetch": "^2.5.7",
+    "rimraf": "^3.0.2",
+    "typescript": "^3.8.0"
+  },
+  "private": true
+}
