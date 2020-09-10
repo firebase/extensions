@@ -1,3 +1,9 @@
+## Version 0.1.12
+
+fixed - ignore gzipped images (#417)
+
+feature - Add new Cloud Functions locations. For more information about locations and their pricing tiers, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+
 ## Version 0.1.11
 
 feature - Update Cloud Functions runtime to Node.js 10.
