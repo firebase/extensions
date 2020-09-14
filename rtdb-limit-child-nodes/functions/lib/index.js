@@ -14,26 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.rtdblimit = void 0;
 const functions = require("firebase-functions");
 const config_1 = require("./config");
 const logs = require("./logs");
 logs.init();
-exports.rtdblimit = functions.handler.database.ref.onCreate((snapshot) => __awaiter(void 0, void 0, void 0, function* () {
+exports.rtdblimit = functions.handler.database.ref.onCreate(async (snapshot) => {
     logs.start();
     try {
         const parentRef = snapshot.ref.parent;
-        const parentSnapshot = yield parentRef.once("value");
+        const parentSnapshot = await parentRef.once("value");
         logs.childCount(parentRef.path, parentSnapshot.numChildren());
         if (parentSnapshot.numChildren() > config_1.default.maxCount) {
             let childCount = 0;
@@ -44,7 +35,7 @@ exports.rtdblimit = functions.handler.database.ref.onCreate((snapshot) => __awai
                 }
             });
             logs.pathTruncating(parentRef.path, config_1.default.maxCount);
-            yield parentRef.update(updates);
+            await parentRef.update(updates);
             logs.pathTruncated(parentRef.path, config_1.default.maxCount);
         }
         else {
@@ -55,4 +46,4 @@ exports.rtdblimit = functions.handler.database.ref.onCreate((snapshot) => __awai
     catch (err) {
         logs.error(err);
     }
-}));
+});

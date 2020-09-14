@@ -1,3 +1,13 @@
+## Version 0.1.12
+
+fixed - ignore gzipped images (#417)
+
+feature - Add new Cloud Functions locations. For more information about locations and their pricing tiers, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+
+## Version 0.1.11
+
+feature - Update Cloud Functions runtime to Node.js 10.
+
 ## Version 0.1.10
 
 fixed - A fresh token is now generated for each resized image. (Issue #323, PR #351)
@@ -5,7 +15,9 @@ fixed - A fresh token is now generated for each resized image. (Issue #323, PR #
 ## Version 0.1.9
 
 changed - If the original image is a vector image, the extension does not resize it. (Issue #326, PR #329)
+
 fixed - Replaced `mkdirp-promise` with `mkdirp` because `mkdirp-promise` is deprecated. (PR #266)
+
 fixed - If the original image is smaller than the specified max width and height, the extension does not enlarge it or resize it. (Issue #337, PR #338)
 
 ## Version 0.1.8
@@ -15,6 +27,7 @@ fixed - Resized images now maintain the same orientation as the original image. 
 ## Version 0.1.7
 
 fixed - Resized images now render in the Firebase console. (Issue #140)
+
 fixed - The Sharp cache is now cleared so that the latest image with a given
 file name is retrieved from the Storage bucket. (Issue #286)
 
@@ -29,7 +42,9 @@ fixed - The original, uploaded image's MIME type must now always be specified in
 ## Version 0.1.4
 
 fixed - Fixed bug where name of resized file was missing original name if there was no file extension. (issue #20)
+
 fixed - Fixed "TypeError: Cannot set property 'resizedImage' of undefined". (issue #130)
+
 fixed - Fixed bug where some valid bucket names were rejected during configuration. (issue #27)
 
 ## Version 0.1.3
