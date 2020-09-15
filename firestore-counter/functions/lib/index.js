@@ -14,15 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onWrite = exports.worker = exports.controller = exports.controllerCore = void 0;
 const functions = require("firebase-functions");
@@ -44,26 +35,26 @@ const WORKERS_COLLECTION_ID = "_counter_workers_";
 exports.controllerCore = functions.handler.pubsub.schedule.onRun(() => __awaiter(void 0, void 0, void 0, function* () {
     const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new controller_1.ShardedCounterController(metadocRef, SHARDS_COLLECTION_ID);
-    let status = yield controller.aggregateOnce({ start: "", end: "" }, 200);
+    let status = await controller.aggregateOnce({ start: "", end: "" }, 200);
     if (status === controller_1.ControllerStatus.WORKERS_RUNNING ||
         status === controller_1.ControllerStatus.TOO_MANY_SHARDS ||
         status === controller_1.ControllerStatus.FAILURE) {
-        yield controller.rescheduleWorkers();
+        await controller.rescheduleWorkers();
     }
     return null;
-}));
+});
 /**
  * Backwards compatible HTTPS function
  */
-exports.controller = functions.handler.https.onRequest((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.controller = functions.handler.https.onRequest(async (req, res) => {
     if (!pubsub) {
         pubsub = new pubsub_1.PubSub();
     }
-    yield pubsub
+    await pubsub
         .topic(process.env.EXT_INSTANCE_ID)
         .publish(Buffer.from(JSON.stringify({})));
     res.status(200).send("Ok");
-}));
+});
 /**
  * Worker is responsible for aggregation of a defined range of shards. It is controlled
  * by a worker metadata document. At the end of its run (that lasts for 45s) it writes
@@ -72,20 +63,20 @@ exports.controller = functions.handler.https.onRequest((req, res) => __awaiter(v
  * ControllerCore is monitoring these metadata documents to detect overload that requires
  * resharding and to detect failed workers that need poking.
  */
-exports.worker = functions.handler.firestore.document.onWrite((change, context) => __awaiter(void 0, void 0, void 0, function* () {
+exports.worker = functions.handler.firestore.document.onWrite(async (change, context) => {
     // stop worker if document got deleted
     if (!change.after.exists)
         return;
     const worker = new worker_1.ShardedCounterWorker(change.after, SHARDS_COLLECTION_ID);
-    yield worker.run();
-}));
+    await worker.run();
+});
 /**
  * This is an additional function that is triggered for every shard write. It is
  * limited to one concurrent run at the time. This helps reduce latency for workloads
  * that are below the threshold for workers.
  */
-exports.onWrite = functions.handler.firestore.document.onWrite((change, context) => __awaiter(void 0, void 0, void 0, function* () {
+exports.onWrite = functions.handler.firestore.document.onWrite(async (change, context) => {
     const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new controller_1.ShardedCounterController(metadocRef, SHARDS_COLLECTION_ID);
-    yield controller.aggregateContinuously({ start: "", end: "" }, 200, 60000);
-}));
+    await controller.aggregateContinuously({ start: "", end: "" }, 200, 60000);
+});

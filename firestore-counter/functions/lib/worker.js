@@ -14,19 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ShardedCounterWorker = void 0;
 const firebase_admin_1 = require("firebase-admin");
 const deepEqual = require("deep-equal");
+const firebase_functions_1 = require("firebase-functions");
 const common_1 = require("./common");
 const planner_1 = require("./planner");
 const aggregator_1 = require("./aggregator");
@@ -67,21 +59,21 @@ class ShardedCounterWorker {
             let timeoutTimer;
             let unsubscribeMetadataListener;
             let unsubscribeSliceListener;
-            const shutdown = () => __awaiter(this, void 0, void 0, function* () {
+            const shutdown = async () => {
                 clearInterval(intervalTimer);
                 clearTimeout(timeoutTimer);
                 unsubscribeMetadataListener();
                 unsubscribeSliceListener();
                 if (this.aggregation != null) {
                     try {
-                        yield this.aggregation;
+                        await this.aggregation;
                     }
                     catch (err) {
                         // Not much here we can do, transaction is over.
                     }
                 }
-            });
-            const writeStats = () => __awaiter(this, void 0, void 0, function* () {
+            };
+            const writeStats = async () => {
                 this.allPaths.sort();
                 let splits = this.allPaths.filter((val, idx) => idx !== 0 && idx % 100 === 0);
                 let stats = {
@@ -92,9 +84,9 @@ class ShardedCounterWorker {
                     roundsCapped: this.roundsCapped,
                 };
                 try {
-                    yield this.db.runTransaction((t) => __awaiter(this, void 0, void 0, function* () {
+                    await this.db.runTransaction(async (t) => {
                         try {
-                            const snap = yield t.get(this.metadoc.ref);
+                            const snap = await t.get(this.metadoc.ref);
                             if (snap.exists && deepEqual(snap.data(), this.metadata)) {
                                 t.update(snap.ref, {
                                     timestamp: firebase_admin_1.firestore.FieldValue.serverTimestamp(),
@@ -103,14 +95,14 @@ class ShardedCounterWorker {
                             }
                         }
                         catch (err) {
-                            console.log("Failed to save writer stats.", err);
+                            firebase_functions_1.logger.log("Failed to save writer stats.", err);
                         }
-                    }));
+                    });
                 }
                 catch (err) {
-                    console.log("Failed to save writer stats.", err);
+                    firebase_functions_1.logger.log("Failed to save writer stats.", err);
                 }
-            });
+            };
             intervalTimer = setInterval(() => {
                 this.maybeAggregate();
             }, 1000);
@@ -121,7 +113,7 @@ class ShardedCounterWorker {
             unsubscribeMetadataListener = this.metadoc.ref.onSnapshot((snap) => {
                 // if something's changed in the worker metadata since we were called, abort.
                 if (!snap.exists || !deepEqual(snap.data(), this.metadata)) {
-                    console.log("Shutting down because metadoc changed.");
+                    firebase_functions_1.logger.log("Shutting down because metadoc changed.");
                     shutdown()
                         .then(resolve)
                         .catch(reject);
@@ -130,7 +122,7 @@ class ShardedCounterWorker {
             unsubscribeSliceListener = common_1.queryRange(this.db, this.shardCollection, this.metadata.slice.start, this.metadata.slice.end, SHARDS_LIMIT).onSnapshot((snap) => {
                 this.shards = snap.docs;
                 if (this.singleRun && this.shards.length === 0) {
-                    console.log("Shutting down, single run mode.");
+                    firebase_functions_1.logger.log("Shutting down, single run mode.");
                     shutdown()
                         .then(writeStats)
                         .then(resolve)
@@ -149,9 +141,9 @@ class ShardedCounterWorker {
         const [toAggregate, toCleanup] = ShardedCounterWorker.categorizeShards(this.shards, this.singleRun);
         const cleanupPromises = ShardedCounterWorker.cleanupPartials(this.db, toCleanup);
         const plans = planner_1.Planner.planAggregations(this.metadata.slice.start, toAggregate);
-        const promises = plans.map((plan) => __awaiter(this, void 0, void 0, function* () {
+        const promises = plans.map(async (plan) => {
             try {
-                const paths = yield this.db.runTransaction((t) => __awaiter(this, void 0, void 0, function* () {
+                const paths = await this.db.runTransaction(async (t) => {
                     const paths = [];
                     // Read metadata document in transaction to guarantee ownership of the slice.
                     const metadocPromise = t.get(this.metadoc.ref);
@@ -169,19 +161,19 @@ class ShardedCounterWorker {
                     let counter;
                     let metadoc;
                     try {
-                        [shards, counter, metadoc] = yield Promise.all([
+                        [shards, counter, metadoc] = await Promise.all([
                             shardsPromise,
                             counterPromise,
                             metadocPromise,
                         ]);
                     }
                     catch (err) {
-                        console.log("Unable to read shards during aggregation round, skipping...", err);
+                        firebase_functions_1.logger.log("Unable to read shards during aggregation round, skipping...", err);
                         return [];
                     }
                     // Check that we still own the slice.
                     if (!metadoc.exists || !deepEqual(metadoc.data(), this.metadata)) {
-                        console.log("Metadata has changed, bailing out...");
+                        firebase_functions_1.logger.log("Metadata has changed, bailing out...");
                         return [];
                     }
                     // Calculate aggregated value and save to aggregate shard.
@@ -203,13 +195,13 @@ class ShardedCounterWorker {
                         }
                     });
                     return paths;
-                }));
+                });
                 this.allPaths.push(...paths);
             }
             catch (err) {
-                console.log("transaction to: " + plan.aggregate + " failed, skipping...", err);
+                firebase_functions_1.logger.log("transaction to: " + plan.aggregate + " failed, skipping...", err);
             }
-        }));
+        });
         if (promises.length === 0 && cleanupPromises.length === 0)
             return;
         this.aggregation = Promise.all(promises.concat(cleanupPromises)).then(() => {
@@ -244,11 +236,11 @@ class ShardedCounterWorker {
      * Deletes empty partials and compacts non-empty ones.
      */
     static cleanupPartials(db, toCleanup) {
-        return toCleanup.map((partial) => __awaiter(this, void 0, void 0, function* () {
+        return toCleanup.map(async (partial) => {
             try {
-                yield db.runTransaction((t) => __awaiter(this, void 0, void 0, function* () {
+                await db.runTransaction(async (t) => {
                     try {
-                        const snap = yield t.get(partial.ref);
+                        const snap = await t.get(partial.ref);
                         if (snap.exists && isEmptyPartial(snap.data())) {
                             t.delete(snap.ref);
                         }
@@ -264,14 +256,14 @@ class ShardedCounterWorker {
                         }
                     }
                     catch (err) {
-                        console.log("Partial cleanup failed: " + partial.ref.path);
+                        firebase_functions_1.logger.log("Partial cleanup failed: " + partial.ref.path);
                     }
-                }));
+                });
             }
             catch (err) {
-                console.log("transaction to delete: " + partial.ref.path + " failed, skipping", err);
+                firebase_functions_1.logger.log("transaction to delete: " + partial.ref.path + " failed, skipping", err);
             }
-        }));
+        });
     }
 }
 exports.ShardedCounterWorker = ShardedCounterWorker;

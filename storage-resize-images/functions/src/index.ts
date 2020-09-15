@@ -22,6 +22,7 @@ import * as mkdirp from "mkdirp";
 import * as os from "os";
 import * as path from "path";
 import * as sharp from "sharp";
+import { uuid } from "uuidv4";
 
 import config from "./config";
 import * as logs from "./logs";
@@ -66,6 +67,11 @@ export const generateResizedImage = functions.storage.object().onFinalize(
 
     if (!contentType.startsWith("image/")) {
       logs.contentTypeInvalid(contentType);
+      return;
+    }
+
+    if (object.contentEncoding === "gzip") {
+      logs.gzipContentEncoding();
       return;
     }
 
@@ -201,13 +207,13 @@ const resizeImage = async ({
       ? path.join(fileDir, config.resizedImagesPath, resizedFileName)
       : path.join(fileDir, resizedFileName)
   );
-  let resizedFile;
+  let resizedFile: string;
 
   try {
     resizedFile = path.join(os.tmpdir(), resizedFileName);
 
     // Cloud Storage files.
-    const metadata: any = {
+    const metadata: { [key: string]: any } = {
       contentDisposition: objectMetadata.contentDisposition,
       contentEncoding: objectMetadata.contentEncoding,
       contentLanguage: objectMetadata.contentLanguage,
@@ -219,6 +225,12 @@ const resizeImage = async ({
       metadata.cacheControl = config.cacheControlHeader;
     } else {
       metadata.cacheControl = objectMetadata.cacheControl;
+    }
+
+    // If the original image has a download token, add a
+    // new token to the image being resized #323
+    if (metadata.metadata.firebaseStorageDownloadTokens) {
+      metadata.metadata.firebaseStorageDownloadTokens = uuid();
     }
 
     // Generate a resized image using Sharp.

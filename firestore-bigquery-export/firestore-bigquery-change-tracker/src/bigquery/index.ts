@@ -17,7 +17,11 @@
 import * as bigquery from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
 import * as traverse from "traverse";
-import { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
+import {
+  RawChangelogSchema,
+  RawChangelogViewSchema,
+  documentIdField,
+} from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 
 import {
@@ -26,6 +30,7 @@ import {
   FirestoreDocumentChangeEvent,
 } from "../tracker";
 import * as logs from "../logs";
+import { InsertRowsOptions } from "@google-cloud/bigquery/build/src/table";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
@@ -62,6 +67,7 @@ export class FirestoreBigQueryEventHistoryTracker
           timestamp: event.timestamp,
           event_id: event.eventId,
           document_name: event.documentName,
+          document_id: event.documentId,
           operation: ChangeType[event.operation],
           data: JSON.stringify(this.serializeData(event.data)),
         },
@@ -96,13 +102,56 @@ export class FirestoreBigQueryEventHistoryTracker
   }
 
   /**
+   * Check whether a failed operation is retryable or not.
+   * Reasons for retrying:
+   * 1) We added a new column to our schema. Sometimes BQ is not ready to stream insertion records immediately
+   *    after adding a new column to an existing table (https://issuetracker.google.com/35905247)
+   */
+  private async isRetryableInsertionError(e) {
+    let isRetryable = true;
+    const expectedErrors = [
+      {
+        message: "no such field.",
+        location: "document_id",
+      },
+    ];
+    if (
+      e.response &&
+      e.response.insertErrors &&
+      e.response.insertErrors.errors
+    ) {
+      const errors = e.response.insertErrors.errors;
+      errors.forEach((error) => {
+        let isExpected = false;
+        expectedErrors.forEach((expectedError) => {
+          if (
+            error.message === expectedError.message &&
+            error.location === expectedError.location
+          ) {
+            isExpected = true;
+          }
+        });
+        if (!isExpected) {
+          isRetryable = false;
+        }
+      });
+    }
+    return isRetryable;
+  }
+
+  /**
    * Inserts rows of data into the BigQuery raw change log table.
    */
-  private async insertData(rows: bigquery.RowMetadata[]) {
+  private async insertData(
+    rows: bigquery.RowMetadata[],
+    overrideOptions: InsertRowsOptions = {},
+    retry: boolean = true
+  ) {
     const options = {
       skipInvalidRows: false,
       ignoreUnknownValues: false,
       raw: true,
+      ...overrideOptions,
     };
     try {
       const dataset = this.bq.dataset(this.config.datasetId);
@@ -111,6 +160,15 @@ export class FirestoreBigQueryEventHistoryTracker
       await table.insert(rows, options);
       logs.dataInserted(rows.length);
     } catch (e) {
+      if (retry && this.isRetryableInsertionError(e)) {
+        retry = false;
+        logs.dataInsertRetried(rows.length);
+        return this.insertData(
+          rows,
+          { ...overrideOptions, ignoreUnknownValues: true },
+          retry
+        );
+      }
       // Reinitializing in case the destintation table is modified.
       this.initialized = false;
       throw e;
@@ -159,6 +217,19 @@ export class FirestoreBigQueryEventHistoryTracker
 
     if (tableExists) {
       logs.bigQueryTableAlreadyExists(table.id, dataset.id);
+
+      const [metadata] = await table.getMetadata();
+      const fields = metadata.schema.fields;
+
+      const documentIdColExists = fields.find(
+        (column) => column.name === "document_id"
+      );
+
+      if (!documentIdColExists) {
+        fields.push(documentIdField);
+        await table.setMetadata(metadata);
+        logs.addDocumentIdColumn(this.rawChangeLogTableName());
+      }
     } else {
       logs.bigQueryTableCreating(changelogName);
       const options = {
@@ -183,6 +254,22 @@ export class FirestoreBigQueryEventHistoryTracker
 
     if (viewExists) {
       logs.bigQueryViewAlreadyExists(view.id, dataset.id);
+      const [metadata] = await view.getMetadata();
+      const fields = metadata.schema.fields;
+
+      const documentIdColExists = fields.find(
+        (column) => column.name === "document_id"
+      );
+
+      if (!documentIdColExists) {
+        metadata.view = latestConsistentSnapshotView(
+          this.config.datasetId,
+          this.rawChangeLogTableName()
+        );
+
+        await view.setMetadata(metadata);
+        logs.addDocumentIdColumn(this.rawLatestView());
+      }
     } else {
       const latestSnapshot = latestConsistentSnapshotView(
         this.config.datasetId,

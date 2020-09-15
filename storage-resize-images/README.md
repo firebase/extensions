@@ -1,5 +1,7 @@
 # Resize Images
 
+**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
+
 **Description**: Resizes images uploaded to Cloud Storage to a specified size, and optionally keeps or deletes the original image.
 
 
@@ -14,7 +16,7 @@ When you upload an image file to your specified Cloud Storage bucket, this exten
 
 You can even configure the extension to create resized images of different dimensions for each original image upload. For example, you might want images that are 200x200, 400x400, and 680x680 - this extension can create these three resized images then store them in your bucket.
 
-The extension automatically copies the following metadata, if present, from the original image to the resized image(s): `Cache-Control`, `Content-Disposition`, `Content-Encoding`, `Content-Language`, `Content-Type`, and user-provided metadata (except Firebase storage download tokens). Note that you can optionally configure the extension to overwrite the [`Cache-Control`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control) value for the resized image(s).
+The extension automatically copies the following metadata, if present, from the original image to the resized image(s): `Cache-Control`, `Content-Disposition`, `Content-Encoding`, `Content-Language`, `Content-Type`, and user-provided metadata (a new Firebase storage download token will be generated on the resized image(s) if the original metadata contains a token). Note that you can optionally configure the extension to overwrite the [`Cache-Control`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control) value for the resized image(s).
 
 #### Detailed configuration information
 
@@ -27,13 +29,13 @@ For example, say that you specify a max width of 200px and a max height of 100px
 Before installing this extension, make sure that you've [set up a Cloud Storage bucket](https://firebase.google.com/docs/storage) in your Firebase project.
 
 #### Billing
-
-This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
-- Cloud Storage
-- Cloud Functions
-
-When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
+ 
+To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
+ 
+- You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
+ - Cloud Storage
+ - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#expandable-24))
 
 
 

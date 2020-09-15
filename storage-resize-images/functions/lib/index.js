@@ -14,16 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateResizedImage = void 0;
 const admin = require("firebase-admin");
 const fs = require("fs");
 const functions = require("firebase-functions");
@@ -31,6 +23,7 @@ const mkdirp = require("mkdirp");
 const os = require("os");
 const path = require("path");
 const sharp = require("sharp");
+const uuidv4_1 = require("uuidv4");
 const config_1 = require("./config");
 const logs = require("./logs");
 const util_1 = require("./util");
@@ -51,7 +44,7 @@ const supportedContentTypes = [
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
  */
-exports.generateResizedImage = functions.storage.object().onFinalize((object) => __awaiter(void 0, void 0, void 0, function* () {
+exports.generateResizedImage = functions.storage.object().onFinalize(async (object) => {
     logs.start();
     const { contentType } = object; // This is the image MIME type
     if (!contentType) {
@@ -60,6 +53,10 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
     }
     if (!contentType.startsWith("image/")) {
         logs.contentTypeInvalid(contentType);
+        return;
+    }
+    if (object.contentEncoding === "gzip") {
+        logs.gzipContentEncoding();
         return;
     }
     if (!supportedContentTypes.includes(contentType)) {
@@ -83,12 +80,12 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
         const tempLocalDir = path.dirname(originalFile);
         // Create the temp directory where the storage file will be downloaded.
         logs.tempDirectoryCreating(tempLocalDir);
-        yield mkdirp(tempLocalDir);
+        await mkdirp(tempLocalDir);
         logs.tempDirectoryCreated(tempLocalDir);
         // Download file from bucket.
         remoteFile = bucket.file(filePath);
         logs.imageDownloading(filePath);
-        yield remoteFile.download({ destination: originalFile });
+        await remoteFile.download({ destination: originalFile });
         logs.imageDownloaded(filePath, originalFile);
         // Convert to a set to remove any duplicate sizes
         const imageSizes = new Set(config_1.default.imageSizes);
@@ -105,7 +102,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
                 objectMetadata: objectMetadata,
             }));
         });
-        const results = yield Promise.all(tasks);
+        const results = await Promise.all(tasks);
         const failed = results.some((result) => result.success === false);
         if (failed) {
             logs.failed();
@@ -127,7 +124,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
             if (remoteFile) {
                 try {
                     logs.remoteFileDeleting(filePath);
-                    yield remoteFile.delete();
+                    await remoteFile.delete();
                     logs.remoteFileDeleted(filePath);
                 }
                 catch (err) {
@@ -136,7 +133,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize((object) =>
             }
         }
     }
-}));
+});
 function resize(originalFile, resizedFile, size) {
     let height, width;
     if (size.indexOf(",") !== -1) {
@@ -156,7 +153,7 @@ function resize(originalFile, resizedFile, size) {
     })
         .toFile(resizedFile);
 }
-const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => __awaiter(void 0, void 0, void 0, function* () {
+const resizeImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => {
     const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
     // Path where resized image will be uploaded to in Storage.
     const resizedFilePath = path.normalize(config_1.default.resizedImagesPath
@@ -180,13 +177,18 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
         else {
             metadata.cacheControl = objectMetadata.cacheControl;
         }
+        // If the original image has a download token, add a
+        // new token to the image being resized #323
+        if (metadata.metadata.firebaseStorageDownloadTokens) {
+            metadata.metadata.firebaseStorageDownloadTokens = uuidv4_1.uuid();
+        }
         // Generate a resized image using Sharp.
         logs.imageResizing(resizedFile, size);
-        yield resize(originalFile, resizedFile, size);
+        await resize(originalFile, resizedFile, size);
         logs.imageResized(resizedFile);
         // Uploading the resized image.
         logs.imageUploading(resizedFilePath);
-        yield bucket.upload(resizedFile, {
+        await bucket.upload(resizedFile, {
             destination: resizedFilePath,
             metadata,
         });
@@ -210,4 +212,4 @@ const resizeImage = ({ bucket, originalFile, fileDir, fileNameWithoutExtension, 
             logs.errorDeleting(err);
         }
     }
-});
+};
