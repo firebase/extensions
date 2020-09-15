@@ -41,10 +41,8 @@ billingRequired: true
 roles:
   - role: datastore.user
     reason: Allows the extension to aggregate Cloud Firestore counter shards.
-  - role: pubsub.publisher
-    reason:
-      Allows the HTTPS controller function to publish a message to the extension's Pub/Sub topic,
-      which triggers the controllerCore function.
+  - role: cloudscheduler.admin
+    reason: Allows the extension to create a new Cloud Scheduler function.
 
 resources:
   - name: controllerCore
@@ -56,16 +54,6 @@ resources:
       maxInstances: 1
       scheduleTrigger:
         schedule: "every ${SCHEDULE_FREQUENCY} minutes"
-
-  - name: controller
-    type: firebaseextensions.v1beta.function
-    description: Maintained for backwards compatibility.
-      This function relays a message to the extension's Pub/Sub topic to trigger the controllerCore function.
-    properties:
-      location: ${LOCATION}
-      runtime: nodejs10
-      maxInstances: 1
-      httpsTrigger: {}
 
   - name: onWrite
     type: firebaseextensions.v1beta.function
