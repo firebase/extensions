@@ -165,10 +165,19 @@ for i in $(find . -type f -name 'extension.yaml' -exec dirname {} \; | sort -u);
   # Pluck extension latest version from yaml file
   extension_version=$(awk '/^version: /' "$i/extension.yaml" | sed "s/version: //")
 
-  # Pluck out change log contents for the latest extension version
-  changelog_contents=$(awk -v ver="$extension_version" '/^## Version / { if (p) { exit }; if ($3 == ver) { p=1; next} } p && NF' "$i/CHANGELOG.md")
+  changelog_contents="No changelog found for this version."
+
+  # Ensure changelog exists exists
+  if [ -f "$i/CHANGELOG.md" ]; then
+    # Pluck out change log contents for the latest extension version
+    changelog_contents=$(awk -v ver="$extension_version" '/^## Version / { if (p) { exit }; if ($3 == ver) { p=1; next} } p && NF' "$i/CHANGELOG.md")
+  else
+    echo "WARNING: A changelog could not be found at $i/CHANGELOG.md - a default entry will be used instead."
+  fi
+
   # JSON escape the markdown content for the release body
   changelog_contents=$(json_escape "$changelog_contents")
+
   # Creates a new release if it does not exist
   #   OR
   # Updates an existing release with updated content (allows updating CHANGELOG.md which will update relevant release body)
