@@ -12,42 +12,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: firestore-shorten-urls-bitly
-version: 0.1.5
+name: firestore-shorten-urls-dynamic-links
+displayName: Shorten URLs with Dynamic Links
 specVersion: v1beta
+version: 0.1.0
 
-displayName: Shorten URLs
-description:
-  Shortens URLs written to a specified Cloud Firestore collection (uses Bitly).
+description: >
+  Shortens URLs written to a specified Cloud Firestore collection using
+  Firebase Dynamic Links.
 
 license: Apache-2.0
-
-sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-shorten-urls-bitly
-releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-shorten-urls-bitly/CHANGELOG.md
+billingRequired: true
+sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-shorten-urls-dynamic-links
+releaseNotesUrl: https://github.com/firebase/extensions/commits/master
 
 author:
   authorName: Firebase
   url: https://firebase.google.com
 
 contributors:
-  - authorName: Chris Bianca
-    email: chris@csfrequency.com
-    url: https://github.com/chrisbianca
   - authorName: Kevin Cheung
     email: kevincheung@google.com
     url: https://github.com/kevinthecheung
-  - authorName: Invertase
-    email: oss@invertase.io
-    url: https://github.com/invertase
-
-billingRequired: true
 
 roles:
   - role: datastore.user
     reason: Allows the extension to write shortened URLs to Cloud Firestore.
 
 resources:
-  - name: fsurlshortener
+  - name: shorten_create
+    type: firebaseextensions.v1beta.function
+    description:
+      Listens for new documents in your specified Cloud Firestore collection,
+      and if they contain URLs, shortens the URLs, then writes the shortened
+      form back to the same document.
+    properties:
+      location: ${LOCATION}
+      runtime: nodejs10
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.create
+        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
+  - name: shorten_update
     type: firebaseextensions.v1beta.function
     description:
       Listens for writes of new URLs to your specified Cloud Firestore collection, shortens the URLs,
@@ -56,7 +61,7 @@ resources:
       location: ${LOCATION}
       runtime: nodejs10
       eventTrigger:
-        eventType: providers/cloud.firestore/eventTypes/document.write
+        eventType: providers/cloud.firestore/eventTypes/document.update
         resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
 
 params:
@@ -111,35 +116,52 @@ params:
     required: true
     immutable: true
 
-  - param: BITLY_ACCESS_TOKEN
-    label: Bitly access token
+  - param: DYNAMIC_LINKS_URL_PREFIX
+    label: Dynamic Links URL prefix
     description: >
-      What is your Bitly access token? Generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
-    example: a1b2c3d4e5f6g7
+      What URL prefix do you want for your shortened links? You will need to
+      set up this prefix in the [Dynamic Links](https://console.firebase.google.com/project/_/durablelinks)
+      section of the console.
+    example: "https://yourapp.page.link"
+    required: true
+
+  - param: DYNAMIC_LINKS_SUFFIX_LENGTH
+    label: Dynamic Links suffix length
+    type: select
+    description: >
+      Do you want your short links to end with the shortest possible suffix or
+      longer suffixes that are unlikely to be guessable? In general, you can use
+      short suffixes as long as there's no harm in someone successfuly guessing
+      a short link.
+    options:
+    - label: Short
+      value: SHORT
+    - label: Unguessable
+      value: UNGUESSABLE
     required: true
 
   - param: COLLECTION_PATH
     label: Collection path
     description: >
       What is the path to the collection that contains the URLs that you want to shorten?
+    default: urls
     example: urls
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore collection
-    default: urls
     required: true
 
   - param: URL_FIELD_NAME
     label: URL field name
     description: >
       What is the name of the field that contains the original long URLs that you want to shorten?
-    example: url
     default: url
+    example: url
     required: true
 
   - param: SHORT_URL_FIELD_NAME
     label: Short URL field name
     description: >
       What is the name of the field where you want to store your shortened URLs?
-    example: shortUrl
     default: shortUrl
+    example: shortUrl
     required: true

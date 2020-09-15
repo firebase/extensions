@@ -78,6 +78,11 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       return;
     }
 
+    if (object.contentEncoding === "gzip") {
+      logs.gzipContentEncoding();
+      return;
+    }
+
     if (!supportedContentTypes.includes(contentType)) {
       logs.unsupportedType(supportedContentTypes, contentType);
       return;
