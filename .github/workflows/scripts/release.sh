@@ -10,7 +10,7 @@ set -o pipefail
 # -------------------
 #      Functions
 # -------------------
-json_escape () {
+json_escape() {
   printf '%s' "$1" | python -c 'import json,sys; print(json.dumps(sys.stdin.read()))'
 }
 
@@ -19,38 +19,38 @@ json_escape () {
 #     1: Name of the release (becomes the release title on GitHub)
 #     2: Markdown body of the release
 #     3: Release Git tag
-create_github_release(){
+create_github_release() {
   local response=''
   local release_name=$1
   local release_body=$2
   local release_tag=$3
 
-	local body='{
-	  "tag_name": "%s",
-	  "target_commitish": "master",
-	  "name": "%s",
-	  "body": %s,
-	  "draft": false,
-	  "prerelease": false
-	}'
+  local body='{
+    "tag_name": "%s",
+    "target_commitish": "master",
+    "name": "%s",
+    "body": %s,
+    "draft": false,
+    "prerelease": false
+  }'
 
   # shellcheck disable=SC2059
   body=$(printf "$body" "$release_tag" "$release_name" "$release_body")
-	response=$(curl --request POST \
-	  --url https://api.github.com/repos/${GITHUB_REPOSITORY}/releases \
-	  --header "Authorization: Bearer $GITHUB_TOKEN" \
-	  --header 'Content-Type: application/json' \
-	  --data "$body" \
-	  -s)
+  response=$(curl --request POST \
+    --url https://api.github.com/repos/${GITHUB_REPOSITORY}/releases \
+    --header "Authorization: Bearer $GITHUB_TOKEN" \
+    --header 'Content-Type: application/json' \
+    --data "$body" \
+    -s)
 
-	created=$(echo "$response" | python -c "import sys, json; data = json.load(sys.stdin); print(data.get('id', sys.stdin))")
-	if [ "$created" != "$response" ]; then
+  created=$(echo "$response" | python -c "import sys, json; data = json.load(sys.stdin); print(data.get('id', sys.stdin))")
+  if [ "$created" != "$response" ]; then
     printf "release created successfully!\n"
   else
     printf "release failed to create; "
     printf "\n%s\n" "$body"
     printf "\n%s\n" "$response"
-    exit 1;
+    exit 1
   fi
 }
 
@@ -60,14 +60,14 @@ create_github_release(){
 #     2: Markdown body of the release
 #     3: Release Git tag
 #     4: ID of the existing release
-update_github_release(){
+update_github_release() {
   local response=''
   local release_name=$1
   local release_body=$2
   local release_tag=$3
   local release_id=$4
 
-	local body='{
+  local body='{
 	  "tag_name": "%s",
 	  "target_commitish": "master",
 	  "name": "%s",
@@ -78,21 +78,21 @@ update_github_release(){
 
   # shellcheck disable=SC2059
   body=$(printf "$body" "$release_tag" "$release_name" "$release_body")
-	response=$(curl --request PATCH \
-	  --url "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/$release_id" \
-	  --header "Authorization: Bearer $GITHUB_TOKEN" \
-	  --header 'Content-Type: application/json' \
-	  --data "$body" \
-	  -s)
+  response=$(curl --request PATCH \
+    --url "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/$release_id" \
+    --header "Authorization: Bearer $GITHUB_TOKEN" \
+    --header 'Content-Type: application/json' \
+    --data "$body" \
+    -s)
 
-	updated=$(echo "$response" | python -c "import sys, json; data = json.load(sys.stdin); print(data.get('id', sys.stdin))")
-	if [ "$updated" != "$response" ]; then
+  updated=$(echo "$response" | python -c "import sys, json; data = json.load(sys.stdin); print(data.get('id', sys.stdin))")
+  if [ "$updated" != "$response" ]; then
     printf "release updated successfully!\n"
   else
     printf "release failed to update; "
     printf "\n%s\n" "$body"
     printf "\n%s\n" "$response"
-    exit 1;
+    exit 1
   fi
 }
 
@@ -134,7 +134,7 @@ create_or_update_github_release() {
     if [ "$response_message" != "Not Found" ]; then
       echo "Failed to query release '$release_name' -> GitHub API request failed with response: $response_message"
       echo "$response"
-      exit 1;
+      exit 1
     else
       printf "Creating new release '%s' ... " "$release_tag"
       create_github_release "$release_name" "$release_body" "$release_tag"
@@ -180,9 +180,10 @@ for i in $(find . -type f -name 'extension.yaml' -exec dirname {} \; | sort -u);
   extension_version=$(awk '/^version: /' "$i/extension.yaml" | sed "s/version: //")
 
   # TODO(salakar): Remove once this is no longer outputting logs.
-  case "${SKIP_EXTENSION_VERSIONS[@]}" in  *"$extension_name $extension_version"*)
+  case "${SKIP_EXTENSION_VERSIONS[@]}" in *"$extension_name $extension_version"*)
     echo "Skipping $extension_name version $extension_version"
     continue
+    ;;
   esac
 
   # Pluck out change log contents for the latest extension version
