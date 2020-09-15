@@ -158,33 +158,12 @@ if [[ -z "$GITHUB_REPOSITORY" ]]; then
   exit 1
 fi
 
-# TODO(salakar): Extensions & Versions to temporarily skip release checks.
-# TODO(salakar): Remove once no more 'skipping' logs on CI.
-SKIP_EXTENSION_VERSIONS=(
-  "auth-mailchimp-sync 0.1.0"
-  "delete-user-data 0.1.4"
-  "firestore-bigquery-export 0.1.5"
-  "firestore-counter 0.1.3"
-  "firestore-send-email 0.1.4"
-  "firestore-shorten-urls-bitly 0.1.3"
-  "firestore-translate-text 0.1.2"
-  "rtdb-limit-child-nodes 0.1.0"
-  "storage-resize-images 0.1.7"
-)
-
 # Find all extensions based on whether a extension.yaml file exists in the directory
 for i in $(find . -type f -name 'extension.yaml' -exec dirname {} \; | sort -u); do
   # Pluck extension name from directory name
   extension_name=$(echo "$i" | sed "s/\.\///")
   # Pluck extension latest version from yaml file
   extension_version=$(awk '/^version: /' "$i/extension.yaml" | sed "s/version: //")
-
-  # TODO(salakar): Remove once this is no longer outputting logs.
-  case "${SKIP_EXTENSION_VERSIONS[@]}" in *"$extension_name $extension_version"*)
-    echo "Skipping $extension_name version $extension_version"
-    continue
-    ;;
-  esac
 
   # Pluck out change log contents for the latest extension version
   changelog_contents=$(awk -v ver="$extension_version" '/^## Version / { if (p) { exit }; if ($3 == ver) { p=1; next} } p && NF' "$i/CHANGELOG.md")
