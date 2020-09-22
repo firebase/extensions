@@ -80,6 +80,10 @@ program
     "The path of the the Cloud Firestore Collection to import from. (This may, or may not, be the same Collection for which you plan to mirror changes.)"
   )
   .option(
+    "-q, --query-collection-group <query-collection-group>",
+    "A boolean value indicating whether you'd prefer a collection group query (true) or a collection query (false)"
+  )
+  .option(
     "-d, --dataset <dataset>",
     "The ID of the BigQuery dataset to import to. (A dataset will be created if it doesn't already exist.)"
   )
@@ -120,6 +124,12 @@ const questions = [
         FIRESTORE_VALID_CHARACTERS,
         FIRESTORE_COLLECTION_NAME_MAX_CHARS
       ),
+  },
+  {
+    message: "Would you like to import documents via a Collection Group query?",
+    name: "queryCollectionGroup",
+    type: "confirm",
+    default: false,
   },
   {
     message:
@@ -163,12 +173,14 @@ interface CliConfig {
   datasetId: string;
   tableId: string;
   batchSize: string;
+  queryCollectionGroup: boolean;
 }
 
 const run = async (): Promise<number> => {
   const {
     projectId,
     sourceCollectionPath,
+    queryCollectionGroup,
     datasetId,
     tableId,
     batchSize,
@@ -176,7 +188,6 @@ const run = async (): Promise<number> => {
 
   const batch = parseInt(batchSize);
   const rawChangeLogName = `${tableId}_raw_changelog`;
-
   // Initialize Firebase
   firebase.initializeApp({
     credential: firebase.credential.applicationDefault(),
@@ -194,7 +205,9 @@ const run = async (): Promise<number> => {
   });
 
   console.log(
-    `Importing data from Cloud Firestore Collection: ${sourceCollectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${rawChangeLogName}`
+    `Importing data from Cloud Firestore Collection${
+      queryCollectionGroup ? " (via a Collection Group query)" : ""
+    }: ${sourceCollectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${rawChangeLogName}`
   );
 
   // Build the data row with a 0 timestamp. This ensures that all other
@@ -208,25 +221,32 @@ const run = async (): Promise<number> => {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
     cursor = await firebase
       .firestore()
-      .collection(sourceCollectionPath)
       .doc(cursorDocumentId)
       .get();
     console.log(
-      `Resuming import of Cloud Firestore Collection ${sourceCollectionPath} from document ${cursorDocumentId}.`
+      `Resuming import of Cloud Firestore Collection ${sourceCollectionPath} ${
+        queryCollectionGroup ? " (via a Collection Group query)" : ""
+      } from document ${cursorDocumentId}.`
     );
   }
 
-  let totalDocsRead = 0;
   let totalRowsImported = 0;
 
   do {
     if (cursor) {
-      await write(cursorPositionFile, cursor.id);
+      await write(cursorPositionFile, cursor.ref.path);
     }
-    let query = firebase
-      .firestore()
-      .collection(sourceCollectionPath)
-      .limit(batch);
+
+    let query: firebase.firestore.Query;
+
+    if (queryCollectionGroup) {
+      query = firebase.firestore().collectionGroup(sourceCollectionPath);
+    } else {
+      query = firebase.firestore().collection(sourceCollectionPath);
+    }
+
+    query = query.limit(batch);
+
     if (cursor) {
       query = query.startAfter(cursor);
     }
@@ -235,7 +255,6 @@ const run = async (): Promise<number> => {
     if (docs.length === 0) {
       break;
     }
-    totalDocsRead += docs.length;
     cursor = docs[docs.length - 1];
     const rows: FirestoreDocumentChangeEvent[] = docs.map((snapshot) => {
       return {
@@ -272,6 +291,7 @@ async function parseConfig(): Promise<CliConfig> {
       program.sourceCollectionPath === undefined ||
       program.dataset === undefined ||
       program.tableNamePrefix === undefined ||
+      program.queryCollectionGroup === undefined ||
       program.batchSize === undefined ||
       !validateBatchSize(program.batchSize)
     ) {
@@ -284,6 +304,7 @@ async function parseConfig(): Promise<CliConfig> {
       datasetId: program.dataset,
       tableId: program.tableNamePrefix,
       batchSize: program.batchSize,
+      queryCollectionGroup: program.queryCollectionGroup === "true",
     };
   }
   const {
@@ -292,6 +313,7 @@ async function parseConfig(): Promise<CliConfig> {
     dataset,
     table,
     batchSize,
+    queryCollectionGroup,
   } = await inquirer.prompt(questions);
   return {
     projectId: project,
@@ -299,6 +321,7 @@ async function parseConfig(): Promise<CliConfig> {
     datasetId: dataset,
     tableId: table,
     batchSize: batchSize,
+    queryCollectionGroup: queryCollectionGroup,
   };
 }
 
