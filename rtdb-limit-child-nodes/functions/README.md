@@ -1,5 +1,7 @@
 # Limit Child Nodes
 
+**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
+
 **Description**: Limits the number of nodes to a specified maximum count in a specified Realtime Database path.
 
 
