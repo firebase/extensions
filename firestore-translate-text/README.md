@@ -1,7 +1,5 @@
 # Translate Text
 
-**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
-
 **Description**: Translates strings written to a Cloud Firestore collection into multiple languages (uses Cloud Translation API).
 
 

@@ -1,7 +1,5 @@
 # Limit Child Nodes
 
-**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
-
 **Description**: Limits the number of nodes to a specified maximum count in a specified Realtime Database path.
 
 
@@ -22,7 +20,6 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 - This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
   - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#expandable-24))
   - Firebase Realtime Database
-
 
 
 
