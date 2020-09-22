@@ -1,5 +1,7 @@
 # Sync with Mailchimp
 
+**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
+
 **Description**: Adds new users from Firebase Authentication to a specified Mailchimp audience.
 
 
