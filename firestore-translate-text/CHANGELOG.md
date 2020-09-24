@@ -1,3 +1,7 @@
+## Version 0.1.5
+
+docs - Improved documentation for input fields of type [`Map`](https://firebase.google.com/docs/firestore/manage-data/data-types#data_types).
+
 ## Version 0.1.4
 
 feature - Support an input field of type [`Map`](https://firebase.google.com/docs/firestore/manage-data/data-types#data_types). If input is a `Map`, every value will be translated.

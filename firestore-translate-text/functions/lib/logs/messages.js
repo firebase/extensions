@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.messages = void 0;
 exports.messages = {
     complete: () => "Completed execution of extension",
     documentCreatedNoInput: () => "Document was created without an input string, no processing is required",
