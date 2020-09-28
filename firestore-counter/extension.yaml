@@ -56,12 +56,12 @@ resources:
       Scheduled to run every minute.
       This function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
     properties:
-      location: ${LOCATION}
+      location: ${param:LOCATION}
       runtime: nodejs10
       maxInstances: 1
       eventTrigger:
         eventType: google.pubsub.topic.publish
-        resource: projects/${PROJECT_ID}/topics/${EXT_INSTANCE_ID}
+        resource: projects/${param:PROJECT_ID}/topics/${param:EXT_INSTANCE_ID}
 
   - name: controller
     type: firebaseextensions.v1beta.function
@@ -69,7 +69,7 @@ resources:
       Maintained for backwards compatibility.
       This function relays a message to the extension's Pub/Sub topic to trigger the controllerCore function.
     properties:
-      location: ${LOCATION}
+      location: ${param:LOCATION}
       runtime: nodejs10
       maxInstances: 1
       httpsTrigger: {}
@@ -79,13 +79,13 @@ resources:
     description:
       Listens for changes on counter shards that may need aggregating. This function is limited to max 1 instance.
     properties:
-      location: ${LOCATION}
+      location: ${param:LOCATION}
       runtime: nodejs10
       maxInstances: 1
       timeout: 120s
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/{collection}/{counter=**}/_counter_shards_/{shardId}
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/{collection}/{counter=**}/_counter_shards_/{shardId}
 
   - name: worker
     type: firebaseextensions.v1beta.function
@@ -94,11 +94,11 @@ resources:
       There may be 0 or more worker functions running at any point in time.
       The controllerCore function is responsible for scheduling and monitoring these workers.
     properties:
-      location: ${LOCATION}
+      location: ${param:LOCATION}
       runtime: nodejs10
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/${INTERNAL_STATE_PATH}/workers/{workerId}
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:INTERNAL_STATE_PATH}/workers/{workerId}
 
 params:
   - param: LOCATION
