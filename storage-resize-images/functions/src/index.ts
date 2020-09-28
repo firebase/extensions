@@ -189,7 +189,7 @@ function resize(file, size) {
     .toBuffer();
 }
 
-function convertType(buffer) {
+export function convertType(buffer) {
   const { imageType } = config;
   if (imageType === "jpg" || imageType === "jpeg") {
     return sharp(buffer)

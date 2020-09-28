@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateResizedImage = void 0;
+exports.convertType = exports.generateResizedImage = void 0;
 const admin = require("firebase-admin");
 const fs = require("fs");
 const functions = require("firebase-functions");
@@ -184,6 +184,7 @@ function convertType(buffer) {
     }
     return buffer;
 }
+exports.convertType = convertType;
 const modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => {
     const { imageType } = config_1.default;
     const hasImageTypeConfigSet = imageType !== "false";
