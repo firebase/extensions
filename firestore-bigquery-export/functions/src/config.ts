@@ -20,4 +20,5 @@ export default {
   tableId: process.env.TABLE_ID,
   location: process.env.LOCATION,
   initialized: false,
+  datasetLocation: process.env.DATASET_LOCATION,
 };

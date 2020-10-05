@@ -64,6 +64,39 @@ const validateBatchSize = (value: string) => {
   return parseInt(value, 10) > 0;
 };
 
+const validateLocation = (value: string) => {
+  const index = [
+    "us-west4",
+    "us-west2",
+    "northamerica-northeast1",
+    "us-east4",
+    "us-west1",
+    "us-west3",
+    "southamerica-east1",
+    "us-east1",
+    "europe-west1",
+    "europe-north1",
+    "europe-west3",
+    "europe-west2",
+    "europe-west4",
+    "europe-west4",
+    "europe-west6",
+    "asia-east2",
+    "asia-southeast2",
+    "asia-south1",
+    "asia-northeast2",
+    "asia-northeast3",
+    "asia-southeast1",
+    "australia-southeast1",
+    "asia-east1",
+    "asia-northeast1",
+    "us",
+    "eu",
+  ].indexOf(value.toLowerCase());
+
+  return index !== 0 && index !== -1;
+};
+
 program
   .name("fs-bq-import-collection")
   .option(
@@ -96,6 +129,10 @@ program
     "Number of documents to stream into BigQuery at once.",
     (value) => parseInt(value, 10),
     300
+  )
+  .option(
+    "-l, --dataset-location <location>",
+    "Location of the BigQuery dataset."
   );
 
 const questions = [
@@ -165,6 +202,13 @@ const questions = [
     default: 300,
     validate: validateBatchSize,
   },
+  {
+    message: "Where would you like the BigQuery dataset to be located?",
+    name: "datasetLocation",
+    type: "input",
+    default: "us",
+    validate: validateLocation,
+  },
 ];
 
 interface CliConfig {
@@ -174,6 +218,7 @@ interface CliConfig {
   tableId: string;
   batchSize: string;
   queryCollectionGroup: boolean;
+  datasetLocation: string;
 }
 
 const run = async (): Promise<number> => {
@@ -184,6 +229,7 @@ const run = async (): Promise<number> => {
     datasetId,
     tableId,
     batchSize,
+    datasetLocation,
   }: CliConfig = await parseConfig();
 
   const batch = parseInt(batchSize);
@@ -202,6 +248,7 @@ const run = async (): Promise<number> => {
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
     tableId: tableId,
     datasetId: datasetId,
+    datasetLocation
   });
 
   console.log(
@@ -293,6 +340,7 @@ async function parseConfig(): Promise<CliConfig> {
       program.tableNamePrefix === undefined ||
       program.queryCollectionGroup === undefined ||
       program.batchSize === undefined ||
+      program.datasetLocation === undefined ||
       !validateBatchSize(program.batchSize)
     ) {
       program.outputHelp();
@@ -305,6 +353,7 @@ async function parseConfig(): Promise<CliConfig> {
       tableId: program.tableNamePrefix,
       batchSize: program.batchSize,
       queryCollectionGroup: program.queryCollectionGroup === "true",
+      datasetLocation: program.datasetLocation,
     };
   }
   const {
@@ -314,6 +363,7 @@ async function parseConfig(): Promise<CliConfig> {
     table,
     batchSize,
     queryCollectionGroup,
+    datasetLocation,
   } = await inquirer.prompt(questions);
   return {
     projectId: project,
@@ -322,6 +372,7 @@ async function parseConfig(): Promise<CliConfig> {
     tableId: table,
     batchSize: batchSize,
     queryCollectionGroup: queryCollectionGroup,
+    datasetLocation: datasetLocation,
   };
 }
 
