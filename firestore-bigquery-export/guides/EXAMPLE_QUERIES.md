@@ -116,6 +116,6 @@ If you wish to clean up the data from your `changelog` table, use the following 
 a range of time against the `timestamp` column, and delete the requisite rows.
 
 ```sql
-/* the first WHERE query is the start of the time range, the second WHERE query is the end of the time range */
+/* the first WHERE query is the start of the time range, the second WHERE query is the end of the time range. The below deletes every row in a 24 hour time frame on the 4th September, 2020*/
 DELETE FROM `[PROJECT ID].[DATASET ID].[CHANGELOG TABLE ID]` WHERE '2020-09-04 00:00:00' < timestamp AND '2020-09-05 00:00:00' > timestamp
 ```
