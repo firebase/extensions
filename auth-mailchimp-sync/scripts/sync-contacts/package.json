@@ -1,0 +1,46 @@
+{
+  "name": "@firebaseextensions/sync-contacts",
+  "version": "0.1.11",
+  "description": "Synchronises auth users with mail-chimp",
+  "main": "./lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "github.com/firebase/extensions.git",
+    "directory": "auth-mailchimp-sync/scripts/sync-contacts"
+  },
+  "scripts": {
+    "build": "npm run clean && npm run compile",
+    "clean": "rimraf ./lib",
+    "compile": "tsc && cp -r src/__tests__/sync lib/__tests__",
+    "sync-contacts": "node ./lib/index.js",
+    "prepare": "npm run build",
+    "test": "jest"
+  },
+  "files": [
+    "lib",
+    "lib/index.js",
+    "lib/logs.js"
+  ],
+  "bin": {
+    "sync-contacts": "./lib/index.js"
+  },
+  "author": "Darren Ackers <darren@invertase.io>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "commander": "5.0.0",
+    "firebase-admin": "^7.1.1",
+    "firebase-functions": "^2.2.1",
+    "mailchimp-api-v3": "^1.14.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "jest": "^24.9.0",
+    "nyc": "^14.0.0",
+    "rimraf": "^2.6.3",
+    "ts-jest": "^24.1.0",
+    "ts-node": "^7.0.1",
+    "typescript": "^3.5.2",
+    "@types/chai": "^4.1.6",
+    "@types/jest": "^24.9.1"
+  }
+}
