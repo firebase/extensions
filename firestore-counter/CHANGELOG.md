@@ -1,3 +1,7 @@
+## Version 0.2.0
+
+feature - convert Firestore Counter to use scheduled functions (#353)
+
 ## Version 0.1.5
 
 feature - Add new Cloud Functions locations. For more information about locations and their pricing tiers, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
