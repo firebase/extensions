@@ -55,7 +55,7 @@ schema file:
 
 You can generate a listing of users that have logged in to the app as follows:
 
-```
+```sql
 SELECT name, last_login
 FROM ${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_${SCHEMA_FILE_NAME}_latest
 ORDER BY last_login DESC
@@ -81,7 +81,7 @@ queries for that data:
 - If you wanted to determine how many favorite numbers each user
   currently has, then you can run the following query:
 
-  ```
+  ```sql
   SELECT document_name, MAX(favorite_numbers_index)
   FROM ${param:PROJECT_ID}.users.users_schema_user_full_schema_latest
   GROUP BY document_name
@@ -91,7 +91,7 @@ queries for that data:
   of the app's users (assuming that number is stored in the first position of
   the `favorite_numbers` array), you can run the following query:
 
-  ```
+  ```sql
   SELECT document_name, favorite_numbers_member
   FROM ${param:PROJECT_ID}.users.users_schema_user_full_schema_latest
   WHERE favorite_numbers_index = 0
@@ -103,8 +103,19 @@ If you had multiple arrays in the schema configuration, you might have to select
 all `DISTINCT` documents to eliminate the redundant rows introduced by the
 cartesian product of `CROSS JOIN`.
 
-```
+```sql
 SELECT DISTINCT document_name, favorite_numbers_member
 FROM ${param:PROJECT_ID}.users.users_schema_user_full_schema_latest
 WHERE favorite_numbers_index = 0
+```
+
+
+### Remove stale data from your changelog table
+
+If you wish to clean up the data from your `changelog` table, use the following `DELETE` query to provide
+a range of time against the `timestamp` column, and delete the requisite rows.
+
+```sql
+/* the first WHERE query is the start of the time range, the second WHERE query is the end of the time range */
+DELETE FROM `[PROJECT ID].[DATASET ID].[CHANGELOG TABLE ID]` WHERE '2020-09-04 00:00:00' < timestamp AND '2020-09-05 00:00:00' > timestamp
 ```
