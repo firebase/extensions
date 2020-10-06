@@ -248,7 +248,7 @@ const run = async (): Promise<number> => {
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
     tableId: tableId,
     datasetId: datasetId,
-    datasetLocation
+    datasetLocation,
   });
 
   console.log(
