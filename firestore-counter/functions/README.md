@@ -26,7 +26,6 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 After installing this extension, you'll need to:
 
 - Update your [database security rules](https://firebase.google.com/docs/rules).
-- Set up a [Cloud Scheduler job](https://cloud.google.com/scheduler/docs/quickstart) to regularly call the controllerCore function, which is created by this extension. It works by either aggregating shards itself or scheduling and monitoring workers to aggregate shards.
 - Use the provided [client sample](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts) or your own client code to specify your document path and increment values.
 
 Detailed information for these post-installation tasks are provided after you install this extension.
@@ -49,13 +48,13 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * Document path for internal state: What is the path to the document where the extension can keep its internal state?
 
+* Frequency for controllerCore function to be run: In minutes, how often should the function to aggregate shards be run?
+
 
 
 **Cloud Functions:**
 
-* **controllerCore:** Scheduled to run every minute. This function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
-
-* **controller:** Maintained for backwards compatibility. This function relays a message to the extension's Pub/Sub topic to trigger the controllerCore function.
+* **controllerCore:** This scheduled function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
 
 * **onWrite:** Listens for changes on counter shards that may need aggregating. This function is limited to max 1 instance.
 
@@ -71,4 +70,4 @@ This extension will operate with the following project IAM roles:
 
 * datastore.user (Reason: Allows the extension to aggregate Cloud Firestore counter shards.)
 
-* pubsub.publisher (Reason: Allows the HTTPS controller function to publish a message to the extension's Pub/Sub topic, which triggers the controllerCore function.)
+* cloudscheduler.admin (Reason: Allows the extension to create a new Cloud Scheduler function.)
