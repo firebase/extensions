@@ -109,7 +109,6 @@ FROM ${param:PROJECT_ID}.users.users_schema_user_full_schema_latest
 WHERE favorite_numbers_index = 0
 ```
 
-
 ### Remove stale data from your changelog table
 
 If you wish to clean up the data from your `changelog` table, use the following `DELETE` query to provide
