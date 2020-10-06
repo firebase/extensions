@@ -37,7 +37,7 @@ export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
   tableId: string;
-  datasetLocation: string;
+  datasetLocation: string | undefined;
 }
 
 /**
@@ -292,7 +292,7 @@ export class FirestoreBigQueryEventHistoryTracker
     return view;
   }
 
-  private bigqueryDataset() {
+  bigqueryDataset() {
     return this.bq.dataset(this.config.datasetId, {
       location: this.config.datasetLocation,
     });
