@@ -39,18 +39,18 @@ function collect(value, previous) {
 }
 
 program
-  .name("gen-schema-views")
+  .name("sync-contacts")
   .option(
     "--non-interactive",
     "Parse all input from command line flags instead of prompting the caller.",
     false
   )
   .option(
-    "-P, --project <project>",
+    "-p, --project <project>",
     "Firebase Project ID for project containing Cloud Firestore database."
   )
   .option(
-    "-d, --key <mailchimpApikey>",
+    "-k, --apikey <mailchimpApikey>",
     "The Mailchimp API key? To obtain a Mailchimp API key, go to your [Mailchimp account](https://admin.mailchimp.com/account/api/)."
   )
   .option(
@@ -58,8 +58,12 @@ program
     "The Mailchimp audience Id. To find your Audience ID: visit https://admin.mailchimp.com/lists"
   )
   .option(
-    "-s, --contact <mailchimpContactStatus>",
-    "The Mailchimp contact status",
+    "-s, --status <mailchimpContactStatus>",
+    "What is the contact status? (subscribed / pending)"
+  )
+  .option(
+    "-s, --account <privateKeyPath>",
+    "The Service Account path",
     collect,
     []
   );
@@ -88,6 +92,14 @@ const questions = [
     type: "list",
     choices: ["subscribed", "pending"],
   },
+  {
+    default: "../key.json",
+    message:
+      "What is the path to the service account private key for your Firebase Project?",
+    name: "privateKeyPath",
+    type: "input",
+    validate: (value) => !!value.length,
+  },
 ];
 
 interface CliConfig {
@@ -95,6 +107,7 @@ interface CliConfig {
   mailchimpApikey: string;
   mailchimpAudienceId: string;
   mailchimpContactStatus: string;
+  privateKeyPath: string;
 }
 
 async function parseConfig(): Promise<CliConfig> {
@@ -104,7 +117,8 @@ async function parseConfig(): Promise<CliConfig> {
       program.project === undefined ||
       program.mailchimpApikey === undefined ||
       program.mailchimpAudienceId === undefined ||
-      program.mailchimpContactStatus === undefined
+      program.mailchimpContactStatus === undefined ||
+      program.privateKeyPath === undefined
     ) {
       program.outputHelp();
       process.exit(1);
@@ -114,6 +128,7 @@ async function parseConfig(): Promise<CliConfig> {
       mailchimpApikey: program.mailchimpApikey,
       mailchimpAudienceId: program.mailchimpAudienceId,
       mailchimpContactStatus: program.mailchimpContactStatus,
+      privateKeyPath: program.privateKeyPath,
     };
   }
   const {
@@ -121,12 +136,14 @@ async function parseConfig(): Promise<CliConfig> {
     mailchimpApikey,
     mailchimpAudienceId,
     mailchimpContactStatus,
+    privateKeyPath,
   } = await inquirer.prompt(questions);
   return {
     projectId: project,
     mailchimpApikey,
     mailchimpAudienceId,
     mailchimpContactStatus,
+    privateKeyPath,
   };
 }
 
@@ -171,7 +188,7 @@ async function run(): Promise<void> {
   // Get all configuration options via inquirer prompt or commander flags.
   const config: CliConfig = await parseConfig();
 
-  var serviceAccount = require("../service-account.json");
+  var serviceAccount = require(config.privateKeyPath);
 
   // Initialize Firebase
   firebase.initializeApp({
