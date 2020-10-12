@@ -5,7 +5,6 @@
   "license": "Apache-2.0",
   "description": "Auto-scalable counters for your app.",
   "dependencies": {
-    "@google-cloud/pubsub": "^1.1.5",
     "deep-equal": "^1.0.1",
     "firebase-admin": "^8.3.0",
     "firebase-functions": "^3.9.0",
