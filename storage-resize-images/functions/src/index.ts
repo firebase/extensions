@@ -62,6 +62,9 @@ export const generateResizedImage = functions.storage.object().onFinalize(
     const absolutePathList = config.absolutePathList
       ? config.absolutePathList.split(",")
       : [""]; // Convert list to an array
+    const excludePathList = config.excludePathList
+      ? config.excludePathList.split(",")
+      : [""]; // Convert list to an array
     const tmpFilePath = path.resolve("/", path.dirname(object.name)); // Absolute path to dirname
 
     if (!contentType) {
