@@ -50,6 +50,9 @@ exports.generateResizedImage = functions.storage.object().onFinalize(async (obje
     const absolutePathList = config_1.default.absolutePathList
         ? config_1.default.absolutePathList.split(",")
         : [""]; // Convert list to an array
+    const excludePathList = config_1.default.excludePathList
+        ? config_1.default.excludePathList.split(",")
+        : [""]; // Convert list to an array
     const tmpFilePath = path.resolve("/", path.dirname(object.name)); // Absolute path to dirname
     if (!contentType) {
         logs.noContentType();
@@ -70,6 +73,11 @@ exports.generateResizedImage = functions.storage.object().onFinalize(async (obje
     if (config_1.default.absolutePathList &&
         !util_1.startsWithArray(absolutePathList, tmpFilePath)) {
         logs.imageOutsideOfPaths(absolutePathList, tmpFilePath);
+        return;
+    }
+    if (config_1.default.excludePathList &&
+        util_1.startsWithArray(excludePathList, tmpFilePath)) {
+        logs.imageInsideOfExcludedPaths(excludePathList, tmpFilePath);
         return;
     }
     if (object.metadata && object.metadata.resizedImage === "true") {

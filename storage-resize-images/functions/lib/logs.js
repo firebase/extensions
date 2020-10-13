@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remoteFileDeleting = exports.remoteFileDeleted = exports.tempResizedFileDeleting = exports.tempResizedFileDeleted = exports.tempOriginalFileDeleting = exports.tempOriginalFileDeleted = exports.tempDirectoryCreating = exports.tempDirectoryCreated = exports.start = exports.init = exports.imageUploading = exports.imageUploaded = exports.imageResizing = exports.imageResized = exports.imageDownloading = exports.imageDownloaded = exports.imageOutsideOfPaths = exports.imageAlreadyResized = exports.failed = exports.errorDeleting = exports.error = exports.unsupportedType = exports.contentTypeInvalid = exports.gzipContentEncoding = exports.noContentType = exports.complete = void 0;
+exports.remoteFileDeleting = exports.remoteFileDeleted = exports.tempResizedFileDeleting = exports.tempResizedFileDeleted = exports.tempOriginalFileDeleting = exports.tempOriginalFileDeleted = exports.tempDirectoryCreating = exports.tempDirectoryCreated = exports.start = exports.init = exports.imageUploading = exports.imageUploaded = exports.imageResizing = exports.imageResized = exports.imageDownloading = exports.imageDownloaded = exports.imageInsideOfExcludedPaths = exports.imageOutsideOfPaths = exports.imageAlreadyResized = exports.failed = exports.errorDeleting = exports.error = exports.unsupportedType = exports.contentTypeInvalid = exports.gzipContentEncoding = exports.noContentType = exports.complete = void 0;
 const firebase_functions_1 = require("firebase-functions");
 const config_1 = require("./config");
 exports.complete = () => {
@@ -47,6 +47,9 @@ exports.imageAlreadyResized = () => {
 };
 exports.imageOutsideOfPaths = (absolutePaths, imagePath) => {
     console.log(`Image path '${imagePath}' is not supported, these are the supported absolute paths: ${absolutePaths.join(", ")}`);
+};
+exports.imageInsideOfExcludedPaths = (absolutePaths, imagePath) => {
+    console.log(`Image path '${imagePath}' is not supported, these are the not supported absolute paths: ${absolutePaths.join(", ")}`);
 };
 exports.imageDownloaded = (remotePath, localPath) => {
     firebase_functions_1.logger.log(`Downloaded image file: '${remotePath}' to '${localPath}'`);
