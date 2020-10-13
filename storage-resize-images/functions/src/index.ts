@@ -95,6 +95,14 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       return;
     }
 
+    if (
+      config.excludePathList &&
+      startsWithArray(excludePathList, tmpFilePath)
+    ) {
+      logs.imageInsideOfExcludedPaths(excludePathList, tmpFilePath);
+      return;
+    }
+
     if (object.metadata && object.metadata.resizedImage === "true") {
       logs.imageAlreadyResized();
       return;
