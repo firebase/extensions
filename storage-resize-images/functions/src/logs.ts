@@ -73,6 +73,17 @@ export const imageOutsideOfPaths = (
   );
 };
 
+export const imageInsideOfExcludedPaths = (
+  absolutePaths: string[],
+  imagePath: string
+) => {
+  console.log(
+    `Image path '${imagePath}' is not supported, these are the not supported absolute paths: ${absolutePaths.join(
+      ", "
+    )}`
+  );
+};
+
 export const imageDownloaded = (remotePath: string, localPath: string) => {
   logger.log(`Downloaded image file: '${remotePath}' to '${localPath}'`);
 };
