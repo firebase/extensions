@@ -183,6 +183,21 @@ params:
       Invalid paths, must be a comma-separated list of absolute path values.
     required: false
 
+  - param: EXCLUDE_PATH_LIST
+    label: List of absolute paths not included for resized images
+    description: >
+      A comma-separated list of absolute paths to not take into account for 
+      images to be resized. For example, to not resize the images 
+      stored in `/users/pictures/avatars` directory, specify the path 
+      `/users/pictures/avatars`. If you prefer to resize every image uploaded 
+      to the storage bucket, leave this field empty.
+    type: string
+    example: "/users/avatars/thumbs,/design/pictures/thumbs"
+    validationRegex: ^(\/[^\s\/\,]+)+(\,(\/[^\s\/\,]+)+)*$
+    validationErrorMessage:
+      Invalid paths, must be a comma-separated list of absolute path values.
+    required: false
+
   - param: CACHE_CONTROL_HEADER
     label: Cache-Control header for resized images
     description: >
