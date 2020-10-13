@@ -20,5 +20,6 @@ export default {
   imageSizes: process.env.IMG_SIZES.split(","),
   resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
   absolutePathList: process.env.ABSOLUTE_PATH_LIST,
+  excludePathList: process.env.EXCLUDE_PATH_LIST,
   deleteOriginalFile: process.env.DELETE_ORIGINAL_FILE === "true",
 };
