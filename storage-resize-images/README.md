@@ -29,6 +29,7 @@ For example, say that you specify a max width of 200px and a max height of 100px
 Before installing this extension, make sure that you've [set up a Cloud Storage bucket](https://firebase.google.com/docs/storage) in your Firebase project.
 
 #### Billing
+<<<<<<< HEAD
 
 This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
 
@@ -36,6 +37,15 @@ This extension uses other Firebase or Google Cloud Platform services which may h
 - Cloud Functions
 
 When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
+=======
+ 
+To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
+ 
+- You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
+ - Cloud Storage
+ - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#expandable-24))
+>>>>>>> upstream/next
 
 
 
@@ -54,7 +64,10 @@ When you use Firebase Extensions, you're only charged for the underlying resourc
 
 * Cloud Storage path for resized images: A relative path in which to store resized images. For example, if you specify a path here of `thumbs` and you upload an image to `/images/original.jpg`, then the resized image is stored at `/images/thumbs/original_200x200.jpg`. If you prefer to store resized images at the root of your bucket, leave this field empty.
 
+<<<<<<< HEAD
 * List of absolute paths for resized images: A comma-separated list of absolute paths to restrict the images to be resized. For instance, if you want to resize only the images stored in `/users/pictures`, then other images uploaded outside that specific path will not be resized. If you prefer to resize whole the images uploaded to the bucket, leave this field empty.
+=======
+>>>>>>> upstream/next
 
 * Cache-Control header for resized images: This extension automatically copies any `Cache-Control` metadata from the original image to the resized images. For the resized images, do you want to overwrite this copied `Cache-Control` metadata or add `Cache-Control` metadata? Learn more about [`Cache-Control` headers](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control). If you prefer not to overwrite or add `Cache-Control` metadata, leave this field empty.
 

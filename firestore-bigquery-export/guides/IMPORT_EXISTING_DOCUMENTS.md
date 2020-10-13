@@ -23,6 +23,7 @@ The import script uses several values from your installation of the extension:
 
 - `${PROJECT_ID}`: the project ID for the Firebase project in which you installed the extension
 - `${COLLECTION_PATH}`: the collection path that you specified during extension installation
+- `${BOOLEAN}`: Confirmation you would like to use a `collectionGroup` query. Reverts to a `collection` query if the value is `false`.
 - `${DATASET_ID}`: the ID that you specified for your dataset during extension installation
 
 Run the import script using [`npx` (the Node Package Runner)](https://www.npmjs.com/package/npx) via `npm` (the Node Package Manager).

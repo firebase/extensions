@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fstranslate = void 0;
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
 const translate_1 = require("@google-cloud/translate");
@@ -88,29 +87,28 @@ const handleDeleteDocument = () => {
     logs.documentDeleted();
 };
 const handleUpdateDocument = async (before, after) => {
-    const inputAfter = extractInput(after);
     const inputBefore = extractInput(before);
-    const inputHasChanged = inputAfter !== inputBefore;
-    if (!inputHasChanged &&
-        inputAfter !== undefined &&
-        inputBefore !== undefined) {
-        logs.documentUpdatedUnchangedInput();
+    const inputAfter = extractInput(after);
+    // If previous and updated documents have no input, skip.
+    if (inputBefore === undefined && inputAfter === undefined) {
+        logs.documentUpdatedNoInput();
         return;
     }
-    if (inputAfter) {
+    // If updated document has no string or object input, delete any existing translations.
+    if (typeof inputAfter !== "string" && typeof inputAfter !== "object") {
+        await updateTranslations(after, admin.firestore.FieldValue.delete());
+        logs.documentUpdatedDeletedInput();
+        return;
+    }
+    if (JSON.stringify(inputBefore) === JSON.stringify(inputAfter)) {
+        logs.documentUpdatedUnchangedInput();
+    }
+    else {
         logs.documentUpdatedChangedInput();
         await translateDocument(after);
     }
-    else if (inputBefore) {
-        logs.documentUpdatedDeletedInput();
-        await updateTranslations(after, admin.firestore.FieldValue.delete());
-    }
-    else {
-        logs.documentUpdatedNoInput();
-    }
 };
-const translateDocument = async (snapshot) => {
-    const input = extractInput(snapshot);
+const translateSingle = async (input, snapshot) => {
     logs.translateInputStringToAllLanguages(input, config_1.default.languages);
     const tasks = config_1.default.languages.map(async (targetLanguage) => {
         return {
@@ -125,12 +123,42 @@ const translateDocument = async (snapshot) => {
             output[translation.language] = translation.output;
             return output;
         }, {});
-        await updateTranslations(snapshot, translationsMap);
+        return updateTranslations(snapshot, translationsMap);
     }
     catch (err) {
         logs.translateInputToAllLanguagesError(input, err);
         throw err;
     }
+};
+const translateMultiple = async (input, snapshot) => {
+    let translations = {};
+    let promises = [];
+    Object.entries(input).forEach(([input, value]) => {
+        config_1.default.languages.forEach((language) => {
+            promises.push(() => new Promise(async (resolve) => {
+                logs.translateInputStringToAllLanguages(value, config_1.default.languages);
+                const output = typeof value === "string"
+                    ? await translateString(value, language)
+                    : null;
+                if (!translations[input])
+                    translations[input] = {};
+                translations[input][language] = output;
+                return resolve();
+            }));
+        });
+    });
+    for (const fn of promises) {
+        if (fn)
+            await fn();
+    }
+    return updateTranslations(snapshot, translations);
+};
+const translateDocument = async (snapshot) => {
+    const input = extractInput(snapshot);
+    if (typeof input === "object") {
+        return translateMultiple(input, snapshot);
+    }
+    await translateSingle(input, snapshot);
 };
 const translateString = async (string, targetLanguage) => {
     try {
