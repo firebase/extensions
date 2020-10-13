@@ -94,7 +94,7 @@ const validateLocation = (value: string) => {
     "eu",
   ].indexOf(value.toLowerCase());
 
-  return index !== 0 && index !== -1;
+  return index !== -1;
 };
 
 program
