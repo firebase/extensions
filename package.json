@@ -7,7 +7,7 @@
     "format": "prettier --write \"**/*.{js,md,yml,ts,json,yaml}\"",
     "lint": "prettier --list-different \"**/*.{js,md,yml,ts,json,yaml}\"",
     "clean": "lerna run --parallel clean",
-    "build": "lerna run --parallel build",
+    "build": "lerna run build",
     "test": "jest",
     "test-watch": "jest --watch",
     "test-coverage": "jest --coverage",
