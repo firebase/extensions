@@ -9,7 +9,9 @@
     "firestore-send-email/functions",
     "firestore-counter/functions",
     "delete-user-data/functions",
-    "firestore-bigquery-export/scripts/gen-schema-view"
+    "firestore-bigquery-export/scripts/gen-schema-view",
+    "firestore-bigquery-export/scripts/import",
+    "firestore-bigquery-export/firestore-bigquery-change-tracker"
   ],
   "version": "0.0.0"
 }
