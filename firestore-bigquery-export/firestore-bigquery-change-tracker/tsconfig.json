@@ -1,13 +1,9 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "lib": ["es6"],
-    "module": "commonjs",
-    "noImplicitReturns": true,
     "outDir": "lib",
-    "sourceMap": false,
-    "target": "es6",
-    "types": ["node", "jest", "chai"]
+    "types": ["node", "jest", "chai"],
+    "target": "es2018"
   },
-  "compileOnSave": true,
   "include": ["src"]
 }
