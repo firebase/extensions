@@ -24,7 +24,7 @@ function data() {
     prop7: admin
       .firestore()
       .collection(collection)
-      .doc(faker.random.word()),  
+      .doc(faker.random.word()),
   };
 }
 
@@ -45,6 +45,6 @@ const update = admin
   .doc(UPDATE_DOC)
   .set(data());
 
-  promises.push(update);
+promises.push(update);
 
 return Promise.all(promises);
