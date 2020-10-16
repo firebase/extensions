@@ -8,6 +8,8 @@ admin.initializeApp({
   databaseURL: `https://${projectId}.firebaseio.com`,
 });
 
+const UPDATE_DOC = "update_test_doc";
+
 function data() {
   return {
     prop1: [faker.random.word(), faker.random.word(), faker.random.word()],
@@ -40,7 +42,7 @@ Array.from({ length: 9 }).forEach(() => {
 const update = admin
   .firestore()
   .collection(collection)
-  .doc("update_test_doc")
+  .doc(UPDATE_DOC)
   .set(data());
 
   promises.push(update);
