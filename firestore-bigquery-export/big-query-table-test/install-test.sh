@@ -58,6 +58,7 @@ echo "Running: installing '$EXTENSION' test extension using instanceId: $EXTENSI
 echo "Success: installed $EXTENSION_INSTANCE_ID from $FIREBASE_PROJECT"
 
 # # add data to the Firestore collection to test the backwards compatibility of latest BigQuery extension update
+echo "Running: adding data to the Firestore collection: $COLLECTION"
 node ./$TEST_DIRECTORY/install-script.js $FIREBASE_PROJECT $COLLECTION
 echo "Success: added data to the Firestore collection: $COLLECTION"
 
@@ -66,4 +67,4 @@ sleep 10s
 
 # # grab recent logs for BigQuery test extension
 echo "Cloud function logs for $EXTENSION_INSTANCE_ID:"
-firebase functions:log --project=${FIREBASE_PROJECT} | grep "$EXTENSION_INSTANCE_ID"
+firebase functions:log --project=$FIREBASE_PROJECT | grep "$EXTENSION_INSTANCE_ID"
