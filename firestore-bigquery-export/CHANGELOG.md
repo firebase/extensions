@@ -1,6 +1,6 @@
 ## Version 0.1.10
 
-fixed - update "gen-schema-view" script to not hide data rows (#442)
+fixed - update `gen-schema-view` script to not hide data rows (#442)
 feature - support collectionGroup queries (#354)
 
 ## Version 0.1.9
