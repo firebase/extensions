@@ -32,5 +32,5 @@ FROM
     FROM
       `test.test_dataset.test_table`
   ) test_table
-  CROSS JOIN UNNEST(test_table.schema1_favorite_numbers) AS schema1_favorite_numbers_member WITH OFFSET schema1_favorite_numbers_index
-  CROSS JOIN UNNEST(test_table.schema2_favorite_numbers) AS schema2_favorite_numbers_member WITH OFFSET schema2_favorite_numbers_index
+  LEFT JOIN UNNEST(test_table.schema1_favorite_numbers) AS schema1_favorite_numbers_member WITH OFFSET schema1_favorite_numbers_index
+  LEFT JOIN UNNEST(test_table.schema2_favorite_numbers) AS schema2_favorite_numbers_member WITH OFFSET schema2_favorite_numbers_index
