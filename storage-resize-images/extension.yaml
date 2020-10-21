@@ -57,12 +57,12 @@ resources:
       then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
     properties:
       sourceDirectory: .
-      location: ${LOCATION}
+      location: ${param:LOCATION}
       runtime: nodejs10
       availableMemoryMb: 1024
       eventTrigger:
         eventType: google.storage.object.finalize
-        resource: projects/_/buckets/${IMG_BUCKET}
+        resource: projects/_/buckets/${param:IMG_BUCKET}
 
 params:
   - param: LOCATION
@@ -126,7 +126,7 @@ params:
     example: my-project-12345.appspot.com
     validationRegex: ^([0-9a-z_.-]*)$
     validationErrorMessage: Invalid storage bucket
-    default: ${STORAGE_BUCKET}
+    default: ${param:STORAGE_BUCKET}
     required: true
 
   - param: IMG_SIZES
