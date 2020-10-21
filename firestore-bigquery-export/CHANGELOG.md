@@ -1,3 +1,8 @@
+## Version 0.1.10
+
+fixed - update "gen-schema-view" script to not hide data rows (#442)
+feature - support collectionGroup queries (#354)
+
 ## Version 0.1.9
 
 feature - Add new Cloud Functions locations. For more information about locations and their pricing tiers, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
