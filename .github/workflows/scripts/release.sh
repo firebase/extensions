@@ -167,7 +167,7 @@ for i in $(find . -type f -name 'extension.yaml' -exec dirname {} \; | sort -u);
 
   changelog_contents="No changelog found for this version."
 
-  # Ensure changelog exists exists
+  # Ensure changelog exists
   if [ -f "$i/CHANGELOG.md" ]; then
     # Pluck out change log contents for the latest extension version
     changelog_contents=$(awk -v ver="$extension_version" '/^## Version / { if (p) { exit }; if ($3 == ver) { p=1; next} } p && NF' "$i/CHANGELOG.md")
