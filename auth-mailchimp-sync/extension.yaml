@@ -48,11 +48,11 @@ resources:
       Listens for new user accounts (as managed by Firebase Authentication),
       then automatically adds the new user to your specified MailChimp audience.
     properties:
-      location: ${LOCATION}
+      location: ${param:LOCATION}
       runtime: nodejs10
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.create
-        resource: projects/${PROJECT_ID}
+        resource: projects/${param:PROJECT_ID}
 
   - name: removeUserFromList
     type: firebaseextensions.v1beta.function
@@ -61,11 +61,11 @@ resources:
       Authentication), then automatically removes them from your specified
       MailChimp audience.
     properties:
-      location: ${LOCATION}
+      location: ${param:LOCATION}
       runtime: nodejs10
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
-        resource: projects/${PROJECT_ID}
+        resource: projects/${param:PROJECT_ID}
 
 params:
   - param: LOCATION

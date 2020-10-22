@@ -161,7 +161,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
           .map(
             (
               arrayFieldName
-            ) => `CROSS JOIN UNNEST(${rawTableName}.${arrayFieldName})
+            ) => `LEFT JOIN UNNEST(${rawTableName}.${arrayFieldName})
             AS ${arrayFieldName}_member
             WITH OFFSET ${arrayFieldName}_index`
           )
