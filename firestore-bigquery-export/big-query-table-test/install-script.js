@@ -8,7 +8,12 @@ admin.initializeApp({
   databaseURL: `https://${projectId}.firebaseio.com`,
 });
 
-const UPDATE_DOC = "update_test_doc";
+const UPDATE_DOC = "update_test_doc_";
+const doNotDeleteIds = [];
+const addUpdatePromises = [];
+const deletePromises = [];
+
+const colRef = admin.firestore().collection(collection);
 
 function data() {
   return {
@@ -21,30 +26,38 @@ function data() {
       faker.random.number(90)
     ),
     prop6: admin.firestore.Timestamp.now(),
-    prop7: admin
-      .firestore()
-      .collection(collection)
-      .doc(faker.random.word()),
+    prop7: colRef.doc(faker.random.word()),
   };
 }
 
-const promises = [];
+Array.from({ length: 9 }).forEach((val, i) => {
+  const document = colRef.add(data());
 
-Array.from({ length: 9 }).forEach(() => {
-  const document = admin
-    .firestore()
-    .collection(collection)
-    .add(data());
+  addUpdatePromises.push(document);
 
-  promises.push(document);
+  const updateDocId = UPDATE_DOC + i;
+  const updateDoc = colRef.doc(updateDocId).set(data());
+
+  doNotDeleteIds.push(updateDocId);
+
+  addUpdatePromises.push(updateDoc);
 });
 
-const update = admin
-  .firestore()
-  .collection(collection)
-  .doc(UPDATE_DOC)
-  .set(data());
+async function queryFirestore() {
+  // add docs and update existing docs
+  await Promise.all(addUpdatePromises);
+  // get 10 random docs to delete
+  const querySnapshot = await colRef
+    .where(admin.firestore.FieldPath.documentId(), "not-in", doNotDeleteIds)
+    .limit(10)
+    .get();
 
-promises.push(update);
+  querySnapshot.forEach((doc) => {
+    console.log(`Document found at path: ${doc.id}`);
+    deletePromises.push(colRef.doc(doc.id).delete());
+  });
+  // delete all but the 10 existing documents
+  return Promise.all(deletePromises);
+}
 
-return Promise.all(promises);
+queryFirestore();
