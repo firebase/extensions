@@ -12,5 +12,5 @@ FROM
     FROM
       `test.test_dataset.test_table`
   ) test_table
-  CROSS JOIN UNNEST(test_table.map_array) AS map_array_member WITH OFFSET map_array_index
-  CROSS JOIN UNNEST(test_table.map2_array) AS map2_array_member WITH OFFSET map2_array_index
+  LEFT JOIN UNNEST(test_table.map_array) AS map_array_member WITH OFFSET map_array_index
+  LEFT JOIN UNNEST(test_table.map2_array) AS map2_array_member WITH OFFSET map2_array_index

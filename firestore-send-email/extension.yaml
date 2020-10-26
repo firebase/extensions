@@ -49,11 +49,11 @@ resources:
       Processes document changes in the specified Cloud Firestore collection,
       delivers emails, and updates the document with delivery status information.
     properties:
-      location: ${LOCATION}
+      location: ${param:LOCATION}
       runtime: nodejs10
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/${MAIL_COLLECTION}/{id}
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:MAIL_COLLECTION}/{id}
 
 params:
   - param: LOCATION
