@@ -12,7 +12,7 @@ EXTENSION="firestore-bigquery-export"
 
 
 # delete node_modules for firestore-bigquery-change-tracker manually to get around typescript binary being removed
-pushd ../$TRACKER > /dev/null
+pushd ../../$TRACKER > /dev/null
 echo "Running: removing node_modules from @firebaseextensions/${TRACKER}"
 rm -rf node_modules
 echo "Success: removed node_modules from @firebaseextensions/$TRACKER"
@@ -26,14 +26,14 @@ echo "Success: unlinked @firebaseextensions/$TRACKER package"
 
 # go into root directory and install & build all packages via lerna
 echo "Running: 'npm install' in root directory"
-pushd ../ > /dev/null
+pushd ../../ > /dev/null
 npm install --loglevel=error > /dev/null
 echo "Success: finished running 'npm install' in root directory"
 
 popd > /dev/null
 
 # register firestore-bigquery-change-tracker for symlinking
-pushd ./$TRACKER > /dev/null
+pushd ../$TRACKER > /dev/null
 echo "Running: 'registering $TRACKER'"
 npm link --loglevel=error > /dev/null
 popd > /dev/null
@@ -43,6 +43,8 @@ echo "Success: register $TRACKER as a linkable package"
 echo "Running: 'symlinking $TRACKER to $EXTENSION"
 npm link @firebaseextensions/$TRACKER --loglevel=error > /dev/null
 echo "Success: $TRACKER package is linked to $EXTENSION"
+
+pushd ../ > /dev/null
 
 # list installed extension to find out if default BigQuery extension is already installed. Uninstall if it exists.
 INSTALLED_EXTENSIONS=$(firebase ext:list --project=$FIREBASE_PROJECT)
@@ -54,12 +56,12 @@ fi
 
 # install BigQuery extenstion with latest changes to test
 echo "Running: installing '$EXTENSION' test extension using instanceId: $EXTENSION_INSTANCE_ID"
-echo "Y\n" | firebase ext:install . --params=./$TEST_DIRECTORY/$PARAMS --project=$FIREBASE_PROJECT
+firebase ext:install . --params=./functions/$TEST_DIRECTORY/$PARAMS --project=$FIREBASE_PROJECT
 echo "Success: installed $EXTENSION_INSTANCE_ID from $FIREBASE_PROJECT"
 
 # add data to the Firestore collection to test the backwards compatibility of latest BigQuery extension update
 echo "Running: adding data to the Firestore collection: $COLLECTION"
-node ./$TEST_DIRECTORY/install-script.js $FIREBASE_PROJECT $COLLECTION
+node ./functions/$TEST_DIRECTORY/install-script.js $FIREBASE_PROJECT $COLLECTION
 echo "Success: added data to the Firestore collection: $COLLECTION"
 
 # sleep for 20 seconds whilst waiting for logs to update

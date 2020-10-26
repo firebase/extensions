@@ -52,7 +52,6 @@ resources:
       Listens for document changes in your specified Cloud Firestore collection,
       then exports the changes into BigQuery.
     properties:
-      sourceDirectory: .
       location: ${LOCATION}
       runtime: nodejs10
       eventTrigger:
