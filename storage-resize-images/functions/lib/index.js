@@ -40,6 +40,13 @@ const supportedContentTypes = [
     "image/tiff",
     "image/webp",
 ];
+const supportedExtensions = [
+    ".jpeg",
+    ".jpg",
+    ".png",
+    ".tiff",
+    ".webp",
+];
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
@@ -154,7 +161,13 @@ function resize(originalFile, resizedFile, size) {
         .toFile(resizedFile);
 }
 const resizeImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => {
-    const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
+    let resizedFileName;
+    if (supportedExtensions.join('').includes(fileExtension)) {
+        resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
+    }
+    else {
+        resizedFileName = `${fileNameWithoutExtension}${fileExtension}_${size}`;
+    }
     // Path where resized image will be uploaded to in Storage.
     const resizedFilePath = path.normalize(config_1.default.resizedImagesPath
         ? path.join(fileDir, config_1.default.resizedImagesPath, resizedFileName)

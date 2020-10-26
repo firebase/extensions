@@ -51,6 +51,15 @@ const supportedContentTypes = [
   "image/webp",
 ];
 
+
+const supportedExtensions = [
+  ".jpeg",
+  ".jpg",
+  ".png",
+  ".tiff",
+  ".webp",
+];
+
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
@@ -200,7 +209,15 @@ const resizeImage = async ({
   size: string;
   objectMetadata: ObjectMetadata;
 }): Promise<ResizedImageResult> => {
-  const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
+
+  let resizedFileName;
+  
+  if(supportedExtensions.join('').includes(fileExtension)){
+    resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;    
+  } else {
+    resizedFileName = `${fileNameWithoutExtension}${fileExtension}_${size}`;    
+  }
+  
   // Path where resized image will be uploaded to in Storage.
   const resizedFilePath = path.normalize(
     config.resizedImagesPath
