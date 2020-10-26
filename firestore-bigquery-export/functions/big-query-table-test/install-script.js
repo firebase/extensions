@@ -27,10 +27,15 @@ function data() {
     ),
     prop6: admin.firestore.Timestamp.now(),
     prop7: colRef.doc(faker.random.word()),
+    prop8: {
+      one: faker.random.word(),
+      two: faker.random.number(),
+      three: faker.random.boolean(),
+    },
   };
 }
 
-Array.from({ length: 9 }).forEach((val, i) => {
+Array.from({ length: 10 }).forEach((val, i) => {
   const document = colRef.add(data());
 
   addUpdatePromises.push(document);
@@ -53,7 +58,6 @@ async function queryFirestore() {
     .get();
 
   querySnapshot.forEach((doc) => {
-    console.log(`Document found at path: ${doc.id}`);
     deletePromises.push(colRef.doc(doc.id).delete());
   });
   // delete all but the 10 existing documents
