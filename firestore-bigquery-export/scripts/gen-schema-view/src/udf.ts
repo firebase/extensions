@@ -74,11 +74,15 @@ function firestoreArrayDefinition(datasetId: string): string {
     RETURNS ARRAY<STRING>
     LANGUAGE js AS """
     function getArray(json) {
-      const parsed = JSON.parse(json);
-
-      if(Array.isArray(parsed)) {
-        return parsed.map(x => JSON.stringify(x));
-      } 
+      if(json) {
+        const parsed = JSON.parse(json);
+        
+        if(Array.isArray(parsed)) {
+          return parsed.map(x => JSON.stringify(x));
+        }
+        
+        return [];
+      }
 
       return [];
     }
