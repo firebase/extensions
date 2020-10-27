@@ -150,9 +150,9 @@ params:
       bucket? Note that these deletions cannot be undone.
     type: select
     options:
-      - label: Always delete
+      - label: Yes
         value: true
-      - label: Never delete
+      - label: No
         value: false
       - label: Delete on successful resize
         value: on_success  
