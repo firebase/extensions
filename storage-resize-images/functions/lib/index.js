@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateResizedImage = void 0;
+exports.generateResizedImage = exports.deleteImage = void 0;
 const admin = require("firebase-admin");
 const fs = require("fs");
 const functions = require("firebase-functions");
@@ -27,6 +27,12 @@ const uuidv4_1 = require("uuidv4");
 const config_1 = require("./config");
 const logs = require("./logs");
 const util_1 = require("./util");
+var deleteImage;
+(function (deleteImage) {
+    deleteImage[deleteImage["always"] = 0] = "always";
+    deleteImage[deleteImage["never"] = 1] = "never";
+    deleteImage[deleteImage["on_success"] = 2] = "on_success";
+})(deleteImage = exports.deleteImage || (exports.deleteImage = {}));
 sharp.cache(false);
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
@@ -100,6 +106,8 @@ exports.generateResizedImage = functions.storage.object().onFinalize(async (obje
                 contentType,
                 size,
                 objectMetadata: objectMetadata,
+                remoteFile,
+                filePath,
             }));
         });
         const results = await Promise.all(tasks);
@@ -119,7 +127,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize(async (obje
             fs.unlinkSync(originalFile);
             logs.tempOriginalFileDeleted(filePath);
         }
-        if (config_1.default.deleteOriginalFile) {
+        if (config_1.default.deleteOriginalFile === deleteImage.always) {
             // Delete the original file
             if (remoteFile) {
                 try {
@@ -153,7 +161,7 @@ function resize(originalFile, resizedFile, size) {
     })
         .toFile(resizedFile);
 }
-const resizeImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => {
+const resizeImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, remoteFile, filePath, }) => {
     const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
     // Path where resized image will be uploaded to in Storage.
     const resizedFilePath = path.normalize(config_1.default.resizedImagesPath
@@ -193,6 +201,18 @@ const resizeImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExten
             metadata,
         });
         logs.imageUploaded(resizedFilePath);
+        if (config_1.default.deleteOriginalFile === deleteImage.on_success) {
+            if (remoteFile) {
+                try {
+                    logs.remoteFileDeleting(filePath);
+                    await remoteFile.delete();
+                    logs.remoteFileDeleted(filePath);
+                }
+                catch (err) {
+                    logs.errorDeleting(err);
+                }
+            }
+        }
         return { size, success: true };
     }
     catch (err) {

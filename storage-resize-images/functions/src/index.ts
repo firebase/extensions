@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Bucket } from "@google-cloud/storage";
+import { Bucket, File } from "@google-cloud/storage";
 import * as admin from "firebase-admin";
 import * as fs from "fs";
 import * as functions from "firebase-functions";
@@ -32,6 +32,12 @@ import { extractFileNameWithoutExtension } from "./util";
 interface ResizedImageResult {
   size: string;
   success: boolean;
+}
+
+export enum deleteImage {
+  always = 0,
+  never,
+  on_success,
 }
 
 sharp.cache(false);
@@ -126,6 +132,8 @@ export const generateResizedImage = functions.storage.object().onFinalize(
             contentType,
             size,
             objectMetadata: objectMetadata,
+            remoteFile,
+            filePath,
           })
         );
       });
@@ -146,7 +154,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
         fs.unlinkSync(originalFile);
         logs.tempOriginalFileDeleted(filePath);
       }
-      if (config.deleteOriginalFile) {
+      if (config.deleteOriginalFile === deleteImage.always) {
         // Delete the original file
         if (remoteFile) {
           try {
@@ -190,6 +198,8 @@ const resizeImage = async ({
   contentType,
   size,
   objectMetadata,
+  remoteFile,
+  filePath,
 }: {
   bucket: Bucket;
   originalFile: string;
@@ -199,6 +209,8 @@ const resizeImage = async ({
   contentType: string;
   size: string;
   objectMetadata: ObjectMetadata;
+  remoteFile: File;
+  filePath: string;
 }): Promise<ResizedImageResult> => {
   const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
   // Path where resized image will be uploaded to in Storage.
@@ -247,6 +259,18 @@ const resizeImage = async ({
       metadata,
     });
     logs.imageUploaded(resizedFilePath);
+
+    if (config.deleteOriginalFile === deleteImage.on_success) {
+      if (remoteFile) {
+        try {
+          logs.remoteFileDeleting(filePath);
+          await remoteFile.delete();
+          logs.remoteFileDeleted(filePath);
+        } catch (err) {
+          logs.errorDeleting(err);
+        }
+      }
+    }
 
     return { size, success: true };
   } catch (err) {
