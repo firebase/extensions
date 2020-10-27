@@ -273,7 +273,7 @@ export const buildSchemaViewQuery = (
   `;
   if (schemaHasArrays) {
     /**
-     * If the schema we are generating has arrays, we perform a CROSS JOIN with
+     * If the schema we are generating has arrays, we perform a LEFT JOIN with
      * the result of UNNESTing each array so that each document ends up with N
      * rows, one for each of N members of it's contained array. Each of these
      * rows contains an additional index column and a corresponding member
@@ -285,7 +285,7 @@ export const buildSchemaViewQuery = (
     query = `${subSelectQuery(query)} ${rawTableName} ${fieldArrays
       .map(
         (arrayFieldName) =>
-          `CROSS JOIN UNNEST(${rawTableName}.${arrayFieldName})
+          `LEFT JOIN UNNEST(${rawTableName}.${arrayFieldName})
        AS ${arrayFieldName}_member
        WITH OFFSET ${arrayFieldName}_index`
       )

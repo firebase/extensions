@@ -94,7 +94,7 @@ FROM
     WHERE
       NOT is_deleted
   ) test_table
-  CROSS JOIN UNNEST(test_table.favorite_numbers) AS favorite_numbers_member WITH OFFSET favorite_numbers_index
+  LEFT JOIN UNNEST(test_table.favorite_numbers) AS favorite_numbers_member WITH OFFSET favorite_numbers_index
 GROUP BY
   document_name,
   document_id,
