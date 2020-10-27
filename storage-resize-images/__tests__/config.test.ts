@@ -1,6 +1,5 @@
 import mockedEnv from "mocked-env";
 
-
 const environment = {
   LOCATION: "us-central1",
   IMG_BUCKET: "extensions-testing.appspot.com",
@@ -44,7 +43,7 @@ describe("extension", () => {
     deleteTypeCounter++;
     expect(mockConfig.deleteOriginalFile).toEqual(mockDeleteImage.always);
   });
-  
+
   test("never delete original file", async () => {
     const mockConfig = config();
     const mockDeleteImage = deleteImage();
