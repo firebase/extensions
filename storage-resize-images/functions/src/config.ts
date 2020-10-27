@@ -34,4 +34,3 @@ export default {
   resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
   deleteOriginalFile: deleteOriginalFile(process.env.DELETE_ORIGINAL_FILE),
 };
-
