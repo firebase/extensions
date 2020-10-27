@@ -111,10 +111,12 @@ WHERE favorite_numbers_index = 0
 
 ### Remove stale data from your changelog table
 
-If you wish to clean up the data from your `changelog` table, use the following `DELETE` query to provide
-a range of time against the `timestamp` column, and delete the requisite rows.
+If you want to clean up data from your `changelog` table, use the following
+`DELETE` query to delete the rows that fall within a range of timestamps.
 
 ```sql
-/* the first WHERE query is the start of the time range, the second WHERE query is the end of the time range. The below deletes every row in a 24 hour time frame on the 4th September, 2020*/
+/* The first WHERE clause is the start of the time range, and the second WHERE
+   clause is the end of the time range. The query below deletes every row in a
+   24-hour time frame on the 4th September, 2020. */
 DELETE FROM `[PROJECT ID].[DATASET ID].[CHANGELOG TABLE ID]` WHERE '2020-09-04 00:00:00' < timestamp AND '2020-09-05 00:00:00' > timestamp
 ```
