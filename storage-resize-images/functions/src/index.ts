@@ -24,7 +24,7 @@ import * as path from "path";
 import * as sharp from "sharp";
 import { uuid } from "uuidv4";
 
-import config from "./config";
+import config, { deleteImage } from "./config";
 import * as logs from "./logs";
 import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
 import { extractFileNameWithoutExtension } from "./util";
@@ -32,12 +32,6 @@ import { extractFileNameWithoutExtension } from "./util";
 interface ResizedImageResult {
   size: string;
   success: boolean;
-}
-
-export enum deleteImage {
-  always = 0,
-  never,
-  on_success,
 }
 
 sharp.cache(false);
@@ -260,7 +254,7 @@ const resizeImage = async ({
     });
     logs.imageUploaded(resizedFilePath);
 
-    if (config.deleteOriginalFile === deleteImage.on_success) {
+    if (config.deleteOriginalFile === deleteImage.onSuccess) {
       if (remoteFile) {
         try {
           logs.remoteFileDeleting(filePath);

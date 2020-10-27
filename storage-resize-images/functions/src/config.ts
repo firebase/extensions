@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-import { deleteImage } from "./index";
+export enum deleteImage {
+  always = 0,
+  never,
+  onSuccess,
+}
 
 function deleteOriginalFile(deleteType) {
   switch (deleteType) {
@@ -23,7 +27,7 @@ function deleteOriginalFile(deleteType) {
     case "false":
       return deleteImage.never;
     default:
-      return deleteImage.on_success;
+      return deleteImage.onSuccess;
   }
 }
 

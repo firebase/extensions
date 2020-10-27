@@ -15,15 +15,21 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-const index_1 = require("./index");
+exports.deleteImage = void 0;
+var deleteImage;
+(function (deleteImage) {
+    deleteImage[deleteImage["always"] = 0] = "always";
+    deleteImage[deleteImage["never"] = 1] = "never";
+    deleteImage[deleteImage["onSuccess"] = 2] = "onSuccess";
+})(deleteImage = exports.deleteImage || (exports.deleteImage = {}));
 function deleteOriginalFile(deleteType) {
     switch (deleteType) {
         case "true":
-            return index_1.deleteImage.always;
+            return deleteImage.always;
         case "false":
-            return index_1.deleteImage.never;
+            return deleteImage.never;
         default:
-            return index_1.deleteImage.on_success;
+            return deleteImage.onSuccess;
     }
 }
 exports.default = {
