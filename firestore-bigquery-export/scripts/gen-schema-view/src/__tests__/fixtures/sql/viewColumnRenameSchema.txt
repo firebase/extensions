@@ -187,8 +187,8 @@ FROM
     WHERE
       NOT is_deleted
   ) test_table
-  CROSS JOIN UNNEST(test_table.newArray) AS newArray_member WITH OFFSET newArray_index
-  CROSS JOIN UNNEST(test_table.newMapColumnName_arrayMap) AS newMapColumnName_arrayMap_member WITH OFFSET newMapColumnName_arrayMap_index
+  LEFT JOIN UNNEST(test_table.newArray) AS newArray_member WITH OFFSET newArray_index
+  LEFT JOIN UNNEST(test_table.newMapColumnName_arrayMap) AS newMapColumnName_arrayMap_member WITH OFFSET newMapColumnName_arrayMap_index
 GROUP BY
   document_name,
   document_id,

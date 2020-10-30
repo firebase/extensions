@@ -36,5 +36,5 @@ FROM
     FROM
       `test.test_dataset.test_table`
   ) test_table
-  CROSS JOIN UNNEST(test_table.newArray) AS newArray_member WITH OFFSET newArray_index
-  CROSS JOIN UNNEST(test_table.newMapColumnName_arrayMap) AS newMapColumnName_arrayMap_member WITH OFFSET newMapColumnName_arrayMap_index
+  LEFT JOIN UNNEST(test_table.newArray) AS newArray_member WITH OFFSET newArray_index
+  LEFT JOIN UNNEST(test_table.newMapColumnName_arrayMap) AS newMapColumnName_arrayMap_member WITH OFFSET newMapColumnName_arrayMap_index
