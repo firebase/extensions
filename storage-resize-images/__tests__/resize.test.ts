@@ -1,4 +1,8 @@
+import * as fs from "fs";
+
 import mockedEnv from "mocked-env";
+import sizeOf from "image-size";
+
 const environment = {
   LOCATION: "us-central1",
   IMG_BUCKET: "extensions-testing.appspot.com",
@@ -12,6 +16,9 @@ let restoreEnv;
 restoreEnv = mockedEnv(environment);
 
 import { resize } from "../functions/src/resize-image";
+
+// 100x100
+const TEST_IMAGE = `${__dirname}/test-image.png`;
 
 describe("extension", () => {
   beforeEach(() => {
@@ -35,5 +42,21 @@ describe("extension", () => {
     } catch (e) {
       expect(e.message).toContain(errorMessage);
     }
+  });
+
+  test("resize image correctly", async () => {
+    const temporaryPath = `${__dirname}/temp-image.png`;
+    const size = "75x75";
+
+    await resize(TEST_IMAGE, temporaryPath, size);
+
+    var dimensions = sizeOf(temporaryPath);
+
+    expect(dimensions.width).toEqual(75);
+    expect(dimensions.height).toEqual(75);
+
+    fs.unlink(temporaryPath, (err) => {
+      if (err) throw new Error(err.message);
+    });
   });
 });
