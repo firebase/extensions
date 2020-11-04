@@ -168,11 +168,11 @@ params:
     example: thumbnails
     required: false
 
-  - param: ABSOLUTE_PATH_LIST
-    label: List of absolute paths for resized images
+  - param: INCLUDE_PATH_LIST
+    label: Paths that contain images you want to resize
     description: >
-      A comma-separated list of absolute paths to restrict the 
-      images to be resized. For example, to only resize the images 
+      Restrict storage-resize-images to only resize images in specific locations in your Storage bucket by 
+      supplying a comma-separated list of absolute paths. For example, to only resize the images 
       stored in `/users/pictures` directory, specify the path `/users/pictures`. 
       If you prefer to resize every image uploaded to the storage bucket, 
       leave this field empty.
