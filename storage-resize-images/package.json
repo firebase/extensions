@@ -8,7 +8,7 @@
     "build": "npm run clean && npm run compile",
     "clean": "rimraf functions/lib",
     "compile": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "generate-readme": "firebase ext:info . --markdown > README.md"
   },
   "dependencies": {
