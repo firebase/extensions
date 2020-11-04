@@ -7,7 +7,6 @@ import { Bucket, File } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
 import { uuid } from "uuidv4";
 
-
 import config, { deleteImage } from "./config";
 import * as logs from "./logs";
 

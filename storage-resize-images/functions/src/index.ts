@@ -22,11 +22,10 @@ import * as os from "os";
 import * as path from "path";
 import * as sharp from "sharp";
 
-import {ResizedImageResult, resizeImage} from "./resize-image";
+import { ResizedImageResult, resizeImage } from "./resize-image";
 import config, { deleteImage } from "./config";
 import * as logs from "./logs";
 import { extractFileNameWithoutExtension } from "./util";
-
 
 sharp.cache(false);
 
@@ -157,7 +156,3 @@ export const generateResizedImage = functions.storage.object().onFinalize(
     }
   }
 );
-
-
-
-
