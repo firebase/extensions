@@ -47,8 +47,8 @@ const supportedContentTypes = [
 exports.generateResizedImage = functions.storage.object().onFinalize(async (object) => {
     logs.start();
     const { contentType } = object; // This is the image MIME type
-    const absolutePathList = config_1.default.absolutePathList
-        ? config_1.default.absolutePathList.split(",")
+    const includePathList = config_1.default.includePathList
+        ? config_1.default.includePathList.split(",")
         : [""]; // Convert list to an array
     const excludePathList = config_1.default.excludePathList
         ? config_1.default.excludePathList.split(",")
@@ -70,9 +70,9 @@ exports.generateResizedImage = functions.storage.object().onFinalize(async (obje
         logs.unsupportedType(supportedContentTypes, contentType);
         return;
     }
-    if (config_1.default.absolutePathList &&
-        !util_1.startsWithArray(absolutePathList, tmpFilePath)) {
-        logs.imageOutsideOfPaths(absolutePathList, tmpFilePath);
+    if (config_1.default.includePathList &&
+        !util_1.startsWithArray(includePathList, tmpFilePath)) {
+        logs.imageOutsideOfPaths(includePathList, tmpFilePath);
         return;
     }
     if (config_1.default.excludePathList &&

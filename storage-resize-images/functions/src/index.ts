@@ -59,8 +59,8 @@ export const generateResizedImage = functions.storage.object().onFinalize(
   async (object): Promise<void> => {
     logs.start();
     const { contentType } = object; // This is the image MIME type
-    const absolutePathList = config.absolutePathList
-      ? config.absolutePathList.split(",")
+    const includePathList = config.includePathList
+      ? config.includePathList.split(",")
       : [""]; // Convert list to an array
     const excludePathList = config.excludePathList
       ? config.excludePathList.split(",")
@@ -88,10 +88,10 @@ export const generateResizedImage = functions.storage.object().onFinalize(
     }
 
     if (
-      config.absolutePathList &&
-      !startsWithArray(absolutePathList, tmpFilePath)
+      config.includePathList &&
+      !startsWithArray(includePathList, tmpFilePath)
     ) {
-      logs.imageOutsideOfPaths(absolutePathList, tmpFilePath);
+      logs.imageOutsideOfPaths(includePathList, tmpFilePath);
       return;
     }
 
