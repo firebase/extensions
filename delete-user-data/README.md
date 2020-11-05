@@ -1,5 +1,7 @@
 # Delete User Data
 
+**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
+
 **Description**: Deletes data keyed on a userId from Cloud Firestore, Realtime Database, and/or Cloud Storage when a user deletes their account.
 
 

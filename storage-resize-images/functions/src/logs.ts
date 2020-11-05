@@ -70,6 +70,19 @@ export const imageDownloading = (path: string) => {
   logger.log(`Downloading image file: '${path}'`);
 };
 
+export const imageConverting = (
+  originalImageType: string,
+  imageType: string
+) => {
+  console.log(
+    `Converting image from type, ${originalImageType}, to type ${imageType}.`
+  );
+};
+
+export const imageConverted = (imageType: string) => {
+  console.log(`Converted image to ${imageType}`);
+};
+
 export const imageResized = (path: string) => {
   logger.log(`Resized image created at '${path}'`);
 };
