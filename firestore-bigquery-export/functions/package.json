@@ -8,7 +8,7 @@
     "compile": "tsc",
     "prepare": "npm run build",
     "test": "jest",
-    "generate-readme": "firebase ext:info . --markdown > README.md"
+    "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
