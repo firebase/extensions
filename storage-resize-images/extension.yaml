@@ -196,4 +196,5 @@ params:
         value: tiff
       - label: Do not convert
         value: false
+    default: false
     required: false
