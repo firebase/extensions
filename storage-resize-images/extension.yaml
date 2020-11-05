@@ -126,7 +126,7 @@ params:
     example: my-project-12345.appspot.com
     validationRegex: ^([0-9a-z_.-]*)$
     validationErrorMessage: Invalid storage bucket
-    default: ${param:STORAGE_BUCKET}
+    default: ${STORAGE_BUCKET}
     required: true
 
   - param: IMG_SIZES
