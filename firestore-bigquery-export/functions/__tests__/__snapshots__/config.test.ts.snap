@@ -3,10 +3,10 @@
 exports[`extension config config loaded from environment variables 1`] = `
 Object {
   "collectionPath": undefined,
-  "datasetId": undefined,
+  "datasetId": "my_dataset",
   "initialized": false,
-  "location": "europe-west2",
-  "tableId": undefined,
+  "location": "us-central1",
+  "tableId": "my_table",
 }
 `;
 
