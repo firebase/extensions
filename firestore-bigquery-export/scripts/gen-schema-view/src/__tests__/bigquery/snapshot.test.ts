@@ -22,6 +22,7 @@ import * as util from "util";
 import {
   buildLatestSchemaSnapshotViewQuery,
   buildLatestSchemaSnapshotViewQueryFromLatestView,
+  testBuildLatestSchemaSnapshotViewQuery,
 } from "../../snapshot";
 
 const fixturesDir = __dirname + "/../fixtures";
@@ -47,19 +48,19 @@ async function readBigQuerySchema(file: string): Promise<any> {
   return require(file);
 }
 
-describe("schema snapshot view sql generation", () => {
-  it("should generate the expected sql", async () => {
+describe("view schema snapshot view sql generation", () => {
+  it("should generate the expected sql for fullSchemaLatest.txt", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/fullSchemaLatest.txt`
     );
-    const result = buildLatestSchemaSnapshotViewQuery(
+    const result = testBuildLatestSchemaSnapshotViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/fullSchema.json`)
     );
     expect(result.query).to.equal(expectedQuery);
   });
-  it("should generate the expected sql", async () => {
+  it("should generate the expected sql for ", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/fullSchemaLatestFromView.txt`
     );
@@ -89,6 +90,18 @@ describe("schema snapshot view sql generation", () => {
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/fullSchema.json`)
+    );
+    expect(result.query).to.equal(expectedQuery);
+  });
+
+  it("should handle renaming properties extracted from JSON data", async () => {
+    const expectedQuery = await readFormattedSQL(
+      `${sqlDir}/viewColumnRenameSchema.txt`
+    );
+    const result = testBuildLatestSchemaSnapshotViewQuery(
+      testDataset,
+      testTable,
+      await readBigQuerySchema(`${schemaDir}/columnRename.json`)
     );
     expect(result.query).to.equal(expectedQuery);
   });

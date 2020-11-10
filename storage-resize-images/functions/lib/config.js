@@ -23,4 +23,5 @@ exports.default = {
     includePathList: process.env.INCLUDE_PATH_LIST,
     excludePathList: process.env.EXCLUDE_PATH_LIST,
     deleteOriginalFile: process.env.DELETE_ORIGINAL_FILE === "true",
+    imageType: process.env.IMAGE_TYPE,
 };

@@ -1,6 +1,10 @@
+## Version 0.1.13
+
+feature - Add new parameter to optionally convert each uploaded image to a different image content-type (PR #483)
+
 ## Version 0.1.12
 
-fixed - ignore gzipped images (#417)
+fixed - ignore gzipped images (PR #417)
 
 feature - Add new Cloud Functions locations. For more information about locations and their pricing tiers, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 

@@ -1,0 +1,41 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`extension config config loaded from environment variables 1`] = `
+Object {
+  "collectionPath": undefined,
+  "datasetId": undefined,
+  "initialized": false,
+  "location": "europe-west2",
+  "tableId": undefined,
+}
+`;
+
+exports[`extension config config.datasetId param exists 1`] = `
+Object {
+  "default": "firestore_export",
+  "description": "What ID would you like to use for your BigQuery dataset? This extension will create the dataset, if it doesn't already exist.",
+  "example": "firestore_export",
+  "label": "Dataset ID",
+  "param": "DATASET_ID",
+  "required": true,
+  "type": "string",
+  "validationErrorMessage": "BigQuery dataset IDs must be alphanumeric (plus underscores) and must be no more than 1024 characters.
+",
+  "validationRegex": "^[a-zA-Z0-9_]+$",
+}
+`;
+
+exports[`extension config config.tableId param exists 1`] = `
+Object {
+  "default": "posts",
+  "description": "What identifying prefix would you like to use for your table and view inside your BigQuery dataset? This extension will create the table and view, if they don't already exist.",
+  "example": "posts",
+  "label": "Table ID",
+  "param": "TABLE_ID",
+  "required": true,
+  "type": "string",
+  "validationErrorMessage": "BigQuery table IDs must be alphanumeric (plus underscores) and must be no more than 1024 characters.
+",
+  "validationRegex": "^[a-zA-Z0-9_]+$",
+}
+`;
