@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.resizeImage = exports.resize = void 0;
+exports.modifyImage = exports.convertType = exports.resize = void 0;
 const os = require("os");
 const sharp = require("sharp");
 const path = require("path");
@@ -8,7 +8,7 @@ const fs = require("fs");
 const uuidv4_1 = require("uuidv4");
 const config_1 = require("./config");
 const logs = require("./logs");
-function resize(originalFile, resizedFile, size) {
+function resize(file, size) {
     let height, width;
     if (size.indexOf(",") !== -1) {
         [width, height] = size.split(",");
@@ -19,30 +19,68 @@ function resize(originalFile, resizedFile, size) {
     else {
         throw new Error("height and width are not delimited by a ',' or a 'x'");
     }
-    return sharp(originalFile)
+    return sharp(file)
         .rotate()
         .resize(parseInt(width, 10), parseInt(height, 10), {
         fit: "inside",
         withoutEnlargement: true,
     })
-        .toFile(resizedFile);
+        .toBuffer();
 }
 exports.resize = resize;
-exports.resizeImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, remoteFile, filePath, }) => {
-    const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
-    // Path where resized image will be uploaded to in Storage.
-    const resizedFilePath = path.normalize(config_1.default.resizedImagesPath
-        ? path.join(fileDir, config_1.default.resizedImagesPath, resizedFileName)
-        : path.join(fileDir, resizedFileName));
-    let resizedFile;
+function convertType(buffer) {
+    const { imageType } = config_1.default;
+    if (imageType === "jpg" || imageType === "jpeg") {
+        return sharp(buffer)
+            .jpeg()
+            .toBuffer();
+    }
+    else if (imageType === "png") {
+        return sharp(buffer)
+            .png()
+            .toBuffer();
+    }
+    else if (imageType === "webp") {
+        return sharp(buffer)
+            .webp()
+            .toBuffer();
+    }
+    else if (imageType === "tiff") {
+        return sharp(buffer)
+            .tiff()
+            .toBuffer();
+    }
+    return buffer;
+}
+exports.convertType = convertType;
+const supportedImageContentTypeMap = {
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    tiff: "image/tiff",
+    webp: "image/webp",
+};
+exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, remoteFile, filePath, }) => {
+    const { imageType } = config_1.default;
+    const hasImageTypeConfigSet = imageType !== "false";
+    const imageContentType = hasImageTypeConfigSet
+        ? supportedImageContentTypeMap[imageType]
+        : contentType;
+    const modifiedExtensionName = fileExtension && hasImageTypeConfigSet ? `.${imageType}` : fileExtension;
+    const modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
+    // Path where modified image will be uploaded to in Storage.
+    const modifiedFilePath = path.normalize(config_1.default.resizedImagesPath
+        ? path.join(fileDir, config_1.default.resizedImagesPath, modifiedFileName)
+        : path.join(fileDir, modifiedFileName));
+    let modifiedFile;
     try {
-        resizedFile = path.join(os.tmpdir(), resizedFileName);
+        modifiedFile = path.join(os.tmpdir(), modifiedFileName);
         // Cloud Storage files.
         const metadata = {
             contentDisposition: objectMetadata.contentDisposition,
             contentEncoding: objectMetadata.contentEncoding,
             contentLanguage: objectMetadata.contentLanguage,
-            contentType: contentType,
+            contentType: imageContentType,
             metadata: objectMetadata.metadata || {},
         };
         metadata.metadata.resizedImage = true;
@@ -57,17 +95,25 @@ exports.resizeImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
         if (metadata.metadata.firebaseStorageDownloadTokens) {
             metadata.metadata.firebaseStorageDownloadTokens = uuidv4_1.uuid();
         }
-        // Generate a resized image using Sharp.
-        logs.imageResizing(resizedFile, size);
-        await resize(originalFile, resizedFile, size);
-        logs.imageResized(resizedFile);
-        // Uploading the resized image.
-        logs.imageUploading(resizedFilePath);
-        await bucket.upload(resizedFile, {
-            destination: resizedFilePath,
+        // Generate a resized image buffer using Sharp.
+        logs.imageResizing(modifiedFile, size);
+        let modifiedImageBuffer = await resize(originalFile, size);
+        logs.imageResized(modifiedFile);
+        // Generate a converted image type buffer using Sharp.
+        if (hasImageTypeConfigSet) {
+            logs.imageConverting(fileExtension, config_1.default.imageType);
+            modifiedImageBuffer = await convertType(modifiedImageBuffer);
+            logs.imageConverted(config_1.default.imageType);
+        }
+        // Generate a image file using Sharp.
+        await sharp(modifiedImageBuffer).toFile(modifiedFile);
+        // Uploading the modified image.
+        logs.imageUploading(modifiedFilePath);
+        await bucket.upload(modifiedFile, {
+            destination: modifiedFilePath,
             metadata,
         });
-        logs.imageUploaded(resizedFilePath);
+        logs.imageUploaded(modifiedFile);
         if (config_1.default.deleteOriginalFile === config_1.deleteImage.onSuccess) {
             if (remoteFile) {
                 try {
@@ -89,10 +135,10 @@ exports.resizeImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
     finally {
         try {
             // Make sure the local resized file is cleaned up to free up disk space.
-            if (resizedFile) {
-                logs.tempResizedFileDeleting(resizedFilePath);
-                fs.unlinkSync(resizedFile);
-                logs.tempResizedFileDeleted(resizedFilePath);
+            if (modifiedFile) {
+                logs.tempResizedFileDeleting(modifiedFilePath);
+                fs.unlinkSync(modifiedFile);
+                logs.tempResizedFileDeleted(modifiedFilePath);
             }
         }
         catch (err) {

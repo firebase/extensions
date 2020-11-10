@@ -8,6 +8,7 @@ Object {
   "imageSizes": Array [
     "200x200",
   ],
+  "imageType": undefined,
   "resizedImagesPath": undefined,
 }
 `;

@@ -22,7 +22,7 @@ import * as os from "os";
 import * as path from "path";
 import * as sharp from "sharp";
 
-import { ResizedImageResult, resizeImage } from "./resize-image";
+import { ResizedImageResult, modifyImage } from "./resize-image";
 import config, { deleteImage } from "./config";
 import * as logs from "./logs";
 import { extractFileNameWithoutExtension } from "./util";
@@ -43,14 +43,6 @@ const supportedContentTypes = [
   "image/tiff",
   "image/webp",
 ];
-
-const supportedImageContentTypeMap = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  tiff: "image/tiff",
-  webp: "image/webp",
-};
 
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using

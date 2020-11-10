@@ -2,6 +2,7 @@ import * as fs from "fs";
 
 import mockedEnv from "mocked-env";
 import sizeOf from "image-size";
+import * as sharp from "sharp";
 
 const environment = {
   LOCATION: "us-central1",
@@ -32,13 +33,13 @@ describe("extension", () => {
     const errorMessage = "height and width are not delimited by a ',' or a 'x'";
 
     try {
-      resize(filePath, filePath, "200200");
+      resize(filePath, "200200");
     } catch (e) {
       expect(e.message).toContain(errorMessage);
     }
 
     try {
-      resize(filePath, filePath, "200 200");
+      resize(filePath, "200 200");
     } catch (e) {
       expect(e.message).toContain(errorMessage);
     }
@@ -48,7 +49,9 @@ describe("extension", () => {
     const temporaryPath = `${__dirname}/temp-image.png`;
     const size = "75x75";
 
-    await resize(TEST_IMAGE, temporaryPath, size);
+    const modifiedImageBuffer = await resize(TEST_IMAGE, size);
+
+    await sharp(modifiedImageBuffer).toFile(temporaryPath);
 
     var dimensions = sizeOf(temporaryPath);
 
