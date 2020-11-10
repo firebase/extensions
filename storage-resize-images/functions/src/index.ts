@@ -44,6 +44,14 @@ const supportedContentTypes = [
   "image/webp",
 ];
 
+const supportedImageContentTypeMap = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  tiff: "image/tiff",
+  webp: "image/webp",
+};
+
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
@@ -110,7 +118,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       const tasks: Promise<ResizedImageResult>[] = [];
       imageSizes.forEach((size) => {
         tasks.push(
-          resizeImage({
+          modifyImage({
             bucket,
             originalFile,
             fileDir,

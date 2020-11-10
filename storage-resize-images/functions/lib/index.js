@@ -23,7 +23,6 @@ const mkdirp = require("mkdirp");
 const os = require("os");
 const path = require("path");
 const sharp = require("sharp");
-const resize_image_1 = require("./resize-image");
 const config_1 = require("./config");
 const logs = require("./logs");
 const util_1 = require("./util");
@@ -40,6 +39,13 @@ const supportedContentTypes = [
     "image/tiff",
     "image/webp",
 ];
+const supportedImageContentTypeMap = {
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    tiff: "image/tiff",
+    webp: "image/webp",
+};
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
@@ -91,7 +97,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize(async (obje
         const imageSizes = new Set(config_1.default.imageSizes);
         const tasks = [];
         imageSizes.forEach((size) => {
-            tasks.push(resize_image_1.resizeImage({
+            tasks.push(modifyImage({
                 bucket,
                 originalFile,
                 fileDir,
