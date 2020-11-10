@@ -49,6 +49,8 @@ type BigQueryFieldType =
 
 export type FirestoreField = {
   fields?: FirestoreField[];
+  extractor?: string;
+  column_name?: string;
   name: string;
   repeated?: boolean;
   description?: string;
@@ -122,6 +124,12 @@ export class FirestoreBigQuerySchemaViewFactory {
       });
     }
 
+    if (firestoreSchema.fields) {
+      firestoreSchema.fields = updateFirestoreSchemaFields(
+        firestoreSchema.fields
+      );
+    }
+
     let changeLogSchemaView = dataset.table(changeLogSchemaViewName);
     const [changeLogSchemaViewExists] = await changeLogSchemaView.exists();
 
@@ -183,6 +191,16 @@ export class FirestoreBigQuerySchemaViewFactory {
   }
 }
 
+export function updateFirestoreSchemaFields(fields: FirestoreField[]) {
+  return fields.map((field) => {
+    return {
+      ...field,
+      extractor: field.name,
+      name: field.column_name || field.name,
+    };
+  });
+}
+
 /**
  * Given a BigQuery schema returned from either `userSchemaView` or
  * `latestConsistentSnapshotSchemaView`, inherit the appropriate
@@ -221,6 +239,15 @@ export function userSchemaView(
   };
 }
 
+export const testBuildSchemaViewQuery = (
+  datasetId: string,
+  rawTableName: string,
+  schema: FirestoreSchema
+) => {
+  schema.fields = updateFirestoreSchemaFields(schema.fields);
+  return buildSchemaViewQuery(datasetId, rawTableName, schema);
+};
+
 /**
  * Constructs a query for building a view over a raw changelog table name.
  */
@@ -246,7 +273,7 @@ export const buildSchemaViewQuery = (
   `;
   if (schemaHasArrays) {
     /**
-     * If the schema we are generating has arrays, we perform a CROSS JOIN with
+     * If the schema we are generating has arrays, we perform a LEFT JOIN with
      * the result of UNNESTing each array so that each document ends up with N
      * rows, one for each of N members of it's contained array. Each of these
      * rows contains an additional index column and a corresponding member
@@ -258,7 +285,7 @@ export const buildSchemaViewQuery = (
     query = `${subSelectQuery(query)} ${rawTableName} ${fieldArrays
       .map(
         (arrayFieldName) =>
-          `CROSS JOIN UNNEST(${rawTableName}.${arrayFieldName})
+          `LEFT JOIN UNNEST(${rawTableName}.${arrayFieldName})
        AS ${arrayFieldName}_member
        WITH OFFSET ${arrayFieldName}_index`
       )
@@ -319,7 +346,8 @@ export function processFirestoreSchema(
     geopoints,
     extractors,
     transformer,
-    bigQueryFields
+    bigQueryFields,
+    []
   );
   return {
     queryInfo: [extractors, arrays, geopoints],
@@ -349,12 +377,15 @@ function processFirestoreSchemaHelper(
   geopoints: string[],
   extractors: { [fieldName: string]: string },
   transformer: (selector: string) => string,
-  bigQueryFields: { [property: string]: string }[]
+  bigQueryFields: { [property: string]: string }[],
+  extractPrefix: string[]
 ) {
   const { fields } = schema;
   return fields.map((field) => {
     if (field.type === "map") {
-      const subschema: FirestoreSchema = { fields: field.fields };
+      const subschema: FirestoreSchema = {
+        fields: updateFirestoreSchemaFields(field.fields),
+      };
       processFirestoreSchemaHelper(
         datasetId,
         dataFieldName,
@@ -364,7 +395,8 @@ function processFirestoreSchemaHelper(
         geopoints,
         extractors,
         transformer,
-        bigQueryFields
+        bigQueryFields,
+        extractPrefix.concat(field.extractor)
       );
       return;
     }
@@ -374,7 +406,8 @@ function processFirestoreSchemaHelper(
       prefix,
       field,
       transformer,
-      bigQueryFields
+      bigQueryFields,
+      extractPrefix
     );
     for (let fieldName in fieldNameToSelector) {
       extractors[fieldName] = fieldNameToSelector[fieldName];
@@ -382,6 +415,7 @@ function processFirestoreSchemaHelper(
     // For "latest" data views, certain types of fields cannot be used in
     // "GROUP BY" clauses. We keep track of them so they can be explicitly
     // transformed into groupable types later.
+
     if (field.type === "array") {
       arrays.push(qualifyFieldName(prefix, field.name));
     }
@@ -402,9 +436,11 @@ const processLeafField = (
   prefix: string[],
   field: FirestoreField,
   transformer: (selector: string) => string,
-  bigQueryFields: { [property: string]: string }[]
+  bigQueryFields: { [property: string]: string }[],
+  extractPrefix: string[]
 ) => {
-  let extractPrefix = `${prefix.join(".")}`;
+  const extractPrefixJoined = `${extractPrefix.join(".")}`;
+
   let fieldNameToSelector = {};
   let selector;
   switch (field.type) {
@@ -415,7 +451,7 @@ const processLeafField = (
     case "reference":
       selector = jsonExtractScalar(
         dataFieldName,
-        extractPrefix,
+        extractPrefixJoined,
         field,
         ``,
         transformer
@@ -424,38 +460,50 @@ const processLeafField = (
     case "array":
       selector = firestoreArray(
         datasetId,
-        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtract(dataFieldName, extractPrefixJoined, field, ``, transformer)
       );
       break;
     case "boolean":
       selector = firestoreBoolean(
         datasetId,
-        jsonExtractScalar(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtractScalar(
+          dataFieldName,
+          extractPrefixJoined,
+          field,
+          ``,
+          transformer
+        )
       );
       break;
     case "number":
       selector = firestoreNumber(
         datasetId,
-        jsonExtractScalar(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtractScalar(
+          dataFieldName,
+          extractPrefixJoined,
+          field,
+          ``,
+          transformer
+        )
       );
       break;
     case "timestamp":
       selector = firestoreTimestamp(
         datasetId,
-        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtract(dataFieldName, extractPrefixJoined, field, ``, transformer)
       );
       break;
     case "geopoint":
       const latitude = jsonExtractScalar(
         dataFieldName,
-        extractPrefix,
+        extractPrefixJoined,
         field,
         `._latitude`,
         transformer
       );
       const longitude = jsonExtractScalar(
         dataFieldName,
-        extractPrefix,
+        extractPrefixJoined,
         field,
         `._longitude`,
         transformer
@@ -468,7 +516,7 @@ const processLeafField = (
         qualifyFieldName(prefix, field.name)
       ] = `${firestoreGeopoint(
         datasetId,
-        jsonExtract(dataFieldName, extractPrefix, field, ``, transformer)
+        jsonExtract(dataFieldName, extractPrefixJoined, field, ``, transformer)
       )} AS ${prefix.concat(field.name).join("_")}`;
 
       bigQueryFields.push({
@@ -555,7 +603,7 @@ const jsonExtractScalar = (
   return transformer(
     `JSON_EXTRACT_SCALAR(${dataFieldName}, \'\$.${
       prefix.length > 0 ? `${prefix}.` : ``
-    }${field.name}${subselector}\')`
+    }${field.extractor}${subselector}\')`
   );
 };
 
@@ -569,7 +617,7 @@ const jsonExtract = (
   return transformer(
     `JSON_EXTRACT(${dataFieldName}, \'\$.${
       prefix.length > 0 ? `${prefix}.` : ``
-    }${field.name}${subselector}\')`
+    }${field.extractor}${subselector}\')`
   );
 };
 

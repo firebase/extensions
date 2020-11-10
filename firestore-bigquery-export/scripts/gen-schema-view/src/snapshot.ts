@@ -21,6 +21,7 @@ import {
   latest,
   processFirestoreSchema,
   subSelectQuery,
+  updateFirestoreSchemaFields,
 } from "./schema";
 
 export function latestConsistentSnapshotSchemaView(
@@ -49,6 +50,15 @@ export function buildLatestSchemaSnapshotViewQueryFromLatestView(
 ): any {
   return buildSchemaViewQuery(datasetId, latest(tableName), schema);
 }
+
+export const testBuildLatestSchemaSnapshotViewQuery = (
+  datasetId: string,
+  rawTableName: string,
+  schema: FirestoreSchema
+) => {
+  schema.fields = updateFirestoreSchemaFields(schema.fields);
+  return buildLatestSchemaSnapshotViewQuery(datasetId, rawTableName, schema);
+};
 
 export const buildLatestSchemaSnapshotViewQuery = (
   datasetId: string,
@@ -161,7 +171,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
           .map(
             (
               arrayFieldName
-            ) => `CROSS JOIN UNNEST(${rawTableName}.${arrayFieldName})
+            ) => `LEFT JOIN UNNEST(${rawTableName}.${arrayFieldName})
             AS ${arrayFieldName}_member
             WITH OFFSET ${arrayFieldName}_index`
           )

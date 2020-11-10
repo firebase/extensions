@@ -59,11 +59,11 @@ resources:
       Authentication's User ID) from Realtime Database, Cloud Firestore, and/or
       Cloud Storage.
     properties:
-      location: ${LOCATION}
+      location: ${param:LOCATION}
       runtime: nodejs10
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
-        resource: projects/${PROJECT_ID}
+        resource: projects/${param:PROJECT_ID}
 
 params:
   - param: LOCATION

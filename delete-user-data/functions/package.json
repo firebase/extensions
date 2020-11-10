@@ -7,7 +7,7 @@
     "clean": "rimraf lib",
     "compile": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "generate-readme": "firebase ext:info .. --markdown > README.md"
+    "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "author": "Lauren Long <longlauren@google.com>",
   "license": "Apache-2.0",
