@@ -110,7 +110,21 @@ exports.generateResizedImage = functions.storage.object().onFinalize(async (obje
             logs.failed();
             return;
         }
-        logs.complete();
+        else {
+            if (config_1.default.deleteOriginalFile === config_1.deleteImage.onSuccess) {
+                if (remoteFile) {
+                    try {
+                        logs.remoteFileDeleting(filePath);
+                        await remoteFile.delete();
+                        logs.remoteFileDeleted(filePath);
+                    }
+                    catch (err) {
+                        logs.errorDeleting(err);
+                    }
+                }
+            }
+            logs.complete();
+        }
     }
     catch (err) {
         logs.error(err);

@@ -114,18 +114,6 @@ exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
             metadata,
         });
         logs.imageUploaded(modifiedFile);
-        if (config_1.default.deleteOriginalFile === config_1.deleteImage.onSuccess) {
-            if (remoteFile) {
-                try {
-                    logs.remoteFileDeleting(filePath);
-                    await remoteFile.delete();
-                    logs.remoteFileDeleted(filePath);
-                }
-                catch (err) {
-                    logs.errorDeleting(err);
-                }
-            }
-        }
         return { size, success: true };
     }
     catch (err) {
