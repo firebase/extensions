@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.modifyImage = exports.convertType = exports.resize = void 0;
+exports.modifyImage = exports.supportedImageContentTypeMap = exports.supportedContentTypes = exports.convertType = exports.resize = void 0;
 const os = require("os");
 const sharp = require("sharp");
 const path = require("path");
@@ -53,18 +53,27 @@ function convertType(buffer) {
     return buffer;
 }
 exports.convertType = convertType;
-const supportedImageContentTypeMap = {
+/**
+ * Supported file types
+ */
+exports.supportedContentTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/tiff",
+    "image/webp",
+];
+exports.supportedImageContentTypeMap = {
     jpg: "image/jpeg",
     jpeg: "image/jpeg",
     png: "image/png",
     tiff: "image/tiff",
     webp: "image/webp",
 };
-exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, remoteFile, filePath, }) => {
+exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => {
     const { imageType } = config_1.default;
     const hasImageTypeConfigSet = imageType !== "false";
     const imageContentType = hasImageTypeConfigSet
-        ? supportedImageContentTypeMap[imageType]
+        ? exports.supportedImageContentTypeMap[imageType]
         : contentType;
     const modifiedExtensionName = fileExtension && hasImageTypeConfigSet ? `.${imageType}` : fileExtension;
     const modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;

@@ -56,7 +56,17 @@ export function convertType(buffer) {
   return buffer;
 }
 
-const supportedImageContentTypeMap = {
+/**
+ * Supported file types
+ */
+export const supportedContentTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/tiff",
+  "image/webp",
+];
+
+export const supportedImageContentTypeMap = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   png: "image/png",
@@ -73,8 +83,6 @@ export const modifyImage = async ({
   contentType,
   size,
   objectMetadata,
-  remoteFile,
-  filePath,
 }: {
   bucket: Bucket;
   originalFile: string;
@@ -84,8 +92,6 @@ export const modifyImage = async ({
   contentType: string;
   size: string;
   objectMetadata: ObjectMetadata;
-  remoteFile: File;
-  filePath: string;
 }): Promise<ResizedImageResult> => {
   const { imageType } = config;
   const hasImageTypeConfigSet = imageType !== "false";

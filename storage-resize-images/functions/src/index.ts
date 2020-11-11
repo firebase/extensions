@@ -22,7 +22,7 @@ import * as os from "os";
 import * as path from "path";
 import * as sharp from "sharp";
 
-import { ResizedImageResult, modifyImage } from "./resize-image";
+import { ResizedImageResult, modifyImage, supportedContentTypes } from "./resize-image";
 import config, { deleteImage } from "./config";
 import * as logs from "./logs";
 import { extractFileNameWithoutExtension } from "./util";
@@ -33,16 +33,6 @@ sharp.cache(false);
 admin.initializeApp();
 
 logs.init();
-
-/**
- * Supported file types
- */
-const supportedContentTypes = [
-  "image/jpeg",
-  "image/png",
-  "image/tiff",
-  "image/webp",
-];
 
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
@@ -119,8 +109,6 @@ export const generateResizedImage = functions.storage.object().onFinalize(
             contentType,
             size,
             objectMetadata: objectMetadata,
-            remoteFile,
-            filePath,
           })
         );
       });

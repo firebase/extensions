@@ -32,15 +32,6 @@ sharp.cache(false);
 admin.initializeApp();
 logs.init();
 /**
- * Supported file types
- */
-const supportedContentTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/tiff",
-    "image/webp",
-];
-/**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
  */
@@ -59,8 +50,8 @@ exports.generateResizedImage = functions.storage.object().onFinalize(async (obje
         logs.gzipContentEncoding();
         return;
     }
-    if (!supportedContentTypes.includes(contentType)) {
-        logs.unsupportedType(supportedContentTypes, contentType);
+    if (!resize_image_1.supportedContentTypes.includes(contentType)) {
+        logs.unsupportedType(resize_image_1.supportedContentTypes, contentType);
         return;
     }
     if (object.metadata && object.metadata.resizedImage === "true") {
@@ -100,8 +91,6 @@ exports.generateResizedImage = functions.storage.object().onFinalize(async (obje
                 contentType,
                 size,
                 objectMetadata: objectMetadata,
-                remoteFile,
-                filePath,
             }));
         });
         const results = await Promise.all(tasks);
