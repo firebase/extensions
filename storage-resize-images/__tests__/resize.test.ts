@@ -16,7 +16,11 @@ const environment = {
 let restoreEnv;
 restoreEnv = mockedEnv(environment);
 
-import { resize } from "../functions/src/resize-image";
+import {
+  resize,
+  supportedContentTypes,
+  supportedImageContentTypeMap,
+} from "../functions/src/resize-image";
 
 // 100x100
 const TEST_IMAGE = `${__dirname}/test-image.png`;
@@ -60,6 +64,24 @@ describe("extension", () => {
 
     fs.unlink(temporaryPath, (err) => {
       if (err) throw new Error(err.message);
+    });
+  });
+
+  test("image types supported", async () => {
+    expect(supportedContentTypes).toEqual(
+      expect.arrayContaining([
+        "image/jpeg",
+        "image/png",
+        "image/tiff",
+        "image/webp",
+      ])
+    );
+    expect(supportedImageContentTypeMap).toMatchObject({
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      png: "image/png",
+      tiff: "image/tiff",
+      webp: "image/webp",
     });
   });
 });
