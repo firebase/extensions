@@ -181,12 +181,9 @@ params:
 
   - param: IMAGE_TYPE
     label: Convert image to preferred type
-    description: >
-      The image type you'd like your source image to convert to. The default for this option will 
+      The image type you'd like your source image to convert to. The default for this option will
       be to keep the original file type.
     type: select
-    options:
-      - label: jpg
         value: jpg
       - label: png
         value: png
