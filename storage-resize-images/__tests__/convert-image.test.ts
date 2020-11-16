@@ -22,12 +22,9 @@ const readFile = util.promisify(fs.readFile);
 let bufferJPG;
 let bufferPNG;
 beforeAll(async () => {
-  bufferJPG = await readFile(__dirname + '/test-image.jpeg');
-  bufferPNG = await readFile(__dirname + '/test-image.png');
+  bufferJPG = await readFile(__dirname + "/test-image.jpeg");
+  bufferPNG = await readFile(__dirname + "/test-image.png");
 });
-
-
-
 
 describe("convertType", () => {
   it("converts to png image type", async () => {
