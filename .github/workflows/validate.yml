@@ -3,7 +3,7 @@ name: Validate
 on:
   pull_request:
     branches:
-      - '**'
+      - "**"
 
 jobs:
   formatting:

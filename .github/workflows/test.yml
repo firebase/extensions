@@ -5,15 +5,14 @@ on:
     branches:
       - "**"
     paths-ignore:
-      - '**/*.md'
-
+      - "**/*.md"
 
 jobs:
   nodejs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [ '10', '12' ]
+        node: ["10", "12"]
     name: node.js_${{ matrix.node }}_test
     steps:
       - uses: actions/checkout@v2
@@ -29,5 +28,3 @@ jobs:
         run: codecov
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-
