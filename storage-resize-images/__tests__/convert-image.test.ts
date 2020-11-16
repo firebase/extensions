@@ -13,7 +13,7 @@ const env = {
 
 mockedEnv(env);
 
-import { convertType } from "../functions/src/index";
+import { convertType } from "../functions/src/resize-image";
 import config from "../functions/src/config";
 
 const canvas = createCanvas(100, 50);
