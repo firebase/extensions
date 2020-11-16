@@ -25,6 +25,6 @@ jobs:
       - name: Run tests with coverage
         run: npm run test-coverage
       - name: Submit coverage
-        run: codecov
+        run: ./node_modules/.bin/codecov
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
