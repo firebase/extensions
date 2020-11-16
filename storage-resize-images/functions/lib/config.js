@@ -15,11 +15,28 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteImage = void 0;
+var deleteImage;
+(function (deleteImage) {
+    deleteImage[deleteImage["always"] = 0] = "always";
+    deleteImage[deleteImage["never"] = 1] = "never";
+    deleteImage[deleteImage["onSuccess"] = 2] = "onSuccess";
+})(deleteImage = exports.deleteImage || (exports.deleteImage = {}));
+function deleteOriginalFile(deleteType) {
+    switch (deleteType) {
+        case "true":
+            return deleteImage.always;
+        case "false":
+            return deleteImage.never;
+        default:
+            return deleteImage.onSuccess;
+    }
+}
 exports.default = {
     bucket: process.env.IMG_BUCKET,
     cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
     imageSizes: process.env.IMG_SIZES.split(","),
     resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
-    deleteOriginalFile: process.env.DELETE_ORIGINAL_FILE === "true",
+    deleteOriginalFile: deleteOriginalFile(process.env.DELETE_ORIGINAL_FILE),
     imageType: process.env.IMAGE_TYPE,
 };

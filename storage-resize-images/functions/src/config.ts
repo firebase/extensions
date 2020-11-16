@@ -14,11 +14,28 @@
  * limitations under the License.
  */
 
+export enum deleteImage {
+  always = 0,
+  never,
+  onSuccess,
+}
+
+function deleteOriginalFile(deleteType) {
+  switch (deleteType) {
+    case "true":
+      return deleteImage.always;
+    case "false":
+      return deleteImage.never;
+    default:
+      return deleteImage.onSuccess;
+  }
+}
+
 export default {
   bucket: process.env.IMG_BUCKET,
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
   imageSizes: process.env.IMG_SIZES.split(","),
   resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
-  deleteOriginalFile: process.env.DELETE_ORIGINAL_FILE === "true",
+  deleteOriginalFile: deleteOriginalFile(process.env.DELETE_ORIGINAL_FILE),
   imageType: process.env.IMAGE_TYPE,
 };
