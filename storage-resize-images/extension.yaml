@@ -154,6 +154,8 @@ params:
         value: true
       - label: No
         value: false
+      - label: Delete on successful resize
+        value: on_success  
     default: false
     required: true
 
