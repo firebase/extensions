@@ -125,7 +125,7 @@ params:
     description: >
       What is the selected Realtime Database used for this extension?
     type: string
-    example: my-project-12345.appspot.com
+    example: my-instance
     validationRegex: ^([0-9a-z_.-]*)$
     validationErrorMessage: Invalid database instance
     default: ${DATABASE_INSTANCE}
