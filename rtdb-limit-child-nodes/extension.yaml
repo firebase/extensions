@@ -55,7 +55,7 @@ resources:
       runtime: nodejs10
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.create
-        resource: projects/_/instances/${param:DATABASE_INSTANCE}/refs/${param:NODE_PATH}/{messageid}
+        resource: projects/_/instances/${param:SELECTED_DATABASE_INSTANCE}/refs/${param:NODE_PATH}/{messageid}
 
 params:
   - param: LOCATION
@@ -119,6 +119,18 @@ params:
     validationRegex: ^\S+$
     validationErrorMessage: Path cannot have spaces.
     required: true
+
+  - param: SELECTED_DATABASE_INSTANCE
+    label: Selected Realtime Database instance
+    description: >
+      What is the selected Realtime Database used for this extension?
+    type: string
+    example: my-project-12345.appspot.com
+    validationRegex: ^([0-9a-z_.-]*)$
+    validationErrorMessage: Invalid database instance
+    default: ${DATABASE_INSTANCE}
+    required: true
+
 
   - param: MAX_COUNT
     label: Maximum count of nodes to keep
