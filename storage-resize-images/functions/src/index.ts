@@ -26,7 +26,6 @@ import {
   ResizedImageResult,
   modifyImage,
   supportedContentTypes,
-  supportedImageContentTypeMap,
 } from "./resize-image";
 import config, { deleteImage } from "./config";
 import * as logs from "./logs";
