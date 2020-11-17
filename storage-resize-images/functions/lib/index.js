@@ -31,7 +31,6 @@ sharp.cache(false);
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 logs.init();
-const supportedExtensions = [".jpeg", ".jpg", ".png", ".tiff", ".webp"];
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
