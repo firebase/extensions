@@ -55,7 +55,7 @@ const supportedContentTypes = [
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
  */
-export const generateResizedImage = functions.storage.object().onFinalize(
+export const generateResizedImage = functions.storage.bucket(config.bucket).object().onFinalize(
   async (object): Promise<void> => {
     logs.start();
     const { contentType } = object; // This is the image MIME type
