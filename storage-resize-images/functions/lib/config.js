@@ -33,7 +33,7 @@ function deleteOriginalFile(deleteType) {
     }
 }
 function paramToArray(param) {
-    return typeof param === 'string' ? param.split(',') : undefined;
+    return typeof param === "string" ? param.split(",") : undefined;
 }
 exports.default = {
     bucket: process.env.IMG_BUCKET,
