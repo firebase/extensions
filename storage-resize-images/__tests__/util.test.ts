@@ -1,4 +1,4 @@
-import { extractFileNameWithoutExtension } from "../functions/src/util";
+import { extractFileNameWithoutExtension, startsWithArray } from "../functions/src/util";
 
 describe("extractFileNameWithoutExtension", () => {
   const filePathWithExtension = "/ref/to/my/image.png";
@@ -23,5 +23,26 @@ describe("extractFileNameWithoutExtension", () => {
       );
       expect(fileNameWithoutExtension).toBe("image");
     });
+  });
+
+  const imagePath = ["/test/picture"];
+
+  describe("startsWithArray function for testing image path", () => {
+    it("allowed paths", () => {
+      const allowed =  ["/test/picture", "/test/picture/directory"];
+
+      allowed.forEach((path)=> {
+        let allowResize = startsWithArray(imagePath, path)
+        expect(allowResize).toBe(true);
+      })
+    });
+  });
+  it("blocked paths", () => {
+    const notAllowed = ["/test","/test/pict","/test/pictures","/test/picturesssssss"];
+
+    notAllowed.forEach((path)=> {
+      let allowResize = startsWithArray(imagePath, path)
+      expect(allowResize).toBe(false);
+    })
   });
 });
