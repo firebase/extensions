@@ -13,7 +13,7 @@ export const startsWithArray = (
 ) => {
   for (let userPath of userInputPaths) {
     const trimmedUserPath = userPath.trim();
-    const regex = new RegExp('^' + trimmedUserPath + '(?:\/.*|$)');
+    const regex = new RegExp("^" + trimmedUserPath + "(?:/.*|$)");
 
     if (regex.test(imagePath)) {
       return true;

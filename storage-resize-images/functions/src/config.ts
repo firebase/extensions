@@ -31,9 +31,8 @@ function deleteOriginalFile(deleteType) {
   }
 }
 
-
-function paramToArray(param){
-  return typeof param === 'string' ? param.split(',') : undefined
+function paramToArray(param) {
+  return typeof param === "string" ? param.split(",") : undefined;
 }
 
 export default {
