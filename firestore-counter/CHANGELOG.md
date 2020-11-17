@@ -1,3 +1,15 @@
+## Version 0.2.0
+
+feature - convert Firestore Counter to use scheduled functions (#353)
+
+## Version 0.1.5
+
+feature - Add new Cloud Functions locations. For more information about locations and their pricing tiers, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+
+## Version 0.1.4
+
+feature - Update Cloud Functions runtime to Node.js 10.
+
 ## Version 0.1.3
 
 build - Updates the firebase-admin and firebase-functions packages to the latest versions (issue #181).

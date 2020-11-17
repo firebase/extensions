@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-translate-text
-version: 0.1.2
+version: 0.1.5
 specVersion: v1beta
 
 displayName: Translate Text
@@ -54,10 +54,11 @@ resources:
       Listens for writes of new strings to your specified Cloud Firestore collection, translates the strings,
       then writes the translated strings back to the same document.
     properties:
-      location: ${LOCATION}
+      location: ${param:LOCATION}
+      runtime: nodejs10
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{messageId}
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{messageId}
 
 params:
   - param: LOCATION
@@ -75,16 +76,38 @@ params:
         value: us-east1
       - label: Northern Virginia (us-east4)
         value: us-east4
+      - label: Los Angeles (us-west2)
+        value: us-west2
+      - label: Salt Lake City (us-west3)
+        value: us-west3
+      - label: Las Vegas (us-west4)
+        value: us-west4
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
         value: europe-west2
       - label: Frankfurt (europe-west3)
         value: europe-west3
+      - label: Zurich (europe-west6)
+        value: europe-west6
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
+      - label: Osaka (asia-northeast2)
+        value: asia-northeast2
+      - label: Seoul (asia-northeast3)
+        value: asia-northeast3
+      - label: Mumbai (asia-south1)
+        value: asia-south1
+      - label: Jakarta (asia-southeast2)
+        value: asia-southeast2
+      - label: Montreal (northamerica-northeast1)
+        value: northamerica-northeast1
+      - label: Sao Paulo (southamerica-east1)
+        value: southamerica-east1
+      - label: Sydney (australia-southeast1)
+        value: australia-southeast1
     default: us-central1
     required: true
     immutable: true

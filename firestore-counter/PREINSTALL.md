@@ -18,17 +18,16 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 After installing this extension, you'll need to:
 
 - Update your [database security rules](https://firebase.google.com/docs/rules).
-- Set up a [Cloud Scheduler job](https://cloud.google.com/scheduler/docs/quickstart) to regularly call the controllerCore function, which is created by this extension. It works by either aggregating shards itself or scheduling and monitoring workers to aggregate shards.
 - Use the provided [client sample](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts) or your own client code to specify your document path and increment values.
 
 Detailed information for these post-installation tasks are provided after you install this extension.
 
 
 #### Billing
-
-This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
-- Cloud Firestore
-- Cloud Functions
-
-When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
+ 
+To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
+ 
+- You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
+ - Cloud Firestore
+ - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#expandable-24))

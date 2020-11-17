@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["esnext.asynciterable"],
+    "outDir": "lib",
+    "types": ["node", "jest", "chai"],
+    "target": "es2018"
+  },
+  "include": ["src"]
+}

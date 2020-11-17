@@ -1,5 +1,7 @@
 # Delete User Data
 
+**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
+
 **Description**: Deletes data keyed on a userId from Cloud Firestore, Realtime Database, and/or Cloud Storage when a user deletes their account.
 
 
@@ -19,22 +21,22 @@ Depending on where you'd like to delete user data from, make sure that you've se
 Also, make sure that you've set up [Firebase Authentication](https://firebase.google.com/docs/auth) to manage your users.
 
 #### Billing
-
-This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
-- Cloud Firestore
-- Firebase Realtime Database
-- Cloud Storage
-- Cloud Functions
-
-When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
+ 
+To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
+ 
+- You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
+  - Cloud Firestore
+  - Firebase Realtime Database
+  - Cloud Storage
+  - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#expandable-24))
 
 
 
 
 **Configuration Parameters:**
 
-* Deployment location: Where should the extension be deployed? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your database or Storage bucket. For help selecting a location, refer to the [location selection  guide](https://firebase.google.com/docs/functions/locations).
 
 * Cloud Firestore paths: Which paths in your Cloud Firestore instance contain user data? Leave empty if you don't use Cloud Firestore.
 Enter the full paths, separated by commas. You can represent the User ID of the deleted user with `{UID}`.
@@ -47,8 +49,8 @@ Enter the full paths, separated by commas. You can represent the User ID of the 
 For example: `users/{UID},admins/{UID}`.
 
 * Cloud Storage paths: Where in Google Cloud Storage do you store user data? Leave empty if you don't use Cloud Storage.
-Enter the full paths, separated by commas. You can represent the User ID of the deleted user with `{UID}`. You can use `{DEFAULT}` to represent your default bucket.
-For example, if you are using your default bucket, and the bucket has files with the naming scheme `{UID}-pic.png`, then you can enter `{DEFAULT}/{UID}-pic.png`. If you also have files in another bucket called `my-awesome-app-logs`, and that bucket has files with the naming scheme `{UID}-logs.txt`, then you can enter `{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt`.
+Enter the full paths to files or directories in your Storage buckets, separated by commas. Use `{UID}` to represent the User ID of the deleted user, and use `{DEFAULT}` to represent your default Storage bucket.
+Here's a series of examples. To delete all the files in your default bucket with the file naming scheme `{UID}-pic.png`, enter `{DEFAULT}/{UID}-pic.png`. To also delete all the files in another bucket called my-app-logs with the file naming scheme `{UID}-logs.txt`, enter `{DEFAULT}/{UID}-pic.png,my-app-logs/{UID}-logs.txt`. To *also* delete a User ID-labeled directory and all its files (like `media/{UID}`), enter `{DEFAULT}/{UID}-pic.png,my-app-logs/{UID}-logs.txt,{DEFAULT}/media/{UID}`.
 
 
 

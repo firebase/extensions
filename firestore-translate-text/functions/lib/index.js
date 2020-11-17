@@ -14,17 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fstranslate = void 0;
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
 const translate_1 = require("@google-cloud/translate");
@@ -40,9 +30,9 @@ var ChangeType;
 const translate = new translate_1.Translate({ projectId: process.env.PROJECT_ID });
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
-logs.init();
-exports.fstranslate = functions.handler.firestore.document.onWrite((change) => __awaiter(void 0, void 0, void 0, function* () {
-    logs.start();
+logs.init(config_1.default);
+exports.fstranslate = functions.handler.firestore.document.onWrite(async (change) => {
+    logs.start(config_1.default);
     const { languages, inputFieldName, outputFieldName } = config_1.default;
     if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
         logs.fieldNamesNotDifferent();
@@ -56,13 +46,13 @@ exports.fstranslate = functions.handler.firestore.document.onWrite((change) => _
     try {
         switch (changeType) {
             case ChangeType.CREATE:
-                yield handleCreateDocument(change.after);
+                await handleCreateDocument(change.after);
                 break;
             case ChangeType.DELETE:
                 handleDeleteDocument();
                 break;
             case ChangeType.UPDATE:
-                yield handleUpdateDocument(change.before, change.after);
+                await handleUpdateDocument(change.before, change.after);
                 break;
         }
         logs.complete();
@@ -70,7 +60,7 @@ exports.fstranslate = functions.handler.firestore.document.onWrite((change) => _
     catch (err) {
         logs.error(err);
     }
-}));
+});
 const extractInput = (snapshot) => {
     return snapshot.get(config_1.default.inputFieldName);
 };
@@ -83,68 +73,97 @@ const getChangeType = (change) => {
     }
     return ChangeType.UPDATE;
 };
-const handleCreateDocument = (snapshot) => __awaiter(void 0, void 0, void 0, function* () {
+const handleCreateDocument = async (snapshot) => {
     const input = extractInput(snapshot);
     if (input) {
         logs.documentCreatedWithInput();
-        yield translateDocument(snapshot);
+        await translateDocument(snapshot);
     }
     else {
         logs.documentCreatedNoInput();
     }
-});
+};
 const handleDeleteDocument = () => {
     logs.documentDeleted();
 };
-const handleUpdateDocument = (before, after) => __awaiter(void 0, void 0, void 0, function* () {
-    const inputAfter = extractInput(after);
+const handleUpdateDocument = async (before, after) => {
     const inputBefore = extractInput(before);
-    const inputHasChanged = inputAfter !== inputBefore;
-    if (!inputHasChanged &&
-        inputAfter !== undefined &&
-        inputBefore !== undefined) {
-        logs.documentUpdatedUnchangedInput();
+    const inputAfter = extractInput(after);
+    // If previous and updated documents have no input, skip.
+    if (inputBefore === undefined && inputAfter === undefined) {
+        logs.documentUpdatedNoInput();
         return;
     }
-    if (inputAfter) {
-        logs.documentUpdatedChangedInput();
-        yield translateDocument(after);
-    }
-    else if (inputBefore) {
+    // If updated document has no string or object input, delete any existing translations.
+    if (typeof inputAfter !== "string" && typeof inputAfter !== "object") {
+        await updateTranslations(after, admin.firestore.FieldValue.delete());
         logs.documentUpdatedDeletedInput();
-        yield updateTranslations(after, admin.firestore.FieldValue.delete());
+        return;
+    }
+    if (JSON.stringify(inputBefore) === JSON.stringify(inputAfter)) {
+        logs.documentUpdatedUnchangedInput();
     }
     else {
-        logs.documentUpdatedNoInput();
+        logs.documentUpdatedChangedInput();
+        await translateDocument(after);
     }
-});
-const translateDocument = (snapshot) => __awaiter(void 0, void 0, void 0, function* () {
-    const input = extractInput(snapshot);
+};
+const translateSingle = async (input, snapshot) => {
     logs.translateInputStringToAllLanguages(input, config_1.default.languages);
-    const tasks = config_1.default.languages.map((targetLanguage) => __awaiter(void 0, void 0, void 0, function* () {
+    const tasks = config_1.default.languages.map(async (targetLanguage) => {
         return {
             language: targetLanguage,
-            output: yield translateString(input, targetLanguage),
+            output: await translateString(input, targetLanguage),
         };
-    }));
+    });
     try {
-        const translations = yield Promise.all(tasks);
+        const translations = await Promise.all(tasks);
         logs.translateInputToAllLanguagesComplete(input);
         const translationsMap = translations.reduce((output, translation) => {
             output[translation.language] = translation.output;
             return output;
         }, {});
-        yield updateTranslations(snapshot, translationsMap);
+        return updateTranslations(snapshot, translationsMap);
     }
     catch (err) {
         logs.translateInputToAllLanguagesError(input, err);
         throw err;
     }
-});
-const translateString = (string, targetLanguage) => __awaiter(void 0, void 0, void 0, function* () {
+};
+const translateMultiple = async (input, snapshot) => {
+    let translations = {};
+    let promises = [];
+    Object.entries(input).forEach(([input, value]) => {
+        config_1.default.languages.forEach((language) => {
+            promises.push(() => new Promise(async (resolve) => {
+                logs.translateInputStringToAllLanguages(value, config_1.default.languages);
+                const output = typeof value === "string"
+                    ? await translateString(value, language)
+                    : null;
+                if (!translations[input])
+                    translations[input] = {};
+                translations[input][language] = output;
+                return resolve();
+            }));
+        });
+    });
+    for (const fn of promises) {
+        if (fn)
+            await fn();
+    }
+    return updateTranslations(snapshot, translations);
+};
+const translateDocument = async (snapshot) => {
+    const input = extractInput(snapshot);
+    if (typeof input === "object") {
+        return translateMultiple(input, snapshot);
+    }
+    await translateSingle(input, snapshot);
+};
+const translateString = async (string, targetLanguage) => {
     try {
         logs.translateInputString(string, targetLanguage);
-        const [translatedString] = yield translate.translate(string, targetLanguage);
+        const [translatedString] = await translate.translate(string, targetLanguage);
         logs.translateStringComplete(string, targetLanguage);
         return translatedString;
     }
@@ -152,13 +171,13 @@ const translateString = (string, targetLanguage) => __awaiter(void 0, void 0, vo
         logs.translateStringError(string, targetLanguage, err);
         throw err;
     }
-});
-const updateTranslations = (snapshot, translations) => __awaiter(void 0, void 0, void 0, function* () {
+};
+const updateTranslations = async (snapshot, translations) => {
     logs.updateDocument(snapshot.ref.path);
     // Wrapping in transaction to allow for automatic retries (#48)
-    yield admin.firestore().runTransaction((transaction) => {
+    await admin.firestore().runTransaction((transaction) => {
         transaction.update(snapshot.ref, config_1.default.outputFieldName, translations);
         return Promise.resolve();
     });
     logs.updateDocumentComplete(snapshot.ref.path);
-});
+};
