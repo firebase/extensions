@@ -38,12 +38,6 @@ logs.init();
 exports.generateResizedImage = functions.storage.object().onFinalize(async (object) => {
     logs.start();
     const { contentType } = object; // This is the image MIME type
-    const includePathList = config_1.default.includePathList
-        ? config_1.default.includePathList.split(",")
-        : [""]; // Convert list to an array
-    const excludePathList = config_1.default.excludePathList
-        ? config_1.default.excludePathList.split(",")
-        : [""]; // Convert list to an array
     const tmpFilePath = path.resolve("/", path.dirname(object.name)); // Absolute path to dirname
     if (!contentType) {
         logs.noContentType();
@@ -62,13 +56,13 @@ exports.generateResizedImage = functions.storage.object().onFinalize(async (obje
         return;
     }
     if (config_1.default.includePathList &&
-        !util_1.startsWithArray(includePathList, tmpFilePath)) {
-        logs.imageOutsideOfPaths(includePathList, tmpFilePath);
+        !util_1.startsWithArray(config_1.default.includePathList, tmpFilePath)) {
+        logs.imageOutsideOfPaths(config_1.default.includePathList, tmpFilePath);
         return;
     }
     if (config_1.default.excludePathList &&
-        util_1.startsWithArray(excludePathList, tmpFilePath)) {
-        logs.imageInsideOfExcludedPaths(excludePathList, tmpFilePath);
+        util_1.startsWithArray(config_1.default.excludePathList, tmpFilePath)) {
+        logs.imageInsideOfExcludedPaths(config_1.default.excludePathList, tmpFilePath);
         return;
     }
     if (object.metadata && object.metadata.resizedImage === "true") {

@@ -5,9 +5,11 @@ const path = require("path");
 exports.extractFileNameWithoutExtension = (filePath, ext) => {
     return path.basename(filePath, ext);
 };
-exports.startsWithArray = (arraySearch, text) => {
-    for (let search of arraySearch) {
-        if (text.startsWith(search)) {
+exports.startsWithArray = (userInputPaths, imagePath) => {
+    for (let userPath of userInputPaths) {
+        const trimmedUserPath = userPath.trim();
+        const regex = new RegExp('^' + trimmedUserPath + '(?:\/.*|$)');
+        if (regex.test(imagePath)) {
             return true;
         }
     }

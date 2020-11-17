@@ -7,9 +7,15 @@ export const extractFileNameWithoutExtension = (
   return path.basename(filePath, ext);
 };
 
-export const startsWithArray = (arraySearch: string[], text: string) => {
-  for (let search of arraySearch) {
-    if (text.startsWith(search)) {
+export const startsWithArray = (
+  userInputPaths: string[],
+  imagePath: string
+) => {
+  for (let userPath of userInputPaths) {
+    const trimmedUserPath = userPath.trim();
+    const regex = new RegExp('^' + trimmedUserPath + '(?:\/.*|$)');
+
+    if (regex.test(imagePath)) {
       return true;
     }
   }
