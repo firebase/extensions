@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.12
+version: 0.1.13
 specVersion: v1beta
 
 displayName: Resize Images
@@ -68,9 +68,9 @@ params:
   - param: LOCATION
     label: Cloud Functions location
     description: >-
-      Where do you want to deploy the functions created for this extension? 
-      You usually want a location close to your Storage bucket. For help selecting a 
-      location, refer to the [location selection 
+      Where do you want to deploy the functions created for this extension?
+      You usually want a location close to your Storage bucket. For help selecting a
+      location, refer to the [location selection
       guide](https://firebase.google.com/docs/functions/locations).
     type: select
     options:
@@ -126,7 +126,7 @@ params:
     example: my-project-12345.appspot.com
     validationRegex: ^([0-9a-z_.-]*)$
     validationErrorMessage: Invalid storage bucket
-    default: ${param:STORAGE_BUCKET}
+    default: ${STORAGE_BUCKET}
     required: true
 
   - param: IMG_SIZES
@@ -154,6 +154,8 @@ params:
         value: true
       - label: No
         value: false
+      - label: Delete on successful resize
+        value: on_success  
     default: false
     required: true
 
@@ -177,4 +179,24 @@ params:
       [`Cache-Control` headers](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control).
       If you prefer not to overwrite or add `Cache-Control` metadata, leave this field empty.
     example: max-age=86400
+    required: false
+
+  - param: IMAGE_TYPE
+    label: Convert image to preferred type
+    description: >
+      The image type you'd like your source image to convert to. The default for this option will 
+      be to keep the original file type.
+    type: select
+    options:
+      - label: jpg
+        value: jpg
+      - label: png
+        value: png
+      - label: webp
+        value: webp
+      - label: tiff
+        value: tiff
+      - label: Do not convert
+        value: false
+    default: false
     required: false

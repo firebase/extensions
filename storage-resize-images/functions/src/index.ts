@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { Bucket } from "@google-cloud/storage";
 import * as admin from "firebase-admin";
 import * as fs from "fs";
 import * as functions from "firebase-functions";
@@ -22,17 +21,16 @@ import * as mkdirp from "mkdirp";
 import * as os from "os";
 import * as path from "path";
 import * as sharp from "sharp";
-import { uuid } from "uuidv4";
 
-import config from "./config";
+import {
+  ResizedImageResult,
+  modifyImage,
+  supportedContentTypes,
+  supportedImageContentTypeMap,
+} from "./resize-image";
+import config, { deleteImage } from "./config";
 import * as logs from "./logs";
-import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
 import { extractFileNameWithoutExtension } from "./util";
-
-interface ResizedImageResult {
-  size: string;
-  success: boolean;
-}
 
 sharp.cache(false);
 
@@ -40,16 +38,6 @@ sharp.cache(false);
 admin.initializeApp();
 
 logs.init();
-
-/**
- * Supported file types
- */
-const supportedContentTypes = [
-  "image/jpeg",
-  "image/png",
-  "image/tiff",
-  "image/webp",
-];
 
 const supportedExtensions = [".jpeg", ".jpg", ".png", ".tiff", ".webp"];
 
@@ -119,7 +107,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       const tasks: Promise<ResizedImageResult>[] = [];
       imageSizes.forEach((size) => {
         tasks.push(
-          resizeImage({
+          modifyImage({
             bucket,
             originalFile,
             fileDir,
@@ -138,8 +126,20 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       if (failed) {
         logs.failed();
         return;
+      } else {
+        if (config.deleteOriginalFile === deleteImage.onSuccess) {
+          if (remoteFile) {
+            try {
+              logs.remoteFileDeleting(filePath);
+              await remoteFile.delete();
+              logs.remoteFileDeleted(filePath);
+            } catch (err) {
+              logs.errorDeleting(err);
+            }
+          }
+        }
+        logs.complete();
       }
-      logs.complete();
     } catch (err) {
       logs.error(err);
     } finally {
@@ -148,7 +148,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
         fs.unlinkSync(originalFile);
         logs.tempOriginalFileDeleted(filePath);
       }
-      if (config.deleteOriginalFile) {
+      if (config.deleteOriginalFile === deleteImage.always) {
         // Delete the original file
         if (remoteFile) {
           try {
@@ -163,114 +163,3 @@ export const generateResizedImage = functions.storage.object().onFinalize(
     }
   }
 );
-
-function resize(originalFile, resizedFile, size) {
-  let height, width;
-  if (size.indexOf(",") !== -1) {
-    [width, height] = size.split(",");
-  } else if (size.indexOf("x") !== -1) {
-    [width, height] = size.split("x");
-  } else {
-    throw new Error("height and width are not delimited by a ',' or a 'x'");
-  }
-
-  return sharp(originalFile)
-    .rotate()
-    .resize(parseInt(width, 10), parseInt(height, 10), {
-      fit: "inside",
-      withoutEnlargement: true,
-    })
-    .toFile(resizedFile);
-}
-
-const resizeImage = async ({
-  bucket,
-  originalFile,
-  fileDir,
-  fileNameWithoutExtension,
-  fileExtension,
-  contentType,
-  size,
-  objectMetadata,
-}: {
-  bucket: Bucket;
-  originalFile: string;
-  fileDir: string;
-  fileNameWithoutExtension: string;
-  fileExtension: string;
-  contentType: string;
-  size: string;
-  objectMetadata: ObjectMetadata;
-}): Promise<ResizedImageResult> => {
-  let resizedFileName;
-
-  if (supportedExtensions.join("").includes(fileExtension)) {
-    resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
-  } else {
-    resizedFileName = `${fileNameWithoutExtension}${fileExtension}_${size}`;
-  }
-
-  // Path where resized image will be uploaded to in Storage.
-  const resizedFilePath = path.normalize(
-    config.resizedImagesPath
-      ? path.join(fileDir, config.resizedImagesPath, resizedFileName)
-      : path.join(fileDir, resizedFileName)
-  );
-  let resizedFile: string;
-
-  try {
-    resizedFile = path.join(os.tmpdir(), resizedFileName);
-
-    // Cloud Storage files.
-    const metadata: { [key: string]: any } = {
-      contentDisposition: objectMetadata.contentDisposition,
-      contentEncoding: objectMetadata.contentEncoding,
-      contentLanguage: objectMetadata.contentLanguage,
-      contentType: contentType,
-      metadata: objectMetadata.metadata || {},
-    };
-    metadata.metadata.resizedImage = true;
-    if (config.cacheControlHeader) {
-      metadata.cacheControl = config.cacheControlHeader;
-    } else {
-      metadata.cacheControl = objectMetadata.cacheControl;
-    }
-
-    // If the original image has a download token, add a
-    // new token to the image being resized #323
-    if (metadata.metadata.firebaseStorageDownloadTokens) {
-      metadata.metadata.firebaseStorageDownloadTokens = uuid();
-    }
-
-    // Generate a resized image using Sharp.
-    logs.imageResizing(resizedFile, size);
-
-    await resize(originalFile, resizedFile, size);
-
-    logs.imageResized(resizedFile);
-
-    // Uploading the resized image.
-    logs.imageUploading(resizedFilePath);
-    await bucket.upload(resizedFile, {
-      destination: resizedFilePath,
-      metadata,
-    });
-    logs.imageUploaded(resizedFilePath);
-
-    return { size, success: true };
-  } catch (err) {
-    logs.error(err);
-    return { size, success: false };
-  } finally {
-    try {
-      // Make sure the local resized file is cleaned up to free up disk space.
-      if (resizedFile) {
-        logs.tempResizedFileDeleting(resizedFilePath);
-        fs.unlinkSync(resizedFile);
-        logs.tempResizedFileDeleted(resizedFilePath);
-      }
-    } catch (err) {
-      logs.errorDeleting(err);
-    }
-  }
-};
