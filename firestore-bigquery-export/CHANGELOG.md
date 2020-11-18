@@ -2,7 +2,7 @@
 
 feature - Updated dataset location (#462)
 
-feature - Allowed renaming of column for `gen-schema-view` schema (#445)
+feature - Allowed renaming of column for `gen-schema-view` script schema (#445)
 
 fixed - Updated "gen-schema-view" script to not hide data rows (#442)
 
