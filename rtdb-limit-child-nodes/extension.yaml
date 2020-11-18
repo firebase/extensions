@@ -121,9 +121,9 @@ params:
     required: true
 
   - param: SELECTED_DATABASE_INSTANCE
-    label: Selected Realtime Database instance
+    label: Realtime Database
     description: >
-      What is the selected Realtime Database used for this extension?
+       From which Realtime Database instance do you want to limit child nodes?
     type: string
     example: my-instance
     validationRegex: ^([0-9a-z_.-]*)$
