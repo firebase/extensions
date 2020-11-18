@@ -74,9 +74,9 @@ export const supportedImageContentTypeMap = {
   webp: "image/webp",
 };
 
-const supportedExtensions = Object.keys(supportedImageContentTypeMap)
-  .map((type) => `.${type}`)
-  .join("");
+const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
+  (type) => `.${type}`
+);
 
 export const modifyImage = async ({
   bucket,

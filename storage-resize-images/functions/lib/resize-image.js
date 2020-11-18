@@ -69,9 +69,7 @@ exports.supportedImageContentTypeMap = {
     tiff: "image/tiff",
     webp: "image/webp",
 };
-const supportedExtensions = Object.keys(exports.supportedImageContentTypeMap)
-    .map((type) => `.${type}`)
-    .join("");
+const supportedExtensions = Object.keys(exports.supportedImageContentTypeMap).map((type) => `.${type}`);
 exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => {
     const { imageType } = config_1.default;
     const hasImageTypeConfigSet = imageType !== "false";
