@@ -1,6 +1,6 @@
 ## Version 0.1.14
 
-feature - Delete images on success (#479)
+feature - Added a "delete only on success" option to the `DELETE_ORIGINAL_FILE` param (#479)
 
 ## Version 0.1.13
 
