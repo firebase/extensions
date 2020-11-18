@@ -1,7 +1,6 @@
 ## Version 0.1.14
 
-
-feature - delete images on success (#479)
+feature - Delete images on success (#479)
 
 ## Version 0.1.13
 
