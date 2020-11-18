@@ -6,7 +6,7 @@ feature - Allowed renaming of column for `gen-schema-view` schema (#445)
 
 fixed - Updated "gen-schema-view" script to not hide data rows (#442)
 
-feature - Aded support collectionGroup queries (#354)
+feature - Added support for collectionGroup queries (#354)
 
 ## Version 0.1.9
 
