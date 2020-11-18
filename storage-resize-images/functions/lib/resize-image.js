@@ -82,6 +82,7 @@ exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
         modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
     }
     else {
+        // Fixes https://github.com/firebase/extensions/issues/476
         modifiedFileName = `${fileNameWithoutExtension}${fileExtension}_${size}`;
     }
     // Path where modified image will be uploaded to in Storage.
