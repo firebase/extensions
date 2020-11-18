@@ -1,3 +1,8 @@
+## Version 0.1.14
+
+
+feature - delete images on success (#479)
+
 ## Version 0.1.13
 
 feature - Add new parameter to optionally convert each uploaded image to a different image content-type (PR #483)
