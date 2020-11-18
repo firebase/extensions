@@ -1,6 +1,6 @@
 ## Version 0.1.10
 
-feature - Updated dataset location (#462)
+feature - Added a new parameter that allows customization of the BigQuery dataset location (#462)
 
 feature - Allowed renaming of column for `gen-schema-view` script schema (#445)
 
