@@ -1,12 +1,12 @@
 ## Version 0.1.10
 
-feature - Dataset location (#462)
+feature - Updated dataset location (#462)
 
-feature - Allow renaming of column for `gen-schema-view` schema (#445)
+feature - Allowed renaming of column for `gen-schema-view` schema (#445)
 
-fixed - Update "gen-schema-view" script to not hide data rows (#442)
+fixed - Updated "gen-schema-view" script to not hide data rows (#442)
 
-feature - Support collectionGroup queries (#354)
+feature - Aded support collectionGroup queries (#354)
 
 ## Version 0.1.9
 
