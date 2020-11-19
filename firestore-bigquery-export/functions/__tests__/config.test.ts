@@ -4,7 +4,6 @@ import { resolve as pathResolve } from "path";
 
 import * as yaml from "js-yaml";
 import mockedEnv from "mocked-env";
-import config from "../src/config";
 
 let restoreEnv;
 let extensionYaml;
@@ -15,6 +14,8 @@ const environment = {
   DATASET_ID: "my_dataset",
   TABLE_ID: "my_table",
 };
+
+const { config } = global;
 
 describe("extension config", () => {
   beforeAll(() => {
@@ -29,15 +30,19 @@ describe("extension config", () => {
   });
 
   beforeEach(() => {
+    jest.resetModules();
     restoreEnv = mockedEnv(environment);
   });
 
   afterEach(() => restoreEnv());
 
   test("config loaded from environment variables", () => {
-    const functionsConfig = config;
-
-    expect(functionsConfig).toMatchSnapshot({});
+    const env = {
+      location: environment.LOCATION,
+      datasetId: environment.DATASET_ID,
+      tableId: environment.TABLE_ID,
+    };
+    expect(config()).toMatchSnapshot(env);
   });
 
   // DATASET_ID

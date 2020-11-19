@@ -9,9 +9,9 @@ admin.initializeApp({
 });
 
 const UPDATE_DOC = "update_test_doc_";
-const doNotDeleteIds = [];
-const addUpdatePromises = [];
 const deletePromises = [];
+const addPromises = [];
+const updatePromises = [];
 
 const colRef = admin.firestore().collection(collection);
 
@@ -38,29 +38,31 @@ function data() {
 Array.from({ length: 10 }).forEach((val, i) => {
   const document = colRef.add(data());
 
-  addUpdatePromises.push(document);
+  addPromises.push(document);
 
   const updateDocId = UPDATE_DOC + i;
   const updateDoc = colRef.doc(updateDocId).set(data());
 
-  doNotDeleteIds.push(updateDocId);
-
-  addUpdatePromises.push(updateDoc);
+  updatePromises.push(updateDoc);
 });
 
 async function queryFirestore() {
   // add docs and update existing docs
-  await Promise.all(addUpdatePromises);
-  // get 10 added docs to delete
+  const newDocuments = await Promise.all(addPromises);
+  await Promise.all(updatePromises);
+
+  const deleteIds = newDocuments.map((ref) => ref.id);
+
+  // delete the newly added documents
   const querySnapshot = await colRef
-    .where(admin.firestore.FieldPath.documentId(), "not-in", doNotDeleteIds)
+    .where(admin.firestore.FieldPath.documentId(), "in", deleteIds)
     .limit(10)
     .get();
 
   querySnapshot.forEach((doc) => {
     deletePromises.push(colRef.doc(doc.id).delete());
   });
-  // delete all but the 10 existing documents
+
   return Promise.all(deletePromises);
 }
 
