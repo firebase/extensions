@@ -118,4 +118,4 @@ params:
     description: >-
       The schedule (in cron syntax) at which messages should be evaluated for
       delivery. Defaults to every minute.
-    default: "* * * * *"
+    default: "every 1 minutes"

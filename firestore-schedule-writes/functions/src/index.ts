@@ -47,7 +47,7 @@ async function fetchAndProcess(): Promise<void> {
   }
 
   const promises = toProcess.docs.map((doc) => {
-    return processMessage(doc.ref, doc.data() as QueuedWrite);
+    return processWrite(doc.ref, doc.data() as QueuedWrite);
   });
 
   const results = await Promise.all(promises);
@@ -86,7 +86,7 @@ function isStale(write: QueuedWrite): boolean {
   );
 }
 
-async function processMessage(
+async function processWrite(
   ref: FirebaseFirestore.DocumentReference,
   write: QueuedWrite
 ): Promise<ProcessResult> {
@@ -112,7 +112,7 @@ async function processMessage(
 
     if (isStale(write)) {
       functions.logger.warn(
-        `Message "${QUEUE_COLLECTION}/${ref.id}" is past invalidAfterTime, skipped delivery.`
+        `Write "${QUEUE_COLLECTION}/${ref.id}" is past invalidAfterTime, skipped delivery.`
       );
     } else {
       await deliver(write);
@@ -160,7 +160,7 @@ async function resetStuck(): Promise<void> {
         lastTimeoutTime: admin.firestore.FieldValue.serverTimestamp(),
       });
       functions.logger.error(
-        `Message "${QUEUE_COLLECTION}/${doc.id}" was still PROCESSING after lease expired. Reset to PENDING.`
+        `Write "${QUEUE_COLLECTION}/${doc.id}" was still PROCESSING after lease expired. Reset to PENDING.`
       );
     })
   );
@@ -193,10 +193,14 @@ function deliver(write: QueuedWrite) {
     data[field] = admin.firestore.FieldValue.serverTimestamp();
   }
 
-  return ref.set(write.data, { merge: MERGE_WRITE });
+  return ref.set(data, { merge: MERGE_WRITE });
 }
 
-exports.deliverMessages = functions.handler.pubsub.schedule.onRun(async () => {
-  await resetStuck();
-  await fetchAndProcess();
+exports.deliverWrites = functions.handler.pubsub.schedule.onRun(async () => {
+  try {
+    await resetStuck();
+    await fetchAndProcess();
+  } catch (e) {
+    console.error(e);
+  }
 });
