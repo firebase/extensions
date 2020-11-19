@@ -23,6 +23,7 @@ const util_1 = require("./util");
 const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEventHistoryTracker({
     tableId: config_1.default.tableId,
     datasetId: config_1.default.datasetId,
+    datasetLocation: config_1.default.datasetLocation,
 });
 logs.init();
 exports.fsexportbigquery = functions.handler.firestore.document.onWrite(async (change, context) => {

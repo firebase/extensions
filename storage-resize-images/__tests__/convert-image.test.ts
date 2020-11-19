@@ -1,6 +1,7 @@
 import mockedEnv from "mocked-env";
-import { createCanvas } from "canvas";
 import imageType from "image-type";
+import * as util from "util";
+import * as fs from "fs";
 
 const env = {
   IMG_BUCKET: "IMG_BUCKET",
@@ -13,13 +14,17 @@ const env = {
 
 mockedEnv(env);
 
-import { convertType } from "../functions/src/index";
+import { convertType } from "../functions/src/resize-image";
 import config from "../functions/src/config";
 
-const canvas = createCanvas(100, 50);
+const readFile = util.promisify(fs.readFile);
 
-let bufferJPG = canvas.toBuffer("image/jpeg");
-let bufferPNG = canvas.toBuffer("image/png");
+let bufferJPG;
+let bufferPNG;
+beforeAll(async () => {
+  bufferJPG = await readFile(__dirname + "/test-image.jpeg");
+  bufferPNG = await readFile(__dirname + "/test-image.png");
+});
 
 describe("convertType", () => {
   it("converts to png image type", async () => {
