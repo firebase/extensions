@@ -1,37 +1,27 @@
-/*
- * This template contains a HTTP function that responds with a greeting when called
- *
- * Always use the FUNCTIONS HANDLER NAMESPACE
- * when writing Cloud Functions for extensions.
- * Learn more about the handler namespace in the docs
- *
- * Reference PARAMETERS in your functions code with:
- * `process.env.<parameter-name>`
- * Learn more about parameters in the docs
- */
-
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { PubSub } from "@google-cloud/pubsub";
 
 admin.initializeApp();
-const pubsub = new PubSub();
 
-interface QueuedMessage {
+interface QueuedWrite {
   state: "PENDING" | "PROCESSING" | "DELIVERED" | "ERRORED";
+  collection?: string;
+  doc?: string;
+  id?: string;
   error?: {
     message: string;
     status?: string;
   };
   deliverTime: admin.firestore.Timestamp;
-  topic?: string;
   invalidAfterTime?: admin.firestore.Timestamp;
   data: any;
+  serverTimestampFields?: string[];
 }
 
+const MERGE_WRITE = process.env.MERGE_WRITE === "true";
 const BATCH_SIZE = 100;
-const QUEUE_COLLECTION = process.env.QUEUE_COLLECTION || "queued_messages";
-const PUBSUB_TOPIC = process.env.PUBSUB_TOPIC;
+const QUEUE_COLLECTION = process.env.QUEUE_COLLECTION || "queued_writes";
+const TARGET_COLLECTION = process.env.TARGET_COLLECTION;
 const STALENESS_THRESHOLD_SECONDS = parseInt(
   process.env.STALENESS_THRESHOLD_SECONDS || "0",
   10
@@ -39,7 +29,9 @@ const STALENESS_THRESHOLD_SECONDS = parseInt(
 const CLEANUP_POLICY: "DELETE" | "KEEP" =
   (process.env.CLEANUP_POLICY as "DELETE" | "KEEP") || "DELETE";
 
-const queueRef = admin.firestore().collection(QUEUE_COLLECTION);
+const db = admin.firestore();
+const queueRef = db.collection(QUEUE_COLLECTION);
+const targetRef = TARGET_COLLECTION ? db.collection(TARGET_COLLECTION) : null;
 
 async function fetchAndProcess(): Promise<void> {
   const toProcess = await queueRef
@@ -50,12 +42,12 @@ async function fetchAndProcess(): Promise<void> {
     .get();
 
   if (toProcess.docs.length === 0) {
-    console.info("No messages to process.");
+    functions.logger.info("No writes to process.");
     return;
   }
 
   const promises = toProcess.docs.map((doc) => {
-    return processMessage(doc.ref, doc.data() as QueuedMessage);
+    return processMessage(doc.ref, doc.data() as QueuedWrite);
   });
 
   const results = await Promise.all(promises);
@@ -66,12 +58,12 @@ async function fetchAndProcess(): Promise<void> {
       continue;
     }
 
-    console.error(
+    functions.logger.error(
       `Failed to deliver "${QUEUE_COLLECTION}/${result.id}":`,
       result.error
     );
   }
-  console.info(`Delivered ${successCount} queued messages.`);
+  functions.logger.info(`Delivered ${successCount} queued writes.`);
 
   if (toProcess.docs.length === BATCH_SIZE) {
     return fetchAndProcess();
@@ -84,32 +76,30 @@ interface ProcessResult {
   error?: Error;
 }
 
-function isStale(message: QueuedMessage): boolean {
+function isStale(write: QueuedWrite): boolean {
   return (
-    (message.invalidAfterTime &&
-      message.invalidAfterTime.toMillis() < Date.now()) ||
+    (write.invalidAfterTime &&
+      write.invalidAfterTime.toMillis() < Date.now()) ||
     (STALENESS_THRESHOLD_SECONDS > 0 &&
-      message.deliverTime.toMillis() + STALENESS_THRESHOLD_SECONDS * 1000 <
+      write.deliverTime.toMillis() + STALENESS_THRESHOLD_SECONDS * 1000 <
         Date.now())
   );
 }
 
 async function processMessage(
   ref: FirebaseFirestore.DocumentReference,
-  message: QueuedMessage
+  write: QueuedWrite
 ): Promise<ProcessResult> {
   let error;
   try {
-    if (!message.topic && !PUBSUB_TOPIC) {
-      throw new Error("no PubSub topic was specified for this message");
+    if (!write.collection && !write.doc && !TARGET_COLLECTION) {
+      throw new Error("no target collection/doc was specified for this write");
     }
 
     await admin.firestore().runTransaction(async (txn) => {
-      const message = await txn.get(ref);
-      if (message.get("state") !== "PENDING") {
-        throw new Error(
-          `expected PENDING state but was ${message.get("state")}`
-        );
+      const write = await txn.get(ref);
+      if (write.get("state") !== "PENDING") {
+        throw new Error(`expected PENDING state but was ${write.get("state")}`);
       }
 
       return txn.update(ref, {
@@ -120,26 +110,13 @@ async function processMessage(
       });
     });
 
-    if (isStale(message)) {
-      console.warn(
+    if (isStale(write)) {
+      functions.logger.warn(
         `Message "${QUEUE_COLLECTION}/${ref.id}" is past invalidAfterTime, skipped delivery.`
       );
     } else {
-      await pubsub
-        .topic(message.topic || PUBSUB_TOPIC!)
-        .publishJSON(message.data);
-      console.info(`Delivered message "${QUEUE_COLLECTION}/${ref.id}"`);
-    }
-
-    switch (CLEANUP_POLICY) {
-      case "DELETE":
-        await ref.delete();
-      case "KEEP":
-        await ref.update({
-          state: "SUCCEEDED",
-          updateTime: admin.firestore.FieldValue.serverTimestamp(),
-          endTime: admin.firestore.FieldValue.serverTimestamp(),
-        });
+      await deliver(write);
+      functions.logger.info(`Delivered write "${QUEUE_COLLECTION}/${ref.id}"`);
     }
   } catch (e) {
     error = e;
@@ -149,6 +126,19 @@ async function processMessage(
       updateTime: admin.firestore.FieldValue.serverTimestamp(),
       endTime: admin.firestore.FieldValue.serverTimestamp(),
     });
+  }
+
+  if (!error) {
+    switch (CLEANUP_POLICY) {
+      case "DELETE":
+        await ref.delete();
+      case "KEEP":
+        await ref.update({
+          state: "DELIVERED",
+          updateTime: admin.firestore.FieldValue.serverTimestamp(),
+          endTime: admin.firestore.FieldValue.serverTimestamp(),
+        });
+    }
   }
 
   return { success: !!error, error, id: ref.id };
@@ -169,7 +159,7 @@ async function resetStuck(): Promise<void> {
         timeouts: admin.firestore.FieldValue.increment(1),
         lastTimeoutTime: admin.firestore.FieldValue.serverTimestamp(),
       });
-      console.error(
+      functions.logger.error(
         `Message "${QUEUE_COLLECTION}/${doc.id}" was still PROCESSING after lease expired. Reset to PENDING.`
       );
     })
@@ -178,6 +168,32 @@ async function resetStuck(): Promise<void> {
   if (stuck.docs.length === BATCH_SIZE) {
     return resetStuck();
   }
+}
+
+function deliver(write: QueuedWrite) {
+  let ref: admin.firestore.DocumentReference;
+  if (TARGET_COLLECTION && write.id) {
+    ref = targetRef!.doc(write.id);
+  } else if (TARGET_COLLECTION) {
+    ref = targetRef!.doc();
+  } else if (write.doc) {
+    ref = db.doc(write.doc);
+  } else if (write.collection) {
+    ref = db.collection(write.collection).doc();
+  } else {
+    throw new Error(
+      `unable to determine write location from scheduled write: ${JSON.stringify(
+        write
+      )}`
+    );
+  }
+
+  const data = { ...write.data };
+  for (const field of write.serverTimestampFields || []) {
+    data[field] = admin.firestore.FieldValue.serverTimestamp();
+  }
+
+  return ref.set(write.data, { merge: MERGE_WRITE });
 }
 
 exports.deliverMessages = functions.handler.pubsub.schedule.onRun(async () => {

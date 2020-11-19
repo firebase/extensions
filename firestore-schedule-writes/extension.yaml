@@ -1,57 +1,46 @@
 # Learn detailed information about the fields of an extension.yaml file in the docs:
 # https://firebase.google.com/docs/extensions/alpha/ref-extension-yaml
 
-name: firestore-schedule-messages # Identifier for your extension
+name: firestore-schedule-writes # Identifier for your extension
 version: 0.0.1 # Follow semver versioning
 specVersion: v1beta # Version of the Firebase Extensions specification
 
 # Friendly display name for your extension (~3-5 words)
-displayName: Schedule Messages
+displayName: Schedule Firestore Writes
 
 # Brief description of the task your extension performs (~1 sentence)
 description: >-
-  Deliver messages via PubSub at an arbitrary time in the future.
+  Write documents to Firestore at an arbitrary time in the future.
 
 license: Apache-2.0 # https://spdx.org/licenses/
 
 # Public URL for the source code of your extension
-sourceUrl: https://github.com/firebase/firebase-tools/tree/master/firestore-schedule-messages
+sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-schedule-writes
 
 # Specify whether a paid-tier billing plan is required to use your extension.
 # Learn more in the docs: https://firebase.google.com/docs/extensions/alpha/ref-extension-yaml#billing-required-field
 billingRequired: true
-
-# In an `apis` field, list any Google APIs (like Cloud Translation, BigQuery, etc.)
-# required for your extension to operate.
-# Learn more in the docs: https://firebase.google.com/docs/extensions/alpha/ref-extension-yaml#apis-field
-apis:
-  - apiName: pubsub.googleapis.com
-    description: Used to publish PubSub messages at the scheduled time.
 
 # In a `roles` field, list any IAM access roles required for your extension to operate.
 # Learn more in the docs: https://firebase.google.com/docs/extensions/alpha/ref-extension-yaml#roles-field
 roles:
   - role: datastore.user
     reason: Allows this extension to fetch and process messages in the queue.
-  - role: pubsub.editor
-    reason:
-      Allows this extension to publish PubSub messages and create topics as
-      needed.
 
 # In the `resources` field, list each of your extension's functions, including the trigger for each function.
 # Learn more in the docs: https://firebase.google.com/docs/extensions/alpha/ref-extension-yaml#resources-field
 resources:
-  - name: deliverMessages
+  - name: deliverWrites
     type: firebaseextensions.v1beta.function
     description: >-
-      Function that runs periodically to find queued messages and deliver them
-      to PubSub topics.
+      Function that runs periodically to find queued writes and deliver them to
+      their intended destination.
     properties:
       # LOCATION is a user-configured parameter value specified by the user during installation.
       location: ${LOCATION}
       scheduleTrigger:
         schedule: "${SCHEDULE}"
-      runtime: "nodejs8"
+      runtime: "nodejs12"
 
 # In the `params` field, set up your extension's user-configured parameters.
 # Learn more in the docs: https://firebase.google.com/docs/extensions/alpha/ref-extension-yaml#params-field
@@ -85,18 +74,28 @@ params:
     immutable: true
   - param: QUEUE_COLLECTION
     label: Message Queue Collection
+    type: string
     description: >-
       The name of the Firestore collection in which queued messages will be
       stored.
+    default: queued_writes
+  - param: TARGET_COLLECTION
+    label: Target Collection
     type: string
-    default: queued_messages
-  - param: PUBSUB_TOPIC
-    label: PubSub Topic
     description: >-
-      The name of the PubSub topic into which messages should be delivered when
-      processed. If blank, may be specified in each queued message.
+      The collection into which queued writes should be delivered when
+      processed. If specified, no writes will be performed outside of the target
+      collection. If blank, each scheduled write can specify its own target
+      collection.
+  - param: MERGE_WRITE
+    label: Merge Writes
+    type: boolean
+    description: >-
+      When true, writes to existing documents are merged with existing data.
+      When false, writes to existing documents overwrite existing data.
+    default: false
   - param: STALENESS_THRESHOLD_SECONDS
-    label: Staleness Threshold (in seconds)
+    label: Staleness Threshold (in minutes)
     description: >-
       The duration (in minutes) after which a scheduled message should be
       abandoned as stale. Considered indefinite if "0" or blank.
