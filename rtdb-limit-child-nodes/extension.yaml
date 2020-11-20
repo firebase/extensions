@@ -55,7 +55,7 @@ resources:
       runtime: nodejs10
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.create
-        resource: projects/_/instances/${param:DATABASE_INSTANCE}/refs/${param:NODE_PATH}/{messageid}
+        resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${NODE_PATH}/{messageid}
 
 params:
   - param: LOCATION

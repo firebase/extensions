@@ -1,0 +1,8 @@
+{
+  "rules": {
+		"test_path": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}

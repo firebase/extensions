@@ -3,6 +3,8 @@ node_modules/
 *.env
 !install-params.env
 firebase-debug.log
+database-debug.log
+ui-debug.log
 .DS_Store
 mods-test-data/key.json
 .gradle

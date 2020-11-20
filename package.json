@@ -12,7 +12,8 @@
     "test-watch": "jest --watch",
     "test-coverage": "jest --coverage",
     "postinstall": "lerna bootstrap --no-ci && npm run clean && npm run build",
-    "generate-readmes": "lerna run --parallel --ignore delete-user-data generate-readme"
+    "generate-readmes": "lerna run --parallel --ignore delete-user-data generate-readme",
+    "emulators": "lerna run --parallel emulator"
   },
   "repository": "",
   "author": "Firebase (https://firebase.google.com/)",

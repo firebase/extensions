@@ -15,21 +15,39 @@
  */
 
 import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
 
 import config from "./config";
 import * as logs from "./logs";
 
 logs.init();
 
-export const rtdblimit = functions.handler.database.ref.onCreate(
+// https://stackoverflow.com/questions/37872478/how-to-get-firebase-database-reference-full-path
+function fullPath(ref: admin.database.Reference){
+  return ref.toString().substring(ref.root.toString().length - 1);
+}
+
+function cleanPath(path: string) {
+  const lastIndex = path.length - 1;
+
+  if (path[lastIndex] === "/") {
+    return path.substring(0, lastIndex);
+  }
+
+  return path;
+}
+
+const configPath = cleanPath(config.nodePath);
+
+export const rtdblimit = functions.database.ref(`${configPath}/{nodeId}`).onCreate(
   async (snapshot): Promise<void> => {
     logs.start();
 
     try {
       const parentRef = snapshot.ref.parent;
       const parentSnapshot = await parentRef.once("value");
-
-      logs.childCount(parentRef.path, parentSnapshot.numChildren());
+      const path = fullPath(parentRef)
+      logs.childCount(path, parentSnapshot.numChildren());
 
       if (parentSnapshot.numChildren() > config.maxCount) {
         let childCount = 0;
@@ -40,11 +58,11 @@ export const rtdblimit = functions.handler.database.ref.onCreate(
           }
         });
 
-        logs.pathTruncating(parentRef.path, config.maxCount);
+        logs.pathTruncating(path, config.maxCount);
         await parentRef.update(updates);
-        logs.pathTruncated(parentRef.path, config.maxCount);
+        logs.pathTruncated(path, config.maxCount);
       } else {
-        logs.pathSkipped(parentRef.path);
+        logs.pathSkipped(path);
       }
 
       logs.complete();
