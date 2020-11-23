@@ -1,0 +1,16 @@
+name: Validate
+
+on:
+  pull_request:
+    branches:
+      - "**"
+
+jobs:
+  formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: NPM install
+        run: npm i
+      - name: Prettier Lint Check
+        run: npm run lint
