@@ -1,3 +1,13 @@
+## Version 0.1.10
+
+feature - Added a new parameter that allows customization of the BigQuery dataset location (#462)
+
+feature - Allowed renaming of column for `gen-schema-view` script schema (#445)
+
+fixed - Updated "gen-schema-view" script to not hide data rows (#442)
+
+feature - Added support for collectionGroup queries (#354)
+
 ## Version 0.1.9
 
 feature - Add new Cloud Functions locations. For more information about locations and their pricing tiers, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
