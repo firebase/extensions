@@ -12,6 +12,7 @@ import FirebaseFirestore
 
 class ViewController: UIViewController {
     var controller = FirestoreShardCounter(docRef: Firestore.firestore().collection("pages").document("hello-world"), field: "visits")
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -39,10 +40,6 @@ class ViewController: UIViewController {
       //increment every time someone visits "hello-world" page
         controller.incrementBy(val:Double(1))
     }
-    
-
 }
-
-
 
 ```
