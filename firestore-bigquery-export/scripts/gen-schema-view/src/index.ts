@@ -37,8 +37,8 @@ const validateInput = (value: any, name: string, regex: RegExp) => {
   return true;
 };
 
-function collect(value, previous) {
-  return previous.concat([value]);
+function commaSeparatedList(value = "") {
+  return value.split(",").map(($) => $.trim());
 }
 
 program
@@ -63,7 +63,7 @@ program
   .option(
     "-f, --schema-files <schema-files>",
     "A collection of files from which to read schemas.",
-    collect,
+    commaSeparatedList,
     []
   );
 
@@ -125,6 +125,7 @@ async function run(): Promise<number> {
   if (Object.keys(config.schemas).length === 0) {
     console.log(`No schema files found!`);
   }
+
   const viewFactory = new FirestoreBigQuerySchemaViewFactory();
   for (const schemaName in config.schemas) {
     await viewFactory.initializeSchemaViewResources(
@@ -139,16 +140,17 @@ async function run(): Promise<number> {
 
 async function parseConfig(): Promise<CliConfig> {
   program.parse(process.argv);
+
   if (program.nonInteractive) {
     if (
       program.project === undefined ||
       program.dataset === undefined ||
-      program.tableNamePrefix === undefined ||
-      program.schemaFiles.length === 0
+      program.tableNamePrefix === undefined
     ) {
       program.outputHelp();
       process.exit(1);
     }
+
     return {
       projectId: program.project,
       datasetId: program.dataset,
