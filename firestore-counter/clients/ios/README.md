@@ -15,7 +15,7 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        // event listener which returns total amount
         controller.onSnapshot { (value, error) in
           if let error = error {
             // handle error
@@ -26,7 +26,7 @@ class ViewController: UIViewController {
     }
 
     @IBAction func getLatest(_ sender: Any) {
-      //get current total
+      // get current total
         controller.get(){ (sum, error) in
           if let error = error{
             // handle error
@@ -37,7 +37,7 @@ class ViewController: UIViewController {
     }
 
     @IBAction func incrementer(_ sender: Any) {
-      //increment every time someone visits "hello-world" page
+      // increment every time someone visits "hello-world" page
         controller.incrementBy(val:Double(1))
     }
 }
