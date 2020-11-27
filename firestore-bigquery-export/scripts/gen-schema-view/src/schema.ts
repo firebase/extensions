@@ -25,6 +25,7 @@ import {
   firestoreGeopoint,
   firestoreNumber,
   firestoreTimestamp,
+  firestoreJSON,
   udfs,
 } from "./udf";
 
@@ -36,6 +37,7 @@ export type FirestoreFieldType =
   | "array"
   | "null"
   | "string"
+  | "json"
   | "timestamp"
   | "reference";
 
@@ -79,6 +81,7 @@ const firestoreToBigQueryFieldType: {
   reference: "STRING",
   array: null /* mode: REPEATED type: STRING */,
   map: null,
+  json: "STRING",
 };
 
 /**
@@ -447,7 +450,15 @@ const processLeafField = (
     case "null":
       selector = transformer(`NULL`);
       break;
+    case "json":
+      selector = firestoreJSON(
+        datasetId,
+        toJsonString(dataFieldName, extractPrefixJoined, field, ``, transformer)
+      );
+
+      break;
     case "string":
+
     case "reference":
       selector = jsonExtractScalar(
         dataFieldName,
@@ -573,6 +584,7 @@ const processLeafField = (
       description: field.description,
     });
   }
+
   return fieldNameToSelector;
 };
 
@@ -605,6 +617,16 @@ const jsonExtractScalar = (
       prefix.length > 0 ? `${prefix}.` : ``
     }${field.extractor}${subselector}\')`
   );
+};
+
+const toJsonString = (
+  dataFieldName: string,
+  prefix: string,
+  field: FirestoreField,
+  subselector: string = "",
+  transformer: (selector: string) => string
+) => {
+  return transformer(`TO_JSON_STRING(${dataFieldName}.${field.extractor})`);
 };
 
 const jsonExtract = (

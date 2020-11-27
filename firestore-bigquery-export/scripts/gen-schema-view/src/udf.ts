@@ -17,12 +17,15 @@
 import * as sqlFormatter from "sql-formatter";
 
 // Persistent UDFs to be created on schema view initialization.
-export const udfs: { [name: string]: (dataset: string) => any } = {
+export const udfs: {
+  [name: string]: (dataset: string) => any;
+} = {
   firestoreArray: firestoreArrayFunction,
   firestoreBoolean: firestoreBooleanFunction,
   firestoreNumber: firestoreNumberFunction,
   firestoreTimestamp: firestoreTimestampFunction,
   firestoreGeopoint: firestoreGeopointFunction,
+  firestoreJSON: firestoreJSONFunction,
 };
 
 export function firestoreArray(datasetId: string, selector: string): string {
@@ -35,6 +38,12 @@ export function firestoreBoolean(datasetId: string, selector: string): string {
   return `\`${
     process.env.PROJECT_ID
   }.${datasetId}.firestoreBoolean\`(${selector})`;
+}
+
+export function firestoreJSON(datasetId: string, selector: string): string {
+  return `\`${
+    process.env.PROJECT_ID
+  }.${datasetId}.firestoreJSON\`(${selector})`;
 }
 
 export function firestoreNumber(datasetId: string, selector: string): string {
@@ -88,6 +97,27 @@ function firestoreArrayDefinition(datasetId: string): string {
     }
     
     return getArray(json);
+    """;`);
+}
+
+function firestoreJSONFunction(datasetId: string): any {
+  const definition: string = firestoreJSONDefinition(datasetId);
+  return {
+    query: definition,
+    useLegacySql: false,
+  };
+}
+
+function firestoreJSONDefinition(datasetId: string): string {
+  return sqlFormatter.format(`
+    CREATE FUNCTION IF NOT EXISTS \`${
+      process.env.PROJECT_ID
+    }.${datasetId}.firestoreJSON\`(json STRING)
+    RETURNS STRING
+    LANGUAGE js AS """
+
+    
+    return JSON.stringify(json);
     """;`);
 }
 
