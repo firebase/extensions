@@ -14,7 +14,6 @@ export interface Attachment {
   cid?: string;
 }
 
-
 export interface TemplateGroup {
   subject?: HandlebarsTemplateDelegate;
   html?: HandlebarsTemplateDelegate;

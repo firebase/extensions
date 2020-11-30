@@ -99,7 +99,7 @@ export default class Templates {
 
       this.templateMap[t.name] = tgroup;
 
-      logs.loadedTemplate(t.name)
+      logs.loadedTemplate(t.name);
     });
     this.ready = true;
     this.waits.forEach((wait) => wait());
