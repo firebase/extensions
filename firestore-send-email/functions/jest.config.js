@@ -7,4 +7,5 @@ module.exports = {
   preset: "ts-jest",
   globalSetup: "./jest.setup.js",
   globalTeardown: "./jest.teardown.js",
+  testMatch: ["**/__tests__/*.test.ts"],
 };
