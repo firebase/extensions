@@ -15,29 +15,15 @@
  */
 
 import { create } from "handlebars";
+import * as logs from "./logs";
+
+import { TemplateGroup, TemplateData, Attachment } from "./types";
 
 const subjHandlebars = create();
 const htmlHandlebars = create();
 const textHandlebars = create();
 const ampHandlebars = create();
-
-import { logger } from "firebase-functions";
-
-interface TemplateGroup {
-  subject?: HandlebarsTemplateDelegate;
-  html?: HandlebarsTemplateDelegate;
-  text?: HandlebarsTemplateDelegate;
-  amp?: HandlebarsTemplateDelegate;
-}
-
-interface TemplateData {
-  name: string;
-  subject?: string;
-  html?: string;
-  text?: string;
-  amp?: string;
-  partial?: boolean;
-}
+const attachmentsHandlebars = create();
 
 export default class Templates {
   collection: FirebaseFirestore.CollectionReference;
@@ -83,7 +69,11 @@ export default class Templates {
       if (p.amp) {
         ampHandlebars.registerPartial(p.name, p.amp);
       }
-      console.log(`registered partial '${p.name}'`);
+      if (p.attachments) {
+        logs.noPartialAttachmentSupport();
+      }
+
+      logs.registeredPartial(p.name);
     });
 
     templates.forEach((t) => {
@@ -100,8 +90,16 @@ export default class Templates {
       if (t.amp) {
         tgroup.amp = ampHandlebars.compile(t.amp);
       }
+      if (t.attachments) {
+        tgroup.attachments = attachmentsHandlebars.compile(
+          JSON.stringify(t.attachments),
+          { strict: true }
+        );
+      }
+
       this.templateMap[t.name] = tgroup;
-      logger.log(`loaded template '${t.name}'`);
+
+      logs.loadedTemplate(t.name)
     });
     this.ready = true;
     this.waits.forEach((wait) => wait());
@@ -115,6 +113,7 @@ export default class Templates {
     html: string | null;
     text: string | null;
     amp: string | null;
+    attachments: Attachment[] | null;
   }> {
     await this.waitUntilReady();
     if (!this.templateMap[name]) {
@@ -124,11 +123,19 @@ export default class Templates {
     }
 
     const t = this.templateMap[name];
+    let attachments;
+
+    if (t.attachments) {
+      const interpolatedAttachments = t.attachments(data);
+      attachments = JSON.parse(interpolatedAttachments);
+    }
+
     return {
       subject: t.subject ? t.subject(data) : null,
       html: t.html ? t.html(data) : null,
       text: t.text ? t.text(data) : null,
       amp: t.amp ? t.amp(data) : null,
+      attachments: attachments || null,
     };
   }
 }
