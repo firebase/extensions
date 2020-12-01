@@ -2,7 +2,7 @@ import FirebaseFirestore
 import Firebase
 
 public class FirestoreShardCounter {
-  private let firestore: Firestore
+  private let db: Firestore
   private let shardId = UUID().uuidString
   private var shards = [String: Double]()
   private let collectionId = "_counter_shards_"
@@ -13,45 +13,51 @@ public class FirestoreShardCounter {
   public init(docRef: DocumentReference, field: String) {
     self.docRef = docRef
     self.field = field
-    self.firestore = docRef.firestore
-    self.shardRef = docRef.collection(collectionId)
-    shards[self.docRef.path] = Double(0)
-    shards[self.shardRef.document(String(self.shardId)).path] = Double(0)
-    shards[self.shardRef.document("\t" + String(self.shardId.prefix(4))).path] = Double(0)
-    shards[self.shardRef.document("\t\t" + String(self.shardId.prefix(3))).path] = Double(0)
-    shards[self.shardRef.document("\t\t\t" + String(self.shardId.prefix(2))).path] = Double(0)
-    shards[self.shardRef.document("\t\t\t\t" + String(self.shardId.prefix(1))).path] = Double(0)
+    db = Firestore.firestore()
+    shardRef = docRef.collection(collectionId)
+    shards[self.docRef.path] = 0
+    shards[shardRef.document(String(shardId)).path] = 0
+    shards[shardRef.document("\t" + String(shardId.prefix(4))).path] = 0
+    shards[shardRef.document("\t\t" + String(shardId.prefix(3))).path] = 0
+    shards[shardRef.document("\t\t\t" + String(shardId.prefix(2))).path] = 0
+    shards[shardRef.document("\t\t\t\t" + String(shardId.prefix(1))).path] = 0
   }
 
-  public func get(result: @escaping (Double?, Error?) -> ()) {
+  public func get(result: @escaping (Double?, Error?) -> Void) {
     var documentIds = [String]()
-    var totalValue = Double(0)
 
     for key in shards.keys {
       documentIds.append((key as NSString).lastPathComponent)
     }
 
-    shardRef.whereField(FieldPath.documentID(), in: documentIds).getDocuments() { (snapshot, error) in
+    shardRef.whereField(FieldPath.documentID(), in: documentIds).getDocuments() { snapshot, error in
       if let error = error {
         print("FirestoreCounter: Error getting documents: \(error)")
         result(nil, error)
       } else {
-        for queryDoc in snapshot!.documents {
-          let document = queryDoc.data()
-          let value = document[self.field] == nil ? 0 : document[self.field] as! Double;
-          totalValue += value
-        }
+        if let documents = snapshot?.documents {
+          let values = documents.map { (documentSnap) -> Double in
+            let document = documentSnap.data()
+            if let amount = document[self.field] as? Double {
+              return amount
+            } else {
+              return 0.0
+            }
+          }
 
-        result(totalValue, nil)
+          let sum = values.reduce(0.0) { $0 + $1 }
+          result(sum, nil)
+        }
       }
     }
   }
 
-  public func incrementBy(val: Double) {
-    let increment = FieldValue.increment(val)
+  public func increment(by delta: Double) {
+    let increment = FieldValue.increment(delta)
     var array = field.components(separatedBy: ".")
     var update = [String: Any]()
-    array.reverse()
+
+    array = array.reversed()
 
     for component in array {
       if (update.isEmpty) {
@@ -61,29 +67,25 @@ public class FirestoreShardCounter {
       }
     }
 
-    return shardRef.document(shardId).setData(update, merge: true)
+    shardRef.document(shardId).setData(update, merge: true)
   }
 
-  public func onSnapshot(observer: @escaping (Double?, Error?) -> ()) {
-    for path in shards.keys {
-      firestore.document(path).addSnapshotListener { (snapshot, error) in
-
+  public func onSnapshot(_ listener: @escaping (Double?, Error?) -> Void) {
+    shards.keys.forEach { path in
+      db.document(path).addSnapshotListener { snapshot, error in
         if let error = error {
           print("FirestoreCounter: Error listening to document changes: \(error)")
-
-          observer(nil, error)
+          listener(nil, error)
         } else {
-          if let snapshotValue = snapshot?.get(self.field) {
-            let doubleVal = snapshotValue as! Double
-            var sum = Double(0)
-            self.shards[path] = doubleVal
-
-            for value in self.shards.values {
-              sum += value
-            }
-
-            observer(sum, nil)
+          guard let snapshot = snapshot,
+            let snapshotValue = snapshot.get(self.field),
+            let doubleVal = snapshotValue as? Double else {
+              listener(nil, error)
+              return
           }
+          self.shards[path] = doubleVal
+          let sum = self.shards.reduce(0.0) { $0 + $1.value }
+          listener(sum, nil)
         }
       }
     }
