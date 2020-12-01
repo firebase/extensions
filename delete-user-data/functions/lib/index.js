@@ -22,7 +22,10 @@ const firebase_tools = require("firebase-tools");
 const config_1 = require("./config");
 const logs = require("./logs");
 // Initialize the Firebase Admin SDK
-admin.initializeApp();
+admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+    databaseURL: `https://${config_1.default.SELECTED_DATABASE_INSTANCE}.firebaseio.com`,
+});
 logs.init();
 /*
  * The clearData function removes personal data from the RealTime Database,
