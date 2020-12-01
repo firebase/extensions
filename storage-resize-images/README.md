@@ -42,7 +42,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 **Configuration Parameters:**
 
-* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your Storage bucket. For help selecting a  location, refer to the [location selection  guide](https://firebase.google.com/docs/functions/locations).
+* Cloud Functions location: Where do you want to deploy the functions created for this extension? You usually want a location close to your Storage bucket. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
 * Cloud Storage bucket for images: To which Cloud Storage bucket will you upload images that you want to resize? Resized images will be stored in this bucket. Depending on your extension configuration, original images are either kept or deleted.
 
@@ -59,6 +59,9 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * List of absolute paths for excluded resized images: A comma-separated list of absolute paths to not take into account for images to be resized. For example, to not resize the images stored in `/users/pictures/avatars` directory, specify the path `/users/pictures/avatars`. If you prefer to resize every image uploaded to the storage bucket, leave this field empty.
 
 * Cache-Control header for resized images: This extension automatically copies any `Cache-Control` metadata from the original image to the resized images. For the resized images, do you want to overwrite this copied `Cache-Control` metadata or add `Cache-Control` metadata? Learn more about [`Cache-Control` headers](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control). If you prefer not to overwrite or add `Cache-Control` metadata, leave this field empty.
+
+
+* Convert image to preferred type: The image type you'd like your source image to convert to. The default for this option will  be to keep the original file type.
 
 
 
