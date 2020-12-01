@@ -1,7 +1,7 @@
 import FirebaseFirestore
 import Firebase
 
-public class FirestoreShardCounter {
+public class FirebaseDistributedCounter {
   private let db: Firestore
   private let shardId = UUID().uuidString
   private var shards = [String: Double]()
