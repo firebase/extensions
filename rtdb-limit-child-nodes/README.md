@@ -32,6 +32,9 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * Realtime Database path: What is the Realtime Database path for which you want to limit the number of child nodes?
 
+* Selected Realtime Database instance: What is the selected Realtime Database used for this extension?
+
+
 * Maximum count of nodes to keep: What is the maximum count of nodes to keep in your specified database path? The oldest nodes will be deleted first to maintain this max count.
 
 
