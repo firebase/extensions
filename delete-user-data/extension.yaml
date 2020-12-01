@@ -148,6 +148,17 @@ params:
     default: shallow
     required: true
 
+  - param: SELECTED_DATABASE_INSTANCE
+    label: Realtime Database instance
+    description: >
+      From which Realtime Database instance do you want to delete user data?
+    type: string
+    example: my-instance
+    validationRegex: ^([0-9a-z_.-]*)$
+    validationErrorMessage: Invalid database instance
+    default: ${DATABASE_INSTANCE}
+    required: true
+
   - param: RTDB_PATHS
     label: Realtime Database paths
     description: >-

@@ -44,6 +44,9 @@ For example, if you have the collections `users` and `admins`, and each collecti
 
 * Cloud Firestore delete mode: (Only applicable if you use the `Cloud Firestore paths` parameter.) How do you want to delete Cloud Firestore documents? To also delete documents in subcollections, set this parameter to `recursive`.
 
+* Selected Realtime Database instance: What is the selected Realtime Database used for this extension?
+
+
 * Realtime Database paths: Which paths in your Realtime Database instance contain user data? Leave empty if you don't use Realtime Database.
 Enter the full paths, separated by commas. You can represent the User ID of the deleted user with `{UID}`.
 For example: `users/{UID},admins/{UID}`.
