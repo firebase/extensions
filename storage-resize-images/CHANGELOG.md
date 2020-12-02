@@ -1,3 +1,7 @@
+## Version 0.1.16
+
+feature - Adds support for absolute paths restrictions for Storage Resize Image (#427)
+
 ## Version 0.1.15
 
 fixed - extension bug. File name incorrect if non-standard file name (#477)
