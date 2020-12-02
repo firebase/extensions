@@ -1,5 +1,7 @@
 # Resize Images
 
+**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
+
 **Description**: Resizes images uploaded to Cloud Storage to a specified size, and optionally keeps or deletes the original image.
 
 

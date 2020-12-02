@@ -1,5 +1,7 @@
 # Trigger Email
 
+**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
+
 **Description**: Composes and sends an email based on the contents of a document written to a specified Cloud Firestore collection.
 
 
