@@ -28,8 +28,8 @@ const {
 
 mockTranslateModule();
 
-let restoreEnv;
 let functionsTest = functionsTestInit();
+let restoreEnv;
 
 describe("extension", () => {
   beforeEach(() => {

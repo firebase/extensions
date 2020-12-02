@@ -62,6 +62,28 @@ export const imageAlreadyResized = () => {
   logger.log("File is already a resized image, no processing is required");
 };
 
+export const imageOutsideOfPaths = (
+  absolutePaths: string[],
+  imagePath: string
+) => {
+  console.log(
+    `Image path '${imagePath}' is not supported, these are the supported absolute paths: ${absolutePaths.join(
+      ", "
+    )}`
+  );
+};
+
+export const imageInsideOfExcludedPaths = (
+  absolutePaths: string[],
+  imagePath: string
+) => {
+  console.log(
+    `Image path '${imagePath}' is not supported, these are the not supported absolute paths: ${absolutePaths.join(
+      ", "
+    )}`
+  );
+};
+
 export const imageDownloaded = (remotePath: string, localPath: string) => {
   logger.log(`Downloaded image file: '${remotePath}' to '${localPath}'`);
 };
