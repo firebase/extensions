@@ -1,7 +1,5 @@
 # Shorten URLs
 
-**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
-
 **Description**: Shortens URLs written to a specified Cloud Firestore collection (uses Bitly).
 
 

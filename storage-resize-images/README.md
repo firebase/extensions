@@ -1,7 +1,5 @@
 # Resize Images
 
-**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
-
 **Description**: Resizes images uploaded to Cloud Storage to a specified size, and optionally keeps or deletes the original image.
 
 
@@ -54,9 +52,12 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * Cloud Storage path for resized images: A relative path in which to store resized images. For example, if you specify a path here of `thumbs` and you upload an image to `/images/original.jpg`, then the resized image is stored at `/images/thumbs/original_200x200.jpg`. If you prefer to store resized images at the root of your bucket, leave this field empty.
 
-* List of absolute paths for resized images: A comma-separated list of absolute paths to restrict the images to be resized. For example, to only resize the images stored in `/users/pictures` directory, specify the path `/users/pictures`. If you prefer to resize every image uploaded to the storage bucket, leave this field empty.
 
-* List of absolute paths for excluded resized images: A comma-separated list of absolute paths to not take into account for images to be resized. For example, to not resize the images stored in `/users/pictures/avatars` directory, specify the path `/users/pictures/avatars`. If you prefer to resize every image uploaded to the storage bucket, leave this field empty.
+* Paths that contain images you want to resize: Restrict storage-resize-images to only resize images in specific locations in your Storage bucket by  supplying a comma-separated list of absolute paths. For example, to only resize the images  stored in `/users/pictures` directory, specify the path `/users/pictures`.  If you prefer to resize every image uploaded to the storage bucket,  leave this field empty.
+
+
+* List of absolute paths not included for resized images: A comma-separated list of absolute paths to not take into account for  images to be resized. For example, to not resize the images  stored in `/users/pictures/avatars` directory, specify the path  `/users/pictures/avatars`. If you prefer to resize every image uploaded  to the storage bucket, leave this field empty.
+
 
 * Cache-Control header for resized images: This extension automatically copies any `Cache-Control` metadata from the original image to the resized images. For the resized images, do you want to overwrite this copied `Cache-Control` metadata or add `Cache-Control` metadata? Learn more about [`Cache-Control` headers](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control). If you prefer not to overwrite or add `Cache-Control` metadata, leave this field empty.
 
