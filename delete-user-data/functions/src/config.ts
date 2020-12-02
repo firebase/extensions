@@ -20,4 +20,5 @@ export default {
   firestoreDeleteMode: process.env.FIRESTORE_DELETE_MODE,
   rtdbPaths: process.env.RTDB_PATHS,
   storagePaths: process.env.STORAGE_PATHS,
+  SELECTED_DATABASE_INSTANCE: process.env.SELECTED_DATABASE_INSTANCE,
 };

@@ -19,6 +19,7 @@ When a user's account is deleted from your project's authenticated users, this e
 * Cloud Firestore path(s): `${param:FIRESTORE_PATHS}`
 * Realtime Database path(s): `${param:RTDB_PATHS}`
 * Cloud Storage path(s): `${param:STORAGE_PATHS}`
+* Database Instance path(s): `${param:SELECTED_DATABASE_INSTANCE}`
 
 You can delete a user directly in your [Authentication dashboard]((https://console.firebase.google.com/project/${param:PROJECT_ID}/authentication/users)) or by using one of the Firebase Authentication SDKs. Learn more in the [Authentication documentation](https://firebase.google.com/docs/auth).
 
