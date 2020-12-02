@@ -1,5 +1,7 @@
 # Export Collections to BigQuery
 
+**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
+
 **Description**: Sends realtime, incremental updates from a specified Cloud Firestore collection to BigQuery.
 
 
