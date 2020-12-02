@@ -1,9 +1,11 @@
 ### Installation
 
-1. Ensure your Swift app already has Firebase [initialized](https://firebase.google.com/docs/ios/setup). 
-2. Add the `firestore-counter/clients/ios` directory to your project in Xcode.
-3. In the "Build Phases" of your project in Xcode, update the "Link Binary With Libraries" to include the `FirestoreCounter` package. 
-4. Once built, you should be able to import the `FirestoreCounter` into your project like below:
+1. Ensure your Swift app already has Firebase [initialized](https://firebase.google.com/docs/ios/setup).
+2. Ensure you have the [Distributed Counter](https://firebase.google.com/products/extensions/firestore-counter?authuser=0) extension installed in your Firebase project.
+3. Add the `firestore-counter/clients/ios` directory to your project in Xcode.
+4. In the "Build Phases" of your project in Xcode, update the "Link Binary With Libraries" to include the `FirestoreCounter` package. 
+5. Once built, you can import the `FirestoreCounter` into your project as in the example below:
+ 
 
 ```swift
 import UIKit
@@ -27,10 +29,10 @@ class ViewController: UIViewController {
 
   @IBAction func getLatest(_ sender: Any) {
     // get current total
-    controller.get() { (sum, error) in
+    controller.get() { (value, error) in
       if let error = error {
         // handle error
-      } else if let sum = sum {
+      } else if let value = value {
         // handle value
       }
     }
