@@ -134,4 +134,14 @@ describe("changelog schema snapshot view sql generation", () => {
     );
     expect(result.query).to.equal(expectedQuery);
   });
+
+  it("should handle extracting JSON data into a column", async () => {
+    const expectedQuery = await readFormattedSQL(`${sqlDir}/jsonColumn.txt`);
+    const result = testBuildSchemaViewQuery(
+      testDataset,
+      testTable,
+      await readBigQuerySchema(`${schemaDir}/jsonSchema.json`)
+    );
+    expect(result.query).to.equal(expectedQuery);
+  });
 });
