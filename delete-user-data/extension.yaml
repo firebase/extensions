@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: delete-user-data
-version: 0.1.6
+version: 0.1.7
 specVersion: v1beta
 
 displayName: Delete User Data
@@ -146,6 +146,17 @@ params:
       - label: Shallow
         value: shallow
     default: shallow
+    required: true
+
+  - param: SELECTED_DATABASE_INSTANCE
+    label: Realtime Database instance
+    description: >
+      From which Realtime Database instance do you want to delete user data?
+    type: string
+    example: my-instance
+    validationRegex: ^([0-9a-z_.-]*)$
+    validationErrorMessage: Invalid database instance
+    default: ${DATABASE_INSTANCE}
     required: true
 
   - param: RTDB_PATHS

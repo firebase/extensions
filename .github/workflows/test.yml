@@ -1,0 +1,30 @@
+name: Testing
+
+on:
+  push:
+    branches:
+      - "**"
+    paths-ignore:
+      - "**/*.md"
+
+jobs:
+  nodejs:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ["10", "12"]
+    name: node.js_${{ matrix.node }}_test
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - name: NPM install
+        run: npm install
+      - name: Run tests with coverage
+        run: npm run test-coverage
+      - name: Submit coverage
+        run: ./node_modules/.bin/codecov
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
