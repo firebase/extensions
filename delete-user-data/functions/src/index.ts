@@ -22,7 +22,10 @@ import config from "./config";
 import * as logs from "./logs";
 
 // Initialize the Firebase Admin SDK
-admin.initializeApp();
+admin.initializeApp({
+  credential: admin.credential.applicationDefault(),
+  databaseURL: `https://${config.SELECTED_DATABASE_INSTANCE}.firebaseio.com`,
+});
 
 logs.init();
 

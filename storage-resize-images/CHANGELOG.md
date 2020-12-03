@@ -1,3 +1,11 @@
+## Version 0.1.16
+
+feature - Adds support for absolute paths restrictions for Storage Resize Image (#427)
+
+## Version 0.1.15
+
+fixed - extension bug. File name incorrect if non-standard file name (#477)
+
 ## Version 0.1.14
 
 feature - Added a "delete only on success" option to the `DELETE_ORIGINAL_FILE` param (#479)

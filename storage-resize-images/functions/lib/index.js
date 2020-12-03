@@ -38,6 +38,7 @@ logs.init();
 exports.generateResizedImage = functions.storage.object().onFinalize(async (object) => {
     logs.start();
     const { contentType } = object; // This is the image MIME type
+    const tmpFilePath = path.resolve("/", path.dirname(object.name)); // Absolute path to dirname
     if (!contentType) {
         logs.noContentType();
         return;
@@ -52,6 +53,16 @@ exports.generateResizedImage = functions.storage.object().onFinalize(async (obje
     }
     if (!resize_image_1.supportedContentTypes.includes(contentType)) {
         logs.unsupportedType(resize_image_1.supportedContentTypes, contentType);
+        return;
+    }
+    if (config_1.default.includePathList &&
+        !util_1.startsWithArray(config_1.default.includePathList, tmpFilePath)) {
+        logs.imageOutsideOfPaths(config_1.default.includePathList, tmpFilePath);
+        return;
+    }
+    if (config_1.default.excludePathList &&
+        util_1.startsWithArray(config_1.default.excludePathList, tmpFilePath)) {
+        logs.imageInsideOfExcludedPaths(config_1.default.excludePathList, tmpFilePath);
         return;
     }
     if (object.metadata && object.metadata.resizedImage === "true") {

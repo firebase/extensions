@@ -29,7 +29,7 @@ import {
 } from "./resize-image";
 import config, { deleteImage } from "./config";
 import * as logs from "./logs";
-import { extractFileNameWithoutExtension } from "./util";
+import { extractFileNameWithoutExtension, startsWithArray } from "./util";
 
 sharp.cache(false);
 
@@ -46,6 +46,8 @@ export const generateResizedImage = functions.storage.object().onFinalize(
   async (object): Promise<void> => {
     logs.start();
     const { contentType } = object; // This is the image MIME type
+
+    const tmpFilePath = path.resolve("/", path.dirname(object.name)); // Absolute path to dirname
 
     if (!contentType) {
       logs.noContentType();
@@ -64,6 +66,22 @@ export const generateResizedImage = functions.storage.object().onFinalize(
 
     if (!supportedContentTypes.includes(contentType)) {
       logs.unsupportedType(supportedContentTypes, contentType);
+      return;
+    }
+
+    if (
+      config.includePathList &&
+      !startsWithArray(config.includePathList, tmpFilePath)
+    ) {
+      logs.imageOutsideOfPaths(config.includePathList, tmpFilePath);
+      return;
+    }
+
+    if (
+      config.excludePathList &&
+      startsWithArray(config.excludePathList, tmpFilePath)
+    ) {
+      logs.imageInsideOfExcludedPaths(config.excludePathList, tmpFilePath);
       return;
     }
 
