@@ -48,7 +48,7 @@ async function initialize() {
 async function transportLayer() {
   if (config.testing) {
     return new Promise((resolve, reject) => {
-      nodemailer.createTestAccount(async (err, account) => {
+      nodemailer.createTestAccount((err, account) => {
         if (err) {
           reject(err);
         }
