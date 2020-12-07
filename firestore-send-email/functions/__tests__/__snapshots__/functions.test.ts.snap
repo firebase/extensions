@@ -2,12 +2,12 @@
 
 exports[`extension functions configuration detected from environment variables 1`] = `
 Object {
-  "defaultFrom": "",
-  "defaultReplyTo": "",
-  "location": "europe-west2",
-  "mailCollection": "",
-  "smtpConnectionUri": "",
-  "templatesCollection": "",
-  "usersCollection": "",
+  "defaultFrom": undefined,
+  "defaultReplyTo": undefined,
+  "location": undefined,
+  "mailCollection": undefined,
+  "smtpConnectionUri": undefined,
+  "templatesCollection": undefined,
+  "usersCollection": undefined,
 }
 `;
