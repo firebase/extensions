@@ -1,3 +1,7 @@
+## Version 0.1.7
+
+feature - Adds an option to select an alternative database instance (#505)
+
 ## Version 0.1.6
 
 feature - Add new Cloud Functions locations. For more information about locations and their pricing tiers, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
