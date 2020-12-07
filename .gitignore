@@ -2,6 +2,7 @@
 node_modules/
 *.env
 !install-params.env
+!emulator-params.env
 firebase-debug.log
 database-debug.log
 ui-debug.log
