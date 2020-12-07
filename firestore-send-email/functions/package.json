@@ -8,7 +8,7 @@
     "compile": "tsc",
     "test": "jest",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md",
-    "emulator": "cd __tests__/emulator && firebase ext:dev:emulators:start --test-params=emulator-params.env --project=extensions-testing"
+    "emulator": "cd __tests__/emulator && sh start.sh"
   },
   "keywords": [],
   "author": "",
