@@ -7,7 +7,8 @@
     "clean": "rimraf lib",
     "compile": "tsc",
     "test": "jest",
-    "generate-readme": "firebase ext:info .. --markdown > ../README.md"
+    "generate-readme": "firebase ext:info .. --markdown > ../README.md",
+    "emulator": "cd __tests__/emulator && firebase ext:dev:emulators:start --test-params=emulator-params.env --project=extensions-testing"
   },
   "keywords": [],
   "author": "",
@@ -15,7 +16,7 @@
   "dependencies": {
     "@types/node": "^12.6.9",
     "@types/nodemailer": "^6.2.1",
-    "firebase-admin": "^8.3.0",
+    "firebase-admin": "^9.4.1",
     "firebase-functions": "^3.9.0",
     "handlebars": "^4.5.3",
     "nodemailer": "^6.3.0"

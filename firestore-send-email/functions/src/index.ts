@@ -32,12 +32,12 @@ let initialized = false;
 /**
  * Initializes Admin SDK & SMTP connection if not already initialized.
  */
-function initialize() {
+async function initialize() {
   if (initialized === true) return;
   initialized = true;
   admin.initializeApp();
   db = admin.firestore();
-  transport = nodemailer.createTransport(config.smtpConnectionUri);
+  transport = await transportLayer();
   if (config.templatesCollection) {
     templates = new Templates(
       admin.firestore().collection(config.templatesCollection)
@@ -45,6 +45,29 @@ function initialize() {
   }
 }
 
+async function transportLayer() {
+  if (config.testing) {
+    return new Promise((resolve, reject) => {
+      nodemailer.createTestAccount(async (err, account) => {
+        if (err) {
+          reject(err);
+        }
+        const testSMTPCredentials = nodemailer.createTransport({
+          host: "smtp.ethereal.email",
+          port: 587,
+          secure: false, // true for 465, false for other ports
+          auth: {
+            user: account.user, // generated ethereal user
+            pass: account.pass, // generated ethereal password
+          },
+        });
+        resolve(testSMTPCredentials);
+      });
+    });
+  } else {
+    return nodemailer.createTransport(config.smtpConnectionUri);
+  }
+}
 interface QueuePayload {
   delivery?: {
     startTime: FirebaseFirestore.Timestamp;
@@ -340,7 +363,7 @@ async function processWrite(change) {
 
 export const processQueue = functions.handler.firestore.document.onWrite(
   async (change) => {
-    initialize();
+    await initialize();
     logs.start();
     try {
       await processWrite(change);

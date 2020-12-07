@@ -22,6 +22,8 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: NPM install
         run: npm install
+      - name: Run emulators
+        run: npm run emulators
       - name: Run tests with coverage
         run: npm run test-coverage
       - name: Submit coverage

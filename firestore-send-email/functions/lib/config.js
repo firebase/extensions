@@ -23,4 +23,5 @@ exports.default = {
     defaultReplyTo: process.env.DEFAULT_REPLY_TO,
     usersCollection: process.env.USERS_COLLECTION,
     templatesCollection: process.env.TEMPLATES_COLLECTION,
+    testing: process.env.TESTING === "true",
 };

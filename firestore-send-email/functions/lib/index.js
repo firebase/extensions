@@ -30,15 +30,39 @@ let initialized = false;
 /**
  * Initializes Admin SDK & SMTP connection if not already initialized.
  */
-function initialize() {
+async function initialize() {
     if (initialized === true)
         return;
     initialized = true;
     admin.initializeApp();
     db = admin.firestore();
-    transport = nodemailer.createTransport(config_1.default.smtpConnectionUri);
+    transport = await transportLayer();
     if (config_1.default.templatesCollection) {
         templates = new templates_1.default(admin.firestore().collection(config_1.default.templatesCollection));
+    }
+}
+async function transportLayer() {
+    if (config_1.default.testing) {
+        return new Promise((resolve, reject) => {
+            nodemailer.createTestAccount(async (err, account) => {
+                if (err) {
+                    reject(err);
+                }
+                const testSMTPCredentials = nodemailer.createTransport({
+                    host: "smtp.ethereal.email",
+                    port: 587,
+                    secure: false,
+                    auth: {
+                        user: account.user,
+                        pass: account.pass,
+                    },
+                });
+                resolve(testSMTPCredentials);
+            });
+        });
+    }
+    else {
+        return nodemailer.createTransport(config_1.default.smtpConnectionUri);
     }
 }
 function validateFieldArray(field, array) {
@@ -252,7 +276,7 @@ async function processWrite(change) {
     }
 }
 exports.processQueue = functions.handler.firestore.document.onWrite(async (change) => {
-    initialize();
+    await initialize();
     logs.start();
     try {
         await processWrite(change);

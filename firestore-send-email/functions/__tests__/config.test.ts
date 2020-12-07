@@ -15,7 +15,8 @@ const environment = {
     "smtps://fakeemail@gmail.com:secret-password@smtp.gmail.com:465",
   DEFAULT_FROM: "fakeemail@gmail.com",
   DEFAULT_REPLY_TO: "fakeemail@gmail.com",
-  USERS_COLLECTION:'users'
+  USERS_COLLECTION: "users",
+  TESTING: "true",
 };
 
 describe("extensions config", () => {
@@ -33,7 +34,8 @@ describe("extensions config", () => {
       defaultReplyTo: environment.DEFAULT_REPLY_TO,
       usersCollection: environment.USERS_COLLECTION,
       templatesCollection: environment.TEMPLATES_COLLECTION,
-    }
+      testing: environment.TESTING === "true",
+    };
     const functionsConfig = config();
 
     expect(functionsConfig).toStrictEqual(testConfig);
