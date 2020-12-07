@@ -6,7 +6,6 @@ import { obfuscatedConfig } from "../src/logs";
 import * as exportedFunctions from "../src";
 
 describe("extension", () => {
-
   test("functions configuration is logged on initialize", async () => {
     expect(consoleLogSpy).toBeCalledWith(
       "Initializing extension with configuration",
