@@ -7,8 +7,7 @@
     "clean": "rimraf lib",
     "compile": "tsc",
     "test": "jest",
-    "generate-readme": "firebase ext:info .. --markdown > ../README.md",
-    "emulator": "cd __tests__/emulator && sh start.sh"
+    "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "keywords": [],
   "author": "",

@@ -1,8 +1,12 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
+    "port": "8080"
   },
   "functions": {
-    "source": "../.."
+    "source": "../..",
+    "port": "5001"
+  },
+  "ui": {
+    "enabled": false
   }
 }
