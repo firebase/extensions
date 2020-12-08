@@ -1,0 +1,12 @@
+{
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "meta_example",
+      "type": "json"
+    }
+  ]
+}

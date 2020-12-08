@@ -1,0 +1,8 @@
+SELECT
+  document_name,
+  document_id,
+  timestamp,
+  operation,
+  `test.test_dataset.firestoreJSON`(TO_JSON_STRING(data.friends)) AS friends
+FROM
+  `test.test_dataset.test_table`
