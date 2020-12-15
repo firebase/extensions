@@ -1,0 +1,29 @@
+name: npm_publish_bq_scripts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish_if_newer_version:
+    runs-on: ubuntu-latest
+    name: publish_if_newer_version
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10
+      - name: NPM install
+        run: npm install
+      - name: NPM Publish - BigQuery Schema Views Script
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          cd firestore-bigquery-export/scripts/gen-schema-view
+          ../../../.github/workflows/scripts/npm_publish.sh
+      - name: NPM Publish - BigQuery Import Collection Script
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          cd firestore-bigquery-export/scripts/import
+          ../../../.github/workflows/scripts/npm_publish.sh
