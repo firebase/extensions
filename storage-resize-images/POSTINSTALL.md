@@ -33,7 +33,46 @@ The extension also copies the following [metadata](https://cloud.google.com/stor
 
 Be aware of the following when using this extension:
 
-- Each original image must have a valid [image MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types#Image_types) specified in its [`Content-Type` metadata](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Type) (for example, `image/png`).
+- Each original image must have a valid [image MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types#Image_types) specified in its [`Content-Type` metadata](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Type) (for example, `image/png`). Below is a list of the content types supported by this extension:
+  * image/jpeg
+  * image/png
+  * image/tiff
+  * image/webp
+
+If you are using raw image data in your application, you need to ensure you set the correct content type when uploading to the Firebase Storage bucket to trigger the extension image resize. Here's an example:
+
+```js
+
+const admin = require("firebase-admin");
+const serviceAccount = require("../path-to-service-account.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+const storage = admin.storage();
+
+// rawImage param is the binary data read from the file system or downloaded from URL
+function uploadImageToStorage(rawImage){
+  const bucket = storage.bucket("YOUR FIREBASE STORAGE BUCKET URL");
+  const file = bucket.file("filename.jpeg");
+
+  file.save(
+    rawImage,
+    {
+      //Set the content type to ensure the extension triggers the image resize(s)
+      metadata: { contentType: "image/jpeg" },
+    },
+    (error) => {
+      if (error) {
+        throw error;
+      }
+      console.log("Sucessfully uploaded image");
+    }
+  );
+}
+
+```
 
 - If you configured the `Cache-Control header for resized images` parameter, your specified value will overwrite the value copied from the original image. Learn more about image metadata in the [Cloud Storage documentation](https://firebase.google.com/docs/storage/).
 
