@@ -7,6 +7,7 @@ Object {
   "datasetLocation": undefined,
   "initialized": false,
   "location": "us-central1",
+  "logInfo": true,
   "tableId": "my_table",
 }
 `;

@@ -21,4 +21,5 @@ export default {
   location: process.env.LOCATION,
   initialized: false,
   datasetLocation: process.env.DATASET_LOCATION,
+  logInfo: process.env.LOG_INFO === "true",
 };

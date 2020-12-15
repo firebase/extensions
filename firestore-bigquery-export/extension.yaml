@@ -213,3 +213,18 @@ params:
       more than 1024 characters.
     default: posts
     required: true
+
+  - param: LOG_INFO
+    label: Log debug information
+    description: >-
+      Should INFO events such as "sending data" and success results be logged by the extension? Notice that
+      WARN and ERROR-level logs are logged anyway.
+    type: select
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+    example: true
+    default: true
+    required: false
