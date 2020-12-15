@@ -17,13 +17,17 @@ You may pause and resume the import script from the last batch at any point.
   - If document changes occur in the time between installing the extension and running the import script.
   - If you run the import script multiple times over the same collection.
 
+- You cannot use wildcard notation in the collection path (i.e. `/collection/{document}/sub_collection}`). It is possible to perform a [collectionGroup](https://firebase.google.com/docs/firestore/query-data/queries#collection-group-query) query. 
+
+To use a collectionGroup query, provide the collection name value as the `${COLLECTION_PATH}`, and set `${COLLECTION_GROUP_QUERY}` value to `true`. Warning: A collectionGroup will target every collection in your Firestore project with the `${COLLECTION_PATH}` value as its name. For example, if you have 10,000 documents with a sub-collection named: `landmarks`, the import script will import every document in those 10,000 `landmark` collections.
+
 ### Run the script
 
 The import script uses several values from your installation of the extension:
 
 - `${PROJECT_ID}`: the project ID for the Firebase project in which you installed the extension
 - `${COLLECTION_PATH}`: the collection path that you specified during extension installation
-- `${BOOLEAN}`: Confirmation you would like to use a `collectionGroup` query. Reverts to a `collection` query if the value is `false`.
+- `${COLLECTION_GROUP_QUERY}`: Confirmation you would like to use a `collectionGroup` query. Reverts to a `collection` query if the value is `false`.
 - `${DATASET_ID}`: the ID that you specified for your dataset during extension installation
 
 Run the import script using [`npx` (the Node Package Runner)](https://www.npmjs.com/package/npx) via `npm` (the Node Package Manager).
