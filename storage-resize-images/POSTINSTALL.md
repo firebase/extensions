@@ -59,7 +59,7 @@ function uploadImageToStorage(rawImage){
   file.save(
     rawImage,
     {
-      //Set the content type to ensure the extension triggers the image resize(s)
+      // set the content type to ensure the extension triggers the image resize(s)
       metadata: { contentType: "image/jpeg" },
     },
     (error) => {
@@ -70,7 +70,6 @@ function uploadImageToStorage(rawImage){
     }
   );
 }
-
 ```
 
 - If you configured the `Cache-Control header for resized images` parameter, your specified value will overwrite the value copied from the original image. Learn more about image metadata in the [Cloud Storage documentation](https://firebase.google.com/docs/storage/).
