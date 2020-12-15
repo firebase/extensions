@@ -31,11 +31,11 @@ npm_package_version_exists() {
     --header 'Content-Type: application/json' \
     -s)
 
-  # Checking if package & version was
   if [[ $response == *"version not found: $2"* ]]; then
     return 1
   fi
 
+  # Checks the version field exists and matches current version from the returned json response.
   if [[ $response == *"\"version\":\"$2\""* ]]; then
     return 0
   fi
