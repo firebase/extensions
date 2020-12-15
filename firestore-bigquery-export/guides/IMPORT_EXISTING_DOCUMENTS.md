@@ -19,7 +19,7 @@ You may pause and resume the import script from the last batch at any point.
 
 - You cannot use wildcard notation in the collection path (i.e. `/collection/{document}/sub_collection}`). It is possible to perform a [collectionGroup](https://firebase.google.com/docs/firestore/query-data/queries#collection-group-query) query. 
 
-To use a collectionGroup query, provide the collection name value as the `${COLLECTION_PATH}`, and set `${COLLECTION_GROUP_QUERY}` value to `true`. Warning: A collectionGroup will target every collection in your Firestore project with the `${COLLECTION_PATH}` value as its name. For example, if you have 10,000 documents with a sub-collection named: `landmarks`, the import script will import every document in those 10,000 `landmark` collections.
+To use a `collectionGroup` query, provide the collection name value as the `${COLLECTION_PATH}`, and set `${COLLECTION_GROUP_QUERY}` value to `true`. Warning: A `collectionGroup`  will target every collection in your Firestore project with the provided `${COLLECTION_PATH}` value. For example, if you have 10,000 documents with a sub-collection named: `landmarks`, the import script will query every document in 10,000 `landmark` collections.
 
 ### Run the script
 
