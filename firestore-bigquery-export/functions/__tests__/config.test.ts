@@ -13,6 +13,7 @@ const environment = {
   LOCATION: "us-central1",
   DATASET_ID: "my_dataset",
   TABLE_ID: "my_table",
+  LOG_INFO: "true",
 };
 
 const { config } = global;
@@ -41,6 +42,7 @@ describe("extension config", () => {
       location: environment.LOCATION,
       datasetId: environment.DATASET_ID,
       tableId: environment.TABLE_ID,
+      logInfo: true,
     };
     expect(config()).toMatchSnapshot(env);
   });
