@@ -450,7 +450,13 @@ const processLeafField = (
       selector = transformer(`NULL`);
       break;
     case "stringified_map":
-      selector = jsonExtract(dataFieldName, extractPrefixJoined, field, "", transformer)
+      selector = jsonExtract(
+        dataFieldName,
+        extractPrefixJoined,
+        field,
+        "",
+        transformer
+      );
       break;
     case "string":
     case "reference":
