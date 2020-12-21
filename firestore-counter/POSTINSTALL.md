@@ -19,8 +19,9 @@ match /databases/{database}/documents/pages/{page} {
 }
 ```
 
-
 #### Specify a document path and increment value in your web app
+
+##### Web Client
 
 1.  Download and copy the [compiled client sample](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/dist/sharded-counter.js) into your application project.
 
@@ -60,6 +61,54 @@ match /databases/{database}/documents/pages/{page} {
   </html>
   ```
 
+##### Android Client
+
+1. Follow the Firebase android setup [guide](https://firebase.google.com/docs/android/setup) in order to use Firebase in your app.
+
+1. Copy and paste the sample [code](https://github.com/firebase/extensions/blob/next/firestore-counter/clients/android/src/main/java/com/firebase/firestore/counter/FirestoreShardedCounter.java) and create this file  `FirestoreShardedCounter.java` in the relevant directory you wish to use the `FirestoreShardedCounter` instance.
+
+```java
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
+
+
+// somewhere in your app code initialize Firestore instance
+FirebaseFirestore db = FirebaseFirestore.getInstance();
+// create reference to the collection and the document you wish to use 
+DocumentReference doc = db.collection("pages").document("hello-world");
+// initialize FirestoreShardedCounter with the document and the property which will hold the counter value
+FirestoreShardedCounter visits = new FirestoreShardedCounter(doc, "visits");
+
+// to increment counter
+visits.incrementBy(1);
+
+// listen for updates
+EventListener<Double> snapshotListener = new EventListener<Double>(){
+  @Override
+  public void onEvent(@Nullable Double value, @Nullable FirebaseFirestoreException error) {
+    // 'value' param is total amount of pages visits
+  }
+};
+ListenerRegistration registration = visits.onSnapshot(snapshotListener);
+// clean up event listeners once finished
+registration.remove();
+
+// make one time call to query total amount of visits
+double totalVisits = visits.get();
+
+// if you don't mind counter delays, you can listen to the document directly.
+db.document("pages/hello-world").addSnapshotListener(new EventListener<DocumentSnapshot>() {
+  @Override
+  public void onEvent(@Nullable DocumentSnapshot value, @Nullable FirebaseFirestoreException error) {
+    // total page visits
+    double pageVisits = (double) value.get("visits");
+  }
+});
+```
 
 #### Upgrading from v0.1.3 and earlier
 
