@@ -39,12 +39,6 @@ export function firestoreBoolean(datasetId: string, selector: string): string {
   }.${datasetId}.firestoreBoolean\`(${selector})`;
 }
 
-export function firestoreJSON(datasetId: string, selector: string): string {
-  return `\`${
-    process.env.PROJECT_ID
-  }.${datasetId}.firestoreJSON\`(${selector})`;
-}
-
 export function firestoreNumber(datasetId: string, selector: string): string {
   return `\`${
     process.env.PROJECT_ID
