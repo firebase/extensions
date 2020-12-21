@@ -25,7 +25,6 @@ export const udfs: {
   firestoreNumber: firestoreNumberFunction,
   firestoreTimestamp: firestoreTimestampFunction,
   firestoreGeopoint: firestoreGeopointFunction,
-  firestoreJSON: firestoreJSONFunction,
 };
 
 export function firestoreArray(datasetId: string, selector: string): string {
@@ -97,27 +96,6 @@ function firestoreArrayDefinition(datasetId: string): string {
     }
     
     return getArray(json);
-    """;`);
-}
-
-function firestoreJSONFunction(datasetId: string): any {
-  const definition: string = firestoreJSONDefinition(datasetId);
-  return {
-    query: definition,
-    useLegacySql: false,
-  };
-}
-
-function firestoreJSONDefinition(datasetId: string): string {
-  return sqlFormatter.format(`
-    CREATE FUNCTION IF NOT EXISTS \`${
-      process.env.PROJECT_ID
-    }.${datasetId}.firestoreJSON\`(json STRING)
-    RETURNS STRING
-    LANGUAGE js AS """
-
-    
-    return JSON.stringify(json);
     """;`);
 }
 
