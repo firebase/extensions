@@ -2,13 +2,15 @@ import * as admin from "firebase-admin";
 
 process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
 
-admin.initializeApp();
+admin.initializeApp({
+  projectId: "extensions-testing",
+});
 
 const mail = "mail";
 const mailCollection = admin.firestore().collection(mail);
 
 describe("e2e testing", () => {
-  test("the SMTP function is working", async () => {
+  test("the SMTP function is working", async (): Promise<void> => {
     const record = {
       to: "test-assertion@email.com",
       message: {
