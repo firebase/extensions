@@ -2,7 +2,7 @@
   "fields": [
     {
       "name": "friends",
-      "type": "json"
+      "type": "stringified_map"
     }
   ]
 }
