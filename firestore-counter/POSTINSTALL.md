@@ -25,7 +25,7 @@ match /databases/{database}/documents/pages/{page} {
 
 1.  Download and copy the [compiled client sample](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/dist/sharded-counter.js) into your application project.
 
-1.  Use the client sample in your code to increment counters. The code snippet below shows an example of how to use it. To see the full reference implementation, refer to the sample's TypeScript [source code](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts).
+2.  Use the client sample in your code to increment counters. The code snippet below shows an example of how to use it. To see the full reference implementation, refer to the sample's TypeScript [source code](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts).
 
   ```html
   <html>
@@ -65,7 +65,7 @@ match /databases/{database}/documents/pages/{page} {
 
 1. Follow the Firebase android setup [guide](https://firebase.google.com/docs/android/setup) in order to use Firebase in your app.
 
-1. Copy and paste the sample [code](https://github.com/firebase/extensions/blob/next/firestore-counter/clients/android/src/main/java/com/firebase/firestore/counter/FirestoreShardedCounter.java) and create this file  `FirestoreShardedCounter.java` in the relevant directory you wish to use the `FirestoreShardedCounter` instance.
+2. Copy and paste the sample [code](https://github.com/firebase/extensions/blob/next/firestore-counter/clients/android/src/main/java/com/firebase/firestore/counter/FirestoreShardedCounter.java) and create this file  `FirestoreShardedCounter.java` in the relevant directory you wish to use the `FirestoreShardedCounter` instance.
 
 ```java
 import com.google.firebase.firestore.DocumentReference;
@@ -123,11 +123,11 @@ After you complete the post-installation configuration above, the process runs a
 
 1. Your extension creates subcollections in all the documents that your app uses as counters.
 
-1. The client sample writes to these subcollections to distribute the write load.
+2. The client sample writes to these subcollections to distribute the write load.
 
-1. The controllerCore function sums the subcollections' values into the single `visits` field (or whichever field you configured in your master document).
+3. The controllerCore function sums the subcollections' values into the single `visits` field (or whichever field you configured in your master document).
 
-1. After each summation, the extension deletes the subcollections, leaving only the count in the master document. This is the document field to which you should listen for the count.
+4. After each summation, the extension deletes the subcollections, leaving only the count in the master document. This is the document field to which you should listen for the count.
 
 ### Monitoring
 
