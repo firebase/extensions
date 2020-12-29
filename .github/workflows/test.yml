@@ -29,6 +29,8 @@ jobs:
           retry_wait_seconds: 60
           max_attempts: 3
           command: npm i -g firebase-tools
+      - name: Use extension commands	
+        run: firebase --open-sesame extdev
       - name: Run 'firestore-send-email' extension emulator
         run:
           cd ./firestore-send-email/functions/__tests__/emulator && sh
