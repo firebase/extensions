@@ -211,7 +211,8 @@ const questions = [
   },
 ];
 
-interface CliConfig {
+type CliConfig = {
+  kind: "CONFIG";
   projectId: string;
   sourceCollectionPath: string;
   datasetId: string;
@@ -221,7 +222,18 @@ interface CliConfig {
   datasetLocation: string;
 }
 
+type CliConfigError = {
+  kind: "ERROR";
+  errors: string[];
+}
+
 const run = async (): Promise<number> => {
+  const parsed = await parseConfig();
+  if (parsed.kind === "ERROR") {
+    parsed.errors.forEach(e => console.error(`[ERROR] ${e}`))
+    process.exit(1);
+  }
+
   const {
     projectId,
     sourceCollectionPath,
@@ -230,7 +242,7 @@ const run = async (): Promise<number> => {
     tableId,
     batchSize,
     datasetLocation,
-  }: CliConfig = await parseConfig();
+  }: CliConfig = parsed;
 
   const batch = parseInt(batchSize);
   const rawChangeLogName = `${tableId}_raw_changelog`;
@@ -330,23 +342,42 @@ const run = async (): Promise<number> => {
   return totalRowsImported;
 };
 
-async function parseConfig(): Promise<CliConfig> {
+async function parseConfig(): Promise<CliConfig | CliConfigError> {
   program.parse(process.argv);
   if (program.nonInteractive) {
-    if (
-      program.project === undefined ||
-      program.sourceCollectionPath === undefined ||
-      program.dataset === undefined ||
-      program.tableNamePrefix === undefined ||
-      program.queryCollectionGroup === undefined ||
-      program.batchSize === undefined ||
-      program.datasetLocation === undefined ||
-      !validateBatchSize(program.batchSize)
-    ) {
-      program.outputHelp();
-      process.exit(1);
+    const errors = [];
+    if (program.project === undefined) {
+      errors.push("Project is not specified.")
     }
+    if (program.sourceCollectionPath === undefined) {
+      errors.push("SourceCollectionPath is not specified.")
+    }
+    if (program.dataset === undefined) {
+      errors.push("Dataset ID is not specified.")
+    }
+    if (program.tableNamePrefix === undefined) {
+      errors.push("TableNamePrefix is not specified.")
+    }
+    if (program.queryCollectionGroup === undefined) {
+      errors.push("QueryCollectionGroup is not specified.")
+    }
+    if (program.batchSize === undefined) {
+      errors.push("BatchSize is not specified.")
+    }
+    if (program.datasetLocation === undefined) {
+      errors.push("DatasetLocation is not specified.")
+    }
+    if (!validateBatchSize(program.batchSize)) {
+      errors.push("Invalid batch size.")
+    }
+
+    if (errors.length !== 0) {
+      program.outputHelp();
+      return {kind: "ERROR", errors};
+    }
+
     return {
+      kind: "CONFIG",
       projectId: program.project,
       sourceCollectionPath: program.sourceCollectionPath,
       datasetId: program.dataset,
@@ -366,6 +397,7 @@ async function parseConfig(): Promise<CliConfig> {
     datasetLocation,
   } = await inquirer.prompt(questions);
   return {
+    kind: "CONFIG",
     projectId: project,
     sourceCollectionPath: sourceCollectionPath,
     datasetId: dataset,
