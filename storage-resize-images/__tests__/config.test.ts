@@ -56,4 +56,29 @@ describe("extension", () => {
 
     expect(mockConfig.deleteOriginalFile).toEqual(mockDeleteImage.onSuccess);
   });
+
+  test("resolutions can be associated to paths", async () => {
+    restoreEnv = mockedEnv({
+      ...environment,
+      IMG_SIZES: "100x100,200x250",
+      INCLUDE_PATH_LIST:
+        "a/path/to/pictures{1 2},another/path/to/pictures{2},a/final/path/to/pictures",
+    });
+
+    const mockConfig = config();
+    expect(mockConfig.includePathList).toEqual([
+      {
+        path: "a/path/to/pictures",
+        sizes: ["100x100", "200x250"],
+      },
+      {
+        path: "another/path/to/pictures",
+        sizes: ["200x250"],
+      },
+      {
+        path: "a/final/path/to/pictures",
+        sizes: ["100x100", "200x250"],
+      },
+    ]);
+  });
 });

@@ -35,12 +35,58 @@ function paramToArray(param) {
   return typeof param === "string" ? param.split(",") : undefined;
 }
 
+function associateSizes(paths, sizes) {
+  if (!paths) return paths;
+  return paths.map((path) => {
+    if (path.endsWith("}")) {
+      // user has specified a set of sizes for this path
+      const splits = path.split("{");
+      const realPath = splits[0];
+      // read indexes of the sizes
+      const sizeRefs = splits[1]
+        .replace("}", "")
+        .split(" ")
+        .filter(
+          (it) =>
+            it &&
+            it.length > 0 &&
+            isNaN(parseInt(it)) === false &&
+            // reference to sizes should be 1 based, not 0 based
+            parseInt(it) > 0 &&
+            parseInt(it) <= sizes.length
+        )
+        .map((it) => parseInt(it))
+        // turn "human" references to valid sizes indexes
+        .map((it) => it - 1);
+
+      // pick the requested sizes
+      const pathSizes = sizes.filter(
+        (size, index) => sizeRefs.indexOf(index) > -1
+      );
+
+      return {
+        path: realPath,
+        sizes: pathSizes,
+      };
+    }
+
+    // defaults to all sizes
+    return {
+      path,
+      sizes,
+    };
+  });
+}
+
 export default {
   bucket: process.env.IMG_BUCKET,
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
   imageSizes: process.env.IMG_SIZES.split(","),
   resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
-  includePathList: paramToArray(process.env.INCLUDE_PATH_LIST),
+  includePathList: associateSizes(
+    paramToArray(process.env.INCLUDE_PATH_LIST),
+    process.env.IMG_SIZES.split(",")
+  ),
   excludePathList: paramToArray(process.env.EXCLUDE_PATH_LIST),
   deleteOriginalFile: deleteOriginalFile(process.env.DELETE_ORIGINAL_FILE),
   imageType: process.env.IMAGE_TYPE,

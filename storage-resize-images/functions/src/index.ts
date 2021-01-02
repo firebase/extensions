@@ -29,7 +29,11 @@ import {
 } from "./resize-image";
 import config, { deleteImage } from "./config";
 import * as logs from "./logs";
-import { extractFileNameWithoutExtension, startsWithArray } from "./util";
+import {
+  extractFileNameWithoutExtension,
+  startsWithArray,
+  findSizes,
+} from "./util";
 
 sharp.cache(false);
 
@@ -71,7 +75,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
 
     if (
       config.includePathList &&
-      !startsWithArray(config.includePathList, tmpFilePath)
+      !startsWithArray(config.includePathList.map((it) => it.path), tmpFilePath)
     ) {
       logs.imageOutsideOfPaths(config.includePathList, tmpFilePath);
       return;
@@ -118,7 +122,9 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       logs.imageDownloaded(filePath, originalFile);
 
       // Convert to a set to remove any duplicate sizes
-      const imageSizes = new Set(config.imageSizes);
+      const imageSizes = new Set(
+        findSizes(config.includePathList, tmpFilePath, config.imageSizes)
+      );
       const tasks: Promise<ResizedImageResult>[] = [];
       imageSizes.forEach((size) => {
         tasks.push(
