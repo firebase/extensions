@@ -16,6 +16,8 @@ When you upload an image file to your specified Cloud Storage bucket, this exten
 
 You can even configure the extension to create resized images of different dimensions for each original image upload. For example, you might want images that are 200x200, 400x400, and 680x680 - this extension can create these three resized images then store them in your bucket.
 
+You can configure the extension to create resized images of different dimensions on a per-path basis. For example, you might want images in specific paths to be 200x200, while for other paths you may want 680x680
+
 The extension automatically copies the following metadata, if present, from the original image to the resized image(s): `Cache-Control`, `Content-Disposition`, `Content-Encoding`, `Content-Language`, `Content-Type`, and user-provided metadata (a new Firebase storage download token will be generated on the resized image(s) if the original metadata contains a token). Note that you can optionally configure the extension to overwrite the [`Cache-Control`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control) value for the resized image(s).
 
 #### Detailed configuration information
@@ -23,6 +25,17 @@ The extension automatically copies the following metadata, if present, from the 
 To configure this extension, you specify a maximum width and a maximum height (in pixels, px). This extension keeps the aspect ratio of uploaded images constant and shrinks the image until the resized image's dimensions are at or under your specified max width and height.
 
 For example, say that you specify a max width of 200px and a max height of 100px. You upload an image that is 480px wide by 640px high, which means a 0.75 aspect ratio. The final resized image will be 75px wide by 100px high to maintain the aspect ratio while also being at or under both of your maximum specified dimensions.
+
+To configure different image sizes on a path, just declare which sizes should be applied to the path:
+
+```javascript
+// ...
+IMG_SIZES: "100x100,200x250",
+INCLUDE_PATH_LIST: "a/path/to/pictures{1 2},another/path/to/pictures{2},a/final/path/to/pictures"
+```
+
+This configuration will apply `100x100` and `200x250` size on `a/path/to/pictures`, `200x250` to `another/path/to/pictures`, `100x100` and `200x250` size on `a/final/path/to/pictures`.
+Not specifying a list of sizes will end in default behaviour (apply all sizes).
 
 #### Additional setup
 
