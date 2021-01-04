@@ -1,4 +1,4 @@
-import * as functionsTestInit from "firebase-functions-test";
+import * as functionsTestInit from "./firebase-functions-test";
 
 export const mockGenerateResizedImage = () => {
   let functionsTest = functionsTestInit();

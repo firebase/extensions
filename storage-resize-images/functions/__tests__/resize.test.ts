@@ -1,8 +1,8 @@
 import * as fs from "fs";
 
-import mockedEnv from "mocked-env";
-import sizeOf from "image-size";
-import * as sharp from "sharp";
+import mockedEnv from "./mocked-env";
+import sizeOf from "./image-size";
+import * as sharp from "./sharp";
 
 const environment = {
   LOCATION: "us-central1",
@@ -20,7 +20,7 @@ import {
   resize,
   supportedContentTypes,
   supportedImageContentTypeMap,
-} from "../functions/src/resize-image";
+} from "../src/resize-image";
 
 // 100x100
 const TEST_IMAGE = `${__dirname}/test-image.png`;

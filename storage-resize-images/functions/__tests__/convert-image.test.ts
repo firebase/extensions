@@ -1,5 +1,5 @@
-import mockedEnv from "mocked-env";
-import imageType from "image-type";
+import mockedEnv from "./mocked-env";
+import imageType from "./image-type";
 import * as util from "util";
 import * as fs from "fs";
 
@@ -14,8 +14,8 @@ const env = {
 
 mockedEnv(env);
 
-import { convertType } from "../functions/src/resize-image";
-import config from "../functions/src/config";
+import { convertType } from "../src/resize-image";
+import config from "../src/config";
 
 const readFile = util.promisify(fs.readFile);
 
