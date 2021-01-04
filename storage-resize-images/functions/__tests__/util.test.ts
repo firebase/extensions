@@ -1,7 +1,4 @@
-import {
-  extractFileNameWithoutExtension,
-  startsWithArray,
-} from "../src/util";
+import { extractFileNameWithoutExtension, startsWithArray } from "../src/util";
 
 describe("extractFileNameWithoutExtension", () => {
   const filePathWithExtension = "/ref/to/my/image.png";
