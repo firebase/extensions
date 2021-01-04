@@ -1,5 +1,5 @@
-import mockedEnv from "./mocked-env";
-import imageType from "./image-type";
+import mockedEnv from "mocked-env";
+import imageType from "image-type";
 import * as util from "util";
 import * as fs from "fs";
 

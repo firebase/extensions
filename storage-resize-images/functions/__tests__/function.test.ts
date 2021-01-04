@@ -1,4 +1,4 @@
-import mockedEnv from "./mocked-env";
+import mockedEnv from "mocked-env";
 
 const environment = {
   LOCATION: "us-central1",
@@ -21,7 +21,7 @@ describe("extension", () => {
   afterEach(() => restoreEnv());
 
   test("'generateResizedImage' function is exported", () => {
-    const exportedFunctions = jest.requireActual("../functions/src");
+    const exportedFunctions = jest.requireActual("../src");
     expect(exportedFunctions.generateResizedImage).toBeInstanceOf(Function);
   });
 

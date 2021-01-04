@@ -1,4 +1,4 @@
-import mockedEnv from "./mocked-env";
+import mockedEnv from "mocked-env";
 
 const environment = {
   LOCATION: "us-central1",

@@ -1,8 +1,8 @@
 import * as fs from "fs";
 
-import mockedEnv from "./mocked-env";
-import sizeOf from "./image-size";
-import * as sharp from "./sharp";
+import mockedEnv from "mocked-env";
+import sizeOf from "image-size";
+import * as sharp from "sharp";
 
 const environment = {
   LOCATION: "us-central1",
