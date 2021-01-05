@@ -23,6 +23,8 @@ const ampHandlebars = create();
 
 import { logger } from "firebase-functions";
 
+import { partialRegistered, templateLoaded } from "./logs";
+
 interface TemplateGroup {
   subject?: HandlebarsTemplateDelegate;
   html?: HandlebarsTemplateDelegate;
@@ -83,7 +85,7 @@ export default class Templates {
       if (p.amp) {
         ampHandlebars.registerPartial(p.name, p.amp);
       }
-      console.log(`registered partial '${p.name}'`);
+      partialRegistered(p.name);
     });
 
     templates.forEach((t) => {
@@ -101,7 +103,8 @@ export default class Templates {
         tgroup.amp = ampHandlebars.compile(t.amp);
       }
       this.templateMap[t.name] = tgroup;
-      logger.log(`loaded template '${t.name}'`);
+
+      templateLoaded(t.name);
     });
     this.ready = true;
     this.waits.forEach((wait) => wait());
