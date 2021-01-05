@@ -17,9 +17,7 @@ import { logger } from "firebase-functions";
 import config from "./config";
 
 export const arrayFieldInvalid = (fieldName: string) => {
-  logger.warn(
-    `Array field '${fieldName}' does not contain an array, skipping`
-  );
+  logger.warn(`Array field '${fieldName}' does not contain an array, skipping`);
 };
 
 export const bigQueryDatasetCreated = (datasetId: string) => {
@@ -83,9 +81,7 @@ export const bigQueryTableValidating = (tableName: string) => {
 export const bigQueryUserDefinedFunctionCreating = (
   functionDefinition: string
 ) => {
-  logger.log(
-    `Creating BigQuery User-defined Function:\n${functionDefinition}`
-  );
+  logger.log(`Creating BigQuery User-defined Function:\n${functionDefinition}`);
 };
 
 export const bigQueryUserDefinedFunctionCreated = (
