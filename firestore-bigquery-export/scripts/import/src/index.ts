@@ -35,7 +35,7 @@ const read = util.promisify(fs.readFile);
 const unlink = util.promisify(fs.unlink);
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
-const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
+const FIRESTORE_VALID_CHARACTERS = /^[^({|})]+$/;
 
 const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
 const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
