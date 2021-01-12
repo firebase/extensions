@@ -63,9 +63,9 @@ match /databases/{database}/documents/pages/{page} {
 
 ##### Android Client
 
-1. Follow the Firebase android setup [guide](https://firebase.google.com/docs/android/setup) in order to use Firebase in your app.
+1. Follow the steps in [Add Firebase to your Android project](https://firebase.google.com/docs/android/setup) to use Firebase in your app.
 
-2. Copy and paste the sample [code](https://github.com/firebase/extensions/blob/next/firestore-counter/clients/android/src/main/java/com/firebase/firestore/counter/FirestoreShardedCounter.java) and create this file  `FirestoreShardedCounter.java` in the relevant directory you wish to use the `FirestoreShardedCounter` instance.
+2. Copy the [sample code](https://github.com/firebase/extensions/blob/next/firestore-counter/clients/android/src/main/java/com/firebase/firestore/counter/FirestoreShardedCounter.java) to the directory in which you want to use the `FirestoreShardedCounter` instance.
 
 ```java
 import com.google.firebase.firestore.DocumentReference;
