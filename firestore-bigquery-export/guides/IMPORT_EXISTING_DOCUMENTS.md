@@ -48,8 +48,9 @@ Run the import script using [`npx` (the Node Package Runner)](https://www.npmjs.
     ```
     npx @firebaseextensions/fs-bq-import-collection
     ```
-    **Note**: The script can be run non-interactively.  To see its usage, run the above command with `--help`.
-    
+
+    **Note**: The script can be run non-interactively. To see its usage, run the above command with `--help`.
+
 1.  When prompted, enter the Cloud Firestore collection path that you specified during extension installation, `${COLLECTION_PATH}`.
 
 1.  _(Optional)_ You can pause and resume the import at any time:
