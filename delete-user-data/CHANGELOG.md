@@ -1,3 +1,7 @@
+## Version 0.1.8
+
+fixed - fixed an issue where delete-user-data didn't recognize {DEFAULT} Storage bucket (#532)
+
 ## Version 0.1.7
 
 feature - Adds an option to select an alternative database instance (#505)
