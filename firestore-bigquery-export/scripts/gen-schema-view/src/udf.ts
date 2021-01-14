@@ -17,7 +17,9 @@
 import * as sqlFormatter from "sql-formatter";
 
 // Persistent UDFs to be created on schema view initialization.
-export const udfs: { [name: string]: (dataset: string) => any } = {
+export const udfs: {
+  [name: string]: (dataset: string) => any;
+} = {
   firestoreArray: firestoreArrayFunction,
   firestoreBoolean: firestoreBooleanFunction,
   firestoreNumber: firestoreNumberFunction,

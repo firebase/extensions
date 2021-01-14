@@ -5,6 +5,10 @@
       "type": "map",
       "fields": [
         {
+          "name": "people",
+          "type": "stringified_map"
+        },
+        {
           "name": "name",
           "type": "string"
         },
@@ -36,6 +40,10 @@
       "name": "schema2",
       "type": "map",
       "fields": [
+        {
+          "name": "people",
+          "type": "stringified_map"
+        },
         {
           "name": "name",
           "type": "string"
