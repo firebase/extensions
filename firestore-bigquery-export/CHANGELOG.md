@@ -1,3 +1,9 @@
+## Version 0.1.11
+
+feature - Add stringified_map schema type to gen-schema-view script (#518)
+
+fixed - Switch from `console.log` to `functions.logger.log` for cleaner log outputs.
+
 ## Version 0.1.10
 
 feature - Added a new parameter that allows customization of the BigQuery dataset location (#462)

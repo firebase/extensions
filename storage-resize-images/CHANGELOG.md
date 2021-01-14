@@ -1,3 +1,7 @@
+## Version 0.1.17
+
+docs - Adds documentation that explains which content types are supported, and shows how to set content type explicitly (#534)
+
 ## Version 0.1.16
 
 feature - Adds support for absolute paths restrictions for Storage Resize Image (#427)

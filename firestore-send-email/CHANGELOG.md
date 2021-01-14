@@ -1,3 +1,7 @@
+## Version 0.1.7
+
+fixed - Switch from `console.log` to `functions.logger.log` for cleaner log outputs.
+
 ## Version 0.1.6
 
 feature - adds support for Handlebars partials (#419)
