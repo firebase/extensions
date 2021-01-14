@@ -1,3 +1,4 @@
+import { logger } from "firebase-functions";
 import * as functionsTestInit from "../node_modules/firebase-functions-test";
 import mockedEnv from "../node_modules/mocked-env";
 
@@ -20,11 +21,11 @@ jest.mock("@firebaseextensions/firestore-bigquery-change-tracker", () => ({
 
 jest.mock("../src/logs", () => ({
   start: jest.fn(() =>
-    console.log("Started execution of extension with configuration", config)
+    logger.log("Started execution of extension with configuration", config)
   ),
   init: jest.fn(() => {}),
   error: jest.fn(() => {}),
-  complete: jest.fn(() => console.log("Completed execution of extension")),
+  complete: jest.fn(() => logger.log("Completed execution of extension")),
 }));
 
 const defaultEnvironment = {

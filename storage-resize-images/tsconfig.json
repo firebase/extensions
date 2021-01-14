@@ -1,8 +1,0 @@
-{
-  "extends": "../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "functions/lib",
-    "target": "es2018"
-  },
-  "include": ["functions/src"]
-}

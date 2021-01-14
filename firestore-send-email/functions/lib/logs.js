@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.missingUids = exports.missingDeliveryField = exports.deliveryError = exports.delivered = exports.attemptingDelivery = exports.complete = exports.error = exports.start = exports.init = exports.obfuscatedConfig = void 0;
+exports.templateLoaded = exports.partialRegistered = exports.missingUids = exports.missingDeliveryField = exports.deliveryError = exports.delivered = exports.attemptingDelivery = exports.complete = exports.error = exports.start = exports.init = exports.obfuscatedConfig = void 0;
 const config_1 = require("./config");
 const firebase_functions_1 = require("firebase-functions");
 exports.obfuscatedConfig = Object.assign({}, config_1.default, {
@@ -57,3 +57,11 @@ function missingUids(uids) {
     firebase_functions_1.logger.log(`The following uids were provided, however a document does not exist or has no 'email' field: ${uids.join(",")}`);
 }
 exports.missingUids = missingUids;
+function partialRegistered(name) {
+    firebase_functions_1.logger.log(`registered partial '${name}'`);
+}
+exports.partialRegistered = partialRegistered;
+function templateLoaded(name) {
+    firebase_functions_1.logger.log(`loaded template '${name}'`);
+}
+exports.templateLoaded = templateLoaded;

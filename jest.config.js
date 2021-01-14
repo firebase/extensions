@@ -1,6 +1,5 @@
 module.exports = {
   projects: [
-    "<rootDir>/*/jest.config.js",
     "<rootDir>/*/functions/jest.config.js",
     "<rootDir>/firestore-bigquery-export/scripts/*/jest.config.js",
   ],

@@ -80,3 +80,11 @@ export function missingUids(uids: string[]) {
     )}`
   );
 }
+
+export function partialRegistered(name) {
+  logger.log(`registered partial '${name}'`);
+}
+
+export function templateLoaded(name) {
+  logger.log(`loaded template '${name}'`);
+}
