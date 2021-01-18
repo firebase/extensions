@@ -240,9 +240,8 @@ Make sure that the other types specified match the types of the fields in your
 Cloud Firestore collection.
 
 The `stringified_map` type will create a JSON string out of a map in your Firestore record. This
- could be useful if you are not sure of the properties in the map ahead of time, and thus 
- cannot specify in your schema.
-
+could be useful if you are not sure of the properties in the map ahead of time, and thus
+cannot specify in your schema.
 
 You may create any number of schema files to use with the schema-views script.
 The schema-views script generates the following views for _each_ schema file:
