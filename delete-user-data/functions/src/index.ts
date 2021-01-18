@@ -22,7 +22,10 @@ import config from "./config";
 import * as logs from "./logs";
 
 // Initialize the Firebase Admin SDK
-admin.initializeApp();
+admin.initializeApp({
+  credential: admin.credential.applicationDefault(),
+  databaseURL: `https://${config.SELECTED_DATABASE_INSTANCE}.firebaseio.com`,
+});
 
 logs.init();
 
@@ -90,7 +93,7 @@ const clearStorageData = async (storagePaths: string, uid: string) => {
     const bucketName = parts[0];
     const bucket =
       bucketName === "{DEFAULT}"
-        ? admin.storage().bucket()
+        ? admin.storage().bucket(config.storageBucketDefault)
         : admin.storage().bucket(bucketName);
     const prefix = parts.slice(1).join("/");
     try {

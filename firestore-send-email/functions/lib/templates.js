@@ -20,7 +20,7 @@ const subjHandlebars = handlebars_1.create();
 const htmlHandlebars = handlebars_1.create();
 const textHandlebars = handlebars_1.create();
 const ampHandlebars = handlebars_1.create();
-const firebase_functions_1 = require("firebase-functions");
+const logs_1 = require("./logs");
 class Templates {
     constructor(collection) {
         this.collection = collection;
@@ -54,7 +54,7 @@ class Templates {
             if (p.amp) {
                 ampHandlebars.registerPartial(p.name, p.amp);
             }
-            console.log(`registered partial '${p.name}'`);
+            logs_1.partialRegistered(p.name);
         });
         templates.forEach((t) => {
             const tgroup = {};
@@ -71,7 +71,7 @@ class Templates {
                 tgroup.amp = ampHandlebars.compile(t.amp);
             }
             this.templateMap[t.name] = tgroup;
-            firebase_functions_1.logger.log(`loaded template '${t.name}'`);
+            logs_1.templateLoaded(t.name);
         });
         this.ready = true;
         this.waits.forEach((wait) => wait());

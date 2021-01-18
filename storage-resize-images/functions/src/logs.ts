@@ -22,7 +22,7 @@ export const complete = () => {
 };
 
 export const noContentType = () => {
-  logger.log(`File has no Content-Type, no processing is required`);
+  logger.log("File has no Content-Type, no processing is required");
 };
 
 export const gzipContentEncoding = () => {
@@ -55,11 +55,33 @@ export const errorDeleting = (err: Error) => {
 };
 
 export const failed = () => {
-  logger.log("Failed execution of extension");
+  logger.error("Failed execution of extension");
 };
 
 export const imageAlreadyResized = () => {
   logger.log("File is already a resized image, no processing is required");
+};
+
+export const imageOutsideOfPaths = (
+  absolutePaths: string[],
+  imagePath: string
+) => {
+  logger.log(
+    `Image path '${imagePath}' is not supported, these are the supported absolute paths: ${absolutePaths.join(
+      ", "
+    )}`
+  );
+};
+
+export const imageInsideOfExcludedPaths = (
+  absolutePaths: string[],
+  imagePath: string
+) => {
+  logger.log(
+    `Image path '${imagePath}' is not supported, these are the not supported absolute paths: ${absolutePaths.join(
+      ", "
+    )}`
+  );
 };
 
 export const imageDownloaded = (remotePath: string, localPath: string) => {
@@ -74,13 +96,13 @@ export const imageConverting = (
   originalImageType: string,
   imageType: string
 ) => {
-  console.log(
+  logger.log(
     `Converting image from type, ${originalImageType}, to type ${imageType}.`
   );
 };
 
 export const imageConverted = (imageType: string) => {
-  console.log(`Converted image to ${imageType}`);
+  logger.log(`Converted image to ${imageType}`);
 };
 
 export const imageResized = (path: string) => {
