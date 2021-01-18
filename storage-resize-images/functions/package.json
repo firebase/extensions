@@ -1,15 +1,15 @@
 {
-  "name": "storage-resize-images",
+  "name": "storage-resize-images-functions",
   "description": "Resized Image Generator for Firebase",
   "author": "Firebase",
   "license": "Apache-2.0",
-  "main": "functions/lib/index.js",
+  "main": "lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
-    "clean": "rimraf functions/lib",
+    "clean": "rimraf lib",
     "compile": "tsc",
     "test": "jest",
-    "generate-readme": "firebase ext:info . --markdown > README.md"
+    "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "dependencies": {
     "firebase-admin": "^8.0.0",
