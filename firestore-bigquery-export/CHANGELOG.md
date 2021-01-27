@@ -1,3 +1,7 @@
+## Version 0.1.12
+
+No changes.
+
 ## Version 0.1.11
 
 feature - Add stringified_map schema type to gen-schema-view script (#518)
