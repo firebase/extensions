@@ -1,6 +1,6 @@
 ## Version 0.1.12
 
-No changes.
+docs - Updated description for COLLECTION_GROUP_QUERY parameter.
 
 ## Version 0.1.11
 
