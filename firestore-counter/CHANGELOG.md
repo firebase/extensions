@@ -1,3 +1,7 @@
+## Version 0.2.1
+
+No changes.
+
 ## Version 0.2.0
 
 feature - convert Firestore Counter to use scheduled functions (#353)
