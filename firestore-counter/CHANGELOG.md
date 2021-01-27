@@ -1,6 +1,6 @@
 ## Version 0.2.1
 
-No changes.
+feature - addded iOS sample for firestore-counter extension.
 
 ## Version 0.2.0
 
