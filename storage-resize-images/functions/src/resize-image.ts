@@ -34,25 +34,31 @@ export function resize(file, size) {
     .toBuffer();
 }
 
-export function convertType(buffer) {
-  const { imageType } = config;
-  if (imageType === "jpg" || imageType === "jpeg") {
+export function convertType(buffer, format) {
+  if (format === "jpg" || format === "jpeg") {
     return sharp(buffer)
       .jpeg()
       .toBuffer();
-  } else if (imageType === "png") {
+  }
+
+  if (format === "png") {
     return sharp(buffer)
       .png()
       .toBuffer();
-  } else if (imageType === "webp") {
+  }
+
+  if (format === "webp") {
     return sharp(buffer)
       .webp()
       .toBuffer();
-  } else if (imageType === "tiff") {
+  }
+
+  if (format === "tiff") {
     return sharp(buffer)
       .tiff()
       .toBuffer();
   }
+
   return buffer;
 }
 
@@ -95,7 +101,7 @@ export const modifyImage = async ({
   objectMetadata: ObjectMetadata;
   format: string;
 }): Promise<ResizedImageResult> => {
-  const useOriginalFormat = format !== "original";
+  const useOriginalFormat = format !== "raw";
   const imageContentType = useOriginalFormat
     ? supportedImageContentTypeMap[format]
     : contentType;
@@ -142,8 +148,8 @@ export const modifyImage = async ({
     // Generate a converted image type buffer using Sharp.
 
     logs.imageConverting(fileExtension, format);
-    modifiedImageBuffer = await convertType(modifiedImageBuffer);
-    logs.imageConverted(config.imageType);
+    modifiedImageBuffer = await convertType(modifiedImageBuffer, format);
+    logs.imageConverted(format);
 
     // Generate a image file using Sharp.
     await sharp(modifiedImageBuffer).toFile(modifiedFile);

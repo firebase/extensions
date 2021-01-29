@@ -91,7 +91,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize(async (obje
         logs.imageDownloaded(filePath, originalFile);
         // Convert to a set to remove any duplicate sizes
         const imageSizes = new Set(config_1.default.imageSizes);
-        const imageTypes = new Set(config_1.default.imageType.split(","));
+        const imageTypes = new Set(config_1.default.imageTypes.split(","));
         const tasks = [];
         imageTypes.forEach((format) => {
             imageSizes.forEach((size) => {

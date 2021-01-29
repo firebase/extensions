@@ -28,36 +28,31 @@ beforeAll(async () => {
 
 describe("convertType", () => {
   it("converts to png image type", async () => {
-    config.imageType = "png";
-    const buffer = await convertType(bufferJPG);
+    const buffer = await convertType(bufferJPG, "png");
 
     expect(imageType(buffer).mime).toBe("image/png");
   });
 
   it("converts to jpeg image type", async () => {
-    config.imageType = "jpeg";
-    const buffer = await convertType(bufferPNG);
+    const buffer = await convertType(bufferPNG, "jpeg");
 
     expect(imageType(buffer).mime).toBe("image/jpeg");
   });
 
   it("converts to webp image type", async () => {
-    config.imageType = "webp";
-    const buffer = await convertType(bufferPNG);
+    const buffer = await convertType(bufferPNG, "webp");
 
     expect(imageType(buffer).mime).toBe("image/webp");
   });
 
   it("converts to tiff image type", async () => {
-    config.imageType = "tiff";
-    const buffer = await convertType(bufferPNG);
+    const buffer = await convertType(bufferPNG, "tiff");
 
     expect(imageType(buffer).mime).toBe("image/tiff");
   });
 
   it("remains jpeg image type when different image type is not supported", async () => {
-    config.imageType = "raw";
-    const buffer = await convertType(bufferJPG);
+    const buffer = await convertType(bufferJPG, "raw");
 
     expect(imageType(buffer).mime).toBe("image/jpeg");
   });

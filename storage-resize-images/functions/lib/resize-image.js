@@ -28,24 +28,23 @@ function resize(file, size) {
         .toBuffer();
 }
 exports.resize = resize;
-function convertType(buffer) {
-    const { imageType } = config_1.default;
-    if (imageType === "jpg" || imageType === "jpeg") {
+function convertType(buffer, format) {
+    if (format === "jpg" || format === "jpeg") {
         return sharp(buffer)
             .jpeg()
             .toBuffer();
     }
-    else if (imageType === "png") {
+    if (format === "png") {
         return sharp(buffer)
             .png()
             .toBuffer();
     }
-    else if (imageType === "webp") {
+    if (format === "webp") {
         return sharp(buffer)
             .webp()
             .toBuffer();
     }
-    else if (imageType === "tiff") {
+    if (format === "tiff") {
         return sharp(buffer)
             .tiff()
             .toBuffer();
@@ -70,7 +69,7 @@ exports.supportedImageContentTypeMap = {
     webp: "image/webp",
 };
 exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, format, }) => {
-    const useOriginalFormat = format !== "original";
+    const useOriginalFormat = format !== "raw";
     const imageContentType = useOriginalFormat
         ? exports.supportedImageContentTypeMap[format]
         : contentType;
@@ -109,8 +108,8 @@ exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
         logs.imageResized(modifiedFile);
         // Generate a converted image type buffer using Sharp.
         logs.imageConverting(fileExtension, format);
-        modifiedImageBuffer = await convertType(modifiedImageBuffer);
-        logs.imageConverted(config_1.default.imageType);
+        modifiedImageBuffer = await convertType(modifiedImageBuffer, format);
+        logs.imageConverted(format);
         // Generate a image file using Sharp.
         await sharp(modifiedImageBuffer).toFile(modifiedFile);
         // Uploading the modified image.

@@ -119,7 +119,8 @@ export const generateResizedImage = functions.storage.object().onFinalize(
 
       // Convert to a set to remove any duplicate sizes
       const imageSizes = new Set(config.imageSizes);
-      const imageTypes = new Set(config.imageType.split(","));
+
+      const imageTypes = new Set(config.imageTypes.split(","));
       const tasks: Promise<ResizedImageResult>[] = [];
 
       imageTypes.forEach((format) => {
