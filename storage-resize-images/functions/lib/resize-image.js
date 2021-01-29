@@ -69,22 +69,13 @@ exports.supportedImageContentTypeMap = {
     tiff: "image/tiff",
     webp: "image/webp",
 };
-const supportedExtensions = Object.keys(exports.supportedImageContentTypeMap).map((type) => `.${type}`);
-exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => {
-    const { imageType } = config_1.default;
-    const hasImageTypeConfigSet = imageType !== "false";
-    const imageContentType = hasImageTypeConfigSet
-        ? exports.supportedImageContentTypeMap[imageType]
+exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, format, }) => {
+    const useOriginalFormat = format !== "original";
+    const imageContentType = useOriginalFormat
+        ? exports.supportedImageContentTypeMap[format]
         : contentType;
-    const modifiedExtensionName = fileExtension && hasImageTypeConfigSet ? `.${imageType}` : fileExtension;
-    let modifiedFileName;
-    if (supportedExtensions.includes(fileExtension)) {
-        modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
-    }
-    else {
-        // Fixes https://github.com/firebase/extensions/issues/476
-        modifiedFileName = `${fileNameWithoutExtension}${fileExtension}_${size}`;
-    }
+    const modifiedExtensionName = fileExtension && useOriginalFormat ? `.${format}` : fileExtension;
+    const modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
     // Path where modified image will be uploaded to in Storage.
     const modifiedFilePath = path.normalize(config_1.default.resizedImagesPath
         ? path.join(fileDir, config_1.default.resizedImagesPath, modifiedFileName)
@@ -117,11 +108,9 @@ exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
         let modifiedImageBuffer = await resize(originalFile, size);
         logs.imageResized(modifiedFile);
         // Generate a converted image type buffer using Sharp.
-        if (hasImageTypeConfigSet) {
-            logs.imageConverting(fileExtension, config_1.default.imageType);
-            modifiedImageBuffer = await convertType(modifiedImageBuffer);
-            logs.imageConverted(config_1.default.imageType);
-        }
+        logs.imageConverting(fileExtension, format);
+        modifiedImageBuffer = await convertType(modifiedImageBuffer);
+        logs.imageConverted(config_1.default.imageType);
         // Generate a image file using Sharp.
         await sharp(modifiedImageBuffer).toFile(modifiedFile);
         // Uploading the modified image.

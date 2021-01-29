@@ -119,20 +119,25 @@ export const generateResizedImage = functions.storage.object().onFinalize(
 
       // Convert to a set to remove any duplicate sizes
       const imageSizes = new Set(config.imageSizes);
+      const imageTypes = new Set(config.imageType.split(","));
       const tasks: Promise<ResizedImageResult>[] = [];
-      imageSizes.forEach((size) => {
-        tasks.push(
-          modifyImage({
-            bucket,
-            originalFile,
-            fileDir,
-            fileNameWithoutExtension,
-            fileExtension,
-            contentType,
-            size,
-            objectMetadata: objectMetadata,
-          })
-        );
+
+      imageTypes.forEach((format) => {
+        imageSizes.forEach((size) => {
+          tasks.push(
+            modifyImage({
+              bucket,
+              originalFile,
+              fileDir,
+              fileNameWithoutExtension,
+              fileExtension,
+              contentType,
+              size,
+              objectMetadata: objectMetadata,
+              format,
+            })
+          );
+        });
       });
 
       const results = await Promise.all(tasks);

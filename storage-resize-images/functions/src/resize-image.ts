@@ -74,10 +74,6 @@ export const supportedImageContentTypeMap = {
   webp: "image/webp",
 };
 
-const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
-  (type) => `.${type}`
-);
-
 export const modifyImage = async ({
   bucket,
   originalFile,
@@ -87,6 +83,7 @@ export const modifyImage = async ({
   contentType,
   size,
   objectMetadata,
+  format,
 }: {
   bucket: Bucket;
   originalFile: string;
@@ -96,24 +93,15 @@ export const modifyImage = async ({
   contentType: string;
   size: string;
   objectMetadata: ObjectMetadata;
+  format: string;
 }): Promise<ResizedImageResult> => {
-  const { imageType } = config;
-  const hasImageTypeConfigSet = imageType !== "false";
-  const imageContentType = hasImageTypeConfigSet
-    ? supportedImageContentTypeMap[imageType]
+  const useOriginalFormat = format !== "original";
+  const imageContentType = useOriginalFormat
+    ? supportedImageContentTypeMap[format]
     : contentType;
   const modifiedExtensionName =
-    fileExtension && hasImageTypeConfigSet ? `.${imageType}` : fileExtension;
-
-  let modifiedFileName;
-
-  if (supportedExtensions.includes(fileExtension)) {
-    modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
-  } else {
-    // Fixes https://github.com/firebase/extensions/issues/476
-    modifiedFileName = `${fileNameWithoutExtension}${fileExtension}_${size}`;
-  }
-
+    fileExtension && useOriginalFormat ? `.${format}` : fileExtension;
+  const modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
   // Path where modified image will be uploaded to in Storage.
   const modifiedFilePath = path.normalize(
     config.resizedImagesPath
@@ -152,11 +140,10 @@ export const modifyImage = async ({
     logs.imageResized(modifiedFile);
 
     // Generate a converted image type buffer using Sharp.
-    if (hasImageTypeConfigSet) {
-      logs.imageConverting(fileExtension, config.imageType);
-      modifiedImageBuffer = await convertType(modifiedImageBuffer);
-      logs.imageConverted(config.imageType);
-    }
+
+    logs.imageConverting(fileExtension, format);
+    modifiedImageBuffer = await convertType(modifiedImageBuffer);
+    logs.imageConverted(config.imageType);
 
     // Generate a image file using Sharp.
     await sharp(modifiedImageBuffer).toFile(modifiedFile);

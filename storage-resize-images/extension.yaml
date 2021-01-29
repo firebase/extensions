@@ -211,21 +211,13 @@ params:
     required: false
 
   - param: IMAGE_TYPE
-    label: Convert image to preferred type
+    label: Convert image to preferred types
     description: >
-      The image type you'd like your source image to convert to. The default for this option will 
+      The image types you'd like your source image to convert to. The default for this option will 
       be to keep the original file type.
-    type: select
-    options:
-      - label: jpg
-        value: jpg
-      - label: png
-        value: png
-      - label: webp
-        value: webp
-      - label: tiff
-        value: tiff
-      - label: Do not convert
-        value: false
-    default: false
-    required: false
+    example: "jpeg,webp,gif,tiff,avif,heif"
+    validationRegex: ^\b(jpeg|webp|gif|tiff|avif|heif|original)\b(,\b(jpeg|webp|gif|tiff|avif|heif|original)\b)*$
+    validationErrorMessage:
+      Invalid image type(s), must be a comma-separated list containing at least one of jpeg,webp,gif,tiff,avif,heif,original.
+    default: original
+    required: true

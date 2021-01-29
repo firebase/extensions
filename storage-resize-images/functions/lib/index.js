@@ -91,18 +91,22 @@ exports.generateResizedImage = functions.storage.object().onFinalize(async (obje
         logs.imageDownloaded(filePath, originalFile);
         // Convert to a set to remove any duplicate sizes
         const imageSizes = new Set(config_1.default.imageSizes);
+        const imageTypes = new Set(config_1.default.imageType.split(","));
         const tasks = [];
-        imageSizes.forEach((size) => {
-            tasks.push(resize_image_1.modifyImage({
-                bucket,
-                originalFile,
-                fileDir,
-                fileNameWithoutExtension,
-                fileExtension,
-                contentType,
-                size,
-                objectMetadata: objectMetadata,
-            }));
+        imageTypes.forEach((format) => {
+            imageSizes.forEach((size) => {
+                tasks.push(resize_image_1.modifyImage({
+                    bucket,
+                    originalFile,
+                    fileDir,
+                    fileNameWithoutExtension,
+                    fileExtension,
+                    contentType,
+                    size,
+                    objectMetadata: objectMetadata,
+                    format,
+                }));
+            });
         });
         const results = await Promise.all(tasks);
         const failed = results.some((result) => result.success === false);
