@@ -27,7 +27,7 @@ The import script uses several values from your installation of the extension:
 
 - `${PROJECT_ID}`: the project ID for the Firebase project in which you installed the extension
 - `${COLLECTION_PATH}`: the collection path that you specified during extension installation
-- `${COLLECTION_GROUP_QUERY}`: Confirmation you would like to use a `collectionGroup` query. Reverts to a `collection` query if the value is `false`.
+- `${COLLECTION_GROUP_QUERY}`: uses a `collectionGroup` query if this value is `"true"`. For any other value, a `collection` query is used.
 - `${DATASET_ID}`: the ID that you specified for your dataset during extension installation
 
 Run the import script using [`npx` (the Node Package Runner)](https://www.npmjs.com/package/npx) via `npm` (the Node Package Manager).
@@ -47,11 +47,13 @@ Run the import script using [`npx` (the Node Package Runner)](https://www.npmjs.
 
     Alternatively, you can [create and use a service account](https://cloud.google.com/docs/authentication/production#obtaining_and_providing_service_account_credentials_manually). This service account must be assigned a role that grants the `bigquery.datasets.create` [permission](https://cloud.google.com/bigquery/docs/access-control#bq-permissions).
 
-1.  Run the import script via `npx` by running the following command:
+1.  Run the import script interactively via `npx` by running the following command:
 
     ```
     npx @firebaseextensions/fs-bq-import-collection
     ```
+
+    **Note**: The script can be run non-interactively. To see its usage, run the above command with `--help`.
 
 1.  When prompted, enter the Cloud Firestore collection path that you specified during extension installation, `${COLLECTION_PATH}`.
 
