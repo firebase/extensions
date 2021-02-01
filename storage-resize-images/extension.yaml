@@ -210,7 +210,7 @@ params:
     example: max-age=86400
     required: false
 
-  - param: IMAGE_TYPES
+  - param: IMAGE_TYPE
     label: Convert image to preferred types
     description: >
       The image types you'd like your source image to convert to. The default for this option will 
@@ -225,7 +225,7 @@ params:
         value: png
       - label: tiff
         value: tiff
-      - label: raw
-        value: raw
-    default: raw
-    required: true
+      - label: original
+        value: original
+    default: original
+    required: false

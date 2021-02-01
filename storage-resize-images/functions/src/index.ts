@@ -117,10 +117,12 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       await remoteFile.download({ destination: originalFile });
       logs.imageDownloaded(filePath, originalFile);
 
+      // Get a unique list of image types
+      const imageTypes = new Set(config.imageTypes.split(","));
+
       // Convert to a set to remove any duplicate sizes
       const imageSizes = new Set(config.imageSizes);
 
-      const imageTypes = new Set(config.imageTypes.split(","));
       const tasks: Promise<ResizedImageResult>[] = [];
 
       imageTypes.forEach((format) => {

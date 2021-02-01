@@ -43,5 +43,5 @@ exports.default = {
     includePathList: paramToArray(process.env.INCLUDE_PATH_LIST),
     excludePathList: paramToArray(process.env.EXCLUDE_PATH_LIST),
     deleteOriginalFile: deleteOriginalFile(process.env.DELETE_ORIGINAL_FILE),
-    imageTypes: process.env.IMAGE_TYPES,
+    imageTypes: process.env.IMAGE_TYPE,
 };
