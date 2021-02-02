@@ -105,12 +105,12 @@ export const modifyImage = async ({
   objectMetadata: ObjectMetadata;
   format: string;
 }): Promise<ResizedImageResult> => {
-  const useOriginalFormat = format !== "original";
-  const imageContentType = useOriginalFormat
+  const shouldFormatImage = format !== "false";
+  const imageContentType = shouldFormatImage
     ? supportedImageContentTypeMap[format]
     : contentType;
   const modifiedExtensionName =
-    fileExtension && useOriginalFormat ? `.${format}` : fileExtension;
+    fileExtension && shouldFormatImage ? `.${format}` : fileExtension;
 
   let modifiedFileName;
 
@@ -160,9 +160,11 @@ export const modifyImage = async ({
 
     // Generate a converted image type buffer using Sharp.
 
-    logs.imageConverting(fileExtension, format);
-    modifiedImageBuffer = await convertType(modifiedImageBuffer, format);
-    logs.imageConverted(format);
+    if (shouldFormatImage) {
+      logs.imageConverting(fileExtension, format);
+      modifiedImageBuffer = await convertType(modifiedImageBuffer, format);
+      logs.imageConverted(format);
+    }
 
     // Generate a image file using Sharp.
     await sharp(modifiedImageBuffer).toFile(modifiedFile);

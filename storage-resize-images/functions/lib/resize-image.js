@@ -70,11 +70,11 @@ exports.supportedImageContentTypeMap = {
 };
 const supportedExtensions = Object.keys(exports.supportedImageContentTypeMap).map((type) => `.${type}`);
 exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, format, }) => {
-    const useOriginalFormat = format !== "original";
-    const imageContentType = useOriginalFormat
+    const shouldFormatImage = format !== "false";
+    const imageContentType = shouldFormatImage
         ? exports.supportedImageContentTypeMap[format]
         : contentType;
-    const modifiedExtensionName = fileExtension && useOriginalFormat ? `.${format}` : fileExtension;
+    const modifiedExtensionName = fileExtension && shouldFormatImage ? `.${format}` : fileExtension;
     let modifiedFileName;
     if (supportedExtensions.includes(fileExtension)) {
         modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
@@ -115,9 +115,11 @@ exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
         let modifiedImageBuffer = await resize(originalFile, size);
         logs.imageResized(modifiedFile);
         // Generate a converted image type buffer using Sharp.
-        logs.imageConverting(fileExtension, format);
-        modifiedImageBuffer = await convertType(modifiedImageBuffer, format);
-        logs.imageConverted(format);
+        if (shouldFormatImage) {
+            logs.imageConverting(fileExtension, format);
+            modifiedImageBuffer = await convertType(modifiedImageBuffer, format);
+            logs.imageConverted(format);
+        }
         // Generate a image file using Sharp.
         await sharp(modifiedImageBuffer).toFile(modifiedFile);
         // Uploading the modified image.

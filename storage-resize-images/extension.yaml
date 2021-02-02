@@ -226,6 +226,6 @@ params:
       - label: tiff
         value: tiff
       - label: original
-        value: original
-    default: original
-    required: false
+        value: false
+    default: false
+    required: true
