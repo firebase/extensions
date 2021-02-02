@@ -47,7 +47,7 @@ Usage of this extension also requires you to have SMTP credentials for mail deli
 
 * Cloud Functions location: Where do you want to deploy the functions created for this extension? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
-* SMTP connection URI: A URI representing an SMTP server that this extension can use to deliver email. PLease note SMTP providers typically include ports `25`, `2525` and `587`. As port `25` is potentially blocked for security reasons, our recommendation would be to use the most recent `587` port for any integrations.
+* SMTP connection URI: A URI representing an SMTP server that this extension can use to deliver email. Please note, port 25 is blocked by Google Cloud Platform, we recommend using port 587 for smtp connections. If you're using the smtps protocol, we recommend using port 465.
 
 * Email documents collection: What is the path to the collection that contains the documents used to build and send the emails?
 
