@@ -261,9 +261,11 @@ const run = async (): Promise<number> => {
   // operations supersede imports when listing the live documents.
   let cursor;
 
+  const formattedPath = sourceCollectionPath.replace(/\//g, "-");
+
   let cursorPositionFile =
     __dirname +
-    `/from-${sourceCollectionPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
+    `/from-${formattedPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
   if (await exists(cursorPositionFile)) {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
     cursor = await firebase
