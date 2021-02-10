@@ -42,6 +42,7 @@ that contains the following:
     {
       "name": "age",
       "type": "number"
+      "column_name": "new_column_name" //Can be used to override column names
     }
   ]
 }
