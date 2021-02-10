@@ -1,6 +1,5 @@
 ## Version 0.1.8
 
-
 fixed - Removed code coverage check on ci
 
 ## Version 0.1.7

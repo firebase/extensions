@@ -1,6 +1,5 @@
 ## Version 0.1.18
 
-
 fixed - capitalised file extensions (#549)
 
 fixed - Removed code coverage check on ci
