@@ -1,3 +1,10 @@
+## Version 0.1.18
+
+
+fixed - capitalised file extensions (#549)
+
+fixed - Removed code coverage check on ci
+
 ## Version 0.1.17
 
 docs - Adds documentation that explains which content types are supported, and shows how to set content type explicitly (#534)
