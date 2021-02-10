@@ -78,7 +78,7 @@ exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
         : contentType;
     const modifiedExtensionName = fileExtension && hasImageTypeConfigSet ? `.${imageType}` : fileExtension;
     let modifiedFileName;
-    if (supportedExtensions.includes(fileExtension)) {
+    if (supportedExtensions.includes(fileExtension.toLowerCase())) {
         modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
     }
     else {
