@@ -1,3 +1,7 @@
+## Version 0.1.12
+
+docs - Updated description for COLLECTION_GROUP_QUERY parameter.
+
 ## Version 0.1.11
 
 feature - Add stringified_map schema type to gen-schema-view script (#518)
