@@ -2,7 +2,7 @@
 
 fixed - capitalised file extensions (#549)
 
-fixed - Removed code coverage check on ci
+fixed - fixed a bug that caused resized images to be named incorrectly if their file extension was capitalized (#549)
 
 ## Version 0.1.17
 
