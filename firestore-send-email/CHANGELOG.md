@@ -1,6 +1,6 @@
 ## Version 0.1.8
 
-fixed - Removed code coverage check on ci
+docs - updated postinstall instructions to clarify which ports are recommended for SMTP connections (#582)
 
 ## Version 0.1.7
 
