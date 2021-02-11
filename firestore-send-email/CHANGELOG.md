@@ -1,3 +1,7 @@
+## Version 0.1.8
+
+docs - updated "SMTP connection URI" parameter description to clarify which ports are recommended for SMTP connections (#582)
+
 ## Version 0.1.7
 
 fixed - Switch from `console.log` to `functions.logger.log` for cleaner log outputs.
