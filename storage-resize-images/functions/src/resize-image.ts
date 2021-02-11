@@ -107,7 +107,7 @@ export const modifyImage = async ({
 
   let modifiedFileName;
 
-  if (supportedExtensions.includes(fileExtension)) {
+  if (supportedExtensions.includes(fileExtension.toLowerCase())) {
     modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
   } else {
     // Fixes https://github.com/firebase/extensions/issues/476
