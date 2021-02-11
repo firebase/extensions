@@ -1,6 +1,6 @@
 ## Version 0.1.8
 
-docs - updated postinstall instructions to clarify which ports are recommended for SMTP connections (#582)
+docs - updated "SMTP connection URI" parameter description to clarify which ports are recommended for SMTP connections (#582)
 
 ## Version 0.1.7
 
