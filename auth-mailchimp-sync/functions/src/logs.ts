@@ -26,10 +26,18 @@ export const complete = () => {
   logger.log("Completed execution of extension");
 };
 
+export const userAlreadyInAudience = () => {
+  logger.log("Attempted added user already in mailchimp audience")
+};
+
 export const errorAddUser = (err: Error) => {
   logger.error("Error when adding user to Mailchimp audience", err);
 };
 
+
+export const userNotInAudience= () =>{
+  logger.log("Attempted removal failed, member deletion not allowed. Probably because member has already been removed from audience")
+}
 export const errorRemoveUser = (err: Error) => {
   logger.error("Error when removing user from Mailchimp audience", err);
 };
