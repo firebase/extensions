@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.14
+version: 0.1.18
 specVersion: v1beta
 
 displayName: Resize Images
@@ -35,9 +35,9 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
-  - authorName: Mike Diarmid
-    email: mike@invertase.io
-    url: https://github.com/salakar
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
 
 billingRequired: true
 
@@ -56,7 +56,6 @@ resources:
       Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images,
       then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
     properties:
-      sourceDirectory: .
       location: ${param:LOCATION}
       runtime: nodejs10
       availableMemoryMb: 1024
@@ -168,6 +167,36 @@ params:
       `/images/thumbs/original_200x200.jpg`. If you prefer to store resized
       images at the root of your bucket, leave this field empty.
     example: thumbnails
+    required: false
+
+  - param: INCLUDE_PATH_LIST
+    label: Paths that contain images you want to resize
+    description: >
+      Restrict storage-resize-images to only resize images in specific locations in your Storage bucket by 
+      supplying a comma-separated list of absolute paths. For example, to only resize the images 
+      stored in `/users/pictures` directory, specify the path `/users/pictures`. 
+      If you prefer to resize every image uploaded to the storage bucket, 
+      leave this field empty.
+    type: string
+    example: "/users/avatars,/design/pictures"
+    validationRegex: ^(\/[^\s\/\,]+)+(\,(\/[^\s\/\,]+)+)*$
+    validationErrorMessage:
+      Invalid paths, must be a comma-separated list of absolute path values.
+    required: false
+
+  - param: EXCLUDE_PATH_LIST
+    label: List of absolute paths not included for resized images
+    description: >
+      A comma-separated list of absolute paths to not take into account for 
+      images to be resized. For example, to not resize the images 
+      stored in `/users/pictures/avatars` directory, specify the path 
+      `/users/pictures/avatars`. If you prefer to resize every image uploaded 
+      to the storage bucket, leave this field empty.
+    type: string
+    example: "/users/avatars/thumbs,/design/pictures/thumbs"
+    validationRegex: ^(\/[^\s\/\,]+)+(\,(\/[^\s\/\,]+)+)*$
+    validationErrorMessage:
+      Invalid paths, must be a comma-separated list of absolute path values.
     required: false
 
   - param: CACHE_CONTROL_HEADER

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: rtdb-limit-child-nodes
-version: 0.1.2
+version: 0.1.3
 specVersion: v1beta
 
 displayName: Limit Child Nodes
@@ -55,7 +55,7 @@ resources:
       runtime: nodejs10
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.create
-        resource: projects/_/instances/${param:DATABASE_INSTANCE}/refs/${param:NODE_PATH}/{messageid}
+        resource: projects/_/instances/${param:SELECTED_DATABASE_INSTANCE}/refs/${param:NODE_PATH}/{messageid}
 
 params:
   - param: LOCATION
@@ -119,6 +119,18 @@ params:
     validationRegex: ^\S+$
     validationErrorMessage: Path cannot have spaces.
     required: true
+
+  - param: SELECTED_DATABASE_INSTANCE
+    label: Realtime Database
+    description: >
+       From which Realtime Database instance do you want to limit child nodes?
+    type: string
+    example: my-instance
+    validationRegex: ^([0-9a-z_.-]*)$
+    validationErrorMessage: Invalid database instance
+    default: ${DATABASE_INSTANCE}
+    required: true
+
 
   - param: MAX_COUNT
     label: Maximum count of nodes to keep
