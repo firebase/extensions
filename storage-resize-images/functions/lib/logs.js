@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remoteFileDeleting = exports.remoteFileDeleted = exports.tempResizedFileDeleting = exports.tempResizedFileDeleted = exports.tempOriginalFileDeleting = exports.tempOriginalFileDeleted = exports.tempDirectoryCreating = exports.tempDirectoryCreated = exports.start = exports.init = exports.imageUploading = exports.imageUploaded = exports.imageResizing = exports.imageResized = exports.imageConverted = exports.imageConverting = exports.imageDownloading = exports.imageDownloaded = exports.imageAlreadyResized = exports.failed = exports.errorDeleting = exports.error = exports.unsupportedType = exports.contentTypeInvalid = exports.gzipContentEncoding = exports.noContentType = exports.complete = void 0;
+exports.remoteFileDeleting = exports.remoteFileDeleted = exports.tempResizedFileDeleting = exports.tempResizedFileDeleted = exports.tempOriginalFileDeleting = exports.tempOriginalFileDeleted = exports.tempDirectoryCreating = exports.tempDirectoryCreated = exports.start = exports.init = exports.imageUploading = exports.imageUploaded = exports.imageResizing = exports.imageResized = exports.imageConverted = exports.imageConverting = exports.imageDownloading = exports.imageDownloaded = exports.imageInsideOfExcludedPaths = exports.imageOutsideOfPaths = exports.imageAlreadyResized = exports.failed = exports.errorDeleting = exports.error = exports.unsupportedType = exports.contentTypeInvalid = exports.gzipContentEncoding = exports.noContentType = exports.complete = void 0;
 const firebase_functions_1 = require("firebase-functions");
 const config_1 = require("./config");
 exports.complete = () => {
     firebase_functions_1.logger.log("Completed execution of extension");
 };
 exports.noContentType = () => {
-    firebase_functions_1.logger.log(`File has no Content-Type, no processing is required`);
+    firebase_functions_1.logger.log("File has no Content-Type, no processing is required");
 };
 exports.gzipContentEncoding = () => {
     firebase_functions_1.logger.log("Images encoded with 'gzip' are not supported by this extension");
@@ -40,10 +40,16 @@ exports.errorDeleting = (err) => {
     firebase_functions_1.logger.warn("Error when deleting temporary files", err);
 };
 exports.failed = () => {
-    firebase_functions_1.logger.log("Failed execution of extension");
+    firebase_functions_1.logger.error("Failed execution of extension");
 };
 exports.imageAlreadyResized = () => {
     firebase_functions_1.logger.log("File is already a resized image, no processing is required");
+};
+exports.imageOutsideOfPaths = (absolutePaths, imagePath) => {
+    firebase_functions_1.logger.log(`Image path '${imagePath}' is not supported, these are the supported absolute paths: ${absolutePaths.join(", ")}`);
+};
+exports.imageInsideOfExcludedPaths = (absolutePaths, imagePath) => {
+    firebase_functions_1.logger.log(`Image path '${imagePath}' is not supported, these are the not supported absolute paths: ${absolutePaths.join(", ")}`);
 };
 exports.imageDownloaded = (remotePath, localPath) => {
     firebase_functions_1.logger.log(`Downloaded image file: '${remotePath}' to '${localPath}'`);
@@ -52,10 +58,10 @@ exports.imageDownloading = (path) => {
     firebase_functions_1.logger.log(`Downloading image file: '${path}'`);
 };
 exports.imageConverting = (originalImageType, imageType) => {
-    console.log(`Converting image from type, ${originalImageType}, to type ${imageType}.`);
+    firebase_functions_1.logger.log(`Converting image from type, ${originalImageType}, to type ${imageType}.`);
 };
 exports.imageConverted = (imageType) => {
-    console.log(`Converted image to ${imageType}`);
+    firebase_functions_1.logger.log(`Converted image to ${imageType}`);
 };
 exports.imageResized = (path) => {
     firebase_functions_1.logger.log(`Resized image created at '${path}'`);

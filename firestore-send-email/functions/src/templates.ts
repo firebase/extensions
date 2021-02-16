@@ -15,15 +15,18 @@
  */
 
 import { create } from "handlebars";
-import * as logs from "./logs";
 
 import { TemplateGroup, TemplateData, Attachment } from "./types";
+
+import { registeredPartial, templateLoaded, noPartialAttachmentSupport } from "./logs";
 
 const subjHandlebars = create();
 const htmlHandlebars = create();
 const textHandlebars = create();
 const ampHandlebars = create();
 const attachmentsHandlebars = create();
+
+
 
 export default class Templates {
   collection: FirebaseFirestore.CollectionReference;
@@ -70,10 +73,10 @@ export default class Templates {
         ampHandlebars.registerPartial(p.name, p.amp);
       }
       if (p.attachments) {
-        logs.noPartialAttachmentSupport();
+        noPartialAttachmentSupport();
       }
 
-      logs.registeredPartial(p.name);
+      registeredPartial(p.name);
     });
 
     templates.forEach((t) => {
@@ -99,7 +102,7 @@ export default class Templates {
 
       this.templateMap[t.name] = tgroup;
 
-      logs.loadedTemplate(t.name);
+      templateLoaded(t.name);
     });
     this.ready = true;
     this.waits.forEach((wait) => wait());

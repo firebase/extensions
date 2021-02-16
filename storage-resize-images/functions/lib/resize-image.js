@@ -69,6 +69,7 @@ exports.supportedImageContentTypeMap = {
     tiff: "image/tiff",
     webp: "image/webp",
 };
+const supportedExtensions = Object.keys(exports.supportedImageContentTypeMap).map((type) => `.${type}`);
 exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => {
     const { imageType } = config_1.default;
     const hasImageTypeConfigSet = imageType !== "false";
@@ -76,7 +77,14 @@ exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
         ? exports.supportedImageContentTypeMap[imageType]
         : contentType;
     const modifiedExtensionName = fileExtension && hasImageTypeConfigSet ? `.${imageType}` : fileExtension;
-    const modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
+    let modifiedFileName;
+    if (supportedExtensions.includes(fileExtension.toLowerCase())) {
+        modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
+    }
+    else {
+        // Fixes https://github.com/firebase/extensions/issues/476
+        modifiedFileName = `${fileNameWithoutExtension}${fileExtension}_${size}`;
+    }
     // Path where modified image will be uploaded to in Storage.
     const modifiedFilePath = path.normalize(config_1.default.resizedImagesPath
         ? path.join(fileDir, config_1.default.resizedImagesPath, modifiedFileName)

@@ -16,7 +16,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const handlebars_1 = require("handlebars");
-const logs = require("./logs");
+const logs_1 = require("./logs");
 const subjHandlebars = handlebars_1.create();
 const htmlHandlebars = handlebars_1.create();
 const textHandlebars = handlebars_1.create();
@@ -56,9 +56,9 @@ class Templates {
                 ampHandlebars.registerPartial(p.name, p.amp);
             }
             if (p.attachments) {
-                logs.noPartialAttachmentSupport();
+                logs_1.noPartialAttachmentSupport();
             }
-            logs.registeredPartial(p.name);
+            logs_1.registeredPartial(p.name);
         });
         templates.forEach((t) => {
             const tgroup = {};
@@ -78,7 +78,7 @@ class Templates {
                 tgroup.attachments = attachmentsHandlebars.compile(JSON.stringify(t.attachments), { strict: true });
             }
             this.templateMap[t.name] = tgroup;
-            logs.loadedTemplate(t.name);
+            logs_1.templateLoaded(t.name);
         });
         this.ready = true;
         this.waits.forEach((wait) => wait());

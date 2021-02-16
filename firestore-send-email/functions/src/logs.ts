@@ -89,6 +89,11 @@ export function registeredPartial(name: string) {
   logger.log(`registered partial '${name}'`);
 }
 
-export function loadedTemplate(name: string) {
+
+export function partialRegistered(name) {
+  logger.log(`registered partial '${name}'`);
+}
+
+export function templateLoaded(name) {
   logger.log(`loaded template '${name}'`);
 }

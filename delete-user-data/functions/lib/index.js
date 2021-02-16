@@ -22,7 +22,10 @@ const firebase_tools = require("firebase-tools");
 const config_1 = require("./config");
 const logs = require("./logs");
 // Initialize the Firebase Admin SDK
-admin.initializeApp();
+admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+    databaseURL: `https://${config_1.default.SELECTED_DATABASE_INSTANCE}.firebaseio.com`,
+});
 logs.init();
 /*
  * The clearData function removes personal data from the RealTime Database,
@@ -81,7 +84,7 @@ const clearStorageData = async (storagePaths, uid) => {
         const parts = path.split("/");
         const bucketName = parts[0];
         const bucket = bucketName === "{DEFAULT}"
-            ? admin.storage().bucket()
+            ? admin.storage().bucket(config_1.default.storageBucketDefault)
             : admin.storage().bucket(bucketName);
         const prefix = parts.slice(1).join("/");
         try {

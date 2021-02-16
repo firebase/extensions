@@ -20,7 +20,7 @@ import {
   resize,
   supportedContentTypes,
   supportedImageContentTypeMap,
-} from "../functions/src/resize-image";
+} from "../src/resize-image";
 
 // 100x100
 const TEST_IMAGE = `${__dirname}/test-image.png`;

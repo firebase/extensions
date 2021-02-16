@@ -74,6 +74,10 @@ export const supportedImageContentTypeMap = {
   webp: "image/webp",
 };
 
+const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
+  (type) => `.${type}`
+);
+
 export const modifyImage = async ({
   bucket,
   originalFile,
@@ -100,7 +104,16 @@ export const modifyImage = async ({
     : contentType;
   const modifiedExtensionName =
     fileExtension && hasImageTypeConfigSet ? `.${imageType}` : fileExtension;
-  const modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
+
+  let modifiedFileName;
+
+  if (supportedExtensions.includes(fileExtension.toLowerCase())) {
+    modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
+  } else {
+    // Fixes https://github.com/firebase/extensions/issues/476
+    modifiedFileName = `${fileNameWithoutExtension}${fileExtension}_${size}`;
+  }
+
   // Path where modified image will be uploaded to in Storage.
   const modifiedFilePath = path.normalize(
     config.resizedImagesPath
