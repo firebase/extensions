@@ -89,7 +89,6 @@ export function registeredPartial(name: string) {
   logger.log(`registered partial '${name}'`);
 }
 
-
 export function partialRegistered(name) {
   logger.log(`registered partial '${name}'`);
 }

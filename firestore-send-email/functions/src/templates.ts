@@ -18,15 +18,17 @@ import { create } from "handlebars";
 
 import { TemplateGroup, TemplateData, Attachment } from "./types";
 
-import { registeredPartial, templateLoaded, noPartialAttachmentSupport } from "./logs";
+import {
+  registeredPartial,
+  templateLoaded,
+  noPartialAttachmentSupport,
+} from "./logs";
 
 const subjHandlebars = create();
 const htmlHandlebars = create();
 const textHandlebars = create();
 const ampHandlebars = create();
 const attachmentsHandlebars = create();
-
-
 
 export default class Templates {
   collection: FirebaseFirestore.CollectionReference;
