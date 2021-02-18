@@ -42,6 +42,25 @@ that contains the following:
     {
       "name": "age",
       "type": "number"
+    }
+  ]
+}
+```
+
+Biq Query has a number of reserved keywords that can cause conflicts when creating a schema, `timestamp` is one such example. To ensure column names stay consistent when syncing with Firestore, this can overridden using the `column_name` option when defining a field.
+
+Please see the example below...
+
+```
+{
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "age",
+      "type": "number"
       "column_name": "new_column_name" //Can be used to override column names
     }
   ]
