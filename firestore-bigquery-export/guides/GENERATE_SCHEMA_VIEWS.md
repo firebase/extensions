@@ -61,7 +61,7 @@ Please see the example below...
     {
       "name": "age",
       "type": "number",
-      "column_name": "new_column_name" // Can be used to override column names.
+      "column_name": "new_column_name" 
     }
   ]
 }
