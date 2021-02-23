@@ -47,7 +47,7 @@ that contains the following:
 }
 ```
 
-Biq Query has a number of reserved keywords that can cause conflicts when creating a schema, `timestamp` is one such example. To ensure column names stay consistent when syncing with Firestore, this can overridden using the `column_name` option when defining a field.
+Biq Query has a number of reserved keywords that can cause conflicts when creating a schema, `timestamp` is one such example. To ensure column names stay consistent when syncing with Firestore, they can be overridden using the `column_name` option when defining a field.
 
 Please see the example below...
 
