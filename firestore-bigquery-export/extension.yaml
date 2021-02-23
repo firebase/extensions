@@ -231,7 +231,7 @@ params:
         value: MONTH 
       - label: year
         value: YEAR
-      - label: no table partitioning
+      - label: none
         value: false
     default: false
     required: true
