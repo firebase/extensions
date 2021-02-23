@@ -232,6 +232,6 @@ params:
       - label: year
         value: YEAR
       - label: none
-        value: false
-    default: false
+        value: NONE
+    default: NONE
     required: true
