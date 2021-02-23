@@ -79,7 +79,7 @@ The template document can include any of the following fields:
 - **text:** A template string for the plaintext content of the email.
 - **html:** A template string for the HTML content of the email.
 - **amp:** A template string for the [AMP4EMAIL][amp4email] content of the email.
-- **attachments:** An array containing attachment(s) with template strings as values; [Nodemailer options](https://nodemailer.com/message/attachments/) supported: utf-8 string, custom content type, URL, encoded string, data URI, and pregenerated MIME node (be aware that your email has no access to the cloud server's file system).
+- **attachments:** An array of attachments with template strings as values; [Nodemailer options](https://nodemailer.com/message/attachments/) supported: utf-8 string, custom content type, URL, encoded string, data URI, and pre-generated MIME node (be aware that your email has no access to the cloud server's file system).
 
 An example template might have an ID of `following` and content like:
 
