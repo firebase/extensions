@@ -1,3 +1,11 @@
+## Version 0.1.18
+
+fixed - fixed a bug that caused resized images to be named incorrectly if their file extension was capitalized (#549)
+
+## Version 0.1.17
+
+docs - Adds documentation that explains which content types are supported, and shows how to set content type explicitly (#534)
+
 ## Version 0.1.16
 
 feature - Adds support for absolute paths restrictions for Storage Resize Image (#427)

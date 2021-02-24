@@ -110,6 +110,55 @@ db.document("pages/hello-world").addSnapshotListener(new EventListener<DocumentS
 });
 ```
 
+##### iOS Client
+
+1. Ensure your Swift app already has Firebase [initialized](https://firebase.google.com/docs/ios/setup).
+2. Copy and paste the sample [code](https://github.com/firebase/extensions/blob/next/firestore-counter/clients/ios/Sources/FirestoreCounter/FirestoreCounter.swift) and create this file  `FirestoreShardedCounter.swift` in the relevant directory you wish to use the `FirestoreShardedCounter` instance.
+
+```swift
+import UIKit
+import FirestoreCounter
+import FirebaseFirestore
+
+class ViewController: UIViewController {
+  // somewhere in your app code initialize Firestore instance
+  var db = Firestore.firestore()
+  // create reference to the collection and the document you wish to use 
+  var doc = db.collection("pages").document("hello-world")
+  // initialize FirestoreShardedCounter with the document and the property which will hold the counter value
+  var controller = FirestoreShardCounter(docRef: doc, field: "visits")
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+    // event listener which returns total amount
+    controller.onSnapshot { (value, error) in
+      if let error = error {
+        // handle error
+      } else if let value = value {
+        // 'value' param is total amount of pages visits
+      }
+    }
+  }
+
+  @IBAction func getLatest(_ sender: Any) {
+    // get current total
+    controller.get() { (value, error) in
+      if let error = error {
+        // handle error
+      } else if let value = value {
+        // 'value' param is total amount of pages visits
+      }
+    }
+  }
+
+  @IBAction func incrementer(_ sender: Any) {
+    // to increment counter
+    controller.incrementBy(val: Double(1))
+  }
+}
+
+```
+
 #### Upgrading from v0.1.3 and earlier
 
 If you installed v0.1.3 or an earlier version of this extension, you set up a Cloud Scheduler job that either sent messages to the extension's Pub/Sub topic (`${param:EXT_INSTANCE_ID}`) or called the extension's controller function. Starting in v0.1.4, the controllerCore function (`${function:controllerCore.name}`) has a configurable schedule, so the manually-created Cloud Scheduler job is no longer required and will start to fail.

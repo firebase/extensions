@@ -36,6 +36,7 @@ export type FirestoreFieldType =
   | "array"
   | "null"
   | "string"
+  | "stringified_map"
   | "timestamp"
   | "reference";
 
@@ -79,6 +80,7 @@ const firestoreToBigQueryFieldType: {
   reference: "STRING",
   array: null /* mode: REPEATED type: STRING */,
   map: null,
+  stringified_map: "STRING",
 };
 
 /**
@@ -447,6 +449,15 @@ const processLeafField = (
     case "null":
       selector = transformer(`NULL`);
       break;
+    case "stringified_map":
+      selector = jsonExtract(
+        dataFieldName,
+        extractPrefixJoined,
+        field,
+        "",
+        transformer
+      );
+      break;
     case "string":
     case "reference":
       selector = jsonExtractScalar(
@@ -573,6 +584,7 @@ const processLeafField = (
       description: field.description,
     });
   }
+
   return fieldNameToSelector;
 };
 

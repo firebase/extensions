@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.16
+version: 0.1.18
 specVersion: v1beta
 
 displayName: Resize Images
@@ -35,9 +35,9 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
-  - authorName: Mike Diarmid
-    email: mike@invertase.io
-    url: https://github.com/salakar
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
 
 billingRequired: true
 
@@ -56,7 +56,6 @@ resources:
       Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images,
       then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
     properties:
-      sourceDirectory: .
       location: ${param:LOCATION}
       runtime: nodejs10
       availableMemoryMb: 1024

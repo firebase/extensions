@@ -35,7 +35,6 @@ const testTable = "test_table";
 
 const expect = chai.expect;
 const readFile = util.promisify(fs.readFile);
-const writeFile = util.promisify(fs.writeFile);
 
 process.env.PROJECT_ID = testProjectId;
 
