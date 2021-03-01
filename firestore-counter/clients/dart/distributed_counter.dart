@@ -53,7 +53,7 @@ class DistributedCounter {
   void onSnapshot(void Function(int) observable) {
     subscriptions.addAll(
         shards.keys.map((path) => db.doc(path).snapshots().listen((snap) {
-              shards[snap.reference.path] = snap.get(field) ?? 0;
+              shards[snap.reference.path] = snap.exists ? snap.get(field) : 0;
               final sum = shards.values.reduce((a, b) => a + b);
               observable(sum);
             })));
