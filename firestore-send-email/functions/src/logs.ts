@@ -82,7 +82,7 @@ export function missingUids(uids: string[]) {
 }
 
 export function noPartialAttachmentSupport() {
-  logger.log("partial attachments are not handled and will be ignored");
+  logger.warn("partial attachments are not handled and will be ignored");
 }
 
 export function registeredPartial(name: string) {
