@@ -1,7 +1,6 @@
 ## Version 0.1.13
 
-
-feature - big query partitioned tables (#581)
+feature - Added the ability to optionally create partitioned tables to improve query performance and reduce the cost of querying large datasets (#581)
 
 feature - Added us-central-1 as a dataset option (#603)
 

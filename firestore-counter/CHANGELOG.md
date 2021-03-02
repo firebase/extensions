@@ -1,6 +1,6 @@
 ## Version 0.2.2
 
-feature - added Android sample for firestore-counter extension.
+feature - Added Android client instructions for firestore-counter extension.
 
 ## Version 0.2.1
 

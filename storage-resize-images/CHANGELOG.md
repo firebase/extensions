@@ -1,6 +1,5 @@
 ## Version 0.1.19
 
-
 feature - added multiple image formats to res… (#579)
 
 ## Version 0.1.18
