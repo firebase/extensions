@@ -3,7 +3,7 @@
 
 feature - big query partitioned tables (#581)
 
-feature - Add us-central-1 as a dataset option (#603)
+feature - Added us-central-1 as a dataset option (#603)
 
 ## Version 0.1.12
 
