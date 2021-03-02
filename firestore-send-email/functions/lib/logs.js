@@ -58,7 +58,7 @@ function missingUids(uids) {
 }
 exports.missingUids = missingUids;
 function noPartialAttachmentSupport() {
-    firebase_functions_1.logger.log("partial attachments are not handled and will be ignored");
+    firebase_functions_1.logger.warn("partial attachments are not handled and will be ignored");
 }
 exports.noPartialAttachmentSupport = noPartialAttachmentSupport;
 function registeredPartial(name) {
