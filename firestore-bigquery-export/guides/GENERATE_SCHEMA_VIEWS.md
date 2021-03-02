@@ -61,7 +61,7 @@ Please see the example below...
     {
       "name": "age",
       "type": "number",
-      "column_name": "new_column_name" 
+      "column_name": "new_column_name"
     }
   ]
 }
