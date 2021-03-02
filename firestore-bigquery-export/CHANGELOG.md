@@ -1,3 +1,10 @@
+## Version 0.1.13
+
+
+feature - big query partitioned tables (#581)
+
+feature - Add us-central-1 as a dataset option (#603)
+
 ## Version 0.1.12
 
 docs - Updated description for COLLECTION_GROUP_QUERY parameter.
