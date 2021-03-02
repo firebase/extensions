@@ -9,7 +9,7 @@ Object {
   "imageSizes": Array [
     "200x200",
   ],
-  "imageType": undefined,
+  "imageTypes": undefined,
   "includePathList": undefined,
   "resizedImagesPath": undefined,
 }

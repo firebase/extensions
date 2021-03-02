@@ -211,21 +211,21 @@ params:
     required: false
 
   - param: IMAGE_TYPE
-    label: Convert image to preferred type
+    label: Convert image to preferred types
     description: >
-      The image type you'd like your source image to convert to. The default for this option will 
+      The image types you'd like your source image to convert to. The default for this option will 
       be to keep the original file type.
-    type: select
+    type: multiSelect
     options:
-      - label: jpg
-        value: jpg
-      - label: png
-        value: png
+      - label: jpeg
+        value: jpeg
       - label: webp
         value: webp
+      - label: png
+        value: png
       - label: tiff
         value: tiff
-      - label: Do not convert
+      - label: original
         value: false
     default: false
-    required: false
+    required: true
