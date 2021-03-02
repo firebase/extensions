@@ -7,9 +7,15 @@ exports.extractFileNameWithoutExtension = (filePath, ext) => {
 };
 exports.startsWithArray = (userInputPaths, imagePath) => {
     for (let userPath of userInputPaths) {
-        const trimmedUserPath = userPath.trim().replace(/\*/g, ".*");
+        console.warn("starting >>>", userPath, userInputPaths);
+        const trimmedUserPath = userPath
+            .trim()
+            .replace(/\*/g, "([a-zA-Z0-9_-.\n/]*)");
+        console.warn("Trimmed user path >>>", trimmedUserPath);
         const regex = new RegExp("^" + trimmedUserPath + "(?:/.*|$)");
+        console.warn("testing >>>", regex, imagePath);
         if (regex.test(imagePath)) {
+            console.warn("worked >>>", regex);
             return true;
         }
     }

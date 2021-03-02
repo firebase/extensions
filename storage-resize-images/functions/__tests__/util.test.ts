@@ -36,6 +36,20 @@ describe("extractFileNameWithoutExtension", () => {
         expect(allowResize).toBe(true);
       });
     });
+
+    it.only("can handle globbed paths", () => {
+      const imagePaths = ["/test/picture", "/test/*/picture"];
+      const allowed = [
+        "/test/picture",
+        "/test/something/picture",
+        "/test/folder1/folder2/picture",
+      ];
+
+      allowed.forEach((path) => {
+        let allowResize = startsWithArray(imagePaths, path);
+        expect(allowResize).toBe(true);
+      });
+    });
   });
   it("blocked paths", () => {
     const notAllowed = [
