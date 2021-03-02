@@ -215,3 +215,25 @@ params:
       more than 1024 characters.
     default: posts
     required: true
+
+  - param: TABLE_PARTITIONING
+    label: BigQuery SQL table partitioning option
+    description: >-
+      This parameter will allow you to partition the BigQuery table and BigQuery view 
+      created by the extension based on data ingestion time. You may select the granularity of
+      partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will
+      generate one partition per day, hour, month or year, respectively. 
+    type: select
+    options:
+      - label: hour
+        value: HOUR
+      - label: day
+        value: DAY
+      - label: month
+        value: MONTH 
+      - label: year
+        value: YEAR
+      - label: none
+        value: NONE
+    default: NONE
+    required: true
