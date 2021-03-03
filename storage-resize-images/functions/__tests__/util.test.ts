@@ -37,7 +37,7 @@ describe("extractFileNameWithoutExtension", () => {
       });
     });
 
-    it.only("can handle globbed paths", () => {
+    it("can handle globbed paths", () => {
       const imagePaths = ["/test/picture", "/test/*/picture"];
       const allowed = [
         "/test/picture",
