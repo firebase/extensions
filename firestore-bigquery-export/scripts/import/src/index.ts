@@ -332,6 +332,16 @@ const run = async (): Promise<number> => {
 
 async function parseConfig(): Promise<CliConfig> {
   program.parse(process.argv);
+
+  console.warn(">>>>", program.nonInteractive);
+  console.warn(">>>>", program.project);
+  console.warn(">>>>", program.sourceCollectionPath);
+  console.warn(">>>>", program.dataset);
+  console.warn(">>>>", program.tableNamePrefix);
+  console.warn(">>>>", program.queryCollectionGroup);
+  console.warn(">>>>", program.datasetLocation);
+  console.warn(">>>>", program.batchSize);
+
   if (program.nonInteractive) {
     if (
       program.project === undefined ||
