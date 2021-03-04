@@ -109,7 +109,7 @@ admin
       data: {
         username: "ada",
         name: "Ada Lovelace",
-        imagePath:'https://path-to-file/image-name.jpg'
+        imagePath: "https://path-to-file/image-name.jpg"
       },
     },
   });
