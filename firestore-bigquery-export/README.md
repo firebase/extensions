@@ -58,6 +58,8 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * Table ID: What identifying prefix would you like to use for your table and view inside your BigQuery dataset? This extension will create the table and view, if they don't already exist.
 
+* BigQuery SQL table partitioning option: This parameter will allow you to partition the BigQuery table and BigQuery view  created by the extension based on data ingestion time. You may select the granularity of partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will generate one partition per day, hour, month or year, respectively. 
+
 
 
 **Cloud Functions:**
