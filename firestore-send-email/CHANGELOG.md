@@ -1,3 +1,7 @@
+## Version 0.1.9
+
+feature - Allow attachments within template records to be interpolated with data values passed into a new record in the mail collection. (#519)
+
 ## Version 0.1.8
 
 docs - updated "SMTP connection URI" parameter description to clarify which ports are recommended for SMTP connections (#582)
