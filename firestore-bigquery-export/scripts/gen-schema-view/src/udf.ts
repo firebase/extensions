@@ -81,7 +81,7 @@ function firestoreArrayDefinition(datasetId: string): string {
         
         if (Array.isArray(parsed)) {
           return parsed.map((x) => {
-            if (typeof x ==='string') {
+            if (typeof x === 'string') {
               return x;
             } else {
               return JSON.stringify(x);
