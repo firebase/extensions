@@ -179,7 +179,7 @@ params:
       You may also use wildcard notation for directories in the path. For example, `/users/*/pictures` 
       would match `/users/profile/pictures/image.png` as well as  `/users/profile/pictures/any/sub/directory/image.png`. 
       
-      If you prefer to resize every image uploaded to the storage bucket, 
+      If you prefer to resize every image uploaded to your Storage bucket, 
       leave this field empty.
     type: string
     example: "/users/avatars,/design/pictures"
