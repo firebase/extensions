@@ -332,6 +332,7 @@ const run = async (): Promise<number> => {
 
 async function parseConfig(): Promise<CliConfig> {
   program.parse(process.argv);
+
   if (program.nonInteractive) {
     if (
       program.project === undefined ||
