@@ -113,8 +113,8 @@ program
     "The path of the the Cloud Firestore Collection to import from. (This may, or may not, be the same Collection for which you plan to mirror changes.)"
   )
   .option(
-    "-q, --query-collection-group <query-collection-group>",
-    "A boolean value indicating whether you'd prefer a collection group query (true) or a collection query (false)"
+    "-q, --query-collection-group [true|false]",
+    "Use 'true' for a collection group query, otherwise a collection query is performed."
   )
   .option(
     "-d, --dataset <dataset>",
@@ -332,6 +332,7 @@ const run = async (): Promise<number> => {
 
 async function parseConfig(): Promise<CliConfig> {
   program.parse(process.argv);
+
   if (program.nonInteractive) {
     if (
       program.project === undefined ||

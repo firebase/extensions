@@ -64,7 +64,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Cache-Control header for resized images: This extension automatically copies any `Cache-Control` metadata from the original image to the resized images. For the resized images, do you want to overwrite this copied `Cache-Control` metadata or add `Cache-Control` metadata? Learn more about [`Cache-Control` headers](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control). If you prefer not to overwrite or add `Cache-Control` metadata, leave this field empty.
 
 
-* Convert image to preferred type: The image type you'd like your source image to convert to. The default for this option will  be to keep the original file type.
+* Convert image to preferred types: The image types you'd like your source image to convert to. The default for this option will  be to keep the original file type.
 
 
 

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.11
+version: 0.1.13
 specVersion: v1beta
 
 displayName: Export Collections to BigQuery
@@ -118,6 +118,8 @@ params:
       guide](https://cloud.google.com/bigquery/docs/locations).
     type: select
     options:
+      - label: Iowa (us-central1)
+        value: us-central1
       - label: Las Vegas (us-west4)
         value: us-west4
       - label: Los Angeles (us-west2)
@@ -212,4 +214,26 @@ params:
       BigQuery table IDs must be alphanumeric (plus underscores) and must be no
       more than 1024 characters.
     default: posts
+    required: true
+
+  - param: TABLE_PARTITIONING
+    label: BigQuery SQL table partitioning option
+    description: >-
+      This parameter will allow you to partition the BigQuery table and BigQuery view 
+      created by the extension based on data ingestion time. You may select the granularity of
+      partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will
+      generate one partition per day, hour, month or year, respectively. 
+    type: select
+    options:
+      - label: hour
+        value: HOUR
+      - label: day
+        value: DAY
+      - label: month
+        value: MONTH 
+      - label: year
+        value: YEAR
+      - label: none
+        value: NONE
+    default: NONE
     required: true
