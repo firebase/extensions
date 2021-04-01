@@ -16,11 +16,12 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const handlebars_1 = require("handlebars");
+const logs_1 = require("./logs");
 const subjHandlebars = handlebars_1.create();
 const htmlHandlebars = handlebars_1.create();
 const textHandlebars = handlebars_1.create();
 const ampHandlebars = handlebars_1.create();
-const firebase_functions_1 = require("firebase-functions");
+const attachmentsHandlebars = handlebars_1.create();
 class Templates {
     constructor(collection) {
         this.collection = collection;
@@ -54,7 +55,10 @@ class Templates {
             if (p.amp) {
                 ampHandlebars.registerPartial(p.name, p.amp);
             }
-            console.log(`registered partial '${p.name}'`);
+            if (p.attachments) {
+                logs_1.noPartialAttachmentSupport();
+            }
+            logs_1.registeredPartial(p.name);
         });
         templates.forEach((t) => {
             const tgroup = {};
@@ -70,8 +74,11 @@ class Templates {
             if (t.amp) {
                 tgroup.amp = ampHandlebars.compile(t.amp);
             }
+            if (t.attachments) {
+                tgroup.attachments = attachmentsHandlebars.compile(JSON.stringify(t.attachments), { strict: true });
+            }
             this.templateMap[t.name] = tgroup;
-            firebase_functions_1.logger.log(`loaded template '${t.name}'`);
+            logs_1.templateLoaded(t.name);
         });
         this.ready = true;
         this.waits.forEach((wait) => wait());
@@ -82,11 +89,17 @@ class Templates {
             return Promise.reject(new Error(`tried to render non-existent template '${name}'`));
         }
         const t = this.templateMap[name];
+        let attachments;
+        if (t.attachments) {
+            const interpolatedAttachments = t.attachments(data);
+            attachments = JSON.parse(interpolatedAttachments);
+        }
         return {
             subject: t.subject ? t.subject(data) : null,
             html: t.html ? t.html(data) : null,
             text: t.text ? t.text(data) : null,
             amp: t.amp ? t.amp(data) : null,
+            attachments: attachments || null,
         };
     }
 }

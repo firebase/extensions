@@ -1,3 +1,19 @@
+## Version 0.1.20
+
+feature - Adds support for wildcards in include/exclude paths (#568)
+
+## Version 0.1.19
+
+feature - Adds support for converting to more than one image format (#579)
+
+## Version 0.1.18
+
+fixed - fixed a bug that caused resized images to be named incorrectly if their file extension was capitalized (#549)
+
+## Version 0.1.17
+
+docs - Adds documentation that explains which content types are supported, and shows how to set content type explicitly (#534)
+
 ## Version 0.1.16
 
 feature - Adds support for absolute paths restrictions for Storage Resize Image (#427)

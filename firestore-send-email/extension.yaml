@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-send-email
-version: 0.1.6
+version: 0.1.9
 specVersion: v1beta
 
 displayName: Trigger Email
@@ -110,7 +110,7 @@ params:
   - param: SMTP_CONNECTION_URI
     label: SMTP connection URI
     description: >-
-      A URI representing an SMTP server that this extension can use to deliver email.
+      A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465.
     type: string
     example: smtps://username:password@smtp.hostname.com:465
     validationRegex: ^smtps?://[^:]+:[^:]+@.*$

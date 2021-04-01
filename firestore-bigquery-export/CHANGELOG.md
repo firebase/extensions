@@ -1,3 +1,19 @@
+## Version 0.1.13
+
+feature - Added the ability to optionally create partitioned tables to improve query performance and reduce the cost of querying large datasets (#581)
+
+feature - Added us-central-1 as a dataset option (#603)
+
+## Version 0.1.12
+
+docs - Updated description for COLLECTION_GROUP_QUERY parameter.
+
+## Version 0.1.11
+
+feature - Add stringified_map schema type to gen-schema-view script (#518)
+
+fixed - Switch from `console.log` to `functions.logger.log` for cleaner log outputs.
+
 ## Version 0.1.10
 
 feature - Added a new parameter that allows customization of the BigQuery dataset location (#462)

@@ -80,3 +80,19 @@ export function missingUids(uids: string[]) {
     )}`
   );
 }
+
+export function noPartialAttachmentSupport() {
+  logger.warn("partial attachments are not handled and will be ignored");
+}
+
+export function registeredPartial(name: string) {
+  logger.log(`registered partial '${name}'`);
+}
+
+export function partialRegistered(name) {
+  logger.log(`registered partial '${name}'`);
+}
+
+export function templateLoaded(name) {
+  logger.log(`loaded template '${name}'`);
+}
