@@ -36,6 +36,6 @@ jobs:
           cd firestore-bigquery-export/firestore-bigquery-change-tracker
       - name: Publish
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ github.event.inputs.npm_token }}
         run: |
           ${{ github.workspace }}/.github/workflows/scripts/npm_publish.sh
