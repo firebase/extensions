@@ -74,4 +74,4 @@ npm config set //wombat-dressing-room.appspot.com/:_authToken=${NPM_TOKEN}
 
 echo "Attempting to publish $NPM_PACKAGE_NAME version $NPM_PACKAGE_VERSION..."
 # This registry allows Googlers to publish with a temporary token from http://go/npm-publish
-npm publish --registry https://wombat-dressing-room.appspot.com --dry-run
+npm publish --registry https://wombat-dressing-room.appspot.com
