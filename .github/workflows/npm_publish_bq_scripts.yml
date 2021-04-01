@@ -24,19 +24,19 @@ jobs:
           ${{ github.event.inputs.package_name ==
           '@firebaseextensions/fs-bq-schema-views'}}
         run: |
-          echo "package_dir={firestore-bigquery-export/scripts/gen-schema-view}" >> $GITHUB_ENV
+          echo "package_dir=firestore-bigquery-export/scripts/gen-schema-view" >> $GITHUB_ENV
       - name: BigQuery Import Collection
         if:
           ${{ github.event.inputs.package_name ==
           '@firebaseextensions/fs-bq-import-collection'}}
         run: |
-          echo "package_dir={firestore-bigquery-export/scripts/import}" >> $GITHUB_ENV
+          echo "package_dir=firestore-bigquery-export/scripts/import" >> $GITHUB_ENV
       - name: BigQuery Change Tracker
         if:
           ${{ github.event.inputs.package_name ==
           '@firebaseextensions/firestore-bigquery-change-tracker'}}
         run: |
-          echo "package_dir={firestore-bigquery-export/firestore-bigquery-change-tracker}" >> $GITHUB_ENV
+          echo "package_dir=firestore-bigquery-export/firestore-bigquery-change-tracker" >> $GITHUB_ENV
       - name: Publish
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN_FIREBASEEXTENSIONS_ORG }}
