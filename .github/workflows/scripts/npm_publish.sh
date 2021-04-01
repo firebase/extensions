@@ -7,9 +7,7 @@ set -o pipefail
 # if its current version does not already exist on the NPM registry.
 # ---------------------------------------------------------------------
 
-# You can create a token via `npm token create --read-only` - note the read only flag is
-# only for testing purposes (ensuring we don't accidentally publish when testing locally).
-# You can also retrieve your current local token by viewing the .npmrc file, e.g. `cat ~/.npmrc`.
+# Googlers can get the npm token from http://go/npm-publish
 # Uncomment for testing purposes:
 #NPM_TOKEN=YOUR_TOKEN_HERE
 
@@ -71,9 +69,8 @@ if [[ -z "$NPM_TOKEN" ]]; then
 fi
 
 echo "NPM package $NPM_PACKAGE_NAME and version $NPM_PACKAGE_VERSION does NOT EXIST on the NPM registry."
-npm config set //registry.npmjs.org/:_authToken ${NPM_TOKEN}
-npm whoami # quick check token valid - will exit if unauthorized
+npm config set //wombat-dressing-room.appspot.com/:_authToken=${NPM_TOKEN}
 
-echo "Attempting to publish this NPM package as NPM user '$(npm whoami)'."
-# TODO remove `--dry-run` once ready to go live
-npm publish --dry-run
+echo "Attempting to publish this NPM package..."
+# This registry allows Googlers to publish with a temporary token from http://go/npm-publish
+npm publish --registry https://wombat-dressing-room.appspot.com
