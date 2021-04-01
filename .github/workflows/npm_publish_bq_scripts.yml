@@ -41,5 +41,4 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN_FIREBASEEXTENSIONS_ORG }}
         run: |
-          pwd
           cd ${{ env.package_dir }} && ${{ github.workspace }}/.github/workflows/scripts/npm_publish.sh
