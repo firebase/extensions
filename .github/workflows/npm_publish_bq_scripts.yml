@@ -7,9 +7,6 @@ on:
         description: "The package name to publish"
         required: true
         default: "@firebaseextensions/fs-bq-schema-views"
-      npm_token:
-        description: "Temporary npm token from http://go/npm-publish"
-        required: true
 jobs:
   publish_if_newer_version:
     runs-on: ubuntu-latest
@@ -42,6 +39,7 @@ jobs:
           echo "package_dir={firestore-bigquery-export/firestore-bigquery-change-tracker}" >> $GITHUB_ENV
       - name: Publish
         env:
-          NPM_TOKEN: ${{ github.event.inputs.npm_token }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN_FIREBASEEXTENSIONS_ORG }}
         run: |
+          pwd
           cd ${{ env.package_dir }} && ${{ github.workspace }}/.github/workflows/scripts/npm_publish.sh
