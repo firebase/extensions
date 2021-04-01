@@ -71,6 +71,6 @@ fi
 echo "NPM package $NPM_PACKAGE_NAME and version $NPM_PACKAGE_VERSION does NOT EXIST on the NPM registry."
 npm config set //wombat-dressing-room.appspot.com/:_authToken=${NPM_TOKEN}
 
-echo "Attempting to publish this NPM package..."
+echo "Attempting to publish $NPM_PACKAGE_NAME version $NPM_PACKAGE_VERSION..."
 # This registry allows Googlers to publish with a temporary token from http://go/npm-publish
 npm publish --registry https://wombat-dressing-room.appspot.com
