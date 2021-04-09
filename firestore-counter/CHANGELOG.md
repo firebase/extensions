@@ -1,3 +1,7 @@
+## Version 0.2.2
+
+feature - Added Android client instructions for firestore-counter extension.
+
 ## Version 0.2.1
 
 feature - addded iOS sample for firestore-counter extension.

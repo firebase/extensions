@@ -21,6 +21,7 @@ import * as nodemailer from "nodemailer";
 import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
+import { QueuePayload } from "./types";
 
 logs.init();
 
@@ -67,36 +68,6 @@ async function transportLayer() {
   } else {
     return nodemailer.createTransport(config.smtpConnectionUri);
   }
-}
-interface QueuePayload {
-  delivery?: {
-    startTime: FirebaseFirestore.Timestamp;
-    endTime: FirebaseFirestore.Timestamp;
-    leaseExpireTime: FirebaseFirestore.Timestamp;
-    state: "PENDING" | "PROCESSING" | "RETRY" | "SUCCESS" | "ERROR";
-    attempts: number;
-    error?: string;
-    info?: {
-      messageId: string;
-      accepted: string[];
-      rejected: string[];
-      pending: string[];
-    };
-  };
-  message?: nodemailer.SendMailOptions;
-  template?: {
-    name: string;
-    data?: { [key: string]: any };
-  };
-  to: string[];
-  toUids?: string[];
-  cc: string[];
-  ccUids?: string[];
-  bcc: string[];
-  bccUids?: string[];
-  from?: string;
-  replyTo?: string;
-  headers?: any;
 }
 
 function validateFieldArray(field: string, array?: string[]) {

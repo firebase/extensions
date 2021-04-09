@@ -1,3 +1,11 @@
+## Version 0.1.20
+
+feature - Adds support for wildcards in include/exclude paths (#568)
+
+## Version 0.1.19
+
+feature - Adds support for converting to more than one image format (#579)
+
 ## Version 0.1.18
 
 fixed - fixed a bug that caused resized images to be named incorrectly if their file extension was capitalized (#549)

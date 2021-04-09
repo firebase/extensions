@@ -28,24 +28,23 @@ function resize(file, size) {
         .toBuffer();
 }
 exports.resize = resize;
-function convertType(buffer) {
-    const { imageType } = config_1.default;
-    if (imageType === "jpg" || imageType === "jpeg") {
+function convertType(buffer, format) {
+    if (format === "jpg" || format === "jpeg") {
         return sharp(buffer)
             .jpeg()
             .toBuffer();
     }
-    else if (imageType === "png") {
+    if (format === "png") {
         return sharp(buffer)
             .png()
             .toBuffer();
     }
-    else if (imageType === "webp") {
+    if (format === "webp") {
         return sharp(buffer)
             .webp()
             .toBuffer();
     }
-    else if (imageType === "tiff") {
+    if (format === "tiff") {
         return sharp(buffer)
             .tiff()
             .toBuffer();
@@ -70,13 +69,12 @@ exports.supportedImageContentTypeMap = {
     webp: "image/webp",
 };
 const supportedExtensions = Object.keys(exports.supportedImageContentTypeMap).map((type) => `.${type}`);
-exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, }) => {
-    const { imageType } = config_1.default;
-    const hasImageTypeConfigSet = imageType !== "false";
-    const imageContentType = hasImageTypeConfigSet
-        ? exports.supportedImageContentTypeMap[imageType]
+exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, format, }) => {
+    const shouldFormatImage = format !== "false";
+    const imageContentType = shouldFormatImage
+        ? exports.supportedImageContentTypeMap[format]
         : contentType;
-    const modifiedExtensionName = fileExtension && hasImageTypeConfigSet ? `.${imageType}` : fileExtension;
+    const modifiedExtensionName = fileExtension && shouldFormatImage ? `.${format}` : fileExtension;
     let modifiedFileName;
     if (supportedExtensions.includes(fileExtension.toLowerCase())) {
         modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
@@ -117,10 +115,10 @@ exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
         let modifiedImageBuffer = await resize(originalFile, size);
         logs.imageResized(modifiedFile);
         // Generate a converted image type buffer using Sharp.
-        if (hasImageTypeConfigSet) {
-            logs.imageConverting(fileExtension, config_1.default.imageType);
-            modifiedImageBuffer = await convertType(modifiedImageBuffer);
-            logs.imageConverted(config_1.default.imageType);
+        if (shouldFormatImage) {
+            logs.imageConverting(fileExtension, format);
+            modifiedImageBuffer = await convertType(modifiedImageBuffer, format);
+            logs.imageConverted(format);
         }
         // Generate a image file using Sharp.
         await sharp(modifiedImageBuffer).toFile(modifiedFile);
