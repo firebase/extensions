@@ -141,6 +141,7 @@ export const modifyImage = async ({
       metadata: objectMetadata.metadata || {},
     };
     metadata.metadata.resizedImage = true;
+    metadata.metadata.size = size;
     if (config.cacheControlHeader) {
       metadata.cacheControl = config.cacheControlHeader;
     } else {
