@@ -8,4 +8,4 @@ When you find an extension that solves a need for your app or project, all you d
 
 You can also browse official Firebase extensions from the following sources:
 * [Firebase Extensions product page](https://firebase.google.com/products/extensions)
-* [Firebase Extensions dashboard](https://console.firebase.google.com/project/_/extensions/) in the Firebase console
+* [Firebase Extensions dashboard](https://console.firebase.google.com/project/_/extensions/) in the Firebase console 
