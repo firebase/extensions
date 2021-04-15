@@ -129,7 +129,7 @@ params:
     label: Collection path
     description: >
       What is the path to the collection that contains the strings that you want to translate?
-    example: translations
+    example: translations, translations/english, translations/french
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore Collection
     default: translations
