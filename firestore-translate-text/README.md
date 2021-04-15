@@ -19,7 +19,7 @@ If the original non-translated field of the document is updated, then the transl
 
 #### Multiple Translations
 
-Common practice is to install multiple versions of the extension but with different configuration.
+Common practice is to install multiple versions of the extension but with different configuration for each installation..
 
 There is currently no limit on how many times the extensions can be reinstalled.
 #### Additional setup
