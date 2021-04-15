@@ -22,9 +22,6 @@ If the original non-translated field of the document is updated, then the transl
 Common practice is to install multiple versions of the extension but with different configuration.
 
 There is currently no limit on how many times the extensions can be reinstalled.
-
-As this configuration always ends in a wildcard based on the following [documentation](https://cloud.google.com/functions/docs/calling/cloud-firestore#specifying_the_document_path)
-To use sub collections paths is is advised to simply added the the collection path as collection/subcollection/...etc
 #### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
