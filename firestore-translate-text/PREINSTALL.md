@@ -17,9 +17,7 @@ There is currently no limit on how many times the extensions can be reinstalled.
 
 #### Multiple field translations
 
-Similar to multiple collections, to translate with `multiple fields` it is recommended to install multiple versions of the extension with an alternative `input field` for each installation.
-
-There is currently no limit on how many times the extensions can be reinstalled.
+Similar to multiple collections, to translate with `multiple fields` it is recommended to install multiple versions of the extension but with an alternative `input field` for each installation.
 
 #### Multiple languages
 
