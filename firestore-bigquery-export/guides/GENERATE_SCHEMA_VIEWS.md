@@ -47,6 +47,26 @@ that contains the following:
 }
 ```
 
+SQL has a number of [reserved keywords](https://en.wikipedia.org/wiki/SQL_reserved_words) that can cause conflicts when creating a schema, `timestamp` is one such example. To ensure your Firestore document field names do not conflict, use the `column_name` option to override the field name.
+
+Please see the example below...
+
+```
+{
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "age",
+      "type": "number",
+      "column_name": "new_column_name"
+    }
+  ]
+}
+```
+
 Learn [How to configure schema files](#how-to-configure-schema-files)
 later in this guide.
 
