@@ -9,12 +9,17 @@ You specify the desired target languages using ISO-639-1 codes. You can find a l
 
 If the original non-translated field of the document is updated, then the translations will be automatically updated, as well.
 
-#### Multiple collections
+#### Multiple collections for translations
 
-In order to handle multiple field translations, it is recommended to install multiple versions of the extension but with different configuration for each installation.
+In order to handle multiple collections, it is recommended to install multiple versions of the extension but with a different collection path for each installation.
 
 There is currently no limit on how many times the extensions can be reinstalled.
 
+#### Multiple field translations
+
+In order to handle multiple field translations, it is recommended to install multiple versions of the extension but with different a different input field for each installation.
+
+There is currently no limit on how many times the extensions can be reinstalled.
 
 #### Multiple languages
 
