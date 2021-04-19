@@ -1,6 +1,10 @@
+## Version 0.1.20
+
+feature - Adds support for wildcards in include/exclude paths (#568)
+
 ## Version 0.1.19
 
-feature - added multiple image formats to res… (#579)
+feature - Adds support for converting to more than one image format (#579)
 
 ## Version 0.1.18
 

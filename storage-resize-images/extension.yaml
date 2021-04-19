@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.19
+version: 0.1.21
 specVersion: v1beta
 
 displayName: Resize Images
@@ -174,8 +174,12 @@ params:
     description: >
       Restrict storage-resize-images to only resize images in specific locations in your Storage bucket by 
       supplying a comma-separated list of absolute paths. For example, to only resize the images 
-      stored in `/users/pictures` directory, specify the path `/users/pictures`. 
-      If you prefer to resize every image uploaded to the storage bucket, 
+      stored in the `/users/pictures` and `/restaurants/menuItems` directories, specify the paths `/users/pictures,/restaurants/menuItems`.
+      
+      You may also use wildcard notation for directories in the path. For example, `/users/*/pictures` 
+      would match `/users/profile/pictures/image.png` as well as  `/users/profile/pictures/any/sub/directory/image.png`. 
+      
+      If you prefer to resize every image uploaded to your Storage bucket, 
       leave this field empty.
     type: string
     example: "/users/avatars,/design/pictures"
@@ -187,11 +191,15 @@ params:
   - param: EXCLUDE_PATH_LIST
     label: List of absolute paths not included for resized images
     description: >
-      A comma-separated list of absolute paths to not take into account for 
-      images to be resized. For example, to not resize the images 
-      stored in `/users/pictures/avatars` directory, specify the path 
-      `/users/pictures/avatars`. If you prefer to resize every image uploaded 
-      to the storage bucket, leave this field empty.
+      Ensure storage-resize-images does *not* resize images in _specific locations_ in your Storage bucket by 
+      supplying a comma-separated list of absolute paths. For example, to *exclude* the images 
+      stored in the `/users/pictures` and `/restaurants/menuItems` directories, specify the paths `/users/pictures,/restaurants/menuItems`.
+      
+      You may also use wildcard notation for directories in the path. For example, `/users/*/pictures` 
+      would exclude `/users/profile/pictures/image.png` as well as `/users/profile/pictures/any/sub/directory/image.png`. 
+      
+      If you prefer to resize every image uploaded to your Storage bucket, 
+      leave this field empty.
     type: string
     example: "/users/avatars/thumbs,/design/pictures/thumbs"
     validationRegex: ^(\/[^\s\/\,]+)+(\,(\/[^\s\/\,]+)+)*$
