@@ -25,15 +25,21 @@ There is currently no limit on how many times the extensions can be reinstalled.
 
 #### Multiple field translations
 
-Similar to multiple collections, to translate with `multiple fields` it is recommended to install multiple versions of the extension but with an alternative `input field` for each installation.
+To translate multiple fields, object data can be passed into the `input field`:
 
+```js
+admin.firestore().collection('translations').add({
+  'example one': 'example one',
+  'example two': 'example two',
+  'example three': 'example three',
+})
+```
 #### Multiple languages
 
 Multiple translations can be defined when setting up the extension `languages` configuration.
 
 The languages are identified using ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr. For these codes, visit the [supported languages list](https://cloud.google.com/translate/docs/languages).
-
-#### Additional setup
+`#### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
 
