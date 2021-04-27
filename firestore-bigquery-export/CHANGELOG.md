@@ -1,3 +1,10 @@
+## Version 0.1.14
+
+
+fixed - Updated file naming for bq imports (#589)
+
+fixed - Remove double quotes on string arrays (#614)
+
 ## Version 0.1.13
 
 feature - Added the ability to optionally create partitioned tables to improve query performance and reduce the cost of querying large datasets (#581)
