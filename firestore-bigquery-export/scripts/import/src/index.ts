@@ -21,6 +21,7 @@ import * as program from "commander";
 import * as fs from "fs";
 import * as inquirer from "inquirer";
 import * as util from "util";
+import * as filenamify from "filenamify";
 
 import {
   ChangeType,
@@ -261,9 +262,11 @@ const run = async (): Promise<number> => {
   // operations supersede imports when listing the live documents.
   let cursor;
 
+  const formattedPath = filenamify(sourceCollectionPath);
+
   let cursorPositionFile =
     __dirname +
-    `/from-${sourceCollectionPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
+    `/from-${formattedPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
   if (await exists(cursorPositionFile)) {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
     cursor = await firebase
