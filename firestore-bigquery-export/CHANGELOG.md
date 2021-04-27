@@ -1,6 +1,5 @@
 ## Version 0.1.14
 
-
 fixed - Updated file naming for bq imports (#589)
 
 fixed - Remove double quotes on string arrays (#614)
