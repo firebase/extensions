@@ -1,6 +1,6 @@
 {
   "name": "@firebaseextensions/fs-bq-import-collection",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Import a Firestore Collection into a BigQuery Changelog Table",
   "main": "./lib/index.js",
   "repository": {
@@ -26,6 +26,7 @@
   "dependencies": {
     "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.2",
     "commander": "5.0.0",
+    "filenamify": "^4.2.0",
     "firebase-admin": "^7.1.1",
     "firebase-functions": "^2.2.1",
     "generate-schema": "^2.6.0",

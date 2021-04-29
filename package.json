@@ -8,9 +8,9 @@
     "lint": "prettier --list-different \"**/*.{js,md,yml,ts,json,yaml}\"",
     "clean": "lerna run --parallel clean && lerna clean",
     "build": "lerna run build",
-    "test": "jest",
+    "test": "jest  --detectOpenHandles --forceExit",
     "test-watch": "jest --watch",
-    "test-coverage": "jest --coverage",
+    "test-coverage": "jest --coverage --detectOpenHandles --forceExit",
     "postinstall": "lerna bootstrap --no-ci && lerna run --parallel clean && npm run build",
     "generate-readmes": "lerna run --parallel --ignore delete-user-data generate-readme"
   },
