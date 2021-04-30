@@ -138,7 +138,7 @@ export const modifyImage = async ({
       contentEncoding: objectMetadata.contentEncoding,
       contentLanguage: objectMetadata.contentLanguage,
       contentType: imageContentType,
-      metadata: objectMetadata.metadata || {},
+      metadata: objectMetadata.metadata ? { ...objectMetadata.metadata } : {},
     };
     metadata.metadata.resizedImage = true;
     metadata.metadata.size = size;
