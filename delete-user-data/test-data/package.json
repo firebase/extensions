@@ -1,8 +1,12 @@
 {
-  "name": "exts-test-data",
+  "name": "test-data",
   "description": "Populate a Firebase project with users and data needed to test extensions",
   "main": "index.js",
   "scripts": {
+    "build": "npm run clean && npm run compile",
+    "clean": "rimraf lib",
+    "compile": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "populate": "ts-node index.ts"
   },
   "author": "Chris Bianca <chris@csfrequency.com>",
