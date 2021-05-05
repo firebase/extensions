@@ -37,7 +37,10 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
  - Cloud Storage
  - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#expandable-24))
 
-#### Configuration Parameters
+
+
+
+**Configuration Parameters:**
 
 * Cloud Functions location: Where do you want to deploy the functions created for this extension? You usually want a location close to your Storage bucket. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
