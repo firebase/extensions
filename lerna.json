@@ -8,6 +8,7 @@
     "firestore-send-email/functions",
     "firestore-counter/functions",
     "delete-user-data/functions",
+    "delete-user-data/test-data",
     "storage-resize-images/functions",
     "firestore-bigquery-export/functions",
     "firestore-bigquery-export/scripts/gen-schema-view",

@@ -1,5 +1,5 @@
 {
-  "name": "exts-test-data",
+  "name": "test-data",
   "description": "Populate a Firebase project with users and data needed to test extensions",
   "main": "index.js",
   "scripts": {
