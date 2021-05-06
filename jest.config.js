@@ -15,7 +15,7 @@ module.exports = {
   collectCoverageFrom: [
     "**/*.{ts,tsx}",
     "!**/node_modules/**",
-    "!**/exts-test-data/**",
+    "!**/test-data/**",
   ],
   maxConcurrency: 10,
 };
