@@ -4,7 +4,7 @@
     "lib": ["esnext.asynciterable"],
     "outDir": "lib",
     "types": ["node", "jest", "chai"],
-    "target": "es2018"
+    "target": "es2019"
   },
   "files": ["./__tests__/test.types.d.ts"],
   "include": ["src"]
