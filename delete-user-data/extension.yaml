@@ -60,7 +60,7 @@ resources:
       Cloud Storage.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs10
+      runtime: nodejs12
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${param:PROJECT_ID}
