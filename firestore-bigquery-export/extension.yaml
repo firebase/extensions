@@ -80,6 +80,8 @@ params:
         value: us-west3
       - label: Las Vegas (us-west4)
         value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
@@ -135,7 +137,7 @@ params:
       - label: Sao Paulo (southamerica-east1)
         value: southamerica-east1
       - label: South Carolina (us-east1)
-        value: us-east1    
+        value: us-east1
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: Finland (europe-north1)
@@ -145,7 +147,7 @@ params:
       - label: London (europe-west2)
         value: europe-west2
       - label: Netherlands (europe-west4)
-        value: europe-west4  
+        value: europe-west4
       - label: Zurich (europe-west6)
         value: europe-west6
       - label: Hong Kong (asia-east2)
@@ -161,7 +163,7 @@ params:
       - label: Singapore (asia-southeast1)
         value: asia-southeast1
       - label: Sydney (australia-southeast1)
-        value: australia-southeast1  
+        value: australia-southeast1
       - label: Taiwan (asia-east1)
         value: asia-east1
       - label: Tokyo (asia-northeast1)
@@ -169,10 +171,10 @@ params:
       - label: United States (multi-regional)
         value: us
       - label: Europe (multi-regional)
-        value: eu      
+        value: eu
     default: us
     required: true
-    immutable: true  
+    immutable: true
 
   - param: COLLECTION_PATH
     label: Collection path
@@ -219,10 +221,10 @@ params:
   - param: TABLE_PARTITIONING
     label: BigQuery SQL table partitioning option
     description: >-
-      This parameter will allow you to partition the BigQuery table and BigQuery view 
+      This parameter will allow you to partition the BigQuery table and BigQuery view
       created by the extension based on data ingestion time. You may select the granularity of
       partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will
-      generate one partition per day, hour, month or year, respectively. 
+      generate one partition per day, hour, month or year, respectively.
     type: select
     options:
       - label: hour
@@ -230,7 +232,7 @@ params:
       - label: day
         value: DAY
       - label: month
-        value: MONTH 
+        value: MONTH
       - label: year
         value: YEAR
       - label: none

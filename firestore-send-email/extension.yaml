@@ -77,6 +77,8 @@ params:
         value: us-west3
       - label: Las Vegas (us-west4)
         value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
@@ -130,7 +132,7 @@ params:
   - param: DEFAULT_FROM
     label: Default FROM address
     description: >-
-      The email address to use as the sender's address (if it's not specified in the added email document). 
+      The email address to use as the sender's address (if it's not specified in the added email document).
       You can optionally include a name with the email address (`Friendly Firebaser <foobar@example.com>`).
     type: string
     example: foobar@example.com
