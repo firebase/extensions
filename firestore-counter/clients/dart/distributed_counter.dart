@@ -1,19 +1,10 @@
-import 'dart:async';
-
+import 'package:async/async.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 const SHARD_COLLECTION_ID = '_counter_shards_';
 
 class DistributedCounter {
-  static String shardId;
-
-  final DocumentReference doc;
-  final String field;
-  final FirebaseFirestore db;
-
-  Map<String, int> shards = {};
-  List<StreamSubscription<DocumentSnapshot>> subscriptions = [];
-
+  /// Initialize the shardId, which is shared among all the instances.
   static void init(String shardId) {
     DistributedCounter.shardId = shardId;
   }
@@ -23,15 +14,34 @@ class DistributedCounter {
   ///
   /// @param doc A reference to a document with a counter field.
   /// @param field A path to a counter field in the above document.
-  DistributedCounter(this.doc, this.field) : db = doc.firestore {
+  factory DistributedCounter(doc, field) {
     final shardsRef = doc.collection(SHARD_COLLECTION_ID);
+    Map<String, int> shards = {};
     shards[doc.path] = 0;
     shards[shardsRef.doc(shardId).path] = 0;
     shards[shardsRef.doc('\t' + shardId.substring(0, 4)).path] = 0;
     shards[shardsRef.doc('\t\t' + shardId.substring(0, 3)).path] = 0;
     shards[shardsRef.doc('\t\t\t' + shardId.substring(0, 2)).path] = 0;
     shards[shardsRef.doc('\t\t\t\t' + shardId.substring(0, 1)).path] = 0;
+    Stream<int> snapshots = StreamGroup.mergeBroadcast<int>(shards.keys.map(
+        (path) => doc.firestore
+                .doc(path)
+                .snapshots()
+                .map<int>((DocumentSnapshot snap) {
+              shards[snap.reference.path] = snap.exists ? snap.get(field) : 0;
+              return shards.values.reduce((a, b) => a + b);
+            })));
+    return DistributedCounter._(doc, field, snapshots);
   }
+
+  DistributedCounter._(this.doc, this.field, this._snapshots);
+
+  static String shardId;
+
+  final DocumentReference doc;
+  final String field;
+  final Map<String, int> shards = {};
+  final Stream<int> _snapshots;
 
   /// Get latency compensated view of the counter.
   ///
@@ -39,7 +49,7 @@ class DistributedCounter {
   /// counter hasn't been updated yet.
   Future<int> get(GetOptions options) async {
     final valuePromises = shards.keys.map((path) async {
-      final shard = await db.doc(path).get(options);
+      final shard = await doc.firestore.doc(path).get(options);
       return shard.get(field) ?? 0;
     });
     final values = await Future.wait(valuePromises);
@@ -50,19 +60,12 @@ class DistributedCounter {
   ///
   /// All local increments to this counter will be immediately visible in the
   /// snapshot.
-  void onSnapshot(void Function(int) observable) {
-    subscriptions.addAll(
-        shards.keys.map((path) => db.doc(path).snapshots().listen((snap) {
-              shards[snap.reference.path] = snap.exists ? snap.get(field) : 0;
-              final sum = shards.values.reduce((a, b) => a + b);
-              observable(sum);
-            })));
-  }
+  Stream<int> snapshots() => _snapshots;
 
   /// Increment the counter by a given value.
   ///
   /// e.g.
-  /// const counter = new sharded.Counter(db.doc('path/document'), 'counter');
+  /// final counter = DistributedCounter(db.doc('path/document'), 'counter');
   /// counter.incrementBy(1);
   Future<void> incrementBy(int val) {
     final increment = FieldValue.increment(val);
@@ -71,25 +74,9 @@ class DistributedCounter {
         .split('.')
         .reversed
         .fold(increment, (value, name) => {name: value});
-    return shard().set(update, SetOptions(merge: true));
-  }
-
-  /// Access the assigned shard directly. Useful to update multiple counters
-  /// at the same time, batches or transactions.
-  ///
-  /// e.g.
-  /// const counter = new sharded.Counter(db.doc('path/counter'), '');
-  /// const shardRef = counter.shard();
-  /// shardRef.set({'counter1', firestore.FieldValue.Increment(1),
-  ///               'counter2', firestore.FieldValue.Increment(1));
-  DocumentReference shard() {
-    return doc.collection(SHARD_COLLECTION_ID).doc(shardId);
-  }
-
-  void unsubscribe() {
-    subscriptions.forEach((element) {
-      element.cancel();
-    });
-    subscriptions = [];
+    return doc
+        .collection(SHARD_COLLECTION_ID)
+        .doc(shardId)
+        .set(update, SetOptions(merge: true));
   }
 }
