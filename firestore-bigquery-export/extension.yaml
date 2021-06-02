@@ -53,7 +53,7 @@ resources:
       then exports the changes into BigQuery.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs12
+      runtime: nodejs14
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
