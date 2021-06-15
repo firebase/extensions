@@ -142,7 +142,7 @@ async function processCollection(config: CliConfig): Promise<number> {
   return total;
 }
 
-export async function run(): Promise<number> {
+export async function runMultiThread(): Promise<number> {
   const config: CliConfig = await parseConfig();
   const { projectId, queryCollectionGroup } = config; // No longer needed? collectionGroup handles both types?
 
