@@ -57,7 +57,7 @@ const validateInput = (
     return `${name} must be at most ${sizeLimit} characters long`;
   }
   if (!value.match(regex)) {
-    return `The ${name} must only contain letters or spaces`;
+    return `The ${name} does not match the regular expression provided`;
   }
   return true;
 };
