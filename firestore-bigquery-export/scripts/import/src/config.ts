@@ -138,6 +138,12 @@ const questions = [
     default: "us",
     validate: validateLocation,
   },
+  {
+    message: "Would you like to run the import across multiple threads?",
+    name: "multiThreaded",
+    type: "confirm",
+    default: false,
+  },
 ];
 
 export async function parseConfig(): Promise<CliConfig> {
@@ -152,6 +158,7 @@ export async function parseConfig(): Promise<CliConfig> {
       program.queryCollectionGroup === undefined ||
       program.batchSize === undefined ||
       program.datasetLocation === undefined ||
+      program.multiThreaded === undefined ||
       !validateBatchSize(program.batchSize)
     ) {
       program.outputHelp();
@@ -165,6 +172,7 @@ export async function parseConfig(): Promise<CliConfig> {
       batchSize: program.batchSize,
       queryCollectionGroup: program.queryCollectionGroup === "true",
       datasetLocation: program.datasetLocation,
+      multiThreaded: program.multiThreaded === "true",
     };
   }
   const {
@@ -175,6 +183,7 @@ export async function parseConfig(): Promise<CliConfig> {
     batchSize,
     queryCollectionGroup,
     datasetLocation,
+    multiThreaded,
   } = await inquirer.prompt(questions);
   return {
     projectId: project,
@@ -184,5 +193,6 @@ export async function parseConfig(): Promise<CliConfig> {
     batchSize: batchSize,
     queryCollectionGroup: queryCollectionGroup,
     datasetLocation: datasetLocation,
+    multiThreaded: multiThreaded,
   };
 }

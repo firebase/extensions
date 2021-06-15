@@ -22,6 +22,7 @@ import * as fs from "fs";
 import * as inquirer from "inquirer";
 import * as util from "util";
 import * as filenamify from "filenamify";
+import { runMultiThread } from "./run";
 
 import {
   ChangeType,
@@ -134,6 +135,10 @@ program
   .option(
     "-l, --dataset-location <location>",
     "Location of the BigQuery dataset."
+  )
+  .option(
+    "-m, --multi-threaded [true|false]",
+    "Whether to run standard or multi-thread import version"
   );
 
 const questions = [
@@ -210,6 +215,12 @@ const questions = [
     default: "us",
     validate: validateLocation,
   },
+  {
+    message: "Would you like to run the import across multiple threads?",
+    name: "multiThreaded",
+    type: "confirm",
+    default: false,
+  },
 ];
 
 interface CliConfig {
@@ -220,6 +231,7 @@ interface CliConfig {
   batchSize: string;
   queryCollectionGroup: boolean;
   datasetLocation: string;
+  multiThreaded: boolean;
 }
 
 const run = async (): Promise<number> => {
@@ -231,7 +243,10 @@ const run = async (): Promise<number> => {
     tableId,
     batchSize,
     datasetLocation,
+    multiThreaded,
   }: CliConfig = await parseConfig();
+
+  if (multiThreaded) return runMultiThread();
 
   const batch = parseInt(batchSize);
   const rawChangeLogName = `${tableId}_raw_changelog`;
@@ -350,6 +365,7 @@ async function parseConfig(): Promise<CliConfig> {
       program.outputHelp();
       process.exit(1);
     }
+
     return {
       projectId: program.project,
       sourceCollectionPath: program.sourceCollectionPath,
@@ -358,6 +374,7 @@ async function parseConfig(): Promise<CliConfig> {
       batchSize: program.batchSize,
       queryCollectionGroup: program.queryCollectionGroup === "true",
       datasetLocation: program.datasetLocation,
+      multiThreaded: program.multiThreaded === "true",
     };
   }
   const {
@@ -368,7 +385,9 @@ async function parseConfig(): Promise<CliConfig> {
     batchSize,
     queryCollectionGroup,
     datasetLocation,
+    multiThreaded,
   } = await inquirer.prompt(questions);
+
   return {
     projectId: project,
     sourceCollectionPath: sourceCollectionPath,
@@ -377,6 +396,7 @@ async function parseConfig(): Promise<CliConfig> {
     batchSize: batchSize,
     queryCollectionGroup: queryCollectionGroup,
     datasetLocation: datasetLocation,
+    multiThreaded: multiThreaded,
   };
 }
 

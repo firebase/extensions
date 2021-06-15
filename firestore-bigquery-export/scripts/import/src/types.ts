@@ -6,6 +6,7 @@ export interface CliConfig {
   batchSize: number;
   queryCollectionGroup: boolean;
   datasetLocation: string;
+  multiThreaded: boolean;
 }
 
 export interface SerializableQuery {
