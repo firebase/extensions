@@ -41,6 +41,7 @@ async function processCollectionGroup(config: CliConfig): Promise<number> {
     const inProgressTasks =
       workerPool.stats().activeTasks + workerPool.stats().pendingTasks;
     if (inProgressTasks >= maxWorkers) {
+      // A timeout is needed here to stop infinite rechecking of workpool.stats().
       await new Promise((resolve) => setTimeout(resolve, 150));
       continue;
     }
@@ -77,6 +78,8 @@ async function processCollectionGroup(config: CliConfig): Promise<number> {
 
   // Wait for all tasks to be complete.
   while (workerPool.stats().activeTasks + workerPool.stats().pendingTasks > 0) {
+    // Return a default promise
+    // A timeout is needed here to stop infinite rechecking of workpool.stats().
     await new Promise((resolve) => setTimeout(resolve, 150));
   }
 
@@ -95,6 +98,7 @@ async function processCollection(config: CliConfig): Promise<number> {
   let batches = 0;
   let lastDocument = null;
   let lastBatchSize: number = config.batchSize;
+
   while (lastBatchSize == config.batchSize) {
     batches++;
     let query = firebase
