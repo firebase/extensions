@@ -87,6 +87,14 @@ async function processCollectionGroup(config: CliConfig): Promise<number> {
 
   console.log(`Imported ${total} documents in ${partitions} partitions.`);
 
+  console.log("---------------------------------------------------------");
+  console.log(
+    `Please see https://console.cloud.google.com/bigquery?p=${
+      config.projectId
+    }&d=${config.datasetId}&t=${config.tableId}_raw_changelog&page=table`
+  );
+  console.log("---------------------------------------------------------");
+
   return Promise.resolve(total);
 }
 
