@@ -1,6 +1,5 @@
 ## Version 0.1.10
 
-
 feature - added warsaw (europe-central2) location (#677)
 
 ## Version 0.1.9

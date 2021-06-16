@@ -1,6 +1,5 @@
 ## Version 0.1.14
 
-
 feature - added warsaw (europe-central2) location (#677)
 
 fixed - Updated file naming for bq imports (#589)
