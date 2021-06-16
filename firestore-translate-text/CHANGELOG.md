@@ -1,3 +1,10 @@
+## Version 0.1.6
+
+
+feature - added warsaw (europe-central2) location (#677)
+
+fixed - Removed code coverage check on ci
+
 ## Version 0.1.5
 
 docs - Improved documentation for input fields of type [`Map`](https://firebase.google.com/docs/firestore/manage-data/data-types#data_types).

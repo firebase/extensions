@@ -1,3 +1,8 @@
+## Version 0.2.3
+
+
+feature - added warsaw (europe-central2) location (#677)
+
 ## Version 0.2.2
 
 feature - Added Android client instructions for firestore-counter extension.

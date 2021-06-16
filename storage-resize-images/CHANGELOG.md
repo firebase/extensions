@@ -1,3 +1,8 @@
+## Version 0.1.22
+
+
+feature - added warsaw (europe-central2) location (#677)
+
 ## Version 0.1.20
 
 feature - Adds support for wildcards in include/exclude paths (#568)

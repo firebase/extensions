@@ -1,3 +1,10 @@
+## Version 0.1.4
+
+
+feature - added warsaw (europe-central2) location (#677)
+
+fixed - Removed code coverage check on ci
+
 ## Version 0.1.3
 
 feature - Adds an option to select an alternative database instance (#504)

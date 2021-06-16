@@ -1,3 +1,10 @@
+## Version 0.1.14
+
+
+feature - added warsaw (europe-central2) location (#677)
+
+fixed - Updated file naming for bq imports (#589)
+
 ## Version 0.1.13
 
 feature - Added the ability to optionally create partitioned tables to improve query performance and reduce the cost of querying large datasets (#581)
