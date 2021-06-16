@@ -54,7 +54,7 @@ resources:
       then writes the shortened form back to the same document.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs10
+      runtime: nodejs14
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
@@ -81,6 +81,8 @@ params:
         value: us-west3
       - label: Las Vegas (us-west4)
         value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
