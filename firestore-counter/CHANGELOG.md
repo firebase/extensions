@@ -1,6 +1,8 @@
 ## Version 0.2.3
 
-feature - added warsaw (europe-central2) location (#677)
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
 
 ## Version 0.2.2
 
