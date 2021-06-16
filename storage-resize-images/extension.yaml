@@ -57,7 +57,7 @@ resources:
       then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs10
+      runtime: nodejs14
       availableMemoryMb: 1024
       eventTrigger:
         eventType: google.storage.object.finalize
