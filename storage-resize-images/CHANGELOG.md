@@ -1,3 +1,9 @@
+## Version 0.1.22
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
 ## Version 0.1.20
 
 feature - Adds support for wildcards in include/exclude paths (#568)
