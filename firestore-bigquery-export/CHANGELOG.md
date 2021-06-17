@@ -1,3 +1,9 @@
+## Version 0.1.14
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
 ## Version 0.1.13
 
 feature - Added the ability to optionally create partitioned tables to improve query performance and reduce the cost of querying large datasets (#581)
