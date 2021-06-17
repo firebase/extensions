@@ -1,3 +1,11 @@
+## Version 0.1.9
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
+fixed - Removed code coverage check on ci
+
 ## Version 0.1.8
 
 fixed - fixed an issue where delete-user-data didn't recognize {DEFAULT} Storage bucket (#532)
