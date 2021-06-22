@@ -5,6 +5,9 @@ import { pool } from "workerpool";
 import { CliConfig } from "./types";
 import { parseConfig } from "./config";
 
+const { BigQuery } = require("@google-cloud/bigquery");
+const bigquery = new BigQuery();
+
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
@@ -156,7 +159,13 @@ async function processCollection(config: CliConfig): Promise<number> {
 
 export async function runMultiThread(): Promise<number> {
   const config: CliConfig = await parseConfig();
-  const { projectId, queryCollectionGroup } = config; // No longer needed? collectionGroup handles both types?
+  const {
+    projectId,
+    queryCollectionGroup,
+    tableId,
+    datasetLocation,
+    datasetId,
+  } = config; // No longer needed? collectionGroup handles both types?
 
   // Initialize Firebase
   firebase.initializeApp({
@@ -164,14 +173,39 @@ export async function runMultiThread(): Promise<number> {
     databaseURL: `https://${projectId}.firebaseio.com`,
   });
 
-  // TODO ensure bq views and tables already exist otherwise first worker will error.
-  // TODO ensure bq views and tables already exist otherwise first worker will error.
-  // TODO ensure bq views and tables already exist otherwise first worker will error.
-  // TODO ensure bq views and tables already exist otherwise first worker will error.
-
   // Set project ID so it can be used in BigQuery initialization
   process.env.PROJECT_ID = projectId;
   process.env.GOOGLE_CLOUD_PROJECT = projectId;
+
+  // Store whether the dataset exists before initialization
+  const rawChangeLogName = `${config.tableId}_raw_changelog`;
+
+  const dataset = bigquery.dataset(config.datasetId, {
+    location: datasetLocation,
+  });
+
+  const table = dataset.table(rawChangeLogName);
+  const [exists] = await table.exists();
+
+  const dataSink = new FirestoreBigQueryEventHistoryTracker({
+    tableId,
+    datasetId,
+    datasetLocation,
+  });
+
+  await dataSink.initialize();
+  if (!exists) {
+    console.log("Intializing dataset, this may take upto 1 minute...");
+    await new Promise((resolve) => setTimeout(resolve, 60000)); // Wait 1 minutes datset init
+  }
+
+  console.log(
+    `Importing data from Cloud Firestore Collection${
+      queryCollectionGroup ? " (via a Collection Group query)" : ""
+    }: ${config.sourceCollectionPath}, to BigQuery Dataset: ${
+      config.datasetId
+    }, Table: ${rawChangeLogName}`
+  );
 
   return queryCollectionGroup
     ? processCollectionGroup(config)
