@@ -10,6 +10,7 @@ Here are some features of this extension:
 
 Note that this extension requires client-side logic to work. We provide a [TypeScript client sample implementation](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts) and its [compiled minified JavaScript](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/dist/sharded-counter.js). You can use this extension on other platforms if you'd like to develop your own client code based on the provided client sample.
 
+We also provide a [Node.js admin sample implementation](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/node/index.js)
 
 #### Additional setup
 
@@ -18,7 +19,7 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 After installing this extension, you'll need to:
 
 - Update your [database security rules](https://firebase.google.com/docs/rules).
-- Use the provided [client sample](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts) or your own client code to specify your document path and increment values.
+- Use the provided [client sample](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts), the provided [Node.js admin sample](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/node/index.js) or your own client code to specify your document path and increment values.
 
 Detailed information for these post-installation tasks are provided after you install this extension.
 

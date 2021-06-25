@@ -19,7 +19,7 @@ match /databases/{database}/documents/pages/{page} {
 }
 ```
 
-#### Client samples for incrementing counter and retrieving its value
+#### Client/Admin samples for incrementing counter and retrieving its value
 
 ##### Web Client
 
@@ -157,6 +157,37 @@ class ViewController: UIViewController {
   }
 }
 
+```
+
+
+##### Node.js Admin
+
+1. Follow the steps in [Add Firebase Admin SDK to your server](https://firebase.google.com/docs/admin/setup) to use Firebase in your app.
+
+2.  Download and copy the [Node.js Admin sample](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/node/index.js) into your application project.
+
+```js
+  // Initialize Firebase.
+  const admin = require('firebase-admin');
+  admin.initializeApp();
+  const db = admin.firestore();
+
+  const Counter = require("./distributed_counter")
+
+  const visits = new Counter(db.collection("pages").doc("hello-world"), "visits")
+
+  // Increment the field "visits" of the document "pages/hello-world".
+  visits.incrementBy(1);
+
+  // Listen to locally consistent values.
+  visits.onSnapshot((snap) => {
+    console.log("Locally consistent view of visits: " + snap.data());
+  });
+
+  // Alternatively, if you don't mind counter delays, you can listen to the document directly.
+  db.collection("pages").doc("hello-world").onSnapshot((snap) => {
+    console.log("Eventually consistent view of visits: " + snap.get("visits"));
+  });
 ```
 
 #### Upgrading from v0.1.3 and earlier
