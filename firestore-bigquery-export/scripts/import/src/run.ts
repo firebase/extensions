@@ -73,7 +73,11 @@ async function processCollectionGroup(config: CliConfig): Promise<number> {
         console.log(`${total} documents processed`);
       })
       .catch((error) => {
-        // TODO handle, what should happen on error?
+        // TODO handle, perhaps introduce a retry option?
+        console.error(
+          "An error has occurred on the following documents, please re-run or insert the following query documents manually...",
+          JSON.stringify(serializedQuery)
+        );
         console.error(error);
         process.exit(1);
       });
