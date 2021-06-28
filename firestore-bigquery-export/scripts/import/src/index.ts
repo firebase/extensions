@@ -39,6 +39,7 @@ const unlink = util.promisify(fs.unlink);
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
 
+const PROJECT_ID_MAX_CHARS = 6144;
 const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
 const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
 
@@ -151,7 +152,7 @@ const questions = [
         value,
         "project ID",
         FIRESTORE_VALID_CHARACTERS,
-        FIRESTORE_COLLECTION_NAME_MAX_CHARS
+        PROJECT_ID_MAX_CHARS
       ),
   },
   {
