@@ -1,3 +1,13 @@
+## Version 0.1.16
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
+## Version 0.1.15
+
+fixed - rolled back version 0.1.14 to address issue #681
+
 ## Version 0.1.14
 
 feature - added Warsaw (europe-central2) location (#677)
