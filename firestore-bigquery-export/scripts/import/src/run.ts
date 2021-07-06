@@ -45,7 +45,7 @@ async function processCollectionGroup(config: CliConfig): Promise<number> {
       workerPool.stats().activeTasks + workerPool.stats().pendingTasks;
     if (inProgressTasks >= maxWorkers) {
       // A timeout is needed here to stop infinite rechecking of workpool.stats().
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150, []));
       continue;
     }
 
@@ -86,7 +86,7 @@ async function processCollectionGroup(config: CliConfig): Promise<number> {
   while (workerPool.stats().activeTasks + workerPool.stats().pendingTasks > 0) {
     // Return a default promise
     // A timeout is needed here to stop infinite rechecking of workpool.stats().
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    await new Promise((resolve) => setTimeout(resolve, 150, []));
   }
 
   await workerPool.terminate();
@@ -199,7 +199,7 @@ export async function runMultiThread(): Promise<number> {
   await dataSink.initialize();
   if (!exists) {
     console.log("Intializing dataset, this may take upto 1 minute...");
-    await new Promise((resolve) => setTimeout(resolve, 60000)); // Wait 1 minutes datset init
+    await new Promise((resolve) => setTimeout(resolve, 60000, [])); // Wait 1 minutes datset init
   }
 
   console.log(
