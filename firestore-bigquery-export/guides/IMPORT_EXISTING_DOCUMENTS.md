@@ -8,6 +8,8 @@ You may pause and resume the import script from the last batch at any point.
 
 #### Important notes
 
+** More information is needed here **
+
 - You must run the import script over the entire collection **_after_** installing the Export Collections to BigQuery extension; otherwise the writes to your database during the import might not be exported to the dataset.
 
 - The import script can take up to _O(collection size)_ time to finish. If your collection is large, you might want to consider [loading data from a Cloud Firestore export into BigQuery](https://cloud.google.com/bigquery/docs/loading-data-cloud-firestore).
