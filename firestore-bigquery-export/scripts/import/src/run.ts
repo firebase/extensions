@@ -15,7 +15,7 @@ import {
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 
 /**
- * Import data from a collection group in parrallel using workers.
+ * Import data from a collection group in parallel using workers.
  */
 async function processCollectionGroup(config: CliConfig): Promise<number> {
   const maxWorkers = Math.ceil(cpus().length / 2);
