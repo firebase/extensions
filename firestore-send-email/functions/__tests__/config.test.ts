@@ -1,7 +1,6 @@
 import * as functionsTestInit from "firebase-functions-test";
 import mockedEnv from "mocked-env";
 
-// @ts-ignore
 const { config } = global;
 
 let restoreEnv;
