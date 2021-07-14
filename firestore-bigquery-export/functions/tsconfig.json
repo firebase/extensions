@@ -6,6 +6,6 @@
     "types": ["node", "jest", "chai"],
     "target": "ES2020"
   },
-  "files": ["./__tests__/test.types.d.ts"],
+  "files": ["__tests__/test.types.d.ts"],
   "include": ["src"]
 }

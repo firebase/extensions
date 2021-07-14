@@ -1,1 +1,5 @@
-global.config = () => require("../src/config").default;
+declare namespace NodeJS {
+  interface Global {
+    config: () => jest.ModuleMocker;
+  }
+}
