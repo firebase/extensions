@@ -1,5 +1,5 @@
 import * as firebase from "firebase-admin";
-import { CliConfig, SerializableQuery } from "./types";
+import { CliConfig, SerializableQuery, QueryOptions } from "./types";
 import { worker } from "workerpool";
 
 import {
@@ -31,15 +31,11 @@ async function processDocuments(
   const query = firebase
     .firestore()
     .collectionGroup(sourceCollectionPath)
-    .orderBy(firebase.firestore.FieldPath.documentId(), "asc");
+    .orderBy(firebase.firestore.FieldPath.documentId(), "asc") as QueryOptions;
 
-  // @ts-ignore
   query._queryOptions.startAt = serializableQuery.startAt;
-  // @ts-ignore
   query._queryOptions.endAt = serializableQuery.endAt;
-  // @ts-ignore
   query._queryOptions.limit = serializableQuery.limit;
-  // @ts-ignore
   query._queryOptions.offset = serializableQuery.offset;
 
   const { docs } = await query.get();
