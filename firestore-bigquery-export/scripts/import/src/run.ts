@@ -168,9 +168,11 @@ export async function runMultiThread(): Promise<number> {
     tableId,
     datasetLocation,
     datasetId,
-  } = config; // No longer needed? collectionGroup handles both types?
+  } = config;
 
   // Initialize Firebase
+  // This uses applicationDefault to authenticate
+  // Please see https://cloud.google.com/docs/authentication/production
   firebase.initializeApp({
     credential: firebase.credential.applicationDefault(),
     databaseURL: `https://${projectId}.firebaseio.com`,
