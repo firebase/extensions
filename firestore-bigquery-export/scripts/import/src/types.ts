@@ -1,3 +1,5 @@
+import * as admin from "firebase-admin";
+
 export interface CliConfig {
   projectId: string;
   sourceCollectionPath: string;
@@ -10,8 +12,13 @@ export interface CliConfig {
 }
 
 export interface SerializableQuery {
-  startAt: any;
-  endAt: any;
-  limit: any;
-  offset: any;
+  startAt: FirebaseFirestore.Query<FirebaseFirestore.DocumentData>;
+  endAt: FirebaseFirestore.Query<FirebaseFirestore.DocumentData>;
+  limit: FirebaseFirestore.Query<FirebaseFirestore.DocumentData>;
+  offset: FirebaseFirestore.Query<FirebaseFirestore.DocumentData>;
+}
+
+export interface QueryOptions
+  extends FirebaseFirestore.Query<FirebaseFirestore.DocumentSnapshot<any>> {
+  _queryOptions: SerializableQuery;
 }
