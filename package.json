@@ -21,6 +21,7 @@
     "url": ""
   },
   "devDependencies": {
+    "@types/node": "^12.6.9",
     "@types/jest": "^24.0.18",
     "codecov": "^3.8.1",
     "jest": "^24.9.0",
