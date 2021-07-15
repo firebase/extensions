@@ -19,7 +19,6 @@ const environment = {
   OUTPUT_FIELD_NAME: "translated",
 };
 
-// @ts-ignore
 const { config } = global;
 
 functionsTestInit();
