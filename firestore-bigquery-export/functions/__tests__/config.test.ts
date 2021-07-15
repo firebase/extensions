@@ -15,7 +15,6 @@ const environment = {
   TABLE_ID: "my_table",
 };
 
-// @ts-ignore
 const { config } = global;
 
 describe("extension config", () => {

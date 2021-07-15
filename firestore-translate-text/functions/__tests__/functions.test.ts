@@ -14,25 +14,15 @@ const defaultEnvironment = {
 };
 
 const {
-  // @ts-ignore
   snapshot,
-  // @ts-ignore
   testTranslations,
-  // @ts-ignore
   mockDocumentSnapshotFactory,
-  // @ts-ignore
   mockTranslate,
-  // @ts-ignore
   mockTranslateClassMethod,
-  // @ts-ignore
   mockTranslateClass,
-  // @ts-ignore
   mockFirestoreUpdate,
-  // @ts-ignore
   mockFirestoreTransaction,
-  // @ts-ignore
   mockTranslateModule,
-  // @ts-ignore
   clearMocks,
 } = global;
 
