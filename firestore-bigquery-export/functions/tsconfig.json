@@ -1,5 +1,6 @@
 {
   "extends": "../../tsconfig.json",
+  "files": ["./__tests__/test.types.d.ts"],
   "compilerOptions": {
     "lib": ["esnext.asynciterable"],
     "outDir": "lib",
