@@ -113,7 +113,7 @@ async function processCollection(config: CliConfig): Promise<number> {
   let lastDocument = null;
   let lastBatchSize: number = config.batchSize;
 
-  while (lastBatchSize == config.batchSize) {
+  while (lastBatchSize === config.batchSize) {
     batches++;
     let query = firebase
       .firestore()
