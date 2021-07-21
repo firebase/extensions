@@ -60,32 +60,20 @@ export function buildLatestSnapshotViewQuery(
     --   event_id: The id of the event that triggered the cloud function mirrored the event.
     --   data: A raw JSON payload of the current state of the document.
     --   document_id: The document id as defined in the Firestore database
+    WITH latest AS (
+      SELECT max(${timestampColumnName}) as latest_timestamp, document_id
+      FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`
+      GROUP BY document_id
+    )
     SELECT
     document_name,
-    document_id${groupByColumns.length > 0 ? `,` : ``}
+    t.document_id${groupByColumns.length > 0 ? `,` : ``}
       ${groupByColumns.join(",")}
-    FROM (
-      SELECT
-        document_name,
-        document_id,
-        ${groupByColumns
-          .map(
-            (columnName) => `FIRST_VALUE(${columnName})
-            OVER(PARTITION BY document_name ORDER BY ${timestampColumnName} DESC)
-            AS ${columnName}`
-          )
-          .join(",")}${groupByColumns.length > 0 ? `,` : ``}
-        FIRST_VALUE(operation)
-          OVER(PARTITION BY document_name ORDER BY ${timestampColumnName} DESC) = "DELETE"
-          AS is_deleted
-      FROM \`${
-        bqProjectId || process.env.PROJECT_ID
-      }.${datasetId}.${tableName}\`
-      ORDER BY document_name, ${timestampColumnName} DESC
-    )
-    WHERE NOT is_deleted
-    GROUP BY document_name, document_id${
-      groupByColumns.length > 0 ? `, ` : ``
-    }${groupByColumns.join(",")}`);
+    FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\` AS t
+    JOIN latest ON (t.document_id = latest.document_id AND t.${timestampColumnName} = latest.latest_timestamp)
+    WHERE operation != "DELETE"
+    GROUP BY document_name, document_id${groupByColumns.length > 0 ? `, ` : ``
+    }${groupByColumns.join(",")}`
+  );
   return query;
 }
