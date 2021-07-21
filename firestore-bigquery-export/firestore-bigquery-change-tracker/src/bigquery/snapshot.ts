@@ -61,16 +61,16 @@ export function buildLatestSnapshotViewQuery(
     --   data: A raw JSON payload of the current state of the document.
     --   document_id: The document id as defined in the Firestore database
     WITH latest AS (
-      SELECT max(${timestampColumnName}) as latest_timestamp, document_id
+      SELECT max(${timestampColumnName}) as latest_timestamp, document_name
       FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`
-      GROUP BY document_id
+      GROUP BY document_name
     )
     SELECT
-    document_name,
-    t.document_id${groupByColumns.length > 0 ? `,` : ``}
+    t.document_name,
+    document_id${groupByColumns.length > 0 ? `,` : ``}
       ${groupByColumns.join(",")}
     FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\` AS t
-    JOIN latest ON (t.document_id = latest.document_id AND t.${timestampColumnName} = latest.latest_timestamp)
+    JOIN latest ON (t.document_name = latest.document_name AND t.${timestampColumnName} = latest.latest_timestamp)
     WHERE operation != "DELETE"
     GROUP BY document_name, document_id${groupByColumns.length > 0 ? `, ` : ``
     }${groupByColumns.join(",")}`
