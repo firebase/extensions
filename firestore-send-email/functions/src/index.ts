@@ -21,11 +21,11 @@ import * as nodemailer from "nodemailer";
 import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
-import { QueuePayload } from "./types";
+import { QueuePayload, TemplateData } from "./types";
 
 logs.init();
 
-let db;
+let db: FirebaseFirestore.Firestore;
 let transport;
 let templates;
 let initialized = false;
@@ -40,9 +40,7 @@ async function initialize() {
   db = admin.firestore();
   transport = await transportLayer();
   if (config.templatesCollection) {
-    templates = new Templates(
-      admin.firestore().collection(config.templatesCollection)
-    );
+    templates = new Templates({ collection: admin.firestore().collection(config.templatesCollection) });
   }
 }
 
@@ -170,15 +168,17 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
     ...Object.keys(toFetch).map((uid) =>
       db.collection(config.usersCollection).doc(uid)
     ),
-    {
-      fieldMask: ["email"],
-    }
+    (payload.personalize == true) ? {} : { fieldMask: ["email"] }
   );
 
   const missingUids = [];
-
-  documents.forEach((documentSnapshot) => {
+  documents.forEach(async (documentSnapshot) => {
     if (documentSnapshot.exists) {
+      // Personalize the email.
+      if (documentSnapshot.id === payload.toUids[0]) {
+        payload.message = await personalizeEmail(payload, documentSnapshot.data());
+      }
+
       const email = documentSnapshot.get("email");
 
       if (email) {
@@ -331,7 +331,36 @@ async function processWrite(change) {
       return deliver(payload, change.after.ref);
   }
 }
+async function personalizeEmail(payload: QueuePayload, data: FirebaseFirestore.DocumentData): Promise<any> {
+  return new Promise(async (resolve, reject) => {
+    // Check if email needs to be personalized or not.
+    if ((payload.toUids.length === 1) && (payload.personalize == true) && (payload.message != undefined)) {
+      try {
+        // Personalize the email.
+        let template = new Templates({
+          template: {
+            name: "default",
+            subject: payload.message.subject,
+            text: payload.message.text.toString(),
+            html: payload.message.html.toString(),
+            partial: false
+          }
+        });
+        payload.message = Object.assign(
+          payload.message || {},
+          await template.render("default", data)
+        )
+        return resolve(payload.message);
+      } catch (reason) {
+        return resolve(payload.message);
+      }
 
+    } else {
+      return resolve(payload.message);
+    }
+  });
+
+}
 export const processQueue = functions.handler.firestore.document.onWrite(
   async (change) => {
     await initialize();
@@ -345,3 +374,5 @@ export const processQueue = functions.handler.firestore.document.onWrite(
     logs.complete();
   }
 );
+
+

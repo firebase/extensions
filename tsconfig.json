@@ -8,4 +8,5 @@
   },
   "compileOnSave": true,
   "exclude": ["node_modules"]
+
 }

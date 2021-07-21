@@ -60,6 +60,7 @@ export interface QueuePayload {
   bccUids?: string[];
   from?: string;
   replyTo?: string;
+  personalize?:boolean;
   headers?: any;
   attachments: Attachment[];
 }

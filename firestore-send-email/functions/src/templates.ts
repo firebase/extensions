@@ -23,6 +23,7 @@ import {
   templateLoaded,
   noPartialAttachmentSupport,
 } from "./logs";
+import { type } from "os";
 
 const subjHandlebars = create();
 const htmlHandlebars = create();
@@ -33,15 +34,24 @@ const attachmentsHandlebars = create();
 export default class Templates {
   collection: FirebaseFirestore.CollectionReference;
   templateMap: { [name: string]: TemplateGroup };
+
   private ready: boolean;
   private waits: (() => void)[];
 
-  constructor(collection: FirebaseFirestore.CollectionReference) {
-    this.collection = collection;
-    this.collection.onSnapshot(this.updateTemplates.bind(this));
-    this.templateMap = {};
-    this.ready = false;
-    this.waits = [];
+  constructor(param: { collection?: FirebaseFirestore.CollectionReference, template?: TemplateData }) {
+    if (param.template) {
+      this.updateTemplates([param.template]);
+      this.templateMap = {};
+      this.ready = false;
+      this.waits = [];
+    } else if (param.collection) {
+      this.collection = param.collection;
+      this.collection.onSnapshot(this.updateTemplates.bind(this));
+      this.templateMap = {};
+      this.ready = false;
+      this.waits = [];
+    }
+
   }
 
   private waitUntilReady(): Promise<void> {
@@ -54,10 +64,17 @@ export default class Templates {
     });
   }
 
-  private updateTemplates(snap: FirebaseFirestore.QuerySnapshot) {
-    const all: TemplateData[] = snap.docs.map((doc) =>
-      Object.assign({ name: doc.id }, doc.data())
-    );
+  private updateTemplates(snap: FirebaseFirestore.QuerySnapshot | TemplateData[]) {
+    let all: TemplateData[];
+    if ("docs" in snap) {
+      all = snap.docs.map((doc) =>
+        Object.assign({ name: doc.id }, doc.data())
+      );
+    } else {
+      all = snap;
+    }
+
+
     const partials = all.filter((t) => t.partial);
     const templates = all.filter((t) => !t.partial);
 
@@ -110,10 +127,7 @@ export default class Templates {
     this.waits.forEach((wait) => wait());
   }
 
-  async render(
-    name: string,
-    data: any
-  ): Promise<{
+  async render(name: string, data: any): Promise<{
     subject: string | null;
     html: string | null;
     text: string | null;
