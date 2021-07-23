@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.21
+version: 0.1.22
 specVersion: v1beta
 
 displayName: Resize Images
@@ -57,7 +57,7 @@ resources:
       then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs10
+      runtime: nodejs14
       availableMemoryMb: 1024
       eventTrigger:
         eventType: google.storage.object.finalize
@@ -85,6 +85,8 @@ params:
         value: us-west3
       - label: Las Vegas (us-west4)
         value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
