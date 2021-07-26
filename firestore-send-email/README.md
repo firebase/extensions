@@ -23,6 +23,10 @@ admin.firestore().collection('mail').add({
 })
 ```
 
+**custom senders**
+
+The `from` field is an optional parameter. If a custom sender is included, please ensure the recieivng SMTP server accepts this fields. Typically, a provider will use the email provided by the configured account details if a custom sender is not allowed.
+
 You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
 
 When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**. Note that this extension is for use with bulk email service providers, like SendGrid, Mailgun, etc.
