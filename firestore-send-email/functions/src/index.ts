@@ -345,3 +345,12 @@ export const processQueue = functions.handler.firestore.document.onWrite(
     logs.complete();
   }
 );
+
+export const processTemplates = functions.handler.firestore.document.onWrite(
+  async (change) => {
+    initialized = false;
+    await initialize();
+
+    logs.complete();
+  }
+);

@@ -55,6 +55,18 @@ resources:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:MAIL_COLLECTION}/{id}
 
+  - name: processTemplates
+    type: firebaseextensions.v1beta.function
+    description:
+      Processes document changes in the specified Cloud Firestore collection,
+      updating available templates for the extension to use.
+    properties:
+      location: ${param:LOCATION}
+      runtime: nodejs14
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:TEMPLATES_COLLECTION}/{id}
+
 params:
   - param: LOCATION
     label: Cloud Functions location
@@ -163,3 +175,5 @@ params:
       This extension can render an email using a [Handlebar](https://handlebarsjs.com/) template,
       if the template is specified in the added email document.
     type: string
+    default: templates
+    required: true

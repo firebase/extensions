@@ -287,3 +287,8 @@ exports.processQueue = functions.handler.firestore.document.onWrite(async (chang
     }
     logs.complete();
 });
+exports.processTemplates = functions.handler.firestore.document.onWrite(async (change) => {
+    initialized = false;
+    await initialize();
+    logs.complete();
+});
