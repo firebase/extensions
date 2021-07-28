@@ -93,6 +93,9 @@ async function preparePayload(payload) {
         if (!template.name) {
             throw new Error(`Template object is missing a 'name' parameter.`);
         }
+        if (typeof payload.message !== "object") {
+            logs.invalidMessage(payload.message);
+        }
         payload.message = Object.assign(payload.message || {}, await templates.render(template.name, template.data));
     }
     let to = [];
@@ -242,6 +245,9 @@ async function processWrite(change) {
         return processCreate(change.after);
     }
     const payload = change.after.data();
+    if (typeof payload.message !== "object") {
+        logs.invalidMessage(payload.message);
+    }
     if (!payload.delivery) {
         logs.missingDeliveryField(change.after.ref);
         return null;

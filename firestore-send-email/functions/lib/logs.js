@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.templateLoaded = exports.partialRegistered = exports.registeredPartial = exports.noPartialAttachmentSupport = exports.missingUids = exports.missingDeliveryField = exports.deliveryError = exports.delivered = exports.attemptingDelivery = exports.complete = exports.error = exports.start = exports.init = exports.obfuscatedConfig = void 0;
+exports.invalidMessage = exports.templateLoaded = exports.partialRegistered = exports.registeredPartial = exports.noPartialAttachmentSupport = exports.missingUids = exports.missingDeliveryField = exports.deliveryError = exports.delivered = exports.attemptingDelivery = exports.complete = exports.error = exports.start = exports.init = exports.obfuscatedConfig = void 0;
 const config_1 = require("./config");
 const firebase_functions_1 = require("firebase-functions");
 exports.obfuscatedConfig = Object.assign({}, config_1.default, {
@@ -73,3 +73,7 @@ function templateLoaded(name) {
     firebase_functions_1.logger.log(`loaded template '${name}'`);
 }
 exports.templateLoaded = templateLoaded;
+function invalidMessage(message) {
+    firebase_functions_1.logger.warn(`message '${message}' is not a valid object - please add as an object or firestore map, otherwise you may experience unexpected results.`);
+}
+exports.invalidMessage = invalidMessage;
