@@ -22,6 +22,8 @@ import {
   registeredPartial,
   templateLoaded,
   noPartialAttachmentSupport,
+  checkingMissingTemplate,
+  foundMissingTemplate,
 } from "./logs";
 
 const subjHandlebars = create();
@@ -110,6 +112,12 @@ export default class Templates {
     this.waits.forEach((wait) => wait());
   }
 
+  checkTemplateExists = async (name) => {
+    const query = this.collection.where("name", "==", name).get();
+
+    return query.then((t) => !t.empty);
+  };
+
   async render(
     name: string,
     data: any
@@ -122,9 +130,16 @@ export default class Templates {
   }> {
     await this.waitUntilReady();
     if (!this.templateMap[name]) {
-      return Promise.reject(
-        new Error(`tried to render non-existent template '${name}'`)
-      );
+      //fallback, check if template does exist, results may be cached
+      checkingMissingTemplate(name);
+      const templateExists = await this.checkTemplateExists(name);
+
+      if (!templateExists)
+        return Promise.reject(
+          new Error(`tried to render non-existent template '${name}'`)
+        );
+
+      foundMissingTemplate(name);
     }
 
     const t = this.templateMap[name];
