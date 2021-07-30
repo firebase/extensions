@@ -119,7 +119,18 @@ If you want to clean up data from your `changelog` table, use the following
    clause is the end of the time range. The query below deletes any rows below that are over one
    month old and have been deleted. */
 
-DELETE FROM `[PROJECT ID].[DATASET ID].[CHANGELOG TABLE ID]`
-  WHERE DATE(timestamp) >= DATE_ADD(CURRENT_DATE(), INTERVAL 1 MONTH)
-  AND operation = "DELETE"
+DELETE FROM `TABLENAME_raw_changelog`
+WHERE (document_name, timestamp) IN
+(
+WITH latest AS (
+    SELECT MAX(timestamp) as timestamp, document_name
+    FROM `TABLENAME_raw_changelog`
+    GROUP BY document_name
+)
+SELECT (t.document_name, t.timestamp)
+FROM `TABLENAME_raw_changelog` AS t
+JOIN latest  ON (t.document_name = latest.document_name )
+WHERE t.timestamp != latest.timestamp
+AND DATETIME(t.timestamp) < DATE_ADD(CURRENT_DATETIME(), INTERVAL -1 MONTH)
+)
 ```
