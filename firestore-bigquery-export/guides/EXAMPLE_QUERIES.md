@@ -117,7 +117,7 @@ If you want to clean up data from your `changelog` table, use the following
 ```sql
 /* The first WHERE clause is the start of the time range, and the second WHERE
    clause is the end of the time range. The query below deletes any rows below that are over one
-   month old and have been deleted. */
+   month old. */
 
 DELETE FROM `TABLENAME_raw_changelog`
 WHERE (document_name, timestamp) IN
