@@ -26,8 +26,8 @@ Or in Firestore
 
 | Field       | Type        | Value                |
 | ----------- | ----------- | -----------          |
-| to          | String      | someone@example.com  |
-| message     | Map         | {subject: 'Hello from Firebase!', html: 'This is an <code>HTML</code> email body.'} |
+| to          | String      | `someone@example.com`  |
+| message     | Map         | `{ subject: 'Hello from Firebase!', html: 'This is an <code>HTML</code> email body.' }` |
 
 
 You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
