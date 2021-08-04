@@ -26,12 +26,12 @@ import {
 
 export function latestConsistentSnapshotSchemaView(
   datasetId: string,
-  rawTableName: string,
+  rawViewName: string,
   schema: FirestoreSchema
 ): any {
   const result = buildLatestSchemaSnapshotViewQuery(
     datasetId,
-    rawTableName,
+    rawViewName,
     schema
   );
   return {
@@ -62,7 +62,7 @@ export const testBuildLatestSchemaSnapshotViewQuery = (
 
 export const buildLatestSchemaSnapshotViewQuery = (
   datasetId: string,
-  rawTableName: string,
+  rawViewName: string,
   schema: FirestoreSchema
 ): any => {
   // We need to pass the dataset id into the parser so that we can call the
@@ -115,20 +115,13 @@ export const buildLatestSchemaSnapshotViewQuery = (
   const schemaHasGeopoints = schemaFieldGeopoints.length > 0;
 
   let query = `
-      WITH latest AS (
-        SELECT max(timestamp) as latest_timestamp, document_name
-        FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawTableName}\`
-        GROUP BY document_name
-      )
       SELECT
-        t.document_name,
+        document_name,
         document_id,
         timestamp,
         operation${fieldValueSelectorClauses.length > 0 ? `,` : ``}
         ${fieldValueSelectorClauses}
-      FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawTableName}\` AS t
-      JOIN latest ON (t.document_name = latest.document_name AND t.timestamp = latest.latest_timestamp)
-      WHERE operation != "DELETE"
+      FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawViewName}\`
   `;
   const groupableExtractors = Object.keys(schemaFieldExtractors).filter(
     (name) =>
@@ -154,12 +147,12 @@ export const buildLatestSchemaSnapshotViewQuery = (
       query,
           /*except=*/ schemaFieldArrays.concat(schemaFieldGeopoints)
     )}
-        ${rawTableName}
+        ${rawViewName}
         ${schemaFieldArrays
         .map(
           (
             arrayFieldName
-          ) => `LEFT JOIN UNNEST(${rawTableName}.${arrayFieldName})
+          ) => `LEFT JOIN UNNEST(${rawViewName}.${arrayFieldName})
             AS ${arrayFieldName}_member
             WITH OFFSET ${arrayFieldName}_index`
         )
