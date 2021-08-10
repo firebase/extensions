@@ -112,10 +112,11 @@ export default class Templates {
     this.waits.forEach((wait) => wait());
   }
 
-  checkTemplateExists = async (name) => {
-    const query = this.collection.where("name", "==", name).get();
-
-    return query.then((t) => !t.empty);
+  checkTemplateExists = (name) => {
+    return this.collection
+      .where("name", "==", name)
+      .get()
+      .then((t) => !t.empty);
   };
 
   async render(
@@ -132,11 +133,11 @@ export default class Templates {
     if (!this.templateMap[name]) {
       //fallback, check if template does exist, results may be cached
       checkingMissingTemplate(name);
-      const templateExists = await this.checkTemplateExists(name);
+      const templateExists = this.checkTemplateExists(name);
 
       if (!templateExists)
         return Promise.reject(
-          new Error(`tried to render non-existent template '${name}'`)
+          new Error(`Tried to render non-existent template '${name}'`)
         );
 
       foundMissingTemplate(name);

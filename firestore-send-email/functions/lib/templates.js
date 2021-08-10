@@ -24,9 +24,11 @@ const ampHandlebars = handlebars_1.create();
 const attachmentsHandlebars = handlebars_1.create();
 class Templates {
     constructor(collection) {
-        this.checkTemplateExists = async (name) => {
-            const query = this.collection.where("name", "==", name).get();
-            return query.then((t) => !t.empty);
+        this.checkTemplateExists = (name) => {
+            return this.collection
+                .where("name", "==", name)
+                .get()
+                .then((t) => !t.empty);
         };
         this.collection = collection;
         this.collection.onSnapshot(this.updateTemplates.bind(this));
@@ -92,9 +94,9 @@ class Templates {
         if (!this.templateMap[name]) {
             //fallback, check if template does exist, results may be cached
             logs_1.checkingMissingTemplate(name);
-            const templateExists = await this.checkTemplateExists(name);
+            const templateExists = this.checkTemplateExists(name);
             if (!templateExists)
-                return Promise.reject(new Error(`tried to render non-existent template '${name}'`));
+                return Promise.reject(new Error(`Tried to render non-existent template '${name}'`));
             logs_1.foundMissingTemplate(name);
         }
         const t = this.templateMap[name];
