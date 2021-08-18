@@ -13,7 +13,6 @@ build
 *.iml
 local.properties
 coverage
-package-lock.json
 yarn.lock
 
 firestore-debug.log
