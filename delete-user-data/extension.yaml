@@ -158,8 +158,7 @@ params:
     example: my-instance
     validationRegex: ^([0-9a-z_.-]*)$
     validationErrorMessage: Invalid database instance
-    default: ${DATABASE_INSTANCE}
-    required: true
+    required: false
 
   - param: RTDB_PATHS
     label: Realtime Database paths
