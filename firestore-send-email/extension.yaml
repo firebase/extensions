@@ -71,8 +71,6 @@ params:
         value: us-east1
       - label: Northern Virginia (us-east4)
         value: us-east4
-      - label: Warsaw (europe-central2)
-        value: europe-central2
       - label: Los Angeles (us-west2)
         value: us-west2
       - label: Salt Lake City (us-west3)
