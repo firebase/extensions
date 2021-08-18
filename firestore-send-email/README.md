@@ -22,7 +22,7 @@ admin.firestore().collection('mail').add({
 })
 ```
 
-Or in Firestore the following fields can be added;
+Or in Firestore the following fields can be added:
 
 | Field       | Type        | Example                                                                                 |
 | ----------- | ----------- | --------------------------------------------------------------------------------------- |
