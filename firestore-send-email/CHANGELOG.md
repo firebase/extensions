@@ -1,3 +1,12 @@
+## Version 0.1.11
+
+
+fixed - added fallback for finding email templates
+
+fixed - removed duplicate warsaw location
+
+feature - added warsaw (europe-central2) location (#677)
+
 ## Version 0.1.10
 
 feature - added Warsaw (europe-central2) location (#677)
