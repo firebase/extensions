@@ -112,7 +112,7 @@ WHERE favorite_numbers_index = 0
 ### Remove stale data from your changelog table
 
 If you want to clean up data from your `changelog` table, use the following
-`DELETE` query to delete all rows that fall within a certain time period, 
+`DELETE` query to delete all rows that fall within a certain time period,
 e.g. greater than 1 month old.
 
 ```sql
