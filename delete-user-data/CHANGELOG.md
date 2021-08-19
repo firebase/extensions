@@ -1,3 +1,7 @@
+## Version 0.1.10
+
+feature - updated RTDB to be optional (#722)
+
 ## Version 0.1.9
 
 feature - added Warsaw (europe-central2) location (#677)

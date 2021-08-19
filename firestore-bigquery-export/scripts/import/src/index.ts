@@ -22,6 +22,7 @@ import * as fs from "fs";
 import * as inquirer from "inquirer";
 import * as util from "util";
 import * as filenamify from "filenamify";
+import { runMultiThread } from "./run";
 
 import {
   ChangeType,
@@ -38,6 +39,7 @@ const unlink = util.promisify(fs.unlink);
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
 
+const PROJECT_ID_MAX_CHARS = 6144;
 const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
 const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
 
@@ -56,7 +58,7 @@ const validateInput = (
     return `${name} must be at most ${sizeLimit} characters long`;
   }
   if (!value.match(regex)) {
-    return `The ${name} must only contain letters or spaces`;
+    return `The ${name} does not match the regular expression provided`;
   }
   return true;
 };
@@ -134,6 +136,10 @@ program
   .option(
     "-l, --dataset-location <location>",
     "Location of the BigQuery dataset."
+  )
+  .option(
+    "-m, --multi-threaded [true|false]",
+    "Whether to run standard or multi-thread import version"
   );
 
 const questions = [
@@ -146,7 +152,7 @@ const questions = [
         value,
         "project ID",
         FIRESTORE_VALID_CHARACTERS,
-        FIRESTORE_COLLECTION_NAME_MAX_CHARS
+        PROJECT_ID_MAX_CHARS
       ),
   },
   {
@@ -210,6 +216,12 @@ const questions = [
     default: "us",
     validate: validateLocation,
   },
+  {
+    message: "Would you like to run the import across multiple threads?",
+    name: "multiThreaded",
+    type: "confirm",
+    default: false,
+  },
 ];
 
 interface CliConfig {
@@ -220,6 +232,7 @@ interface CliConfig {
   batchSize: string;
   queryCollectionGroup: boolean;
   datasetLocation: string;
+  multiThreaded: boolean;
 }
 
 const run = async (): Promise<number> => {
@@ -231,7 +244,10 @@ const run = async (): Promise<number> => {
     tableId,
     batchSize,
     datasetLocation,
+    multiThreaded,
   }: CliConfig = await parseConfig();
+
+  if (multiThreaded) return runMultiThread();
 
   const batch = parseInt(batchSize);
   const rawChangeLogName = `${tableId}_raw_changelog`;
@@ -350,6 +366,7 @@ async function parseConfig(): Promise<CliConfig> {
       program.outputHelp();
       process.exit(1);
     }
+
     return {
       projectId: program.project,
       sourceCollectionPath: program.sourceCollectionPath,
@@ -358,6 +375,7 @@ async function parseConfig(): Promise<CliConfig> {
       batchSize: program.batchSize,
       queryCollectionGroup: program.queryCollectionGroup === "true",
       datasetLocation: program.datasetLocation,
+      multiThreaded: program.multiThreaded === "true",
     };
   }
   const {
@@ -368,7 +386,9 @@ async function parseConfig(): Promise<CliConfig> {
     batchSize,
     queryCollectionGroup,
     datasetLocation,
+    multiThreaded,
   } = await inquirer.prompt(questions);
+
   return {
     projectId: project,
     sourceCollectionPath: sourceCollectionPath,
@@ -377,6 +397,7 @@ async function parseConfig(): Promise<CliConfig> {
     batchSize: batchSize,
     queryCollectionGroup: queryCollectionGroup,
     datasetLocation: datasetLocation,
+    multiThreaded: multiThreaded,
   };
 }
 
