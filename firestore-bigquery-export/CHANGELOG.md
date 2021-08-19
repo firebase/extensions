@@ -1,3 +1,7 @@
+## Version 0.1.17
+
+fixed - improved import script
+
 ## Version 0.1.16
 
 feature - added Warsaw (europe-central2) location (#677)
