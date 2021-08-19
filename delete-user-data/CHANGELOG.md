@@ -1,6 +1,6 @@
 ## Version 0.1.10
 
-feature - updated rtdb to be optional (#722)
+feature - updated RTDB to be optional (#722)
 
 ## Version 0.1.9
 
