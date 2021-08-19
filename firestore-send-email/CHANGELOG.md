@@ -2,7 +2,7 @@
 
 fixed - added fallback for finding email templates
 
-fixed - removed duplicate warsaw location
+fixed - removed duplicate Warsaw location
 
 feature - added warsaw (europe-central2) location (#677)
 
