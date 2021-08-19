@@ -1,6 +1,6 @@
 ## Version 0.1.17
 
-fixed - Improved import script
+fixed - improved import script
 
 ## Version 0.1.16
 
