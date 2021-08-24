@@ -3,14 +3,14 @@
   "author": "patryk@google.com",
   "description": "Stress test for sharded counter.",
   "dependencies": {
-    "@google-cloud/firestore": "^1.3.0",
-    "@types/uuid": "^3.4.4",
-    "firebase-admin": "^7.3.0",
-    "uuid": "^3.3.2"
+    "@google-cloud/firestore": "^4.14.2",
+    "@types/uuid": "^8.3.1",
+    "firebase-admin": "^9.11.1",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "prettier": "1.15.3",
-    "typescript": "^3.5.2"
+    "prettier": "2.3.2",
+    "typescript": "^4.3.5"
   },
   "scripts": {
     "build": "tsc",
