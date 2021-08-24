@@ -11,20 +11,20 @@
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "dependencies": {
-    "@types/node": "^12.6.9",
-    "@google-cloud/translate": "^4.0.1",
-    "firebase-admin": "^8.0.0",
-    "firebase-functions": "^3.13.2"
+    "@types/node": "^16.7.1",
+    "@google-cloud/translate": "^6.2.7",
+    "firebase-admin": "^9.11.1",
+    "firebase-functions": "^3.15.4"
   },
   "devDependencies": {
-    "firebase-functions-test": "^0.1.7",
-    "js-yaml": "^3.13.1",
-    "mocked-env": "^1.3.1",
-    "rimraf": "^2.6.3",
-    "typescript": "^3.2.4",
-    "@types/jest": "^24.0.18",
-    "jest": "^24.9.0",
-    "ts-jest": "^24.1.0"
+    "firebase-functions-test": "^0.3.2",
+    "js-yaml": "^4.1.0",
+    "mocked-env": "^1.3.5",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.3.5",
+    "@types/jest": "^27.0.1",
+    "jest": "^27.0.6",
+    "ts-jest": "^27.0.5"
   },
   "private": true
 }
