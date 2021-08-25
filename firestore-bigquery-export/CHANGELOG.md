@@ -1,5 +1,9 @@
 ## Version 0.1.18
 
+fixed - updated broken package-lock.json breaking deployments of version 0.1.17
+
+## Version 0.1.17
+
 fixed - improved import script
 
 ## Version 0.1.16
