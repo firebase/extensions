@@ -21,9 +21,8 @@ To translate multiple fields, store a map of input strings in the input field:
 
 ```js
 admin.firestore().collection('translations').add({
-  'example one': 'example one',
-  'example two': 'example two',
-  'example three': 'example three',
+  first: "My name is Bob",
+  second: "Hello, friend"
 })
 ```
 #### Multiple languages
