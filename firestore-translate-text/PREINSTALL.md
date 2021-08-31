@@ -17,7 +17,7 @@ There is currently no limit on how many times the extensions can be reinstalled.
 
 #### Multiple field translations
 
-To translate multiple fields, object data can be passed into the `input field`:
+To translate multiple fields, store a map of input strings in the input field:
 
 ```js
 admin.firestore().collection('translations').add({
