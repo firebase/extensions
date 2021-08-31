@@ -29,7 +29,7 @@ admin.firestore().collection('translations').add({
 
 To translate text into multiple languages, set the `languages` parameter to a comma-separated list
 of languages, such as `en,fr,de`. See the [supported languages list](https://cloud.google.com/translate/docs/languages).
-`#### Additional setup
+#### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
 
