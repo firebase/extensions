@@ -27,9 +27,8 @@ admin.firestore().collection('translations').add({
 ```
 #### Multiple languages
 
-Multiple translations can be defined when setting up the extension `languages` configuration.
-
-The languages are identified using ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr. For these codes, visit the [supported languages list](https://cloud.google.com/translate/docs/languages).
+To translate text into multiple languages, set the `languages` parameter to a comma-separated list
+of languages, such as `en,fr,de`. See the [supported languages list](https://cloud.google.com/translate/docs/languages).
 `#### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
