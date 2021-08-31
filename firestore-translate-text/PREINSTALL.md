@@ -11,9 +11,9 @@ If the original non-translated field of the document is updated, then the transl
 
 #### Multiple collections for translations
 
-To translate through `multiple collections`, it is recommended to install multiple versions of the extension but with a alternative `collection path` for each installation.
-
-There is currently no limit on how many times the extensions can be reinstalled.
+To translate multiple collections, install this extension multiple times, specifying a different
+collection path each time. There is currently no limit on how many instances of an extension you
+can install.
 
 #### Multiple field translations
 
