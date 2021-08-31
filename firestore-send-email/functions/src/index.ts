@@ -310,6 +310,7 @@ async function processWrite(change) {
         return admin.firestore().runTransaction((transaction) => {
           transaction.update(change.after.ref, {
             "delivery.state": "ERROR",
+            error: "Message processing lease expired.",
             "delivery.error": "Message processing lease expired.",
           });
           return Promise.resolve();
