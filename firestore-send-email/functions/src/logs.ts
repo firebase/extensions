@@ -96,3 +96,11 @@ export function partialRegistered(name) {
 export function templateLoaded(name) {
   logger.log(`loaded template '${name}'`);
 }
+
+export function checkingMissingTemplate(name) {
+  logger.log(`checking missing template '${name}'`);
+}
+
+export function foundMissingTemplate(name) {
+  logger.log(`template '${name}' has been found`);
+}

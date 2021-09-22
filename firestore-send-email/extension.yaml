@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-send-email
-version: 0.1.9
+version: 0.1.11
 specVersion: v1beta
 
 displayName: Trigger Email
@@ -50,7 +50,7 @@ resources:
       delivers emails, and updates the document with delivery status information.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs10
+      runtime: nodejs14
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:MAIL_COLLECTION}/{id}
@@ -77,6 +77,8 @@ params:
         value: us-west3
       - label: Las Vegas (us-west4)
         value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)

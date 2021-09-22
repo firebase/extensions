@@ -5,6 +5,12 @@ module.exports = {
   displayName: packageJson.name,
   rootDir: "./",
   preset: "ts-jest",
-  globalSetup: "./jest.setup.js",
-  globalTeardown: "./jest.teardown.js",
+  globals: {
+    "ts-jest": {
+      tsConfig: "<rootDir>/__tests__/tsconfig.json",
+    },
+  },
+  setupFiles: ["<rootDir>/__tests__/jest.setup.ts"],
+  testMatch: ["**/__tests__/*.test.ts"],
+  testEnvironment: "node",
 };
