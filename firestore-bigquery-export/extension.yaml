@@ -16,7 +16,7 @@ name: firestore-bigquery-export
 version: 0.1.17
 specVersion: v1beta
 
-displayName: Export Collections to BigQuery
+displayName: Stream Collections to BigQuery
 description:
   Sends realtime, incremental updates from a specified Cloud Firestore
   collection to BigQuery.
