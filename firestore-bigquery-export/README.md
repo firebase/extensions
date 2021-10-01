@@ -24,6 +24,22 @@ Before installing this extension, you'll need to:
 - [Set up Cloud Firestore in your Firebase project.](https://firebase.google.com/docs/firestore/quickstart)
 - [Link your Firebase project to BigQuery.](https://support.google.com/firebase/answer/6318765)
 
+#### Transform function
+
+Prior to sending the document change to BigQuery, you have an opportunity to transform the data with an HTTP function. The payload will contain multiple instances of the following:
+
+{
+  insertId: int;
+  json: {
+    timestamp: int;
+    event_id: int;
+    document_name: string;
+    document_id: int;
+    operation: ChangeType;
+    data: string;
+  },
+}
+
 #### Backfill your BigQuery dataset
 
 This extension only sends the content of documents that have been changed -- it does not export your full dataset of existing documents into BigQuery. So, to backfill your BigQuery dataset with all the documents in your collection, you can run the [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md) provided by this extension.
@@ -59,6 +75,8 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Table ID: What identifying prefix would you like to use for your table and view inside your BigQuery dataset? This extension will create the table and view, if they don't already exist.
 
 * BigQuery SQL table partitioning option: This parameter will allow you to partition the BigQuery table and BigQuery view  created by the extension based on data ingestion time. You may select the granularity of partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will generate one partition per day, hour, month or year, respectively. 
+
+* Transform function URL: Specify a function URL to call that will transform the payload that will be written to BigQuery.  See the pre-install documentation for more details.
 
 
 
