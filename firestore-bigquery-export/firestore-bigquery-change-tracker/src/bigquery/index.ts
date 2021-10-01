@@ -17,6 +17,7 @@
 import * as bigquery from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
 import * as traverse from "traverse";
+import { fetch } from "node-fetch";
 import {
   RawChangelogSchema,
   RawChangelogViewSchema,
@@ -42,6 +43,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   tableId: string;
   datasetLocation: string | undefined;
   tablePartitioning: string;
+  transformFunction: string;
 }
 
 /**
@@ -82,7 +84,25 @@ export class FirestoreBigQueryEventHistoryTracker
         },
       };
     });
-    await this.insertData(rows);
+    const transformedRows = await this.transformRows(rows);
+    await this.insertData(transformedRows);
+  }
+
+  private async transformRows(rows: any[]) {
+    if (this.config.transformFunction !== "") {
+      try {
+        const response = await fetch(this.config.transformFunction, {
+          method: 'post',
+          body:    JSON.stringify({ data: rows }),
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const responseJson = await response?.json();
+        return responseJson.result;
+      } catch (e) {
+        logs.error(e);
+      }
+    }
+    return rows;
   }
 
   serializeData(eventData: any) {
