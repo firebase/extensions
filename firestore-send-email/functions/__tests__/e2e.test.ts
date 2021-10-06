@@ -63,7 +63,7 @@ describe("e2e testing", () => {
         if (document.delivery && document.delivery.info) {
           expect(document.delivery.info.accepted[0]).toEqual(record.to);
           expect(document.delivery.info.response).toContain("250 Accepted");
-          expect(document.message.attachments.length.toEqual(1));
+          expect(document.message.attachments.length).toEqual(1);
           unsubscribe();
           resolve();
         }
