@@ -1,9 +1,8 @@
 name: Testing
 
 on:
-  push:
-    branches:
-      - "**"
+  - pull_request
+  - push
 
 jobs:
   nodejs:
