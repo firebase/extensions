@@ -59,6 +59,10 @@ resources:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
 
+externalServices:
+  - name: Bitly
+    PricingUri: https://bitly.com/pages/pricing
+
 params:
   - param: LOCATION
     label: Cloud Functions location
