@@ -103,10 +103,17 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
       throw new Error(`Template object is missing a 'name' parameter.`);
     }
 
-    payload.message = Object.assign(
-      payload.message || {},
-      await templates.render(template.name, template.data)
-    );
+    const templateRender = await templates.render(template.name, template.data);
+
+    const mergeMessage = payload.message || {};
+
+    const attachments = templateRender.attachments
+      ? templateRender.attachments
+      : mergeMessage.attachments;
+
+    payload.message = Object.assign(mergeMessage, templateRender, {
+      attachments: attachments || [],
+    });
   }
 
   let to: string[] = [];
