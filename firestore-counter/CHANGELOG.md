@@ -1,3 +1,12 @@
+## Version 0.2.4
+
+
+feature - Add Node.js Admin SDK Implementation (#687)
+
+feature - add Taiwan and Singapore Cloud Function Locations (#729)
+
+feature - added warsaw (europe-central2) location (#677)
+
 ## Version 0.2.3
 
 feature - added Warsaw (europe-central2) location (#677)
