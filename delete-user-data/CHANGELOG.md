@@ -1,3 +1,8 @@
+## Version 0.1.11
+
+
+feature - add Taiwan and Singapore Cloud Function Locations (#729)
+
 ## Version 0.1.10
 
 feature - updated RTDB to be optional (#722)
