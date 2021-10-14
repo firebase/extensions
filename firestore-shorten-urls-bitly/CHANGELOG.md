@@ -1,6 +1,5 @@
 ## Version 0.1.7
 
-
 fixed - added secret type to bitly access token configuration (#752)
 
 feature - add Taiwan and Singapore Cloud Function Locations (#729)

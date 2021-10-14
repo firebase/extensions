@@ -1,6 +1,5 @@
 ## Version 0.1.12
 
-
 fixed - moved lease expired error message to delivery document (#726)
 
 feature - add Taiwan and Singapore Cloud Function Locations (#729)
