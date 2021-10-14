@@ -1,3 +1,10 @@
+## Version 0.1.7
+
+
+feature - add Taiwan and Singapore Cloud Function Locations (#729)
+
+feature - added warsaw (europe-central2) location (#677)
+
 ## Version 0.1.6
 
 feature - added Warsaw (europe-central2) location (#677)
