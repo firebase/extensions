@@ -178,8 +178,6 @@ const preparePayload = async function(
     bcc = bcc.concat(payload.bcc);
   }
 
-  console.log("payload >>>>", JSON.stringify(payload));
-
   if (!payload.toUids && !payload.ccUids && !payload.bccUids) {
     payload.to = to;
     payload.cc = cc;
