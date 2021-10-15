@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.foundMissingTemplate = exports.checkingMissingTemplate = exports.templateLoaded = exports.partialRegistered = exports.registeredPartial = exports.noPartialAttachmentSupport = exports.missingUids = exports.missingDeliveryField = exports.deliveryError = exports.delivered = exports.attemptingDelivery = exports.complete = exports.error = exports.start = exports.init = exports.obfuscatedConfig = void 0;
+exports.testing = exports.foundMissingTemplate = exports.checkingMissingTemplate = exports.templateLoaded = exports.partialRegistered = exports.registeredPartial = exports.noPartialAttachmentSupport = exports.missingUids = exports.missingDeliveryField = exports.deliveryError = exports.delivered = exports.attemptingDelivery = exports.complete = exports.error = exports.start = exports.init = exports.obfuscatedConfig = void 0;
 const config_1 = require("./config");
 const firebase_functions_1 = require("firebase-functions");
 exports.obfuscatedConfig = Object.assign({}, config_1.default, {

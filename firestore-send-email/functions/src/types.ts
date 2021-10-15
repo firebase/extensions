@@ -52,7 +52,7 @@ export interface QueuePayload {
     name: string;
     data?: { [key: string]: any };
   };
-  to: string[];
+  to: string[] | string;
   toUids?: string[];
   cc: string[];
   ccUids?: string[];

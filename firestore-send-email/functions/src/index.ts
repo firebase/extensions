@@ -95,7 +95,40 @@ async function processCreate(snap: FirebaseFirestore.DocumentSnapshot) {
   });
 }
 
-async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
+export const findUser = async function(
+  recipients: string | string[]
+): Promise<UserRecord> | undefined {
+  console.log("finding user data >>>>", recipients);
+
+  const isString: boolean = typeof recipients === "string";
+
+  if (isString && !recipients.length) return null;
+  if (isString && (recipients as string).split(",").length > 1) return null;
+  if (!isString && recipients.length > 1) return null;
+
+  const recipient: string = isString ? (recipients as string) : recipients[0];
+
+  const user = await admin
+    .auth()
+    .getUser(recipient)
+    .catch(async () => {
+      return admin.auth().getUserByEmail(recipient);
+    });
+
+  if (!user) return null;
+  if (!config.usersCollection) return user;
+
+  const userDoc = await db
+    .collection(config.usersCollection)
+    .doc(user.uid)
+    .get();
+
+  return userDoc.exists ? { ...user, ...userDoc.data() } : user;
+};
+
+const preparePayload = async function(
+  payload: QueuePayload
+): Promise<QueuePayload> {
   const { template } = payload;
 
   if (templates && template) {
@@ -103,9 +136,13 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
       throw new Error(`Template object is missing a 'name' parameter.`);
     }
 
+    const _userData = await findUser(payload.toUids || payload.to);
+
+    console.log("Got user data >>>", JSON.stringify(_userData));
+
     payload.message = Object.assign(
       payload.message || {},
-      await templates.render(template.name, template.data)
+      await templates.render(template.name, { ...template.data, _userData })
     );
   }
 
@@ -227,7 +264,7 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
   payload.bcc = bcc;
 
   return payload;
-}
+};
 
 async function deliver(
   payload: QueuePayload,

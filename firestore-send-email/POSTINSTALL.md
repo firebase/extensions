@@ -115,6 +115,38 @@ admin
   });
 ```
 
+For individual recipients, user `metadata` from the associated `Firebase User` is included for automatic personalization of emails. This is included in the template data as `_userData`.
+
+Additionally if you have included a `${param:USERS_COLLECTION}`. The associated customer data will be automatically included in the template data.
+
+Please note: This data will only be populated for single recipients, for example a single email or single uid.
+
+```js
+admin
+  .firestore()
+  .collection("${param:MAIL_COLLECTION}")
+  .add({
+    toUids: ["abc123"],
+    template: {
+      name: "following",
+      data: {
+        username: "ada",
+        name: "Ada Lovelace",
+        imagePath: "https://path-to-file/image-name.jpg"
+      },
+    },
+  });
+```
+
+An example of a template would be similar to
+
+```js
+{
+  subject: "@{{username}} is now following you!",
+  html: "Just writing to let you know that <code>@{{_userData.displayName}}</code> ({{name}}) is now following you.",
+}
+```
+
 #### Template Partials
 
 Templates may be registered reusable [partials](https://handlebarsjs.com/guide/partials.html) by specifying `{partial: true}` in the document in the template collection. Each of the standard data fields (`subject`, `html`, `text`, and `amp`) will be defined as a partial used only in its own environment. For example, a partial called `footer` might have data like:

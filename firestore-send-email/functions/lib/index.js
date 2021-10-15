@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processQueue = void 0;
+exports.processQueue = exports.findUser = void 0;
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
 const nodemailer = require("nodemailer");
@@ -87,13 +87,41 @@ async function processCreate(snap) {
         return Promise.resolve();
     });
 }
-async function preparePayload(payload) {
+exports.findUser = async function (recipients) {
+    console.log("finding user data >>>>", recipients);
+    const isString = typeof recipients === "string";
+    if (isString && !recipients.length)
+        return null;
+    if (isString && recipients.split(",").length > 1)
+        return null;
+    if (!isString && recipients.length > 1)
+        return null;
+    const recipient = isString ? recipients : recipients[0];
+    const user = await admin
+        .auth()
+        .getUser(recipient)
+        .catch(async () => {
+        return admin.auth().getUserByEmail(recipient);
+    });
+    if (!user)
+        return null;
+    if (!config_1.default.usersCollection)
+        return user;
+    const userDoc = await db
+        .collection(config_1.default.usersCollection)
+        .doc(user.uid)
+        .get();
+    return userDoc.exists ? { ...user, ...userDoc.data() } : user;
+};
+const preparePayload = async function (payload) {
     const { template } = payload;
     if (templates && template) {
         if (!template.name) {
             throw new Error(`Template object is missing a 'name' parameter.`);
         }
-        payload.message = Object.assign(payload.message || {}, await templates.render(template.name, template.data));
+        const _userData = await exports.findUser(payload.toUids || payload.to);
+        console.log("Got user data >>>", JSON.stringify(_userData));
+        payload.message = Object.assign(payload.message || {}, await templates.render(template.name, { ...template.data, _userData }));
     }
     let to = [];
     let cc = [];
@@ -190,7 +218,7 @@ async function preparePayload(payload) {
     }
     payload.bcc = bcc;
     return payload;
-}
+};
 async function deliver(payload, ref) {
     logs.attemptingDelivery(ref);
     const update = {
