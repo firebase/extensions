@@ -88,7 +88,6 @@ async function processCreate(snap) {
     });
 }
 exports.findUser = async function (recipients) {
-    console.log("finding user data >>>>", recipients);
     const isString = typeof recipients === "string";
     if (isString && !recipients.length)
         return null;

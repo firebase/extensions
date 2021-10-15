@@ -99,8 +99,6 @@ async function processCreate(snap: FirebaseFirestore.DocumentSnapshot) {
 export const findUser = async function(
   recipients: string | string[]
 ): Promise<UserRecord> | undefined {
-  console.log("finding user data >>>>", recipients);
-
   const isString: boolean = typeof recipients === "string";
 
   if (isString && !recipients.length) return null;
