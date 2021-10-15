@@ -45,7 +45,7 @@ describe("e2e testing", () => {
     });
   }, 8000);
 
-  test.only("empty template attachments should default to message attachments", async (): Promise<
+  test("empty template attachments should default to message attachments", async (): Promise<
     void
   > => {
     //create template
