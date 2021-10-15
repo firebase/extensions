@@ -4,14 +4,25 @@
 set -e
 
 PUBLISHER_ID=$1
-EXTENSIONS="delete-user-data,firestore-bigquery-export,firestore-counter,firestore-send-email,firestore-shorten-urls-bitly,firestore-translate-text,rtdb-limit-child-nodes,storage-resize-images"
+shift
+ALL_EXTENSIONS=(
+  "delete-user-data"
+  "firestore-bigquery-export"
+  "firestore-counter"
+  "firestore-send-email"
+  "firestore-shorten-urls-bitly"
+  "firestore-translate-text"
+  "rtdb-limit-child-nodes"
+  "storage-resize-images"
+)
+EXTENSIONS=${@:-${ALL_EXTENSIONS[@]}}
 
 if [ -z "$PUBLISHER_ID" ]
 then
   echo "\$PUBLISHER_ID is not defined"
   exit 1
 else
-  echo "Publishing $EXTENSIONS into $PUBLISHER_ID."
+  echo "Publishing $EXTENSIONS into $PUBLISHER_ID"
 fi
 
 REPO_ROOT="`( cd \`dirname \"$0\"\` && cd .. && pwd )`"
@@ -26,14 +37,17 @@ fi
 
 npm test
 
-set +e
-IFS=',' read -ra EXTENSIONS_SPLIT <<< "$EXTENSIONS"
-for i in "${EXTENSIONS_SPLIT[@]}"; do
-  echo "-------------------------------"
-  echo "- Publishing $PUBLISHER_ID/$i."
-  echo "-------------------------------"
+set -e
+
+for i in ${EXTENSIONS[@]}; do
+  echo ""
+  echo "- Publishing $PUBLISHER_ID/$i"
+  echo ""
+
   cd "$REPO_ROOT/$i"
+  set +e
   firebase ext:dev:publish $PUBLISHER_ID/$i --non-interactive --force
+  set -e
   EXIT_CODE=$?
   # Exit code 103 means that version already published, move on.
   [ $EXIT_CODE -eq 0  ] || [ $EXIT_CODE -eq 103 ]  || exit 1
