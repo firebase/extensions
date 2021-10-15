@@ -22,6 +22,7 @@ import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
+import { UserRecord } from "firebase-functions/v1/auth";
 
 logs.init();
 
@@ -170,6 +171,8 @@ const preparePayload = async function(
     validateFieldArray("bcc", payload.bcc);
     bcc = bcc.concat(payload.bcc);
   }
+
+  console.log("payload >>>>", JSON.stringify(payload));
 
   if (!payload.toUids && !payload.ccUids && !payload.bccUids) {
     payload.to = to;
@@ -373,6 +376,7 @@ export const processQueue = functions.handler.firestore.document.onWrite(
   async (change) => {
     await initialize();
     logs.start();
+
     try {
       await processWrite(change);
     } catch (err) {
