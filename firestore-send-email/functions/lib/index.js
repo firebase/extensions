@@ -120,8 +120,17 @@ const preparePayload = async function (payload) {
             throw new Error(`Template object is missing a 'name' parameter.`);
         }
         const _userData = await exports.findUser(payload.toUids || payload.to);
-        console.log("Got user data >>>", JSON.stringify(_userData));
-        payload.message = Object.assign(payload.message || {}, await templates.render(template.name, { ...template.data, _userData }));
+        const templateRender = await templates.render(template.name, {
+            ...template.data,
+            _userData,
+        });
+        const mergeMessage = payload.message || {};
+        const attachments = templateRender.attachments
+            ? templateRender.attachments
+            : mergeMessage.attachments;
+        payload.message = Object.assign(mergeMessage, templateRender, {
+            attachments: attachments || [],
+        });
     }
     let to = [];
     let cc = [];
@@ -147,6 +156,7 @@ const preparePayload = async function (payload) {
         validateFieldArray("bcc", payload.bcc);
         bcc = bcc.concat(payload.bcc);
     }
+    console.log("payload >>>>", JSON.stringify(payload));
     if (!payload.toUids && !payload.ccUids && !payload.bccUids) {
         payload.to = to;
         payload.cc = cc;
@@ -284,7 +294,10 @@ async function processWrite(change) {
                 return admin.firestore().runTransaction((transaction) => {
                     transaction.update(change.after.ref, {
                         "delivery.state": "ERROR",
+                        // Keeping error to avoid any breaking changes in the next minor update.
+                        // Error to be removed for the next major release.
                         error: "Message processing lease expired.",
+                        "delivery.error": "Message processing lease expired.",
                     });
                     return Promise.resolve();
                 });
