@@ -5,6 +5,7 @@ docs - Renamed the extension to "Stream Collections to BigQuery"
 feature - add Taiwan and Singapore Cloud Function locations (#729)
 
 ## Version 0.1.18
+
 No change from last release
 
 ## Version 0.1.17
