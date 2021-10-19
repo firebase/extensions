@@ -20,7 +20,6 @@ Note that this extension requires client-side logic to work. We provide a [TypeS
 
 We also provide a [Node.js admin sample implementation](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/node/index.js)
 
-
 #### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
