@@ -1,3 +1,11 @@
+## Version 0.1.12
+
+fixed - moved lease expired error message to delivery document (#726)
+
+feature - add Taiwan and Singapore Cloud Function locations (#729)
+
+fixed - empty template attachments fall back to message attachments (#719)
+
 ## Version 0.1.11
 
 fixed - added fallback for finding email templates
