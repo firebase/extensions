@@ -1,8 +1,8 @@
 ## Version 0.1.7
 
-fixed - added secret type to bitly access token configuration (#752)
+fixed - changed Bitly access token configuration from string type to secret type (#752)
 
-feature - add Taiwan and Singapore Cloud Function Locations (#729)
+feature - add Taiwan and Singapore Cloud Function locations (#729)
 
 feature - added warsaw (europe-central2) location (#677)
 

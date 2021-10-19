@@ -1,8 +1,8 @@
 ## Version 0.1.3
 
-feature - add Taiwan and Singapore Cloud Function Locations (#729)
+feature - add Taiwan and Singapore Cloud Function locations (#729)
 
-feature - added warsaw (europe-central2) location (#677)
+feature - added Warsaw (europe-central2) location (#677)
 
 fixed - Removed code coverage check on ci
 
