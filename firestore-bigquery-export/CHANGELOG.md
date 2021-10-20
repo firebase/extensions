@@ -1,3 +1,7 @@
+## Version 0.1.20
+
+fixed - Fixed installation error due to bad package-lock.json
+
 ## Version 0.1.19
 
 docs - Renamed the extension to "Stream Collections to BigQuery"
