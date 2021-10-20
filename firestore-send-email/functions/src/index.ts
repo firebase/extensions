@@ -103,10 +103,17 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
       throw new Error(`Template object is missing a 'name' parameter.`);
     }
 
-    payload.message = Object.assign(
-      payload.message || {},
-      await templates.render(template.name, template.data)
-    );
+    const templateRender = await templates.render(template.name, template.data);
+
+    const mergeMessage = payload.message || {};
+
+    const attachments = templateRender.attachments
+      ? templateRender.attachments
+      : mergeMessage.attachments;
+
+    payload.message = Object.assign(mergeMessage, templateRender, {
+      attachments: attachments || [],
+    });
   }
 
   let to: string[] = [];
@@ -310,7 +317,10 @@ async function processWrite(change) {
         return admin.firestore().runTransaction((transaction) => {
           transaction.update(change.after.ref, {
             "delivery.state": "ERROR",
+            // Keeping error to avoid any breaking changes in the next minor update.
+            // Error to be removed for the next major release.
             error: "Message processing lease expired.",
+            "delivery.error": "Message processing lease expired.",
           });
           return Promise.resolve();
         });
