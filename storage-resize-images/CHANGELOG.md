@@ -1,3 +1,7 @@
+## Version 0.1.24
+
+fixed - update package lock file to fix installation errors (#782)
+
 ## Version 0.1.23
 
 feature - add Taiwan and Singapore Cloud Function locations (#729)
