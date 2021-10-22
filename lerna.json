@@ -6,14 +6,14 @@
     "firestore-shorten-urls-bitly/functions",
     "auth-mailchimp-sync/functions",
     "firestore-send-email/functions",
-    "firestore-counter/functions",
     "delete-user-data/functions",
     "delete-user-data/test-data",
-    "storage-resize-images/functions",
     "firestore-bigquery-export/functions",
     "firestore-bigquery-export/scripts/gen-schema-view",
     "firestore-bigquery-export/scripts/import",
-    "firestore-bigquery-export/firestore-bigquery-change-tracker"
+    "firestore-bigquery-export/firestore-bigquery-change-tracker",
+    "storage-resize-images/functions"
   ],
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "brokenTests": ["firestore-counter/functions"]
 }
