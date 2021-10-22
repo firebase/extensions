@@ -6,7 +6,7 @@
     "build": "npm run clean && npm run compile",
     "clean": "rimraf lib",
     "compile": "tsc",
-    "test": "jest",
+    "test": "firebase ext:dev:emulators:exec ./node_modules/.bin/jest --test-params=emulator-params.env --project=extensions-testing --config=./firebase.json",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "keywords": [],
@@ -21,6 +21,7 @@
     "nodemailer": "^6.3.0"
   },
   "devDependencies": {
+    "firebase": "^9.1.3",
     "firebase-functions-test": "^0.2.3",
     "jest": "^26.6.3",
     "jest-environment-jsdom-fifteen": "^1.0.2",
