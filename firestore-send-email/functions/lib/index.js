@@ -44,6 +44,18 @@ async function initialize() {
 async function transportLayer() {
     if (config_1.default.testing) {
         return new Promise((resolve, reject) => {
+            if (process.env.NODEMAILER_AUTH_USER &&
+                process.env.NODEMAILER_AUTH_PASS) {
+                resolve(nodemailer.createTransport({
+                    host: "smtp.ethereal.email",
+                    port: 587,
+                    secure: false,
+                    auth: {
+                        user: process.env.NODEMAILER_AUTH_USER,
+                        pass: process.env.NODEMAILER_AUTH_PASS,
+                    },
+                }));
+            }
             nodemailer.createTestAccount((err, account) => {
                 if (err) {
                     reject(err);

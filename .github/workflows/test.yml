@@ -38,6 +38,9 @@ jobs:
           ./start.sh
       - name: Run tests with coverage
         run: npm run test-coverage
+        env:
+          NODEMAILER_AUTH_USER: ${{ secrets.NODEMAILER_AUTH_USER }}
+          NODEMAILER_AUTH_PASSWORD: ${{ secrets.NODEMAILER_AUTH_PASSWORD }}
       - name: Submit coverage
         run: ./node_modules/.bin/codecov
         env:
