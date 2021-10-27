@@ -1,3 +1,8 @@
+
+## Version 0.2.0
+
+feature - set Mailchimp API Key parameter type to `secret` so it is stored in Cloud Secret Manager
+
 ## Version 0.1.3
 
 feature - add Taiwan and Singapore Cloud Function locations (#729)
