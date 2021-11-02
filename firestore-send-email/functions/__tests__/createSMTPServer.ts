@@ -5,10 +5,11 @@ export const smtpServer = () => {
     secure: false,
     authOptional: true,
     closeTimeout: 1000,
+    ignoreTLS: true,
     onData(stream, session, callback) {
       stream.pipe(process.stdout); // print message to console
       stream.on("end", () => {
-        callback(null, "Message accepted");
+        callback(null, "Accepted");
       });
     },
   });
