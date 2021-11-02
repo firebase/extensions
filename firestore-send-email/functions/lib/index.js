@@ -43,27 +43,13 @@ async function initialize() {
 }
 async function transportLayer() {
     if (config_1.default.testing) {
-        return new Promise((resolve, reject) => {
-            nodemailer.createTestAccount((err, account) => {
-                if (err) {
-                    reject(err);
-                }
-                const testSMTPCredentials = nodemailer.createTransport({
-                    host: "smtp.ethereal.email",
-                    port: 587,
-                    secure: false,
-                    auth: {
-                        user: account.user,
-                        pass: account.pass,
-                    },
-                });
-                resolve(testSMTPCredentials);
-            });
+        return nodemailer.createTransport({
+            host: "localhost",
+            port: 465,
+            secure: false,
         });
     }
-    else {
-        return nodemailer.createTransport(config_1.default.smtpConnectionUri);
-    }
+    return nodemailer.createTransport(config_1.default.smtpConnectionUri);
 }
 function validateFieldArray(field, array) {
     if (!Array.isArray(array)) {
