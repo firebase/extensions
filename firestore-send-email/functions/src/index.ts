@@ -47,16 +47,16 @@ async function initialize() {
 }
 
 async function transportLayer() {
-  // if (config.testing) {
-  return nodemailer.createTransport({
-    host: "localhost",
-    port: 8132,
-    secure: false,
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
-  // }
+  if (config.testing) {
+    return nodemailer.createTransport({
+      host: "localhost",
+      port: 8132,
+      secure: false,
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+  }
 
   return nodemailer.createTransport(config.smtpConnectionUri);
 }
