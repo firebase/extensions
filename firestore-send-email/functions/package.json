@@ -7,7 +7,7 @@
     "build:watch": "npm run clean && tsc --watch",
     "clean": "rimraf lib",
     "compile": "tsc",
-    "test": "NODE_TLS_REJECT_UNAUTHORIZED=0 jest",
+    "test": "jest",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "keywords": [],
