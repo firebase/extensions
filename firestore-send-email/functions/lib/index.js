@@ -45,7 +45,7 @@ async function transportLayer() {
     // if (config.testing) {
     return nodemailer.createTransport({
         host: "localhost",
-        port: 465,
+        port: 8132,
         secure: false,
         tls: {
             rejectUnauthorized: false,

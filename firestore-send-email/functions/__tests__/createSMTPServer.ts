@@ -13,7 +13,8 @@ export const smtpServer = () => {
       });
     },
   });
-  const port = 465;
+
+  const port = 8132;
   const host = "localhost";
 
   server.listen(port, () => console.log(`Server listening on ${host}:${port}`));
