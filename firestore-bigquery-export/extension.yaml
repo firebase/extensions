@@ -13,10 +13,10 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.17
+version: 0.1.20
 specVersion: v1beta
 
-displayName: Export Collections to BigQuery
+displayName: Stream Collections to BigQuery
 description:
   Sends realtime, incremental updates from a specified Cloud Firestore
   collection to BigQuery.
@@ -90,6 +90,8 @@ params:
         value: europe-west3
       - label: Zurich (europe-west6)
         value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
@@ -100,6 +102,8 @@ params:
         value: asia-northeast3
       - label: Mumbai (asia-south1)
         value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
       - label: Jakarta (asia-southeast2)
         value: asia-southeast2
       - label: Montreal (northamerica-northeast1)
@@ -152,12 +156,16 @@ params:
         value: europe-west4  
       - label: Zurich (europe-west6)
         value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Jakarta (asia-southeast2)
         value: asia-southeast2
       - label: Mumbai (asia-south1)
         value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
       - label: Osaka (asia-northeast2)
         value: asia-northeast2
       - label: Seoul (asia-northeast3)

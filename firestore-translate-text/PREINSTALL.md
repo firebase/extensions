@@ -9,6 +9,26 @@ You specify the desired target languages using ISO-639-1 codes. You can find a l
 
 If the original non-translated field of the document is updated, then the translations will be automatically updated, as well.
 
+#### Multiple collections for translations
+
+To translate multiple collections, install this extension multiple times, specifying a different
+collection path each time. There is currently no limit on how many instances of an extension you
+can install.
+
+#### Multiple field translations
+
+To translate multiple fields, store a map of input strings in the input field:
+
+```js
+admin.firestore().collection('translations').add({
+  first: "My name is Bob",
+  second: "Hello, friend"
+})
+```
+#### Multiple languages
+
+To translate text into multiple languages, set the `languages` parameter to a comma-separated list
+of languages, such as `en,fr,de`. See the [supported languages list](https://cloud.google.com/translate/docs/languages).
 #### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
