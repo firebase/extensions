@@ -96,7 +96,7 @@ export class FirestoreBigQueryEventHistoryTracker
           body:    JSON.stringify({ data: rows }),
           headers: { 'Content-Type': 'application/json' },
         });
-        const responseJson = await response?.json();
+        const responseJson = await response.json();
         return responseJson.data;
       } catch (e) {
         logs.error(e);
