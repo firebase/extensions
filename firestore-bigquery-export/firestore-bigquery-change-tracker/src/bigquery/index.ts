@@ -17,7 +17,7 @@
 import * as bigquery from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
 import * as traverse from "traverse";
-import { fetch } from "node-fetch";
+import fetch from "node-fetch";
 import {
   RawChangelogSchema,
   RawChangelogViewSchema,
@@ -97,7 +97,7 @@ export class FirestoreBigQueryEventHistoryTracker
           headers: { 'Content-Type': 'application/json' },
         });
         const responseJson = await response?.json();
-        return responseJson.result;
+        return responseJson.data;
       } catch (e) {
         logs.error(e);
       }

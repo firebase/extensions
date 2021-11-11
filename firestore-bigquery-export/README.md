@@ -26,19 +26,23 @@ Before installing this extension, you'll need to:
 
 #### Transform function
 
-Prior to sending the document change to BigQuery, you have an opportunity to transform the data with an HTTP function. The payload will contain multiple instances of the following:
+Prior to sending the document change to BigQuery, you have an opportunity to transform the data with an HTTP function. The payload will contain the following:
 
-{
-  insertId: int;
-  json: {
-    timestamp: int;
-    event_id: int;
-    document_name: string;
-    document_id: int;
-    operation: ChangeType;
-    data: string;
-  },
+{ 
+  data: [{
+    insertId: int;
+    json: {
+      timestamp: int;
+      event_id: int;
+      document_name: string;
+      document_id: int;
+      operation: ChangeType;
+      data: string;
+    },
+  }]
 }
+
+The response should be indentical in structure.
 
 #### Backfill your BigQuery dataset
 
