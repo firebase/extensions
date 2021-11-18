@@ -164,6 +164,22 @@ params:
     validationErrorMessage: Invalid database instance
     required: false
 
+  - param: SELECTED_DATABASE_LOCATION
+    label: Realtime Database location
+    description: >
+      (Only applicable if you provided the `Realtime Database instance` parameter.) From which Realtime Database location do you want to delete user data?
+    type: select
+    options:
+      - label: United States
+        value: us-central1
+      - label: Belgium
+        value: europe-west1
+      - label: Singapore
+        value: asia-southeast1
+    default: us-central1
+    required: false
+    immutable: true
+
   - param: RTDB_PATHS
     label: Realtime Database paths
     description: >-

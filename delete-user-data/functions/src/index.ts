@@ -24,8 +24,9 @@ import * as logs from "./logs";
 // Initialize the Firebase Admin SDK
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
-  databaseURL: `https://${config.SELECTED_DATABASE_INSTANCE}.firebaseio.com`,
-});
+  databaseURL: `https://${config.selectedDatabaseInstance}${config.selectedDatabaseLocation === "us-central1" ? ".firebaseio.com" : `.${config.selectedDatabaseLocation}.firebasedatabase.app`}`
+})
+
 
 logs.init();
 
@@ -46,7 +47,7 @@ export const clearData = functions.auth.user().onDelete(async (user) => {
   } else {
     logs.firestoreNotConfigured();
   }
-  if (rtdbPaths) {
+  if (rtdbPaths && !!config.selectedDatabaseInstance) {
     promises.push(clearDatabaseData(rtdbPaths, uid));
   } else {
     logs.rtdbNotConfigured();
