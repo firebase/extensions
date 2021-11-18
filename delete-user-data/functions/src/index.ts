@@ -24,9 +24,12 @@ import * as logs from "./logs";
 // Initialize the Firebase Admin SDK
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
-  databaseURL: `https://${config.selectedDatabaseInstance}${config.selectedDatabaseLocation === "us-central1" ? ".firebaseio.com" : `.${config.selectedDatabaseLocation}.firebasedatabase.app`}`
-})
-
+  databaseURL: `https://${config.selectedDatabaseInstance}${
+    config.selectedDatabaseLocation === "us-central1"
+      ? ".firebaseio.com"
+      : `.${config.selectedDatabaseLocation}.firebasedatabase.app`
+  }`,
+});
 
 logs.init();
 
