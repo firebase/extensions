@@ -14,7 +14,7 @@ class DistributedCounter {
   ///
   /// @param doc A reference to a document with a counter field.
   /// @param field A path to a counter field in the above document.
-  factory DistributedCounter(doc, field) {
+  factory DistributedCounter(DocumentReference<Object?> doc, String field) {
     final shardsRef = doc.collection(SHARD_COLLECTION_ID);
     Map<String, int> shards = {};
     shards[doc.path] = 0;
@@ -38,7 +38,7 @@ class DistributedCounter {
 
   static String shardId;
 
-  final DocumentReference doc;
+  final DocumentReference<Object?> doc;
   final String field;
   final Map<String, int> shards = {};
   final Stream<int> _snapshots;
