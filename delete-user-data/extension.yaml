@@ -178,7 +178,6 @@ params:
         value: asia-southeast1
     default: us-central1
     required: false
-    immutable: true
 
   - param: RTDB_PATHS
     label: Realtime Database paths
