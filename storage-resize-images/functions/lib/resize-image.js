@@ -68,7 +68,7 @@ exports.supportedImageContentTypeMap = {
     png: "image/png",
     tiff: "image/tiff",
     webp: "image/webp",
-    gif: "image/gif"
+    gif: "image/gif",
 };
 const supportedExtensions = Object.keys(exports.supportedImageContentTypeMap).map((type) => `.${type}`);
 exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, format, }) => {
@@ -78,12 +78,14 @@ exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
         : contentType;
     const modifiedExtensionName = fileExtension && shouldFormatImage ? `.${format}` : fileExtension;
     let modifiedFileName;
+    let isFileAnimated = (await sharp(originalFile).metadata()).pages > 1;
     if (supportedExtensions.includes(fileExtension.toLowerCase())) {
         modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
-        if (fileExtension === ".gif") {
-            modifiedFileName = `${fileNameWithoutExtension}_${size}_gif_thumbnail${modifiedExtensionName}`;
+        if (isFileAnimated) {
+            modifiedFileName = `${fileNameWithoutExtension}_${size}_no_animation${modifiedExtensionName}`;
         }
-    } else {
+    }
+    else {
         // Fixes https://github.com/firebase/extensions/issues/476
         modifiedFileName = `${fileNameWithoutExtension}${fileExtension}_${size}`;
     }

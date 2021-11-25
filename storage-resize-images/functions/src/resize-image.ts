@@ -70,14 +70,15 @@ export const supportedContentTypes = [
   "image/png",
   "image/tiff",
   "image/webp",
+  "image/gif",
 ];
-
 export const supportedImageContentTypeMap = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   png: "image/png",
   tiff: "image/tiff",
   webp: "image/webp",
+  gif: "image/gif",
 };
 
 const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
@@ -113,9 +114,13 @@ export const modifyImage = async ({
     fileExtension && shouldFormatImage ? `.${format}` : fileExtension;
 
   let modifiedFileName;
+  let isFileAnimated = (await sharp(originalFile).metadata()).pages > 1;
 
   if (supportedExtensions.includes(fileExtension.toLowerCase())) {
     modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
+    if (isFileAnimated) {
+      modifiedFileName = `${fileNameWithoutExtension}_${size}_no_animation${modifiedExtensionName}`;
+    }
   } else {
     // Fixes https://github.com/firebase/extensions/issues/476
     modifiedFileName = `${fileNameWithoutExtension}${fileExtension}_${size}`;

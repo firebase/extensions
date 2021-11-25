@@ -111,10 +111,16 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       await mkdirp(tempLocalDir);
       logs.tempDirectoryCreated(tempLocalDir);
 
+      //for emulation download bucket validation purpose
+      const envValidation = process.env.EMULATOR_TEST_VALIDATION;
+
       // Download file from bucket.
       remoteFile = bucket.file(filePath);
       logs.imageDownloading(filePath);
-      await remoteFile.download({ destination: originalFile });
+      await remoteFile.download({
+        destination: originalFile,
+        validation: !envValidation,
+      });
       logs.imageDownloaded(filePath, originalFile);
 
       // Get a unique list of image types
