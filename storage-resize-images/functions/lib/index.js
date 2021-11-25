@@ -27,6 +27,7 @@ const resize_image_1 = require("./resize-image");
 const config_1 = require("./config");
 const logs = require("./logs");
 const util_1 = require("./util");
+const envValidation = process.env.EMULATOR_TEST_VALIDATION
 sharp.cache(false);
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
@@ -87,7 +88,7 @@ exports.generateResizedImage = functions.storage.object().onFinalize(async (obje
         // Download file from bucket.
         remoteFile = bucket.file(filePath);
         logs.imageDownloading(filePath);
-        await remoteFile.download({ destination: originalFile });
+        await remoteFile.download({ destination: originalFile , validation: !envValidation});
         logs.imageDownloaded(filePath, originalFile);
         // Get a unique list of image types
         const imageTypes = new Set(config_1.default.imageTypes);

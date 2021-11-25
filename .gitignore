@@ -14,5 +14,5 @@ build
 local.properties
 coverage
 yarn.lock
-
+!emulator-params.env
 firestore-debug.log
