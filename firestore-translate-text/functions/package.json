@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "prepare": "npm run build",
-    "build": "npm run compile",
+    "build": "npm run clean && npm run compile",
     "clean": "rimraf lib",
     "compile": "tsc",
     "test": "jest",
