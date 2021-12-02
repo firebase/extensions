@@ -13,6 +13,10 @@ const environment = {
   MAIL_COLLECTION: "mail",
   SMTP_CONNECTION_URI:
     "smtps://fakeemail@gmail.com:secret-password@smtp.gmail.com:465",
+  SMTP_SERVER_HOST_AND_PORT: "smtp.gmail.com:465",
+  SMTP_SERVER_SSL: "true",
+  SMTP_EMAIL: "fakeemail@gmail.com",
+  SMTP_PASSWORD: "secret-password",
   DEFAULT_FROM: "fakeemail@gmail.com",
   DEFAULT_REPLY_TO: "fakeemail@gmail.com",
   USERS_COLLECTION: "users",
@@ -27,17 +31,21 @@ describe("extensions config", () => {
 
   test("config loaded from environment variables", () => {
     const testConfig = {
-      location: environment.LOCATION,
-      mailCollection: environment.MAIL_COLLECTION,
-      smtpConnectionUri: environment.SMTP_CONNECTION_URI,
-      defaultFrom: environment.DEFAULT_FROM,
-      defaultReplyTo: environment.DEFAULT_REPLY_TO,
-      usersCollection: environment.USERS_COLLECTION,
-      templatesCollection: environment.TEMPLATES_COLLECTION,
-      testing: environment.TESTING === "true",
+      location: process.env.LOCATION,
+      mailCollection: process.env.MAIL_COLLECTION,
+      smtpConnectionUri: process.env.SMTP_CONNECTION_URI,
+      smtpServerDomain: process.env.SMTP_SERVER_HOST_AND_PORT,
+      smtpServerSSL: process.env.SMTP_SERVER_SSL === "true",
+      smtpEmail: process.env.SMTP_EMAIL,
+      smtpPassword: process.env.SMTP_PASSWORD,
+      defaultFrom: process.env.DEFAULT_FROM,
+      defaultReplyTo: process.env.DEFAULT_REPLY_TO,
+      usersCollection: process.env.USERS_COLLECTION,
+      templatesCollection: process.env.TEMPLATES_COLLECTION,
+      testing: process.env.TESTING === "true",
     };
     const functionsConfig = config();
-
+    console.log(functionsConfig);
     expect(functionsConfig).toStrictEqual(testConfig);
   });
 });

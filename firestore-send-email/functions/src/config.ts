@@ -14,13 +14,20 @@
  * limitations under the License.
  */
 
+
 export default {
   location: process.env.LOCATION,
   mailCollection: process.env.MAIL_COLLECTION,
   smtpConnectionUri: process.env.SMTP_CONNECTION_URI,
+  smtpServerDomain: process.env.SMTP_SERVER_HOST_AND_PORT,
+  smtpServerSSL: process.env.SMTP_SERVER_SSL === "true",
+  smtpEmail: process.env.SMTP_EMAIL,
+  smtpPassword: process.env.SMTP_PASSWORD,
   defaultFrom: process.env.DEFAULT_FROM,
   defaultReplyTo: process.env.DEFAULT_REPLY_TO,
   usersCollection: process.env.USERS_COLLECTION,
   templatesCollection: process.env.TEMPLATES_COLLECTION,
   testing: process.env.TESTING === "true",
 };
+
+

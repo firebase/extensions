@@ -69,6 +69,12 @@ export function deliveryError(
   logger.error(`Error when delivering message=${ref.path}: ${e.toString()}`);
 }
 
+export function errorMissingDomainAndUri() {
+  logger.error(
+    `Please provide SMTP_CONNECTION_URI or SMTP_SERVER_DOMAIN on installation`
+  );
+}
+
 export function missingDeliveryField(ref: FirebaseFirestore.DocumentReference) {
   logger.error(`message=${ref.path} is missing 'delivery' field`);
 }
