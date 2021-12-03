@@ -22,7 +22,6 @@ import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
-import { resolve } from "dns";
 import { setSmtpCredentials } from "./helpers";
 
 logs.init();
