@@ -146,15 +146,15 @@ class ShardedCounterWorker {
                 const paths = await this.db.runTransaction(async (t) => {
                     const paths = [];
                     // Read metadata document in transaction to guarantee ownership of the slice.
-                    const metadocPromise = t.get(this.metadoc.ref);
-                    const counterPromise = plan.isPartial
+                    const metadocPromise = () => t.get(this.metadoc.ref);
+                    const counterPromise = () => plan.isPartial || plan.aggregate === "."
                         ? Promise.resolve(null)
                         : t.get(this.db.doc(plan.aggregate));
                     // Read all shards in a transaction since we want to delete them immediately.
                     // Note that partials are not read here, because we use array transform to
                     // update them and don't need transaction guarantees.
                     const shardRefs = plan.shards.map((snap) => snap.ref);
-                    const shardsPromise = shardRefs.length > 0
+                    const shardsPromise = () => shardRefs.length > 0
                         ? t.getAll(shardRefs[0], ...shardRefs.slice(1))
                         : Promise.resolve([]);
                     let shards;
@@ -162,9 +162,9 @@ class ShardedCounterWorker {
                     let metadoc;
                     try {
                         [shards, counter, metadoc] = await Promise.all([
-                            shardsPromise,
-                            counterPromise,
-                            metadocPromise,
+                            shardsPromise(),
+                            counterPromise(),
+                            metadocPromise(),
                         ]);
                     }
                     catch (err) {
@@ -179,6 +179,9 @@ class ShardedCounterWorker {
                     // Calculate aggregated value and save to aggregate shard.
                     const aggr = new aggregator_1.Aggregator();
                     const update = aggr.aggregate(counter, plan.partials, shards);
+                    if (plan.aggregate === ".") {
+                        return [];
+                    }
                     t.set(this.db.doc(plan.aggregate), update, { merge: true });
                     // Delete shards that have been aggregated.
                     shards.forEach((snap) => {
