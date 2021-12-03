@@ -45,7 +45,6 @@ describe("extensions config", () => {
       testing: process.env.TESTING === "true",
     };
     const functionsConfig = config();
-    console.log(functionsConfig);
     expect(functionsConfig).toStrictEqual(testConfig);
   });
 });
