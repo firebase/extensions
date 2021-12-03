@@ -150,7 +150,7 @@ params:
   - param: SMTP_EMAIL
     label: SMTP email username (new recommended setup)
     description: >-
-      Email username for the STMP server. e.g. `email@gmail.com`
+      Email username for the SMTP server. e.g. `email@gmail.com`
     type: string
     validationRegex: ^.+\@.+\..+$
     validationErrorMessage: Must be a valid email that contains @ and. e.g. `email@gmail.com`
@@ -160,7 +160,7 @@ params:
   - param: SMTP_PASSWORD
     label: SMTP password (new recommended setup)
     description: >-
-      User password for the STMP server
+      User password for the SMTP server
     type: secret
     required: false
 
