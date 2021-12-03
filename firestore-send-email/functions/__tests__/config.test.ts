@@ -1,5 +1,6 @@
 import * as functionsTestInit from "firebase-functions-test";
 import mockedEnv from "mocked-env";
+import { Config } from "../src/types";
 
 const { config } = global;
 
@@ -30,7 +31,7 @@ describe("extensions config", () => {
   afterEach(() => restoreEnv());
 
   test("config loaded from environment variables", () => {
-    const testConfig = {
+    const testConfig: Config = {
       location: process.env.LOCATION,
       mailCollection: process.env.MAIL_COLLECTION,
       smtpConnectionUri: process.env.SMTP_CONNECTION_URI,

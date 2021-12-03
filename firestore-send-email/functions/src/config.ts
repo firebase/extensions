@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+import { Config } from "./types";
 
-export default {
+const config: Config = {
   location: process.env.LOCATION,
   mailCollection: process.env.MAIL_COLLECTION,
   smtpConnectionUri: process.env.SMTP_CONNECTION_URI,
@@ -30,4 +31,4 @@ export default {
   testing: process.env.TESTING === "true",
 };
 
-
+export default config;

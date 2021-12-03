@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = {
+const config = {
     location: process.env.LOCATION,
     mailCollection: process.env.MAIL_COLLECTION,
     smtpConnectionUri: process.env.SMTP_CONNECTION_URI,
@@ -29,3 +29,4 @@ exports.default = {
     templatesCollection: process.env.TEMPLATES_COLLECTION,
     testing: process.env.TESTING === "true",
 };
+exports.default = config;
