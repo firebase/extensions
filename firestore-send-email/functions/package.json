@@ -6,7 +6,7 @@
     "build": "npm run clean && npm run compile",
     "clean": "rimraf lib",
     "compile": "tsc",
-    "test": "jest --watch",
+    "test": "jest",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "keywords": [],
