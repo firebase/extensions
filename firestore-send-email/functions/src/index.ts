@@ -70,7 +70,7 @@ async function transportLayer() {
   } else {
     return new Promise((resolve, reject) => {
       const SMTPCredentials = setSmtpCredentials(config);
-      if (!!SMTPCredentials) {
+      if (!SMTPCredentials) {
         logs.errorMissingDomainAndUri();
         reject(new Error("Missing server domain or uri parameters"));
       } else {

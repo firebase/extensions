@@ -1,7 +1,5 @@
 import { createTransport } from "nodemailer";
 
-
-
 export const setSmtpCredentials = (config) => {
   const {
     smtpConnectionUri,
@@ -12,7 +10,7 @@ export const setSmtpCredentials = (config) => {
   } = config;
   let smtpCredentials;
   if (!!smtpConnectionUri && !smtpServerDomain) {
-    // depracated smtp settings version after 0.1.12
+    // deprecated smtp settings version after 0.1.12
     smtpCredentials = createTransport(smtpConnectionUri);
   } else if (!!smtpServerDomain) {
     // recommended smtp setting from version 0.1.13

@@ -7,7 +7,7 @@ exports.setSmtpCredentials = (config) => {
     smtpServerSSL, smtpEmail, smtpPassword, } = config;
     let smtpCredentials;
     if (!!smtpConnectionUri && !smtpServerDomain) {
-        // depracated smtp settings version after 0.1.12
+        // deprecated smtp settings version after 0.1.12
         smtpCredentials = nodemailer_1.createTransport(smtpConnectionUri);
     }
     else if (!!smtpServerDomain) {

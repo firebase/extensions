@@ -65,7 +65,7 @@ async function transportLayer() {
     else {
         return new Promise((resolve, reject) => {
             const SMTPCredentials = helpers_1.setSmtpCredentials(config_1.default);
-            if (!!SMTPCredentials) {
+            if (!SMTPCredentials) {
                 logs.errorMissingDomainAndUri();
                 reject(new Error("Missing server domain or uri parameters"));
             }

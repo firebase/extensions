@@ -114,9 +114,9 @@ params:
     immutable: true
 
   - param: SMTP_CONNECTION_URI
-    label: SMTP connection URI (depracated setup)
+    label: SMTP connection URI (deprecated setup, can be omitted)
     description: >-
-      A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465. `Depracated: we recommend using setting new setting below for email setup. This field can be omitted`
+      A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465. `deprecated: we recommend using new configuration settings below for email setup. This field can be omitted`
     type: string
     example: smtps://username:password@smtp.hostname.com:465
     validationRegex: ^smtps?://[^:]+:[^:]+@.*$
@@ -126,7 +126,8 @@ params:
   - param: SMTP_SERVER_HOST_AND_PORT
     label: SMTP connection host and port (new recommended setup)
     description: >-
-      A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465. e.g. `smtp.gmail.com:465`
+      A host and port representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465. e.g. `smtp.gmail.com:465`
+      When filled deprecated previous SMTP connection URI field will not be used and can be deleted.
     type: string
     example: smtp.hostname.com:port
     validationRegex: ^(.*\.*:?:(\d{1,5}))$
@@ -134,7 +135,7 @@ params:
     required: false
 
   - param: SMTP_SERVER_SSL
-    label: SMTP connection security (new recommended setup)
+    label: SSL/TLS connection (new recommended setup)
     description: >-
       Is email server using SSL/TLS security connection? (SMTPS)
     type: select
@@ -149,11 +150,11 @@ params:
   - param: SMTP_EMAIL
     label: SMTP email username (new recommended setup)
     description: >-
-      Email username for the STMP server. e.g. `john89@gmail.com`
+      Email username for the STMP server. e.g. `email@gmail.com`
     type: string
     validationRegex: ^.+\@.+\..+$
-    validationErrorMessage: Must be a valid email that contains @ and. e.g. `john89@gmail.com`
-    example: john89@gmail.com
+    validationErrorMessage: Must be a valid email that contains @ and. e.g. `email@gmail.com`
+    example: email@gmail.com
     required: false
 
   - param: SMTP_PASSWORD
