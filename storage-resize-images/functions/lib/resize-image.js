@@ -44,7 +44,7 @@ function convertType(buffer, format) {
             .webp()
             .toBuffer();
     }
-    if (format === "tiff") {
+    if (format === "tiff" || format === "tif") {
         return sharp(buffer)
             .tiff()
             .toBuffer();
@@ -65,6 +65,7 @@ exports.supportedImageContentTypeMap = {
     jpg: "image/jpeg",
     jpeg: "image/jpeg",
     png: "image/png",
+    tif: "image/tif",
     tiff: "image/tiff",
     webp: "image/webp",
 };
