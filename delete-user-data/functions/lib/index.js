@@ -23,7 +23,7 @@ const helpers_1 = require("./helpers");
 const config_1 = require("./config");
 const logs = require("./logs");
 // Helper function for selecting correct domain adrress
-const databaseURL = helpers_1.getDatabaseUrl(config_1.default.selectedDatabaseInstance, config_1.default.selectedDatabaseLocation);
+const databaseURL = (0, helpers_1.getDatabaseUrl)(config_1.default.selectedDatabaseInstance, config_1.default.selectedDatabaseLocation);
 // Initialize the Firebase Admin SDK
 admin.initializeApp({
     credential: admin.credential.applicationDefault(),
@@ -130,7 +130,7 @@ const clearFirestoreData = async (firestorePaths, uid) => {
                 await firebase_tools.firestore.delete(path, {
                     project: process.env.PROJECT_ID,
                     recursive: true,
-                    yes: true,
+                    yes: true, // auto-confirmation
                 });
                 logs.firestorePathDeleted(path, true);
             }
