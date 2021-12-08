@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "lib": ["es6"],
+    "lib": ["es2018"],
     "module": "commonjs",
     "noImplicitReturns": true,
     "sourceMap": false,
-    "target": "es6"
+    "target": "es2018"
   },
   "compileOnSave": true,
   "exclude": ["node_modules"]
