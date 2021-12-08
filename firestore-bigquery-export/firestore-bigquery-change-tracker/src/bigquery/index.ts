@@ -90,17 +90,13 @@ export class FirestoreBigQueryEventHistoryTracker
 
   private async transformRows(rows: any[]) {
     if (this.config.transformFunction !== "") {
-      try {
-        const response = await fetch(this.config.transformFunction, {
-          method: "post",
-          body: JSON.stringify({ data: rows }),
-          headers: { "Content-Type": "application/json" },
-        });
-        const responseJson = await response.json();
-        return responseJson.data;
-      } catch (e) {
-        logs.error(e);
-      }
+      const response = await fetch(this.config.transformFunction, {
+        method: "post",
+        body: JSON.stringify({ data: rows }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const responseJson = await response.json();
+      return responseJson.data;
     }
     return rows;
   }
