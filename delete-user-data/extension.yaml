@@ -132,9 +132,14 @@ params:
       Enter the full paths, separated by commas. You can represent the User ID
       of the deleted user with `{UID}`.
 
+      Paths can also use query search by specified property for User ID. You can specify collection
+      and property name (`collection.property`) for searching documents in collection by it that is equal to User ID. (Please note that it can generate higher functions usage costs 
+      than specified by `{UID}` document name)
+
       For example, if you have the collections `users` and `admins`, and each
       collection has documents with User ID as document IDs, then you can enter
-      `users/{UID},admins/{UID}`.
+      `users/{UID},admins/{UID}`. If you want find and delete a documents with a specific property containing deleted User ID
+      you can type `posts.userId`. You can mix paths with delete by property as well `users/{UID},posts.userId`.
     type: string
     example: users/{UID},admins/{UID}
     required: false
