@@ -1,3 +1,7 @@
+## Version 0.1.25
+
+fixed - fix samsung encoded jpg resizing
+
 ## Version 0.1.24
 
 fixed - update package lock file to fix installation errors (#782)
