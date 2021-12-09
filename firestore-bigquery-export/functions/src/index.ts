@@ -30,6 +30,7 @@ const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHis
     datasetId: config.datasetId,
     datasetLocation: config.datasetLocation,
     tablePartitioning: config.tablePartitioning,
+    transformFunction: config.transformFunction,
   }
 );
 
