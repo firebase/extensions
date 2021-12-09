@@ -1,3 +1,7 @@
+## Version 0.1.21
+
+feature - added operating hooks functionality
+
 ## Version 0.1.20
 
 fixed - Fixed installation error due to bad package-lock.json
