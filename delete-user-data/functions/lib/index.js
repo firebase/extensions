@@ -22,24 +22,11 @@ const firebase_tools = require("firebase-tools");
 const config_1 = require("./config");
 const logs = require("./logs");
 // Initialize the Firebase Admin SDK
-
-process.env.FIREBASE_STORAGE_EMULATOR_HOST="localhost:9199"
-
-
-const app = admin.initializeApp({
-    projectId: "extensions-testing",
-    // credential: admin.credential.applicationDefault(),
-    storageBucket: "default-bucket",
-    databaseURL: process.env.DATABASE_URL,
+admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+    databaseURL: `https://${config_1.default.SELECTED_DATABASE_INSTANCE}.firebaseio.com`,
 });
-
-const database = app.database()
-const storage = app.storage()
-const firestore = app.firestore()
-const auth = app.auth()
-
-console.log(storage)
-
+logs.init();
 /*
  * The clearData function removes personal data from the RealTime Database,
  * Storage, and Firestore. It waits for all deletions to complete, and then
@@ -97,14 +84,14 @@ const clearStorageData = async (storagePaths, uid) => {
         const parts = path.split("/");
         const bucketName = parts[0];
         const bucket = bucketName === "{DEFAULT}"
-            ? storage.bucket()
-            : storage.bucket();
+            ? admin.storage().bucket(config_1.default.storageBucketDefault)
+            : admin.storage().bucket(bucketName);
         const prefix = parts.slice(1).join("/");
-        console.log(bucket)
-
         try {
             logs.storagePathDeleting(prefix);
-            bucket.deleteFiles({prefix})
+            await bucket.deleteFiles({
+                prefix,
+            });
             logs.storagePathDeleted(prefix);
         }
         catch (err) {
