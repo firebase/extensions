@@ -22,11 +22,24 @@ const firebase_tools = require("firebase-tools");
 const config_1 = require("./config");
 const logs = require("./logs");
 // Initialize the Firebase Admin SDK
-admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-    databaseURL: `https://${config_1.default.SELECTED_DATABASE_INSTANCE}.firebaseio.com`,
+
+process.env.FIREBASE_STORAGE_EMULATOR_HOST="localhost:9199"
+
+
+const app = admin.initializeApp({
+    projectId: "extensions-testing",
+    // credential: admin.credential.applicationDefault(),
+    storageBucket: "default-bucket",
+    databaseURL: process.env.DATABASE_URL,
 });
-logs.init();
+
+const database = app.database()
+const storage = app.storage()
+const firestore = app.firestore()
+const auth = app.auth()
+
+console.log(storage)
+
 /*
  * The clearData function removes personal data from the RealTime Database,
  * Storage, and Firestore. It waits for all deletions to complete, and then
@@ -84,14 +97,14 @@ const clearStorageData = async (storagePaths, uid) => {
         const parts = path.split("/");
         const bucketName = parts[0];
         const bucket = bucketName === "{DEFAULT}"
-            ? admin.storage().bucket(config_1.default.storageBucketDefault)
-            : admin.storage().bucket(bucketName);
+            ? storage.bucket()
+            : storage.bucket();
         const prefix = parts.slice(1).join("/");
+        console.log(bucket)
+
         try {
             logs.storagePathDeleting(prefix);
-            await bucket.deleteFiles({
-                prefix,
-            });
+            bucket.deleteFiles({prefix})
             logs.storagePathDeleted(prefix);
         }
         catch (err) {
@@ -111,25 +124,20 @@ const clearFirestoreData = async (firestorePaths, uid) => {
     const paths = extractUserPaths(firestorePaths, uid);
     const promises = paths.map(async (path) => {
         try {
-            const isRecursive = config_1.default.firestoreDeleteMode === "recursive";
-            if (!isRecursive) {
-                const firestore = admin.firestore();
-                logs.firestorePathDeleting(path, false);
-                // Wrapping in transaction to allow for automatic retries (#48)
-                await firestore.runTransaction((transaction) => {
-                    transaction.delete(firestore.doc(path));
-                    return Promise.resolve();
-                });
-                logs.firestorePathDeleted(path, false);
+            const firestore = admin.firestore();
+            const isFieldInDocument = path.includes(".");
+            if (isFieldInDocument) {
+                const collection = extractCollection(path);
+                const collectionQuery = await firestore
+                    .collection(collection)
+                    .where(extractDocField(path), "==", uid)
+                    .get();
+                await Promise.all(collectionQuery.docs.map(async (doc) => {
+                    await clearFirestorePath(collection + "/" + doc.id, firestore);
+                }));
             }
             else {
-                logs.firestorePathDeleting(path, true);
-                await firebase_tools.firestore.delete(path, {
-                    project: process.env.PROJECT_ID,
-                    recursive: true,
-                    yes: true,
-                });
-                logs.firestorePathDeleted(path, true);
+                await clearFirestorePath(path, firestore);
             }
         }
         catch (err) {
@@ -138,6 +146,38 @@ const clearFirestoreData = async (firestorePaths, uid) => {
     });
     await Promise.all(promises);
     logs.firestoreDeleted();
+};
+const clearFirestorePath = async (path, firestore) => {
+    try {
+        const isRecursive = config_1.default.firestoreDeleteMode === "recursive";
+        if (!isRecursive) {
+            logs.firestorePathDeleting(path, false);
+            // Wrapping in transaction to allow for automatic retries (#48)
+            await firestore.runTransaction((transaction) => {
+                transaction.delete(firestore.doc(path));
+                return Promise.resolve();
+            });
+            logs.firestorePathDeleted(path, false);
+        }
+        else {
+            logs.firestorePathDeleting(path, true);
+            await firebase_tools.firestore.delete(path, {
+                project: process.env.PROJECT_ID,
+                recursive: true,
+                yes: true,
+            });
+            logs.firestorePathDeleted(path, true);
+        }
+    }
+    catch (err) {
+        logs.firestorePathError(path, err);
+    }
+};
+const extractCollection = (path) => {
+    return path.substring(0, path.lastIndexOf("."));
+};
+const extractDocField = (path) => {
+    return path.substring(path.lastIndexOf(".") + 1);
 };
 const extractUserPaths = (paths, uid) => {
     return paths.split(",").map((path) => replaceUID(path, uid));

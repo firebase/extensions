@@ -135,8 +135,22 @@ params:
       For example, if you have the collections `users` and `admins`, and each
       collection has documents with User ID as document IDs, then you can enter
       `users/{UID},admins/{UID}`.
+
+      You can also search (`collection.documentProperty`) and delete documents
+      containing User ID string as their property.
+
+      For example, if you have a collection of `docs` and each document in the collection
+      has a property `uid` containing your User ID, then you can enter
+      `docs.uid`
+
+      You can also mix the paths:
+      `users/{UID}, docs.uid`
+      This would delete documents with User ID as document IDs in `users` collection and
+      all documents in `docs` collection containing User ID string in `uid` field.
+      
+
     type: string
-    example: users/{UID},admins/{UID}
+    example: users/{UID},admins/{UID},docs.uid
     required: false
 
   - param: FIRESTORE_DELETE_MODE
