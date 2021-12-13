@@ -1,6 +1,6 @@
 ## Version 0.1.13
 
-docs - updated postinstall docs to link to Firebase documentation
+docs - updated POSTINSTALL docs to link to Firebase documentation
 
 ## Version 0.1.12
 
