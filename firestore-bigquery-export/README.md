@@ -28,6 +28,7 @@ Before installing this extension, you'll need to:
 
 Prior to sending the document change to BigQuery, you have an opportunity to transform the data with an HTTP function. The payload will contain the following:
 
+```
 { 
   data: [{
     insertId: int;
@@ -41,6 +42,7 @@ Prior to sending the document change to BigQuery, you have an opportunity to tra
     },
   }]
 }
+```
 
 The response should be indentical in structure.
 
