@@ -1,6 +1,6 @@
 ## Version 0.1.25
 
-fixed - fix samsung encoded jpg resizing
+fixed - fix errors when resizing Samsung-encoded JPEGs
 
 ## Version 0.1.24
 
