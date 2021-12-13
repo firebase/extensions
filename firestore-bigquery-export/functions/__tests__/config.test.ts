@@ -13,7 +13,6 @@ const environment = {
   LOCATION: "us-central1",
   DATASET_ID: "my_dataset",
   TABLE_ID: "my_table",
-  TRANSFORM_FUNCTION: "",
 };
 
 const { config } = global;
