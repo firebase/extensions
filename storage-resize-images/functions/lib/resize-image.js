@@ -19,7 +19,7 @@ function resize(file, size) {
     else {
         throw new Error("height and width are not delimited by a ',' or a 'x'");
     }
-    return sharp(file)
+    return sharp(file, { failOnError: false })
         .rotate()
         .resize(parseInt(width, 10), parseInt(height, 10), {
         fit: "inside",
@@ -44,7 +44,7 @@ function convertType(buffer, format) {
             .webp()
             .toBuffer();
     }
-    if (format === "tiff") {
+    if (format === "tiff" || format === "tif") {
         return sharp(buffer)
             .tiff()
             .toBuffer();
@@ -65,6 +65,7 @@ exports.supportedImageContentTypeMap = {
     jpg: "image/jpeg",
     jpeg: "image/jpeg",
     png: "image/png",
+    tif: "image/tif",
     tiff: "image/tiff",
     webp: "image/webp",
 };
