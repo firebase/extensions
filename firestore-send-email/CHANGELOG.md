@@ -1,3 +1,7 @@
+## Version 0.1.13
+
+docs - updated POSTINSTALL docs to link to Firebase documentation
+
 ## Version 0.1.12
 
 fixed - moved lease expired error message to delivery document (#726)
