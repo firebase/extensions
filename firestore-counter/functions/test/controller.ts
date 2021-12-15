@@ -22,21 +22,12 @@ import {
   ShardedCounterController,
   ControllerStatus,
 } from "../src/controller";
-import { initializeApp, credential } from "firebase-admin";
+
 import * as uuid from "uuid";
 
-let serviceAccount = require("../../test-project-key.json");
+import init from "../initialize";
 
-const app = initializeApp(
-  {
-    credential: credential.cert(serviceAccount),
-    projectId: serviceAccount.project_id,
-  },
-  "controller-test"
-);
-
-const db = app.firestore();
-db.settings({ timestampsInSnapshots: true });
+const { db } = init();
 
 @suite
 class ControllerTest extends ShardedCounterController {

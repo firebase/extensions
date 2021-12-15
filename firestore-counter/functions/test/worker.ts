@@ -17,21 +17,11 @@
 import { expect } from "chai";
 import { suite, test, timeout } from "mocha-typescript";
 import { ShardedCounterWorker } from "../src/worker";
-import { initializeApp, credential } from "firebase-admin";
 import * as uuid from "uuid";
 
-let serviceAccount = require("../../test-project-key.json");
+import init from "../initialize";
 
-const app = initializeApp(
-  {
-    credential: credential.cert(serviceAccount),
-    projectId: serviceAccount.project_id,
-  },
-  "worker-test"
-);
-
-const db = app.firestore();
-db.settings({ timestampsInSnapshots: true });
+const { db } = init();
 
 function range(n: number) {
   return Array.from(Array(n).keys());
