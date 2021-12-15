@@ -12,8 +12,8 @@
     "firestore-bigquery-export/scripts/gen-schema-view",
     "firestore-bigquery-export/scripts/import",
     "firestore-bigquery-export/firestore-bigquery-change-tracker",
-    "storage-resize-images/functions"
+    "storage-resize-images/functions",
+    "firestore-counter/functions"
   ],
-  "version": "0.0.0",
-  "brokenTests": ["firestore-counter/functions"]
+  "version": "0.0.0"
 }
