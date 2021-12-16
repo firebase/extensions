@@ -2,19 +2,27 @@ import Mail = require("nodemailer/lib/mailer");
 import { setSmtpCredentials } from "../src/helpers";
 import { Config } from "../src/types";
 
-describe("function setSmtpCredential test returning creating nodemailer transport based on ENV config", () => {
-  test("Mail config without smtpConnectionUri(SMTP_CONNECTION_URI env variable), old setting", () => {
+describe("set server credentials helper function", () => {
+  test("should return smtpServerDomain credentials", () => {
     const config: Config = {
-      smtpServerDomain: "smtp.gmail.com:25",
+      smtpServerDomain: "smtp.gmail.com:465",
+      smtpEmail: "fakeemail@gmail.com",
+      smtpPassword: "fakepassword",
+      smtpServerSSL: true,
       location: "",
       mailCollection: "",
       defaultFrom: "",
     };
     const credentials = setSmtpCredentials(config);
+    console.log(credentials);
     expect(credentials).toBeInstanceOf(Mail);
+    expect(credentials.options.port).toBe(465);
+    expect(credentials.options.host).toBe("smtp.gmail.com");
+    expect(credentials.options.auth.user).toBe(config.smtpEmail);
+    expect(credentials.options.secure).toBe(true);
   });
 
-  test("Mail config without smtpServerDomain(SMTP_SERVER_HOST_AND_PORT env variable)", () => {
+  test("return smtpConnectionUri credentials", () => {
     const config: Config = {
       smtpConnectionUri:
         "smtps://fakeemail@gmail.com:secret-password@smtp.gmail.com:465",
@@ -23,14 +31,23 @@ describe("function setSmtpCredential test returning creating nodemailer transpor
       defaultFrom: "",
     };
     const credentials = setSmtpCredentials(config);
+
+    console.log(credentials);
     expect(credentials).toBeInstanceOf(Mail);
+    expect(credentials.options.port).toBe(465);
+    expect(credentials.options.host).toBe("smtp.gmail.com");
+    expect(credentials.options.auth.user).toBe("fakeemail@gmail.com");
+    expect(credentials.options.secure).toBe(true);
   });
 
-  test("Mail config with smtpServerDomain(SMTP_SERVER_HOST_AND_PORT env variable) and smtpConnectionUri(SMTP_CONNECTION_URI env variable)), it should return smtpServerDomain instance credentials", () => {
+  test("return smtpServerDomain credentials, when both config fields used", () => {
     const config: Config = {
       smtpConnectionUri:
         "smtps://fakeemail@gmail.com:secret-password@smtp.gmail.com:465",
-      smtpServerDomain: "smtp.address.com:25",
+      smtpServerDomain: "smtp.mail.com:25",
+      smtpEmail: "fakeemail2@gmail.com",
+      smtpPassword: "fakepassword",
+      smtpServerSSL: false,
       location: "",
       mailCollection: "",
       defaultFrom: "",
@@ -38,10 +55,12 @@ describe("function setSmtpCredential test returning creating nodemailer transpor
     const credentials = setSmtpCredentials(config);
     expect(credentials).toBeInstanceOf(Mail);
     expect(credentials.options.port).toBe(25);
-    expect(credentials.options.host).toBe("smtp.address.com");
+    expect(credentials.options.host).toBe("smtp.mail.com");
+    expect(credentials.options.auth.user).toBe(config.smtpEmail);
+    expect(credentials.options.secure).toBe(false);
   });
 
-  test("Mail config without smtpServerDomain(SMTP_SERVER_HOST_AND_PORT env variable) and smtpConnectionUri(SMTP_CONNECTION_URI env variable). Should return null", () => {
+  test("return null", () => {
     const config: Config = {
       location: "",
       mailCollection: "",

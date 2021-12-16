@@ -1,6 +1,7 @@
 import { createTransport } from "nodemailer";
+import { Config } from "./types";
 
-export const setSmtpCredentials = (config) => {
+export const setSmtpCredentials = (config: Config) => {
   const {
     smtpConnectionUri,
     smtpServerDomain, // eg.smtp.gmail.com:465
