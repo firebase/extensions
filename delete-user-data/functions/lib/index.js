@@ -21,10 +21,6 @@ const functions = require("firebase-functions");
 const firebase_tools = require("firebase-tools");
 const config_1 = require("./config");
 const logs = require("./logs");
-process.env.FIREBASE_AUTH_EMULATOR_HOST = "localhost:9099";
-process.env.FIREBASE_DATABASE_EMULATOR_HOST = "localhost:9000";
-process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
-process.env.FIREBASE_STORAGE_EMULATOR_HOST = "localhost:9199";
 // Initialize the Firebase Admin SDK
 admin.initializeApp({
     credential: admin.credential.applicationDefault(),
@@ -88,11 +84,9 @@ const clearStorageData = async (storagePaths, uid) => {
         const parts = path.split("/");
         const bucketName = parts[0];
         const bucket = bucketName === "{DEFAULT}"
-            ? app.storage().bucket()
-            : app.storage().bucket(bucketName);
+            ? admin.storage().bucket(config_1.default.storageBucketDefault)
+            : admin.storage().bucket(bucketName);
         const prefix = parts.slice(1).join("/");
-        console.log(prefix)
-        console.log(bucket.deleteFiles)
         try {
             logs.storagePathDeleting(prefix);
             await bucket.deleteFiles({
@@ -117,20 +111,25 @@ const clearFirestoreData = async (firestorePaths, uid) => {
     const paths = extractUserPaths(firestorePaths, uid);
     const promises = paths.map(async (path) => {
         try {
-            const firestore = admin.firestore();
-            const isFieldInDocument = path.includes(".");
-            if (isFieldInDocument) {
-                const collection = extractCollection(path);
-                const collectionQuery = await firestore
-                    .collection(collection)
-                    .where(extractDocField(path), "==", uid)
-                    .get();
-                await Promise.all(collectionQuery.docs.map(async (doc) => {
-                    await clearFirestorePath(collection + "/" + doc.id, firestore);
-                }));
+            const isRecursive = config_1.default.firestoreDeleteMode === "recursive";
+            if (!isRecursive) {
+                const firestore = admin.firestore();
+                logs.firestorePathDeleting(path, false);
+                // Wrapping in transaction to allow for automatic retries (#48)
+                await firestore.runTransaction((transaction) => {
+                    transaction.delete(firestore.doc(path));
+                    return Promise.resolve();
+                });
+                logs.firestorePathDeleted(path, false);
             }
             else {
-                await clearFirestorePath(path, firestore);
+                logs.firestorePathDeleting(path, true);
+                await firebase_tools.firestore.delete(path, {
+                    project: process.env.PROJECT_ID,
+                    recursive: true,
+                    yes: true,
+                });
+                logs.firestorePathDeleted(path, true);
             }
         }
         catch (err) {
@@ -139,38 +138,6 @@ const clearFirestoreData = async (firestorePaths, uid) => {
     });
     await Promise.all(promises);
     logs.firestoreDeleted();
-};
-const clearFirestorePath = async (path, firestore) => {
-    try {
-        const isRecursive = config_1.default.firestoreDeleteMode === "recursive";
-        if (!isRecursive) {
-            logs.firestorePathDeleting(path, false);
-            // Wrapping in transaction to allow for automatic retries (#48)
-            await firestore.runTransaction((transaction) => {
-                transaction.delete(firestore.doc(path));
-                return Promise.resolve();
-            });
-            logs.firestorePathDeleted(path, false);
-        }
-        else {
-            logs.firestorePathDeleting(path, true);
-            await firebase_tools.firestore.delete(path, {
-                project: process.env.PROJECT_ID,
-                recursive: true,
-                yes: true,
-            });
-            logs.firestorePathDeleted(path, true);
-        }
-    }
-    catch (err) {
-        logs.firestorePathError(path, err);
-    }
-};
-const extractCollection = (path) => {
-    return path.substring(0, path.lastIndexOf("."));
-};
-const extractDocField = (path) => {
-    return path.substring(path.lastIndexOf(".") + 1);
 };
 const extractUserPaths = (paths, uid) => {
     return paths.split(",").map((path) => replaceUID(path, uid));

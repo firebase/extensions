@@ -122,24 +122,26 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
   const paths = extractUserPaths(firestorePaths, uid);
   const promises = paths.map(async (path) => {
     try {
-      const firestore = admin.firestore();
-      const isFieldInDocument = path.includes(".");
+      const isRecursive = config.firestoreDeleteMode === "recursive";
 
-      if (isFieldInDocument) {
-        const collection = extractCollection(path);
+      if (!isRecursive) {
+        const firestore = admin.firestore();
+        logs.firestorePathDeleting(path, false);
 
-        const collectionQuery = await firestore
-          .collection(collection)
-          .where(extractDocField(path), "==", uid)
-          .get();
-
-        await Promise.all(
-          collectionQuery.docs.map(async (doc: any) => {
-            await clearFirestorePath(collection + "/" + doc.id, firestore);
-          })
-        );
+        // Wrapping in transaction to allow for automatic retries (#48)
+        await firestore.runTransaction((transaction) => {
+          transaction.delete(firestore.doc(path));
+          return Promise.resolve();
+        });
+        logs.firestorePathDeleted(path, false);
       } else {
-        await clearFirestorePath(path, firestore);
+        logs.firestorePathDeleting(path, true);
+        await firebase_tools.firestore.delete(path, {
+          project: process.env.PROJECT_ID,
+          recursive: true,
+          yes: true, // auto-confirmation
+        });
+        logs.firestorePathDeleted(path, true);
       }
     } catch (err) {
       logs.firestorePathError(path, err);
@@ -149,41 +151,6 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
   await Promise.all(promises);
 
   logs.firestoreDeleted();
-};
-
-const clearFirestorePath = async (path: string, firestore: any) => {
-  try {
-    const isRecursive = config.firestoreDeleteMode === "recursive";
-
-    if (!isRecursive) {
-      logs.firestorePathDeleting(path, false);
-
-      // Wrapping in transaction to allow for automatic retries (#48)
-      await firestore.runTransaction((transaction) => {
-        transaction.delete(firestore.doc(path));
-        return Promise.resolve();
-      });
-      logs.firestorePathDeleted(path, false);
-    } else {
-      logs.firestorePathDeleting(path, true);
-      await firebase_tools.firestore.delete(path, {
-        project: process.env.PROJECT_ID,
-        recursive: true,
-        yes: true, // auto-confirmation
-      });
-      logs.firestorePathDeleted(path, true);
-    }
-  } catch (err) {
-    logs.firestorePathError(path, err);
-  }
-};
-
-const extractCollection = (path: string) => {
-  return path.substring(0, path.lastIndexOf("."));
-};
-
-const extractDocField = (path: string) => {
-  return path.substring(path.lastIndexOf(".") + 1);
 };
 
 const extractUserPaths = (paths: string, uid: string) => {
