@@ -116,7 +116,7 @@ params:
   - param: SMTP_CONNECTION_URI
     label: SMTP connection URI (deprecated setup, can be omitted)
     description: >-
-      A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465. `deprecated: we recommend using new configuration settings below for email setup. This field can be omitted`
+      A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465. `DEPRECATED: we recommend using new configuration settings below for email setup. This field can be omitted`
     type: string
     example: smtps://username:password@smtp.hostname.com:465
     validationRegex: ^smtps?://[^:]+:[^:]+@.*$
@@ -127,7 +127,7 @@ params:
     label: SMTP connection host and port (new recommended setup)
     description: >-
       A host and port representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465. e.g. `smtp.gmail.com:465`
-      When filled deprecated previous SMTP connection URI field will not be used and can be deleted.
+      When filled deprecated SMTP connection URI parameter will not be used and can be deleted.
     type: string
     example: smtp.hostname.com:port
     validationRegex: ^(.*\.*:?:(\d{1,5}))$
