@@ -21,10 +21,13 @@ const functions = require("firebase-functions");
 const firebase_tools = require("firebase-tools");
 const config_1 = require("./config");
 const logs = require("./logs");
+// Check environment
+const environment = process.env.TESTING;
 // Initialize the Firebase Admin SDK
-admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-    databaseURL: `https://${config_1.default.SELECTED_DATABASE_INSTANCE}.firebaseio.com`,
+const app = admin.initializeApp({
+    projectId: process.env.PROJECT_ID,
+    // credential: admin.credential.applicationDefault(),
+    // databaseURL: `https://${config.SELECTED_DATABASE_INSTANCE}.firebaseio.com`,
 });
 logs.init();
 /*
@@ -64,7 +67,7 @@ const clearDatabaseData = async (databasePaths, uid) => {
     const promises = paths.map(async (path) => {
         try {
             logs.rtdbPathDeleting(path);
-            await admin
+            await app
                 .database()
                 .ref(path)
                 .remove();
@@ -84,8 +87,8 @@ const clearStorageData = async (storagePaths, uid) => {
         const parts = path.split("/");
         const bucketName = parts[0];
         const bucket = bucketName === "{DEFAULT}"
-            ? admin.storage().bucket(config_1.default.storageBucketDefault)
-            : admin.storage().bucket(bucketName);
+            ? app.storage().bucket(config_1.default.storageBucketDefault)
+            : app.storage().bucket(bucketName);
         const prefix = parts.slice(1).join("/");
         try {
             logs.storagePathDeleting(prefix);
@@ -111,7 +114,7 @@ const clearFirestoreData = async (firestorePaths, uid) => {
     const paths = extractUserPaths(firestorePaths, uid);
     const promises = paths.map(async (path) => {
         try {
-            const firestore = admin.firestore();
+            const firestore = app.firestore();
             const isFieldInDocument = path.includes(".");
             if (isFieldInDocument) {
                 const collection = extractCollection(path);
@@ -151,7 +154,7 @@ const clearFirestorePath = async (path, firestore) => {
             await firebase_tools.firestore.delete(path, {
                 project: process.env.PROJECT_ID,
                 recursive: true,
-                yes: true,
+                yes: true, // auto-confirmation
             });
             logs.firestorePathDeleted(path, true);
         }

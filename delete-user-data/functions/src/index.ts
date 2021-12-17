@@ -21,10 +21,14 @@ import * as firebase_tools from "firebase-tools";
 import config from "./config";
 import * as logs from "./logs";
 
+// Check environment
+const environment = process.env.TESTING;
+
 // Initialize the Firebase Admin SDK
-admin.initializeApp({
-  credential: admin.credential.applicationDefault(),
-  databaseURL: `https://${config.SELECTED_DATABASE_INSTANCE}.firebaseio.com`,
+const app = admin.initializeApp({
+  projectId: process.env.PROJECT_ID,
+  // credential: admin.credential.applicationDefault(),
+  // databaseURL: `https://${config.SELECTED_DATABASE_INSTANCE}.firebaseio.com`,
 });
 
 logs.init();
@@ -69,7 +73,7 @@ const clearDatabaseData = async (databasePaths: string, uid: string) => {
   const promises = paths.map(async (path) => {
     try {
       logs.rtdbPathDeleting(path);
-      await admin
+      await app
         .database()
         .ref(path)
         .remove();
@@ -93,8 +97,8 @@ const clearStorageData = async (storagePaths: string, uid: string) => {
     const bucketName = parts[0];
     const bucket =
       bucketName === "{DEFAULT}"
-        ? admin.storage().bucket(config.storageBucketDefault)
-        : admin.storage().bucket(bucketName);
+        ? app.storage().bucket(config.storageBucketDefault)
+        : app.storage().bucket(bucketName);
     const prefix = parts.slice(1).join("/");
     try {
       logs.storagePathDeleting(prefix);
@@ -122,7 +126,7 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
   const paths = extractUserPaths(firestorePaths, uid);
   const promises = paths.map(async (path) => {
     try {
-      const firestore = admin.firestore();
+      const firestore = app.firestore();
       const isFieldInDocument = path.includes(".");
 
       if (isFieldInDocument) {
