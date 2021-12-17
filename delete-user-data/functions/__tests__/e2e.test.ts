@@ -20,7 +20,6 @@ describe("delete user data", () => {
   beforeEach(async () => {
     user = await auth.createUser({
       email: `${(Math.random() + 1).toString(36).substring(7)}@example.com`,
-      password: "test123456",
     });
 
     await usersCollection.doc(user.uid);
@@ -33,15 +32,15 @@ describe("delete user data", () => {
     await usersCollection.doc(userDoc.id).create({ foo: "bar" });
     await postsCollection.doc(postDoc.id).create({ uid: user.uid });
 
-    // await auth.deleteUser(user.uid);
+    await auth.deleteUser(user.uid);
 
-    // return new Promise((resolve) => {
-    //   const unsubscribe = doc.onSnapshot(async (snapshot) => {
-    //     if (!snapshot.exists) {
-    //       unsubscribe();
-    //       resolve(true);
-    //     }
+    //   return new Promise((resolve) => {
+    //     const unsubscribe = userDoc.onSnapshot(async (snapshot) => {
+    //       if (!snapshot.exists) {
+    //         unsubscribe();
+    //         resolve(true);
+    //       }
+    //     });
     //   });
-    // });
   });
 });
