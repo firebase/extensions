@@ -60,7 +60,7 @@ describe("set server credentials helper function", () => {
     expect(credentials.options.secure).toBe(false);
   });
 
-  test("return null", () => {
+  test("it provides null credentials with default or invalid configuration", () => {
     const config: Config = {
       location: "",
       mailCollection: "",
