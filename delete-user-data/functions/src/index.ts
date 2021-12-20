@@ -22,11 +22,8 @@ import config from "./config";
 import * as logs from "./logs";
 
 // Check environment
-const environment = process.env.TESTING;
-
 // Initialize the Firebase Admin SDK
 const app = admin.initializeApp({
-  // projectId: process.env.PROJECT_ID,
   credential: admin.credential.applicationDefault(),
   databaseURL: `https://${config.SELECTED_DATABASE_INSTANCE}.firebaseio.com`,
 });

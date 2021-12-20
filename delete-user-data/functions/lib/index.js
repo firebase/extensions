@@ -22,10 +22,8 @@ const firebase_tools = require("firebase-tools");
 const config_1 = require("./config");
 const logs = require("./logs");
 // Check environment
-const environment = process.env.TESTING;
 // Initialize the Firebase Admin SDK
 const app = admin.initializeApp({
-    // projectId: process.env.PROJECT_ID,
     credential: admin.credential.applicationDefault(),
     databaseURL: `https://${config_1.default.SELECTED_DATABASE_INSTANCE}.firebaseio.com`,
 });

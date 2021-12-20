@@ -1,13 +1,11 @@
 import * as admin from "firebase-admin";
-import { firestore } from "firebase-admin";
 import { UserRecord } from "firebase-functions/v1/auth";
 
 process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
-process.env.FIREBASE_FIRESTORE_EMULATOR_ADDRESS = "localhost:8080";
 process.env.FIREBASE_AUTH_EMULATOR_HOST = "localhost:9099";
 
 const app = admin.initializeApp({
-  projectId: "demo-project",
+  projectId: "extensions-testing",
 });
 
 const db = app.firestore();
@@ -34,13 +32,13 @@ describe("delete user data", () => {
 
     await auth.deleteUser(user.uid);
 
-    //   return new Promise((resolve) => {
-    //     const unsubscribe = userDoc.onSnapshot(async (snapshot) => {
-    //       if (!snapshot.exists) {
-    //         unsubscribe();
-    //         resolve(true);
-    //       }
-    //     });
-    //   });
-  });
+    return new Promise((resolve) => {
+      const unsubscribe = userDoc.onSnapshot(async (snapshot) => {
+        if (!snapshot.exists) {
+          unsubscribe();
+          resolve(true);
+        }
+      });
+    });
+  }, 12000);
 });
