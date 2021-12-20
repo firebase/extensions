@@ -41,6 +41,9 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Cloud Firestore paths: Which paths in your Cloud Firestore instance contain user data? Leave empty if you don't use Cloud Firestore.
 Enter the full paths, separated by commas. You can represent the User ID of the deleted user with `{UID}`.
 For example, if you have the collections `users` and `admins`, and each collection has documents with User ID as document IDs, then you can enter `users/{UID},admins/{UID}`.
+You can also search (`collection.documentProperty`) and delete documents containing User ID string as their property.
+For example, if you have a collection of `docs` and each document in the collection has a property `uid` containing your User ID, then you can enter `docs.uid`
+You can also mix the paths: `users/{UID}, docs.uid` This would delete documents with User ID as document IDs in `users` collection and all documents in `docs` collection containing User ID string in `uid` field.
 
 * Cloud Firestore delete mode: (Only applicable if you use the `Cloud Firestore paths` parameter.) How do you want to delete Cloud Firestore documents? To also delete documents in subcollections, set this parameter to `recursive`.
 

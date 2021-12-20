@@ -159,7 +159,7 @@ const clearFirestorePath = async (path: string, firestore: any) => {
       logs.firestorePathDeleting(path, false);
 
       // Wrapping in transaction to allow for automatic retries (#48)
-      await firestore.runTransaction((transaction) => {
+      await firestore.runTransaction(async (transaction) => {
         transaction.delete(firestore.doc(path));
 
         return Promise.resolve();

@@ -140,7 +140,7 @@ const clearFirestorePath = async (path, firestore) => {
         if (!isRecursive) {
             logs.firestorePathDeleting(path, false);
             // Wrapping in transaction to allow for automatic retries (#48)
-            await firestore.runTransaction((transaction) => {
+            await firestore.runTransaction(async (transaction) => {
                 transaction.delete(firestore.doc(path));
                 return Promise.resolve();
             });
@@ -151,7 +151,7 @@ const clearFirestorePath = async (path, firestore) => {
             await firebase_tools.firestore.delete(path, {
                 project: process.env.PROJECT_ID,
                 recursive: true,
-                yes: true,
+                yes: true, // auto-confirmation
             });
             logs.firestorePathDeleted(path, true);
         }
