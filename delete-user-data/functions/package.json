@@ -8,9 +8,8 @@
     "compile": "tsc",
     "build:watch": "tsc --watch",
     "setup:emulator": "cd .. && firebase ext:dev:emulators:start --project=extensions-testing --test-params=test-params.env --test-config=./firebase.json",
-    "test": "jest",
+    "test": "firebase ext:dev:emulators:exec ./node_modules/.bin/jest --project=extensions-testing --test-params=../test-params.env --test-config=../firebase.json",
     "test:watch": "jest --watch",
-    "test:emulator": "firebase ext:dev:emulators:exec ./node_modules/.bin/jest --project=extensions-testing --test-params=../test-params.env --test-config=../firebase.json",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "author": "Lauren Long <longlauren@google.com>",
