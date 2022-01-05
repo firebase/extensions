@@ -4,9 +4,6 @@ export interface Config {
   location: string;
   mailCollection: string;
   smtpConnectionUri?: string;
-  smtpServerDomain?: string;
-  smtpServerSSL?: boolean;
-  smtpEmail?: string;
   smtpPassword?: string;
   defaultFrom: string;
   defaultReplyTo?: string;

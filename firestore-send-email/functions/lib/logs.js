@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.foundMissingTemplate = exports.checkingMissingTemplate = exports.templateLoaded = exports.partialRegistered = exports.registeredPartial = exports.noPartialAttachmentSupport = exports.missingUids = exports.missingDeliveryField = exports.errorMissingDomainAndUri = exports.deliveryError = exports.delivered = exports.attemptingDelivery = exports.complete = exports.error = exports.start = exports.init = exports.obfuscatedConfig = void 0;
+exports.foundMissingTemplate = exports.checkingMissingTemplate = exports.templateLoaded = exports.partialRegistered = exports.registeredPartial = exports.noPartialAttachmentSupport = exports.missingUids = exports.missingDeliveryField = exports.errorSmtpSetup = exports.deliveryError = exports.delivered = exports.attemptingDelivery = exports.complete = exports.error = exports.start = exports.init = exports.obfuscatedConfig = void 0;
 const config_1 = require("./config");
 const firebase_functions_1 = require("firebase-functions");
 exports.obfuscatedConfig = Object.assign({}, config_1.default, {
@@ -49,10 +49,10 @@ function deliveryError(ref, e) {
     firebase_functions_1.logger.error(`Error when delivering message=${ref.path}: ${e.toString()}`);
 }
 exports.deliveryError = deliveryError;
-function errorMissingDomainAndUri() {
-    firebase_functions_1.logger.error(`Please provide SMTP_CONNECTION_URI or SMTP_SERVER_DOMAIN on installation`);
+function errorSmtpSetup() {
+    firebase_functions_1.logger.error(`Something went wrong on SMTP Credentials setup. Please ensure you have a correct SMTP URI formatting`);
 }
-exports.errorMissingDomainAndUri = errorMissingDomainAndUri;
+exports.errorSmtpSetup = errorSmtpSetup;
 function missingDeliveryField(ref) {
     firebase_functions_1.logger.error(`message=${ref.path} is missing 'delivery' field`);
 }

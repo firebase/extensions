@@ -63,16 +63,7 @@ async function transportLayer() {
         });
     }
     else {
-        return new Promise((resolve, reject) => {
-            const SMTPCredentials = helpers_1.setSmtpCredentials(config_1.default);
-            if (!SMTPCredentials) {
-                logs.errorMissingDomainAndUri();
-                reject(new Error("Missing server domain or uri parameters"));
-            }
-            else {
-                resolve(SMTPCredentials);
-            }
-        });
+        return helpers_1.setSmtpCredentials(config_1.default);
     }
 }
 function validateFieldArray(field, array) {
