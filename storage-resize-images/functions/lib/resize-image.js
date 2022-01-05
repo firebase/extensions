@@ -70,7 +70,7 @@ exports.supportedImageContentTypeMap = {
     webp: "image/webp",
 };
 const supportedExtensions = Object.keys(exports.supportedImageContentTypeMap).map((type) => `.${type}`);
-exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, format, }) => {
+const modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, format, }) => {
     const shouldFormatImage = format !== "false";
     const imageContentType = shouldFormatImage
         ? exports.supportedImageContentTypeMap[format]
@@ -112,7 +112,7 @@ exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
         // If the original image has a download token, add a
         // new token to the image being resized #323
         if (metadata.metadata.firebaseStorageDownloadTokens) {
-            metadata.metadata.firebaseStorageDownloadTokens = uuidv4_1.uuid();
+            metadata.metadata.firebaseStorageDownloadTokens = (0, uuidv4_1.uuid)();
         }
         // Generate a resized image buffer using Sharp.
         logs.imageResizing(modifiedFile, size);
@@ -153,3 +153,4 @@ exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
         }
     }
 };
+exports.modifyImage = modifyImage;
