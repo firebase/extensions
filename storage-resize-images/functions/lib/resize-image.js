@@ -70,7 +70,7 @@ exports.supportedImageContentTypeMap = {
     webp: "image/webp",
 };
 const supportedExtensions = Object.keys(exports.supportedImageContentTypeMap).map((type) => `.${type}`);
-const modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, format, }) => {
+exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, format, }) => {
     const shouldFormatImage = format !== "false";
     const imageContentType = shouldFormatImage
         ? exports.supportedImageContentTypeMap[format]
@@ -93,7 +93,9 @@ const modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExten
         modifiedFile = path.join(os.tmpdir(), modifiedFileName);
         // filename\*=utf-8''  selects any string match the filename notation.
         // [^;\s]+ searches any following string until either a space or semi-colon.
-        const contentDisposition = (objectMetadata?.contentDisposition || "").replace(/(filename\*=utf-8''[^;\s]+)/, `filename*=utf-8''${modifiedFileName}`);
+        const contentDisposition = objectMetadata && objectMetadata.contentDisposition
+            ? objectMetadata.contentDisposition.replace(/(filename\*=utf-8''[^;\s]+)/, `filename*=utf-8''${modifiedFileName}`)
+            : "";
         // Cloud Storage files.
         const metadata = {
             contentDisposition,
@@ -112,7 +114,7 @@ const modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExten
         // If the original image has a download token, add a
         // new token to the image being resized #323
         if (metadata.metadata.firebaseStorageDownloadTokens) {
-            metadata.metadata.firebaseStorageDownloadTokens = (0, uuidv4_1.uuid)();
+            metadata.metadata.firebaseStorageDownloadTokens = uuidv4_1.uuid();
         }
         // Generate a resized image buffer using Sharp.
         logs.imageResizing(modifiedFile, size);
@@ -153,4 +155,3 @@ const modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExten
         }
     }
 };
-exports.modifyImage = modifyImage;
