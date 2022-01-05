@@ -133,9 +133,17 @@ export const modifyImage = async ({
   try {
     modifiedFile = path.join(os.tmpdir(), modifiedFileName);
 
+
+    // filename\*=utf-8''  selects any string match the filename notation.
+    // [^;\s]+ searches any following string until either a space or semi-colon.
+    const contentDisposition = (objectMetadata?.contentDisposition || "").replace(
+      /(filename\*=utf-8''[^;\s]+)/,
+      `filename*=utf-8''${modifiedFileName}`
+    );
+
     // Cloud Storage files.
     const metadata: { [key: string]: any } = {
-      contentDisposition: objectMetadata.contentDisposition,
+      contentDisposition,
       contentEncoding: objectMetadata.contentEncoding,
       contentLanguage: objectMetadata.contentLanguage,
       contentType: imageContentType,
