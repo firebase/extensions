@@ -22,6 +22,7 @@ const nodemailer = require("nodemailer");
 const logs = require("./logs");
 const config_1 = require("./config");
 const templates_1 = require("./templates");
+const helpers_1 = require("./helpers");
 logs.init();
 let db;
 let transport;
@@ -62,7 +63,7 @@ async function transportLayer() {
         });
     }
     else {
-        return nodemailer.createTransport(config_1.default.smtpConnectionUri);
+        return helpers_1.setSmtpCredentials(config_1.default);
     }
 }
 function validateFieldArray(field, array) {

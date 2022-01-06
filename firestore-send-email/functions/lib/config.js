@@ -15,13 +15,15 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = {
+const config = {
     location: process.env.LOCATION,
     mailCollection: process.env.MAIL_COLLECTION,
     smtpConnectionUri: process.env.SMTP_CONNECTION_URI,
+    smtpPassword: process.env.SMTP_PASSWORD,
     defaultFrom: process.env.DEFAULT_FROM,
     defaultReplyTo: process.env.DEFAULT_REPLY_TO,
     usersCollection: process.env.USERS_COLLECTION,
     templatesCollection: process.env.TEMPLATES_COLLECTION,
     testing: process.env.TESTING === "true",
 };
+exports.default = config;
