@@ -47,9 +47,7 @@ Usage of this extension also requires you to have SMTP credentials for mail deli
 
 * Cloud Functions location: Where do you want to deploy the functions created for this extension? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
-* SMTP connection URI: A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465. Recommended hidden password format: `smtps://username@gmail.com@smtp.gmail.com:465`. Provide password (can use special characters) in separate field later.  Backward compatible with less secure format: `smtps://username@gmail.com:password@smtp.gmail.com:465`.
-
-* SMTP password (new recommended setup, can use special signs): User password for the SMTP server
+* SMTP connection URI: A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465.
 
 * Email documents collection: What is the path to the collection that contains the documents used to build and send the emails?
 

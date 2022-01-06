@@ -69,9 +69,9 @@ export function deliveryError(
   logger.error(`Error when delivering message=${ref.path}: ${e.toString()}`);
 }
 
-export function errorSmtpSetup() {
+export function errorMissingDomainAndUri() {
   logger.error(
-    `Something went wrong on SMTP Credentials setup. Please ensure you have a correct SMTP URI formatting`
+    `Please provide SMTP_CONNECTION_URI or SMTP_SERVER_DOMAIN on installation`
   );
 }
 

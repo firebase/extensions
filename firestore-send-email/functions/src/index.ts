@@ -67,7 +67,15 @@ async function transportLayer() {
       });
     });
   } else {
-    return setSmtpCredentials(config);
+    return new Promise((resolve, reject) => {
+      const SMTPCredentials = setSmtpCredentials(config);
+      if (!SMTPCredentials) {
+        logs.errorMissingDomainAndUri();
+        reject(new Error("Missing server domain or uri parameters"));
+      } else {
+        resolve(SMTPCredentials);
+      }
+    });
   }
 }
 

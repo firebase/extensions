@@ -2,24 +2,29 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.setSmtpCredentials = void 0;
 const nodemailer_1 = require("nodemailer");
-const url_1 = require("url");
 exports.setSmtpCredentials = (config) => {
-    const { smtpConnectionUri, smtpPassword } = config;
-    let url = new url_1.URL(smtpConnectionUri);
+    const { smtpConnectionUri, smtpServerDomain, // eg.smtp.gmail.com:465
+    smtpServerSSL, smtpEmail, smtpPassword, } = config;
     let smtpCredentials;
-    if (!url) {
-        return (smtpCredentials = null);
+    if (!!smtpConnectionUri && !smtpServerDomain) {
+        // deprecated smtp settings version after 0.1.12
+        smtpCredentials = nodemailer_1.createTransport(smtpConnectionUri);
     }
-    if (smtpConnectionUri) {
+    else if (!!smtpServerDomain) {
+        // recommended smtp setting from version 0.1.13
+        const [serverHost, serverPort] = smtpServerDomain.split(":");
         smtpCredentials = nodemailer_1.createTransport({
-            host: decodeURIComponent(url.hostname),
-            port: parseInt(url.port),
-            secure: url.protocol.includes("smtps") ? true : false,
+            host: serverHost,
+            port: parseInt(serverPort),
+            secure: smtpServerSSL,
             auth: {
-                user: decodeURIComponent(url.username),
-                pass: smtpPassword || encodeURIComponent(url.password),
+                user: smtpEmail,
+                pass: smtpPassword,
             },
         });
+    }
+    else {
+        smtpCredentials = null;
     }
     return smtpCredentials;
 };

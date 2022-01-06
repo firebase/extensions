@@ -1,24 +1,32 @@
-import { createTransport, Transporter } from "nodemailer";
-import { URL, format } from "url";
+import { createTransport } from "nodemailer";
 import { Config } from "./types";
 
 export const setSmtpCredentials = (config: Config) => {
-  const { smtpConnectionUri, smtpPassword } = config;
-  let url = new URL(smtpConnectionUri);
+  const {
+    smtpConnectionUri,
+    smtpServerDomain, // eg.smtp.gmail.com:465
+    smtpServerSSL,
+    smtpEmail,
+    smtpPassword,
+  } = config;
   let smtpCredentials;
-  if (!url) {
-    return (smtpCredentials = null);
-  }
-  if (smtpConnectionUri) {
+  if (!!smtpConnectionUri && !smtpServerDomain) {
+    // deprecated smtp settings version after 0.1.12
+    smtpCredentials = createTransport(smtpConnectionUri);
+  } else if (!!smtpServerDomain) {
+    // recommended smtp setting from version 0.1.13
+    const [serverHost, serverPort] = smtpServerDomain.split(":");
     smtpCredentials = createTransport({
-      host: decodeURIComponent(url.hostname),
-      port: parseInt(url.port),
-      secure: url.protocol.includes("smtps") ? true : false, // true for 465, false for other ports
+      host: serverHost,
+      port: parseInt(serverPort),
+      secure: smtpServerSSL,
       auth: {
-        user: decodeURIComponent(url.username), // generated ethereal user
-        pass: smtpPassword || encodeURIComponent(url.password), // generated ethereal password
+        user: smtpEmail,
+        pass: smtpPassword,
       },
     });
+  } else {
+    smtpCredentials = null;
   }
   return smtpCredentials;
 };

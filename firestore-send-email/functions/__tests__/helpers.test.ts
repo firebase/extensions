@@ -3,27 +3,12 @@ import { setSmtpCredentials } from "../src/helpers";
 import { Config } from "../src/types";
 
 describe("set server credentials helper function", () => {
-  test(" return smtpServerDomain credentials with new password", () => {
+  test("should return smtpServerDomain credentials", () => {
     const config: Config = {
-      smtpConnectionUri:
-        "smtps://fakeemail@gmail.com:secret-password@smtp.gmail.com:465",
+      smtpServerDomain: "smtp.gmail.com:465",
+      smtpEmail: "fakeemail@gmail.com",
       smtpPassword: "fakepassword",
-      location: "",
-      mailCollection: "",
-      defaultFrom: "",
-    };
-    const credentials = setSmtpCredentials(config);
-    expect(credentials).toBeInstanceOf(Mail);
-    expect(credentials.options.port).toBe(465);
-    expect(credentials.options.host).toBe("smtp.gmail.com");
-    expect(credentials.options.auth.pass).toBe(config.smtpPassword);
-    expect(credentials.options.secure).toBe(true);
-  });
-
-  test(" return smtpServerDomain credentials with new password (old deleted)", () => {
-    const config: Config = {
-      smtpConnectionUri: "smtps://fakeemail@gmail.com@smtp.gmail.com:465",
-      smtpPassword: "sec#:@ret-password",
+      smtpServerSSL: true,
       location: "",
       mailCollection: "",
       defaultFrom: "",
@@ -33,11 +18,11 @@ describe("set server credentials helper function", () => {
     expect(credentials).toBeInstanceOf(Mail);
     expect(credentials.options.port).toBe(465);
     expect(credentials.options.host).toBe("smtp.gmail.com");
-    expect(credentials.options.auth.pass).toBe(config.smtpPassword);
+    expect(credentials.options.auth.user).toBe(config.smtpEmail);
     expect(credentials.options.secure).toBe(true);
   });
 
-  test("return smtpConnectionUri credentials with old password", () => {
+  test("return smtpConnectionUri credentials", () => {
     const config: Config = {
       smtpConnectionUri:
         "smtps://fakeemail@gmail.com:secret-password@smtp.gmail.com:465",
@@ -46,27 +31,42 @@ describe("set server credentials helper function", () => {
       defaultFrom: "",
     };
     const credentials = setSmtpCredentials(config);
+
+    console.log(credentials);
     expect(credentials).toBeInstanceOf(Mail);
     expect(credentials.options.port).toBe(465);
     expect(credentials.options.host).toBe("smtp.gmail.com");
     expect(credentials.options.auth.user).toBe("fakeemail@gmail.com");
-    expect(credentials.options.auth.pass).toBe("secret-password");
     expect(credentials.options.secure).toBe(true);
   });
 
-  test("return smtpConnectionUri credentials without any password", () => {
+  test("return smtpServerDomain credentials, when both config fields used", () => {
     const config: Config = {
-      smtpConnectionUri: "smtps://fakeemail@gmail.com@smtp.gmail.com:465",
+      smtpConnectionUri:
+        "smtps://fakeemail@gmail.com:secret-password@smtp.gmail.com:465",
+      smtpServerDomain: "smtp.mail.com:25",
+      smtpEmail: "fakeemail2@gmail.com",
+      smtpPassword: "fakepassword",
+      smtpServerSSL: false,
       location: "",
       mailCollection: "",
       defaultFrom: "",
     };
     const credentials = setSmtpCredentials(config);
     expect(credentials).toBeInstanceOf(Mail);
-    expect(credentials.options.port).toBe(465);
-    expect(credentials.options.host).toBe("smtp.gmail.com");
-    expect(credentials.options.auth.user).toBe("fakeemail@gmail.com");
-    expect(credentials.options.auth.pass).toBe("");
-    expect(credentials.options.secure).toBe(true);
+    expect(credentials.options.port).toBe(25);
+    expect(credentials.options.host).toBe("smtp.mail.com");
+    expect(credentials.options.auth.user).toBe(config.smtpEmail);
+    expect(credentials.options.secure).toBe(false);
+  });
+
+  test("it provides null credentials with default or invalid configuration", () => {
+    const config: Config = {
+      location: "",
+      mailCollection: "",
+      defaultFrom: "",
+    };
+    const credentials = setSmtpCredentials(config);
+    expect(credentials).toBeNull();
   });
 });
