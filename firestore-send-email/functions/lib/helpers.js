@@ -6,20 +6,13 @@ const url_1 = require("url");
 exports.setSmtpCredentials = (config) => {
     const { smtpConnectionUri, smtpPassword } = config;
     let url = new url_1.URL(smtpConnectionUri);
-    let smtpCredentials;
+    let transport;
     if (!url) {
-        return (smtpCredentials = null);
+        transport = null;
     }
-    if (smtpConnectionUri) {
-        smtpCredentials = nodemailer_1.createTransport({
-            host: decodeURIComponent(url.hostname),
-            port: parseInt(url.port),
-            secure: url.protocol.includes("smtps") ? true : false,
-            auth: {
-                user: decodeURIComponent(url.username),
-                pass: smtpPassword || encodeURIComponent(url.password),
-            },
-        });
+    if (url.hostname && smtpPassword) {
+        url.password = smtpPassword;
     }
-    return smtpCredentials;
+    transport = nodemailer_1.createTransport(url.href);
+    return transport;
 };

@@ -68,4 +68,20 @@ describe("set server credentials helper function", () => {
     expect(credentials.options.auth.pass).toBe("");
     expect(credentials.options.secure).toBe(true);
   });
+
+  test("return smtpConnectionUri credentials without any password and username", () => {
+    const config: Config = {
+      smtpConnectionUri: "smtp://smtp.gmail.com:465",
+      location: "",
+      mailCollection: "",
+      defaultFrom: "",
+    };
+    const credentials = setSmtpCredentials(config);
+    console.log(credentials);
+    expect(credentials).toBeInstanceOf(Mail);
+    expect(credentials.options.port).toBe(465);
+    expect(credentials.options.host).toBe("smtp.gmail.com");
+    expect(credentials.options.auth).toBe(undefined);
+    expect(credentials.options.secure).toBe(false);
+  });
 });
