@@ -1,5 +1,6 @@
 import { createTransport } from "nodemailer";
 import { URL } from "url";
+import { invalidURI } from "./logs";
 import { Config } from "./types";
 
 export const setSmtpCredentials = (config: Config) => {
@@ -8,6 +9,7 @@ export const setSmtpCredentials = (config: Config) => {
   let transport;
 
   if (!url) {
+    invalidURI(smtpConnectionUri);
     transport = null;
   }
 

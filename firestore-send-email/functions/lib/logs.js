@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.foundMissingTemplate = exports.checkingMissingTemplate = exports.templateLoaded = exports.partialRegistered = exports.registeredPartial = exports.noPartialAttachmentSupport = exports.missingUids = exports.missingDeliveryField = exports.deliveryError = exports.delivered = exports.attemptingDelivery = exports.complete = exports.error = exports.start = exports.init = exports.obfuscatedConfig = void 0;
+exports.invalidURI = exports.foundMissingTemplate = exports.checkingMissingTemplate = exports.templateLoaded = exports.partialRegistered = exports.registeredPartial = exports.noPartialAttachmentSupport = exports.missingUids = exports.missingDeliveryField = exports.deliveryError = exports.delivered = exports.attemptingDelivery = exports.complete = exports.error = exports.start = exports.init = exports.obfuscatedConfig = void 0;
 const config_1 = require("./config");
 const firebase_functions_1 = require("firebase-functions");
 exports.obfuscatedConfig = Object.assign({}, config_1.default, {
@@ -81,3 +81,7 @@ function foundMissingTemplate(name) {
     firebase_functions_1.logger.log(`template '${name}' has been found`);
 }
 exports.foundMissingTemplate = foundMissingTemplate;
+function invalidURI(uri) {
+    firebase_functions_1.logger.warn(`invalid url: '${uri}' , please reconfigure with a valid SMTP connection URI`);
+}
+exports.invalidURI = invalidURI;
