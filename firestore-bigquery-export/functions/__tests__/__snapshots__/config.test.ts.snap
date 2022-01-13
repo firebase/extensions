@@ -9,6 +9,7 @@ Object {
   "location": "us-central1",
   "tableId": "my_table",
   "tablePartitioning": null,
+  "transformFunction": "",
 }
 `;
 
