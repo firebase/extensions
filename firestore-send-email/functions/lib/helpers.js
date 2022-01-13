@@ -10,7 +10,7 @@ exports.setSmtpCredentials = (config) => {
     let transport;
     if (!url) {
         logs_1.invalidURI(smtpConnectionUri);
-        transport = null;
+        return null;
     }
     if (url.hostname && smtpPassword) {
         url.password = smtpPassword;
