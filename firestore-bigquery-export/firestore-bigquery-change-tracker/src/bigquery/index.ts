@@ -42,6 +42,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   tableId: string;
   datasetLocation: string | undefined;
   tablePartitioning: string;
+  clustering: string[] | null;
 }
 
 /**
@@ -248,6 +249,12 @@ export class FirestoreBigQueryEventHistoryTracker
       if (this.config.tablePartitioning) {
         options.timePartitioning = {
           type: this.config.tablePartitioning,
+        };
+      }
+
+      if (this.config.clustering) {
+        options.clustering = {
+          fields: this.config.clustering,
         };
       }
 
