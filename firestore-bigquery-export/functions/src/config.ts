@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-function tablePartitioning(type) {
+function tablePartitioning(type: string) {
   if (
     type === "HOUR" ||
     type === "DAY" ||
@@ -27,6 +27,10 @@ function tablePartitioning(type) {
   return null;
 }
 
+export function clustering(clusters: string | undefined) {
+  return clusters ? clusters.split(",").slice(0, 4) : null;
+}
+
 export default {
   collectionPath: process.env.COLLECTION_PATH,
   datasetId: process.env.DATASET_ID,
@@ -35,4 +39,5 @@ export default {
   initialized: false,
   datasetLocation: process.env.DATASET_LOCATION,
   tablePartitioning: tablePartitioning(process.env.TABLE_PARTITIONING),
+  clustering: clustering(process.env.CLUSTERING),
 };

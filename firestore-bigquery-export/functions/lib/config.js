@@ -24,6 +24,9 @@ function tablePartitioning(type) {
     }
     return null;
 }
+function clustering(clusters) {
+    return clusters ? clusters.split(",").slice(0, 4) : null;
+}
 exports.default = {
     collectionPath: process.env.COLLECTION_PATH,
     datasetId: process.env.DATASET_ID,
@@ -32,4 +35,5 @@ exports.default = {
     initialized: false,
     datasetLocation: process.env.DATASET_LOCATION,
     tablePartitioning: tablePartitioning(process.env.TABLE_PARTITIONING),
+    clustering: clustering(process.env.CLUSTERING),
 };

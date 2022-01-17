@@ -60,6 +60,8 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery SQL table partitioning option: This parameter will allow you to partition the BigQuery table and BigQuery view  created by the extension based on data ingestion time. You may select the granularity of partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will generate one partition per day, hour, month or year, respectively. 
 
+* BigQuery SQL table clustering (experimental): This parameter will allow you to set up Clustering for the BigQuery Table created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 coma separated fields(order matters).  Available schema extensions table fields for clustering: `document_id, timestamp, event_id, operation, data`.
+
 
 
 **Cloud Functions:**

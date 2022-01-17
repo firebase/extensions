@@ -25,6 +25,7 @@ const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEv
     datasetId: config_1.default.datasetId,
     datasetLocation: config_1.default.datasetLocation,
     tablePartitioning: config_1.default.tablePartitioning,
+    clustering: config_1.default.clustering,
 });
 logs.init();
 exports.fsexportbigquery = functions.handler.firestore.document.onWrite(async (change, context) => {
