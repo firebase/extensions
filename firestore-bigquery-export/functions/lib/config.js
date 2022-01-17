@@ -25,6 +25,7 @@ function tablePartitioning(type) {
     return null;
 }
 exports.default = {
+    bqProjectId: process.env.BIGQUERY_PROJECT_ID,
     collectionPath: process.env.COLLECTION_PATH,
     datasetId: process.env.DATASET_ID,
     tableId: process.env.TABLE_ID,

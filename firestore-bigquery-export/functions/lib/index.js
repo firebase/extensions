@@ -20,14 +20,15 @@ const functions = require("firebase-functions");
 const firestore_bigquery_change_tracker_1 = require("@firebaseextensions/firestore-bigquery-change-tracker");
 const logs = require("./logs");
 const util_1 = require("./util");
-const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEventHistoryTracker({
-    tableId: config_1.default.tableId,
-    datasetId: config_1.default.datasetId,
-    datasetLocation: config_1.default.datasetLocation,
-    tablePartitioning: config_1.default.tablePartitioning,
-});
 logs.init();
 exports.fsexportbigquery = functions.handler.firestore.document.onWrite(async (change, context) => {
+    const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEventHistoryTracker({
+        tableId: config_1.default.tableId,
+        datasetId: config_1.default.datasetId,
+        datasetLocation: config_1.default.datasetLocation,
+        tablePartitioning: config_1.default.tablePartitioning,
+        bqProjectId: config_1.default.bqProjectId,
+    });
     logs.start();
     try {
         const changeType = util_1.getChangeType(change);

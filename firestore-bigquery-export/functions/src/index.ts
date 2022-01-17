@@ -24,19 +24,20 @@ import {
 import * as logs from "./logs";
 import { getChangeType, getDocumentId } from "./util";
 
-const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker(
-  {
-    tableId: config.tableId,
-    datasetId: config.datasetId,
-    datasetLocation: config.datasetLocation,
-    tablePartitioning: config.tablePartitioning,
-  }
-);
-
 logs.init();
 
 exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
   async (change, context) => {
+    const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker(
+      {
+        tableId: config.tableId,
+        datasetId: config.datasetId,
+        datasetLocation: config.datasetLocation,
+        tablePartitioning: config.tablePartitioning,
+        bqProjectId: config.bqProjectId,
+      }
+    );
+
     logs.start();
     try {
       const changeType = getChangeType(change);
