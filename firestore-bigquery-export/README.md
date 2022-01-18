@@ -60,6 +60,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery SQL table partitioning option: This parameter will allow you to partition the BigQuery table and BigQuery view  created by the extension based on data ingestion time. You may select the granularity of partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will generate one partition per day, hour, month or year, respectively. 
 
+* Big query project Id: This parameter will allow an alternative BigQuery project to receive updates from the extension.
 
 
 **Cloud Functions:**
