@@ -192,7 +192,8 @@ params:
       Override the default project bigquery instance. 
       This can allow updates to be directed to a bigquery instance on another project.
     type: string
-    required: false
+    default: ${param:PROJECT_ID}
+    required: true
 
   - param: COLLECTION_PATH
     label: Collection path
