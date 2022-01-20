@@ -29,7 +29,10 @@ const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHis
     tableId: config.tableId,
     datasetId: config.datasetId,
     datasetLocation: config.datasetLocation,
-    tablePartitioning: config.tablePartitioning,
+    timePartitioning: config.timePartitioning,
+    timePartitioningField: config.timePartitioningField,
+    timePartitioningFieldType: config.timePartitioningFieldType,
+    timePartitioningFirestoreField: config.timePartitioningFirestoreField,
   }
 );
 
@@ -41,6 +44,13 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
     try {
       const changeType = getChangeType(change);
       const documentId = getDocumentId(change);
+
+      const validateTimePartitionFirestoreField =
+        config.timePartitioningFirestoreField &&
+        config.timePartitioningFieldType &&
+        config.timePartitioningField &&
+        change.after.data()[config.timePartitioningFirestoreField];
+
       await eventTracker.record([
         {
           timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
@@ -50,6 +60,12 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
           eventId: context.eventId,
           data:
             changeType === ChangeType.DELETE ? undefined : change.after.data(),
+          // This is Time Partition custom field if all params set by the user and Firestore Document field available
+          ...(validateTimePartitionFirestoreField && {
+            [config.timePartitioningField]: change.after.data()[
+              config.timePartitioningFirestoreField
+            ],
+          }),
         },
       ]);
       logs.complete();

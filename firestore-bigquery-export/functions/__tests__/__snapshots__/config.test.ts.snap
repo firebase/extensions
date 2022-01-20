@@ -8,7 +8,10 @@ Object {
   "initialized": false,
   "location": "us-central1",
   "tableId": "my_table",
-  "tablePartitioning": null,
+  "timePartitioning": null,
+  "timePartitioningField": undefined,
+  "timePartitioningFieldType": undefined,
+  "timePartitioningFirestoreField": undefined,
 }
 `;
 
