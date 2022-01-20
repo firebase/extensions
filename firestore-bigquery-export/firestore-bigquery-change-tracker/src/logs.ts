@@ -168,3 +168,21 @@ export const timestampMissingValue = (fieldName: string) => {
 export const addDocumentIdColumn = (table) => {
   logger.log(`Updated '${table}' table with a 'document_id' column`);
 };
+
+export const bigQueryTableInsertErrors = (
+  insertErrors: [
+    {
+      row: object;
+      errors: Array<{ message: string }>;
+    }
+  ]
+) => {
+  logger.warn(`Error when inserting data to table.`);
+  insertErrors.forEach((error) => {
+    logger.warn("ROW DATA JSON:");
+    logger.warn(error.row);
+    error.errors.forEach((error) =>
+      logger.warn(`ROW ERROR MESSAGE: ${error.message}`)
+    );
+  });
+};

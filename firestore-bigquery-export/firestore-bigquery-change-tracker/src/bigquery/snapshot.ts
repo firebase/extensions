@@ -16,20 +16,26 @@
 
 import * as sqlFormatter from "sql-formatter";
 
-import { RawChangelogViewSchema, timestampField } from "./schema";
+import { getRawChangelogPartitioned, timestampField } from "./schema";
 
 const excludeFields: string[] = ["document_name", "document_id"];
 
 export const latestConsistentSnapshotView = (
   datasetId: string,
-  tableName: string
+  tableName: string,
+  timePartitioningField: string | undefined,
+  partitioningFieldType: string | undefined
 ) => ({
   query: buildLatestSnapshotViewQuery(
     datasetId,
     tableName,
     timestampField.name,
-    RawChangelogViewSchema["fields"]
-      .map((field) => field.name)
+    getRawChangelogPartitioned(
+      timePartitioningField,
+      partitioningFieldType,
+      true
+    )
+      ["fields"].map((field) => field.name)
       .filter((name) => excludeFields.indexOf(name) === -1)
   ),
   useLegacySql: false,
