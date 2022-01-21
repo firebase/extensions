@@ -82,7 +82,10 @@ export class FirestoreBigQueryEventHistoryTracker
           document_id: event.documentId,
           operation: ChangeType[event.operation],
           data: JSON.stringify(this.serializeData(event.data)),
-          ...this.getTimePartitionParameterField(event.data, event.documentName),
+          ...this.getTimePartitionParameterField(
+            event.data,
+            event.documentName
+          ),
         },
       };
     });
@@ -111,7 +114,12 @@ export class FirestoreBigQueryEventHistoryTracker
           [fieldName]: data[firestoreFieldName].toDate(),
         };
       else {
-        logs.firestoreTimePartitionFieldError(documentName, fieldName, firestoreFieldName, data[firestoreFieldName]);
+        logs.firestoreTimePartitionFieldError(
+          documentName,
+          fieldName,
+          firestoreFieldName,
+          data[firestoreFieldName]
+        );
         return {};
       }
     } else {
