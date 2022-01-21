@@ -35,10 +35,6 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(async (c
     try {
         const changeType = util_1.getChangeType(change);
         const documentId = util_1.getDocumentId(change);
-        const validateTimePartitionFirestoreField = config_1.default.timePartitioningFirestoreField &&
-            config_1.default.timePartitioningFieldType &&
-            config_1.default.timePartitioningField &&
-            change.after.data()[config_1.default.timePartitioningFirestoreField];
         await eventTracker.record([
             {
                 timestamp: context.timestamp,
@@ -47,10 +43,6 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(async (c
                 documentId: documentId,
                 eventId: context.eventId,
                 data: changeType === firestore_bigquery_change_tracker_1.ChangeType.DELETE ? undefined : change.after.data(),
-                // This is Time Partition custom field if all params set by the user and Firestore Document field available
-                ...(validateTimePartitionFirestoreField && {
-                    [config_1.default.timePartitioningField]: change.after.data()[config_1.default.timePartitioningFirestoreField],
-                }),
             },
         ]);
         logs.complete();
