@@ -72,15 +72,7 @@ export class FirestoreBigQueryEventHistoryTracker
 
   async record(events: FirestoreDocumentChangeEvent[]) {
     await this.initialize();
-    const timePartitioningFirestoreField = this.config
-      .timePartitioningFirestoreField;
-    const timePartitioningField = this.config.timePartitioningField;
     const rows = events.map((event) => {
-      const validateIsTimePartitionFirestoreField =
-        timePartitioningFirestoreField &&
-        timePartitioningField &&
-        this.config.timePartitioningFieldType &&
-        event.data[timePartitioningFirestoreField];
       return {
         insertId: event.eventId,
         json: {
@@ -90,20 +82,48 @@ export class FirestoreBigQueryEventHistoryTracker
           document_id: event.documentId,
           operation: ChangeType[event.operation],
           data: JSON.stringify(this.serializeData(event.data)),
-
-          //attach partitioning property if Firestore Field avalible.
-          ...(validateIsTimePartitionFirestoreField && {
-            [timePartitioningField]:
-              typeof event.data[timePartitioningFirestoreField] === "string"
-                ? event.data[timePartitioningFirestoreField]
-                : event.data[timePartitioningFirestoreField].toDate(),
-          }),
+          ...this.getTimePartitionParameterField(event.data, event.documentName),
         },
       };
     });
     await this.insertData(rows);
   }
 
+  getTimePartitionParameterField(data, documentName) {
+    const fieldName = this.config.timePartitioningField;
+    const fieldType = this.config.timePartitioningFieldType;
+    const firestoreFieldName = this.config.timePartitioningFirestoreField;
+    if (
+      fieldName &&
+      fieldType &&
+      firestoreFieldName &&
+      data[firestoreFieldName]
+    ) {
+      if (typeof data[firestoreFieldName] === "string") {
+        // If wrong BigQuery format(TIMESTAMP, DATE, DATETIME) it will log out error on insertData.
+        return {
+          [fieldName]: data[firestoreFieldName],
+        };
+      } else if (
+        data[firestoreFieldName] instanceof firebase.firestore.Timestamp
+      )
+        return {
+          [fieldName]: data[firestoreFieldName].toDate(),
+        };
+      else {
+        logs.firestoreTimePartitionFieldError(documentName, fieldName, firestoreFieldName, data[firestoreFieldName]);
+        return {};
+      }
+    } else {
+      logs.firestoreTimePartitioningParametersError(
+        fieldName,
+        fieldType,
+        firestoreFieldName,
+        data[firestoreFieldName]
+      );
+      return {};
+    }
+  }
   serializeData(eventData: any) {
     if (typeof eventData === "undefined") {
       return undefined;

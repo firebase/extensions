@@ -157,18 +157,15 @@ export const getRawChangelogPartitioned = (
   partitioningFieldType: string,
   isView: boolean
 ) => {
-  const isSchemaFieldExist =
-    RawChangelogSchema.fields.find(
-      (field) => field.name === partitioningField
-    ) ||
-    RawChangelogViewSchema.fields.find(
-      (field) => field.name === partitioningField
-    );
+  const isSchemaFieldExist = !![
+    ...RawChangelogSchema.fields,
+    ...RawChangelogViewSchema.fields,
+  ].find((field) => field.name === partitioningField);
   const newPartitionField = {
     name: partitioningField,
     mode: "NULLABLE",
     type: partitioningFieldType,
-    description: "The document partition field selected by user",
+    description: "The document TimePartition partition field selected by user",
   };
   let schema = isView
     ? { fields: [...RawChangelogViewSchema.fields] }
