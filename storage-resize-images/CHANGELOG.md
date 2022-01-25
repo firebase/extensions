@@ -1,3 +1,37 @@
+## Version 0.1.25
+
+fixed - fix errors when resizing Samsung-encoded JPEGs
+
+## Version 0.1.24
+
+fixed - update package lock file to fix installation errors (#782)
+
+## Version 0.1.23
+
+feature - add Taiwan and Singapore Cloud Function locations (#729)
+
+## Version 0.1.22
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
+## Version 0.1.20
+
+feature - Adds support for wildcards in include/exclude paths (#568)
+
+## Version 0.1.19
+
+feature - Adds support for converting to more than one image format (#579)
+
+## Version 0.1.18
+
+fixed - fixed a bug that caused resized images to be named incorrectly if their file extension was capitalized (#549)
+
+## Version 0.1.17
+
+docs - Adds documentation that explains which content types are supported, and shows how to set content type explicitly (#534)
+
 ## Version 0.1.16
 
 feature - Adds support for absolute paths restrictions for Storage Resize Image (#427)

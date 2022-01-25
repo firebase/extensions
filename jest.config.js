@@ -1,6 +1,5 @@
 module.exports = {
   projects: [
-    "<rootDir>/*/jest.config.js",
     "<rootDir>/*/functions/jest.config.js",
     "<rootDir>/firestore-bigquery-export/scripts/*/jest.config.js",
   ],
@@ -16,7 +15,7 @@ module.exports = {
   collectCoverageFrom: [
     "**/*.{ts,tsx}",
     "!**/node_modules/**",
-    "!**/exts-test-data/**",
+    "!**/test-data/**",
   ],
   maxConcurrency: 10,
 };

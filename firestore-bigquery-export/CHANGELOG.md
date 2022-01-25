@@ -1,3 +1,53 @@
+## Version 0.1.20
+
+fixed - Fixed installation error due to bad package-lock.json
+
+## Version 0.1.19
+
+docs - Renamed the extension to "Stream Collections to BigQuery"
+
+feature - add Taiwan and Singapore Cloud Function locations (#729)
+
+## Version 0.1.18
+
+No change from last release
+
+## Version 0.1.17
+
+fixed - improved import script
+
+## Version 0.1.16
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
+## Version 0.1.15
+
+fixed - rolled back version 0.1.14 to address issue #681
+
+## Version 0.1.14
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
+## Version 0.1.13
+
+feature - Added the ability to optionally create partitioned tables to improve query performance and reduce the cost of querying large datasets (#581)
+
+feature - Added us-central-1 as a dataset option (#603)
+
+## Version 0.1.12
+
+docs - Updated description for COLLECTION_GROUP_QUERY parameter.
+
+## Version 0.1.11
+
+feature - Add stringified_map schema type to gen-schema-view script (#518)
+
+fixed - Switch from `console.log` to `functions.logger.log` for cleaner log outputs.
+
 ## Version 0.1.10
 
 feature - Added a new parameter that allows customization of the BigQuery dataset location (#462)

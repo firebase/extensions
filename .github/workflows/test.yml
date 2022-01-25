@@ -4,15 +4,16 @@ on:
   push:
     branches:
       - "**"
-    paths-ignore:
-      - "**/*.md"
+  pull_request:
+    branches:
+      - "**"
 
 jobs:
   nodejs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["10", "12"]
+        node: ["12", "14"]
     name: node.js_${{ matrix.node }}_test
     steps:
       - uses: actions/checkout@v2
@@ -22,6 +23,19 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: NPM install
         run: npm install
+      - name: Install firebase CLI
+        uses: nick-invision/retry@v1
+        with:
+          timeout_minutes: 10
+          retry_wait_seconds: 60
+          max_attempts: 3
+          command: npm i -g firebase-tools
+      - name: Use extension commands
+        run: firebase --open-sesame extdev
+      - name: Run 'firestore-send-email' extension emulator
+        run:
+          cd ./firestore-send-email/functions/__tests__/emulator && sh
+          ./start.sh
       - name: Run tests with coverage
         run: npm run test-coverage
       - name: Submit coverage

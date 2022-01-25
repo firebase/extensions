@@ -1,5 +1,7 @@
-export const mockConsoleLog = jest.spyOn(console, "log").mockImplementation();
+import { logger } from "firebase-functions";
+
+export const mockConsoleLog = jest.spyOn(logger, "log").mockImplementation();
 
 export const mockConsoleError = jest
-  .spyOn(console, "error")
+  .spyOn(logger, "error")
   .mockImplementation();

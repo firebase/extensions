@@ -17,7 +17,9 @@
 import * as sqlFormatter from "sql-formatter";
 
 // Persistent UDFs to be created on schema view initialization.
-export const udfs: { [name: string]: (dataset: string) => any } = {
+export const udfs: {
+  [name: string]: (dataset: string) => any;
+} = {
   firestoreArray: firestoreArrayFunction,
   firestoreBoolean: firestoreBooleanFunction,
   firestoreNumber: firestoreNumberFunction,
@@ -68,7 +70,7 @@ function firestoreArrayFunction(datasetId: string): any {
 
 function firestoreArrayDefinition(datasetId: string): string {
   return sqlFormatter.format(`
-    CREATE FUNCTION IF NOT EXISTS \`${
+    CREATE OR REPLACE FUNCTION \`${
       process.env.PROJECT_ID
     }.${datasetId}.firestoreArray\`(json STRING)
     RETURNS ARRAY<STRING>
@@ -77,8 +79,14 @@ function firestoreArrayDefinition(datasetId: string): string {
       if(json) {
         const parsed = JSON.parse(json);
         
-        if(Array.isArray(parsed)) {
-          return parsed.map(x => JSON.stringify(x));
+        if (Array.isArray(parsed)) {
+          return parsed.map((x) => {
+            if (typeof x === 'string') {
+              return x;
+            } else {
+              return JSON.stringify(x);
+            }
+          });
         }
         
         return [];

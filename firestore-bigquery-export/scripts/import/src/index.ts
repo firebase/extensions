@@ -21,6 +21,8 @@ import * as program from "commander";
 import * as fs from "fs";
 import * as inquirer from "inquirer";
 import * as util from "util";
+import * as filenamify from "filenamify";
+import { runMultiThread } from "./run";
 
 import {
   ChangeType,
@@ -37,6 +39,7 @@ const unlink = util.promisify(fs.unlink);
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
 
+const PROJECT_ID_MAX_CHARS = 6144;
 const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
 const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
 
@@ -55,7 +58,7 @@ const validateInput = (
     return `${name} must be at most ${sizeLimit} characters long`;
   }
   if (!value.match(regex)) {
-    return `The ${name} must only contain letters or spaces`;
+    return `The ${name} does not match the regular expression provided`;
   }
   return true;
 };
@@ -113,8 +116,8 @@ program
     "The path of the the Cloud Firestore Collection to import from. (This may, or may not, be the same Collection for which you plan to mirror changes.)"
   )
   .option(
-    "-q, --query-collection-group <query-collection-group>",
-    "A boolean value indicating whether you'd prefer a collection group query (true) or a collection query (false)"
+    "-q, --query-collection-group [true|false]",
+    "Use 'true' for a collection group query, otherwise a collection query is performed."
   )
   .option(
     "-d, --dataset <dataset>",
@@ -133,6 +136,10 @@ program
   .option(
     "-l, --dataset-location <location>",
     "Location of the BigQuery dataset."
+  )
+  .option(
+    "-m, --multi-threaded [true|false]",
+    "Whether to run standard or multi-thread import version"
   );
 
 const questions = [
@@ -145,7 +152,7 @@ const questions = [
         value,
         "project ID",
         FIRESTORE_VALID_CHARACTERS,
-        FIRESTORE_COLLECTION_NAME_MAX_CHARS
+        PROJECT_ID_MAX_CHARS
       ),
   },
   {
@@ -209,6 +216,12 @@ const questions = [
     default: "us",
     validate: validateLocation,
   },
+  {
+    message: "Would you like to run the import across multiple threads?",
+    name: "multiThreaded",
+    type: "confirm",
+    default: false,
+  },
 ];
 
 type CliConfig = {
@@ -220,6 +233,7 @@ type CliConfig = {
   batchSize: string;
   queryCollectionGroup: boolean;
   datasetLocation: string;
+  multiThreaded: boolean;
 }
 
 type CliConfigError = {
@@ -242,7 +256,10 @@ const run = async (): Promise<number> => {
     tableId,
     batchSize,
     datasetLocation,
+    multiThreaded,
   }: CliConfig = parsed;
+
+  if (multiThreaded) return runMultiThread();
 
   const batch = parseInt(batchSize);
   const rawChangeLogName = `${tableId}_raw_changelog`;
@@ -273,9 +290,11 @@ const run = async (): Promise<number> => {
   // operations supersede imports when listing the live documents.
   let cursor;
 
+  const formattedPath = filenamify(sourceCollectionPath);
+
   let cursorPositionFile =
     __dirname +
-    `/from-${sourceCollectionPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
+    `/from-${formattedPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
   if (await exists(cursorPositionFile)) {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
     cursor = await firebase
@@ -344,6 +363,7 @@ const run = async (): Promise<number> => {
 
 async function parseConfig(): Promise<CliConfig | CliConfigError> {
   program.parse(process.argv);
+
   if (program.nonInteractive) {
     const errors = [];
     if (program.project === undefined) {
@@ -385,6 +405,7 @@ async function parseConfig(): Promise<CliConfig | CliConfigError> {
       batchSize: program.batchSize,
       queryCollectionGroup: program.queryCollectionGroup === "true",
       datasetLocation: program.datasetLocation,
+      multiThreaded: program.multiThreaded === "true",
     };
   }
   const {
@@ -395,7 +416,9 @@ async function parseConfig(): Promise<CliConfig | CliConfigError> {
     batchSize,
     queryCollectionGroup,
     datasetLocation,
+    multiThreaded,
   } = await inquirer.prompt(questions);
+
   return {
     kind: "CONFIG",
     projectId: project,
@@ -405,6 +428,7 @@ async function parseConfig(): Promise<CliConfig | CliConfigError> {
     batchSize: batchSize,
     queryCollectionGroup: queryCollectionGroup,
     datasetLocation: datasetLocation,
+    multiThreaded: multiThreaded,
   };
 }
 

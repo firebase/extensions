@@ -15,6 +15,15 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+function tablePartitioning(type) {
+    if (type === "HOUR" ||
+        type === "DAY" ||
+        type === "MONTH" ||
+        type === "YEAR") {
+        return type;
+    }
+    return null;
+}
 exports.default = {
     collectionPath: process.env.COLLECTION_PATH,
     datasetId: process.env.DATASET_ID,
@@ -22,4 +31,5 @@ exports.default = {
     location: process.env.LOCATION,
     initialized: false,
     datasetLocation: process.env.DATASET_LOCATION,
+    tablePartitioning: tablePartitioning(process.env.TABLE_PARTITIONING),
 };

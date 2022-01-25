@@ -30,7 +30,10 @@ import {
   FirestoreDocumentChangeEvent,
 } from "../tracker";
 import * as logs from "../logs";
-import { InsertRowsOptions } from "@google-cloud/bigquery/build/src/table";
+import {
+  InsertRowsOptions,
+  TableMetadata,
+} from "@google-cloud/bigquery/build/src/table";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
@@ -38,6 +41,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
   tableId: string;
   datasetLocation: string | undefined;
+  tablePartitioning: string;
 }
 
 /**
@@ -212,7 +216,6 @@ export class FirestoreBigQueryEventHistoryTracker
 
   /**
    * Creates the raw change log table if it doesn't already exist.
-   * TODO: Validate that the BigQuery schema is correct if the table does exist,
    */
   private async initializeRawChangeLogTable() {
     const changelogName = this.rawChangeLogTableName();
@@ -237,11 +240,17 @@ export class FirestoreBigQueryEventHistoryTracker
       }
     } else {
       logs.bigQueryTableCreating(changelogName);
-      const options = {
-        // `friendlyName` needs to be here to satisfy TypeScript
+      const options: TableMetadata = {
         friendlyName: changelogName,
         schema: RawChangelogSchema,
       };
+
+      if (this.config.tablePartitioning) {
+        options.timePartitioning = {
+          type: this.config.tablePartitioning,
+        };
+      }
+
       await table.create(options);
       logs.bigQueryTableCreated(changelogName);
     }
@@ -281,10 +290,16 @@ export class FirestoreBigQueryEventHistoryTracker
         this.rawChangeLogTableName()
       );
       logs.bigQueryViewCreating(this.rawLatestView(), latestSnapshot.query);
-      const options = {
+      const options: TableMetadata = {
         friendlyName: this.rawLatestView(),
         view: latestSnapshot,
       };
+
+      if (this.config.tablePartitioning) {
+        options.timePartitioning = {
+          type: this.config.tablePartitioning,
+        };
+      }
       await view.create(options);
       await view.setMetadata({ schema: RawChangelogViewSchema });
       logs.bigQueryViewCreated(this.rawLatestView());

@@ -35,7 +35,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 - You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
 - This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
  - Cloud Storage
- - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#expandable-24))
+ - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
 
 
 
@@ -55,16 +55,20 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Cloud Storage path for resized images: A relative path in which to store resized images. For example, if you specify a path here of `thumbs` and you upload an image to `/images/original.jpg`, then the resized image is stored at `/images/thumbs/original_200x200.jpg`. If you prefer to store resized images at the root of your bucket, leave this field empty.
 
 
-* Paths that contain images you want to resize: Restrict storage-resize-images to only resize images in specific locations in your Storage bucket by  supplying a comma-separated list of absolute paths. For example, to only resize the images  stored in `/users/pictures` directory, specify the path `/users/pictures`.  If you prefer to resize every image uploaded to the storage bucket,  leave this field empty.
+* Paths that contain images you want to resize: Restrict storage-resize-images to only resize images in specific locations in your Storage bucket by  supplying a comma-separated list of absolute paths. For example, to only resize the images  stored in the `/users/pictures` and `/restaurants/menuItems` directories, specify the paths `/users/pictures,/restaurants/menuItems`.
+You may also use wildcard notation for directories in the path. For example, `/users/*/pictures`  would match `/users/profile/pictures/image.png` as well as  `/users/profile/pictures/any/sub/directory/image.png`. 
+If you prefer to resize every image uploaded to your Storage bucket,  leave this field empty.
 
 
-* List of absolute paths not included for resized images: A comma-separated list of absolute paths to not take into account for  images to be resized. For example, to not resize the images  stored in `/users/pictures/avatars` directory, specify the path  `/users/pictures/avatars`. If you prefer to resize every image uploaded  to the storage bucket, leave this field empty.
+* List of absolute paths not included for resized images: Ensure storage-resize-images does *not* resize images in _specific locations_ in your Storage bucket by  supplying a comma-separated list of absolute paths. For example, to *exclude* the images  stored in the `/users/pictures` and `/restaurants/menuItems` directories, specify the paths `/users/pictures,/restaurants/menuItems`.
+You may also use wildcard notation for directories in the path. For example, `/users/*/pictures`  would exclude `/users/profile/pictures/image.png` as well as `/users/profile/pictures/any/sub/directory/image.png`. 
+If you prefer to resize every image uploaded to your Storage bucket,  leave this field empty.
 
 
 * Cache-Control header for resized images: This extension automatically copies any `Cache-Control` metadata from the original image to the resized images. For the resized images, do you want to overwrite this copied `Cache-Control` metadata or add `Cache-Control` metadata? Learn more about [`Cache-Control` headers](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control). If you prefer not to overwrite or add `Cache-Control` metadata, leave this field empty.
 
 
-* Convert image to preferred type: The image type you'd like your source image to convert to. The default for this option will  be to keep the original file type.
+* Convert image to preferred types: The image types you'd like your source image to convert to. The default for this option will  be to keep the original file type.
 
 
 

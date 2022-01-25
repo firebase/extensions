@@ -1,3 +1,23 @@
+## Version 0.2.4
+
+feature - Add Node.js Admin SDK implementation (#687)
+
+feature - add Taiwan and Singapore Cloud Function locations (#729)
+
+## Version 0.2.3
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
+## Version 0.2.2
+
+feature - Added Android client instructions for firestore-counter extension.
+
+## Version 0.2.1
+
+feature - addded iOS sample for firestore-counter extension.
+
 ## Version 0.2.0
 
 feature - convert Firestore Counter to use scheduled functions (#353)

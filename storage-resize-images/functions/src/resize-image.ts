@@ -25,7 +25,7 @@ export function resize(file, size) {
     throw new Error("height and width are not delimited by a ',' or a 'x'");
   }
 
-  return sharp(file)
+  return sharp(file, { failOnError: false })
     .rotate()
     .resize(parseInt(width, 10), parseInt(height, 10), {
       fit: "inside",
@@ -34,25 +34,31 @@ export function resize(file, size) {
     .toBuffer();
 }
 
-export function convertType(buffer) {
-  const { imageType } = config;
-  if (imageType === "jpg" || imageType === "jpeg") {
+export function convertType(buffer, format) {
+  if (format === "jpg" || format === "jpeg") {
     return sharp(buffer)
       .jpeg()
       .toBuffer();
-  } else if (imageType === "png") {
+  }
+
+  if (format === "png") {
     return sharp(buffer)
       .png()
       .toBuffer();
-  } else if (imageType === "webp") {
+  }
+
+  if (format === "webp") {
     return sharp(buffer)
       .webp()
       .toBuffer();
-  } else if (imageType === "tiff") {
+  }
+
+  if (format === "tiff" || format === "tif") {
     return sharp(buffer)
       .tiff()
       .toBuffer();
   }
+
   return buffer;
 }
 
@@ -70,6 +76,7 @@ export const supportedImageContentTypeMap = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   png: "image/png",
+  tif: "image/tif",
   tiff: "image/tiff",
   webp: "image/webp",
 };
@@ -87,6 +94,7 @@ export const modifyImage = async ({
   contentType,
   size,
   objectMetadata,
+  format,
 }: {
   bucket: Bucket;
   originalFile: string;
@@ -96,18 +104,18 @@ export const modifyImage = async ({
   contentType: string;
   size: string;
   objectMetadata: ObjectMetadata;
+  format: string;
 }): Promise<ResizedImageResult> => {
-  const { imageType } = config;
-  const hasImageTypeConfigSet = imageType !== "false";
-  const imageContentType = hasImageTypeConfigSet
-    ? supportedImageContentTypeMap[imageType]
+  const shouldFormatImage = format !== "false";
+  const imageContentType = shouldFormatImage
+    ? supportedImageContentTypeMap[format]
     : contentType;
   const modifiedExtensionName =
-    fileExtension && hasImageTypeConfigSet ? `.${imageType}` : fileExtension;
+    fileExtension && shouldFormatImage ? `.${format}` : fileExtension;
 
   let modifiedFileName;
 
-  if (supportedExtensions.includes(fileExtension)) {
+  if (supportedExtensions.includes(fileExtension.toLowerCase())) {
     modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
   } else {
     // Fixes https://github.com/firebase/extensions/issues/476
@@ -152,10 +160,11 @@ export const modifyImage = async ({
     logs.imageResized(modifiedFile);
 
     // Generate a converted image type buffer using Sharp.
-    if (hasImageTypeConfigSet) {
-      logs.imageConverting(fileExtension, config.imageType);
-      modifiedImageBuffer = await convertType(modifiedImageBuffer);
-      logs.imageConverted(config.imageType);
+
+    if (shouldFormatImage) {
+      logs.imageConverting(fileExtension, format);
+      modifiedImageBuffer = await convertType(modifiedImageBuffer, format);
+      logs.imageConverted(format);
     }
 
     // Generate a image file using Sharp.

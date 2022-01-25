@@ -93,7 +93,7 @@ const clearStorageData = async (storagePaths: string, uid: string) => {
     const bucketName = parts[0];
     const bucket =
       bucketName === "{DEFAULT}"
-        ? admin.storage().bucket()
+        ? admin.storage().bucket(config.storageBucketDefault)
         : admin.storage().bucket(bucketName);
     const prefix = parts.slice(1).join("/");
     try {

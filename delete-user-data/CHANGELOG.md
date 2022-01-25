@@ -1,3 +1,27 @@
+## Version 0.1.12
+
+fixed - updated dependencies
+
+## Version 0.1.11
+
+feature - add Taiwan and Singapore Cloud Function locations (#729)
+
+## Version 0.1.10
+
+feature - updated RTDB to be optional (#722)
+
+## Version 0.1.9
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
+fixed - Removed code coverage check on ci
+
+## Version 0.1.8
+
+fixed - fixed an issue where delete-user-data didn't recognize {DEFAULT} Storage bucket (#532)
+
 ## Version 0.1.7
 
 feature - Adds an option to select an alternative database instance (#505)

@@ -13,10 +13,10 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.10
+version: 0.1.20
 specVersion: v1beta
 
-displayName: Export Collections to BigQuery
+displayName: Stream Collections to BigQuery
 description:
   Sends realtime, incremental updates from a specified Cloud Firestore
   collection to BigQuery.
@@ -53,7 +53,7 @@ resources:
       then exports the changes into BigQuery.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs10
+      runtime: nodejs14
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
@@ -80,6 +80,8 @@ params:
         value: us-west3
       - label: Las Vegas (us-west4)
         value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
@@ -88,6 +90,8 @@ params:
         value: europe-west3
       - label: Zurich (europe-west6)
         value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
@@ -98,6 +102,8 @@ params:
         value: asia-northeast3
       - label: Mumbai (asia-south1)
         value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
       - label: Jakarta (asia-southeast2)
         value: asia-southeast2
       - label: Montreal (northamerica-northeast1)
@@ -118,8 +124,12 @@ params:
       guide](https://cloud.google.com/bigquery/docs/locations).
     type: select
     options:
+      - label: Iowa (us-central1)
+        value: us-central1
       - label: Las Vegas (us-west4)
         value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
       - label: Los Angeles (us-west2)
         value: us-west2
       - label: Montreal (northamerica-northeast1)
@@ -146,12 +156,16 @@ params:
         value: europe-west4  
       - label: Zurich (europe-west6)
         value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Jakarta (asia-southeast2)
         value: asia-southeast2
       - label: Mumbai (asia-south1)
         value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
       - label: Osaka (asia-northeast2)
         value: asia-northeast2
       - label: Seoul (asia-northeast3)
@@ -213,3 +227,26 @@ params:
       more than 1024 characters.
     default: posts
     required: true
+
+  - param: TABLE_PARTITIONING
+    label: BigQuery SQL table partitioning option
+    description: >-
+      This parameter will allow you to partition the BigQuery table and BigQuery view 
+      created by the extension based on data ingestion time. You may select the granularity of
+      partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will
+      generate one partition per day, hour, month or year, respectively. 
+    type: select
+    options:
+      - label: hour
+        value: HOUR
+      - label: day
+        value: DAY
+      - label: month
+        value: MONTH 
+      - label: year
+        value: YEAR
+      - label: none
+        value: NONE
+    default: NONE
+    required: true
+    

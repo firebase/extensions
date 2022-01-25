@@ -21,6 +21,7 @@ import * as nodemailer from "nodemailer";
 import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
+import { QueuePayload } from "./types";
 
 logs.init();
 
@@ -32,12 +33,12 @@ let initialized = false;
 /**
  * Initializes Admin SDK & SMTP connection if not already initialized.
  */
-function initialize() {
+async function initialize() {
   if (initialized === true) return;
   initialized = true;
   admin.initializeApp();
   db = admin.firestore();
-  transport = nodemailer.createTransport(config.smtpConnectionUri);
+  transport = await transportLayer();
   if (config.templatesCollection) {
     templates = new Templates(
       admin.firestore().collection(config.templatesCollection)
@@ -45,35 +46,28 @@ function initialize() {
   }
 }
 
-interface QueuePayload {
-  delivery?: {
-    startTime: FirebaseFirestore.Timestamp;
-    endTime: FirebaseFirestore.Timestamp;
-    leaseExpireTime: FirebaseFirestore.Timestamp;
-    state: "PENDING" | "PROCESSING" | "RETRY" | "SUCCESS" | "ERROR";
-    attempts: number;
-    error?: string;
-    info?: {
-      messageId: string;
-      accepted: string[];
-      rejected: string[];
-      pending: string[];
-    };
-  };
-  message?: nodemailer.SendMailOptions;
-  template?: {
-    name: string;
-    data?: { [key: string]: any };
-  };
-  to: string[];
-  toUids?: string[];
-  cc: string[];
-  ccUids?: string[];
-  bcc: string[];
-  bccUids?: string[];
-  from?: string;
-  replyTo?: string;
-  headers?: any;
+async function transportLayer() {
+  if (config.testing) {
+    return new Promise((resolve, reject) => {
+      nodemailer.createTestAccount((err, account) => {
+        if (err) {
+          reject(err);
+        }
+        const testSMTPCredentials = nodemailer.createTransport({
+          host: "smtp.ethereal.email",
+          port: 587,
+          secure: false, // true for 465, false for other ports
+          auth: {
+            user: account.user, // generated ethereal user
+            pass: account.pass, // generated ethereal password
+          },
+        });
+        resolve(testSMTPCredentials);
+      });
+    });
+  } else {
+    return nodemailer.createTransport(config.smtpConnectionUri);
+  }
 }
 
 function validateFieldArray(field: string, array?: string[]) {
@@ -109,10 +103,17 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
       throw new Error(`Template object is missing a 'name' parameter.`);
     }
 
-    payload.message = Object.assign(
-      payload.message || {},
-      await templates.render(template.name, template.data)
-    );
+    const templateRender = await templates.render(template.name, template.data);
+
+    const mergeMessage = payload.message || {};
+
+    const attachments = templateRender.attachments
+      ? templateRender.attachments
+      : mergeMessage.attachments;
+
+    payload.message = Object.assign(mergeMessage, templateRender, {
+      attachments: attachments || [],
+    });
   }
 
   let to: string[] = [];
@@ -316,7 +317,10 @@ async function processWrite(change) {
         return admin.firestore().runTransaction((transaction) => {
           transaction.update(change.after.ref, {
             "delivery.state": "ERROR",
+            // Keeping error to avoid any breaking changes in the next minor update.
+            // Error to be removed for the next major release.
             error: "Message processing lease expired.",
+            "delivery.error": "Message processing lease expired.",
           });
           return Promise.resolve();
         });
@@ -340,7 +344,7 @@ async function processWrite(change) {
 
 export const processQueue = functions.handler.firestore.document.onWrite(
   async (change) => {
-    initialize();
+    await initialize();
     logs.start();
     try {
       await processWrite(change);

@@ -30,15 +30,39 @@ let initialized = false;
 /**
  * Initializes Admin SDK & SMTP connection if not already initialized.
  */
-function initialize() {
+async function initialize() {
     if (initialized === true)
         return;
     initialized = true;
     admin.initializeApp();
     db = admin.firestore();
-    transport = nodemailer.createTransport(config_1.default.smtpConnectionUri);
+    transport = await transportLayer();
     if (config_1.default.templatesCollection) {
         templates = new templates_1.default(admin.firestore().collection(config_1.default.templatesCollection));
+    }
+}
+async function transportLayer() {
+    if (config_1.default.testing) {
+        return new Promise((resolve, reject) => {
+            nodemailer.createTestAccount((err, account) => {
+                if (err) {
+                    reject(err);
+                }
+                const testSMTPCredentials = nodemailer.createTransport({
+                    host: "smtp.ethereal.email",
+                    port: 587,
+                    secure: false,
+                    auth: {
+                        user: account.user,
+                        pass: account.pass,
+                    },
+                });
+                resolve(testSMTPCredentials);
+            });
+        });
+    }
+    else {
+        return nodemailer.createTransport(config_1.default.smtpConnectionUri);
     }
 }
 function validateFieldArray(field, array) {
@@ -69,7 +93,14 @@ async function preparePayload(payload) {
         if (!template.name) {
             throw new Error(`Template object is missing a 'name' parameter.`);
         }
-        payload.message = Object.assign(payload.message || {}, await templates.render(template.name, template.data));
+        const templateRender = await templates.render(template.name, template.data);
+        const mergeMessage = payload.message || {};
+        const attachments = templateRender.attachments
+            ? templateRender.attachments
+            : mergeMessage.attachments;
+        payload.message = Object.assign(mergeMessage, templateRender, {
+            attachments: attachments || [],
+        });
     }
     let to = [];
     let cc = [];
@@ -232,7 +263,10 @@ async function processWrite(change) {
                 return admin.firestore().runTransaction((transaction) => {
                     transaction.update(change.after.ref, {
                         "delivery.state": "ERROR",
+                        // Keeping error to avoid any breaking changes in the next minor update.
+                        // Error to be removed for the next major release.
                         error: "Message processing lease expired.",
+                        "delivery.error": "Message processing lease expired.",
                     });
                     return Promise.resolve();
                 });
@@ -252,7 +286,7 @@ async function processWrite(change) {
     }
 }
 exports.processQueue = functions.handler.firestore.document.onWrite(async (change) => {
-    initialize();
+    await initialize();
     logs.start();
     try {
         await processWrite(change);

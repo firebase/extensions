@@ -84,7 +84,7 @@ const clearStorageData = async (storagePaths, uid) => {
         const parts = path.split("/");
         const bucketName = parts[0];
         const bucket = bucketName === "{DEFAULT}"
-            ? admin.storage().bucket()
+            ? admin.storage().bucket(config_1.default.storageBucketDefault)
             : admin.storage().bucket(bucketName);
         const prefix = parts.slice(1).join("/");
         try {
@@ -127,7 +127,7 @@ const clearFirestoreData = async (firestorePaths, uid) => {
                 await firebase_tools.firestore.delete(path, {
                     project: process.env.PROJECT_ID,
                     recursive: true,
-                    yes: true,
+                    yes: true, // auto-confirmation
                 });
                 logs.firestorePathDeleted(path, true);
             }
