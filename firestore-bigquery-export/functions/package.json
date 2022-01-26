@@ -13,7 +13,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@types/node": "^12.6.9",
-    "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.13",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.14",
     "@google-cloud/bigquery": "^2.1.0",
     "@types/chai": "^4.1.6",
     "chai": "^4.2.0",
