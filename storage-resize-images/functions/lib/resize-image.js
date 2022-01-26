@@ -60,6 +60,7 @@ exports.supportedContentTypes = [
     "image/png",
     "image/tiff",
     "image/webp",
+    "image/gif",
 ];
 exports.supportedImageContentTypeMap = {
     jpg: "image/jpeg",
@@ -68,6 +69,7 @@ exports.supportedImageContentTypeMap = {
     tif: "image/tif",
     tiff: "image/tiff",
     webp: "image/webp",
+    gif: "image/gif",
 };
 const supportedExtensions = Object.keys(exports.supportedImageContentTypeMap).map((type) => `.${type}`);
 exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, format, }) => {

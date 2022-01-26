@@ -70,6 +70,7 @@ export const supportedContentTypes = [
   "image/png",
   "image/tiff",
   "image/webp",
+  "image/gif",
 ];
 
 export const supportedImageContentTypeMap = {
@@ -79,6 +80,7 @@ export const supportedImageContentTypeMap = {
   tif: "image/tif",
   tiff: "image/tiff",
   webp: "image/webp",
+  gif: "image/gif",
 };
 
 const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(

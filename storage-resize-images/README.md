@@ -18,6 +18,7 @@ You can even configure the extension to create resized images of different dimen
 
 The extension automatically copies the following metadata, if present, from the original image to the resized image(s): `Cache-Control`, `Content-Disposition`, `Content-Encoding`, `Content-Language`, `Content-Type`, and user-provided metadata (a new Firebase storage download token will be generated on the resized image(s) if the original metadata contains a token). Note that you can optionally configure the extension to overwrite the [`Cache-Control`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control) value for the resized image(s).
 
+Please note. This extension does not  support animation for GIF and WEBP formats. You can convert the image and receive a resized static image with first frame of the animation. To convert all other images formats as GIFs you can use "original" option as an output types. (GIF=>GIF case).
 #### Detailed configuration information
 
 To configure this extension, you specify a maximum width and a maximum height (in pixels, px). This extension keeps the aspect ratio of uploaded images constant and shrinks the image until the resized image's dimensions are at or under your specified max width and height.
