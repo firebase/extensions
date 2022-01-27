@@ -66,6 +66,13 @@ export const documentIdField = {
   description: "The document id as defined in the firestore database.",
 };
 
+export const documentJsonTree = {
+  name: "document_tree",
+  mode: "NULLABLE",
+  type: "JSON",
+  description: "BigQuery JSON representing document nodes",
+};
+
 /*
  * We cannot specify a schema for view creation, and all view columns default
  * to the NULLABLE mode.
@@ -107,6 +114,7 @@ export const RawChangelogViewSchema: any = {
         "The full JSON representation of the current document state.",
     },
     documentIdField,
+    documentJsonTree,
   ],
 };
 
@@ -147,5 +155,6 @@ export const RawChangelogSchema: any = {
         "The full JSON representation of the document state after the indicated operation is applied. This field will be null for DELETE operations.",
     },
     documentIdField,
+    documentJsonTree,
   ],
 };

@@ -17,7 +17,7 @@
 import { DocumentSnapshot } from "firebase-functions/lib/providers/firestore";
 import { Change } from "firebase-functions";
 
-import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import { ChangeType } from "@posiek07/fbct";
 
 export function getChangeType(change: Change<DocumentSnapshot>): ChangeType {
   if (!change.after.exists) {
@@ -34,4 +34,32 @@ export function getDocumentId(change: Change<DocumentSnapshot>): string {
     return change.after.id;
   }
   return change.before.id;
+}
+
+export function getDocumentTree(change: Change<DocumentSnapshot>): object {
+  if (change.after.exists) {
+    return getFirestoreJsonTree(change.after.ref.path);
+  }
+  return getFirestoreJsonTree(change.before.ref.path);
+}
+
+export type FirestoreRefObject = {
+  id: string;
+  type: "document" | "collection" | "";
+  parent: object | null;
+};
+
+function getFirestoreJsonTree(path: string) {
+  return path.split("/").reduce((acc: object, value, index) => {
+    let object: FirestoreRefObject = { id: "", type: "", parent: null };
+    if (index % 2 === 1) {
+      object.id = value;
+      object.type = "document";
+    } else {
+      object.id = value;
+      object.type = "collection";
+    }
+    object.parent = acc;
+    return object;
+  }, null);
 }

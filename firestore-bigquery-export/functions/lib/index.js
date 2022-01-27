@@ -17,10 +17,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const config_1 = require("./config");
 const functions = require("firebase-functions");
-const firestore_bigquery_change_tracker_1 = require("@firebaseextensions/firestore-bigquery-change-tracker");
+const fbct_1 = require("@posiek07/fbct");
 const logs = require("./logs");
 const util_1 = require("./util");
-const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEventHistoryTracker({
+const eventTracker = new fbct_1.FirestoreBigQueryEventHistoryTracker({
     tableId: config_1.default.tableId,
     datasetId: config_1.default.datasetId,
     datasetLocation: config_1.default.datasetLocation,
@@ -32,14 +32,16 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(async (c
     try {
         const changeType = util_1.getChangeType(change);
         const documentId = util_1.getDocumentId(change);
+        const documentTree = util_1.getDocumentTree(change);
         await eventTracker.record([
             {
                 timestamp: context.timestamp,
                 operation: changeType,
                 documentName: context.resource.name,
                 documentId: documentId,
+                documentTree: documentTree,
                 eventId: context.eventId,
-                data: changeType === firestore_bigquery_change_tracker_1.ChangeType.DELETE ? undefined : change.after.data(),
+                data: changeType === fbct_1.ChangeType.DELETE ? undefined : change.after.data(),
             },
         ]);
         logs.complete();

@@ -15,16 +15,16 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDocumentId = exports.getChangeType = void 0;
-const firestore_bigquery_change_tracker_1 = require("@firebaseextensions/firestore-bigquery-change-tracker");
+exports.getDocumentTree = exports.getDocumentId = exports.getChangeType = void 0;
+const fbct_1 = require("@posiek07/fbct");
 function getChangeType(change) {
     if (!change.after.exists) {
-        return firestore_bigquery_change_tracker_1.ChangeType.DELETE;
+        return fbct_1.ChangeType.DELETE;
     }
     if (!change.before.exists) {
-        return firestore_bigquery_change_tracker_1.ChangeType.CREATE;
+        return fbct_1.ChangeType.CREATE;
     }
-    return firestore_bigquery_change_tracker_1.ChangeType.UPDATE;
+    return fbct_1.ChangeType.UPDATE;
 }
 exports.getChangeType = getChangeType;
 function getDocumentId(change) {
@@ -34,3 +34,27 @@ function getDocumentId(change) {
     return change.before.id;
 }
 exports.getDocumentId = getDocumentId;
+function getDocumentTree(change) {
+    if (change.after.exists) {
+        return getFirestoreJsonTree(change.after.ref.path);
+    }
+    return getFirestoreJsonTree(change.before.ref.path);
+}
+exports.getDocumentTree = getDocumentTree;
+function getFirestoreJsonTree(path) {
+    return path.split("/").reduce((acc, value, index) => {
+        let object = { id: "", type: "", parent: null };
+        if (index % 2 === 1) {
+            object.id = value;
+            object.type = "document";
+        }
+        else {
+            object.id = value;
+            object.type = "collection";
+        }
+        object.parent = acc;
+        return object;
+    }, null);
+}
+
+console.log(JSON.stringify(getFirestoreJsonTree("collectionID/348128348/bigQueryTimestamp10/TObmosD16Gg5siavxE3H/subcollection/pFSm9rZjxhAwtfWQsPpK")))

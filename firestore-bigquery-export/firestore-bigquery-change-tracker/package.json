@@ -1,11 +1,11 @@
 {
-  "name": "@firebaseextensions/firestore-bigquery-change-tracker",
+  "name": "@posiek07/fbct",
   "repository": {
     "type": "git",
     "url": "github.com/firebase/extensions.git",
     "directory": "firestore-bigquery-export/firestore-bigquery-change-tracker"
   },
-  "version": "1.1.13",
+  "version": "1.1.51",
   "description": "Core change-tracker library for Cloud Firestore Collection BigQuery Exports",
   "main": "./lib/index.js",
   "scripts": {
@@ -19,7 +19,7 @@
     "lib/*.js",
     "lib/bigquery/*.js"
   ],
-  "author": "Jan Wyszynski <wyszynski@google.com>",
+  "author": "posiek07@gmail.com",
   "license": "Apache-2.0",
   "dependencies": {
     "@google-cloud/bigquery": "^4.7.0",

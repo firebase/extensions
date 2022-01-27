@@ -20,9 +20,9 @@ import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreEventHistoryTracker,
-} from "@firebaseextensions/firestore-bigquery-change-tracker";
+} from "@posiek07/fbct";
 import * as logs from "./logs";
-import { getChangeType, getDocumentId } from "./util";
+import { getChangeType, getDocumentTree, getDocumentId } from "./util";
 
 const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker(
   {
@@ -41,12 +41,14 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
     try {
       const changeType = getChangeType(change);
       const documentId = getDocumentId(change);
+      const documentTree = getDocumentTree(change);
       await eventTracker.record([
         {
           timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
           operation: changeType,
           documentName: context.resource.name,
           documentId: documentId,
+          documentTree: documentTree,
           eventId: context.eventId,
           data:
             changeType === ChangeType.DELETE ? undefined : change.after.data(),
