@@ -21,6 +21,7 @@ import {
   RawChangelogSchema,
   RawChangelogViewSchema,
   documentIdField,
+  documentPathParams,
 } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 
@@ -77,7 +78,7 @@ export class FirestoreBigQueryEventHistoryTracker
           event_id: event.eventId,
           document_name: event.documentName,
           document_id: event.documentId,
-          document_tree: JSON.stringify(event.documentTree),
+          path_params: JSON.stringify(event.pathParams),
           operation: ChangeType[event.operation],
           data: JSON.stringify(this.serializeData(event.data)),
         },
@@ -122,7 +123,11 @@ export class FirestoreBigQueryEventHistoryTracker
     const expectedErrors = [
       {
         message: "no such field.",
-        location: "document_id",
+        location: documentIdField.name,
+      },
+      {
+        message: "no such field.",
+        location: documentPathParams.name,
       },
     ];
     if (
@@ -233,11 +238,22 @@ export class FirestoreBigQueryEventHistoryTracker
       const documentIdColExists = fields.find(
         (column) => column.name === "document_id"
       );
+      const paramsColExists = fields.find(
+        (column) => column.name === "path_params"
+      );
 
       if (!documentIdColExists) {
         fields.push(documentIdField);
         await table.setMetadata(metadata);
-        logs.addDocumentIdColumn(this.rawChangeLogTableName());
+        logs.addNewColumn(this.rawChangeLogTableName(), documentIdField.name);
+      }
+      if (!paramsColExists) {
+        fields.push(documentPathParams);
+        await table.setMetadata(metadata);
+        logs.addNewColumn(
+          this.rawChangeLogTableName(),
+          documentPathParams.name
+        );
       }
     } else {
       logs.bigQueryTableCreating(changelogName);
@@ -276,14 +292,26 @@ export class FirestoreBigQueryEventHistoryTracker
         (column) => column.name === "document_id"
       );
 
+      const paramsColExists = fields.find(
+        (column) => column.name === "path_params"
+      );
+
       if (!documentIdColExists) {
         metadata.view = latestConsistentSnapshotView(
           this.config.datasetId,
           this.rawChangeLogTableName()
         );
-
         await view.setMetadata(metadata);
-        logs.addDocumentIdColumn(this.rawLatestView());
+        logs.addNewColumn(this.rawLatestView(), documentIdField.name);
+      }
+
+      if (!paramsColExists) {
+        metadata.view = latestConsistentSnapshotView(
+          this.config.datasetId,
+          this.rawChangeLogTableName()
+        );
+        await view.setMetadata(metadata);
+        logs.addNewColumn(this.rawLatestView(), documentPathParams.name);
       }
     } else {
       const latestSnapshot = latestConsistentSnapshotView(

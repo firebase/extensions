@@ -32,14 +32,14 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(async (c
     try {
         const changeType = util_1.getChangeType(change);
         const documentId = util_1.getDocumentId(change);
-        const documentTree = util_1.getDocumentTree(change);
+        const pathParams = util_1.getCollectionPathParams(change);
         await eventTracker.record([
             {
                 timestamp: context.timestamp,
                 operation: changeType,
                 documentName: context.resource.name,
                 documentId: documentId,
-                documentTree: documentTree,
+                pathParams: pathParams,
                 eventId: context.eventId,
                 data: changeType === fbct_1.ChangeType.DELETE ? undefined : change.after.data(),
             },

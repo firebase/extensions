@@ -66,11 +66,12 @@ export const documentIdField = {
   description: "The document id as defined in the firestore database.",
 };
 
-export const documentJsonTree = {
-  name: "document_tree",
+export const documentPathParams = {
+  name: "path_params",
   mode: "NULLABLE",
-  type: "JSON",
-  description: "BigQuery JSON representing document nodes",
+  type: "STRING",
+  description:
+    "JSON string representing wildcard params with Firestore Document ids",
 };
 
 /*
@@ -114,7 +115,7 @@ export const RawChangelogViewSchema: any = {
         "The full JSON representation of the current document state.",
     },
     documentIdField,
-    documentJsonTree,
+    documentPathParams,
   ],
 };
 
@@ -155,6 +156,6 @@ export const RawChangelogSchema: any = {
         "The full JSON representation of the document state after the indicated operation is applied. This field will be null for DELETE operations.",
     },
     documentIdField,
-    documentJsonTree,
+    documentPathParams,
   ],
 };

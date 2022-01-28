@@ -16,6 +16,7 @@
 
 import { DocumentSnapshot } from "firebase-functions/lib/providers/firestore";
 import { Change } from "firebase-functions";
+import config from "./config";
 
 import { ChangeType } from "@posiek07/fbct";
 
@@ -36,30 +37,46 @@ export function getDocumentId(change: Change<DocumentSnapshot>): string {
   return change.before.id;
 }
 
-export function getDocumentTree(change: Change<DocumentSnapshot>): object {
+export function getCollectionPathParams(
+  change: Change<DocumentSnapshot>
+): object {
   if (change.after.exists) {
-    return getFirestoreJsonTree(change.after.ref.path);
+    return getWildcardParamsValues(
+      change.after.ref.path,
+      config.collectionPath
+    );
   }
-  return getFirestoreJsonTree(change.before.ref.path);
+  return getWildcardParamsValues(change.before.ref.path, config.collectionPath);
 }
 
-export type FirestoreRefObject = {
-  id: string;
-  type: "document" | "collection" | "";
-  parent: object | null;
-};
+export function getWildcardParamsValues(
+  path: string,
+  collectionPath: string
+): any {
+  const pathArray = path
+    .split("/")
+    .filter(($, i) => i % 2)
+    .slice(0, -1);
+  const collectionArray = collectionPath.split("/").filter(($, i) => i % 2);
+  let pathWildcardArray = [];
+  let collectionWildcardArray = [];
 
-function getFirestoreJsonTree(path: string) {
-  return path.split("/").reduce((acc: object, value, index) => {
-    let object: FirestoreRefObject = { id: "", type: "", parent: null };
-    if (index % 2 === 1) {
-      object.id = value;
-      object.type = "document";
-    } else {
-      object.id = value;
-      object.type = "collection";
+  collectionArray.forEach((el, index) => {
+    if (el.includes("{")) {
+      pathWildcardArray.push(pathArray[index]);
+      collectionWildcardArray.push(collectionArray[index].replace(/[{}]/g, ""));
     }
-    object.parent = acc;
-    return object;
-  }, null);
+  });
+  return convertStringArrayToObj(collectionWildcardArray, pathWildcardArray);
+}
+
+function convertStringArrayToObj(a, b) {
+  if (a.length != b.length || a.length == 0 || b.length == 0) {
+    return null;
+  }
+  let obj = {};
+  a.forEach((k, i) => {
+    obj[k] = b[i];
+  });
+  return obj;
 }

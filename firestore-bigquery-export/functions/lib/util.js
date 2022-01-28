@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getDocumentTree = exports.getDocumentId = exports.getChangeType = void 0;
+exports.getCollectionPathParams = exports.getDocumentId = exports.getChangeType = void 0;
+const config_1 = require("./config");
 const fbct_1 = require("@posiek07/fbct");
 function getChangeType(change) {
     if (!change.after.exists) {
@@ -34,27 +35,31 @@ function getDocumentId(change) {
     return change.before.id;
 }
 exports.getDocumentId = getDocumentId;
-function getDocumentTree(change) {
+function getCollectionPathParams(change) {
     if (change.after.exists) {
-        return getFirestoreJsonTree(change.after.ref.path);
+        return getWildcardParamsValues(change.after.ref.path);
     }
-    return getFirestoreJsonTree(change.before.ref.path);
+    return getWildcardParamsValues(change.before.ref.path);
 }
-exports.getDocumentTree = getDocumentTree;
-function getFirestoreJsonTree(path) {
-    return path.split("/").reduce((acc, value, index) => {
-        let object = { id: "", type: "", parent: null };
-        if (index % 2 === 1) {
-            object.id = value;
-            object.type = "document";
-        }
-        else {
-            object.id = value;
-            object.type = "collection";
-        }
-        object.parent = acc;
-        return object;
-    }, null);
+exports.getCollectionPathParams = getCollectionPathParams;
+function getWildcardParamsValues(path) {
+    const pathArray = path
+        .split("/")
+        .filter(($, i) => i % 2)
+        .slice(0, -1);
+    const collectionArray = config_1.default.collectionPath
+        .split("/")
+        .filter(($, i) => i % 2)
+        .map((value) => value.replace(/[{}]/g, ""));
+    return convertEqualStringArraysToObj(collectionArray, pathArray);
 }
-
-console.log(JSON.stringify(getFirestoreJsonTree("collectionID/348128348/bigQueryTimestamp10/TObmosD16Gg5siavxE3H/subcollection/pFSm9rZjxhAwtfWQsPpK")))
+function convertEqualStringArraysToObj(a, b) {
+    if (a.length != b.length || a.length == 0 || b.length == 0) {
+        return null;
+    }
+    let obj = {};
+    a.forEach((k, i) => {
+        obj[k] = b[i];
+    });
+    return obj;
+}
