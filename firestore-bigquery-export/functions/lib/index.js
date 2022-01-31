@@ -27,19 +27,20 @@ const eventTracker = new fbct_1.FirestoreBigQueryEventHistoryTracker({
     tablePartitioning: config_1.default.tablePartitioning,
 });
 logs.init();
-exports.fsexportbigquery = functions.handler.firestore.document.onWrite(async (change, context) => {
+exports.fsexportbigquery = functions.firestore
+    .document(config_1.default.collectionPath)
+    .onWrite(async (change, context) => {
     logs.start();
     try {
         const changeType = util_1.getChangeType(change);
         const documentId = util_1.getDocumentId(change);
-        const pathParams = util_1.getCollectionPathParams(change);
         await eventTracker.record([
             {
                 timestamp: context.timestamp,
                 operation: changeType,
                 documentName: context.resource.name,
                 documentId: documentId,
-                pathParams: pathParams,
+                pathParams: context.params,
                 eventId: context.eventId,
                 data: changeType === fbct_1.ChangeType.DELETE ? undefined : change.after.data(),
             },

@@ -1,4 +1,4 @@
-import { getChangeType, getWildcardParamsValues } from "../src/util";
+import { getChangeType } from "../src/util";
 import * as functionsTestInit from "firebase-functions-test";
 import { ChangeType } from "@posiek07/fbct";
 import { DocumentSnapshot } from "firebase-functions/lib/providers/firestore";
@@ -50,52 +50,5 @@ describe("util.getChangeType", () => {
     const changeType: ChangeType = getChangeType(makeChange(before, after));
 
     expect(changeType === ChangeType.UPDATE).toBeTruthy();
-  });
-});
-
-describe("util.getWildcardParamsValues", () => {
-  test("create params object for wildcards ids", () => {
-    const configCollectionPath =
-      "wildcard-test/{user_id}/subcoll/{post_id}/attachments";
-    const docRefPath =
-      "wildcard-test/user_1/subcoll/post_1/attachments/attachment_1";
-
-    const docPathRef = getWildcardParamsValues(
-      docRefPath,
-      configCollectionPath
-    );
-    expect(docPathRef.user_id).toBe("user_1");
-    expect(docPathRef.post_id).toBe("post_1");
-  });
-  test("returns params to be null if no wildcards", () => {
-    const configCollectionPath = "wildcard-test/post_1/subcoll";
-    const docRefPath = "wildcard-test/post_1/subcoll/attachment_1";
-    const docPathRef = getWildcardParamsValues(
-      docRefPath,
-      configCollectionPath
-    );
-    expect(docPathRef).toBe(null);
-  });
-  test("returns params to be 1 parameter for first wildcard ", () => {
-    const configCollectionPath =
-      "wildcard-test/{user_id}/subcoll/post_1/attachments";
-    const docRefPath =
-      "wildcard-test/user_1/subcoll/post_1/attachments/attachment_1";
-    const docPathRef = getWildcardParamsValues(
-      docRefPath,
-      configCollectionPath
-    );
-    expect(docPathRef.user_id).toBe("user_1");
-  });
-  test("returns params to be 1 parameter for last wildcard ", () => {
-    const configCollectionPath =
-      "wildcard-test/user_1/subcoll/{post_id}/attachments";
-    const docRefPath =
-      "wildcard-test/user_1/subcoll/post_1/attachments/attachment_1";
-    const docPathRef = getWildcardParamsValues(
-      docRefPath,
-      configCollectionPath
-    );
-    expect(docPathRef.post_id).toBe("post_1");
   });
 });
