@@ -6,14 +6,14 @@
     "build": "npm run clean && npm run compile",
     "clean": "rimraf lib",
     "compile": "tsc",
-    "test": "jest --watch",
+    "test": "jest",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
   "dependencies": {
     "@types/node": "^12.6.9",
-    "@posiek07/fbct": "^1.1.55",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.15",
     "@google-cloud/bigquery": "^2.1.0",
     "@types/chai": "^4.1.6",
     "chai": "^4.2.0",
