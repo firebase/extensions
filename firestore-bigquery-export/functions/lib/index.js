@@ -17,7 +17,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const config_1 = require("./config");
 const functions = require("firebase-functions");
-const fbct_1 = require("@posiek07/fbct");
+const fbct_1 = require("@firebaseextensions/firestore-bigquery-change-tracker");
 const logs = require("./logs");
 const util_1 = require("./util");
 const eventTracker = new fbct_1.FirestoreBigQueryEventHistoryTracker({
