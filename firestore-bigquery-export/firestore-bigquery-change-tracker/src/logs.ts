@@ -170,6 +170,10 @@ export const addDocumentIdColumn = (table) => {
   logger.log(`Updated '${table}' table with a 'document_id' column`);
 };
 
+export const addPartitionFieldColumn = (table, field) => {
+  logger.log(`Updated '${table}' table with a partition field '${field}' column`);
+};
+
 export const firestoreTimePartitionFieldError = (
   documentName: string | undefined,
   fieldName: string | undefined,

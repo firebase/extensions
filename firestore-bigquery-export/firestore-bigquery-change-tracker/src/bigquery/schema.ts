@@ -151,27 +151,15 @@ export const RawChangelogSchema = {
   ],
 };
 
-// Helper function for Partitioned Changelogs
-export const getRawChangelogPartitioned = (
+// Helper function for Partitioned Changelogs field
+export const getNewPartitionField = (
   partitioningField: string,
-  partitioningFieldType: string,
-  isView: boolean
+  partitioningFieldType: string
 ) => {
-  const isSchemaFieldExist = !![
-    ...RawChangelogSchema.fields,
-    ...RawChangelogViewSchema.fields,
-  ].find((field) => field.name === partitioningField);
-  const newPartitionField = {
+  return {
     name: partitioningField,
     mode: "NULLABLE",
     type: partitioningFieldType,
     description: "The document TimePartition partition field selected by user",
   };
-  let schema = isView
-    ? { fields: [...RawChangelogViewSchema.fields] }
-    : { fields: [...RawChangelogSchema.fields] };
-  if (!isSchemaFieldExist && partitioningField && partitioningFieldType) {
-    schema.fields.push(newPartitionField);
-  }
-  return schema;
 };
