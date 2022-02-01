@@ -115,7 +115,6 @@ export const RawChangelogViewSchema: any = {
         "The full JSON representation of the current document state.",
     },
     documentIdField,
-    documentPathParams,
   ],
 };
 
@@ -156,6 +155,5 @@ export const RawChangelogSchema: any = {
         "The full JSON representation of the document state after the indicated operation is applied. This field will be null for DELETE operations.",
     },
     documentIdField,
-    documentPathParams,
   ],
 };

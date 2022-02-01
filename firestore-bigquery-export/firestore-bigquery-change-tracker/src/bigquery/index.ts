@@ -43,6 +43,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   tableId: string;
   datasetLocation: string | undefined;
   tablePartitioning: string;
+  wildcardIds?: boolean;
 }
 
 /**
@@ -78,9 +79,12 @@ export class FirestoreBigQueryEventHistoryTracker
           event_id: event.eventId,
           document_name: event.documentName,
           document_id: event.documentId,
-          path_params: JSON.stringify(event.pathParams),
           operation: ChangeType[event.operation],
           data: JSON.stringify(this.serializeData(event.data)),
+          ...(this.config.wildcardIds &&
+            event.pathParams && {
+              path_params: JSON.stringify(event.pathParams),
+            }),
         },
       };
     });
@@ -242,7 +246,7 @@ export class FirestoreBigQueryEventHistoryTracker
         (column) => column.name === "path_params"
       );
 
-      if (!documentIdColExists) {
+      if (!documentIdColExists && this.config.wildcardIds) {
         fields.push(documentIdField);
         await table.setMetadata(metadata);
         logs.addNewColumn(this.rawChangeLogTableName(), documentIdField.name);
@@ -257,9 +261,13 @@ export class FirestoreBigQueryEventHistoryTracker
       }
     } else {
       logs.bigQueryTableCreating(changelogName);
+      const schema = { ...RawChangelogSchema };
+      if (this.config.wildcardIds) {
+        schema.fields.push(documentPathParams);
+      }
       const options: TableMetadata = {
         friendlyName: changelogName,
-        schema: RawChangelogSchema,
+        schema: schema,
       };
 
       if (this.config.tablePartitioning) {
@@ -305,7 +313,7 @@ export class FirestoreBigQueryEventHistoryTracker
         logs.addNewColumn(this.rawLatestView(), documentIdField.name);
       }
 
-      if (!paramsColExists) {
+      if (!paramsColExists && this.config.wildcardIds) {
         metadata.view = latestConsistentSnapshotView(
           this.config.datasetId,
           this.rawChangeLogTableName()
@@ -314,6 +322,10 @@ export class FirestoreBigQueryEventHistoryTracker
         logs.addNewColumn(this.rawLatestView(), documentPathParams.name);
       }
     } else {
+      const schema = { ...RawChangelogViewSchema };
+      if (this.config.wildcardIds) {
+        schema.fields.push(documentPathParams);
+      }
       const latestSnapshot = latestConsistentSnapshotView(
         this.config.datasetId,
         this.rawChangeLogTableName()
@@ -330,7 +342,9 @@ export class FirestoreBigQueryEventHistoryTracker
         };
       }
       await view.create(options);
-      await view.setMetadata({ schema: RawChangelogViewSchema });
+      await view.setMetadata({
+        schema: schema,
+      });
       logs.bigQueryViewCreated(this.rawLatestView());
     }
     return view;

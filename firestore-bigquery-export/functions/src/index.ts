@@ -30,6 +30,7 @@ const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHis
     datasetId: config.datasetId,
     datasetLocation: config.datasetLocation,
     tablePartitioning: config.tablePartitioning,
+    wildcardIds: config.wildcardIds,
   }
 );
 
@@ -48,7 +49,7 @@ exports.fsexportbigquery = functions.firestore
           operation: changeType,
           documentName: context.resource.name,
           documentId: documentId,
-          pathParams: context.params,
+          pathParams: config.wildcardIds ? context.params : null,
           eventId: context.eventId,
           data:
             changeType === ChangeType.DELETE ? undefined : change.after.data(),

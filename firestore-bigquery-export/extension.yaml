@@ -250,4 +250,17 @@ params:
         value: NONE
     default: NONE
     required: true
+
+  - param: WILDCARD_IDS
+    label: Wildcard Firestore Document IDs
+    description: >-
+     Optional schema string field containing wildcards JSON object with parent Firestore Document IDs.
+    type: select
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+    default: false
+    required: false
     

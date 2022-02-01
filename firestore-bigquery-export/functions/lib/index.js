@@ -25,6 +25,7 @@ const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEv
     datasetId: config_1.default.datasetId,
     datasetLocation: config_1.default.datasetLocation,
     tablePartitioning: config_1.default.tablePartitioning,
+    wildcardIds: config_1.default.wildcardIds,
 });
 logs.init();
 exports.fsexportbigquery = functions.firestore
@@ -40,7 +41,7 @@ exports.fsexportbigquery = functions.firestore
                 operation: changeType,
                 documentName: context.resource.name,
                 documentId: documentId,
-                pathParams: context.params,
+                pathParams: config_1.default.wildcardIds ? context.params : null,
                 eventId: context.eventId,
                 data: changeType === firestore_bigquery_change_tracker_1.ChangeType.DELETE ? undefined : change.after.data(),
             },
