@@ -32,5 +32,5 @@ exports.default = {
     initialized: false,
     datasetLocation: process.env.DATASET_LOCATION,
     tablePartitioning: tablePartitioning(process.env.TABLE_PARTITIONING),
-    wildcardIds: process.env.WILDCARD_IDS === "false" ? false : true,
+    wildcardIds: process.env.WILDCARD_IDS === "true" ? true : false,
 };
