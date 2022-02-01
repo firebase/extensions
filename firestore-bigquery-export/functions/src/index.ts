@@ -29,8 +29,11 @@ const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHis
     tableId: config.tableId,
     datasetId: config.datasetId,
     datasetLocation: config.datasetLocation,
-    tablePartitioning: config.tablePartitioning,
     transformFunction: config.transformFunction,
+    timePartitioning: config.timePartitioning,
+    timePartitioningField: config.timePartitioningField,
+    timePartitioningFieldType: config.timePartitioningFieldType,
+    timePartitioningFirestoreField: config.timePartitioningFirestoreField,
   }
 );
 
@@ -42,6 +45,7 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
     try {
       const changeType = getChangeType(change);
       const documentId = getDocumentId(change);
+
       await eventTracker.record([
         {
           timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.

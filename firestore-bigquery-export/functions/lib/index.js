@@ -24,8 +24,11 @@ const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEv
     tableId: config_1.default.tableId,
     datasetId: config_1.default.datasetId,
     datasetLocation: config_1.default.datasetLocation,
-    tablePartitioning: config_1.default.tablePartitioning,
     transformFunction: config_1.default.transformFunction,
+    timePartitioning: config_1.default.timePartitioning,
+    timePartitioningField: config_1.default.timePartitioningField,
+    timePartitioningFieldType: config_1.default.timePartitioningFieldType,
+    timePartitioningFirestoreField: config_1.default.timePartitioningFirestoreField,
 });
 logs.init();
 exports.fsexportbigquery = functions.handler.firestore.document.onWrite(async (change, context) => {

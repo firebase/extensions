@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-function tablePartitioning(type) {
+function timePartitioning(type) {
     if (type === "HOUR" ||
         type === "DAY" ||
         type === "MONTH" ||
@@ -31,6 +31,11 @@ exports.default = {
     location: process.env.LOCATION,
     initialized: false,
     datasetLocation: process.env.DATASET_LOCATION,
-    tablePartitioning: tablePartitioning(process.env.TABLE_PARTITIONING),
     transformFunction: process.env.TRANSFORM_FUNCTION,
+    timePartitioning: timePartitioning(process.env.TIME_PARTITIONING),
+    timePartitioningField: process.env.TIME_PARTITIONING_FIELD,
+    timePartitioningFieldType: process.env.TIME_PARTITIONING_FIELD_TYPE !== "omit"
+        ? process.env.TIME_PARTITIONING_FIELD_TYPE
+        : undefined,
+    timePartitioningFirestoreField: process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
 };
