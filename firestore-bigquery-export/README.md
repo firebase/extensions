@@ -88,6 +88,9 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery SQL Time Partitioning table schema field(column) type: Parameter for BigQuery SQL schema field type(BigQuery SQL format) for selected Time Partitioning Firestore Document field option. If you use Firestore Timestamp in your Firestore Document it will be converted into BigQuery SQL TIMESTAMP.
 
+* BigQuery SQL table clustering (experimental): This parameter will allow you to set up Clustering for the BigQuery Table created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 coma separated fields(order matters).  Available schema extensions table fields for clustering: `document_id, timestamp, event_id, operation, data`.
+
+
 * Transform function URL: Specify a function URL to call that will transform the payload that will be written to BigQuery. See the pre-install documentation for more details.
 
 **Cloud Functions:**

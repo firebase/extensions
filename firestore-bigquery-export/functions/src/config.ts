@@ -27,6 +27,10 @@ function timePartitioning(type) {
   return null;
 }
 
+export function clustering(clusters: string | undefined) {
+  return clusters ? clusters.split(",").slice(0, 4) : null;
+}
+
 export default {
   collectionPath: process.env.COLLECTION_PATH,
   datasetId: process.env.DATASET_ID,
@@ -42,4 +46,5 @@ export default {
       ? process.env.TIME_PARTITIONING_FIELD_TYPE
       : undefined,
   timePartitioningFirestoreField: process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
+  clustering: clustering(process.env.CLUSTERING),
 };
