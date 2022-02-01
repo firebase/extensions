@@ -295,7 +295,10 @@ export class FirestoreBigQueryEventHistoryTracker
       logs.bigQueryViewAlreadyExists(view.id, dataset.id);
       const [metadata] = await view.getMetadata();
       const fields = metadata.schema.fields;
-
+      const schema = { ...RawChangelogViewSchema };
+      if (this.config.wildcardIds) {
+        schema.fields.push(documentPathParams);
+      }
       const documentIdColExists = fields.find(
         (column) => column.name === "document_id"
       );
@@ -307,7 +310,8 @@ export class FirestoreBigQueryEventHistoryTracker
       if (!documentIdColExists) {
         metadata.view = latestConsistentSnapshotView(
           this.config.datasetId,
-          this.rawChangeLogTableName()
+          this.rawChangeLogTableName(),
+          schema
         );
         await view.setMetadata(metadata);
         logs.addNewColumn(this.rawLatestView(), documentIdField.name);
@@ -316,7 +320,8 @@ export class FirestoreBigQueryEventHistoryTracker
       if (!paramsColExists && this.config.wildcardIds) {
         metadata.view = latestConsistentSnapshotView(
           this.config.datasetId,
-          this.rawChangeLogTableName()
+          this.rawChangeLogTableName(),
+          schema
         );
         await view.setMetadata(metadata);
         logs.addNewColumn(this.rawLatestView(), documentPathParams.name);
@@ -328,7 +333,8 @@ export class FirestoreBigQueryEventHistoryTracker
       }
       const latestSnapshot = latestConsistentSnapshotView(
         this.config.datasetId,
-        this.rawChangeLogTableName()
+        this.rawChangeLogTableName(),
+        schema
       );
       logs.bigQueryViewCreating(this.rawLatestView(), latestSnapshot.query);
       const options: TableMetadata = {
