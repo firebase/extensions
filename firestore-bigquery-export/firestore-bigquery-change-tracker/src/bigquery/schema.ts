@@ -70,7 +70,8 @@ export const documentIdField = {
  * We cannot specify a schema for view creation, and all view columns default
  * to the NULLABLE mode.
  */
-export const RawChangelogViewSchema: any = {
+
+export const RawChangelogViewSchema = {
   fields: [
     {
       name: "timestamp",
@@ -110,7 +111,7 @@ export const RawChangelogViewSchema: any = {
   ],
 };
 
-export const RawChangelogSchema: any = {
+export const RawChangelogSchema = {
   fields: [
     {
       name: "timestamp",
@@ -148,4 +149,17 @@ export const RawChangelogSchema: any = {
     },
     documentIdField,
   ],
+};
+
+// Helper function for Partitioned Changelogs field
+export const getNewPartitionField = (
+  partitioningField: string,
+  partitioningFieldType: string
+) => {
+  return {
+    name: partitioningField,
+    mode: "NULLABLE",
+    type: partitioningFieldType,
+    description: "The document TimePartition partition field selected by user",
+  };
 };

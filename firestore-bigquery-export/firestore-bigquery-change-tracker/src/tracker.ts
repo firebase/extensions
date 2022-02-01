@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-import { DocumentSnapshot } from "firebase-functions/lib/providers/firestore";
-import { Change, EventContext } from "firebase-functions";
-
 export enum ChangeType {
   CREATE,
   DELETE,

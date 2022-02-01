@@ -22,6 +22,7 @@ import {
   RawChangelogSchema,
   RawChangelogViewSchema,
   documentIdField,
+  getNewPartitionField,
 } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 
@@ -42,8 +43,11 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
   tableId: string;
   datasetLocation: string | undefined;
-  tablePartitioning: string;
   transformFunction: string;
+  timePartitioning: string;
+  timePartitioningField: string | undefined;
+  timePartitioningFieldType: string | undefined;
+  timePartitioningFirestoreField: string | undefined;
 }
 
 /**
@@ -70,7 +74,6 @@ export class FirestoreBigQueryEventHistoryTracker
 
   async record(events: FirestoreDocumentChangeEvent[]) {
     await this.initialize();
-
     const rows = events.map((event) => {
       return {
         insertId: event.eventId,
@@ -81,6 +84,10 @@ export class FirestoreBigQueryEventHistoryTracker
           document_id: event.documentId,
           operation: ChangeType[event.operation],
           data: JSON.stringify(this.serializeData(event.data)),
+          ...this.getTimePartitionParameterField(
+            event.data,
+            event.documentName
+          ),
         },
       };
     });
@@ -101,6 +108,46 @@ export class FirestoreBigQueryEventHistoryTracker
     return rows;
   }
 
+  getTimePartitionParameterField(data, documentName) {
+    const fieldName = this.config.timePartitioningField;
+    const fieldType = this.config.timePartitioningFieldType;
+    const firestoreFieldName = this.config.timePartitioningFirestoreField;
+    if (
+      fieldName &&
+      fieldType &&
+      firestoreFieldName &&
+      data[firestoreFieldName]
+    ) {
+      if (typeof data[firestoreFieldName] === "string") {
+        // If wrong BigQuery format(TIMESTAMP, DATE, DATETIME) it will log out error on insertData.
+        return {
+          [fieldName]: data[firestoreFieldName],
+        };
+      } else if (
+        data[firestoreFieldName] instanceof firebase.firestore.Timestamp
+      )
+        return {
+          [fieldName]: data[firestoreFieldName].toDate(),
+        };
+      else {
+        logs.firestoreTimePartitionFieldError(
+          documentName,
+          fieldName,
+          firestoreFieldName,
+          data[firestoreFieldName]
+        );
+        return {};
+      }
+    } else {
+      logs.firestoreTimePartitioningParametersError(
+        fieldName,
+        fieldType,
+        firestoreFieldName,
+        data[firestoreFieldName]
+      );
+      return {};
+    }
+  }
   serializeData(eventData: any) {
     if (typeof eventData === "undefined") {
       return undefined;
@@ -196,6 +243,7 @@ export class FirestoreBigQueryEventHistoryTracker
       }
       // Reinitializing in case the destintation table is modified.
       this.initialized = false;
+      logs.bigQueryTableInsertErrors(e.errors);
       throw e;
     }
   }
@@ -249,21 +297,62 @@ export class FirestoreBigQueryEventHistoryTracker
         (column) => column.name === "document_id"
       );
 
+      const partitionColExists = fields.find(
+        (column) => column.name === this.config.timePartitioningField
+      );
+
       if (!documentIdColExists) {
         fields.push(documentIdField);
         await table.setMetadata(metadata);
         logs.addDocumentIdColumn(this.rawChangeLogTableName());
       }
+
+      if (
+        !partitionColExists &&
+        this.config.timePartitioningField &&
+        this.config.timePartitioningFieldType
+      ) {
+        fields.push(
+          getNewPartitionField(
+            this.config.timePartitioningField,
+            this.config.timePartitioningFieldType
+          )
+        );
+        await table.setMetadata(metadata);
+        logs.addPartitionFieldColumn(
+          this.rawChangeLogTableName(),
+          this.config.timePartitioningField
+        );
+      }
     } else {
       logs.bigQueryTableCreating(changelogName);
+      const schema = { fields: [...RawChangelogSchema.fields] };
+      if (
+        this.config.timePartitioningField &&
+        this.config.timePartitioningFieldType
+      ) {
+        schema.fields.push(
+          getNewPartitionField(
+            this.config.timePartitioningField,
+            this.config.timePartitioningFieldType
+          )
+        );
+      }
       const options: TableMetadata = {
         friendlyName: changelogName,
-        schema: RawChangelogSchema,
+        schema: schema,
       };
 
-      if (this.config.tablePartitioning) {
+      if (this.config.timePartitioning) {
         options.timePartitioning = {
-          type: this.config.tablePartitioning,
+          type: this.config.timePartitioning,
+        };
+      }
+
+      if (this.config.timePartitioningField) {
+        options.timePartitioning = {
+          ...options.timePartitioning,
+          field: this.config.timePartitioningField,
         };
       }
 
@@ -281,7 +370,18 @@ export class FirestoreBigQueryEventHistoryTracker
     const dataset = this.bigqueryDataset();
     const view = dataset.table(this.rawLatestView());
     const [viewExists] = await view.exists();
-
+    const schema = { fields: [...RawChangelogViewSchema.fields] };
+    if (
+      this.config.timePartitioningField &&
+      this.config.timePartitioningFieldType
+    ) {
+      schema.fields.push(
+        getNewPartitionField(
+          this.config.timePartitioningField,
+          this.config.timePartitioningFieldType
+        )
+      );
+    }
     if (viewExists) {
       logs.bigQueryViewAlreadyExists(view.id, dataset.id);
       const [metadata] = await view.getMetadata();
@@ -291,19 +391,43 @@ export class FirestoreBigQueryEventHistoryTracker
         (column) => column.name === "document_id"
       );
 
+      const partitionColExists = fields.find(
+        (column) => column.name === this.config.timePartitioningField
+      );
+
       if (!documentIdColExists) {
         metadata.view = latestConsistentSnapshotView(
           this.config.datasetId,
-          this.rawChangeLogTableName()
+          this.rawChangeLogTableName(),
+          schema
         );
 
         await view.setMetadata(metadata);
         logs.addDocumentIdColumn(this.rawLatestView());
       }
+
+      if (
+        !partitionColExists &&
+        this.config.timePartitioningField &&
+        this.config.timePartitioningFieldType
+      ) {
+        fields.push(
+          getNewPartitionField(
+            this.config.timePartitioningField,
+            this.config.timePartitioningFieldType
+          )
+        );
+        await view.setMetadata(metadata);
+        logs.addPartitionFieldColumn(
+          this.rawChangeLogTableName(),
+          this.config.timePartitioningField
+        );
+      }
     } else {
       const latestSnapshot = latestConsistentSnapshotView(
         this.config.datasetId,
-        this.rawChangeLogTableName()
+        this.rawChangeLogTableName(),
+        schema
       );
       logs.bigQueryViewCreating(this.rawLatestView(), latestSnapshot.query);
       const options: TableMetadata = {
@@ -311,13 +435,15 @@ export class FirestoreBigQueryEventHistoryTracker
         view: latestSnapshot,
       };
 
-      if (this.config.tablePartitioning) {
+      if (this.config.timePartitioning) {
         options.timePartitioning = {
-          type: this.config.tablePartitioning,
+          type: this.config.timePartitioning,
         };
       }
       await view.create(options);
-      await view.setMetadata({ schema: RawChangelogViewSchema });
+      await view.setMetadata({
+        schema: schema,
+      });
       logs.bigQueryViewCreated(this.rawLatestView());
     }
     return view;

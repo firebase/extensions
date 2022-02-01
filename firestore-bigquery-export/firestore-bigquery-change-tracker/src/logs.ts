@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { firestore } from "firebase-admin";
 import { logger } from "firebase-functions";
 
 export const arrayFieldInvalid = (fieldName: string) => {
@@ -167,4 +168,56 @@ export const timestampMissingValue = (fieldName: string) => {
 
 export const addDocumentIdColumn = (table) => {
   logger.log(`Updated '${table}' table with a 'document_id' column`);
+};
+
+export const addPartitionFieldColumn = (table, field) => {
+  logger.log(`Updated '${table}' table with a partition field '${field}' column`);
+};
+
+export const firestoreTimePartitionFieldError = (
+  documentName: string | undefined,
+  fieldName: string | undefined,
+  firestoreFieldName: string | undefined,
+  firestoreFieldData: any
+) => {
+  logger.warn(
+    `Wrong type of Firestore Field for TimePartitioning. Accepts only strings in BigQuery format (DATE, DATETIME, TIMESTAMP) and Firestore Timestamp. Wrong Firestore Document field path: ${documentName}. Field name: ${firestoreFieldName}. Field data: ${firestoreFieldData}. Schema field "${fieldName}" value for  will be value of null.`
+  );
+};
+
+export const firestoreTimePartitioningParametersError = (
+  fieldName: string | undefined,
+  fieldType: string | undefined,
+  firestoreFieldName: string | undefined,
+  dataFirestoreField: firestore.Timestamp | string | undefined
+) => {
+  logger.warn(
+    "All TimePartitioning option parameters need to be available to create new custom schema field"
+  );
+  !fieldName && logger.warn(`Parameter missing: TIME_PARTITIONING_FIELD`);
+  !fieldType && logger.warn(`Parameter missing: TIME_PARTITIONING_FIELD_TYPE`);
+  !firestoreFieldName &&
+    logger.warn(`Parameter missing: TIME_PARTITIONING_FIRESTORE_FIELD`);
+  !dataFirestoreField &&
+    logger.warn(
+      `No data found in Firestore Document under selected field: "${firestoreFieldName}"`
+    );
+};
+
+export const bigQueryTableInsertErrors = (
+  insertErrors: [
+    {
+      row: object;
+      errors: Array<{ message: string }>;
+    }
+  ]
+) => {
+  logger.warn(`Error when inserting data to table.`);
+  insertErrors.forEach((error) => {
+    logger.warn("ROW DATA JSON:");
+    logger.warn(error.row);
+    error.errors.forEach((error) =>
+      logger.warn(`ROW ERROR MESSAGE: ${error.message}`)
+    );
+  });
 };
