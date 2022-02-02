@@ -23,6 +23,7 @@ import {
   RawChangelogViewSchema,
   documentIdField,
   getNewPartitionField,
+  documentPathParams,
 } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 
@@ -49,6 +50,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   timePartitioningFieldType: string | undefined;
   timePartitioningFirestoreField: string | undefined;
   clustering: string[] | null;
+  wildcardIds?: boolean;
 }
 
 /**
@@ -89,6 +91,10 @@ export class FirestoreBigQueryEventHistoryTracker
             event.data,
             event.documentName
           ),
+          ...(this.config.wildcardIds &&
+            event.pathParams && {
+              path_params: JSON.stringify(event.pathParams),
+            }),
         },
       };
     });
@@ -185,7 +191,11 @@ export class FirestoreBigQueryEventHistoryTracker
     const expectedErrors = [
       {
         message: "no such field.",
-        location: "document_id",
+        location: documentIdField.name,
+      },
+      {
+        message: "no such field.",
+        location: documentPathParams.name,
       },
     ];
     if (
@@ -297,6 +307,9 @@ export class FirestoreBigQueryEventHistoryTracker
       const documentIdColExists = fields.find(
         (column) => column.name === "document_id"
       );
+      const paramsColExists = fields.find(
+        (column) => column.name === "path_params"
+      );
 
       const partitionColExists = fields.find(
         (column) => column.name === this.config.timePartitioningField
@@ -305,7 +318,15 @@ export class FirestoreBigQueryEventHistoryTracker
       if (!documentIdColExists) {
         fields.push(documentIdField);
         await table.setMetadata(metadata);
-        logs.addDocumentIdColumn(this.rawChangeLogTableName());
+        logs.addNewColumn(this.rawChangeLogTableName(), documentIdField.name);
+      }
+      if (!paramsColExists) {
+        fields.push(documentPathParams);
+        await table.setMetadata(metadata);
+        logs.addNewColumn(
+          this.rawChangeLogTableName(),
+          documentPathParams.name
+        );
       }
 
       if (
@@ -327,7 +348,7 @@ export class FirestoreBigQueryEventHistoryTracker
       }
     } else {
       logs.bigQueryTableCreating(changelogName);
-      const schema = { fields: [...RawChangelogSchema.fields] };
+      const schema = RawChangelogSchema
       if (
         this.config.timePartitioningField &&
         this.config.timePartitioningFieldType
@@ -338,37 +359,39 @@ export class FirestoreBigQueryEventHistoryTracker
             this.config.timePartitioningFieldType
           )
         );
-      }
-      const options: TableMetadata = {
-        friendlyName: changelogName,
-        schema: schema,
-      };
-
-      if (this.config.timePartitioning) {
-        options.timePartitioning = {
-          type: this.config.timePartitioning,
+        if (this.config.wildcardIds) {
+          schema.fields.push(documentPathParams);
+        }
+        const options: TableMetadata = {
+          friendlyName: changelogName,
+          schema: schema,
         };
-      }
 
-      if (this.config.timePartitioningField) {
-        options.timePartitioning = {
-          ...options.timePartitioning,
-          field: this.config.timePartitioningField,
-        };
-      }
+        if (this.config.timePartitioning) {
+          options.timePartitioning = {
+            type: this.config.timePartitioning,
+          };
+        }
 
-      if (this.config.clustering) {
-        options.clustering = {
-          fields: this.config.clustering,
-        };
-      }
+        if (this.config.timePartitioningField) {
+          options.timePartitioning = {
+            ...options.timePartitioning,
+            field: this.config.timePartitioningField,
+          };
+        }
 
-      await table.create(options);
-      logs.bigQueryTableCreated(changelogName);
+        if (this.config.clustering) {
+          options.clustering = {
+            fields: this.config.clustering,
+          };
+        }
+
+        await table.create(options);
+        logs.bigQueryTableCreated(changelogName);
+      }
+      return table;
     }
-    return table;
   }
-
   /**
    * Creates the latest snapshot view, which returns only latest operations
    * of all existing documents over the raw change log table.
@@ -393,13 +416,19 @@ export class FirestoreBigQueryEventHistoryTracker
       logs.bigQueryViewAlreadyExists(view.id, dataset.id);
       const [metadata] = await view.getMetadata();
       const fields = metadata.schema.fields;
-
+      const schema = { ...RawChangelogViewSchema };
+      if (this.config.wildcardIds) {
+        schema.fields.push(documentPathParams);
+      }
       const documentIdColExists = fields.find(
         (column) => column.name === "document_id"
       );
 
       const partitionColExists = fields.find(
         (column) => column.name === this.config.timePartitioningField
+      )
+      const paramsColExists = fields.find(
+        (column) => column.name === "path_params"
       );
 
       if (!documentIdColExists) {
@@ -408,9 +437,18 @@ export class FirestoreBigQueryEventHistoryTracker
           this.rawChangeLogTableName(),
           schema
         );
-
         await view.setMetadata(metadata);
-        logs.addDocumentIdColumn(this.rawLatestView());
+        logs.addNewColumn(this.rawLatestView(), documentIdField.name);
+      }
+
+      if (!paramsColExists && this.config.wildcardIds) {
+        metadata.view = latestConsistentSnapshotView(
+          this.config.datasetId,
+          this.rawChangeLogTableName(),
+          schema
+        );
+        await view.setMetadata(metadata);
+        logs.addNewColumn(this.rawLatestView(), documentPathParams.name);
       }
 
       if (
@@ -431,6 +469,10 @@ export class FirestoreBigQueryEventHistoryTracker
         );
       }
     } else {
+      const schema = { ...RawChangelogViewSchema };
+      if (this.config.wildcardIds) {
+        schema.fields.push(documentPathParams);
+      }
       const latestSnapshot = latestConsistentSnapshotView(
         this.config.datasetId,
         this.rawChangeLogTableName(),

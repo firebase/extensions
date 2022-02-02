@@ -42,4 +42,5 @@ exports.default = {
         : undefined,
     timePartitioningFirestoreField: process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
     clustering: clustering(process.env.CLUSTERING),
+    wildcardIds: process.env.WILDCARD_IDS === "true" ? true : false,
 };

@@ -35,13 +35,15 @@ const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHis
     timePartitioningFieldType: config.timePartitioningFieldType,
     timePartitioningFirestoreField: config.timePartitioningFirestoreField,
     clustering: config.clustering,
+    wildcardIds: config.wildcardIds,
   }
 );
 
 logs.init();
 
-exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
-  async (change, context) => {
+exports.fsexportbigquery = functions.firestore
+  .document(config.collectionPath)
+  .onWrite(async (change, context) => {
     logs.start();
     try {
       const changeType = getChangeType(change);
@@ -53,6 +55,7 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
           operation: changeType,
           documentName: context.resource.name,
           documentId: documentId,
+          pathParams: config.wildcardIds ? context.params : null,
           eventId: context.eventId,
           data:
             changeType === ChangeType.DELETE ? undefined : change.after.data(),
@@ -62,5 +65,4 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
     } catch (err) {
       logs.error(err);
     }
-  }
-);
+  });

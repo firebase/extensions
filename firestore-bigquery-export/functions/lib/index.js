@@ -30,9 +30,12 @@ const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEv
     timePartitioningFieldType: config_1.default.timePartitioningFieldType,
     timePartitioningFirestoreField: config_1.default.timePartitioningFirestoreField,
     clustering: config_1.default.clustering,
+    wildcardIds: config_1.default.wildcardIds,
 });
 logs.init();
-exports.fsexportbigquery = functions.handler.firestore.document.onWrite(async (change, context) => {
+exports.fsexportbigquery = functions.firestore
+    .document(config_1.default.collectionPath)
+    .onWrite(async (change, context) => {
     logs.start();
     try {
         const changeType = util_1.getChangeType(change);
@@ -43,6 +46,7 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(async (c
                 operation: changeType,
                 documentName: context.resource.name,
                 documentId: documentId,
+                pathParams: config_1.default.wildcardIds ? context.params : null,
                 eventId: context.eventId,
                 data: changeType === firestore_bigquery_change_tracker_1.ChangeType.DELETE ? undefined : change.after.data(),
             },

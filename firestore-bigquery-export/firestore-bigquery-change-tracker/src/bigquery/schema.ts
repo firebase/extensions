@@ -66,6 +66,14 @@ export const documentIdField = {
   description: "The document id as defined in the firestore database.",
 };
 
+export const documentPathParams = {
+  name: "path_params",
+  mode: "NULLABLE",
+  type: "STRING",
+  description:
+    "JSON string representing wildcard params with Firestore Document ids",
+};
+
 /*
  * We cannot specify a schema for view creation, and all view columns default
  * to the NULLABLE mode.

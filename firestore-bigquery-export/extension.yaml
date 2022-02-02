@@ -191,7 +191,8 @@ params:
     description: >-
       What is the path of the collection that you would like to export? You may
       use `{wildcard}` notation to match a subcollection of all documents in a
-      collection (for example: `chatrooms/{chatid}/posts`).
+      collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}` 
+      will be returned in `param_paths` as JSON formatted string.
     type: string
     example: posts
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
@@ -307,3 +308,17 @@ params:
     validationErrorMessage: No whitespaces. Max 4 fields. e.g. `data,timestamp,event_id,operation`
     example: data,document_id,timestamp
     required: false
+
+  - param: WILDCARD_IDS
+    label: Wildcard Firestore Document IDs
+    description: >-
+     Optional schema string field containing wildcards JSON object with parent Firestore Document IDs.
+    type: select
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+    default: false
+    required: false
+    
