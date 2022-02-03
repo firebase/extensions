@@ -225,11 +225,11 @@ export const bigQueryTableInsertErrors = (
 };
 
 export const errorTimePartitioningUpdate = () => {
-  logger.error(
+  logger.warn(
     `Time Partitioning update error. You cannot update partitioning settings. Please create new partitioned table.`
   );
 };
 
 export const clusteringUpdate = (clustering) => {
-  logger.warn(`Clustering updated with new settings fields: ${clustering}`);
+  logger.info(`Clustering updated with new settings fields: ${clustering}`);
 };
