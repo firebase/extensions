@@ -15,7 +15,10 @@ The extension creates and updates a [dataset](https://cloud.google.com/bigquery/
 
 If you create, update, delete, or import a document in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset.
 
-Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`).
+Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`). You can also optionally return STRING column with JSON object containing reference parent Firestore Document names.
+
+Tables partition options settings cannot be updated after creating a table. You will be able to update clustering.
+
 
 #### Additional setup
 
@@ -74,7 +77,9 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery Dataset location: Where do you want to deploy the BigQuery dataset created for this extension? For help selecting a location, refer to the [location selection guide](https://cloud.google.com/bigquery/docs/locations).
 
-* Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`).
+* Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}`  will be returned in `param_paths` as JSON formatted string.
+
+* Wildcard Column field with Parent Firestore Document IDs: Optional column BigQuery STRING field containing JSON object with wildcards named params and parent Firestore Document IDs as values.
 
 * Dataset ID: What ID would you like to use for your BigQuery dataset? This extension will create the dataset, if it doesn't already exist.
 
@@ -82,16 +87,17 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery SQL table Time Partitioning option type: This parameter will allow you to partition type of the BigQuery table and BigQuery view  created by the extension based on data ingestion time. You may select the granularity of partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will generate one partition per day, hour, month or year, respectively. The table is partitioned by pseudo column '_PARTITIONTIME' or you can be assign it to BigQuery Table schema field if other parameters passed.
 
-* BigQuery SQL Time Partitioning table schema field(column) name: BigQuery table column/schema field name for TimePartitioning. You can choose schema available like `timestamp` OR give a name for new BigQuery Table schema column/field that will be assigned to the selected Firestore Document field below. example: 'post_date'. If not set, the table is partitioned by pseudo column '_PARTITIONTIME'; if set, the table is partitioned by this field.
+* BigQuery SQL Time Partitioning table schema field(column) name: BigQuery table column/schema field name for TimePartitioning. You can choose schema available like `timestamp` OR give a name for new BigQuery Table schema column/field that will be assigned to the selected Firestore Document field below. example: 'post_date'. If not set, the table is partitioned by pseudo column '_PARTITIONTIME'; if set, the table is partitioned by this field. Cannot be changed if Table is already partitioned.
 
-* Firestore Document field name for BigQuery SQL Time Partitioning field option: This parameter will allow you to partition the BigQuery table created by the extension based on selected Document Firestore field. This will generate one partition based on selected field. The Firestore Document field value must be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or Firestore timestamp(will be converted to BigQuery TIMESTAMP). example: `postDate`
+* Firestore Document field name for BigQuery SQL Time Partitioning field option: This parameter will allow you to partition the BigQuery table created by the extension based on selected Document Firestore field. This will generate one partition based on selected field. The Firestore Document field value must be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or Firestore timestamp(will be converted to BigQuery TIMESTAMP). Cannot be changed if Table is already partitioned. example: `postDate`
 
-* BigQuery SQL Time Partitioning table schema field(column) type: Parameter for BigQuery SQL schema field type(BigQuery SQL format) for selected Time Partitioning Firestore Document field option. If you use Firestore Timestamp in your Firestore Document it will be converted into BigQuery SQL TIMESTAMP.
+* BigQuery SQL Time Partitioning table schema field(column) type: Parameter for BigQuery SQL schema field type(BigQuery SQL format) for selected Time Partitioning Firestore Document field option. If you use Firestore Timestamp in your Firestore Document it will be converted into BigQuery SQL TIMESTAMP. Cannot be changed if Table is already partitioned.
 
 * BigQuery SQL table clustering (experimental): This parameter will allow you to set up Clustering for the BigQuery Table created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 coma separated fields(order matters).  Available schema extensions table fields for clustering: `document_id, timestamp, event_id, operation, data`.
 
+* Transform function URL: Specify a function URL to call that will transform the payload that will be written to BigQuery.  See the pre-install documentation for more details.
 
-* Transform function URL: Specify a function URL to call that will transform the payload that will be written to BigQuery. See the pre-install documentation for more details.
+
 
 **Cloud Functions:**
 

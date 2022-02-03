@@ -45,7 +45,9 @@ Whenever a document is created, updated, imported, or deleted in the specified c
 
 To review the schema for these two resources, click the **Schema** tab for each resource in BigQuery.
 
-Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`).
+Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`). You can also optionally return STRING column with JSON object containing reference parent Firestore Document names.
+
+Tables partition options settings cannot be updated after creating a table. You will be able to update clustering.
 
 ### _(Optional)_ Import existing documents
 
