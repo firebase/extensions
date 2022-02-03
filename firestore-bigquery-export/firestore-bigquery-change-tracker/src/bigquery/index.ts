@@ -395,7 +395,7 @@ export class FirestoreBigQueryEventHistoryTracker
       }
       const options: TableMetadata = {
         friendlyName: changelogName,
-        schema: schema,
+        schema,
       };
 
       if (this.config.timePartitioning) {
@@ -526,7 +526,7 @@ export class FirestoreBigQueryEventHistoryTracker
       }
       await view.create(options);
       await view.setMetadata({
-        schema: schema,
+        schema,
       });
       logs.bigQueryViewCreated(this.rawLatestView());
     }
