@@ -171,7 +171,9 @@ export const addNewColumn = (table: string, field: string) => {
 };
 
 export const addPartitionFieldColumn = (table, field) => {
-  logger.log(`Updated '${table}' table with a partition field '${field}' column`);
+  logger.log(
+    `Updated '${table}' table with a partition field '${field}' column`
+  );
 };
 
 export const firestoreTimePartitionFieldError = (
@@ -220,4 +222,14 @@ export const bigQueryTableInsertErrors = (
       logger.warn(`ROW ERROR MESSAGE: ${error.message}`)
     );
   });
+};
+
+export const errorTimePartitioningUpdate = () => {
+  logger.error(
+    `Time Partitioning update error. You cannot update partitioning settings. Please create new partitioned table.`
+  );
+};
+
+export const clusteringUpdate = (clustering) => {
+  logger.warn(`Clustering updated with new settings fields: ${clustering}`);
 };
