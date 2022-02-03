@@ -51,6 +51,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   timePartitioningFirestoreField: string | undefined;
   clustering: string[] | null;
   wildcardIds?: boolean;
+  bqProjectId: string | undefined;
 }
 
 /**
@@ -69,6 +70,10 @@ export class FirestoreBigQueryEventHistoryTracker
 
   constructor(public config: FirestoreBigQueryEventHistoryTrackerConfig) {
     this.bq = new bigquery.BigQuery();
+
+    if (config.bqProjectId) {
+      this.bq.projectId = config.bqProjectId;
+    }
 
     if (!this.config.datasetLocation) {
       this.config.datasetLocation = "us";
