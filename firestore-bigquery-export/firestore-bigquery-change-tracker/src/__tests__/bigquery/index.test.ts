@@ -17,6 +17,7 @@ describe("function getTimePartitionParameterField for generating Time Partition 
         timePartitioningFirestoreField: "endDate",
         transformFunction: "",
         clustering: [],
+        bqProjectId: null,
       }
     ).getTimePartitionParameterField(firestoreData, docName);
     expect(generatedTimePartitionField.end_date).toBe(firestoreData.endDate);
@@ -34,6 +35,7 @@ describe("function getTimePartitionParameterField for generating Time Partition 
         timePartitioningFirestoreField: "endDate",
         transformFunction: "",
         clustering: [],
+        bqProjectId: null,
       }
     ).getTimePartitionParameterField(firestoreData, docName);
     expect(generatedTimePartitionField.end_date).toBeInstanceOf(Date);
@@ -51,6 +53,7 @@ describe("function getTimePartitionParameterField for generating Time Partition 
         timePartitioningFirestoreField: "endDate",
         transformFunction: "",
         clustering: [],
+        bqProjectId: null,
       }
     ).getTimePartitionParameterField(firestoreData, docName);
     expect(generatedTimePartitionField.end_date).toBe(undefined);
@@ -69,6 +72,7 @@ describe("function getTimePartitionParameterField for generating Time Partition 
         timePartitioningFirestoreField: "endDate",
         transformFunction: "",
         clustering: [],
+        bqProjectId: null,
       }
     ).getTimePartitionParameterField(firestoreData, docName);
     expect(generatedTimePartitionField.end_date).toBe(undefined);
