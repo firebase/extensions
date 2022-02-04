@@ -184,7 +184,16 @@ params:
         value: eu      
     default: us
     required: true
-    immutable: true  
+    immutable: true 
+
+  - param: BIGQUERY_PROJECT_ID
+    label: Project Id
+    description: >-
+      Override the default project bigquery instance. 
+      This can allow updates to be directed to a bigquery instance on another project.
+    type: string
+    default: ${param:PROJECT_ID}
+    required: true
 
   - param: COLLECTION_PATH
     label: Collection path

@@ -97,6 +97,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * Transform function URL: Specify a function URL to call that will transform the payload that will be written to BigQuery.  See the pre-install documentation for more details.
 
+* Big query project Id: This parameter will allow an alternative BigQuery project to receive updates from the extension.
 
 
 **Cloud Functions:**

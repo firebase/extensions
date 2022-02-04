@@ -36,6 +36,7 @@ const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHis
     timePartitioningFirestoreField: config.timePartitioningFirestoreField,
     clustering: config.clustering,
     wildcardIds: config.wildcardIds,
+    bqProjectId: config.bqProjectId,
   }
 );
 
