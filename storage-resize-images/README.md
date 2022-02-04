@@ -71,6 +71,11 @@ If you prefer to resize every image uploaded to your Storage bucket,  leave this
 * Convert image to preferred types: The image types you'd like your source image to convert to. The default for this option will  be to keep the original file type.
 
 
+* GIF and WEBP animated option: Keep animation of GIF and WEBP formats.
+
+
+* Cloud Function memory: Memory of the function responsible of resizing images.  Choose how much memory to give to the function that resize images. (For animated GIF => GIF we recommend using a minimum of 2GB).
+
 
 
 **Cloud Functions:**

@@ -19,7 +19,7 @@ function resize(file, size) {
     else {
         throw new Error("height and width are not delimited by a ',' or a 'x'");
     }
-    return sharp(file, { failOnError: false })
+    return sharp(file, { failOnError: false, animated: config_1.default.animated })
         .rotate()
         .resize(parseInt(width, 10), parseInt(height, 10), {
         fit: "inside",
@@ -40,13 +40,18 @@ function convertType(buffer, format) {
             .toBuffer();
     }
     if (format === "webp") {
-        return sharp(buffer)
+        return sharp(buffer, { animated: config_1.default.animated })
             .webp()
             .toBuffer();
     }
     if (format === "tiff" || format === "tif") {
         return sharp(buffer)
             .tiff()
+            .toBuffer();
+    }
+    if (format === "gif") {
+        return sharp(buffer, { animated: config_1.default.animated })
+            .gif()
             .toBuffer();
     }
     return buffer;
@@ -60,6 +65,7 @@ exports.supportedContentTypes = [
     "image/png",
     "image/tiff",
     "image/webp",
+    "image/gif",
 ];
 exports.supportedImageContentTypeMap = {
     jpg: "image/jpeg",
@@ -68,6 +74,7 @@ exports.supportedImageContentTypeMap = {
     tif: "image/tif",
     tiff: "image/tiff",
     webp: "image/webp",
+    gif: "image/gif",
 };
 const supportedExtensions = Object.keys(exports.supportedImageContentTypeMap).map((type) => `.${type}`);
 exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExtension, fileExtension, contentType, size, objectMetadata, format, }) => {
@@ -122,7 +129,7 @@ exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
             logs.imageConverted(format);
         }
         // Generate a image file using Sharp.
-        await sharp(modifiedImageBuffer).toFile(modifiedFile);
+        await sharp(modifiedImageBuffer, { animated: config_1.default.animated }).toFile(modifiedFile);
         // Uploading the modified image.
         logs.imageUploading(modifiedFilePath);
         await bucket.upload(modifiedFile, {
