@@ -158,7 +158,7 @@ export class FirestoreBigQueryEventHistoryTracker
           clearTimeout(handle);
           return resolve(table);
         }
-      }, 2000);
+      }, 500);
     });
   }
 
