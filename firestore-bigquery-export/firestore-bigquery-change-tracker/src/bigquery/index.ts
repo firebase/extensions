@@ -148,6 +148,11 @@ export class FirestoreBigQueryEventHistoryTracker
     return isRetryable;
   }
 
+  /**
+   * Tables can often take time to create and propagate.
+   * A half a second delay is added per check while the function
+   * continually re-checks until the referenced dataset and table become available.
+   */
   private async waitForInitialization(dataset, table) {
     return new Promise((resolve) => {
       let handle = setTimeout(async () => {
