@@ -193,7 +193,7 @@ params:
       This can allow updates to be directed to a bigquery instance on another project.
     type: string
     default: ${param:PROJECT_ID}
-    required: true
+    required: false
 
   - param: COLLECTION_PATH
     label: Collection path
