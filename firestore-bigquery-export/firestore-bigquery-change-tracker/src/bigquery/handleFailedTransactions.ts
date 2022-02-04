@@ -35,7 +35,9 @@ export default async (
     }
   });
 
-  await batchArray.forEach(async (batch) => await batch.commit());
+  for (let batch of batchArray) {
+    await batch.commit();
+  }
 
   return Promise.resolve();
 };
