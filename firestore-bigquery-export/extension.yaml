@@ -45,6 +45,9 @@ roles:
   - role: bigquery.dataEditor
     reason: Allows the extension to configure and export data into BigQuery.
 
+  - role: datastore.user
+    reason: Allows the extension to write updates to the database.
+
 resources:
   - name: fsexportbigquery
     type: firebaseextensions.v1beta.function
@@ -249,4 +252,11 @@ params:
         value: NONE
     default: NONE
     required: true
+
+  - param: BACKUP_COLLECTION
+    label: Backup Collection Name
+    description: >-
+      This (optional) parameter will allow you to specify a collection for which failed BigQuery updates
+      will be written to.
+    type: string
     
