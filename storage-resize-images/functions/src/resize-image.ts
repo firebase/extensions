@@ -37,25 +37,25 @@ export function resize(file, size) {
 export function convertType(buffer, format) {
   if (format === "jpg" || format === "jpeg") {
     return sharp(buffer)
-      .jpeg()
+      .jpeg(config.outputOptions?.jpeg ?? {})
       .toBuffer();
   }
 
   if (format === "png") {
     return sharp(buffer)
-      .png()
+      .png(config.outputOptions?.png ?? {})
       .toBuffer();
   }
 
   if (format === "webp") {
     return sharp(buffer)
-      .webp()
+      .webp(config.outputOptions?.webp ?? {})
       .toBuffer();
   }
 
   if (format === "tiff" || format === "tif") {
     return sharp(buffer)
-      .tiff()
+      .tiff(config.outputOptions?.tiff ?? {})
       .toBuffer();
   }
 

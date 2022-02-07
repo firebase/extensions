@@ -31,22 +31,22 @@ exports.resize = resize;
 function convertType(buffer, format) {
     if (format === "jpg" || format === "jpeg") {
         return sharp(buffer)
-            .jpeg()
+            .jpeg(config_1.default.outputOptions?.jpeg ?? {})
             .toBuffer();
     }
     if (format === "png") {
         return sharp(buffer)
-            .png()
+            .png(config_1.default.outputOptions?.png ?? {})
             .toBuffer();
     }
     if (format === "webp") {
         return sharp(buffer)
-            .webp()
+            .webp(config_1.default.outputOptions?.webp ?? {})
             .toBuffer();
     }
     if (format === "tiff" || format === "tif") {
         return sharp(buffer)
-            .tiff()
+            .tiff(config_1.default.outputOptions?.tiff ?? {})
             .toBuffer();
     }
     return buffer;
