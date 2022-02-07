@@ -97,7 +97,7 @@ exports.modifyImage = async ({ bucket, originalFile, fileDir, fileNameWithoutExt
             contentEncoding: objectMetadata.contentEncoding,
             contentLanguage: objectMetadata.contentLanguage,
             contentType: imageContentType,
-            metadata: objectMetadata.metadata || {},
+            metadata: objectMetadata.metadata ? { ...objectMetadata.metadata } : {},
         };
         metadata.metadata.resizedImage = true;
         if (config_1.default.cacheControlHeader) {
