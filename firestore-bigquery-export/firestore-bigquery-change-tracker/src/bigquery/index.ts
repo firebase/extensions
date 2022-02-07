@@ -45,7 +45,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetLocation: string | undefined;
   tablePartitioning: string;
   backupTableId?: string | undefined;
-  transformFunction: string;
+  transformFunction?: string;
 }
 
 /**
