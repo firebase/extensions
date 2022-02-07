@@ -44,4 +44,7 @@ export default {
   excludePathList: paramToArray(process.env.EXCLUDE_PATH_LIST),
   deleteOriginalFile: deleteOriginalFile(process.env.DELETE_ORIGINAL_FILE),
   imageTypes: paramToArray(process.env.IMAGE_TYPE),
+  outputOptions: process.env.OUTPUT_OPTIONS
+    ? JSON.parse(process.env.OUTPUT_OPTIONS)
+    : undefined,
 };
