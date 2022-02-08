@@ -35,4 +35,5 @@ export default {
   initialized: false,
   datasetLocation: process.env.DATASET_LOCATION,
   tablePartitioning: tablePartitioning(process.env.TABLE_PARTITIONING),
+  backupCollectionId: process.env.BACKUP_COLLECTION,
 };
