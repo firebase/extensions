@@ -29,24 +29,25 @@ function resize(file, size) {
 }
 exports.resize = resize;
 function convertType(buffer, format) {
+    const { jpeg, png, webp, tiff } = config_1.default.outputOptions;
     if (format === "jpg" || format === "jpeg") {
         return sharp(buffer)
-            .jpeg(config_1.default.outputOptions?.jpeg ?? {})
+            .jpeg(jpeg ? jpeg : {})
             .toBuffer();
     }
     if (format === "png") {
         return sharp(buffer)
-            .png(config_1.default.outputOptions?.png ?? {})
+            .png(png ? png : {})
             .toBuffer();
     }
     if (format === "webp") {
         return sharp(buffer)
-            .webp(config_1.default.outputOptions?.webp ?? {})
+            .webp(webp ? webp : {})
             .toBuffer();
     }
     if (format === "tiff" || format === "tif") {
         return sharp(buffer)
-            .tiff(config_1.default.outputOptions?.tiff ?? {})
+            .tiff(tiff ? tiff : {})
             .toBuffer();
     }
     return buffer;
