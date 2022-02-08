@@ -121,7 +121,6 @@ describe("extension config", () => {
       // });
       test("does not allow spaces", () => {
         const { validationRegex } = extensionParams["CLUSTERING"];
-        console.log(validationRegex);
         expect(
           Boolean("foo, bar".match(new RegExp(validationRegex)))
         ).toBeFalsy();
