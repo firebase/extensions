@@ -246,9 +246,9 @@ params:
 
 
   - param: OUTPUT_OPTIONS
-    label: Output options for selected formats (experimental)
+    label: Output options for selected formats
     description: >
       You can now provide an output option stringified object containing Sharp output options for selected image types conversion.
-      eg. `{ "jpeg": { "quality": 100, "chromaSubsampling": "4:4:4" ... }, "gif": { "loop": 2 }, ... }`
+      eg. `{ "jpeg": { "quality": 5, "chromaSubsampling": "4:4:4 }, "gif": { "pallete": true } }`
     type: string
     required: false
