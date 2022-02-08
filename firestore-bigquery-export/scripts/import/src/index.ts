@@ -234,17 +234,17 @@ type CliConfig = {
   queryCollectionGroup: boolean;
   datasetLocation: string;
   multiThreaded: boolean;
-}
+};
 
 type CliConfigError = {
   kind: "ERROR";
   errors: string[];
-}
+};
 
 const run = async (): Promise<number> => {
   const parsed = await parseConfig();
   if (parsed.kind === "ERROR") {
-    parsed.errors.forEach(e => console.error(`[ERROR] ${e}`))
+    parsed.errors.forEach((e) => console.error(`[ERROR] ${e}`));
     process.exit(1);
   }
 
@@ -367,33 +367,33 @@ async function parseConfig(): Promise<CliConfig | CliConfigError> {
   if (program.nonInteractive) {
     const errors = [];
     if (program.project === undefined) {
-      errors.push("Project is not specified.")
+      errors.push("Project is not specified.");
     }
     if (program.sourceCollectionPath === undefined) {
-      errors.push("SourceCollectionPath is not specified.")
+      errors.push("SourceCollectionPath is not specified.");
     }
     if (program.dataset === undefined) {
-      errors.push("Dataset ID is not specified.")
+      errors.push("Dataset ID is not specified.");
     }
     if (program.tableNamePrefix === undefined) {
-      errors.push("TableNamePrefix is not specified.")
+      errors.push("TableNamePrefix is not specified.");
     }
     if (program.queryCollectionGroup === undefined) {
-      errors.push("QueryCollectionGroup is not specified.")
+      errors.push("QueryCollectionGroup is not specified.");
     }
     if (program.batchSize === undefined) {
-      errors.push("BatchSize is not specified.")
+      errors.push("BatchSize is not specified.");
     }
     if (program.datasetLocation === undefined) {
-      errors.push("DatasetLocation is not specified.")
+      errors.push("DatasetLocation is not specified.");
     }
     if (!validateBatchSize(program.batchSize)) {
-      errors.push("Invalid batch size.")
+      errors.push("Invalid batch size.");
     }
 
     if (errors.length !== 0) {
       program.outputHelp();
-      return {kind: "ERROR", errors};
+      return { kind: "ERROR", errors };
     }
 
     return {
