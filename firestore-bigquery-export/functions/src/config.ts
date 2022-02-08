@@ -40,7 +40,7 @@ export default {
   initialized: false,
   datasetLocation: process.env.DATASET_LOCATION,
   transformFunction: process.env.TRANSFORM_FUNCTION,
-  timePartitioning: timePartitioning(process.env.TIME_PARTITIONING),
+  timePartitioning: timePartitioning(process.env.TABLE_PARTITIONING),
   timePartitioningField: process.env.TIME_PARTITIONING_FIELD,
   timePartitioningFieldType:
     process.env.TIME_PARTITIONING_FIELD_TYPE !== "omit"

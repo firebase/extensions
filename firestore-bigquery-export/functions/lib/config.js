@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.clustering = void 0;
 function timePartitioning(type) {
     if (type === "HOUR" ||
         type === "DAY" ||
@@ -27,6 +28,7 @@ function timePartitioning(type) {
 function clustering(clusters) {
     return clusters ? clusters.split(",").slice(0, 4) : null;
 }
+exports.clustering = clustering;
 exports.default = {
     bqProjectId: process.env.BIGQUERY_PROJECT_ID,
     collectionPath: process.env.COLLECTION_PATH,
@@ -36,7 +38,7 @@ exports.default = {
     initialized: false,
     datasetLocation: process.env.DATASET_LOCATION,
     transformFunction: process.env.TRANSFORM_FUNCTION,
-    timePartitioning: timePartitioning(process.env.TIME_PARTITIONING),
+    timePartitioning: timePartitioning(process.env.TABLE_PARTITIONING),
     timePartitioningField: process.env.TIME_PARTITIONING_FIELD,
     timePartitioningFieldType: process.env.TIME_PARTITIONING_FIELD_TYPE !== "omit"
         ? process.env.TIME_PARTITIONING_FIELD_TYPE

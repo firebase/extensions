@@ -135,21 +135,19 @@ export class FirestoreBigQueryEventHistoryTracker
         return {
           [fieldName]: data[firestoreFieldName],
         };
-      } else if (
-        data[firestoreFieldName] instanceof firebase.firestore.Timestamp
-      )
+      }
+      if (data[firestoreFieldName] instanceof firebase.firestore.Timestamp)
         return {
           [fieldName]: data[firestoreFieldName].toDate(),
         };
-      else {
-        logs.firestoreTimePartitionFieldError(
-          documentName,
-          fieldName,
-          firestoreFieldName,
-          data[firestoreFieldName]
-        );
-        return {};
-      }
+
+      logs.firestoreTimePartitionFieldError(
+        documentName,
+        fieldName,
+        firestoreFieldName,
+        data[firestoreFieldName]
+      );
+      return {};
     } else {
       logs.firestoreTimePartitioningParametersError(
         fieldName,
@@ -309,12 +307,14 @@ export class FirestoreBigQueryEventHistoryTracker
       const [metadata] = await table.getMetadata();
       const fields = metadata.schema.fields;
       const isUpdateClustering: boolean =
-        (!metadata.clustering && this.config.clustering) ||
+        // check if clustering exist in config and doesn't exist on metadata OR
+        (!metadata.clustering && !!this.config.clustering) ||
+        // check if clustering fields are not the same length as provided in config OR
         metadata.clustering.fields.length !== this.config.clustering.length ||
-        (metadata.clustering.fields.length === this.config.clustering.length &&
-          metadata.clustering.fields.every(function(value, index) {
-            return value === this.config.clustering[index];
-          }));
+        // check if clustering fields are the the same values order as provided in config
+        !metadata.clustering.fields.every(function(value, index) {
+          return value === this.config.clustering[index];
+        });
 
       //check if clustering needs to be updated
       if (isUpdateClustering) {
@@ -323,7 +323,7 @@ export class FirestoreBigQueryEventHistoryTracker
         logs.clusteringUpdate(this.config.clustering);
       }
 
-      // drop error for trying to update partitioning. It is not available for already created tables.
+      // drop warning for trying to update partitioning. It is not available for already created tables.
       if (
         (!metadata.timePartitioning &&
           (this.config.timePartitioningField ||

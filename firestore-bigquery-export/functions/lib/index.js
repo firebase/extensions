@@ -31,7 +31,7 @@ const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEv
     timePartitioningFirestoreField: config_1.default.timePartitioningFirestoreField,
     clustering: config_1.default.clustering,
     wildcardIds: config_1.default.wildcardIds,
-    bqProjectId: config_1.bqProjectId,
+    bqProjectId: config_1.default.bqProjectId,
 });
 logs.init();
 exports.fsexportbigquery = functions.firestore

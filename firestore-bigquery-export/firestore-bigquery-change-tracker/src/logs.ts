@@ -183,7 +183,7 @@ export const firestoreTimePartitionFieldError = (
   firestoreFieldData: any
 ) => {
   logger.warn(
-    `Wrong type of Firestore Field for TimePartitioning. Accepts only strings in BigQuery format (DATE, DATETIME, TIMESTAMP) and Firestore Timestamp. Wrong Firestore Document field path: ${documentName}. Field name: ${firestoreFieldName}. Field data: ${firestoreFieldData}. Schema field "${fieldName}" value for  will be value of null.`
+    `Wrong type of Firestore Field for TimePartitioning. Accepts only strings in BigQuery format (DATE, DATETIME, TIMESTAMP) and Firestore Timestamp. Firestore Document field path: ${documentName}. Field name: ${firestoreFieldName}. Field data: ${firestoreFieldData}. Schema field "${fieldName}" value will be null.`
   );
 };
 
