@@ -11,7 +11,7 @@ Object {
   ],
   "imageTypes": undefined,
   "includePathList": undefined,
-  "outputOptions": undefined,
+  "outputOptions": Object {},
   "resizedImagesPath": undefined,
 }
 `;

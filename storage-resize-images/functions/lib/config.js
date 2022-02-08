@@ -46,5 +46,5 @@ exports.default = {
     imageTypes: paramToArray(process.env.IMAGE_TYPE),
     outputOptions: process.env.OUTPUT_OPTIONS
         ? JSON.parse(process.env.OUTPUT_OPTIONS)
-        : undefined,
+        : {},
 };
