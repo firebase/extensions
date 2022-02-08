@@ -196,6 +196,10 @@ export class ShardedCounterWorker {
           // Read metadata document in transaction to guarantee ownership of the slice.
           const metadocPromise = () => t.get(this.metadoc.ref);
 
+          /**
+           * Resolve if plan is a partial shard or main counter
+           * Resolve if aggregate is a root document path (.)
+           */
           const counterPromise = () =>
             plan.isPartial || plan.aggregate === "."
               ? Promise.resolve(null)
@@ -239,11 +243,16 @@ export class ShardedCounterWorker {
           const aggr = new Aggregator();
           const update = aggr.aggregate(counter, plan.partials, shards);
 
+          /**
+           * Resolve if aggregate is a root document path (.)
+           */
           if (plan.aggregate === ".") {
             return [];
           }
 
-          t.set(this.db.doc(plan.aggregate), update, { merge: true });
+          t.set(this.db.doc(plan.aggregate), update, {
+            merge: true,
+          });
 
           // Delete shards that have been aggregated.
           shards.forEach((snap) => {
@@ -257,7 +266,9 @@ export class ShardedCounterWorker {
           plan.partials.forEach((snap) => {
             if (snap.exists) {
               const decrement = aggr.subtractPartial(snap);
-              t.set(snap.ref, decrement, { merge: true });
+              t.set(snap.ref, decrement, {
+                merge: true,
+              });
             }
           });
 
