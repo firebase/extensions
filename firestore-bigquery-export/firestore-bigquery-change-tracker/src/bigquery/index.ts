@@ -155,12 +155,12 @@ export class FirestoreBigQueryEventHistoryTracker
    */
   private async waitForInitialization(dataset, table) {
     return new Promise((resolve) => {
-      let handle = setTimeout(async () => {
+      let handle = setInterval(async () => {
         const [datasetExists] = await dataset.exists();
         const [tableExists] = await table.exists();
 
         if (datasetExists && tableExists) {
-          clearTimeout(handle);
+          clearInterval(handle);
           return resolve(table);
         }
       }, 500);
