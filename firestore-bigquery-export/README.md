@@ -15,9 +15,14 @@ The extension creates and updates a [dataset](https://cloud.google.com/bigquery/
 
 If you create, update, delete, or import a document in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset.
 
-Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`). You can also optionally return STRING column with JSON object containing reference parent Firestore Document names.
+Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`). 
 
-Tables partition options settings cannot be updated after creating a table. You will be able to update clustering.
+You can also optionally return STRING column with JSON object containing reference parent Firestore Document names
+
+`Partition` settings cannot be updated on a pre-existing table, if these options are required then a new table must be cerated.
+
+`Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
+
 
 
 #### Additional setup
@@ -89,7 +94,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery SQL table Time Partitioning option type: This parameter will allow you to partition the BigQuery table and BigQuery view  created by the extension based on data ingestion time. You may select the granularity of partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will generate one partition per day, hour, month or year, respectively.
 
-* BigQuery Time Partitioning column name: BigQuery table column/schema field name for TimePartitioning. You can choose schema available like `timestamp` OR give a name for new BigQuery Table schema column/field that will be assigned to the selected Firestore Document field below. example: 'post_date'. If not set, the table is partitioned by pseudo column '_PARTITIONTIME'; if set, the table is partitioned by this field. Cannot be changed if Table is already partitioned.
+* BigQuery Time Partitioning column name: BigQuery table column/schema field name for TimePartitioning. You can choose schema available as `timestamp` OR new custom defined column that will be assigned to the selected Firestore Document field below. Defaults to pseudo column _PARTITIONTIME if unspecified. Cannot be changed if Table is already partitioned.
 
 * Firestore Document field name for BigQuery SQL Time Partitioning field option: This parameter will allow you to partition the BigQuery table  created by the extension based on selected. The Firestore Document field value must be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or Firestore timestamp(will be converted to BigQuery TIMESTAMP). Cannot be changed if Table is already partitioned.
  example: `postDate`
@@ -98,7 +103,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery SQL table clustering: This parameter will allow you to set up Clustering for the BigQuery Table created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 comma separated fields(order matters).  Available schema extensions table fields for clustering: `document_id, timestamp, event_id, operation, data`.
 
-* Transform function URL: Specify a function URL to call that will transform the payload that will be written to BigQuery.  See the pre-install documentation for more details.
+* Transform function URL: Specify a function URL to call that will transform the payload that will be written to BigQuery. See the pre-install documentation for more details.
 
 
 
