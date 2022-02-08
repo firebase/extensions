@@ -116,9 +116,10 @@ describe("extension config", () => {
     });
 
     describe("validationRegex", () => {
-      // test("does not allow empty strings", () => {
-      //   expect(Boolean("".match(new RegExp(validationRegex)))).toBeFalsy();
-      // });
+      test("does not allow empty strings", () => {
+        const { validationRegex } = extensionParams["CLUSTERING"];
+        expect(Boolean("".match(new RegExp(validationRegex)))).toBeFalsy();
+      });
       test("does not allow spaces", () => {
         const { validationRegex } = extensionParams["CLUSTERING"];
         expect(
