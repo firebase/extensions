@@ -7,9 +7,14 @@ The extension creates and updates a [dataset](https://cloud.google.com/bigquery/
 
 If you create, update, delete, or import a document in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset.
 
-Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`). You can also optionally return STRING column with JSON object containing reference parent Firestore Document names.
+Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`). 
 
-Tables partition options settings cannot be updated after creating a table. You will be able to update clustering.
+You can also optionally return STRING column with JSON object containing reference parent Firestore Document names
+
+`Partition` settings cannot be updated on a pre-existing table, if these options are required then a new table must be cerated.
+
+`Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
+
 
 
 #### Additional setup
