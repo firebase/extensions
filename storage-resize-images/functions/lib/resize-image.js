@@ -34,7 +34,7 @@ function convertType(buffer, format) {
         outputOptions = JSON.parse(config_1.default.outputOptions);
     }
     catch (e) {
-        logs.warnOutputOptionsParseError(e);
+        logs.errorOutputOptionsParse(e);
     }
     const { jpeg, png, webp, tiff } = outputOptions;
     if (format === "jpg" || format === "jpeg") {
