@@ -249,8 +249,8 @@ params:
     label: Output options for selected formats
     description: >
       Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion.
-      eg. `{ "jpeg": { "quality": 5, "chromaSubsampling": "4:4:4 }, "gif": { "pallete": true } }`
+      eg. `{"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "pallete": true }}`
     type: string
-    validationRegex: ^({"(.*?)})$
-    validationErrorMessage: Please provide a valid json object.
+    validationRegex: ^({(.*?)})$
+    validationErrorMessage: Please provide a valid json object. Expected to start with `{`.
     required: false

@@ -29,25 +29,32 @@ function resize(file, size) {
 }
 exports.resize = resize;
 function convertType(buffer, format) {
-    const { jpeg, png, webp, tiff } = config_1.default.outputOptions;
+    let outputOptions = { jpeg: {}, png: {}, webp: {}, tiff: {} };
+    try {
+        outputOptions = JSON.parse(config_1.default.outputOptions);
+    }
+    catch (e) {
+        logs.warnOutputOptionsParseError(e);
+    }
+    const { jpeg, png, webp, tiff } = outputOptions;
     if (format === "jpg" || format === "jpeg") {
         return sharp(buffer)
-            .jpeg(jpeg ? jpeg : {})
+            .jpeg(jpeg)
             .toBuffer();
     }
     if (format === "png") {
         return sharp(buffer)
-            .png(png ? png : {})
+            .png(png)
             .toBuffer();
     }
     if (format === "webp") {
         return sharp(buffer)
-            .webp(webp ? webp : {})
+            .webp(webp)
             .toBuffer();
     }
     if (format === "tiff" || format === "tif") {
         return sharp(buffer)
-            .tiff(tiff ? tiff : {})
+            .tiff(tiff)
             .toBuffer();
     }
     return buffer;

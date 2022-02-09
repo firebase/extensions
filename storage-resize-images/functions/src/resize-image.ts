@@ -3,12 +3,13 @@ import * as sharp from "sharp";
 import * as path from "path";
 import * as fs from "fs";
 
-import { Bucket, File } from "@google-cloud/storage";
+import { Bucket } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
 import { uuid } from "uuidv4";
 
-import config, { deleteImage } from "./config";
+import config from "./config";
 import * as logs from "./logs";
+import { logger } from "firebase-functions/v1";
 
 export interface ResizedImageResult {
   size: string;
@@ -35,29 +36,35 @@ export function resize(file, size) {
 }
 
 export function convertType(buffer, format) {
-  const { jpeg, png, webp, tiff } = config.outputOptions;
+  let outputOptions = { jpeg: {}, png: {}, webp: {}, tiff: {} };
+  try {
+    outputOptions = JSON.parse(config.outputOptions);
+  } catch (e) {
+    logs.errorOutputOptionsParse(e);
+  }
+  const { jpeg, png, webp, tiff } = outputOptions;
 
   if (format === "jpg" || format === "jpeg") {
     return sharp(buffer)
-      .jpeg(jpeg ? jpeg : {})
+      .jpeg(jpeg)
       .toBuffer();
   }
 
   if (format === "png") {
     return sharp(buffer)
-      .png(png ? png : {})
+      .png(png)
       .toBuffer();
   }
 
   if (format === "webp") {
     return sharp(buffer)
-      .webp(webp ? webp : {})
+      .webp(webp)
       .toBuffer();
   }
 
   if (format === "tiff" || format === "tif") {
     return sharp(buffer)
-      .tiff(tiff ? tiff : {})
+      .tiff(tiff)
       .toBuffer();
   }
 
