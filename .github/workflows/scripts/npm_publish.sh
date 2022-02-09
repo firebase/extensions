@@ -22,7 +22,7 @@ set -o pipefail
 npm_package_version_exists() {
   local response
   # e.g. http://registry.npmjs.org/@firebaseextensions/fs-bq-import-collection/0.1.10
-  local npm_registry_url=http://registry.npmjs.org/$1/$2
+  local npm_registry_url=https://registry.npmjs.org/$1/$2
 
   response=$(curl --request GET \
     --url "$npm_registry_url" \

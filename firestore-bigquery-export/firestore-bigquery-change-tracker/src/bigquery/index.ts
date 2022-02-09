@@ -17,12 +17,14 @@
 import * as bigquery from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
 import * as traverse from "traverse";
+import fetch from "node-fetch";
 import {
   RawChangelogSchema,
   RawChangelogViewSchema,
   documentIdField,
 } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
+import handleFailedTransactions from "./handleFailedTransactions";
 
 import {
   ChangeType,
@@ -42,6 +44,8 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   tableId: string;
   datasetLocation: string | undefined;
   tablePartitioning: string;
+  backupTableId?: string | undefined;
+  transformFunction?: string;
 }
 
 /**
@@ -82,7 +86,21 @@ export class FirestoreBigQueryEventHistoryTracker
         },
       };
     });
-    await this.insertData(rows);
+    const transformedRows = await this.transformRows(rows);
+    await this.insertData(transformedRows);
+  }
+
+  private async transformRows(rows: any[]) {
+    if (this.config.transformFunction !== "") {
+      const response = await fetch(this.config.transformFunction, {
+        method: "post",
+        body: JSON.stringify({ data: rows }),
+        headers: { "Content-Type": "application/json" },
+      });
+      const responseJson = await response.json();
+      return responseJson.data;
+    }
+    return rows;
   }
 
   serializeData(eventData: any) {
@@ -178,6 +196,12 @@ export class FirestoreBigQueryEventHistoryTracker
           retry
         );
       }
+
+      // Exceeded number of retires, save in failed collection
+      if (!retry && this.config.backupTableId) {
+        await handleFailedTransactions(rows, this.config, e);
+      }
+
       // Reinitializing in case the destintation table is modified.
       this.initialized = false;
       throw e;

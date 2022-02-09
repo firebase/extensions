@@ -33,4 +33,5 @@ exports.default = {
     datasetLocation: process.env.DATASET_LOCATION,
     tablePartitioning: tablePartitioning(process.env.TABLE_PARTITIONING),
     backupCollectionId: process.env.BACKUP_COLLECTION,
+    transformFunction: process.env.TRANSFORM_FUNCTION,
 };

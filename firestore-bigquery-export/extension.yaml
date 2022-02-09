@@ -260,3 +260,12 @@ params:
       will be written to.
     type: string
     
+  - param: TRANSFORM_FUNCTION
+    label: Transform function URL
+    description: >-
+      Specify a function URL to call that will transform the payload that will be written to BigQuery. 
+      See the pre-install documentation for more details.
+    example: https://us-west1-my-project-id.cloudfunctions.net/myTransformFunction
+    type: string
+    required: false
+    
