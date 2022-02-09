@@ -24,6 +24,7 @@ const eventTracker = new firestore_bigquery_change_tracker_1.FirestoreBigQueryEv
     tableId: config_1.default.tableId,
     datasetId: config_1.default.datasetId,
     datasetLocation: config_1.default.datasetLocation,
+    backupTableId: config_1.default.backupCollectionId,
     transformFunction: config_1.default.transformFunction,
     timePartitioning: config_1.default.timePartitioning,
     timePartitioningField: config_1.default.timePartitioningField,

@@ -26,6 +26,7 @@ import {
   documentPathParams,
 } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
+import handleFailedTransactions from "./handleFailedTransactions";
 
 import {
   ChangeType,
@@ -52,6 +53,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   clustering: string[] | null;
   wildcardIds?: boolean;
   bqProjectId: string | undefined;
+  backupTableId?: string | undefined;
 }
 
 /**
@@ -255,6 +257,12 @@ export class FirestoreBigQueryEventHistoryTracker
           retry
         );
       }
+
+      // Exceeded number of retires, save in failed collection
+      if (!retry && this.config.backupTableId) {
+        await handleFailedTransactions(rows, this.config, e);
+      }
+
       // Reinitializing in case the destintation table is modified.
       this.initialized = false;
       logs.bigQueryTableInsertErrors(e.errors);

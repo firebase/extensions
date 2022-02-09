@@ -39,6 +39,7 @@ export default {
   location: process.env.LOCATION,
   initialized: false,
   datasetLocation: process.env.DATASET_LOCATION,
+  backupCollectionId: process.env.BACKUP_COLLECTION,
   transformFunction: process.env.TRANSFORM_FUNCTION,
   timePartitioning: timePartitioning(process.env.TABLE_PARTITIONING),
   timePartitioningField: process.env.TIME_PARTITIONING_FIELD,

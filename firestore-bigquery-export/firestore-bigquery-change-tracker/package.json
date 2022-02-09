@@ -12,7 +12,7 @@
     "build": "npm run clean && npm run compile",
     "clean": "rimraf lib",
     "compile": "tsc",
-    "test": "jest",
+    "test": "firebase ext:dev:emulators:exec ./node_modules/.bin/jest --test-params=./src/__tests__/emulator-params.env --project=extensions-testing --config=./src/__tests__/firebase.json",
     "prepare": "npm run build"
   },
   "files": [

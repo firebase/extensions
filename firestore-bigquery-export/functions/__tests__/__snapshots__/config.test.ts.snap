@@ -2,6 +2,7 @@
 
 exports[`extension config config loaded from environment variables 1`] = `
 Object {
+  "backupCollectionId": undefined,
   "bqProjectId": undefined,
   "clustering": Array [
     "data",
