@@ -2,6 +2,7 @@
 
 exports[`extension config config loaded from environment variables 1`] = `
 Object {
+  "backupCollectionId": undefined,
   "collectionPath": undefined,
   "datasetId": "my_dataset",
   "datasetLocation": undefined,
