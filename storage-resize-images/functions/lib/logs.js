@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.warnOutputOptionsParseError = exports.remoteFileDeleting = exports.remoteFileDeleted = exports.tempResizedFileDeleting = exports.tempResizedFileDeleted = exports.tempOriginalFileDeleting = exports.tempOriginalFileDeleted = exports.tempDirectoryCreating = exports.tempDirectoryCreated = exports.start = exports.init = exports.imageUploading = exports.imageUploaded = exports.imageResizing = exports.imageResized = exports.imageConverted = exports.imageConverting = exports.imageDownloading = exports.imageDownloaded = exports.imageInsideOfExcludedPaths = exports.imageOutsideOfPaths = exports.imageAlreadyResized = exports.failed = exports.errorDeleting = exports.error = exports.unsupportedType = exports.contentTypeInvalid = exports.gzipContentEncoding = exports.noContentType = exports.complete = void 0;
+exports.errorOutputOptionsParse = exports.remoteFileDeleting = exports.remoteFileDeleted = exports.tempResizedFileDeleting = exports.tempResizedFileDeleted = exports.tempOriginalFileDeleting = exports.tempOriginalFileDeleted = exports.tempDirectoryCreating = exports.tempDirectoryCreated = exports.start = exports.init = exports.imageUploading = exports.imageUploaded = exports.imageResizing = exports.imageResized = exports.imageConverted = exports.imageConverting = exports.imageDownloading = exports.imageDownloaded = exports.imageInsideOfExcludedPaths = exports.imageOutsideOfPaths = exports.imageAlreadyResized = exports.failed = exports.errorDeleting = exports.error = exports.unsupportedType = exports.contentTypeInvalid = exports.gzipContentEncoding = exports.noContentType = exports.complete = void 0;
 const firebase_functions_1 = require("firebase-functions");
 const config_1 = require("./config");
 exports.complete = () => {
@@ -105,6 +105,6 @@ exports.remoteFileDeleted = (path) => {
 exports.remoteFileDeleting = (path) => {
     firebase_functions_1.logger.log(`Deleting original file from storage bucket: '${path}'`);
 };
-exports.warnOutputOptionsParseError = (err) => {
+exports.errorOutputOptionsParse = (err) => {
     firebase_functions_1.logger.error(`Error while parsing "Output options for selected format". Parameter will be ignored`, err);
 };

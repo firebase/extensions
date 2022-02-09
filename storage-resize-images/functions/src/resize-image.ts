@@ -9,7 +9,6 @@ import { uuid } from "uuidv4";
 
 import config from "./config";
 import * as logs from "./logs";
-import { logger } from "firebase-functions/v1";
 
 export interface ResizedImageResult {
   size: string;
