@@ -187,7 +187,7 @@ export const firestoreTimePartitionFieldError = (
   );
 };
 
-export const firestoreTimePartitioningParametersError = (
+export const firestoreTimePartitioningParametersWarning = (
   fieldName: string | undefined,
   fieldType: string | undefined,
   firestoreFieldName: string | undefined,
@@ -222,12 +222,6 @@ export const bigQueryTableInsertErrors = (
       logger.warn(`ROW ERROR MESSAGE: ${error.message}`)
     );
   });
-};
-
-export const errorTimePartitioningUpdate = () => {
-  logger.warn(
-    `Time Partitioning update error. You cannot update partitioning settings. Please create new partitioned table.`
-  );
 };
 
 export const clusteringUpdate = (clustering) => {
