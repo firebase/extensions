@@ -314,21 +314,15 @@ export class FirestoreBigQueryEventHistoryTracker
 
       const [metadata] = await table.getMetadata();
       const fields = metadata.schema.fields;
-      const isUpdateClustering: boolean =
-        // check if clustering exist in config and doesn't exist on metadata OR
-        (!metadata.clustering && !!this.config.clustering) ||
-        // check if clustering fields are not the same length as provided in config OR
-        metadata.clustering.fields.length !== this.config.clustering.length ||
-        // check if clustering fields are the the same values order as provided in config
-        !metadata.clustering.fields.every(function(value, index) {
-          return value === this.config.clustering[index];
-        });
 
       //check if clustering needs to be updated
-      if (isUpdateClustering) {
+      if (this.shouldUpdateClustering(metadata, this.config)) {
         const clustering = { fields: this.config.clustering };
         metadata.clustering = clustering;
-        logs.clusteringUpdate(this.config.clustering);
+        if (!this.config.clustering && metadata.clustering) {
+          metadata.clustering = null;
+        }
+        logs.clusteringUpdate(clustering);
       }
 
       // drop warning for trying to update partitioning. It is not available for already created tables.
@@ -385,7 +379,7 @@ export class FirestoreBigQueryEventHistoryTracker
         !documentIdColExists ||
         !pathParamsColExists ||
         !partitionColExists ||
-        isUpdateClustering
+        this.shouldUpdateClustering(metadata, this.config)
       ) {
         await table.setMetadata(metadata);
       }
@@ -551,6 +545,28 @@ export class FirestoreBigQueryEventHistoryTracker
       location: this.config.datasetLocation,
     });
   }
+
+  shouldUpdateClustering = (metadata, config): boolean => {
+    // create clustering
+    if (!metadata.clustering && !!config.clustering) return true;
+
+    // delete clustering
+    if (!config.clustering && !!metadata.clustering) return true;
+    if (
+      metadata.clustering &&
+      metadata.clustering.fields &&
+      config.clustering
+    ) {
+      // update if clustering fields are not the same length as provided in config
+      if (metadata.clustering.fields.length !== config.clustering.length)
+        return true;
+      // update if clustering fields are the not the same value and order
+      return !metadata.clustering.fields.every((value, index) => {
+        return value === config.clustering[index];
+      });
+    }
+    return false;
+  };
 
   private rawChangeLogTableName(): string {
     return `${this.config.tableId}_raw_changelog`;

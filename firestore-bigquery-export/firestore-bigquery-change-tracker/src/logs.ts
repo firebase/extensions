@@ -231,5 +231,9 @@ export const errorTimePartitioningUpdate = () => {
 };
 
 export const clusteringUpdate = (clustering) => {
-  logger.info(`Clustering updated with new settings fields: ${clustering}`);
+  logger.info(
+    clustering
+      ? `Clustering updated with new settings fields: ${clustering}`
+      : `Clustering removed`
+  );
 };
