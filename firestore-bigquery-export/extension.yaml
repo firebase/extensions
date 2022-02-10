@@ -218,10 +218,10 @@ params:
      Creates a column containing a JSON object of all wildcard ids from a documents path.
     type: select
     options:
-      - label: Yes
-        value: true
       - label: No
         value: false
+      - label: Yes
+        value: true
     default: false
     required: false
 
@@ -317,7 +317,7 @@ params:
         value: DATE
       - label: omit
         value: omit
-    default: TIMESTAMP
+    default: omit
     required: false
 
   - param: CLUSTERING
