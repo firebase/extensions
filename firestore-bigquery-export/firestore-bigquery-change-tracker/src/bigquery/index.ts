@@ -325,17 +325,6 @@ export class FirestoreBigQueryEventHistoryTracker
         logs.clusteringUpdate(clustering);
       }
 
-      // drop warning for trying to update partitioning. It is not available for already created tables.
-      if (
-        (!metadata.timePartitioning &&
-          (this.config.timePartitioningField ||
-            this.config.timePartitioning)) ||
-        metadata.timePartitioning.field !== this.config.timePartitioningField ||
-        metadata.timePartitioning.type !== this.config.timePartitioning
-      ) {
-        logs.errorTimePartitioningUpdate();
-      }
-
       const documentIdColExists = fields.find(
         (column) => column.name === "document_id"
       );
