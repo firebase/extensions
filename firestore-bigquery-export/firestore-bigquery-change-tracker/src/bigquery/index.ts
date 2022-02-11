@@ -123,42 +123,30 @@ export class FirestoreBigQueryEventHistoryTracker
   }
 
   getTimePartitionParameterField(data, documentName) {
-    const fieldName = this.config.timePartitioningField;
-    const fieldType = this.config.timePartitioningFieldType;
-    const firestoreFieldName = this.config.timePartitioningFirestoreField;
-    if (
-      fieldName &&
-      fieldType &&
-      firestoreFieldName &&
-      data[firestoreFieldName]
-    ) {
-      if (typeof data[firestoreFieldName] === "string") {
-        // If wrong BigQuery format(TIMESTAMP, DATE, DATETIME) it will log out error on insertData.
-        return {
-          [fieldName]: data[firestoreFieldName],
-        };
-      }
-      if (data[firestoreFieldName] instanceof firebase.firestore.Timestamp)
-        return {
-          [fieldName]: data[firestoreFieldName].toDate(),
-        };
+    if (!data) return {};
 
-      logs.firestoreTimePartitionFieldError(
-        documentName,
-        fieldName,
-        firestoreFieldName,
-        data[firestoreFieldName]
-      );
-      return {};
-    } else {
-      logs.firestoreTimePartitioningParametersError(
-        fieldName,
-        fieldType,
-        firestoreFieldName,
-        data[firestoreFieldName]
-      );
+    const firestoreFieldName = this.config.timePartitioningFirestoreField;
+    const fieldName = this.config.timePartitioningField;
+    const fieldValue = data[firestoreFieldName];
+
+    if (!fieldName || !fieldValue) {
       return {};
     }
+
+    if (typeof data[firestoreFieldName] === "string") {
+      return { [fieldName]: fieldValue };
+    }
+    if (data[firestoreFieldName] instanceof firebase.firestore.Timestamp)
+      return { [fieldName]: fieldValue.toDate() };
+
+    logs.firestoreTimePartitionFieldError(
+      documentName,
+      fieldName,
+      firestoreFieldName,
+      fieldValue
+    );
+
+    return {};
   }
   serializeData(eventData: any) {
     if (typeof eventData === "undefined") {
@@ -194,14 +182,8 @@ export class FirestoreBigQueryEventHistoryTracker
   private async isRetryableInsertionError(e) {
     let isRetryable = true;
     const expectedErrors = [
-      {
-        message: "no such field.",
-        location: documentIdField.name,
-      },
-      {
-        message: "no such field.",
-        location: documentPathParams.name,
-      },
+      { message: "no such field.", location: documentIdField.name },
+      { message: "no such field.", location: documentPathParams.name },
     ];
     if (
       e.response &&
@@ -340,7 +322,7 @@ export class FirestoreBigQueryEventHistoryTracker
         fields.push(documentIdField);
         logs.addNewColumn(this.rawChangeLogTableName(), documentIdField.name);
       }
-      if (!pathParamsColExists) {
+      if (!pathParamsColExists && this.config.wildcardIds) {
         fields.push(documentPathParams);
         logs.addNewColumn(
           this.rawChangeLogTableName(),
@@ -389,15 +371,10 @@ export class FirestoreBigQueryEventHistoryTracker
       if (this.config.wildcardIds) {
         schema.fields.push(documentPathParams);
       }
-      const options: TableMetadata = {
-        friendlyName: changelogName,
-        schema,
-      };
+      const options: TableMetadata = { friendlyName: changelogName, schema };
 
       if (this.config.timePartitioning) {
-        options.timePartitioning = {
-          type: this.config.timePartitioning,
-        };
+        options.timePartitioning = { type: this.config.timePartitioning };
       }
 
       if (this.config.timePartitioningField) {
@@ -408,9 +385,7 @@ export class FirestoreBigQueryEventHistoryTracker
       }
 
       if (this.config.clustering) {
-        options.clustering = {
-          fields: this.config.clustering,
-        };
+        options.clustering = { fields: this.config.clustering };
       }
 
       await table.create(options);
@@ -516,14 +491,10 @@ export class FirestoreBigQueryEventHistoryTracker
       };
 
       if (this.config.timePartitioning) {
-        options.timePartitioning = {
-          type: this.config.timePartitioning,
-        };
+        options.timePartitioning = { type: this.config.timePartitioning };
       }
       await view.create(options);
-      await view.setMetadata({
-        schema,
-      });
+      await view.setMetadata({ schema });
       logs.bigQueryViewCreated(this.rawLatestView());
     }
     return view;
