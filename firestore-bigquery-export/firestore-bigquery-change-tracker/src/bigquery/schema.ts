@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+
 export type BigQueryFieldMode = "NULLABLE" | "REPEATED" | "REQUIRED";
 export type BigQueryFieldType =
   | "BOOLEAN"
@@ -161,13 +163,14 @@ export const RawChangelogSchema = {
 
 // Helper function for Partitioned Changelogs field
 export const getNewPartitionField = (
-  partitioningField: string,
-  partitioningFieldType: string
+  config: FirestoreBigQueryEventHistoryTrackerConfig
 ) => {
+  const { timePartitioningField, timePartitioningFieldType } = config;
+
   return {
-    name: partitioningField,
+    name: timePartitioningField,
     mode: "NULLABLE",
-    type: partitioningFieldType,
+    type: timePartitioningFieldType,
     description: "The document TimePartition partition field selected by user",
   };
 };

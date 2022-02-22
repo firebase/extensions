@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { Table } from "@google-cloud/bigquery";
 import { firestore } from "firebase-admin";
 import { logger } from "firebase-functions";
 
@@ -231,3 +232,22 @@ export const clusteringUpdate = (clustering) => {
       : `Clustering removed`
   );
 };
+
+export const cannotPartitionExistingTable = (table: Table) => {
+  logger.warn(
+    `Cannot partition an existing table ${table.dataset.id}_${table.id}`
+  );
+};
+
+export function invalidProjectIdWarning(bqProjectId: string) {
+  logger.warn(`Invalid project Id ${bqProjectId}, data cannot be synchronized`);
+}
+export function invalidTableReference() {
+  logger.warn(`No valid table reference is available. Skipping partitioning`);
+}
+
+export function hourAndDatePartitioningWarning() {
+  logger.warn(
+    `Cannot partition table with hour partitioning and Date. For DATE columns, the partitions can have daily, monthly, or yearly granularity. Skipping partitioning`
+  );
+}

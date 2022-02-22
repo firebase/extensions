@@ -195,7 +195,6 @@ params:
       Override the default project bigquery instance. 
       This can allow updates to be directed to a bigquery instance on another project.
     type: string
-    default: ${param:PROJECT_ID}
     required: false
 
   - param: COLLECTION_PATH
@@ -275,16 +274,7 @@ params:
       - label: none
         value: NONE
     default: NONE
-    required: true
-
-  - param: BACKUP_COLLECTION
-    label: Backup Collection Name
-    description: >-
-      This (optional) parameter will allow you to specify a collection for which failed BigQuery updates
-      will be written to.
-    type: string
-    
-
+    required: true 
 
   - param: TIME_PARTITIONING_FIELD
     label: BigQuery Time Partitioning column name
@@ -331,6 +321,13 @@ params:
     validationErrorMessage: No whitespaces. Max 4 fields. e.g. `data,timestamp,event_id,operation`
     example: data,document_id,timestamp
     required: false
+
+  - param: BACKUP_COLLECTION
+    label: Backup Collection Name
+    description: >-
+      This (optional) parameter will allow you to specify a collection for which failed BigQuery updates
+      will be written to.
+    type: string
     
   - param: TRANSFORM_FUNCTION
     label: Transform function URL
