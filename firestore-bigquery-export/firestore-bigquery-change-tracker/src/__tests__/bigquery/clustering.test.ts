@@ -34,7 +34,7 @@ describe("Clustering ", () => {
   });
 
   describe("without an existing table", () => {
-    test.only("does not error when an empty array of options are provided", async () => {
+    test("does not error when an empty array of options are provided", async () => {
       await changeTracker({
         datasetId,
         tableId,
