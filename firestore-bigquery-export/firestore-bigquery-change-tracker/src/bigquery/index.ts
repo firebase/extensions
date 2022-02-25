@@ -39,6 +39,7 @@ import {
 } from "@google-cloud/bigquery/build/src/table";
 
 import { Partitioning } from "./partitioning";
+import { Clustering } from "./clustering";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
@@ -271,6 +272,7 @@ export class FirestoreBigQueryEventHistoryTracker
     const table = dataset.table(changelogName);
     const [tableExists] = await table.exists();
     const partitioning = new Partitioning(this.config, table);
+    const clustering = new Clustering(this.config, table);
 
     if (tableExists) {
       logs.bigQueryTableAlreadyExists(table.id, dataset.id);
@@ -278,15 +280,7 @@ export class FirestoreBigQueryEventHistoryTracker
       const [metadata] = await table.getMetadata();
       const fields = metadata.schema ? metadata.schema.fields : [];
 
-      //check if clustering needs to be updated
-      if (this.shouldUpdateClustering(metadata, this.config)) {
-        const clustering = { fields: this.config.clustering };
-        metadata.clustering = clustering;
-        if (!this.config.clustering && metadata.clustering) {
-          metadata.clustering = null;
-        }
-        logs.clusteringUpdate(clustering);
-      }
+      await clustering.updateClustering(metadata);
 
       const documentIdColExists = fields.find(
         (column) => column.name === "document_id"
@@ -307,11 +301,8 @@ export class FirestoreBigQueryEventHistoryTracker
         );
       }
       await partitioning.addPartitioningToSchema(metadata.schema.fields);
-      if (
-        !documentIdColExists ||
-        !pathParamsColExists ||
-        this.shouldUpdateClustering(metadata, this.config)
-      ) {
+
+      if (!documentIdColExists || !pathParamsColExists) {
         await table.setMetadata(metadata);
       }
     } else {
@@ -327,9 +318,8 @@ export class FirestoreBigQueryEventHistoryTracker
       await partitioning.addPartitioningToSchema(schema.fields);
       await partitioning.updateTableMetadata(options);
 
-      if (this.config.clustering && this.config.clustering.length) {
-        options.clustering = { fields: this.config.clustering };
-      }
+      // Add clustering
+      await clustering.updateClustering(options);
 
       await table.create(options);
 
@@ -360,9 +350,7 @@ export class FirestoreBigQueryEventHistoryTracker
       const documentIdColExists = fields.find(
         (column) => column.name === "document_id"
       );
-      const partitionColExists = fields.find(
-        (column) => column.name === this.config.timePartitioningField
-      );
+
       const pathParamsColExists = fields.find(
         (column) => column.name === "path_params"
       );
@@ -433,32 +421,6 @@ export class FirestoreBigQueryEventHistoryTracker
       location: this.config.datasetLocation,
     });
   }
-
-  shouldUpdateClustering = (metadata, config): boolean => {
-    /*
-     * clustering does not exist on current table
-     * clustering config is available
-     * clustering config has at least one field.
-     */
-    if (!metadata.clustering && !!config.clustering) return true;
-
-    // delete clustering
-    if (!config.clustering && !!metadata.clustering) return true;
-    if (
-      metadata.clustering &&
-      metadata.clustering.fields &&
-      config.clustering
-    ) {
-      // update if clustering fields are not the same length as provided in config
-      if (metadata.clustering.fields.length !== config.clustering.length)
-        return true;
-      // update if clustering fields are the not the same value and order
-      return !metadata.clustering.fields.every((value, index) => {
-        return value === config.clustering[index];
-      });
-    }
-    return false;
-  };
 
   private rawChangeLogTableName(): string {
     return `${this.config.tableId}_raw_changelog`;

@@ -34,7 +34,7 @@ describe("Clustering ", () => {
   });
 
   describe("without an existing table", () => {
-    test("does not error when an empty array of options are provided", async () => {
+    test.only("does not error when an empty array of options are provided", async () => {
       await changeTracker({
         datasetId,
         tableId,
@@ -85,7 +85,7 @@ describe("Clustering ", () => {
     });
 
     //TODO: Check what happens if no schema exists on an already partitioned table without schema
-    test("successfully adds clustering on a currently partitioned imported Firestore field", async () => {
+    test.skip("successfully adds clustering on a currently partitioned imported Firestore field", async () => {
       await changeTracker({
         datasetId,
         tableId,
@@ -263,6 +263,44 @@ describe("Clustering ", () => {
       const [metadata] = await myDataset.table(tableId_raw).getMetadata();
 
       expect(metadata.clustering.fields[0]).toBe("custom");
+    });
+
+    test("keeps existing clustering and warns the user when an invalid field has been provided", async () => {
+      [myTable] = await myDataset.createTable(tableId_raw, {
+        schema: {
+          fields: [...RawChangelogSchema.fields],
+        },
+        clustering: { fields: ["data", "timestamp"] },
+      });
+
+      await changeTracker({
+        datasetId,
+        tableId,
+        clustering: ["data", "unknown", "timestamp"],
+      }).record([event]);
+
+      const [metadata] = await myDataset.table(tableId_raw).getMetadata();
+
+      expect(metadata.clustering.fields[0]).toBe("data");
+      expect(metadata.clustering.fields[1]).toBe("timestamp");
+    });
+
+    test("does not add clustering and warns the user when an invalid field has been provided when clustering does exist", async () => {
+      [myTable] = await myDataset.createTable(tableId_raw, {
+        schema: {
+          fields: [...RawChangelogSchema.fields],
+        },
+      });
+
+      await changeTracker({
+        datasetId,
+        tableId,
+        clustering: ["data,unknown,timestamp"],
+      }).record([event]);
+
+      const [metadata] = await myDataset.table(tableId_raw).getMetadata();
+
+      expect(metadata.clustering).toBeUndefined();
     });
   });
 });

@@ -226,5 +226,24 @@ describe("Partitioning", () => {
 
       expect(metadata.timePartitioning).toBeUndefined();
     });
+
+    test("does not update add a custom partitioning column when the relevant partitioning exists", async () => {
+      await changeTracker({
+        datasetId,
+        tableId,
+        timePartitioning: "HOUR",
+        timePartitioningField: "endDate",
+        timePartitioningFieldType: "DATE",
+        timePartitioningFirestoreField: "end_date",
+      }).record([event]);
+
+      const [metadata] = await dataset.table(tableId_raw).getMetadata();
+
+      expect(
+        metadata.schema.fields.filter(($) => $.name === "endDate").length
+      ).toBe(0);
+
+      expect(metadata.timePartitioning).toBeUndefined();
+    });
   });
 });

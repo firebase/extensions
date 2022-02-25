@@ -112,7 +112,7 @@ export class Partitioning {
     return !!metadata.schema;
   }
 
-  async hasValidTableReference() {
+  hasValidTableReference() {
     logs.invalidTableReference();
     return !!this.table;
   }

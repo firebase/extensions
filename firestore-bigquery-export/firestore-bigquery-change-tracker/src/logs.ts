@@ -225,12 +225,12 @@ export const bigQueryTableInsertErrors = (
   });
 };
 
-export const clusteringUpdate = (clustering) => {
-  logger.info(
-    clustering
-      ? `Clustering updated with new settings fields: ${clustering}`
-      : `Clustering removed`
-  );
+export const updatedClustering = (fields: string) => {
+  logger.info(`Clustering updated with new settings fields: ${fields}`);
+};
+
+export const removedClustering = (tableName: string) => {
+  logger.info(`Clustering removed on ${tableName}`);
 };
 
 export const cannotPartitionExistingTable = (table: Table) => {
@@ -249,5 +249,10 @@ export function invalidTableReference() {
 export function hourAndDatePartitioningWarning() {
   logger.warn(
     `Cannot partition table with hour partitioning and Date. For DATE columns, the partitions can have daily, monthly, or yearly granularity. Skipping partitioning`
+  );
+}
+export function invalidClustering(fields: string) {
+  logger.warn(
+    `Unable to add clustering, field(s) ${fields} do not exist on the expected table`
   );
 }
