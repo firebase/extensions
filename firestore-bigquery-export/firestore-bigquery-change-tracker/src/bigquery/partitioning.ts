@@ -6,6 +6,7 @@ import * as logs from "../logs";
 import * as bigquery from "@google-cloud/bigquery";
 
 import { getNewPartitionField } from "./schema";
+import { TableMetadata } from "@google-cloud/bigquery";
 
 export class Partitioning {
   public config: FirestoreBigQueryEventHistoryTrackerConfig;
@@ -33,7 +34,7 @@ export class Partitioning {
   }
 
   private async metaDataSchemaFields() {
-    let metadata;
+    let metadata: TableMetadata;
 
     try {
       [metadata] = await this.table.getMetadata();
@@ -193,6 +194,14 @@ export class Partitioning {
     return {};
   }
 
+  customFieldExists(fields = []) {
+    if (!fields.length) return false;
+
+    const { timePartitioningField } = this.config;
+
+    return fields.map(($) => $.name).includes(timePartitioningField);
+  }
+
   async addPartitioningToSchema(fields = []): Promise<void> {
     /** check if class has valid table reference */
     if (!this.hasValidTableReference()) return Promise.resolve();
@@ -219,6 +228,9 @@ export class Partitioning {
     if (!this.config.timePartitioningField) return Promise.resolve();
 
     // if (await !this.hasExistingSchema) return Promise.resolve();
+
+    // Field already exists on schema, skip
+    if (this.customFieldExists(fields)) return Promise.resolve();
 
     fields.push(getNewPartitionField(this.config));
 

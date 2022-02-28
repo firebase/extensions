@@ -245,5 +245,34 @@ describe("Partitioning", () => {
 
       expect(metadata.timePartitioning).toBeUndefined();
     });
+
+    test("does not add an additional custom when the field column already exists", async () => {
+      // Add a custom field to the table.
+      const [metaData] = await table.getMetadata();
+
+      metaData.schema.fields.push({
+        name: "custom_field",
+        mode: "NULLABLE",
+        type: "Date",
+        description: "example custom field",
+      });
+
+      await table.setMetadata(metaData);
+
+      await changeTracker({
+        datasetId,
+        tableId,
+        timePartitioning: "DAY",
+        timePartitioningField: "custom_field",
+        timePartitioningFieldType: "DATE",
+        timePartitioningFirestoreField: "custom_field",
+      }).record([event]);
+
+      const [metadata] = await dataset.table(tableId_raw).getMetadata();
+
+      expect(
+        metadata.schema.fields.filter(($) => $.name === "custom_field").length
+      ).toBe(1);
+    });
   });
 });
