@@ -79,13 +79,14 @@ describe("Clustering ", () => {
         .table(tableId_raw)
         .getMetadata();
 
+      console.log("metadata >>>>", metadata);
+
       expect(metadata.clustering).toBeDefined();
       expect(metadata.clustering.fields.length).toBe(1);
       expect(metadata.clustering.fields[0]).toBe("timestamp");
     });
 
-    //TODO: Check what happens if no schema exists on an already partitioned table without schema
-    test.skip("successfully adds clustering on a currently partitioned imported Firestore field", async () => {
+    test("successfully adds clustering on a currently partitioned imported Firestore field", async () => {
       await changeTracker({
         datasetId,
         tableId,

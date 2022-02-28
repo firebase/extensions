@@ -19,41 +19,28 @@ export class Clustering {
     this.schema = schema;
   }
 
-  private async metaData(): Promise<TableMetadata> {
-    const [metaData] = await this.table.getMetadata();
-
-    return Promise.resolve(metaData);
-  }
-
   hasValidTableReference() {
     logs.invalidTableReference();
     return !!this.table;
   }
 
-  private async tableExists(): Promise<boolean> {
-    /*** No table exists, return */
-    const [tableExists] = await this.table.exists();
-    return Promise.resolve(tableExists);
-  }
+  private async hasInvalidFields(metaData: TableMetadata): Promise<boolean> {
+    const { clustering = [] } = this.config;
 
-  private async hasValidClusteringConfig(): Promise<boolean> {
-    const metaData = await this.metaData();
+    if (!clustering) return Promise.resolve(false);
 
-    const { clustering } = this.config;
-
-    /** Valid clustering if none provided */
-    if (!clustering || !clustering.length) return Promise.resolve(true);
-
-    const fieldNames = metaData.schema.fields.map(($) => $.name);
+    const fieldNames = metaData
+      ? metaData.schema.fields.map(($) => $.name)
+      : [];
 
     const invalidFields = clustering.filter(($) => !fieldNames.includes($));
 
     if (invalidFields.length) {
       logs.invalidClustering(invalidFields.join(","));
-      return Promise.resolve(false);
+      return Promise.resolve(true);
     }
 
-    return Promise.resolve(true);
+    return Promise.resolve(false);
   }
 
   private updateCluster = async (metaData) => {
@@ -73,16 +60,10 @@ export class Clustering {
   };
 
   updateClustering = async (metaData: TableMetadata): Promise<void> => {
-    /** Check if table exists */
-    if (!(await this.tableExists())) return Promise.resolve();
-
-    /** check if class has valid table reference */
-    if (!this.hasValidTableReference()) return Promise.resolve();
-
     /** Return if invalid config */
-    if (!(await this.hasValidClusteringConfig())) return Promise.resolve();
+    if (await this.hasInvalidFields(metaData)) return Promise.resolve();
 
-    return !!this.config.clustering
+    return !!this.config.clustering && !!this.config.clustering.length
       ? this.updateCluster(metaData)
       : this.removeCluster(metaData);
   };
