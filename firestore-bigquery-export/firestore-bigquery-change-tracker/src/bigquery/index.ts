@@ -165,6 +165,25 @@ export class FirestoreBigQueryEventHistoryTracker
   }
 
   /**
+   * Tables can often take time to create and propagate.
+   * A half a second delay is added per check while the function
+   * continually re-checks until the referenced dataset and table become available.
+   */
+  private async waitForInitialization(dataset, table) {
+    return new Promise((resolve) => {
+      let handle = setInterval(async () => {
+        const [datasetExists] = await dataset.exists();
+        const [tableExists] = await table.exists();
+
+        if (datasetExists && tableExists) {
+          clearInterval(handle);
+          return resolve(table);
+        }
+      }, 500);
+    });
+  }
+
+  /**
    * Inserts rows of data into the BigQuery raw change log table.
    */
   private async insertData(
@@ -181,6 +200,8 @@ export class FirestoreBigQueryEventHistoryTracker
     try {
       const dataset = this.bigqueryDataset();
       const table = dataset.table(this.rawChangeLogTableName());
+      await this.waitForInitialization(dataset, table);
+
       logs.dataInserting(rows.length);
       await table.insert(rows, options);
       logs.dataInserted(rows.length);
@@ -223,9 +244,13 @@ export class FirestoreBigQueryEventHistoryTracker
     if (datasetExists) {
       logs.bigQueryDatasetExists(this.config.datasetId);
     } else {
-      logs.bigQueryDatasetCreating(this.config.datasetId);
-      await dataset.create();
-      logs.bigQueryDatasetCreated(this.config.datasetId);
+      try {
+        logs.bigQueryDatasetCreating(this.config.datasetId);
+        await dataset.create();
+        logs.bigQueryDatasetCreated(this.config.datasetId);
+      } catch (ex) {
+        logs.tableCreationError(this.config.datasetId, ex.message);
+      }
     }
     return dataset;
   }
@@ -267,8 +292,12 @@ export class FirestoreBigQueryEventHistoryTracker
         };
       }
 
-      await table.create(options);
-      logs.bigQueryTableCreated(changelogName);
+      try {
+        await table.create(options);
+        logs.bigQueryTableCreated(changelogName);
+      } catch (ex) {
+        logs.tableCreationError(changelogName, ex.message);
+      }
     }
     return table;
   }
@@ -316,9 +345,14 @@ export class FirestoreBigQueryEventHistoryTracker
           type: this.config.tablePartitioning,
         };
       }
-      await view.create(options);
-      await view.setMetadata({ schema: RawChangelogViewSchema });
-      logs.bigQueryViewCreated(this.rawLatestView());
+
+      try {
+        await view.create(options);
+        await view.setMetadata({ schema: RawChangelogViewSchema });
+        logs.bigQueryViewCreated(this.rawLatestView());
+      } catch (ex) {
+        logs.tableCreationError(this.rawLatestView(), ex.message);
+      }
     }
     return view;
   }
