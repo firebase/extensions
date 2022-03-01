@@ -5,6 +5,7 @@
     "noImplicitReturns": true,
     "sourceMap": false,
     "outDir": "lib",
+    "lib": ["es2018.AsyncIterable"],
     "target": "ES2020"
   },
   "compileOnSave": true,

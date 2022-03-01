@@ -5,7 +5,7 @@
     "url": "github.com/firebase/extensions.git",
     "directory": "firestore-bigquery-export/firestore-bigquery-change-tracker"
   },
-  "version": "1.1.13",
+  "version": "1.1.14",
   "description": "Core change-tracker library for Cloud Firestore Collection BigQuery Exports",
   "main": "./lib/index.js",
   "scripts": {
@@ -29,7 +29,8 @@
     "inquirer": "^6.4.0",
     "lodash": "^4.17.14",
     "sql-formatter": "^2.3.3",
-    "traverse": "^0.6.6"
+    "traverse": "^0.6.6",
+    "node-fetch": "^2.6.1"
   },
   "devDependencies": {
     "@types/traverse": "^0.6.32",
