@@ -1,3 +1,7 @@
+## Version 0.1.12
+
+fixed - updated dependencies
+
 ## Version 0.1.11
 
 feature - add Taiwan and Singapore Cloud Function locations (#729)

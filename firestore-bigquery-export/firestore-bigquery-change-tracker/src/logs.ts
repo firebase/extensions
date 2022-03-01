@@ -168,3 +168,7 @@ export const timestampMissingValue = (fieldName: string) => {
 export const addDocumentIdColumn = (table) => {
   logger.log(`Updated '${table}' table with a 'document_id' column`);
 };
+
+export const tableCreationError = (table, message) => {
+  logger.warn(`Error caught creating table`, message);
+};

@@ -15,9 +15,22 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
+function tablePartitioning(type) {
+    if (type === "HOUR" ||
+        type === "DAY" ||
+        type === "MONTH" ||
+        type === "YEAR") {
+        return type;
+    }
+    return null;
+}
 exports.default = {
+    collectionPath: process.env.COLLECTION_PATH,
+    datasetId: process.env.DATASET_ID,
+    tableId: process.env.TABLE_ID,
     location: process.env.LOCATION,
-    maxCount: Number(process.env.MAX_COUNT),
-    databaseInstance: process.env.SELECTED_DATABASE_INSTANCE,
-    nodePath: process.env.NODE_PATH,
+    initialized: false,
+    datasetLocation: process.env.DATASET_LOCATION,
+    tablePartitioning: tablePartitioning(process.env.TABLE_PARTITIONING),
+    transformFunction: process.env.TRANSFORM_FUNCTION,
 };
