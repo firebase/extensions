@@ -324,7 +324,7 @@ const run = async (): Promise<number> => {
     cursor = docs[docs.length - 1];
     const rows: FirestoreDocumentChangeEvent[] = docs.map((snapshot) => {
       return {
-        timestamp: new Date(0).toISOString(), // epoch
+        timestamp: new Date().toISOString(), // epoch
         operation: ChangeType.IMPORT,
         documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${
           snapshot.ref.path

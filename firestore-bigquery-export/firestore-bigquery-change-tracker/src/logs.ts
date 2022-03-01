@@ -256,3 +256,6 @@ export function invalidClustering(fields: string) {
     `Unable to add clustering, field(s) ${fields} do not exist on the expected table`
   );
 }
+export const tableCreationError = (table, message) => {
+  logger.warn(`Error caught creating table`, message);
+};

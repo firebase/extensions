@@ -79,8 +79,6 @@ describe("Clustering ", () => {
         .table(tableId_raw)
         .getMetadata();
 
-      console.log("metadata >>>>", metadata);
-
       expect(metadata.clustering).toBeDefined();
       expect(metadata.clustering.fields.length).toBe(1);
       expect(metadata.clustering.fields[0]).toBe("timestamp");
