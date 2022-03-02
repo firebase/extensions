@@ -7,7 +7,7 @@ import { Bucket, File } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
 import { uuid } from "uuidv4";
 
-import config, { deleteImage } from "./config";
+import config from "./config";
 import * as logs from "./logs";
 
 export interface ResizedImageResult {
@@ -25,7 +25,7 @@ export function resize(file, size) {
     throw new Error("height and width are not delimited by a ',' or a 'x'");
   }
 
-  return sharp(file)
+  return sharp(file, { failOnError: false, animated: config.animated })
     .rotate()
     .resize(parseInt(width, 10), parseInt(height, 10), {
       fit: "inside",
@@ -48,14 +48,20 @@ export function convertType(buffer, format) {
   }
 
   if (format === "webp") {
-    return sharp(buffer)
+    return sharp(buffer, { animated: config.animated })
       .webp()
       .toBuffer();
   }
 
-  if (format === "tiff") {
+  if (format === "tiff" || format === "tif") {
     return sharp(buffer)
       .tiff()
+      .toBuffer();
+  }
+
+  if (format === "gif") {
+    return sharp(buffer, { animated: config.animated })
+      .gif()
       .toBuffer();
   }
 
@@ -70,14 +76,17 @@ export const supportedContentTypes = [
   "image/png",
   "image/tiff",
   "image/webp",
+  "image/gif",
 ];
 
 export const supportedImageContentTypeMap = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   png: "image/png",
+  tif: "image/tif",
   tiff: "image/tiff",
   webp: "image/webp",
+  gif: "image/gif",
 };
 
 const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
@@ -167,7 +176,9 @@ export const modifyImage = async ({
     }
 
     // Generate a image file using Sharp.
-    await sharp(modifiedImageBuffer).toFile(modifiedFile);
+    await sharp(modifiedImageBuffer, { animated: config.animated }).toFile(
+      modifiedFile
+    );
 
     // Uploading the modified image.
     logs.imageUploading(modifiedFilePath);

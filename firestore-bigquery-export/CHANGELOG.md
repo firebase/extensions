@@ -1,3 +1,17 @@
+## Version 0.1.20
+
+fixed - Fixed installation error due to bad package-lock.json
+
+## Version 0.1.19
+
+docs - Renamed the extension to "Stream Collections to BigQuery"
+
+feature - add Taiwan and Singapore Cloud Function locations (#729)
+
+## Version 0.1.18
+
+No change from last release
+
 ## Version 0.1.17
 
 fixed - improved import script

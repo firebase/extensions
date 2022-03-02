@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.22
+version: 0.1.25
 specVersion: v1beta
 
 displayName: Resize Images
@@ -58,7 +58,7 @@ resources:
     properties:
       location: ${param:LOCATION}
       runtime: nodejs14
-      availableMemoryMb: 1024
+      availableMemoryMb: ${param:FUNCTION_MEMORY}
       eventTrigger:
         eventType: google.storage.object.finalize
         resource: projects/_/buckets/${param:IMG_BUCKET}
@@ -95,6 +95,8 @@ params:
         value: europe-west3
       - label: Zurich (europe-west6)
         value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
@@ -105,6 +107,8 @@ params:
         value: asia-northeast3
       - label: Mumbai (asia-south1)
         value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
       - label: Jakarta (asia-southeast2)
         value: asia-southeast2
       - label: Montreal (northamerica-northeast1)
@@ -223,8 +227,8 @@ params:
   - param: IMAGE_TYPE
     label: Convert image to preferred types
     description: >
-      The image types you'd like your source image to convert to. The default for this option will 
-      be to keep the original file type.
+      The image types you'd like your source image to convert to. 
+      The default for this option will be to keep the original file type as the destination file type.
     type: multiSelect
     options:
       - label: jpeg
@@ -235,7 +239,39 @@ params:
         value: png
       - label: tiff
         value: tiff
+      - label: gif
+        value: gif
       - label: original
         value: false
     default: false
     required: true
+
+  - param: IS_ANIMATED
+    label: GIF and WEBP animated option
+    description: >
+      Keep animation of GIF and WEBP formats.
+    type: select
+    options:
+      - label: Yes
+        value: true
+      - label: No (1st frame only)
+        value: false
+    default: true
+    required: false
+
+  - param: FUNCTION_MEMORY
+    label: Cloud Function memory
+    description: >-
+      Memory of the function responsible of resizing images. 
+      Choose how much memory to give to the function that resize images. (For animated GIF => GIF we recommend using a minimum of 2GB).
+    type: select
+    options:
+      - label: 512 MB
+        value: 512
+      - label: 1 GB
+        value: 1024
+      - label: 2 GB
+        value: 2048
+    default: 1024
+    required: true
+    immutable: false

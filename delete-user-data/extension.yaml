@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: delete-user-data
-version: 0.1.10
+version: 0.1.12
 specVersion: v1beta
 
 displayName: Delete User Data
@@ -97,6 +97,8 @@ params:
         value: europe-west3
       - label: Zurich (europe-west6)
         value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
@@ -107,6 +109,8 @@ params:
         value: asia-northeast3
       - label: Mumbai (asia-south1)
         value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
       - label: Jakarta (asia-southeast2)
         value: asia-southeast2
       - label: Montreal (northamerica-northeast1)
@@ -158,6 +162,21 @@ params:
     example: my-instance
     validationRegex: ^([0-9a-z_.-]*)$
     validationErrorMessage: Invalid database instance
+    required: false
+
+  - param: SELECTED_DATABASE_LOCATION
+    label: Realtime Database location
+    description: >
+      (Only applicable if you provided the `Realtime Database instance` parameter.) From which Realtime Database location do you want to delete user data?
+    type: select
+    options:
+      - label: United States
+        value: us-central1
+      - label: Belgium
+        value: europe-west1
+      - label: Singapore
+        value: asia-southeast1
+    default: us-central1
     required: false
 
   - param: RTDB_PATHS

@@ -1,3 +1,15 @@
+## Version 0.1.25
+
+fixed - fix errors when resizing Samsung-encoded JPEGs
+
+## Version 0.1.24
+
+fixed - update package lock file to fix installation errors (#782)
+
+## Version 0.1.23
+
+feature - add Taiwan and Singapore Cloud Function locations (#729)
+
 ## Version 0.1.22
 
 feature - added Warsaw (europe-central2) location (#677)

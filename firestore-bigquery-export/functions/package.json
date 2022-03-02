@@ -4,6 +4,7 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
+    "prepare": "npm run build",
     "clean": "rimraf lib",
     "compile": "tsc",
     "test": "jest",
@@ -12,10 +13,11 @@
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@types/node": "^12.6.9",
-    "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.10",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.14",
     "@google-cloud/bigquery": "^2.1.0",
     "@types/chai": "^4.1.6",
+    "@types/jest": "^24.9.0",
+    "@types/node": "^12.6.9",
     "chai": "^4.2.0",
     "firebase-admin": "^8.1.0",
     "firebase-functions": "^3.13.2",
