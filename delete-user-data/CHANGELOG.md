@@ -1,3 +1,14 @@
+## Version 0.1.13
+
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - add RTDB locations function (#865)
+
+fixed - updated typescript compiler
+
+fixed - update validate workflow to use node14
+
 ## Version 0.1.12
 
 fixed - updated dependencies
