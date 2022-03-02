@@ -77,7 +77,7 @@ describe("Partitioning", () => {
       expect(metadata.timePartitioning).toBeDefined();
     });
 
-    test("does not partition latest view table with a timePartitioning option only", async () => {
+    test("successfully partitions latest view table with a timePartitioning option only", async () => {
       await changeTracker({
         datasetId,
         tableId,
@@ -88,7 +88,7 @@ describe("Partitioning", () => {
         .table(`${tableId}_raw_latest`)
         .getMetadata();
 
-      expect(metadata.timePartitioning).toBeUndefined();
+      expect(metadata.timePartitioning).toBeDefined();
     });
 
     test("does not partition with without a valid timePartitioningField when including timePartitioning, timePartitioningFieldType and timePartitioningFirestoreField", async () => {
