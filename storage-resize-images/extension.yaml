@@ -227,8 +227,8 @@ params:
   - param: IMAGE_TYPE
     label: Convert image to preferred types
     description: >
-      The image types you'd like your source image to convert to. The default for this option will 
-      be to keep the original file type.
+      The image types you'd like your source image to convert to. 
+      The default for this option will be to keep the original file type as the destination file type.
     type: multiSelect
     options:
       - label: jpeg
