@@ -302,6 +302,10 @@ async function processWrite(change) {
 
   const payload = change.after.data() as QueuePayload;
 
+  if (typeof payload.message !== "object") {
+    logs.invalidMessage(payload.message);
+  }
+
   if (!payload.delivery) {
     logs.missingDeliveryField(change.after.ref);
     return null;
