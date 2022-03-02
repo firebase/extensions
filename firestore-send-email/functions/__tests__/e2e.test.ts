@@ -1,5 +1,7 @@
 import * as admin from "firebase-admin";
 
+import { smtpServer } from "./createSMTPServer";
+
 process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
 
 admin.initializeApp({
@@ -12,7 +14,13 @@ const mailCollection = admin.firestore().collection(mail);
 const templates = "templates";
 const templatesCollection = admin.firestore().collection(templates);
 
+let server = null;
+
 describe("e2e testing", () => {
+  beforeAll(() => {
+    server = smtpServer();
+  });
+
   test("the SMTP function is working", async (): Promise<void> => {
     const record = {
       to: "test-assertion@email.com",
@@ -69,5 +77,9 @@ describe("e2e testing", () => {
         }
       });
     });
-  }, 12000);
+  }, 8000);
+
+  afterAll(() => {
+    server.close();
+  });
 });
