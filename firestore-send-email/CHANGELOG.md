@@ -1,6 +1,5 @@
 ## Version 0.1.15
 
-
 fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
 
 fixed - added local smtp server for running tests (#794)

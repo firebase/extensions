@@ -1,6 +1,5 @@
 ## Version 0.1.8
 
-
 fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
 
 fixed - update validate workflow to use node14

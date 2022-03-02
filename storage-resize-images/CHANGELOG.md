@@ -1,6 +1,5 @@
 ## Version 0.1.26
 
-
 fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
 
 fixed - update resized metadata content disposition (#839)

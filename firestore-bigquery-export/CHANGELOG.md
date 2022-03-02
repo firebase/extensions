@@ -1,6 +1,5 @@
 ## Version 0.1.21
 
-
 fixed - removed lib files and updated local test suite (#894)
 
 fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)

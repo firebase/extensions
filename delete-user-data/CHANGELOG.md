@@ -1,6 +1,5 @@
 ## Version 0.1.13
 
-
 fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
 
 fixed - add RTDB locations function (#865)
