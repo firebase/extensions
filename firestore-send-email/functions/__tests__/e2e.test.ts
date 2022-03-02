@@ -43,7 +43,7 @@ describe("e2e testing", () => {
         }
       });
     });
-  }, 8000);
+  }, 12000);
 
   test("empty template attachments should default to message attachments", async (): Promise<
     void

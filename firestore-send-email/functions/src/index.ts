@@ -22,6 +22,7 @@ import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
+import { setSmtpCredentials } from "./helpers";
 
 logs.init();
 
@@ -58,7 +59,7 @@ async function transportLayer() {
     });
   }
 
-  return nodemailer.createTransport(config.smtpConnectionUri);
+  return setSmtpCredentials(config);
 }
 
 function validateFieldArray(field: string, array?: string[]) {
