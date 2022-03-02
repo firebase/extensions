@@ -47,6 +47,12 @@ To review the schema for these two resources, click the **Schema** tab for each 
 
 Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`).
 
+Enabling wildcard references will provide an additional STRING based column. The resulting JSON field value references any wildcards that are included in ${param:COLLECTION_PATH}. You can extract them using [JSON_EXTRACT_SCALAR](https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions#json_extract_scalar).
+
+`Partition` settings cannot be updated on a pre-existing table, if these options are required then a new table must be created.
+
+`Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
+
 ### Configuring Alternative BigQuery Project
 When defining a specific BigQuery project, a manual step to setup permissions is required:
 

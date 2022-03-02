@@ -40,7 +40,12 @@ const trackerInstance = new FirestoreBigQueryEventHistoryTracker({
   datasetId: "id",
   datasetLocation: undefined,
   tableId: "id",
-  tablePartitioning: null,
+  transformFunction: "",
+  timePartitioning: null,
+  timePartitioningField: undefined,
+  timePartitioningFieldType: undefined,
+  timePartitioningFirestoreField: undefined,
+  clustering: null,
   bqProjectId: null,
 });
 
