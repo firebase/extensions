@@ -4,9 +4,9 @@ You can test out this extension right away!
 
 1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/firestore/data) in the Firebase console.
 
-1.  If it doesn't already exist, create the collection you specified during installation: `${param:MAIL_COLLECTION}`.
+2.  If it doesn't already exist, create the collection you specified during installation: `${param:MAIL_COLLECTION}`.
 
-1.  Add a document with a `to` field and a `message` field with the following content:
+3.  Add a document with a `to` field and a `message` field with the following content:
 
     ```js
     to: ['someone@example.com'],
@@ -17,7 +17,7 @@ You can test out this extension right away!
     }
     ```
 
-1.  In a few seconds, you'll see a `delivery` field appear in the document. The field will update as the extension processes the email.
+4.  In a few seconds, you'll see a `delivery` field appear in the document. The field will update as the extension processes the email.
 
 **Note:** You can also use the [Firebase Admin SDK][admin_sdk] to add a document:
 
@@ -195,6 +195,7 @@ An email will typically go from `PENDING` to `PROCESSING` to either `SUCCESS` or
 #### Manual retries
 
 There are instances in which email delivery fails in a recoverable fashion or the document can be manually corrected for proper delivery with minor modifications. While retries are not automatic, you can manually change the `state` in the `delivery` field to `RETRY` so that the extension attempts email delivery again (and increments the number of `attempts`).
+See the [official documentation](https://firebase.google.com/docs/extensions/official/firestore-send-email) for information on using this extension, including advanced use cases such as using Handlebars templates and managing email delivery status.
 
 ### Monitoring
 

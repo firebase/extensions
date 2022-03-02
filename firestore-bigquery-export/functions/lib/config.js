@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-function tablePartitioning(type) {
+exports.clustering = void 0;
+function timePartitioning(type) {
     if (type === "HOUR" ||
         type === "DAY" ||
         type === "MONTH" ||
@@ -24,12 +25,26 @@ function tablePartitioning(type) {
     }
     return null;
 }
+function clustering(clusters) {
+    return clusters ? clusters.split(",").slice(0, 4) : null;
+}
+exports.clustering = clustering;
 exports.default = {
+    bqProjectId: process.env.BIGQUERY_PROJECT_ID,
     collectionPath: process.env.COLLECTION_PATH,
     datasetId: process.env.DATASET_ID,
     tableId: process.env.TABLE_ID,
     location: process.env.LOCATION,
     initialized: false,
     datasetLocation: process.env.DATASET_LOCATION,
-    tablePartitioning: tablePartitioning(process.env.TABLE_PARTITIONING),
+    backupCollectionId: process.env.BACKUP_COLLECTION,
+    transformFunction: process.env.TRANSFORM_FUNCTION,
+    timePartitioning: timePartitioning(process.env.TABLE_PARTITIONING),
+    timePartitioningField: process.env.TIME_PARTITIONING_FIELD,
+    timePartitioningFieldType: process.env.TIME_PARTITIONING_FIELD_TYPE !== "omit"
+        ? process.env.TIME_PARTITIONING_FIELD_TYPE
+        : undefined,
+    timePartitioningFirestoreField: process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
+    clustering: clustering(process.env.CLUSTERING),
+    wildcardIds: process.env.WILDCARD_IDS === "true" ? true : false,
 };
