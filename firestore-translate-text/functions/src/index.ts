@@ -188,7 +188,7 @@ const translateMultiple = async (
     config.languages.forEach((language) => {
       promises.push(
         () =>
-          new Promise(async (resolve) => {
+          new Promise<void>(async (resolve) => {
             logs.translateInputStringToAllLanguages(value, config.languages);
 
             const output =

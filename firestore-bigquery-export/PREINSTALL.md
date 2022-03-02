@@ -7,7 +7,16 @@ The extension creates and updates a [dataset](https://cloud.google.com/bigquery/
 
 If you create, update, delete, or import a document in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset.
 
-Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`).
+Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`). 
+
+Enabling wildcard references will provide an additional STRING based column. The resulting JSON field value references any wildcards that are included in ${param:COLLECTION_PATH}. You can extract them using [JSON_EXTRACT_SCALAR](https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions#json_extract_scalar).
+
+
+`Partition` settings cannot be updated on a pre-existing table, if these options are required then a new table must be created.
+
+`Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
+
+
 
 #### Additional setup
 
@@ -15,6 +24,28 @@ Before installing this extension, you'll need to:
 
 - [Set up Cloud Firestore in your Firebase project.](https://firebase.google.com/docs/firestore/quickstart)
 - [Link your Firebase project to BigQuery.](https://support.google.com/firebase/answer/6318765)
+
+#### Transform function
+
+Prior to sending the document change to BigQuery, you have an opportunity to transform the data with an HTTP function. The payload will contain the following:
+
+```
+{ 
+  data: [{
+    insertId: int;
+    json: {
+      timestamp: int;
+      event_id: int;
+      document_name: string;
+      document_id: int;
+      operation: ChangeType;
+      data: string;
+    },
+  }]
+}
+```
+
+The response should be indentical in structure.
 
 #### Backfill your BigQuery dataset
 
