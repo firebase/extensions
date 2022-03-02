@@ -3,22 +3,26 @@
   "description": "Automatically delete a user's data when they delete their account.",
   "main": "lib/index.js",
   "scripts": {
+    "prepare": "npm run build",
     "build": "npm run clean && npm run compile",
     "clean": "rimraf lib",
     "compile": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "author": "Lauren Long <longlauren@google.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "firebase-admin": "^8.0.0",
-    "firebase-functions": "^3.13.2",
-    "firebase-tools": "^8.11.0"
-  },
-  "devDependencies": {
+    "firebase-admin": "^9.11.1",
+    "firebase-functions": "^3.15.4",
+    "firebase-tools": "^9.16.5",
+    "jest": "^24.9.0",
     "rimraf": "^2.6.3",
-    "typescript": "^3.5.2"
+    "typescript": "^4.4.4"
+  },
+  "engines": {
+    "node": "14"
   },
   "private": true
 }
