@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+
 export type BigQueryFieldMode = "NULLABLE" | "REPEATED" | "REQUIRED";
 export type BigQueryFieldType =
   | "BOOLEAN"
@@ -66,11 +68,20 @@ export const documentIdField = {
   description: "The document id as defined in the firestore database.",
 };
 
+export const documentPathParams = {
+  name: "path_params",
+  mode: "NULLABLE",
+  type: "STRING",
+  description:
+    "JSON string representing wildcard params with Firestore Document ids",
+};
+
 /*
  * We cannot specify a schema for view creation, and all view columns default
  * to the NULLABLE mode.
  */
-export const RawChangelogViewSchema: any = {
+
+export const RawChangelogViewSchema = {
   fields: [
     {
       name: "timestamp",
@@ -110,7 +121,7 @@ export const RawChangelogViewSchema: any = {
   ],
 };
 
-export const RawChangelogSchema: any = {
+export const RawChangelogSchema = {
   fields: [
     {
       name: "timestamp",
@@ -148,4 +159,18 @@ export const RawChangelogSchema: any = {
     },
     documentIdField,
   ],
+};
+
+// Helper function for Partitioned Changelogs field
+export const getNewPartitionField = (
+  config: FirestoreBigQueryEventHistoryTrackerConfig
+) => {
+  const { timePartitioningField, timePartitioningFieldType } = config;
+
+  return {
+    name: timePartitioningField,
+    mode: "NULLABLE",
+    type: timePartitioningFieldType,
+    description: "The document TimePartition partition field selected by user",
+  };
 };
