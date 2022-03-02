@@ -22,6 +22,7 @@
     "handlebars": "^4.5.3",
     "nodemailer": "^6.3.0",
     "rimraf": "^2.6.3",
+    "smtp-server": "^3.10.0",
     "typescript": "^3.5.3"
   },
   "devDependencies": {
