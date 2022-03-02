@@ -15,6 +15,7 @@ The extension creates and updates a [dataset](https://cloud.google.com/bigquery/
 
 If you create, update, delete, or import a document in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset.
 
+Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chatrooms/{providerId}/{categoryId}`).
 Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`). 
 
 You can also optionally return a STRING column (path_params) with JSON object containing wildcard reference ids. You can extract them using [JSON_EXTRACT_SCALAR](https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions#json_extract_scalar).
@@ -22,8 +23,6 @@ You can also optionally return a STRING column (path_params) with JSON object co
 `Partition` settings cannot be updated on a pre-existing table, if these options are required then a new table must be created.
 
 `Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
-
-
 
 #### Additional setup
 
