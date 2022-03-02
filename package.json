@@ -11,7 +11,8 @@
     "test": "jest  --detectOpenHandles --forceExit",
     "test-watch": "jest --watch",
     "test-coverage": "jest --coverage --detectOpenHandles --forceExit",
-    "postinstall": "lerna bootstrap --no-ci && lerna run --parallel clean && npm run build",
+    "postinstall": "lerna bootstrap --no-ci && lerna run --parallel clean && npm run build && npm run generate-package-locks",
+    "generate-package-locks": "lerna exec -- npm i --package-lock-only",
     "generate-readmes": "lerna run --parallel --ignore delete-user-data generate-readme"
   },
   "repository": "",
