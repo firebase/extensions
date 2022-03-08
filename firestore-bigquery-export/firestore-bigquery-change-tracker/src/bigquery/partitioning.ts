@@ -50,7 +50,11 @@ export class Partitioning {
   }
 
   private isValidPartitionTypeDate(value) {
-    return value instanceof firebase.firestore.Timestamp;
+    /* Check if valid timestamp value from sdk */
+    if (value instanceof firebase.firestore.Timestamp) return true;
+
+    /* Check if valid date/time value from console */
+    return Object.prototype.toString.call(value) === "[object Date]";
   }
 
   private hasHourAndDatePartitionConfig() {
@@ -182,7 +186,7 @@ export class Partitioning {
     }
 
     if (this.isValidPartitionTypeDate(fieldValue))
-      return { [fieldName]: fieldValue.toDate() };
+      return { [fieldName]: fieldValue };
 
     logs.firestoreTimePartitionFieldError(
       event.documentName,

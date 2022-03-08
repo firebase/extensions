@@ -10,6 +10,8 @@ import { FirestoreDocumentChangeEvent } from "../..";
 import { latestConsistentSnapshotView } from "../../bigquery/snapshot";
 import { deleteTable } from "../fixtures/clearTables";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
+import { getBigQueryTableData } from "../fixtures/queries";
+import { firestore } from "firebase-admin";
 
 process.env.PROJECT_ID = "extensions-testing";
 
@@ -89,6 +91,70 @@ describe("Partitioning", () => {
         .getMetadata();
 
       expect(metadata.timePartitioning).toBeDefined();
+    });
+
+    test("successfully partitions with a valid DateTime Timestamp", async () => {
+      const created = firestore.Timestamp.now();
+
+      const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
+        data: { created },
+      });
+
+      await changeTracker({
+        datasetId,
+        tableId,
+        timePartitioning: "DAY",
+        timePartitioningField: "created",
+        timePartitioningFieldType: "TIMESTAMP",
+        timePartitioningFirestoreField: "created",
+      }).record([event]);
+
+      const [metadata] = await dataset
+        .table(`${tableId}_raw_latest`)
+        .getMetadata();
+
+      const [changeLogRows] = await getBigQueryTableData(
+        process.env.PROJECT_ID,
+        datasetId,
+        tableId
+      );
+
+      expect(metadata.timePartitioning).toBeDefined();
+      expect(changeLogRows[0].created.value).toBe(
+        BigQuery.timestamp(created.toDate()).value
+      );
+    });
+
+    test.only("successfully partitions with a valid DateTime Timestamp Date", async () => {
+      const created = firestore.Timestamp.now().toDate();
+
+      const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
+        data: { created },
+      });
+
+      await changeTracker({
+        datasetId,
+        tableId,
+        timePartitioning: "DAY",
+        timePartitioningField: "created",
+        timePartitioningFieldType: "TIMESTAMP",
+        timePartitioningFirestoreField: "created",
+      }).record([event]);
+
+      const [metadata] = await dataset
+        .table(`${tableId}_raw_latest`)
+        .getMetadata();
+
+      const [changeLogRows] = await getBigQueryTableData(
+        process.env.PROJECT_ID,
+        datasetId,
+        tableId
+      );
+
+      expect(metadata.timePartitioning).toBeDefined();
+      expect(changeLogRows[0].created.value).toBe(
+        BigQuery.timestamp(created).value
+      );
     });
 
     test("does not partition with without a valid timePartitioningField when including timePartitioning, timePartitioningFieldType and timePartitioningFirestoreField", async () => {
