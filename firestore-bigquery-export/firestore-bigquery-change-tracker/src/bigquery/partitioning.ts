@@ -185,8 +185,13 @@ export class Partitioning {
       return { [fieldName]: fieldValue };
     }
 
-    if (this.isValidPartitionTypeDate(fieldValue))
+    if (this.isValidPartitionTypeDate(fieldValue)) {
+      /* Return converted timestamp value */
+      if (fieldValue.toDate) return { [fieldName]: fieldValue.toDate() };
+
+      /* Return date value */
       return { [fieldName]: fieldValue };
+    }
 
     logs.firestoreTimePartitionFieldError(
       event.documentName,

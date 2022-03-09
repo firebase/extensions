@@ -125,7 +125,7 @@ describe("Partitioning", () => {
       );
     });
 
-    test.only("successfully partitions with a valid DateTime Timestamp Date", async () => {
+    test("successfully partitions with a valid DateTime Timestamp Date", async () => {
       const created = firestore.Timestamp.now().toDate();
 
       const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
