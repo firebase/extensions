@@ -6,7 +6,7 @@ import * as logs from "../logs";
 import * as bigquery from "@google-cloud/bigquery";
 
 import { getNewPartitionField } from "./schema";
-import { TableMetadata } from "@google-cloud/bigquery";
+import { BigQuery, TableMetadata } from "@google-cloud/bigquery";
 
 export class Partitioning {
   public config: FirestoreBigQueryEventHistoryTrackerConfig;
@@ -162,6 +162,23 @@ export class Partitioning {
     return this.hasValidCustomPartitionConfig();
   }
 
+  convertDateValue(fieldValue: Date): string {
+    const { timePartitioningFieldType } = this.config;
+
+    /* Return as Datetime value */
+    if (timePartitioningFieldType === "DATETIME") {
+      return BigQuery.datetime(fieldValue.toISOString()).value;
+    }
+
+    /* Return as Date value */
+    if (timePartitioningFieldType === "DATE") {
+      return BigQuery.date(fieldValue.toISOString().substring(0, 10)).value;
+    }
+
+    /* Return as Timestamp  */
+    return BigQuery.timestamp(fieldValue).value;
+  }
+
   /*
     Extracts a valid Partition field from the Document Change Event.
     Matches result based on a pre-defined Firestore field matching the event data object.
@@ -186,10 +203,12 @@ export class Partitioning {
     }
 
     if (this.isValidPartitionTypeDate(fieldValue)) {
-      /* Return converted timestamp value */
-      if (fieldValue.toDate) return { [fieldName]: fieldValue.toDate() };
+      /* Return converted console value */
+      if (fieldValue.toDate) {
+        return { [fieldName]: this.convertDateValue(fieldValue.toDate()) };
+      }
 
-      /* Return date value */
+      /* Return standard date value */
       return { [fieldName]: fieldValue };
     }
 
