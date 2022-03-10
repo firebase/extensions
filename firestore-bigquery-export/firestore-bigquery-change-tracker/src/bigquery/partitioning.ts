@@ -8,6 +8,8 @@ import * as bigquery from "@google-cloud/bigquery";
 import { getNewPartitionField } from "./schema";
 import { BigQuery, TableMetadata } from "@google-cloud/bigquery";
 
+import { PartitionFieldType } from "../types";
+
 export class Partitioning {
   public config: FirestoreBigQueryEventHistoryTrackerConfig;
   public table: bigquery.Table;
@@ -166,12 +168,12 @@ export class Partitioning {
     const { timePartitioningFieldType } = this.config;
 
     /* Return as Datetime value */
-    if (timePartitioningFieldType === "DATETIME") {
+    if (timePartitioningFieldType === PartitionFieldType.DATETIME) {
       return BigQuery.datetime(fieldValue.toISOString()).value;
     }
 
     /* Return as Date value */
-    if (timePartitioningFieldType === "DATE") {
+    if (timePartitioningFieldType === PartitionFieldType.DATE) {
       return BigQuery.date(fieldValue.toISOString().substring(0, 10)).value;
     }
 
