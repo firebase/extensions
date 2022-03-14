@@ -96,7 +96,6 @@ const validateLocation = (value: string) => {
     "us-west3",
     "us-east1",
     "us-central1",
-
   ].indexOf(value.toLowerCase());
 
   return index !== -1;
