@@ -116,18 +116,18 @@ export const buildLatestSchemaSnapshotViewQuery = (
 
   let query = `
       WITH latest AS (
-        SELECT max(timestamp) as latest_timestamp, document_id
+        SELECT max(timestamp) as latest_timestamp, document_name
         FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawTableName}\`
-        GROUP BY document_id
+        GROUP BY document_name
       )
       SELECT
-        document_name,
-        t.document_id,
+        t.document_name,
+        document_id,
         timestamp,
         operation${fieldValueSelectorClauses.length > 0 ? `,` : ``}
         ${fieldValueSelectorClauses}
       FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawTableName}\` AS t
-      JOIN latest ON (t.document_id = latest.document_id AND t.timestamp = latest.latest_timestamp)
+      JOIN latest ON (t.document_name = latest.document_name AND t.timestamp = latest.latest_timestamp)
       WHERE operation != "DELETE"
   `;
   const groupableExtractors = Object.keys(schemaFieldExtractors).filter(
