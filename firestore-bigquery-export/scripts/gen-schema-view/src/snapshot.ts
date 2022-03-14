@@ -26,12 +26,12 @@ import {
 
 export function latestConsistentSnapshotSchemaView(
   datasetId: string,
-  rawViewName: string,
+  rawTableName: string,
   schema: FirestoreSchema
 ): any {
   const result = buildLatestSchemaSnapshotViewQuery(
     datasetId,
-    rawViewName,
+    rawTableName,
     schema
   );
   return {
@@ -62,7 +62,7 @@ export const testBuildLatestSchemaSnapshotViewQuery = (
 
 export const buildLatestSchemaSnapshotViewQuery = (
   datasetId: string,
-  rawViewName: string,
+  rawTableName: string,
   schema: FirestoreSchema
 ): any => {
   // We need to pass the dataset id into the parser so that we can call the
@@ -121,7 +121,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
         timestamp,
         operation${fieldValueSelectorClauses.length > 0 ? `,` : ``}
         ${fieldValueSelectorClauses}
-      FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawViewName}\`
+      FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawTableName}\`
   `;
   const groupableExtractors = Object.keys(schemaFieldExtractors).filter(
     (name) =>
@@ -147,12 +147,12 @@ export const buildLatestSchemaSnapshotViewQuery = (
       query,
           /*except=*/ schemaFieldArrays.concat(schemaFieldGeopoints)
     )}
-        ${rawViewName}
+        ${rawTableName}
         ${schemaFieldArrays
         .map(
           (
             arrayFieldName
-          ) => `LEFT JOIN UNNEST(${rawViewName}.${arrayFieldName})
+          ) => `LEFT JOIN UNNEST(${rawTableName}.${arrayFieldName})
             AS ${arrayFieldName}_member
             WITH OFFSET ${arrayFieldName}_index`
         )
