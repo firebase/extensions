@@ -1,3 +1,15 @@
+## Version 0.1.26
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - update resized metadata content disposition (#839)
+
+feature - add WEBP and GIF animation (#875)
+
+fixed - update validate workflow to use node14
+
+fixed - fix samsung encoded jpg resizing
+
 ## Version 0.1.25
 
 fixed - fix errors when resizing Samsung-encoded JPEGs

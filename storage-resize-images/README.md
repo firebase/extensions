@@ -68,8 +68,13 @@ If you prefer to resize every image uploaded to your Storage bucket,  leave this
 * Cache-Control header for resized images: This extension automatically copies any `Cache-Control` metadata from the original image to the resized images. For the resized images, do you want to overwrite this copied `Cache-Control` metadata or add `Cache-Control` metadata? Learn more about [`Cache-Control` headers](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control). If you prefer not to overwrite or add `Cache-Control` metadata, leave this field empty.
 
 
-* Convert image to preferred types: The image types you'd like your source image to convert to. The default for this option will  be to keep the original file type.
+* Convert image to preferred types: The image types you'd like your source image to convert to.  The default for this option will be to keep the original file type as the destination file type.
 
+
+* GIF and WEBP animated option: Keep animation of GIF and WEBP formats.
+
+
+* Cloud Function memory: Memory of the function responsible of resizing images.  Choose how much memory to give to the function that resize images. (For animated GIF => GIF we recommend using a minimum of 2GB).
 
 
 

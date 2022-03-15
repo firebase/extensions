@@ -21,5 +21,6 @@ export default {
   rtdbPaths: process.env.RTDB_PATHS,
   storagePaths: process.env.STORAGE_PATHS,
   storageBucketDefault: process.env.STORAGE_BUCKET,
-  SELECTED_DATABASE_INSTANCE: process.env.SELECTED_DATABASE_INSTANCE,
+  selectedDatabaseInstance: process.env.SELECTED_DATABASE_INSTANCE,
+  selectedDatabaseLocation: process.env.SELECTED_DATABASE_LOCATION,
 };

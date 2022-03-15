@@ -17,14 +17,21 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as firebase_tools from "firebase-tools";
+import { getDatabaseUrl } from "./helpers";
 
 import config from "./config";
 import * as logs from "./logs";
 
+// Helper function for selecting correct domain adrress
+const databaseURL = getDatabaseUrl(
+  config.selectedDatabaseInstance,
+  config.selectedDatabaseLocation
+);
+
 // Initialize the Firebase Admin SDK
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
-  databaseURL: `https://${config.SELECTED_DATABASE_INSTANCE}.firebaseio.com`,
+  databaseURL,
 });
 
 logs.init();
@@ -46,7 +53,7 @@ export const clearData = functions.auth.user().onDelete(async (user) => {
   } else {
     logs.firestoreNotConfigured();
   }
-  if (rtdbPaths) {
+  if (rtdbPaths && databaseURL) {
     promises.push(clearDatabaseData(rtdbPaths, uid));
   } else {
     logs.rtdbNotConfigured();
