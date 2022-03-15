@@ -21,7 +21,7 @@ let server = null;
 
 describe("e2e testing", () => {
   let user: UserRecord | undefined = null;
-  
+
   beforeAll(async () => {
     server = smtpServer();
 
