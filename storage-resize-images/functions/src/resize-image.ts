@@ -25,7 +25,7 @@ export function resize(file, size) {
     throw new Error("height and width are not delimited by a ',' or a 'x'");
   }
 
-  return sharp(file, { failOnError: false })
+  return sharp(file, { failOnError: false, animated: config.animated })
     .rotate()
     .resize(parseInt(width, 10), parseInt(height, 10), {
       fit: "inside",
@@ -69,7 +69,7 @@ export function convertType(buffer, format) {
   }
 
   if (format === "webp") {
-    return sharp(buffer)
+    return sharp(buffer, { animated: config.animated })
       .webp(webp)
       .toBuffer();
   }
@@ -86,6 +86,12 @@ export function convertType(buffer, format) {
       .toBuffer();
   }
 
+  if (format === "gif") {
+    return sharp(buffer, { animated: config.animated })
+      .gif()
+      .toBuffer();
+  }
+
   return buffer;
 }
 
@@ -97,6 +103,7 @@ export const supportedContentTypes = [
   "image/png",
   "image/tiff",
   "image/webp",
+  "image/gif",
 ];
 
 export const supportedImageContentTypeMap = {
@@ -106,6 +113,7 @@ export const supportedImageContentTypeMap = {
   tif: "image/tif",
   tiff: "image/tiff",
   webp: "image/webp",
+  gif: "image/gif",
 };
 
 const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
@@ -160,9 +168,19 @@ export const modifyImage = async ({
   try {
     modifiedFile = path.join(os.tmpdir(), modifiedFileName);
 
+    // filename\*=utf-8''  selects any string match the filename notation.
+    // [^;\s]+ searches any following string until either a space or semi-colon.
+    const contentDisposition =
+      objectMetadata && objectMetadata.contentDisposition
+        ? objectMetadata.contentDisposition.replace(
+            /(filename\*=utf-8''[^;\s]+)/,
+            `filename*=utf-8''${modifiedFileName}`
+          )
+        : "";
+
     // Cloud Storage files.
     const metadata: { [key: string]: any } = {
-      contentDisposition: objectMetadata.contentDisposition,
+      contentDisposition,
       contentEncoding: objectMetadata.contentEncoding,
       contentLanguage: objectMetadata.contentLanguage,
       contentType: imageContentType,
@@ -195,7 +213,9 @@ export const modifyImage = async ({
     }
 
     // Generate a image file using Sharp.
-    await sharp(modifiedImageBuffer).toFile(modifiedFile);
+    await sharp(modifiedImageBuffer, { animated: config.animated }).toFile(
+      modifiedFile
+    );
 
     // Uploading the modified image.
     logs.imageUploading(modifiedFilePath);
