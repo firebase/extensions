@@ -22,6 +22,14 @@ admin.firestore().collection('mail').add({
 })
 ```
 
+Or in Firestore the following fields can be added:
+
+| Field       | Type        | Example                                                                                 |
+| ----------- | ----------- | --------------------------------------------------------------------------------------- |
+| `to`        | String      | `"someone@example.com"`                                                                 |
+| `message`   | Map         | `{ subject: "Hello from Firebase!", html: "This is an <code>HTML</code> email body." }` |
+
+
 You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
 
 When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**. Note that this extension is for use with bulk email service providers, like SendGrid, Mailgun, etc.
@@ -47,7 +55,14 @@ Usage of this extension also requires you to have SMTP credentials for mail deli
 
 * Cloud Functions location: Where do you want to deploy the functions created for this extension? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
-* SMTP connection URI: A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465.
+* SMTP connection URI: A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465. In order to keep passwords secure, it is recommended to omit the password from the connection string while using the `SMTP Password` field for entering secrets and passwords. Passwords and secrets should now be included in `SMTP password` field.
+Secure format:
+ `smtps://username@gmail.com@smtp.gmail.com:465` (username only)
+ `smtps://smtp.gmail.com:465` (No username and password)
+Backwards Compatible (less secure):
+ `smtps://username@gmail.com:password@smtp.gmail.com:465`. (username and password)
+
+* SMTP password: User password for the SMTP server
 
 * Email documents collection: What is the path to the collection that contains the documents used to build and send the emails?
 

@@ -135,7 +135,7 @@ async function processCollection(config: CliConfig): Promise<number> {
 
     const rows: FirestoreDocumentChangeEvent = docs.map((document) => {
       return {
-        timestamp: new Date(0).toISOString(),
+        timestamp: new Date().toISOString(),
         operation: ChangeType.IMPORT,
         documentName: `projects/${
           config.projectId
