@@ -383,7 +383,6 @@ export const processQueue = functions.handler.firestore.document.onWrite(
   async (change) => {
     await initialize();
     logs.start();
-
     try {
       await processWrite(change);
     } catch (err) {
