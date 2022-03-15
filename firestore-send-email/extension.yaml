@@ -128,7 +128,7 @@ params:
     type: string
     example: smtps://username@smtp.hostname.com:465
     validationRegex: ^smtps?://[^:]+@.*$
-    validationErrorMessage: Invalid SMTP connection URI. Must be in the form `smtp(s)://username:password@hostname:port` or `smtp(s)://username@hostname:port`.
+    validationErrorMessage: Invalid SMTP connection URI. Must be in the form `smtp(s)://username@hostname:port`.
     required: true
 
   - param: SMTP_PASSWORD
