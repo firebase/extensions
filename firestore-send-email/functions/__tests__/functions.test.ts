@@ -1,5 +1,4 @@
 import * as admin from "firebase-admin";
-import Templates from "../src/templates";
 
 const { logger } = require("firebase-functions");
 const consoleLogSpy = jest.spyOn(logger, "log").mockImplementation();

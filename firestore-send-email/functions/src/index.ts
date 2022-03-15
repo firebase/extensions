@@ -23,6 +23,7 @@ import config from "./config";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
 import { UserRecord } from "firebase-functions/v1/auth";
+import { setSmtpCredentials } from "./helpers";
 
 logs.init();
 
@@ -49,26 +50,17 @@ async function initialize() {
 
 async function transportLayer() {
   if (config.testing) {
-    return new Promise((resolve, reject) => {
-      nodemailer.createTestAccount((err, account) => {
-        if (err) {
-          reject(err);
-        }
-        const testSMTPCredentials = nodemailer.createTransport({
-          host: "smtp.ethereal.email",
-          port: 587,
-          secure: false, // true for 465, false for other ports
-          auth: {
-            user: account.user, // generated ethereal user
-            pass: account.pass, // generated ethereal password
-          },
-        });
-        resolve(testSMTPCredentials);
-      });
+    return nodemailer.createTransport({
+      host: "localhost",
+      port: 8132,
+      secure: false,
+      tls: {
+        rejectUnauthorized: false,
+      },
     });
-  } else {
-    return nodemailer.createTransport(config.smtpConnectionUri);
   }
+
+  return setSmtpCredentials(config);
 }
 
 function validateFieldArray(field: string, array?: string[]) {
@@ -338,6 +330,10 @@ async function processWrite(change) {
   }
 
   const payload = change.after.data() as QueuePayload;
+
+  if (typeof payload.message !== "object") {
+    logs.invalidMessage(payload.message);
+  }
 
   if (!payload.delivery) {
     logs.missingDeliveryField(change.after.ref);
