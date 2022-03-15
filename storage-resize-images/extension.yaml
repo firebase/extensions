@@ -252,5 +252,5 @@ params:
       eg. `{"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "pallete": true }}`
     type: string
     validationRegex: ^({(.*?)})$
-    validationErrorMessage: Please provide a valid json object. Expected to start with `{`.
+    validationErrorMessage: Please provide a valid json object.
     required: false

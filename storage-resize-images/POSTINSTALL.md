@@ -38,7 +38,6 @@ Be aware of the following when using this extension:
   * image/png
   * image/tiff
   * image/webp
-  
 
 If you are using raw image data in your application, you need to ensure you set the correct content type when uploading to the Firebase Storage bucket to trigger the extension image resize. Below is an example of how to set the content type:
 
