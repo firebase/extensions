@@ -22,7 +22,8 @@ export type BigQueryFieldType =
   | "NUMERIC"
   | "RECORD"
   | "STRING"
-  | "TIMESTAMP";
+  | "TIMESTAMP"
+  | "JSON";
 export type BigQueryField = {
   fields?: BigQueryField[];
   mode: BigQueryFieldMode;
@@ -43,7 +44,7 @@ const bigQueryField = (
 });
 
 // These field types form the basis of the `raw` data table
-export const dataField = bigQueryField("data", "STRING", "NULLABLE");
+export const dataField = bigQueryField("data", "JSON", "NULLABLE");
 export const documentNameField = bigQueryField(
   "document_name",
   "STRING",
@@ -113,7 +114,7 @@ export const RawChangelogViewSchema = {
     {
       name: "data",
       mode: "NULLABLE",
-      type: "STRING",
+      type: "JSON",
       description:
         "The full JSON representation of the current document state.",
     },
@@ -153,7 +154,7 @@ export const RawChangelogSchema = {
     {
       name: "data",
       mode: "NULLABLE",
-      type: "STRING",
+      type: "JSON",
       description:
         "The full JSON representation of the document state after the indicated operation is applied. This field will be null for DELETE operations.",
     },
