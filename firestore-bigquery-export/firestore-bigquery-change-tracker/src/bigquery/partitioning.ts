@@ -6,7 +6,9 @@ import * as logs from "../logs";
 import * as bigquery from "@google-cloud/bigquery";
 
 import { getNewPartitionField } from "./schema";
-import { TableMetadata } from "@google-cloud/bigquery";
+import { BigQuery, TableMetadata } from "@google-cloud/bigquery";
+
+import { PartitionFieldType } from "../types";
 
 export class Partitioning {
   public config: FirestoreBigQueryEventHistoryTrackerConfig;
@@ -50,7 +52,11 @@ export class Partitioning {
   }
 
   private isValidPartitionTypeDate(value) {
-    return value instanceof firebase.firestore.Timestamp;
+    /* Check if valid timestamp value from sdk */
+    if (value instanceof firebase.firestore.Timestamp) return true;
+
+    /* Check if valid date/time value from console */
+    return Object.prototype.toString.call(value) === "[object Date]";
   }
 
   private hasHourAndDatePartitionConfig() {
@@ -158,6 +164,23 @@ export class Partitioning {
     return this.hasValidCustomPartitionConfig();
   }
 
+  convertDateValue(fieldValue: Date): string {
+    const { timePartitioningFieldType } = this.config;
+
+    /* Return as Datetime value */
+    if (timePartitioningFieldType === PartitionFieldType.DATETIME) {
+      return BigQuery.datetime(fieldValue.toISOString()).value;
+    }
+
+    /* Return as Date value */
+    if (timePartitioningFieldType === PartitionFieldType.DATE) {
+      return BigQuery.date(fieldValue.toISOString().substring(0, 10)).value;
+    }
+
+    /* Return as Timestamp  */
+    return BigQuery.timestamp(fieldValue).value;
+  }
+
   /*
     Extracts a valid Partition field from the Document Change Event.
     Matches result based on a pre-defined Firestore field matching the event data object.
@@ -181,8 +204,15 @@ export class Partitioning {
       return { [fieldName]: fieldValue };
     }
 
-    if (this.isValidPartitionTypeDate(fieldValue))
-      return { [fieldName]: fieldValue.toDate() };
+    if (this.isValidPartitionTypeDate(fieldValue)) {
+      /* Return converted console value */
+      if (fieldValue.toDate) {
+        return { [fieldName]: this.convertDateValue(fieldValue.toDate()) };
+      }
+
+      /* Return standard date value */
+      return { [fieldName]: fieldValue };
+    }
 
     logs.firestoreTimePartitionFieldError(
       event.documentName,
