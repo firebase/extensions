@@ -1,15 +1,15 @@
 import { BigQuery } from "@google-cloud/bigquery";
 
 export const getTableDataColumns = async (
-  bqProjectId,
+  projectId,
   datasetId,
   tableId,
   column_name
 ) => {
-  const bq = new BigQuery();
+  const bq = new BigQuery({ projectId });
 
   const [latest_metadata] = await bq
-    .dataset(bqProjectId)
+    .dataset(datasetId)
     .table(`${tableId}_raw_changelog`)
     .getMetadata();
 

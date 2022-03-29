@@ -323,6 +323,20 @@ params:
     example: data,document_id,timestamp
     required: false
 
+  - param: DATA_FORMAT
+    label: Select how to store data in the big query table
+    description: >-
+      Choose how to store synced firestore data within your bigquery table. 
+      JSON is currently in Beta https://cloud.google.com/bigquery/docs/reference/standard-sql/json-data
+    type: select
+    options:
+      - label: string
+        value: STRING
+      - label: json
+        value: JSON
+    default: string
+    required: true
+
   - param: BACKUP_COLLECTION
     label: Backup Collection Name
     description: >-

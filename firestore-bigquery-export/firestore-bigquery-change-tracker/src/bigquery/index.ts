@@ -19,10 +19,10 @@ import * as firebase from "firebase-admin";
 import * as traverse from "traverse";
 import fetch from "node-fetch";
 import {
-  RawChangelogSchema,
-  RawChangelogViewSchema,
   documentIdField,
   documentPathParams,
+  SelectRawChangelogSchema,
+  SelectRawChangelogViewSchema,
 } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 import handleFailedTransactions from "./handleFailedTransactions";
@@ -55,6 +55,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   clustering: string[] | null;
   wildcardIds?: boolean;
   bqProjectId: string | undefined;
+  data_format?: string | undefined;
   backupTableId?: string | undefined;
 }
 
@@ -332,7 +333,9 @@ export class FirestoreBigQueryEventHistoryTracker
       }
     } else {
       logs.bigQueryTableCreating(changelogName);
-      const schema = { fields: [...RawChangelogSchema.fields] };
+
+      /* select default schema type based on configuration */
+      const schema = SelectRawChangelogSchema(this.config.data_format);
 
       if (this.config.wildcardIds) {
         schema.fields.push(documentPathParams);
@@ -364,7 +367,9 @@ export class FirestoreBigQueryEventHistoryTracker
     const dataset = this.bigqueryDataset();
     const view = dataset.table(this.rawLatestView());
     const [viewExists] = await view.exists();
-    const schema = RawChangelogViewSchema;
+
+    /* select default schema type based on configuration */
+    const schema = SelectRawChangelogViewSchema(this.config.data_format);
 
     const partitioning = new Partitioning(this.config, view);
 
@@ -414,7 +419,9 @@ export class FirestoreBigQueryEventHistoryTracker
       await view.setMetadata(metadata);
       // }
     } else {
-      const schema = { fields: [...RawChangelogViewSchema.fields] };
+      /* select default schema type based on configuration */
+      const schema = SelectRawChangelogSchema(this.config.data_format);
+
       //Add partitioning field
       await partitioning.addPartitioningToSchema(schema.fields);
       //TODO Create notification for a user that View cannot be Time Partitioned by the field.
@@ -423,6 +430,7 @@ export class FirestoreBigQueryEventHistoryTracker
       if (this.config.wildcardIds) {
         schema.fields.push(documentPathParams);
       }
+
       const latestSnapshot = latestConsistentSnapshotView(
         this.config.datasetId,
         this.rawChangeLogTableName(),
@@ -436,14 +444,16 @@ export class FirestoreBigQueryEventHistoryTracker
       };
 
       if (this.config.timePartitioning) {
-        options.timePartitioning = {
-          type: this.config.timePartitioning,
-        };
+        options.timePartitioning = { type: this.config.timePartitioning };
       }
+
+      console.log("creating view >>>", latestSnapshot);
 
       try {
         await view.create(options);
-        await view.setMetadata({ schema: RawChangelogViewSchema });
+        await view.setMetadata({
+          schema: SelectRawChangelogViewSchema(this.config.data_format),
+        });
         logs.bigQueryViewCreated(this.rawLatestView());
       } catch (ex) {
         logs.tableCreationError(this.rawLatestView(), ex.message);

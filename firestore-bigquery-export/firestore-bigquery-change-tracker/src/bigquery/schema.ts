@@ -77,6 +77,78 @@ export const documentPathParams = {
     "JSON string representing wildcard params with Firestore Document ids",
 };
 
+const defaultSchemaFields = [
+  {
+    name: "timestamp",
+    mode: "REQUIRED",
+    type: "TIMESTAMP",
+    description:
+      "The commit timestamp of this change in Cloud Firestore. If the operation is IMPORT, this timestamp is epoch to ensure that any operation on an imported document supersedes the IMPORT.",
+  },
+  {
+    name: "event_id",
+    mode: "REQUIRED",
+    type: "STRING",
+    description:
+      "The ID of the document change event that triggered the Cloud Function created by the extension. Empty for imports.",
+  },
+  {
+    name: "document_name",
+    mode: "REQUIRED",
+    type: "STRING",
+    description:
+      "The full name of the changed document, for example, projects/collection/databases/(default)/documents/users/me).",
+  },
+  {
+    name: "operation",
+    mode: "REQUIRED",
+    type: "STRING",
+    description: "One of CREATE, UPDATE, IMPORT, or DELETE.",
+  },
+];
+
+const defaultViewSchemaFields = [
+  {
+    name: "timestamp",
+    mode: "NULLABLE",
+    type: "TIMESTAMP",
+    description:
+      "The commit timestamp of this change in Cloud Firestore. If the operation is IMPORT, this timestamp is epoch to ensure that any operation on an imported document supersedes the IMPORT.",
+  },
+  {
+    name: "event_id",
+    mode: "NULLABLE",
+    type: "STRING",
+    description:
+      "The ID of the most-recent document change event that triggered the Cloud Function created by the extension. Empty for imports.",
+  },
+  {
+    name: "document_name",
+    mode: "NULLABLE",
+    type: "STRING",
+    description:
+      "The full name of the changed document, for example, projects/collection/databases/(default)/documents/users/me).",
+  },
+  {
+    name: "operation",
+    mode: "NULLABLE",
+    type: "STRING",
+    description: "One of CREATE, UPDATE, IMPORT.",
+  },
+];
+
+export const SelectRawChangelogViewSchema = (type = "STRING") => {
+  if (type === "STRING") return RawChangelogViewSchema;
+
+  return RawChangelogJSONViewSchema;
+};
+
+export const SelectRawChangelogSchema = (type = "STRING") => {
+  if (type === "STRING") return RawChangelogSchema;
+
+  return RawChangelogJSONSchema;
+};
+
 /*
  * We cannot specify a schema for view creation, and all view columns default
  * to the NULLABLE mode.
@@ -84,33 +156,21 @@ export const documentPathParams = {
 
 export const RawChangelogViewSchema = {
   fields: [
+    ...defaultViewSchemaFields,
     {
-      name: "timestamp",
-      mode: "NULLABLE",
-      type: "TIMESTAMP",
-      description:
-        "The commit timestamp of this change in Cloud Firestore. If the operation is IMPORT, this timestamp is epoch to ensure that any operation on an imported document supersedes the IMPORT.",
-    },
-    {
-      name: "event_id",
+      name: "data",
       mode: "NULLABLE",
       type: "STRING",
       description:
-        "The ID of the most-recent document change event that triggered the Cloud Function created by the extension. Empty for imports.",
+        "The full JSON representation of the current document state.",
     },
-    {
-      name: "document_name",
-      mode: "NULLABLE",
-      type: "STRING",
-      description:
-        "The full name of the changed document, for example, projects/collection/databases/(default)/documents/users/me).",
-    },
-    {
-      name: "operation",
-      mode: "NULLABLE",
-      type: "STRING",
-      description: "One of CREATE, UPDATE, IMPORT.",
-    },
+    documentIdField,
+  ],
+};
+
+export const RawChangelogJSONViewSchema = {
+  fields: [
+    ...defaultViewSchemaFields,
     {
       name: "data",
       mode: "NULLABLE",
@@ -124,33 +184,21 @@ export const RawChangelogViewSchema = {
 
 export const RawChangelogSchema = {
   fields: [
+    ...defaultSchemaFields,
     {
-      name: "timestamp",
-      mode: "REQUIRED",
-      type: "TIMESTAMP",
-      description:
-        "The commit timestamp of this change in Cloud Firestore. If the operation is IMPORT, this timestamp is epoch to ensure that any operation on an imported document supersedes the IMPORT.",
-    },
-    {
-      name: "event_id",
-      mode: "REQUIRED",
+      name: "data",
+      mode: "NULLABLE",
       type: "STRING",
       description:
-        "The ID of the document change event that triggered the Cloud Function created by the extension. Empty for imports.",
+        "The full JSON representation of the document state after the indicated operation is applied. This field will be null for DELETE operations.",
     },
-    {
-      name: "document_name",
-      mode: "REQUIRED",
-      type: "STRING",
-      description:
-        "The full name of the changed document, for example, projects/collection/databases/(default)/documents/users/me).",
-    },
-    {
-      name: "operation",
-      mode: "REQUIRED",
-      type: "STRING",
-      description: "One of CREATE, UPDATE, IMPORT, or DELETE.",
-    },
+    documentIdField,
+  ],
+};
+
+export const RawChangelogJSONSchema = {
+  fields: [
+    ...defaultSchemaFields,
     {
       name: "data",
       mode: "NULLABLE",

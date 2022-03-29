@@ -10,6 +10,7 @@
   "main": "./lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
+    "build:watch": "npm run clean && tsc --watch",
     "clean": "rimraf lib",
     "compile": "tsc",
     "test:local": "firebase ext:dev:emulators:exec ./node_modules/.bin/jest --test-params=./src/__tests__/emulator-params.env --project=extensions-testing --config=./src/__tests__/firebase.json",
@@ -39,7 +40,7 @@
     "rimraf": "^2.6.3",
     "nyc": "^14.0.0",
     "jest": "^24.9.0",
-    "chai": "^4.2.0",
+    "chai": "^4.3.6",
     "ts-node": "^7.0.1",
     "ts-jest": "^24.1.0",
     "@types/jest": "^24.0.18",

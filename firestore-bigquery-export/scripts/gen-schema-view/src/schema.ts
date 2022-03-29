@@ -210,7 +210,9 @@ export function updateFirestoreSchemaFields(fields: FirestoreField[]) {
  */
 function decorateSchemaWithChangelogFields(schema: any): any {
   let decorated: any = { fields: schema.fields };
-  const changelogSchemaFields: any[] = RawChangelogViewSchema.fields;
+  const changelogSchemaFields: any[] = RawChangelogViewSchema(
+    this.config.data_format
+  ).fields;
   for (let i = 0; i < changelogSchemaFields.length; i++) {
     if (
       changelogSchemaFields[i].name === "event_id" ||

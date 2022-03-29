@@ -46,6 +46,7 @@ describe("e2e testing", () => {
         await changeTracker({
           datasetId,
           tableId,
+          data_format: "JSON",
         }).record([event]);
 
         const [changelogColumn, latestColumn] = await getTableDataColumns(
@@ -70,8 +71,6 @@ describe("e2e testing", () => {
           datasetId,
           tableId
         );
-
-        console.log(latestRows, changeLogRows);
       });
     });
   });

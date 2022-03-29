@@ -62,7 +62,9 @@ export function buildLatestSnapshotViewQuery(
     SELECT
     document_name,
     document_id${groupByColumns.length > 0 ? `,` : ``}
-      ${groupByColumns.join(",")}
+      ${groupByColumns
+        .map(($) => ($ !== "data" ? $ : "TO_JSON_STRING(data) as data"))
+        .join(",")}
     FROM (
       SELECT
         document_name,

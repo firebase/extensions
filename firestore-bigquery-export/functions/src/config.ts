@@ -49,5 +49,6 @@ export default {
       : undefined,
   timePartitioningFirestoreField: process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
   clustering: clustering(process.env.CLUSTERING),
+  data_format: process.env.DATA_FORMAT || "STRING",
   wildcardIds: process.env.WILDCARD_IDS === "true" ? true : false,
 };
