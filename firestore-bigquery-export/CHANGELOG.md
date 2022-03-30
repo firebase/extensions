@@ -2,7 +2,7 @@
 
 fixed - updated type check on partitioned date fields (#906)
 
-fixed - updated the bq projectId to be required and to default as the current firebase project (#900)
+fixed - updated the BigQuery projectId to be required and to default as the current firebase project (#900)
 
 ## Version 0.1.21
 
