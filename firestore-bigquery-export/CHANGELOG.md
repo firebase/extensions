@@ -1,3 +1,9 @@
+## Version 0.1.22
+
+fixed - updated type check on partitioned date fields (#906)
+
+fixed - updated the BigQuery projectId to be required and to default as the current firebase project (#900)
+
 ## Version 0.1.21
 
 fixed - removed lib files and updated local test suite (#894)
