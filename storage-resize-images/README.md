@@ -80,7 +80,7 @@ If you prefer to resize every image uploaded to your Storage bucket,  leave this
 
 **Cloud Functions:**
 
-* **generateResizedImage:** Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images, then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
+* **generateResizedImage:** Listens for all changes made to your specified Cloud Storage bucket, finds any images, and resizes them. Resized images are stored in the same bucket. Optionally keeps or deletes the original images.
 
 
 
