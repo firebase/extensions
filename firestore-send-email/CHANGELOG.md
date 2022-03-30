@@ -1,3 +1,7 @@
+## Version 0.1.16
+
+fixed - updated the extensions regular expression validation to contain additional smtp formats (#909)
+
 ## Version 0.1.15
 
 fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
