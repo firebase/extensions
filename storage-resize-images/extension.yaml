@@ -148,6 +148,24 @@ params:
     default: "200x200"
     required: true
 
+  - param: NAMING_CONVENTION
+    label: Naming convention for resized images
+    description:
+      How should the resized images be named? You can use the following variables
+
+      - {original-name} - the original name of the image.
+
+      - {size} - the size of the resized image (WIDTHxHEIGHT).
+
+      - {extension} - the extension of the resized image.
+
+
+      Learn more about [how this parameter works](https://firebase.google.com/products/extensions/storage-resize-images).
+    type: string
+    example: "{original-name}_{size}{extension}"
+    default: "{original-name}_{size}{extension}"
+    required: true
+
   - param: DELETE_ORIGINAL_FILE
     label: Deletion of original file
     description: >-
@@ -160,7 +178,7 @@ params:
       - label: No
         value: false
       - label: Delete on successful resize
-        value: on_success  
+        value: on_success
     default: false
     required: true
 

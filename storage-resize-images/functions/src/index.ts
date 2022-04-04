@@ -136,7 +136,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
               fileExtension,
               contentType,
               size,
-              objectMetadata: objectMetadata,
+              objectMetadata,
               format,
             })
           );
