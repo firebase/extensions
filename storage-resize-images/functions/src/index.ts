@@ -23,8 +23,8 @@ import * as path from "path";
 import * as sharp from "sharp";
 
 import {
-  ResizedImageResult,
   modifyImage,
+  ResizedImageResult,
   supportedContentTypes,
 } from "./resize-image";
 import config, { deleteImage } from "./config";
@@ -136,7 +136,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
               fileExtension,
               contentType,
               size,
-              objectMetadata: objectMetadata,
+              objectMetadata,
               format,
             })
           );
