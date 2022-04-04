@@ -2,7 +2,7 @@ Use this extension to create resized versions of an image uploaded to a Cloud St
 
 When you upload a file to your specified Cloud Storage bucket, this extension:
 
-- Detect if the file is an image. If it is, then:
+- Detects if the file is an image. If it is, then:
   - Creates a resized image with your specified dimensions.
   - Names the resized image using the same name as the original uploaded image, but suffixed with your specified width and height.
   - Stores the resized image in the same Storage bucket as the original uploaded image.
@@ -25,7 +25,7 @@ Before installing this extension, make sure that you've [set up a Cloud Storage 
 
 #### Multiple instances of this extension
 
-You can install multiple instances of this extension for the same project to configure different resizing options for different paths. However, As mentioned before this extension listens for all changes made to the specified Cloud Storage bucket. That means all instances will be triggered every time a file is uploaded to the bucket. Therefore, it is recommended to use different buckets instead of different paths to prevent unnecessary function calls.
+You can install multiple instances of this extension for the same project to configure different resizing options for different paths. However, as mentioned before this extension listens for all changes made to the specified Cloud Storage bucket. That means all instances will be triggered every time a file is uploaded to the bucket. Therefore, it is recommended to use different buckets instead of different paths to prevent unnecessary function calls.
 
 #### Billing
  
