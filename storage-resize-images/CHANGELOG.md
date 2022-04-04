@@ -1,5 +1,9 @@
 ## Version 0.1.26
 
+feature - updated to firebase-admin v10
+
+## Version 0.1.26
+
 fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
 
 fixed - update resized metadata content disposition (#839)
