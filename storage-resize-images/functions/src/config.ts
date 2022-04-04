@@ -35,26 +35,10 @@ function paramToArray(param) {
   return typeof param === "string" ? param.split(",") : undefined;
 }
 
-function paramToMap(param) {
-  const map = new Map();
-  if (param) {
-    param.split(",").forEach((item) => {
-      const [key, value] = item.split("=");
-      if (!value) {
-        map.set("default", key);
-      } else {
-        map.set(key, value);
-      }
-    });
-  }
-  return map;
-}
-
 export default {
   bucket: process.env.IMG_BUCKET,
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
   imageSizes: process.env.IMG_SIZES.split(","),
-  namingConvention: paramToMap(process.env.NAMING_CONVENTION),
   resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
   includePathList: paramToArray(process.env.INCLUDE_PATH_LIST),
   excludePathList: paramToArray(process.env.EXCLUDE_PATH_LIST),

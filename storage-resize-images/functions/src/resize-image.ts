@@ -3,7 +3,7 @@ import * as sharp from "sharp";
 import * as path from "path";
 import * as fs from "fs";
 
-import { Bucket } from "@google-cloud/storage";
+import { Bucket, File } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
 import { uuid } from "uuidv4";
 
@@ -121,23 +121,14 @@ export const modifyImage = async ({
   const modifiedExtensionName =
     fileExtension && shouldFormatImage ? `.${format}` : fileExtension;
 
-  const params = {
-    "original-name": fileNameWithoutExtension,
-    extension: modifiedExtensionName,
-    size,
-  };
+  let modifiedFileName;
 
-  // Fixes https://github.com/firebase/extensions/issues/476
-  if (!supportedExtensions.includes(fileExtension.toLowerCase())) {
-    params["original-name"] = fileNameWithoutExtension + fileExtension;
-    params["extension"] = "";
+  if (supportedExtensions.includes(fileExtension.toLowerCase())) {
+    modifiedFileName = `${fileNameWithoutExtension}_${size}${modifiedExtensionName}`;
+  } else {
+    // Fixes https://github.com/firebase/extensions/issues/476
+    modifiedFileName = `${fileNameWithoutExtension}${fileExtension}_${size}`;
   }
-
-  let modifiedFileName = config.namingConvention.get(size) || config.namingConvention.get("default");
-
-  Object.entries(params).forEach(([name, value]) => {
-    modifiedFileName = modifiedFileName.replace(`{${name}}`, value);
-  });
 
   // Path where modified image will be uploaded to in Storage.
   const modifiedFilePath = path.normalize(
@@ -151,7 +142,7 @@ export const modifyImage = async ({
     modifiedFile = path.join(os.tmpdir(), modifiedFileName);
 
     // filename\*=utf-8''  selects any string match the filename notation.
-    // [^;\s]+ searches any following string until either a space or semicolon.
+    // [^;\s]+ searches any following string until either a space or semi-colon.
     const contentDisposition =
       objectMetadata && objectMetadata.contentDisposition
         ? objectMetadata.contentDisposition.replace(
@@ -194,7 +185,7 @@ export const modifyImage = async ({
       logs.imageConverted(format);
     }
 
-    // Generate an image file using Sharp.
+    // Generate a image file using Sharp.
     await sharp(modifiedImageBuffer, { animated: config.animated }).toFile(
       modifiedFile
     );
