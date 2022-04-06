@@ -22,14 +22,6 @@ admin.firestore().collection('mail').add({
 })
 ```
 
-Or in Firestore the following fields can be added:
-
-| Field       | Type        | Example                                                                                 |
-| ----------- | ----------- | --------------------------------------------------------------------------------------- |
-| `to`        | String      | `"someone@example.com"`                                                                 |
-| `message`   | Map         | `{ subject: "Hello from Firebase!", html: "This is an <code>HTML</code> email body." }` |
-
-
 You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
 
 When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**. Note that this extension is for use with bulk email service providers, like SendGrid, Mailgun, etc.
