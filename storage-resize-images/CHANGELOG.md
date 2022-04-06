@@ -4,7 +4,6 @@ fixed - update to firebase-admin v10 (#935)
 
 feature - add output options param, to support [Sharp Output Options](https://sharp.pixelplumbing.com/api-output#jpeg) (#878)
 
-
 ## Version 0.1.26
 
 fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
