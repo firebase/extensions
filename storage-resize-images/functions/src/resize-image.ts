@@ -133,7 +133,8 @@ export const modifyImage = async ({
     params["extension"] = "";
   }
 
-  let modifiedFileName = config.namingConvention.get(size) || config.namingConvention.get("default");
+  let modifiedFileName =
+    config.namingConvention.get(size) || config.namingConvention.get("default");
 
   Object.entries(params).forEach(([name, value]) => {
     modifiedFileName = modifiedFileName.replace(`{${name}}`, value);
