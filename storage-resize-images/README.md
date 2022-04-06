@@ -71,6 +71,9 @@ If you prefer to resize every image uploaded to your Storage bucket,  leave this
 * Convert image to preferred types: The image types you'd like your source image to convert to.  The default for this option will be to keep the original file type as the destination file type.
 
 
+* Output options for selected formats: Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion. eg. `{"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "pallete": true }}`
+
+
 * GIF and WEBP animated option: Keep animation of GIF and WEBP formats.
 
 

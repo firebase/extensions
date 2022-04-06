@@ -46,8 +46,9 @@ For example, if you have the collections `users` and `admins`, and each collecti
 
 * Realtime Database instance: From which Realtime Database instance do you want to delete user data?
 
-* Realtime Database location: Where is the server location for Realtime Database instance you want to use?
-For example: `Belgium`
+
+* Realtime Database location: (Only applicable if you provided the `Realtime Database instance` parameter.) From which Realtime Database location do you want to delete user data?
+
 
 * Realtime Database paths: Which paths in your Realtime Database instance contain user data? Leave empty if you don't use Realtime Database.
 Enter the full paths, separated by commas. You can represent the User ID of the deleted user with `{UID}`.
