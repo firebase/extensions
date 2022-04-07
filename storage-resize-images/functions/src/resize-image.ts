@@ -43,10 +43,12 @@ export function convertType(buffer, format) {
     tiff: {},
     tif: {},
   };
-  try {
-    outputOptions = JSON.parse(config.outputOptions);
-  } catch (e) {
-    logs.errorOutputOptionsParse(e);
+  if (config.outputOptions) {
+    try {
+      outputOptions = JSON.parse(config.outputOptions);
+    } catch (e) {
+      logs.errorOutputOptionsParse(e);
+    }
   }
   const { jpeg, jpg, png, webp, tiff, tif } = outputOptions;
 
