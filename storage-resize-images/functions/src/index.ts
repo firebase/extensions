@@ -15,6 +15,7 @@
  */
 
 import * as admin from "firebase-admin";
+import {getEventarc} from 'firebase-admin/eventarc';
 import * as fs from "fs";
 import * as functions from "firebase-functions";
 import * as mkdirp from "mkdirp";
@@ -35,6 +36,10 @@ sharp.cache(false);
 
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
+
+const eventChannel = process.env.EVENTARC_CHANNEL && getEventarc().channel(process.env.EVENTARC_CHANNEL, {
+  allowedEventTypes: process.env.EXT_SELECTED_EVENTS
+});
 
 logs.init();
 
@@ -144,6 +149,13 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       });
 
       const results = await Promise.all(tasks);
+      eventChannel && eventChannel.publish({
+        type: 'firebase.extensions.storage-resize-images.v1.complete',
+        subject: object.name,
+        data: {
+          outputs: results
+        }
+      });
 
       const failed = results.some((result) => result.success === false);
       if (failed) {
