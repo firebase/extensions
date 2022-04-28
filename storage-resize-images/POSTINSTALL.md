@@ -75,7 +75,11 @@ function uploadImageToStorage(rawImage){
 
 - If you configured the `Cache-Control header for resized images` parameter, your specified value will overwrite the value copied from the original image. Learn more about image metadata in the [Cloud Storage documentation](https://firebase.google.com/docs/storage/).
 
-- 
+- If you would like to optionally configure `Output options for selected formats` you can create an JSON stringfied object where you can provide file [Sharp Output Options](https://sharp.pixelplumbing.com/api-output#jpeg). Please use file formats as object keys and pass correct options. Incorrect options parameters or not selected formats will be ignored. Provide it as stringfied JSON object without outer quote signs and indentation:
+
+```js
+{"jpeg": {"quality": 5,"chromaSubsampling": '4:4:4'}, "png": { "pallete": true}}
+```
 
 ### Monitoring
 

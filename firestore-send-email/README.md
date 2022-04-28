@@ -22,14 +22,6 @@ admin.firestore().collection('mail').add({
 })
 ```
 
-Or in Firestore the following fields can be added:
-
-| Field       | Type        | Example                                                                                 |
-| ----------- | ----------- | --------------------------------------------------------------------------------------- |
-| `to`        | String      | `"someone@example.com"`                                                                 |
-| `message`   | Map         | `{ subject: "Hello from Firebase!", html: "This is an <code>HTML</code> email body." }` |
-
-
 You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
 
 When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**. Note that this extension is for use with bulk email service providers, like SendGrid, Mailgun, etc.
@@ -42,7 +34,7 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 
 - You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
-- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
   - Cloud Firestore
   - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
 

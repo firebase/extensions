@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.26
+version: 0.1.27
 specVersion: v1beta
 
 displayName: Resize Images
@@ -247,6 +247,16 @@ params:
         value: false
     default: false
     required: true
+
+  - param: OUTPUT_OPTIONS
+    label: Output options for selected formats
+    description: >
+      Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion.
+      eg. `{"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "pallete": true }}`
+    type: string
+    validationRegex: ^({(.*?)})$
+    validationErrorMessage: Please provide a valid json object.
+    required: false
 
   - param: IS_ANIMATED
     label: GIF and WEBP animated option
