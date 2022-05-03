@@ -33,11 +33,10 @@ describe("Stress testing", () => {
 
   describe("running multiple chnages simulatenously", () => {
     test("Successfully handles 100 simulteaneous inserts.", async () => {
-
-      const toRun = Array.from(Array(100).keys()).map(documentId => {
+      const toRun = Array.from(Array(100).keys()).map((documentId) => {
         return new Promise(async (resolve) => {
           event = changeTrackerEvent({
-            documentId
+            documentId,
           });
 
           await changeTracker({
@@ -49,14 +48,12 @@ describe("Stress testing", () => {
         });
       });
 
-
       await Promise.all(toRun);
 
       table = bq.dataset(datasetId).table(tableId_raw);
 
       const rows = await table.getRows();
-      expect(rows[0].length).toEqual(100)
-
+      expect(rows[0].length).toEqual(100);
     }, 120000);
   });
 });

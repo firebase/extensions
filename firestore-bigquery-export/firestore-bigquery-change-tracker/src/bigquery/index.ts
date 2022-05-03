@@ -68,7 +68,6 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
  * If any subsequent data export fails, it will attempt to reinitialize.
  */
 
-
 export class FirestoreBigQueryEventHistoryTracker
   implements FirestoreEventHistoryTracker {
   bq: bigquery.BigQuery;
@@ -131,7 +130,7 @@ export class FirestoreBigQueryEventHistoryTracker
       return undefined;
     }
 
-    const data = traverse<traverse.Traverse<any>>(eventData).map(function (
+    const data = traverse<traverse.Traverse<any>>(eventData).map(function(
       property
     ) {
       if (property && property.constructor) {
@@ -207,13 +206,10 @@ export class FirestoreBigQueryEventHistoryTracker
             clearInterval(handle);
             return resolve(table);
           }
-        }
-
-        catch (ex) {
+        } catch (ex) {
           clearInterval(handle);
           logs.failedToInitializeWait(ex.message);
         }
-
       }, 5000);
     });
   }
@@ -279,12 +275,10 @@ export class FirestoreBigQueryEventHistoryTracker
       await this.initializeLatestView();
 
       this._initialized = true;
-    }
-    catch (ex) {
+    } catch (ex) {
       await this.waitForInitialization();
       this._initialized = true;
     }
-
   }
 
   /**

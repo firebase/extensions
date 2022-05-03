@@ -52,7 +52,7 @@ export const bigQueryTableAlreadyExists = (
 ) => {
   logger.log(
     `BigQuery table with name ${tableName} already ` +
-    `exists in dataset ${datasetName}!`
+      `exists in dataset ${datasetName}!`
   );
 };
 
