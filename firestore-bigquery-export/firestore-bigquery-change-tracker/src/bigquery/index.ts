@@ -210,6 +210,7 @@ export class FirestoreBigQueryEventHistoryTracker
         }
 
         catch (ex) {
+          clearInterval(handle);
           logs.failedToInitializeWait(ex.message);
         }
 
