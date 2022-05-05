@@ -1,0 +1,27 @@
+{
+  "extensions": {
+    "resize-images": "../events"
+  },
+  "functions": {},
+  "emulators": {
+    "functions": {
+      "port": 5001
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": true
+    },
+    "storage": {
+      "port": 9199
+    }
+  },
+  "firestore": {
+    "rules": "./__tests__/firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "./__tests__/storage.rules"
+  }
+}
