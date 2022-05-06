@@ -30,4 +30,4 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 - This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
  - Cloud Storage
  - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
-- If you enable events [Eventarc Fees apply](https://cloud.google.com/eventarc/pricing).
+- If you enable events [Eventarc fees apply](https://cloud.google.com/eventarc/pricing).
