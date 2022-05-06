@@ -10,6 +10,8 @@ You can even configure the extension to create resized images of different dimen
 
 The extension automatically copies the following metadata, if present, from the original image to the resized image(s): `Cache-Control`, `Content-Disposition`, `Content-Encoding`, `Content-Language`, `Content-Type`, and user-provided metadata (a new Firebase storage download token will be generated on the resized image(s) if the original metadata contains a token). Note that you can optionally configure the extension to overwrite the [`Cache-Control`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control) value for the resized image(s).
 
+The extension can publish resize completion event which you can optionally enable when you install the extension. If you enable events, you can [write custom event handlers](https://firebase.google.com/docs/extensions/install-extensions#eventarc) that respond to these events. You can always enable or disable events later. Events will be emitted via Eventarc. [Fees apply](https://cloud.google.com/eventarc/pricing).
+
 #### Detailed configuration information
 
 To configure this extension, you specify a maximum width and a maximum height (in pixels, px). This extension keeps the aspect ratio of uploaded images constant and shrinks the image until the resized image's dimensions are at or under your specified max width and height.
