@@ -149,9 +149,11 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       });
 
       const results = await Promise.all(tasks);
+      console.log("filePath=" + filePath)
+      console.log("object.name=" + object.name)
       eventChannel && eventChannel.publish({
         type: 'firebase.extensions.storage-resize-images.v1.complete',
-        subject: object.name,
+        subject: filePath,
         data: {
           outputs: results
         }
