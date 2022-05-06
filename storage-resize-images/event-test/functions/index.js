@@ -3,10 +3,10 @@ const { eventarc } = require("firebase-functions/v2");
 
 admin.initializeApp();
 
-exports.stripetesting = eventarc.onCustomEventPublished(
-  "com.stripe.v1.product.created",
+exports.test = eventarc.onCustomEventPublished(
+  "firebase.extensions.storage-resize-images.v1.complete",
   (e) => {
-    console.log("stripe here! >>>>>");
+    console.log("event listener here! >>>>>");
     console.log(JSON.stringify(e));
   }
 );

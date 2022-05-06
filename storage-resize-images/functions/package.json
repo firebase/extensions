@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@types/node": "^14.0.0",
-    "firebase-admin": "https://storage.googleapis.com/firebase-admin-sdk-eventarc/firebase-admin-10.0.2.tgz",
+    "firebase-admin": "github:firebase/firebase-admin-node",
     "firebase-functions": "^3.20.1",
     "mkdirp": "^1.0.4",
     "sharp": "0.30.1",
