@@ -1,10 +1,11 @@
 Use this extension to create resized versions of an image uploaded to a Cloud Storage bucket.
 
-When you upload an image file to your specified Cloud Storage bucket, this extension:
+When you upload a file to your specified Cloud Storage bucket, this extension:
 
-- Creates a resized image with your specified dimensions.
-- Names the resized image using the same name as the original uploaded image, but suffixed with your specified width and height.
-- Stores the resized image in the same Storage bucket as the original uploaded image.
+- Detects if the file is an image. If it is, then:
+  - Creates a resized image with your specified dimensions.
+  - Names the resized image using the same name as the original uploaded image, but suffixed with your specified width and height.
+  - Stores the resized image in the same Storage bucket as the original uploaded image.
 
 You can even configure the extension to create resized images of different dimensions for each original image upload. For example, you might want images that are 200x200, 400x400, and 680x680 - this extension can create these three resized images then store them in your bucket.
 
@@ -21,6 +22,12 @@ For example, say that you specify a max width of 200px and a max height of 100px
 #### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Storage bucket](https://firebase.google.com/docs/storage) in your Firebase project.
+
+> **NOTE**: As mentioned above, this extension listens for all changes made to the specified Cloud Storage bucket. This may cause unnecessary function calls. It is recommended to create a separate Cloud Storage bucket, especially for images you want to resize, and set up this extension to listen to that bucket.
+
+#### Multiple instances of this extension
+
+You can install multiple instances of this extension for the same project to configure different resizing options for different paths. However, as mentioned before this extension listens for all changes made to the specified Cloud Storage bucket. That means all instances will be triggered every time a file is uploaded to the bucket. Therefore, it is recommended to use different buckets instead of different paths to prevent unnecessary function calls.
 
 #### Billing
  
