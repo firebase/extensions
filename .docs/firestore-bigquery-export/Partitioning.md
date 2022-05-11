@@ -27,8 +27,8 @@ Developers can query data based on the specified partitioning field.
 The following example shows an example query with a `created` field set as the partition column name along with a `DATTIME` partitioning type:
 
 ```sql
-SELECT * FROM `example_dataset.table_raw_changelog` 
-WHERE created = "2022-04-18" 
+SELECT * FROM `example_dataset.table_raw_changelog`
+WHERE created = "2022-04-18"
 LIMIT 1000
 ```
 

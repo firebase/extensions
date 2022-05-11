@@ -4,10 +4,10 @@ If you specified a `transform function url` parameter during configuration of th
 
 ## Payload Format
 
-When data from Firestore has been created or modified, the entire payload is copied to the BigQuery table under the data column in the following format. 
+When data from Firestore has been created or modified, the entire payload is copied to the BigQuery table under the data column in the following format.
 
 ```json
-{ 
+{
   data: [{
     insertId: int;
     json: {

@@ -8,7 +8,7 @@ When defining clustering, multiple columns can be defined allowing specific orde
 
 ## Adding columns to cluster
 
-Through the extension, adding clustering is as simple as adding a comma-separated list of the columns you would like to cluster by -  this is then applied to the Big Query table.
+Through the extension, adding clustering is as simple as adding a comma-separated list of the columns you would like to cluster by - this is then applied to the Big Query table.
 
 Clustering allows up to a maximum of `four` fields and can be configured similar to
 

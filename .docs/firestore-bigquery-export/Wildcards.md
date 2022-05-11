@@ -2,7 +2,7 @@
 
 The data is stored as a If you specified a "wildcard" parameter during configuration of the extension, the wildcard values are added as a `JSON string` as an additional column in your exported dataset.
 
-A [wildcard](https://firebase.google.com/docs/functions/firestore-events#wildcards-parameters) column contains the wildcard values extracted from a Firestore collection/sub-collection path.  
+A [wildcard](https://firebase.google.com/docs/functions/firestore-events#wildcards-parameters) column contains the wildcard values extracted from a Firestore collection/sub-collection path.
 
 ## Parameters column
 
@@ -16,7 +16,7 @@ An example path value could be `regions/{regionId}/countries` resulting in an ob
 
 ```jsx
 {
- regionId: "Central America"
+  regionId: "Central America";
 }
 ```
 
