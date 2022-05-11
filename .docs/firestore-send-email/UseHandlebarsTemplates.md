@@ -1,9 +1,5 @@
 # Use Handlebars templates
 
-Created: April 27, 2022 4:28 PM
-Last Edited Time: April 27, 2022 4:36 PM
-Status: Approved
-
 ## Use Handlebars templates with the Trigger Email extension
 
 If you specified a "Templates collection" parameter during configuration of the extension, you can create and manage [Handlebars templates](https://handlebarsjs.com/) templates for your emails.
@@ -41,19 +37,19 @@ To deliver email using templates, when adding documents to your mail collection,
 
 ```jsx
 admin
-  .firestore()
-  .collection("MAIL_COLLECTION")
-  .add({
-    toUids: ["abc123"],
-    template: {
-      name: "following",
-      data: {
-        username: "ada",
-        name: "Ada Lovelace",
-        imagePath: "https://example.com/path/to/file/image-name.jpg"
-      },
-    },
-  });
+  .firestore()
+  .collection("MAIL_COLLECTION")
+  .add({
+    toUids: ["abc123"],
+    template: {
+      name: "following",
+      data: {
+        username: "ada",
+        name: "Ada Lovelace",
+        imagePath: "https://example.com/path/to/file/image-name.jpg",
+      },
+    },
+  });
 ```
 
 ## Template Partials

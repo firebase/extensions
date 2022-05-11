@@ -1,9 +1,5 @@
 # Manage delivery status
 
-Created: April 27, 2022 4:30 PM
-Last Edited Time: April 27, 2022 4:37 PM
-Status: Approved
-
 ## Manage delivery status with the Trigger Email extension
 
 When a document is added to the collection, the extension picks it up for email delivery processing. The extension creates and updates a `delivery` field in the document as it processes the email.
