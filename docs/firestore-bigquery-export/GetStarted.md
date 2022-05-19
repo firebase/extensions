@@ -6,10 +6,10 @@ The Big Query extension (`firestore-bigquery-export`) lets you automatically mir
 
 The extension supports the following features:
 
-- Mirroring subcollections (via wildcards).
-- Data partitioning.
-- Clustering.
-- Custom data transformer functions.
+- Mirroring subcollections (using wildcards)
+- Data partitioning
+- Clustering
+- Custom data transformer functions
 
 Additionally, tooling is provided to assist with generation of SQL schemas from a Cloud Firestore collection and backfilling data from an existing collection.
 
