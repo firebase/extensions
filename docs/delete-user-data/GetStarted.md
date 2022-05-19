@@ -8,11 +8,11 @@ The Delete User Data extension (`delete-user-data`) lets you delete a user's dat
 
 This extension is useful in respecting user privacy and fulfilling compliance requirements. However, using this extension does not guarantee compliance with government and industry regulations.
 
-## Pre-installation setup
+## Prerequisites
 
-Depending on where you'd like to delete user data from, make sure that you've set up [Cloud Firestore](https://firebase.google.com/docs/firestore), [Realtime Database](https://firebase.google.com/docs/database), or [Cloud Storage](https://firebase.google.com/docs/storage) in your Firebase project before installing this extension.
+- You must use [Firebase Authentication](https://firebase.google.com/docs/auth) to manage your users.
 
-Also, make sure that you've set up [Firebase Authentication](https://firebase.google.com/docs/auth) to manage your users.
+- This extension only deletes data from [Cloud Firestore](https://firebase.google.com/docs/firestore), [Realtime Database](https://firebase.google.com/docs/database), and [Cloud Storage](https://firebase.google.com/docs/storage). If you store user data elsewhere, you should also delete user data from those sources when you delete users.
 
 ## **Install the extension**
 
