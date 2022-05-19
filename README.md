@@ -17,6 +17,6 @@ Firebase is looking for Extensions users to participate in an upcoming study on 
 
 ## Documentation
 
-Docuemtation for the [Extensions by Firebase](https://firebase.google.com/docs/extensions) section are now stored in this repoistory.
+Documentation for the [Extensions by Firebase](https://firebase.google.com/docs/extensions) section are now stored in this repository.
 
 They can be found under [Docs](https://github.com/firebase/extensions/docs)
