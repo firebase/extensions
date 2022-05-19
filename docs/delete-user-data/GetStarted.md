@@ -2,7 +2,7 @@
 
 ## Using the Delete User Data extension
 
-The Delete User Data extension (`delete-user-data`) lets you delete a user's data if the user is deleted from your authenticated users. You can configure this extension to delete user data from any or all of the following: Cloud Firestore, Realtime Database, or Cloud Storage. Each trigger of the extension to delete data is keyed to the user's `UserId`.
+The Delete User Data extension (`delete-user-data`) lets you delete a user's data when the user is deleted from your Firebase project. You can configure this extension to delete user data from any or all of the following: Cloud Firestore, Realtime Database, or Cloud Storage. Each trigger of the extension to delete data is keyed to the user's `UserId`.
 
 > **Note:** To use this extension, you need to manage your users with Firebase Authentication.
 
