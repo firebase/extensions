@@ -14,13 +14,13 @@ You can handle custom events published by extensions using the `onCustomEventPub
 
 Ensure you have the latest firebase-functions package installed.
 
-```jsx
+```js
 {
  "firebase-functions": "^3.21.1"
 }
 ```
 
-```jsx
+```js
 const { onCustomEventPublished } = require("firebase-functions/v2/eventarc");
 const logger = require("firebase-functions/logger");
 const { initializeApp } = require("firebase-admin/app");
@@ -29,7 +29,7 @@ const { getFirestore } = require("firebase-admin/firestore");
 
 In your function code, pass in the event name as shown for the example function `onimageresized`:
 
-```jsx
+```js
 exports.onimageresized = onCustomEventPublished(
   "firebase.extensions.storage-resize-images.v1.complete",
   (event) => {

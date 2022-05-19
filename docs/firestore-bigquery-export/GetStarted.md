@@ -28,7 +28,7 @@ To install the extension, follow the steps on the [Install a Firebase Extension
 
 - **CLI:** Run the following command:
 
-  ```jsx
+  ```js
   firebase ext:install firebase/firestore-bigquery-export --project=projectId-or-alias
   ```
 

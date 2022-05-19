@@ -14,7 +14,7 @@ All generated tables and views are updated with this new column:
 
 An example path value could be `regions/{regionId}/countries` resulting in an object similar to
 
-```jsx
+```js
 {
   regionId: "Central America";
 }

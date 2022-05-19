@@ -6,7 +6,7 @@ The Translate Text extension (`firestore-translate-text`) lets you translate str
 
 Here’s a basic example document write that would trigger this extension:
 
-```jsx
+```js
 admin
   .firestore()
   .collection("translations")
@@ -17,7 +17,7 @@ admin
 
 When the extension triggers, the input text would update the document with translations:
 
-```jsx
+```js
 {
   input: 'Hello from Firebase!',
   translations: {
@@ -66,7 +66,7 @@ To translate multiple collections, install this extension multiple times, specif
 
 To translate multiple fields, store a map of input strings in the input field:
 
-```jsx
+```js
 admin
   .firestore()
   .collection("translations")

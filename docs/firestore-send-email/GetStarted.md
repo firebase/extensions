@@ -6,7 +6,7 @@ The Trigger Email extension (`firestore-send-email`) lets you automatically send
 
 Here's a basic example document write that would trigger this extension:
 
-```jsx
+```js
 admin
   .firestore()
   .collection("mail")
@@ -76,7 +76,7 @@ After installation, this extension monitors all document writes to the collectio
 
 To send a simple message, add a document to your messages collection with a `to` field and a `message` field with the following content:
 
-```jsx
+```js
 to: ['someone@example.com'],
 message: {
   subject: 'Hello from Firebase!',
