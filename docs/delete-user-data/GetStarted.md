@@ -6,7 +6,7 @@ The Delete User Data extension (`delete-user-data`) lets you delete a user's dat
 
 > **Note:** To use this extension, you need to manage your users with Firebase Authentication.
 
-This extension is useful in respecting user privacy and fulfilling compliance requirements. However, using this extension does not guarantee compliance with government and industry regulations.
+This extension is useful for respecting user privacy and fulfilling compliance requirements. However, using this extension does not guarantee compliance with government and industry regulations.
 
 ## Prerequisites
 
