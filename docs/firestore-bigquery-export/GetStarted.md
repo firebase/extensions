@@ -11,7 +11,7 @@ The extension supports the following features:
 - Clustering
 - Custom data transformer functions
 
-Additionally, tooling is provided to assist with generation of SQL schemas from a Cloud Firestore collection and backfilling data from an existing collection.
+This extension also includes tooling to assist with generation of SQL schemas from a Cloud Firestore collection and backfilling data from an existing collection.
 
 ## Pre-installation setup
 
