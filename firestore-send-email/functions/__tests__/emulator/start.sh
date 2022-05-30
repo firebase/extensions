@@ -4,7 +4,7 @@ if ! [ -x "$(command -v firebase)" ]; then
   exit 1
 fi
 
-firebase ext:dev:emulators:start --test-params=emulator-params.env --project=extensions-testing --config=./firebase.json &
+npx kill-port 8080 && firebase ext:dev:emulators:start --test-params=emulator-params.env --project=extensions-testing --config=./firebase.json &
 
 until curl --output /dev/null --silent --fail http://localhost:8080; do
   echo "Waiting for Firestore emulator to come online..."
