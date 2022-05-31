@@ -120,7 +120,7 @@ const run = async (): Promise<number> => {
     tableId: tableId,
     datasetId: datasetId,
     datasetLocation,
-    wildcardIds: queryCollectionGroup
+    wildcardIds: queryCollectionGroup,
   });
 
   console.log(
