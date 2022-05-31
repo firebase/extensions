@@ -1,6 +1,5 @@
-import * as admin from "firebase-admin";
-
 export interface CliConfig {
+  kind: "CONFIG";
   projectId: string;
   sourceCollectionPath: string;
   datasetId: string;
@@ -9,6 +8,11 @@ export interface CliConfig {
   queryCollectionGroup: boolean;
   datasetLocation: string;
   multiThreaded: boolean;
+}
+
+export interface CliConfigError {
+  kind: "ERROR";
+  errors: string[];
 }
 
 export interface SerializableQuery {
