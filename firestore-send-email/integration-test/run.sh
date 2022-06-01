@@ -6,7 +6,7 @@
 firebase --open-sesame extensionsemulator
 
 (
-  cd functions
+  cd ../functions
   npm install 
   npm run test
 )
