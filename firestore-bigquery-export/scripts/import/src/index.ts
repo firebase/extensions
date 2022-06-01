@@ -28,7 +28,7 @@ import {
   FirestoreBigQueryEventHistoryTracker,
   FirestoreDocumentChangeEvent,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
-import { parseConfig, resolveWildcardIds } from "./config";
+import { parseConfig } from "./config";
 
 // For reading cursor position.
 const exists = util.promisify(fs.exists);
@@ -120,7 +120,6 @@ const run = async (): Promise<number> => {
     tableId: tableId,
     datasetId: datasetId,
     datasetLocation,
-    wildcardIds: queryCollectionGroup,
   });
 
   console.log(
@@ -185,7 +184,6 @@ const run = async (): Promise<number> => {
           snapshot.ref.path
         }`,
         documentId: snapshot.id,
-        pathParams: resolveWildcardIds(sourceCollectionPath, snapshot.ref.path),
         eventId: "",
         data: snapshot.data(),
       };
