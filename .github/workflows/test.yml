@@ -32,10 +32,9 @@ jobs:
           command: npm i -g firebase-tools
       - name: Use extension commands
         run: firebase --open-sesame extdev
-      - name: Run 'firestore-send-email' extension emulator
+      - name: Run 'firestore-send-email' tests on the Extension emulator
         run:
-          cd ./firestore-send-email/functions/__tests__/emulator && sh
-          ./start.sh
+          cd ./firestore-send-email/integration-test/ && firebase emulators:exec ./run.sh
       - name: Run tests with coverage
         run: npm run test-coverage
       - name: Submit coverage
