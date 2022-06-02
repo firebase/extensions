@@ -33,9 +33,7 @@ jobs:
       - name: Run 'firestore-send-email' tests on the Extension emulator
         run:
           cd ./firestore-send-email/integration-test/ && firebase emulators:exec
-          ./run.sh -P demo-test
-      - name: Run tests with coverage
-        run: npm run test-coverage
+          "cd ../../ && npm run test-coverage" -P demo-test
       - name: Submit coverage
         run: ./node_modules/.bin/codecov
         env:
