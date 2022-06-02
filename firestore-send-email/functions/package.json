@@ -8,7 +8,7 @@
     "build:watch": "npm run clean && tsc --watch",
     "clean": "rimraf lib",
     "compile": "tsc",
-    "test": "jest",
+    "test": "jest --detectOpenHandles",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "keywords": [],
