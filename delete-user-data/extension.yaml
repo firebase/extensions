@@ -213,3 +213,7 @@ params:
     type: string
     example: "{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt"
     required: false
+
+events:
+  - type: firebase.extensions.delete-user-data.v1.trigger
+    description: Occurs when a pre-defined collection or document has been triggered by a deleted user.

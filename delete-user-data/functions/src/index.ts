@@ -17,6 +17,8 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as firebase_tools from "firebase-tools";
+import { getEventarc } from "firebase-admin/eventarc";
+
 import { getDatabaseUrl } from "./helpers";
 
 import config from "./config";
@@ -34,6 +36,12 @@ admin.initializeApp({
   databaseURL,
 });
 
+const eventChannel =
+  process.env.EVENTARC_CHANNEL &&
+  getEventarc().channel(process.env.EVENTARC_CHANNEL, {
+    allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
+  });
+
 logs.init();
 
 /*
@@ -47,26 +55,19 @@ export const clearData = functions.auth.user().onDelete(async (user) => {
   const { firestorePaths, rtdbPaths, storagePaths } = config;
   const { uid } = user;
 
-  const promises = [];
-  if (firestorePaths) {
-    promises.push(clearFirestoreData(firestorePaths, uid));
-  } else {
-    logs.firestoreNotConfigured();
-  }
-  if (rtdbPaths && databaseURL) {
-    promises.push(clearDatabaseData(rtdbPaths, uid));
-  } else {
-    logs.rtdbNotConfigured();
-  }
-  if (storagePaths) {
-    promises.push(clearStorageData(storagePaths, uid));
-  } else {
-    logs.storageNotConfigured();
-  }
+  if (eventChannel) {
+    const paths = firestorePaths.split(",").map((path) => {
+      return path.replace("{UID}", uid);
+    });
 
-  await Promise.all(promises);
-
-  logs.complete(uid);
+    await eventChannel.publish({
+      type: "firebase.extensions.delete-user-data.v1.trigger",
+      subject: "test",
+      data: {
+        paths,
+      },
+    });
+  }
 });
 
 const clearDatabaseData = async (databasePaths: string, uid: string) => {
