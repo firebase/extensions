@@ -1,6 +1,6 @@
 {
   "extensions": {
-    "firestore-send-email": "../"
+    "firestore-send-email": "../firestore-send-email"
   },
   "storage": {
     "rules": "storage.rules"
