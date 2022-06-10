@@ -87,11 +87,9 @@ match /databases/{database}/documents/pages/{page} {
       // initializeApp(firebaseConfig);
       const db = getFirestore(firebaseApp);
 
-      console.log(db);
 
       const docRef = doc(db, "pages", "hello-world");
 
-      // console.log("$ >>>>>", $);
 
       // Initialize the sharded counter.
       var views = new sharded.Counter(docRef, "stats.views");
