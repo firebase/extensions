@@ -52,8 +52,13 @@ logs.init();
 export const clearData = functions.auth.user().onDelete(async (user) => {
   logs.start();
 
-  const { firestorePaths, rtdbPaths, storagePaths } = config;
+  const { firestorePaths, rtdbPaths, storagePaths, queryCollection } = config;
   const { uid } = user;
+
+  /** Add query record deletions here */
+  if (queryCollection) {
+    // const queries = await buildQueries();
+  }
 
   if (eventChannel) {
     const paths = firestorePaths.split(",").map((path) => {

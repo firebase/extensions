@@ -138,6 +138,14 @@ params:
     type: string
     example: users/{UID},admins/{UID}
     required: false
+  
+    - param: FIRESTORE_QUERY_COLLECTION
+    label: Cloud Firestore paths
+    description: >-
+     Collection to store query specification documents
+    type: string
+    example: queries
+    required: false
 
   - param: FIRESTORE_DELETE_MODE
     label: Cloud Firestore delete mode

@@ -4,7 +4,10 @@
     "target": "ES2020",
     "module": "commonjs",
     "noImplicitReturns": true,
-    "sourceMap": false
+    "sourceMap": false,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
   "compileOnSave": true,
   "include": ["src"]
