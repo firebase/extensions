@@ -176,6 +176,12 @@ params:
       this extension delivers email to the `email` field based on lookups in this collection.
     type: string
 
+  - param: INCLUDE_USER_TEMPLATE_DATA
+    label: Automatically include user template data?
+    description: >-
+      If `true`, the extension will automatically get the user document from the Users collection and include in the email template data.
+    type: boolean
+
   - param: TEMPLATES_COLLECTION
     label: Templates collection
     description: >-

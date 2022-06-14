@@ -8,6 +8,7 @@ export interface Config {
   defaultFrom: string;
   defaultReplyTo?: string;
   usersCollection?: string;
+  includeUserTemplateData?: boolean;
   templatesCollection?: string;
   testing?: boolean;
 }

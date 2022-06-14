@@ -107,7 +107,7 @@ export const findUser = async function(
     });
 
   if (!user) return null;
-  if (!config.usersCollection) return user;
+  if (!config.usersCollection || !config.includeUserTemplateData) return user;
 
   const userDoc = await db
     .collection(config.usersCollection)
