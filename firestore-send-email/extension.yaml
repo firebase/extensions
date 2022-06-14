@@ -180,7 +180,13 @@ params:
     label: Automatically include user template data?
     description: >-
       If selected, the extension will automatically get the user document from the Users collection and include in the email template data.
-    type: boolean
+    type: select
+    options:
+      - label: No
+        value: false
+      - label: Yes
+        value: true
+    default: false
 
   - param: TEMPLATES_COLLECTION
     label: Templates collection
