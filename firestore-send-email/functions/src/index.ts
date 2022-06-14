@@ -22,6 +22,7 @@ import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
+import { UserRecord } from "firebase-functions/v1/auth";
 import { setSmtpCredentials } from "./helpers";
 
 logs.init();
@@ -87,7 +88,38 @@ async function processCreate(snap: FirebaseFirestore.DocumentSnapshot) {
   });
 }
 
-async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
+export const findUser = async function(
+  recipients: string | string[]
+): Promise<UserRecord> | undefined {
+  const isString: boolean = typeof recipients === "string";
+
+  if (isString && !recipients.length) return null;
+  if (isString && (recipients as string).split(",").length > 1) return null;
+  if (!isString && recipients.length > 1) return null;
+
+  const recipient: string = isString ? (recipients as string) : recipients[0];
+
+  const user = await admin
+    .auth()
+    .getUser(recipient)
+    .catch(async () => {
+      return admin.auth().getUserByEmail(recipient);
+    });
+
+  if (!user) return null;
+  if (!config.usersCollection || !config.includeUserTemplateData) return user;
+
+  const userDoc = await db
+    .collection(config.usersCollection)
+    .doc(user.uid)
+    .get();
+
+  return userDoc.exists ? { ...user, ...userDoc.data() } : user;
+};
+
+const preparePayload = async function(
+  payload: QueuePayload
+): Promise<QueuePayload> {
   const { template } = payload;
 
   if (templates && template) {
@@ -95,7 +127,12 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
       throw new Error(`Template object is missing a 'name' parameter.`);
     }
 
-    const templateRender = await templates.render(template.name, template.data);
+    const _userData = await findUser(payload.toUids || payload.to);
+
+    const templateRender = await templates.render(template.name, {
+      ...template.data,
+      _userData,
+    });
 
     const mergeMessage = payload.message || {};
 
@@ -226,7 +263,7 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
   payload.bcc = bcc;
 
   return payload;
-}
+};
 
 async function deliver(
   payload: QueuePayload,

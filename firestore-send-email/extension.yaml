@@ -42,6 +42,9 @@ roles:
   - role: datastore.user
     reason: Allows this extension to access Cloud Firestore to read and process added email documents.
 
+  - role: firebaseauth.viewer
+    reason: Allows this extension to access Firestore Admin to read user information.
+
 resources:
   - name: processQueue
     type: firebaseextensions.v1beta.function
@@ -172,6 +175,18 @@ params:
       If the `toUids`, `ccUids`, and/or `bccUids` recipient options are used in the added email document,
       this extension delivers email to the `email` field based on lookups in this collection.
     type: string
+
+  - param: INCLUDE_USER_TEMPLATE_DATA
+    label: Automatically include user template data?
+    description: >-
+      If selected, the extension will automatically get the user document from the Users collection and include in the email template data.
+    type: select
+    options:
+      - label: No
+        value: false
+      - label: Yes
+        value: true
+    default: false
 
   - param: TEMPLATES_COLLECTION
     label: Templates collection

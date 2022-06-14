@@ -8,6 +8,7 @@ export interface Config {
   defaultFrom: string;
   defaultReplyTo?: string;
   usersCollection?: string;
+  includeUserTemplateData?: boolean;
   templatesCollection?: string;
   testing?: boolean;
 }
@@ -63,7 +64,7 @@ export interface QueuePayload {
     name: string;
     data?: { [key: string]: any };
   };
-  to: string[];
+  to: string[] | string;
   toUids?: string[];
   cc: string[];
   ccUids?: string[];

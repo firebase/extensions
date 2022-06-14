@@ -1,8 +1,11 @@
 import * as admin from "firebase-admin";
+import { UserRecord } from "firebase-functions/v1/auth";
 
 import { smtpServer } from "./createSMTPServer";
 
 process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
+process.env.FIREBASE_FIRESTORE_EMULATOR_ADDRESS = "localhost:8080";
+process.env.FIREBASE_AUTH_EMULATOR_HOST = "localhost:9099";
 
 admin.initializeApp({
   projectId: "extensions-testing",
@@ -17,17 +20,21 @@ const templatesCollection = admin.firestore().collection(templates);
 let server = null;
 
 describe("e2e testing", () => {
-  beforeAll(() => {
+  let user: UserRecord | undefined = null;
+
+  beforeAll(async () => {
     server = smtpServer();
+
+    const createdUser = await admin.auth().createUser({
+      email: `${(Math.random() + 1).toString(36).substring(7)}@google.com`,
+      displayName: "test_name",
+    });
+
+    user = createdUser;
   });
 
   test("the SMTP function is working", async (): Promise<void> => {
-    const record = {
-      to: "test-assertion@email.com",
-      message: {
-        subject: "test",
-      },
-    };
+    const record = { to: user.email, message: { subject: "test" } };
 
     const doc = await mailCollection.add(record);
 
@@ -54,7 +61,7 @@ describe("e2e testing", () => {
     });
 
     const record = {
-      to: "test-assertion@email.com",
+      to: user.email,
       message: {
         subject: "test",
         attachments: [{ filename: "{{username}}.jpg" }],

@@ -1,12 +1,23 @@
 {
-  "firestore": {
-    "port": "8080"
-  },
   "functions": {
-    "source": "../..",
-    "port": "5001"
+    "source": "functions"
   },
-  "ui": {
-    "enabled": false
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "functions": {
+      "port": 5001
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "ui": {
+      "enabled": true
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   }
 }
