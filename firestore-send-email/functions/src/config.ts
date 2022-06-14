@@ -24,6 +24,7 @@ const config: Config = {
   defaultFrom: process.env.DEFAULT_FROM,
   defaultReplyTo: process.env.DEFAULT_REPLY_TO,
   usersCollection: process.env.USERS_COLLECTION,
+  includeUserTemplateData: process.env.INCLUDE_USER_TEMPLATE_DATA === "true",
   templatesCollection: process.env.TEMPLATES_COLLECTION,
   testing: process.env.TESTING === "true",
 };

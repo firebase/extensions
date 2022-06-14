@@ -72,6 +72,8 @@ Backwards Compatible (less secure):
 
 * Users collection: A collection of documents keyed by user UID. If the `toUids`, `ccUids`, and/or `bccUids` recipient options are used in the added email document, this extension delivers email to the `email` field based on lookups in this collection.
 
+* Automatically include user template data?: If selected, the extension will automatically get the user document from the Users collection and include in the email template data.
+
 * Templates collection: A collection of email templates keyed by name. This extension can render an email using a [Handlebar](https://handlebarsjs.com/) template, if the template is specified in the added email document.
 
 
@@ -89,3 +91,5 @@ Backwards Compatible (less secure):
 This extension will operate with the following project IAM roles:
 
 * datastore.user (Reason: Allows this extension to access Cloud Firestore to read and process added email documents.)
+
+* firebaseauth.viewer (Reason: Allows this extension to access Firestore Admin to read user information.)
