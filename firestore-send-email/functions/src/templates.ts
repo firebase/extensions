@@ -103,8 +103,9 @@ export default class Templates {
           { strict: true }
         );
       }
-      
+
       this.templateMap[t.name] = tgroup;
+
       return t.name;
     });
     templatesLoaded(loadedTemplates);
