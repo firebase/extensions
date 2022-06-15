@@ -23,6 +23,7 @@ import * as inquirer from "inquirer";
 import * as util from "util";
 import * as filenamify from "filenamify";
 import { runMultiThread } from "./run";
+import { resolveWildcardIds } from "./config";
 
 import {
   ChangeType,
@@ -279,6 +280,7 @@ const run = async (): Promise<number> => {
     tableId: tableId,
     datasetId: datasetId,
     datasetLocation,
+    wildcardIds: queryCollectionGroup,
   });
 
   console.log(
@@ -343,6 +345,7 @@ const run = async (): Promise<number> => {
           snapshot.ref.path
         }`,
         documentId: snapshot.id,
+        pathParams: resolveWildcardIds(sourceCollectionPath, snapshot.ref.path),
         eventId: "",
         data: snapshot.data(),
       };
