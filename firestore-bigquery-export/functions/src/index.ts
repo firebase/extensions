@@ -29,24 +29,35 @@ const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHis
     tableId: config.tableId,
     datasetId: config.datasetId,
     datasetLocation: config.datasetLocation,
-    tablePartitioning: config.tablePartitioning,
+    backupTableId: config.backupCollectionId,
+    transformFunction: config.transformFunction,
+    timePartitioning: config.timePartitioning,
+    timePartitioningField: config.timePartitioningField,
+    timePartitioningFieldType: config.timePartitioningFieldType,
+    timePartitioningFirestoreField: config.timePartitioningFirestoreField,
+    clustering: config.clustering,
+    wildcardIds: config.wildcardIds,
+    bqProjectId: config.bqProjectId,
   }
 );
 
 logs.init();
 
-exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
-  async (change, context) => {
+exports.fsexportbigquery = functions.firestore
+  .document(config.collectionPath)
+  .onWrite(async (change, context) => {
     logs.start();
     try {
       const changeType = getChangeType(change);
       const documentId = getDocumentId(change);
+
       await eventTracker.record([
         {
           timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
           operation: changeType,
           documentName: context.resource.name,
           documentId: documentId,
+          pathParams: config.wildcardIds ? context.params : null,
           eventId: context.eventId,
           data:
             changeType === ChangeType.DELETE ? undefined : change.after.data(),
@@ -56,5 +67,4 @@ exports.fsexportbigquery = functions.handler.firestore.document.onWrite(
     } catch (err) {
       logs.error(err);
     }
-  }
-);
+  });
