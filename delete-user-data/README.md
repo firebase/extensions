@@ -25,7 +25,7 @@ Also, make sure that you've set up [Firebase Authentication](https://firebase.go
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
  
 - You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
-- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
   - Cloud Firestore
   - Firebase Realtime Database
   - Cloud Storage
@@ -46,8 +46,9 @@ For example, if you have the collections `users` and `admins`, and each collecti
 
 * Realtime Database instance: From which Realtime Database instance do you want to delete user data?
 
-* Realtime Database location: Where is the server location for Realtime Database instance you want to use?
-For example: `Belgium`
+
+* Realtime Database location: (Only applicable if you provided the `Realtime Database instance` parameter.) From which Realtime Database location do you want to delete user data?
+
 
 * Realtime Database paths: Which paths in your Realtime Database instance contain user data? Leave empty if you don't use Realtime Database.
 Enter the full paths, separated by commas. You can represent the User ID of the deleted user with `{UID}`.

@@ -37,7 +37,7 @@ const read = util.promisify(fs.readFile);
 const unlink = util.promisify(fs.unlink);
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
-const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
+const FIRESTORE_VALID_CHARACTERS = /^[^({|})]+$/;
 
 const PROJECT_ID_MAX_CHARS = 6144;
 const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
@@ -69,32 +69,33 @@ const validateBatchSize = (value: string) => {
 
 const validateLocation = (value: string) => {
   const index = [
-    "us-west4",
-    "us-west2",
-    "northamerica-northeast1",
-    "us-east4",
-    "us-west1",
-    "us-west3",
-    "southamerica-east1",
-    "us-east1",
-    "europe-west1",
+    "asia-east1",
+    "asia-east2",
+    "asia-northeast1",
+    "asia-northeast2",
+    "asia-northeast3",
+    "asia-south1",
+    "asia-southeast1",
+    "asia-southeast2",
+    "australia-southeast1",
+    "eu",
+    "europe-central2",
     "europe-north1",
+    "europe-west1",
     "europe-west3",
     "europe-west2",
     "europe-west4",
-    "europe-west4",
     "europe-west6",
-    "asia-east2",
-    "asia-southeast2",
-    "asia-south1",
-    "asia-northeast2",
-    "asia-northeast3",
-    "asia-southeast1",
-    "australia-southeast1",
-    "asia-east1",
-    "asia-northeast1",
+    "northamerica-northeast1",
+    "southamerica-east1",
     "us",
-    "eu",
+    "us-central1",
+    "us-east1",
+    "us-east4",
+    "us-west1",
+    "us-west2",
+    "us-west3",
+    "us-west4",
   ].indexOf(value.toLowerCase());
 
   return index !== -1;
