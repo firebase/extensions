@@ -104,6 +104,12 @@ export function invalidMessage(message) {
   );
 }
 
+export function invalidMessage(message) {
+  logger.warn(
+    `message '${message}' is not a valid object - please add as an object or firestore map, otherwise you may experience unexpected results.`
+  );
+}
+
 export function checkingMissingTemplate(name) {
   logger.log(`checking missing template '${name}'`);
 }
