@@ -329,7 +329,7 @@ params:
       This (optional) parameter will allow you to specify a collection for which failed BigQuery updates
       will be written to.
     type: string
-
+    
   - param: TRANSFORM_FUNCTION
     label: Transform function URL
     description: >-
