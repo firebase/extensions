@@ -1,6 +1,5 @@
 ## Version 0.1.18
 
-
 fixed - added encoding for connection string passwords (#985)
 
 fixed - move log statement outside of forEach loop (#950)

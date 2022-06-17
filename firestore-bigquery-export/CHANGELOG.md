@@ -1,6 +1,5 @@
 ## Version 0.1.23
 
-
 fixed - dataset initialization time (#980)
 
 feature - update the import script to write path_params (#982)
