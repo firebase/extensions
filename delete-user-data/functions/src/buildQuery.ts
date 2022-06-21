@@ -16,7 +16,9 @@ export const buildQuery = async (userId): Promise<Query<DocumentData>[]> => {
 
     const data = (documents[doc.id] = document.data());
 
-    const ref = db.collectionGroup(data.collection === "{uid}" ? `${userId}` : data.collection);
+    const ref = db.collectionGroup(
+      data.collection === "{uid}" ? `${userId}` : data.collection
+    );
     const condition = (data.conditions || [])[0];
 
     if (!condition || !condition.length) {
@@ -25,16 +27,17 @@ export const buildQuery = async (userId): Promise<Query<DocumentData>[]> => {
           ref.get().then((querySnapshot) => {
             querySnapshot.forEach(async (doc) => {
               console.log(doc.id, " => ", doc.data());
-              await data.recusrive ? db.recursiveDelete(doc.ref): db.doc(doc.ref.path).delete();
+              (await data.recusrive)
+                ? db.recursiveDelete(doc.ref)
+                : db.doc(doc.ref.path).delete();
             });
           });
           resolve(true);
         })
       );
     }
-    
 
-    if (condition?.where) {
+    if (condition && condition.where) {
       promises.push(
         new Promise((resolve) => {
           ref
@@ -47,7 +50,9 @@ export const buildQuery = async (userId): Promise<Query<DocumentData>[]> => {
             .then((querySnapshot) => {
               querySnapshot.forEach(async (doc) => {
                 console.log(doc.id, " => ", doc.data());
-                await data.recusrive ? db.recursiveDelete(doc.ref): db.doc(doc.ref.path).delete();        
+                (await data.recusrive)
+                  ? db.recursiveDelete(doc.ref)
+                  : db.doc(doc.ref.path).delete();
               });
               resolve(true);
             });
