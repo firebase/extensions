@@ -1,9 +1,3 @@
-## Version 0.1.17
-
-fixed - update SMTP connection URI validation regex (#942)
-
-fixed - hide password from showing up in logs (#943)
-
 ## Version 0.1.16
 
 fixed - updated the extensions regular expression validation to contain additional smtp formats (#909)
