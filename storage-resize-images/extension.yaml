@@ -287,7 +287,3 @@ params:
     default: 1024
     required: true
     immutable: false
-
-events:
-  - type: firebase.extensions.storage-resize-images.v1.complete
-    description: Occurs when image resizing completes. The event will contain further details about specific formats and sizes.

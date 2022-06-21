@@ -12,7 +12,6 @@ import * as logs from "./logs";
 
 export interface ResizedImageResult {
   size: string;
-  outputFilePath: string;
   success: boolean;
 }
 
@@ -228,10 +227,10 @@ export const modifyImage = async ({
     });
     logs.imageUploaded(modifiedFile);
 
-    return { size, outputFilePath: modifiedFilePath, success: true };
+    return { size, success: true };
   } catch (err) {
     logs.error(err);
-    return { size, outputFilePath: modifiedFilePath, success: false };
+    return { size, success: false };
   } finally {
     try {
       // Make sure the local resized file is cleaned up to free up disk space.
