@@ -9,7 +9,3 @@ When you find an extension that solves a need for your app or project, all you d
 You can also browse official Firebase extensions from the following sources:
 * [Firebase Extensions product page](https://firebase.google.com/products/extensions)
 * [Firebase Extensions dashboard](https://console.firebase.google.com/project/_/extensions/) in the Firebase console
-
-# Want to help shape the future of Extensions?
-
-Firebase is looking for Extensions users to participate in an upcoming study on Wednesday, March 23, 2022! We’d love your feedback on new Extensions features. Selected users will receive a $100USD gift card or local equivalent. Submit your availability [here](https://forms.gle/TaBf17RMfgWydx5QA)
