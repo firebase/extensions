@@ -216,16 +216,12 @@ export const bigQueryTableInsertErrors = (
   ]
 ) => {
   logger.warn(`Error when inserting data to table.`);
-
   insertErrors.forEach((error) => {
     logger.warn("ROW DATA JSON:");
     logger.warn(error.row);
-
-    if (error && error.errors) {
-      error.errors.forEach((error) =>
-        logger.warn(`ROW ERROR MESSAGE: ${error.message}`)
-      );
-    }
+    error.errors.forEach((error) =>
+      logger.warn(`ROW ERROR MESSAGE: ${error.message}`)
+    );
   });
 };
 
@@ -262,8 +258,4 @@ export function invalidClustering(fields: string) {
 }
 export const tableCreationError = (table, message) => {
   logger.warn(`Error caught creating table`, message);
-};
-
-export const failedToInitializeWait = (message) => {
-  logger.warn(`Failed while waiting to initialize.`, message);
 };
