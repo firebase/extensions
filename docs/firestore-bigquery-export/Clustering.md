@@ -18,7 +18,7 @@ Clustering allows up to a maximum of four fields and can be configured similar t
 
 ## Ignoring Columns
 
-Any columns that are added as part of the configuration, but do not exist on the table schema will be `ignored`.
+Any columns that are added as part of the configuration, but do not exist on the table schema will be ignored.
 
 ## Pre-existing tables
 
