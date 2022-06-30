@@ -22,4 +22,4 @@ Any columns that are added as part of the configuration, but do not exist on the
 
 ## Pre-existing tables
 
-If a pre-existing table exists, the extension will `overwrite` the previous configuration.
+If a pre-existing table exists, the extension will overwrite the previous configuration.
