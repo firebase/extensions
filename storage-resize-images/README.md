@@ -33,7 +33,7 @@ Before installing this extension, make sure that you've [set up a Cloud Storage 
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
  
 - You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
-- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
  - Cloud Storage
  - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
 
@@ -71,6 +71,9 @@ If you prefer to resize every image uploaded to your Storage bucket,  leave this
 * Convert image to preferred types: The image types you'd like your source image to convert to.  The default for this option will be to keep the original file type as the destination file type.
 
 
+* Output options for selected formats: Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion. eg. `{"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "pallete": true }}`
+
+
 * GIF and WEBP animated option: Keep animation of GIF and WEBP formats.
 
 
@@ -80,7 +83,7 @@ If you prefer to resize every image uploaded to your Storage bucket,  leave this
 
 **Cloud Functions:**
 
-* **generateResizedImage:** Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images, then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
+* **generateResizedImage:** Listens for all changes made to your specified Cloud Storage bucket, finds any images, and resizes them. Resized images are stored in the same bucket. Optionally keeps or deletes the original images.
 
 
 
