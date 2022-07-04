@@ -136,9 +136,24 @@ describe("buildQueries", () => {
         });
       });
     });
+
+    test("Can delete a subcollection document based on a userId", async () => {
+      const doc = await db.collection("collection_1").add({ id: "testing" });
+      const subCollection = doc.collection("users");
+      await subCollection.doc(`${user.uid}`).set({ id: "test" });
+
+      const queries = await buildQuery(user.uid);
+
+      //Assert if document has been deleted.
+      return new Promise((resolve) => {
+        subCollection.onSnapshot((collection) => {
+          if (collection.docs.length === 0) resolve(true);
+        });
+      });
+    });
   });
 
-  describe("can delete records based on multiple where clauses", () => {
+  describe("multiple clauses", () => {
     beforeEach(async () => {
       await generateMultipleWhereClauseQuery();
     });
