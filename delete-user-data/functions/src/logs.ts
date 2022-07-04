@@ -100,6 +100,10 @@ export const storageNotConfigured = () => {
   logger.log("Cloud Storage paths are not configured, skipping");
 };
 
+export const queryCollectionNotConfigured = () => {
+  logger.log("Firestore query collection paths are not configured, skipping");
+};
+
 export const storagePathDeleted = (path: string) => {
   logger.log(`Deleted: '${path}' from Cloud Storage`);
 };

@@ -17,12 +17,12 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as firebase_tools from "firebase-tools";
-import { getEventarc } from "firebase-admin/eventarc";
 
 import { getDatabaseUrl } from "./helpers";
 
 import config from "./config";
 import * as logs from "./logs";
+import { buildQuery } from "./buildQuery";
 
 // Helper function for selecting correct domain adrress
 const databaseURL = getDatabaseUrl(
@@ -35,12 +35,6 @@ admin.initializeApp({
   credential: admin.credential.applicationDefault(),
   databaseURL,
 });
-
-const eventChannel =
-  process.env.EVENTARC_CHANNEL &&
-  getEventarc().channel(process.env.EVENTARC_CHANNEL, {
-    allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
-  });
 
 logs.init();
 
@@ -55,24 +49,33 @@ export const clearData = functions.auth.user().onDelete(async (user) => {
   const { firestorePaths, rtdbPaths, storagePaths, queryCollection } = config;
   const { uid } = user;
 
-  /** Add query record deletions here */
+  const promises = [];
+  if (firestorePaths) {
+    promises.push(clearFirestoreData(firestorePaths, uid));
+  } else {
+    logs.firestoreNotConfigured();
+  }
+  if (rtdbPaths && databaseURL) {
+    promises.push(clearDatabaseData(rtdbPaths, uid));
+  } else {
+    logs.rtdbNotConfigured();
+  }
+  if (storagePaths) {
+    promises.push(clearStorageData(storagePaths, uid));
+  } else {
+    logs.storageNotConfigured();
+  }
+
+  /** find all query collection data */
   if (queryCollection) {
-    // const queries = await buildQueries();
+    promises.push(buildQuery(uid));
+  } else {
+    logs.queryCollectionNotConfigured();
   }
 
-  if (eventChannel) {
-    const paths = firestorePaths.split(",").map((path) => {
-      return path.replace("{UID}", uid);
-    });
+  await Promise.all(promises);
 
-    await eventChannel.publish({
-      type: "firebase.extensions.delete-user-data.v1.trigger",
-      subject: "test",
-      data: {
-        paths,
-      },
-    });
-  }
+  logs.complete(uid);
 });
 
 const clearDatabaseData = async (databasePaths: string, uid: string) => {

@@ -1,7 +1,21 @@
-import { DocumentReference } from "@google-cloud/firestore";
 import * as admin from "firebase-admin";
 import { UserRecord } from "firebase-admin/lib/auth/user-record";
 import { buildQuery } from "../src/buildQuery";
+import setupEnvironment from "../__tests__/helpers/setupEnvironment";
+
+const environment = {
+  queryCollection: "queries",
+};
+
+admin.initializeApp({ projectId: "demo-test" });
+setupEnvironment();
+
+const db = admin.firestore();
+const auth = admin.auth();
+let user: UserRecord;
+
+const queryCollection = db.collection(environment.queryCollection);
+const usersCollection = db.collection("users");
 
 const generateRandomEmail = () => {
   var chars = "abcdefghijklmnopqrstuvwxyz1234567890";
@@ -13,94 +27,149 @@ const generateRandomEmail = () => {
   return `${string}@google.com`;
 };
 
-process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
-process.env.FIREBASE_AUTH_EMULATOR_HOST = "localhost:9099";
+const clearCollection = async (
+  collection: admin.firestore.CollectionReference
+) => {
+  const docs = await collection.listDocuments();
 
-const environment = {
-  queryCollection: "queries",
+  for await (const doc of docs || []) {
+    await doc.delete();
+  }
 };
 
-admin.initializeApp({ projectId: "demo-test" });
-const db = admin.firestore();
-const auth = admin.auth();
-let user: UserRecord;
-let userDoc: DocumentReference;
+const generateSingleWhereClauseQuery = async () => {
+  await Promise.all([
+    queryCollection.doc("single_where_clause").set({
+      collection: "users",
+      conditions: [{ where: ["id", "==", "{uid}"] }],
+      recursive: true,
+    }),
+    queryCollection.doc("{uid}").set({
+      collection: "{uid}",
+    }),
+  ]);
+};
+
+const generateMultipleWhereClauseQuery = async () => {
+  await Promise.all([
+    queryCollection.doc("multiple_where_clause").set({
+      collection: "users",
+      conditions: [
+        { where: ["id", "==", "{uid}"] },
+        { where: ["name", "==", "example"] },
+      ],
+      recursive: true,
+    }),
+    queryCollection.doc("{uid}").set({
+      collection: "{uid}",
+    }),
+  ]);
+};
 
 describe("buildQueries", () => {
   beforeEach(async () => {
     user = await auth.createUser({ email: generateRandomEmail() });
+  });
 
-    await Promise.all([
-      db
-        .collection(environment.queryCollection)
-        .doc("users")
-        .set({
-          collection: "users",
-          conditions: [{ where: ["id", "==", "{uid}"] }],
-          recursive: true,
+  describe("using a single where clause", () => {
+    beforeEach(async () => {
+      await generateSingleWhereClauseQuery();
+    });
+
+    afterEach(async () => {
+      await clearCollection(queryCollection);
+      await clearCollection(usersCollection);
+    });
+
+    test("Can delete a single document based on a userId", async () => {
+      const userDoc = await usersCollection.add({ id: user.uid });
+      const queries = await buildQuery(user.uid);
+
+      //Assert if document has been deleted.
+      await new Promise((resolve) => {
+        userDoc.onSnapshot((doc) => {
+          if (!doc.exists) resolve(true);
+        });
+      });
+    });
+
+    test("Can delete multiple documents based on a userId", async () => {
+      await Promise.all([
+        usersCollection.add({ id: user.uid }),
+        usersCollection.add({ id: user.uid }),
+      ]);
+
+      const queries = await buildQuery(user.uid);
+
+      //Assert if document has been deleted.
+      return new Promise((resolve) => {
+        usersCollection.onSnapshot((collection) => {
+          if (collection.docs.length === 0) resolve(true);
+        });
+      });
+    });
+
+    test("Can delete a collection based on a userId", async () => {
+      await Promise.all([db.collection(user.uid).add({ id: "testing" })]);
+
+      const queries = await buildQuery(user.uid);
+
+      //Assert if document has been deleted.
+      return new Promise((resolve) => {
+        db.collection(user.uid).onSnapshot((collection) => {
+          if (collection.docs.length === 0) resolve(true);
+        });
+      });
+    });
+
+    test("Can delete all subcollections based on a userId", async () => {
+      const doc = await usersCollection.add({ id: "testing" });
+      const subcollection = doc.collection(user.uid);
+      await subcollection.add({ foo: "bar" });
+
+      const queries = await buildQuery(user.uid);
+
+      //Assert if document has been deleted.
+      return new Promise((resolve) => {
+        subcollection.onSnapshot((collection) => {
+          if (collection.docs.length === 0) resolve(true);
+        });
+      });
+    });
+  });
+
+  describe("can delete records based on multiple where clauses", () => {
+    beforeEach(async () => {
+      await generateMultipleWhereClauseQuery();
+    });
+
+    afterEach(async () => {
+      // await clearCollection(queryCollection);
+      await clearCollection(usersCollection);
+    });
+
+    test("Can delete documents based on multiple where clauses", async () => {
+      const userDoc = await usersCollection.add({ id: user.uid });
+      const userDoc2 = await usersCollection.add({
+        id: user.uid,
+        name: "example",
+      });
+
+      const queries = await buildQuery(user.uid);
+
+      //Assert if both documents has been deleted.
+      await Promise.all([
+        new Promise((resolve) => {
+          userDoc.onSnapshot((doc) => {
+            if (!doc.exists) resolve(true);
+          });
         }),
-      db
-        .collection(environment.queryCollection)
-        .doc("{uid}")
-        .set({
-          collection: "{uid}",
+        new Promise((resolve) => {
+          userDoc2.onSnapshot((doc) => {
+            if (!doc.exists) resolve(true);
+          });
         }),
-    ]);
-  });
-
-  test("Can delete a single document based on a userId", async () => {
-    const userDoc = await db.collection("users").add({ id: user.uid });
-    const queries = await buildQuery(user.uid);
-
-    //Assert if document has been deleted.
-    return new Promise((resolve) => {
-      userDoc.onSnapshot((doc) => {
-        if (!doc.exists) resolve(true);
-      });
-    });
-  });
-
-  test("Can delete multiple documents based on a userId", async () => {
-    await Promise.all([
-      db.collection("users").add({ id: user.uid }),
-      db.collection("users").add({ id: user.uid }),
-    ]);
-
-    const queries = await buildQuery(user.uid);
-
-    //Assert if document has been deleted.
-    return new Promise((resolve) => {
-      db.collection("users").onSnapshot((collection) => {
-        if (collection.docs.length === 0) resolve(true);
-      });
-    });
-  });
-
-  test("Can delete a collection based on a userId", async () => {
-    await Promise.all([db.collection(user.uid).add({ id: "testing" })]);
-
-    const queries = await buildQuery(user.uid);
-
-    //Assert if document has been deleted.
-    return new Promise((resolve) => {
-      db.collection(user.uid).onSnapshot((collection) => {
-        if (collection.docs.length === 0) resolve(true);
-      });
-    });
-  });
-
-  test("Can delete all subcollections based on a userId", async () => {
-    const doc = await db.collection("users").add({ id: "testing" });
-    const subcollection = doc.collection(user.uid);
-    await subcollection.add({ foo: "bar" });
-
-    const queries = await buildQuery(user.uid);
-
-    //Assert if document has been deleted.
-    return new Promise((resolve) => {
-      subcollection.onSnapshot((collection) => {
-        if (collection.docs.length === 0) resolve(true);
-      });
+      ]);
     });
   });
 });

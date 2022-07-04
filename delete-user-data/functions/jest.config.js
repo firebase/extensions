@@ -5,4 +5,6 @@ module.exports = {
   displayName: packageJson.name,
   rootDir: "./",
   preset: "ts-jest",
+  testMatch: ["**/__tests__/*.test.ts"],
+  setupFilesAfterEnv: ["<rootDir>/__tests__/setupTests.ts"],
 };
