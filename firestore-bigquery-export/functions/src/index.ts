@@ -22,7 +22,7 @@ import {
   FirestoreEventHistoryTracker,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 
-import * as admin from 'firebase-admin';
+import * as admin from "firebase-admin";
 import { getEventarc } from "firebase-admin/eventarc";
 import * as logs from "./logs";
 import { getChangeType, getDocumentId } from "./util";
@@ -61,18 +61,21 @@ exports.fsexportbigquery = functions.firestore
       const changeType = getChangeType(change);
       const documentId = getDocumentId(change);
 
-      await eventChannel?.publish({
-        type: `com.bigqueryexport.v1.sync.start`,
-        data: {
-          before: {
-            ...change.before, 
-            data: change.before.data()}, 
+      if (eventChannel) {
+        await eventChannel.publish({
+          type: `com.bigqueryexport.v1.sync.start`,
+          data: {
+            before: {
+              ...change.before,
+              data: change.before.data(),
+            },
             after: {
-              ...change.after, 
-              data: change.after.data()
-            }
-          }
+              ...change.after,
+              data: change.after.data(),
+            },
+          },
         });
+      }
 
       await eventTracker.record([
         {
