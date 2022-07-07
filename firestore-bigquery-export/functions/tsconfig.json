@@ -1,7 +1,7 @@
 {
   "files": ["./__tests__/test.types.d.ts"],
   "compilerOptions": {
-    "lib": ["esnext.asynciterable"],
+    "lib": ["es2020", "DOM"],
     "outDir": "lib",
     "types": ["node", "jest", "chai"],
     "target": "ES2020",
