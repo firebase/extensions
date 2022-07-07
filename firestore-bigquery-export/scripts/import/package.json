@@ -29,10 +29,10 @@
     "@google-cloud/bigquery": "^5.6.0",
     "commander": "5.0.0",
     "filenamify": "^4.2.0",
-    "firebase-admin": "^9.7.0",
+    "firebase-admin": "^10.0.2",
     "firebase-functions": "^3.13.2",
     "generate-schema": "^2.6.0",
-    "inquirer": "^6.4.0",
+    "inquirer": "^7.0.0",
     "sql-formatter": "^2.3.3",
     "workerpool": "^6.1.4"
   },
