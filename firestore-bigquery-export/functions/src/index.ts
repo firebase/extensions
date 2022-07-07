@@ -64,10 +64,15 @@ exports.fsexportbigquery = functions.firestore
       await eventChannel?.publish({
         type: `com.bigqueryexport.v1.sync.start`,
         data: {
-          before: change.before,
-          after: change.after
-        },
-       });
+          before: {
+            ...change.before, 
+            data: change.before.data()}, 
+            after: {
+              ...change.after, 
+              data: change.after.data()
+            }
+          }
+        });
 
       await eventTracker.record([
         {
