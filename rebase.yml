@@ -1,0 +1,16 @@
+
+... 
+    - name: Checkout the latest code
+      uses: actions/checkout@v2
+      with:
+        token: ${{ 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 }}
+        fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+    - name: Automatic Rebase
+      uses: cirrus-actions/rebase@1.5
+      env:
+        GITHUB_TOKEN: ${{ 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}}
+      - name: Automatic Rebase
+      uses: cirrus-actions/rebase@1.5
+      env:
+        GITHUB_TOKEN: ${{ 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 }}
+        PR_NUMBER: 45
