@@ -38,12 +38,20 @@ admin.initializeApp({
 
 logs.init();
 
+export const handleDeletion = functions.pubsub
+  .topic("deletions")
+  .onPublish((message, context) => {
+    console.log("The function was triggered at ", context.timestamp);
+    console.log("The unique ID for the event is", context.eventId);
+  });
+
 /*
  * The clearData function removes personal data from the RealTime Database,
  * Storage, and Firestore. It waits for all deletions to complete, and then
  * returns a success message.
  */
 export const clearData = functions.auth.user().onDelete(async (user) => {
+  console.log("here!!!! >>>>>");
   logs.start();
 
   const { firestorePaths, rtdbPaths, storagePaths, queryCollection } = config;

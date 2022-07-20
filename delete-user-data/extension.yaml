@@ -49,6 +49,8 @@ roles:
     reason: Allows the extension to delete (user) data from Realtime Database.
   - role: storage.admin
     reason: Allows the extension to delete (user) data from Cloud Storage.
+  - role: pubsub.admin
+    reason: allows publish and subscribing of deletion events
 
 resources:
   - name: clearData
@@ -64,6 +66,14 @@ resources:
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${param:PROJECT_ID}
+
+  - name: handleDeletion
+    type: firebaseextensions.v1beta.function
+    properties:
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: google.pubsub.topic.publish
+        resource: projects/${PROJECT_ID}/topics/deletions
 
 params:
   - param: LOCATION
@@ -139,7 +149,7 @@ params:
     example: users/{UID},admins/{UID}
     required: false
   
-    - param: FIRESTORE_QUERY_COLLECTION
+  - param: FIRESTORE_QUERY_COLLECTION
     label: Cloud Firestore paths
     description: >-
      Collection to store query specification documents

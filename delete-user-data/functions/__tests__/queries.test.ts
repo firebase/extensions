@@ -66,7 +66,7 @@ const generateMultipleWhereClauseQuery = async () => {
   ]);
 };
 
-describe("buildQueries", () => {
+xdescribe("buildQueries", () => {
   beforeEach(async () => {
     user = await auth.createUser({ email: generateRandomEmail() });
   });

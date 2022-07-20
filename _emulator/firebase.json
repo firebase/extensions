@@ -1,6 +1,7 @@
 {
   "extensions": {
-    "firestore-send-email": "../firestore-send-email"
+    "firestore-send-email": "../firestore-send-email",
+    "delete-user-data": "../delete-user-data"
   },
   "storage": {
     "rules": "storage.rules"
@@ -14,6 +15,12 @@
     },
     "auth": {
       "port": 9099
+    },
+    "pubsub": {
+      "port": 8085
+    },
+    "functions": {
+      "port": 5001
     },
     "ui": {
       "enabled": true

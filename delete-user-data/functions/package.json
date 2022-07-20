@@ -10,7 +10,7 @@
     "compile": "tsc",
     "local:emulator": "cd ../../_emulator && firebase emulators:start -P demo-test",
     "test": "cd ../../_emulator && firebase emulators:exec jest -P demo-test",
-    "test:local": "npm-run-all --kill-others --success=second \"npm run local:emulator\" \"jest\"",
+    "test:local": "concurrently \"npm run local:emulator\" \"jest\"",
     "test:watch": "concurrently \"npm run local:emulator\" \"jest --watch\"",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
