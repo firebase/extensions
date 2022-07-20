@@ -161,7 +161,7 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
 };
 
 const extractUserPaths = (paths: string, uid: string) => {
-  return paths.split(",").map((path) => replaceUID(path, uid));
+  return paths.split(",").map((path) => replaceUID(path.trim(), uid));
 };
 
 const replaceUID = (path: string, uid: string) => {
