@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import { UserRecord } from "firebase-admin/lib/auth/user-record";
 import { search } from "../src//search";
+import { createFirebaseUser, waitForCollectionDeletion } from "../src/helpers";
 import setupEnvironment from "../__tests__/helpers/setupEnvironment";
 
 const environment = {
@@ -12,10 +13,9 @@ setupEnvironment();
 
 const db = admin.firestore();
 const auth = admin.auth();
-let user: UserRecord;
+
 
 const queryCollection = db.collection(environment.queryCollection);
-// const usersCollection = db.collection("users");
 
 const generateRandomEmail = () => {
   var chars = "abcdefghijklmnopqrstuvwxyz1234567890";
@@ -27,45 +27,25 @@ const generateRandomEmail = () => {
   return `${string}@google.com`;
 };
 
-const clearCollection = async (
-  collection: admin.firestore.CollectionReference
-) => {
-  const docs = await collection.listDocuments();
-
-  for await (const doc of docs || []) {
-    await doc.delete();
-  }
+const generateTopLevelUserCollection = async (userId) => {
+  const collection = db.collection(userId);
+  await collection.add({})
+  return collection;
 };
 
-const generateNestedCollections = async () => {
-  const doc1 = await queryCollection.doc("doc1").set({});
-
-  const doc2 = queryCollection
-    .doc("doc1")
-    .collection("collection2")
-    .doc("doc2")
-    .set({});
-
-  const doc3 = queryCollection
-    .doc("doc1")
-    .collection("collection2")
-    .doc("doc2")
-    .collection("collection3")
-    .doc("doc3")
-    .set({});
-};
-
-describe("buildQueries", () => {
+describe("search", () => {
+  let user: UserRecord;
+  let collection: admin.firestore.CollectionReference;
   beforeEach(async () => {
-    await generateNestedCollections();
-    user = await auth.createUser({ email: generateRandomEmail() });
+    user = await createFirebaseUser();
+    collection = await  generateTopLevelUserCollection(user.uid);
   });
 
-  describe("using a single where clause", () => {
+  describe("can delete a top level collection", () => {
     test("truthy", async () => {
-      const collections = await search(user?.uid);
+      await search(user?.uid);
 
-      console.log(collections);
+      await waitForCollectionDeletion(collection)
     });
   });
 });

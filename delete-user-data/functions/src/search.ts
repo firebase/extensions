@@ -16,18 +16,19 @@ export const search = async (userId) => {
     return { id: col.id, ref: col };
   });
 
-  await topic.publish(Buffer.from("Test message!"));
+  const promises = collections
+    .filter(($) => $.id === userId)
+    .map((collection) => {
+      return topic.publish(
+        Buffer.from(
+          JSON.stringify({ path: collection.path, type: "collection" })
+        )
+      );
+    });
 
-  // collections.forEach((collection) => {
-  //   // if (collection.id === userId) {
-  //   console.log("Publishing >>>", topic.name);
+  console.log("publishes >>>", promises);
 
-  //   // }
-  // });
+  await Promise.all(promises);
 
   return collectionIds;
-};
-
-export const searchDocuments = async (ref: CollectionReference) => {
-  const db = admin.firestore();
 };

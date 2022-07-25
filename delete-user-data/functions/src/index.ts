@@ -18,7 +18,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as firebase_tools from "firebase-tools";
 
-import { getDatabaseUrl } from "./helpers";
+import { getDatabaseUrl, deleteCollection } from "./helpers";
 
 import config from "./config";
 import * as logs from "./logs";
@@ -40,9 +40,16 @@ logs.init();
 
 export const handleDeletion = functions.pubsub
   .topic("deletions")
-  .onPublish((message, context) => {
-    console.log("The function was triggered at ", context.timestamp);
-    console.log("The unique ID for the event is", context.eventId);
+  .onPublish(async (message, context) => {
+    const { path, type } = JSON.parse(
+      Buffer.from(message.data, "base64").toString("utf8")
+    );
+
+    if (type === "collection") {
+      return deleteCollection(admin.firestore(), path, 100);
+    }
+
+    return Promise.resolve();
   });
 
 /*
@@ -51,7 +58,6 @@ export const handleDeletion = functions.pubsub
  * returns a success message.
  */
 export const clearData = functions.auth.user().onDelete(async (user) => {
-  console.log("here!!!! >>>>>");
   logs.start();
 
   const { firestorePaths, rtdbPaths, storagePaths, queryCollection } = config;
