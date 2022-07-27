@@ -222,11 +222,16 @@ export const modifyImage = async ({
 
     // Uploading the modified image.
     logs.imageUploading(modifiedFilePath);
-    await bucket.upload(modifiedFile, {
+    const uploadResponse = await bucket.upload(modifiedFile, {
       destination: modifiedFilePath,
       metadata,
     });
     logs.imageUploaded(modifiedFile);
+
+    // Make uploaded image public.
+    if (config.makePublic) {
+      await uploadResponse[0].makePublic();
+    }
 
     return { size, outputFilePath: modifiedFilePath, success: true };
   } catch (err) {
