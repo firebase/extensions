@@ -14,6 +14,27 @@ A simple SMTP connection URL may consist of a **protocol** (should be either **s
 
 You can find all of these components by doing a small Google search on the SMTP settings for the email delivery service you are using (for example, Sendgrid SMTP settings).
 
+### Providers
+
+Some providers have specific guides for what credemtials can be used.
+
+#### Gmail (Setup Google App Passwords)
+
+**Google** no longer allows **Gmail** users to use their own passwords to authorize third-party apps and services. Instead, you have to use the [Sign in with App Passwords](https://support.google.com/accounts/answer/185833) service to generate a special password for each app you want to authorize. To do so:
+
+1. Go to your [Google Account](https://myaccount.google.com/).
+2. Select **Security**.
+3. Under "Signing in to Google," select **App Passwords**. You may need to sign in. If you don’t have this option, it might be because:
+   1. 2-Step Verification is not set up for your account.
+   2. 2-Step Verification is only set up for security keys.
+   3. Your account is through work, school, or other organization.
+   4. You turned on Advanced Protection.
+4. At the bottom, choose **Select app** and choose **Other** option and then write the name of the app password (e.g. `Firebase Trigger Email Extension`) and click **Generate**.
+5. Follow the instructions to enter the App Password. The App Password is the 16-character code in the yellow bar on your device.
+6. Tap **Done**.
+
+Now you can use your Google username with the generated password to authorize the extension.
+
 ## Extension Configuration
 
 There are two methods that can be used to configure the extension with the SMTP server settings in terms of where to save the password:
