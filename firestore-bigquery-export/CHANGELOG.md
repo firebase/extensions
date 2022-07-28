@@ -1,6 +1,10 @@
 ## Version 0.1.25
 
-wip
+feature - add version to the bigquery import script
+
+feature - add version to the bigquery gen-schema-view script
+
+fixed - updated bigquery.googleapis.com api reference (#1022)
 
 ## Version 0.1.24
 
