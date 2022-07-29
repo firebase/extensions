@@ -15,14 +15,16 @@ The extension creates and updates a [dataset](https://cloud.google.com/bigquery/
 
 If you create, update, delete, or import a document in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset.
 
-Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chatrooms/{providerId}/{categoryId}`).
 Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`). 
 
-You can also optionally return a STRING column (path_params) with JSON object containing wildcard reference ids. You can extract them using [JSON_EXTRACT_SCALAR](https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions#json_extract_scalar).
+Enabling wildcard references will provide an additional STRING based column. The resulting JSON field value references any wildcards that are included in ${param:COLLECTION_PATH}. You can extract them using [JSON_EXTRACT_SCALAR](https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions#json_extract_scalar).
+
 
 `Partition` settings cannot be updated on a pre-existing table, if these options are required then a new table must be created.
 
 `Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
+
+
 
 #### Additional setup
 
@@ -68,7 +70,7 @@ After your data is in BigQuery, you can run the [schema-views script](https://gi
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
  
 - You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
-- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
   - BigQuery (this extension writes to BigQuery with [streaming inserts](https://cloud.google.com/bigquery/pricing#streaming_pricing))
   - Cloud Firestore
   - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
@@ -81,9 +83,9 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery Dataset location: Where do you want to deploy the BigQuery dataset created for this extension? For help selecting a location, refer to the [location selection guide](https://cloud.google.com/bigquery/docs/locations).
 
-* Project Id: Override the default project bigquery instance.  This can allow updates to be directed to a bigquery instance on another project.
+* Project Id: Override the default project bigquery instance. This can allow updates to be directed to a bigquery instance on another project.
 
-* Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}`  will be returned in `param_paths` as a JSON formatted string.
+* Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}`  can be returned in `path_params` as a JSON formatted string.
 
 * Wildcard Column field with Parent Firestore Document IDs: Creates a column containing a JSON object of all wildcard ids from a documents path.
 
@@ -100,7 +102,9 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery SQL Time Partitioning table schema field(column) type: Parameter for BigQuery SQL schema field type for the selected Time Partitioning Firestore Document field option. Cannot be changed if Table is already partitioned.
 
-* BigQuery SQL table clustering: This parameter will allow you to set up Clustering for the BigQuery Table created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 comma separated fields(order matters).  Available schema extensions table fields for clustering: `document_id, timestamp, event_id, operation, data`.
+* BigQuery SQL table clustering: This parameter will allow you to set up Clustering for the BigQuery Table created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 comma separated fields. The order of the specified columns determines the sort order of the data. Available schema extensions table fields for clustering: `document_id, timestamp, event_id, operation, data`.
+
+* Backup Collection Name: This (optional) parameter will allow you to specify a collection for which failed BigQuery updates will be written to.
 
 * Transform function URL: Specify a function URL to call that will transform the payload that will be written to BigQuery. See the pre-install documentation for more details.
 
@@ -125,3 +129,5 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 This extension will operate with the following project IAM roles:
 
 * bigquery.dataEditor (Reason: Allows the extension to configure and export data into BigQuery.)
+
+* datastore.user (Reason: Allows the extension to write updates to the database.)
