@@ -4,7 +4,7 @@ import { smtpServer } from "./createSMTPServer";
 process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
 
 admin.initializeApp({
-  projectId: "demo-test",
+  projectId: "extensions-testing",
 });
 
 const mail = "mail";
