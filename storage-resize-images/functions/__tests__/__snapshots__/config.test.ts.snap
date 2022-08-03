@@ -12,7 +12,6 @@ Object {
   ],
   "imageTypes": undefined,
   "includePathList": undefined,
-  "outputOptions": undefined,
   "resizedImagesPath": undefined,
 }
 `;
