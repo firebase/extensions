@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`extension functions configuration detected from environment variables 1`] = `
+Object {
+  "defaultFrom": "",
+  "defaultReplyTo": "",
+  "location": "europe-west2",
+  "mailCollection": "",
+  "smtpConnectionUri": "",
+  "templatesCollection": "",
+  "usersCollection": "",
+}
+`;
