@@ -3,7 +3,7 @@ import * as sharp from "sharp";
 import * as path from "path";
 import * as fs from "fs";
 
-import { Bucket } from "@google-cloud/storage";
+import { Bucket, File } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
 import { uuid } from "uuidv4";
 
@@ -12,7 +12,6 @@ import * as logs from "./logs";
 
 export interface ResizedImageResult {
   size: string;
-  outputFilePath: string;
   success: boolean;
 }
 
@@ -36,56 +35,27 @@ export function resize(file, size) {
 }
 
 export function convertType(buffer, format) {
-  let outputOptions = {
-    jpeg: {},
-    jpg: {},
-    png: {},
-    webp: {},
-    tiff: {},
-    tif: {},
-  };
-  if (config.outputOptions) {
-    try {
-      outputOptions = JSON.parse(config.outputOptions);
-    } catch (e) {
-      logs.errorOutputOptionsParse(e);
-    }
-  }
-  const { jpeg, jpg, png, webp, tiff, tif } = outputOptions;
-
-  if (format === "jpeg") {
+  if (format === "jpg" || format === "jpeg") {
     return sharp(buffer)
-      .jpeg(jpeg)
-      .toBuffer();
-  }
-
-  if (format === "jpg") {
-    return sharp(buffer)
-      .jpeg(jpg)
+      .jpeg()
       .toBuffer();
   }
 
   if (format === "png") {
     return sharp(buffer)
-      .png(png)
+      .png()
       .toBuffer();
   }
 
   if (format === "webp") {
     return sharp(buffer, { animated: config.animated })
-      .webp(webp)
+      .webp()
       .toBuffer();
   }
 
-  if (format === "tif") {
+  if (format === "tiff" || format === "tif") {
     return sharp(buffer)
-      .tiff(tif)
-      .toBuffer();
-  }
-
-  if (format === "tiff") {
-    return sharp(buffer)
-      .tiff(tiff)
+      .tiff()
       .toBuffer();
   }
 
@@ -228,10 +198,10 @@ export const modifyImage = async ({
     });
     logs.imageUploaded(modifiedFile);
 
-    return { size, outputFilePath: modifiedFilePath, success: true };
+    return { size, success: true };
   } catch (err) {
     logs.error(err);
-    return { size, outputFilePath: modifiedFilePath, success: false };
+    return { size, success: false };
   } finally {
     try {
       // Make sure the local resized file is cleaned up to free up disk space.
