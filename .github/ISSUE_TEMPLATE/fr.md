@@ -15,7 +15,7 @@ Issues filed here should be about a feature request for a **specific extension i
 
 ### [REQUIRED] Step 2: Extension name
 
-This feature request is for extension: **\_** (`storage-resize-images`, `firestore-send-email`, etc)
+This feature request is for extension: **\_** (`storage-resize-images`, etc)
 
 ### What feature would you like to see?
 
