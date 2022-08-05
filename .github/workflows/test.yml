@@ -13,7 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+      update-test-workflow
         node: ["14", "16"]
+        node: ["14", "16]
+    update-test-workflow
     name: node.js_${{ matrix.node }}_test
     steps:
       - uses: actions/checkout@v2
