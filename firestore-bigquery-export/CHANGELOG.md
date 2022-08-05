@@ -1,7 +1,9 @@
+next
 ## Version 0.1.24
 
 fixed - generate new lib folder
 
+next
 ## Version 0.1.23
 
 fixed - dataset initialization time (#980)
