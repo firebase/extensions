@@ -13,17 +13,16 @@
 # limitations under the License.
 
 name: firestore-counter
-displayName: Distributed Counter
+version: 0.2.5
 specVersion: v1beta
-version: 0.1.0
 
-description:
-  Records event counters at scale to accommodate high-velocity writes to Cloud Firestore.
+displayName: Distributed Counter
+description: Records event counters at scale to accommodate high-velocity writes to Cloud Firestore.
 
 license: Apache-2.0
-billingRequired: false
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-counter
-releaseNotesUrl: https://github.com/firebase/extensions/commits/master
+releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-counter/CHANGELOG.md
 
 author:
   authorName: Firebase
@@ -33,56 +32,62 @@ contributors:
   - authorName: Patryk Lesiewicz
     url: https://github.com/lepatryk
 
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
+
+billingRequired: true
+
 roles:
   - role: datastore.user
     reason: Allows the extension to aggregate Cloud Firestore counter shards.
+  - role: cloudscheduler.admin
+    reason: Allows the extension to create a new Cloud Scheduler function.
 
 resources:
-  - name: controller
+  - name: controllerCore
     type: firebaseextensions.v1beta.function
-    description:
-      Scheduled to run every minute.
-      This function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
+    description: This scheduled function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
     properties:
-      sourceDirectory: .
-      location: ${LOCATION}
+      location: ${param:LOCATION}
+      runtime: nodejs14
       maxInstances: 1
-      httpsTrigger: {}
+      scheduleTrigger:
+        schedule: "every ${param:SCHEDULE_FREQUENCY} minutes"
 
   - name: onWrite
     type: firebaseextensions.v1beta.function
-    description:
-      Listens for changes on counter shards that may need aggregating. This function is limited to max 1 instance.
+    description: Listens for changes on counter shards that may need aggregating. This function is limited to max 1 instance.
     properties:
-      sourceDirectory: .
-      location: ${LOCATION}
+      location: ${param:LOCATION}
+      runtime: nodejs14
       maxInstances: 1
       timeout: 120s
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/{collection}/{counter=**}/_counter_shards_/{shardId}
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/{collection}/{counter=**}/_counter_shards_/{shardId}
 
   - name: worker
     type: firebaseextensions.v1beta.function
-    description:
-      Monitors a range of shards and aggregates them, as needed.
+    description: Monitors a range of shards and aggregates them, as needed.
       There may be 0 or more worker functions running at any point in time.
-      The controller function is responsible for scheduling and monitoring these workers.
+      The controllerCore function is responsible for scheduling and monitoring these workers.
     properties:
-      sourceDirectory: .
-      location: ${LOCATION}
+      location: ${param:LOCATION}
+      runtime: nodejs14
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/${INTERNAL_STATE_PATH}/workers/{workerId}
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:INTERNAL_STATE_PATH}/workers/{workerId}
 
 params:
   - param: LOCATION
-    type: select
-    label: Deployment location
+    label: Cloud Functions location
     description: >-
-      Where should the extension be deployed? You usually want a location close to your database.
-      For help selecting a location, refer to the
-      [location selection guide](https://firebase.google.com/docs/functions/locations).
+      Where do you want to deploy the functions created for this extension?
+      You usually want a location close to your database. For help selecting a
+      location, refer to the [location selection
+      guide](https://firebase.google.com/docs/functions/locations).
+    type: select
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -90,21 +95,65 @@ params:
         value: us-east1
       - label: Northern Virginia (us-east4)
         value: us-east4
+      - label: Los Angeles (us-west2)
+        value: us-west2
+      - label: Salt Lake City (us-west3)
+        value: us-west3
+      - label: Las Vegas (us-west4)
+        value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
         value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
+      - label: Zurich (europe-west6)
+        value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
+      - label: Osaka (asia-northeast2)
+        value: asia-northeast2
+      - label: Seoul (asia-northeast3)
+        value: asia-northeast3
+      - label: Mumbai (asia-south1)
+        value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
+      - label: Jakarta (asia-southeast2)
+        value: asia-southeast2
+      - label: Montreal (northamerica-northeast1)
+        value: northamerica-northeast1
+      - label: Sao Paulo (southamerica-east1)
+        value: southamerica-east1
+      - label: Sydney (australia-southeast1)
+        value: australia-southeast1
     default: us-central1
     required: true
+    immutable: true
 
   - param: INTERNAL_STATE_PATH
     label: Document path for internal state
     description: >-
       What is the path to the document where the extension can keep its internal state?
-    default: _firebase_ext_/sharded_counter
     example: _firebase_ext_/sharded_counter
+    validationRegex: "^[^/]+/[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage:
+      Enter a document path, not a collection path. The path must have an even number of segments,
+      for example, `my_collection/doc` or `my_collection/doc/subcollection/doc`, but not `my_collection`.
+    default: _firebase_ext_/sharded_counter
+    required: true
+
+  - param: SCHEDULE_FREQUENCY
+    label: Frequency for controllerCore function to be run
+    description: >-
+      In minutes, how often should the function to aggregate shards be run?
+    validationRegex: "^[1-9][0-9]*$"
+    validationErrorMessage: The number of minutes must be an integer value greater than zero.
+    default: "1"
     required: true

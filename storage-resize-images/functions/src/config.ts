@@ -14,10 +14,36 @@
  * limitations under the License.
  */
 
+export enum deleteImage {
+  always = 0,
+  never,
+  onSuccess,
+}
+
+function deleteOriginalFile(deleteType) {
+  switch (deleteType) {
+    case "true":
+      return deleteImage.always;
+    case "false":
+      return deleteImage.never;
+    default:
+      return deleteImage.onSuccess;
+  }
+}
+
+function paramToArray(param) {
+  return typeof param === "string" ? param.split(",") : undefined;
+}
+
 export default {
   bucket: process.env.IMG_BUCKET,
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
   imageSizes: process.env.IMG_SIZES.split(","),
   resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
-  deleteOriginalFile: process.env.DELETE_ORIGINAL_FILE === "true",
+  includePathList: paramToArray(process.env.INCLUDE_PATH_LIST),
+  excludePathList: paramToArray(process.env.EXCLUDE_PATH_LIST),
+  deleteOriginalFile: deleteOriginalFile(process.env.DELETE_ORIGINAL_FILE),
+  imageTypes: paramToArray(process.env.IMAGE_TYPE),
+  outputOptions: process.env.OUTPUT_OPTIONS,
+  animated: process.env.IS_ANIMATED === "true" || undefined ? true : false,
 };

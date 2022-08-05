@@ -1,12 +1,10 @@
 ### See it in action
 
-You can test out this extension right away:
+You can test out this extension right away!
 
-1.  Go to your [Authentication dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/authentication/users).
+1.  Go to your [Authentication dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/authentication/users) in the Firebase console.
 
-1.  Click **Add User** to add a test user.
-
-1.  Copy the test user's UID to your clipboard.
+1.  Click **Add User** to add a test user, then copy the test user's UID to your clipboard.
 
 1.  Create a new Cloud Firestore document, a new Realtime Database entry, or upload a new file to Storage - incorporating the user's UID into the path according to the schema that you configured.
 
@@ -21,6 +19,7 @@ When a user's account is deleted from your project's authenticated users, this e
 * Cloud Firestore path(s): `${param:FIRESTORE_PATHS}`
 * Realtime Database path(s): `${param:RTDB_PATHS}`
 * Cloud Storage path(s): `${param:STORAGE_PATHS}`
+* Database Instance path(s): `${param:SELECTED_DATABASE_INSTANCE}`
 
 You can delete a user directly in your [Authentication dashboard]((https://console.firebase.google.com/project/${param:PROJECT_ID}/authentication/users)) or by using one of the Firebase Authentication SDKs. Learn more in the [Authentication documentation](https://firebase.google.com/docs/auth).
 

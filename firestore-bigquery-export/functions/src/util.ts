@@ -17,9 +17,7 @@
 import { DocumentSnapshot } from "firebase-functions/lib/providers/firestore";
 import { Change } from "firebase-functions";
 
-import {
-  ChangeType
-} from "@firebaseextensions/firestore-bigquery-change-tracker";
+import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
 
 export function getChangeType(change: Change<DocumentSnapshot>): ChangeType {
   if (!change.after.exists) {
@@ -29,4 +27,11 @@ export function getChangeType(change: Change<DocumentSnapshot>): ChangeType {
     return ChangeType.CREATE;
   }
   return ChangeType.UPDATE;
+}
+
+export function getDocumentId(change: Change<DocumentSnapshot>): string {
+  if (change.after.exists) {
+    return change.after.id;
+  }
+  return change.before.id;
 }
