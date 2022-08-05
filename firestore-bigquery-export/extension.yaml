@@ -13,17 +13,18 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-displayName: Export Collections to BigQuery
+version: 0.1.24
 specVersion: v1beta
-version: 0.1.0
 
+displayName: Stream Collections to BigQuery
 description:
-  Sends realtime, incremental updates from a specified Cloud Firestore collection to BigQuery.
+  Sends realtime, incremental updates from a specified Cloud Firestore
+  collection to BigQuery.
 
 license: Apache-2.0
-billingRequired: true
+
 sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-bigquery-export
-releaseNotesUrl: https://github.com/firebase/extensions/commits/master
+releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/CHANGELOG.md
 
 author:
   authorName: Firebase
@@ -34,35 +35,41 @@ contributors:
     email: wyszynski@google.com
     url: https://github.com/IanWyszynski
 
+billingRequired: true
+
 apis:
-  - apiName: bigquery-json.googleapis.com
+  - apiName: bigquery.googleapis.com
     reason: Mirrors data from your Cloud Firestore collection in BigQuery.
 
 roles:
   - role: bigquery.dataEditor
     reason: Allows the extension to configure and export data into BigQuery.
 
+  - role: datastore.user
+    reason: Allows the extension to write updates to the database.
+
 resources:
   - name: fsexportbigquery
     type: firebaseextensions.v1beta.function
     description:
-      Listens for document changes in your specified Cloud Firestore collection, then exports the changes into
-      BigQuery.
+      Listens for document changes in your specified Cloud Firestore collection,
+      then exports the changes into BigQuery.
     properties:
-      sourceDirectory: .
-      location: ${LOCATION}
+      location: ${param:LOCATION}
+      runtime: nodejs14
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
 
 params:
   - param: LOCATION
-    type: select
-    label: Deployment location
+    label: Cloud Functions location
     description: >-
-      Where should the extension be deployed? You usually want a location close to your database.
-      For help selecting a location, refer to the
-      [location selection guide](https://firebase.google.com/docs/functions/locations).
+      Where do you want to deploy the functions created for this extension?  You
+      usually want a location close to your database. For help selecting a
+      location, refer to the [location selection
+      guide](https://firebase.google.com/docs/functions/locations).
+    type: select
     options:
       - label: Iowa (us-central1)
         value: us-central1
@@ -70,53 +77,264 @@ params:
         value: us-east1
       - label: Northern Virginia (us-east4)
         value: us-east4
+      - label: Los Angeles (us-west2)
+        value: us-west2
+      - label: Salt Lake City (us-west3)
+        value: us-west3
+      - label: Las Vegas (us-west4)
+        value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
         value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
+      - label: Zurich (europe-west6)
+        value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
+      - label: Osaka (asia-northeast2)
+        value: asia-northeast2
+      - label: Seoul (asia-northeast3)
+        value: asia-northeast3
+      - label: Mumbai (asia-south1)
+        value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
+      - label: Jakarta (asia-southeast2)
+        value: asia-southeast2
+      - label: Montreal (northamerica-northeast1)
+        value: northamerica-northeast1
+      - label: Sao Paulo (southamerica-east1)
+        value: southamerica-east1
+      - label: Sydney (australia-southeast1)
+        value: australia-southeast1
     default: us-central1
+    required: true
+    immutable: true
+
+  - param: DATASET_LOCATION
+    label: BigQuery Dataset location
+    description: >-
+      Where do you want to deploy the BigQuery dataset created for this extension? For help selecting a
+      location, refer to the [location selection
+      guide](https://cloud.google.com/bigquery/docs/locations).
+    type: select
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: Las Vegas (us-west4)
+        value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
+      - label: Los Angeles (us-west2)
+        value: us-west2
+      - label: Montreal (northamerica-northeast1)
+        value: northamerica-northeast1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Oregon (us-west1)
+        value: us-west1
+      - label: Salt Lake City (us-west3)
+        value: us-west3
+      - label: Sao Paulo (southamerica-east1)
+        value: southamerica-east1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: Finland (europe-north1)
+        value: europe-north1
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Netherlands (europe-west4)
+        value: europe-west4
+      - label: Zurich (europe-west6)
+        value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Jakarta (asia-southeast2)
+        value: asia-southeast2
+      - label: Mumbai (asia-south1)
+        value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
+      - label: Osaka (asia-northeast2)
+        value: asia-northeast2
+      - label: Seoul (asia-northeast3)
+        value: asia-northeast3
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
+      - label: Sydney (australia-southeast1)
+        value: australia-southeast1
+      - label: Taiwan (asia-east1)
+        value: asia-east1
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+      - label: United States (multi-regional)
+        value: us
+      - label: Europe (multi-regional)
+        value: eu
+    default: us
+    required: true
+    immutable: true
+
+  - param: BIGQUERY_PROJECT_ID
+    label: Project Id
+    description: >-
+      Override the default project bigquery instance.
+      This can allow updates to be directed to a bigquery instance on another project.
+    type: string
+    default: ${PROJECT_ID}
     required: true
 
   - param: COLLECTION_PATH
-    type: string
     label: Collection path
     description: >-
-      What is the path of the collection that you would like to export?
-      You may use `{wildcard}` notation to match a subcollection of all documents in a collection
-      (for example: `chatrooms/{chatid}/posts`).
-    default: posts
+      What is the path of the collection that you would like to export? You may
+      use `{wildcard}` notation to match a subcollection of all documents in a
+      collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}` 
+      can be returned in `path_params` as a JSON formatted string.
+    type: string
     example: posts
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Firestore collection paths must be an odd number of segments separated by slashes, e.g. "path/to/collection".
+    default: posts
     required: true
 
+  - param: WILDCARD_IDS
+    label: Wildcard Column field with Parent Firestore Document IDs
+    description: >-
+     Creates a column containing a JSON object of all wildcard ids from a documents path.
+    type: select
+    options:
+      - label: No
+        value: false
+      - label: Yes
+        value: true
+    default: false
+    required: false
+
   - param: DATASET_ID
-    type: string
     label: Dataset ID
     description: >-
-      What ID would you like to use for your BigQuery dataset? This
-      extension will create the dataset, if it doesn't already exist.
+      What ID would you like to use for your BigQuery dataset? This extension
+      will create the dataset, if it doesn't already exist.
+    type: string
+    example: firestore_export
     validationRegex: "^[a-zA-Z0-9_]+$"
     validationErrorMessage: >
-      BigQuery dataset IDs must be alphanumeric (plus underscores) and must be no more than
-      1024 characters.
+      BigQuery dataset IDs must be alphanumeric (plus underscores) and must be
+      no more than 1024 characters.
     default: firestore_export
-    example: firestore_export
     required: true
 
   - param: TABLE_ID
-    type: string
     label: Table ID
     description: >-
       What identifying prefix would you like to use for your table and view
-      inside your BigQuery dataset? This extension will create the table and view,
-      if they don't already exist.
+      inside your BigQuery dataset? This extension will create the table and
+      view, if they don't already exist.
+    type: string
+    example: posts
     validationRegex: "^[a-zA-Z0-9_]+$"
     validationErrorMessage: >
-      BigQuery table IDs must be alphanumeric (plus underscores) and must be no more than
-      1024 characters.
+      BigQuery table IDs must be alphanumeric (plus underscores) and must be no
+      more than 1024 characters.
     default: posts
-    example: posts
     required: true
+
+
+  - param: TABLE_PARTITIONING
+    label: BigQuery SQL table Time Partitioning option type
+    description: >-
+      This parameter will allow you to partition the BigQuery table and BigQuery view 
+      created by the extension based on data ingestion time. You may select the granularity of
+      partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will
+      generate one partition per day, hour, month or year, respectively.
+    type: select
+    options:
+      - label: hour
+        value: HOUR
+      - label: day
+        value: DAY
+      - label: month
+        value: MONTH
+      - label: year
+        value: YEAR
+      - label: none
+        value: NONE
+    default: NONE
+    required: true
+
+  - param: TIME_PARTITIONING_FIELD
+    label: BigQuery Time Partitioning column name
+    description: >-
+      BigQuery table column/schema field name for TimePartitioning. You can choose schema available as `timestamp` OR new custom defined column that will be assigned to the selected Firestore Document field below. Defaults to pseudo column _PARTITIONTIME if unspecified. Cannot be changed if Table is already partitioned.
+    type: string
+    required: false
+
+
+  - param: TIME_PARTITIONING_FIRESTORE_FIELD
+    label: Firestore Document field name for BigQuery SQL Time Partitioning field option
+    description: >-
+     This parameter will allow you to partition the BigQuery table  created by the extension based on selected. The Firestore Document field value must be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or Firestore timestamp(will be converted to BigQuery TIMESTAMP). Cannot be changed if Table is already partitioned.
+      example: `postDate`
+    type: string
+    required: false
+
+
+  - param: TIME_PARTITIONING_FIELD_TYPE
+    label: BigQuery SQL Time Partitioning table schema field(column) type
+    description: >-
+     Parameter for BigQuery SQL schema field type for the selected Time Partitioning Firestore Document field option. Cannot be changed if Table is already partitioned.
+    type: select
+    options:
+      - label: TIMESTAMP
+        value: TIMESTAMP
+      - label: DATETIME
+        value: DATETIME
+      - label: DATE
+        value: DATE
+      - label: omit
+        value: omit
+    default: omit
+    required: false
+
+  - param: CLUSTERING
+    label: BigQuery SQL table clustering
+    description: >-
+      This parameter will allow you to set up Clustering for the BigQuery Table
+      created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 comma separated fields. The order of the specified columns determines the sort order of the data.
+      Available schema extensions table fields for clustering: `document_id, timestamp, event_id, operation, data`.
+    type: string
+    validationRegex: ^[^,\s]+(?:,[^,\s]+){0,3}$
+    validationErrorMessage: No whitespaces. Max 4 fields. e.g. `data,timestamp,event_id,operation`
+    example: data,document_id,timestamp
+    required: false
+
+  - param: BACKUP_COLLECTION
+    label: Backup Collection Name
+    description: >-
+      This (optional) parameter will allow you to specify a collection for which failed BigQuery updates
+      will be written to.
+    type: string
+    
+  - param: TRANSFORM_FUNCTION
+    label: Transform function URL
+    description: >-
+      Specify a function URL to call that will transform the payload that will be written to BigQuery.
+      See the pre-install documentation for more details.
+    example: https://us-west1-my-project-id.cloudfunctions.net/myTransformFunction
+    type: string
+    required: false

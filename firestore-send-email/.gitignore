@@ -1,1 +1,2 @@
 .gcloudignore
+!emulator-params.env

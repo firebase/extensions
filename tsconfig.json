@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "lib": ["es6"],
+    "module": "commonjs",
+    "noImplicitReturns": true,
+    "sourceMap": false,
+    "target": "es6"
+  },
+  "compileOnSave": true,
+  "exclude": ["node_modules"]
+}

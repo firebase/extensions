@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
-    "lib": ["es6"],
+    "lib": ["es2018"],
     "module": "commonjs",
     "noImplicitReturns": true,
     "outDir": "lib",
     "sourceMap": false,
-    "target": "es6"
+    "target": "es2018",
+    "types": ["node", "mocha", "chai"]
   },
   "compileOnSave": true,
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["**/node_modules/@types/jest/**"]
 }

@@ -1,0 +1,24 @@
+{
+  "fields": [
+    {
+      "name": "map",
+      "type": "map",
+      "fields": [
+        {
+          "name": "array",
+          "type": "array"
+        }
+      ]
+    },
+    {
+      "name": "map2",
+      "type": "map",
+      "fields": [
+        {
+          "name": "array",
+          "type": "array"
+        }
+      ]
+    }
+  ]
+}

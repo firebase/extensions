@@ -16,11 +16,14 @@
  * limitations under the License.
  */
 
-import * as bigquery from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
+import * as program from "commander";
 import * as fs from "fs";
 import * as inquirer from "inquirer";
 import * as util from "util";
+import * as filenamify from "filenamify";
+import { runMultiThread } from "./run";
+import { resolveWildcardIds } from "./config";
 
 import {
   ChangeType,
@@ -35,12 +38,20 @@ const read = util.promisify(fs.readFile);
 const unlink = util.promisify(fs.unlink);
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
-const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
+const FIRESTORE_VALID_CHARACTERS = /^[^({|})]+$/;
 
+const PROJECT_ID_MAX_CHARS = 6144;
 const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
 const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
 
-const validateInput = (value: string, name: string, regex: RegExp, sizeLimit: number) => {
+const FIRESTORE_DEFAULT_DATABASE = "(default)";
+
+const validateInput = (
+  value: string,
+  name: string,
+  regex: RegExp,
+  sizeLimit: number
+) => {
   if (!value || value === "" || value.trim() === "") {
     return `Please supply a ${name}`;
   }
@@ -48,42 +59,149 @@ const validateInput = (value: string, name: string, regex: RegExp, sizeLimit: nu
     return `${name} must be at most ${sizeLimit} characters long`;
   }
   if (!value.match(regex)) {
-    return `The ${name} must only contain letters or spaces`;
+    return `The ${name} does not match the regular expression provided`;
   }
   return true;
 };
 
+const validateBatchSize = (value: string) => {
+  return parseInt(value, 10) > 0;
+};
+
+const validateLocation = (value: string) => {
+  const index = [
+    "asia-east1",
+    "asia-east2",
+    "asia-northeast1",
+    "asia-northeast2",
+    "asia-northeast3",
+    "asia-south1",
+    "asia-southeast1",
+    "asia-southeast2",
+    "australia-southeast1",
+    "eu",
+    "europe-central2",
+    "europe-north1",
+    "europe-west1",
+    "europe-west3",
+    "europe-west2",
+    "europe-west4",
+    "europe-west6",
+    "northamerica-northeast1",
+    "southamerica-east1",
+    "us",
+    "us-central1",
+    "us-east1",
+    "us-east4",
+    "us-west1",
+    "us-west2",
+    "us-west3",
+    "us-west4",
+  ].indexOf(value.toLowerCase());
+
+  return index !== -1;
+};
+
+program
+  .name("fs-bq-import-collection")
+  .option(
+    "--non-interactive",
+    "Parse all input from command line flags instead of prompting the caller.",
+    false
+  )
+  .option(
+    "-P, --project <project>",
+    "Firebase Project ID for project containing the Cloud Firestore database."
+  )
+  .option(
+    "-s, --source-collection-path <source-collection-path>",
+    "The path of the the Cloud Firestore Collection to import from. (This may, or may not, be the same Collection for which you plan to mirror changes.)"
+  )
+  .option(
+    "-q, --query-collection-group [true|false]",
+    "Use 'true' for a collection group query, otherwise a collection query is performed."
+  )
+  .option(
+    "-d, --dataset <dataset>",
+    "The ID of the BigQuery dataset to import to. (A dataset will be created if it doesn't already exist.)"
+  )
+  .option(
+    "-t, --table-name-prefix <table-name-prefix>",
+    "The identifying prefix of the BigQuery table to import to. (A table will be created if one doesn't already exist.)"
+  )
+  .option(
+    "-b, --batch-size [batch-size]",
+    "Number of documents to stream into BigQuery at once.",
+    (value) => parseInt(value, 10),
+    300
+  )
+  .option(
+    "-l, --dataset-location <location>",
+    "Location of the BigQuery dataset."
+  )
+  .option(
+    "-m, --multi-threaded [true|false]",
+    "Whether to run standard or multi-thread import version"
+  );
+
 const questions = [
   {
     message: "What is your Firebase project ID?",
-    name: "projectId",
+    name: "project",
     type: "input",
     validate: (value) =>
-      validateInput(value, "project ID", FIRESTORE_VALID_CHARACTERS, FIRESTORE_COLLECTION_NAME_MAX_CHARS),
+      validateInput(
+        value,
+        "project ID",
+        FIRESTORE_VALID_CHARACTERS,
+        PROJECT_ID_MAX_CHARS
+      ),
   },
   {
-    message: "What is the path of the the Cloud Firestore Collection you would like to import from? " +
+    message:
+      "What is the path of the the Cloud Firestore Collection you would like to import from? " +
       "(This may, or may not, be the same Collection for which you plan to mirror changes.)",
     name: "sourceCollectionPath",
     type: "input",
     validate: (value) =>
-      validateInput(value, "collection path", FIRESTORE_VALID_CHARACTERS, FIRESTORE_COLLECTION_NAME_MAX_CHARS),
+      validateInput(
+        value,
+        "collection path",
+        FIRESTORE_VALID_CHARACTERS,
+        FIRESTORE_COLLECTION_NAME_MAX_CHARS
+      ),
+  },
+  {
+    message: "Would you like to import documents via a Collection Group query?",
+    name: "queryCollectionGroup",
+    type: "confirm",
+    default: false,
   },
   {
     message:
       "What is the ID of the BigQuery dataset that you would like to use? (A dataset will be created if it doesn't already exist)",
-    name: "datasetId",
+    name: "dataset",
     type: "input",
     validate: (value) =>
-      validateInput(value, "dataset", BIGQUERY_VALID_CHARACTERS, BIGQUERY_RESOURCE_NAME_MAX_CHARS),
+      validateInput(
+        value,
+        "dataset",
+        BIGQUERY_VALID_CHARACTERS,
+        BIGQUERY_RESOURCE_NAME_MAX_CHARS
+      ),
   },
   {
     message:
       "What is the identifying prefix of the BigQuery table that you would like to import to? (A table will be created if one doesn't already exist)",
-    name: "tableId",
+    name: "table",
     type: "input",
     validate: (value) =>
-      validateInput(value, "table", BIGQUERY_VALID_CHARACTERS, BIGQUERY_RESOURCE_NAME_MAX_CHARS),
+      validateInput(
+        value,
+        "table",
+        BIGQUERY_VALID_CHARACTERS,
+        BIGQUERY_RESOURCE_NAME_MAX_CHARS
+      ),
   },
   {
     message:
@@ -91,24 +209,62 @@ const questions = [
     name: "batchSize",
     type: "input",
     default: 300,
-    validate: (value) => {
-      return parseInt(value, 10) > 0
-    }
+    validate: validateBatchSize,
+  },
+  {
+    message: "Where would you like the BigQuery dataset to be located?",
+    name: "datasetLocation",
+    type: "input",
+    default: "us",
+    validate: validateLocation,
+  },
+  {
+    message: "Would you like to run the import across multiple threads?",
+    name: "multiThreaded",
+    type: "confirm",
+    default: false,
   },
 ];
 
+type CliConfig = {
+  kind: "CONFIG";
+  projectId: string;
+  sourceCollectionPath: string;
+  datasetId: string;
+  tableId: string;
+  batchSize: string;
+  queryCollectionGroup: boolean;
+  datasetLocation: string;
+  multiThreaded: boolean;
+};
+
+type CliConfigError = {
+  kind: "ERROR";
+  errors: string[];
+};
+
 const run = async (): Promise<number> => {
+  const parsed = await parseConfig();
+  if (parsed.kind === "ERROR") {
+    parsed.errors.forEach((e) => console.error(`[ERROR] ${e}`));
+    process.exit(1);
+  }
+
   const {
     projectId,
     sourceCollectionPath,
+    queryCollectionGroup,
     datasetId,
     tableId,
     batchSize,
-  } = await inquirer.prompt(questions);
+    datasetLocation,
+    multiThreaded,
+  }: CliConfig = parsed;
+
+  if (multiThreaded) return runMultiThread();
 
   const batch = parseInt(batchSize);
   const rawChangeLogName = `${tableId}_raw_changelog`;
-
   // Initialize Firebase
   firebase.initializeApp({
     credential: firebase.credential.applicationDefault(),
@@ -123,40 +279,55 @@ const run = async (): Promise<number> => {
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
     tableId: tableId,
     datasetId: datasetId,
+    datasetLocation,
+    wildcardIds: queryCollectionGroup,
   });
 
   console.log(
-    `Importing data from Cloud Firestore Collection: ${sourceCollectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${rawChangeLogName}`
+    `Importing data from Cloud Firestore Collection${
+      queryCollectionGroup ? " (via a Collection Group query)" : ""
+    }: ${sourceCollectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${rawChangeLogName}`
   );
 
   // Build the data row with a 0 timestamp. This ensures that all other
   // operations supersede imports when listing the live documents.
   let cursor;
 
-  let cursorPositionFile = __dirname + `/from-${sourceCollectionPath}-to-${projectId}\:${datasetId}\:${rawChangeLogName}`;
+  const formattedPath = filenamify(sourceCollectionPath);
+
+  let cursorPositionFile =
+    __dirname +
+    `/from-${formattedPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
   if (await exists(cursorPositionFile)) {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
     cursor = await firebase
       .firestore()
-      .collection(sourceCollectionPath)
       .doc(cursorDocumentId)
       .get();
     console.log(
-      `Resuming import of Cloud Firestore Collection ${sourceCollectionPath} from document ${cursorDocumentId}.`
+      `Resuming import of Cloud Firestore Collection ${sourceCollectionPath} ${
+        queryCollectionGroup ? " (via a Collection Group query)" : ""
+      } from document ${cursorDocumentId}.`
     );
   }
 
-  let totalDocsRead = 0;
   let totalRowsImported = 0;
 
   do {
     if (cursor) {
-      await write(cursorPositionFile, cursor.id);
+      await write(cursorPositionFile, cursor.ref.path);
     }
-    let query = firebase
-      .firestore()
-      .collection(sourceCollectionPath)
-      .limit(batch);
+
+    let query: firebase.firestore.Query;
+
+    if (queryCollectionGroup) {
+      query = firebase.firestore().collectionGroup(sourceCollectionPath);
+    } else {
+      query = firebase.firestore().collection(sourceCollectionPath);
+    }
+
+    query = query.limit(batch);
+
     if (cursor) {
       query = query.startAfter(cursor);
     }
@@ -165,17 +336,19 @@ const run = async (): Promise<number> => {
     if (docs.length === 0) {
       break;
     }
-    totalDocsRead += docs.length;
     cursor = docs[docs.length - 1];
-    const rows: FirestoreDocumentChangeEvent[] = docs.map(
-      (snapshot) => {
-        return {
-          timestamp: new Date(0).toISOString(), // epoch
-          operation: ChangeType.IMPORT,
-          documentName: snapshot.ref.path,
-          eventId: "",
-          data: snapshot.data(),
-        };
+    const rows: FirestoreDocumentChangeEvent[] = docs.map((snapshot) => {
+      return {
+        timestamp: new Date().toISOString(), // epoch
+        operation: ChangeType.IMPORT,
+        documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${
+          snapshot.ref.path
+        }`,
+        documentId: snapshot.id,
+        pathParams: resolveWildcardIds(sourceCollectionPath, snapshot.ref.path),
+        eventId: "",
+        data: snapshot.data(),
+      };
     });
     await dataSink.record(rows);
     totalRowsImported += rows.length;
@@ -184,11 +357,84 @@ const run = async (): Promise<number> => {
   try {
     await unlink(cursorPositionFile);
   } catch (e) {
-    console.log(`Error unlinking journal file ${cursorPositionFile} after successful import: ${e.toString()}`);
+    console.log(
+      `Error unlinking journal file ${cursorPositionFile} after successful import: ${e.toString()}`
+    );
   }
 
   return totalRowsImported;
 };
+
+async function parseConfig(): Promise<CliConfig | CliConfigError> {
+  program.parse(process.argv);
+
+  if (program.nonInteractive) {
+    const errors = [];
+    if (program.project === undefined) {
+      errors.push("Project is not specified.");
+    }
+    if (program.sourceCollectionPath === undefined) {
+      errors.push("SourceCollectionPath is not specified.");
+    }
+    if (program.dataset === undefined) {
+      errors.push("Dataset ID is not specified.");
+    }
+    if (program.tableNamePrefix === undefined) {
+      errors.push("TableNamePrefix is not specified.");
+    }
+    if (program.queryCollectionGroup === undefined) {
+      errors.push("QueryCollectionGroup is not specified.");
+    }
+    if (program.batchSize === undefined) {
+      errors.push("BatchSize is not specified.");
+    }
+    if (program.datasetLocation === undefined) {
+      errors.push("DatasetLocation is not specified.");
+    }
+    if (!validateBatchSize(program.batchSize)) {
+      errors.push("Invalid batch size.");
+    }
+
+    if (errors.length !== 0) {
+      program.outputHelp();
+      return { kind: "ERROR", errors };
+    }
+
+    return {
+      kind: "CONFIG",
+      projectId: program.project,
+      sourceCollectionPath: program.sourceCollectionPath,
+      datasetId: program.dataset,
+      tableId: program.tableNamePrefix,
+      batchSize: program.batchSize,
+      queryCollectionGroup: program.queryCollectionGroup === "true",
+      datasetLocation: program.datasetLocation,
+      multiThreaded: program.multiThreaded === "true",
+    };
+  }
+  const {
+    project,
+    sourceCollectionPath,
+    dataset,
+    table,
+    batchSize,
+    queryCollectionGroup,
+    datasetLocation,
+    multiThreaded,
+  } = await inquirer.prompt(questions);
+
+  return {
+    kind: "CONFIG",
+    projectId: project,
+    sourceCollectionPath: sourceCollectionPath,
+    datasetId: dataset,
+    tableId: table,
+    batchSize: batchSize,
+    queryCollectionGroup: queryCollectionGroup,
+    datasetLocation: datasetLocation,
+    multiThreaded: multiThreaded,
+  };
+}
 
 run()
   .then((rowCount) => {
@@ -198,6 +444,8 @@ run()
     process.exit();
   })
   .catch((error) => {
-    console.error(`Error importing Collection to BigQuery: ${error.toString()}`);
+    console.error(
+      `Error importing Collection to BigQuery: ${error.toString()}`
+    );
     process.exit(1);
   });

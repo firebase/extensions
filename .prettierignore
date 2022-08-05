@@ -1,0 +1,17 @@
+package.json
+extension.yaml
+package-lock.json
+
+**/node_modules/**
+
+# generated files
+README.md
+**/functions/lib/**
+**/lib/**
+**/dist/**
+coverage
+
+# extension install md files
+#   - excluded as prettier escapes variables e.g. `${PROJECT_ID}` becomes `\${PROJECT_ID}`
+POSTINSTALL.md
+PREINSTALL.md

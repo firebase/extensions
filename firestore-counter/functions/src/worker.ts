@@ -16,6 +16,7 @@
 
 import { firestore } from "firebase-admin";
 import * as deepEqual from "deep-equal";
+import { logger } from "firebase-functions";
 
 import {
   Slice,
@@ -26,10 +27,9 @@ import {
 } from "./common";
 import { Planner } from "./planner";
 import { Aggregator, NumericUpdate } from "./aggregator";
-import { FieldValue } from "@google-cloud/firestore";
 import * as uuid from "uuid";
 
-const SHARDS_LIMIT = 499;
+const SHARDS_LIMIT = 100;
 const WORKER_TIMEOUT_MS = 45000;
 
 interface WorkerMetadata {
@@ -50,7 +50,7 @@ interface WorkerMetadata {
  *
  * Workers avoid double scheduling and overruns by including their metadata documents in every
  * aggregation transaction. If metadata changes underneath, transaction fails, worker detects that
- * and terminates immmediately.
+ * and terminates immediately.
  */
 export class ShardedCounterWorker {
   private db: firestore.Firestore;
@@ -111,16 +111,16 @@ export class ShardedCounterWorker {
               const snap = await t.get(this.metadoc.ref);
               if (snap.exists && deepEqual(snap.data(), this.metadata)) {
                 t.update(snap.ref, {
-                  timestamp: FieldValue.serverTimestamp(),
+                  timestamp: firestore.FieldValue.serverTimestamp(),
                   stats: stats,
                 });
               }
             } catch (err) {
-              console.log("Failed to save writer stats.", err);
+              logger.log("Failed to save writer stats.", err);
             }
           });
         } catch (err) {
-          console.log("Failed to save writer stats.", err);
+          logger.log("Failed to save writer stats.", err);
         }
       };
 
@@ -140,7 +140,7 @@ export class ShardedCounterWorker {
       unsubscribeMetadataListener = this.metadoc.ref.onSnapshot((snap) => {
         // if something's changed in the worker metadata since we were called, abort.
         if (!snap.exists || !deepEqual(snap.data(), this.metadata)) {
-          console.log("Shutting down because metadoc changed.");
+          logger.log("Shutting down because metadoc changed.");
           shutdown()
             .then(resolve)
             .catch(reject);
@@ -156,7 +156,7 @@ export class ShardedCounterWorker {
       ).onSnapshot((snap) => {
         this.shards = snap.docs;
         if (this.singleRun && this.shards.length === 0) {
-          console.log("Shutting down, single run mode.");
+          logger.log("Shutting down, single run mode.");
           shutdown()
             .then(writeStats)
             .then(resolve)
@@ -194,31 +194,39 @@ export class ShardedCounterWorker {
           const paths = [];
 
           // Read metadata document in transaction to guarantee ownership of the slice.
-          const metadocPromise = t.get(this.metadoc.ref);
+          const metadocPromise = () => t.get(this.metadoc.ref);
 
-          const counterPromise = plan.isPartial
-            ? Promise.resolve(null)
-            : t.get(this.db.doc(plan.aggregate));
+          /**
+           * Resolve if plan is a partial shard or main counter
+           * Resolve if aggregate is a root document path (.)
+           */
+          const counterPromise = () =>
+            plan.isPartial || plan.aggregate === "."
+              ? Promise.resolve(null)
+              : t.get(this.db.doc(plan.aggregate));
 
           // Read all shards in a transaction since we want to delete them immediately.
           // Note that partials are not read here, because we use array transform to
           // update them and don't need transaction guarantees.
           const shardRefs = plan.shards.map((snap) => snap.ref);
-          const shardsPromise =
+
+          const shardsPromise = () =>
             shardRefs.length > 0
               ? t.getAll(shardRefs[0], ...shardRefs.slice(1))
               : Promise.resolve([]);
+
           let shards: firestore.DocumentSnapshot[];
           let counter: firestore.DocumentSnapshot;
           let metadoc: firestore.DocumentSnapshot;
+
           try {
             [shards, counter, metadoc] = await Promise.all([
-              shardsPromise,
-              counterPromise,
-              metadocPromise,
+              shardsPromise(),
+              counterPromise(),
+              metadocPromise(),
             ]);
           } catch (err) {
-            console.log(
+            logger.log(
               "Unable to read shards during aggregation round, skipping...",
               err
             );
@@ -227,14 +235,24 @@ export class ShardedCounterWorker {
 
           // Check that we still own the slice.
           if (!metadoc.exists || !deepEqual(metadoc.data(), this.metadata)) {
-            console.log("Metadata has changed, bailing out...");
+            logger.log("Metadata has changed, bailing out...");
             return [];
           }
 
           // Calculate aggregated value and save to aggregate shard.
           const aggr = new Aggregator();
           const update = aggr.aggregate(counter, plan.partials, shards);
-          t.set(this.db.doc(plan.aggregate), update, { merge: true });
+
+          /**
+           * Resolve if aggregate is a root document path (.)
+           */
+          if (plan.aggregate === ".") {
+            return [];
+          }
+
+          t.set(this.db.doc(plan.aggregate), update, {
+            merge: true,
+          });
 
           // Delete shards that have been aggregated.
           shards.forEach((snap) => {
@@ -248,14 +266,17 @@ export class ShardedCounterWorker {
           plan.partials.forEach((snap) => {
             if (snap.exists) {
               const decrement = aggr.subtractPartial(snap);
-              t.set(snap.ref, decrement, { merge: true });
+              t.set(snap.ref, decrement, {
+                merge: true,
+              });
             }
           });
+
           return paths;
         });
         this.allPaths.push(...paths);
       } catch (err) {
-        console.log(
+        logger.log(
           "transaction to: " + plan.aggregate + " failed, skipping...",
           err
         );
@@ -322,11 +343,11 @@ export class ShardedCounterWorker {
               t.set(snap.ref, update.toPartialShard(() => uuid.v4()));
             }
           } catch (err) {
-            console.log("Partial cleanup failed: " + partial.ref.path);
+            logger.log("Partial cleanup failed: " + partial.ref.path);
           }
         });
       } catch (err) {
-        console.log(
+        logger.log(
           "transaction to delete: " + partial.ref.path + " failed, skipping",
           err
         );

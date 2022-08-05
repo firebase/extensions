@@ -21,49 +21,45 @@ import * as nodemailer from "nodemailer";
 import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
-import { logger } from "handlebars";
+import { QueuePayload } from "./types";
+import { setSmtpCredentials } from "./helpers";
 
-admin.initializeApp();
-const db = admin.firestore();
+logs.init();
 
-const transport = nodemailer.createTransport(config.smtpConnectionUri);
-
+let db;
+let transport;
 let templates;
+let initialized = false;
 
-if (config.templatesCollection) {
-  templates = new Templates(
-    admin.firestore().collection(config.templatesCollection)
-  );
+/**
+ * Initializes Admin SDK & SMTP connection if not already initialized.
+ */
+async function initialize() {
+  if (initialized === true) return;
+  initialized = true;
+  admin.initializeApp();
+  db = admin.firestore();
+  transport = await transportLayer();
+  if (config.templatesCollection) {
+    templates = new Templates(
+      admin.firestore().collection(config.templatesCollection)
+    );
+  }
 }
 
-interface QueuePayload {
-  delivery?: {
-    startTime: FirebaseFirestore.Timestamp;
-    endTime: FirebaseFirestore.Timestamp;
-    leaseExpireTime: FirebaseFirestore.Timestamp;
-    state: "PENDING" | "PROCESSING" | "RETRY" | "SUCCESS" | "ERROR";
-    attempts: number;
-    error?: string;
-    info?: {
-      messageId: string;
-      accepted: string[];
-      rejected: string[];
-      pending: string[];
-    };
-  };
-  message?: nodemailer.SendMailOptions;
-  template?: {
-    name: string;
-    data?: { [key: string]: any };
-  };
-  to: string[];
-  toUids?: string[];
-  cc: string[];
-  ccUids?: string[];
-  bcc: string[];
-  bccUids?: string[];
-  from?: string;
-  replyTo?: string;
+async function transportLayer() {
+  if (config.testing) {
+    return nodemailer.createTransport({
+      host: "localhost",
+      port: 8132,
+      secure: false,
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+  }
+
+  return setSmtpCredentials(config);
 }
 
 function validateFieldArray(field: string, array?: string[]) {
@@ -71,21 +67,23 @@ function validateFieldArray(field: string, array?: string[]) {
     throw new Error(`Invalid field "${field}". Expected an array of strings.`);
   }
 
-  if (array.find(item => typeof item !== 'string')) {
-    throw new Error(
-      `Invalid field "${field}". Expected an array of strings.`
-    );
+  if (array.find((item) => typeof item !== "string")) {
+    throw new Error(`Invalid field "${field}". Expected an array of strings.`);
   }
 }
 
 async function processCreate(snap: FirebaseFirestore.DocumentSnapshot) {
-  return snap.ref.update({
-    delivery: {
-      startTime: admin.firestore.FieldValue.serverTimestamp(),
-      state: "PENDING",
-      attempts: 0,
-      error: null,
-    },
+  // Wrapping in transaction to allow for automatic retries (#48)
+  return admin.firestore().runTransaction((transaction) => {
+    transaction.update(snap.ref, {
+      delivery: {
+        startTime: admin.firestore.FieldValue.serverTimestamp(),
+        state: "PENDING",
+        attempts: 0,
+        error: null,
+      },
+    });
+    return Promise.resolve();
   });
 }
 
@@ -97,31 +95,38 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
       throw new Error(`Template object is missing a 'name' parameter.`);
     }
 
-    payload.message = Object.assign(
-      payload.message || {},
-      await templates.render(template.name, template.data)
-    );
+    const templateRender = await templates.render(template.name, template.data);
+
+    const mergeMessage = payload.message || {};
+
+    const attachments = templateRender.attachments
+      ? templateRender.attachments
+      : mergeMessage.attachments;
+
+    payload.message = Object.assign(mergeMessage, templateRender, {
+      attachments: attachments || [],
+    });
   }
 
   let to: string[] = [];
   let cc: string[] = [];
   let bcc: string[] = [];
 
-  if (typeof payload.to === 'string') {
+  if (typeof payload.to === "string") {
     to = [payload.to];
   } else if (payload.to) {
     validateFieldArray("to", payload.to);
     to = to.concat(payload.to);
   }
 
-  if (typeof payload.cc === 'string') {
+  if (typeof payload.cc === "string") {
     cc = [payload.cc];
   } else if (payload.cc) {
     validateFieldArray("cc", payload.cc);
     cc = cc.concat(payload.cc);
   }
 
-  if (typeof payload.bcc === 'string') {
+  if (typeof payload.bcc === "string") {
     bcc = [payload.bcc];
   } else if (payload.bcc) {
     validateFieldArray("bcc", payload.bcc);
@@ -158,10 +163,12 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
   }
 
   const toFetch = {};
-  uids.forEach(uid => toFetch[uid] = null);
+  uids.forEach((uid) => (toFetch[uid] = null));
 
   const documents = await db.getAll(
-    ...Object.keys(toFetch).map((uid) => db.collection(config.usersCollection).doc(uid)),
+    ...Object.keys(toFetch).map((uid) =>
+      db.collection(config.usersCollection).doc(uid)
+    ),
     {
       fieldMask: ["email"],
     }
@@ -237,7 +244,9 @@ async function deliver(
     payload = await preparePayload(payload);
 
     if (!payload.to.length && !payload.cc.length && !payload.bcc.length) {
-      throw new Error("Failed to deliver email. Expected at least 1 recipient.")
+      throw new Error(
+        "Failed to deliver email. Expected at least 1 recipient."
+      );
     }
 
     const result = await transport.sendMail(
@@ -247,6 +256,7 @@ async function deliver(
         to: payload.to,
         cc: payload.cc,
         bcc: payload.bcc,
+        headers: payload.headers || {},
       })
     );
     const info = {
@@ -266,7 +276,11 @@ async function deliver(
     logs.deliveryError(ref, e);
   }
 
-  return ref.update(update);
+  // Wrapping in transaction to allow for automatic retries (#48)
+  return admin.firestore().runTransaction((transaction) => {
+    transaction.update(ref, update);
+    return Promise.resolve();
+  });
 }
 
 async function processWrite(change) {
@@ -280,6 +294,10 @@ async function processWrite(change) {
 
   const payload = change.after.data() as QueuePayload;
 
+  if (typeof payload.message !== "object") {
+    logs.invalidMessage(payload.message);
+  }
+
   if (!payload.delivery) {
     logs.missingDeliveryField(change.after.ref);
     return null;
@@ -291,26 +309,39 @@ async function processWrite(change) {
       return null;
     case "PROCESSING":
       if (payload.delivery.leaseExpireTime.toMillis() < Date.now()) {
-        return change.after.ref.update({
-          "delivery.state": "ERROR",
-          error: "Message processing lease expired.",
+        // Wrapping in transaction to allow for automatic retries (#48)
+        return admin.firestore().runTransaction((transaction) => {
+          transaction.update(change.after.ref, {
+            "delivery.state": "ERROR",
+            // Keeping error to avoid any breaking changes in the next minor update.
+            // Error to be removed for the next major release.
+            error: "Message processing lease expired.",
+            "delivery.error": "Message processing lease expired.",
+          });
+          return Promise.resolve();
         });
       }
       return null;
     case "PENDING":
     case "RETRY":
-      await change.after.ref.update({
-        "delivery.state": "PROCESSING",
-        "delivery.leaseExpireTime": admin.firestore.Timestamp.fromMillis(
-          Date.now() + 60000
-        ),
+      // Wrapping in transaction to allow for automatic retries (#48)
+      await admin.firestore().runTransaction((transaction) => {
+        transaction.update(change.after.ref, {
+          "delivery.state": "PROCESSING",
+          "delivery.leaseExpireTime": admin.firestore.Timestamp.fromMillis(
+            Date.now() + 60000
+          ),
+        });
+        return Promise.resolve();
       });
       return deliver(payload, change.after.ref);
   }
 }
 
-export const processQueue = functions.handler.firestore.document.onWrite(
-  async (change) => {
+export const processQueue = functions.firestore
+  .document(config.mailCollection)
+  .onWrite(async (change) => {
+    await initialize();
     logs.start();
     try {
       await processWrite(change);
@@ -319,5 +350,4 @@ export const processQueue = functions.handler.firestore.document.onWrite(
       return null;
     }
     logs.complete();
-  }
-);
+  });
