@@ -203,11 +203,19 @@ After you complete the post-installation configuration above, the process runs a
 
 1. Your extension creates subcollections in all the documents that your app uses as counters.
 
+rachelsaunders-fscounter-mastercounter
 2. The client sample writes to these subcollections to distribute the write load.
 
 3. The controllerCore function sums the subcollections' values into the single `visits` field (or whichever field you configured in your master document).
 
 4. After each summation, the extension deletes the subcollections, leaving only the count in the master document. This is the document field to which you should listen for the count.
+
+1. The client SDK writes to these subcollections to distribute the write load.
+
+1. The scheduled function that you deployed sums the subcollections' values into the single `visits` field (or whichever field you configured in your master document).
+
+1. After each summation, the extension deletes the subcollections, leaving only the count in the master document. This is the document field to which you should listen for the count.
+rachelsaunders-fscounter-mastercounter
 
 ### Monitoring
 
