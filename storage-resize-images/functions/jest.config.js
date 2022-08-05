@@ -11,9 +11,12 @@ module.exports = {
   },
   preset: "ts-jest",
   setupFiles: ["<rootDir>/__tests__/jest.setup.ts"],
+  @invertase/events-emulator-wip
   testMatch: ["**/__tests__/*.test.ts"],
   moduleNameMapper: {
     "firebase-admin/eventarc":
       "<rootDir>/node_modules/firebase-admin/lib/eventarc",
   },
+  testMatch: ["**/__tests__/e2e.test.ts"],
+  @invertase/events-emulator-wip
 };

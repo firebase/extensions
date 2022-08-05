@@ -152,6 +152,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
 
       const results = await Promise.all(tasks);
       eventChannel &&
+    @invertase/events-emulator-wip
         (await eventChannel.publish({
           type: "firebase.extensions.storage-resize-images.v1.complete",
           subject: filePath,
@@ -159,6 +160,14 @@ export const generateResizedImage = functions.storage.object().onFinalize(
             outputs: results,
           },
         }));
+        eventChannel.publish({
+          type: "firebase.extensions.storage-resize-images.v1.complete",
+          subject: object.name,
+          data: {
+            outputs: results,
+          },
+        });
+      @invertase/events-emulator-wip
 
       const failed = results.some((result) => result.success === false);
       if (failed) {
