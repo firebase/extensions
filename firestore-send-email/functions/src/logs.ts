@@ -94,8 +94,8 @@ export function partialRegistered(name) {
   logger.log(`registered partial '${name}'`);
 }
 
-export function templateLoaded(name) {
-  logger.log(`loaded template '${name}'`);
+export function templatesLoaded(names) {
+  logger.log(`loaded templates (${names})`);
 }
 
 export function invalidMessage(message) {
