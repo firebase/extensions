@@ -1,7 +1,6 @@
 import Mail = require("nodemailer/lib/mailer");
 import { setSmtpCredentials } from "../src/helpers";
 import { Config } from "../src/types";
-import { invalidURI } from "../src/logs";
 
 const { logger } = require("firebase-functions");
 const consoleLogSpy = jest.spyOn(logger, "warn").mockImplementation();
