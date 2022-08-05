@@ -1,4 +1,5 @@
 import { createTransport } from "nodemailer";
+
 import { URL } from "url";
 import { invalidURI } from "./logs";
 import { Config } from "./types";
@@ -24,6 +25,11 @@ export const setSmtpCredentials = (config: Config) => {
   if (!url) {
     invalidURI(smtpConnectionUri);
 
+  @invertase/encode-email-passwords
+    if (!smtpPassword) {
+    }
+
+    @invertase/encode-email-passwords
     return null;
   }
 
