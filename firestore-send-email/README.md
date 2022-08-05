@@ -1,20 +1,69 @@
-# firestore-send-email
+# Trigger Email
 
-**VERSION**: 0.1.0
+**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
 
-**DESCRIPTION**: Composes and sends an email based on the contents of a document written to a specified Cloud Firestore collection.
+**Description**: Composes and sends an email based on the contents of a document written to a specified Cloud Firestore collection.
 
 
 
-**CONFIGURATION PARAMETERS:**
+**Details**: Use this extension to render and send emails that contain the information from documents added to a specified Cloud Firestore collection.
 
-* Deployment location: Where should the extension be deployed? For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+Adding a document triggers this extension to send an email built from the document's fields. The document's top-level fields specify the email sender and recipients, including `to`, `cc`, and `bcc` options (each supporting UIDs). The document's `message` field specifies the other email elements, like subject line and email body (either plaintext or HTML)
 
-* SMTP connection URI: A URI representing an SMTP server that this extension can use to deliver email.
+Here's a basic example document write that would trigger this extension:
+
+```js
+admin.firestore().collection('mail').add({
+  to: 'someone@example.com',
+  from: 'somebodyelse@example.com',
+  message: {
+    subject: 'Hello from Firebase!',
+    html: 'This is an <code>HTML</code> email body.',
+  },
+})
+```
+
+**Custom senders**
+
+The `from` field is an optional parameter. If you specify a value for this field, ensure the receiving SMTP server accepts custom senders in this field. Typically, a provider will use the email address provided by the configured account if the provider doesn't allow custom senders.
+
+You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
+
+When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**. Note that this extension is for use with bulk email service providers, like SendGrid, Mailgun, etc.
+
+#### Additional setup
+
+Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
+
+#### Billing
+To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
+
+- You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
+  - Cloud Firestore
+  - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
+
+Usage of this extension also requires you to have SMTP credentials for mail delivery. You are responsible for any associated costs with your usage of your SMTP provider.
+
+
+
+
+**Configuration Parameters:**
+
+* Cloud Functions location: Where do you want to deploy the functions created for this extension? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+
+* SMTP connection URI: A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465. In order to keep passwords secure, it is recommended to omit the password from the connection string while using the `SMTP Password` field for entering secrets and passwords. Passwords and secrets should now be included in `SMTP password` field.
+Secure format:
+ `smtps://username@gmail.com@smtp.gmail.com:465` (username only)
+ `smtps://smtp.gmail.com:465` (No username and password)
+Backwards Compatible (less secure):
+ `smtps://username@gmail.com:password@smtp.gmail.com:465`. (username and password)
+
+* SMTP password: User password for the SMTP server
 
 * Email documents collection: What is the path to the collection that contains the documents used to build and send the emails?
 
-* Default FROM address: The email address to use as the sender's address (if it's not specified in the added email document).
+* Default FROM address: The email address to use as the sender's address (if it's not specified in the added email document).  You can optionally include a name with the email address (`Friendly Firebaser <foobar@example.com>`).
 
 * Default REPLY-TO address: The email address to use as the reply-to address (if it's not specified in the added email document).
 
@@ -24,50 +73,13 @@
 
 
 
-**CLOUD FUNCTIONS CREATED:**
+**Cloud Functions:**
 
-* processQueue (providers/cloud.firestore/eventTypes/document.write)
-
-
-
-**DETAILS**: Use this extension to render and send emails that contain the information from documents added to a specified Cloud Firestore collection.
-
-Adding a document triggers this extension to send an email built from the document's fields. The document's top-level fields specify the email sender and recipients, including `to`, `cc`, and `bcc` options (each supporting UIDs). The document's `message` field specifies the other email elements, like subject line and email body (either plaintext or HTML)
-
-Here's a basic example document write that would trigger this extension:
-
-```js
-admin.firestore().collection('mail').add({
-  to: 'someone@example.com',
-  message: {
-    subject: 'Hello from Firebase!',
-    html: 'This is an <code>HTML</code> email body.',
-  },
-})
-```
-
-You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
-
-When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**.
-
-#### Additional setup
-
-Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
-
-#### Billing
-
-This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
-- Cloud Firestore
-- Cloud Functions
-
-When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
-
-Usage of this extension also requires you to have SMTP credentials for mail delivery. You are responsible for any associated costs with your usage of your SMTP provider.
+* **processQueue:** Processes document changes in the specified Cloud Firestore collection, delivers emails, and updates the document with delivery status information.
 
 
 
-**ACCESS REQUIRED**:
+**Access Required**:
 
 
 

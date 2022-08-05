@@ -1,8 +1,0 @@
-SELECT
-  document_name,
-  timestamp,
-  operation,
-  JSON_EXTRACT(data, '$.reference') AS reference,
-  JSON_EXTRACT(data, '$.map.reference') AS map_reference
-FROM
-  `test.test_dataset.test_table`

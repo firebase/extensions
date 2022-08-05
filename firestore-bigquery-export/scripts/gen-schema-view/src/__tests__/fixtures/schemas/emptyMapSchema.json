@@ -1,0 +1,9 @@
+{
+  "fields": [
+    {
+      "name": "map",
+      "type": "map",
+      "fields": []
+    }
+  ]
+}

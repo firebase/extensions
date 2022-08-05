@@ -4,14 +4,18 @@
   "description": "Repository of sample Firebase Extensions.",
   "private": true,
   "scripts": {
-    "format": "prettier --write {,**/}*.{yaml,js,md}",
-    "lint": "prettier --list-different {,**/}*.{yaml,js,md}",
-    "clean": "lerna run clean",
+    "format": "prettier --write \"**/*.{js,md,yml,ts,json,yaml}\"",
+    "lint": "prettier --list-different \"**/*.{js,md,yml,ts,json,yaml}\"",
+    "clean": "lerna run --parallel clean && lerna clean",
     "build": "lerna run build",
-    "test": "jest",
-    "test-watch": "jest --watch",
-    "test-coverage": "jest --coverage",
-    "postinstall": "lerna bootstrap && npm run clean && npm run build"
+    "local:emulator": "cd _emulator && firebase emulators:start -P demo-test",
+    "test": "cd _emulator && firebase emulators:exec jest -P demo-test",
+    "test:local": "concurrently \"npm run local:emulator\" \"jest\"",
+    "test:watch": "concurrently \"npm run local:emulator\" \"jest --watch\"",
+    "test-coverage": "jest --coverage --detectOpenHandles --forceExit",
+    "postinstall": "lerna bootstrap --no-ci && lerna run --parallel clean && npm run build && npm run generate-package-locks",
+    "generate-package-locks": "lerna exec -- npm i --package-lock-only",
+    "generate-readmes": "lerna run --parallel --ignore delete-user-data generate-readme"
   },
   "repository": "",
   "author": "Firebase (https://firebase.google.com/)",
@@ -20,11 +24,13 @@
     "url": ""
   },
   "devDependencies": {
-    "jest": "^24.9.0",
-    "ts-jest": "^24.1.0",
     "@types/jest": "^24.0.18",
-    "typescript": "^3.6.3",
+    "codecov": "^3.8.1",
+    "concurrently": "^7.2.1",
+    "jest": "^24.9.0",
     "lerna": "^3.4.3",
-    "prettier": "1.15.3"
+    "prettier": "1.15.3",
+    "ts-jest": "^24.1.0",
+    "typescript": "^3.6.3"
   }
 }

@@ -1,0 +1,18 @@
+{
+  "fields": [
+    {
+      "name": "reference",
+      "type": "reference"
+    },
+    {
+      "name": "map",
+      "type": "map",
+      "fields": [
+        {
+          "name": "reference",
+          "type": "reference"
+        }
+      ]
+    }
+  ]
+}

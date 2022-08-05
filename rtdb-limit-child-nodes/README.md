@@ -1,28 +1,12 @@
-# rtdb-limit-child-nodes
+# Limit Child Nodes
 
-**VERSION**: 0.1.0
+**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
 
-**DESCRIPTION**: Limits the number of nodes to a specified maximum count in a specified Realtime Database path.
-
-
-
-**CONFIGURATION PARAMETERS:**
-
-* Deployment location: Where should the extension be deployed? You usually want a location close to your database. Realtime Database instances are located in us-central1. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
-
-* Realtime Database path: What is the Realtime Database path for which you want to limit the number of child nodes?
-
-* Maximum count of nodes to keep: What is the maximum count of nodes to keep in your specified database path? The oldest nodes will be deleted first to maintain this max count.
+**Description**: Limits the number of nodes to a specified maximum count in a specified Realtime Database path.
 
 
 
-**CLOUD FUNCTIONS CREATED:**
-
-* rtdblimit (providers/google.firebase.database/eventTypes/ref.create)
-
-
-
-**DETAILS**: Use this extension to control the maximum number of nodes stored in a Firebase Realtime Database path.
+**Details**: Use this extension to control the maximum number of nodes stored in a Firebase Realtime Database path.
 
 If the number of nodes in your specified Realtime Database path exceeds the specified max count, this extension deletes the oldest nodes first until there are the max count number of nodes remaining.
 
@@ -30,18 +14,38 @@ If the number of nodes in your specified Realtime Database path exceeds the spec
 
 Before installing this extension, make sure that you've [set up a Realtime Database instance](https://firebase.google.com/docs/database) in your Firebase project.
 
-#### Billing
+### Billing
+ 
+To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
+ 
+- You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
+  - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
+  - Firebase Realtime Database
 
-This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
-- Firebase Realtime Database
-- Cloud Functions
-
-When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
 
 
 
-**ACCESS REQUIRED**:
+**Configuration Parameters:**
+
+* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your database. Realtime Database  instances are located in `us-central1`. For help selecting a  location, refer to the [location selection  guide](https://firebase.google.com/docs/functions/locations).
+
+* Realtime Database path: What is the Realtime Database path for which you want to limit the number of child nodes?
+
+* Realtime Database: From which Realtime Database instance do you want to limit child nodes?
+
+
+* Maximum count of nodes to keep: What is the maximum count of nodes to keep in your specified database path? The oldest nodes will be deleted first to maintain this max count.
+
+
+
+**Cloud Functions:**
+
+* **rtdblimit:** Listens for new child nodes in your specified Realtime Database path, checks if the max count has been exceeded, then deletes the oldest nodes first, as needed to maintain the max count.
+
+
+
+**Access Required**:
 
 
 

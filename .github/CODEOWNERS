@@ -1,0 +1,9 @@
+# Dependencies, package.json and mono-repo files
+package.json     @firebase/invertase
+*/package.json   @firebase/invertase
+lerna.json       @firebase/invertase
+
+# Tests
+jest.config.js   @firebase/invertase
+*/jest.config.js @firebase/invertase
+__tests__/*      @firebase/invertase
