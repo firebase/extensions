@@ -1,5 +1,4 @@
 import * as admin from "firebase-admin";
-
 import { smtpServer } from "./createSMTPServer";
 
 process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";

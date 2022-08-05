@@ -200,8 +200,8 @@ export async function runMultiThread(): Promise<number> {
 
   await dataSink.initialize();
   if (!exists) {
-    console.log("Intializing dataset, this may take upto 1 minute...");
-    await new Promise((resolve) => setTimeout(resolve, 60000, [])); // Wait 1 minute for dataset to initialize
+    console.log("Wait a few seconds for the dataset to initialize...");
+    await new Promise((resolve) => setTimeout(resolve, 5000, [])); // Wait for the dataset to initialize
   }
 
   console.log(
