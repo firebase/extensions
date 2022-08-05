@@ -6,6 +6,9 @@ import { invalidURI } from "../src/logs";
 const { logger } = require("firebase-functions");
 const consoleLogSpy = jest.spyOn(logger, "warn").mockImplementation();
 
+const { logger } = require("firebase-functions");
+const consoleLogSpy = jest.spyOn(logger, "warn").mockImplementation();
+
 describe("set server credentials helper function", () => {
   test(" return smtpServerDomain credentials with new password", () => {
     const config: Config = {
