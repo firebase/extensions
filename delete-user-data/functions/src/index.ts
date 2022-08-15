@@ -23,6 +23,7 @@ import { getDatabaseUrl, deleteCollection } from "./helpers";
 import config from "./config";
 import * as logs from "./logs";
 import { buildQuery } from "./buildQuery";
+import { search } from "./search";
 
 // Helper function for selecting correct domain adrress
 const databaseURL = getDatabaseUrl(
@@ -41,13 +42,43 @@ logs.init();
 export const handleDeletion = functions.pubsub
   .topic("deletions")
   .onPublish(async (message, context) => {
-    const { path, type } = JSON.parse(
+    const { path, uid } = JSON.parse(
       Buffer.from(message.data, "base64").toString("utf8")
     );
 
-    if (type === "collection") {
+    if (path.includes(uid)) {
       return deleteCollection(admin.firestore(), path, 100);
     }
+
+    /** Check for subcollections and documents */
+    const collection = admin.firestore().collection(path);
+
+    /** Iterate through documents */
+    const docs = await collection.listDocuments();
+
+    docs.forEach(async (doc) => {
+      /** Check id value */
+      if (doc.path.includes(uid)) {
+        await doc.delete();
+      }
+
+      /** Check field/value */
+      const data = await doc.get();
+      const fields = data.data();
+      if (fields) {
+        Object.entries(fields).forEach(async ([field, value]) => {
+          if (field.includes(uid)) {
+            await doc.delete();
+          }
+
+          if (value.includes(uid)) {
+            await doc.delete();
+          }
+        });
+      }
+
+      await search(uid, doc);
+    });
 
     return Promise.resolve();
   });

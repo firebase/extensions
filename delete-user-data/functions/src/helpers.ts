@@ -168,12 +168,34 @@ export const waitForCollectionDeletion = (
     let timedOut = false;
     const timer = setTimeout(() => {
       timedOut = true;
-      reject(new Error("Timeout waiting for firestore document"));
+      reject(new Error("Timeout waiting for collection deletion"));
     }, timeout);
     const unsubscribe = query.onSnapshot(async (snapshot) => {
       const hasDocuments = snapshot.docs.length;
 
       if (!hasDocuments) {
+        unsubscribe();
+        if (!timedOut) {
+          clearTimeout(timer);
+          resolve(true);
+        }
+      }
+    });
+  });
+};
+
+export const waitForDocumentDeletion = (
+  document: DocumentData,
+  timeout: number = 10_000
+): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      reject(new Error("Timeout waiting for document deletion"));
+    }, timeout);
+    const unsubscribe = document.onSnapshot(async (doc) => {
+      if (!doc.exists) {
         unsubscribe();
         if (!timedOut) {
           clearTimeout(timer);
