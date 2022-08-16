@@ -93,7 +93,7 @@ export class ShardedCounterController {
         limit
       ).onSnapshot(async (snap) => {
         if (snap.docs.length == limit) return;
-        if (controllerData.workers && controllerData.length > 0) {
+        if (controllerData.workers && controllerData.workers.length > 0) {
           skippedRoundsDueToWorkers++;
           return;
         }
