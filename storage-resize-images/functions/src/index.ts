@@ -92,7 +92,11 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       return;
     }
 
-    if (object.metadata && object.metadata.resizedImage === "true") {
+    if (
+      object.metadata &&
+      (object.metadata.resizedImage === "true" ||
+        object.metadata.resizeFailed === "true")
+    ) {
       logs.imageAlreadyResized();
       return;
     }
@@ -163,6 +167,21 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       const failed = results.some((result) => result.success === false);
       if (failed) {
         logs.failed();
+
+        if (config.failedImagesPath) {
+          const failedFilePath = path.join(
+            fileDir,
+            config.failedImagesPath,
+            `${fileNameWithoutExtension}${fileExtension}`
+          );
+
+          logs.failedImageUploading(failedFilePath);
+          await bucket.upload(originalFile, {
+            destination: failedFilePath,
+            metadata: { metadata: { resizeFailed: "true" } },
+          });
+          logs.failedImageUploaded(failedFilePath);
+        }
         return;
       } else {
         if (config.deleteOriginalFile === deleteImage.onSuccess) {

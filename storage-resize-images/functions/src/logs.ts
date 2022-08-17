@@ -167,3 +167,13 @@ export const errorOutputOptionsParse = (err: any) => {
     err
   );
 };
+
+export const failedImageUploading = (path: string) => {
+  logger.log(
+    `Uploading failed image to the failed images directory: '${path}'`
+  );
+};
+
+export const failedImageUploaded = (path: string) => {
+  logger.log(`Uploaded failed image to the failed images directory: '${path}'`);
+};
