@@ -181,3 +181,12 @@ export const backfillComplete = (success: number, failures: number) => {
     `Finished backfill. Successfully resized ${success} images. Failed to resize ${failures} images.`
   );
 };
+export const failedImageUploading = (path: string) => {
+  logger.log(
+    `Uploading failed image to the failed images directory: '${path}'`
+  );
+};
+
+export const failedImageUploaded = (path: string) => {
+  logger.log(`Uploaded failed image to the failed images directory: '${path}'`);
+};

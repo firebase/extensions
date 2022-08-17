@@ -239,6 +239,14 @@ params:
       Invalid paths, must be a comma-separated list of absolute path values.
     required: false
 
+  - param: FAILED_IMAGES_PATH
+    label: Cloud Storage path for failed images
+    description: >
+      An absolute path in which to store failed images. Leave this field empty
+      if you do not want to store failed images in a separate directory.
+    example: failed
+    required: false
+
   - param: CACHE_CONTROL_HEADER
     label: Cache-Control header for resized images
     description: >
