@@ -242,8 +242,13 @@ params:
   - param: FAILED_IMAGES_PATH
     label: Cloud Storage path for failed images
     description: >
-      An absolute path in which to store failed images. Leave this field empty
-      if you do not want to store failed images in a separate directory.
+      A relative path in which to store failed images. For example,
+      if you specify a path here of `failed` and you upload an image to
+      `/images/original.jpg`, then resizing failed, the image will be
+      stored at `/images/failed/original.jpg`.
+      
+      Leave this field empty if you do not want to store failed images
+      in a separate directory.
     example: failed
     required: false
 
