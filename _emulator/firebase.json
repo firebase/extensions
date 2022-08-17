@@ -1,6 +1,7 @@
 {
   "extensions": {
-    "firestore-send-email": "../firestore-send-email"
+    "firestore-send-email": "../firestore-send-email",
+    "storage-resize-images": "../storage-resize-images"
   },
   "storage": {
     "rules": "storage.rules"
