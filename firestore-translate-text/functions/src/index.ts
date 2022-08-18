@@ -46,20 +46,10 @@ export const fstranslate = functions.firestore
   .document(process.env.COLLECTION_PATH)
   .onWrite(async (change): Promise<void> => {
     logs.start(config);
-    const { languages, inputFieldName, outputFieldName } = config;
+    const { inputFieldName, outputFieldName } = config;
 
     if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
       logs.fieldNamesNotDifferent();
-      return;
-    }
-    if (
-      validators.fieldNameIsTranslationPath(
-        inputFieldName,
-        outputFieldName,
-        languages
-      )
-    ) {
-      logs.inputFieldNameIsOutputPath();
       return;
     }
 
@@ -92,7 +82,7 @@ export const fstranslatebackfill = functions.tasks
       await runtime.setProcessingState(
         "PROCESSING_COMPLETE",
         'Existing documents were not translated because "Translate existing documents?" is configured to false. ' +
-          "If you want to fill in missing translations, reconfigure this instance."
+        "If you want to fill in missing translations, reconfigure this instance."
       );
       return;
     }
@@ -143,22 +133,19 @@ export const fstranslatebackfill = functions.tasks
       if (newErrorCount == 0) {
         return await runtime.setProcessingState(
           "PROCESSING_COMPLETE",
-          `Successfully translated ${newSucessCount} documents in ${
-            Date.now() - startTime
+          `Successfully translated ${newSucessCount} documents in ${Date.now() - startTime
           }ms.`
         );
       } else if (newErrorCount > 0 && newSucessCount > 0) {
         return await runtime.setProcessingState(
           "PROCESSING_WARNING",
-          `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors in ${
-            Date.now() - startTime
+          `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors in ${Date.now() - startTime
           }ms. See function logs for specific error messages.`
         );
       }
       return await runtime.setProcessingState(
         "PROCESSING_FAILED",
-        `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors in ${
-          Date.now() - startTime
+        `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors in ${Date.now() - startTime
         }ms. See function logs for specific error messages.`
       );
     }
@@ -170,6 +157,13 @@ const extractInput = (snapshot: admin.firestore.DocumentSnapshot): any => {
 
 const extractOutput = (snapshot: admin.firestore.DocumentSnapshot): any => {
   return snapshot.get(config.outputFieldName);
+}
+
+const extractLanguages = (
+  snapshot: admin.firestore.DocumentSnapshot
+): string[] => {
+  if (!config.languagesFieldName) return config.languages;
+  return snapshot.get(config.languagesFieldName) || config.languages;
 };
 
 const getChangeType = (
@@ -224,6 +218,9 @@ const handleUpdateDocument = async (
   const inputBefore = extractInput(before);
   const inputAfter = extractInput(after);
 
+  const languagesBefore = extractLanguages(before);
+  const languagesAfter = extractLanguages(after);
+
   // If previous and updated documents have no input, skip.
   if (inputBefore === undefined && inputAfter === undefined) {
     logs.documentUpdatedNoInput();
@@ -237,7 +234,10 @@ const handleUpdateDocument = async (
     return;
   }
 
-  if (JSON.stringify(inputBefore) === JSON.stringify(inputAfter)) {
+  if (
+    JSON.stringify(inputBefore) === JSON.stringify(inputAfter) &&
+    JSON.stringify(languagesBefore) === JSON.stringify(languagesAfter)
+  ) {
     logs.documentUpdatedUnchangedInput();
   } else {
     logs.documentUpdatedChangedInput();
@@ -259,11 +259,12 @@ const filterLanguagesFn = (
 
 const translateSingle = async (
   input: string,
+  languages: string[],
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
-  logs.translateInputStringToAllLanguages(input, config.languages);
+  logs.translateInputStringToAllLanguages(input, languages);
 
-  const tasks = config.languages.map(
+  const tasks = languages.map(
     async (targetLanguage: string): Promise<Translation> => {
       return {
         language: targetLanguage,
@@ -337,8 +338,7 @@ const translateSingleBackfill = async (
   } else if (failedTranslations.length && successfulTranslations.length) {
     logs.partialTranslateError(input, failedTranslations, translations.length);
     // If any translations failed, throw so it is reported as an error.
-    throw `Error while translating '${input}': ${
-      failedTranslations.length
+    throw `Error while translating '${input}': ${failedTranslations.length
     } out of ${languages.length} translations failed: ${failedTranslations.join(
       "\n"
     )}`;
@@ -349,17 +349,18 @@ const translateSingleBackfill = async (
 
 const translateMultiple = async (
   input: object,
+  languages: string[],
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
   let translations = {};
   let promises = [];
 
   Object.entries(input).forEach(([input, value]) => {
-    config.languages.forEach((language) => {
+    languages.forEach((language) => {
       promises.push(
         () =>
           new Promise<void>(async (resolve) => {
-            logs.translateInputStringToAllLanguages(value, config.languages);
+            logs.translateInputStringToAllLanguages(value, languages);
 
             const output =
               typeof value === "string"
@@ -432,8 +433,7 @@ const translateMultipleBackfill = async (
       translations.length
     );
     // If any translations failed, throw so it is reported as an error.
-    throw `${
-      failedTranslations.length
+    throw `${failedTranslations.length
     } error(s) while translating '${input}': ${failedTranslations.join("\n")}`;
   } else {
     logs.translateInputToAllLanguagesComplete(JSON.stringify(input));
@@ -457,12 +457,24 @@ const translateDocument = async (
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
   const input: any = extractInput(snapshot);
+  const languages = extractLanguages(snapshot);
 
-  if (typeof input === "object") {
-    return translateMultiple(input, snapshot);
+  if (
+    validators.fieldNameIsTranslationPath(
+      config.inputFieldName,
+      config.outputFieldName,
+      languages
+    )
+  ) {
+    logs.inputFieldNameIsOutputPath();
+    return;
   }
 
-  await translateSingle(input, snapshot);
+  if (typeof input === "object") {
+    return translateMultiple(input, languages, snapshot);
+  }
+
+  await translateSingle(input, languages, snapshot);
 };
 
 const translateString = async (
