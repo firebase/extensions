@@ -1,14 +1,12 @@
 {
   "compilerOptions": {
-    "lib": ["es2018"],
+    "target": "es5",
     "module": "commonjs",
-    "noImplicitReturns": true,
     "outDir": "lib",
-    "sourceMap": false,
-    "target": "es2018",
-    "types": ["node"]
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   },
-  "compileOnSave": true,
-  "include": ["src"],
-  "exclude": ["**/node_modules/@types/jest/**"]
+  "include": ["src"]
 }
