@@ -1,0 +1,19 @@
+{
+  "name": "exts-test-data",
+  "description": "Populate a Firebase project with users and data needed to test extensions",
+  "main": "index.js",
+  "scripts": {
+    "populate": "ts-node index.ts"
+  },
+  "author": "Chris Bianca <chris@csfrequency.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "firebase-admin": "^8.0.0"
+  },
+  "devDependencies": {
+    "inquirer": "^6.5.0",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.5.3"
+  },
+  "private": true
+}
