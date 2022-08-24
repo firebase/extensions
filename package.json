@@ -24,6 +24,7 @@
     "url": ""
   },
   "devDependencies": {
+    "@types/concurrently": "^7.0.0",
     "@types/jest": "^24.0.18",
     "codecov": "^3.8.1",
     "concurrently": "^7.2.1",
