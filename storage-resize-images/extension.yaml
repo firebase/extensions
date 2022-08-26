@@ -129,7 +129,8 @@ params:
       original images are either kept or deleted.
       It is recommended to create a separate bucket for this extension. For more information,
       refer to the [pre-installation guide](https://firebase.google.com/products/extensions/storage-resize-images).
-    type: string
+    type: selectResource
+    resourceType: storage.googleapis.com/Bucket
     example: my-project-12345.appspot.com
     validationRegex: ^([0-9a-z_.-]*)$
     validationErrorMessage: Invalid storage bucket
