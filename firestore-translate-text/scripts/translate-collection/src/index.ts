@@ -1,8 +1,7 @@
 import { program } from "commander";
 import { parseConfig } from "./config";
 import firebase from "firebase-admin";
-import googleTranslate from "@google-cloud/translate";
-
+import { translateDocument } from "./translate";
 const packageJson = require("../package.json");
 
 program
@@ -57,16 +56,17 @@ async function run(options: any) {
   const collection = db.collection(collectionPath);
   const snapshot = await collection.get();
   const docs = snapshot.docs;
+  const doc = docs[0];
 
-  const translate = new googleTranslate.v2.Translate();
+  console.log(`Translating ${docs.length} documents...`);
 
-  for (const doc of docs) {
-    const input = doc.get(inputFieldName);
-    try {
-      const output = await translate.translate(input, { to: languages[0] });
-      await doc.ref.update({ [outputFieldName]: output });
-    } catch (e) {
-      console.log(e);
-    }
+  try {
+    await Promise.all(
+      docs.map((doc) =>
+        translateDocument(doc, languages, inputFieldName, outputFieldName)
+      )
+    );
+  } catch (e) {
+    console.log(e);
   }
 }
