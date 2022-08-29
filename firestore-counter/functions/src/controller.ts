@@ -201,11 +201,19 @@ export class ShardedCounterController {
           logger.log("Some counter aggregation failed, bailing out.");
           throw Error("Some counter aggregation failed, bailing out.");
         }
-        t.set(
-          this.controllerDocRef,
-          { timestamp: firestore.FieldValue.serverTimestamp() },
-          { merge: true }
-        );
+        if (controllerDoc.exists) { //Only update timestamp
+          t.set(
+            this.controllerDocRef,
+            { timestamp: firestore.FieldValue.serverTimestamp() },
+            { merge: true }
+          );
+        }else{ //Init worker list as well
+          t.set(
+            this.controllerDocRef,
+            { workers: [], timestamp: firestore.FieldValue.serverTimestamp() },
+            { merge: true }
+          );
+        }
         logger.log("Aggregated " + plans.length + " counters.");
         return ControllerStatus.SUCCESS;
       });
