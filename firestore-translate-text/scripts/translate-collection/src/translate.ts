@@ -3,14 +3,6 @@ import admin from "firebase-admin";
 
 const translationClient = new TranslationServiceClient();
 
-const writeOutput = (
-  snapshot: admin.firestore.DocumentSnapshot,
-  outputFieldName: string,
-  output: any
-) => {
-  return snapshot.ref.update(outputFieldName, output);
-};
-
 const translate = async (
   gcProjectId: string,
   contents: string | string[],
@@ -83,14 +75,7 @@ const translateSingle = async (
   );
 };
 
-const extractField = (
-  snapshot: admin.firestore.DocumentSnapshot,
-  fieldName: string
-) => {
-  return snapshot.get(fieldName);
-};
-
-export const translateDocument = (
+export const translateDocument = async (
   gcProjectId: string,
   snapshot: admin.firestore.DocumentSnapshot,
   languages: string[],
@@ -98,17 +83,17 @@ export const translateDocument = (
   outputFieldName: string,
   languagesFieldName?: string
 ) => {
-  const input = extractField(snapshot, inputFieldName);
+  const input = snapshot.get(inputFieldName);
   const targetLanguages = languagesFieldName
-    ? extractField(snapshot, languagesFieldName) || languages
+    ? snapshot.get(languagesFieldName) || languages
     : languages;
 
   if (!input || targetLanguages.length === 0) return;
 
   const output =
     typeof input === "object"
-      ? translateMultiple(gcProjectId, input, targetLanguages)
-      : translateSingle(gcProjectId, input, targetLanguages);
+      ? await translateMultiple(gcProjectId, input, targetLanguages)
+      : await translateSingle(gcProjectId, input, targetLanguages);
 
-  return writeOutput(snapshot, outputFieldName, output);
+  return snapshot.ref.update(outputFieldName, output);
 };

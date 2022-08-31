@@ -81,16 +81,15 @@ async function run(options: any) {
 
   try {
     await Promise.all(
-      docs.map(
-        (doc) =>
-          translateDocument(
-            gcProjectId,
-            doc,
-            languages,
-            inputFieldName,
-            outputFieldName,
-            languagesFieldName
-          ) as any
+      docs.map((doc) =>
+        translateDocument(
+          gcProjectId,
+          doc,
+          languages,
+          inputFieldName,
+          outputFieldName,
+          languagesFieldName
+        )
       )
     );
   } catch (e) {
