@@ -20,7 +20,7 @@
     "lib"
   ],
   "bin": {
-    "fs-tt-translate-collection": "./lib/index.js"
+    "fs-translate-collection": "./lib/index.js"
   },
   "author": "Yaman KATBY <me@yamankatby.com> (https://yamankatby.com/)",
   "license": "Apache-2.0",

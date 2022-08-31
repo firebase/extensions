@@ -11,7 +11,7 @@ const writeOutput = (
   return snapshot.ref.update(outputFieldName, output);
 };
 
-const translateContents = async (
+const translate = async (
   gcProjectId: string,
   contents: string | string[],
   targetLanguage: string
@@ -26,28 +26,53 @@ const translateContents = async (
 
 const translateMultiple = async (
   gcProjectId: string,
-  snapshot: admin.firestore.DocumentSnapshot,
   input: object,
-  targetLanguages: string[],
-  outputFieldName: string
-) => {};
+  targetLanguages: string[]
+) => {
+  const entries = Object.entries(input);
+
+  const requests = targetLanguages.map(async (targetLanguage) => ({
+    language: targetLanguage,
+    output: await translate(
+      gcProjectId,
+      entries.map((entry) => entry[1]),
+      targetLanguage
+    ),
+  }));
+
+  const responses = await Promise.all(requests);
+
+  return entries.reduce(
+    (output, entry, index) => {
+      output[entry[0]] = responses.reduce(
+        (output, translation) => {
+          if (!translation.output) return output;
+          output[translation.language] =
+            translation.output[index].translatedText;
+          return output;
+        },
+        {} as any
+      );
+      return output;
+    },
+    {} as any
+  );
+};
 
 const translateSingle = async (
   gcProjectId: string,
-  snapshot: admin.firestore.DocumentSnapshot,
   input: string,
-  targetLanguages: string[],
-  outputFieldName: string
+  targetLanguages: string[]
 ) => {
   const requests = targetLanguages.map(async (targetLanguage: string) => {
     return {
       language: targetLanguage,
-      output: await translateContents(gcProjectId, input, targetLanguage),
+      output: await translate(gcProjectId, input, targetLanguage),
     };
   });
   const response = await Promise.all(requests);
 
-  const translationsMap: { [language: string]: string } = response.reduce(
+  return response.reduce(
     (output, translation) => {
       if (!translation.output) return output;
       output[translation.language] =
@@ -56,8 +81,6 @@ const translateSingle = async (
     },
     {} as any
   );
-
-  return writeOutput(snapshot, outputFieldName, translationsMap);
 };
 
 const extractField = (
@@ -82,21 +105,10 @@ export const translateDocument = (
 
   if (!input || targetLanguages.length === 0) return;
 
-  if (typeof input === "object") {
-    return translateMultiple(
-      gcProjectId,
-      snapshot,
-      input,
-      targetLanguages,
-      outputFieldName
-    );
-  }
+  const output =
+    typeof input === "object"
+      ? translateMultiple(gcProjectId, input, targetLanguages)
+      : translateSingle(gcProjectId, input, targetLanguages);
 
-  return translateSingle(
-    gcProjectId,
-    snapshot,
-    input,
-    targetLanguages,
-    outputFieldName
-  );
+  return writeOutput(snapshot, outputFieldName, output);
 };
