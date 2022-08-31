@@ -2,14 +2,6 @@ import { program } from "commander";
 import inquirer, { Question } from "inquirer";
 import { validateLanguages } from "./languages";
 
-interface CliConfig {
-  projectId: string;
-  languages: string[];
-  collectionPath: string;
-  inputFieldName: string;
-  outputFieldName: string;
-}
-
 const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
 const PROJECT_ID_MAX_CHARS = 6144;
 const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
@@ -36,6 +28,8 @@ const parseLanguages = (value: string) => {
   return value.split(",").map((l) => l.trim());
 };
 
+export const DEFAULT_BATCH_SIZE = 100;
+
 const questions: Question[] = [
   {
     message: "What is your Firebase project ID?",
@@ -51,12 +45,18 @@ const questions: Question[] = [
   },
   {
     message:
-      "Into which target languages do you want to translate new strings? \n" +
-      "The languages are identified using ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr. \n" +
-      "For these codes, visit the [supported languages list](https://cloud.google.com/translate/docs/languages).",
-    name: "languages",
+      "What is the Google Cloud project ID would you like to use for the Translation API? (leave blank to use the same project as the Firebase project)",
+    name: "gcProjectId",
     type: "input",
-    validate: (value) => validateLanguages(parseLanguages(value)),
+    validate: (value) =>
+      !value
+        ? true
+        : validateInput(
+            value,
+            "Google Cloud project ID",
+            FIRESTORE_VALID_CHARACTERS,
+            PROJECT_ID_MAX_CHARS
+          ),
   },
   {
     message:
@@ -73,6 +73,15 @@ const questions: Question[] = [
   },
   {
     message:
+      "Into which target languages do you want to translate new strings? \n" +
+      "The languages are identified using ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr. \n" +
+      "For these codes, visit the [supported languages list](https://cloud.google.com/translate/docs/languages).",
+    name: "languages",
+    type: "input",
+    validate: (value) => validateLanguages(parseLanguages(value)),
+  },
+  {
+    message:
       "What is the name of the field that contains the string that you want to translate?",
     name: "inputFieldName",
     type: "input",
@@ -83,48 +92,76 @@ const questions: Question[] = [
     name: "outputFieldName",
     type: "input",
   },
+  {
+    message:
+      "What is the name of the field that contains the languages that you want to translate into? (leave blank if you want to translate into languages specified in the languages param)",
+    name: "languagesFieldName",
+    type: "input",
+  },
+  {
+    message: "How many documents should be processed at once?",
+    name: "batchSize",
+    type: "input",
+    default: DEFAULT_BATCH_SIZE,
+    validate: (value) => {
+      const parsed = parseInt(value, 10);
+      if (isNaN(parsed)) return "Please supply a valid number";
+      else if (parsed < 1) return "Please supply a number greater than 0";
+      else return true;
+    },
+  },
+  {
+    message: "Would you like to run the script across multiple threads?",
+    name: "multiThreaded",
+    type: "confirm",
+    default: false,
+  },
 ];
 
+interface CliConfig {
+  projectId: string;
+  gcProjectId: string;
+  collectionPath: string;
+  languages: string[];
+  inputFieldName: string;
+  outputFieldName: string;
+  languagesFieldName?: string;
+  batchSize?: number;
+  multiThreaded?: boolean;
+}
+
 export const parseConfig = async (options: any): Promise<CliConfig> => {
-  if (options.nonInteractive) {
-    if (
-      !options.projectId ||
-      !options.languages ||
-      !options.collectionPath ||
-      !options.inputFieldName ||
-      !options.outputFieldName
-    ) {
-      program.help();
-    } else {
-      const parsedLanguages = parseLanguages(options.languages);
-      const validation = validateLanguages(parsedLanguages);
-      if (validation !== true) {
-        program.error(validation);
-      }
+  const {
+    projectId,
+    gcProjectId,
+    collectionPath,
+    languages,
+    inputFieldName,
+    outputFieldName,
+    languagesFieldName,
+    batchSize,
+    multiThreaded,
+  } = options.nonInteractive ? options : await inquirer.prompt(questions);
 
-      return {
-        projectId: options.projectId,
-        languages: parsedLanguages,
-        collectionPath: options.collectionPath,
-        inputFieldName: options.inputFieldName,
-        outputFieldName: options.outputFieldName,
-      };
-    }
-  } else {
-    const {
-      projectId,
-      languages,
-      collectionPath,
-      inputFieldName,
-      outputFieldName,
-    } = await inquirer.prompt(questions);
-
-    return {
-      projectId,
-      languages: parseLanguages(languages),
-      collectionPath,
-      inputFieldName,
-      outputFieldName,
-    };
+  if (
+    !projectId ||
+    !collectionPath ||
+    !languages ||
+    !inputFieldName ||
+    !outputFieldName
+  ) {
+    program.help();
   }
+
+  return {
+    projectId,
+    gcProjectId: gcProjectId || projectId,
+    collectionPath,
+    languages: parseLanguages(languages),
+    inputFieldName,
+    outputFieldName,
+    languagesFieldName,
+    batchSize: parseInt(batchSize, 10),
+    multiThreaded,
+  };
 };

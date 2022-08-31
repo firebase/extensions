@@ -1,7 +1,9 @@
 import { program } from "commander";
-import { parseConfig } from "./config";
-import firebase from "firebase-admin";
+import admin from "firebase-admin";
+import { DEFAULT_BATCH_SIZE, parseConfig } from "./config";
+import { validateLanguages } from "./languages";
 import { translateDocument } from "./translate";
+
 const packageJson = require("../package.json");
 
 program
@@ -15,12 +17,16 @@ program
   )
   .option("-P --project-id <project-id>", "The Firebase project ID.")
   .option(
-    "-L --languages <languages>",
-    "Target languages for translations, as a comma-separated list."
+    "-G --gc-project-id <gc-project-id>",
+    "The Google Cloud project ID for the Translation API."
   )
   .option(
     "-C --collection-path <collection-path>",
     "The path of the Cloud Firestore Collection to translate."
+  )
+  .option(
+    "-L --languages <languages>",
+    "Target languages for translations, as a comma-separated list."
   )
   .option(
     "-I --input-field-name <input-field-name>",
@@ -30,6 +36,20 @@ program
     "-O --output-field-name <output-field-name>",
     "The name of the field where you want to store your translations."
   )
+  .option(
+    "-N --languages-field-name <languages-field-name>",
+    "The name of the field that contains the languages that you want to translate into."
+  )
+  .option(
+    "--batch-size <batch-size>",
+    "The number of documents to process in each batch.",
+    `${DEFAULT_BATCH_SIZE}`
+  )
+  .option(
+    "--multi-threaded <multi-threaded>",
+    "Whether to run the script across multiple threads.",
+    false
+  )
   .action(run)
   .parseAsync(process.argv);
 
@@ -37,33 +57,40 @@ async function run(options: any) {
   const config = await parseConfig(options);
   const {
     projectId,
-    languages,
+    gcProjectId,
     collectionPath,
+    languages,
     inputFieldName,
     outputFieldName,
+    languagesFieldName,
   } = config;
 
+  const validation = validateLanguages(languages);
+  if (validation !== true) program.error(validation);
+
   // Initialize Firebase
-  const app = firebase.initializeApp({
-    credential: firebase.credential.applicationDefault(),
+  const app = admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
     databaseURL: `https://${projectId}.firebaseio.com`,
   });
-
-  process.env.PROJECT_ID = projectId;
-  process.env.GOOGLE_CLOUD_PROJECT = projectId;
 
   const db = app.firestore();
   const collection = db.collection(collectionPath);
   const snapshot = await collection.get();
   const docs = snapshot.docs;
-  const doc = docs[0];
-
-  console.log(`Translating ${docs.length} documents...`);
 
   try {
     await Promise.all(
-      docs.map((doc) =>
-        translateDocument(doc, languages, inputFieldName, outputFieldName)
+      docs.map(
+        (doc) =>
+          translateDocument(
+            gcProjectId,
+            doc,
+            languages,
+            inputFieldName,
+            outputFieldName,
+            languagesFieldName
+          ) as any
       )
     );
   } catch (e) {

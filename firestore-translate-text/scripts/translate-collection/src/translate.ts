@@ -2,10 +2,6 @@ import { TranslationServiceClient } from "@google-cloud/translate";
 import admin from "firebase-admin";
 
 const translationClient = new TranslationServiceClient();
-translationClient.batchTranslateText({
-  parent: "projects/dev-extensions-testing",
-  sourceLanguageCode: "en",
-});
 
 const writeOutput = (
   snapshot: admin.firestore.DocumentSnapshot,
@@ -16,11 +12,12 @@ const writeOutput = (
 };
 
 const translateContents = async (
+  gcProjectId: string,
   contents: string | string[],
   targetLanguage: string
 ) => {
   const [response] = await translationClient.translateText({
-    parent: `projects/dev-extensions-testing`,
+    parent: `projects/${gcProjectId}`,
     contents: Array.isArray(contents) ? contents : [contents],
     targetLanguageCode: targetLanguage,
   });
@@ -28,6 +25,7 @@ const translateContents = async (
 };
 
 const translateMultiple = async (
+  gcProjectId: string,
   snapshot: admin.firestore.DocumentSnapshot,
   input: object,
   targetLanguages: string[],
@@ -35,6 +33,7 @@ const translateMultiple = async (
 ) => {};
 
 const translateSingle = async (
+  gcProjectId: string,
   snapshot: admin.firestore.DocumentSnapshot,
   input: string,
   targetLanguages: string[],
@@ -43,7 +42,7 @@ const translateSingle = async (
   const requests = targetLanguages.map(async (targetLanguage: string) => {
     return {
       language: targetLanguage,
-      output: await translateContents(input, targetLanguage),
+      output: await translateContents(gcProjectId, input, targetLanguage),
     };
   });
   const response = await Promise.all(requests);
@@ -69,6 +68,7 @@ const extractField = (
 };
 
 export const translateDocument = (
+  gcProjectId: string,
   snapshot: admin.firestore.DocumentSnapshot,
   languages: string[],
   inputFieldName: string,
@@ -77,14 +77,26 @@ export const translateDocument = (
 ) => {
   const input = extractField(snapshot, inputFieldName);
   const targetLanguages = languagesFieldName
-    ? extractField(snapshot, languagesFieldName)
+    ? extractField(snapshot, languagesFieldName) || languages
     : languages;
 
   if (!input || targetLanguages.length === 0) return;
 
   if (typeof input === "object") {
-    return translateMultiple(snapshot, input, targetLanguages, outputFieldName);
+    return translateMultiple(
+      gcProjectId,
+      snapshot,
+      input,
+      targetLanguages,
+      outputFieldName
+    );
   }
 
-  return translateSingle(snapshot, input, targetLanguages, outputFieldName);
+  return translateSingle(
+    gcProjectId,
+    snapshot,
+    input,
+    targetLanguages,
+    outputFieldName
+  );
 };
