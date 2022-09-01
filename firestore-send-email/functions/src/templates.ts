@@ -20,10 +20,10 @@ import { TemplateGroup, TemplateData, Attachment } from "./types";
 
 import {
   registeredPartial,
+  templateLoaded,
   noPartialAttachmentSupport,
   checkingMissingTemplate,
   foundMissingTemplate,
-  templatesLoaded,
 } from "./logs";
 
 const subjHandlebars = create();
@@ -83,7 +83,7 @@ export default class Templates {
       registeredPartial(p.name);
     });
 
-    const loadedTemplates = templates.map((t) => {
+    templates.forEach((t) => {
       const tgroup: TemplateGroup = {};
       if (t.subject) {
         tgroup.subject = subjHandlebars.compile(t.subject, { noEscape: true });
@@ -106,10 +106,8 @@ export default class Templates {
 
       this.templateMap[t.name] = tgroup;
 
-      return t.name;
+      templateLoaded(t.name);
     });
-    templatesLoaded(loadedTemplates);
-
     this.ready = true;
     this.waits.forEach((wait) => wait());
   }
