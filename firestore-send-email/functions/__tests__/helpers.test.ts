@@ -1,6 +1,7 @@
 import Mail = require("nodemailer/lib/mailer");
 import { setSmtpCredentials } from "../src/helpers";
 import { Config } from "../src/types";
+import { invalidURI } from "../src/logs";
 
 describe("set server credentials helper function", () => {
   test(" return smtpServerDomain credentials with new password", () => {
