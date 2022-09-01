@@ -187,7 +187,7 @@ params:
         value: eu
     default: us
     required: true
-    immutable: true
+    immutable: true 
 
   - param: BIGQUERY_PROJECT_ID
     label: Project Id
@@ -275,7 +275,7 @@ params:
       - label: none
         value: NONE
     default: NONE
-    required: true
+    required: true 
 
   - param: TIME_PARTITIONING_FIELD
     label: BigQuery Time Partitioning column name
@@ -338,3 +338,4 @@ params:
     example: https://us-west1-my-project-id.cloudfunctions.net/myTransformFunction
     type: string
     required: false
+    
