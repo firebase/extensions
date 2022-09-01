@@ -13,11 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-<<<<<<< HEAD
 version: 0.1.23
-=======
-version: 0.1.24
->>>>>>> parent of b28bdaa1 (July-release-2022 (#1067))
 specVersion: v1beta
 
 displayName: Stream Collections to BigQuery
