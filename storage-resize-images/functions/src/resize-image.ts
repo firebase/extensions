@@ -187,7 +187,7 @@ export const modifyImage = async ({
       contentEncoding: objectMetadata.contentEncoding,
       contentLanguage: objectMetadata.contentLanguage,
       contentType: imageContentType,
-      metadata: objectMetadata.metadata ? { ...objectMetadata.metadata } : {},
+      metadata: objectMetadata.metadata || {},
     };
     metadata.metadata.resizedImage = true;
     if (config.cacheControlHeader) {
@@ -222,16 +222,11 @@ export const modifyImage = async ({
 
     // Uploading the modified image.
     logs.imageUploading(modifiedFilePath);
-    const uploadResponse = await bucket.upload(modifiedFile, {
+    await bucket.upload(modifiedFile, {
       destination: modifiedFilePath,
       metadata,
     });
     logs.imageUploaded(modifiedFile);
-
-    // Make uploaded image public.
-    if (config.makePublic) {
-      await uploadResponse[0].makePublic();
-    }
 
     return { size, outputFilePath: modifiedFilePath, success: true };
   } catch (err) {
