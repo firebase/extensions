@@ -102,12 +102,8 @@ const validateLocation = (value: string) => {
   return index !== -1;
 };
 
-const packageJson = require("../package.json");
-
 program
   .name("fs-bq-import-collection")
-  .description(packageJson.description)
-  .version(packageJson.version)
   .option(
     "--non-interactive",
     "Parse all input from command line flags instead of prompting the caller.",
