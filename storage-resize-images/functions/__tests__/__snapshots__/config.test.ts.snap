@@ -2,6 +2,7 @@
 
 exports[`extension configuration detected from environment variables 1`] = `
 Object {
+  "animated": false,
   "bucket": "extensions-testing.appspot.com",
   "cacheControlHeader": undefined,
   "deleteOriginalFile": 0,
@@ -11,6 +12,7 @@ Object {
   ],
   "imageTypes": undefined,
   "includePathList": undefined,
+  "outputOptions": undefined,
   "resizedImagesPath": undefined,
 }
 `;

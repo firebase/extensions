@@ -4,7 +4,7 @@ export const defaultQuery = (
   bqProjectId: string,
   datasetId: string,
   tableId: string
-): string => `SELECT document_id
+): string => `SELECT *
       FROM \`${bqProjectId}.${datasetId}.${tableId}\`
       LIMIT 1`;
 

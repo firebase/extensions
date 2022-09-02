@@ -1,3 +1,33 @@
+## Version 0.1.29
+
+fixed - add size to metadata
+
+feature - add an option to make the resized images public
+
+fixed - updated sharp lib dependency for improved compression algorithm
+
+## Version 0.1.28
+
+feature - added extension event for image resize completion (#967)
+
+## Version 0.1.27
+
+fixed - update to firebase-admin v10 (#935)
+
+feature - add output options param, to support [Sharp Output Options](https://sharp.pixelplumbing.com/api-output#jpeg) (#878)
+
+## Version 0.1.26
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - update resized metadata content disposition (#839)
+
+feature - add WEBP and GIF animation (#875)
+
+fixed - update validate workflow to use node14
+
+fixed - fix samsung encoded jpg resizing
+
 ## Version 0.1.25
 
 fixed - fix errors when resizing Samsung-encoded JPEGs
