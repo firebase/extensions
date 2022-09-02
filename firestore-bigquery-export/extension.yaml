@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.22
+version: 0.1.20
 specVersion: v1beta
 
 displayName: Stream Collections to BigQuery
@@ -44,9 +44,6 @@ apis:
 roles:
   - role: bigquery.dataEditor
     reason: Allows the extension to configure and export data into BigQuery.
-
-  - role: datastore.user
-    reason: Allows the extension to write updates to the database.
 
 resources:
   - name: fsexportbigquery
@@ -187,43 +184,20 @@ params:
         value: eu      
     default: us
     required: true
-    immutable: true 
-
-  - param: BIGQUERY_PROJECT_ID
-    label: Project Id
-    description: >-
-      Override the default project bigquery instance.
-      This can allow updates to be directed to a bigquery instance on another project.
-    type: string
-    default: ${PROJECT_ID}
-    required: true
+    immutable: true  
 
   - param: COLLECTION_PATH
     label: Collection path
     description: >-
       What is the path of the collection that you would like to export? You may
       use `{wildcard}` notation to match a subcollection of all documents in a
-      collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}` 
-      can be returned in `path_params` as a JSON formatted string.
+      collection (for example: `chatrooms/{chatid}/posts`).
     type: string
     example: posts
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Firestore collection paths must be an odd number of segments separated by slashes, e.g. "path/to/collection".
     default: posts
     required: true
-
-  - param: WILDCARD_IDS
-    label: Wildcard Column field with Parent Firestore Document IDs
-    description: >-
-     Creates a column containing a JSON object of all wildcard ids from a documents path.
-    type: select
-    options:
-      - label: No
-        value: false
-      - label: Yes
-        value: true
-    default: false
-    required: false
 
   - param: DATASET_ID
     label: Dataset ID
@@ -254,14 +228,13 @@ params:
     default: posts
     required: true
 
-
   - param: TABLE_PARTITIONING
-    label: BigQuery SQL table Time Partitioning option type
+    label: BigQuery SQL table partitioning option
     description: >-
       This parameter will allow you to partition the BigQuery table and BigQuery view 
       created by the extension based on data ingestion time. You may select the granularity of
       partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will
-      generate one partition per day, hour, month or year, respectively.
+      generate one partition per day, hour, month or year, respectively. 
     type: select
     options:
       - label: hour
@@ -275,6 +248,7 @@ params:
       - label: none
         value: NONE
     default: NONE
+<<<<<<< HEAD
     required: true 
 
   - param: TIME_PARTITIONING_FIELD
@@ -338,4 +312,7 @@ params:
     example: https://us-west1-my-project-id.cloudfunctions.net/myTransformFunction
     type: string
     required: false
+=======
+    required: true
+>>>>>>> parent of cc0ce18b (March 7, 2022 Release (#903))
     

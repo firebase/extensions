@@ -1,25 +1,3 @@
-## Version 0.1.22
-
-fixed - updated type check on partitioned date fields (#906)
-
-fixed - updated the BigQuery projectId to be required and to default as the current firebase project (#900)
-
-## Version 0.1.21
-
-fixed - removed lib files and updated local test suite (#894)
-
-fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
-
-feature - added merge partitioning, clustering, wildcard Ids & backup collections (#890) (#891)
-
-fixed - added fields null check when generating schemas (#845)
-
-fixed - import script date (#835)
-
-fixed - update validate workflow to use node14
-
-fixed - update package lock file to match latest node type changes (#782)
-
 ## Version 0.1.20
 
 fixed - Fixed installation error due to bad package-lock.json

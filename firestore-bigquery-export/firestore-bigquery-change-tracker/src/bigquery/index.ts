@@ -17,15 +17,12 @@
 import * as bigquery from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
 import * as traverse from "traverse";
-import fetch from "node-fetch";
 import {
   RawChangelogSchema,
   RawChangelogViewSchema,
   documentIdField,
-  documentPathParams,
 } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
-import handleFailedTransactions from "./handleFailedTransactions";
 
 import {
   ChangeType,
@@ -38,24 +35,13 @@ import {
   TableMetadata,
 } from "@google-cloud/bigquery/build/src/table";
 
-import { Partitioning } from "./partitioning";
-import { Clustering } from "./clustering";
-
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
   tableId: string;
   datasetLocation: string | undefined;
-  transformFunction: string | undefined;
-  timePartitioning: string;
-  timePartitioningField: string | undefined;
-  timePartitioningFieldType: string | undefined;
-  timePartitioningFirestoreField: string | undefined;
-  clustering: string[] | null;
-  wildcardIds?: boolean;
-  bqProjectId: string | undefined;
-  backupTableId?: string | undefined;
+  tablePartitioning: string;
 }
 
 /**
@@ -67,7 +53,6 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
  * - View: Latest view {@link FirestoreBigQueryEventHistoryTracker#rawLatestView}.
  * If any subsequent data export fails, it will attempt to reinitialize.
  */
-
 export class FirestoreBigQueryEventHistoryTracker
   implements FirestoreEventHistoryTracker {
   bq: bigquery.BigQuery;
@@ -75,8 +60,6 @@ export class FirestoreBigQueryEventHistoryTracker
 
   constructor(public config: FirestoreBigQueryEventHistoryTrackerConfig) {
     this.bq = new bigquery.BigQuery();
-
-    this.bq.projectId = config.bqProjectId || process.env.PROJECT_ID;
 
     if (!this.config.datasetLocation) {
       this.config.datasetLocation = "us";
@@ -86,13 +69,7 @@ export class FirestoreBigQueryEventHistoryTracker
   async record(events: FirestoreDocumentChangeEvent[]) {
     await this.initialize();
 
-    const partitionHandler = new Partitioning(this.config);
-
     const rows = events.map((event) => {
-      const partitionValue = partitionHandler.getPartitionValue(event);
-
-      const { documentId, ...pathParams } = event.pathParams || {};
-
       return {
         insertId: event.eventId,
         json: {
@@ -102,27 +79,10 @@ export class FirestoreBigQueryEventHistoryTracker
           document_id: event.documentId,
           operation: ChangeType[event.operation],
           data: JSON.stringify(this.serializeData(event.data)),
-          ...partitionValue,
-          ...(this.config.wildcardIds &&
-            event.pathParams && { path_params: JSON.stringify(pathParams) }),
         },
       };
     });
-    const transformedRows = await this.transformRows(rows);
-    await this.insertData(transformedRows);
-  }
-
-  private async transformRows(rows: any[]) {
-    if (this.config.transformFunction && this.config.transformFunction !== "") {
-      const response = await fetch(this.config.transformFunction, {
-        method: "post",
-        body: JSON.stringify({ data: rows }),
-        headers: { "Content-Type": "application/json" },
-      });
-      const responseJson = await response.json();
-      return responseJson.data;
-    }
-    return rows;
+    await this.insertData(rows);
   }
 
   serializeData(eventData: any) {
@@ -159,8 +119,10 @@ export class FirestoreBigQueryEventHistoryTracker
   private async isRetryableInsertionError(e) {
     let isRetryable = true;
     const expectedErrors = [
-      { message: "no such field.", location: documentIdField.name },
-      { message: "no such field.", location: documentPathParams.name },
+      {
+        message: "no such field.",
+        location: "document_id",
+      },
     ];
     if (
       e.response &&
@@ -187,25 +149,6 @@ export class FirestoreBigQueryEventHistoryTracker
   }
 
   /**
-   * Tables can often take time to create and propagate.
-   * A half a second delay is added per check while the function
-   * continually re-checks until the referenced dataset and table become available.
-   */
-  private async waitForInitialization(dataset, table) {
-    return new Promise((resolve) => {
-      let handle = setInterval(async () => {
-        const [datasetExists] = await dataset.exists();
-        const [tableExists] = await table.exists();
-
-        if (datasetExists && tableExists) {
-          clearInterval(handle);
-          return resolve(table);
-        }
-      }, 500);
-    });
-  }
-
-  /**
    * Inserts rows of data into the BigQuery raw change log table.
    */
   private async insertData(
@@ -222,8 +165,6 @@ export class FirestoreBigQueryEventHistoryTracker
     try {
       const dataset = this.bigqueryDataset();
       const table = dataset.table(this.rawChangeLogTableName());
-      await this.waitForInitialization(dataset, table);
-
       logs.dataInserting(rows.length);
       await table.insert(rows, options);
       logs.dataInserted(rows.length);
@@ -237,15 +178,8 @@ export class FirestoreBigQueryEventHistoryTracker
           retry
         );
       }
-
-      // Exceeded number of retires, save in failed collection
-      if (!retry && this.config.backupTableId) {
-        await handleFailedTransactions(rows, this.config, e);
-      }
-
       // Reinitializing in case the destintation table is modified.
       this.initialized = false;
-      logs.bigQueryTableInsertErrors(e.errors);
       throw e;
     }
   }
@@ -258,13 +192,9 @@ export class FirestoreBigQueryEventHistoryTracker
     if (this.initialized) {
       return;
     }
-
     await this.initializeDataset();
-
     await this.initializeRawChangeLogTable();
-
     await this.initializeLatestView();
-
     this.initialized = true;
   }
 
@@ -277,13 +207,9 @@ export class FirestoreBigQueryEventHistoryTracker
     if (datasetExists) {
       logs.bigQueryDatasetExists(this.config.datasetId);
     } else {
-      try {
-        logs.bigQueryDatasetCreating(this.config.datasetId);
-        await dataset.create();
-        logs.bigQueryDatasetCreated(this.config.datasetId);
-      } catch (ex) {
-        logs.tableCreationError(this.config.datasetId, ex.message);
-      }
+      logs.bigQueryDatasetCreating(this.config.datasetId);
+      await dataset.create();
+      logs.bigQueryDatasetCreated(this.config.datasetId);
     }
     return dataset;
   }
@@ -296,66 +222,41 @@ export class FirestoreBigQueryEventHistoryTracker
     const dataset = this.bigqueryDataset();
     const table = dataset.table(changelogName);
     const [tableExists] = await table.exists();
-    const partitioning = new Partitioning(this.config, table);
-    const clustering = new Clustering(this.config, table);
 
     if (tableExists) {
       logs.bigQueryTableAlreadyExists(table.id, dataset.id);
 
       const [metadata] = await table.getMetadata();
-      const fields = metadata.schema ? metadata.schema.fields : [];
-
-      await clustering.updateClustering(metadata);
+      const fields = metadata.schema.fields;
 
       const documentIdColExists = fields.find(
         (column) => column.name === "document_id"
       );
-      const pathParamsColExists = fields.find(
-        (column) => column.name === "path_params"
-      );
 
       if (!documentIdColExists) {
         fields.push(documentIdField);
-        logs.addNewColumn(this.rawChangeLogTableName(), documentIdField.name);
-      }
-      if (!pathParamsColExists && this.config.wildcardIds) {
-        fields.push(documentPathParams);
-        logs.addNewColumn(
-          this.rawChangeLogTableName(),
-          documentPathParams.name
-        );
-      }
-      await partitioning.addPartitioningToSchema(metadata.schema.fields);
-
-      if (!documentIdColExists || !pathParamsColExists) {
         await table.setMetadata(metadata);
+        logs.addDocumentIdColumn(this.rawChangeLogTableName());
       }
     } else {
       logs.bigQueryTableCreating(changelogName);
-      const schema = { fields: [...RawChangelogSchema.fields] };
+      const options: TableMetadata = {
+        friendlyName: changelogName,
+        schema: RawChangelogSchema,
+      };
 
-      if (this.config.wildcardIds) {
-        schema.fields.push(documentPathParams);
+      if (this.config.tablePartitioning) {
+        options.timePartitioning = {
+          type: this.config.tablePartitioning,
+        };
       }
-      const options: TableMetadata = { friendlyName: changelogName, schema };
 
-      //Add partitioning
-      await partitioning.addPartitioningToSchema(schema.fields);
-      await partitioning.updateTableMetadata(options);
-
-      // Add clustering
-      await clustering.updateClustering(options);
-
-      try {
-        await table.create(options);
-        logs.bigQueryTableCreated(changelogName);
-      } catch (ex) {
-        logs.tableCreationError(changelogName, ex.message);
-      }
+      await table.create(options);
+      logs.bigQueryTableCreated(changelogName);
     }
-
     return table;
   }
+
   /**
    * Creates the latest snapshot view, which returns only latest operations
    * of all existing documents over the raw change log table.
@@ -364,70 +265,29 @@ export class FirestoreBigQueryEventHistoryTracker
     const dataset = this.bigqueryDataset();
     const view = dataset.table(this.rawLatestView());
     const [viewExists] = await view.exists();
-    const schema = RawChangelogViewSchema;
-
-    const partitioning = new Partitioning(this.config, view);
 
     if (viewExists) {
       logs.bigQueryViewAlreadyExists(view.id, dataset.id);
       const [metadata] = await view.getMetadata();
-      const fields = metadata.schema ? metadata.schema.fields : [];
-      if (this.config.wildcardIds) {
-        schema.fields.push(documentPathParams);
-      }
+      const fields = metadata.schema.fields;
+
       const documentIdColExists = fields.find(
         (column) => column.name === "document_id"
-      );
-
-      const pathParamsColExists = fields.find(
-        (column) => column.name === "path_params"
       );
 
       if (!documentIdColExists) {
         metadata.view = latestConsistentSnapshotView(
           this.config.datasetId,
-          this.rawChangeLogTableName(),
-          schema
+          this.rawChangeLogTableName()
         );
-        logs.addNewColumn(this.rawLatestView(), documentIdField.name);
+
+        await view.setMetadata(metadata);
+        logs.addDocumentIdColumn(this.rawLatestView());
       }
-
-      if (!pathParamsColExists && this.config.wildcardIds) {
-        metadata.view = latestConsistentSnapshotView(
-          this.config.datasetId,
-          this.rawChangeLogTableName(),
-          schema
-        );
-        logs.addNewColumn(this.rawLatestView(), documentPathParams.name);
-      }
-
-      //Add partitioning
-      await partitioning.addPartitioningToSchema(schema.fields);
-
-      //TODO: Tidy up and format / add test cases?
-      // if (
-      //   !documentIdColExists ||
-      //   (!pathParamsColExists && this.config.wildcardIds) ||
-      //   partition.isValidPartitionForExistingTable(partitionColExists)
-      // ) {
-
-      await view.setMetadata(metadata);
-      // }
     } else {
-      const schema = { fields: [...RawChangelogViewSchema.fields] };
-      //Add partitioning field
-      await partitioning.addPartitioningToSchema(schema.fields);
-      //TODO Create notification for a user that View cannot be Time Partitioned by the field.
-      // await partitioning.updateTableMetadata(options);
-
-      if (this.config.wildcardIds) {
-        schema.fields.push(documentPathParams);
-      }
       const latestSnapshot = latestConsistentSnapshotView(
         this.config.datasetId,
-        this.rawChangeLogTableName(),
-        schema,
-        this.bq.projectId
+        this.rawChangeLogTableName()
       );
       logs.bigQueryViewCreating(this.rawLatestView(), latestSnapshot.query);
       const options: TableMetadata = {
@@ -435,19 +295,14 @@ export class FirestoreBigQueryEventHistoryTracker
         view: latestSnapshot,
       };
 
-      if (this.config.timePartitioning) {
+      if (this.config.tablePartitioning) {
         options.timePartitioning = {
-          type: this.config.timePartitioning,
+          type: this.config.tablePartitioning,
         };
       }
-
-      try {
-        await view.create(options);
-        await view.setMetadata({ schema: RawChangelogViewSchema });
-        logs.bigQueryViewCreated(this.rawLatestView());
-      } catch (ex) {
-        logs.tableCreationError(this.rawLatestView(), ex.message);
-      }
+      await view.create(options);
+      await view.setMetadata({ schema: RawChangelogViewSchema });
+      logs.bigQueryViewCreated(this.rawLatestView());
     }
     return view;
   }

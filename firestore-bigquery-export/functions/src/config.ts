@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-function timePartitioning(type) {
+function tablePartitioning(type) {
   if (
     type === "HOUR" ||
     type === "DAY" ||
@@ -27,27 +27,12 @@ function timePartitioning(type) {
   return null;
 }
 
-export function clustering(clusters: string | undefined) {
-  return clusters ? clusters.split(",").slice(0, 4) : null;
-}
-
 export default {
-  bqProjectId: process.env.BIGQUERY_PROJECT_ID,
   collectionPath: process.env.COLLECTION_PATH,
   datasetId: process.env.DATASET_ID,
   tableId: process.env.TABLE_ID,
   location: process.env.LOCATION,
   initialized: false,
   datasetLocation: process.env.DATASET_LOCATION,
-  backupCollectionId: process.env.BACKUP_COLLECTION,
-  transformFunction: process.env.TRANSFORM_FUNCTION,
-  timePartitioning: timePartitioning(process.env.TABLE_PARTITIONING),
-  timePartitioningField: process.env.TIME_PARTITIONING_FIELD,
-  timePartitioningFieldType:
-    process.env.TIME_PARTITIONING_FIELD_TYPE !== "omit"
-      ? process.env.TIME_PARTITIONING_FIELD_TYPE
-      : undefined,
-  timePartitioningFirestoreField: process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
-  clustering: clustering(process.env.CLUSTERING),
-  wildcardIds: process.env.WILDCARD_IDS === "true" ? true : false,
+  tablePartitioning: tablePartitioning(process.env.TABLE_PARTITIONING),
 };

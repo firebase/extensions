@@ -122,7 +122,7 @@ export abstract class FirestoreUrlShortener {
     }
   }
 
-  protected abstract shortenUrl(
+  protected abstract async shortenUrl(
     snapshot: admin.firestore.DocumentSnapshot
   ): Promise<void>;
 

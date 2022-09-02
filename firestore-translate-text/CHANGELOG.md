@@ -1,9 +1,3 @@
-## Version 0.1.8
-
-fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
-
-fixed - update validate workflow to use node14
-
 ## Version 0.1.7
 
 feature - add Taiwan and Singapore Cloud Function locations (#729)

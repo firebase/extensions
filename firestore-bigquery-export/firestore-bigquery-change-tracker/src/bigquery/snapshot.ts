@@ -16,24 +16,21 @@
 
 import * as sqlFormatter from "sql-formatter";
 
-import { timestampField } from "./schema";
+import { RawChangelogViewSchema, timestampField } from "./schema";
 
 const excludeFields: string[] = ["document_name", "document_id"];
 
 export const latestConsistentSnapshotView = (
   datasetId: string,
-  tableName: string,
-  schema: any,
-  bqProjectId?: string
+  tableName: string
 ) => ({
   query: buildLatestSnapshotViewQuery(
     datasetId,
     tableName,
     timestampField.name,
-    schema["fields"]
+    RawChangelogViewSchema["fields"]
       .map((field) => field.name)
-      .filter((name) => excludeFields.indexOf(name) === -1),
-    bqProjectId
+      .filter((name) => excludeFields.indexOf(name) === -1)
   ),
   useLegacySql: false,
 });
@@ -42,8 +39,7 @@ export function buildLatestSnapshotViewQuery(
   datasetId: string,
   tableName: string,
   timestampColumnName: string,
-  groupByColumns: string[],
-  bqProjectId?: string
+  groupByColumns: string[]
 ): string {
   if (datasetId === "" || tableName === "" || timestampColumnName === "") {
     throw Error(`Missing some query parameters!`);
@@ -53,7 +49,8 @@ export function buildLatestSnapshotViewQuery(
       throw Error(`Found empty group by column!`);
     }
   }
-  const query = sqlFormatter.format(` -- Retrieves the latest document change events for all live documents.
+  const query = sqlFormatter.format(
+    ` -- Retrieves the latest document change events for all live documents.
     --   timestamp: The Firestore timestamp at which the event took place.
     --   operation: One of INSERT, UPDATE, DELETE, IMPORT.
     --   event_id: The id of the event that triggered the cloud function mirrored the event.
@@ -69,7 +66,8 @@ export function buildLatestSnapshotViewQuery(
         document_id,
         ${groupByColumns
           .map(
-            (columnName) => `FIRST_VALUE(${columnName})
+            (columnName) =>
+              `FIRST_VALUE(${columnName})
             OVER(PARTITION BY document_name ORDER BY ${timestampColumnName} DESC)
             AS ${columnName}`
           )
@@ -77,13 +75,13 @@ export function buildLatestSnapshotViewQuery(
         FIRST_VALUE(operation)
           OVER(PARTITION BY document_name ORDER BY ${timestampColumnName} DESC) = "DELETE"
           AS is_deleted
-      FROM \`${bqProjectId ||
-        process.env.PROJECT_ID}.${datasetId}.${tableName}\`
+      FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableName}\`
       ORDER BY document_name, ${timestampColumnName} DESC
     )
     WHERE NOT is_deleted
     GROUP BY document_name, document_id${
       groupByColumns.length > 0 ? `, ` : ``
-    }${groupByColumns.join(",")}`);
+    }${groupByColumns.join(",")}`
+  );
   return query;
 }
