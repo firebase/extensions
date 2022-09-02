@@ -71,7 +71,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
 export class FirestoreBigQueryEventHistoryTracker
   implements FirestoreEventHistoryTracker {
   bq: bigquery.BigQuery;
-  _initialized: boolean = false;
+  initialized: boolean = false;
 
   constructor(public config: FirestoreBigQueryEventHistoryTrackerConfig) {
     this.bq = new bigquery.BigQuery();
@@ -191,26 +191,17 @@ export class FirestoreBigQueryEventHistoryTracker
    * A half a second delay is added per check while the function
    * continually re-checks until the referenced dataset and table become available.
    */
-  private async waitForInitialization() {
+  private async waitForInitialization(dataset, table) {
     return new Promise((resolve) => {
       let handle = setInterval(async () => {
-        try {
-          const dataset = this.bigqueryDataset();
-          const changelogName = this.rawChangeLogTableName();
-          const table = dataset.table(changelogName);
+        const [datasetExists] = await dataset.exists();
+        const [tableExists] = await table.exists();
 
-          const [datasetExists] = await dataset.exists();
-          const [tableExists] = await table.exists();
-
-          if (datasetExists && tableExists) {
-            clearInterval(handle);
-            return resolve(table);
-          }
-        } catch (ex) {
+        if (datasetExists && tableExists) {
           clearInterval(handle);
-          logs.failedToInitializeWait(ex.message);
+          return resolve(table);
         }
-      }, 5000);
+      }, 500);
     });
   }
 
@@ -231,6 +222,7 @@ export class FirestoreBigQueryEventHistoryTracker
     try {
       const dataset = this.bigqueryDataset();
       const table = dataset.table(this.rawChangeLogTableName());
+      await this.waitForInitialization(dataset, table);
 
       logs.dataInserting(rows.length);
       await table.insert(rows, options);
@@ -252,7 +244,7 @@ export class FirestoreBigQueryEventHistoryTracker
       }
 
       // Reinitializing in case the destintation table is modified.
-      this._initialized = false;
+      this.initialized = false;
       logs.bigQueryTableInsertErrors(e.errors);
       throw e;
     }
@@ -263,22 +255,17 @@ export class FirestoreBigQueryEventHistoryTracker
    * After the first invokation, it skips initialization assuming these resources are still there.
    */
   private async initialize() {
-    try {
-      if (this._initialized) {
-        return;
-      }
-
-      await this.initializeDataset();
-
-      await this.initializeRawChangeLogTable();
-
-      await this.initializeLatestView();
-
-      this._initialized = true;
-    } catch (ex) {
-      await this.waitForInitialization();
-      this._initialized = true;
+    if (this.initialized) {
+      return;
     }
+
+    await this.initializeDataset();
+
+    await this.initializeRawChangeLogTable();
+
+    await this.initializeLatestView();
+
+    this.initialized = true;
   }
 
   /**
