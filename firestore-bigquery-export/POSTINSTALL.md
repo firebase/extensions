@@ -60,16 +60,11 @@ When defining a specific BigQuery project, a manual step to setup permissions is
 
 1. Navigate to https://console.cloud.google.com/iam-admin/iam?project=${param:BIGQUERY_PROJECT_ID}
 <<<<<<< HEAD
-<<<<<<< HEAD
 2. Add the **BigQuery Data Editor** role to the following service account:
    `ext-${param:EXT_INSTANCE_ID}@${param:PROJECT_ID}.iam.gserviceaccount.com`.
 
 =======
 >>>>>>> parent of cc0ce18b (March 7, 2022 Release (#903))
-=======
-2. Add a new IAM role added for the extension ${param:EXT_INSTANCE_ID}@${param:PROJECT_ID}.iam.gserviceaccount.com
-3. Ensure the new role has the a role of `BigQuery Data Editor`.
->>>>>>> parent of a8848a27 (docs(firestore-bigquery-export): Correct service account name (#1164))
 =======
 2. Add a new IAM role added for the extension ${param:EXT_INSTANCE_ID}@${param:PROJECT_ID}.iam.gserviceaccount.com
 3. Ensure the new role has the a role of `BigQuery Data Editor`.
