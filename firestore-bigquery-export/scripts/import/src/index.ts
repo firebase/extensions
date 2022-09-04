@@ -69,33 +69,32 @@ const validateBatchSize = (value: string) => {
 
 const validateLocation = (value: string) => {
   const index = [
-    "asia-east1",
-    "asia-east2",
-    "asia-northeast1",
-    "asia-northeast2",
-    "asia-northeast3",
-    "asia-south1",
-    "asia-southeast1",
-    "asia-southeast2",
-    "australia-southeast1",
-    "eu",
-    "europe-central2",
-    "europe-north1",
+    "us-west4",
+    "us-west2",
+    "northamerica-northeast1",
+    "us-east4",
+    "us-west1",
+    "us-west3",
+    "southamerica-east1",
+    "us-east1",
     "europe-west1",
+    "europe-north1",
     "europe-west3",
     "europe-west2",
     "europe-west4",
+    "europe-west4",
     "europe-west6",
-    "northamerica-northeast1",
-    "southamerica-east1",
+    "asia-east2",
+    "asia-southeast2",
+    "asia-south1",
+    "asia-northeast2",
+    "asia-northeast3",
+    "asia-southeast1",
+    "australia-southeast1",
+    "asia-east1",
+    "asia-northeast1",
     "us",
-    "us-central1",
-    "us-east1",
-    "us-east4",
-    "us-west1",
-    "us-west2",
-    "us-west3",
-    "us-west4",
+    "eu",
   ].indexOf(value.toLowerCase());
 
   return index !== -1;
@@ -225,8 +224,7 @@ const questions = [
   },
 ];
 
-type CliConfig = {
-  kind: "CONFIG";
+interface CliConfig {
   projectId: string;
   sourceCollectionPath: string;
   datasetId: string;
@@ -235,20 +233,9 @@ type CliConfig = {
   queryCollectionGroup: boolean;
   datasetLocation: string;
   multiThreaded: boolean;
-};
-
-type CliConfigError = {
-  kind: "ERROR";
-  errors: string[];
-};
+}
 
 const run = async (): Promise<number> => {
-  const parsed = await parseConfig();
-  if (parsed.kind === "ERROR") {
-    parsed.errors.forEach((e) => console.error(`[ERROR] ${e}`));
-    process.exit(1);
-  }
-
   const {
     projectId,
     sourceCollectionPath,
@@ -258,7 +245,7 @@ const run = async (): Promise<number> => {
     batchSize,
     datasetLocation,
     multiThreaded,
-  }: CliConfig = parsed;
+  }: CliConfig = await parseConfig();
 
   if (multiThreaded) return runMultiThread();
 
@@ -337,7 +324,7 @@ const run = async (): Promise<number> => {
     cursor = docs[docs.length - 1];
     const rows: FirestoreDocumentChangeEvent[] = docs.map((snapshot) => {
       return {
-        timestamp: new Date().toISOString(), // epoch
+        timestamp: new Date(0).toISOString(), // epoch
         operation: ChangeType.IMPORT,
         documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${
           snapshot.ref.path
@@ -362,43 +349,25 @@ const run = async (): Promise<number> => {
   return totalRowsImported;
 };
 
-async function parseConfig(): Promise<CliConfig | CliConfigError> {
+async function parseConfig(): Promise<CliConfig> {
   program.parse(process.argv);
 
   if (program.nonInteractive) {
-    const errors = [];
-    if (program.project === undefined) {
-      errors.push("Project is not specified.");
-    }
-    if (program.sourceCollectionPath === undefined) {
-      errors.push("SourceCollectionPath is not specified.");
-    }
-    if (program.dataset === undefined) {
-      errors.push("Dataset ID is not specified.");
-    }
-    if (program.tableNamePrefix === undefined) {
-      errors.push("TableNamePrefix is not specified.");
-    }
-    if (program.queryCollectionGroup === undefined) {
-      errors.push("QueryCollectionGroup is not specified.");
-    }
-    if (program.batchSize === undefined) {
-      errors.push("BatchSize is not specified.");
-    }
-    if (program.datasetLocation === undefined) {
-      errors.push("DatasetLocation is not specified.");
-    }
-    if (!validateBatchSize(program.batchSize)) {
-      errors.push("Invalid batch size.");
-    }
-
-    if (errors.length !== 0) {
+    if (
+      program.project === undefined ||
+      program.sourceCollectionPath === undefined ||
+      program.dataset === undefined ||
+      program.tableNamePrefix === undefined ||
+      program.queryCollectionGroup === undefined ||
+      program.batchSize === undefined ||
+      program.datasetLocation === undefined ||
+      !validateBatchSize(program.batchSize)
+    ) {
       program.outputHelp();
-      return { kind: "ERROR", errors };
+      process.exit(1);
     }
 
     return {
-      kind: "CONFIG",
       projectId: program.project,
       sourceCollectionPath: program.sourceCollectionPath,
       datasetId: program.dataset,
@@ -421,7 +390,6 @@ async function parseConfig(): Promise<CliConfig | CliConfigError> {
   } = await inquirer.prompt(questions);
 
   return {
-    kind: "CONFIG",
     projectId: project,
     sourceCollectionPath: sourceCollectionPath,
     datasetId: dataset,

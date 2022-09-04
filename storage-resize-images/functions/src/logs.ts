@@ -160,10 +160,3 @@ export const remoteFileDeleted = (path: string) => {
 export const remoteFileDeleting = (path: string) => {
   logger.log(`Deleting original file from storage bucket: '${path}'`);
 };
-
-export const errorOutputOptionsParse = (err: any) => {
-  logger.error(
-    `Error while parsing "Output options for selected format". Parameter will be ignored`,
-    err
-  );
-};

@@ -382,8 +382,7 @@ function processFirestoreSchemaHelper(
   bigQueryFields: { [property: string]: string }[],
   extractPrefix: string[]
 ) {
-  const { fields = [] } = schema;
-  if (!fields.length) return null;
+  const { fields } = schema;
   return fields.map((field) => {
     if (field.type === "map") {
       const subschema: FirestoreSchema = {

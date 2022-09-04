@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## Version 0.1.19
 
 fixed - generate new lib folder
@@ -44,6 +45,8 @@ fixed - added logging for invalid email messages, documentation updated with fir
 
 fixed - update validate workflow to use node14
 
+=======
+>>>>>>> parent of cc0ce18b (March 7, 2022 Release (#903))
 ## Version 0.1.13
 
 docs - updated POSTINSTALL docs to link to Firebase documentation

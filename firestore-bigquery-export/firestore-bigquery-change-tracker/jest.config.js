@@ -11,7 +11,4 @@ module.exports = {
   },
   preset: "ts-jest",
   testMatch: ["**/src/__tests__/bigquery/*.test.ts"],
-  testEnvironment: "node",
-  testTimeout: 16000,
-  collectCoverage: true,
 };

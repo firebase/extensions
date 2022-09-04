@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { Table } from "@google-cloud/bigquery";
-import { firestore } from "firebase-admin";
 import { logger } from "firebase-functions";
 
 export const arrayFieldInvalid = (fieldName: string) => {
@@ -167,6 +165,7 @@ export const timestampMissingValue = (fieldName: string) => {
   );
 };
 
+<<<<<<< HEAD
 export const addNewColumn = (table: string, field: string) => {
   logger.log(`Updated '${table}' table with a '${field}' column`);
 };
@@ -262,6 +261,10 @@ export function invalidClustering(fields: string) {
 }
 export const tableCreationError = (table, message) => {
   logger.warn(`Error caught creating table`, message);
+=======
+export const addDocumentIdColumn = (table) => {
+  logger.log(`Updated '${table}' table with a 'document_id' column`);
+>>>>>>> parent of cc0ce18b (March 7, 2022 Release (#903))
 };
 
 export const failedToInitializeWait = (message) => {

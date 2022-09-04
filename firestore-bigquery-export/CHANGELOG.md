@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## Version 0.1.24
 
 fixed - generate new lib folder
@@ -50,6 +51,8 @@ fixed - update validate workflow to use node14
 
 fixed - update package lock file to match latest node type changes (#782)
 
+=======
+>>>>>>> parent of cc0ce18b (March 7, 2022 Release (#903))
 ## Version 0.1.20
 
 fixed - Fixed installation error due to bad package-lock.json

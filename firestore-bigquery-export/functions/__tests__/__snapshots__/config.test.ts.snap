@@ -2,18 +2,13 @@
 
 exports[`extension config config loaded from environment variables 1`] = `
 Object {
-  "backupCollectionId": undefined,
-  "bqProjectId": undefined,
-  "clustering": Array [
-    "data",
-    "timestamp",
-  ],
   "collectionPath": undefined,
   "datasetId": "my_dataset",
   "datasetLocation": undefined,
   "initialized": false,
   "location": "us-central1",
   "tableId": "my_table",
+<<<<<<< HEAD
   "timePartitioning": null,
   "timePartitioningField": undefined,
   "timePartitioningFieldType": undefined,
@@ -33,6 +28,9 @@ Object {
   "type": "string",
   "validationErrorMessage": "No whitespaces. Max 4 fields. e.g. \`data,timestamp,event_id,operation\`",
   "validationRegex": "^[^,\\\\s]+(?:,[^,\\\\s]+){0,3}$",
+=======
+  "tablePartitioning": null,
+>>>>>>> parent of cc0ce18b (March 7, 2022 Release (#903))
 }
 `;
 
