@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { program } from "commander";
 import admin from "firebase-admin";
 import { DEFAULT_BATCH_SIZE, parseConfig } from "./config";

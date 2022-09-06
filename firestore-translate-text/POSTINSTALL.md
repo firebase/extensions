@@ -69,6 +69,10 @@ will result in the following translated output in `${param:OUTPUT_FIELD_NAME}`:
 }
 ```
 
+### Translate existing documents (optional)
+
+This extension does not translate existing documents in your collection. It will only translate new documents or documents that are updated after the extension is installed. If you want to translate existing documents, you can use the [Translate Existing Documents](https://github.com/firebase/extensions/blob/master/firestore-translate-text/guides/TRANSLATE_EXISTING_DOCUMENTS.md) script.
+
 ### Monitoring
 
 As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.

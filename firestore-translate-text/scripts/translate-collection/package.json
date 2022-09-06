@@ -1,5 +1,5 @@
 {
-  "name": "@firebaseextensions/fs-translate-collection",
+  "name": "@firebaseextensions/firestore-translate-text",
   "version": "0.1.0",
   "description": "Translate an input text in a whole collection",
   "main": "./lib/index.js",
@@ -10,10 +10,9 @@
   },
   "scripts": {
     "build": "npm run clean && npm run compile",
-    "build-watch": "npm run clean && tsc --watch",
+    "build:watch": "npm run clean && tsc --watch",
     "clean": "rimraf ./lib",
     "compile": "tsc",
-    "import": "node ./lib/index.js",
     "prepare": "npm run build",
     "test:local": "firebase ext:dev:emulators:exec ./node_modules/.bin/jest --test-params=./src/__tests__/emulator-params.env --project=dev-extensions-testing --config=./src/__tests__/firebase.json",
     "emulator:local": "firebase emulators:start --only firestore --project dev-extensions-testing --config ./src/__tests__/firebase.json",
@@ -22,13 +21,10 @@
   "files": [
     "lib"
   ],
-  "bin": {
-    "fs-translate-collection": "./lib/index.js"
-  },
-  "author": "Yaman KATBY <me@yamankatby.com> (https://yamankatby.com/)",
+  "bin": "./lib/index.js",
+  "author": "Yaman KATBY <yaman@invertase.io>",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@firebase/testing": "^0.20.11",
     "@types/inquirer": "^9.0.1",
     "@types/jest": "^29.0.0",
     "jest": "^28.1.3",
