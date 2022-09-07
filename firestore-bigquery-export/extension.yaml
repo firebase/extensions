@@ -127,8 +127,6 @@ params:
       guide](https://cloud.google.com/bigquery/docs/locations).
     type: select
     options:
-      - label: Iowa (us-central1)
-        value: us-central1
       - label: Las Vegas (us-west4)
         value: us-west4
       - label: Warsaw (europe-central2)
