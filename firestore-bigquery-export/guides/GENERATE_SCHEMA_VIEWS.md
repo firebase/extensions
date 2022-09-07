@@ -207,7 +207,7 @@ Here's an example of a configuration that a schema file might contain:
       "type": "string"
     },
     {
-      "name": "favorite_numbers",
+      "name":"favorite_numbers",
       "type": "array"
     },
     {
@@ -217,10 +217,6 @@ Here's an example of a configuration that a schema file might contain:
     {
       "name": "last_location",
       "type": "geopoint"
-    },
-    {
-      "name": "geo_point",
-      "type": "stringified_map"
     },
     {
       "fields": [
@@ -252,16 +248,11 @@ Each `fields` array must contain _at least one_ of the following types:
 - `geopoint`
 - `reference`
 - `null`
-- `stringified_map`
 
-All but `stringified_map` correspond with Cloud Firestore's
+These types correspond with Cloud Firestore's
 [supported data types](https://firebase.google.com/docs/firestore/manage-data/data-types).
-Make sure that the other types specified match the types of the fields in your
+Make sure that the types that you specify match the types of the fields in your
 Cloud Firestore collection.
-
-The `stringified_map` type will create a JSON string out of a map in your Firestore record. This
-could be useful if you are not sure of the properties in the map ahead of time, and thus
-cannot specify in your schema.
 
 You may create any number of schema files to use with the schema-views script.
 The schema-views script generates the following views for _each_ schema file:
@@ -390,8 +381,7 @@ exception of `map` and `array`, the type conversion scheme is as follows:
 Cloud Firestore maps are interpreted recursively. If you include a map in your
 schema configuration, the resulting view will contain columns for whatever
 fields that map contains. If the map doesn't contain any fields, the map is
-ignored by the schema-views script. If using the `stringified_map` type, the
-map will be stringified.
+ignored by the schema-views script.
 
 #### Cloud Firestore arrays
 
