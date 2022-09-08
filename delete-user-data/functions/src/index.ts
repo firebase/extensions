@@ -22,7 +22,7 @@ import { getDatabaseUrl, deleteCollection } from "./helpers";
 
 import config from "./config";
 import * as logs from "./logs";
-import { buildQuery } from "./buildQuery";
+import { runCustomQueries } from "./runCustomQueries";
 import { search } from "./search";
 
 // Helper function for selecting correct domain adrress
@@ -46,6 +46,7 @@ export const handleDeletion = functions.pubsub
       Buffer.from(message.data, "base64").toString("utf8")
     );
 
+    /** Delete collection if userId is included in the path */
     if (path.includes(uid)) {
       return deleteCollection(admin.firestore(), path, 100);
     }
@@ -77,7 +78,12 @@ export const handleDeletion = functions.pubsub
         });
       }
 
-      await search(uid, doc);
+      const depth = doc.path.split("/").length;
+
+      /** Hard code limit to subcollection data only */
+      if (depth < 3) {
+        await search(uid, doc);
+      }
     });
 
     return Promise.resolve();
@@ -91,7 +97,13 @@ export const handleDeletion = functions.pubsub
 export const clearData = functions.auth.user().onDelete(async (user) => {
   logs.start();
 
-  const { firestorePaths, rtdbPaths, storagePaths, queryCollection } = config;
+  const {
+    firestorePaths,
+    rtdbPaths,
+    storagePaths,
+    queryCollection,
+    enableSearch,
+  } = config;
   const { uid } = user;
 
   const promises = [];
@@ -113,12 +125,17 @@ export const clearData = functions.auth.user().onDelete(async (user) => {
 
   /** find all query collection data */
   if (queryCollection) {
-    promises.push(buildQuery(uid));
+    promises.push(runCustomQueries(uid));
   } else {
     logs.queryCollectionNotConfigured();
   }
 
   await Promise.all(promises);
+
+  /** If search mode enable, run pubsub search fn */
+  if (enableSearch) {
+    await search(uid);
+  }
 
   logs.complete(uid);
 });

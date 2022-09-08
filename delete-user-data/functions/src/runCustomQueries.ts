@@ -1,7 +1,9 @@
 import { DocumentData, Query, WhereFilterOp } from "@google-cloud/firestore";
 import * as admin from "firebase-admin";
 
-export const buildQuery = async (userId): Promise<Query<DocumentData>[]> => {
+export const runCustomQueries = async (
+  userId
+): Promise<Query<DocumentData>[]> => {
   const db = admin.firestore();
   const promises = [];
   const documents = [];
@@ -34,7 +36,6 @@ export const buildQuery = async (userId): Promise<Query<DocumentData>[]> => {
       new Promise((resolve) => {
         ref.get().then((querySnapshot) => {
           querySnapshot.forEach(async (doc) => {
-            console.log(doc.id, " => ", doc.data());
             (await data.recusrive)
               ? db.recursiveDelete(doc.ref)
               : db.doc(doc.ref.path).delete();

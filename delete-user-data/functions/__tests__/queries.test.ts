@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
 import { UserRecord } from "firebase-admin/lib/auth/user-record";
-import { buildQuery } from "../src/buildQuery";
+import { runCustomQueries } from "../src/runCustomQueries";
 import setupEnvironment from "../__tests__/helpers/setupEnvironment";
 
 const environment = {
@@ -66,7 +66,7 @@ const generateMultipleWhereClauseQuery = async () => {
   ]);
 };
 
-xdescribe("buildQueries", () => {
+describe("buildQueries", () => {
   beforeEach(async () => {
     user = await auth.createUser({ email: generateRandomEmail() });
   });
@@ -83,7 +83,7 @@ xdescribe("buildQueries", () => {
 
     test("Can delete a single document based on a userId", async () => {
       const userDoc = await usersCollection.add({ id: user.uid });
-      const queries = await buildQuery(user.uid);
+      await runCustomQueries(user.uid);
 
       //Assert if document has been deleted.
       await new Promise((resolve) => {
@@ -99,7 +99,7 @@ xdescribe("buildQueries", () => {
         usersCollection.add({ id: user.uid }),
       ]);
 
-      const queries = await buildQuery(user.uid);
+      await runCustomQueries(user.uid);
 
       //Assert if document has been deleted.
       return new Promise((resolve) => {
@@ -112,7 +112,7 @@ xdescribe("buildQueries", () => {
     test("Can delete a collection based on a userId", async () => {
       await Promise.all([db.collection(user.uid).add({ id: "testing" })]);
 
-      const queries = await buildQuery(user.uid);
+      await runCustomQueries(user.uid);
 
       //Assert if document has been deleted.
       return new Promise((resolve) => {
@@ -127,7 +127,7 @@ xdescribe("buildQueries", () => {
       const subcollection = doc.collection(user.uid);
       await subcollection.add({ foo: "bar" });
 
-      const queries = await buildQuery(user.uid);
+      await runCustomQueries(user.uid);
 
       //Assert if document has been deleted.
       return new Promise((resolve) => {
@@ -142,7 +142,7 @@ xdescribe("buildQueries", () => {
       const subCollection = doc.collection("users");
       await subCollection.doc(`${user.uid}`).set({ id: "test" });
 
-      const queries = await buildQuery(user.uid);
+      await runCustomQueries(user.uid);
 
       //Assert if document has been deleted.
       return new Promise((resolve) => {
@@ -159,7 +159,6 @@ xdescribe("buildQueries", () => {
     });
 
     afterEach(async () => {
-      // await clearCollection(queryCollection);
       await clearCollection(usersCollection);
     });
 
@@ -170,7 +169,7 @@ xdescribe("buildQueries", () => {
         name: "example",
       });
 
-      const queries = await buildQuery(user.uid);
+      await runCustomQueries(user.uid);
 
       //Assert if both documents has been deleted.
       await Promise.all([
