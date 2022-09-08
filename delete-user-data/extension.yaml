@@ -232,6 +232,27 @@ params:
     example: "{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt"
     required: false
 
+  - param: FIRESTORE_QUERY_COLLECTION
+    label: Cloud Firestore custom paths
+    description: >-
+     Collection to store custom queries for searching user data.
+    type: string
+    example: queries
+    required: false
+
+  - param: ENABLE_SEARCH
+    label: Enable search
+    description: >-
+      Enable search for user data in Cloud Firestore and Realtime Database.
+    type: select
+    options:
+      - label: Yes
+        value: yes
+      - label: No
+        value: no
+    default: no
+    required: false
+
 events:
   - type: firebase.extensions.delete-user-data.v1.trigger
     description: Occurs when a pre-defined collection or document has been triggered by a deleted user.

@@ -21,7 +21,7 @@ export default {
   rtdbPaths: process.env.RTDB_PATHS,
   storagePaths: process.env.STORAGE_PATHS,
   queryCollection: process.env.FIRESTORE_QUERY_COLLECTION,
-  enableSearch: process.env.ENABLE_SEARCH,
+  enableSearch: process.env.ENABLE_SEARCH === "yes",
   storageBucketDefault: process.env.STORAGE_BUCKET,
   selectedDatabaseInstance: process.env.SELECTED_DATABASE_INSTANCE,
   selectedDatabaseLocation: process.env.SELECTED_DATABASE_LOCATION,
