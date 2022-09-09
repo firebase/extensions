@@ -21,7 +21,7 @@ import * as logs from "./logs";
 
 logs.init();
 
-export const rtdblimit = functions.handler.database.ref.onCreate(
+export const rtdblimit = functions.database.ref(config.databaseInstance).onCreate(
   async (snapshot): Promise<void> => {
     logs.start();
 

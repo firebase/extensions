@@ -40,7 +40,7 @@ admin.initializeApp();
 
 logs.init(config);
 
-export const fstranslate = functions.handler.firestore.document.onWrite(
+export const fstranslate = functions.firestore.document(process.env.COLLECTION_PATH).onWrite(
   async (change): Promise<void> => {
     logs.start(config);
     const { languages, inputFieldName, outputFieldName } = config;

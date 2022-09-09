@@ -31,7 +31,7 @@ try {
   logs.initError(err);
 }
 
-export const addUserToList = functions.handler.auth.user.onCreate(
+export const addUserToList = functions.auth.user().onCreate(
   async (user): Promise<void> => {
     logs.start();
 
@@ -68,7 +68,7 @@ export const addUserToList = functions.handler.auth.user.onCreate(
   }
 );
 
-export const removeUserFromList = functions.handler.auth.user.onDelete(
+export const removeUserFromList = functions.auth.user().onDelete(
   async (user): Promise<void> => {
     logs.start();
 

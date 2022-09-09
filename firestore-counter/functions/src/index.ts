@@ -30,7 +30,7 @@ const SHARDS_COLLECTION_ID = "_counter_shards_";
  * there's less than 200 of them. Otherwise it is scheduling and monitoring
  * workers to do the aggregation.
  */
-export const controllerCore = functions.handler.pubsub.schedule.onRun(
+export const controllerCore = functions.pubsub.schedule(process.env.SCHEDULE_FREQUENCY).onRun(
   async () => {
     const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new ShardedCounterController(
@@ -57,7 +57,7 @@ export const controllerCore = functions.handler.pubsub.schedule.onRun(
  * ControllerCore is monitoring these metadata documents to detect overload that requires
  * resharding and to detect failed workers that need poking.
  */
-export const worker = functions.handler.firestore.document.onWrite(
+export const worker = functions.firestore.document(SHARDS_COLLECTION_ID).onWrite(
   async (change, context) => {
     // stop worker if document got deleted
     if (!change.after.exists) return;
@@ -72,7 +72,7 @@ export const worker = functions.handler.firestore.document.onWrite(
  * limited to one concurrent run at the time. This helps reduce latency for workloads
  * that are below the threshold for workers.
  */
-export const onWrite = functions.handler.firestore.document.onWrite(
+export const onWrite = functions.firestore.document(process.env.INTERNAL_STATE_PATH).onWrite(
   async (change, context) => {
     const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new ShardedCounterController(
