@@ -40,47 +40,49 @@ admin.initializeApp();
 
 logs.init(config);
 
-export const fstranslate = functions.firestore.document(process.env.COLLECTION_PATH).onWrite(
-  async (change): Promise<void> => {
-    logs.start(config);
-    const { languages, inputFieldName, outputFieldName } = config;
+export const fstranslate = functions.firestore
+  .document(process.env.COLLECTION_PATH)
+  .onWrite(
+    async (change): Promise<void> => {
+      logs.start(config);
+      const { languages, inputFieldName, outputFieldName } = config;
 
-    if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
-      logs.fieldNamesNotDifferent();
-      return;
-    }
-    if (
-      validators.fieldNameIsTranslationPath(
-        inputFieldName,
-        outputFieldName,
-        languages
-      )
-    ) {
-      logs.inputFieldNameIsOutputPath();
-      return;
-    }
-
-    const changeType = getChangeType(change);
-
-    try {
-      switch (changeType) {
-        case ChangeType.CREATE:
-          await handleCreateDocument(change.after);
-          break;
-        case ChangeType.DELETE:
-          handleDeleteDocument();
-          break;
-        case ChangeType.UPDATE:
-          await handleUpdateDocument(change.before, change.after);
-          break;
+      if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
+        logs.fieldNamesNotDifferent();
+        return;
+      }
+      if (
+        validators.fieldNameIsTranslationPath(
+          inputFieldName,
+          outputFieldName,
+          languages
+        )
+      ) {
+        logs.inputFieldNameIsOutputPath();
+        return;
       }
 
-      logs.complete();
-    } catch (err) {
-      logs.error(err);
+      const changeType = getChangeType(change);
+
+      try {
+        switch (changeType) {
+          case ChangeType.CREATE:
+            await handleCreateDocument(change.after);
+            break;
+          case ChangeType.DELETE:
+            handleDeleteDocument();
+            break;
+          case ChangeType.UPDATE:
+            await handleUpdateDocument(change.before, change.after);
+            break;
+        }
+
+        logs.complete();
+      } catch (err) {
+        logs.error(err);
+      }
     }
-  }
-);
+  );
 
 const extractInput = (snapshot: admin.firestore.DocumentSnapshot): any => {
   return snapshot.get(config.inputFieldName);
