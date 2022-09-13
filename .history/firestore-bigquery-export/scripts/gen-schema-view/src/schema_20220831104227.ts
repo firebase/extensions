@@ -387,7 +387,6 @@ function processFirestoreSchemaHelper(
   return fields.map((field) => {
     if (field.type === "map") {
       const subschema: FirestoreSchema = {
-        // deepcode ignore MissingArgument: <please specify a reason of ignoring this>
         fields: updateFirestoreSchemaFields(field.fields),
       };
       processFirestoreSchemaHelper(
