@@ -1,0 +1,2 @@
+git reset --hard HEAD~2
+git reset --hard 7e235af
