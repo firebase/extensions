@@ -1,5 +1,0 @@
-{
-  "hooks": {
-    "commit-msg": "npm run pre-commit-lint"
-  }
-}

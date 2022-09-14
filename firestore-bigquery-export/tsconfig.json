@@ -1,8 +1,0 @@
-{
-  "extends": "../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "functions/lib",
-    "types": ["node", "jest", "chai"]
-  },
-  "include": ["functions/src"]
-}

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { logger } from "firebase-functions";
 import config from "./config";
 
 export const obfuscatedConfig = {
@@ -22,33 +23,33 @@ export const obfuscatedConfig = {
 };
 
 export const complete = () => {
-  console.log("Completed execution of extension");
+  logger.log("Completed execution of extension");
 };
 
 export const errorAddUser = (err: Error) => {
-  console.error("Error when adding user to Mailchimp audience", err);
+  logger.error("Error when adding user to Mailchimp audience", err);
 };
 
 export const errorRemoveUser = (err: Error) => {
-  console.error("Error when removing user from Mailchimp audience", err);
+  logger.error("Error when removing user from Mailchimp audience", err);
 };
 
 export const init = () => {
-  console.log("Initializing extension with configuration", obfuscatedConfig);
+  logger.log("Initializing extension with configuration", obfuscatedConfig);
 };
 
 export const initError = (err: Error) => {
-  console.error("Error when initializing extension", err);
+  logger.error("Error when initializing extension", err);
 };
 
 export const mailchimpNotInitialized = () => {
-  console.error(
+  logger.error(
     "Mailchimp was not initialized correctly, check for errors in the logs"
   );
 };
 
 export const start = () => {
-  console.log(
+  logger.log(
     "Started execution of extension with configuration",
     obfuscatedConfig
   );
@@ -60,17 +61,17 @@ export const userAdded = (
   mailchimpId: string,
   status: string
 ) => {
-  console.log(
+  logger.log(
     `Added user: ${userId} with status '${status}' to Mailchimp audience: ${audienceId} with Mailchimp ID: ${mailchimpId}`
   );
 };
 
 export const userAdding = (userId: string, audienceId: string) => {
-  console.log(`Adding user: ${userId} to Mailchimp audience: ${audienceId}`);
+  logger.log(`Adding user: ${userId} to Mailchimp audience: ${audienceId}`);
 };
 
 export const userNoEmail = () => {
-  console.log("User does not have an email");
+  logger.log("User does not have an email");
 };
 
 export const userRemoved = (
@@ -78,7 +79,7 @@ export const userRemoved = (
   hashedEmail: string,
   audienceId: string
 ) => {
-  console.log(
+  logger.log(
     `Removed user: ${userId} with hashed email: ${hashedEmail} from Mailchimp audience: ${audienceId}`
   );
 };
@@ -88,7 +89,7 @@ export const userRemoving = (
   hashedEmail: string,
   audienceId: string
 ) => {
-  console.log(
+  logger.log(
     `Removing user: ${userId} with hashed email: ${hashedEmail} from Mailchimp audience: ${audienceId}`
   );
 };

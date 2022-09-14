@@ -28,3 +28,10 @@ export function getChangeType(change: Change<DocumentSnapshot>): ChangeType {
   }
   return ChangeType.UPDATE;
 }
+
+export function getDocumentId(change: Change<DocumentSnapshot>): string {
+  if (change.after.exists) {
+    return change.after.id;
+  }
+  return change.before.id;
+}

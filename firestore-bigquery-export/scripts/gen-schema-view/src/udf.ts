@@ -17,7 +17,9 @@
 import * as sqlFormatter from "sql-formatter";
 
 // Persistent UDFs to be created on schema view initialization.
-export const udfs: { [name: string]: (dataset: string) => any } = {
+export const udfs: {
+  [name: string]: (dataset: string) => any;
+} = {
   firestoreArray: firestoreArrayFunction,
   firestoreBoolean: firestoreBooleanFunction,
   firestoreNumber: firestoreNumberFunction,
@@ -68,12 +70,32 @@ function firestoreArrayFunction(datasetId: string): any {
 
 function firestoreArrayDefinition(datasetId: string): string {
   return sqlFormatter.format(`
-    CREATE FUNCTION IF NOT EXISTS \`${
+    CREATE OR REPLACE FUNCTION \`${
       process.env.PROJECT_ID
     }.${datasetId}.firestoreArray\`(json STRING)
     RETURNS ARRAY<STRING>
     LANGUAGE js AS """
-      return json ? JSON.parse(json).map(x => JSON.stringify(x)) : [];
+    function getArray(json) {
+      if(json) {
+        const parsed = JSON.parse(json);
+        
+        if (Array.isArray(parsed)) {
+          return parsed.map((x) => {
+            if (typeof x === 'string') {
+              return x;
+            } else {
+              return JSON.stringify(x);
+            }
+          });
+        }
+        
+        return [];
+      }
+
+      return [];
+    }
+    
+    return getArray(json);
     """;`);
 }
 
@@ -140,5 +162,5 @@ function firestoreGeopointDefinition(datasetId: string): string {
       process.env.PROJECT_ID
     }.${datasetId}.firestoreGeopoint\`(json STRING)
     RETURNS GEOGRAPHY AS
-    (ST_GEOGPOINT(SAFE_CAST(JSON_EXTRACT(json, '$._latitude') AS NUMERIC), SAFE_CAST(JSON_EXTRACT(json, '$._longitude') AS NUMERIC)));`);
+    (ST_GEOGPOINT(SAFE_CAST(JSON_EXTRACT(json, '$._longitude') AS NUMERIC), SAFE_CAST(JSON_EXTRACT(json, '$._latitude') AS NUMERIC)));`);
 }

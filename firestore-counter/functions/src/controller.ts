@@ -18,6 +18,7 @@ import { firestore } from "firebase-admin";
 import { Slice, WorkerStats, queryRange } from "./common";
 import { Planner } from "./planner";
 import { Aggregator } from "./aggregator";
+import { logger } from "firebase-functions";
 
 export interface WorkerShardingInfo {
   slice: Slice; // shard range a single worker is responsible for
@@ -108,14 +109,14 @@ export class ShardedCounterController {
       });
 
       const shutdown = async () => {
-        console.log(
+        logger.log(
           "Successfully ran " +
             rounds +
             " rounds. Aggregated " +
             shardsCount +
             " shards."
         );
-        console.log(
+        logger.log(
           "Skipped " +
             skippedRoundsDueToWorkers +
             " rounds due to workers running."
@@ -143,7 +144,7 @@ export class ShardedCounterController {
         try {
           controllerDoc = await t.get(this.controllerDocRef);
         } catch (err) {
-          console.log(
+          logger.log(
             "Failed to read controller doc: " + this.controllerDocRef.path
           );
           throw Error("Failed to read controller doc.");
@@ -166,7 +167,7 @@ export class ShardedCounterController {
             )
           );
         } catch (err) {
-          console.log("Query to find shards to aggregate failed.", err);
+          logger.log("Query to find shards to aggregate failed.", err);
           throw Error("Query to find shards to aggregate failed.");
         }
         if (shards.docs.length == 200) return ControllerStatus.TOO_MANY_SHARDS;
@@ -183,7 +184,7 @@ export class ShardedCounterController {
           try {
             counter = await t.get(this.db.doc(plan.aggregate));
           } catch (err) {
-            console.log("Failed to read document: " + plan.aggregate, err);
+            logger.log("Failed to read document: " + plan.aggregate, err);
             throw Error("Failed to read counter " + plan.aggregate);
           }
           // Calculate aggregated value and save to aggregate shard.
@@ -197,7 +198,7 @@ export class ShardedCounterController {
         try {
           await Promise.all(promises);
         } catch (err) {
-          console.log("Some counter aggregation failed, bailing out.");
+          logger.log("Some counter aggregation failed, bailing out.");
           throw Error("Some counter aggregation failed, bailing out.");
         }
         t.set(
@@ -205,12 +206,12 @@ export class ShardedCounterController {
           { timestamp: firestore.FieldValue.serverTimestamp() },
           { merge: true }
         );
-        console.log("Aggregated " + plans.length + " counters.");
+        logger.log("Aggregated " + plans.length + " counters.");
         return ControllerStatus.SUCCESS;
       });
       return status;
     } catch (err) {
-      console.log("Transaction to aggregate shards failed.", err);
+      logger.log("Transaction to aggregate shards failed.", err);
       return ControllerStatus.FAILURE;
     }
   }
@@ -226,7 +227,7 @@ export class ShardedCounterController {
       try {
         await t.get(this.controllerDocRef);
       } catch (err) {
-        console.log(
+        logger.log(
           "Failed to read controller doc " + this.controllerDocRef.path
         );
         throw Error("Failed to read controller doc.");
@@ -238,7 +239,7 @@ export class ShardedCounterController {
           this.workersRef.orderBy(firestore.FieldPath.documentId())
         );
       } catch (err) {
-        console.log("Failed to read worker docs.", err);
+        logger.log("Failed to read worker docs.", err);
         throw Error("Failed to read worker docs.");
       }
       let shardingInfo: WorkerShardingInfo[] = await Promise.all(
@@ -274,7 +275,7 @@ export class ShardedCounterController {
               }
             }
           } catch (err) {
-            console.log(
+            logger.log(
               "Failed to calculate additional splits for worker: " + worker.id
             );
           }
@@ -286,7 +287,7 @@ export class ShardedCounterController {
         shardingInfo
       );
       if (reshard) {
-        console.log(
+        logger.log(
           "Resharding workers, new workers: " +
             slices.length +
             " prev num workers: " +
@@ -321,7 +322,7 @@ export class ShardedCounterController {
             failures++;
           }
         });
-        console.log("Detected " + failures + " failed workers.");
+        logger.log("Detected " + failures + " failed workers.");
         t.set(
           this.controllerDocRef,
           { timestamp: firestore.FieldValue.serverTimestamp() },

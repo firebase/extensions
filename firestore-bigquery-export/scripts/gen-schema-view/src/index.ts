@@ -16,7 +16,6 @@
  * limitations under the License.
  */
 
-import * as bigquery from "@google-cloud/bigquery";
 import * as program from "commander";
 import * as firebase from "firebase-admin";
 import * as inquirer from "inquirer";
@@ -42,8 +41,12 @@ function collect(value, previous) {
   return previous.concat([value]);
 }
 
+const packageJson = require("../package.json");
+
 program
   .name("gen-schema-views")
+  .description(packageJson.description)
+  .version(packageJson.version)
   .option(
     "--non-interactive",
     "Parse all input from command line flags instead of prompting the caller.",

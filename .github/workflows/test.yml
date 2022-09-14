@@ -1,0 +1,36 @@
+name: Testing
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - "**"
+
+jobs:
+  nodejs:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ["14", "16"]
+    name: node.js_${{ matrix.node }}_test
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup node
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - name: NPM install
+        run: npm install
+      - name: Install firebase CLI
+        uses: nick-invision/retry@v1
+        with:
+          timeout_minutes: 10
+          retry_wait_seconds: 60
+          max_attempts: 3
+          command: npm i -g firebase-tools
+      - name: Submit coverage
+        run: ./node_modules/.bin/codecov
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

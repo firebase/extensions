@@ -19,11 +19,13 @@ const environment = {
   OUTPUT_FIELD_NAME: "translated",
 };
 
-const { mockConsoleLog, config } = global;
+const { config } = global;
 
 functionsTestInit();
 
 describe("extension config", () => {
+  let logMock;
+
   beforeAll(() => {
     extensionYaml = yaml.safeLoad(
       readFileSync(pathResolve(__dirname, "../../extension.yaml"), "utf8")
@@ -37,7 +39,11 @@ describe("extension config", () => {
 
   beforeEach(() => {
     restoreEnv = mockedEnv(environment);
-    mockConsoleLog.mockClear();
+    logMock = jest.fn();
+
+    require("firebase-functions").logger = {
+      log: logMock,
+    };
   });
 
   afterEach(() => restoreEnv());
@@ -53,7 +59,7 @@ describe("extension config", () => {
 
     const functionsConfig = config();
 
-    expect(mockConsoleLog).toBeCalledWith(...messages.init(functionsConfig));
+    expect(logMock).toBeCalledWith(...messages.init(functionsConfig));
   });
 
   // LANGUAGES

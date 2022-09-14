@@ -2,7 +2,7 @@ declare namespace NodeJS {
   interface Global {
     config: () => jest.ModuleMocker;
     snapshot: (
-      input?: { input?: string; changed?: number; notTheInput?: string },
+      input?: { input?: any; changed?: number; notTheInput?: string },
       path?: string
     ) => any;
     testTranslations: {

@@ -1,3 +1,31 @@
+## Version 0.1.8
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - update validate workflow to use node14
+
+## Version 0.1.7
+
+fixed - changed Bitly access token configuration from string type to secret type (#752)
+
+feature - add Taiwan and Singapore Cloud Function locations (#729)
+
+## Version 0.1.6
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
+fixed - Removed code coverage check on ci
+
+## Version 0.1.5
+
+feature - Add new Cloud Functions locations. For more information about locations and their pricing tiers, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
+
+## Version 0.1.4
+
+feature - Update Cloud Functions runtime to Node.js 10.
+
 ## Version 0.1.3
 
 fixed - Fixed 406 HTTP error code from Bitly API due to `Content-Type` header not being set (#202).

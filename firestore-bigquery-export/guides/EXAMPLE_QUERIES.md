@@ -55,7 +55,7 @@ schema file:
 
 You can generate a listing of users that have logged in to the app as follows:
 
-```
+```sql
 SELECT name, last_login
 FROM ${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_${SCHEMA_FILE_NAME}_latest
 ORDER BY last_login DESC
@@ -81,7 +81,7 @@ queries for that data:
 - If you wanted to determine how many favorite numbers each user
   currently has, then you can run the following query:
 
-  ```
+  ```sql
   SELECT document_name, MAX(favorite_numbers_index)
   FROM ${param:PROJECT_ID}.users.users_schema_user_full_schema_latest
   GROUP BY document_name
@@ -91,7 +91,7 @@ queries for that data:
   of the app's users (assuming that number is stored in the first position of
   the `favorite_numbers` array), you can run the following query:
 
-  ```
+  ```sql
   SELECT document_name, favorite_numbers_member
   FROM ${param:PROJECT_ID}.users.users_schema_user_full_schema_latest
   WHERE favorite_numbers_index = 0
@@ -103,8 +103,32 @@ If you had multiple arrays in the schema configuration, you might have to select
 all `DISTINCT` documents to eliminate the redundant rows introduced by the
 cartesian product of `CROSS JOIN`.
 
-```
+```sql
 SELECT DISTINCT document_name, favorite_numbers_member
 FROM ${param:PROJECT_ID}.users.users_schema_user_full_schema_latest
 WHERE favorite_numbers_index = 0
+```
+
+### Remove stale data from your changelog table
+
+If you want to clean up data from your `changelog` table, use the following
+`DELETE` query to delete all rows that fall within a certain time period,
+e.g. greater than 1 month old.
+
+```sql
+/* The query below deletes any rows below that are over one month old. */
+DELETE FROM `[PROJECT ID].[DATASET ID].[CHANGELOG TABLE ID]`
+WHERE (document_name, timestamp) IN
+(
+  WITH latest AS (
+    SELECT MAX(timestamp) as timestamp, document_name
+    FROM `[PROJECT ID].[DATASET ID].[CHANGELOG TABLE ID]`
+    GROUP BY document_name
+  )
+  SELECT (t.document_name, t.timestamp)
+  FROM `[PROJECT ID].[DATASET ID].[CHANGELOG TABLE ID]` AS t
+  JOIN latest  ON (t.document_name = latest.document_name )
+  WHERE t.timestamp != latest.timestamp
+  AND DATETIME(t.timestamp) < DATE_ADD(CURRENT_DATETIME(), INTERVAL -1 MONTH)
+)
 ```

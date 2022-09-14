@@ -18,8 +18,10 @@ import * as chai from "chai";
 import * as fs from "fs";
 import * as sqlFormatter from "sql-formatter";
 import * as util from "util";
+import * as bigquery from "@google-cloud/bigquery";
 
 import { buildLatestSnapshotViewQuery } from "../../bigquery/snapshot";
+import { FirestoreBigQueryEventHistoryTracker } from "../../bigquery";
 
 const fixturesDir = __dirname + "/../fixtures";
 const sqlDir = fixturesDir + "/sql";
@@ -31,21 +33,39 @@ const testTable = "test_table";
 
 const expect = chai.expect;
 const readFile = util.promisify(fs.readFile);
-const writeFile = util.promisify(fs.writeFile);
 
 process.env.PROJECT_ID = testProjectId;
+
+const trackerInstance = new FirestoreBigQueryEventHistoryTracker({
+  datasetId: "id",
+  datasetLocation: undefined,
+  tableId: "id",
+  transformFunction: "",
+  timePartitioning: null,
+  timePartitioningField: undefined,
+  timePartitioningFieldType: undefined,
+  timePartitioningFirestoreField: undefined,
+  clustering: null,
+  bqProjectId: null,
+});
 
 async function readFormattedSQL(file: string): Promise<string> {
   const query = await readFile(file, "utf8");
   return sqlFormatter.format(query);
 }
 
-async function readBigQuerySchema(file: string): Promise<any> {
-  return require(file);
-}
+describe("FirestoreBigQueryEventHistoryTracker functionality", () => {
+  it('should have a default dataset location of "us"', () => {
+    expect(trackerInstance.config.datasetLocation).to.equal("us");
+  });
+
+  it("should create a dataset with the location property set", () => {
+    expect(trackerInstance.bigqueryDataset()).instanceOf(bigquery.Dataset);
+  });
+});
 
 describe("latest snapshot view sql generation", () => {
-  it("should generate the epxected sql", async () => {
+  it("should generate the expected sql", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/latestConsistentSnapshot.txt`
     );

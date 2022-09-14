@@ -15,17 +15,13 @@
  */
 
 import * as sqlFormatter from "sql-formatter";
-
-import { RawChangelogSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
-
 import {
   buildSchemaViewQuery,
-  latest,
   FirestoreSchema,
-  FirestoreFieldType,
-  FirestoreField,
+  latest,
   processFirestoreSchema,
   subSelectQuery,
+  updateFirestoreSchemaFields,
 } from "./schema";
 
 export function latestConsistentSnapshotSchemaView(
@@ -54,6 +50,15 @@ export function buildLatestSchemaSnapshotViewQueryFromLatestView(
 ): any {
   return buildSchemaViewQuery(datasetId, latest(tableName), schema);
 }
+
+export const testBuildLatestSchemaSnapshotViewQuery = (
+  datasetId: string,
+  rawTableName: string,
+  schema: FirestoreSchema
+) => {
+  schema.fields = updateFirestoreSchemaFields(schema.fields);
+  return buildLatestSchemaSnapshotViewQuery(datasetId, rawTableName, schema);
+};
 
 export const buildLatestSchemaSnapshotViewQuery = (
   datasetId: string,
@@ -105,6 +110,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
       (field) => field.name != `${geopointFieldName}`
     );
   }
+
   const fieldNameSelectorClauses = Object.keys(schemaFieldExtractors).join(
     ", "
   );
@@ -113,15 +119,18 @@ export const buildLatestSchemaSnapshotViewQuery = (
   );
   const schemaHasArrays = schemaFieldArrays.length > 0;
   const schemaHasGeopoints = schemaFieldGeopoints.length > 0;
+
   let query = `
       SELECT
         document_name,
+        document_id,
         timestamp,
         operation${fieldNameSelectorClauses.length > 0 ? `,` : ``}
         ${fieldNameSelectorClauses}
       FROM (
         SELECT
           document_name,
+          document_id,
           ${firstValue(`timestamp`)} AS timestamp,
           ${firstValue(`operation`)} AS operation,
           ${firstValue(`operation`)} = "DELETE" AS is_deleted${
@@ -142,6 +151,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
   const groupBy = `
     GROUP BY
       document_name,
+      document_id,
       timestamp,
       operation${groupableExtractors.length > 0 ? `,` : ``}
       ${
@@ -159,8 +169,9 @@ export const buildLatestSchemaSnapshotViewQuery = (
         ${rawTableName}
         ${schemaFieldArrays
           .map(
-            (arrayFieldName) =>
-              `CROSS JOIN UNNEST(${rawTableName}.${arrayFieldName})
+            (
+              arrayFieldName
+            ) => `LEFT JOIN UNNEST(${rawTableName}.${arrayFieldName})
             AS ${arrayFieldName}_member
             WITH OFFSET ${arrayFieldName}_index`
           )
@@ -200,8 +211,5 @@ export const buildLatestSchemaSnapshotViewQuery = (
     --                    corresponding to fields defined in the schema.
     ${query}
   `);
-  return {
-    query: query,
-    fields: bigQueryFields,
-  };
+  return { query: query, fields: bigQueryFields };
 };

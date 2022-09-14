@@ -14,36 +14,37 @@
  * limitations under the License.
  */
 
+import { logger } from "firebase-functions";
 import config from "./config";
 
 export const childCount = (path: string, childCount: number) => {
-  console.log(`Node: '${path}' has: ${childCount} children`);
+  logger.log(`Node: '${path}' has: ${childCount} children`);
 };
 
 export const complete = () => {
-  console.log("Completed execution of extension");
+  logger.log("Completed execution of extension");
 };
 
 export const error = (err: Error) => {
-  console.error("Error when truncating the database node", err);
+  logger.error("Error when truncating the database node", err);
 };
 
 export const init = () => {
-  console.log("Initializing extension with configuration", config);
+  logger.log("Initializing extension with configuration", config);
 };
 
 export const pathSkipped = (path: string) => {
-  console.log(`Path: '${path}' does not need to be truncated`);
+  logger.log(`Path: '${path}' does not need to be truncated`);
 };
 
 export const pathTruncated = (path: string, count: number) => {
-  console.log(`Truncated path: '${path}' to ${count} items`);
+  logger.log(`Truncated path: '${path}' to ${count} items`);
 };
 
 export const pathTruncating = (path: string, count: number) => {
-  console.log(`Truncating path: '${path}' to ${count} items`);
+  logger.log(`Truncating path: '${path}' to ${count} items`);
 };
 
 export const start = () => {
-  console.log("Started execution of extension with configuration", config);
+  logger.log("Started execution of extension with configuration", config);
 };

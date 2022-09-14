@@ -4,7 +4,6 @@ import {
   mockFirestoreUpdate,
   mockFirestoreTransaction,
 } from "./mocks/firestore";
-import { mockConsoleError, mockConsoleLog } from "./mocks/console";
 import {
   testTranslations,
   mockTranslate,
@@ -30,10 +29,6 @@ global.mockTranslateClass = mockTranslateClass;
 global.mockTranslateModule = () =>
   jest.mock("@google-cloud/translate", mockTranslateModuleFactory);
 
-global.mockConsoleError = mockConsoleError;
-
-global.mockConsoleLog = mockConsoleLog;
-
 global.mockFirestoreUpdate = mockFirestoreUpdate;
 
 global.mockFirestoreTransaction = mockFirestoreTransaction;
@@ -41,6 +36,4 @@ global.mockFirestoreTransaction = mockFirestoreTransaction;
 global.clearMocks = () => {
   mockFirestoreUpdate.mockClear();
   mockTranslateClassMethod.mockClear();
-  mockConsoleLog.mockClear();
-  mockConsoleError.mockClear();
 };
