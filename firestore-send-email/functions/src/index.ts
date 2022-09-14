@@ -222,12 +222,7 @@ async function deliver(
   }
   let payload = snapshot.data();
   // Only attempt delivery if the payload is still in a valid delivery state.
-  if (
-    !payload.delivery ||
-    !(
-      payload.delivery.state === "PENDING" || payload.delivery.state === "RETRY"
-    )
-  ) {
+  if (!payload.delivery ||  payload.delivery.state !== "PROCESSING") {
     return;
   }
 
