@@ -272,7 +272,7 @@ async function deliver(
 
   // Wrapping in transaction to allow for automatic retries (#48)
   return admin.firestore().runTransaction((transaction) => {
-    // We could check state here is still PENDING or RETRY, but we don't
+    // We could check state here is still PROCESSING, but we don't
     // since the email sending will have been attempted regardless of what the
     // delivery state was at that point, so we just update the state to reflect
     // the result of the last attempt so as to not potentially cause duplicate sends.
