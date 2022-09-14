@@ -26,9 +26,9 @@ import { setSmtpCredentials } from "./helpers";
 
 logs.init();
 
-let db;
-let transport;
-let templates;
+let db: FirebaseFirestore.Firestore;
+let transport: nodemailer.Transporter;
+let templates: Templates;
 let initialized = false;
 
 /**
@@ -70,21 +70,6 @@ function validateFieldArray(field: string, array?: string[]) {
   if (array.find((item) => typeof item !== "string")) {
     throw new Error(`Invalid field "${field}". Expected an array of strings.`);
   }
-}
-
-async function processCreate(snap: FirebaseFirestore.DocumentSnapshot) {
-  // Wrapping in transaction to allow for automatic retries (#48)
-  return admin.firestore().runTransaction((transaction) => {
-    transaction.update(snap.ref, {
-      delivery: {
-        startTime: admin.firestore.FieldValue.serverTimestamp(),
-        state: "PENDING",
-        attempts: 0,
-        error: null,
-      },
-    });
-    return Promise.resolve();
-  });
 }
 
 async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
@@ -229,9 +214,23 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
 }
 
 async function deliver(
-  payload: QueuePayload,
-  ref: FirebaseFirestore.DocumentReference
-): Promise<any> {
+  ref: FirebaseFirestore.DocumentReference<QueuePayload>
+): Promise<void> {
+  const snapshot = await ref.get();
+  if (!snapshot.exists) {
+    return;
+  }
+  let payload = snapshot.data();
+  // Only attempt delivery if the payload is still in a valid delivery state.
+  if (
+    !payload.delivery ||
+    !(
+      payload.delivery.state === "PENDING" || payload.delivery.state === "RETRY"
+    )
+  ) {
+    return;
+  }
+
   logs.attemptingDelivery(ref);
   const update = {
     "delivery.attempts": admin.firestore.FieldValue.increment(1),
@@ -278,76 +277,146 @@ async function deliver(
 
   // Wrapping in transaction to allow for automatic retries (#48)
   return admin.firestore().runTransaction((transaction) => {
+    // We could check state here is still PENDING or RETRY, but we don't
+    // since the email sending will have been attempted regardless of what the
+    // delivery state was at that point, so we just update the state to reflect
+    // the result of the last attempt so as to not potentially cause duplicate sends.
     transaction.update(ref, update);
     return Promise.resolve();
   });
 }
 
-async function processWrite(change) {
-  if (!change.after.exists) {
-    return null;
+async function processWrite(
+  change: functions.Change<FirebaseFirestore.DocumentSnapshot<QueuePayload>>
+): Promise<void> {
+  const ref = change.after.ref;
+
+  // A quick check to avoid doing unnecessary transaction work.
+  // If the record state is SUCCESS or ERROR we don't need to do anything
+  // transactionally here since these are the 'final' delivery states.
+  // Note: we still check these again inside the transaction in case the state has
+  // changed while the transaction was inflight.
+  if (change.after.exists) {
+    const payloadAfter = change.after.data();
+    // The email has already been delivered, so we don't need to do anything.
+    if (
+      payloadAfter &&
+      payloadAfter.delivery &&
+      payloadAfter.delivery.state === "SUCCESS"
+    ) {
+      return;
+    }
+
+    // The email has previously failed to be delivered, so we can't do anything.
+    if (
+      payloadAfter &&
+      payloadAfter.delivery &&
+      payloadAfter.delivery.state === "ERROR"
+    ) {
+      return;
+    }
   }
 
-  if (!change.before.exists && change.after.exists) {
-    return processCreate(change.after);
-  }
+  const shouldAttemptDelivery = await admin
+    .firestore()
+    .runTransaction<boolean>(async (transaction) => {
+      const snapshot = await transaction.get(ref);
+      // Record no longer exists, so no need to attempt delivery.
+      if (!snapshot.exists) {
+        return false;
+      }
 
-  const payload = change.after.data() as QueuePayload;
+      const payload = snapshot.data();
 
-  if (typeof payload.message !== "object") {
-    logs.invalidMessage(payload.message);
-  }
+      // We expect the payload to contain a message object describing the email
+      // to be sent. If it doesn't, we can't do anything.
+      if (typeof payload.message !== "object") {
+        logs.invalidMessage(payload.message);
+        return false;
+      }
 
-  if (!payload.delivery) {
-    logs.missingDeliveryField(change.after.ref);
-    return null;
-  }
+      // The record has most likely just been created by a client, so we need to
+      // initialize the delivery state.
+      if (!payload.delivery) {
+        transaction.update(ref, {
+          delivery: {
+            startTime: admin.firestore.FieldValue.serverTimestamp(),
+            state: "PENDING",
+            attempts: 0,
+            error: null,
+          },
+        } as QueuePayload);
+        // We've updated the payload, so we need to attempt delivery, but we
+        // don't want to do it in this transaction. Since the transaction will
+        // update the record again the cloud function will be triggered again
+        // and delivery will be attempted at that point.
+        return false;
+      }
 
-  switch (payload.delivery.state) {
-    case "SUCCESS":
-    case "ERROR":
-      return null;
-    case "PROCESSING":
-      if (payload.delivery.leaseExpireTime.toMillis() < Date.now()) {
-        // Wrapping in transaction to allow for automatic retries (#48)
-        return admin.firestore().runTransaction((transaction) => {
-          transaction.update(change.after.ref, {
+      // The email has already been delivered, so we don't need to do anything.
+      if (payload.delivery.state === "SUCCESS") {
+        return false;
+      }
+
+      // The email has previously failed to be delivered, so we can't do anything.
+      if (payload.delivery.state === "ERROR") {
+        return false;
+      }
+
+      if (payload.delivery.state === "PROCESSING") {
+        if (payload.delivery.leaseExpireTime.toMillis() < Date.now()) {
+          // The lease has expired, so we should not attempt to deliver the email again,
+          // but we set the state to ERROR so clients can see that the email failed.
+          transaction.update(ref, {
             "delivery.state": "ERROR",
             // Keeping error to avoid any breaking changes in the next minor update.
             // Error to be removed for the next major release.
             error: "Message processing lease expired.",
             "delivery.error": "Message processing lease expired.",
           });
-          return Promise.resolve();
-        });
+        }
+        // Already being processed, so we don't need to do anything.
+        return false;
       }
-      return null;
-    case "PENDING":
-    case "RETRY":
-      // Wrapping in transaction to allow for automatic retries (#48)
-      await admin.firestore().runTransaction((transaction) => {
-        transaction.update(change.after.ref, {
+
+      if (
+        payload.delivery.state === "PENDING" ||
+        payload.delivery.state === "RETRY"
+      ) {
+        // We can attempt to deliver the email in these states, so we set the state to PROCESSING
+        // and set a lease time to prevent delivery from being attempted forever.
+        transaction.update(ref, {
           "delivery.state": "PROCESSING",
           "delivery.leaseExpireTime": admin.firestore.Timestamp.fromMillis(
             Date.now() + 60000
           ),
         });
-        return Promise.resolve();
-      });
-      return deliver(payload, change.after.ref);
+        return true;
+      }
+
+      // We don't know what the state is, so we can't do anything. This should never happen.
+      return false;
+    });
+
+  if (shouldAttemptDelivery) {
+    await deliver(ref);
   }
 }
 
 export const processQueue = functions.firestore
   .document(config.mailCollection)
-  .onWrite(async (change) => {
-    await initialize();
-    logs.start();
-    try {
-      await processWrite(change);
-    } catch (err) {
-      logs.error(err);
-      return null;
+  .onWrite(
+    async (
+      change: functions.Change<FirebaseFirestore.DocumentSnapshot<QueuePayload>>
+    ) => {
+      await initialize();
+      logs.start();
+      try {
+        await processWrite(change);
+      } catch (err) {
+        logs.error(err);
+        return null;
+      }
+      logs.complete();
     }
-    logs.complete();
-  });
+  );
