@@ -1,5 +1,6 @@
-import { DocumentData, Query, WhereFilterOp } from "@google-cloud/firestore";
 import * as admin from "firebase-admin";
+import { DocumentData, Query, WhereFilterOp } from "@google-cloud/firestore";
+import { runBatchPubSubDeletions } from "./runBatchPubSubDeletions";
 
 export const runCustomQueries = async (
   userId
@@ -32,18 +33,11 @@ export const runCustomQueries = async (
       }
     }
 
-    promises.push(
-      new Promise((resolve) => {
-        ref.get().then((querySnapshot) => {
-          querySnapshot.forEach(async (doc) => {
-            (await data.recusrive)
-              ? db.recursiveDelete(doc.ref)
-              : db.doc(doc.ref.path).delete();
-          });
-        });
-        resolve(true);
-      })
-    );
+    const snapshot = await ref.get();
+
+    if (snapshot.docs) {
+      await runBatchPubSubDeletions(snapshot.docs.map((doc) => doc.ref.path));
+    }
   }
 
   return promises;

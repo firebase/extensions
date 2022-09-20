@@ -67,13 +67,21 @@ resources:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${param:PROJECT_ID}
 
+  - name: handleSearch
+    type: firebaseextensions.v1beta.function
+    properties:
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: google.pubsub.topic.publish
+        resource: projects/${PROJECT_ID}/topics/${param:SEARCH_TOPIC}
+
   - name: handleDeletion
     type: firebaseextensions.v1beta.function
     properties:
       location: ${LOCATION}
       eventTrigger:
         eventType: google.pubsub.topic.publish
-        resource: projects/${PROJECT_ID}/topics/deletions
+        resource: projects/${PROJECT_ID}/topics/${param:DELETION_TOPIC}
 
 params:
   - param: LOCATION
@@ -229,6 +237,33 @@ params:
         value: no
     default: no
     required: false
+
+  - param: SEARCH_FUNCTION
+    label: Search function URL
+    description: >-
+      Specify a function URL to call that will return a list of queries that can used to delete user data.
+      See the pre-install documentation for more details.
+    example: https://us-west1-my-project-id.cloudfunctions.net/myTransformFunction
+    type: string
+    required: false
+
+  - param: SEARCH_TOPIC
+    label: Search function URL
+    description: >-
+      Specify a Pub/Sub topic to publish search queries to.
+    example: search
+    type: string
+    required: false
+
+  - param: DELETION_TOPIC
+    label: Search function URL
+    description: >-
+      Specify a Pub/Sub topic to publish deletion queries to.
+    example: deletions
+    type: string
+    required: false
+
+
 
 events:
   - type: firebase.extensions.delete-user-data.v1.trigger

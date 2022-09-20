@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import * as config from "./config";
 const { PubSub } = require("@google-cloud/pubsub");
 
 export const search = async (
@@ -9,9 +10,13 @@ export const search = async (
 ) => {
   const db = admin.firestore();
 
-  const pubsub = new PubSub({ projectId: "demo-test" });
+  const pubsub = new PubSub();
 
-  const topic = pubsub.topic("projects/demo-test/topics/deletions");
+  const topic = pubsub.topic(
+    `projects/${process.env.GOOGLE_CLOUD_PROJECT}/topics/${
+      config.default.searchTopic
+    }`
+  );
 
   const collections = !document
     ? await db.listCollections()

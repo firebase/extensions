@@ -26,6 +26,10 @@
       "enabled": true
     }
   },
+  "functions": {
+    "port": 5002,
+    "source": "functions"
+  },
   "firestore": {
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"

@@ -60,7 +60,7 @@ describe("search", () => {
     test("can delete a document with a field value named {uid}", async () => {
       const document = await db
         .collection(generateRandomId())
-        .add({ test: user.uid });
+        .add({ field1: user.uid });
       await search(user.uid);
 
       await waitForDocumentDeletion(document);
@@ -75,7 +75,7 @@ describe("search", () => {
   });
 
   describe("sub collection", () => {
-    test("can delete a subcollection document named {uid}", async () => {
+    xtest("can delete a subcollection document named {uid}", async () => {
       const collection = await db
         .collection(generateRandomId())
         .doc()

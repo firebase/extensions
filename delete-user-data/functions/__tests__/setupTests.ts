@@ -1,8 +1,15 @@
-const waitPort = require("wait-port");
+import path from "path";
 
-beforeEach(async () => {
-  /** Wait for the emulator to initialize */
-  await Promise.all([
-    waitPort({ port: 9099, interval: 10000, output: "silent" }, 2000),
-  ]);
-}, 20000);
+(async function() {
+  const $ = path.resolve(
+    __dirname,
+    `../../../_emulator/extensions/delete-user-data.env.local`
+  );
+
+  require("dotenv").config({
+    path: path.resolve(
+      __dirname,
+      `../../../_emulator/extensions/delete-user-data.env.local`
+    ),
+  });
+})();

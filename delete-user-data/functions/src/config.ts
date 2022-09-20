@@ -25,4 +25,8 @@ export default {
   storageBucketDefault: process.env.STORAGE_BUCKET,
   selectedDatabaseInstance: process.env.SELECTED_DATABASE_INSTANCE,
   selectedDatabaseLocation: process.env.SELECTED_DATABASE_LOCATION,
+  searchFields: process.env.SEARCH_FIELDS || "",
+  searchFunction: process.env.SEARCH_FUNCTION,
+  searchTopic: process.env.SEARCH_TOPIC,
+  deletionTopic: process.env.DELETION_TOPIC,
 };

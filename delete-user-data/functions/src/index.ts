@@ -17,13 +17,16 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as firebase_tools from "firebase-tools";
-
-import { getDatabaseUrl, deleteCollection } from "./helpers";
+import { getDatabaseUrl } from "./helpers";
 
 import config from "./config";
 import * as logs from "./logs";
 import { runCustomQueries } from "./runCustomQueries";
 import { search } from "./search";
+import { runCustomSearchFunction } from "./runCustomSearchFunction";
+import { runBatchPubSubDeletions } from "./runBatchPubSubDeletions";
+
+var _ = require("lodash");
 
 // Helper function for selecting correct domain adrress
 const databaseURL = getDatabaseUrl(
@@ -37,54 +40,85 @@ admin.initializeApp({
   databaseURL,
 });
 
+const db = admin.firestore();
+
 logs.init();
 
 export const handleDeletion = functions.pubsub
-  .topic("deletions")
+  .topic(config.deletionTopic)
+  .onPublish(async (message, context) => {
+    const { paths } = JSON.parse(
+      Buffer.from(message.data, "base64").toString("utf8")
+    );
+
+    if (!paths) return Promise.resolve();
+
+    const batchArray = [];
+
+    _.chunk(paths, 450).forEach((chunk, index) => {
+      batchArray.push(db.batch());
+
+      /** Loop through each path query */
+      for (const path of chunk) {
+        const docRef = db.doc(path);
+        batchArray[index].delete(docRef);
+      }
+    });
+
+    batchArray.forEach(async (batch) => await batch.commit());
+  });
+
+export const handleSearch = functions.pubsub
+  .topic(config.searchTopic)
   .onPublish(async (message, context) => {
     const { path, uid } = JSON.parse(
       Buffer.from(message.data, "base64").toString("utf8")
     );
 
-    /** Delete collection if userId is included in the path */
-    if (path.includes(uid)) {
-      return deleteCollection(admin.firestore(), path, 100);
+    /** Check if a document path */
+    if (path.split("/").length % 2 === 0) {
+      /** Delete document */
+      const doc = db.doc(path);
+
+      if (path.includes(uid)) {
+        const toDelete = await doc.get();
+        await toDelete.ref.delete();
+      }
+
+      return Promise.resolve();
     }
 
     /** Check for subcollections and documents */
-    const collection = admin.firestore().collection(path);
+    const collection = db.collection(path.toString());
+
+    /** Delete collection if userId is included in the path */
+    if (path.includes(uid)) {
+      const snapshot = await collection.get();
+
+      if (snapshot.docs.length) {
+        const docs = snapshot.docs.map((doc) => doc.ref.path);
+        await runBatchPubSubDeletions(docs);
+      }
+    }
+
+    /** Seatch document Ids*/
+    const snapshot = await collection
+      .where(admin.firestore.FieldPath.documentId(), "==", uid)
+      .get();
+
+    if (snapshot.docs.length) {
+      await runBatchPubSubDeletions(snapshot.docs.map((doc) => doc.ref.path));
+    }
 
     /** Iterate through documents */
-    const docs = await collection.listDocuments();
+    for await (const field of config.searchFields.split(",")) {
+      const snapshot = await collection.where(field, "==", uid).get();
 
-    docs.forEach(async (doc) => {
-      /** Check id value */
-      if (doc.path.includes(uid)) {
-        await doc.delete();
+      if (snapshot.docs.length) {
+        const docs = snapshot.docs.map((doc) => doc.ref.path);
+        await runBatchPubSubDeletions(docs);
       }
-
-      /** Check field/value */
-      const data = await doc.get();
-      const fields = data.data();
-      if (fields) {
-        Object.entries(fields).forEach(async ([field, value]) => {
-          if (field.includes(uid)) {
-            await doc.delete();
-          }
-
-          if (value.includes(uid)) {
-            await doc.delete();
-          }
-        });
-      }
-
-      const depth = doc.path.split("/").length;
-
-      /** Hard code limit to subcollection data only */
-      if (depth < 3) {
-        await search(uid, doc);
-      }
-    });
+    }
 
     return Promise.resolve();
   });
@@ -103,6 +137,7 @@ export const clearData = functions.auth.user().onDelete(async (user) => {
     storagePaths,
     queryCollection,
     enableSearch,
+    searchFunction,
   } = config;
   const { uid } = user;
 
@@ -135,6 +170,11 @@ export const clearData = functions.auth.user().onDelete(async (user) => {
   /** If search mode enable, run pubsub search fn */
   if (enableSearch) {
     await search(uid);
+  }
+
+  /** If search function provided, return a list of queries */
+  if (config.searchFunction && config.searchFunction !== "") {
+    await runCustomSearchFunction(uid);
   }
 
   logs.complete(uid);

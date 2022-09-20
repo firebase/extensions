@@ -22,6 +22,7 @@
     "firebase-functions": "^3.13.2",
     "firebase-tools": "^9.16.5",
     "jest": "^24.9.0",
+    "lodash": "^4.17.21",
     "rimraf": "^2.6.3",
     "typescript": "^3.5.2"
   },
@@ -31,6 +32,7 @@
   "private": true,
   "devDependencies": {
     "concurrency": "^0.1.4",
+    "dotenv": "^16.0.2",
     "wait-port": "^0.2.9"
   }
 }
