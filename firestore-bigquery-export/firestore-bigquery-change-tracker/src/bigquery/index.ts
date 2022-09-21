@@ -417,15 +417,12 @@ export class FirestoreBigQueryEventHistoryTracker
       //Add partitioning
       await partitioning.addPartitioningToSchema(schema.fields);
 
-      //TODO: Tidy up and format / add test cases?
-      // if (
-      //   !documentIdColExists ||
-      //   (!pathParamsColExists && this.config.wildcardIds) ||
-      //   partition.isValidPartitionForExistingTable(partitionColExists)
-      // ) {
-
-      await view.setMetadata(metadata);
-      // }
+      if (
+        !documentIdColExists ||
+        (!pathParamsColExists && this.config.wildcardIds)
+      ) {
+        await view.setMetadata(metadata);
+      }
     } else {
       const schema = { fields: [...RawChangelogViewSchema.fields] };
       //Add partitioning field
