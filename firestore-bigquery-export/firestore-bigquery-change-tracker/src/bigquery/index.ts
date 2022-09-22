@@ -379,8 +379,6 @@ export class FirestoreBigQueryEventHistoryTracker
     const [viewExists] = await view.exists();
     const schema = RawChangelogViewSchema;
 
-    const partitioning = new Partitioning(this.config, view);
-
     if (viewExists) {
       logs.bigQueryViewAlreadyExists(view.id, dataset.id);
       const [metadata] = await view.getMetadata();
@@ -414,9 +412,6 @@ export class FirestoreBigQueryEventHistoryTracker
         logs.addNewColumn(this.rawLatestView(), documentPathParams.name);
       }
 
-      //Add partitioning
-      await partitioning.addPartitioningToSchema(schema.fields);
-
       if (
         !documentIdColExists ||
         (!pathParamsColExists && this.config.wildcardIds)
@@ -425,10 +420,6 @@ export class FirestoreBigQueryEventHistoryTracker
       }
     } else {
       const schema = { fields: [...RawChangelogViewSchema.fields] };
-      //Add partitioning field
-      await partitioning.addPartitioningToSchema(schema.fields);
-      //TODO Create notification for a user that View cannot be Time Partitioned by the field.
-      // await partitioning.updateTableMetadata(options);
 
       if (this.config.wildcardIds) {
         schema.fields.push(documentPathParams);
@@ -444,12 +435,6 @@ export class FirestoreBigQueryEventHistoryTracker
         friendlyName: this.rawLatestView(),
         view: latestSnapshot,
       };
-
-      if (this.config.timePartitioning) {
-        options.timePartitioning = {
-          type: this.config.timePartitioning,
-        };
-      }
 
       try {
         await view.create(options);
