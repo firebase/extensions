@@ -256,6 +256,8 @@ params:
         value: tiff
       - label: gif
         value: gif
+      - label: avif
+        value: avif
       - label: original
         value: false
     default: false

@@ -43,6 +43,7 @@ export function convertType(buffer, format) {
     webp: {},
     tiff: {},
     tif: {},
+    avif: {},
   };
   if (config.outputOptions) {
     try {
@@ -51,7 +52,7 @@ export function convertType(buffer, format) {
       logs.errorOutputOptionsParse(e);
     }
   }
-  const { jpeg, jpg, png, webp, tiff, tif } = outputOptions;
+  const { jpeg, jpg, png, webp, tiff, tif, avif } = outputOptions;
 
   if (format === "jpeg") {
     return sharp(buffer).jpeg(jpeg).toBuffer();
@@ -81,6 +82,12 @@ export function convertType(buffer, format) {
     return sharp(buffer, { animated: config.animated }).gif().toBuffer();
   }
 
+  if (format === "avif") {
+    return sharp(buffer)
+      .avif(avif)
+      .toBuffer();
+  }
+
   return buffer;
 }
 
@@ -93,6 +100,7 @@ export const supportedContentTypes = [
   "image/tiff",
   "image/webp",
   "image/gif",
+  "image/avif",
 ];
 
 export const supportedImageContentTypeMap = {
@@ -103,6 +111,7 @@ export const supportedImageContentTypeMap = {
   tiff: "image/tiff",
   webp: "image/webp",
   gif: "image/gif",
+  avif: "image/avif",
 };
 
 const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
