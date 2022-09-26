@@ -156,6 +156,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
           type: "firebase.extensions.storage-resize-images.v1.complete",
           subject: filePath,
           data: {
+            input: object,
             outputs: results,
           },
         }));
