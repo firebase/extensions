@@ -245,7 +245,7 @@ params:
       Specify a Pub/Sub topic to publish search queries to.
     example: search
     type: string
-    required: false
+    required: true
 
   - param: DELETION_TOPIC
     label: Deletion pubsub topic name
@@ -253,7 +253,7 @@ params:
       Specify a Pub/Sub topic to publish deletion queries to.
     example: deletions
     type: string
-    required: false
+    required: true
 
 
 
