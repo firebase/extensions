@@ -23,6 +23,7 @@ import * as inquirer from "inquirer";
 import * as util from "util";
 import * as filenamify from "filenamify";
 import { runMultiThread } from "./run";
+import { resolveWildcardIds } from "./config";
 
 import {
   ChangeType,
@@ -101,8 +102,12 @@ const validateLocation = (value: string) => {
   return index !== -1;
 };
 
+const packageJson = require("../package.json");
+
 program
   .name("fs-bq-import-collection")
+  .description(packageJson.description)
+  .version(packageJson.version)
   .option(
     "--non-interactive",
     "Parse all input from command line flags instead of prompting the caller.",
@@ -279,6 +284,7 @@ const run = async (): Promise<number> => {
     tableId: tableId,
     datasetId: datasetId,
     datasetLocation,
+    wildcardIds: queryCollectionGroup,
   });
 
   console.log(
@@ -343,6 +349,7 @@ const run = async (): Promise<number> => {
           snapshot.ref.path
         }`,
         documentId: snapshot.id,
+        pathParams: resolveWildcardIds(sourceCollectionPath, snapshot.ref.path),
         eventId: "",
         data: snapshot.data(),
       };

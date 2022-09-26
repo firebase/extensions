@@ -15,17 +15,12 @@ Here's a basic example document write that would trigger this extension:
 ```js
 admin.firestore().collection('mail').add({
   to: 'someone@example.com',
-  from: 'somebodyelse@example.com',
   message: {
     subject: 'Hello from Firebase!',
     html: 'This is an <code>HTML</code> email body.',
   },
 })
 ```
-
-**Custom senders**
-
-The `from` field is an optional parameter. If you specify a value for this field, ensure the receiving SMTP server accepts custom senders in this field. Typically, a provider will use the email address provided by the configured account if the provider doesn't allow custom senders.
 
 You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
 
