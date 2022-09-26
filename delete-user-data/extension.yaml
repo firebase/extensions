@@ -248,7 +248,7 @@ params:
     required: false
 
   - param: SEARCH_TOPIC
-    label: Search function URL
+    label: Search pubsub topic name
     description: >-
       Specify a Pub/Sub topic to publish search queries to.
     example: search
@@ -256,7 +256,7 @@ params:
     required: false
 
   - param: DELETION_TOPIC
-    label: Search function URL
+    label: Deletion pubsub topic name
     description: >-
       Specify a Pub/Sub topic to publish deletion queries to.
     example: deletions
