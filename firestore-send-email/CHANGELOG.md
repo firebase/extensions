@@ -1,3 +1,7 @@
+## Version 0.1.19
+
+fixed - generate new lib folder
+
 ## Version 0.1.18
 
 fixed - added encoding for connection string passwords (#985)

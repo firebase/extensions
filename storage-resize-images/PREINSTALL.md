@@ -29,6 +29,10 @@ Before installing this extension, make sure that you've [set up a Cloud Storage 
 
 You can install multiple instances of this extension for the same project to configure different resizing options for different paths. However, as mentioned before this extension listens for all changes made to the specified Cloud Storage bucket. That means all instances will be triggered every time a file is uploaded to the bucket. Therefore, it is recommended to use different buckets instead of different paths to prevent unnecessary function calls.
 
+#### Troubleshooting
+
+If events are enabled, and you want to create custom event handlers to respond to the events published by the extension, you must ensure that you have the appropriate [role/permissions](https://cloud.google.com/pubsub/docs/access-control#permissions_and_roles) to subscribe to Pub/Sub events.
+
 #### Billing
  
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
