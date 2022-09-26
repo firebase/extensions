@@ -21,7 +21,6 @@ import { getDatabaseUrl } from "./helpers";
 
 import config from "./config";
 import * as logs from "./logs";
-import { runCustomQueries } from "./runCustomQueries";
 import { search } from "./search";
 import { runCustomSearchFunction } from "./runCustomSearchFunction";
 import { runBatchPubSubDeletions } from "./runBatchPubSubDeletions";
@@ -156,13 +155,6 @@ export const clearData = functions.auth.user().onDelete(async (user) => {
     promises.push(clearStorageData(storagePaths, uid));
   } else {
     logs.storageNotConfigured();
-  }
-
-  /** find all query collection data */
-  if (queryCollection) {
-    promises.push(runCustomQueries(uid));
-  } else {
-    logs.queryCollectionNotConfigured();
   }
 
   await Promise.all(promises);

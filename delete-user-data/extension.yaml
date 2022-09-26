@@ -217,14 +217,6 @@ params:
     example: "{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt"
     required: false
 
-  - param: FIRESTORE_QUERY_COLLECTION
-    label: Cloud Firestore custom paths
-    description: >-
-     Collection to store custom queries for searching user data.
-    type: string
-    example: queries
-    required: false
-
   - param: ENABLE_SEARCH
     label: Enable search
     description: >-
