@@ -1,3 +1,7 @@
+## Version 0.1.26
+
+docs - correct service account name
+
 ## Version 0.1.25
 
 feature - add version to the bigquery import script
