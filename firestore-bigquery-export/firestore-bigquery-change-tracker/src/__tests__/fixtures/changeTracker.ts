@@ -41,6 +41,7 @@ export const changeTrackerEvent = ({
   documentId = "testing",
   pathParams = { documentId: "12345" },
   data = { end_date: firestore.Timestamp.now() },
+  oldData = null,
 }: any): FirestoreDocumentChangeEvent => {
   return {
     timestamp,
@@ -49,6 +50,7 @@ export const changeTrackerEvent = ({
     eventId,
     documentId,
     data,
+    oldData,
     pathParams,
   };
 };
