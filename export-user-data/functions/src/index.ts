@@ -18,9 +18,10 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as csvStringify from "csv-stringify/sync";
 
-
-const STORAGE_BUCKET = 'storage-bucket';
+const STORAGE_BUCKET = "storage-bucket";
 const STORAGE_EXPORT_DIRECTORY = "exports";
+const PATHS_FROM_CONFIG = "users/{UID},posts/{UID}";
+const HEADERS = ["TYPE", "path", "data"];
 
 // Initialize the Firebase Admin SDK
 admin.initializeApp({
@@ -28,11 +29,9 @@ admin.initializeApp({
 });
 
 const getPaths = (uid: string) => {
-  const configParam = "users/{UID},posts/{UID}";
-
-  const paths = configParam
-    .split(",")
-    .map((path) => path.replace(/{UID}/g, uid));
+  const paths = PATHS_FROM_CONFIG.split(",").map((path) =>
+    path.replace(/{UID}/g, uid)
+  );
 
   const collections: string[] = [];
   const docs: string[] = [];
@@ -69,14 +68,59 @@ const uploadToStorage = async (
 
   await file.save(csv);
 
-  await admin.firestore()
+  await admin
+    .firestore()
     .doc(`exports/${exportId}`)
     .update({
       status: "complete",
       storagePath: storagePath,
-    })
+    });
 
-  return storagePath
+  return storagePath;
+};
+
+const initializeExport = async (uid: string, startedAt) => {
+  const exportDoc = await admin
+    .firestore()
+    .collection("exports")
+    .add({
+      uid,
+      status: "pending",
+      started_at: startedAt,
+    });
+
+  return exportDoc.id;
+};
+
+const constructFirestoreCollectionCSV = async (
+  snap: FirebaseFirestore.QuerySnapshot,
+  collectionPath: string
+) => {
+  const csvData = snap.docs.map((doc) => {
+    const path = `${collectionPath}/${doc.id}`;
+
+    return ["FIRESTORE", path, JSON.stringify(doc.data())];
+  });
+
+  csvData.unshift(HEADERS);
+
+  return csvStringify.stringify(csvData);
+};
+
+const constructFirestoreDocumentCSV = async (
+  snap: FirebaseFirestore.DocumentSnapshot,
+  documentPath: string
+) => {
+  const csvData = [HEADERS];
+
+  const data = snap.data();
+
+  for (let key in data) {
+    const path = `${documentPath}/${key}`;
+    csvData.push(["FIRESTORE", path, JSON.stringify(data[key])]);
+  }
+
+  return csvStringify.stringify(csvData);
 };
 
 export const exportUserData = functions.https.onCall(async (_data, context) => {
@@ -84,71 +128,38 @@ export const exportUserData = functions.https.onCall(async (_data, context) => {
   // const uid = context.auth.uid;
   const uid = "123";
 
-  // create /exports/<exportId> with status "pending"
-  const ref = await admin
-    .firestore()
-    .collection("exports")
-    .add({ status: "pending", started_at: startedAt, uid });
-
-  const exportId = ref.id;
+  const exportId = await initializeExport(uid, startedAt);
 
   // get all paths we will export
   const { collections, docs } = getPaths(uid);
 
-  const headers = ["TYPE", "path", "data"];
-
   const promises = [];
 
   for (let collection of collections) {
-
     const snap = await admin
       .firestore()
       .collection(collection)
       .get();
 
     if (!snap.empty) {
-      const csvData = snap.docs.map((doc => {
-
-        const path = `${collection}/${doc.id}`;
-        return ["FIRESTORE", path, JSON.stringify(doc.data())];
-      }));
-
-      csvData.unshift(headers);
-
-      const csv = csvStringify.stringify(csvData);
+      const csv = await constructFirestoreCollectionCSV(snap, collection);
       promises.push(uploadToStorage(csv, uid, exportId, collection));
     }
   }
 
   for (let doc of docs) {
-    const csvData = [headers];
     const snap = await admin
       .firestore()
       .doc(doc)
       .get();
-    if (snap.exists) {
-      const data = snap.data();
-      csvData.push(["FIRESTORE", doc, JSON.stringify(data)]);
 
-      const csv = csvStringify.stringify(csvData);
+    if (snap.exists) {
+      const csv = await constructFirestoreDocumentCSV(snap, doc);
       promises.push(uploadToStorage(csv, uid, exportId, doc));
     }
   }
 
   await Promise.all(promises);
 
-  await admin
-    .firestore()
-    .collection("exports")
-    .doc(exportId)
-    .update({
-      uid,
-      started_at: startedAt,
-      status: "complete",
-      location: `gs://storage-bucket/exports/${uid}/${exportId}`,
-      // TODO include links to export
-    });
-
-  // TODO return the storage refs
   return { exportId };
 });
