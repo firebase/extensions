@@ -16,10 +16,11 @@
 
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import * as archiver from "archiver";
-import config from "./config";
-import * as logs from "./logs";
 import * as csvStringify from "csv-stringify/sync";
+
+
+const STORAGE_BUCKET = 'storage-bucket';
+const STORAGE_EXPORT_DIRECTORY = "exports";
 
 // Initialize the Firebase Admin SDK
 admin.initializeApp({
@@ -59,12 +60,23 @@ const uploadToStorage = async (
 ) => {
   const formattedPath = path.replace(/\//g, "_");
 
+  const storagePath = `${STORAGE_EXPORT_DIRECTORY}/${uid}/${exportId}/${formattedPath}.csv`;
+
   const file = admin
     .storage()
-    .bucket("storage-bucket")
-    .file(`exports/${uid}/${exportId}/${formattedPath}`);
+    .bucket(STORAGE_BUCKET)
+    .file(storagePath);
 
-  return file.save(csv);
+  await file.save(csv);
+
+  await admin.firestore()
+    .doc(`exports/${exportId}`)
+    .update({
+      status: "complete",
+      storagePath: storagePath,
+    })
+
+  return storagePath
 };
 
 export const exportUserData = functions.https.onCall(async (_data, context) => {
@@ -76,13 +88,9 @@ export const exportUserData = functions.https.onCall(async (_data, context) => {
   const ref = await admin
     .firestore()
     .collection("exports")
-    .add({ status: "pending", started_at: startedAt });
-  const exportId = ref.id;
+    .add({ status: "pending", started_at: startedAt, uid });
 
-  const file = admin
-    .storage()
-    .bucket("storage-bucket")
-    .file("exports/" + uid + "/" + exportId + ".zip");
+  const exportId = ref.id;
 
   // get all paths we will export
   const { collections, docs } = getPaths(uid);
@@ -92,15 +100,20 @@ export const exportUserData = functions.https.onCall(async (_data, context) => {
   const promises = [];
 
   for (let collection of collections) {
-    const csvData = [headers];
+
     const snap = await admin
       .firestore()
       .collection(collection)
       .get();
 
     if (!snap.empty) {
-      const data = snap.docs.map((doc) => doc.data());
-      csvData.push(["FIRESTORE", collection, JSON.stringify(data)]);
+      const csvData = snap.docs.map((doc => {
+
+        const path = `${collection}/${doc.id}`;
+        return ["FIRESTORE", path, JSON.stringify(doc.data())];
+      }));
+
+      csvData.unshift(headers);
 
       const csv = csvStringify.stringify(csvData);
       promises.push(uploadToStorage(csv, uid, exportId, collection));
@@ -122,6 +135,8 @@ export const exportUserData = functions.https.onCall(async (_data, context) => {
     }
   }
 
+  await Promise.all(promises);
+
   await admin
     .firestore()
     .collection("exports")
@@ -130,6 +145,7 @@ export const exportUserData = functions.https.onCall(async (_data, context) => {
       uid,
       started_at: startedAt,
       status: "complete",
+      location: `gs://storage-bucket/exports/${uid}/${exportId}`,
       // TODO include links to export
     });
 
