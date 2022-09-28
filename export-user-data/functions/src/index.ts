@@ -19,71 +19,120 @@ import * as functions from "firebase-functions";
 import * as archiver from "archiver";
 import config from "./config";
 import * as logs from "./logs";
+import * as csvStringify from "csv-stringify/sync";
 
 // Initialize the Firebase Admin SDK
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),
 });
 
-logs.init();
+const getPaths = (uid: string) => {
+  const configParam = "users/{UID},posts/{UID}";
 
-const pipeToStorage = (archive: any, exportId: string, uid: string) => {
+  const paths = configParam
+    .split(",")
+    .map((path) => path.replace(/{UID}/g, uid));
+
+  const collections: string[] = [];
+  const docs: string[] = [];
+
+  for (let path of paths) {
+    const parts = path.split("/");
+    if (parts.length % 2 === 0) {
+      docs.push(path);
+    } else {
+      collections.push(path);
+    }
+  }
+
+  return {
+    collections,
+    docs,
+  };
+};
+
+const uploadToStorage = async (
+  csv: string,
+  uid: string,
+  exportId: string,
+  path: string
+) => {
+  const formattedPath = path.replace(/\//g, "_");
 
   const file = admin
     .storage()
-    .bucket('storage-bucket')
-    .file('exports/' + uid + '/' + exportId + '.zip')
+    .bucket("storage-bucket")
+    .file(`exports/${uid}/${exportId}/${formattedPath}`);
 
-
-  const outputStreamBuffer = file.createWriteStream({
-    gzip: true,
-    contentType: 'application/zip',
-  });
-
-  archive.pipe(outputStreamBuffer);
-
-
-}
+  return file.save(csv);
+};
 
 export const exportUserData = functions.https.onCall(async (_data, context) => {
-
-  const uid = context.auth.uid;
-
-  const archive = archiver('zip', { zlib: { level: 9 } });
-
-  archive.on('error', function (err: unknown) {
-    throw err;
-  });
-
-  archive.on("finish", async () => {
-    console.log("Archive created");
-  })
+  const startedAt = admin.firestore.Timestamp.now();
+  // const uid = context.auth.uid;
+  const uid = "123";
 
   // create /exports/<exportId> with status "pending"
-  const ref = await admin.firestore().collection('exports').add({ status: 'pending' })
+  const ref = await admin
+    .firestore()
+    .collection("exports")
+    .add({ status: "pending", started_at: startedAt });
   const exportId = ref.id;
 
-  pipeToStorage(archive, exportId, uid);
+  const file = admin
+    .storage()
+    .bucket("storage-bucket")
+    .file("exports/" + uid + "/" + exportId + ".zip");
 
+  // get all paths we will export
+  const { collections, docs } = getPaths(uid);
 
-  // get firestore paths to export
-  const { firestoreExportCollectionPaths } = config;
-  // make CSV for each path
-  const exportedDocs = [];
+  const headers = ["TYPE", "path", "data"];
 
-  for (let path of firestoreExportCollectionPaths.split(',')) {
-    const pathWithUid = path.replace(/{UID}/g, uid);
-    // get document with path and uid
-    const doc = await admin.firestore().doc(path).get();
-    if (doc.exists) {
-      exportedDocs.push('FIRESTORE');
-      exportedDocs.push(pathWithUid);
-      exportedDocs.push(JSON.stringify(doc.data()));
+  const promises = [];
+
+  for (let collection of collections) {
+    const csvData = [headers];
+    const snap = await admin
+      .firestore()
+      .collection(collection)
+      .get();
+
+    if (!snap.empty) {
+      const data = snap.docs.map((doc) => doc.data());
+      csvData.push(["FIRESTORE", collection, JSON.stringify(data)]);
+
+      const csv = csvStringify.stringify(csvData);
+      promises.push(uploadToStorage(csv, uid, exportId, collection));
     }
   }
-  let csv = exportedDocs.join(',');
 
-  archive.append(csv, { name: exportId + '.zip' });
+  for (let doc of docs) {
+    const csvData = [headers];
+    const snap = await admin
+      .firestore()
+      .doc(doc)
+      .get();
+    if (snap.exists) {
+      const data = snap.data();
+      csvData.push(["FIRESTORE", doc, JSON.stringify(data)]);
 
-  return { exportId }
+      const csv = csvStringify.stringify(csvData);
+      promises.push(uploadToStorage(csv, uid, exportId, doc));
+    }
+  }
+
+  await admin
+    .firestore()
+    .collection("exports")
+    .doc(exportId)
+    .update({
+      uid,
+      started_at: startedAt,
+      status: "complete",
+      // TODO include links to export
+    });
+
+  // TODO return the storage refs
+  return { exportId };
 });

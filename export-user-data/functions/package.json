@@ -1,6 +1,6 @@
 {
-  "name": "delete-user-data-functions",
-  "description": "Automatically delete a user's data when they delete their account.",
+  "name": "export-user-data-functions",
+  "description": "Automatically export a user's data when they delete their account.",
   "main": "lib/index.js",
   "scripts": {
     "prepare": "npm run build",
@@ -11,9 +11,10 @@
     "test:watch": "jest --watch",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
-  "author": "Lauren Long <longlauren@google.com>",
+  "author": "Jacob Cable",
   "license": "Apache-2.0",
   "dependencies": {
+    "csv-stringify": "^6.2.0",
     "firebase-admin": "^9.11.1",
     "firebase-functions": "^3.15.4",
     "firebase-tools": "^9.16.5",
@@ -25,7 +26,9 @@
   },
   "private": true,
   "devDependencies": {
+    "@types/jest": "^29.0.3",
     "jest": "^26.6.3",
-    "jest-environment-jsdom-fifteen": "^1.0.2"
+    "jest-environment-jsdom-fifteen": "^1.0.2",
+    "ts-jest": "^24.1.0"
   }
 }

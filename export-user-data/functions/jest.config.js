@@ -3,6 +3,9 @@ const packageJson = require("./package.json");
 module.exports = {
   name: packageJson.name,
   displayName: packageJson.name,
-  rootDir: "./",
+  rootDir: "./__tests__",
   preset: "ts-jest",
+  testMatch: ["**/__tests__/*.test.ts"],
+  testEnvironment: "node",
+  setupFiles: ["<rootDir>/jest.setup.ts"],
 };

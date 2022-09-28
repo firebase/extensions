@@ -27,6 +27,7 @@
     "@types/jest": "^24.0.18",
     "codecov": "^3.8.1",
     "concurrently": "^7.2.1",
+    "firebase-functions-test": "^2.4.0",
     "jest": "^24.9.0",
     "lerna": "^3.4.3",
     "prettier": "1.15.3",
