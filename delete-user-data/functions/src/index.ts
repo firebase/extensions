@@ -110,12 +110,14 @@ export const handleSearch = functions.pubsub
     }
 
     /** Iterate through documents */
-    for await (const field of config.searchFields.split(",")) {
-      const snapshot = await collection.where(field, "==", uid).get();
+    if (config.searchFields) {
+      for await (const field of config.searchFields.split(",")) {
+        const snapshot = await collection.where(field, "==", uid).get();
 
-      if (snapshot.docs.length) {
-        const docs = snapshot.docs.map((doc) => doc.ref.path);
-        await runBatchPubSubDeletions(docs);
+        if (snapshot.docs.length) {
+          const docs = snapshot.docs.map((doc) => doc.ref.path);
+          await runBatchPubSubDeletions(docs);
+        }
       }
     }
 

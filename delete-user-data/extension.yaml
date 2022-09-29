@@ -230,17 +230,22 @@ params:
     default: no
     required: false
 
-    - param: SEARCH_DEPTH
-    label: Enable search
+  - param: SEARCH_DEPTH
+    label: Search Depth
     description: >-
       Enable search for user data in Cloud Firestore and Realtime Database.
-    type: select
-    options:
-      - label: Yes
-        value: yes
-      - label: No
-        value: no
-    default: no
+    validation: ^[0-9]
+    type: string
+    default: 3
+    required: true
+
+  - param: SEARCH_FIELDS
+    label: Search Fields
+    description: >-
+      Select the fields to search for to delete user data in Cloud Firestore. Works with enable search.
+    validation: ^[0-9]
+    type: string
+    default: "id,uid,userId"
     required: false
 
   - param: SEARCH_FUNCTION
