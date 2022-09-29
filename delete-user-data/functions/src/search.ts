@@ -13,9 +13,8 @@ export const search = async (
   const pubsub = new PubSub();
 
   const topic = pubsub.topic(
-    `projects/${process.env.GOOGLE_CLOUD_PROJECT}/topics/${
-      config.default.searchTopic
-    }`
+    `projects/${process.env.GOOGLE_CLOUD_PROJECT ||
+      process.env.PROJECT_ID}/topics/${config.default.searchTopic}`
   );
 
   const collections = !document
