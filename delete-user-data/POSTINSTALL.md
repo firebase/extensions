@@ -21,6 +21,18 @@ When a user's account is deleted from your project's authenticated users, this e
 * Cloud Storage path(s): `${param:STORAGE_PATHS}`
 * Database Instance path(s): `${param:SELECTED_DATABASE_INSTANCE}`
 
+* Auto Discovery
+
+For Firestore database, you can optionally configure the extension to automatically discover data to delete, as well as customize the data to be deleted. Here are some additional discovery strategies that you could turn on:
+
+1. Auto-discover documents underneath a top-level collection where a document ID itself is a UID
+
+2. Auto-discover documents underneath a top-level collection containing any pre-configured fields (specified in configuration parameters) matching the UID that triggered the deletion.
+
+* Custom functions hook: `${param:SEARCH_FUNCTION}`
+
+A predefined url can provide a list of document paths for the extension to delete.
+
 You can delete a user directly in your [Authentication dashboard]((https://console.firebase.google.com/project/${param:PROJECT_ID}/authentication/users)) or by using one of the Firebase Authentication SDKs. Learn more in the [Authentication documentation](https://firebase.google.com/docs/auth).
 
 ### Monitoring
