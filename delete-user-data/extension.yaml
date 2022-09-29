@@ -230,6 +230,19 @@ params:
     default: no
     required: false
 
+    - param: SEARCH_DEPTH
+    label: Enable search
+    description: >-
+      Enable search for user data in Cloud Firestore and Realtime Database.
+    type: select
+    options:
+      - label: Yes
+        value: yes
+      - label: No
+        value: no
+    default: no
+    required: false
+
   - param: SEARCH_FUNCTION
     label: Search function URL
     description: >-
