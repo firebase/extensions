@@ -15,6 +15,7 @@
  */
 
 import * as admin from "firebase-admin";
+import { FieldPath } from 'firebase-admin/firestore';
 import * as functions from "firebase-functions";
 import * as firebase_tools from "firebase-tools";
 import { getDatabaseUrl } from "./helpers";
@@ -106,29 +107,28 @@ export const handleSearch = functions.pubsub
       if (nextDepth <= config.searchDepth) {
         // Trigger a pubsub event to search in sub-collections
         await search(uid, nextDepth, documentRef);
-      }      
+      }
     }
 
-    // Handle search fields
-    if (config.searchFields) {
-      for await (const field of config.searchFields.split(",")) {
-        const snapshot = await collection.where(field, "==", uid).get();
+    if (nextDepth <= config.searchDepth) {
+      const documentSnapshots = await collection.get();
+      const paths: string[] = [];
 
-        if (!snapshot.empty) {
-          const paths = snapshot.docs.map((doc) => doc.ref.path);
-          // Delete the document paths
-          await runBatchPubSubDeletions({
-            firestorePaths: paths,
-          });
+      await Promise.all(documentSnapshots.docs.map(async (snapshot) => {
+        // Start a sub-collection search on each document.
+        await search(uid, nextDepth, documentSnapshot.ref);
 
-          if (nextDepth <= config.searchDepth) {
-            for (const path of paths) {
-              // Trigger a pubsub event to search in sub-collections
-              await search(uid, nextDepth, db.doc(path));
-            }
+        for (const field of config.searchFields.split(",")) {
+          if (documentSnapshot.get(new FieldPath(field)) === uid) {
+            paths.push(snapshot.ref.path);
+            continue;
           }
-        } 
-      }
+        }
+      }));
+
+      await runBatchPubSubDeletions({
+        firestorePaths: paths,
+      });
     }
   });
 
