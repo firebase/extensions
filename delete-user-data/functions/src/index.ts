@@ -17,6 +17,7 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as firebase_tools from "firebase-tools";
+const { PubSub } = require("@google-cloud/pubsub");
 import { getDatabaseUrl } from "./helpers";
 
 import config from "./config";
@@ -24,7 +25,6 @@ import * as logs from "./logs";
 import { search } from "./search";
 import { runCustomSearchFunction } from "./runCustomSearchFunction";
 import { runBatchPubSubDeletions } from "./runBatchPubSubDeletions";
-
 var _ = require("lodash");
 
 // Helper function for selecting correct domain adrress
@@ -101,12 +101,10 @@ export const handleSearch = functions.pubsub
     }
 
     /** Seatch document Ids*/
-    const snapshot = await collection
-      .where(admin.firestore.FieldPath.documentId(), "==", uid)
-      .get();
+    const snapshot = await collection.doc(uid).get();
 
-    if (snapshot.docs.length) {
-      await runBatchPubSubDeletions(snapshot.docs.map((doc) => doc.ref.path));
+    if (snapshot.exists) {
+      await snapshot.ref.delete();
     }
 
     /** Iterate through documents */
@@ -117,6 +115,45 @@ export const handleSearch = functions.pubsub
         if (snapshot.docs.length) {
           const docs = snapshot.docs.map((doc) => doc.ref.path);
           await runBatchPubSubDeletions(docs);
+        }
+      }
+    }
+
+    /** Check Search depth and continue if valid */
+    const collectionDepth = collection.path.split("/").length;
+    const documentDepth = collectionDepth + 1;
+
+    if (collectionDepth > 4) {
+      console.log("Checking collection path >>>>>", collection.path);
+      console.log("Checking collection path depth >>>>>", collectionDepth);
+      console.log("Checking document path depth >>>>>", collectionDepth);
+      console.log("Checking config search depth >>>>>", config.searchDepth);
+    }
+
+    if (documentDepth < config.searchDepth) {
+      const snapshot = await collection.get();
+
+      if (snapshot.docs.length) {
+        /** Configure search pubsub */
+        const pubsub = new PubSub();
+
+        /** Set pubsub topic */
+        const topic = pubsub.topic(
+          `projects/${process.env.GOOGLE_CLOUD_PROJECT ||
+            process.env.PROJECT_ID}/topics/${config.searchTopic}`
+        );
+
+        /** Iterate through each document */
+        for await (const doc of snapshot.docs) {
+          /** List collections */
+          const collections = await doc.ref.listCollections();
+
+          /** Iterate and search each collection */
+          for (const collection of collections) {
+            topic.publish(
+              Buffer.from(JSON.stringify({ path: collection.path, uid }))
+            );
+          }
         }
       }
     }

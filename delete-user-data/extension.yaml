@@ -157,6 +157,21 @@ params:
     example: users/{UID},admins/{UID}
     required: false
 
+  - param: FIRESTORE_DELETE_MODE
+    label: Cloud Firestore delete mode
+    description: >-
+      (Only applicable if you use the `Cloud Firestore paths` parameter.) How do
+      you want to delete Cloud Firestore documents? To also delete documents in
+      subcollections, set this parameter to `recursive`.
+    type: select
+    options:
+      - label: Recursive
+        value: recursive
+      - label: Shallow
+        value: shallow
+    default: shallow
+    required: true
+
   - param: SELECTED_DATABASE_INSTANCE
     label: Realtime Database instance
     description: >
@@ -243,7 +258,6 @@ params:
     label: Search Fields
     description: >-
       Select the fields to search for to delete user data in Cloud Firestore. Works with enable search.
-    validation: ^[0-9]
     type: string
     default: "id,uid,userId"
     required: false

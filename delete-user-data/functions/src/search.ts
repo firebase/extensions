@@ -22,8 +22,6 @@ export const search = async (
     : await document.listCollections();
 
   for (const collection of collections) {
-    await topic.publish(
-      Buffer.from(JSON.stringify({ path: collection.path, uid }))
-    );
+    topic.publish(Buffer.from(JSON.stringify({ path: collection.path, uid })));
   }
 };
