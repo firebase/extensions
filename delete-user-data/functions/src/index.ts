@@ -95,20 +95,25 @@ export const handleSearch = functions.pubsub
     }
 
     if (nextDepth <= config.searchDepth) {
-      const documentSnapshots = await collection.get();
+      const documentReferences = await collection.listDocuments();
       const paths: string[] = [];
 
-      await Promise.all(documentSnapshots.docs.map(async (snapshot) => {
+      await Promise.all(documentReferences.map(async (reference) => {
         // Start a sub-collection search on each document.
-        await search(uid, nextDepth, snapshot.ref);
+        await search(uid, nextDepth, reference);
 
-        if (snapshot.id === uid) {
-          await snapshot.ref.delete();
+        if (reference.id === uid) {
+          paths.push(reference.path);
         } else if (config.searchFields) {
-          for (const field of config.searchFields.split(",")) {
-            if (snapshot.get(new FieldPath(field)) === uid) {
-              paths.push(snapshot.ref.path);
-              continue;
+          // If there is search fields, get the document snapshot
+          const snapshot = await reference.get();
+
+          if (snapshot.exists) {
+            for (const field of config.searchFields.split(",")) {
+              if (snapshot.get(new FieldPath(field)) === uid) {
+                paths.push(snapshot.ref.path);
+                continue;
+              }
             }
           }
         }
