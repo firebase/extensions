@@ -43,7 +43,7 @@ describe("search", () => {
 
   describe("top level collections", () => {
     test("can delete is single collection named {uid}", async () => {
-      await search(user.uid);
+      await search(user.uid, 1);
 
       await waitForCollectionDeletion(rootCollection);
     }, 60000);
@@ -52,7 +52,7 @@ describe("search", () => {
   describe("top level collection documents", () => {
     test("can delete a document named {uid}", async () => {
       const document = await db.collection(generateRandomId()).doc(user.uid);
-      await search(user.uid);
+      await search(user.uid, 1);
 
       await waitForDocumentDeletion(document);
     }, 60000);
@@ -61,34 +61,40 @@ describe("search", () => {
       const document = await db
         .collection(generateRandomId())
         .add({ field1: user.uid });
-      await search(user.uid);
+      await search(user.uid, 1);
 
       await waitForDocumentDeletion(document);
     }, 60000);
 
     test("can check a document without any field values", async () => {
       await db.collection(generateRandomId()).add({});
-      await search(user.uid);
+      await search(user.uid, 1);
 
       expect(true).toBeTruthy();
     }, 60000);
   });
 
   describe("sub collection", () => {
-    xtest("can delete a subcollection document named {uid}", async () => {
-      const collection = await db
-        .collection(generateRandomId())
-        .doc()
-        .collection(user.uid);
-      await collection.add({});
+    test("can delete a subcollection named {uid}", async () => {
+      const collection = await db.collection(
+        "can-delete-a-subcollection-named-uid"
+      );
 
-      const checkExists = await (await collection.get()).docs[0].exists;
+      const subcollection = await collection
+        .doc("subcollection")
+        .collection(user.uid);
+
+      await subcollection.add({ foo: "bar" });
+
+      const checkExists = await subcollection
+        .get()
+        .then((col) => col.docs.length > 0);
 
       expect(checkExists).toBe(true);
 
-      await search(user.uid);
+      await search(user.uid, 1);
 
-      await waitForCollectionDeletion(collection);
+      await waitForCollectionDeletion(subcollection);
     }, 60000);
   });
 });
