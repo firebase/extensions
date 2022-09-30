@@ -17,15 +17,14 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import * as firebase_tools from "firebase-tools";
-const { PubSub } = require("@google-cloud/pubsub");
 import { getDatabaseUrl } from "./helpers";
+import chunk from 'lodash.chunk';
 
 import config from "./config";
 import * as logs from "./logs";
 import { search } from "./search";
 import { runCustomSearchFunction } from "./runCustomSearchFunction";
 import { runBatchPubSubDeletions } from "./runBatchPubSubDeletions";
-var _ = require("lodash");
 
 // Helper function for selecting correct domain adrress
 const databaseURL = getDatabaseUrl(
@@ -45,120 +44,84 @@ logs.init();
 
 export const handleDeletion = functions.pubsub
   .topic(config.deletionTopic)
-  .onPublish(async (message, context) => {
-    const { paths } = JSON.parse(
+  .onPublish(async (message) => {
+    const data = JSON.parse(
       Buffer.from(message.data, "base64").toString("utf8")
     );
 
-    if (!paths) return Promise.resolve();
+    const paths = data.paths as string[];
 
     const batchArray = [];
 
-    _.chunk(paths, 450).forEach((chunk, index) => {
-      batchArray.push(db.batch());
-
+    chunk<string>(paths, 450).forEach((chunk) => {
+      const batch = db.batch();
       /** Loop through each path query */
       for (const path of chunk) {
         const docRef = db.doc(path);
-        batchArray[index].delete(docRef);
+        batch.delete(docRef);
       }
+
+      batchArray.push(batch);
     });
 
-    batchArray.forEach(async (batch) => await batch.commit());
+    await Promise.all(batchArray.map((batch) => batch.commit()));
   });
 
 export const handleSearch = functions.pubsub
   .topic(config.searchTopic)
-  .onPublish(async (message, context) => {
-    const { path, uid } = JSON.parse(
+  .onPublish(async (message) => {
+    const data = JSON.parse(
       Buffer.from(message.data, "base64").toString("utf8")
     );
 
-    /** Check if a document path */
-    if (path.split("/").length % 2 === 0) {
-      /** Delete document */
-      const doc = db.doc(path);
+    const path = data.path as string;
+    const depth = data.depth as number;
+    const uid = data.uid as string;
 
-      if (path.includes(uid)) {
-        const toDelete = await doc.get();
-        await toDelete.ref.delete();
-      }
+    // Create a collection reference from the path
+    const collection = db.collection(path);
 
-      return Promise.resolve();
+    // If the collection ID is the same as the UID, delete the entire collection and sub-collections
+    if (collection.id === uid) {
+      await firebase_tools.firestore.delete(path, {
+        project: process.env.PROJECT_ID,
+        recursive: true,
+        yes: true, // auto-confirmation
+      });
+
+      return;
     }
 
-    /** Check for subcollections and documents */
-    const collection = db.collection(path.toString());
+    // Reference a collection document
+    const documentRef = collection.doc(uid);
+    const documentSnapshot = await documentRef.get();
 
-    /** Delete collection if userId is included in the path */
-    if (path.includes(uid)) {
-      const snapshot = await collection.get();
+    // Delete the document if it exists, and trigger a sub-collection search
+    if (documentSnapshot.exists) {
+      // Attempt to delete a document with the UID as the document ID
+      await documentRef.delete();
 
-      if (snapshot.docs.length) {
-        const docs = snapshot.docs.map((doc) => doc.ref.path);
-        await runBatchPubSubDeletions(docs);
-      }
+      const nextDepth = depth + 1;
+
+      // Only search sub-collections if the depth is less than the max depth
+      if (nextDepth <= config.searchDepth) {
+        // Trigger a pubsub event to search in sub-collections
+        await search(uid, nextDepth, documentRef);
+      }      
     }
 
-    /** Seatch document Ids*/
-    const snapshot = await collection.doc(uid).get();
-
-    if (snapshot.exists) {
-      await snapshot.ref.delete();
-    }
-
-    /** Iterate through documents */
+    // Handle search fields
     if (config.searchFields) {
       for await (const field of config.searchFields.split(",")) {
         const snapshot = await collection.where(field, "==", uid).get();
 
-        if (snapshot.docs.length) {
-          const docs = snapshot.docs.map((doc) => doc.ref.path);
-          await runBatchPubSubDeletions(docs);
+        if (!snapshot.empty) {
+          await runBatchPubSubDeletions({
+            firestorePaths: snapshot.docs.map((doc) => doc.ref.path),
+          });
         }
       }
     }
-
-    /** Check Search depth and continue if valid */
-    const collectionDepth = collection.path.split("/").length;
-    const documentDepth = collectionDepth + 1;
-
-    if (collectionDepth > 4) {
-      console.log("Checking collection path >>>>>", collection.path);
-      console.log("Checking collection path depth >>>>>", collectionDepth);
-      console.log("Checking document path depth >>>>>", collectionDepth);
-      console.log("Checking config search depth >>>>>", config.searchDepth);
-    }
-
-    if (documentDepth < config.searchDepth) {
-      const snapshot = await collection.get();
-
-      if (snapshot.docs.length) {
-        /** Configure search pubsub */
-        const pubsub = new PubSub();
-
-        /** Set pubsub topic */
-        const topic = pubsub.topic(
-          `projects/${process.env.GOOGLE_CLOUD_PROJECT ||
-            process.env.PROJECT_ID}/topics/${config.searchTopic}`
-        );
-
-        /** Iterate through each document */
-        for await (const doc of snapshot.docs) {
-          /** List collections */
-          const collections = await doc.ref.listCollections();
-
-          /** Iterate and search each collection */
-          for (const collection of collections) {
-            topic.publish(
-              Buffer.from(JSON.stringify({ path: collection.path, uid }))
-            );
-          }
-        }
-      }
-    }
-
-    return Promise.resolve();
   });
 
 /*
@@ -173,10 +136,9 @@ export const clearData = functions.auth.user().onDelete(async (user) => {
     firestorePaths,
     rtdbPaths,
     storagePaths,
-    queryCollection,
     enableSearch,
-    searchFunction,
   } = config;
+
   const { uid } = user;
 
   const promises = [];
@@ -200,7 +162,7 @@ export const clearData = functions.auth.user().onDelete(async (user) => {
 
   /** If search mode enable, run pubsub search fn */
   if (enableSearch) {
-    await search(uid);
+    await search(uid, 1);
   }
 
   /** If search function provided, return a list of queries */

@@ -3,10 +3,11 @@ import * as config from "./config";
 const { PubSub } = require("@google-cloud/pubsub");
 
 export const search = async (
-  uid,
+  uid: string,
+  depth: number,
   document?: admin.firestore.DocumentReference<
     admin.firestore.DocumentData
-  > | null
+  >
 ) => {
   const db = admin.firestore();
 
@@ -22,6 +23,6 @@ export const search = async (
     : await document.listCollections();
 
   for (const collection of collections) {
-    topic.publish(Buffer.from(JSON.stringify({ path: collection.path, uid })));
+    topic.publish(Buffer.from(JSON.stringify({ path: collection.path, uid, depth })));
   }
 };

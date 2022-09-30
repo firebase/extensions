@@ -249,7 +249,7 @@ params:
     label: Search Depth
     description: >-
       Enable search for user data in Cloud Firestore and Realtime Database.
-    validation: ^[0-9]
+    validation: ^[1-9]
     type: string
     default: 3
     required: true

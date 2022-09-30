@@ -1,16 +1,29 @@
+import chunk from 'lodash.chunk';
 const { PubSub } = require("@google-cloud/pubsub");
-var _ = require("lodash");
+
 
 import * as config from "./config";
 
-export async function runBatchPubSubDeletions(paths: string[]) {
+type Paths = {
+  firestorePaths: string[];
+};
+
+export async function runBatchPubSubDeletions(paths: Paths) {
   /** Define pubsub */
   const pubsub = new PubSub();
 
-  if (!paths.length) return Promise.resolve();
+  const {firestorePaths} = paths;
+
+  if (!firestorePaths || !Array.isArray(firestorePaths)) {
+    return;
+  }
+
+  if (firestorePaths.length === 0) {
+    return;
+  }
 
   /** Define batch array variables */
-  for await (const chunk of _.chunk(paths, 450)) {
+  for await (const c of chunk<string>(firestorePaths, 450)) {
     const topic = pubsub.topic(
       `projects/${process.env.GOOGLE_CLOUD_PROJECT ||
         process.env.PROJECT_ID}/topics/${config.default.deletionTopic}`
