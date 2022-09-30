@@ -94,34 +94,22 @@ export const handleSearch = functions.pubsub
       return;
     }
 
-    // Reference a collection document
-    const documentRef = collection.doc(uid);
-    const documentSnapshot = await documentRef.get();
-
-    // Delete the document if it exists, and trigger a sub-collection search
-    if (documentSnapshot.exists) {
-      // Attempt to delete a document with the UID as the document ID
-      await documentRef.delete();
-
-      // Only search sub-collections if the depth is less than the max depth
-      if (nextDepth <= config.searchDepth) {
-        // Trigger a pubsub event to search in sub-collections
-        await search(uid, nextDepth, documentRef);
-      }
-    }
-
     if (nextDepth <= config.searchDepth) {
       const documentSnapshots = await collection.get();
       const paths: string[] = [];
 
       await Promise.all(documentSnapshots.docs.map(async (snapshot) => {
         // Start a sub-collection search on each document.
-        await search(uid, nextDepth, documentSnapshot.ref);
+        await search(uid, nextDepth, snapshot.ref);
 
-        for (const field of config.searchFields.split(",")) {
-          if (documentSnapshot.get(new FieldPath(field)) === uid) {
-            paths.push(snapshot.ref.path);
-            continue;
+        if (snapshot.id === uid) {
+          await snapshot.ref.delete();
+        } else if (config.searchFields) {
+          for (const field of config.searchFields.split(",")) {
+            if (snapshot.get(new FieldPath(field)) === uid) {
+              paths.push(snapshot.ref.path);
+              continue;
+            }
           }
         }
       }));
