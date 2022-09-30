@@ -77,6 +77,7 @@ export const handleSearch = functions.pubsub
     const path = data.path as string;
     const depth = data.depth as number;
     const uid = data.uid as string;
+    const nextDepth = depth + 1;
 
     // Create a collection reference from the path
     const collection = db.collection(path);
@@ -101,8 +102,6 @@ export const handleSearch = functions.pubsub
       // Attempt to delete a document with the UID as the document ID
       await documentRef.delete();
 
-      const nextDepth = depth + 1;
-
       // Only search sub-collections if the depth is less than the max depth
       if (nextDepth <= config.searchDepth) {
         // Trigger a pubsub event to search in sub-collections
@@ -116,10 +115,19 @@ export const handleSearch = functions.pubsub
         const snapshot = await collection.where(field, "==", uid).get();
 
         if (!snapshot.empty) {
+          const paths = snapshot.docs.map((doc) => doc.ref.path);
+          // Delete the document paths
           await runBatchPubSubDeletions({
-            firestorePaths: snapshot.docs.map((doc) => doc.ref.path),
+            firestorePaths: paths,
           });
-        }
+
+          if (nextDepth <= config.searchDepth) {
+            for (const path of paths) {
+              // Trigger a pubsub event to search in sub-collections
+              await search(uid, nextDepth, db.doc(path));
+            }
+          }
+        } 
       }
     }
   });
