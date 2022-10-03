@@ -85,25 +85,24 @@ export const handleSearch = functions.pubsub
 
     const path = data.path as string;
     const depth = data.depth as number;
+    const nextDepth = (data.depth as number) + 1;
     const uid = data.uid as string;
 
     // Create a collection reference from the path
     const collection = db.collection(path);
 
-    // If the collection ID is the same as the UID, delete the entire collection and sub-collections
-    if (collection.id === uid) {
-      await firebase_tools.firestore.delete(path, {
-        project: process.env.PROJECT_ID,
-        recursive: true,
-        yes: true, // auto-confirmation
-      });
+    if (depth <= config.searchDepth) {
+      // If the collection ID is the same as the UID, delete the entire collection and sub-collections
+      if (collection.id === uid) {
+        await firebase_tools.firestore.delete(path, {
+          project: process.env.PROJECT_ID,
+          recursive: true,
+          yes: true, // auto-confirmation
+        });
 
-      return;
-    }
+        return;
+      }
 
-    const nextDepth = depth + 1;
-
-    if (nextDepth <= config.searchDepth) {
       const documentReferences = await collection.listDocuments();
       const documentReferencesToSearch: DocumentReference[] = [];
       const pathsToDelete: string[] = [];
@@ -111,7 +110,9 @@ export const handleSearch = functions.pubsub
       await Promise.all(
         documentReferences.map(async (reference) => {
           // Start a sub-collection search on each document.
-          await search(uid, nextDepth, reference);
+          if (nextDepth <= config.searchDepth) {
+            await search(uid, nextDepth, reference);
+          }
 
           // If the ID of the document is the same as the UID, add it to delete list.
           if (reference.id === uid) {
