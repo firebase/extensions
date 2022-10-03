@@ -15,7 +15,7 @@
  */
 
 import * as admin from "firebase-admin";
-import { FieldPath } from "firebase-admin/firestore";
+import { FieldPath, DocumentReference } from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
 import * as firebase_tools from "firebase-tools";
 import { getDatabaseUrl } from "./helpers";
@@ -86,7 +86,6 @@ export const handleSearch = functions.pubsub
     const path = data.path as string;
     const depth = data.depth as number;
     const uid = data.uid as string;
-    const nextDepth = depth + 1;
 
     // Create a collection reference from the path
     const collection = db.collection(path);
@@ -102,35 +101,45 @@ export const handleSearch = functions.pubsub
       return;
     }
 
-    if (nextDepth <= config.searchDepth) {
+    if (depth <= config.searchDepth) {
       const documentReferences = await collection.listDocuments();
-      const paths: string[] = [];
+      const documentReferencesToSearch: DocumentReference[] = [];
+      const pathsToDelete: string[] = [];
 
       await Promise.all(
         documentReferences.map(async (reference) => {
           // Start a sub-collection search on each document.
-          await search(uid, nextDepth, reference);
+          await search(uid, depth + 1, reference);
 
+          // If the ID of the document is the same as the UID, add it to delete list.
           if (reference.id === uid) {
-            paths.push(reference.path);
-          } else if (config.searchFields) {
-            // If there is search fields, get the document snapshot
-            const snapshot = await reference.get();
-
-            if (snapshot.exists) {
-              for (const field of config.searchFields.split(",")) {
-                if (snapshot.get(new FieldPath(field)) === uid) {
-                  paths.push(snapshot.ref.path);
-                  continue;
-                }
-              }
-            }
+            pathsToDelete.push(reference.path);
+          }
+          // If the user has search fields, all the document to the list of documents to search.
+          else if (config.searchFields) {
+            documentReferencesToSearch.push(reference);
           }
         })
       );
 
+      // Get any documents which need searching, and then check their fields.
+      if (documentReferencesToSearch.length > 0) {
+        const snapshots = await db.getAll(...documentReferencesToSearch);
+
+        for (const snapshot of snapshots) {
+          if (snapshot.exists) {
+            for (const field of config.searchFields.split(",")) {
+              if (snapshot.get(new FieldPath(field)) === uid) {
+                pathsToDelete.push(snapshot.ref.path);
+                continue;
+              }
+            }
+          }
+        }
+      }
+
       await runBatchPubSubDeletions({
-        firestorePaths: paths,
+        firestorePaths: pathsToDelete,
       });
     }
   });
