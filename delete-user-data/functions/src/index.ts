@@ -101,7 +101,9 @@ export const handleSearch = functions.pubsub
       return;
     }
 
-    if (depth <= config.searchDepth) {
+    const nextDepth = depth + 1;
+
+    if (nextDepth <= config.searchDepth) {
       const documentReferences = await collection.listDocuments();
       const documentReferencesToSearch: DocumentReference[] = [];
       const pathsToDelete: string[] = [];
@@ -109,7 +111,7 @@ export const handleSearch = functions.pubsub
       await Promise.all(
         documentReferences.map(async (reference) => {
           // Start a sub-collection search on each document.
-          await search(uid, depth + 1, reference);
+          await search(uid, nextDepth, reference);
 
           // If the ID of the document is the same as the UID, add it to delete list.
           if (reference.id === uid) {

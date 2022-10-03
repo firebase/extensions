@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
 import { UserRecord } from "firebase-functions/v1/auth";
-import { createFirebaseUser, waitForDocumentDeletion } from "../src/helpers";
+import { createFirebaseUser, waitForDocumentDeletion } from "./helpers";
 import setupEnvironment from "../__tests__/helpers/setupEnvironment";
 
 setupEnvironment();
@@ -16,7 +16,7 @@ describe("search", () => {
     user = await createFirebaseUser();
   });
 
-  test("can delete a single document ", async () => {
+  test("can delete a single document", async () => {
     await admin
       .firestore()
       .collection("searchFunction")

@@ -1,12 +1,13 @@
 import * as admin from "firebase-admin";
 import { UserRecord } from "firebase-admin/lib/auth/user-record";
-import { search } from "../src//search";
+import { search } from "../src/search";
 import {
   createFirebaseUser,
   waitForCollectionDeletion,
   waitForDocumentDeletion,
-} from "../src/helpers";
+} from "./helpers";
 import setupEnvironment from "../__tests__/helpers/setupEnvironment";
+import config from "../src/config";
 
 const environment = {
   queryCollection: "queries",
@@ -33,7 +34,7 @@ const generateTopLevelUserCollection = async (userId) => {
   return collection;
 };
 
-describe("search", () => {
+describe("discovery", () => {
   let user: UserRecord;
   let rootCollection: admin.firestore.CollectionReference;
   beforeEach(async () => {
@@ -41,7 +42,7 @@ describe("search", () => {
     rootCollection = await generateTopLevelUserCollection(user.uid);
   });
 
-  describe("top level collections", () => {
+  describe("searches on top level collections", () => {
     test("can delete is single collection named {uid}", async () => {
       await search(user.uid, 1);
 
@@ -49,7 +50,7 @@ describe("search", () => {
     }, 60000);
   });
 
-  describe("top level collection documents", () => {
+  describe("searches on top level collection documents", () => {
     test("can delete a document named {uid}", async () => {
       const document = await db.collection(generateRandomId()).doc(user.uid);
       await search(user.uid, 1);
@@ -95,6 +96,70 @@ describe("search", () => {
       await search(user.uid, 1);
 
       await waitForCollectionDeletion(subcollection);
+    }, 60000);
+  });
+
+  describe("does not exceed the search depth", () => {
+    test("on a collection named {uid}", async () => {
+      const subcollection = await db
+        .collection("1")
+        .doc("1")
+        .collection("2")
+        .doc("2")
+        .collection("3")
+        .doc("3")
+        .collection("4")
+        .doc("4")
+        .collection(`${user.uid}`);
+
+      await subcollection.add({ foo: "bar" });
+
+      const collectionPathCount = subcollection.path.split("/").length / 2;
+
+      expect(collectionPathCount).toBeGreaterThan(config.searchDepth);
+
+      await search(user.uid, 1);
+
+      // /** Wait 10 seconds for the discovery to complete */
+      await new Promise((resolve) => setTimeout(resolve, 20000));
+
+      // /** Check that document still exists */
+      const checkExists = await subcollection.get().then((collection) => {
+        return collection.docs.length > 0;
+      });
+
+      expect(checkExists).toBe(true);
+    }, 60000);
+
+    test("on a document with a field named {uid}", async () => {
+      const subcollection = await db
+        .collection("1")
+        .doc("1")
+        .collection("2")
+        .doc("2")
+        .collection("3")
+        .doc("3")
+        .collection("4")
+        .doc("4")
+        .collection("5");
+
+      await subcollection.add({ field1: `${user.uid}` });
+
+      const collectionPathCount = subcollection.path.split("/").length / 2;
+
+      expect(collectionPathCount).toBeGreaterThan(config.searchDepth);
+
+      await search(user.uid, 1);
+
+      // /** Wait 10 seconds for the discovery to complete */
+      await new Promise((resolve) => setTimeout(resolve, 20000));
+
+      // /** Check that document still exists */
+      const checkExists = await subcollection.get().then((collection) => {
+        return collection.docs.length > 0;
+      });
+
+      expect(checkExists).toBe(true);
     }, 60000);
   });
 });
