@@ -15,11 +15,12 @@
  */
 
 import * as admin from "firebase-admin";
-import { FieldPath } from 'firebase-admin/firestore';
+import { FieldPath } from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
 import * as firebase_tools from "firebase-tools";
 import { getDatabaseUrl } from "./helpers";
-import chunk from 'lodash.chunk';
+import chunk from "lodash.chunk";
+import { getEventarc } from "firebase-admin/eventarc";
 
 import config from "./config";
 import * as logs from "./logs";
@@ -40,6 +41,13 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+
+/** Setup EventArc Channels */
+const eventChannel =
+  process.env.EVENTARC_CHANNEL &&
+  getEventarc().channel(process.env.EVENTARC_CHANNEL, {
+    allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
+  });
 
 logs.init();
 
@@ -98,26 +106,28 @@ export const handleSearch = functions.pubsub
       const documentReferences = await collection.listDocuments();
       const paths: string[] = [];
 
-      await Promise.all(documentReferences.map(async (reference) => {
-        // Start a sub-collection search on each document.
-        await search(uid, nextDepth, reference);
+      await Promise.all(
+        documentReferences.map(async (reference) => {
+          // Start a sub-collection search on each document.
+          await search(uid, nextDepth, reference);
 
-        if (reference.id === uid) {
-          paths.push(reference.path);
-        } else if (config.searchFields) {
-          // If there is search fields, get the document snapshot
-          const snapshot = await reference.get();
+          if (reference.id === uid) {
+            paths.push(reference.path);
+          } else if (config.searchFields) {
+            // If there is search fields, get the document snapshot
+            const snapshot = await reference.get();
 
-          if (snapshot.exists) {
-            for (const field of config.searchFields.split(",")) {
-              if (snapshot.get(new FieldPath(field)) === uid) {
-                paths.push(snapshot.ref.path);
-                continue;
+            if (snapshot.exists) {
+              for (const field of config.searchFields.split(",")) {
+                if (snapshot.get(new FieldPath(field)) === uid) {
+                  paths.push(snapshot.ref.path);
+                  continue;
+                }
               }
             }
           }
-        }
-      }));
+        })
+      );
 
       await runBatchPubSubDeletions({
         firestorePaths: paths,
@@ -133,27 +143,61 @@ export const handleSearch = functions.pubsub
 export const clearData = functions.auth.user().onDelete(async (user) => {
   logs.start();
 
-  const {
-    firestorePaths,
-    rtdbPaths,
-    storagePaths,
-    enableSearch,
-  } = config;
+  const { firestorePaths, rtdbPaths, storagePaths, enableSearch } = config;
 
   const { uid } = user;
 
   const promises = [];
   if (firestorePaths) {
+    if (eventChannel) {
+      await eventChannel.publish({
+        type: `firebase.extensions.delete-user-data.v1.firestore`,
+        data: JSON.stringify({
+          id: user.uid,
+          firestorePaths,
+          rtdbPaths,
+          storagePaths,
+          enableSearch,
+        }),
+      });
+    }
+
     promises.push(clearFirestoreData(firestorePaths, uid));
   } else {
     logs.firestoreNotConfigured();
   }
   if (rtdbPaths && databaseURL) {
+    if (eventChannel) {
+      await eventChannel.publish({
+        type: `firebase.extensions.delete-user-data.v1.rtdb`,
+        data: JSON.stringify({
+          id: user.uid,
+          firestorePaths,
+          rtdbPaths,
+          storagePaths,
+          enableSearch,
+        }),
+      });
+    }
+
     promises.push(clearDatabaseData(rtdbPaths, uid));
   } else {
     logs.rtdbNotConfigured();
   }
   if (storagePaths) {
+    if (eventChannel) {
+      await eventChannel.publish({
+        type: `firebase.extensions.delete-user-data.v1.storage`,
+        data: JSON.stringify({
+          id: user.uid,
+          firestorePaths,
+          rtdbPaths,
+          storagePaths,
+          enableSearch,
+        }),
+      });
+    }
+
     promises.push(clearStorageData(storagePaths, uid));
   } else {
     logs.storageNotConfigured();

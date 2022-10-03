@@ -287,8 +287,10 @@ params:
     type: string
     required: true
 
-
-
 events:
-  - type: firebase.extensions.delete-user-data.v1.trigger
-    description: Occurs when a pre-defined collection or document has been triggered by a deleted user.
+  - type: firebase.extensions.delete-user-data.v1.firestore
+    description: Occurs when a pre-defined list of collections/documents has been triggered by a deleted user.
+  - type: firebase.extensions.delete-user-data.v1.rtdb
+    description: Occurs when a pre-defined real-time database paths has been triggered by a deleted user.
+  - type: firebase.extensions.delete-user-data.v1.storage
+    description: Occurs when a pre-defined storage paths has been triggered by a deleted user.
