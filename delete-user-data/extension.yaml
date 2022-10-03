@@ -175,7 +175,7 @@ params:
   - param: SELECTED_DATABASE_INSTANCE
     label: Realtime Database instance
     description: >
-      From which Realtime Database instance do you want to delete user data?
+      From which Realtime Database instance do you want to delete user data? Leave empty to use the default project instance.
     type: string
     example: my-instance
     validationRegex: ^([0-9a-z_.-]*)$
