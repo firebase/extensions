@@ -74,6 +74,15 @@ export const handleDeletion = functions.pubsub
     });
 
     await Promise.all(batchArray.map((batch) => batch.commit()));
+
+    // TODO add me
+    // await eventChannel.publish({
+    //   type: `firebase.extensions.delete-user-data.v1.firestore`,
+    //   data: JSON.stringify({
+    //     uid: user.uid,
+    //     documentPaths: paths,
+    //   }),
+    // });
   });
 
 export const handleSearch = functions.pubsub
@@ -85,25 +94,34 @@ export const handleSearch = functions.pubsub
 
     const path = data.path as string;
     const depth = data.depth as number;
+    const nextDepth = (data.depth as number) + 1;
     const uid = data.uid as string;
 
     // Create a collection reference from the path
     const collection = db.collection(path);
 
-    // If the collection ID is the same as the UID, delete the entire collection and sub-collections
-    if (collection.id === uid) {
-      await firebase_tools.firestore.delete(path, {
-        project: process.env.PROJECT_ID,
-        recursive: true,
-        yes: true, // auto-confirmation
-      });
+    if (depth <= config.searchDepth) {
+      // If the collection ID is the same as the UID, delete the entire collection and sub-collections
+      if (collection.id === uid) {
+        // TODO event with collection path
+        await firebase_tools.firestore.delete(path, {
+          project: process.env.PROJECT_ID,
+          recursive: true,
+          yes: true, // auto-confirmation
+        });
 
-      return;
-    }
+        // TODO add me
+      // await eventChannel.publish({
+      //   type: `firebase.extensions.delete-user-data.v1.firestore`,
+      //   data: JSON.stringify({
+      //     uid: user.uid,
+      //     collectionPath: collection.path,
+      //   }),
+      // });
 
-    const nextDepth = depth + 1;
+        return;
+      }
 
-    if (nextDepth <= config.searchDepth) {
       const documentReferences = await collection.listDocuments();
       const documentReferencesToSearch: DocumentReference[] = [];
       const pathsToDelete: string[] = [];
@@ -111,7 +129,9 @@ export const handleSearch = functions.pubsub
       await Promise.all(
         documentReferences.map(async (reference) => {
           // Start a sub-collection search on each document.
-          await search(uid, nextDepth, reference);
+          if (nextDepth <= config.searchDepth) {
+            await search(uid, nextDepth, reference);
+          }
 
           // If the ID of the document is the same as the UID, add it to delete list.
           if (reference.id === uid) {
@@ -160,55 +180,16 @@ export const clearData = functions.auth.user().onDelete(async (user) => {
 
   const promises = [];
   if (firestorePaths) {
-    if (eventChannel) {
-      await eventChannel.publish({
-        type: `firebase.extensions.delete-user-data.v1.firestore`,
-        data: JSON.stringify({
-          id: user.uid,
-          firestorePaths,
-          rtdbPaths,
-          storagePaths,
-          enableSearch,
-        }),
-      });
-    }
-
     promises.push(clearFirestoreData(firestorePaths, uid));
   } else {
     logs.firestoreNotConfigured();
   }
   if (rtdbPaths && databaseURL) {
-    if (eventChannel) {
-      await eventChannel.publish({
-        type: `firebase.extensions.delete-user-data.v1.rtdb`,
-        data: JSON.stringify({
-          id: user.uid,
-          firestorePaths,
-          rtdbPaths,
-          storagePaths,
-          enableSearch,
-        }),
-      });
-    }
-
     promises.push(clearDatabaseData(rtdbPaths, uid));
   } else {
     logs.rtdbNotConfigured();
   }
   if (storagePaths) {
-    if (eventChannel) {
-      await eventChannel.publish({
-        type: `firebase.extensions.delete-user-data.v1.storage`,
-        data: JSON.stringify({
-          id: user.uid,
-          firestorePaths,
-          rtdbPaths,
-          storagePaths,
-          enableSearch,
-        }),
-      });
-    }
-
     promises.push(clearStorageData(storagePaths, uid));
   } else {
     logs.storageNotConfigured();
@@ -248,6 +229,15 @@ const clearDatabaseData = async (databasePaths: string, uid: string) => {
 
   await Promise.all(promises);
 
+    // TODO add me
+  // await eventChannel.publish({
+  //   type: `firebase.extensions.delete-user-data.v1.database`,
+  //   data: JSON.stringify({
+  //     uid: user.uid,
+  //     paths,
+  //   }),
+  // });
+
   logs.rtdbDeleted();
 };
 
@@ -279,6 +269,14 @@ const clearStorageData = async (storagePaths: string, uid: string) => {
   });
 
   await Promise.all(promises);
+
+    // await eventChannel.publish({
+  //   type: `firebase.extensions.delete-user-data.v1.storage`,
+  //   data: JSON.stringify({
+  //     uid: user.uid,
+  //     paths,
+  //   }),
+  // });
 
   logs.storageDeleted();
 };
@@ -316,6 +314,15 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
   });
 
   await Promise.all(promises);
+
+  // TODO
+    // await eventChannel?.publish({
+  //   type: `firebase.extensions.delete-user-data.v1.firestore`,
+  //   data: JSON.stringify({
+  //     uid: user.uid,
+  //     documentPaths: paths,
+  //   }),
+  // });
 
   logs.firestoreDeleted();
 };
