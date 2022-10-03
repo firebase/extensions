@@ -73,7 +73,7 @@ resources:
       location: ${LOCATION}
       eventTrigger:
         eventType: google.pubsub.topic.publish
-        resource: projects/${PROJECT_ID}/topics/${param:SEARCH_TOPIC}
+        resource: projects/${PROJECT_ID}/topics/${param:AUTO_DISCOVERY_TOPIC}
 
   - name: handleDeletion
     type: firebaseextensions.v1beta.function
@@ -232,35 +232,36 @@ params:
     example: "{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt"
     required: false
 
-  - param: ENABLE_SEARCH
-    label: Enable search
-    description: >-
-      Enable search for user data in Cloud Firestore and Realtime Database.
-    type: select
-    options:
-      - label: Yes
-        value: yes
-      - label: No
-        value: no
-    default: no
-    required: false
+  - param: ENABLE_AUTO_DISCOVERY
+   label: Enable auto discovery
+   description: >-
+     Enable the extension to automatically discover Firestore collections and documents to delete.
+   type: select
+   options:
+     - label: Yes
+       value: yes
+     - label: No
+       value: no
+   default: no
+   required: false
 
-  - param: SEARCH_DEPTH
-    label: Search Depth
-    description: >-
-      Enable search for user data in Cloud Firestore and Realtime Database.
-    validation: ^[1-9]
-    type: string
-    default: 3
-    required: true
+  - param: AUTO_DISCOVERY_SEARCH_DEPTH
+   label: Auto discovery search depth
+   description: >-
+     If auto discovery is enabled, how deep should auto discovery find collections and documents. For example, setting to `1` would only discover root collections and documents, whereas setting to `9` would search sub-collections 9 levels deep. Defaults to `3`.
+   validation: ^[0-9]
+   type: string
+   default: 3
+   required: true
 
-  - param: SEARCH_FIELDS
-    label: Search Fields
-    description: >-
-      Select the fields to search for to delete user data in Cloud Firestore. Works with enable search.
-    type: string
-    default: "id,uid,userId"
-    required: false
+  - param: AUTO_DISCOVERY_SEARCH_FIELDS
+   label: Auto discovery search fields
+   description: >-
+     If auto discovery is enabled, specify what document fields should be matched to the user’s UID. If left empty, document fields will not be used in auto discovery.
+   type: string
+   default: "id,uid,userId"
+   required: false
+
 
   - param: SEARCH_FUNCTION
     label: Search function URL
@@ -271,13 +272,14 @@ params:
     type: string
     required: false
 
-  - param: SEARCH_TOPIC
-    label: Search pubsub topic name
+  - param: AUTO_DISCOVERY_TOPIC
+    label: Auto discovery pubsub topic name
     description: >-
-      Specify a Pub/Sub topic to publish search queries to.
-    example: search
+      Specify a Pub/Sub topic to publish discovery queries to.
+    example: discovery
     type: string
-    required: true
+    required: false
+    default: discovery
 
   - param: DELETION_TOPIC
     label: Deletion pubsub topic name
@@ -285,7 +287,9 @@ params:
       Specify a Pub/Sub topic to publish deletion queries to.
     example: deletions
     type: string
-    required: true
+    required: false
+    default: deletions
+
 
 events:
   - type: firebase.extensions.delete-user-data.v1.firestore

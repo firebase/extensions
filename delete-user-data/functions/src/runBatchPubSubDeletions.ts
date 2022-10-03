@@ -1,6 +1,5 @@
-import chunk from 'lodash.chunk';
+import chunk from "lodash.chunk";
 const { PubSub } = require("@google-cloud/pubsub");
-
 
 import * as config from "./config";
 
@@ -12,7 +11,7 @@ export async function runBatchPubSubDeletions(paths: Paths) {
   /** Define pubsub */
   const pubsub = new PubSub();
 
-  const {firestorePaths} = paths;
+  const { firestorePaths } = paths;
 
   if (!firestorePaths || !Array.isArray(firestorePaths)) {
     return;

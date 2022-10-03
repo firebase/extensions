@@ -5,9 +5,7 @@ const { PubSub } = require("@google-cloud/pubsub");
 export const search = async (
   uid: string,
   depth: number,
-  document?: admin.firestore.DocumentReference<
-    admin.firestore.DocumentData
-  >
+  document?: admin.firestore.DocumentReference<admin.firestore.DocumentData>
 ) => {
   const db = admin.firestore();
 
@@ -15,7 +13,7 @@ export const search = async (
 
   const topic = pubsub.topic(
     `projects/${process.env.GOOGLE_CLOUD_PROJECT ||
-      process.env.PROJECT_ID}/topics/${config.default.searchTopic}`
+      process.env.PROJECT_ID}/topics/${config.default.discoveryTopic}`
   );
 
   const collections = !document
@@ -23,6 +21,8 @@ export const search = async (
     : await document.listCollections();
 
   for (const collection of collections) {
-    topic.publish(Buffer.from(JSON.stringify({ path: collection.path, uid, depth })));
+    topic.publish(
+      Buffer.from(JSON.stringify({ path: collection.path, uid, depth }))
+    );
   }
 };

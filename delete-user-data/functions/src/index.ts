@@ -77,7 +77,7 @@ export const handleDeletion = functions.pubsub
   });
 
 export const handleSearch = functions.pubsub
-  .topic(config.searchTopic)
+  .topic(config.discoveryTopic)
   .onPublish(async (message) => {
     const data = JSON.parse(
       Buffer.from(message.data, "base64").toString("utf8")
