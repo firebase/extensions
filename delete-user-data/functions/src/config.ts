@@ -28,5 +28,5 @@ export default {
   searchFunction: process.env.SEARCH_FUNCTION,
   searchTopic: process.env.SEARCH_TOPIC,
   deletionTopic: process.env.DELETION_TOPIC,
-  searchDepth: process.env.SEARCH_DEPTH || 3,
+  searchDepth: process.env.SEARCH_DEPTH ? parseInt(process.env.SEARCH_DEPTH) : 3,
 };
