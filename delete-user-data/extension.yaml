@@ -211,6 +211,17 @@ params:
     example: users/{UID},admins/{UID}
     required: false
 
+  - param: STORAGE_BUCKET
+    label: Cloud Storage bucket
+    description: >
+       Where in Google Cloud Storage do you store user data?
+    type: string
+    example: my-project-12345.appspot.com
+    validationRegex: ^([0-9a-z_.-]*)$
+    validationErrorMessage: Invalid storage bucket
+    default: ${STORAGE_BUCKET}
+    required: true
+
   - param: STORAGE_PATHS
     label: Cloud Storage paths
     description: >-
