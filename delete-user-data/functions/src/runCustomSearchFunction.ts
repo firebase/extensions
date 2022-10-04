@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 import { runBatchPubSubDeletions } from "./runBatchPubSubDeletions";
-import * as logs from './logs';
+import * as logs from "./logs";
 import config from "./config";
 
 export const runCustomSearchFunction = async (uid: string): Promise<void> => {
@@ -21,10 +21,8 @@ export const runCustomSearchFunction = async (uid: string): Promise<void> => {
 
   // Support returning an array directly
   if (Array.isArray(json)) {
-    return runBatchPubSubDeletions({
-      firestorePaths: json,
-    });
-  } 
+    return runBatchPubSubDeletions({ firestorePaths: json }, uid);
+  }
 
-  return runBatchPubSubDeletions(json);
+  return runBatchPubSubDeletions(json, uid);
 };

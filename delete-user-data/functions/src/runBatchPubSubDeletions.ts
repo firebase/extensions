@@ -7,7 +7,7 @@ type Paths = {
   firestorePaths: string[];
 };
 
-export async function runBatchPubSubDeletions(paths: Paths) {
+export async function runBatchPubSubDeletions(paths: Paths, uid: string) {
   /** Define pubsub */
   const pubsub = new PubSub();
 
@@ -27,6 +27,8 @@ export async function runBatchPubSubDeletions(paths: Paths) {
       `projects/${process.env.GOOGLE_CLOUD_PROJECT ||
         process.env.PROJECT_ID}/topics/${config.default.deletionTopic}`
     );
-    await topic.publish(Buffer.from(JSON.stringify({ paths: chunkedPaths })));
+    await topic.publish(
+      Buffer.from(JSON.stringify({ paths: chunkedPaths, uid }))
+    );
   }
 }

@@ -59,6 +59,7 @@ export const handleDeletion = functions.pubsub
     );
 
     const paths = data.paths as string[];
+    const uid = data.uid as string;
 
     const batchArray = [];
 
@@ -75,14 +76,15 @@ export const handleDeletion = functions.pubsub
 
     await Promise.all(batchArray.map((batch) => batch.commit()));
 
-    // TODO add me
-    // await eventChannel.publish({
-    //   type: `firebase.extensions.delete-user-data.v1.firestore`,
-    //   data: JSON.stringify({
-    //     uid: user.uid,
-    //     documentPaths: paths,
-    //   }),
-    // });
+    if (eventChannel) {
+      await eventChannel.publish({
+        type: `firebase.extensions.delete-user-data.v1.firestore`,
+        data: JSON.stringify({
+          uid,
+          documentPaths: paths,
+        }),
+      });
+    }
   });
 
 export const handleSearch = functions.pubsub
@@ -103,21 +105,22 @@ export const handleSearch = functions.pubsub
     if (depth <= config.searchDepth) {
       // If the collection ID is the same as the UID, delete the entire collection and sub-collections
       if (collection.id === uid) {
-        // TODO event with collection path
         await firebase_tools.firestore.delete(path, {
           project: process.env.PROJECT_ID,
           recursive: true,
           yes: true, // auto-confirmation
         });
 
-        // TODO add me
-        // await eventChannel.publish({
-        //   type: `firebase.extensions.delete-user-data.v1.firestore`,
-        //   data: JSON.stringify({
-        //     uid: user.uid,
-        //     collectionPath: collection.path,
-        //   }),
-        // });
+        if (eventChannel) {
+          /** Publish event to EventArc */
+          await eventChannel.publish({
+            type: `firebase.extensions.delete-user-data.v1.firestore`,
+            data: JSON.stringify({
+              uid,
+              collectionPath: collection.path,
+            }),
+          });
+        }
 
         return;
       }
@@ -160,9 +163,12 @@ export const handleSearch = functions.pubsub
         }
       }
 
-      await runBatchPubSubDeletions({
-        firestorePaths: pathsToDelete,
-      });
+      await runBatchPubSubDeletions(
+        {
+          firestorePaths: pathsToDelete,
+        },
+        uid
+      );
     }
   });
 
@@ -229,14 +235,16 @@ const clearDatabaseData = async (databasePaths: string, uid: string) => {
 
   await Promise.all(promises);
 
-  // TODO add me
-  // await eventChannel.publish({
-  //   type: `firebase.extensions.delete-user-data.v1.database`,
-  //   data: JSON.stringify({
-  //     uid: user.uid,
-  //     paths,
-  //   }),
-  // });
+  if (eventChannel) {
+    /** Send database deletion event */
+    await eventChannel.publish({
+      type: `firebase.extensions.delete-user-data.v1.database`,
+      data: JSON.stringify({
+        uid,
+        paths,
+      }),
+    });
+  }
 
   logs.rtdbDeleted();
 };
@@ -270,13 +278,16 @@ const clearStorageData = async (storagePaths: string, uid: string) => {
 
   await Promise.all(promises);
 
-  // await eventChannel.publish({
-  //   type: `firebase.extensions.delete-user-data.v1.storage`,
-  //   data: JSON.stringify({
-  //     uid: user.uid,
-  //     paths,
-  //   }),
-  // });
+  if (eventChannel) {
+    /** Send storage deletion event */
+    await eventChannel.publish({
+      type: `firebase.extensions.delete-user-data.v1.storage`,
+      data: JSON.stringify({
+        uid,
+        paths,
+      }),
+    });
+  }
 
   logs.storageDeleted();
 };
@@ -315,14 +326,16 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
 
   await Promise.all(promises);
 
-  // TODO
-  // await eventChannel?.publish({
-  //   type: `firebase.extensions.delete-user-data.v1.firestore`,
-  //   data: JSON.stringify({
-  //     uid: user.uid,
-  //     documentPaths: paths,
-  //   }),
-  // });
+  if (eventChannel) {
+    /** Send firestore deletion event */
+    await eventChannel.publish({
+      type: `firebase.extensions.delete-user-data.v1.firestore`,
+      data: JSON.stringify({
+        uid,
+        documentPaths: paths,
+      }),
+    });
+  }
 
   logs.firestoreDeleted();
 };
