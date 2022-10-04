@@ -301,11 +301,16 @@ params:
     required: false
     default: deletions
 
-
 events:
   - type: firebase.extensions.delete-user-data.v1.firestore
-    description: Occurs when a pre-defined list of collections/documents has been triggered by a deleted user.
+    description: Occurs when a set of Firestore paths has been marked for deletion following a delete user trigger.
+
   - type: firebase.extensions.delete-user-data.v1.rtdb
-    description: Occurs when a pre-defined real-time database paths has been triggered by a deleted user.
+    description:  Occurs when a set of Realtime Database paths has been marked for deletion following a delete user trigger.
+
   - type: firebase.extensions.delete-user-data.v1.storage
-    description: Occurs when a pre-defined storage paths has been triggered by a deleted user.
+    description:  Occurs when a set of Storage paths has been marked for deletion following a delete user trigger.
+
+  - type: firebase.extensions.delete-user-data.v1.autoDiscovery
+    description:  Occurs when an auto-discovered list of Firestore collections or documents have been marked for deletion following a delete user trigger.
+
