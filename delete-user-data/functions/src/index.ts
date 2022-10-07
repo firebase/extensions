@@ -79,10 +79,10 @@ export const handleDeletion = functions.pubsub
     if (eventChannel) {
       await eventChannel.publish({
         type: `firebase.extensions.delete-user-data.v1.firestore`,
-        data: JSON.stringify({
+        data:{
           uid,
           documentPaths: paths,
-        }),
+        }
       });
     }
   });
@@ -115,10 +115,10 @@ export const handleSearch = functions.pubsub
           /** Publish event to EventArc */
           await eventChannel.publish({
             type: `firebase.extensions.delete-user-data.v1.firestore`,
-            data: JSON.stringify({
+            data: {
               uid,
               collectionPath: collection.path,
-            }),
+            },
           });
         }
 
@@ -239,10 +239,10 @@ const clearDatabaseData = async (databasePaths: string, uid: string) => {
     /** Send database deletion event */
     await eventChannel.publish({
       type: `firebase.extensions.delete-user-data.v1.database`,
-      data: JSON.stringify({
+      data: {
         uid,
         paths,
-      }),
+      },
     });
   }
 
@@ -282,10 +282,10 @@ const clearStorageData = async (storagePaths: string, uid: string) => {
     /** Send storage deletion event */
     await eventChannel.publish({
       type: `firebase.extensions.delete-user-data.v1.storage`,
-      data: JSON.stringify({
+      data: {
         uid,
         paths,
-      }),
+      },
     });
   }
 
@@ -330,10 +330,10 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
     /** Send firestore deletion event */
     await eventChannel.publish({
       type: `firebase.extensions.delete-user-data.v1.firestore`,
-      data: JSON.stringify({
+      data: {
         uid,
         documentPaths: paths,
-      }),
+      },
     });
   }
 
