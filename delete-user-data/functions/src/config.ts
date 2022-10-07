@@ -22,7 +22,7 @@ export default {
   storagePaths: process.env.STORAGE_PATHS,
   enableSearch: process.env.ENABLE_AUTO_DISCOVERY === "yes",
   storageBucketDefault:
-    process.env.STORAGE_BUCKET || process.env.STORAGE_BUCKET,
+    process.env.CLOUD_STORAGE_BUCKET || process.env.STORAGE_BUCKET,
   selectedDatabaseInstance: process.env.SELECTED_DATABASE_INSTANCE,
   selectedDatabaseLocation: process.env.SELECTED_DATABASE_LOCATION,
   searchFields: process.env.AUTO_DISCOVERY_SEARCH_FIELDS || "",

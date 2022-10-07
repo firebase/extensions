@@ -211,7 +211,7 @@ params:
     example: users/{UID},admins/{UID}
     required: false
 
-  - param: STORAGE_BUCKET
+  - param: CLOUD_STORAGE_BUCKET
     label: Cloud Storage bucket
     description: >
        Which Google Could Storage bucket do you want to delete files from?
