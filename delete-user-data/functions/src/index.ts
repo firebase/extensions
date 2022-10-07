@@ -79,10 +79,10 @@ export const handleDeletion = functions.pubsub
     if (eventChannel) {
       await eventChannel.publish({
         type: `firebase.extensions.delete-user-data.v1.firestore`,
-        data:{
+        data: {
           uid,
           documentPaths: paths,
-        }
+        },
       });
     }
   });
