@@ -283,24 +283,6 @@ params:
     type: string
     required: false
 
-  - param: AUTO_DISCOVERY_TOPIC
-    label: Auto discovery pubsub topic name
-    description: >-
-      Specify a Pub/Sub topic to publish discovery queries to.
-    example: discovery
-    type: string
-    required: false
-    default: discovery
-
-  - param: DELETION_TOPIC
-    label: Deletion pubsub topic name
-    description: >-
-      Specify a Pub/Sub topic to publish deletion queries to.
-    example: deletions
-    type: string
-    required: false
-    default: deletions
-
 events:
   - type: firebase.extensions.delete-user-data.v1.firestore
     description: Occurs when a set of Firestore paths has been marked for deletion following a delete user trigger.

@@ -27,8 +27,8 @@ export default {
   selectedDatabaseLocation: process.env.SELECTED_DATABASE_LOCATION,
   searchFields: process.env.AUTO_DISCOVERY_SEARCH_FIELDS || "",
   searchFunction: process.env.SEARCH_FUNCTION,
-  discoveryTopic: process.env.AUTO_DISCOVERY_TOPIC,
-  deletionTopic: process.env.DELETION_TOPIC,
+  discoveryTopic: `ext-${process.env.EXT_INSTANCE_ID}-discovery`,
+  deletionTopic: `ext-${process.env.EXT_INSTANCE_ID}-deletion`,
   searchDepth: process.env.AUTO_DISCOVERY_SEARCH_DEPTH
     ? parseInt(process.env.AUTO_DISCOVERY_SEARCH_DEPTH)
     : 3,
