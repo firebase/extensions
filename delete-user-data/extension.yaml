@@ -50,7 +50,7 @@ roles:
   - role: storage.admin
     reason: Allows the extension to delete (user) data from Cloud Storage.
   - role: pubsub.admin
-    reason: allows publish and subscribing of deletion events
+    reason: Allows the extension to publish and subscribe to PubSub deletion events.
 
 resources:
   - name: clearData
@@ -211,10 +211,10 @@ params:
     example: users/{UID},admins/{UID}
     required: false
 
-  - param: STORAGE_BUCKET
+  - param: CLOUD_STORAGE_BUCKET
     label: Cloud Storage bucket
     description: >
-       Where in Google Cloud Storage do you store user data?
+       Which Google Could Storage bucket do you want to delete files from?
     type: string
     example: my-project-12345.appspot.com
     validationRegex: ^([0-9a-z_.-]*)$
@@ -287,12 +287,8 @@ events:
   - type: firebase.extensions.delete-user-data.v1.firestore
     description: Occurs when a set of Firestore paths has been marked for deletion following a delete user trigger.
 
-  - type: firebase.extensions.delete-user-data.v1.rtdb
-    description:  Occurs when a set of Realtime Database paths has been marked for deletion following a delete user trigger.
+  - type: firebase.extensions.delete-user-data.v1.database
+    description: Occurs when a set of Realtime Database paths has been marked for deletion following a delete user trigger.
 
   - type: firebase.extensions.delete-user-data.v1.storage
-    description:  Occurs when a set of Storage paths has been marked for deletion following a delete user trigger.
-
-  - type: firebase.extensions.delete-user-data.v1.autoDiscovery
-    description:  Occurs when an auto-discovered list of Firestore collections or documents have been marked for deletion following a delete user trigger.
-
+    description: Occurs when a set of Storage paths has been marked for deletion following a delete user trigger.
