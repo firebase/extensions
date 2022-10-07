@@ -241,7 +241,7 @@ params:
       `{DEFAULT}/{UID}-pic.png,my-app-logs/{UID}-logs.txt,{DEFAULT}/media/{UID}`.
     type: string
     example: "{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt"
-    required: true
+    required: false
 
   - param: ENABLE_AUTO_DISCOVERY
     label: Enable auto discovery
