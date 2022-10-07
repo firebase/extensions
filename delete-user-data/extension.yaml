@@ -214,7 +214,7 @@ params:
   - param: STORAGE_BUCKET
     label: Cloud Storage bucket
     description: >
-       Where in Google Cloud Storage do you store user data?
+       Which Google Could Storage bucket do you want to delete files from?
     type: string
     example: my-project-12345.appspot.com
     validationRegex: ^([0-9a-z_.-]*)$
@@ -287,6 +287,9 @@ params:
     label: Auto discovery pubsub topic name
     description: >-
       Specify a Pub/Sub topic to publish discovery queries to.
+    validationRegex: "^(?!goog)(?=^[A-za-z])[A-Za-z_\-.~\+]{3,255}+$"
+    validationErrorMessage: >
+     Pubsub topics must follow the following naming convention https://cloud.google.com/pubsub/docs/admin guidelines.
     example: discovery
     type: string
     required: false
@@ -296,6 +299,9 @@ params:
     label: Deletion pubsub topic name
     description: >-
       Specify a Pub/Sub topic to publish deletion queries to.
+    validationRegex: "^(?!goog)(?=^[A-za-z])[A-Za-z_\-.~\+]{3,255}+$"
+    validationErrorMessage: >
+     Pubsub topics must follow the following naming convention https://cloud.google.com/pubsub/docs/admin guidelines.
     example: deletions
     type: string
     required: false
@@ -305,12 +311,8 @@ events:
   - type: firebase.extensions.delete-user-data.v1.firestore
     description: Occurs when a set of Firestore paths has been marked for deletion following a delete user trigger.
 
-  - type: firebase.extensions.delete-user-data.v1.rtdb
-    description:  Occurs when a set of Realtime Database paths has been marked for deletion following a delete user trigger.
+  - type: firebase.extensions.delete-user-data.v1.database
+    description: Occurs when a set of Realtime Database paths has been marked for deletion following a delete user trigger.
 
   - type: firebase.extensions.delete-user-data.v1.storage
-    description:  Occurs when a set of Storage paths has been marked for deletion following a delete user trigger.
-
-  - type: firebase.extensions.delete-user-data.v1.autoDiscovery
-    description:  Occurs when an auto-discovered list of Firestore collections or documents have been marked for deletion following a delete user trigger.
-
+    description: Occurs when a set of Storage paths has been marked for deletion following a delete user trigger.
