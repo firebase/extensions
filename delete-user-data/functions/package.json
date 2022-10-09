@@ -27,7 +27,8 @@
     "lodash.chunk": "^4.2.0",
     "node-fetch": "^2.6.2",
     "rimraf": "^2.6.3",
-    "typescript": "^4.8.4"
+    "typescript": "^4.8.4",
+    "ts-jest": "^24.1.0"
   },
   "engines": {
     "node": "14"
