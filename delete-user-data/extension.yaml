@@ -73,7 +73,7 @@ resources:
       location: ${LOCATION}
       eventTrigger:
         eventType: google.pubsub.topic.publish
-        resource: projects/${PROJECT_ID}/topics/${param:AUTO_DISCOVERY_TOPIC}
+        resource: projects/${PROJECT_ID}/topics/ext-${EXT_INSTANCE_ID}-discovery
 
   - name: handleDeletion
     type: firebaseextensions.v1beta.function
@@ -81,7 +81,7 @@ resources:
       location: ${LOCATION}
       eventTrigger:
         eventType: google.pubsub.topic.publish
-        resource: projects/${PROJECT_ID}/topics/${param:DELETION_TOPIC}
+        resource: projects/${PROJECT_ID}/topics/ext-${EXT_INSTANCE_ID}-deletion
 
 params:
   - param: LOCATION
