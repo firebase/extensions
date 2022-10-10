@@ -2,7 +2,7 @@
 
 name: firestore-bundle-builder
 specVersion: v1beta
-version: 0.1.2
+version: 0.1.0
 license: Apache-2.0
 
 displayName: Firestore Bundle Builder
