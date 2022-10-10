@@ -44,9 +44,7 @@ describe("e2e testing", () => {
     });
   }, 12000);
 
-  test("empty template attachments should default to message attachments", async (): Promise<
-    void
-  > => {
+  test("empty template attachments should default to message attachments", async (): Promise<void> => {
     //create template
     const template = await templatesCollection.doc("default").set({
       subject: "@{{username}} is now following you!",

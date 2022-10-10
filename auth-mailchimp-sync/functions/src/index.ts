@@ -84,10 +84,7 @@ export const removeUserFromList = functions.handler.auth.user.onDelete(
     }
 
     try {
-      const hashed = crypto
-        .createHash("md5")
-        .update(email)
-        .digest("hex");
+      const hashed = crypto.createHash("md5").update(email).digest("hex");
 
       logs.userRemoving(uid, hashed, config.mailchimpAudienceId);
       await mailchimp.delete(

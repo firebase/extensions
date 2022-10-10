@@ -43,9 +43,9 @@ export class NumericUpdate {
    * Exports an object with modified fields in the counter.
    * @param counter The counter data to be updated.
    */
-  public toCounterUpdate(counter: {
+  public toCounterUpdate(counter: { [key: string]: any }): {
     [key: string]: any;
-  }): { [key: string]: any } {
+  } {
     NumericUpdate.addCommonFieldsRecursive(counter, this.data);
     return this.data;
   }
@@ -55,7 +55,7 @@ export class NumericUpdate {
    *
    * Resulting operation will append current data to an array "_updates_".
    */
-  public toPartialUpdate(uuidv4: (() => string)): { [key: string]: any } {
+  public toPartialUpdate(uuidv4: () => string): { [key: string]: any } {
     if (this.isNoop()) return {};
     return {
       _updates_: firestore.FieldValue.arrayUnion({
@@ -65,7 +65,7 @@ export class NumericUpdate {
     };
   }
 
-  public toPartialShard(uuidv4: (() => string)): { [key: string]: any } {
+  public toPartialShard(uuidv4: () => string): { [key: string]: any } {
     return {
       _updates_: [
         {
@@ -133,7 +133,7 @@ export class NumericUpdate {
 }
 
 export class Aggregator {
-  constructor(private uuidv4: (() => string) = uuid.v4) {}
+  constructor(private uuidv4: () => string = uuid.v4) {}
   /**
    * Aggregates increments from shards and partials and returns an update object suitable for
    * DocumentRef.update() call.
@@ -168,9 +168,9 @@ export class Aggregator {
    * Returns an update object that will subtract the sum of all the fields in a partial.
    * @param partial Snapshot with partial aggregations to be subtracted.
    */
-  public subtractPartial(
-    partial: firestore.DocumentSnapshot
-  ): { [key: string]: any } {
+  public subtractPartial(partial: firestore.DocumentSnapshot): {
+    [key: string]: any;
+  } {
     const update = new NumericUpdate();
     if (partial.exists) {
       const data = partial.data();

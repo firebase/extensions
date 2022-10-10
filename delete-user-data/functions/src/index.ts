@@ -76,10 +76,7 @@ const clearDatabaseData = async (databasePaths: string, uid: string) => {
   const promises = paths.map(async (path) => {
     try {
       logs.rtdbPathDeleting(path);
-      await admin
-        .database()
-        .ref(path)
-        .remove();
+      await admin.database().ref(path).remove();
       logs.rtdbPathDeleted(path);
     } catch (err) {
       logs.rtdbPathError(path, err);
