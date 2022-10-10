@@ -50,7 +50,7 @@ roles:
   - role: storage.admin
     reason: Allows the extension to delete (user) data from Cloud Storage.
   - role: pubsub.admin
-    reason: Allows the extension to publish and subscribe to PubSub deletion events.
+    reason: Allows the extension to publish and subscribe to PubSub events. The extension uses PubSub to parallelize deletion and data discovery, no PubSub data is deleted.
 
 resources:
   - name: clearData
