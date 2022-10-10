@@ -160,12 +160,8 @@ async function parseConfig(): Promise<CliConfig> {
       schemas: readSchemas(program.schemaFiles),
     };
   }
-  const {
-    project,
-    dataset,
-    tableNamePrefix,
-    schemaFiles,
-  } = await inquirer.prompt(questions);
+  const { project, dataset, tableNamePrefix, schemaFiles } =
+    await inquirer.prompt(questions);
   return {
     projectId: project,
     datasetId: dataset,

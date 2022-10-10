@@ -27,9 +27,7 @@ describe("Test Realtime Database URL helper function", () => {
       environment.SELECTED_DATABASE_LOCATION
     );
     expect(serverUrl).toBe(
-      `https://${
-        environment.SELECTED_DATABASE_INSTANCE
-      }.europe-west1.firebasedatabase.app`
+      `https://${environment.SELECTED_DATABASE_INSTANCE}.europe-west1.firebasedatabase.app`
     );
   });
 
@@ -44,9 +42,7 @@ describe("Test Realtime Database URL helper function", () => {
       environment.SELECTED_DATABASE_LOCATION
     );
     expect(serverUrl).toBe(
-      `https://${
-        environment.SELECTED_DATABASE_INSTANCE
-      }.asia-southeast1.firebasedatabase.app`
+      `https://${environment.SELECTED_DATABASE_INSTANCE}.asia-southeast1.firebasedatabase.app`
     );
   });
 
