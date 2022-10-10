@@ -191,10 +191,7 @@ describe("Partitioning", () => {
 
     test("successfully partitions with a valid Firebase Timestamp value with a Date partitioning type", async () => {
       const created = firestore.Timestamp.now();
-      const expectedDate = created
-        .toDate()
-        .toISOString()
-        .substring(0, 10);
+      const expectedDate = created.toDate().toISOString().substring(0, 10);
 
       const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
         data: { created },
@@ -225,10 +222,7 @@ describe("Partitioning", () => {
 
     test("successfully partitions with a valid Firebase Timestamp value with a DateTime partitioning type", async () => {
       const created = firestore.Timestamp.now();
-      const expectedDate = created
-        .toDate()
-        .toISOString()
-        .substring(0, 22);
+      const expectedDate = created.toDate().toISOString().substring(0, 22);
 
       const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
         data: { created },
