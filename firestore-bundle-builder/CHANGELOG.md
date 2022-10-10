@@ -1,7 +1,3 @@
-## Version 0.1.2
+## Version 0.1.0
 
-fixed - pre-generate lib files prior to publishing extension
-
-## Version 0.1.1
-
-fixed - update extension.yaml (#75)
+Stable release with documentation.
