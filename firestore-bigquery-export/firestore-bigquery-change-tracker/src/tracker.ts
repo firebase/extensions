@@ -32,7 +32,7 @@ export interface FirestoreDocumentChangeEvent {
   documentId: string;
   pathParams?: { documentId: string; [key: string]: string } | null;
   data: Object;
-  oldData: Object;
+  oldData?: Object | null;
 }
 
 export interface FirestoreEventHistoryTracker {
