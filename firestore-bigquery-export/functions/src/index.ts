@@ -65,6 +65,8 @@ exports.fsexportbigquery = functions.firestore
         await eventChannel.publish({
           type: `firebase.extensions.big-query-export.v1.sync.start`,
           data: {
+            documentId,
+            changeType,
             before: {
               data: change.before.data(),
             },
