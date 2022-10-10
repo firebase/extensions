@@ -1,0 +1,73 @@
+# Learn detailed information about the fields of an extension.yaml file in the docs
+
+name: firestore-bundle-builder
+specVersion: v1beta
+version: 0.1.2
+license: Apache-2.0
+
+displayName: Firestore Bundle Builder
+
+description: >-
+  Provides cached serving of Firestore bundles.
+
+author:
+  authorName: Firebase
+  url: https://firebase.google.com
+
+billingRequired: true
+
+# For your extension to interact with other Google APIs (like Firestore, Cloud Storage, or Cloud Translation),
+# set the `apis` field. In addition, set the `roles` field to grant appropriate IAM access to interact with these products.
+# Learn about these fields in the docs
+
+roles:
+- role: datastore.user
+  reason:
+    Allows the extension to read configuration and build bundles from Firestore.
+- role: storage.objectAdmin
+  reason:
+    Allows the extension to save built bundles in Cloud Storage
+
+# Learn about the `resources` field in the docs
+resources:
+  - name: serve
+    type: firebaseextensions.v1beta.function
+    description: >-
+      HTTPS function that serves bundled content from Cloud Storage cache or by dynamically building.
+    properties:
+      location: us-central1
+      httpsTrigger: {}
+      runtime: "nodejs14"
+
+# Learn about the `params` field in the docs
+params:
+  - param: BUNDLESPEC_COLLECTION
+    type: string
+    label: Collection to store bundle specification documents
+    description: >-
+      Path to the Firestore collection whose documents are specifications of
+      bundles the extension will build.
+    default: bundles
+    required: true
+    immutable: false
+
+  - param: BUNDLE_STORAGE_BUCKET
+    type: string
+    label: Google Cloud Storage bucket to save the built bundle files
+    description: >-
+      The Cloud Storage bucket to save the built bundle files. This applies when
+      the bundle specification has `fileCache` enabled.
+    validationRegex: ^([0-9a-z_.-]*)$
+    validationErrorMessage: Invalid storage bucket
+    default: ${STORAGE_BUCKET}
+    required: false
+    immutable: false
+
+  - param: STORAGE_PREFIX
+    type: string
+    label: Prefix to use for bundle files saved in Google Cloud Storage.
+    description: >-
+      The prefix for all the bundle files built and saved in Cloud Storage.
+      This applies when the bundle specification has `fileCache` enabled.
+    required: false
+    immutable: false

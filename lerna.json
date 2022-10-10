@@ -13,7 +13,8 @@
     "firestore-bigquery-export/functions",
     "firestore-bigquery-export/scripts/gen-schema-view",
     "firestore-bigquery-export/scripts/import",
-    "firestore-bigquery-export/firestore-bigquery-change-tracker"
+    "firestore-bigquery-export/firestore-bigquery-change-tracker",
+    "firestore-bundle-builder/functions"
   ],
   "version": "0.0.0"
 }
