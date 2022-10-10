@@ -51,7 +51,13 @@ describe("extension config", () => {
   test("config loaded from environment variables", () => {
     const functionsConfig = config();
 
-    expect(functionsConfig).toMatchSnapshot({});
+    expect(functionsConfig).toMatchSnapshot({
+      languages: ["en", "es", "de", "fr"],
+      languagesFieldName: undefined,
+      location: "us-central1",
+      inputFieldName: "input",
+      outputFieldName: "translated",
+    });
   });
 
   test("config is logged on initialize", () => {
