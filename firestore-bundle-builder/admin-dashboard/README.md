@@ -7,7 +7,7 @@ This repository contains the source code for the Admin Dashboard for the Firesto
 Clone this repository:
 
 ```bash
-git clone ... todo
+git clone git@github.com:firebase/extensions.git
 ```
 
 Install the dependencies:
