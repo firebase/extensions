@@ -102,8 +102,12 @@ const validateLocation = (value: string) => {
   return index !== -1;
 };
 
+const packageJson = require("../package.json");
+
 program
   .name("fs-bq-import-collection")
+  .description(packageJson.description)
+  .version(packageJson.version)
   .option(
     "--non-interactive",
     "Parse all input from command line flags instead of prompting the caller.",
@@ -300,10 +304,7 @@ const run = async (): Promise<number> => {
     `/from-${formattedPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
   if (await exists(cursorPositionFile)) {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
-    cursor = await firebase
-      .firestore()
-      .doc(cursorDocumentId)
-      .get();
+    cursor = await firebase.firestore().doc(cursorDocumentId).get();
     console.log(
       `Resuming import of Cloud Firestore Collection ${sourceCollectionPath} ${
         queryCollectionGroup ? " (via a Collection Group query)" : ""
@@ -341,9 +342,7 @@ const run = async (): Promise<number> => {
       return {
         timestamp: new Date().toISOString(), // epoch
         operation: ChangeType.IMPORT,
-        documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${
-          snapshot.ref.path
-        }`,
+        documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${snapshot.ref.path}`,
         documentId: snapshot.id,
         pathParams: resolveWildcardIds(sourceCollectionPath, snapshot.ref.path),
         eventId: "",

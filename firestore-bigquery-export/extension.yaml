@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.22
+version: 0.1.26
 specVersion: v1beta
 
 displayName: Stream Collections to BigQuery
@@ -38,7 +38,7 @@ contributors:
 billingRequired: true
 
 apis:
-  - apiName: bigquery-json.googleapis.com
+  - apiName: bigquery.googleapis.com
     reason: Mirrors data from your Cloud Firestore collection in BigQuery.
 
 roles:
