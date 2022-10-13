@@ -1,51 +1,26 @@
-# Learn detailed information about the fields of an extension.yaml file in the docs
-
 name: firestore-bundle-builder
-specVersion: v1beta
 version: 0.1.0
-license: Apache-2.0
-
 displayName: Firestore Bundle Builder
-
 description: >-
   Provides cached serving of Firestore bundles.
 
-author:
-  authorName: Firebase
-  url: https://firebase.google.com
-
-billingRequired: true
-
-# For your extension to interact with other Google APIs (like Firestore, Cloud Storage, or Cloud Translation),
-# set the `apis` field. In addition, set the `roles` field to grant appropriate IAM access to interact with these products.
-# Learn about these fields in the docs
-
 roles:
-- role: datastore.user
-  reason:
-    Allows the extension to read configuration and build bundles from Firestore.
-- role: storage.objectAdmin
-  reason:
-    Allows the extension to save built bundles in Cloud Storage
+  - role: datastore.user
+    reason: Allows the extension to read Firestore configuration and build bundles from Firestore.
+  - role: storage.objectAdmin
+    reason: Allows the extension to save built bundles in Cloud Storage
 
-# Learn about the `resources` field in the docs
 resources:
   - name: serve
-    type: firebaseextensions.v1beta.function
     description: >-
       HTTPS function that serves bundled content from Cloud Storage cache or by dynamically building.
-    properties:
-      location: us-central1
-      httpsTrigger: {}
-      runtime: "nodejs14"
 
-# Learn about the `params` field in the docs
 params:
   - param: BUNDLESPEC_COLLECTION
     type: string
     label: Collection to store bundle specification documents
     description: >-
-      Path to the Firestore collection whose documents are specifications of
+      Path to the Firestore collection that contains the specifications of the
       bundles the extension will build.
     default: bundles
     required: true
