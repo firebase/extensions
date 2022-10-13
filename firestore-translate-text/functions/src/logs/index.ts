@@ -29,6 +29,14 @@ export const documentCreatedWithInput = () => {
   logger.log(messages.documentCreatedWithInput());
 };
 
+export const documentFoundWithInput = () => {
+  logger.log(messages.documentFoundWithInput());
+};
+
+export const documentFoundNoInput = () => {
+  logger.log(messages.documentFoundNoInput());
+};
+
 export const documentDeleted = () => {
   logger.log(messages.documentDeleted());
 };
@@ -110,3 +118,7 @@ export const updateDocument = (path: string) => {
 export const updateDocumentComplete = (path: string) => {
   logger.log(messages.updateDocumentComplete(path));
 };
+
+export const backfillComplete = (successCount: number, errorCount: number) => {
+  logger.log(messages.backfillComplete(successCount, errorCount))
+}
