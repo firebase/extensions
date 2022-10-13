@@ -22,7 +22,7 @@ type BundleDocument = {
   fileCache?: string;
   // If a 'File Cache' is specified, bundles created before this timestamp will not be file cached.
   notBefore?: Timestamp;
-}
+};
 ```
 
 ## ParamDefinition Interface
@@ -35,14 +35,14 @@ type ParamDefinition = {
   required: boolean;
   // The type of value which will be parsed, defaults to ‘string’.
   type?:
-  | "string"
-  | "integer"
-  | "float"
-  | "boolean"
-  | "string-array"
-  | "integer-array"
-  | "float-array";
-}
+    | "string"
+    | "integer"
+    | "float"
+    | "boolean"
+    | "string-array"
+    | "integer-array"
+    | "float-array";
+};
 ```
 
 For example, given the follow parameter:
@@ -68,7 +68,7 @@ type QueryDefinition = {
   collection: string;
   // An optional list of conditions to perform on the specified collection.
   conditions?: QueryCondition[];
-}
+};
 ```
 
 The `conditions` parameter can contain an array of `QueryCondition` interfaces. Each item in the array must only include a single condition.
@@ -77,20 +77,20 @@ The `conditions` parameter can contain an array of `QueryCondition` interfaces. 
 type QueryCondition = {
   // Performs a `where` filter on the collection on a given FieldPath, operator and value.
   where?: [
-  string,
-  (
-  | "<"
-  | "<="
-  | "=="
-  | ">="
-  | ">"
-  | "!="
-  | "array-contains"
-  | "in"
-  | "not-in"
-  | "array-contains-any"
-  ),
-  any
+    string,
+    (
+      | "<"
+      | "<="
+      | "=="
+      | ">="
+      | ">"
+      | "!="
+      | "array-contains"
+      | "in"
+      | "not-in"
+      | "array-contains-any"
+    ),
+    any
   ];
   orderBy?: [string, ("asc" | "desc")?];
   limit?: number;
@@ -100,7 +100,7 @@ type QueryCondition = {
   startAfter?: string;
   endAt?: string;
   endBefore?: string;
-}
+};
 ```
 
 For example, to create a query named “products” on a `products` collection with a where and limit condition, the data structure output should match the following:
