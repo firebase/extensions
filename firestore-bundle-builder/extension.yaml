@@ -2,7 +2,7 @@ name: firestore-bundle-builder
 version: 0.1.0
 displayName: Firestore Bundle Builder
 description: >-
-  Provides cached serving of Firestore bundles.
+  Caches publicly available documents in Cloud Firestore data bundles that are served from either Firebase Hosting CDN or from Firebase storage.
 
 roles:
   - role: datastore.user
