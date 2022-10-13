@@ -10,7 +10,7 @@
 
 You can configure this extension to delete certain data keyed on a user ID from any or all of the following: Cloud Firestore, Realtime Database, or Cloud Storage. Each trigger of the extension to delete data is keyed to the user's UID.
 
-This extension has a few different mechanisms for discovering certain data keyed on a user ID for deletion that you can configure during installation. These are outlined in the [official docs](https://firebase.google.com/docs/extensions/official/delete-user-data) for this extension. The extension will only delete data that it is explicitly configured to delete based on the mechanisms provided.
+This extension has a few different mechanisms for discovering data keyed on a user ID for deletion that you can configure during installation. These are outlined in the [official docs](https://firebase.google.com/docs/extensions/official/delete-user-data) for this extension. The extension will only delete data that it is explicitly configured to delete based on the mechanisms provided.
 
 To use this extension, you need to manage your users with Firebase Authentication.
 
