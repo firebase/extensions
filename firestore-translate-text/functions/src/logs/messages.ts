@@ -1,8 +1,12 @@
 export const messages = {
+  backfillComplete: (successCount: number, errorCount: number) => `Finshed backfilling translations. ${successCount} documents checked, ${errorCount} errors.`,
   complete: () => "Completed execution of extension",
   documentCreatedNoInput: () =>
     "Document was created without an input string, no processing is required",
   documentCreatedWithInput: () => "Document was created with an input string",
+  documentFoundWithInput: () => "Backfill fround document with an input string",
+  documentFoundNoInput: () =>
+    "Backfill found document without an input string, no processing is required",
   documentDeleted: () => "Document was deleted, no processing is required",
   documentUpdatedChangedInput: () =>
     "Document was updated, input string has changed",
@@ -47,4 +51,5 @@ export const messages = {
     `Updating Cloud Firestore document: '${path}'`,
   updateDocumentComplete: (path: string) =>
     `Finished updating Cloud Firestore document: '${path}'`,
+    
 };
