@@ -51,7 +51,7 @@ export const error = (err: Error) => {
 };
 
 export const errorDeleting = (err: Error) => {
-  logger.warn("Error when deleting temporary files", err);
+  logger.warn("Error when deleting files", err);
 };
 
 export const failed = () => {
