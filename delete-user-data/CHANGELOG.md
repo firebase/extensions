@@ -1,7 +1,6 @@
 ## Version 0.1.14
 
-
-feature - add auto discovery mechanisms + update documentation 
+feature - add auto discovery mechanisms + update documentation
 
 feature - upgrade to the latest emulator updates (#995)
 
