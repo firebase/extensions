@@ -1,3 +1,16 @@
+## Version 0.1.14
+
+
+feature - add auto discovery mechanisms + update documentation 
+
+feature - upgrade to the latest emulator updates (#995)
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - add RTDB locations function (#865)
+
+fixed - updated typescript compiler
+
 ## Version 0.1.13
 
 fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
