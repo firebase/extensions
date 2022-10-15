@@ -18,7 +18,7 @@ specVersion: v1beta
 
 displayName: Delete User Data
 description:
-  Deletes data keyed on a userId from Cloud Firestore, Realtime Database, and/or
+  Deletes data keyed on a userId from Cloud Firestore, Realtime Database, or
   Cloud Storage when a user deletes their account.
 
 license: Apache-2.0
@@ -49,6 +49,8 @@ roles:
     reason: Allows the extension to delete (user) data from Realtime Database.
   - role: storage.admin
     reason: Allows the extension to delete (user) data from Cloud Storage.
+  - role: pubsub.admin
+    reason: Allows the extension to publish and subscribe to PubSub events. The extension uses PubSub to parallelize deletion and data discovery, no PubSub data is deleted.
 
 resources:
   - name: clearData
@@ -64,6 +66,22 @@ resources:
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${param:PROJECT_ID}
+
+  - name: handleSearch
+    type: firebaseextensions.v1beta.function
+    properties:
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: google.pubsub.topic.publish
+        resource: projects/${PROJECT_ID}/topics/ext-${EXT_INSTANCE_ID}-discovery
+
+  - name: handleDeletion
+    type: firebaseextensions.v1beta.function
+    properties:
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: google.pubsub.topic.publish
+        resource: projects/${PROJECT_ID}/topics/ext-${EXT_INSTANCE_ID}-deletion
 
 params:
   - param: LOCATION
@@ -126,15 +144,14 @@ params:
   - param: FIRESTORE_PATHS
     label: Cloud Firestore paths
     description: >-
-      Which paths in your Cloud Firestore instance contain user data? Leave
-      empty if you don't use Cloud Firestore.
+     Which paths in your Cloud Firestore instance contain data keyed on a user ID? Leave
+     empty if you don't use Cloud Firestore.
 
-      Enter the full paths, separated by commas. You can represent the User ID
-      of the deleted user with `{UID}`.
+     Enter the full paths, separated by commas. Use `{UID}` as a placeholder for the user's UID.
 
-      For example, if you have the collections `users` and `admins`, and each
-      collection has documents with User ID as document IDs, then you can enter
-      `users/{UID},admins/{UID}`.
+     For example, if you have the collections `users` and `admins`, and each
+     collection has documents with User ID as document IDs, then enter
+     `users/{UID},admins/{UID}`.
     type: string
     example: users/{UID},admins/{UID}
     required: false
@@ -157,7 +174,7 @@ params:
   - param: SELECTED_DATABASE_INSTANCE
     label: Realtime Database instance
     description: >
-      From which Realtime Database instance do you want to delete user data?
+      From which Realtime Database instance do you want to delete data keyed on a user ID?
     type: string
     example: my-instance
     validationRegex: ^([0-9a-z_.-]*)$
@@ -167,7 +184,7 @@ params:
   - param: SELECTED_DATABASE_LOCATION
     label: Realtime Database location
     description: >
-      (Only applicable if you provided the `Realtime Database instance` parameter.) From which Realtime Database location do you want to delete user data?
+      (Only applicable if you provided the `Realtime Database instance` parameter.) From which Realtime Database location do you want to delete data keyed on a user ID?
     type: select
     options:
       - label: United States
@@ -182,21 +199,32 @@ params:
   - param: RTDB_PATHS
     label: Realtime Database paths
     description: >-
-      Which paths in your Realtime Database instance contain user data? Leave
-      empty if you don't use Realtime Database.
+     Which paths in your Realtime Database instance contain data keyed on a user ID? Leave
+     empty if you don't use Realtime Database.
 
-      Enter the full paths, separated by commas. You can represent the User ID
-      of the deleted user with `{UID}`.
+     Enter the full paths, separated by commas. Use `{UID}` as a placeholder for the user's UID.
 
-      For example: `users/{UID},admins/{UID}`.
+     For example: `users/{UID},admins/{UID}`.
+
     type: string
     example: users/{UID},admins/{UID}
     required: false
 
+  - param: CLOUD_STORAGE_BUCKET
+    label: Cloud Storage bucket
+    description: >
+       Which Google Cloud Storage bucket do you want to delete files from?
+    type: string
+    example: my-project-12345.appspot.com
+    validationRegex: ^([0-9a-z_.-]*)$
+    validationErrorMessage: Invalid storage bucket
+    default: ${STORAGE_BUCKET}
+    required: true
+
   - param: STORAGE_PATHS
     label: Cloud Storage paths
     description: >-
-      Where in Google Cloud Storage do you store user data? Leave empty if you
+      Where in Google Cloud Storage do you store data keyed on a user ID? Leave empty if you
       don't use Cloud Storage.
 
       Enter the full paths to files or directories in your Storage buckets,
@@ -213,3 +241,51 @@ params:
     type: string
     example: "{DEFAULT}/{UID}-pic.png,my-awesome-app-logs/{UID}-logs.txt"
     required: false
+
+  - param: ENABLE_AUTO_DISCOVERY
+    label: Enable auto discovery
+    description: >-
+      Enable the extension to automatically discover Firestore collections and documents to delete.
+    type: select
+    options:
+      - label: Yes
+        value: yes
+      - label: No
+        value: no
+    default: no
+    required: true
+
+  - param: AUTO_DISCOVERY_SEARCH_DEPTH
+    label: Auto discovery search depth
+    description: >-
+      If auto discovery is enabled, how deep should auto discovery find collections and documents. For example, setting to `1` would only discover root collections and documents, whereas setting to `9` would search sub-collections 9 levels deep. Defaults to `3`.
+    validation: ^[0-9]
+    type: string
+    default: 3
+    required: true
+
+  - param: AUTO_DISCOVERY_SEARCH_FIELDS
+    label: Auto discovery search fields
+    description: >-
+      If auto discovery is enabled, specify what document fields are used to associate the UID with the document. The extension will delete documents where the value for one or more of these fields matches the deleting user’s UID. If left empty, document fields will not be used in auto discovery.
+    type: string
+    default: "id,uid,userId"
+    required: false
+
+  - param: SEARCH_FUNCTION
+    label: Search function URL
+    description: >-
+      Specify a function URL to call that will return a list of document paths to delete.
+    example: https://us-west1-my-project-id.cloudfunctions.net/myTransformFunction
+    type: string
+    required: false
+
+events:
+  - type: firebase.extensions.delete-user-data.v1.firestore
+    description: Occurs when a set of Firestore paths has been marked for deletion following a delete user trigger.
+
+  - type: firebase.extensions.delete-user-data.v1.database
+    description: Occurs when a set of Realtime Database paths has been marked for deletion following a delete user trigger.
+
+  - type: firebase.extensions.delete-user-data.v1.storage
+    description: Occurs when a set of Storage paths has been marked for deletion following a delete user trigger.
