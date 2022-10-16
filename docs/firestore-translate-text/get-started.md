@@ -7,9 +7,18 @@ The Translate Text extension (`firestore-translate-text`) lets you translate str
 Here’s a basic example document write that would trigger this extension:
 
 ```js
+<<<<<<< HEAD
 admin.firestore().collection("translations").add({
   input: "Hello from Firebase!",
 });
+=======
+admin
+  .firestore()
+  .collection("translations")
+  .add({
+    input: "Hello from Firebase!",
+  });
+>>>>>>> master
 ```
 
 When the extension triggers, the input text would update the document with translations:
