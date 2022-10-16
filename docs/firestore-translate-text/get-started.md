@@ -64,8 +64,18 @@ To translate multiple collections, install this extension multiple times, specif
 To translate multiple fields, store a map of input strings in the input field:
 
 ```js
+<<<<<<< HEAD
 admin.firestore().collection("translations").add({
   first: "My name is Bob",
   second: "Hello, friend",
 });
+=======
+admin
+  .firestore()
+  .collection("translations")
+  .add({
+    first: "My name is Bob",
+    second: "Hello, friend",
+  });
+>>>>>>> master
 ```
