@@ -60,6 +60,15 @@ resources:
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
+  - name: fsimportexistingdocs
+    type: firebaseextensions.v1beta.function
+    description:
+      Imports exisitng documents in ${param:IMPORT_COLLECTION_PATH} into BigQuery. Imported documents will have 
+      a special changelog with the operation of `IMPORT` and the timestamp of epoch.
+    properties:
+      location: ${param:LOCATION}
+      runtime: nodejs14
+      taskQueueTrigger: {}
 
 params:
   - param: LOCATION
@@ -338,3 +347,38 @@ params:
     example: https://us-west1-my-project-id.cloudfunctions.net/myTransformFunction
     type: string
     required: false
+        
+  - param: DO_BACKFILL
+    label: Import existing Firestore documents into BigQuery
+    description: >-
+      Do you want to import existing documents from your Firestore collection into BigQuery? These documents 
+      will have each have a special changelog with the operation of `IMPORT` and the timestamp of epoch.
+      This ensures that any operation on an imported document supersedes the import record.
+    type: select
+    default: false
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+  
+  - param: IMPORT_COLLECTION_PATH
+    label: Existing documents collection
+    description:  >-
+      What is the path of the the Cloud Firestore Collection you would like to import from?
+      (This may, or may not, be the same Collection for which you plan to mirror changes.)
+    type: string
+    example: posts
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Firestore collection paths must be an odd number of segments separated by slashes, e.g. "path/to/collection".
+    default: posts
+    required: true
+  
+
+lifecycleEvents:
+  onInstall:
+    function: fsimportexistingdocs
+    processingMessage: Checking whether to import existing documents
+  onUpdate:
+    function: fsimportexistingdocs
+    processingMessage: Checking whether to import existing documents
