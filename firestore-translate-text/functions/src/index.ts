@@ -85,6 +85,11 @@ export const fstranslate = functions.firestore.document(process.env.COLLECTION_P
 );
 
 export const fstranslatebackfill = functions.tasks.taskQueue().onDispatch(async (data: any)=> {
+  const runtime = getExtensions().runtime();
+  if (!process.env.DO_BACKFILL) {
+    await runtime.setProcessingState("PROCESSING_COMPLETE", "Existing documents were not backfilled.");
+    return;
+  }
   const offset = data["offset"] as number ?? 0;
   const pastSuccessCount = data["successCount"] as number ?? 0;
   const pastErrorCount = data["errorCount"] as number ?? 0;
@@ -103,7 +108,6 @@ export const fstranslatebackfill = functions.tasks.taskQueue().onDispatch(async 
     })
   } else {
     logs.backfillComplete(newSucessCount, newErrorCount);
-    const runtime = getExtensions().runtime();
     if (newErrorCount == 0) {
       runtime.setProcessingState("PROCESSING_COMPLETE", `Successfully backfilled ${newSucessCount} documents.`);
     } else if (newErrorCount > 0 && newSucessCount > 0) {
