@@ -16,6 +16,9 @@
 
 import config from "./config";
 import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
+import { getExtensions } from "firebase-admin/extensions";
+import { getFunctions } from "firebase-admin/functions";
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
@@ -42,6 +45,11 @@ const eventTracker: FirestoreEventHistoryTracker =
 
 logs.init();
 
+if (!admin.apps.length) {
+  admin.initializeApp();
+  admin.firestore().settings({ ignoreUndefinedProperties: true });
+}
+
 exports.fsexportbigquery = functions.firestore
   .document(config.collectionPath)
   .onWrite(async (change, context) => {
@@ -67,3 +75,46 @@ exports.fsexportbigquery = functions.firestore
       logs.error(err);
     }
   });
+
+exports.fsimportexistingdocs = functions.tasks.taskQueue().onDispatch(async (data) => {
+  const runtime = getExtensions().runtime();
+  if (!process.env.DO_BACKFILL) {
+    await runtime.setProcessingState("PROCESSING_COMPLETE", "No existing documents imported into BigQuery.");
+    return;
+  }
+  const offset = data["offset"] as number ?? 0;
+  const docsCount = data["docsCount"] as number ?? 0;
+
+  const snapshot = await admin.firestore()
+    .collection(process.env.COLLECTION_PATH)
+    .offset(offset)
+    .limit(config.docsPerBackfill)
+    .get();
+
+  const rows = snapshot.docs.map((d) => {
+    return {
+      timestamp: new Date().toISOString(),
+      operation: ChangeType.IMPORT,
+      documentName: `projects/${config.bqProjectId}/databases/(default)/documents/${d.ref.path}`,
+      documentId: d.id,
+      eventId: "",
+      data: d.data(),
+    };
+  });
+  try {
+    await eventTracker.record(rows);
+  } catch(err: any) {
+    // eventTracker will already try to write failures back to BACKUP_COLLECTION if configured.
+    // TODO: Decide how this should behave/what this should log if BACKUP_COLLECTION is undefined.
+    functions.logger.log(err);
+  }
+  if (rows.length == config.docsPerBackfill) {
+    const queue = getFunctions().taskQueue("fsimportexistingdocs", process.env.EXT_INSTANCE_ID);
+    await queue.enqueue({
+      offset: offset + config.docsPerBackfill,
+      docsCount: docsCount + rows.length,
+    })
+  } else {
+    runtime.setProcessingState("PROCESSING_COMPLETE", `Successfully imported ${docsCount + rows.length} documents into BigQuery`);
+  }
+});
