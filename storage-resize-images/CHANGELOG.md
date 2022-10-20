@@ -1,3 +1,6 @@
+## Version 0.3.1
+feature - added lifecycle event to resize existing images
+
 ## Version 0.1.30
 
 feature - include original image data in events

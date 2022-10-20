@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.30
+version: 0.3.1
 specVersion: v1beta
 
 displayName: Resize Images
@@ -62,7 +62,17 @@ resources:
       eventTrigger:
         eventType: google.storage.object.finalize
         resource: projects/_/buckets/${param:IMG_BUCKET}
-
+  - name: backfillResizedImages
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Handles tasks from startBackfill to resize existing images.
+    properties:
+      location: ${LOCATION}
+      runtime: nodejs14
+      availableMemoryMb: ${param:FUNCTION_MEMORY}
+      taskQueueTrigger:
+        rateLimits:
+          maxConcurrentDispatches: 10
 params:
   - param: LOCATION
     label: Cloud Functions location
@@ -301,6 +311,25 @@ params:
     required: true
     immutable: false
 
+  - param: DO_BACKFILL
+    label: Backfill existing images
+    description: >
+      Should existing, unresized images in the Storage bucket be resized as well?
+    type: select
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+
 events:
   - type: firebase.extensions.storage-resize-images.v1.complete
     description: Occurs when image resizing completes. The event will contain further details about specific formats and sizes.
+
+lifecycleEvents:
+  onInstall:
+    function: backfillResizedImages
+    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
+  onUpdate:
+    function: backfillResizedImages
+    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
