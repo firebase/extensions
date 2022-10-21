@@ -15,6 +15,7 @@
  */
 
 import * as admin from "firebase-admin";
+import { getEventarc } from "firebase-admin/eventarc";
 import * as functions from "firebase-functions";
 import * as nodemailer from "nodemailer";
 
@@ -342,12 +343,45 @@ export const processQueue = functions.firestore
   .document(config.mailCollection)
   .onWrite(async (change) => {
     await initialize();
+
+    const eventChannel =
+      process.env.EVENTARC_CHANNEL &&
+      getEventarc().channel(process.env.EVENTARC_CHANNEL, {
+        allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
+      });
+
     logs.start();
+
+    eventChannel &&
+      (await eventChannel.publish({
+        type: "firebase.extensions.firestore-send-email.v1.onStart",
+        subject: change.after.id,
+        data: { doc: change.after },
+      }));
+
     try {
       await processWrite(change);
+      eventChannel &&
+        (await eventChannel.publish({
+          type: "firebase.extensions.firestore-send-email.v1.onSuccess",
+          subject: change.after.id,
+          data: { doc: change.after },
+        }));
     } catch (err) {
+      eventChannel &&
+        (await eventChannel.publish({
+          type: "firebase.extensions.firestore-send-email.v1.onFailure",
+          subject: change.after.id,
+          data: { doc: change.after, err },
+        }));
       logs.error(err);
       return null;
     }
+    eventChannel &&
+      (await eventChannel.publish({
+        type: "firebase.extensions.firestore-send-email.v1.onComplete",
+        subject: change.after.id,
+        data: { doc: change.after },
+      }));
     logs.complete();
   });

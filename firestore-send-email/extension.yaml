@@ -180,3 +180,16 @@ params:
       This extension can render an email using a [Handlebar](https://handlebarsjs.com/) template,
       if the template is specified in the added email document.
     type: string
+
+events:
+  - type: firebase.extensions.firestore-send-email.v1.onStart
+    description: Occurs when the extension starts execution.
+  
+  - type: firebase.extensions.firestore-send-email.v1.onComplete
+    description: Occurs when the extension completes execution.
+
+  - type: firebase.extensions.firestore-send-email.v1.onSuccess
+    description: Occurs when the extension successfully completes execution.
+
+  - type: firebase.extensions.firestore-send-email.v1.onFailure
+    description: Occurs when the extension fails to complete execution.
