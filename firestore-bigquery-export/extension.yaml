@@ -280,7 +280,7 @@ params:
   - param: TIME_PARTITIONING_FIELD
     label: BigQuery Time Partitioning column name
     description: >-
-      BigQuery table column/schema field name for TimePartitioning. You can choose schema available as `timestamp` OR a new custom defined column that will be assigned to the selected Firestore Document field below. Defaults to pseudo column _PARTITIONTIME if unspecified. Cannot be changed if Table is already partitioned. Press ENTER, without entering a value, to keep the default setting.
+      BigQuery table column/schema field name for TimePartitioning. You can choose schema available as `timestamp` OR a new custom defined column that will be assigned to the selected Firestore Document field below. Defaults to pseudo column _PARTITIONTIME if unspecified. Cannot be changed if Table is already partitioned. Leave empty to keep the default settings.
     type: string
     required: false
 
