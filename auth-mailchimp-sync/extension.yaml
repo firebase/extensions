@@ -59,13 +59,22 @@ resources:
     description:
       Listens for existing user accounts to be deleted (as managed by Firebase
       Authentication), then automatically removes them from your specified
-      MailChimp audience.
+      Mailchimp audience.
     properties:
       location: ${param:LOCATION}
       runtime: nodejs14
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${param:PROJECT_ID}
+        
+  - name: addExistingUsersToList
+    type: firebaseextensions.v1beta.function
+    description:
+      Adds existing users into the specified Mailchimp audience.
+    properties:
+      location: ${param:LOCATION}
+      runtime: nodejs14
+      taskQueueTrigger: {}
 
 params:
   - param: LOCATION
@@ -155,3 +164,15 @@ params:
         value: pending
     default: subscribed
     required: true
+
+  - param: DO_BACKFILL
+    label: Import existing users into Mailchimp audience
+    description: >-
+      Do you want to add existing users to the Mailchimp audience?
+    type: select
+    default: false
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false

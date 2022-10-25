@@ -16,6 +16,9 @@
 
 import * as crypto from "crypto";
 import * as functions from "firebase-functions";
+import { getAuth } from "firebase-admin/auth";
+import { getExtensions } from "firebase-admin/extensions";
+import { getFunctions } from "firebase-admin/functions";
 // @ts-ignore incorrect typescript typings
 import * as Mailchimp from "mailchimp-api-v3";
 
@@ -31,7 +34,7 @@ try {
   logs.initError(err);
 }
 
-export const addUserToList = functions.handler.auth.user.onCreate(
+export const addUserToList = functions.auth.user().onCreate(
   async (user): Promise<void> => {
     logs.start();
 
@@ -68,7 +71,7 @@ export const addUserToList = functions.handler.auth.user.onCreate(
   }
 );
 
-export const removeUserFromList = functions.handler.auth.user.onDelete(
+export const removeUserFromList = functions.auth.user().onDelete(
   async (user): Promise<void> => {
     logs.start();
 
@@ -97,3 +100,64 @@ export const removeUserFromList = functions.handler.auth.user.onDelete(
     }
   }
 );
+
+export const addExistingUsersToList = functions.tasks.taskQueue().onDispatch(async (data) => {
+  const runtime = getExtensions().runtime();
+  if (!config.doBackfill) {
+    await runtime.setProcessingState("PROCESSING_COMPLETE", "No existing documents imported into BigQuery.");
+    return;
+  }
+  const nextPageToken = data.nextPageToken;
+  const pastSuccessCount = data["successCount"] as number ?? 0;
+  const pastErrorCount = data["errorCount"] as number ?? 0;
+
+  const res = await getAuth().listUsers(100, nextPageToken);
+  const mailchimpPromises = res.users.map(async (user) => {
+    const { email, uid } = user;
+    if (!email) {
+      logs.userNoEmail();
+      return;
+    }
+
+    try {
+      logs.userAdding(uid, config.mailchimpAudienceId);
+      const results = await mailchimp.post(
+        `/lists/${config.mailchimpAudienceId}/members`,
+        {
+          email_address: email,
+          status: config.mailchimpContactStatus,
+        }
+      );
+      logs.userAdded(
+        uid,
+        config.mailchimpAudienceId,
+        results.id,
+        config.mailchimpContactStatus
+      );
+    } catch (err) {
+      logs.errorAddUser(err);
+    }
+  });
+  const results = await Promise.allSettled(mailchimpPromises);
+  const newSucessCount = pastSuccessCount + results.filter(p => p.status === "fulfilled").length;
+  const newErrorCount = pastErrorCount + results.filter(p => p.status === "rejected").length;
+  if (res.pageToken) {
+    const queue = getFunctions().taskQueue("fsimportexistingdocs", process.env.EXT_INSTANCE_ID);
+    await queue.enqueue({
+      nextPageToken: res.pageToken,
+      successCount: newSucessCount,
+      errorCount: newErrorCount,
+    })
+  } else {
+    logs.backfillComplete(newSucessCount, newErrorCount);
+    if (newErrorCount == 0) {
+      await runtime.setProcessingState("PROCESSING_COMPLETE", `Successfully added ${newSucessCount} users.`);
+    } else if (newErrorCount > 0 && newSucessCount > 0) {
+      await runtime.setProcessingState("PROCESSING_WARNING", `Successfully added ${newSucessCount} users, failed to add ${newErrorCount} users.`);
+    } if (newErrorCount > 0 && newSucessCount == 0) {
+      await runtime.setProcessingState("PROCESSING_FAILED", `Successfully added ${newSucessCount} users, failed to add ${newErrorCount} users.`);
+    }
+  }
+
+    
+})

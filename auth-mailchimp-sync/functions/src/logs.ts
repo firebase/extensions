@@ -93,3 +93,9 @@ export const userRemoving = (
     `Removing user: ${userId} with hashed email: ${hashedEmail} from Mailchimp audience: ${audienceId}`
   );
 };
+
+export const backfillComplete = (successCount: number, errorCount: number) => {
+  logger.log(
+    `Finshed adding existing users to Mailchimp audience. ${successCount} users added, ${errorCount} errors.`
+  )
+}
