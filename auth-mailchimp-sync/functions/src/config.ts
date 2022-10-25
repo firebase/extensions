@@ -19,4 +19,5 @@ export default {
   mailchimpApiKey: process.env.MAILCHIMP_API_KEY,
   mailchimpAudienceId: process.env.MAILCHIMP_AUDIENCE_ID,
   mailchimpContactStatus: process.env.MAILCHIMP_CONTACT_STATUS,
+  doBackfill: process.env.DO_BACKFILL,
 };
