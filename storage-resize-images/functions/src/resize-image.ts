@@ -83,9 +83,7 @@ export function convertType(buffer, format) {
   }
 
   if (format === "avif") {
-    return sharp(buffer)
-      .avif(avif)
-      .toBuffer();
+    return sharp(buffer).avif(avif).toBuffer();
   }
 
   return buffer;
