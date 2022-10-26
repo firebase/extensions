@@ -112,9 +112,7 @@ const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
 export const modifyImage = async ({
   bucket,
   originalFile,
-  fileDir,
-  fileNameWithoutExtension,
-  fileExtension,
+  parsedPath,
   contentType,
   size,
   objectMetadata,
@@ -122,14 +120,17 @@ export const modifyImage = async ({
 }: {
   bucket: Bucket;
   originalFile: string;
-  fileDir: string;
-  fileNameWithoutExtension: string;
-  fileExtension: string;
+  parsedPath: path.ParsedPath;
   contentType: string;
   size: string;
   objectMetadata: ObjectMetadata;
   format: string;
 }): Promise<ResizedImageResult> => {
+  const {
+    ext: fileExtension,
+    dir: fileDir,
+    name: fileNameWithoutExtension,
+  } = parsedPath;
   const shouldFormatImage = format !== "false";
   const imageContentType = shouldFormatImage
     ? supportedImageContentTypeMap[format]
