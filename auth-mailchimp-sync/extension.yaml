@@ -176,3 +176,12 @@ params:
         value: true
       - label: No
         value: false
+
+
+lifecycleEvents:
+  onInstall:
+    function: addExistingUsersToList
+    processingMessage: "Adding existing users to Mailchimp audience"
+  onUpdate:
+    function: addExistingUsersToList
+    processingMessage: "Adding existing users to Mailchimp audience"
