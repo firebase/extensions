@@ -56,7 +56,9 @@ async function processDocuments(
     return {
       timestamp: new Date().toISOString(),
       operation: ChangeType.IMPORT,
-      documentName: `projects/${projectId}/databases/(default)/documents/${document.ref.path}`,
+      documentName: `projects/${projectId}/databases/(default)/documents/${
+        document.ref.path
+      }`,
       documentId: document.id,
       eventId: "",
       data: document.data(),

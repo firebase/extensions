@@ -15,6 +15,6 @@ jobs:
         with:
           node-version: 14
       - name: NPM install
-        run: npm pkg set scripts.postinstall="echo no-postinstall" && npm i
+        run: SKIP_BUILD=yes npm i
       - name: Prettier Lint Check
         run: npm run lint

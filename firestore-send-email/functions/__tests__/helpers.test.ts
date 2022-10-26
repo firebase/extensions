@@ -158,7 +158,9 @@ describe("set server credentials helper function", () => {
 
     expect(credentials).toBeNull();
     expect(consoleLogSpy).toBeCalledWith(
-      `invalid url: '${config.smtpConnectionUri}' , please reconfigure with a valid SMTP connection URI`
+      `invalid url: '${
+        config.smtpConnectionUri
+      }' , please reconfigure with a valid SMTP connection URI`
     );
   });
 });

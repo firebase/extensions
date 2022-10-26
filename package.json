@@ -13,7 +13,7 @@
     "test:local": "concurrently \"npm run local:emulator\" \"jest\"",
     "test:watch": "concurrently \"npm run local:emulator\" \"jest --watch\"",
     "test-coverage": "jest --coverage --detectOpenHandles --forceExit",
-    "postinstall": "lerna bootstrap --no-ci && lerna run --parallel clean && npm run build && npm run generate-package-locks",
+    "postinstall": "if test \"$SKIP_BUILD\" != \"yes\" ; then lerna bootstrap --no-ci && lerna run --parallel clean && npm run build && npm run generate-package-locks ; fi",
     "generate-package-locks": "lerna exec -- npm i --package-lock-only",
     "generate-readmes": "lerna run --parallel --ignore delete-user-data generate-readme"
   },
@@ -29,7 +29,7 @@
     "concurrently": "^7.2.1",
     "jest": "^24.9.0",
     "lerna": "^3.4.3",
-    "prettier": "2.7.1",
+    "prettier": "1.15.3",
     "ts-jest": "^24.1.0",
     "typescript": "^3.6.3"
   }

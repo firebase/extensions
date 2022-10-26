@@ -69,8 +69,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
  */
 
 export class FirestoreBigQueryEventHistoryTracker
-  implements FirestoreEventHistoryTracker
-{
+  implements FirestoreEventHistoryTracker {
   bq: bigquery.BigQuery;
   _initialized: boolean = false;
 
@@ -131,7 +130,7 @@ export class FirestoreBigQueryEventHistoryTracker
       return undefined;
     }
 
-    const data = traverse<traverse.Traverse<any>>(eventData).map(function (
+    const data = traverse<traverse.Traverse<any>>(eventData).map(function(
       property
     ) {
       if (property && property.constructor) {

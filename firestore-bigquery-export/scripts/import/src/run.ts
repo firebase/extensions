@@ -95,7 +95,9 @@ async function processCollectionGroup(config: CliConfig): Promise<number> {
 
   console.log("---------------------------------------------------------");
   console.log(
-    `Please see https://console.cloud.google.com/bigquery?p=${config.projectId}&d=${config.datasetId}&t=${config.tableId}_raw_changelog&page=table`
+    `Please see https://console.cloud.google.com/bigquery?p=${
+      config.projectId
+    }&d=${config.datasetId}&t=${config.tableId}_raw_changelog&page=table`
   );
   console.log("---------------------------------------------------------");
 
@@ -135,7 +137,9 @@ async function processCollection(config: CliConfig): Promise<number> {
       return {
         timestamp: new Date().toISOString(),
         operation: ChangeType.IMPORT,
-        documentName: `projects/${config.projectId}/databases/(default)/documents/${document.ref.path}`,
+        documentName: `projects/${
+          config.projectId
+        }/databases/(default)/documents/${document.ref.path}`,
         documentId: document.id,
         eventId: "",
         data: document.data(),

@@ -24,9 +24,8 @@ export async function runBatchPubSubDeletions(paths: Paths, uid: string) {
   /** Define batch array variables */
   for await (const chunkedPaths of chunk<string>(firestorePaths, 450)) {
     const topic = pubsub.topic(
-      `projects/${
-        process.env.GOOGLE_CLOUD_PROJECT || process.env.PROJECT_ID
-      }/topics/${config.default.deletionTopic}`
+      `projects/${process.env.GOOGLE_CLOUD_PROJECT ||
+        process.env.PROJECT_ID}/topics/${config.default.deletionTopic}`
     );
     await topic.publish(
       Buffer.from(JSON.stringify({ paths: chunkedPaths, uid }))

@@ -129,7 +129,11 @@ export class ShardedCounterWorker {
       }, 1000);
 
       timeoutTimer = setTimeout(
-        () => shutdown().then(writeStats).then(resolve).catch(reject),
+        () =>
+          shutdown()
+            .then(writeStats)
+            .then(resolve)
+            .catch(reject),
         WORKER_TIMEOUT_MS
       );
 
@@ -137,7 +141,9 @@ export class ShardedCounterWorker {
         // if something's changed in the worker metadata since we were called, abort.
         if (!snap.exists || !deepEqual(snap.data(), this.metadata)) {
           logger.log("Shutting down because metadoc changed.");
-          shutdown().then(resolve).catch(reject);
+          shutdown()
+            .then(resolve)
+            .catch(reject);
         }
       });
 
@@ -151,7 +157,10 @@ export class ShardedCounterWorker {
         this.shards = snap.docs;
         if (this.singleRun && this.shards.length === 0) {
           logger.log("Shutting down, single run mode.");
-          shutdown().then(writeStats).then(resolve).catch(reject);
+          shutdown()
+            .then(writeStats)
+            .then(resolve)
+            .catch(reject);
         }
       });
     });
@@ -331,10 +340,7 @@ export class ShardedCounterWorker {
                   update.mergeFrom(u["_data_"]);
                 });
               }
-              t.set(
-                snap.ref,
-                update.toPartialShard(() => uuid.v4())
-              );
+              t.set(snap.ref, update.toPartialShard(() => uuid.v4()));
             }
           } catch (err) {
             logger.log("Partial cleanup failed: " + partial.ref.path);

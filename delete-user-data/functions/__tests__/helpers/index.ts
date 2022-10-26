@@ -3,7 +3,9 @@ import { UserRecord } from "firebase-functions/v1/auth";
 import { Query, DocumentData } from "@google-cloud/firestore";
 
 export const createFirebaseUser = async (): Promise<UserRecord> => {
-  const email = `${Math.random().toString(36).substr(2, 5)}@google.com`;
+  const email = `${Math.random()
+    .toString(36)
+    .substr(2, 5)}@google.com`;
   return admin.auth().createUser({ email });
 };
 
