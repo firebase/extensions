@@ -186,3 +186,6 @@ lifecycleEvents:
   onUpdate:
     function: fstranslatebackfill
     processingMessage: "Translating existing documents in ${COLLECTION_PATH}"
+  onConfigure:
+    function: fstranslatebackfill
+    processingMessage: "Translating existing documents in ${COLLECTION_PATH}"
