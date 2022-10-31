@@ -178,7 +178,9 @@ const run = async (): Promise<number> => {
     let query: firebase.firestore.Query;
 
     if (queryCollectionGroup) {
-      query = firebase.firestore().collectionGroup(sourceCollectionPath);
+      query = firebase
+        .firestore()
+        .collectionGroup(sourceCollectionPath.split("/").at(-1));
     } else {
       query = firebase.firestore().collection(sourceCollectionPath);
     }
