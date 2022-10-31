@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "format": "prettier --write \"**/*.{js,md,yml,ts,json,yaml}\"",
-    "lint": "prettier --list-different \"**/*.{js,md,yml,ts,json,yaml}\"",
+    "lint": "prettier --check \"**/*.{js,md,yml,ts,json,yaml}\"",
     "clean": "lerna run --parallel clean && lerna clean",
     "build": "lerna run build",
     "local:emulator": "cd _emulator && firebase emulators:start -P demo-test",
