@@ -333,3 +333,6 @@ lifecycleEvents:
   onUpdate:
     function: backfillResizedImages
     processingMessage: Resizing existing images in ${param:IMG_BUCKET}
+  onConfigure:
+    function: backfillResizedImages
+    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
