@@ -8,10 +8,6 @@ When you find an extension that solves a need for your app or project, all you d
 
 You can also browse official Firebase extensions on the [Extensions Marketplace](https://extensions.dev).
 
-## Want to help shape the future of Extensions?
-
-Firebase is looking for Extensions users to participate in an upcoming study on Wednesday, March 23, 2022! We’d love your feedback on new Extensions features. Selected users will receive a $100USD gift card or local equivalent. Submit your availability [here](https://forms.gle/TaBf17RMfgWydx5QA)
-
 ## Documentation
 
 Documentation for the [Extensions by Firebase](https://firebase.google.com/docs/extensions) section are now stored in this repository.
