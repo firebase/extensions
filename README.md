@@ -2,8 +2,6 @@
 
 This repository contains the source for Firebase Extensions. Created and tested by Firebase, these official Firebase extensions are reliable and secure. To learn more about Firebase Extensions, including how to install them in your Firebase projects, visit the [Firebase documentation](https://firebase.google.com/docs/extensions).
 
-> New to Extensions? You can learn more at the [Firebase Extensions product page](https://firebase.google.com/products/extensions).
-
 Each directory in this repo contains the source code for the extension and a README to explain how the extension works, including information about the APIs enabled, resources created, and the access granted to the extension.
 
 When you find an extension that solves a need for your app or project, all you do is install and configure the extension. With extensions, you don't spend time researching, writing, and debugging the code that implements functionality or automates a task for your app or project.
