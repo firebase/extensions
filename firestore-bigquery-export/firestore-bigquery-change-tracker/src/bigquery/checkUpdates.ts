@@ -16,7 +16,7 @@ export async function tableRequiresUpdate(
   }
 
   /* Setup checks */
-  const {metadata} = table;
+  const { metadata } = table;
 
   /** Check clustering */
   const configCluster = JSON.stringify(config.clustering);
@@ -24,7 +24,9 @@ export async function tableRequiresUpdate(
   if (configCluster !== tableCluster) return true;
 
   /** Check wildcards */
-  const initializedWildcards = schemaFields.some($ => $.name === "path_params").length;
+  const initializedWildcards = schemaFields.some(
+    ($) => $.name === "path_params"
+  ).length;
   if (!!config.wildcardIds !== !!initializedWildcards) return true;
 
   /** Check document id column */
@@ -35,8 +37,9 @@ export async function tableRequiresUpdate(
 
   /** Check partitioning */
   const partitioning = new Partitioning(config, table);
-  const isValidPartition = await partitioning.isValidPartitionForExistingTable();
-  if(isValidPartition) return true;
+  const isValidPartition =
+    await partitioning.isValidPartitionForExistingTable();
+  if (isValidPartition) return true;
 
   // No updates have occured.
   return false;
