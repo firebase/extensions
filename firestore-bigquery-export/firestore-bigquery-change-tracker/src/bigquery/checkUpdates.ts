@@ -25,15 +25,12 @@ export async function tableRequiresUpdate(
 
   /** Check wildcards */
   const initializedWildcards = schemaFields.some($ => $.name === "path_params").length;
-  console.log(config.wildcardIds, !!initializedWildcards);
   if (!!config.wildcardIds !== !!initializedWildcards) return true;
 
   /** Check document id column */
-
   if (!documentIdColExists) return true;
 
   /** Checkout pathParam column exists */
-
   if (!pathParamsColExists) return true;
 
   /** Check partitioning */
