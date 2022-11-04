@@ -31,7 +31,7 @@ describe("Stress testing", () => {
     });
   });
 
-  describe("running multiple chnages simulatenously", () => {
+  describe.only("running multiple chnages simulatenously", () => {
     test("Successfully handles 100 simulteaneous inserts.", async () => {
       const toRun = Array.from(Array(100).keys()).map((documentId) => {
         return new Promise(async (resolve) => {
@@ -54,6 +54,6 @@ describe("Stress testing", () => {
 
       const rows = await table.getRows();
       expect(rows[0].length).toEqual(100);
-    }, 120000);
+    }, 180000);
   });
 });

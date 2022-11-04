@@ -40,21 +40,22 @@ import {
 
 import { Partitioning } from "./partitioning";
 import { Clustering } from "./clustering";
+import { tableRequiresUpdate } from "./checkUpdates";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
   tableId: string;
-  datasetLocation: string | undefined;
-  transformFunction: string | undefined;
-  timePartitioning: string;
-  timePartitioningField: string | undefined;
-  timePartitioningFieldType: string | undefined;
-  timePartitioningFirestoreField: string | undefined;
+  datasetLocation?: string | undefined;
+  transformFunction?: string | undefined;
+  timePartitioning?: string | undefined;
+  timePartitioningField?: string | undefined;
+  timePartitioningFieldType?: string | undefined;
+  timePartitioningFirestoreField?: string | undefined;
   clustering: string[] | null;
   wildcardIds?: boolean;
-  bqProjectId: string | undefined;
+  bqProjectId?: string | undefined;
   backupTableId?: string | undefined;
 }
 
@@ -340,7 +341,16 @@ export class FirestoreBigQueryEventHistoryTracker
       }
       await partitioning.addPartitioningToSchema(metadata.schema.fields);
 
-      if (!documentIdColExists || !pathParamsColExists) {
+      /** Updated table metadata if required */
+      const shouldUpdate = await tableRequiresUpdate(
+        table,
+        this.config,
+        fields,
+        documentIdColExists,
+        pathParamsColExists
+      );
+
+      if (shouldUpdate) {
         await table.setMetadata(metadata);
       }
     } else {
@@ -354,6 +364,7 @@ export class FirestoreBigQueryEventHistoryTracker
 
       //Add partitioning
       await partitioning.addPartitioningToSchema(schema.fields);
+
       await partitioning.updateTableMetadata(options);
 
       // Add clustering
