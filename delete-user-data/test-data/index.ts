@@ -48,10 +48,7 @@ const createFirestoreDocument = async (
     field: "value",
   }
 ): Promise<void> => {
-  await firebase
-    .firestore()
-    .doc(path)
-    .set(value);
+  await firebase.firestore().doc(path).set(value);
   console.log(`Created Firestore data at path: '${path}'`);
 };
 
@@ -59,10 +56,7 @@ const createRTDBDocument = async (
   path: string,
   value: any = { field: "value " }
 ): Promise<void> => {
-  await firebase
-    .database()
-    .ref(path)
-    .set(value);
+  await firebase.database().ref(path).set(value);
   console.log(`Created RTDB data at path: '${path}'`);
 };
 

@@ -55,11 +55,7 @@ export function delivered(
   }
 ) {
   logger.log(
-    `Delivered message: ${ref.path} successfully. messageId: ${
-      info.messageId
-    } accepted: ${info.accepted.length} rejected: ${
-      info.rejected.length
-    } pending: ${info.pending.length}`
+    `Delivered message: ${ref.path} successfully. messageId: ${info.messageId} accepted: ${info.accepted.length} rejected: ${info.rejected.length} pending: ${info.pending.length}`
   );
 }
 

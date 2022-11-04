@@ -54,45 +54,31 @@ export function convertType(buffer, format) {
   const { jpeg, jpg, png, webp, tiff, tif } = outputOptions;
 
   if (format === "jpeg") {
-    return sharp(buffer)
-      .jpeg(jpeg)
-      .toBuffer();
+    return sharp(buffer).jpeg(jpeg).toBuffer();
   }
 
   if (format === "jpg") {
-    return sharp(buffer)
-      .jpeg(jpg)
-      .toBuffer();
+    return sharp(buffer).jpeg(jpg).toBuffer();
   }
 
   if (format === "png") {
-    return sharp(buffer)
-      .png(png)
-      .toBuffer();
+    return sharp(buffer).png(png).toBuffer();
   }
 
   if (format === "webp") {
-    return sharp(buffer, { animated: config.animated })
-      .webp(webp)
-      .toBuffer();
+    return sharp(buffer, { animated: config.animated }).webp(webp).toBuffer();
   }
 
   if (format === "tif") {
-    return sharp(buffer)
-      .tiff(tif)
-      .toBuffer();
+    return sharp(buffer).tiff(tif).toBuffer();
   }
 
   if (format === "tiff") {
-    return sharp(buffer)
-      .tiff(tiff)
-      .toBuffer();
+    return sharp(buffer).tiff(tiff).toBuffer();
   }
 
   if (format === "gif") {
-    return sharp(buffer, { animated: config.animated })
-      .gif()
-      .toBuffer();
+    return sharp(buffer, { animated: config.animated }).gif().toBuffer();
   }
 
   return buffer;
@@ -126,9 +112,7 @@ const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
 export const modifyImage = async ({
   bucket,
   originalFile,
-  fileDir,
-  fileNameWithoutExtension,
-  fileExtension,
+  parsedPath,
   contentType,
   size,
   objectMetadata,
@@ -136,14 +120,17 @@ export const modifyImage = async ({
 }: {
   bucket: Bucket;
   originalFile: string;
-  fileDir: string;
-  fileNameWithoutExtension: string;
-  fileExtension: string;
+  parsedPath: path.ParsedPath;
   contentType: string;
   size: string;
   objectMetadata: ObjectMetadata;
   format: string;
 }): Promise<ResizedImageResult> => {
+  const {
+    ext: fileExtension,
+    dir: fileDir,
+    name: fileNameWithoutExtension,
+  } = parsedPath;
   const shouldFormatImage = format !== "false";
   const imageContentType = shouldFormatImage
     ? supportedImageContentTypeMap[format]

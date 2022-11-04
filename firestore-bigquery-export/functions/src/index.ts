@@ -24,8 +24,8 @@ import {
 import * as logs from "./logs";
 import { getChangeType, getDocumentId } from "./util";
 
-const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHistoryTracker(
-  {
+const eventTracker: FirestoreEventHistoryTracker =
+  new FirestoreBigQueryEventHistoryTracker({
     tableId: config.tableId,
     datasetId: config.datasetId,
     datasetLocation: config.datasetLocation,
@@ -38,8 +38,7 @@ const eventTracker: FirestoreEventHistoryTracker = new FirestoreBigQueryEventHis
     clustering: config.clustering,
     wildcardIds: config.wildcardIds,
     bqProjectId: config.bqProjectId,
-  }
-);
+  });
 
 logs.init();
 
