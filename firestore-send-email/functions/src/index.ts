@@ -15,7 +15,6 @@
  */
 
 import * as admin from "firebase-admin";
-import { getEventarc } from "firebase-admin/eventarc";
 import * as functions from "firebase-functions";
 import * as nodemailer from "nodemailer";
 
@@ -24,6 +23,7 @@ import config from "./config";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
 import { setSmtpCredentials } from "./helpers";
+import * as events from "./events";
 
 logs.init();
 
@@ -46,6 +46,9 @@ async function initialize() {
       admin.firestore().collection(config.templatesCollection)
     );
   }
+
+  /** setup events */
+  events.setupEventChannel();
 }
 
 async function transportLayer() {
@@ -306,25 +309,39 @@ async function processWrite(change) {
 
   switch (payload.delivery.state) {
     case "SUCCESS":
+      await events.recordSuccessEvent(change);
     case "ERROR":
+      await events.recordErrorEvent(change, payload, payload.delivery.error);
       return null;
     case "PROCESSING":
+      await events.recordProcessingEvent(change);
+
       if (payload.delivery.leaseExpireTime.toMillis() < Date.now()) {
+        const error = "Message processing lease expired.";
+
+        /** Send error event */
+        await events.recordErrorEvent(change, payload, error);
+
         // Wrapping in transaction to allow for automatic retries (#48)
         return admin.firestore().runTransaction((transaction) => {
           transaction.update(change.after.ref, {
             "delivery.state": "ERROR",
             // Keeping error to avoid any breaking changes in the next minor update.
             // Error to be removed for the next major release.
-            error: "Message processing lease expired.",
+            error,
             "delivery.error": "Message processing lease expired.",
           });
+
           return Promise.resolve();
         });
       }
       return null;
     case "PENDING":
+      await events.recordPendingEvent(change, payload);
     case "RETRY":
+      /** Send retry event */
+      await events.recordRetryEvent(change, payload);
+
       // Wrapping in transaction to allow for automatic retries (#48)
       await admin.firestore().runTransaction((transaction) => {
         transaction.update(change.after.ref, {
@@ -344,44 +361,28 @@ export const processQueue = functions.firestore
   .onWrite(async (change) => {
     await initialize();
 
-    const eventChannel =
-      process.env.EVENTARC_CHANNEL &&
-      getEventarc().channel(process.env.EVENTARC_CHANNEL, {
-        allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
-      });
-
     logs.start();
 
-    eventChannel &&
-      (await eventChannel.publish({
-        type: "firebase.extensions.firestore-send-email.v1.onStart",
-        subject: change.after.id,
-        data: { doc: change.after },
-      }));
+    console.log("change.before.exists >>>", change.before.exists);
+
+    if (!change.before.exists) {
+      await events.recordStartEvent(change);
+    }
 
     try {
       await processWrite(change);
-      eventChannel &&
-        (await eventChannel.publish({
-          type: "firebase.extensions.firestore-send-email.v1.onSuccess",
-          subject: change.after.id,
-          data: { doc: change.after },
-        }));
     } catch (err) {
-      eventChannel &&
-        (await eventChannel.publish({
-          type: "firebase.extensions.firestore-send-email.v1.onFailure",
-          subject: change.after.id,
-          data: { doc: change.after, err },
-        }));
+      await events.recordErrorEvent(
+        change,
+        change.after.data(),
+        `Unhandled error occurred during processing: ${err.message}"`
+      );
       logs.error(err);
       return null;
     }
-    eventChannel &&
-      (await eventChannel.publish({
-        type: "firebase.extensions.firestore-send-email.v1.onComplete",
-        subject: change.after.id,
-        data: { doc: change.after },
-      }));
+
+    /** record complete event */
+    await events.recordCompleteEvent(change);
+
     logs.complete();
   });

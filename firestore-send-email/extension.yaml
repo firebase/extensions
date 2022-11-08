@@ -184,12 +184,21 @@ params:
 events:
   - type: firebase.extensions.firestore-send-email.v1.onStart
     description: Occurs when the extension starts execution.
+
+  - type: firebase.extensions.firestore-send-email.v1.onProcessing
+    description: Occurs when the extension attempts to process an email.
+
+  - type: firebase.extensions.firestore-send-email.v1.onRetry
+    description: Occurs when the extension attempts to resend an email.
+
+  - type: firebase.extensions.firestore-send-email.v1.onPending
+    description: Occurs when an email has a pending status.
+
+  - type: firebase.extensions.firestore-send-email.v1.onSuccess
+    description: Occurs when the extension successfully sends an email.
   
   - type: firebase.extensions.firestore-send-email.v1.onComplete
     description: Occurs when the extension completes execution.
 
-  - type: firebase.extensions.firestore-send-email.v1.onSuccess
-    description: Occurs when the extension successfully completes execution.
-
-  - type: firebase.extensions.firestore-send-email.v1.onFailure
+  - type: firebase.extensions.firestore-send-email.v1.onError
     description: Occurs when the extension fails to complete execution.
