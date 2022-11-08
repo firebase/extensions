@@ -16,7 +16,7 @@ let viewId_raw: string;
 let dataset: Dataset;
 let table: Table;
 let view: Table;
-
+const count = 100;
 describe("Stress testing", () => {
   beforeEach(() => {
     randomID = (Math.random() + 1).toString(36).substring(7);
@@ -32,8 +32,8 @@ describe("Stress testing", () => {
   });
 
   describe("running multiple chnages simulatenously", () => {
-    test("Successfully handles 100 simulteaneous inserts.", async () => {
-      const toRun = Array.from(Array(100).keys()).map((documentId) => {
+    test(`Successfully handles ${count} simulteaneous inserts.`, async () => {
+      const toRun = Array.from(Array(count).keys()).map((documentId) => {
         return new Promise(async (resolve) => {
           event = changeTrackerEvent({
             documentId,
