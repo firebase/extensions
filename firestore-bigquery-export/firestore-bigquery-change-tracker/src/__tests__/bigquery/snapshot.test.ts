@@ -25,7 +25,6 @@ import { FirestoreBigQueryEventHistoryTracker } from "../../bigquery";
 
 const fixturesDir = __dirname + "/../fixtures";
 const sqlDir = fixturesDir + "/sql";
-const schemaDir = fixturesDir + "/schemas";
 
 const testProjectId = "test";
 const testDataset = "test_dataset";
@@ -67,7 +66,7 @@ describe("FirestoreBigQueryEventHistoryTracker functionality", () => {
 describe("latest snapshot view sql generation", () => {
   it("should generate the expected sql", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/latestConsistentSnapshot.txt`
+      `${sqlDir}/latestConsistentSnapshot.sql`
     );
     const query = buildLatestSnapshotViewQuery(
       testDataset,
@@ -79,7 +78,7 @@ describe("latest snapshot view sql generation", () => {
   });
   it("should generate correct sql with no groupBy columns", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/latestConsistentSnapshotNoGroupBy.txt`
+      `${sqlDir}/latestConsistentSnapshotNoGroupBy.sql`
     );
     const query = buildLatestSnapshotViewQuery(
       testDataset,
