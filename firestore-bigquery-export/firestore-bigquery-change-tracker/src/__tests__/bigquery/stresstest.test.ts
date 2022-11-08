@@ -31,7 +31,7 @@ describe("Stress testing", () => {
     });
   });
 
-  describe.only("running multiple chnages simulatenously", () => {
+  describe("running multiple chnages simulatenously", () => {
     test("Successfully handles 100 simulteaneous inserts.", async () => {
       const toRun = Array.from(Array(100).keys()).map((documentId) => {
         return new Promise(async (resolve) => {
