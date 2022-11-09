@@ -12,6 +12,7 @@ import * as logs from "./logs";
 
 export interface ResizedImageResult {
   size: string;
+  outputFilePath: string;
   success: boolean;
 }
 
@@ -53,45 +54,31 @@ export function convertType(buffer, format) {
   const { jpeg, jpg, png, webp, tiff, tif } = outputOptions;
 
   if (format === "jpeg") {
-    return sharp(buffer)
-      .jpeg(jpeg)
-      .toBuffer();
+    return sharp(buffer).jpeg(jpeg).toBuffer();
   }
 
   if (format === "jpg") {
-    return sharp(buffer)
-      .jpeg(jpg)
-      .toBuffer();
+    return sharp(buffer).jpeg(jpg).toBuffer();
   }
 
   if (format === "png") {
-    return sharp(buffer)
-      .png(png)
-      .toBuffer();
+    return sharp(buffer).png(png).toBuffer();
   }
 
   if (format === "webp") {
-    return sharp(buffer, { animated: config.animated })
-      .webp(webp)
-      .toBuffer();
+    return sharp(buffer, { animated: config.animated }).webp(webp).toBuffer();
   }
 
   if (format === "tif") {
-    return sharp(buffer)
-      .tiff(tif)
-      .toBuffer();
+    return sharp(buffer).tiff(tif).toBuffer();
   }
 
   if (format === "tiff") {
-    return sharp(buffer)
-      .tiff(tiff)
-      .toBuffer();
+    return sharp(buffer).tiff(tiff).toBuffer();
   }
 
   if (format === "gif") {
-    return sharp(buffer, { animated: config.animated })
-      .gif()
-      .toBuffer();
+    return sharp(buffer, { animated: config.animated }).gif().toBuffer();
   }
 
   return buffer;
@@ -186,7 +173,7 @@ export const modifyImage = async ({
       contentEncoding: objectMetadata.contentEncoding,
       contentLanguage: objectMetadata.contentLanguage,
       contentType: imageContentType,
-      metadata: objectMetadata.metadata || {},
+      metadata: objectMetadata.metadata ? { ...objectMetadata.metadata } : {},
     };
     metadata.metadata.resizedImage = true;
     if (config.cacheControlHeader) {
@@ -221,16 +208,21 @@ export const modifyImage = async ({
 
     // Uploading the modified image.
     logs.imageUploading(modifiedFilePath);
-    await bucket.upload(modifiedFile, {
+    const uploadResponse = await bucket.upload(modifiedFile, {
       destination: modifiedFilePath,
       metadata,
     });
     logs.imageUploaded(modifiedFile);
 
-    return { size, success: true };
+    // Make uploaded image public.
+    if (config.makePublic) {
+      await uploadResponse[0].makePublic();
+    }
+
+    return { size, outputFilePath: modifiedFilePath, success: true };
   } catch (err) {
     logs.error(err);
-    return { size, success: false };
+    return { size, outputFilePath: modifiedFilePath, success: false };
   } finally {
     try {
       // Make sure the local resized file is cleaned up to free up disk space.

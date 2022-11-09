@@ -15,6 +15,7 @@
  */
 
 import * as admin from "firebase-admin";
+import { getEventarc } from "firebase-admin/eventarc";
 import * as fs from "fs";
 import * as functions from "firebase-functions";
 import * as mkdirp from "mkdirp";
@@ -36,14 +37,21 @@ sharp.cache(false);
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 
+const eventChannel =
+  process.env.EVENTARC_CHANNEL &&
+  getEventarc().channel(process.env.EVENTARC_CHANNEL, {
+    allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
+  });
+
 logs.init();
 
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
  */
-export const generateResizedImage = functions.storage.object().onFinalize(
-  async (object): Promise<void> => {
+export const generateResizedImage = functions.storage
+  .object()
+  .onFinalize(async (object): Promise<void> => {
     logs.start();
     const { contentType } = object; // This is the image MIME type
 
@@ -144,6 +152,15 @@ export const generateResizedImage = functions.storage.object().onFinalize(
       });
 
       const results = await Promise.all(tasks);
+      eventChannel &&
+        (await eventChannel.publish({
+          type: "firebase.extensions.storage-resize-images.v1.complete",
+          subject: filePath,
+          data: {
+            input: object,
+            outputs: results,
+          },
+        }));
 
       const failed = results.some((result) => result.success === false);
       if (failed) {
@@ -184,5 +201,4 @@ export const generateResizedImage = functions.storage.object().onFinalize(
         }
       }
     }
-  }
-);
+  });

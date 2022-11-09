@@ -21,9 +21,9 @@ import { FirestoreSchema } from "./schema";
 
 import { existsSync, readdirSync, lstatSync } from "fs";
 
-export function readSchemas(
-  globs: string[]
-): { [schemaName: string]: FirestoreSchema } {
+export function readSchemas(globs: string[]): {
+  [schemaName: string]: FirestoreSchema;
+} {
   let schemas = {};
   const expanded = expandGlobs(globs);
   for (var i = 0; i < expanded.length; i++) {
@@ -70,9 +70,9 @@ function expandGlobs(globs: string[]): string[] {
   return results;
 }
 
-function readSchemasFromDirectory(
-  directory: string
-): { [schemaName: string]: FirestoreSchema } {
+function readSchemasFromDirectory(directory: string): {
+  [schemaName: string]: FirestoreSchema;
+} {
   let results = {};
   const files = readdirSync(directory);
   const schemaNames = files.map((fileName) => filePathToSchemaName(fileName));

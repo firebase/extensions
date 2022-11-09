@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["12", "14"]
+        node: ["14", "16"]
     name: node.js_${{ matrix.node }}_test
     steps:
       - uses: actions/checkout@v2
@@ -30,14 +30,6 @@ jobs:
           retry_wait_seconds: 60
           max_attempts: 3
           command: npm i -g firebase-tools
-      - name: Use extension commands
-        run: firebase --open-sesame extdev
-      - name: Run 'firestore-send-email' extension emulator
-        run:
-          cd ./firestore-send-email/functions/__tests__/emulator && sh
-          ./start.sh
-      - name: Run tests with coverage
-        run: npm run test-coverage
       - name: Submit coverage
         run: ./node_modules/.bin/codecov
         env:

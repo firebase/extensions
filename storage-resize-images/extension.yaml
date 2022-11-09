@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.27
+version: 0.1.30
 specVersion: v1beta
 
 displayName: Resize Images
@@ -127,6 +127,8 @@ params:
       To which Cloud Storage bucket will you upload images that you want to resize?
       Resized images will be stored in this bucket. Depending on your extension configuration,
       original images are either kept or deleted.
+      It is recommended to create a separate bucket for this extension. For more information,
+      refer to the [pre-installation guide](https://firebase.google.com/products/extensions/storage-resize-images).
     type: string
     example: my-project-12345.appspot.com
     validationRegex: ^([0-9a-z_.-]*)$
@@ -160,9 +162,22 @@ params:
       - label: No
         value: false
       - label: Delete on successful resize
-        value: on_success  
+        value: on_success
     default: false
     required: true
+
+  - param: MAKE_PUBLIC
+    label: Make resized images public
+    description: >-
+      Do you want to make the resized images public automatically? So you can access them by URL.
+      For example: https://storage.googleapis.com/{bucket}/{path}
+    type: select
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+    default: false
 
   - param: RESIZED_IMAGES_PATH
     label: Cloud Storage path for resized images
@@ -285,3 +300,7 @@ params:
     default: 1024
     required: true
     immutable: false
+
+events:
+  - type: firebase.extensions.storage-resize-images.v1.complete
+    description: Occurs when image resizing completes. The event will contain further details about specific formats and sizes.

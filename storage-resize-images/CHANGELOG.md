@@ -1,3 +1,19 @@
+## Version 0.1.30
+
+feature - include original image data in events
+
+## Version 0.1.29
+
+fixed - add size to metadata
+
+feature - add an option to make the resized images public
+
+fixed - updated sharp lib dependency for improved compression algorithm
+
+## Version 0.1.28
+
+feature - added extension event for image resize completion (#967)
+
 ## Version 0.1.27
 
 fixed - update to firebase-admin v10 (#935)

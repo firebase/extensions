@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.22
+version: 0.1.26
 specVersion: v1beta
 
 displayName: Stream Collections to BigQuery
@@ -38,7 +38,7 @@ contributors:
 billingRequired: true
 
 apis:
-  - apiName: bigquery-json.googleapis.com
+  - apiName: bigquery.googleapis.com
     reason: Mirrors data from your Cloud Firestore collection in BigQuery.
 
 roles:
@@ -146,7 +146,7 @@ params:
       - label: Sao Paulo (southamerica-east1)
         value: southamerica-east1
       - label: South Carolina (us-east1)
-        value: us-east1    
+        value: us-east1
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: Finland (europe-north1)
@@ -156,7 +156,7 @@ params:
       - label: London (europe-west2)
         value: europe-west2
       - label: Netherlands (europe-west4)
-        value: europe-west4  
+        value: europe-west4
       - label: Zurich (europe-west6)
         value: europe-west6
       - label: Taiwan (asia-east1)
@@ -176,7 +176,7 @@ params:
       - label: Singapore (asia-southeast1)
         value: asia-southeast1
       - label: Sydney (australia-southeast1)
-        value: australia-southeast1  
+        value: australia-southeast1
       - label: Taiwan (asia-east1)
         value: asia-east1
       - label: Tokyo (asia-northeast1)
@@ -184,10 +184,10 @@ params:
       - label: United States (multi-regional)
         value: us
       - label: Europe (multi-regional)
-        value: eu      
+        value: eu
     default: us
     required: true
-    immutable: true 
+    immutable: true
 
   - param: BIGQUERY_PROJECT_ID
     label: Project Id
@@ -269,13 +269,13 @@ params:
       - label: day
         value: DAY
       - label: month
-        value: MONTH 
+        value: MONTH
       - label: year
         value: YEAR
       - label: none
         value: NONE
     default: NONE
-    required: true 
+    required: true
 
   - param: TIME_PARTITIONING_FIELD
     label: BigQuery Time Partitioning column name
@@ -315,7 +315,7 @@ params:
     label: BigQuery SQL table clustering
     description: >-
       This parameter will allow you to set up Clustering for the BigQuery Table
-      created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 comma separated fields(order matters). 
+      created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 comma separated fields. The order of the specified columns determines the sort order of the data.
       Available schema extensions table fields for clustering: `document_id, timestamp, event_id, operation, data`.
     type: string
     validationRegex: ^[^,\s]+(?:,[^,\s]+){0,3}$
@@ -338,4 +338,3 @@ params:
     example: https://us-west1-my-project-id.cloudfunctions.net/myTransformFunction
     type: string
     required: false
-    

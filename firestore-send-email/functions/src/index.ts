@@ -338,8 +338,9 @@ async function processWrite(change) {
   }
 }
 
-export const processQueue = functions.handler.firestore.document.onWrite(
-  async (change) => {
+export const processQueue = functions.firestore
+  .document(config.mailCollection)
+  .onWrite(async (change) => {
     await initialize();
     logs.start();
     try {
@@ -349,5 +350,4 @@ export const processQueue = functions.handler.firestore.document.onWrite(
       return null;
     }
     logs.complete();
-  }
-);
+  });

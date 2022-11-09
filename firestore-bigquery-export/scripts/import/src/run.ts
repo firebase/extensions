@@ -95,9 +95,7 @@ async function processCollectionGroup(config: CliConfig): Promise<number> {
 
   console.log("---------------------------------------------------------");
   console.log(
-    `Please see https://console.cloud.google.com/bigquery?p=${
-      config.projectId
-    }&d=${config.datasetId}&t=${config.tableId}_raw_changelog&page=table`
+    `Please see https://console.cloud.google.com/bigquery?p=${config.projectId}&d=${config.datasetId}&t=${config.tableId}_raw_changelog&page=table`
   );
   console.log("---------------------------------------------------------");
 
@@ -137,9 +135,7 @@ async function processCollection(config: CliConfig): Promise<number> {
       return {
         timestamp: new Date().toISOString(),
         operation: ChangeType.IMPORT,
-        documentName: `projects/${
-          config.projectId
-        }/databases/(default)/documents/${document.ref.path}`,
+        documentName: `projects/${config.projectId}/databases/(default)/documents/${document.ref.path}`,
         documentId: document.id,
         eventId: "",
         data: document.data(),
@@ -200,8 +196,8 @@ export async function runMultiThread(): Promise<number> {
 
   await dataSink.initialize();
   if (!exists) {
-    console.log("Intializing dataset, this may take upto 1 minute...");
-    await new Promise((resolve) => setTimeout(resolve, 60000, [])); // Wait 1 minute for dataset to initialize
+    console.log("Wait a few seconds for the dataset to initialize...");
+    await new Promise((resolve) => setTimeout(resolve, 5000, [])); // Wait for the dataset to initialize
   }
 
   console.log(

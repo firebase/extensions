@@ -25,7 +25,7 @@ Object {
 
 exports[`extension config config.clustering param exists 1`] = `
 Object {
-  "description": "This parameter will allow you to set up Clustering for the BigQuery Table created by the extension. (for example: \`data,document_id,timestamp\`- no whitespaces). You can select up to 4 comma separated fields(order matters).  Available schema extensions table fields for clustering: \`document_id, timestamp, event_id, operation, data\`.",
+  "description": "This parameter will allow you to set up Clustering for the BigQuery Table created by the extension. (for example: \`data,document_id,timestamp\`- no whitespaces). You can select up to 4 comma separated fields. The order of the specified columns determines the sort order of the data. Available schema extensions table fields for clustering: \`document_id, timestamp, event_id, operation, data\`.",
   "example": "data,document_id,timestamp",
   "label": "BigQuery SQL table clustering",
   "param": "CLUSTERING",

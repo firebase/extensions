@@ -1,3 +1,33 @@
+## Version 0.1.19
+
+fixed - generate new lib folder
+
+## Version 0.1.18
+
+fixed - added encoding for connection string passwords (#985)
+
+fixed - move log statement outside of forEach loop (#950)
+
+feature - upgrade to the latest emulator updates (#995)
+
+fixed - further updated the extensions regular expression validation to contain additional smtp formats (#909)
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - added local smtp server for running tests (#794)
+
+fixed - add SMTP secret password (#840)
+
+fixed - added logging for invalid email messages, documentation updated with firestore example (#710)
+
+fixed - update validate workflow to use node14
+
+## Version 0.1.17
+
+fixed - update SMTP connection URI validation regex (#942)
+
+fixed - hide password from showing up in logs (#943)
+
 ## Version 0.1.16
 
 fixed - updated the extensions regular expression validation to contain additional smtp formats (#909)
