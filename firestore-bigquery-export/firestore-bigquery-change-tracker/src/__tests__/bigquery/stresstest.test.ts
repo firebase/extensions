@@ -50,10 +50,16 @@ describe("Stress testing", () => {
 
       await Promise.all(toRun);
 
+      /* Wait for data to set */
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+
       table = bq.dataset(datasetId).table(tableId_raw);
 
-      const rows = await table.getRows();
+      const rows = await table.getRows({
+        selectedFields: "document_id",
+        maxResults: 100,
+      });
       expect(rows[0].length).toEqual(100);
-    }, 180000);
+    }, 320000);
   });
 });
