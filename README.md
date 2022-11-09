@@ -7,9 +7,16 @@ Each directory in this repo contains the source code for the extension and a REA
 When you find an extension that solves a need for your app or project, all you do is install and configure the extension. With extensions, you don't spend time researching, writing, and debugging the code that implements functionality or automates a task for your app or project.
 
 You can also browse official Firebase extensions from the following sources:
+
 * [Firebase Extensions product page](https://firebase.google.com/products/extensions)
 * [Firebase Extensions dashboard](https://console.firebase.google.com/project/_/extensions/) in the Firebase console
 
-# Want to help shape the future of Extensions?
+## Want to help shape the future of Extensions?
 
 Firebase is looking for Extensions users to participate in an upcoming study on Wednesday, March 23, 2022! We’d love your feedback on new Extensions features. Selected users will receive a $100USD gift card or local equivalent. Submit your availability [here](https://forms.gle/TaBf17RMfgWydx5QA)
+
+## Documentation
+
+Documentation for the [Extensions by Firebase](https://firebase.google.com/docs/extensions) section are now stored in this repository.
+
+They can be found under [Docs](https://github.com/firebase/extensions/docs)

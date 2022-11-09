@@ -29,7 +29,7 @@ fi
 REPO_ROOT="`( cd \`dirname \"$0\"\` && cd .. && pwd )`"
 
 cd "$REPO_ROOT"
-npm install
+npm ci
 if [ ! -z "$IGNORE_TEST_FAILURES" ]
 then
   echo "Ignoring failing tests."
@@ -47,9 +47,10 @@ for i in ${EXTENSIONS[@]}; do
 
   cd "$REPO_ROOT/$i"
   set +e
-  firebase ext:dev:publish $PUBLISHER_ID/$i --non-interactive --force
-  set -e
+  firebase ext:dev:publish $PUBLISHER_ID/$i $FIREX_PUBLISH_EXTRA_FLAGS --non-interactive --force
   EXIT_CODE=$?
+  set -e
+  echo "Exit code: $EXIT_CODE"
   # Exit code 103 means that version already published, move on.
-  [ $EXIT_CODE -eq 0  ] || [ $EXIT_CODE -eq 103 ]  || exit 1
+  [ $EXIT_CODE -eq 0  ] || [ $EXIT_CODE -eq 103 ] || exit 1
 done

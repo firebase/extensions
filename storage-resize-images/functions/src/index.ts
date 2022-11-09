@@ -49,8 +49,9 @@ logs.init();
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
  */
-export const generateResizedImage = functions.storage.object().onFinalize(
-  async (object): Promise<void> => {
+export const generateResizedImage = functions.storage
+  .object()
+  .onFinalize(async (object): Promise<void> => {
     logs.start();
     const { contentType } = object; // This is the image MIME type
 
@@ -156,6 +157,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
           type: "firebase.extensions.storage-resize-images.v1.complete",
           subject: filePath,
           data: {
+            input: object,
             outputs: results,
           },
         }));
@@ -199,5 +201,4 @@ export const generateResizedImage = functions.storage.object().onFinalize(
         }
       }
     }
-  }
-);
+  });
