@@ -103,6 +103,9 @@ export class FirestoreBigQueryEventHistoryTracker
           document_id: event.documentId,
           operation: ChangeType[event.operation],
           data: JSON.stringify(this.serializeData(event.data)),
+          old_data: event.oldData
+            ? JSON.stringify(this.serializeData(event.oldData))
+            : null,
           ...partitionValue,
           ...(this.config.wildcardIds &&
             event.pathParams && { path_params: JSON.stringify(pathParams) }),
