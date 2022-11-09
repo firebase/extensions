@@ -3,7 +3,8 @@ import { FirestoreDocumentChangeEvent } from "../..";
 import { RawChangelogSchema } from "../../bigquery";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { deleteTable } from "../fixtures/clearTables";
-
+import { ChangeType } from "../..";
+import { buildLatestSnapshotViewQuery } from "../../bigquery/snapshot";
 process.env.PROJECT_ID = "extensions-testing";
 
 const bq = new BigQuery();
@@ -62,4 +63,26 @@ describe("Stress testing", () => {
       expect(rows[0].length).toEqual(count);
     }, 320000);
   });
+  
+  describe("snapshot view stresstest", () => {
+    test("should run snapshot view query on big table", async () => {
+      const query = buildLatestSnapshotViewQuery(
+        "new_stresstest",
+        "test_changelog_table",
+        "timestamp",
+        ["data","operation","event_id","timestamp"],
+        "extensions-testing"
+      );
+
+      const [job] = await bq.createQueryJob({
+        query,
+        useLegacySql: false,
+      });
+
+      const [rows] = await job.getQueryResults();
+
+      expect(rows.length).toEqual(1);
+    }, 240000);
+    });
+
 });
