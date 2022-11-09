@@ -40,7 +40,7 @@ import {
 
 import { Partitioning } from "./partitioning";
 import { Clustering } from "./clustering";
-import { tableRequiresUpdate } from "./checkUpdates";
+import { tableRequiresUpdate, viewRequiresUpdate } from "./checkUpdates";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
@@ -428,8 +428,12 @@ export class FirestoreBigQueryEventHistoryTracker
       }
 
       if (
-        !documentIdColExists ||
-        (!pathParamsColExists && this.config.wildcardIds)
+        viewRequiresUpdate(
+          this.config,
+          fields,
+          documentIdColExists,
+          pathParamsColExists
+        )
       ) {
         await view.setMetadata(metadata);
       }

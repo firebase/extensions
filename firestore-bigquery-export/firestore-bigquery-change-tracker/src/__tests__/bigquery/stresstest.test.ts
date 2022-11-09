@@ -51,7 +51,7 @@ describe("Stress testing", () => {
       await Promise.all(toRun);
 
       /* Wait for data to set */
-      await new Promise((resolve) => setTimeout(resolve, 10000));
+      await new Promise((resolve) => setTimeout(resolve, 20000));
 
       table = bq.dataset(datasetId).table(tableId_raw);
 

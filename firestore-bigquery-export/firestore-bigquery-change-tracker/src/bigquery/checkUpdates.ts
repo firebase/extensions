@@ -44,3 +44,31 @@ export async function tableRequiresUpdate(
   // No updates have occured.
   return false;
 }
+
+export function viewRequiresUpdate(
+  config: FirestoreBigQueryEventHistoryTrackerConfig,
+  schemaFields: any,
+  documentIdColExists: boolean,
+  pathParamsColExists: boolean
+): boolean {
+  /** Check if documentId column exists */
+  if (!documentIdColExists) return true;
+
+  /** Check wildcards */
+  const initializedWildcards = schemaFields.some(
+    ($) => $.name === "path_params"
+  ).length;
+
+  console.log(initializedWildcards, config.wildcardIds);
+
+  if (!!config.wildcardIds !== !!initializedWildcards) return true;
+
+  /** Check document id column */
+  if (!documentIdColExists) return true;
+
+  /** Checkout pathParam column exists */
+  if (!pathParamsColExists) return true;
+
+  // No updates have occured.
+  return false;
+}
