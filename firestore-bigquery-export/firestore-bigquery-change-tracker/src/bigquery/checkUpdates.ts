@@ -10,11 +10,6 @@ export async function tableRequiresUpdate(
   documentIdColExists: boolean,
   pathParamsColExists: boolean
 ): Promise<boolean> {
-  // If the table doesn't exist, return early.
-  if (!table) {
-    return false;
-  }
-
   /* Setup checks */
   const { metadata } = table;
 
