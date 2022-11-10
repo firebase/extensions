@@ -24,7 +24,8 @@ export const latestConsistentSnapshotView = (
   datasetId: string,
   tableName: string,
   schema: any,
-  bqProjectId?: string
+  bqProjectId?: string,
+  useLegacyQuery = true
 ) => ({
   query: buildLatestSnapshotViewQuery(
     datasetId,
@@ -33,7 +34,8 @@ export const latestConsistentSnapshotView = (
     schema["fields"]
       .map((field) => field.name)
       .filter((name) => excludeFields.indexOf(name) === -1),
-    bqProjectId
+    bqProjectId,
+    useLegacyQuery
   ),
   useLegacySql: false,
 });
@@ -43,7 +45,8 @@ export function buildLatestSnapshotViewQuery(
   tableName: string,
   timestampColumnName: string,
   groupByColumns: string[],
-  bqProjectId?: string
+  bqProjectId?: string,
+  useLegacyQuery = true
 ): string {
   if (datasetId === "" || tableName === "" || timestampColumnName === "") {
     throw Error(`Missing some query parameters!`);
@@ -53,6 +56,40 @@ export function buildLatestSnapshotViewQuery(
       throw Error(`Found empty group by column!`);
     }
   }
+
+  const legacyQuery =
+    sqlFormatter.format(` -- Retrieves the latest document change events for all live documents.
+  --   timestamp: The Firestore timestamp at which the event took place.
+  --   operation: One of INSERT, UPDATE, DELETE, IMPORT.
+  --   event_id: The id of the event that triggered the cloud function mirrored the event.
+  --   data: A raw JSON payload of the current state of the document.
+  --   document_id: The document id as defined in the Firestore database
+  SELECT
+  document_name,
+  document_id${groupByColumns.length > 0 ? `,` : ``}
+    ${groupByColumns.join(",")}
+  FROM (
+    SELECT
+      document_name,
+      document_id,
+      ${groupByColumns
+        .map(
+          (columnName) => `FIRST_VALUE(${columnName})
+          OVER(PARTITION BY document_name ORDER BY ${timestampColumnName} DESC)
+          AS ${columnName}`
+        )
+        .join(",")}${groupByColumns.length > 0 ? `,` : ``}
+      FIRST_VALUE(operation)
+        OVER(PARTITION BY document_name ORDER BY ${timestampColumnName} DESC) = "DELETE"
+        AS is_deleted
+    FROM \`${bqProjectId || process.env.PROJECT_ID}.${datasetId}.${tableName}\`
+    ORDER BY document_name, ${timestampColumnName} DESC
+  )
+  WHERE NOT is_deleted
+  GROUP BY document_name, document_id${
+    groupByColumns.length > 0 ? `, ` : ``
+  }${groupByColumns.join(",")}`);
+
   const query =
     sqlFormatter.format(` -- Retrieves the latest document change events for all live documents.
     --   timestamp: The Firestore timestamp at which the event took place.
@@ -69,11 +106,13 @@ export function buildLatestSnapshotViewQuery(
     t.document_name,
     document_id${groupByColumns.length > 0 ? `,` : ``}
       ${groupByColumns.join(",")}
-    FROM \`${bqProjectId || process.env.PROJECT_ID}.${datasetId}.${tableName}\` AS t
-    JOIN latest ON (t.document_name = latest.document_name AND t.${timestampColumnName} = latest.latest_timestamp)
+    FROM \`${
+      bqProjectId || process.env.PROJECT_ID
+    }.${datasetId}.${tableName}\` AS t
+    JOIN latest ON (t.document_name = latest.document_name AND (IFNULL(t.${timestampColumnName}, timestamp("1990-01-01 12:00:00+00"))) = (IFNULL(latest.latest_timestamp, timestamp("1990-01-01 12:00:00+00"))))
     WHERE operation != "DELETE"
-    GROUP BY document_name, document_id${groupByColumns.length > 0 ? `, ` : ``
-    }${groupByColumns.join(",")}`
-  );
-  return query;
+    GROUP BY document_name, document_id${
+      groupByColumns.length > 0 ? `, ` : ``
+    }${groupByColumns.join(",")}`);
+  return useLegacyQuery ? legacyQuery : query;
 }
