@@ -20,38 +20,55 @@ import { timestampField } from "./schema";
 
 const excludeFields: string[] = ["document_name", "document_id"];
 
-export const latestConsistentSnapshotView = (
-  datasetId: string,
-  tableName: string,
-  schema: any,
-  bqProjectId?: string,
-  useLegacyQuery = true
-) => ({
-  query: buildLatestSnapshotViewQuery(
+interface LatestConsistentSnapshotViewOptions {
+  datasetId: string;
+  tableName: string;
+  schema: any;
+  bqProjectId?: string;
+  useLegacyQuery?: boolean;
+}
+
+export const latestConsistentSnapshotView = ({
+  datasetId,
+  tableName,
+  schema,
+  bqProjectId,
+  useLegacyQuery = false,
+}: LatestConsistentSnapshotViewOptions) => ({
+  query: buildLatestSnapshotViewQuery({
     datasetId,
     tableName,
-    timestampField.name,
-    schema["fields"]
+    timestampColumnName: timestampField.name,
+    groupByColumns: schema["fields"]
       .map((field) => field.name)
       .filter((name) => excludeFields.indexOf(name) === -1),
     bqProjectId,
-    useLegacyQuery
-  ),
+    useLegacyQuery,
+  }),
   useLegacySql: false,
 });
 
-export function buildLatestSnapshotViewQuery(
-  datasetId: string,
-  tableName: string,
-  timestampColumnName: string,
-  groupByColumns: string[],
-  bqProjectId?: string,
-  useLegacyQuery = true
-): string {
+interface buildLatestSnapshotViewQueryOptions {
+  datasetId: string;
+  tableName: string;
+  timestampColumnName: string;
+  groupByColumns: string[];
+  bqProjectId?: string;
+  useLegacyQuery?: boolean;
+}
+
+export function buildLatestSnapshotViewQuery({
+  datasetId,
+  tableName,
+  timestampColumnName,
+  groupByColumns,
+  bqProjectId,
+  useLegacyQuery = true,
+}: buildLatestSnapshotViewQueryOptions): string {
   if (datasetId === "" || tableName === "" || timestampColumnName === "") {
     throw Error(`Missing some query parameters!`);
   }
-  for (let columnName in groupByColumns) {
+  for (let columnName of groupByColumns) {
     if (columnName === "") {
       throw Error(`Found empty group by column!`);
     }
@@ -109,7 +126,7 @@ export function buildLatestSnapshotViewQuery(
     FROM \`${
       bqProjectId || process.env.PROJECT_ID
     }.${datasetId}.${tableName}\` AS t
-    JOIN latest ON (t.document_name = latest.document_name AND (IFNULL(t.${timestampColumnName}, timestamp("1990-01-01 12:00:00+00"))) = (IFNULL(latest.latest_timestamp, timestamp("1990-01-01 12:00:00+00"))))
+    JOIN latest ON (t.document_name = latest.document_name AND (IFNULL(t.${timestampColumnName}, timestamp("1970-01-01 00:00:00+00"))) = (IFNULL(latest.latest_timestamp, timestamp("1970-01-01 00:00:00+00"))))
     WHERE operation != "DELETE"
     GROUP BY document_name, document_id${
       groupByColumns.length > 0 ? `, ` : ``

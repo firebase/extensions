@@ -67,14 +67,14 @@ describe("Stress testing", () => {
 
   describe("snapshot view stresstest", () => {
     test("should run new snapshot view query on a big table", async () => {
-      const query = buildLatestSnapshotViewQuery(
-        "new_stresstest",
-        "test_changelog_table",
-        "timestamp",
-        ["data", "operation", "event_id", "timestamp"],
-        "extensions-testing",
-        false
-      );
+      const query = buildLatestSnapshotViewQuery({
+        datasetId: "new_stresstest",
+        tableName: "test_changelog_table",
+        timestampColumnName: "timestamp",
+        groupByColumns: ["data", "operation", "event_id", "timestamp"],
+        bqProjectId: "extensions-testing",
+        useLegacyQuery: false,
+      });
 
       const [job] = await bq.createQueryJob({
         query,
@@ -98,13 +98,13 @@ describe("Stress testing", () => {
     }, 240000);
 
     test("should fail to run legacy snapshot view query on a big table", async () => {
-      const query = buildLatestSnapshotViewQuery(
-        "new_stresstest",
-        "test_changelog_table",
-        "timestamp",
-        ["data", "operation", "event_id", "timestamp"],
-        "extensions-testing"
-      );
+      const query = buildLatestSnapshotViewQuery({
+        datasetId: "new_stresstest",
+        tableName: "test_changelog_table",
+        timestampColumnName: "timestamp",
+        groupByColumns: ["data", "operation", "event_id", "timestamp"],
+        bqProjectId: "extensions-testing",
+      });
       try {
         await bq.createQueryJob({
           query,
@@ -115,14 +115,14 @@ describe("Stress testing", () => {
       }
     }, 240000);
     test("should get snapshot view query if some timestamps are null", async () => {
-      const query = buildLatestSnapshotViewQuery(
-        "new_stresstest",
-        "some_null",
-        "timestamp",
-        ["data", "operation", "event_id", "timestamp"],
-        "extensions-testing",
-        false
-      );
+      const query = buildLatestSnapshotViewQuery({
+        datasetId: "new_stresstest",
+        tableName: "some_null",
+        timestampColumnName: "timestamp",
+        groupByColumns: ["data", "operation", "event_id", "timestamp"],
+        bqProjectId: "extensions-testing",
+        useLegacyQuery: false,
+      });
 
       const [job] = await bq.createQueryJob({
         query,
@@ -134,14 +134,14 @@ describe("Stress testing", () => {
       expect(rows.length).toEqual(1);
     }, 240000);
     test("should get snapshot view query if duplicate timestamps exist", async () => {
-      const query = buildLatestSnapshotViewQuery(
-        "new_stresstest",
-        "duplicate_timestamp_table",
-        "timestamp",
-        ["data", "operation", "event_id", "timestamp"],
-        "extensions-testing",
-        false
-      );
+      const query = buildLatestSnapshotViewQuery({
+        datasetId: "new_stresstest",
+        tableName: "duplicate_timestamp_table",
+        timestampColumnName: "timestamp",
+        groupByColumns: ["data", "operation", "event_id", "timestamp"],
+        bqProjectId: "extensions-testing",
+        useLegacyQuery: false,
+      });
 
       const [job] = await bq.createQueryJob({
         query,

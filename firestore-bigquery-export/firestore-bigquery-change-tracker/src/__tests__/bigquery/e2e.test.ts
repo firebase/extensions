@@ -357,11 +357,12 @@ describe("Partitioning", () => {
         schema: RawChangelogSchema,
       });
 
-      const latestSnapshot = latestConsistentSnapshotView(
+      const latestSnapshot = latestConsistentSnapshotView({
         datasetId,
-        tableId_raw,
-        RawChangelogViewSchema
-      );
+        tableName: tableId_raw,
+        schema: RawChangelogViewSchema,
+        useLegacyQuery: false,
+      });
 
       [view] = await dataset.createTable(`${tableId}_raw_latest`, {
         view: latestSnapshot,

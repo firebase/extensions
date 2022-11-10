@@ -24,7 +24,7 @@
       `test.test_dataset.test_table` AS t
       JOIN latest ON (
         t.document_name = latest.document_name
-        AND (IFNULL(t.timestamp, timestamp("1990-01-01 12:00:00+00"))) = (IFNULL(latest.latest_timestamp, timestamp("1990-01-01 12:00:00+00")))
+        AND (IFNULL(t.timestamp, timestamp("1970-01-01 00:00:00+00"))) = (IFNULL(latest.latest_timestamp, timestamp("1970-01-01 00:00:00+00")))
       )
     WHERE
       operation != "DELETE"

@@ -57,6 +57,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   wildcardIds?: boolean;
   bqProjectId?: string | undefined;
   backupTableId?: string | undefined;
+  useNewSnapshotQuerySyntax?: boolean;
 }
 
 /**
@@ -410,20 +411,22 @@ export class FirestoreBigQueryEventHistoryTracker
       );
 
       if (!documentIdColExists) {
-        metadata.view = latestConsistentSnapshotView(
-          this.config.datasetId,
-          this.rawChangeLogTableName(),
-          schema
-        );
+        metadata.view = latestConsistentSnapshotView({
+          datasetId: this.config.datasetId,
+          tableName: this.rawChangeLogTableName(),
+          schema,
+          useLegacyQuery: !this.config.useNewSnapshotQuerySyntax,
+        });
         logs.addNewColumn(this.rawLatestView(), documentIdField.name);
       }
 
       if (!pathParamsColExists && this.config.wildcardIds) {
-        metadata.view = latestConsistentSnapshotView(
-          this.config.datasetId,
-          this.rawChangeLogTableName(),
-          schema
-        );
+        metadata.view = latestConsistentSnapshotView({
+          datasetId: this.config.datasetId,
+          tableName: this.rawChangeLogTableName(),
+          schema,
+          useLegacyQuery: !this.config.useNewSnapshotQuerySyntax,
+        });
         logs.addNewColumn(this.rawLatestView(), documentPathParams.name);
       }
 
@@ -443,12 +446,13 @@ export class FirestoreBigQueryEventHistoryTracker
       if (this.config.wildcardIds) {
         schema.fields.push(documentPathParams);
       }
-      const latestSnapshot = latestConsistentSnapshotView(
-        this.config.datasetId,
-        this.rawChangeLogTableName(),
+      const latestSnapshot = latestConsistentSnapshotView({
+        datasetId: this.config.datasetId,
+        tableName: this.rawChangeLogTableName(),
         schema,
-        this.bq.projectId
-      );
+        bqProjectId: this.bq.projectId,
+        useLegacyQuery: !this.config.useNewSnapshotQuerySyntax,
+      });
       logs.bigQueryViewCreating(this.rawLatestView(), latestSnapshot.query);
       const options: TableMetadata = {
         friendlyName: this.rawLatestView(),

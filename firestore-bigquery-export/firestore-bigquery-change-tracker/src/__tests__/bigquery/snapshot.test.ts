@@ -68,36 +68,48 @@ describe("latest snapshot view sql generation", () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/latestConsistentSnapshot.sql`
     );
-    const query = buildLatestSnapshotViewQuery(
-      testDataset,
-      testTable,
-      "timestamp",
-      ["timestamp", "event_id", "operation", "data"]
-    );
+    const query = buildLatestSnapshotViewQuery({
+      datasetId: testDataset,
+      tableName: testTable,
+      timestampColumnName: "timestamp",
+      groupByColumns: ["timestamp", "event_id", "operation", "data"],
+      useLegacyQuery: false,
+    });
     expect(query).to.equal(expectedQuery);
   });
   it("should generate correct sql with no groupBy columns", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/latestConsistentSnapshotNoGroupBy.sql`
     );
-    const query = buildLatestSnapshotViewQuery(
-      testDataset,
-      testTable,
-      "timestamp",
-      []
-    );
+    const query = buildLatestSnapshotViewQuery({
+      datasetId: testDataset,
+      tableName: testTable,
+      timestampColumnName: "timestamp",
+      groupByColumns: [],
+      useLegacyQuery: false,
+    });
     expect(query).to.equal(expectedQuery);
   });
   it("should throw an error for empty group by columns", async () => {
     expect(
-      buildLatestSnapshotViewQuery.bind(testDataset, testTable, "timestamp", [
-        "",
-      ])
+      buildLatestSnapshotViewQuery.bind(null, {
+        datasetId: testDataset,
+        tableName: testTable,
+        timestampColumnName: "timestamp",
+        groupByColumns: [""],
+        useLegacyQuery: false,
+      })
     ).to.throw();
   });
   it("should throw an error for empty timestamp field", async () => {
     expect(
-      buildLatestSnapshotViewQuery.bind(null, testDataset, testTable, "", [])
+      buildLatestSnapshotViewQuery.bind(null, {
+        datasetId: testDataset,
+        tableName: testTable,
+        timestampColumnName: "",
+        groupByColumns: [],
+        useLegacyQuery: false,
+      })
     ).to.throw();
   });
 });
