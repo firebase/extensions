@@ -129,7 +129,8 @@ params:
       original images are either kept or deleted.
       It is recommended to create a separate bucket for this extension. For more information,
       refer to the [pre-installation guide](https://firebase.google.com/products/extensions/storage-resize-images).
-    type: string
+    type: selectResource
+    resourceType: storage.googleapis.com/Bucket
     example: my-project-12345.appspot.com
     validationRegex: ^([0-9a-z_.-]*)$
     validationErrorMessage: Invalid storage bucket
@@ -157,11 +158,11 @@ params:
       bucket? Note that these deletions cannot be undone.
     type: select
     options:
-      - label: Yes
-        value: true
-      - label: No
+      - label: Don't delete
         value: false
-      - label: Delete on successful resize
+      - label: Delete on any resize attempt
+        value: true
+      - label: Delete only on successful resize attempts
         value: on_success
     default: false
     required: true
@@ -256,6 +257,8 @@ params:
         value: tiff
       - label: gif
         value: gif
+      - label: avif
+        value: avif
       - label: original
         value: false
     default: false

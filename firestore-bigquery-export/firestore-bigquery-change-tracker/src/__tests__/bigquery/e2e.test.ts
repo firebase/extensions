@@ -86,9 +86,7 @@ describe("Partitioning", () => {
         timePartitioning: "HOUR",
       }).record([event]);
 
-      const [metadata] = await dataset
-        .table(`${tableId}_raw_latest`)
-        .getMetadata();
+      const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
       expect(metadata.timePartitioning).toBeDefined();
     });
@@ -109,9 +107,7 @@ describe("Partitioning", () => {
         timePartitioningFirestoreField: "created",
       }).record([event]);
 
-      const [metadata] = await dataset
-        .table(`${tableId}_raw_latest`)
-        .getMetadata();
+      const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
       const [changeLogRows] = await getBigQueryTableData(
         process.env.PROJECT_ID,
@@ -141,9 +137,7 @@ describe("Partitioning", () => {
         timePartitioningFirestoreField: "created",
       }).record([event]);
 
-      const [metadata] = await dataset
-        .table(`${tableId}_raw_latest`)
-        .getMetadata();
+      const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
       const [changeLogRows] = await getBigQueryTableData(
         process.env.PROJECT_ID,
@@ -173,9 +167,7 @@ describe("Partitioning", () => {
         timePartitioningFirestoreField: "created",
       }).record([event]);
 
-      const [metadata] = await dataset
-        .table(`${tableId}_raw_latest`)
-        .getMetadata();
+      const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
       const [changeLogRows] = await getBigQueryTableData(
         process.env.PROJECT_ID,
@@ -206,9 +198,7 @@ describe("Partitioning", () => {
         timePartitioningFirestoreField: "created",
       }).record([event]);
 
-      const [metadata] = await dataset
-        .table(`${tableId}_raw_latest`)
-        .getMetadata();
+      const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
       const [changeLogRows] = await getBigQueryTableData(
         process.env.PROJECT_ID,
@@ -237,9 +227,7 @@ describe("Partitioning", () => {
         timePartitioningFirestoreField: "created",
       }).record([event]);
 
-      const [metadata] = await dataset
-        .table(`${tableId}_raw_latest`)
-        .getMetadata();
+      const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
       const [changeLogRows] = await getBigQueryTableData(
         process.env.PROJECT_ID,
@@ -252,6 +240,39 @@ describe("Partitioning", () => {
       expect(changeLogRows[0].created.value.substring(0, 22)).toBe(
         expectedDate
       );
+    });
+
+    test("old_data is null if is not provided", async () => {
+      const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
+        data: { foo: "foo" },
+      });
+
+      await changeTracker({ datasetId, tableId }).record([event]);
+
+      const [changeLogRows] = await getBigQueryTableData(
+        process.env.PROJECT_ID,
+        datasetId,
+        tableId
+      );
+
+      expect(changeLogRows[0].old_data).toBe(null);
+    });
+
+    test("changeLog table has a value for old_data", async () => {
+      const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
+        old_data: { foo: "foo" },
+        data: { foo: "bar" },
+      });
+
+      await changeTracker({ datasetId, tableId }).record([event]);
+
+      const [changeLogRows] = await getBigQueryTableData(
+        process.env.PROJECT_ID,
+        datasetId,
+        tableId
+      );
+
+      expect(changeLogRows[0].old_data).toBeDefined();
     });
 
     test("does not partition with without a valid timePartitioningField when including timePartitioning, timePartitioningFieldType and timePartitioningFirestoreField", async () => {
@@ -360,9 +381,6 @@ describe("Partitioning", () => {
 
       expect(consoleLogSpyWarn).toBeCalledWith(
         `Cannot partition an existing table ${datasetId}_${tableId_raw}`
-      );
-      expect(consoleLogSpyWarn).toBeCalledWith(
-        `Cannot partition an existing table ${datasetId}_${tableId}_raw_latest`
       );
       expect(consoleLogSpy).toBeCalledWith(
         `BigQuery dataset already exists: ${datasetId}`
