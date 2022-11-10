@@ -1,3 +1,15 @@
+## Version 0.1.26
+
+docs - correct service account name
+
+## Version 0.1.25
+
+feature - add version to the bigquery import script
+
+feature - add version to the bigquery gen-schema-view script
+
+fixed - updated bigquery.googleapis.com api reference (#1022)
+
 ## Version 0.1.24
 
 fixed - generate new lib folder

@@ -118,7 +118,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 **APIs Used**:
 
-* bigquery-json.googleapis.com (Reason: Mirrors data from your Cloud Firestore collection in BigQuery.)
+* bigquery.googleapis.com (Reason: Mirrors data from your Cloud Firestore collection in BigQuery.)
 
 
 
