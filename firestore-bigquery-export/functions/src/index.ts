@@ -60,6 +60,8 @@ exports.fsexportbigquery = functions.firestore
           eventId: context.eventId,
           data:
             changeType === ChangeType.DELETE ? undefined : change.after.data(),
+          oldData:
+            changeType === ChangeType.CREATE ? undefined : change.before.data(),
         },
       ]);
       logs.complete();
