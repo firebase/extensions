@@ -192,5 +192,7 @@ describe("Stress testing", () => {
 
       expect(legacyRows).toEqual(newRows);
     }, 240000);
+      expect(rows[0].length).toEqual(100);
+    }, 320000);
   });
 });

@@ -297,6 +297,9 @@ describe("e2e", () => {
           timePartitioningField: "endDate",
           timePartitioningFirestoreField: "end_date",
         }).record([event]);
+        const [metadata] = await dataset.table(tableId_raw).getMetadata();
+
+        expect(metadata.timePartitioning).toBeUndefined();
       });
 
       test("old_data is null if is not provided", async () => {
