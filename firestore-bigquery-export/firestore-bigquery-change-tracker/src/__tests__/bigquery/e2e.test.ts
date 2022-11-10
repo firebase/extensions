@@ -86,9 +86,7 @@ describe("Partitioning", () => {
         timePartitioning: "HOUR",
       }).record([event]);
 
-      const [metadata] = await dataset
-        .table(`${tableId}_raw_latest`)
-        .getMetadata();
+      const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
       expect(metadata.timePartitioning).toBeDefined();
     });
@@ -109,9 +107,7 @@ describe("Partitioning", () => {
         timePartitioningFirestoreField: "created",
       }).record([event]);
 
-      const [metadata] = await dataset
-        .table(`${tableId}_raw_latest`)
-        .getMetadata();
+      const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
       const [changeLogRows] = await getBigQueryTableData(
         process.env.PROJECT_ID,
@@ -141,9 +137,7 @@ describe("Partitioning", () => {
         timePartitioningFirestoreField: "created",
       }).record([event]);
 
-      const [metadata] = await dataset
-        .table(`${tableId}_raw_latest`)
-        .getMetadata();
+      const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
       const [changeLogRows] = await getBigQueryTableData(
         process.env.PROJECT_ID,
@@ -173,9 +167,7 @@ describe("Partitioning", () => {
         timePartitioningFirestoreField: "created",
       }).record([event]);
 
-      const [metadata] = await dataset
-        .table(`${tableId}_raw_latest`)
-        .getMetadata();
+      const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
       const [changeLogRows] = await getBigQueryTableData(
         process.env.PROJECT_ID,
@@ -206,9 +198,7 @@ describe("Partitioning", () => {
         timePartitioningFirestoreField: "created",
       }).record([event]);
 
-      const [metadata] = await dataset
-        .table(`${tableId}_raw_latest`)
-        .getMetadata();
+      const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
       const [changeLogRows] = await getBigQueryTableData(
         process.env.PROJECT_ID,
@@ -237,9 +227,7 @@ describe("Partitioning", () => {
         timePartitioningFirestoreField: "created",
       }).record([event]);
 
-      const [metadata] = await dataset
-        .table(`${tableId}_raw_latest`)
-        .getMetadata();
+      const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
       const [changeLogRows] = await getBigQueryTableData(
         process.env.PROJECT_ID,
@@ -267,7 +255,7 @@ describe("Partitioning", () => {
         tableId
       );
 
-      expect(changeLogRows[0].old_data).toBe("null");
+      expect(changeLogRows[0].old_data).toBe(null);
     });
 
     test("changeLog table has a value for old_data", async () => {
@@ -393,9 +381,6 @@ describe("Partitioning", () => {
 
       expect(consoleLogSpyWarn).toBeCalledWith(
         `Cannot partition an existing table ${datasetId}_${tableId_raw}`
-      );
-      expect(consoleLogSpyWarn).toBeCalledWith(
-        `Cannot partition an existing table ${datasetId}_${tableId}_raw_latest`
       );
       expect(consoleLogSpy).toBeCalledWith(
         `BigQuery dataset already exists: ${datasetId}`
