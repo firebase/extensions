@@ -54,8 +54,6 @@ export function viewRequiresUpdate(
     ($) => $.name === "path_params"
   ).length;
 
-  console.log(initializedWildcards, config.wildcardIds);
-
   if (!!config.wildcardIds !== !!initializedWildcards) return true;
 
   /** Check document id column */
