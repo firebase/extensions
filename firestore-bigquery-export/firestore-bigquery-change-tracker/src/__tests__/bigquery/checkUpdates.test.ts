@@ -17,7 +17,7 @@ let datasetId: string;
 let tableId: string;
 let tableId_raw: string;
 describe("Checking updates", () => {
-  describe.only("for a table", () => {
+  describe("for a table", () => {
     beforeEach(() => {
       randomID = (Math.random() + 1).toString(36).substring(7);
       datasetId = `dataset_${randomID}`;

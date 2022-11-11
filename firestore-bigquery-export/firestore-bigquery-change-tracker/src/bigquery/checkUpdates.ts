@@ -78,14 +78,20 @@ export function viewRequiresUpdate({
 
   /** Checkout pathParam column exists */
   if (!pathParamsColExists) return true;
+
   /* Using the new query syntax for snapshots */
-  const query = metadata.view.query;
-  const hasLegacyQuery = query.includes("FIRST_VALUE");
-  if (config.useNewSnapshotQuerySyntax) {
-    /** Has legacy query, can update */
-    return hasLegacyQuery;
+  if (metadata) {
+    const query = metadata.view?.query || "";
+    const hasLegacyQuery = query.includes("FIRST_VALUE");
+    const { useNewSnapshotQuerySyntax } = config;
+
+    /** If enabled and has legacy query, can update */
+    if (useNewSnapshotQuerySyntax && hasLegacyQuery) return true;
+
+    /** If not enabled and has an updated query, can update */
+    if (!useNewSnapshotQuerySyntax && !hasLegacyQuery) return true;
   }
 
   // No updates have occured.
-  return !hasLegacyQuery;
+  return false;
 }
