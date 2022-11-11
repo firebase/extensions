@@ -3,13 +3,21 @@ import { Partitioning } from "./partitioning";
 
 import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
 
-export async function tableRequiresUpdate(
-  table: Table,
-  config: FirestoreBigQueryEventHistoryTrackerConfig,
-  schemaFields: any,
-  documentIdColExists: boolean,
-  pathParamsColExists: boolean
-): Promise<boolean> {
+interface TableRequiresUpdateOptions {
+  table: Table;
+  config: FirestoreBigQueryEventHistoryTrackerConfig;
+  schemaFields: any;
+  documentIdColExists: boolean;
+  pathParamsColExists: boolean;
+}
+
+export async function tableRequiresUpdate({
+  table,
+  config,
+  schemaFields,
+  documentIdColExists,
+  pathParamsColExists,
+}: TableRequiresUpdateOptions): Promise<boolean> {
   /* Setup checks */
   const { metadata } = table;
 
@@ -71,12 +79,13 @@ export function viewRequiresUpdate({
   /** Checkout pathParam column exists */
   if (!pathParamsColExists) return true;
   /* Using the new query syntax for snapshots */
+  const query = metadata.view.query;
+  const hasLegacyQuery = query.includes("FIRST_VALUE");
   if (config.useNewSnapshotQuerySyntax) {
-    const query = metadata.view.query;
     /** Has legacy query, can update */
-    return query.includes("FIRST_VALUE");
+    return hasLegacyQuery;
   }
 
   // No updates have occured.
-  return false;
+  return !hasLegacyQuery;
 }

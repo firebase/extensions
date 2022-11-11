@@ -347,13 +347,13 @@ export class FirestoreBigQueryEventHistoryTracker
       await partitioning.addPartitioningToSchema(metadata.schema.fields);
 
       /** Updated table metadata if required */
-      const shouldUpdate = await tableRequiresUpdate(
+      const shouldUpdate = await tableRequiresUpdate({
         table,
-        this.config,
-        fields,
+        config: this.config,
+        schemaFields: fields,
         documentIdColExists,
-        pathParamsColExists
-      );
+        pathParamsColExists,
+      });
 
       if (shouldUpdate) {
         await table.setMetadata(metadata);

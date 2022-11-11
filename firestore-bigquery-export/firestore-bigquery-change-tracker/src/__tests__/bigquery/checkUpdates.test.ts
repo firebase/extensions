@@ -17,7 +17,7 @@ let datasetId: string;
 let tableId: string;
 let tableId_raw: string;
 describe("Checking updates", () => {
-  describe("for a table", () => {
+  describe.only("for a table", () => {
     beforeEach(() => {
       randomID = (Math.random() + 1).toString(36).substring(7);
       datasetId = `dataset_${randomID}`;
@@ -31,7 +31,7 @@ describe("Checking updates", () => {
       });
     });
     describe("clustering", () => {
-      test("does not update the table metatdata is clustering is unchanged as an empty array", async () => {
+      test("does not update the table metadata is clustering is unchanged as an empty array", async () => {
         await changeTracker({
           datasetId,
           tableId,
@@ -42,17 +42,17 @@ describe("Checking updates", () => {
         const [metadata] = await raw_changelog_table.getMetadata();
 
         expect(
-          await tableRequiresUpdate(
-            raw_changelog_table,
-            {
+          await tableRequiresUpdate({
+            table: raw_changelog_table,
+            config: {
               clustering: [],
               datasetId,
               tableId,
             },
-            metadata.schema.fields,
-            true,
-            true
-          )
+            schemaFields: metadata.schema.fields,
+            documentIdColExists: true,
+            pathParamsColExists: true,
+          })
         ).toBe(false);
       });
 
@@ -67,9 +67,9 @@ describe("Checking updates", () => {
         const [metadata] = await raw_changelog_table.getMetadata();
 
         expect(
-          await tableRequiresUpdate(
-            raw_changelog_table,
-            {
+          await tableRequiresUpdate({
+            table: raw_changelog_table,
+            config: {
               clustering: ["test1", "test2"],
               datasetId,
               tableId,
@@ -81,10 +81,10 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            metadata.schema.fields,
-            true,
-            true
-          )
+            schemaFields: metadata.schema.fields,
+            documentIdColExists: true,
+            pathParamsColExists: true,
+          })
         ).toBe(true);
       });
 
@@ -99,9 +99,9 @@ describe("Checking updates", () => {
         const [metadata] = await raw_changelog_table.getMetadata();
 
         expect(
-          await tableRequiresUpdate(
-            raw_changelog_table,
-            {
+          await tableRequiresUpdate({
+            table: raw_changelog_table,
+            config: {
               clustering: ["test2"],
               datasetId,
               tableId,
@@ -113,10 +113,10 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            metadata.schema.fields,
-            true,
-            true
-          )
+            schemaFields: metadata.schema.fields,
+            documentIdColExists: true,
+            pathParamsColExists: true,
+          })
         ).toBe(true);
       });
 
@@ -130,9 +130,9 @@ describe("Checking updates", () => {
         const raw_changelog_table = bq.dataset(datasetId).table(tableId_raw);
 
         expect(
-          await tableRequiresUpdate(
-            raw_changelog_table,
-            {
+          await tableRequiresUpdate({
+            table: raw_changelog_table,
+            config: {
               clustering: ["test2", "test1"],
               datasetId,
               tableId,
@@ -144,10 +144,10 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            [],
-            true,
-            true
-          )
+            schemaFields: [],
+            documentIdColExists: true,
+            pathParamsColExists: true,
+          })
         ).toBe(true);
       });
     });
@@ -165,9 +165,9 @@ describe("Checking updates", () => {
         const raw_changelog_table = bq.dataset(datasetId).table(tableId_raw);
 
         expect(
-          await tableRequiresUpdate(
-            raw_changelog_table,
-            {
+          await tableRequiresUpdate({
+            table: raw_changelog_table,
+            config: {
               clustering: [],
               datasetId,
               tableId,
@@ -179,10 +179,10 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            [],
-            true,
-            true
-          )
+            schemaFields: [],
+            documentIdColExists: true,
+            pathParamsColExists: true,
+          })
         ).toBe(false);
       });
 
@@ -199,9 +199,9 @@ describe("Checking updates", () => {
         const [metadata] = await raw_changelog_table.getMetadata();
 
         expect(
-          await tableRequiresUpdate(
-            raw_changelog_table,
-            {
+          await tableRequiresUpdate({
+            table: raw_changelog_table,
+            config: {
               clustering: [],
               datasetId,
               tableId,
@@ -213,10 +213,10 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            metadata.schema.fields,
-            true,
-            true
-          )
+            schemaFields: metadata.schema.fields,
+            documentIdColExists: true,
+            pathParamsColExists: true,
+          })
         ).toBe(false);
       });
 
@@ -230,9 +230,9 @@ describe("Checking updates", () => {
         const [metadata] = await raw_changelog_table.getMetadata();
 
         expect(
-          await tableRequiresUpdate(
-            raw_changelog_table,
-            {
+          await tableRequiresUpdate({
+            table: raw_changelog_table,
+            config: {
               clustering: [],
               datasetId,
               tableId,
@@ -241,10 +241,10 @@ describe("Checking updates", () => {
               timePartitioningFieldType: "TIMESTAMP",
               timePartitioningFirestoreField: "test",
             },
-            metadata.schema.fields,
-            true,
-            true
-          )
+            schemaFields: metadata.schema.fields,
+            documentIdColExists: true,
+            pathParamsColExists: true,
+          })
         ).toBe(true);
       });
     });
@@ -259,17 +259,17 @@ describe("Checking updates", () => {
         const raw_changelog_table = bq.dataset(datasetId).table(tableId_raw);
 
         expect(
-          await tableRequiresUpdate(
-            raw_changelog_table,
-            {
+          await tableRequiresUpdate({
+            table: raw_changelog_table,
+            config: {
               clustering: [],
               datasetId,
               tableId,
             },
-            [],
-            true,
-            true
-          )
+            schemaFields: [],
+            documentIdColExists: true,
+            pathParamsColExists: true,
+          })
         ).toBe(false);
       });
 
@@ -282,18 +282,18 @@ describe("Checking updates", () => {
         const raw_changelog_table = bq.dataset(datasetId).table(tableId_raw);
 
         expect(
-          await tableRequiresUpdate(
-            raw_changelog_table,
-            {
+          await tableRequiresUpdate({
+            table: raw_changelog_table,
+            config: {
               clustering: [],
               datasetId,
               tableId,
               wildcardIds: true,
             },
-            [],
-            true,
-            true
-          )
+            schemaFields: [],
+            documentIdColExists: true,
+            pathParamsColExists: true,
+          })
         ).toBe(true);
       });
     });
@@ -618,9 +618,54 @@ describe("Checking updates", () => {
         ).toBe(false);
       });
 
-      test("successfully updates the view if opt-in is not selected and the current query has been already updated ", async () => {});
+      test("successfully updates the view if opt-in is not selected and the current query has been already updated ", async () => {
+        await changeTracker({
+          datasetId,
+          tableId,
+          useNewSnapshotQuerySyntax: true,
+        }).record([event]);
 
-      test("does not update view if opt-in is not selected and the current query is a legacy query ", async () => {});
+        const raw_changelog_table = bq.dataset(datasetId).table(tableId_raw);
+        const [metadata] = await raw_changelog_table.getMetadata();
+
+        expect(
+          viewRequiresUpdate({
+            metadata,
+            config: {
+              clustering: [],
+              datasetId,
+              tableId,
+            },
+            schemaFields: [],
+            documentIdColExists: true,
+            pathParamsColExists: true,
+          })
+        ).toBe(true);
+      });
+
+      test("does not update view if opt-in is not selected and the current query is a legacy query ", async () => {
+        await changeTracker({
+          datasetId,
+          tableId,
+        }).record([event]);
+
+        const raw_changelog_table = bq.dataset(datasetId).table(tableId_raw);
+        const [metadata] = await raw_changelog_table.getMetadata();
+
+        expect(
+          viewRequiresUpdate({
+            metadata,
+            config: {
+              clustering: [],
+              datasetId,
+              tableId,
+            },
+            schemaFields: [],
+            documentIdColExists: true,
+            pathParamsColExists: true,
+          })
+        ).toBe(false);
+      });
     });
   });
 });
