@@ -431,12 +431,13 @@ export class FirestoreBigQueryEventHistoryTracker
       }
 
       if (
-        viewRequiresUpdate(
-          this.config,
-          fields,
+        viewRequiresUpdate({
+          metadata,
+          config: this.config,
+          schemaFields: fields,
           documentIdColExists,
-          pathParamsColExists
-        )
+          pathParamsColExists,
+        })
       ) {
         await view.setMetadata(metadata);
       }

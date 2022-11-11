@@ -40,12 +40,21 @@ export async function tableRequiresUpdate(
   return false;
 }
 
-export function viewRequiresUpdate(
-  config: FirestoreBigQueryEventHistoryTrackerConfig,
-  schemaFields: any,
-  documentIdColExists: boolean,
-  pathParamsColExists: boolean
-): boolean {
+interface ViewRequiresUpdateOptions {
+  metadata?: TableMetadata;
+  config: FirestoreBigQueryEventHistoryTrackerConfig;
+  schemaFields: any;
+  documentIdColExists: boolean;
+  pathParamsColExists: boolean;
+}
+
+export function viewRequiresUpdate({
+  metadata,
+  config,
+  schemaFields,
+  documentIdColExists,
+  pathParamsColExists,
+}: ViewRequiresUpdateOptions): boolean {
   /** Check if documentId column exists */
   if (!documentIdColExists) return true;
 
@@ -61,6 +70,12 @@ export function viewRequiresUpdate(
 
   /** Checkout pathParam column exists */
   if (!pathParamsColExists) return true;
+  /* Using the new query syntax for snapshots */
+  if (config.useNewSnapshotQuerySyntax) {
+    const query = metadata.view.query;
+    /** Has legacy query, can update */
+    return query.includes("FIRST_VALUE");
+  }
 
   // No updates have occured.
   return false;

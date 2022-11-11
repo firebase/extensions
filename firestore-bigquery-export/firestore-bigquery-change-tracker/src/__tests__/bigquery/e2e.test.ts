@@ -466,32 +466,7 @@ describe("Partitioning", () => {
 });
 
 describe("SQL opt-in", () => {
-  test("successfully updates the view if opt-in is selected and the current query is a legacy query ", async () => {
-
-    //not sure how we set this up
-    
-    const [dataset] = await bq.dataset(datasetId).create();
-    const [table] = await dataset.createTable(tableId_raw, {
-      schema: RawChangelogSchema,
-    });
-
-    const latestSnapshot = latestConsistentSnapshotView({
-      datasetId,
-      tableName: tableId_raw,
-      schema: RawChangelogViewSchema,
-      useLegacyQuery: true,
-    });
-
-    const [view] = await dataset.createTable(`${tableId}_raw_latest`, {
-      view: latestSnapshot,
-    });
-
-    const [metadata] = await dataset
-      .table(`${tableId}_raw_latest`)
-      .getMetadata();
-
-    expect(metadata.view.query).not.toContain("LEGACY_SQL");
-  });
+  test("successfully updates the view if opt-in is selected and the current query is a legacy query ", async () => {});
 
   test("does not update view if opt-in is selected and the current query has been already updates ", async () => {});
 
