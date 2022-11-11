@@ -69,11 +69,8 @@ export const buildLatestSchemaSnapshotViewQuery = (
   // fully qualified json2array persistent user-defined function in the proper
   // scope.
   const result = processFirestoreSchema(datasetId, "data", schema);
-  const [
-    schemaFieldExtractors,
-    schemaFieldArrays,
-    schemaFieldGeopoints,
-  ] = result.queryInfo;
+  const [schemaFieldExtractors, schemaFieldArrays, schemaFieldGeopoints] =
+    result.queryInfo;
   let bigQueryFields = result.fields;
   /*
    * Include additional array schema fields.
@@ -136,43 +133,46 @@ export const buildLatestSchemaSnapshotViewQuery = (
       document_id,
       timestamp,
       operation${groupableExtractors.length > 0 ? `,` : ``}
-      ${groupableExtractors.length > 0
-      ? `${groupableExtractors.join(`, `)}`
-      : ``
-    }
+      ${
+        groupableExtractors.length > 0
+          ? `${groupableExtractors.join(`, `)}`
+          : ``
+      }
   `;
   if (hasNonGroupableFields) {
     query = `
         ${subSelectQuery(
-      query,
+          query,
           /*except=*/ schemaFieldArrays.concat(schemaFieldGeopoints)
-    )}
+        )}
         ${rawViewName}
         ${schemaFieldArrays
-        .map(
-          (
-            arrayFieldName
-          ) => `LEFT JOIN UNNEST(${rawViewName}.${arrayFieldName})
+          .map(
+            (
+              arrayFieldName
+            ) => `LEFT JOIN UNNEST(${rawViewName}.${arrayFieldName})
             AS ${arrayFieldName}_member
             WITH OFFSET ${arrayFieldName}_index`
-        )
-        .join(" ")}
+          )
+          .join(" ")}
       `;
     query = `
         ${query}
         ${groupBy}
-        ${schemaHasArrays
-        ? `, ${schemaFieldArrays
-          .map((name) => `${name}_index, ${name}_member`)
-          .join(", ")}`
-        : ``
-      }
-        ${schemaHasGeopoints
-        ? `, ${schemaFieldGeopoints
-          .map((name) => `${name}_latitude, ${name}_longitude`)
-          .join(", ")}`
-        : ``
-      }
+        ${
+          schemaHasArrays
+            ? `, ${schemaFieldArrays
+                .map((name) => `${name}_index, ${name}_member`)
+                .join(", ")}`
+            : ``
+        }
+        ${
+          schemaHasGeopoints
+            ? `, ${schemaFieldGeopoints
+                .map((name) => `${name}_latitude, ${name}_longitude`)
+                .join(", ")}`
+            : ``
+        }
       `;
   } else {
     query = `

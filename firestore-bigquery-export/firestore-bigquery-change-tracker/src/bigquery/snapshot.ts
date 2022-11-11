@@ -116,7 +116,9 @@ export function buildLatestSnapshotViewQuery({
     --   document_id: The document id as defined in the Firestore database
     WITH latest AS (
       SELECT max(${timestampColumnName}) as latest_timestamp, document_name
-      FROM \`${bqProjectId || process.env.PROJECT_ID}.${datasetId}.${tableName}\`
+      FROM \`${
+        bqProjectId || process.env.PROJECT_ID
+      }.${datasetId}.${tableName}\`
       GROUP BY document_name
     )
     SELECT
