@@ -217,7 +217,7 @@ export const bigQueryTableInsertErrors = (
 ) => {
   logger.warn(`Error when inserting data to table.`);
 
-  insertErrors.forEach((error) => {
+  insertErrors?.forEach((error) => {
     logger.warn("ROW DATA JSON:");
     logger.warn(error.row);
 
