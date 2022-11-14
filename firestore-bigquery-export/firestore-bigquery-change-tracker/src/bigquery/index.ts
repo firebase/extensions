@@ -410,7 +410,16 @@ export class FirestoreBigQueryEventHistoryTracker
         (column) => column.name === "path_params"
       );
 
-      if (!documentIdColExists) {
+      /** If new view or opt-in to new query syntax **/
+      const updateView = viewRequiresUpdate({
+        metadata,
+        config: this.config,
+        schemaFields: fields,
+        documentIdColExists,
+        pathParamsColExists,
+      });
+
+      if (updateView) {
         metadata.view = latestConsistentSnapshotView({
           datasetId: this.config.datasetId,
           tableName: this.rawChangeLogTableName(),
@@ -430,15 +439,7 @@ export class FirestoreBigQueryEventHistoryTracker
         logs.addNewColumn(this.rawLatestView(), documentPathParams.name);
       }
 
-      if (
-        viewRequiresUpdate({
-          metadata,
-          config: this.config,
-          schemaFields: fields,
-          documentIdColExists,
-          pathParamsColExists,
-        })
-      ) {
+      if (updateView) {
         await view.setMetadata(metadata);
       }
     } else {

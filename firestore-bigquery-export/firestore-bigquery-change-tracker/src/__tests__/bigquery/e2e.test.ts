@@ -479,40 +479,42 @@ describe("e2e", () => {
         datasetId,
       });
     });
-    test.only("successfully updates the view if opt-in is selected and the current query is a legacy query ", async () => {
+    test("successfully updates the view if opt-in is selected and the current query is a legacy query ", async () => {
       let legacyView: Table;
       let optimisedView: Table;
 
       /** Get legacy view */
+      const legacyEvent: FirestoreDocumentChangeEvent = changeTrackerEvent({
+        data: { test: "one" },
+        eventId: "one",
+      });
+
       await changeTracker({
         datasetId,
         tableId,
-        timePartitioning: "DAY",
-        timePartitioningField: "custom_field",
-        timePartitioningFieldType: "DATE",
-        timePartitioningFirestoreField: "custom_field",
         useNewSnapshotQuerySyntax: false,
-      }).record([event]);
+      }).record([legacyEvent]);
 
       legacyView = await dataset.table(view_raw_latest);
       const [legacyViewMetadata] = await legacyView.getMetadata();
+
+      /** Get legacy view */
+      const optimizedEvent: FirestoreDocumentChangeEvent = changeTrackerEvent({
+        data: { test: "two" },
+        eventId: "two",
+      });
 
       /** Get optimised view */
       await changeTracker({
         datasetId,
         tableId,
-        timePartitioning: "DAY",
-        timePartitioningField: "custom_field",
-        timePartitioningFieldType: "DATE",
-        timePartitioningFirestoreField: "custom_field",
-        useNewSnapshotQuerySyntax: false,
-      }).record([event]);
+        useNewSnapshotQuerySyntax: true,
+      }).record([optimizedEvent]);
 
       optimisedView = dataset.table(view_raw_latest);
       const [optimisedViewMetadata] = await optimisedView.getMetadata();
 
       /** Create SQL jobs */
-
       const [legacyDataJob] = await legacyView.createQueryJob({
         query: legacyViewMetadata.view.query,
       });
@@ -528,6 +530,7 @@ describe("e2e", () => {
       expect(legacyData.length).toEqual(optimisedData.length);
       const firstPageLegacy = legacyData[0];
       const firstPageOptimised = optimisedData[0];
+
       expect(firstPageLegacy.length).toEqual(firstPageOptimised.length);
       expect(firstPageLegacy).toEqual(firstPageOptimised);
     });

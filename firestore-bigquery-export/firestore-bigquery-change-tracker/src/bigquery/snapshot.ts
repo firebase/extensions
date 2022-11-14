@@ -107,6 +107,21 @@ export function buildLatestSnapshotViewQuery({
     groupByColumns.length > 0 ? `, ` : ``
   }${groupByColumns.join(",")}`);
 
+  const nonGroupFields = ["event_id", "data", "old_data"];
+  const joinFields = ["document_name"];
+
+  const addSelectField = (field) => {
+    if (joinFields.includes(field)) return `t.${field}`;
+
+    return nonGroupFields.includes(field)
+      ? `ANY_VALUE(${field}) as ${field}`
+      : `${field} as ${field}`;
+  };
+
+  const filterGroupField = (field) => {
+    return nonGroupFields.includes(field);
+  };
+
   const query =
     sqlFormatter.format(` -- Retrieves the latest document change events for all live documents.
     --   timestamp: The Firestore timestamp at which the event took place.
@@ -124,7 +139,7 @@ export function buildLatestSnapshotViewQuery({
     SELECT
     t.document_name,
     document_id${groupByColumns.length > 0 ? `,` : ``}
-      ${groupByColumns.join(",")}
+      ${groupByColumns.map((f) => addSelectField(f)).join(",")}
     FROM \`${
       bqProjectId || process.env.PROJECT_ID
     }.${datasetId}.${tableName}\` AS t
@@ -132,6 +147,7 @@ export function buildLatestSnapshotViewQuery({
     WHERE operation != "DELETE"
     GROUP BY document_name, document_id${
       groupByColumns.length > 0 ? `, ` : ``
-    }${groupByColumns.join(",")}`);
+    }${groupByColumns.filter((c) => !filterGroupField(c)).join(",")}`);
+
   return useLegacyQuery ? legacyQuery : query;
 }
