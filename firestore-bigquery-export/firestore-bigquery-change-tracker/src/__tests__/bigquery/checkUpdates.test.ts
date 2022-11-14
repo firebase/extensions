@@ -666,6 +666,20 @@ describe("Checking updates", () => {
           })
         ).toBe(false);
       });
+      test("updates view if no existing view/table", async () => {
+        expect(
+          viewRequiresUpdate({
+            config: {
+              clustering: [],
+              datasetId,
+              tableId,
+            },
+            schemaFields: [],
+            documentIdColExists: true,
+            pathParamsColExists: true,
+          })
+        ).toBe(false);
+      });
     });
   });
 });
