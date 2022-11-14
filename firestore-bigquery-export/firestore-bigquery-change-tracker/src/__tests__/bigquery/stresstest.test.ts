@@ -151,6 +151,46 @@ describe("Stress testing", () => {
       const [rows] = await job.getQueryResults();
 
       expect(rows.length).toEqual(1);
+
+      expect(typeof rows[0].data).toBe("string");
+      expect(rows[0].operation).toBe("UPDATE");
+      expect(rows[0].event_id).toBeDefined();
+      expect(rows[0].timestamp).toBeDefined();
+    }, 240000);
+
+    test("legacy query results should match new query results in stress tests", async () => {
+      const legacyQuery = buildLatestSnapshotViewQuery({
+        datasetId: "new_stresstest",
+        tableName: "some_null",
+        timestampColumnName: "timestamp",
+        groupByColumns: ["data", "operation", "event_id", "timestamp"],
+        bqProjectId: "extensions-testing",
+        useLegacyQuery: true,
+      });
+
+      const newQuery = buildLatestSnapshotViewQuery({
+        datasetId: "new_stresstest",
+        tableName: "some_null",
+        timestampColumnName: "timestamp",
+        groupByColumns: ["data", "operation", "event_id", "timestamp"],
+        bqProjectId: "extensions-testing",
+        useLegacyQuery: false,
+      });
+
+      const [legacyJob] = await bq.createQueryJob({
+        query: legacyQuery,
+        useLegacySql: false,
+      });
+
+      const [newJob] = await bq.createQueryJob({
+        query: newQuery,
+        useLegacySql: false,
+      });
+
+      const [legacyRows] = await legacyJob.getQueryResults();
+      const [newRows] = await newJob.getQueryResults();
+
+      expect(legacyRows).toEqual(newRows);
     }, 240000);
   });
 });

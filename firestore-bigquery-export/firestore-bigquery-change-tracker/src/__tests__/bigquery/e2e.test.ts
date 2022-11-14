@@ -28,20 +28,20 @@ let dataset: Dataset;
 let table: Table;
 let view: Table;
 describe("e2e", () => {
-  beforeEach(async () => {
-    randomID = (Math.random() + 1).toString(36).substring(7);
-    datasetId = `dataset_${randomID}`;
-    tableId = `table_${randomID}`;
-    tableId_raw = `${tableId}_raw_changelog`;
-    dataset = bq.dataset(datasetId);
-  });
-
-  afterEach(async () => {
-    await deleteTable({
-      datasetId,
-    });
-  });
   describe("Partitioning", () => {
+    beforeEach(async () => {
+      randomID = (Math.random() + 1).toString(36).substring(7);
+      datasetId = `dataset_${randomID}`;
+      tableId = `table_${randomID}`;
+      tableId_raw = `${tableId}_raw_changelog`;
+      dataset = bq.dataset(datasetId);
+    });
+
+    afterEach(async () => {
+      await deleteTable({
+        datasetId,
+      });
+    });
     describe("a non existing dataset and table", () => {
       test("does not partition without a defined timePartitioning option", async () => {
         await changeTracker({
@@ -464,8 +464,26 @@ describe("e2e", () => {
     });
   });
 
-  describe.only("SQL opt-in", () => {
-    test.only("opt-in to SQL opimised query, results in the same dataset result. ", async () => {
+  describe("SQL opt-in", () => {
+    let view_raw_latest;
+    beforeEach(async () => {
+      randomID = (Math.random() + 1).toString(36).substring(7);
+      datasetId = `dataset_${randomID}`;
+      tableId = `table_${randomID}`;
+      view_raw_latest = `${tableId}_raw_latest`;
+      dataset = bq.dataset(datasetId);
+    });
+
+    afterEach(async () => {
+      await deleteTable({
+        datasetId,
+      });
+    });
+    test.only("successfully updates the view if opt-in is selected and the current query is a legacy query ", async () => {
+      let legacyView: Table;
+      let optimisedView: Table;
+
+      /** Get legacy view */
       await changeTracker({
         datasetId,
         tableId,
@@ -476,18 +494,10 @@ describe("e2e", () => {
         useNewSnapshotQuerySyntax: false,
       }).record([event]);
 
-      // Add a custom field to the table.
-      const [rows1] = await dataset.table(`${tableId_raw}`).getRows();
+      legacyView = await dataset.table(view_raw_latest);
+      const [legacyViewMetadata] = await legacyView.getMetadata();
 
-      await deleteTable({
-        datasetId,
-      });
-      randomID = (Math.random() + 1).toString(36).substring(7);
-      datasetId = `dataset_${randomID}`;
-      tableId = `table_${randomID}`;
-      tableId_raw = `${tableId}_raw_changelog`;
-      dataset = bq.dataset(datasetId);
-
+      /** Get optimised view */
       await changeTracker({
         datasetId,
         tableId,
@@ -495,12 +505,31 @@ describe("e2e", () => {
         timePartitioningField: "custom_field",
         timePartitioningFieldType: "DATE",
         timePartitioningFirestoreField: "custom_field",
-        useNewSnapshotQuerySyntax: true,
+        useNewSnapshotQuerySyntax: false,
       }).record([event]);
 
-      const [rows2] = await dataset.table(`${tableId_raw}`).getRows();
+      optimisedView = dataset.table(view_raw_latest);
+      const [optimisedViewMetadata] = await optimisedView.getMetadata();
 
-      expect(rows1).toEqual(rows2);
+      /** Create SQL jobs */
+
+      const [legacyDataJob] = await legacyView.createQueryJob({
+        query: legacyViewMetadata.view.query,
+      });
+
+      const [optimisedDataJob] = await optimisedView.createQueryJob({
+        query: optimisedViewMetadata.view.query,
+      });
+
+      /** Assertions */
+      const legacyData = await legacyDataJob.getQueryResults();
+      const optimisedData = await optimisedDataJob.getQueryResults();
+
+      expect(legacyData.length).toEqual(optimisedData.length);
+      const firstPageLegacy = legacyData[0];
+      const firstPageOptimised = optimisedData[0];
+      expect(firstPageLegacy.length).toEqual(firstPageOptimised.length);
+      expect(firstPageLegacy).toEqual(firstPageOptimised);
     });
   });
 });
