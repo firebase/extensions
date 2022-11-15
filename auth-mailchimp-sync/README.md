@@ -43,10 +43,14 @@ Usage of this extension also requires you to have a Mailchimp account. You are r
 
 * Contact status: When the extension adds a new user to the Mailchimp audience, what is their initial status? This value can be `subscribed` or `pending`. `subscribed` means the user can receive campaigns; `pending` means the user still needs to opt-in to receive campaigns.
 
+* Import existing users into Mailchimp audience: Do you want to add existing users to the Mailchimp audience?
+
 
 
 **Cloud Functions:**
 
 * **addUserToList:** Listens for new user accounts (as managed by Firebase Authentication), then automatically adds the new user to your specified MailChimp audience.
 
-* **removeUserFromList:** Listens for existing user accounts to be deleted (as managed by Firebase Authentication), then automatically removes them from your specified MailChimp audience.
+* **removeUserFromList:** Listens for existing user accounts to be deleted (as managed by Firebase Authentication), then automatically removes them from your specified Mailchimp audience.
+
+* **addExistingUsersToList:** Adds existing users into the specified Mailchimp audience.
