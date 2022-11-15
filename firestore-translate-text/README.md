@@ -69,11 +69,16 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Translations output field name: What is the name of the field where you want to store your translations?
 
 
+* Translate existing documents: Should existing, untranslated documents in the Firestore collection be translated as well?
+
+
 
 
 **Cloud Functions:**
 
 * **fstranslate:** Listens for writes of new strings to your specified Cloud Firestore collection, translates the strings, then writes the translated strings back to the same document.
+
+* **fstranslatebackfill:** Search your specified Cloud Firestore collection for existing, untranslated documents, translates the strings, then writes the translated strings back to the same document.
 
 
 
