@@ -13,7 +13,9 @@
     "clean": "rimraf lib",
     "compile": "tsc",
     "test:local": "firebase ext:dev:emulators:exec ./node_modules/.bin/jest --test-params=./src/__tests__/emulator-params.env --project=extensions-testing --config=./src/__tests__/firebase.json",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "generate-stresstest-table": "bq query --project_id=extensions-testing  --use_legacy_sql=false < ./src/__tests__/fixtures/sql/generateSnapshotStresstestTable.sql"
+
   },
   "files": [
     "lib/*.js",
