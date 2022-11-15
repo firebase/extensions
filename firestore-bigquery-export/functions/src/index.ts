@@ -38,6 +38,7 @@ const eventTracker: FirestoreEventHistoryTracker =
     clustering: config.clustering,
     wildcardIds: config.wildcardIds,
     bqProjectId: config.bqProjectId,
+    useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
   });
 
 logs.init();
