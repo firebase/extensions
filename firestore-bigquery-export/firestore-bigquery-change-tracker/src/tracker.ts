@@ -33,6 +33,7 @@ export interface FirestoreDocumentChangeEvent {
   pathParams?: { documentId: string; [key: string]: string } | null;
   data: Object;
   oldData?: Object | null;
+  useNewSnapshotQuerySyntax?: boolean | null;
 }
 
 export interface FirestoreEventHistoryTracker {

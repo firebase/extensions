@@ -3,13 +3,19 @@ import { Partitioning } from "./partitioning";
 
 import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
 
-export async function tableRequiresUpdate(
-  table: Table,
-  config: FirestoreBigQueryEventHistoryTrackerConfig,
-  schemaFields: any,
-  documentIdColExists: boolean,
-  pathParamsColExists: boolean
-): Promise<boolean> {
+interface TableRequiresUpdateOptions {
+  table: Table;
+  config: FirestoreBigQueryEventHistoryTrackerConfig;
+  documentIdColExists: boolean;
+  pathParamsColExists: boolean;
+}
+
+export async function tableRequiresUpdate({
+  table,
+  config,
+  documentIdColExists,
+  pathParamsColExists,
+}: TableRequiresUpdateOptions): Promise<boolean> {
   /* Setup checks */
   const { metadata } = table;
 
@@ -19,16 +25,10 @@ export async function tableRequiresUpdate(
   if (configCluster !== tableCluster) return true;
 
   /** Check wildcards */
-  const initializedWildcards = schemaFields.some(
-    ($) => $.name === "path_params"
-  ).length;
-  if (!!config.wildcardIds !== !!initializedWildcards) return true;
+  if (!!config.wildcardIds !== pathParamsColExists) return true;
 
   /** Check document id column */
   if (!documentIdColExists) return true;
-
-  /** Checkout pathParam column exists */
-  if (!pathParamsColExists) return true;
 
   /** Check partitioning */
   const partitioning = new Partitioning(config, table);
@@ -40,27 +40,40 @@ export async function tableRequiresUpdate(
   return false;
 }
 
-export function viewRequiresUpdate(
-  config: FirestoreBigQueryEventHistoryTrackerConfig,
-  schemaFields: any,
-  documentIdColExists: boolean,
-  pathParamsColExists: boolean
-): boolean {
+interface ViewRequiresUpdateOptions {
+  metadata?: TableMetadata;
+  config: FirestoreBigQueryEventHistoryTrackerConfig;
+  documentIdColExists: boolean;
+  pathParamsColExists: boolean;
+}
+
+export function viewRequiresUpdate({
+  metadata,
+  config,
+  documentIdColExists,
+  pathParamsColExists,
+}: ViewRequiresUpdateOptions): boolean {
   /** Check if documentId column exists */
   if (!documentIdColExists) return true;
 
   /** Check wildcards */
-  const initializedWildcards = schemaFields.some(
-    ($) => $.name === "path_params"
-  ).length;
-
-  if (!!config.wildcardIds !== !!initializedWildcards) return true;
+  if (!!config.wildcardIds !== pathParamsColExists) return true;
 
   /** Check document id column */
   if (!documentIdColExists) return true;
 
-  /** Checkout pathParam column exists */
-  if (!pathParamsColExists) return true;
+  /* Using the new query syntax for snapshots */
+  if (metadata) {
+    const query = metadata.view?.query || "";
+    const hasLegacyQuery = query.includes("FIRST_VALUE");
+    const { useNewSnapshotQuerySyntax } = config;
+
+    /** If enabled and has legacy query, can update */
+    if (useNewSnapshotQuerySyntax && hasLegacyQuery) return true;
+
+    /** If not enabled and has an updated query, can update */
+    if (!useNewSnapshotQuerySyntax && !hasLegacyQuery) return true;
+  }
 
   // No updates have occured.
   return false;

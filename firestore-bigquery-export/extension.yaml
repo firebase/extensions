@@ -338,3 +338,17 @@ params:
     example: https://us-west1-my-project-id.cloudfunctions.net/myTransformFunction
     type: string
     required: false
+
+  - param: USE_NEW_SNAPSHOT_QUERY_SYNTAX
+    label: Use new query syntax for snapshots
+    description: >-
+      If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential
+      resource limitations.
+    type: select
+    options:
+      - label: Yes
+        value: yes
+      - label: Noya
+        value: no
+    default: no
+    required: true
