@@ -348,7 +348,7 @@ params:
     options:
       - label: Yes
         value: yes
-      - label: Noya
+      - label: No
         value: no
     default: no
     required: true
