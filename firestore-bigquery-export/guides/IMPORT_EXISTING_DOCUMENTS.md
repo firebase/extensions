@@ -1,4 +1,4 @@
-The `fs-bq-import-collection` script is for use with the official Firebase Extension [**Export Collections to BiqQuery**](https://github.com/firebase/extensions/tree/master/firestore-bigquery-export).
+The `fs-bq-import-collection` script is for use with the official Firebase Extension [**Export Collections to BiqQuery**](https://github.com/firebase/extensions/tree/master/firestore-bigquery-export). You can use this script instead of enabling the extension's built-in backfill feature.
 
 ### Overview
 
