@@ -350,7 +350,6 @@ export class FirestoreBigQueryEventHistoryTracker
       const shouldUpdate = await tableRequiresUpdate({
         table,
         config: this.config,
-        schemaFields: fields,
         documentIdColExists,
         pathParamsColExists,
       });
@@ -414,7 +413,6 @@ export class FirestoreBigQueryEventHistoryTracker
       const updateView = viewRequiresUpdate({
         metadata,
         config: this.config,
-        schemaFields: fields,
         documentIdColExists,
         pathParamsColExists,
       });
@@ -427,19 +425,7 @@ export class FirestoreBigQueryEventHistoryTracker
           useLegacyQuery: !this.config.useNewSnapshotQuerySyntax,
         });
         logs.addNewColumn(this.rawLatestView(), documentIdField.name);
-      }
 
-      if (!pathParamsColExists && this.config.wildcardIds) {
-        metadata.view = latestConsistentSnapshotView({
-          datasetId: this.config.datasetId,
-          tableName: this.rawChangeLogTableName(),
-          schema,
-          useLegacyQuery: !this.config.useNewSnapshotQuerySyntax,
-        });
-        logs.addNewColumn(this.rawLatestView(), documentPathParams.name);
-      }
-
-      if (updateView) {
         await view.setMetadata(metadata);
       }
     } else {

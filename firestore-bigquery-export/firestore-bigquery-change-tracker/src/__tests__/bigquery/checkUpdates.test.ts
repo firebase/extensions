@@ -49,9 +49,8 @@ describe("Checking updates", () => {
               datasetId,
               tableId,
             },
-            schemaFields: metadata.schema.fields,
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });
@@ -81,9 +80,8 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            schemaFields: metadata.schema.fields,
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(true);
       });
@@ -113,9 +111,8 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            schemaFields: metadata.schema.fields,
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(true);
       });
@@ -144,9 +141,8 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            schemaFields: [],
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(true);
       });
@@ -179,9 +175,8 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            schemaFields: [],
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });
@@ -213,9 +208,8 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            schemaFields: metadata.schema.fields,
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });
@@ -241,9 +235,8 @@ describe("Checking updates", () => {
               timePartitioningFieldType: "TIMESTAMP",
               timePartitioningFirestoreField: "test",
             },
-            schemaFields: metadata.schema.fields,
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(true);
       });
@@ -266,9 +259,8 @@ describe("Checking updates", () => {
               datasetId,
               tableId,
             },
-            schemaFields: [],
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });
@@ -290,9 +282,8 @@ describe("Checking updates", () => {
               tableId,
               wildcardIds: true,
             },
-            schemaFields: [],
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(true);
       });
@@ -331,9 +322,8 @@ describe("Checking updates", () => {
               datasetId,
               tableId,
             },
-            schemaFields: metadata.schema.fields,
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });
@@ -362,9 +352,8 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            schemaFields: metadata.schema.fields,
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });
@@ -393,9 +382,8 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            schemaFields: metadata.schema.fields,
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });
@@ -423,9 +411,8 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            schemaFields: [],
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });
@@ -455,9 +442,8 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            schemaFields: [],
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });
@@ -488,9 +474,8 @@ describe("Checking updates", () => {
               timePartitioningFirestoreField: undefined,
               bqProjectId: undefined,
             },
-            schemaFields: metadata.schema.fields,
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });
@@ -515,9 +500,8 @@ describe("Checking updates", () => {
               timePartitioningFieldType: "TIMESTAMP",
               timePartitioningFirestoreField: "test",
             },
-            schemaFields: metadata.schema.fields,
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });
@@ -537,9 +521,8 @@ describe("Checking updates", () => {
               datasetId,
               tableId,
             },
-            schemaFields: [],
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });
@@ -558,7 +541,27 @@ describe("Checking updates", () => {
               tableId,
               wildcardIds: true,
             },
-            schemaFields: [],
+            documentIdColExists: true,
+            pathParamsColExists: false,
+          })
+        ).toBe(true);
+      });
+
+      test("successfully updates the table metatdata with when switching off wildcards configuration", async () => {
+        await changeTracker({
+          datasetId,
+          tableId,
+          wildcardIds: false,
+        }).record([event]);
+
+        expect(
+          viewRequiresUpdate({
+            config: {
+              clustering: [],
+              datasetId,
+              tableId,
+              wildcardIds: false,
+            },
             documentIdColExists: true,
             pathParamsColExists: true,
           })
@@ -585,9 +588,8 @@ describe("Checking updates", () => {
               datasetId,
               tableId,
             },
-            schemaFields: [],
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(true);
       });
@@ -611,9 +613,8 @@ describe("Checking updates", () => {
               datasetId,
               tableId,
             },
-            schemaFields: [],
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });
@@ -636,9 +637,8 @@ describe("Checking updates", () => {
               datasetId,
               tableId,
             },
-            schemaFields: [],
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(true);
       });
@@ -660,9 +660,8 @@ describe("Checking updates", () => {
               datasetId,
               tableId,
             },
-            schemaFields: [],
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });
@@ -674,9 +673,8 @@ describe("Checking updates", () => {
               datasetId,
               tableId,
             },
-            schemaFields: [],
             documentIdColExists: true,
-            pathParamsColExists: true,
+            pathParamsColExists: false,
           })
         ).toBe(false);
       });

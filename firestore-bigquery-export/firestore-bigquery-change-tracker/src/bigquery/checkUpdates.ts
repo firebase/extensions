@@ -6,7 +6,6 @@ import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
 interface TableRequiresUpdateOptions {
   table: Table;
   config: FirestoreBigQueryEventHistoryTrackerConfig;
-  schemaFields: any;
   documentIdColExists: boolean;
   pathParamsColExists: boolean;
 }
@@ -14,7 +13,6 @@ interface TableRequiresUpdateOptions {
 export async function tableRequiresUpdate({
   table,
   config,
-  schemaFields,
   documentIdColExists,
   pathParamsColExists,
 }: TableRequiresUpdateOptions): Promise<boolean> {
@@ -27,16 +25,10 @@ export async function tableRequiresUpdate({
   if (configCluster !== tableCluster) return true;
 
   /** Check wildcards */
-  const initializedWildcards = schemaFields.some(
-    ($) => $.name === "path_params"
-  ).length;
-  if (!!config.wildcardIds !== !!initializedWildcards) return true;
+  if (!!config.wildcardIds !== pathParamsColExists) return true;
 
   /** Check document id column */
   if (!documentIdColExists) return true;
-
-  /** Checkout pathParam column exists */
-  if (!pathParamsColExists) return true;
 
   /** Check partitioning */
   const partitioning = new Partitioning(config, table);
@@ -51,7 +43,6 @@ export async function tableRequiresUpdate({
 interface ViewRequiresUpdateOptions {
   metadata?: TableMetadata;
   config: FirestoreBigQueryEventHistoryTrackerConfig;
-  schemaFields: any;
   documentIdColExists: boolean;
   pathParamsColExists: boolean;
 }
@@ -59,7 +50,6 @@ interface ViewRequiresUpdateOptions {
 export function viewRequiresUpdate({
   metadata,
   config,
-  schemaFields,
   documentIdColExists,
   pathParamsColExists,
 }: ViewRequiresUpdateOptions): boolean {
@@ -67,17 +57,10 @@ export function viewRequiresUpdate({
   if (!documentIdColExists) return true;
 
   /** Check wildcards */
-  const initializedWildcards = schemaFields.some(
-    ($) => $.name === "path_params"
-  ).length;
-
-  if (!!config.wildcardIds !== !!initializedWildcards) return true;
+  if (!!config.wildcardIds !== pathParamsColExists) return true;
 
   /** Check document id column */
   if (!documentIdColExists) return true;
-
-  /** Checkout pathParam column exists */
-  if (!pathParamsColExists) return true;
 
   /* Using the new query syntax for snapshots */
   if (metadata) {
