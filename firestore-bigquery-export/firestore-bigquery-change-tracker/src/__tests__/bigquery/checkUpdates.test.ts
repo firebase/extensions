@@ -1,6 +1,5 @@
-import { BigQuery, Dataset, Table } from "@google-cloud/bigquery";
+import { BigQuery } from "@google-cloud/bigquery";
 import { FirestoreDocumentChangeEvent } from "../..";
-import { RawChangelogSchema } from "../../bigquery/schema";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { deleteTable } from "../fixtures/clearTables";
 
@@ -17,9 +16,6 @@ let randomID: string;
 let datasetId: string;
 let tableId: string;
 let tableId_raw: string;
-
-const { logger } = require("firebase-functions");
-
 describe("Checking updates", () => {
   describe("for a table", () => {
     beforeEach(() => {
@@ -34,9 +30,8 @@ describe("Checking updates", () => {
         datasetId,
       });
     });
-
     describe("clustering", () => {
-      test("does not update the table metatdata is clustering is unchanged as an empty array", async () => {
+      test("does not update the table metadata is clustering is unchanged as an empty array", async () => {
         await changeTracker({
           datasetId,
           tableId,

@@ -10,13 +10,12 @@ interface TableRequiresUpdateOptions {
   pathParamsColExists: boolean;
 }
 
-export async function tableRequiresUpdate(
-  table: Table,
-  config: FirestoreBigQueryEventHistoryTrackerConfig,
-  schemaFields: any,
-  documentIdColExists: boolean,
-  pathParamsColExists: boolean
-): Promise<boolean> {
+export async function tableRequiresUpdate({
+  table,
+  config,
+  documentIdColExists,
+  pathParamsColExists,
+}: TableRequiresUpdateOptions): Promise<boolean> {
   /* Setup checks */
   const { metadata } = table;
 

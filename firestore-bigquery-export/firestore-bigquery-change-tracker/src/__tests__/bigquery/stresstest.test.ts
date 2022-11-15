@@ -190,8 +190,6 @@ describe("Stress testing", () => {
       const [legacyRows] = await legacyJob.getQueryResults();
       const [newRows] = await newJob.getQueryResults();
 
-      expect(legacyRows).toEqual(newRows);
-    }, 240000);
       expect(rows[0].length).toEqual(100);
     }, 320000);
   });
