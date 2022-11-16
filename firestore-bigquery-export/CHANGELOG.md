@@ -1,3 +1,7 @@
+## Version 0.1.27
+
+feature - add lifecycle hook to export existing documents to Bigquery
+
 ## Version 0.1.26
 
 docs - correct service account name
