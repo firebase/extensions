@@ -1,5 +1,5 @@
 ## Version 0.1.9
-feature - add lifecycle event to translate existing documents in the collection
+feature - add lifecycle event to translate existing documents in the collection.
 
 ## Version 0.1.8
 
