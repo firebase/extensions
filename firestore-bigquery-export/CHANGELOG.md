@@ -1,7 +1,3 @@
-## Version 0.1.28
-
-fixed - added fix for configuration setup
-
 ## Version 0.1.27
 
 fixed - added fix for configuration setup
