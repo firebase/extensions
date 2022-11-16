@@ -1,8 +1,6 @@
-## Version 0.1.28
+## Version 0.1.27
 
 fixed - added fix for configuration setup
-
-## Version 0.1.27
 
 fixed - update snapshot script
 
