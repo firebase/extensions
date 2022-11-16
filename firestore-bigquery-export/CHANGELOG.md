@@ -1,6 +1,6 @@
 ## Version 0.1.27
 
-feature - add lifecycle hook to export existing documents to Bigquery
+feature - add lifecycle event to export existing documents to Bigquery
 
 ## Version 0.1.26
 
