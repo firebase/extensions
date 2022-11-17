@@ -40,22 +40,24 @@ import {
 
 import { Partitioning } from "./partitioning";
 import { Clustering } from "./clustering";
+import { tableRequiresUpdate, viewRequiresUpdate } from "./checkUpdates";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
   tableId: string;
-  datasetLocation: string | undefined;
-  transformFunction: string | undefined;
-  timePartitioning: string;
-  timePartitioningField: string | undefined;
-  timePartitioningFieldType: string | undefined;
-  timePartitioningFirestoreField: string | undefined;
+  datasetLocation?: string | undefined;
+  transformFunction?: string | undefined;
+  timePartitioning?: string | undefined;
+  timePartitioningField?: string | undefined;
+  timePartitioningFieldType?: string | undefined;
+  timePartitioningFirestoreField?: string | undefined;
   clustering: string[] | null;
   wildcardIds?: boolean;
-  bqProjectId: string | undefined;
+  bqProjectId?: string | undefined;
   backupTableId?: string | undefined;
+  useNewSnapshotQuerySyntax?: boolean;
 }
 
 /**
@@ -103,6 +105,9 @@ export class FirestoreBigQueryEventHistoryTracker
           document_id: event.documentId,
           operation: ChangeType[event.operation],
           data: JSON.stringify(this.serializeData(event.data)),
+          old_data: event.oldData
+            ? JSON.stringify(this.serializeData(event.oldData))
+            : null,
           ...partitionValue,
           ...(this.config.wildcardIds &&
             event.pathParams && { path_params: JSON.stringify(pathParams) }),
@@ -341,7 +346,15 @@ export class FirestoreBigQueryEventHistoryTracker
       }
       await partitioning.addPartitioningToSchema(metadata.schema.fields);
 
-      if (!documentIdColExists || !pathParamsColExists) {
+      /** Updated table metadata if required */
+      const shouldUpdate = await tableRequiresUpdate({
+        table,
+        config: this.config,
+        documentIdColExists,
+        pathParamsColExists,
+      });
+
+      if (shouldUpdate) {
         await table.setMetadata(metadata);
       }
     } else {
@@ -355,6 +368,7 @@ export class FirestoreBigQueryEventHistoryTracker
 
       //Add partitioning
       await partitioning.addPartitioningToSchema(schema.fields);
+
       await partitioning.updateTableMetadata(options);
 
       // Add clustering
@@ -380,8 +394,6 @@ export class FirestoreBigQueryEventHistoryTracker
     const [viewExists] = await view.exists();
     const schema = RawChangelogViewSchema;
 
-    const partitioning = new Partitioning(this.config, view);
-
     if (viewExists) {
       logs.bigQueryViewAlreadyExists(view.id, dataset.id);
       const [metadata] = await view.getMetadata();
@@ -397,63 +409,43 @@ export class FirestoreBigQueryEventHistoryTracker
         (column) => column.name === "path_params"
       );
 
-      if (!documentIdColExists) {
-        metadata.view = latestConsistentSnapshotView(
-          this.config.datasetId,
-          this.rawChangeLogTableName(),
-          schema
-        );
+      /** If new view or opt-in to new query syntax **/
+      const updateView = viewRequiresUpdate({
+        metadata,
+        config: this.config,
+        documentIdColExists,
+        pathParamsColExists,
+      });
+
+      if (updateView) {
+        metadata.view = latestConsistentSnapshotView({
+          datasetId: this.config.datasetId,
+          tableName: this.rawChangeLogTableName(),
+          schema,
+          useLegacyQuery: !this.config.useNewSnapshotQuerySyntax,
+        });
         logs.addNewColumn(this.rawLatestView(), documentIdField.name);
+
+        await view.setMetadata(metadata);
       }
-
-      if (!pathParamsColExists && this.config.wildcardIds) {
-        metadata.view = latestConsistentSnapshotView(
-          this.config.datasetId,
-          this.rawChangeLogTableName(),
-          schema
-        );
-        logs.addNewColumn(this.rawLatestView(), documentPathParams.name);
-      }
-
-      //Add partitioning
-      await partitioning.addPartitioningToSchema(schema.fields);
-
-      //TODO: Tidy up and format / add test cases?
-      // if (
-      //   !documentIdColExists ||
-      //   (!pathParamsColExists && this.config.wildcardIds) ||
-      //   partition.isValidPartitionForExistingTable(partitionColExists)
-      // ) {
-
-      await view.setMetadata(metadata);
-      // }
     } else {
       const schema = { fields: [...RawChangelogViewSchema.fields] };
-      //Add partitioning field
-      await partitioning.addPartitioningToSchema(schema.fields);
-      //TODO Create notification for a user that View cannot be Time Partitioned by the field.
-      // await partitioning.updateTableMetadata(options);
 
       if (this.config.wildcardIds) {
         schema.fields.push(documentPathParams);
       }
-      const latestSnapshot = latestConsistentSnapshotView(
-        this.config.datasetId,
-        this.rawChangeLogTableName(),
+      const latestSnapshot = latestConsistentSnapshotView({
+        datasetId: this.config.datasetId,
+        tableName: this.rawChangeLogTableName(),
         schema,
-        this.bq.projectId
-      );
+        bqProjectId: this.bq.projectId,
+        useLegacyQuery: !this.config.useNewSnapshotQuerySyntax,
+      });
       logs.bigQueryViewCreating(this.rawLatestView(), latestSnapshot.query);
       const options: TableMetadata = {
         friendlyName: this.rawLatestView(),
         view: latestSnapshot,
       };
-
-      if (this.config.timePartitioning) {
-        options.timePartitioning = {
-          type: this.config.timePartitioning,
-        };
-      }
 
       try {
         await view.create(options);
