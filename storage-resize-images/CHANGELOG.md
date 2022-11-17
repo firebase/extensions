@@ -1,4 +1,9 @@
-## Version 0.3.1
+## Version 0.1.31
+
+feature - add AVIF codec support
+
+feature - update IMG_BUCKET param type to selectResource
+
 feature - added lifecycle event to resize existing images
 
 ## Version 0.1.30

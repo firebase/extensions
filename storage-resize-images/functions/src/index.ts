@@ -25,13 +25,9 @@ import * as os from "os";
 import * as path from "path";
 import * as sharp from "sharp";
 
-import {
-  ResizedImageResult,
-  modifyImage,
-} from "./resize-image";
+import { ResizedImageResult, modifyImage } from "./resize-image";
 import config, { deleteImage } from "./config";
 import * as logs from "./logs";
-import { extractFileNameWithoutExtension } from "./util";
 import { shouldResize } from "./filters";
 
 sharp.cache(false);
@@ -52,21 +48,18 @@ logs.init();
  * the Sharp image converting library.
  */
 
-const generateResizedImageHandler =  async (object, verbose = true): Promise<void> => {
+const generateResizedImageHandler = async (
+  object,
+  verbose = true
+): Promise<void> => {
   !verbose || logs.start();
   if (!shouldResize(object)) {
     return;
   }
 
-
   const bucket = admin.storage().bucket(object.bucket);
   const filePath = object.name; // File path in the bucket.
-  const fileDir = path.dirname(filePath);
-  const fileExtension = path.extname(filePath);
-  const fileNameWithoutExtension = extractFileNameWithoutExtension(
-    filePath,
-    fileExtension
-  );
+  const parsedPath = path.parse(filePath);
   const objectMetadata = object;
 
   let originalFile;
@@ -100,9 +93,7 @@ const generateResizedImageHandler =  async (object, verbose = true): Promise<voi
           modifyImage({
             bucket,
             originalFile,
-            fileDir,
-            fileNameWithoutExtension,
-            fileExtension,
+            parsedPath,
             contentType: object.contentType,
             size,
             objectMetadata: objectMetadata,
@@ -147,7 +138,7 @@ const generateResizedImageHandler =  async (object, verbose = true): Promise<voi
       !verbose || logs.tempOriginalFileDeleting(filePath);
       try {
         fs.unlinkSync(originalFile);
-      }  catch (err) {
+      } catch (err) {
         logs.errorDeleting(err);
       }
       !verbose || logs.tempOriginalFileDeleted(filePath);
@@ -167,59 +158,83 @@ const generateResizedImageHandler =  async (object, verbose = true): Promise<voi
   }
 };
 
-export const generateResizedImage = functions.storage.object().onFinalize(async (object) => {
-  await generateResizedImageHandler(object);
-});
+export const generateResizedImage = functions.storage
+  .object()
+  .onFinalize(async (object) => {
+    await generateResizedImageHandler(object);
+  });
 
 /**
- * 
+ *
  */
- export const backfillResizedImages = functions.tasks.taskQueue().onDispatch(async (data) => {
-  const runtime = getExtensions().runtime();
-  if (!process.env.DO_BACKFILL) {
-    await runtime.setProcessingState("PROCESSING_COMPLETE", "Existing images were not resized.");
-    return;
-  }
-  if (data == undefined) {
-    logs.startBackfill();
-  }
-  const bucket = admin.storage().bucket(process.env.IMG_BUCKET);
-  const query = data.nextPageQuery || {
-    autoPaginate: false,
-    maxResults: 3,
-  };
-  const [ files, nextPageQuery ] = await bucket.getFiles(query);
-  const filesToResize = files.filter((f) => {
-    logs.continueBackfill(f.metadata.name);
-    return shouldResize(f.metadata);
-  });
-  const filePromises = filesToResize.map((f) => {
-    return generateResizedImageHandler(f.metadata, false);
-  });
-  const results = await Promise.allSettled(filePromises);
-
-  const pageErrorsCount = results.filter(r => r.status==="rejected").length;
-  const pageSuccessCount = results.filter(r => r.status==="fulfilled").length;
-  const oldErrorsCount = Number(data.errorsCount) || 0;
-  const oldSuccessCount = Number(data.successCount) || 0;
-  const errorsCount =  pageErrorsCount + oldErrorsCount;
-  const successCount =  pageSuccessCount + oldSuccessCount;
-
-  if (nextPageQuery) {
-    const queue = getFunctions().taskQueue(`backfillResizedImages`, process.env.EXT_INSTANCE_ID);
-    await queue.enqueue({
-      nextPageQuery,
-      errorsCount,
-      successCount,
-    });
-  } else {
-    logs.backfillComplete(successCount, errorsCount);
-    if (errorsCount == 0) {
-      await runtime.setProcessingState("PROCESSING_COMPLETE", `Successfully resized ${successCount} images.`);
-    } else if (errorsCount > 0 && successCount > 0) {
-      await runtime.setProcessingState("PROCESSING_WARNING", `Successfully resized ${successCount} images, failed to resize ${errorsCount} images.`);
-    } if (errorsCount > 0 && successCount == 0) {
-      await runtime.setProcessingState("PROCESSING_FAILED", `Successfully resized ${successCount} images, failed to resize ${errorsCount} images.`);
+export const backfillResizedImages = functions.tasks
+  .taskQueue()
+  .onDispatch(async (data) => {
+    const runtime = getExtensions().runtime();
+    if (!process.env.DO_BACKFILL) {
+      await runtime.setProcessingState(
+        "PROCESSING_COMPLETE",
+        "Existing images were not resized."
+      );
+      return;
     }
-  }
-});
+    if (data == undefined) {
+      logs.startBackfill();
+    }
+    const bucket = admin.storage().bucket(process.env.IMG_BUCKET);
+    const query = data.nextPageQuery || {
+      autoPaginate: false,
+      maxResults: 3,
+    };
+    const [files, nextPageQuery] = await bucket.getFiles(query);
+    const filesToResize = files.filter((f) => {
+      logs.continueBackfill(f.metadata.name);
+      return shouldResize(f.metadata);
+    });
+    const filePromises = filesToResize.map((f) => {
+      return generateResizedImageHandler(f.metadata, false);
+    });
+    const results = await Promise.allSettled(filePromises);
+
+    const pageErrorsCount = results.filter(
+      (r) => r.status === "rejected"
+    ).length;
+    const pageSuccessCount = results.filter(
+      (r) => r.status === "fulfilled"
+    ).length;
+    const oldErrorsCount = Number(data.errorsCount) || 0;
+    const oldSuccessCount = Number(data.successCount) || 0;
+    const errorsCount = pageErrorsCount + oldErrorsCount;
+    const successCount = pageSuccessCount + oldSuccessCount;
+
+    if (nextPageQuery) {
+      const queue = getFunctions().taskQueue(
+        `backfillResizedImages`,
+        process.env.EXT_INSTANCE_ID
+      );
+      await queue.enqueue({
+        nextPageQuery,
+        errorsCount,
+        successCount,
+      });
+    } else {
+      logs.backfillComplete(successCount, errorsCount);
+      if (errorsCount == 0) {
+        await runtime.setProcessingState(
+          "PROCESSING_COMPLETE",
+          `Successfully resized ${successCount} images.`
+        );
+      } else if (errorsCount > 0 && successCount > 0) {
+        await runtime.setProcessingState(
+          "PROCESSING_WARNING",
+          `Successfully resized ${successCount} images, failed to resize ${errorsCount} images.`
+        );
+      }
+      if (errorsCount > 0 && successCount == 0) {
+        await runtime.setProcessingState(
+          "PROCESSING_FAILED",
+          `Successfully resized ${successCount} images, failed to resize ${errorsCount} images.`
+        );
+      }
+    }
+  });
