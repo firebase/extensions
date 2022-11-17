@@ -55,11 +55,13 @@ Enabling wildcard references will provide an additional STRING based column. The
 `Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
 
 ### Configuring Alternative BigQuery Project
-When defining a specific BigQuery project, a manual step to setup permissions is required:
+
+When defining a specific BigQuery project, a manual step to set up permissions is required:
 
 1. Navigate to https://console.cloud.google.com/iam-admin/iam?project=${param:BIGQUERY_PROJECT_ID}
-2. Add a new IAM role added for the extension ${param:EXT_INSTANCE_ID}@${param:PROJECT_ID}.iam.gserviceaccount.com
-3. Ensure the new role has the a role of `BigQuery Data Editor`.
+2. Add the **BigQuery Data Editor** role to the following service account:
+   `ext-${param:EXT_INSTANCE_ID}@${param:PROJECT_ID}.iam.gserviceaccount.com`.
+
 ### _(Optional)_ Import existing documents
 
 This extension only sends the content of documents that have been changed -- it does not export your full dataset of existing documents into BigQuery. So, to backfill your BigQuery dataset with all the documents in your collection, you can run the import script provided by this extension.

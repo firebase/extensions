@@ -30,7 +30,7 @@ import {
 } from "./resize-image";
 import config, { deleteImage } from "./config";
 import * as logs from "./logs";
-import { extractFileNameWithoutExtension, startsWithArray } from "./util";
+import { startsWithArray } from "./util";
 
 sharp.cache(false);
 
@@ -49,8 +49,9 @@ logs.init();
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
  */
-export const generateResizedImage = functions.storage.object().onFinalize(
-  async (object): Promise<void> => {
+export const generateResizedImage = functions.storage
+  .object()
+  .onFinalize(async (object): Promise<void> => {
     logs.start();
     const { contentType } = object; // This is the image MIME type
 
@@ -99,12 +100,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
 
     const bucket = admin.storage().bucket(object.bucket);
     const filePath = object.name; // File path in the bucket.
-    const fileDir = path.dirname(filePath);
-    const fileExtension = path.extname(filePath);
-    const fileNameWithoutExtension = extractFileNameWithoutExtension(
-      filePath,
-      fileExtension
-    );
+    const parsedPath = path.parse(filePath);
     const objectMetadata = object;
 
     let originalFile;
@@ -138,9 +134,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
             modifyImage({
               bucket,
               originalFile,
-              fileDir,
-              fileNameWithoutExtension,
-              fileExtension,
+              parsedPath,
               contentType,
               size,
               objectMetadata: objectMetadata,
@@ -156,6 +150,7 @@ export const generateResizedImage = functions.storage.object().onFinalize(
           type: "firebase.extensions.storage-resize-images.v1.complete",
           subject: filePath,
           data: {
+            input: object,
             outputs: results,
           },
         }));
@@ -199,5 +194,4 @@ export const generateResizedImage = functions.storage.object().onFinalize(
         }
       }
     }
-  }
-);
+  });

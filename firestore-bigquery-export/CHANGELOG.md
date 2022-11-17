@@ -1,3 +1,17 @@
+## Version 0.1.27
+
+fixed - added fix for configuration setup
+
+fixed - update snapshot script
+
+feature - add oldData to the record
+
+fixed - updating table metadata too often
+
+## Version 0.1.26
+
+docs - correct service account name
+
 ## Version 0.1.25
 
 feature - add version to the bigquery import script
