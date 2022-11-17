@@ -168,7 +168,7 @@ params:
   - param: DO_BACKFILL
     label: Import existing users into Mailchimp audience
     description: >-
-      Do you want to add existing users to the Mailchimp audience?
+      Do you want to add existing users to the Mailchimp audience when you install or update this extension?
     type: select
     default: false
     options:
