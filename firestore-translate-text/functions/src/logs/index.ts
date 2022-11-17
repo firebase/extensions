@@ -120,5 +120,5 @@ export const updateDocumentComplete = (path: string) => {
 };
 
 export const backfillComplete = (successCount: number, errorCount: number) => {
-  logger.log(messages.backfillComplete(successCount, errorCount))
-}
+  logger.log(messages.backfillComplete(successCount, errorCount));
+};

@@ -42,8 +42,9 @@ admin.initializeApp();
 
 logs.init(config);
 
-export const fstranslate = functions.firestore.document(process.env.COLLECTION_PATH).onWrite(
-  async (change): Promise<void> => {
+export const fstranslate = functions.firestore
+  .document(process.env.COLLECTION_PATH)
+  .onWrite(async (change): Promise<void> => {
     logs.start(config);
     const { languages, inputFieldName, outputFieldName } = config;
 
@@ -81,42 +82,69 @@ export const fstranslate = functions.firestore.document(process.env.COLLECTION_P
     } catch (err) {
       logs.error(err);
     }
-  }
-);
+  });
 
-export const fstranslatebackfill = functions.tasks.taskQueue().onDispatch(async (data: any)=> {
-  const runtime = getExtensions().runtime();
-  if (!process.env.DO_BACKFILL) {
-    await runtime.setProcessingState("PROCESSING_COMPLETE", "Existing documents were not backfilled.");
-    return;
-  }
-  const offset = data["offset"] as number ?? 0;
-  const pastSuccessCount = data["successCount"] as number ?? 0;
-  const pastErrorCount = data["errorCount"] as number ?? 0;
-
-  const snapshot = await admin.firestore().collection(process.env.COLLECTION_PATH).offset(offset).get();
-  const translations = await Promise.allSettled(snapshot.docs.map(handleExistingDocument));
-  const newSucessCount = pastSuccessCount + translations.filter(p => p.status === "fulfilled").length;
-  const newErrorCount = pastErrorCount + translations.filter(p => p.status === "rejected").length;
-
-  if (snapshot.size == DOCS_PER_BACKFILL) {
-    const queue = getFunctions().taskQueue("fstranslatebackfill", process.env.EXT_INSTANCE_ID);
-    await queue.enqueue({
-      offset: offset + DOCS_PER_BACKFILL,
-      successCount: newSucessCount,
-      errorCount: newErrorCount,
-    })
-  } else {
-    logs.backfillComplete(newSucessCount, newErrorCount);
-    if (newErrorCount == 0) {
-      runtime.setProcessingState("PROCESSING_COMPLETE", `Successfully backfilled ${newSucessCount} documents.`);
-    } else if (newErrorCount > 0 && newSucessCount > 0) {
-      runtime.setProcessingState("PROCESSING_WARNING", `Successfully backfilled ${newSucessCount} documents, failed to translate ${newErrorCount} documents.`);
-    } if (newErrorCount > 0 && newSucessCount == 0) {
-      runtime.setProcessingState("PROCESSING_FAILED", `Successfully backfilled ${newSucessCount} documents, failed to translate ${newErrorCount} documents.`);
+export const fstranslatebackfill = functions.tasks
+  .taskQueue()
+  .onDispatch(async (data: any) => {
+    const runtime = getExtensions().runtime();
+    if (!process.env.DO_BACKFILL) {
+      await runtime.setProcessingState(
+        "PROCESSING_COMPLETE",
+        "Existing documents were not backfilled."
+      );
+      return;
     }
-  }
-});
+    const offset = (data["offset"] as number) ?? 0;
+    const pastSuccessCount = (data["successCount"] as number) ?? 0;
+    const pastErrorCount = (data["errorCount"] as number) ?? 0;
+
+    const snapshot = await admin
+      .firestore()
+      .collection(process.env.COLLECTION_PATH)
+      .offset(offset)
+      .get();
+    const translations = await Promise.allSettled(
+      snapshot.docs.map(handleExistingDocument)
+    );
+    const newSucessCount =
+      pastSuccessCount +
+      translations.filter((p) => p.status === "fulfilled").length;
+    const newErrorCount =
+      pastErrorCount +
+      translations.filter((p) => p.status === "rejected").length;
+
+    if (snapshot.size == DOCS_PER_BACKFILL) {
+      const queue = getFunctions().taskQueue(
+        "fstranslatebackfill",
+        process.env.EXT_INSTANCE_ID
+      );
+      await queue.enqueue({
+        offset: offset + DOCS_PER_BACKFILL,
+        successCount: newSucessCount,
+        errorCount: newErrorCount,
+      });
+    } else {
+      logs.backfillComplete(newSucessCount, newErrorCount);
+      if (newErrorCount == 0) {
+        runtime.setProcessingState(
+          "PROCESSING_COMPLETE",
+          `Successfully backfilled ${newSucessCount} documents.`
+        );
+      } else if (newErrorCount > 0 && newSucessCount > 0) {
+        runtime.setProcessingState(
+          "PROCESSING_WARNING",
+          `Successfully backfilled ${newSucessCount} documents, failed to translate ${newErrorCount} documents.`
+        );
+      }
+      if (newErrorCount > 0 && newSucessCount == 0) {
+        runtime.setProcessingState(
+          "PROCESSING_FAILED",
+          `Successfully backfilled ${newSucessCount} documents, failed to translate ${newErrorCount} documents.`
+        );
+      }
+    }
+  });
 
 const extractInput = (snapshot: admin.firestore.DocumentSnapshot): any => {
   return snapshot.get(config.inputFieldName);
@@ -134,7 +162,6 @@ const getChangeType = (
   return ChangeType.UPDATE;
 };
 
-
 const handleExistingDocument = async (
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
@@ -145,7 +172,7 @@ const handleExistingDocument = async (
   } else {
     logs.documentFoundNoInput();
   }
-}
+};
 
 const handleCreateDocument = async (
   snapshot: admin.firestore.DocumentSnapshot
