@@ -86,7 +86,7 @@ export class Partitioning {
       !timePartitioningFieldType &&
       !timePartitioningFirestoreField;
 
-    /* No custom congig has been set, use partition value option only */
+    /* No custom config has been set, use partition value option only */
     if (hasNoCustomOptions) return true;
 
     /* check if all options have been provided to be  */
@@ -153,7 +153,8 @@ export class Partitioning {
   }
 
   async isValidPartitionForExistingTable(): Promise<boolean> {
-    if (this.isTablePartitioned()) return false;
+    const isPartitioned = await this.isTablePartitioned();
+    if (isPartitioned) return Promise.resolve(false);
 
     return this.hasValidCustomPartitionConfig();
   }

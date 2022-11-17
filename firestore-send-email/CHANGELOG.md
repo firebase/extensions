@@ -1,3 +1,7 @@
+## Version 0.1.20
+
+docs - add google app passwords guide
+
 ## Version 0.1.19
 
 fixed - generate new lib folder
