@@ -17,6 +17,7 @@ export const changeTracker = ({
   transformFunction = null,
   clustering = null,
   bqProjectId = "extensions-testing",
+  useNewSnapshotQuerySyntax = false,
 }): FirestoreBigQueryEventHistoryTracker => {
   return new FirestoreBigQueryEventHistoryTracker({
     datasetId,
@@ -30,6 +31,7 @@ export const changeTracker = ({
     transformFunction,
     clustering,
     bqProjectId,
+    useNewSnapshotQuerySyntax,
   });
 };
 
@@ -41,6 +43,8 @@ export const changeTrackerEvent = ({
   documentId = "testing",
   pathParams = { documentId: "12345" },
   data = { end_date: firestore.Timestamp.now() },
+  oldData = null,
+  useNewSnapshotQuerySyntax = false,
 }: any): FirestoreDocumentChangeEvent => {
   return {
     timestamp,
@@ -49,6 +53,8 @@ export const changeTrackerEvent = ({
     eventId,
     documentId,
     data,
+    oldData,
     pathParams,
+    useNewSnapshotQuerySyntax,
   };
 };

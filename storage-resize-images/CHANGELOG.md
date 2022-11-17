@@ -1,3 +1,13 @@
+## Version 0.1.31
+
+feature - add AVIF codec support
+
+feature - update IMG_BUCKET param type to selectResource
+
+## Version 0.1.30
+
+feature - include original image data in events
+
 ## Version 0.1.29
 
 fixed - add size to metadata
