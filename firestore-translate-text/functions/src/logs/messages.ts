@@ -1,5 +1,6 @@
 export const messages = {
-  backfillComplete: (successCount: number, errorCount: number) => `Finshed backfilling translations. ${successCount} documents checked, ${errorCount} errors.`,
+  backfillComplete: (successCount: number, errorCount: number) =>
+    `Finshed backfilling translations. ${successCount} documents checked, ${errorCount} errors.`,
   complete: () => "Completed execution of extension",
   documentCreatedNoInput: () =>
     "Document was created without an input string, no processing is required",
@@ -51,5 +52,4 @@ export const messages = {
     `Updating Cloud Firestore document: '${path}'`,
   updateDocumentComplete: (path: string) =>
     `Finished updating Cloud Firestore document: '${path}'`,
-    
 };
