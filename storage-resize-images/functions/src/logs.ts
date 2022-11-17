@@ -177,5 +177,7 @@ export const continueBackfill = (fileName: string) => {
 };
 
 export const backfillComplete = (success: number, failures: number) => {
-  logger.log(`Finished backfill. Successfully resized ${success} images. Failed to resize ${failures} images.`);
-}
+  logger.log(
+    `Finished backfill. Successfully resized ${success} images. Failed to resize ${failures} images.`
+  );
+};
