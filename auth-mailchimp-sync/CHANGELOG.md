@@ -1,4 +1,5 @@
 ## Version 0.2.2
+
 feature - adds lifecycle event to add existing users to a Mailchimp audience.
 
 ## Version 0.2.1
