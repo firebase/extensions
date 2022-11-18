@@ -35,6 +35,7 @@ export default {
   bqProjectId: process.env.BIGQUERY_PROJECT_ID,
   collectionPath: process.env.COLLECTION_PATH,
   datasetId: process.env.DATASET_ID,
+  doBackfill: process.env.DO_BACKFILL === "true",
   docsPerBackfill: parseInt(process.env.DOCS_PER_BACKFILL),
   tableId: process.env.TABLE_ID,
   location: process.env.LOCATION,
