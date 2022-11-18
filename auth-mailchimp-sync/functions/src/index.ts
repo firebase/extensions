@@ -108,7 +108,7 @@ export const addExistingUsersToList = functions.tasks
     if (!config.doBackfill) {
       await runtime.setProcessingState(
         "PROCESSING_COMPLETE",
-        "No processing requested, skipping lifecycle event."
+        "No processing requested."
       );
       return;
     }
