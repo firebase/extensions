@@ -35,7 +35,6 @@ try {
   logs.initError(err);
 }
 
-
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 
