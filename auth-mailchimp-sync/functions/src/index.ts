@@ -15,6 +15,7 @@
  */
 
 import * as crypto from "crypto";
+import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import { getAuth } from "firebase-admin/auth";
 import { getExtensions } from "firebase-admin/extensions";
@@ -33,6 +34,10 @@ try {
 } catch (err) {
   logs.initError(err);
 }
+
+
+// Initialize the Firebase Admin SDK
+admin.initializeApp();
 
 export const addUserToList = functions.auth
   .user()
