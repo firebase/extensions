@@ -41,6 +41,10 @@ contributors:
 
 billingRequired: true
 
+roles:
+  - role: firebaseauth.viewer
+    reason: Allows the extension to read existing users while handling lifecycle events.
+
 resources:
   - name: addUserToList
     type: firebaseextensions.v1beta.function
