@@ -5,7 +5,7 @@ export const messages = {
   documentCreatedNoInput: () =>
     "Document was created without an input string, no processing is required",
   documentCreatedWithInput: () => "Document was created with an input string",
-  documentFoundWithInput: () => "Backfill fround document with an input string",
+  documentFoundWithInput: () => "Backfill found document with an input string",
   documentFoundNoInput: () =>
     "Backfill found document without an input string, no processing is required",
   documentDeleted: () => "Document was deleted, no processing is required",
@@ -26,6 +26,8 @@ export const messages = {
   ],
   inputFieldNameIsOutputPath: () =>
     "The `Input` field name must not be the same as an `Output` path for this extension to function correctly",
+  skippingLanguage: (lang: string) =>
+    `Found existing translation to ${lang}, skipping.`,
   start: (config = {}) => [
     "Started execution of extension with configuration",
     config,

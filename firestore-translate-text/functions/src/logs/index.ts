@@ -122,3 +122,7 @@ export const updateDocumentComplete = (path: string) => {
 export const backfillComplete = (successCount: number, errorCount: number) => {
   logger.log(messages.backfillComplete(successCount, errorCount));
 };
+
+export const skippingLanguage = (language: string) => {
+  logger.log(messages.skippingLanguage(language));
+};
