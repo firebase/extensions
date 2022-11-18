@@ -150,6 +150,10 @@ const extractInput = (snapshot: admin.firestore.DocumentSnapshot): any => {
   return snapshot.get(config.inputFieldName);
 };
 
+const extractOutput = (snapshot: admin.firestore.DocumentSnapshot): any => {
+  return snapshot.get(config.outputFieldName);
+};
+
 const getChangeType = (
   change: functions.Change<admin.firestore.DocumentSnapshot>
 ): ChangeType => {
@@ -168,7 +172,7 @@ const handleExistingDocument = async (
   const input = extractInput(snapshot);
   if (input) {
     logs.documentFoundWithInput();
-    await translateDocument(snapshot);
+    await translateDocument(snapshot, /*keepExistingTranslations=*/ true);
   } else {
     logs.documentFoundNoInput();
   }
@@ -220,11 +224,25 @@ const handleUpdateDocument = async (
 
 const translateSingle = async (
   input: string,
-  snapshot: admin.firestore.DocumentSnapshot
+  snapshot: admin.firestore.DocumentSnapshot,
+  keepExistingTranslations: boolean = false
 ): Promise<void> => {
-  logs.translateInputStringToAllLanguages(input, config.languages);
+  const existingTranslations = extractOutput(snapshot);
+  const languages = config.languages.filter(
+    (targetLanguage: string): boolean => {
+      if (
+        !keepExistingTranslations ||
+        existingTranslations[targetLanguage] != undefined
+      ) {
+        logs.skippingLanguage(targetLanguage);
+        return false;
+      }
+      return true;
+    }
+  );
+  logs.translateInputStringToAllLanguages(input, languages);
 
-  const tasks = config.languages.map(
+  const tasks = languages.map(
     async (targetLanguage: string): Promise<Translation> => {
       return {
         language: targetLanguage,
@@ -255,25 +273,32 @@ const translateSingle = async (
 
 const translateMultiple = async (
   input: object,
-  snapshot: admin.firestore.DocumentSnapshot
+  snapshot: admin.firestore.DocumentSnapshot,
+  keepExistingTranslations: boolean = false
 ): Promise<void> => {
   let translations = {};
   let promises = [];
+  const existingTranslations = extractOutput(snapshot);
 
-  Object.entries(input).forEach(([input, value]) => {
-    config.languages.forEach((language) => {
+  Object.entries(input).forEach(([entry, value]) => {
+    const languages = config.languages.filter(
+      (targetLanguage: string): boolean =>
+        !keepExistingTranslations ||
+        existingTranslations[entry][targetLanguage] != undefined
+    );
+    languages.forEach((language) => {
       promises.push(
         () =>
           new Promise<void>(async (resolve) => {
-            logs.translateInputStringToAllLanguages(value, config.languages);
+            logs.translateInputStringToAllLanguages(value, languages);
 
             const output =
               typeof value === "string"
                 ? await translateString(value, language)
                 : null;
 
-            if (!translations[input]) translations[input] = {};
-            translations[input][language] = output;
+            if (!translations[entry]) translations[entry] = {};
+            translations[entry][language] = output;
 
             return resolve();
           })
@@ -289,15 +314,16 @@ const translateMultiple = async (
 };
 
 const translateDocument = async (
-  snapshot: admin.firestore.DocumentSnapshot
+  snapshot: admin.firestore.DocumentSnapshot,
+  keepExistingTranslations: boolean = false
 ): Promise<void> => {
   const input: any = extractInput(snapshot);
 
   if (typeof input === "object") {
-    return translateMultiple(input, snapshot);
+    return translateMultiple(input, snapshot, keepExistingTranslations);
   }
 
-  await translateSingle(input, snapshot);
+  await translateSingle(input, snapshot, keepExistingTranslations);
 };
 
 const translateString = async (
