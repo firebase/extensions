@@ -108,7 +108,7 @@ export const addExistingUsersToList = functions.tasks
     if (!config.doBackfill) {
       await runtime.setProcessingState(
         "PROCESSING_COMPLETE",
-        "No existing documents imported into BigQuery."
+        "No processing requested, skipping lifecycle event."
       );
       return;
     }
@@ -149,8 +149,9 @@ export const addExistingUsersToList = functions.tasks
     const newErrorCount =
       pastErrorCount + results.filter((p) => p.status === "rejected").length;
     if (res.pageToken) {
+      // If there is a pageToken, we have more users to add, so we enqueue another task.
       const queue = getFunctions().taskQueue(
-        "fsimportexistingdocs",
+        "addExistingUsersToList",
         process.env.EXT_INSTANCE_ID
       );
       await queue.enqueue({
@@ -159,6 +160,7 @@ export const addExistingUsersToList = functions.tasks
         errorCount: newErrorCount,
       });
     } else {
+      // The backfill is complete, now we need to set the processing state.
       logs.backfillComplete(newSucessCount, newErrorCount);
       if (newErrorCount == 0) {
         await runtime.setProcessingState(
