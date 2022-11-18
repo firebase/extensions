@@ -83,7 +83,7 @@ exports.fsimportexistingdocs = functions.tasks
   .taskQueue()
   .onDispatch(async (data) => {
     const runtime = getExtensions().runtime();
-    if (!process.env.DO_BACKFILL) {
+    if (!config.doBackfill) {
       await runtime.setProcessingState(
         "PROCESSING_COMPLETE",
         "No existing documents imported into BigQuery."
