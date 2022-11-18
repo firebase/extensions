@@ -145,6 +145,7 @@ export const addExistingUsersToList = functions.tasks
         );
       } catch (err) {
         logs.errorAddUser(err);
+        throw err;
       }
     });
     const results = await Promise.allSettled(mailchimpPromises);
