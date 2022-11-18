@@ -83,6 +83,14 @@ program
   .option(
     "-m, --multi-threaded [true|false]",
     "Whether to run standard or multi-thread import version"
+  )
+  .option(
+    "-u, --use-new-snapshot-query-syntax [true|false]",
+    "Whether to use updated latest snapshot query"
+  )
+  .option(
+    "-e, --use-emulator [true|false]",
+    "Whether to use updated latest snapshot query"
   );
 
 const run = async (): Promise<number> => {
@@ -101,7 +109,14 @@ const run = async (): Promise<number> => {
     queryCollectionGroup,
     datasetLocation,
     multiThreaded,
+    useNewSnapshotQuerySyntax,
+    useEmulator,
   } = config;
+
+  if (useEmulator) {
+    console.log("Using emulator");
+    process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
+  }
 
   // Initialize Firebase
   // This uses applicationDefault to authenticate
@@ -126,6 +141,7 @@ const run = async (): Promise<number> => {
     datasetId: datasetId,
     datasetLocation,
     wildcardIds: queryCollectionGroup,
+    useNewSnapshotQuerySyntax,
   });
 
   console.log(
@@ -197,6 +213,7 @@ const run = async (): Promise<number> => {
   try {
     await unlink(cursorPositionFile);
   } catch (e) {
+    console.log(e);
     console.log(
       `Error unlinking journal file ${cursorPositionFile} after successful import: ${e.toString()}`
     );

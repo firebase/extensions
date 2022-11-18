@@ -6,7 +6,7 @@
     "outDir": "lib",
     "sourceMap": false,
     "target": "es2018",
-    "types": ["node", "mocha", "chai"]
+    "types": ["node", "chai", "jest"]
   },
   "compileOnSave": true,
   "include": ["src"],
