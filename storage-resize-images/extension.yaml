@@ -70,9 +70,8 @@ resources:
       location: ${LOCATION}
       runtime: nodejs14
       availableMemoryMb: ${param:FUNCTION_MEMORY}
-      taskQueueTrigger:
-        rateLimits:
-          maxConcurrentDispatches: 10
+      taskQueueTrigger: {}
+
 params:
   - param: LOCATION
     label: Cloud Functions location
