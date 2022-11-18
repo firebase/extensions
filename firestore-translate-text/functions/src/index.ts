@@ -88,7 +88,7 @@ export const fstranslatebackfill = functions.tasks
   .taskQueue()
   .onDispatch(async (data: any) => {
     const runtime = getExtensions().runtime();
-    if (!process.env.DO_BACKFILL) {
+    if (!config.doBackfill) {
       await runtime.setProcessingState(
         "PROCESSING_COMPLETE",
         "Existing documents were not backfilled."
