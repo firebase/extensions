@@ -91,7 +91,7 @@ export const fstranslatebackfill = functions.tasks
     if (!config.doBackfill) {
       await runtime.setProcessingState(
         "PROCESSING_COMPLETE",
-        "Existing documents were not backfilled."
+        "Existing documents were not translated because backfill was not requested."
       );
       return;
     }
@@ -129,18 +129,18 @@ export const fstranslatebackfill = functions.tasks
       if (newErrorCount == 0) {
         runtime.setProcessingState(
           "PROCESSING_COMPLETE",
-          `Successfully backfilled ${newSucessCount} documents.`
+          `Successfully translated ${newSucessCount} documents.`
         );
       } else if (newErrorCount > 0 && newSucessCount > 0) {
         runtime.setProcessingState(
           "PROCESSING_WARNING",
-          `Successfully backfilled ${newSucessCount} documents, failed to translate ${newErrorCount} documents.`
+          `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors. See function logs for specific error messages.`
         );
       }
       if (newErrorCount > 0 && newSucessCount == 0) {
         runtime.setProcessingState(
           "PROCESSING_FAILED",
-          `Successfully backfilled ${newSucessCount} documents, failed to translate ${newErrorCount} documents.`
+          `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors. See function logs for specific error messages.`
         );
       }
     }

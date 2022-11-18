@@ -63,7 +63,7 @@ resources:
   - name: fstranslatebackfill
     type: firebaseextensions.v1beta.function
     description:
-     Search your specified Cloud Firestore collection for existing, untranslated documents, translates the strings,
+     Searches your specified Cloud Firestore collection for existing, untranslated documents, translates the strings,
       then writes the translated strings back to the same document.
     properties:
       location: ${param:LOCATION}
