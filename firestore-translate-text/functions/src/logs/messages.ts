@@ -18,6 +18,8 @@ export const messages = {
   documentUpdatedUnchangedInput: () =>
     "Document was updated, input string has not changed, no processing is required",
   error: (err: Error) => ["Failed execution of extension", err],
+  enqueueNext: (offset: number) =>
+    `About to enqueue next task, starting at offset ${offset}`,
   fieldNamesNotDifferent: () =>
     "The `Input` and `Output` field names must be different for this extension to function correctly",
   init: (config = {}) => [

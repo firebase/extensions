@@ -63,7 +63,7 @@ resources:
   - name: fstranslatebackfill
     type: firebaseextensions.v1beta.function
     description:
-     Searches your specified Cloud Firestore collection for existing, untranslated documents, translates the strings,
+     Searches your specified Cloud Firestore collection for existing documents, translates the strings into any missing languages,
       then writes the translated strings back to the same document.
     properties:
       location: ${param:LOCATION}
@@ -170,7 +170,8 @@ params:
   - param: DO_BACKFILL
     label: Translate existing documents
     description: >
-      Should existing, untranslated documents in the Firestore collection be translated as well?
+      Should existing documents in the Firestore collection be translated as well? 
+      If you've added new languages since a document was translated, this will fill those in as well.
     type: select
     options:
       - label: Yes

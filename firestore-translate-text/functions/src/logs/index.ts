@@ -15,6 +15,7 @@
  */
 
 import { logger } from "firebase-functions";
+import { off } from "process";
 import { messages } from "./messages";
 
 export const complete = () => {
@@ -125,4 +126,8 @@ export const backfillComplete = (successCount: number, errorCount: number) => {
 
 export const skippingLanguage = (language: string) => {
   logger.log(messages.skippingLanguage(language));
+};
+
+export const enqueueNext = (offset: number) => {
+  logger.log(messages.enqueueNext(offset));
 };

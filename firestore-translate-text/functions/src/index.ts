@@ -34,7 +34,7 @@ enum ChangeType {
   DELETE,
   UPDATE,
 }
-const DOCS_PER_BACKFILL = 200;
+const DOCS_PER_BACKFILL = 1500;
 const translate = new Translate({ projectId: process.env.PROJECT_ID });
 
 // Initialize the Firebase Admin SDK
@@ -115,6 +115,8 @@ export const fstranslatebackfill = functions.tasks
       translations.filter((p) => p.status === "rejected").length;
 
     if (snapshot.size == DOCS_PER_BACKFILL) {
+      // Stil have more documents to translate, enqueue another task.
+      logs.enqueueNext(offset + DOCS_PER_BACKFILL);
       const queue = getFunctions().taskQueue(
         "fstranslatebackfill",
         process.env.EXT_INSTANCE_ID
@@ -125,24 +127,23 @@ export const fstranslatebackfill = functions.tasks
         errorCount: newErrorCount,
       });
     } else {
+      // No more douments to translate, time to set the processing state.
       logs.backfillComplete(newSucessCount, newErrorCount);
       if (newErrorCount == 0) {
-        runtime.setProcessingState(
+        return await runtime.setProcessingState(
           "PROCESSING_COMPLETE",
           `Successfully translated ${newSucessCount} documents.`
         );
       } else if (newErrorCount > 0 && newSucessCount > 0) {
-        runtime.setProcessingState(
+        return await runtime.setProcessingState(
           "PROCESSING_WARNING",
           `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors. See function logs for specific error messages.`
         );
       }
-      if (newErrorCount > 0 && newSucessCount == 0) {
-        runtime.setProcessingState(
-          "PROCESSING_FAILED",
-          `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors. See function logs for specific error messages.`
-        );
-      }
+      return await runtime.setProcessingState(
+        "PROCESSING_FAILED",
+        `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors. See function logs for specific error messages.`
+      );
     }
   });
 
@@ -231,7 +232,7 @@ const translateSingle = async (
   const languages = config.languages.filter(
     (targetLanguage: string): boolean => {
       if (
-        !keepExistingTranslations ||
+        keepExistingTranslations &&
         existingTranslations[targetLanguage] != undefined
       ) {
         logs.skippingLanguage(targetLanguage);
@@ -261,7 +262,7 @@ const translateSingle = async (
         output[translation.language] = translation.output;
         return output;
       },
-      {}
+      keepExistingTranslations ? existingTranslations : {}
     );
 
     return updateTranslations(snapshot, translationsMap);
@@ -276,15 +277,22 @@ const translateMultiple = async (
   snapshot: admin.firestore.DocumentSnapshot,
   keepExistingTranslations: boolean = false
 ): Promise<void> => {
-  let translations = {};
-  let promises = [];
   const existingTranslations = extractOutput(snapshot);
+  let translations = keepExistingTranslations ? existingTranslations : {};
+  let promises = [];
 
   Object.entries(input).forEach(([entry, value]) => {
     const languages = config.languages.filter(
-      (targetLanguage: string): boolean =>
-        !keepExistingTranslations ||
-        existingTranslations[entry][targetLanguage] != undefined
+      (targetLanguage: string): boolean => {
+        if (
+          keepExistingTranslations &&
+          existingTranslations[entry]?.[targetLanguage] != undefined
+        ) {
+          logs.skippingLanguage(targetLanguage);
+          return false;
+        }
+        return true;
+      }
     );
     languages.forEach((language) => {
       promises.push(
