@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.26
+version: 0.1.27
 specVersion: v1beta
 
 displayName: Stream Collections to BigQuery
@@ -213,9 +213,9 @@ params:
     required: true
 
   - param: WILDCARD_IDS
-    label: Wildcard Column field with Parent Firestore Document IDs
+    label: Enable Wildcard Column field with Parent Firestore Document IDs
     description: >-
-     Creates a column containing a JSON object of all wildcard ids from a documents path.
+     If enabled, creates a column containing a JSON object of all wildcard ids from a documents path.
     type: select
     options:
       - label: No
@@ -280,7 +280,7 @@ params:
   - param: TIME_PARTITIONING_FIELD
     label: BigQuery Time Partitioning column name
     description: >-
-      BigQuery table column/schema field name for TimePartitioning. You can choose schema available as `timestamp` OR new custom defined column that will be assigned to the selected Firestore Document field below. Defaults to pseudo column _PARTITIONTIME if unspecified. Cannot be changed if Table is already partitioned.
+      BigQuery table column/schema field name for TimePartitioning. You can choose schema available as `timestamp` OR a new custom defined column that will be assigned to the selected Firestore Document field below. Defaults to pseudo column _PARTITIONTIME if unspecified. Cannot be changed if Table is already partitioned.
     type: string
     required: false
 
@@ -338,3 +338,17 @@ params:
     example: https://us-west1-my-project-id.cloudfunctions.net/myTransformFunction
     type: string
     required: false
+
+  - param: USE_NEW_SNAPSHOT_QUERY_SYNTAX
+    label: Use new query syntax for snapshots
+    description: >-
+      If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential
+      resource limitations.
+    type: select
+    options:
+      - label: Yes
+        value: yes
+      - label: No
+        value: no
+    default: no
+    required: true

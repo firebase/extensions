@@ -38,6 +38,7 @@ const eventTracker: FirestoreEventHistoryTracker =
     clustering: config.clustering,
     wildcardIds: config.wildcardIds,
     bqProjectId: config.bqProjectId,
+    useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
   });
 
 logs.init();
@@ -60,6 +61,8 @@ exports.fsexportbigquery = functions.firestore
           eventId: context.eventId,
           data:
             changeType === ChangeType.DELETE ? undefined : change.after.data(),
+          oldData:
+            changeType === ChangeType.CREATE ? undefined : change.before.data(),
         },
       ]);
       logs.complete();

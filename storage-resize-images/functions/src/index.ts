@@ -30,7 +30,7 @@ import {
 } from "./resize-image";
 import config, { deleteImage } from "./config";
 import * as logs from "./logs";
-import { extractFileNameWithoutExtension, startsWithArray } from "./util";
+import { startsWithArray } from "./util";
 
 sharp.cache(false);
 
@@ -100,12 +100,7 @@ export const generateResizedImage = functions.storage
 
     const bucket = admin.storage().bucket(object.bucket);
     const filePath = object.name; // File path in the bucket.
-    const fileDir = path.dirname(filePath);
-    const fileExtension = path.extname(filePath);
-    const fileNameWithoutExtension = extractFileNameWithoutExtension(
-      filePath,
-      fileExtension
-    );
+    const parsedPath = path.parse(filePath);
     const objectMetadata = object;
 
     let originalFile;
@@ -139,9 +134,7 @@ export const generateResizedImage = functions.storage
             modifyImage({
               bucket,
               originalFile,
-              fileDir,
-              fileNameWithoutExtension,
-              fileExtension,
+              parsedPath,
               contentType,
               size,
               objectMetadata: objectMetadata,
