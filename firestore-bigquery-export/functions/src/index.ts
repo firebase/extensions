@@ -25,7 +25,7 @@ import {
   FirestoreEventHistoryTracker,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as logs from "./logs";
-import { getChangeType, getDocumentId } from "./util";
+import { getChangeType, getDocumentId, resolveWildcardIds } from "./util";
 
 const eventTracker: FirestoreEventHistoryTracker =
   new FirestoreBigQueryEventHistoryTracker({
@@ -95,7 +95,7 @@ exports.fsimportexistingdocs = functions.tasks
 
     const snapshot = await admin
       .firestore()
-      .collection(process.env.COLLECTION_PATH)
+      .collection(config.importCollectionPath)
       .offset(offset)
       .limit(config.docsPerBackfill)
       .get();
@@ -107,6 +107,7 @@ exports.fsimportexistingdocs = functions.tasks
         documentName: `projects/${config.bqProjectId}/databases/(default)/documents/${d.ref.path}`,
         documentId: d.id,
         eventId: "",
+        pathParams: resolveWildcardIds(config.importCollectionPath, d.ref.path),
         data: d.data(),
       };
     });
@@ -118,6 +119,7 @@ exports.fsimportexistingdocs = functions.tasks
       functions.logger.log(err);
     }
     if (rows.length == config.docsPerBackfill) {
+      // There are more documents to import - enqueue another task to continue the backfill.
       const queue = getFunctions().taskQueue(
         "fsimportexistingdocs",
         process.env.EXT_INSTANCE_ID
@@ -127,6 +129,7 @@ exports.fsimportexistingdocs = functions.tasks
         docsCount: docsCount + rows.length,
       });
     } else {
+      // We are finished, set the processing state to report back how many docs were imported.
       runtime.setProcessingState(
         "PROCESSING_COMPLETE",
         `Successfully imported ${

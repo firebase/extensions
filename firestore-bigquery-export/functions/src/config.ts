@@ -40,6 +40,7 @@ export default {
   tableId: process.env.TABLE_ID,
   location: process.env.LOCATION,
   initialized: false,
+  importCollectionPath: process.env.IMPORT_COLLECTION_PATH,
   datasetLocation: process.env.DATASET_LOCATION,
   backupCollectionId: process.env.BACKUP_COLLECTION,
   transformFunction: process.env.TRANSFORM_FUNCTION,
