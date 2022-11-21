@@ -133,7 +133,6 @@ const run = async (): Promise<number> => {
   const rawChangeLogName = `${tableId}_raw_changelog`;
 
   if (multiThreaded) return runMultiThread(config, rawChangeLogName);
-
   // We pass in the application-level "tableId" here. The tracker determines
   // the name of the raw changelog from this field.
   const dataSink = new FirestoreBigQueryEventHistoryTracker({

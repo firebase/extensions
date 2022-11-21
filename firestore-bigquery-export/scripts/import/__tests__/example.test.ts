@@ -77,18 +77,73 @@ describe("CLI", () => {
   });
 
   afterEach(async () => {
-    // we don't need this, will reset on emulator closing?
-    // if ((await firestore.collection(collectionName).get()).size > 0) {
-    // await firestore.collection(collectionName).delete();
-    // }
-
     // if dataset exists, delete it
     if ((await bigquery.dataset(datasetName).exists())[0]) {
       await bigquery.dataset(datasetName).delete({ force: true });
     }
   });
 
-  test(`my test`, async () => {
+  test(`should import data with old script`, async () => {
+    const args = [
+      "--non-interactive",
+      "-P",
+      "extensions-testing",
+      "-u",
+      "-s",
+      collectionName,
+      "-d",
+      datasetName,
+      "-t",
+      tableName,
+      "-q",
+      "false",
+      "-l",
+      "us",
+      "-e",
+      "true",
+    ];
+
+    await runScript(
+      scriptPath,
+      () => {
+        console.log("complete!");
+      },
+      args
+    );
+
+    const [rows] = await repeat(
+      () =>
+        bigquery
+          .dataset(datasetName)
+          .table(`${tableName}_raw_changelog`)
+          .getRows(),
+      (rows) => rows.length > 0,
+      10,
+      8000
+    );
+
+    const {
+      operation,
+      timestamp,
+      document_name,
+      document_id,
+      data,
+      event_id,
+      old_data,
+    } = rows[0];
+    console.log(rows[0]);
+
+    expect(operation).toBe("IMPORT");
+    expect(document_name).toBe(
+      `projects/extensions-testing/databases/(default)/documents/${collectionName}/test`
+    );
+    expect(document_id).toBe("test");
+    expect(JSON.parse(data)).toEqual({ test: "test" });
+    expect(event_id).toBe("");
+    expect(old_data).toBeNull();
+    expect(timestamp).toBeDefined();
+  });
+  test(`should import data with new script, and add the correct view`, async () => {
     const args = [
       "--non-interactive",
       "-P",
@@ -105,7 +160,9 @@ describe("CLI", () => {
       "-l",
       "us",
       "-u",
+      "true",
       "-e",
+      "true",
     ];
 
     await runScript(
@@ -116,13 +173,15 @@ describe("CLI", () => {
       args
     );
 
-    // sleep for 2 seconds
-    await new Promise((resolve) => setTimeout(resolve, 10000));
-
-    const rows = await repeat(
-      () => bigquery.dataset(datasetName).table(tableName).getRows(),
+    const [rows] = await repeat(
+      () =>
+        bigquery
+          .dataset(datasetName)
+          .table(`${tableName}_raw_changelog`)
+          .getRows(),
       (rows) => rows.length > 0,
-      10
+      10,
+      8000
     );
 
     const {
@@ -137,14 +196,22 @@ describe("CLI", () => {
 
     expect(operation).toBe("IMPORT");
     expect(document_name).toBe(
-      "projects/extensions-testing/databases/(default)/documents/testCollection/test"
+      `projects/extensions-testing/databases/(default)/documents/${collectionName}/test`
     );
     expect(document_id).toBe("test");
     expect(JSON.parse(data)).toEqual({ test: "test" });
     expect(event_id).toBe("");
     expect(old_data).toBeNull();
+    expect(timestamp).toBeDefined();
 
-    process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
-    // delete the bigquery table test_table_jacob_1
+    const [view] = await bigquery
+      .dataset(datasetName)
+      .table(`${tableName}_raw_latest`)
+      .get();
+
+    const query = view.metadata.view.query;
+    expect(query).toBeDefined();
+    const isOldQuery = query.includes("FIRST_VALUE");
+    expect(isOldQuery).toBe(false);
   });
 });
