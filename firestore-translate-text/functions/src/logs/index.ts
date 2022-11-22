@@ -15,7 +15,6 @@
  */
 
 import { logger } from "firebase-functions";
-import { off } from "process";
 import { messages } from "./messages";
 
 export const complete = () => {
