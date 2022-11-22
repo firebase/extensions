@@ -174,7 +174,7 @@ params:
     description: >-
       Do you want to add existing users to the Mailchimp audience when you install or update this extension?
     type: select
-    default: false
+    required: true
     options:
       - label: Yes
         value: true
