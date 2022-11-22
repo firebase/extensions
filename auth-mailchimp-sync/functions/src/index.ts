@@ -71,7 +71,11 @@ export const addUserToList = functions.auth
       );
       logs.complete();
     } catch (err) {
-      logs.errorAddUser(err);
+      if (/already a list member/.test(err)) {
+        logs.userAlreadyInAudience(uid, config.mailchimpAudienceId);
+      } else {
+        logs.errorAddUser(err);
+      }
     }
   });
 
@@ -144,8 +148,12 @@ export const addExistingUsersToList = functions.tasks
           config.mailchimpContactStatus
         );
       } catch (err) {
-        logs.errorAddUser(err);
-        throw err;
+        if (/already a list member/.test(err)) {
+          logs.userAlreadyInAudience(uid, config.mailchimpAudienceId);
+        } else {
+          logs.errorAddUser(err);
+          throw err;
+        }
       }
     });
     const results = await Promise.allSettled(mailchimpPromises);

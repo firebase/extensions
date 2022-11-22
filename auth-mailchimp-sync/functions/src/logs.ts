@@ -70,6 +70,10 @@ export const userAdding = (userId: string, audienceId: string) => {
   logger.log(`Adding user: ${userId} to Mailchimp audience: ${audienceId}`);
 };
 
+export const userAlreadyInAudience = (userId: string, audienceId: string) => {
+  logger.log(`User: ${userId} is already in Mailchimp audience: ${audienceId}`);
+};
+
 export const userNoEmail = () => {
   logger.log("User does not have an email");
 };
