@@ -318,6 +318,7 @@ params:
     description: >
       Should existing, unresized images in the Storage bucket be resized as well?
     type: select
+    required: true
     options:
       - label: Yes
         value: true
