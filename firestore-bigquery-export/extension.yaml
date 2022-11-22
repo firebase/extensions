@@ -369,7 +369,7 @@ params:
       will have each have a special changelog with the operation of `IMPORT` and the timestamp of epoch.
       This ensures that any operation on an imported document supersedes the import record.
     type: select
-    default: false
+    required: true
     options:
       - label: Yes
         value: true
