@@ -173,6 +173,7 @@ params:
       Should existing documents in the Firestore collection be translated as well? 
       If you've added new languages since a document was translated, this will fill those in as well.
     type: select
+    required: true
     options:
       - label: Yes
         value: true
