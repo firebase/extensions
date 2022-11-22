@@ -96,6 +96,6 @@ export const userRemoving = (
 
 export const backfillComplete = (successCount: number, errorCount: number) => {
   logger.log(
-    `Finshed adding existing users to Mailchimp audience. ${successCount} users added, ${errorCount} errors.`
+    `Finished adding existing users to Mailchimp audience. ${successCount} users added, ${errorCount} errors.`
   );
 };
