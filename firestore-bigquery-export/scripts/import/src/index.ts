@@ -196,17 +196,27 @@ const run = async (): Promise<number> => {
       break;
     }
     cursor = docs[docs.length - 1];
-    const rows: FirestoreDocumentChangeEvent[] = docs.map((snapshot) => {
-      return {
-        timestamp: new Date().toISOString(), // epoch
-        operation: ChangeType.IMPORT,
-        documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${snapshot.ref.path}`,
-        documentId: snapshot.id,
-        pathParams: resolveWildcardIds(sourceCollectionPath, snapshot.ref.path),
-        eventId: "",
-        data: snapshot.data(),
-      };
-    });
+    const rows: FirestoreDocumentChangeEvent[] = docs
+      .filter((snapshot) =>
+        snapshot.ref.path.startsWith(sourceCollectionPath.split("{")[0])
+      )
+      .map((snapshot) => {
+        return {
+          timestamp: new Date().toISOString(), // epoch
+          operation: ChangeType.IMPORT,
+          documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${snapshot.ref.path}`,
+          documentId: snapshot.id,
+          pathParams: resolveWildcardIds(
+            sourceCollectionPath,
+            snapshot.ref.path
+          ),
+          eventId: "",
+          data: snapshot.data(),
+        };
+      });
+
+    console.log("ROWS", rows);
+
     await dataSink.record(rows);
     totalRowsImported += rows.length;
   } while (true);
