@@ -10,7 +10,7 @@ import {
 
 process.env.PROJECT_ID = "extensions-testing";
 
-const bq: BigQuery = new BigQuery({ projectId: "extensions-testing" });
+const bq: BigQuery = new BigQuery();
 const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
 let randomID: string;
 let datasetId: string;
