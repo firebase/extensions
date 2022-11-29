@@ -34,7 +34,7 @@ enum ChangeType {
   DELETE,
   UPDATE,
 }
-const DOCS_PER_BACKFILL = 500;
+const DOCS_PER_BACKFILL = 250;
 const translate = new Translate({ projectId: process.env.PROJECT_ID });
 
 // Initialize the Firebase Admin SDK
@@ -107,21 +107,21 @@ export const fstranslatebackfill = functions.tasks
       .offset(offset)
       .limit(DOCS_PER_BACKFILL)
       .get();
-
-    let newSucessCount = pastSuccessCount;
-    let newErrorCount = pastErrorCount;
-    // Since we will be writing many documents back to Firestore, we use BulkWriter.
+    // Since we will be writing many docs to Firestore, use a BulkWriter for better performance.
     const writer = admin.firestore().bulkWriter();
-    for (const doc of snapshot.docs) {
-      try {
-        await handleExistingDocument(doc, writer);
-        newSucessCount++;
-      } catch (err) {
-        newErrorCount++;
-      }
-    }
+    const translations = await Promise.allSettled(
+      snapshot.docs.map((doc) => {
+        return handleExistingDocument(doc, writer);
+      })
+    );
     // Close the writer to commit the changes to Firestore.
     await writer.close();
+    const newSucessCount =
+      pastSuccessCount +
+      translations.filter((p) => p.status === "fulfilled").length;
+    const newErrorCount =
+      pastErrorCount +
+      translations.filter((p) => p.status === "rejected").length;
 
     if (snapshot.size == DOCS_PER_BACKFILL) {
       // Stil have more documents to translate, enqueue another task.
