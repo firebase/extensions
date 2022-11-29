@@ -68,6 +68,8 @@ resources:
     properties:
       location: ${param:LOCATION}
       runtime: nodejs14
+      availableMemoryMb: 1024
+      timeout: 540s
       taskQueueTrigger: {}
 
 params:

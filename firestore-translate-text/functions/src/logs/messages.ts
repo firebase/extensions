@@ -1,6 +1,6 @@
 export const messages = {
   backfillComplete: (successCount: number, errorCount: number) =>
-    `Finshed backfilling translations. ${successCount} documents checked, ${errorCount} errors.`,
+    `Finshed backfilling translations. ${successCount} translations succeeded, ${errorCount} errors.`,
   complete: () => "Completed execution of extension",
   documentCreatedNoInput: () =>
     "Document was created without an input string, no processing is required",
@@ -28,6 +28,12 @@ export const messages = {
   ],
   inputFieldNameIsOutputPath: () =>
     "The `Input` field name must not be the same as an `Output` path for this extension to function correctly",
+  partialTranslateError: (input: string, reasons: string[], numLanguages) =>
+    `Failed to translate ${input} to ${
+      reasons.length
+    } languages of the requested ${numLanguages}. Reasons: ${reasons.join(
+      "\n"
+    )}`,
   skippingLanguage: (lang: string) =>
     `Found existing translation to ${lang}, skipping.`,
   start: (config = {}) => [
@@ -36,8 +42,12 @@ export const messages = {
   ],
   translateInputString: (string: string, language: string) =>
     `Translating string: '${string}' into language(s): '${language}'`,
-  translateStringComplete: (string: string, language: string) =>
-    `Finished translating string: '${string}' into language(s): '${language}'`,
+  translateStringComplete: (
+    string: string,
+    language: string,
+    translated: string
+  ) =>
+    `Finished translating string: '${string}' into language(s): '${language}' : '${translated}'`,
   translateStringError: (string: string, language: string, err: Error) => [
     `Error when translating string: '${string}' into language(s): '${language}'`,
     err,

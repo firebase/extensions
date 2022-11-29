@@ -34,7 +34,7 @@ enum ChangeType {
   DELETE,
   UPDATE,
 }
-const DOCS_PER_BACKFILL = 1500;
+const DOCS_PER_BACKFILL = 500;
 const translate = new Translate({ projectId: process.env.PROJECT_ID });
 
 // Initialize the Firebase Admin SDK
@@ -98,21 +98,30 @@ export const fstranslatebackfill = functions.tasks
     const offset = (data["offset"] as number) ?? 0;
     const pastSuccessCount = (data["successCount"] as number) ?? 0;
     const pastErrorCount = (data["errorCount"] as number) ?? 0;
+    // We also track the start time of the first invocation, so that we can report the full length at the end.
+    const startTime = (data["startTime"] as number) ?? Date.now();
 
     const snapshot = await admin
       .firestore()
       .collection(process.env.COLLECTION_PATH)
       .offset(offset)
+      .limit(DOCS_PER_BACKFILL)
       .get();
-    const translations = await Promise.allSettled(
-      snapshot.docs.map(handleExistingDocument)
-    );
-    const newSucessCount =
-      pastSuccessCount +
-      translations.filter((p) => p.status === "fulfilled").length;
-    const newErrorCount =
-      pastErrorCount +
-      translations.filter((p) => p.status === "rejected").length;
+
+    let newSucessCount = pastSuccessCount;
+    let newErrorCount = pastErrorCount;
+    // Since we will be writing many documents back to Firestore, we use BulkWriter.
+    const writer = admin.firestore().bulkWriter();
+    for (const doc of snapshot.docs) {
+      try {
+        await handleExistingDocument(doc, writer);
+        newSucessCount++;
+      } catch (err) {
+        newErrorCount++;
+      }
+    }
+    // Close the writer to commit the changes to Firestore.
+    await writer.close();
 
     if (snapshot.size == DOCS_PER_BACKFILL) {
       // Stil have more documents to translate, enqueue another task.
@@ -125,6 +134,7 @@ export const fstranslatebackfill = functions.tasks
         offset: offset + DOCS_PER_BACKFILL,
         successCount: newSucessCount,
         errorCount: newErrorCount,
+        startTime: startTime,
       });
     } else {
       // No more douments to translate, time to set the processing state.
@@ -132,17 +142,23 @@ export const fstranslatebackfill = functions.tasks
       if (newErrorCount == 0) {
         return await runtime.setProcessingState(
           "PROCESSING_COMPLETE",
-          `Successfully translated ${newSucessCount} documents.`
+          `Successfully translated ${newSucessCount} documents in ${
+            Date.now() - startTime
+          }ms.`
         );
       } else if (newErrorCount > 0 && newSucessCount > 0) {
         return await runtime.setProcessingState(
           "PROCESSING_WARNING",
-          `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors. See function logs for specific error messages.`
+          `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors in ${
+            Date.now() - startTime
+          }ms. See function logs for specific error messages.`
         );
       }
       return await runtime.setProcessingState(
         "PROCESSING_FAILED",
-        `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors. See function logs for specific error messages.`
+        `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors in ${
+          Date.now() - startTime
+        }ms. See function logs for specific error messages.`
       );
     }
   });
@@ -168,14 +184,19 @@ const getChangeType = (
 };
 
 const handleExistingDocument = async (
-  snapshot: admin.firestore.DocumentSnapshot
+  snapshot: admin.firestore.DocumentSnapshot,
+  bulkWriter: admin.firestore.BulkWriter
 ): Promise<void> => {
   const input = extractInput(snapshot);
-  if (input) {
-    logs.documentFoundWithInput();
-    await translateDocument(snapshot, /*keepExistingTranslations=*/ true);
-  } else {
-    logs.documentFoundNoInput();
+  try {
+    if (input) {
+      return await translateDocumentBackfill(snapshot, bulkWriter);
+    } else {
+      logs.documentFoundNoInput();
+    }
+  } catch (err) {
+    logs.translateInputToAllLanguagesError(input, err);
+    throw err;
   }
 };
 
@@ -223,27 +244,25 @@ const handleUpdateDocument = async (
   }
 };
 
+const filterLanguagesFn = (
+  existingTranslations: Record<string, any>
+): ((string) => boolean) => {
+  return (targetLanguage: string) => {
+    if (existingTranslations[targetLanguage] != undefined) {
+      logs.skippingLanguage(targetLanguage);
+      return false;
+    }
+    return true;
+  };
+};
+
 const translateSingle = async (
   input: string,
-  snapshot: admin.firestore.DocumentSnapshot,
-  keepExistingTranslations: boolean = false
+  snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
-  const existingTranslations = extractOutput(snapshot);
-  const languages = config.languages.filter(
-    (targetLanguage: string): boolean => {
-      if (
-        keepExistingTranslations &&
-        existingTranslations[targetLanguage] != undefined
-      ) {
-        logs.skippingLanguage(targetLanguage);
-        return false;
-      }
-      return true;
-    }
-  );
-  logs.translateInputStringToAllLanguages(input, languages);
+  logs.translateInputStringToAllLanguages(input, config.languages);
 
-  const tasks = languages.map(
+  const tasks = config.languages.map(
     async (targetLanguage: string): Promise<Translation> => {
       return {
         language: targetLanguage,
@@ -262,7 +281,7 @@ const translateSingle = async (
         output[translation.language] = translation.output;
         return output;
       },
-      keepExistingTranslations ? existingTranslations : {}
+      {}
     );
 
     return updateTranslations(snapshot, translationsMap);
@@ -272,41 +291,77 @@ const translateSingle = async (
   }
 };
 
+const translateSingleBackfill = async (
+  input: string,
+  snapshot: admin.firestore.DocumentSnapshot,
+  bulkWriter: admin.firestore.BulkWriter
+): Promise<void> => {
+  const existingTranslations = extractOutput(snapshot) || {};
+  // During backfills, we filter out languages that we already have translations for.
+  const languages = config.languages.filter(
+    filterLanguagesFn(existingTranslations)
+  );
+
+  const tasks = languages.map(
+    async (targetLanguage: string): Promise<Translation> => {
+      return {
+        language: targetLanguage,
+        output: await translateString(input, targetLanguage),
+      };
+    }
+  );
+
+  const translations = await Promise.allSettled(tasks);
+  const successfulTranslations = translations
+    .filter((p) => p.status === "fulfilled")
+    .map((p: PromiseFulfilledResult<Translation>) => p.value);
+  const failedTranslations = translations
+    .filter((p) => p.status === "rejected")
+    .map((p: PromiseRejectedResult) => p.reason);
+
+  const translationsMap: { [language: string]: string } =
+    successfulTranslations.reduce((output, translation) => {
+      output[translation.language] = translation.output;
+      return output;
+    }, existingTranslations);
+
+  // Use firestore.BulkWriter for better performance when writing many docs to Firestore.
+  bulkWriter.update(snapshot.ref, config.outputFieldName, translationsMap);
+
+  if (failedTranslations.length && !successfulTranslations.length) {
+    logs.partialTranslateError(input, failedTranslations, translations.length);
+    // If any translations failed, throw so it is reported as an error.
+    throw `Error while translating '${input}': ${
+      failedTranslations.length
+    } out of ${languages.length} translations failed: ${failedTranslations.join(
+      "\n"
+    )}`;
+  } else {
+    logs.translateInputToAllLanguagesComplete(input);
+  }
+};
+
 const translateMultiple = async (
   input: object,
-  snapshot: admin.firestore.DocumentSnapshot,
-  keepExistingTranslations: boolean = false
+  snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
-  const existingTranslations = extractOutput(snapshot);
-  let translations = keepExistingTranslations ? existingTranslations : {};
+  let translations = {};
   let promises = [];
 
-  Object.entries(input).forEach(([entry, value]) => {
-    const languages = config.languages.filter(
-      (targetLanguage: string): boolean => {
-        if (
-          keepExistingTranslations &&
-          existingTranslations[entry]?.[targetLanguage] != undefined
-        ) {
-          logs.skippingLanguage(targetLanguage);
-          return false;
-        }
-        return true;
-      }
-    );
-    languages.forEach((language) => {
+  Object.entries(input).forEach(([input, value]) => {
+    config.languages.forEach((language) => {
       promises.push(
         () =>
           new Promise<void>(async (resolve) => {
-            logs.translateInputStringToAllLanguages(value, languages);
+            logs.translateInputStringToAllLanguages(value, config.languages);
 
             const output =
               typeof value === "string"
                 ? await translateString(value, language)
                 : null;
 
-            if (!translations[entry]) translations[entry] = {};
-            translations[entry][language] = output;
+            if (!translations[input]) translations[input] = {};
+            translations[input][language] = output;
 
             return resolve();
           })
@@ -321,17 +376,87 @@ const translateMultiple = async (
   return updateTranslations(snapshot, translations);
 };
 
-const translateDocument = async (
+const translateMultipleBackfill = async (
+  input: object,
   snapshot: admin.firestore.DocumentSnapshot,
-  keepExistingTranslations: boolean = false
+  bulkWriter: admin.firestore.BulkWriter
+): Promise<void> => {
+  const existingTranslations = extractOutput(snapshot);
+  let translations = existingTranslations;
+  let promises: Promise<void>[] = [];
+
+  for (let [entry, value] of Object.entries(input)) {
+    // If keeping original translations, filter out languages we already have translated.
+    const languages = config.languages.filter(
+      filterLanguagesFn(existingTranslations[entry] ?? {})
+    );
+
+    for (const language of languages) {
+      promises.push(
+        new Promise<void>(async (resolve) => {
+          const output =
+            typeof value === "string"
+              ? await translateString(value, language)
+              : null;
+
+          if (!translations[entry]) translations[entry] = {};
+          translations[entry][language] = output;
+
+          return resolve();
+        })
+      );
+    }
+  }
+
+  const results = await Promise.allSettled(promises);
+  const successfulTranslations = results.filter(
+    (p) => p.status === "fulfilled"
+  );
+  const failedTranslations = results
+    .filter((p) => p.status === "rejected")
+    .map((p: PromiseRejectedResult) => p.reason);
+
+  // Use firestore.BulkWriter for better performance when writing many docs to Firestore.
+  bulkWriter.update(snapshot.ref, config.outputFieldName, translations);
+
+  if (failedTranslations.length && !successfulTranslations.length) {
+    logs.partialTranslateError(
+      JSON.stringify(input),
+      failedTranslations,
+      translations.length
+    );
+    // If any translations failed, throw so it is reported as an error.
+    throw `${
+      failedTranslations.length
+    } error(s) while translating '${input}': ${failedTranslations.join("\n")}`;
+  } else {
+    logs.translateInputToAllLanguagesComplete(JSON.stringify(input));
+  }
+};
+
+const translateDocumentBackfill = async (
+  snapshot: admin.firestore.DocumentSnapshot,
+  bulkWriter: admin.firestore.BulkWriter
 ): Promise<void> => {
   const input: any = extractInput(snapshot);
 
   if (typeof input === "object") {
-    return translateMultiple(input, snapshot, keepExistingTranslations);
+    return translateMultipleBackfill(input, snapshot, bulkWriter);
   }
 
-  await translateSingle(input, snapshot, keepExistingTranslations);
+  await translateSingleBackfill(input, snapshot, bulkWriter);
+};
+
+const translateDocument = async (
+  snapshot: admin.firestore.DocumentSnapshot
+): Promise<void> => {
+  const input: any = extractInput(snapshot);
+
+  if (typeof input === "object") {
+    return translateMultiple(input, snapshot);
+  }
+
+  await translateSingle(input, snapshot);
 };
 
 const translateString = async (
@@ -339,15 +464,11 @@ const translateString = async (
   targetLanguage: string
 ): Promise<string> => {
   try {
-    logs.translateInputString(string, targetLanguage);
-
     const [translatedString] = await translate.translate(
       string,
       targetLanguage
     );
-
-    logs.translateStringComplete(string, targetLanguage);
-
+    logs.translateStringComplete(string, targetLanguage, translatedString);
     return translatedString;
   } catch (err) {
     logs.translateStringError(string, targetLanguage, err);
@@ -360,7 +481,6 @@ const updateTranslations = async (
   translations: any
 ): Promise<void> => {
   logs.updateDocument(snapshot.ref.path);
-
   // Wrapping in transaction to allow for automatic retries (#48)
   await admin.firestore().runTransaction((transaction) => {
     transaction.update(snapshot.ref, config.outputFieldName, translations);
