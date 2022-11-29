@@ -155,10 +155,10 @@ export const modifyImage = async ({
   }
 
   // Path where modified image will be uploaded to in Storage.
-  const modifiedFilePath = path.normalize(
+  const modifiedFilePath = path.posix.normalize(
     config.resizedImagesPath
-      ? path.join(fileDir, config.resizedImagesPath, modifiedFileName)
-      : path.join(fileDir, modifiedFileName)
+      ? path.posix.join(fileDir, config.resizedImagesPath, modifiedFileName)
+      : path.posix.join(fileDir, modifiedFileName)
   );
   let modifiedFile: string;
 
