@@ -137,7 +137,7 @@ export const fstranslatebackfill = functions.tasks
         startTime: startTime,
       });
     } else {
-      // No more douments to translate, time to set the processing state.
+      // No more documents to translate, time to set the processing state.
       logs.backfillComplete(newSucessCount, newErrorCount);
       if (newErrorCount == 0) {
         return await runtime.setProcessingState(
@@ -329,6 +329,11 @@ const translateSingleBackfill = async (
   bulkWriter.update(snapshot.ref, config.outputFieldName, translationsMap);
 
   if (failedTranslations.length && !successfulTranslations.length) {
+    logs.translateInputToAllLanguagesError(
+      input,
+      new Error(failedTranslations.join("\n"))
+    );
+  } else if (failedTranslations.length && successfulTranslations.length) {
     logs.partialTranslateError(input, failedTranslations, translations.length);
     // If any translations failed, throw so it is reported as an error.
     throw `Error while translating '${input}': ${
