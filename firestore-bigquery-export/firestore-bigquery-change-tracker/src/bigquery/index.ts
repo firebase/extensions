@@ -333,6 +333,10 @@ export class FirestoreBigQueryEventHistoryTracker
         (column) => column.name === "path_params"
       );
 
+      const oldDataColExists = fields.find(
+        (column) => column.name === "old_data"
+      );
+
       if (!documentIdColExists) {
         fields.push(documentIdField);
         logs.addNewColumn(this.rawChangeLogTableName(), documentIdField.name);
@@ -352,6 +356,7 @@ export class FirestoreBigQueryEventHistoryTracker
         config: this.config,
         documentIdColExists,
         pathParamsColExists,
+        oldDataColExists,
       });
 
       if (shouldUpdate) {
@@ -409,12 +414,17 @@ export class FirestoreBigQueryEventHistoryTracker
         (column) => column.name === "path_params"
       );
 
+      const oldDataColExists = fields.find(
+        (column) => column.name === "old_data"
+      );
+
       /** If new view or opt-in to new query syntax **/
       const updateView = viewRequiresUpdate({
         metadata,
         config: this.config,
         documentIdColExists,
         pathParamsColExists,
+        oldDataColExists,
       });
 
       if (updateView) {

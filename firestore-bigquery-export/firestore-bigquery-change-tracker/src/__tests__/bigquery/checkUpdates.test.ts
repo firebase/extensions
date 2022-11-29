@@ -51,6 +51,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
       });
@@ -82,6 +83,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(true);
       });
@@ -113,6 +115,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(true);
       });
@@ -143,6 +146,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(true);
       });
@@ -177,6 +181,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
       });
@@ -210,6 +215,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
       });
@@ -237,6 +243,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(true);
       });
@@ -261,6 +268,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
       });
@@ -284,6 +292,31 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
+          })
+        ).toBe(true);
+      });
+    });
+    describe("old_data", () => {
+      test("successfully updates the table with the new old_data column", async () => {
+        await changeTracker({
+          datasetId,
+          tableId,
+        }).record([event]);
+
+        const raw_changelog_table = bq.dataset(datasetId).table(tableId_raw);
+
+        expect(
+          await tableRequiresUpdate({
+            table: raw_changelog_table,
+            config: {
+              clustering: [],
+              datasetId,
+              tableId,
+            },
+            documentIdColExists: true,
+            pathParamsColExists: true,
+            oldDataColExists: false,
           })
         ).toBe(true);
       });
@@ -324,6 +357,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
       });
@@ -354,6 +388,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
       });
@@ -384,6 +419,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
       });
@@ -413,6 +449,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
       });
@@ -444,6 +481,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
       });
@@ -476,6 +514,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
       });
@@ -502,6 +541,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
       });
@@ -523,6 +563,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
       });
@@ -543,6 +584,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(true);
       });
@@ -564,6 +606,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: true,
+            oldDataColExists: true,
           })
         ).toBe(true);
       });
@@ -590,6 +633,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(true);
       });
@@ -615,6 +659,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
       });
@@ -639,6 +684,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(true);
       });
@@ -662,6 +708,7 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
       });
@@ -675,8 +722,36 @@ describe("Checking updates", () => {
             },
             documentIdColExists: true,
             pathParamsColExists: false,
+            oldDataColExists: true,
           })
         ).toBe(false);
+      });
+    });
+
+    describe("old_data", () => {
+      test("successfully updates the view with the new old_data column", async () => {
+        await changeTracker({
+          datasetId,
+          tableId,
+        }).record([event]);
+
+        const raw_changelog_table = bq.dataset(datasetId).table(tableId_raw);
+        const [metadata] = await raw_changelog_table.getMetadata();
+
+        expect(
+          viewRequiresUpdate({
+            metadata,
+            config: {
+              clustering: [],
+              useNewSnapshotQuerySyntax: true,
+              datasetId,
+              tableId,
+            },
+            documentIdColExists: true,
+            pathParamsColExists: true,
+            oldDataColExists: false,
+          })
+        ).toBe(true);
       });
     });
   });
