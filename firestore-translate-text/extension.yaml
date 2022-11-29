@@ -170,7 +170,7 @@ params:
     required: true
 
   - param: DO_BACKFILL
-    label: Translate existing documents
+    label: Translate existing documents?
     description: >
       Should existing documents in the Firestore collection be translated as well? 
       If you've added new languages since a document was translated, this will fill those in as well.
