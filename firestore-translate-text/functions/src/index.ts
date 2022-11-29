@@ -91,7 +91,8 @@ export const fstranslatebackfill = functions.tasks
     if (!config.doBackfill) {
       await runtime.setProcessingState(
         "PROCESSING_COMPLETE",
-        "Existing documents were not translated because backfill was not requested."
+        'Existing documents were not translated because "Translate existing documents?" is configured to false. ' +
+          "If you want to fill in missing translations, reconfigure this instance."
       );
       return;
     }
