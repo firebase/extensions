@@ -60,9 +60,6 @@ export function viewRequiresUpdate({
   pathParamsColExists,
   oldDataColExists,
 }: ViewRequiresUpdateOptions): boolean {
-  /** Check if documentId column exists */
-  if (!documentIdColExists) return true;
-
   /** Check wildcards */
   if (!!config.wildcardIds !== pathParamsColExists) return true;
 
