@@ -214,7 +214,8 @@ function decorateSchemaWithChangelogFields(schema: any): any {
   for (let i = 0; i < changelogSchemaFields.length; i++) {
     if (
       changelogSchemaFields[i].name === "event_id" ||
-      changelogSchemaFields[i].name === "data"
+      changelogSchemaFields[i].name === "data" ||
+      changelogSchemaFields[i].name === "old_data"
     ) {
       continue;
     }
