@@ -402,21 +402,18 @@ export class FirestoreBigQueryEventHistoryTracker
     if (viewExists) {
       logs.bigQueryViewAlreadyExists(view.id, dataset.id);
       const [metadata] = await view.getMetadata();
-      const fields = metadata.schema ? metadata.schema.fields : [];
+      // TODO: just casting this for now, needs properly fixing
+      const fields = (metadata.schema ? metadata.schema.fields : []) as {
+        name: string;
+      }[];
       if (this.config.wildcardIds) {
         schema.fields.push(documentPathParams);
       }
-      const documentIdColExists = fields.find(
-        (column) => column.name === "document_id"
-      );
 
-      const pathParamsColExists = fields.find(
-        (column) => column.name === "path_params"
-      );
-
-      const oldDataColExists = fields.find(
-        (column) => column.name === "old_data"
-      );
+      const columnNames = fields.map((field) => field.name);
+      const documentIdColExists = columnNames.includes("document_id");
+      const pathParamsColExists = columnNames.includes("path_params");
+      const oldDataColExists = columnNames.includes("old_data");
 
       /** If new view or opt-in to new query syntax **/
       const updateView = viewRequiresUpdate({
