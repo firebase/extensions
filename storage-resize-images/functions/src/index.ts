@@ -62,11 +62,11 @@ const generateResizedImageHandler = async (
   const parsedPath = path.parse(filePath);
   const objectMetadata = object;
 
-  let originalFile;
-  let remoteFile;
+  let localOriginalFile;
+  let remoteOriginalFile;
   try {
-    originalFile = path.join(os.tmpdir(), filePath);
-    const tempLocalDir = path.dirname(originalFile);
+    localOriginalFile = path.join(os.tmpdir(), filePath);
+    const tempLocalDir = path.dirname(localOriginalFile);
 
     // Create the temp directory where the storage file will be downloaded.
     !verbose || logs.tempDirectoryCreating(tempLocalDir);
@@ -74,10 +74,10 @@ const generateResizedImageHandler = async (
     !verbose || logs.tempDirectoryCreated(tempLocalDir);
 
     // Download file from bucket.
-    remoteFile = bucket.file(filePath);
+    remoteOriginalFile = bucket.file(filePath);
     !verbose || logs.imageDownloading(filePath);
-    await remoteFile.download({ destination: originalFile });
-    !verbose || logs.imageDownloaded(filePath, originalFile);
+    await remoteOriginalFile.download({ destination: localOriginalFile });
+    !verbose || logs.imageDownloaded(filePath, localOriginalFile);
 
     // Get a unique list of image types
     const imageTypes = new Set(config.imageTypes);
@@ -92,7 +92,7 @@ const generateResizedImageHandler = async (
         tasks.push(
           modifyImage({
             bucket,
-            originalFile,
+            originalFile: localOriginalFile,
             parsedPath,
             contentType: object.contentType,
             size,
@@ -119,10 +119,10 @@ const generateResizedImageHandler = async (
       return;
     } else {
       if (config.deleteOriginalFile === deleteImage.onSuccess) {
-        if (remoteFile) {
+        if (remoteOriginalFile) {
           try {
             logs.remoteFileDeleting(filePath);
-            await remoteFile.delete();
+            await remoteOriginalFile.delete();
             logs.remoteFileDeleted(filePath);
           } catch (err) {
             logs.errorDeleting(err);
@@ -134,10 +134,10 @@ const generateResizedImageHandler = async (
   } catch (err) {
     logs.error(err);
   } finally {
-    if (originalFile) {
+    if (localOriginalFile) {
       !verbose || logs.tempOriginalFileDeleting(filePath);
       try {
-        fs.unlinkSync(originalFile);
+        fs.unlinkSync(localOriginalFile);
       } catch (err) {
         logs.errorDeleting(err);
       }
@@ -145,10 +145,10 @@ const generateResizedImageHandler = async (
     }
     if (config.deleteOriginalFile === deleteImage.always) {
       // Delete the original file
-      if (remoteFile) {
+      if (remoteOriginalFile) {
         try {
           logs.remoteFileDeleting(filePath);
-          await remoteFile.delete();
+          await remoteOriginalFile.delete();
           logs.remoteFileDeleted(filePath);
         } catch (err) {
           logs.errorDeleting(err);
@@ -174,17 +174,18 @@ export const backfillResizedImages = functions.tasks
     if (!config.doBackfill) {
       await runtime.setProcessingState(
         "PROCESSING_COMPLETE",
-        "Existing images were not resized."
+        "Existing images were not resized because 'Backfill existing images' was configured to false." +
+          " If you want to resize existing images, reconfigure this instance."
       );
       return;
     }
-    if (data == undefined) {
+    if (data?.nextPageQuery == undefined) {
       logs.startBackfill();
     }
     const bucket = admin.storage().bucket(process.env.IMG_BUCKET);
     const query = data.nextPageQuery || {
       autoPaginate: false,
-      maxResults: 3,
+      maxResults: 3, // We only grab 3 images at a time to minimize the chance of OOM errors.
     };
     const [files, nextPageQuery] = await bucket.getFiles(query);
     const filesToResize = files.filter((f) => {
@@ -192,7 +193,7 @@ export const backfillResizedImages = functions.tasks
       return shouldResize(f.metadata);
     });
     const filePromises = filesToResize.map((f) => {
-      return generateResizedImageHandler(f.metadata, false);
+      return generateResizedImageHandler(f.metadata, /*verbose=*/ false);
     });
     const results = await Promise.allSettled(filePromises);
 
@@ -227,13 +228,13 @@ export const backfillResizedImages = functions.tasks
       } else if (errorsCount > 0 && successCount > 0) {
         await runtime.setProcessingState(
           "PROCESSING_WARNING",
-          `Successfully resized ${successCount} images, failed to resize ${errorsCount} images.`
+          `Successfully resized ${successCount} images, failed to resize ${errorsCount} images. See function logs for error details.`
         );
       }
       if (errorsCount > 0 && successCount == 0) {
         await runtime.setProcessingState(
           "PROCESSING_FAILED",
-          `Successfully resized ${successCount} images, failed to resize ${errorsCount} images.`
+          `Successfully resized ${successCount} images, failed to resize ${errorsCount} images. See function logs for error details.`
         );
       }
     }
