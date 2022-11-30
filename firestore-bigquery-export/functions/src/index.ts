@@ -93,9 +93,10 @@ exports.fsimportexistingdocs = functions.tasks
     const offset = (data["offset"] as number) ?? 0;
     const docsCount = (data["docsCount"] as number) ?? 0;
 
-    const snapshot = await admin
-      .firestore()
-      .collection(config.importCollectionPath)
+    const query = config.useCollectionGroupQuery
+      ? admin.firestore().collectionGroup(config.importCollectionPath)
+      : admin.firestore().collection(config.importCollectionPath);
+    const snapshot = await query
       .offset(offset)
       .limit(config.docsPerBackfill)
       .get();
