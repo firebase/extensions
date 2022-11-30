@@ -52,7 +52,8 @@ export default {
       : undefined,
   timePartitioningFirestoreField: process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
   clustering: clustering(process.env.CLUSTERING),
-  wildcardIds: process.env.WILDCARD_IDS === "true" ? true : false,
+  wildcardIds: process.env.WILDCARD_IDS === "true",
   useNewSnapshotQuerySyntax:
-    process.env.USE_NEW_SNAPSHOT_QUERY_SYNTAX === "yes" ? true : false,
+    process.env.USE_NEW_SNAPSHOT_QUERY_SYNTAX === "yes",
+  useCollectionGroupQuery: process.env.USE_COLLECTION_GROUP_QUERY === "yes",
 };
