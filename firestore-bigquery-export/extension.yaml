@@ -275,7 +275,7 @@ params:
       - label: none
         value: NONE
     default: NONE
-    required: true
+    required: false
 
   - param: TIME_PARTITIONING_FIELD
     label: BigQuery Time Partitioning column name
