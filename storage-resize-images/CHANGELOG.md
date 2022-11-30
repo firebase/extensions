@@ -4,6 +4,8 @@ feature - add AVIF codec support
 
 feature - update IMG_BUCKET param type to selectResource
 
+feature - added lifecycle event to resize existing images
+
 ## Version 0.1.30
 
 feature - include original image data in events
