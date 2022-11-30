@@ -196,17 +196,69 @@ const run = async (): Promise<number> => {
       break;
     }
     cursor = docs[docs.length - 1];
-    const rows: FirestoreDocumentChangeEvent[] = docs.map((snapshot) => {
-      return {
-        timestamp: new Date().toISOString(), // epoch
-        operation: ChangeType.IMPORT,
-        documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${snapshot.ref.path}`,
-        documentId: snapshot.id,
-        pathParams: resolveWildcardIds(sourceCollectionPath, snapshot.ref.path),
-        eventId: "",
-        data: snapshot.data(),
-      };
-    });
+
+    let rows: FirestoreDocumentChangeEvent[] = [];
+
+    if (queryCollectionGroup) {
+      for (const doc of docs) {
+        let pathParams = {};
+        const path = doc.ref.path;
+
+        const pathSegments = path.split("/");
+        const templateSegments = sourceCollectionPath.split("/");
+        const isSameLength =
+          pathSegments.length === templateSegments.length + 1;
+
+        if (isSameLength) {
+          let isMatch = true;
+          for (let i = 0; i < templateSegments.length; i++) {
+            if (
+              templateSegments[i].startsWith("{") &&
+              templateSegments[i].endsWith("}")
+            ) {
+              const key = templateSegments[i].substring(
+                1,
+                templateSegments[i].length - 1
+              );
+              const value = pathSegments[i];
+              pathParams = {
+                ...pathParams,
+                [key]: value,
+              };
+            } else if (templateSegments[i] !== pathSegments[i]) {
+              isMatch = false;
+              break;
+            }
+          }
+          if (isMatch) {
+            rows.push({
+              timestamp: new Date().toISOString(), // epoch
+              operation: ChangeType.IMPORT,
+              documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${path}`,
+              documentId: doc.id,
+              pathParams,
+              eventId: "",
+              data: doc.data(),
+            });
+          }
+        }
+      }
+    } else {
+      rows = docs.map((snapshot) => {
+        return {
+          timestamp: new Date().toISOString(), // epoch
+          operation: ChangeType.IMPORT,
+          documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${snapshot.ref.path}`,
+          documentId: snapshot.id,
+          pathParams: resolveWildcardIds(
+            sourceCollectionPath,
+            snapshot.ref.path
+          ),
+          eventId: "",
+          data: snapshot.data(),
+        };
+      });
+    }
     await dataSink.record(rows);
     totalRowsImported += rows.length;
   } while (true);
