@@ -38,6 +38,7 @@ function paramToArray(param) {
 export default {
   bucket: process.env.IMG_BUCKET,
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
+  doBackfill: process.env.DO_BACKFILL === "true",
   imageSizes: process.env.IMG_SIZES.split(","),
   makePublic: process.env.MAKE_PUBLIC === "true",
   resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
