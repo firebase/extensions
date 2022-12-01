@@ -373,7 +373,6 @@ export class FirestoreBigQueryEventHistoryTracker
         /** update table metadata with changes. */
         await table.setMetadata(metadata);
         logs.updatingMetadata(this.rawChangeLogTableName(), {
-          table,
           config: this.config,
           documentIdColExists,
           pathParamsColExists,
@@ -456,7 +455,6 @@ export class FirestoreBigQueryEventHistoryTracker
 
         await view.setMetadata(metadata);
         logs.updatingMetadata(this.rawLatestView(), {
-          metadata,
           config: this.config,
           documentIdColExists,
           pathParamsColExists,
