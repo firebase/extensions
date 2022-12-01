@@ -22,6 +22,7 @@ import {
   RawChangelogSchema,
   RawChangelogViewSchema,
   documentIdField,
+  oldDataField,
   documentPathParams,
 } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
@@ -114,7 +115,9 @@ export class FirestoreBigQueryEventHistoryTracker
         },
       };
     });
+
     const transformedRows = await this.transformRows(rows);
+
     await this.insertData(transformedRows);
   }
 
@@ -337,6 +340,11 @@ export class FirestoreBigQueryEventHistoryTracker
         (column) => column.name === "old_data"
       );
 
+      if (!oldDataColExists) {
+        fields.push(oldDataField);
+        logs.addNewColumn(this.rawChangeLogTableName(), oldDataField.name);
+      }
+
       if (!documentIdColExists) {
         fields.push(documentIdField);
         logs.addNewColumn(this.rawChangeLogTableName(), documentIdField.name);
@@ -348,7 +356,6 @@ export class FirestoreBigQueryEventHistoryTracker
           documentPathParams.name
         );
       }
-      await partitioning.addPartitioningToSchema(metadata.schema.fields);
 
       /** Updated table metadata if required */
       const shouldUpdate = await tableRequiresUpdate({
@@ -360,7 +367,18 @@ export class FirestoreBigQueryEventHistoryTracker
       });
 
       if (shouldUpdate) {
+        /** set partitioning */
+        await partitioning.addPartitioningToSchema(metadata.schema.fields);
+
+        /** update table metadata with changes. */
         await table.setMetadata(metadata);
+        logs.updatingMetadata(this.rawChangeLogTableName(), {
+          table,
+          config: this.config,
+          documentIdColExists,
+          pathParamsColExists,
+          oldDataColExists,
+        });
       }
     } else {
       logs.bigQueryTableCreating(changelogName);
@@ -431,9 +449,19 @@ export class FirestoreBigQueryEventHistoryTracker
           schema,
           useLegacyQuery: !this.config.useNewSnapshotQuerySyntax,
         });
-        logs.addNewColumn(this.rawLatestView(), documentIdField.name);
+
+        if (!documentIdColExists) {
+          logs.addNewColumn(this.rawLatestView(), documentIdField.name);
+        }
 
         await view.setMetadata(metadata);
+        logs.updatingMetadata(this.rawLatestView(), {
+          metadata,
+          config: this.config,
+          documentIdColExists,
+          pathParamsColExists,
+          oldDataColExists,
+        });
       }
     } else {
       const schema = { fields: [...RawChangelogViewSchema.fields] };
