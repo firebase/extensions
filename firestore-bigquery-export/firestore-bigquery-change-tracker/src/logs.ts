@@ -267,3 +267,7 @@ export const tableCreationError = (table, message) => {
 export const failedToInitializeWait = (message) => {
   logger.warn(`Failed while waiting to initialize.`, message);
 };
+
+export const updatingMetadata = (tableName) => {
+  logger.info(`Updated Metadata on ${tableName}`);
+};

@@ -22,6 +22,7 @@ import {
   RawChangelogSchema,
   RawChangelogViewSchema,
   documentIdField,
+  oldDataField,
   documentPathParams,
 } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
@@ -114,7 +115,9 @@ export class FirestoreBigQueryEventHistoryTracker
         },
       };
     });
+
     const transformedRows = await this.transformRows(rows);
+
     await this.insertData(transformedRows);
   }
 
@@ -337,6 +340,11 @@ export class FirestoreBigQueryEventHistoryTracker
         (column) => column.name === "old_data"
       );
 
+      if (!oldDataColExists) {
+        fields.push(oldDataField);
+        logs.addNewColumn(this.rawChangeLogTableName(), oldDataField.name);
+      }
+
       if (!documentIdColExists) {
         fields.push(documentIdField);
         logs.addNewColumn(this.rawChangeLogTableName(), documentIdField.name);
@@ -361,6 +369,7 @@ export class FirestoreBigQueryEventHistoryTracker
 
       if (shouldUpdate) {
         await table.setMetadata(metadata);
+        logs.updatingMetadata(this.rawChangeLogTableName());
       }
     } else {
       logs.bigQueryTableCreating(changelogName);
