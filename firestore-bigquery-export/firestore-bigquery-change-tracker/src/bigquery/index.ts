@@ -356,7 +356,6 @@ export class FirestoreBigQueryEventHistoryTracker
           documentPathParams.name
         );
       }
-      await partitioning.addPartitioningToSchema(metadata.schema.fields);
 
       /** Updated table metadata if required */
       const shouldUpdate = await tableRequiresUpdate({
@@ -368,8 +367,18 @@ export class FirestoreBigQueryEventHistoryTracker
       });
 
       if (shouldUpdate) {
+        /** set partitioning */
+        await partitioning.addPartitioningToSchema(metadata.schema.fields);
+
+        /** update table metadata with changes. */
         await table.setMetadata(metadata);
-        logs.updatingMetadata(this.rawChangeLogTableName());
+        logs.updatingMetadata(this.rawChangeLogTableName(), {
+          table,
+          config: this.config,
+          documentIdColExists,
+          pathParamsColExists,
+          oldDataColExists,
+        });
       }
     } else {
       logs.bigQueryTableCreating(changelogName);
@@ -440,9 +449,19 @@ export class FirestoreBigQueryEventHistoryTracker
           schema,
           useLegacyQuery: !this.config.useNewSnapshotQuerySyntax,
         });
-        logs.addNewColumn(this.rawLatestView(), documentIdField.name);
+
+        if (!documentIdColExists) {
+          logs.addNewColumn(this.rawLatestView(), documentIdField.name);
+        }
 
         await view.setMetadata(metadata);
+        logs.updatingMetadata(this.rawLatestView(), {
+          metadata,
+          config: this.config,
+          documentIdColExists,
+          pathParamsColExists,
+          oldDataColExists,
+        });
       }
     } else {
       const schema = { fields: [...RawChangelogViewSchema.fields] };

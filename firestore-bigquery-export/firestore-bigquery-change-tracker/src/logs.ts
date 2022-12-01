@@ -268,6 +268,8 @@ export const failedToInitializeWait = (message) => {
   logger.warn(`Failed while waiting to initialize.`, message);
 };
 
-export const updatingMetadata = (tableName) => {
-  logger.info(`Updated Metadata on ${tableName}`);
+export const updatingMetadata = (tableName, resources) => {
+  logger.info(
+    `Updated Metadata on ${tableName}, ${JSON.stringify(resources)})`
+  );
 };

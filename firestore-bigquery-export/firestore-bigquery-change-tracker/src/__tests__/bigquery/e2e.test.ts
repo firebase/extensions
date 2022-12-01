@@ -533,6 +533,12 @@ describe("e2e", () => {
 
       expect(firstPageLegacy.length).toEqual(firstPageOptimised.length);
       expect(firstPageLegacy).toEqual(firstPageOptimised);
+
+      expect(legacyViewMetadata.view.query.includes("FIRST_VALUE")).toBe(true);
+
+      expect(optimisedViewMetadata.view.query.includes("FIRST_VALUE")).toBe(
+        false
+      );
     });
   });
 
