@@ -30,6 +30,8 @@ jobs:
           retry_wait_seconds: 60
           max_attempts: 3
           command: npm i -g firebase-tools
+      - name: npm test with coverage report
+        run: npm run test-coverage
       - name: Submit coverage
         run: ./node_modules/.bin/codecov
         env:
