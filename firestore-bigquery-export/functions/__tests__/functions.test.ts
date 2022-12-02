@@ -2,7 +2,7 @@ import { logger } from "firebase-functions";
 import * as functionsTestInit from "../node_modules/firebase-functions-test";
 import mockedEnv from "../node_modules/mocked-env";
 
-import { mockConsoleError, mockConsoleLog } from "./__mocks__/console";
+import { mockConsoleLog } from "./__mocks__/console";
 
 import config from "../src/config";
 
@@ -69,8 +69,14 @@ describe("extension", () => {
     });
 
     test("functions runs with a deletion", async () => {
-      const beforeSnapshot = { foo: "bar" };
-      const afterSnapshot = { foo: "bars" };
+      const beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { foo: "bar" },
+        "document/path"
+      );
+      const afterSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { foo: "bars" },
+        "document/path"
+      );
 
       const documentChange = functionsTest.makeChange(
         beforeSnapshot,
@@ -92,15 +98,19 @@ describe("extension", () => {
 
       // sleep for 10 seconds
       await new Promise((resolve) => setTimeout(resolve, 10000));
-      console.log("ERR", mockConsoleError.mock.calls);
-      console.log("MOCK", mockConsoleLog.mock.calls);
 
       expect(mockConsoleLog).toBeCalledWith("Completed execution of extension");
     }, 20000);
 
     test("function runs with updated data", async () => {
-      const beforeSnapshot = { foo: "bar" };
-      const afterSnapshot = { foo: "bars", exists: true };
+      const beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { foo: "bar" },
+        "document/path"
+      );
+      const afterSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { foo: "bars" },
+        "document/path"
+      );
 
       const documentChange = functionsTest.makeChange(
         beforeSnapshot,
