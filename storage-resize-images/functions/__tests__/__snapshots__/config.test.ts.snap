@@ -12,6 +12,7 @@ Object {
   ],
   "imageTypes": undefined,
   "includePathList": undefined,
+  "makePublic": false,
   "outputOptions": undefined,
   "resizedImagesPath": undefined,
 }

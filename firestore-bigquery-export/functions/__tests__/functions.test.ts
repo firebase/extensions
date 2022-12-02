@@ -2,7 +2,7 @@ import { logger } from "firebase-functions";
 import * as functionsTestInit from "../node_modules/firebase-functions-test";
 import mockedEnv from "../node_modules/mocked-env";
 
-import { mockConsoleLog } from "./__mocks__/console";
+import { mockConsoleError, mockConsoleLog } from "./__mocks__/console";
 
 import config from "../src/config";
 
@@ -60,7 +60,6 @@ describe("extension", () => {
 
   describe("functions.fsexportbigquery", () => {
     let functionsConfig;
-    let callResult;
 
     beforeEach(async () => {
       jest.resetModules();
@@ -91,8 +90,13 @@ describe("extension", () => {
         functionsConfig
       );
 
+      // sleep for 10 seconds
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+      console.log("ERR", mockConsoleError.mock.calls);
+      console.log("MOCK", mockConsoleLog.mock.calls);
+
       expect(mockConsoleLog).toBeCalledWith("Completed execution of extension");
-    });
+    }, 20000);
 
     test("function runs with updated data", async () => {
       const beforeSnapshot = { foo: "bar" };
