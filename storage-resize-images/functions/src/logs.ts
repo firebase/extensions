@@ -167,3 +167,17 @@ export const errorOutputOptionsParse = (err: any) => {
     err
   );
 };
+
+export const startBackfill = () => {
+  logger.log("Starting backfill job. Checking for existing images to resize.");
+};
+
+export const continueBackfill = (fileName: string) => {
+  logger.log(`Checking if '${fileName}' needs to resized`);
+};
+
+export const backfillComplete = (success: number, failures: number) => {
+  logger.log(
+    `Finished backfill. Successfully resized ${success} images. Failed to resize ${failures} images.`
+  );
+};

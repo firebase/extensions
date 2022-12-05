@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.31
+version: 0.1.32
 specVersion: v1beta
 
 displayName: Resize Images
@@ -62,6 +62,15 @@ resources:
       eventTrigger:
         eventType: google.storage.object.finalize
         resource: projects/_/buckets/${param:IMG_BUCKET}
+  - name: backfillResizedImages
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Handles tasks from startBackfill to resize existing images.
+    properties:
+      location: ${LOCATION}
+      runtime: nodejs14
+      availableMemoryMb: ${param:FUNCTION_MEMORY}
+      taskQueueTrigger: {}
 
 params:
   - param: LOCATION
@@ -155,7 +164,8 @@ params:
     label: Deletion of original file
     description: >-
       Do you want to automatically delete the original file from the Cloud Storage
-      bucket? Note that these deletions cannot be undone.
+      bucket? Warning: these deletions cannot be undone, and if you reconfigure this
+      instance to use different image dimensions, you won't be able to backfill deleted images.
     type: select
     options:
       - label: Don't delete
@@ -304,6 +314,29 @@ params:
     required: true
     immutable: false
 
+  - param: DO_BACKFILL
+    label: Backfill existing images
+    description: >
+      Should existing, unresized images in the Storage bucket be resized as well?
+    type: select
+    required: true
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+
 events:
   - type: firebase.extensions.storage-resize-images.v1.complete
     description: Occurs when image resizing completes. The event will contain further details about specific formats and sizes.
+
+lifecycleEvents:
+  onInstall:
+    function: backfillResizedImages
+    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
+  onUpdate:
+    function: backfillResizedImages
+    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
+  onConfigure:
+    function: backfillResizedImages
+    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
