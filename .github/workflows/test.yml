@@ -31,7 +31,7 @@ jobs:
           max_attempts: 3
           command: npm i -g firebase-tools
       - name: npm test
-        run: npm run test
+        run: npm run test:ci
       - name: Submit coverage
         run: ./node_modules/.bin/codecov
         env:
