@@ -5,4 +5,5 @@ module.exports = {
   displayName: packageJson.name,
   rootDir: "./",
   preset: "ts-jest",
+  testPathIgnorePatterns: process.env.CI_TEST === "true" ? ["e2e"] : [],
 };

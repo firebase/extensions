@@ -20,4 +20,5 @@ module.exports = {
     "firebase-admin/extensions":
       "<rootDir>/node_modules/firebase-admin/lib/extensions",
   },
+  testPathIgnorePatterns: process.env.CI_TEST === "true" ? ["e2e"] : [],
 };

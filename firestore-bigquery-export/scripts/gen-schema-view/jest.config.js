@@ -14,4 +14,5 @@ module.exports = {
     "<rootDir>/src/__tests__/bigquery/*.test.ts",
     "<rootDir>/src/__tests__/schema-loader-utils/*.test.ts",
   ],
+  testPathIgnorePatterns: process.env.CI_TEST === "true" ? ["e2e"] : [],
 };
