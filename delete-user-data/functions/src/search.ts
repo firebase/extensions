@@ -17,6 +17,13 @@ export const search = async (
     }/topics/${config.default.discoveryTopic}`
   );
 
+  console.log(
+    "TOPIC >>>>",
+    `projects/${
+      process.env.GOOGLE_CLOUD_PROJECT || process.env.PROJECT_ID
+    }/topics/${config.default.discoveryTopic}`
+  );
+
   const collections = !document
     ? await db.listCollections()
     : await document.listCollections();

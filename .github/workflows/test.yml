@@ -36,7 +36,7 @@ jobs:
       - name: Use extension commands
         run: firebase --open-sesame extdev
       - name: npm test
-        run: npm run test
+        run: npm run test:ci
       - name: Submit coverage
         run: ./node_modules/.bin/codecov
         env:

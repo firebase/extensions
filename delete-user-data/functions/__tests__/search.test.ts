@@ -45,12 +45,13 @@ describe("discovery", () => {
   describe("searches on top level collections", () => {
     test("can delete is single collection named {uid}", async () => {
       await search(user.uid, 1);
-
-      await waitForCollectionDeletion(rootCollection);
+      console.log(rootCollection.path);
+      console.log((await rootCollection.get()).docs);
+      await waitForCollectionDeletion(rootCollection, 20_000);
     }, 60000);
   });
 
-  describe("searches on top level collection documents", () => {
+  describe.skip("searches on top level collection documents", () => {
     test("can delete a document named {uid}", async () => {
       const document = await db.collection(generateRandomId()).doc(user.uid);
       await search(user.uid, 1);
@@ -58,7 +59,7 @@ describe("discovery", () => {
       await waitForDocumentDeletion(document);
     }, 60000);
 
-    test("can delete a document with a field value named {uid}", async () => {
+    test.skip("can delete a document with a field value named {uid}", async () => {
       const document = await db
         .collection(generateRandomId())
         .add({ field1: user.uid });
@@ -75,8 +76,8 @@ describe("discovery", () => {
     }, 60000);
   });
 
-  describe("sub collection", () => {
-    test("can delete a subcollection named {uid}", async () => {
+  describe.skip("sub collection", () => {
+    test.skip("can delete a subcollection named {uid}", async () => {
       const collection = await db.collection(
         "can-delete-a-subcollection-named-uid"
       );
@@ -99,7 +100,7 @@ describe("discovery", () => {
     }, 60000);
   });
 
-  describe("does not exceed the search depth", () => {
+  describe.skip("does not exceed the search depth", () => {
     test("on a collection named {uid}", async () => {
       const subcollection = await db
         .collection("1")
