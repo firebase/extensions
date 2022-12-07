@@ -14,6 +14,7 @@ jobs:
     strategy:
       matrix:
         node: ["14", "16"]
+      max-parallel: 1
     name: node.js_${{ matrix.node }}_test
     steps:
       - uses: actions/checkout@v2
@@ -24,7 +25,7 @@ jobs:
       - name: NPM install
         run: npm install
       - name: build emulator functions
-        run: cd _emulator/functions && npm run build & cd ../..
+        run: cd _emulator/functions && npm i && npm run build & cd ../..
       - name: Install firebase CLI
         uses: nick-invision/retry@v1
         with:
@@ -32,6 +33,8 @@ jobs:
           retry_wait_seconds: 60
           max_attempts: 3
           command: npm i -g firebase-tools
+      - name: Use extension commands
+        run: firebase --open-sesame extdev
       - name: npm test
         run: npm run test
       - name: Submit coverage
