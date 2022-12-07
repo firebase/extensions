@@ -25,7 +25,7 @@ jobs:
       - name: NPM install
         run: npm install
       - name: build emulator functions
-        run: cd _emulator/functions && npm run build & cd ../..
+        run: cd _emulator/functions && npm i && npm run build & cd ../..
       - name: Install firebase CLI
         uses: nick-invision/retry@v1
         with:
