@@ -34,7 +34,7 @@ const generateTopLevelUserCollection = async (userId) => {
   return collection;
 };
 
-describe("discovery", () => {
+describe.skip("discovery", () => {
   let user: UserRecord;
   let rootCollection: admin.firestore.CollectionReference;
   beforeEach(async () => {
