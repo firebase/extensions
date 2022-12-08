@@ -50,8 +50,6 @@ const eventChannel =
   });
 
 logs.init();
-console.log("CONFIG", config);
-console.log("CONFIG DELETION TOPIC", config.deletionTopic);
 
 export const handleDeletion = functions.pubsub
   .topic(config.deletionTopic)
@@ -71,7 +69,6 @@ export const handleDeletion = functions.pubsub
       for (const path of chunk) {
         const docRef = db.doc(path);
         batch.delete(docRef);
-        console.log(`Deleting document: ${path}...`);
       }
 
       batchArray.push(batch);
@@ -97,8 +94,6 @@ export const handleSearch = functions.pubsub
       Buffer.from(message.data, "base64").toString("utf8")
     );
 
-    console.log("HANDLE SEARCH DATA >>>>", data);
-
     const path = data.path as string;
     const depth = data.depth as number;
     const nextDepth = (data.depth as number) + 1;
@@ -110,7 +105,6 @@ export const handleSearch = functions.pubsub
     if (depth <= config.searchDepth) {
       // If the collection ID is the same as the UID, delete the entire collection and sub-collections
       if (collection.id === uid) {
-        console.log("CALLS HERE WITH PID", process.env.PROJECT_ID);
         await firebase_tools.firestore.delete(path, {
           project: process.env.PROJECT_ID,
           recursive: true,
