@@ -10,7 +10,7 @@ const projectId = "extensions-testing";
 
 const bigquery = new BigQuery({ projectId });
 
-async function runScript(scriptPath, callback, args?: string[]) {
+async function runScript(scriptPath: string, callback, args?: string[]) {
   return new Promise<void>((resolve, reject) => {
     // keep track of whether callback has been invoked to prevent multiple invocations
     let invoked = false;

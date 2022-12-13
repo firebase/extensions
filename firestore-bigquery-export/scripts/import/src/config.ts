@@ -4,7 +4,8 @@ import * as program from "commander";
 import { CliConfig, CliConfigError } from "./types";
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
-const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
+// regex to match valid characters in firestore and also {,
+const FIRESTORE_VALID_CHARACTERS = /^[^(|)]+$/;
 
 const PROJECT_ID_MAX_CHARS = 6144;
 const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
