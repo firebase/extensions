@@ -41,7 +41,7 @@ async function runScript(scriptPath: string, callback, args?: string[]) {
   });
 }
 
-describe("CLI", () => {
+describe("e2e test CLI", () => {
   let firestore;
   let collectionName = "testCollection";
   let datasetName = "testDataset";
