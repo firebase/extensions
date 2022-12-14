@@ -106,7 +106,8 @@ export class FirestoreBigQuerySchemaViewFactory {
     datasetId: string,
     tableNamePrefix: string,
     schemaName: string,
-    firestoreSchema: FirestoreSchema
+    firestoreSchema: FirestoreSchema,
+    force: boolean
   ): Promise<void> {
     const rawChangeLogTableName = changeLog(raw(tableNamePrefix));
     const latestRawViewName = latest(raw(tableNamePrefix));
@@ -138,6 +139,11 @@ export class FirestoreBigQuerySchemaViewFactory {
     let latestSchemaView = dataset.table(latestSchemaViewName);
     const [latestSchemaViewExists] = await latestSchemaView.exists();
 
+    // if force option is set and changeLogSchemaViewExists, first delete the view
+    if (changeLogSchemaViewExists && force) {
+      await changeLogSchemaView.delete();
+    }
+
     let result = userSchemaView(
       datasetId,
       rawChangeLogTableName,
@@ -158,7 +164,6 @@ export class FirestoreBigQuerySchemaViewFactory {
       await changeLogSchemaView.create(changelogOptions);
       logs.bigQuerySchemaViewCreated(changeLogSchemaViewName);
     }
-
     await changeLogSchemaView.setMetadata({
       schema: decorateSchemaWithChangelogFields({
         fields: bigQueryFields,

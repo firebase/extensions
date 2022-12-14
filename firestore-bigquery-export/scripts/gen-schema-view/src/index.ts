@@ -69,6 +69,11 @@ program
     "A collection of files from which to read schemas.",
     collect,
     []
+  )
+  .option(
+    "-F, --force <force>",
+    "Changes will be forced; views will be created or replaced as with the SQL statement CREATE OR REPLACE VIEW",
+    false
   );
 
 const questions = [
@@ -108,6 +113,7 @@ interface CliConfig {
   datasetId: string;
   tableNamePrefix: string;
   schemas: { [schemaName: string]: FirestoreSchema };
+  force: boolean;
 }
 
 async function run(): Promise<number> {
@@ -135,7 +141,8 @@ async function run(): Promise<number> {
       config.datasetId,
       config.tableNamePrefix,
       schemaName,
-      config.schemas[schemaName]
+      config.schemas[schemaName],
+      config.force
     );
   }
   return 0;
@@ -158,6 +165,7 @@ async function parseConfig(): Promise<CliConfig> {
       datasetId: program.dataset,
       tableNamePrefix: program.tableNamePrefix,
       schemas: readSchemas(program.schemaFiles),
+      force: program.force,
     };
   }
   const { project, dataset, tableNamePrefix, schemaFiles } =
@@ -169,11 +177,12 @@ async function parseConfig(): Promise<CliConfig> {
     schemas: readSchemas(
       schemaFiles.split(",").map((schemaFileName) => schemaFileName.trim())
     ),
+    force: program.force,
   };
 }
 
 run()
-  .then((result) => {
+  .then((_result) => {
     console.log("done.");
     process.exit();
   })
