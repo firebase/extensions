@@ -34,7 +34,7 @@ const generateTopLevelUserCollection = async (userId) => {
   return collection;
 };
 
-describe.skip("discovery", () => {
+describe("discovery", () => {
   let user: UserRecord;
   let rootCollection: admin.firestore.CollectionReference;
   beforeEach(async () => {
@@ -45,13 +45,12 @@ describe.skip("discovery", () => {
   describe("searches on top level collections", () => {
     test("can delete is single collection named {uid}", async () => {
       await search(user.uid, 1);
-      console.log(rootCollection.path);
-      console.log((await rootCollection.get()).docs);
+
       await waitForCollectionDeletion(rootCollection, 20_000);
     }, 60000);
   });
 
-  describe.skip("searches on top level collection documents", () => {
+  describe("searches on top level collection documents", () => {
     test("can delete a document named {uid}", async () => {
       const document = await db.collection(generateRandomId()).doc(user.uid);
       await search(user.uid, 1);
@@ -59,7 +58,7 @@ describe.skip("discovery", () => {
       await waitForDocumentDeletion(document);
     }, 60000);
 
-    test.skip("can delete a document with a field value named {uid}", async () => {
+    test("can delete a document with a field value named {uid}", async () => {
       const document = await db
         .collection(generateRandomId())
         .add({ field1: user.uid });
@@ -76,8 +75,8 @@ describe.skip("discovery", () => {
     }, 60000);
   });
 
-  describe.skip("sub collection", () => {
-    test.skip("can delete a subcollection named {uid}", async () => {
+  describe("sub collection", () => {
+    test("can delete a subcollection named {uid}", async () => {
       const collection = await db.collection(
         "can-delete-a-subcollection-named-uid"
       );
@@ -100,7 +99,7 @@ describe.skip("discovery", () => {
     }, 60000);
   });
 
-  describe.skip("does not exceed the search depth", () => {
+  describe("does not exceed the search depth", () => {
     test("on a collection named {uid}", async () => {
       const subcollection = await db
         .collection("1")
