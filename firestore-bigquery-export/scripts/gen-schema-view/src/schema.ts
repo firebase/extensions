@@ -37,6 +37,7 @@ export type FirestoreFieldType =
   | "null"
   | "string"
   | "stringified_map"
+  | "array_map"
   | "timestamp"
   | "reference";
 
@@ -80,6 +81,7 @@ const firestoreToBigQueryFieldType: {
   reference: "STRING",
   array: null /* mode: REPEATED type: STRING */,
   map: null,
+  array_map: null,
   stringified_map: "STRING",
 };
 
@@ -149,6 +151,7 @@ export class FirestoreBigQuerySchemaViewFactory {
       friendlyName: changeLogSchemaViewName,
       view: result.viewInfo,
     };
+
     if (!changeLogSchemaViewExists) {
       logs.bigQuerySchemaViewCreating(
         changeLogSchemaViewName,
@@ -260,10 +263,12 @@ export const buildSchemaViewQuery = (
   schema: FirestoreSchema
 ): any => {
   const result = processFirestoreSchema(datasetId, "data", schema);
-  const [fieldExtractors, fieldArrays] = result.queryInfo;
+  const [fieldExtractors, fieldArrays, geoPoints, subArrays] = result.queryInfo;
   const bigQueryFields = result.fields;
   const fieldValueSelectorClauses = Object.values(fieldExtractors).join(", ");
   const schemaHasArrays = fieldArrays.length > 0;
+  const schemaHasSubArrays = subArrays.length > 0;
+
   let query = `
     SELECT
       document_name,
@@ -274,6 +279,7 @@ export const buildSchemaViewQuery = (
       FROM
         \`${process.env.PROJECT_ID}.${datasetId}.${rawTableName}\`
   `;
+
   if (schemaHasArrays) {
     /**
      * If the schema we are generating has arrays, we perform a LEFT JOIN with
@@ -285,7 +291,11 @@ export const buildSchemaViewQuery = (
      * of additional rows added per document will be the product of the lengths
      * of all the arrays.
      */
-    query = `${subSelectQuery(query)} ${rawTableName} ${fieldArrays
+    query = `${subSelectQuery(
+      query,
+      null,
+      rawTableName
+    )} ${rawTableName} ${fieldArrays
       .map(
         (arrayFieldName) =>
           `LEFT JOIN UNNEST(${rawTableName}.${arrayFieldName})
@@ -309,6 +319,20 @@ export const buildSchemaViewQuery = (
       });
     }
   }
+
+  if (schemaHasSubArrays) {
+    const joins = subArrays
+      .map(
+        (s) =>
+          `LEFT JOIN UNNEST(json_extract_array(${rawTableName}.${s.key}, '$.${s.value}'))
+     ${s.value}
+     WITH OFFSET _${s.value}`
+      )
+      .join(" ");
+
+    query = `${subSelectQuery(query, null, rawTableName, joins)}`;
+  }
+
   query = sqlFormatter.format(query);
   return {
     query: query,
@@ -338,6 +362,7 @@ export function processFirestoreSchema(
   }
   let extractors: { [fieldName: string]: string } = {};
   let arrays: string[] = [];
+  let subArrays: Record<string, string>[] = [];
   let geopoints: string[] = [];
   let bigQueryFields: { [property: string]: string }[] = [];
   processFirestoreSchemaHelper(
@@ -350,10 +375,11 @@ export function processFirestoreSchema(
     extractors,
     transformer,
     bigQueryFields,
-    []
+    [],
+    subArrays
   );
   return {
-    queryInfo: [extractors, arrays, geopoints],
+    queryInfo: [extractors, arrays, geopoints, subArrays],
     fields: bigQueryFields,
   };
 }
@@ -365,9 +391,6 @@ export function processFirestoreSchema(
  * geopoints separately because they require handling in a context that
  * this function doesn't have access to:
  *
- * - Arrays must be unnested in the non-snapshot query (buildSchemaView) and
- *   filtered out in the snapshot query (buildLatestSnapshotViewQuery) because
- *   they are not groupable
  * - Geopoints must be filtered out in the snapshot query
  *   (buildLatestSnapshotViewQuery) because they are not groupable
  */
@@ -379,9 +402,10 @@ function processFirestoreSchemaHelper(
   arrays: string[],
   geopoints: string[],
   extractors: { [fieldName: string]: string },
-  transformer: (selector: string) => string,
+  transformer: (selector: string, isArrayType?: boolean) => string,
   bigQueryFields: { [property: string]: string }[],
-  extractPrefix: string[]
+  extractPrefix: string[],
+  subArrays?: Record<string, string>[]
 ) {
   const { fields = [] } = schema;
   if (!fields.length) return null;
@@ -404,6 +428,28 @@ function processFirestoreSchemaHelper(
       );
       return;
     }
+
+    if (field.type === "array_map") {
+      const isArrayValue = true;
+      subArrays.push({ key: "data", value: field.name });
+      for (let f of field.fields) {
+        const fieldNameToSelector = processLeafField(
+          datasetId,
+          field.extractor,
+          prefix,
+          f,
+          transformer,
+          bigQueryFields,
+          [f.name],
+          isArrayValue
+        );
+        for (let fieldName in fieldNameToSelector) {
+          extractors[fieldName] = fieldNameToSelector[fieldName];
+        }
+      }
+      return;
+    }
+
     const fieldNameToSelector = processLeafField(
       datasetId,
       "data",
@@ -416,6 +462,7 @@ function processFirestoreSchemaHelper(
     for (let fieldName in fieldNameToSelector) {
       extractors[fieldName] = fieldNameToSelector[fieldName];
     }
+
     // For "latest" data views, certain types of fields cannot be used in
     // "GROUP BY" clauses. We keep track of them so they can be explicitly
     // transformed into groupable types later.
@@ -439,9 +486,10 @@ const processLeafField = (
   dataFieldName: string,
   prefix: string[],
   field: FirestoreField,
-  transformer: (selector: string) => string,
+  transformer: (selector: string, isArrayType?: boolean) => string,
   bigQueryFields: { [property: string]: string }[],
-  extractPrefix: string[]
+  extractPrefix: string[],
+  isArrayValue?: boolean
 ) => {
   const extractPrefixJoined = `${extractPrefix.join(".")}`;
 
@@ -451,6 +499,7 @@ const processLeafField = (
     case "null":
       selector = transformer(`NULL`);
       break;
+
     case "stringified_map":
       selector = jsonExtract(
         dataFieldName,
@@ -467,7 +516,8 @@ const processLeafField = (
         extractPrefixJoined,
         field,
         ``,
-        transformer
+        transformer,
+        isArrayValue
       );
       break;
     case "array":
@@ -607,17 +657,26 @@ const processLeafField = (
  * JSON_EXTRACT. This is typically a BigQuery CAST, or an UNNEST (in the case
  * where the result is an ARRAY).
  */
+
 const jsonExtractScalar = (
   dataFieldName: string,
   prefix: string,
   field: FirestoreField,
   subselector: string = "",
-  transformer: (selector: string) => string
+  transformer: (selector: string, isArrayType?: boolean) => string,
+  isArrayValue?: boolean
 ) => {
+  console.log(
+    "TRANSFORMING jsonExtractScalar >>>>>",
+    isArrayValue,
+    field.name,
+    field.type
+  );
   return transformer(
     `JSON_EXTRACT_SCALAR(${dataFieldName}, \'\$.${
-      prefix.length > 0 ? `${prefix}.` : ``
-    }${field.extractor}${subselector}\')`
+      prefix.length > 0 ? `${prefix}` : ``
+    }${field.extractor ? field.extractor + subselector : ""}\')`,
+    isArrayValue
   );
 };
 
@@ -626,12 +685,14 @@ const jsonExtract = (
   prefix: string,
   field: FirestoreField,
   subselector: string = "",
-  transformer: (selector: string) => string
+  transformer: (selector: string, isArrayType?: boolean) => string,
+  isArrayValue?: boolean
 ) => {
   return transformer(
     `JSON_EXTRACT(${dataFieldName}, \'\$.${
       prefix.length > 0 ? `${prefix}.` : ``
-    }${field.extractor}${subselector}\')`
+    }${field.extractor}${subselector}\')`,
+    isArrayValue
   );
 };
 
@@ -646,16 +707,26 @@ const jsonExtract = (
  * @param query a SELECT query
  * @param filter an array of field names to filter out from `query`
  */
-export function subSelectQuery(query: string, filter?: string[]): string {
+export function subSelectQuery(
+  query: string,
+  filter?: string[],
+  tblname?: string,
+  joins?: string[]
+): string {
   return `SELECT * ${
     filter && filter.length > 0 ? `EXCEPT (${filter.join(", ")})` : ``
-  } FROM (${query})`;
+  } FROM (${query} ${tblname} ${joins})`;
 }
 
-function qualifyFieldName(prefix: string[], name: string): string {
+function qualifyFieldName(
+  prefix: string[],
+  name: string,
+  concat: boolean | null = true
+): string {
   const notAlphanumericUnderscore = /([^a-zA-Z0-9_])/g;
   const cleanName = name.replace(notAlphanumericUnderscore, "_");
 
+  if (!concat) return cleanName;
   return prefix.concat(cleanName).join("_");
 }
 
