@@ -19,6 +19,8 @@ You can even configure the extension to create resized images of different dimen
 
 The extension automatically copies the following metadata, if present, from the original image to the resized image(s): `Cache-Control`, `Content-Disposition`, `Content-Encoding`, `Content-Language`, `Content-Type`, and user-provided metadata (a new Firebase storage download token will be generated on the resized image(s) if the original metadata contains a token). Note that you can optionally configure the extension to overwrite the [`Cache-Control`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control) value for the resized image(s).
 
+The extension supports resizing images in `JPEG`, `PNG`, `WebP`, `GIF`, `AVIF` and `TIFF` formats, and the output can be in one or more of these formats.
+
 The extension can publish a resize completion event which you can optionally enable when you install the extension. If you enable events, you can [write custom event handlers](https://firebase.google.com/docs/extensions/install-extensions#eventarc) that respond to these events. You can always enable or disable events later. Events will be emitted via Eventarc.
 
 #### Detailed configuration information
@@ -36,6 +38,10 @@ Before installing this extension, make sure that you've [set up a Cloud Storage 
 #### Multiple instances of this extension
 
 You can install multiple instances of this extension for the same project to configure different resizing options for different paths. However, as mentioned before this extension listens for all changes made to the specified Cloud Storage bucket. That means all instances will be triggered every time a file is uploaded to the bucket. Therefore, it is recommended to use different buckets instead of different paths to prevent unnecessary function calls.
+
+#### Troubleshooting
+
+If events are enabled, and you want to create custom event handlers to respond to the events published by the extension, you must ensure that you have the appropriate [role/permissions](https://cloud.google.com/pubsub/docs/access-control#permissions_and_roles) to subscribe to Pub/Sub events.
 
 #### Billing
  
@@ -91,11 +97,16 @@ If you prefer to resize every image uploaded to your Storage bucket,  leave this
 
 * Cloud Function memory: Memory of the function responsible of resizing images.  Choose how much memory to give to the function that resize images. (For animated GIF => GIF we recommend using a minimum of 2GB).
 
+* Backfill existing images: Should existing, unresized images in the Storage bucket be resized as well?
+
+
 
 
 **Cloud Functions:**
 
 * **generateResizedImage:** Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images, then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
+
+* **backfillResizedImages:** Handles tasks from startBackfill to resize existing images.
 
 
 

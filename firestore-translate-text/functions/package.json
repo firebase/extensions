@@ -12,10 +12,10 @@
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "dependencies": {
-    "@types/node": "^12.6.9",
+    "@types/node": "^18.11.9",
     "@google-cloud/translate": "^4.0.1",
-    "firebase-admin": "^8.0.0",
-    "firebase-functions": "^3.13.2",
+    "firebase-admin": "^11.3.0",
+    "firebase-functions": "^3.24.0",
     "typescript": "^4.4.4",
     "rimraf": "^2.6.3"
   },
