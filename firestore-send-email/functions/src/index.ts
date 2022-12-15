@@ -363,8 +363,6 @@ export const processQueue = functions.firestore
 
     logs.start();
 
-    console.log("change.before.exists >>>", change.before.exists);
-
     if (!change.before.exists) {
       await events.recordStartEvent(change);
     }
