@@ -29,6 +29,14 @@ export const documentCreatedWithInput = () => {
   logger.log(messages.documentCreatedWithInput());
 };
 
+export const documentFoundWithInput = () => {
+  logger.log(messages.documentFoundWithInput());
+};
+
+export const documentFoundNoInput = () => {
+  logger.log(messages.documentFoundNoInput());
+};
+
 export const documentDeleted = () => {
   logger.log(messages.documentDeleted());
 };
@@ -73,8 +81,14 @@ export const translateInputString = (string: string, language: string) => {
   logger.log(messages.translateInputString(string, language));
 };
 
-export const translateStringComplete = (string: string, language: string) => {
-  logger.log(messages.translateStringComplete(string, language));
+export const translateStringComplete = (
+  string: string,
+  language: string,
+  translatedString: string
+) => {
+  logger.log(
+    messages.translateStringComplete(string, language, translatedString)
+  );
 };
 
 export const translateStringError = (
@@ -96,6 +110,14 @@ export const translateInputToAllLanguagesComplete = (string: string) => {
   logger.log(messages.translateInputToAllLanguagesComplete(string));
 };
 
+export const partialTranslateError = (
+  input: string,
+  reasons: string[],
+  numLanguages: number
+) => {
+  logger.error(messages.partialTranslateError(input, reasons, numLanguages));
+};
+
 export const translateInputToAllLanguagesError = (
   string: string,
   err: Error
@@ -109,4 +131,16 @@ export const updateDocument = (path: string) => {
 
 export const updateDocumentComplete = (path: string) => {
   logger.log(messages.updateDocumentComplete(path));
+};
+
+export const backfillComplete = (successCount: number, errorCount: number) => {
+  logger.log(messages.backfillComplete(successCount, errorCount));
+};
+
+export const skippingLanguage = (language: string) => {
+  logger.log(messages.skippingLanguage(language));
+};
+
+export const enqueueNext = (offset: number) => {
+  logger.log(messages.enqueueNext(offset));
 };

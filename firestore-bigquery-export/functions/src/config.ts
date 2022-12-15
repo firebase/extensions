@@ -50,4 +50,6 @@ export default {
   timePartitioningFirestoreField: process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
   clustering: clustering(process.env.CLUSTERING),
   wildcardIds: process.env.WILDCARD_IDS === "true" ? true : false,
+  useNewSnapshotQuerySyntax:
+    process.env.USE_NEW_SNAPSHOT_QUERY_SYNTAX === "yes" ? true : false,
 };

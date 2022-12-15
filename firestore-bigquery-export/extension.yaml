@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.26
+version: 0.1.28
 specVersion: v1beta
 
 displayName: Stream Collections to BigQuery
@@ -275,7 +275,7 @@ params:
       - label: none
         value: NONE
     default: NONE
-    required: true
+    required: false
 
   - param: TIME_PARTITIONING_FIELD
     label: BigQuery Time Partitioning column name
@@ -338,6 +338,20 @@ params:
     example: https://us-west1-my-project-id.cloudfunctions.net/myTransformFunction
     type: string
     required: false
+
+  - param: USE_NEW_SNAPSHOT_QUERY_SYNTAX
+    label: Use new query syntax for snapshots
+    description: >-
+      If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential
+      resource limitations.
+    type: select
+    options:
+      - label: Yes
+        value: yes
+      - label: No
+        value: no
+    default: no
+    required: true
 
 events:
   - type: firebase.extensions.big-query-export.v1.sync.start
