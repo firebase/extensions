@@ -57,8 +57,9 @@ const eventChannel =
     allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
   });
 
-exports.fsexportbigquery = functions.runWith({failurePolicy: true}).firestore
-  .document(config.collectionPath)
+exports.fsexportbigquery = functions
+  .runWith({ failurePolicy: true })
+  .firestore.document(config.collectionPath)
   .onWrite(async (change, context) => {
     logs.start();
     try {
@@ -101,11 +102,11 @@ exports.fsexportbigquery = functions.runWith({failurePolicy: true}).firestore
       logs.error(err);
       const eventAgeMs = Date.now() - Date.parse(context.timestamp);
       const eventMaxAgeMs = 10000;
-      
+
       if (eventAgeMs > eventMaxAgeMs) {
         return;
       }
-      
+
       throw err;
     }
   });
