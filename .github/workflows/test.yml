@@ -14,7 +14,6 @@ jobs:
     strategy:
       matrix:
         node: ["14", "16"]
-      max-parallel: 2
     name: node.js_${{ matrix.node }}_test
     steps:
       - uses: actions/checkout@v2
