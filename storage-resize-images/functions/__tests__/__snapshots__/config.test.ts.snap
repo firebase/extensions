@@ -6,12 +6,14 @@ Object {
   "bucket": "extensions-testing.appspot.com",
   "cacheControlHeader": undefined,
   "deleteOriginalFile": 0,
+  "doBackfill": false,
   "excludePathList": undefined,
   "imageSizes": Array [
     "200x200",
   ],
   "imageTypes": undefined,
   "includePathList": undefined,
+  "makePublic": false,
   "outputOptions": undefined,
   "resizedImagesPath": undefined,
 }
