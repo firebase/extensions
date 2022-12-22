@@ -7,5 +7,4 @@ module.exports = {
   preset: "ts-jest",
   testMatch: ["**/__tests__/*.test.ts"],
   setupFilesAfterEnv: ["<rootDir>/setupTests.ts"],
-  testPathIgnorePatterns: process.env.CI_TEST === "true" ? ["e2e"] : [],
 };

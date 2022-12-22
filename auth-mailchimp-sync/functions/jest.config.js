@@ -7,5 +7,4 @@ module.exports = {
   preset: "ts-jest",
   globalSetup: "./jest.setup.js",
   globalTeardown: "./jest.teardown.js",
-  testPathIgnorePatterns: process.env.CI_TEST === "true" ? ["e2e"] : [],
 };

@@ -14,5 +14,4 @@ module.exports = {
   testEnvironment: "node",
   testTimeout: 180000,
   collectCoverage: true,
-  testPathIgnorePatterns: process.env.CI_TEST === "true" ? ["e2e"] : [],
 };
