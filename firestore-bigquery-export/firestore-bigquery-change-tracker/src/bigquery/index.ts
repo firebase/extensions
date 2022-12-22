@@ -255,7 +255,7 @@ export class FirestoreBigQueryEventHistoryTracker
         );
       }
 
-      // Exceeded number of retires, save in failed collection
+      // Exceeded number of retries, save in failed collection
       if (!retry && this.config.backupTableId) {
         await handleFailedTransactions(rows, this.config, e);
       }
