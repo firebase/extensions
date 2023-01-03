@@ -63,11 +63,10 @@ class DistributedCounter {
   /// counter.incrementBy(1);
   Future<void> incrementBy(int val) {
     final increment = FieldValue.increment(val);
-    final update = this
-        .field
-        .split('.')
-        .reversed
-        .fold(increment, (value, name) => {name: value});
+    final toFold = this.field.split('.').reversed;
+    Map<String, dynamic> update = toFold
+        .skip(1)
+        .fold({toFold.elementAt(0): increment}, (value, name) => {name: value});
     return doc
         .collection(SHARD_COLLECTION_ID)
         .doc(shardId)
