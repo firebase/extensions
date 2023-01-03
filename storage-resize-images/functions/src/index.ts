@@ -120,12 +120,10 @@ const generateResizedImageHandler = async (
       logs.failed();
 
       if (config.failedImagesPath) {
-
         const filePath = object.name; // File path in the bucket.
-        const fileDir = path.dirname(filePath);
-        const fileExtension = path.extname(filePath);
+        const fileDir = parsedPath.dir;
+        const fileExtension = parsedPath.ext;
         const fileNameWithoutExtension = path.basename(filePath, fileExtension);
-
 
         const failedFilePath = path.join(
           fileDir,
@@ -200,7 +198,7 @@ export const backfillResizedImages = functions.tasks
       await runtime.setProcessingState(
         "PROCESSING_COMPLETE",
         "Existing images were not resized because 'Backfill existing images' was configured to false." +
-        " If you want to resize existing images, reconfigure this instance."
+          " If you want to resize existing images, reconfigure this instance."
       );
       return;
     }
