@@ -35,10 +35,18 @@ class DistributedCounter {
   ///
   /// All local increments will be reflected in the counter even if the main
   /// counter hasn't been updated yet.
-  Future<int> get(GetOptions options) async {
+ Future<int> get(
+      {GetOptions options =
+          const GetOptions(source: Source.server)}) async {
     final valuePromises = shards.keys.map((path) async {
       final shard = await doc.firestore.doc(path).get(options);
-      return shard.get(field) ?? 0;
+      final shardData = shard.data();
+      if (shardData != null && shardData.containsKey(field)) {
+        return shard.get(field) ?? 0;
+      }
+      else{
+        return 0;
+      }
     });
     final values = await Future.wait(valuePromises);
     return values.reduce((a, b) => a + b);
