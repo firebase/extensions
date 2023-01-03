@@ -177,9 +177,9 @@ export class FirestoreBigQueryEventHistoryTracker
       e.response.insertErrors.errors
     ) {
       const errors = e.response.insertErrors.errors;
-      errors.forEach((error) => {
+      errors?.forEach((error) => {
         let isExpected = false;
-        expectedErrors.forEach((expectedError) => {
+        expectedErrors?.forEach((expectedError) => {
           if (
             error.message === expectedError.message &&
             error.location === expectedError.location
