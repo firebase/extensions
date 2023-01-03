@@ -4,15 +4,16 @@ on:
   push:
     branches:
       - "**"
-    paths-ignore:
-      - "**/*.md"
+  pull_request:
+    branches:
+      - "**"
 
 jobs:
   nodejs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["10", "12"]
+        node: ["14", "16"]
     name: node.js_${{ matrix.node }}_test
     steps:
       - uses: actions/checkout@v2
@@ -20,11 +21,18 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node }}
-      - name: NPM install
-        run: npm install
-      - name: Run tests with coverage
-        run: npm run test-coverage
-      - name: Submit coverage
-        run: ./node_modules/.bin/codecov
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+      - name: NPM INSTALL
+        run: npm i
+      - name: build emulator functions
+        run: cd _emulator/functions && npm i && npm run build & cd ../..
+      - name: Install firebase CLI
+        uses: nick-invision/retry@v1
+        with:
+          timeout_minutes: 10
+          retry_wait_seconds: 60
+          max_attempts: 3
+          command: npm i -g firebase-tools
+      - name: npm test
+        run: npm run test:ci

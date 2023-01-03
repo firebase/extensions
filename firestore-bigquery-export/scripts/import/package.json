@@ -1,6 +1,6 @@
 {
   "name": "@firebaseextensions/fs-bq-import-collection",
-  "version": "0.1.10",
+  "version": "0.1.15",
   "description": "Import a Firestore Collection into a BigQuery Changelog Table",
   "main": "./lib/index.js",
   "repository": {
@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "npm run clean && npm run compile",
+    "build-watch": "npm run clean && tsc --watch",
     "clean": "rimraf ./lib",
     "compile": "tsc",
     "import": "node ./lib/index.js",
@@ -24,21 +25,25 @@
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.2",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.16",
+    "@google-cloud/bigquery": "^5.6.0",
     "commander": "5.0.0",
-    "firebase-admin": "^7.1.1",
-    "firebase-functions": "^2.2.1",
+    "filenamify": "^4.2.0",
+    "firebase-admin": "^9.7.0",
+    "firebase-functions": "^3.13.2",
     "generate-schema": "^2.6.0",
     "inquirer": "^6.4.0",
-    "sql-formatter": "^2.3.3"
+    "sql-formatter": "^2.3.3",
+    "workerpool": "^6.1.4"
   },
   "devDependencies": {
-    "@types/mocha": "^5.2.5",
     "@types/chai": "^4.2.0",
+    "@types/mocha": "^5.2.5",
+    "@types/workerpool": "^6.0.0",
     "chai": "^4.2.0",
     "mocha": "^5.2.0",
     "rimraf": "^2.6.3",
-    "typescript": "^3.4.5",
-    "ts-node": "^7.0.1"
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.4"
   }
 }

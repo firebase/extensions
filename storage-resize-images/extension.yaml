@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.18
+version: 0.1.32
 specVersion: v1beta
 
 displayName: Resize Images
@@ -57,11 +57,20 @@ resources:
       then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs10
-      availableMemoryMb: 1024
+      runtime: nodejs14
+      availableMemoryMb: ${param:FUNCTION_MEMORY}
       eventTrigger:
         eventType: google.storage.object.finalize
         resource: projects/_/buckets/${param:IMG_BUCKET}
+  - name: backfillResizedImages
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Handles tasks from startBackfill to resize existing images.
+    properties:
+      location: ${LOCATION}
+      runtime: nodejs14
+      availableMemoryMb: ${param:FUNCTION_MEMORY}
+      taskQueueTrigger: {}
 
 params:
   - param: LOCATION
@@ -85,6 +94,8 @@ params:
         value: us-west3
       - label: Las Vegas (us-west4)
         value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
@@ -93,6 +104,8 @@ params:
         value: europe-west3
       - label: Zurich (europe-west6)
         value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
@@ -103,6 +116,8 @@ params:
         value: asia-northeast3
       - label: Mumbai (asia-south1)
         value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
       - label: Jakarta (asia-southeast2)
         value: asia-southeast2
       - label: Montreal (northamerica-northeast1)
@@ -121,7 +136,10 @@ params:
       To which Cloud Storage bucket will you upload images that you want to resize?
       Resized images will be stored in this bucket. Depending on your extension configuration,
       original images are either kept or deleted.
-    type: string
+      It is recommended to create a separate bucket for this extension. For more information,
+      refer to the [pre-installation guide](https://firebase.google.com/products/extensions/storage-resize-images).
+    type: selectResource
+    resourceType: storage.googleapis.com/Bucket
     example: my-project-12345.appspot.com
     validationRegex: ^([0-9a-z_.-]*)$
     validationErrorMessage: Invalid storage bucket
@@ -146,17 +164,31 @@ params:
     label: Deletion of original file
     description: >-
       Do you want to automatically delete the original file from the Cloud Storage
-      bucket? Note that these deletions cannot be undone.
+      bucket? Warning: these deletions cannot be undone, and if you reconfigure this
+      instance to use different image dimensions, you won't be able to backfill deleted images.
+    type: select
+    options:
+      - label: Don't delete
+        value: false
+      - label: Delete on any resize attempt
+        value: true
+      - label: Delete only on successful resize attempts
+        value: on_success
+    default: false
+    required: true
+
+  - param: MAKE_PUBLIC
+    label: Make resized images public
+    description: >-
+      Do you want to make the resized images public automatically? So you can access them by URL.
+      For example: https://storage.googleapis.com/{bucket}/{path}
     type: select
     options:
       - label: Yes
         value: true
       - label: No
         value: false
-      - label: Delete on successful resize
-        value: on_success  
     default: false
-    required: true
 
   - param: RESIZED_IMAGES_PATH
     label: Cloud Storage path for resized images
@@ -174,8 +206,12 @@ params:
     description: >
       Restrict storage-resize-images to only resize images in specific locations in your Storage bucket by 
       supplying a comma-separated list of absolute paths. For example, to only resize the images 
-      stored in `/users/pictures` directory, specify the path `/users/pictures`. 
-      If you prefer to resize every image uploaded to the storage bucket, 
+      stored in the `/users/pictures` and `/restaurants/menuItems` directories, specify the paths `/users/pictures,/restaurants/menuItems`.
+      
+      You may also use wildcard notation for directories in the path. For example, `/users/*/pictures` 
+      would match `/users/profile/pictures/image.png` as well as  `/users/profile/pictures/any/sub/directory/image.png`. 
+      
+      If you prefer to resize every image uploaded to your Storage bucket, 
       leave this field empty.
     type: string
     example: "/users/avatars,/design/pictures"
@@ -187,11 +223,15 @@ params:
   - param: EXCLUDE_PATH_LIST
     label: List of absolute paths not included for resized images
     description: >
-      A comma-separated list of absolute paths to not take into account for 
-      images to be resized. For example, to not resize the images 
-      stored in `/users/pictures/avatars` directory, specify the path 
-      `/users/pictures/avatars`. If you prefer to resize every image uploaded 
-      to the storage bucket, leave this field empty.
+      Ensure storage-resize-images does *not* resize images in _specific locations_ in your Storage bucket by 
+      supplying a comma-separated list of absolute paths. For example, to *exclude* the images 
+      stored in the `/users/pictures` and `/restaurants/menuItems` directories, specify the paths `/users/pictures,/restaurants/menuItems`.
+      
+      You may also use wildcard notation for directories in the path. For example, `/users/*/pictures` 
+      would exclude `/users/profile/pictures/image.png` as well as `/users/profile/pictures/any/sub/directory/image.png`. 
+      
+      If you prefer to resize every image uploaded to your Storage bucket, 
+      leave this field empty.
     type: string
     example: "/users/avatars/thumbs,/design/pictures/thumbs"
     validationRegex: ^(\/[^\s\/\,]+)+(\,(\/[^\s\/\,]+)+)*$
@@ -211,21 +251,92 @@ params:
     required: false
 
   - param: IMAGE_TYPE
-    label: Convert image to preferred type
+    label: Convert image to preferred types
     description: >
-      The image type you'd like your source image to convert to. The default for this option will 
-      be to keep the original file type.
-    type: select
+      The image types you'd like your source image to convert to. 
+      The default for this option will be to keep the original file type as the destination file type.
+    type: multiSelect
     options:
-      - label: jpg
-        value: jpg
-      - label: png
-        value: png
+      - label: jpeg
+        value: jpeg
       - label: webp
         value: webp
+      - label: png
+        value: png
       - label: tiff
         value: tiff
-      - label: Do not convert
+      - label: gif
+        value: gif
+      - label: avif
+        value: avif
+      - label: original
         value: false
     default: false
+    required: true
+
+  - param: OUTPUT_OPTIONS
+    label: Output options for selected formats
+    description: >
+      Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion.
+      eg. `{"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "pallete": true }}`
+    type: string
+    validationRegex: ^({(.*?)})$
+    validationErrorMessage: Please provide a valid json object.
     required: false
+
+  - param: IS_ANIMATED
+    label: GIF and WEBP animated option
+    description: >
+      Keep animation of GIF and WEBP formats.
+    type: select
+    options:
+      - label: Yes
+        value: true
+      - label: No (1st frame only)
+        value: false
+    default: true
+    required: false
+
+  - param: FUNCTION_MEMORY
+    label: Cloud Function memory
+    description: >-
+      Memory of the function responsible of resizing images. 
+      Choose how much memory to give to the function that resize images. (For animated GIF => GIF we recommend using a minimum of 2GB).
+    type: select
+    options:
+      - label: 512 MB
+        value: 512
+      - label: 1 GB
+        value: 1024
+      - label: 2 GB
+        value: 2048
+    default: 1024
+    required: true
+    immutable: false
+
+  - param: DO_BACKFILL
+    label: Backfill existing images
+    description: >
+      Should existing, unresized images in the Storage bucket be resized as well?
+    type: select
+    required: true
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+
+events:
+  - type: firebase.extensions.storage-resize-images.v1.complete
+    description: Occurs when image resizing completes. The event will contain further details about specific formats and sizes.
+
+lifecycleEvents:
+  onInstall:
+    function: backfillResizedImages
+    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
+  onUpdate:
+    function: backfillResizedImages
+    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
+  onConfigure:
+    function: backfillResizedImages
+    processingMessage: Resizing existing images in ${param:IMG_BUCKET}

@@ -9,8 +9,12 @@ jobs:
   formatting:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14
       - name: NPM install
-        run: npm i
+        run: SKIP_POSTINSTALL=yes npm i
       - name: Prettier Lint Check
         run: npm run lint

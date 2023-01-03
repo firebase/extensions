@@ -26,6 +26,23 @@ You can also optionally configure this extension to render emails using [Handleb
 
 When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**. Note that this extension is for use with bulk email service providers, like SendGrid, Mailgun, etc.
 
+#### Setup Google App Passwords
+
+**Google** no longer allows **Gmail** users to use their own passwords to authorize third-party apps and services. Instead, you have to use the [Sign in with App Passwords](https://support.google.com/accounts/answer/185833) service to generate a special password for each app you want to authorize. To do so:
+
+1.  Go to your [Google Account](https://myaccount.google.com/).
+2.  Select **Security**.
+3.  Under "Signing in to Google," select **App Passwords**. You may need to sign in. If you don’t have this option, it might be because:
+    1.  2-Step Verification is not set up for your account.
+    2.  2-Step Verification is only set up for security keys.
+    3.  Your account is through work, school, or other organization.
+    4.  You turned on Advanced Protection.
+4.  At the bottom, choose **Select app** and choose **Other** option and then write the name of the app password (e.g. `Firebase Trigger Email Extension`) and click **Generate**.
+5.  Follow the instructions to enter the App Password. The App Password is the 16-character code in the yellow bar on your device.
+6.  Tap **Done**.
+
+Now you can use your Google username with the generated password to authorize the extension.
+
 #### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
@@ -34,9 +51,9 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 
 - You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
-- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
   - Cloud Firestore
-  - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#expandable-24))
+  - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
 
 Usage of this extension also requires you to have SMTP credentials for mail delivery. You are responsible for any associated costs with your usage of your SMTP provider.
 
@@ -47,7 +64,14 @@ Usage of this extension also requires you to have SMTP credentials for mail deli
 
 * Cloud Functions location: Where do you want to deploy the functions created for this extension? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
-* SMTP connection URI: A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465.
+* SMTP connection URI: A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465. In order to keep passwords secure, it is recommended to omit the password from the connection string while using the `SMTP Password` field for entering secrets and passwords. Passwords and secrets should now be included in `SMTP password` field.
+Secure format:
+ `smtps://username@gmail.com@smtp.gmail.com:465` (username only)
+ `smtps://smtp.gmail.com:465` (No username and password)
+Backwards Compatible (less secure):
+ `smtps://username@gmail.com:password@smtp.gmail.com:465`. (username and password)
+
+* SMTP password: User password for the SMTP server
 
 * Email documents collection: What is the path to the collection that contains the documents used to build and send the emails?
 

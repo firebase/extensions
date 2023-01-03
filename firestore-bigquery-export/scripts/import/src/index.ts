@@ -19,14 +19,17 @@
 import * as firebase from "firebase-admin";
 import * as program from "commander";
 import * as fs from "fs";
-import * as inquirer from "inquirer";
 import * as util from "util";
+import * as filenamify from "filenamify";
+import { runMultiThread } from "./run";
+import { resolveWildcardIds } from "./config";
 
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreDocumentChangeEvent,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import { parseConfig } from "./config";
 
 // For reading cursor position.
 const exists = util.promisify(fs.exists);
@@ -34,71 +37,14 @@ const write = util.promisify(fs.writeFile);
 const read = util.promisify(fs.readFile);
 const unlink = util.promisify(fs.unlink);
 
-const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
-const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
-
-const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
-const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
-
 const FIRESTORE_DEFAULT_DATABASE = "(default)";
 
-const validateInput = (
-  value: string,
-  name: string,
-  regex: RegExp,
-  sizeLimit: number
-) => {
-  if (!value || value === "" || value.trim() === "") {
-    return `Please supply a ${name}`;
-  }
-  if (value.length >= sizeLimit) {
-    return `${name} must be at most ${sizeLimit} characters long`;
-  }
-  if (!value.match(regex)) {
-    return `The ${name} must only contain letters or spaces`;
-  }
-  return true;
-};
-
-const validateBatchSize = (value: string) => {
-  return parseInt(value, 10) > 0;
-};
-
-const validateLocation = (value: string) => {
-  const index = [
-    "us-west4",
-    "us-west2",
-    "northamerica-northeast1",
-    "us-east4",
-    "us-west1",
-    "us-west3",
-    "southamerica-east1",
-    "us-east1",
-    "europe-west1",
-    "europe-north1",
-    "europe-west3",
-    "europe-west2",
-    "europe-west4",
-    "europe-west4",
-    "europe-west6",
-    "asia-east2",
-    "asia-southeast2",
-    "asia-south1",
-    "asia-northeast2",
-    "asia-northeast3",
-    "asia-southeast1",
-    "australia-southeast1",
-    "asia-east1",
-    "asia-northeast1",
-    "us",
-    "eu",
-  ].indexOf(value.toLowerCase());
-
-  return index !== -1;
-};
+const packageJson = require("../package.json");
 
 program
   .name("fs-bq-import-collection")
+  .description(packageJson.description)
+  .version(packageJson.version)
   .option(
     "--non-interactive",
     "Parse all input from command line flags instead of prompting the caller.",
@@ -133,115 +79,45 @@ program
   .option(
     "-l, --dataset-location <location>",
     "Location of the BigQuery dataset."
+  )
+  .option(
+    "-m, --multi-threaded [true|false]",
+    "Whether to run standard or multi-thread import version"
   );
 
-const questions = [
-  {
-    message: "What is your Firebase project ID?",
-    name: "project",
-    type: "input",
-    validate: (value) =>
-      validateInput(
-        value,
-        "project ID",
-        FIRESTORE_VALID_CHARACTERS,
-        FIRESTORE_COLLECTION_NAME_MAX_CHARS
-      ),
-  },
-  {
-    message:
-      "What is the path of the the Cloud Firestore Collection you would like to import from? " +
-      "(This may, or may not, be the same Collection for which you plan to mirror changes.)",
-    name: "sourceCollectionPath",
-    type: "input",
-    validate: (value) =>
-      validateInput(
-        value,
-        "collection path",
-        FIRESTORE_VALID_CHARACTERS,
-        FIRESTORE_COLLECTION_NAME_MAX_CHARS
-      ),
-  },
-  {
-    message: "Would you like to import documents via a Collection Group query?",
-    name: "queryCollectionGroup",
-    type: "confirm",
-    default: false,
-  },
-  {
-    message:
-      "What is the ID of the BigQuery dataset that you would like to use? (A dataset will be created if it doesn't already exist)",
-    name: "dataset",
-    type: "input",
-    validate: (value) =>
-      validateInput(
-        value,
-        "dataset",
-        BIGQUERY_VALID_CHARACTERS,
-        BIGQUERY_RESOURCE_NAME_MAX_CHARS
-      ),
-  },
-  {
-    message:
-      "What is the identifying prefix of the BigQuery table that you would like to import to? (A table will be created if one doesn't already exist)",
-    name: "table",
-    type: "input",
-    validate: (value) =>
-      validateInput(
-        value,
-        "table",
-        BIGQUERY_VALID_CHARACTERS,
-        BIGQUERY_RESOURCE_NAME_MAX_CHARS
-      ),
-  },
-  {
-    message:
-      "How many documents should the import stream into BigQuery at once?",
-    name: "batchSize",
-    type: "input",
-    default: 300,
-    validate: validateBatchSize,
-  },
-  {
-    message: "Where would you like the BigQuery dataset to be located?",
-    name: "datasetLocation",
-    type: "input",
-    default: "us",
-    validate: validateLocation,
-  },
-];
-
-interface CliConfig {
-  projectId: string;
-  sourceCollectionPath: string;
-  datasetId: string;
-  tableId: string;
-  batchSize: string;
-  queryCollectionGroup: boolean;
-  datasetLocation: string;
-}
-
 const run = async (): Promise<number> => {
+  const config = await parseConfig();
+  if (config.kind === "ERROR") {
+    config.errors.forEach((e) => console.error(`[ERROR] ${e}`));
+    process.exit(1);
+  }
+
   const {
     projectId,
     sourceCollectionPath,
-    queryCollectionGroup,
     datasetId,
     tableId,
     batchSize,
+    queryCollectionGroup,
     datasetLocation,
-  }: CliConfig = await parseConfig();
+    multiThreaded,
+  } = config;
 
-  const batch = parseInt(batchSize);
-  const rawChangeLogName = `${tableId}_raw_changelog`;
   // Initialize Firebase
+  // This uses applicationDefault to authenticate
+  // Please see https://cloud.google.com/docs/authentication/production
   firebase.initializeApp({
     credential: firebase.credential.applicationDefault(),
     databaseURL: `https://${projectId}.firebaseio.com`,
   });
-  // Set project ID so it can be used in BigQuery intialization
+
+  // Set project ID, so it can be used in BigQuery initialization
   process.env.PROJECT_ID = projectId;
   process.env.GOOGLE_CLOUD_PROJECT = projectId;
+
+  const rawChangeLogName = `${tableId}_raw_changelog`;
+
+  if (multiThreaded) return runMultiThread(config, rawChangeLogName);
 
   // We pass in the application-level "tableId" here. The tracker determines
   // the name of the raw changelog from this field.
@@ -249,6 +125,7 @@ const run = async (): Promise<number> => {
     tableId: tableId,
     datasetId: datasetId,
     datasetLocation,
+    wildcardIds: queryCollectionGroup,
   });
 
   console.log(
@@ -261,15 +138,14 @@ const run = async (): Promise<number> => {
   // operations supersede imports when listing the live documents.
   let cursor;
 
+  const formattedPath = filenamify(sourceCollectionPath);
+
   let cursorPositionFile =
     __dirname +
-    `/from-${sourceCollectionPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
+    `/from-${formattedPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
   if (await exists(cursorPositionFile)) {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
-    cursor = await firebase
-      .firestore()
-      .doc(cursorDocumentId)
-      .get();
+    cursor = await firebase.firestore().doc(cursorDocumentId).get();
     console.log(
       `Resuming import of Cloud Firestore Collection ${sourceCollectionPath} ${
         queryCollectionGroup ? " (via a Collection Group query)" : ""
@@ -292,7 +168,7 @@ const run = async (): Promise<number> => {
       query = firebase.firestore().collection(sourceCollectionPath);
     }
 
-    query = query.limit(batch);
+    query = query.limit(batchSize);
 
     if (cursor) {
       query = query.startAfter(cursor);
@@ -305,12 +181,11 @@ const run = async (): Promise<number> => {
     cursor = docs[docs.length - 1];
     const rows: FirestoreDocumentChangeEvent[] = docs.map((snapshot) => {
       return {
-        timestamp: new Date(0).toISOString(), // epoch
+        timestamp: new Date().toISOString(), // epoch
         operation: ChangeType.IMPORT,
-        documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${
-          snapshot.ref.path
-        }`,
+        documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${snapshot.ref.path}`,
         documentId: snapshot.id,
+        pathParams: resolveWildcardIds(sourceCollectionPath, snapshot.ref.path),
         eventId: "",
         data: snapshot.data(),
       };
@@ -329,52 +204,6 @@ const run = async (): Promise<number> => {
 
   return totalRowsImported;
 };
-
-async function parseConfig(): Promise<CliConfig> {
-  program.parse(process.argv);
-  if (program.nonInteractive) {
-    if (
-      program.project === undefined ||
-      program.sourceCollectionPath === undefined ||
-      program.dataset === undefined ||
-      program.tableNamePrefix === undefined ||
-      program.queryCollectionGroup === undefined ||
-      program.batchSize === undefined ||
-      program.datasetLocation === undefined ||
-      !validateBatchSize(program.batchSize)
-    ) {
-      program.outputHelp();
-      process.exit(1);
-    }
-    return {
-      projectId: program.project,
-      sourceCollectionPath: program.sourceCollectionPath,
-      datasetId: program.dataset,
-      tableId: program.tableNamePrefix,
-      batchSize: program.batchSize,
-      queryCollectionGroup: program.queryCollectionGroup === "true",
-      datasetLocation: program.datasetLocation,
-    };
-  }
-  const {
-    project,
-    sourceCollectionPath,
-    dataset,
-    table,
-    batchSize,
-    queryCollectionGroup,
-    datasetLocation,
-  } = await inquirer.prompt(questions);
-  return {
-    projectId: project,
-    sourceCollectionPath: sourceCollectionPath,
-    datasetId: dataset,
-    tableId: table,
-    batchSize: batchSize,
-    queryCollectionGroup: queryCollectionGroup,
-    datasetLocation: datasetLocation,
-  };
-}
 
 run()
   .then((rowCount) => {

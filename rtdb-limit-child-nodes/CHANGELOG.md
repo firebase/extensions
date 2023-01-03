@@ -1,3 +1,21 @@
+## Version 0.1.6
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - update validate workflow to use node14
+
+## Version 0.1.5
+
+feature - add Taiwan and Singapore Cloud Function locations (#729)
+
+## Version 0.1.4
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
+fixed - Removed code coverage check on ci
+
 ## Version 0.1.3
 
 feature - Adds an option to select an alternative database instance (#504)

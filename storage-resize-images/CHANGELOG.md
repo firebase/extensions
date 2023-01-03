@@ -1,3 +1,73 @@
+## Version 0.1.32
+
+feature - added lifecycle event to resize existing images
+
+## Version 0.1.31
+
+feature - add AVIF codec support
+
+feature - update IMG_BUCKET param type to selectResource
+
+## Version 0.1.30
+
+feature - include original image data in events
+
+## Version 0.1.29
+
+fixed - add size to metadata
+
+feature - add an option to make the resized images public
+
+fixed - updated sharp lib dependency for improved compression algorithm
+
+## Version 0.1.28
+
+feature - added extension event for image resize completion (#967)
+
+## Version 0.1.27
+
+fixed - update to firebase-admin v10 (#935)
+
+feature - add output options param, to support [Sharp Output Options](https://sharp.pixelplumbing.com/api-output#jpeg) (#878)
+
+## Version 0.1.26
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - update resized metadata content disposition (#839)
+
+feature - add WEBP and GIF animation (#875)
+
+fixed - update validate workflow to use node14
+
+fixed - fix samsung encoded jpg resizing
+
+## Version 0.1.25
+
+fixed - fix errors when resizing Samsung-encoded JPEGs
+
+## Version 0.1.24
+
+fixed - update package lock file to fix installation errors (#782)
+
+## Version 0.1.23
+
+feature - add Taiwan and Singapore Cloud Function locations (#729)
+
+## Version 0.1.22
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
+## Version 0.1.20
+
+feature - Adds support for wildcards in include/exclude paths (#568)
+
+## Version 0.1.19
+
+feature - Adds support for converting to more than one image format (#579)
+
 ## Version 0.1.18
 
 fixed - fixed a bug that caused resized images to be named incorrectly if their file extension was capitalized (#549)

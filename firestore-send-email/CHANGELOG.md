@@ -1,3 +1,81 @@
+## Version 0.1.20
+
+docs - add google app passwords guide
+
+## Version 0.1.19
+
+fixed - generate new lib folder
+
+## Version 0.1.18
+
+fixed - added encoding for connection string passwords (#985)
+
+fixed - move log statement outside of forEach loop (#950)
+
+feature - upgrade to the latest emulator updates (#995)
+
+fixed - further updated the extensions regular expression validation to contain additional smtp formats (#909)
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - added local smtp server for running tests (#794)
+
+fixed - add SMTP secret password (#840)
+
+fixed - added logging for invalid email messages, documentation updated with firestore example (#710)
+
+fixed - update validate workflow to use node14
+
+## Version 0.1.17
+
+fixed - update SMTP connection URI validation regex (#942)
+
+fixed - hide password from showing up in logs (#943)
+
+## Version 0.1.16
+
+fixed - updated the extensions regular expression validation to contain additional smtp formats (#909)
+
+## Version 0.1.15
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - added local smtp server for running tests (#794)
+
+fixed - add SMTP secret password (#840)
+
+fixed - added logging for invalid email messages, documentation updated with firestore example (#710)
+
+fixed - update validate workflow to use node14
+
+## Version 0.1.13
+
+docs - updated POSTINSTALL docs to link to Firebase documentation
+
+## Version 0.1.12
+
+fixed - moved lease expired error message to delivery document (#726)
+
+feature - add Taiwan and Singapore Cloud Function locations (#729)
+
+fixed - empty template attachments fall back to message attachments (#719)
+
+## Version 0.1.11
+
+fixed - added fallback for finding email templates
+
+fixed - removed duplicate Warsaw location
+
+## Version 0.1.10
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
+## Version 0.1.9
+
+feature - Allow attachments within template records to be interpolated with data values passed into a new record in the mail collection. (#519)
+
 ## Version 0.1.8
 
 docs - updated "SMTP connection URI" parameter description to clarify which ports are recommended for SMTP connections (#582)

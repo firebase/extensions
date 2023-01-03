@@ -1,3 +1,45 @@
+## Version 0.1.14
+
+feature - add auto discovery mechanisms + update documentation
+
+feature - upgrade to the latest emulator updates (#995)
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - add RTDB locations function (#865)
+
+fixed - updated typescript compiler
+
+## Version 0.1.13
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - add RTDB locations function (#865)
+
+fixed - updated typescript compiler
+
+fixed - update validate workflow to use node14
+
+## Version 0.1.12
+
+fixed - updated dependencies
+
+## Version 0.1.11
+
+feature - add Taiwan and Singapore Cloud Function locations (#729)
+
+## Version 0.1.10
+
+feature - updated RTDB to be optional (#722)
+
+## Version 0.1.9
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
+fixed - Removed code coverage check on ci
+
 ## Version 0.1.8
 
 fixed - fixed an issue where delete-user-data didn't recognize {DEFAULT} Storage bucket (#532)
