@@ -4,10 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 const SHARD_COLLECTION_ID = '_counter_shards_';
 
 class DistributedCounter {
-  /// Initialize the shardId, which is shared among all the instances.
-  static void init(String shardId) {
-    DistributedCounter.shardId = shardId;
-  }
 
   /// Constructs a sharded counter object that references to a field
   /// in a document that is a counter.
