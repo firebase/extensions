@@ -17,7 +17,6 @@
 import * as admin from "firebase-admin";
 import { FieldPath, DocumentReference } from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
-import * as firebase_tools from "firebase-tools";
 import { getDatabaseUrl } from "./helpers";
 import chunk from "lodash.chunk";
 import { getEventarc } from "firebase-admin/eventarc";
@@ -27,6 +26,7 @@ import * as logs from "./logs";
 import { search } from "./search";
 import { runCustomSearchFunction } from "./runCustomSearchFunction";
 import { runBatchPubSubDeletions } from "./runBatchPubSubDeletions";
+import { recursiveDelete } from "./recursiveDelete";
 
 // Helper function for selecting correct domain adrress
 const databaseURL = getDatabaseUrl(
@@ -105,11 +105,7 @@ export const handleSearch = functions.pubsub
     if (depth <= config.searchDepth) {
       // If the collection ID is the same as the UID, delete the entire collection and sub-collections
       if (collection.id === uid) {
-        await firebase_tools.firestore.delete(path, {
-          project: process.env.PROJECT_ID,
-          recursive: true,
-          yes: true, // auto-confirmation
-        });
+        await recursiveDelete(path);
 
         if (eventChannel) {
           /** Publish event to EventArc */
@@ -309,11 +305,9 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
         logs.firestorePathDeleted(path, false);
       } else {
         logs.firestorePathDeleting(path, true);
-        await firebase_tools.firestore.delete(path, {
-          project: process.env.PROJECT_ID,
-          recursive: true,
-          yes: true, // auto-confirmation
-        });
+
+        await recursiveDelete(path);
+
         logs.firestorePathDeleted(path, true);
       }
     } catch (err) {

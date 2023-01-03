@@ -44,3 +44,9 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
  - Cloud Storage
  - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
 - If you enable events [Eventarc fees apply](https://cloud.google.com/eventarc/pricing).
+
+#### Further reading & resources
+
+You can find more information about this extension in the following articles:
+
+- [Image Optimization With Firebase Extensions](https://invertase.link/ext-resize-images-tutorial)
