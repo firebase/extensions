@@ -10,27 +10,19 @@ class DistributedCounter {
   ///
   /// @param doc A reference to a document with a counter field.
   /// @param field A path to a counter field in the above document.
-  factory DistributedCounter(DocumentReference<Object?> doc, String field) {
+  DistributedCounter(
+    this.doc,
+    this.field,
+  ) {
+    this.shardId = Uuid().v4();
     final shardsRef = doc.collection(SHARD_COLLECTION_ID);
-    Map<String, int> shards = {};
     shards[doc.path] = 0;
     shards[shardsRef.doc(shardId).path] = 0;
     shards[shardsRef.doc('\t' + shardId.substring(0, 4)).path] = 0;
     shards[shardsRef.doc('\t\t' + shardId.substring(0, 3)).path] = 0;
     shards[shardsRef.doc('\t\t\t' + shardId.substring(0, 2)).path] = 0;
     shards[shardsRef.doc('\t\t\t\t' + shardId.substring(0, 1)).path] = 0;
-    Stream<int> snapshots = StreamGroup.mergeBroadcast<int>(shards.keys.map(
-        (path) => doc.firestore
-                .doc(path)
-                .snapshots()
-                .map<int>((DocumentSnapshot snap) {
-              shards[snap.reference.path] = snap.exists ? snap.get(field) : 0;
-              return shards.values.reduce((a, b) => a + b);
-            })));
-    return DistributedCounter._(doc, field, snapshots);
   }
-
-  DistributedCounter._(this.doc, this.field, this._snapshots);
 
   static String shardId;
 
