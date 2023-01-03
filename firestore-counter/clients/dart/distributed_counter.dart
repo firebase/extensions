@@ -60,7 +60,13 @@ class DistributedCounter {
   ///
   /// All local increments to this counter will be immediately visible in the
   /// snapshot.
-  Stream<int> snapshots() => _snapshots;
+  Stream<int> onSnapshot() {
+    return StreamGroup.mergeBroadcast<int>(shards.keys.map((path) =>
+        doc.firestore.doc(path).snapshots().map<int>((DocumentSnapshot snap) {
+          shards[snap.reference.path] = snap.exists ? snap.get(field) : 0;
+          return shards.values.reduce((a, b) => a + b);
+        })));
+  }
 
   /// Increment the counter by a given value.
   ///
