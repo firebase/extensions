@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.27
+version: 0.1.28
 specVersion: v1beta
 
 displayName: Stream Collections to BigQuery
@@ -275,7 +275,7 @@ params:
       - label: none
         value: NONE
     default: NONE
-    required: true
+    required: false
 
   - param: TIME_PARTITIONING_FIELD
     label: BigQuery Time Partitioning column name

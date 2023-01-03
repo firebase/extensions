@@ -96,7 +96,7 @@ program
 const run = async (): Promise<number> => {
   const config = await parseConfig();
   if (config.kind === "ERROR") {
-    config.errors.forEach((e) => console.error(`[ERROR] ${e}`));
+    config.errors?.forEach((e) => console.error(`[ERROR] ${e}`));
     process.exit(1);
   }
 

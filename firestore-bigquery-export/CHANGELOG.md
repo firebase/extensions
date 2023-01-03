@@ -1,3 +1,9 @@
+## Version 0.1.28
+
+fixed - improve table update checks
+
+fixed - Update to fix old_data bug, upgrade dependencies and fix broken tests
+
 ## Version 0.1.27
 
 fixed - added fix for configuration setup

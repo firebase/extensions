@@ -46,7 +46,7 @@ describe("discovery", () => {
     test("can delete is single collection named {uid}", async () => {
       await search(user.uid, 1);
 
-      await waitForCollectionDeletion(rootCollection);
+      await waitForCollectionDeletion(rootCollection, 20_000);
     }, 60000);
   });
 
