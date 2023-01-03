@@ -24,7 +24,7 @@ class DistributedCounter {
     shards[shardsRef.doc('\t\t\t\t' + shardId.substring(0, 1)).path] = 0;
   }
 
-  static String shardId;
+  late final String shardId;
 
   final DocumentReference<Object?> doc;
   final String field;
