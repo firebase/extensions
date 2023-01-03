@@ -1,6 +1,6 @@
 import 'package:async/async.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:uuid/uuid.dart';
 const SHARD_COLLECTION_ID = '_counter_shards_';
 
 class DistributedCounter {
