@@ -15,6 +15,7 @@
  */
 
 export default {
+  doBackfill: process.env.DO_BACKFILL === "true",
   languages: Array.from(new Set(process.env.LANGUAGES.split(","))),
   location: process.env.LOCATION,
   inputFieldName: process.env.INPUT_FIELD_NAME,

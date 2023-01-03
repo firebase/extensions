@@ -2,6 +2,7 @@
 
 exports[`extension config config loaded from environment variables 1`] = `
 Object {
+  "doBackfill": false,
   "inputFieldName": "input",
   "languages": Array [
     "en",

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: auth-mailchimp-sync
-version: 0.1.2
+version: 0.2.1
 specVersion: v1beta
 
 displayName: Sync with Mailchimp
@@ -49,7 +49,7 @@ resources:
       then automatically adds the new user to your specified MailChimp audience.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs10
+      runtime: nodejs14
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.create
         resource: projects/${param:PROJECT_ID}
@@ -62,7 +62,7 @@ resources:
       MailChimp audience.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs10
+      runtime: nodejs14
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${param:PROJECT_ID}
@@ -94,6 +94,8 @@ params:
         value: europe-west3
       - label: Zurich (europe-west6)
         value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
@@ -104,6 +106,8 @@ params:
         value: asia-northeast3
       - label: Mumbai (asia-south1)
         value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
       - label: Jakarta (asia-southeast2)
         value: asia-southeast2
       - label: Montreal (northamerica-northeast1)
@@ -121,7 +125,7 @@ params:
     description: >-
       What is your Mailchimp API key? To obtain a Mailchimp API key, go to your
       [Mailchimp account](https://admin.mailchimp.com/account/api/).
-    type: string
+    type: secret
     example: a1b2c3d4e5f6g7
     required: true
 

@@ -69,7 +69,7 @@ export type FirestoreSchema = {
  * a BigQuery schema in the same pass that generates the view generation query.
  */
 const firestoreToBigQueryFieldType: {
-  [f in FirestoreFieldType]: BigQueryFieldType
+  [f in FirestoreFieldType]: BigQueryFieldType;
 } = {
   boolean: "BOOLEAN",
   geopoint: "GEOGRAPHY",
@@ -214,7 +214,8 @@ function decorateSchemaWithChangelogFields(schema: any): any {
   for (let i = 0; i < changelogSchemaFields.length; i++) {
     if (
       changelogSchemaFields[i].name === "event_id" ||
-      changelogSchemaFields[i].name === "data"
+      changelogSchemaFields[i].name === "data" ||
+      changelogSchemaFields[i].name === "old_data"
     ) {
       continue;
     }
@@ -382,7 +383,8 @@ function processFirestoreSchemaHelper(
   bigQueryFields: { [property: string]: string }[],
   extractPrefix: string[]
 ) {
-  const { fields } = schema;
+  const { fields = [] } = schema;
+  if (!fields.length) return null;
   return fields.map((field) => {
     if (field.type === "map") {
       const subschema: FirestoreSchema = {

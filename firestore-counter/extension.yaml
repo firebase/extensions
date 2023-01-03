@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-counter
-version: 0.2.1
+version: 0.2.5
 specVersion: v1beta
 
 displayName: Distributed Counter
@@ -50,7 +50,7 @@ resources:
     description: This scheduled function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs10
+      runtime: nodejs14
       maxInstances: 1
       scheduleTrigger:
         schedule: "every ${param:SCHEDULE_FREQUENCY} minutes"
@@ -60,7 +60,7 @@ resources:
     description: Listens for changes on counter shards that may need aggregating. This function is limited to max 1 instance.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs10
+      runtime: nodejs14
       maxInstances: 1
       timeout: 120s
       eventTrigger:
@@ -74,7 +74,7 @@ resources:
       The controllerCore function is responsible for scheduling and monitoring these workers.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs10
+      runtime: nodejs14
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:INTERNAL_STATE_PATH}/workers/{workerId}
@@ -101,6 +101,8 @@ params:
         value: us-west3
       - label: Las Vegas (us-west4)
         value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
@@ -109,6 +111,8 @@ params:
         value: europe-west3
       - label: Zurich (europe-west6)
         value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
@@ -119,6 +123,8 @@ params:
         value: asia-northeast3
       - label: Mumbai (asia-south1)
         value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
       - label: Jakarta (asia-southeast2)
         value: asia-southeast2
       - label: Montreal (northamerica-northeast1)

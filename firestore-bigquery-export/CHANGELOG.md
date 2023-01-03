@@ -1,3 +1,123 @@
+## Version 0.1.28
+
+fixed - improve table update checks
+
+fixed - Update to fix old_data bug, upgrade dependencies and fix broken tests
+
+## Version 0.1.27
+
+fixed - added fix for configuration setup
+
+fixed - update snapshot script
+
+feature - add oldData to the record
+
+fixed - updating table metadata too often
+
+## Version 0.1.26
+
+docs - correct service account name
+
+## Version 0.1.25
+
+feature - add version to the bigquery import script
+
+feature - add version to the bigquery gen-schema-view script
+
+fixed - updated bigquery.googleapis.com api reference (#1022)
+
+## Version 0.1.24
+
+fixed - generate new lib folder
+
+## Version 0.1.23
+
+fixed - dataset initialization time (#980)
+
+feature - update the import script to write path_params (#982)
+
+fixed - added updates and tests for improving change tracker initialisation (#946)
+
+feature - upgrade to the latest emulator updates (#995)
+
+fixed - updated type check on partitioned date fields (#906)
+
+fixed - updated the bq projectId to be required and to default as the current firebase project (#900)
+
+fixed - removed lib files and updated local test suite (#894)
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+feature - added merge partitioning, clustering, wildcard Ids & backup collections (#890) (#891)
+
+fixed - added fields null check when generating schemas (#845)
+
+fixed - import script date (#835)
+
+fixed - update validate workflow to use node14
+
+## Version 0.1.22
+
+fixed - updated type check on partitioned date fields (#906)
+
+fixed - updated the BigQuery projectId to be required and to default as the current firebase project (#900)
+
+## Version 0.1.21
+
+fixed - removed lib files and updated local test suite (#894)
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+feature - added merge partitioning, clustering, wildcard Ids & backup collections (#890) (#891)
+
+fixed - added fields null check when generating schemas (#845)
+
+fixed - import script date (#835)
+
+fixed - update validate workflow to use node14
+
+fixed - update package lock file to match latest node type changes (#782)
+
+## Version 0.1.20
+
+fixed - Fixed installation error due to bad package-lock.json
+
+## Version 0.1.19
+
+docs - Renamed the extension to "Stream Collections to BigQuery"
+
+feature - add Taiwan and Singapore Cloud Function locations (#729)
+
+## Version 0.1.18
+
+No change from last release
+
+## Version 0.1.17
+
+fixed - improved import script
+
+## Version 0.1.16
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
+## Version 0.1.15
+
+fixed - rolled back version 0.1.14 to address issue #681
+
+## Version 0.1.14
+
+feature - added Warsaw (europe-central2) location (#677)
+
+feature - updated Cloud Functions runtime to Node.js 14 (#660)
+
+## Version 0.1.13
+
+feature - Added the ability to optionally create partitioned tables to improve query performance and reduce the cost of querying large datasets (#581)
+
+feature - Added us-central-1 as a dataset option (#603)
+
 ## Version 0.1.12
 
 docs - Updated description for COLLECTION_GROUP_QUERY parameter.

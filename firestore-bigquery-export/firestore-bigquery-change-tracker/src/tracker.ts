@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-import { DocumentSnapshot } from "firebase-functions/lib/providers/firestore";
-import { Change, EventContext } from "firebase-functions";
-
 export enum ChangeType {
   CREATE,
   DELETE,
@@ -33,7 +30,10 @@ export interface FirestoreDocumentChangeEvent {
   documentName: string;
   eventId: string;
   documentId: string;
+  pathParams?: { documentId: string; [key: string]: string } | null;
   data: Object;
+  oldData?: Object | null;
+  useNewSnapshotQuerySyntax?: boolean | null;
 }
 
 export interface FirestoreEventHistoryTracker {

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-send-email
-version: 0.1.8
+version: 0.1.20
 specVersion: v1beta
 
 displayName: Trigger Email
@@ -50,7 +50,7 @@ resources:
       delivers emails, and updates the document with delivery status information.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs10
+      runtime: nodejs14
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:MAIL_COLLECTION}/{id}
@@ -77,6 +77,8 @@ params:
         value: us-west3
       - label: Las Vegas (us-west4)
         value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
@@ -85,6 +87,8 @@ params:
         value: europe-west3
       - label: Zurich (europe-west6)
         value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
@@ -95,6 +99,8 @@ params:
         value: asia-northeast3
       - label: Mumbai (asia-south1)
         value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
       - label: Jakarta (asia-southeast2)
         value: asia-southeast2
       - label: Montreal (northamerica-northeast1)
@@ -111,11 +117,26 @@ params:
     label: SMTP connection URI
     description: >-
       A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465.
+      In order to keep passwords secure, it is recommended to omit the password from the connection string while using the `SMTP Password` field for entering secrets and passwords.
+      Passwords and secrets should now be included in `SMTP password` field.
+
+      Secure format:
+       `smtps://username@gmail.com@smtp.gmail.com:465` (username only)
+       `smtps://smtp.gmail.com:465` (No username and password)
+      Backwards Compatible (less secure):
+       `smtps://username@gmail.com:password@smtp.gmail.com:465`. (username and password)
     type: string
-    example: smtps://username:password@smtp.hostname.com:465
-    validationRegex: ^smtps?://[^:]+:[^:]+@.*$
-    validationErrorMessage: Invalid SMTP connection URI. Must be in the form `smtp(s)://username:password@hostname:port`.
+    example: smtps://username@smtp.hostname.com:465
+    validationRegex: ^(smtp[s]*://.*?:[0-9]+.*$)
+    validationErrorMessage: Invalid SMTP connection URI. Must be in the form `smtp(s)://username:password@hostname:port` or `smtp(s)://username@hostname:port`.
     required: true
+
+  - param: SMTP_PASSWORD
+    label: SMTP password
+    description: >-
+      User password for the SMTP server
+    type: secret
+    required: false
 
   - param: MAIL_COLLECTION
     label: Email documents collection

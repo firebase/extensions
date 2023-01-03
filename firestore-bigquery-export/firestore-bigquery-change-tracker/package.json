@@ -5,15 +5,16 @@
     "url": "github.com/firebase/extensions.git",
     "directory": "firestore-bigquery-export/firestore-bigquery-change-tracker"
   },
-  "version": "1.1.11",
+  "version": "1.1.20",
   "description": "Core change-tracker library for Cloud Firestore Collection BigQuery Exports",
   "main": "./lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
     "clean": "rimraf lib",
     "compile": "tsc",
-    "test": "jest",
-    "prepare": "npm run build"
+    "test:local": "firebase ext:dev:emulators:exec ./node_modules/.bin/jest --test-params=./src/__tests__/emulator-params.env --project=extensions-testing --config=./src/__tests__/firebase.json",
+    "prepare": "npm run build",
+    "generate-stresstest-table": "bq query --project_id=extensions-testing  --use_legacy_sql=false < ./src/__tests__/fixtures/sql/generateSnapshotStresstestTable.sql"
   },
   "files": [
     "lib/*.js",
@@ -23,11 +24,13 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@google-cloud/bigquery": "^4.7.0",
-    "firebase-admin": "^7.1.1",
-    "firebase-functions": "^3.9.0",
+    "@google-cloud/resource-manager": "^3.0.0",
+    "firebase-admin": "^8.0.0",
+    "firebase-functions": "^3.13.2",
     "generate-schema": "^2.6.0",
     "inquirer": "^6.4.0",
     "lodash": "^4.17.14",
+    "node-fetch": "^2.6.1",
     "sql-formatter": "^2.3.3",
     "traverse": "^0.6.6"
   },

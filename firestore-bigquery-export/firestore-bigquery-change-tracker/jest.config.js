@@ -10,5 +10,8 @@ module.exports = {
     },
   },
   preset: "ts-jest",
-  testMatch: ["**/src/__tests__/bigquery/*.test.ts"],
+  testMatch: ["**/src/__tests__/**/*.test.ts"],
+  testEnvironment: "node",
+  testTimeout: 180000,
+  collectCoverage: true,
 };

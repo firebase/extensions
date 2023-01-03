@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-shorten-urls-bitly
-version: 0.1.5
+version: 0.1.8
 specVersion: v1beta
 
 displayName: Shorten URLs
@@ -54,10 +54,14 @@ resources:
       then writes the shortened form back to the same document.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs10
+      runtime: nodejs14
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
+
+externalServices:
+  - name: Bitly
+    PricingUri: https://bitly.com/pages/pricing
 
 params:
   - param: LOCATION
@@ -81,6 +85,8 @@ params:
         value: us-west3
       - label: Las Vegas (us-west4)
         value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
@@ -89,6 +95,8 @@ params:
         value: europe-west3
       - label: Zurich (europe-west6)
         value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
@@ -99,6 +107,8 @@ params:
         value: asia-northeast3
       - label: Mumbai (asia-south1)
         value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
       - label: Jakarta (asia-southeast2)
         value: asia-southeast2
       - label: Montreal (northamerica-northeast1)
@@ -113,6 +123,7 @@ params:
 
   - param: BITLY_ACCESS_TOKEN
     label: Bitly access token
+    type: secret
     description: >
       What is your Bitly access token? Generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
     example: a1b2c3d4e5f6g7

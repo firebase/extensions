@@ -2,36 +2,36 @@
 
 You can test out this extension right away!
 
-1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/firestore/data) in the Firebase console.
+1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:BIGQUERY_PROJECT_ID}/firestore/data) in the Firebase console.
 
 1.  If it doesn't already exist, create the collection you specified during installation: `${param:COLLECTION_PATH}`
 
 1.  Create a document in the collection called `bigquery-mirror-test` that contains any fields with any values that you'd like.
 
-1.  Go to the [BigQuery web UI](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}) in the Google Cloud Platform console.
+1.  Go to the [BigQuery web UI](https://console.cloud.google.com/bigquery?project=${param:BIGQUERY_PROJECT_ID}&p=${param:BIGQUERY_PROJECT_ID}&d=${param:DATASET_ID}) in the Google Cloud Platform console.
 
 1.  Query your **raw changelog table**, which should contain a single log of creating the `bigquery-mirror-test` document.
 
     ```
     SELECT *
-    FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog`
+    FROM `${param:BIGQUERY_PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog`
     ```
 
 1.  Query your **latest view**, which should return the latest change event for the only document present -- `bigquery-mirror-test`.
 
     ```
     SELECT *
-    FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_latest`
+    FROM `${param:BIGQUERY_PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_latest`
     ```
 
-1.  Delete the `bigquery-mirror-test` document from [Cloud Firestore](https://console.firebase.google.com/project/${param:PROJECT_ID}/firestore/data).
+1.  Delete the `bigquery-mirror-test` document from [Cloud Firestore](https://console.firebase.google.com/project/${param:BIGQUERY_PROJECT_ID}/firestore/data).
     The `bigquery-mirror-test` document will disappear from the **latest view** and a `DELETE` event will be added to the **raw changelog table**.
 
 1.  You can check the changelogs of a single document with this query:
 
     ```
     SELECT *
-    FROM `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog`
+    FROM `${param:BIGQUERY_PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog`
     WHERE document_name = "bigquery-mirror-test"
     ORDER BY TIMESTAMP ASC
     ```
@@ -40,12 +40,27 @@ You can test out this extension right away!
 
 Whenever a document is created, updated, imported, or deleted in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset which contains the following resources:
 
-- **raw changelog table:** [`${param:TABLE_ID}_raw_changelog`](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:TABLE_ID}_raw_changelog&page=table)
-- **latest view:** [`${param:TABLE_ID}_raw_latest`](https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:TABLE_ID}_raw_latest&page=table)
+- **raw changelog table:** [`${param:TABLE_ID}_raw_changelog`](https://console.cloud.google.com/bigquery?project=${param:BIGQUERY_PROJECT_ID}&p=${param:BIGQUERY_PROJECT_ID}&d=${param:DATASET_ID}&t=${param:TABLE_ID}_raw_changelog&page=table)
+- **latest view:** [`${param:TABLE_ID}_raw_latest`](https://console.cloud.google.com/bigquery?project=${param:BIGQUERY_PROJECT_ID}&p=${param:BIGQUERY_PROJECT_ID}&d=${param:DATASET_ID}&t=${param:TABLE_ID}_raw_latest&page=table)
 
 To review the schema for these two resources, click the **Schema** tab for each resource in BigQuery.
 
 Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`).
+
+Enabling wildcard references will provide an additional STRING based column. The resulting JSON field value references any wildcards that are included in ${param:COLLECTION_PATH}. You can extract them using [JSON_EXTRACT_SCALAR](https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions#json_extract_scalar).
+
+
+`Partition` settings cannot be updated on a pre-existing table, if these options are required then a new table must be created.
+
+`Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
+
+### Configuring Alternative BigQuery Project
+
+When defining a specific BigQuery project, a manual step to set up permissions is required:
+
+1. Navigate to https://console.cloud.google.com/iam-admin/iam?project=${param:BIGQUERY_PROJECT_ID}
+2. Add the **BigQuery Data Editor** role to the following service account:
+   `ext-${param:EXT_INSTANCE_ID}@${param:PROJECT_ID}.iam.gserviceaccount.com`.
 
 ### _(Optional)_ Import existing documents
 
