@@ -352,3 +352,7 @@ params:
         value: no
     default: no
     required: true
+
+events:
+  - type: firebase.extensions.big-query-export.v1.sync.start
+    description: Occurs on a firestore document write event.
