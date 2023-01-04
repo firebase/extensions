@@ -1,3 +1,7 @@
+## Version 0.1.21
+
+feature - add lifecycle events
+
 ## Version 0.1.20
 
 docs - add google app passwords guide

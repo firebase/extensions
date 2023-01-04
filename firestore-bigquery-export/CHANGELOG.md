@@ -1,3 +1,11 @@
+## Version 0.1.29
+
+feature - added events with an initial sync start event
+
+feature - add flags for emulator and updated snapshot script in the import script
+
+fixed - add optional chaining to forEach method calls, to prevent undefined errors
+
 ## Version 0.1.28
 
 fixed - improve table update checks
