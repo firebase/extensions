@@ -8,6 +8,8 @@ export interface CliConfig {
   queryCollectionGroup: boolean;
   datasetLocation: string;
   multiThreaded: boolean;
+  useNewSnapshotQuerySyntax: boolean;
+  useEmulator: boolean;
 }
 
 export interface CliConfigError {
