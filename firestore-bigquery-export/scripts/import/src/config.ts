@@ -145,6 +145,18 @@ const questions = [
     type: "confirm",
     default: false,
   },
+  {
+    message: "Would you like to use the new optimized snapshot query script?",
+    name: "useNewSnapshotQuerySyntax",
+    type: "confirm",
+    default: false,
+  },
+  {
+    message: "Would you like to use a local firestore emulator?",
+    name: "useEmulator",
+    type: "confirm",
+    default: false,
+  },
 ];
 
 export async function parseConfig(): Promise<CliConfig | CliConfigError> {
@@ -192,6 +204,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       queryCollectionGroup: program.queryCollectionGroup === "true",
       datasetLocation: program.datasetLocation,
       multiThreaded: program.multiThreaded === "true",
+      useNewSnapshotQuerySyntax: program.useNewSnapshotQuerySyntax === "true",
+      useEmulator: program.useEmulator === "true",
     };
   }
   const {
@@ -203,6 +217,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     queryCollectionGroup,
     datasetLocation,
     multiThreaded,
+    useNewSnapshotQuerySyntax,
+    useEmulator,
   } = await inquirer.prompt(questions);
 
   return {
@@ -215,6 +231,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     queryCollectionGroup: queryCollectionGroup,
     datasetLocation: datasetLocation,
     multiThreaded: multiThreaded,
+    useNewSnapshotQuerySyntax: useNewSnapshotQuerySyntax,
+    useEmulator: useEmulator,
   };
 }
 
