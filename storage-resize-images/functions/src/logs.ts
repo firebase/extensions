@@ -62,6 +62,12 @@ export const imageAlreadyResized = () => {
   logger.log("File is already a resized image, no processing is required");
 };
 
+export const imageFailedAttempt = () => {
+  logger.log(
+    "File is a copy of an image which failed to resize, no processing is required"
+  );
+};
+
 export const imageOutsideOfPaths = (
   absolutePaths: string[],
   imagePath: string
