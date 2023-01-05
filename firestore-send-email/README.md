@@ -57,6 +57,11 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 Usage of this extension also requires you to have SMTP credentials for mail delivery. You are responsible for any associated costs with your usage of your SMTP provider.
 
+#### Further reading & resources
+
+You can find more information about this extension in the following articles:
+
+- [Sending Emails Using Firestore And Firebase Extensions](https://invertase.link/Y6Nu)
 
 
 
