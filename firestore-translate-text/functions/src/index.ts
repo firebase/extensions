@@ -82,7 +82,7 @@ export const fstranslatebackfill = functions.tasks
       await runtime.setProcessingState(
         "PROCESSING_COMPLETE",
         'Existing documents were not translated because "Translate existing documents?" is configured to false. ' +
-        "If you want to fill in missing translations, reconfigure this instance."
+          "If you want to fill in missing translations, reconfigure this instance."
       );
       return;
     }
@@ -133,19 +133,22 @@ export const fstranslatebackfill = functions.tasks
       if (newErrorCount == 0) {
         return await runtime.setProcessingState(
           "PROCESSING_COMPLETE",
-          `Successfully translated ${newSucessCount} documents in ${Date.now() - startTime
+          `Successfully translated ${newSucessCount} documents in ${
+            Date.now() - startTime
           }ms.`
         );
       } else if (newErrorCount > 0 && newSucessCount > 0) {
         return await runtime.setProcessingState(
           "PROCESSING_WARNING",
-          `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors in ${Date.now() - startTime
+          `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors in ${
+            Date.now() - startTime
           }ms. See function logs for specific error messages.`
         );
       }
       return await runtime.setProcessingState(
         "PROCESSING_FAILED",
-        `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors in ${Date.now() - startTime
+        `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors in ${
+          Date.now() - startTime
         }ms. See function logs for specific error messages.`
       );
     }
@@ -157,7 +160,7 @@ const extractInput = (snapshot: admin.firestore.DocumentSnapshot): any => {
 
 const extractOutput = (snapshot: admin.firestore.DocumentSnapshot): any => {
   return snapshot.get(config.outputFieldName);
-}
+};
 
 const extractLanguages = (
   snapshot: admin.firestore.DocumentSnapshot
@@ -338,7 +341,8 @@ const translateSingleBackfill = async (
   } else if (failedTranslations.length && successfulTranslations.length) {
     logs.partialTranslateError(input, failedTranslations, translations.length);
     // If any translations failed, throw so it is reported as an error.
-    throw `Error while translating '${input}': ${failedTranslations.length
+    throw `Error while translating '${input}': ${
+      failedTranslations.length
     } out of ${languages.length} translations failed: ${failedTranslations.join(
       "\n"
     )}`;
@@ -433,7 +437,8 @@ const translateMultipleBackfill = async (
       translations.length
     );
     // If any translations failed, throw so it is reported as an error.
-    throw `${failedTranslations.length
+    throw `${
+      failedTranslations.length
     } error(s) while translating '${input}': ${failedTranslations.join("\n")}`;
   } else {
     logs.translateInputToAllLanguagesComplete(JSON.stringify(input));
