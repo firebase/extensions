@@ -10,6 +10,7 @@
     "build": "lerna run build",
     "local:emulator": "cd _emulator && firebase emulators:start -P demo-test",
     "test": "cd _emulator && firebase emulators:exec jest -P demo-test",
+    "test:ci": "cd _emulator && firebase emulators:exec \"CI_TEST=true jest --detectOpenHandles --forceExit\" -P demo-test",
     "test:local": "concurrently \"npm run local:emulator\" \"jest\"",
     "test:watch": "concurrently \"npm run local:emulator\" \"jest --watch\"",
     "test-coverage": "jest --coverage --detectOpenHandles --forceExit",
