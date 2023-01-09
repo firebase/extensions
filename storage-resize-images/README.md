@@ -39,6 +39,10 @@ Before installing this extension, make sure that you've [set up a Cloud Storage 
 
 You can install multiple instances of this extension for the same project to configure different resizing options for different paths. However, as mentioned before this extension listens for all changes made to the specified Cloud Storage bucket. That means all instances will be triggered every time a file is uploaded to the bucket. Therefore, it is recommended to use different buckets instead of different paths to prevent unnecessary function calls.
 
+#### Troubleshooting
+
+If events are enabled, and you want to create custom event handlers to respond to the events published by the extension, you must ensure that you have the appropriate [role/permissions](https://cloud.google.com/pubsub/docs/access-control#permissions_and_roles) to subscribe to Pub/Sub events.
+
 #### Billing
  
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
@@ -49,6 +53,11 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
  - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
 - If you enable events [Eventarc fees apply](https://cloud.google.com/eventarc/pricing).
 
+#### Further reading & resources
+
+You can find more information about this extension in the following articles:
+
+- [Image Optimization With Firebase Extensions](https://invertase.link/ext-resize-images-tutorial)
 
 
 
@@ -62,7 +71,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Sizes of resized images: What sizes of images would you like (in pixels)? Enter the sizes as a comma-separated list of WIDTHxHEIGHT values. Learn more about [how this parameter works](https://firebase.google.com/products/extensions/storage-resize-images).
 
 
-* Deletion of original file: Do you want to automatically delete the original file from the Cloud Storage bucket? Note that these deletions cannot be undone.
+* Deletion of original file: Do you want to automatically delete the original file from the Cloud Storage bucket? Warning: these deletions cannot be undone, and if you reconfigure this instance to use different image dimensions, you won't be able to backfill deleted images.
 
 * Make resized images public: Do you want to make the resized images public automatically? So you can access them by URL. For example: https://storage.googleapis.com/{bucket}/{path}
 
@@ -93,11 +102,16 @@ If you prefer to resize every image uploaded to your Storage bucket,  leave this
 
 * Cloud Function memory: Memory of the function responsible of resizing images.  Choose how much memory to give to the function that resize images. (For animated GIF => GIF we recommend using a minimum of 2GB).
 
+* Backfill existing images: Should existing, unresized images in the Storage bucket be resized as well?
+
+
 
 
 **Cloud Functions:**
 
 * **generateResizedImage:** Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images, then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
+
+* **backfillResizedImages:** Handles tasks from startBackfill to resize existing images.
 
 
 

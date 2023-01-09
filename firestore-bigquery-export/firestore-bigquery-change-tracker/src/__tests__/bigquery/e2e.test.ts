@@ -533,6 +533,54 @@ describe("e2e", () => {
 
       expect(firstPageLegacy.length).toEqual(firstPageOptimised.length);
       expect(firstPageLegacy).toEqual(firstPageOptimised);
+
+      expect(legacyViewMetadata.view.query.includes("FIRST_VALUE")).toBe(true);
+
+      expect(optimisedViewMetadata.view.query.includes("FIRST_VALUE")).toBe(
+        false
+      );
+    });
+  });
+
+  describe("old data field", () => {
+    let table_raw_changelog;
+    beforeEach(async () => {
+      randomID = (Math.random() + 1).toString(36).substring(7);
+      datasetId = `dataset_${randomID}`;
+      tableId = `${randomID}`;
+      table_raw_changelog = `${tableId}_raw_changelog`;
+      [dataset] = await bq.createDataset(datasetId, {});
+    });
+
+    afterEach(async () => {
+      await deleteTable({
+        datasetId,
+      });
+    });
+    test("successfully adds old data field if it does not yet exist", async () => {
+      const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
+
+      /** Create a table without an old_data column */
+      let schema = [{ name: "Name", type: "STRING" }];
+
+      let [originalRawTable] = await dataset.createTable(table_raw_changelog, {
+        schema,
+      });
+
+      expect(
+        originalRawTable.metadata.schema.fields.filter(
+          ($) => $.name === "old_data"
+        ).length
+      ).toBe(0);
+
+      await changeTracker({ datasetId, tableId }).record([event]);
+
+      const [metadata] = await dataset.table(table_raw_changelog).getMetadata();
+
+      /** Assertions */
+      expect(
+        metadata.schema.fields.filter(($) => $.name === "old_data").length
+      ).toBe(1);
     });
   });
 });

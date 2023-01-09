@@ -22,6 +22,7 @@ import {
   RawChangelogSchema,
   RawChangelogViewSchema,
   documentIdField,
+  oldDataField,
   documentPathParams,
 } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
@@ -114,7 +115,9 @@ export class FirestoreBigQueryEventHistoryTracker
         },
       };
     });
+
     const transformedRows = await this.transformRows(rows);
+
     await this.insertData(transformedRows);
   }
 
@@ -174,9 +177,9 @@ export class FirestoreBigQueryEventHistoryTracker
       e.response.insertErrors.errors
     ) {
       const errors = e.response.insertErrors.errors;
-      errors.forEach((error) => {
+      errors?.forEach((error) => {
         let isExpected = false;
-        expectedErrors.forEach((expectedError) => {
+        expectedErrors?.forEach((expectedError) => {
           if (
             error.message === expectedError.message &&
             error.location === expectedError.location
@@ -252,7 +255,7 @@ export class FirestoreBigQueryEventHistoryTracker
         );
       }
 
-      // Exceeded number of retires, save in failed collection
+      // Exceeded number of retries, save in failed collection
       if (!retry && this.config.backupTableId) {
         await handleFailedTransactions(rows, this.config, e);
       }
@@ -333,6 +336,15 @@ export class FirestoreBigQueryEventHistoryTracker
         (column) => column.name === "path_params"
       );
 
+      const oldDataColExists = fields.find(
+        (column) => column.name === "old_data"
+      );
+
+      if (!oldDataColExists) {
+        fields.push(oldDataField);
+        logs.addNewColumn(this.rawChangeLogTableName(), oldDataField.name);
+      }
+
       if (!documentIdColExists) {
         fields.push(documentIdField);
         logs.addNewColumn(this.rawChangeLogTableName(), documentIdField.name);
@@ -344,7 +356,6 @@ export class FirestoreBigQueryEventHistoryTracker
           documentPathParams.name
         );
       }
-      await partitioning.addPartitioningToSchema(metadata.schema.fields);
 
       /** Updated table metadata if required */
       const shouldUpdate = await tableRequiresUpdate({
@@ -352,10 +363,21 @@ export class FirestoreBigQueryEventHistoryTracker
         config: this.config,
         documentIdColExists,
         pathParamsColExists,
+        oldDataColExists,
       });
 
       if (shouldUpdate) {
+        /** set partitioning */
+        await partitioning.addPartitioningToSchema(metadata.schema.fields);
+
+        /** update table metadata with changes. */
         await table.setMetadata(metadata);
+        logs.updatingMetadata(this.rawChangeLogTableName(), {
+          config: this.config,
+          documentIdColExists,
+          pathParamsColExists,
+          oldDataColExists,
+        });
       }
     } else {
       logs.bigQueryTableCreating(changelogName);
@@ -397,17 +419,18 @@ export class FirestoreBigQueryEventHistoryTracker
     if (viewExists) {
       logs.bigQueryViewAlreadyExists(view.id, dataset.id);
       const [metadata] = await view.getMetadata();
-      const fields = metadata.schema ? metadata.schema.fields : [];
+      // TODO: just casting this for now, needs properly fixing
+      const fields = (metadata.schema ? metadata.schema.fields : []) as {
+        name: string;
+      }[];
       if (this.config.wildcardIds) {
         schema.fields.push(documentPathParams);
       }
-      const documentIdColExists = fields.find(
-        (column) => column.name === "document_id"
-      );
 
-      const pathParamsColExists = fields.find(
-        (column) => column.name === "path_params"
-      );
+      const columnNames = fields.map((field) => field.name);
+      const documentIdColExists = columnNames.includes("document_id");
+      const pathParamsColExists = columnNames.includes("path_params");
+      const oldDataColExists = columnNames.includes("old_data");
 
       /** If new view or opt-in to new query syntax **/
       const updateView = viewRequiresUpdate({
@@ -415,6 +438,7 @@ export class FirestoreBigQueryEventHistoryTracker
         config: this.config,
         documentIdColExists,
         pathParamsColExists,
+        oldDataColExists,
       });
 
       if (updateView) {
@@ -424,9 +448,18 @@ export class FirestoreBigQueryEventHistoryTracker
           schema,
           useLegacyQuery: !this.config.useNewSnapshotQuerySyntax,
         });
-        logs.addNewColumn(this.rawLatestView(), documentIdField.name);
+
+        if (!documentIdColExists) {
+          logs.addNewColumn(this.rawLatestView(), documentIdField.name);
+        }
 
         await view.setMetadata(metadata);
+        logs.updatingMetadata(this.rawLatestView(), {
+          config: this.config,
+          documentIdColExists,
+          pathParamsColExists,
+          oldDataColExists,
+        });
       }
     } else {
       const schema = { fields: [...RawChangelogViewSchema.fields] };
