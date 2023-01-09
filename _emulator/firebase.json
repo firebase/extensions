@@ -1,7 +1,8 @@
 {
   "extensions": {
     "firestore-send-email": "../firestore-send-email",
-    "delete-user-data": "../delete-user-data"
+    "delete-user-data": "../delete-user-data",
+    "firestore-counter": "../firestore-counter"
   },
   "storage": {
     "rules": "storage.rules"
@@ -9,6 +10,9 @@
   "emulators": {
     "hub": {
       "port": 4000
+    },
+    "firestore": {
+      "port": 8080
     },
     "storage": {
       "port": 9199
@@ -24,15 +28,7 @@
     },
     "ui": {
       "enabled": true
-    },
-    "firestore": {
-      "host": "127.0.0.1",
-      "port": 8080
     }
-  },
-  "functions": {
-    "port": 5002,
-    "source": "functions"
   },
   "firestore": {
     "rules": "firestore.rules",
