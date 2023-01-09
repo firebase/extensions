@@ -250,7 +250,7 @@ describe("extension", () => {
       );
     });
 
-    test("should only translate to english if languages field test specifies that", async () => {
+    test("should only translate to english if languages has "English" as a single array item", async () => {
       beforeSnapshot = snapshot();
 
       afterSnapshot = snapshot({
