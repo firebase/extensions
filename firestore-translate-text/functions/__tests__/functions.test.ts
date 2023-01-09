@@ -250,7 +250,7 @@ describe("extension", () => {
       );
     });
 
-    test("should only translate to english if languages has "English" as a single array item", async () => {
+    test('should only translate to english if languages has "English" as a single array item', async () => {
       beforeSnapshot = snapshot();
 
       afterSnapshot = snapshot({
@@ -297,7 +297,7 @@ describe("extension", () => {
       });
     });
 
-    test("should only translate english and spanish if languages field test specifies that", async () => {
+    test('should only translate "English" and "Spanish" if languages field contains English and Spanish as array items', async () => {
       beforeSnapshot = snapshot();
 
       afterSnapshot = snapshot({
