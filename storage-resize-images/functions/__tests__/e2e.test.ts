@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import { config } from "dotenv";
 import * as path from "path";
+import { waitForFile } from "./util";
 
 const envLocalPath = path.resolve(
   __dirname,
@@ -32,45 +33,14 @@ describe("extension", () => {
     await storage.bucket().upload(__dirname + "/not-an-image.jpeg", {});
     await storage.bucket().upload(__dirname + "/test-image.jpeg", {});
   });
-  afterEach(async () => {
-    // await storage.bucket().deleteFiles(process.env.RESIZED_IMAGES_PATH);
-  });
 
-  test("should resize image successfully, and copy failed image to failed directory", async () => {
+  test("should resize (test-image.jpeg) successfully, and copy failed image (not-an-image.jpeg) to failed directory", async () => {
     const successFilePath = `${process.env.RESIZED_IMAGES_PATH}/test-image_${process.env.IMG_SIZES}.${process.env.IMAGE_TYPE}`;
     // wait for file to be uploaded to storage:
-    expect(await waitForFile(successFilePath)).toBe(true);
+    expect(await waitForFile(storage, successFilePath)).toBe(true);
 
     const failureFilePath = `${process.env.FAILED_IMAGES_PATH}/not-an-image.jpeg`;
 
-    expect(await waitForFile(failureFilePath)).toBe(true);
+    expect(await waitForFile(storage, failureFilePath)).toBe(true);
   });
 });
-
-const waitForFile = async (
-  filePath: string,
-  timeout: number = 1000,
-  maxAttempts: number = 20
-) => {
-  let exists: boolean;
-
-  const promise = new Promise((resolve, reject) => {
-    let timesRun = 0;
-    const interval = setInterval(async () => {
-      timesRun += 1;
-      try {
-        exists = await storage.bucket().file(filePath).exists();
-      } catch (e) {}
-      if (exists && exists[0]) {
-        clearInterval(interval);
-        resolve(exists[0]);
-      }
-      if (timesRun > maxAttempts) {
-        clearInterval(interval);
-        reject("timed out without finding file " + filePath);
-      }
-    }, timeout);
-  });
-
-  return await promise;
-};
