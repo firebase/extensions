@@ -25,7 +25,6 @@ import {
   FirestoreEventHistoryTracker,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 
-import * as admin from "firebase-admin";
 import { getEventarc } from "firebase-admin/eventarc";
 import * as logs from "./logs";
 import { getChangeType, getDocumentId, resolveWildcardIds } from "./util";
