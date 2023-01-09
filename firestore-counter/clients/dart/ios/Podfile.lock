@@ -1,0 +1,93 @@
+PODS:
+  - cloud_firestore (4.3.1):
+    - Firebase/Firestore (= 10.3.0)
+    - firebase_core
+    - Flutter
+    - nanopb (< 2.30910.0, >= 2.30908.0)
+  - Firebase/CoreOnly (10.3.0):
+    - FirebaseCore (= 10.3.0)
+  - Firebase/Firestore (10.3.0):
+    - Firebase/CoreOnly
+    - FirebaseFirestore (~> 10.3.0)
+  - firebase_core (2.4.1):
+    - Firebase/CoreOnly (= 10.3.0)
+    - Flutter
+  - FirebaseCore (10.3.0):
+    - FirebaseCoreInternal (~> 10.0)
+    - GoogleUtilities/Environment (~> 7.8)
+    - GoogleUtilities/Logger (~> 7.8)
+  - FirebaseCoreInternal (10.3.0):
+    - "GoogleUtilities/NSData+zlib (~> 7.8)"
+  - FirebaseFirestore (10.3.0):
+    - FirebaseFirestore/AutodetectLeveldb (= 10.3.0)
+  - FirebaseFirestore/AutodetectLeveldb (10.3.0):
+    - FirebaseFirestore/Base
+    - FirebaseFirestore/WithLeveldb
+  - FirebaseFirestore/Base (10.3.0)
+  - FirebaseFirestore/WithLeveldb (10.3.0):
+    - FirebaseFirestore/Base
+  - Flutter (1.0.0)
+  - GoogleUtilities/Environment (7.10.0):
+    - PromisesObjC (< 3.0, >= 1.2)
+  - GoogleUtilities/Logger (7.10.0):
+    - GoogleUtilities/Environment
+  - "GoogleUtilities/NSData+zlib (7.10.0)"
+  - integration_test (0.0.1):
+    - Flutter
+  - nanopb (2.30909.0):
+    - nanopb/decode (= 2.30909.0)
+    - nanopb/encode (= 2.30909.0)
+  - nanopb/decode (2.30909.0)
+  - nanopb/encode (2.30909.0)
+  - PromisesObjC (2.1.1)
+
+DEPENDENCIES:
+  - cloud_firestore (from `.symlinks/plugins/cloud_firestore/ios`)
+  - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
+  - FirebaseFirestore (from `https://github.com/invertase/firestore-ios-sdk-frameworks.git`, tag `10.3.0`)
+  - Flutter (from `Flutter`)
+  - integration_test (from `.symlinks/plugins/integration_test/ios`)
+
+SPEC REPOS:
+  trunk:
+    - Firebase
+    - FirebaseCore
+    - FirebaseCoreInternal
+    - GoogleUtilities
+    - nanopb
+    - PromisesObjC
+
+EXTERNAL SOURCES:
+  cloud_firestore:
+    :path: ".symlinks/plugins/cloud_firestore/ios"
+  firebase_core:
+    :path: ".symlinks/plugins/firebase_core/ios"
+  FirebaseFirestore:
+    :git: https://github.com/invertase/firestore-ios-sdk-frameworks.git
+    :tag: 10.3.0
+  Flutter:
+    :path: Flutter
+  integration_test:
+    :path: ".symlinks/plugins/integration_test/ios"
+
+CHECKOUT OPTIONS:
+  FirebaseFirestore:
+    :git: https://github.com/invertase/firestore-ios-sdk-frameworks.git
+    :tag: 10.3.0
+
+SPEC CHECKSUMS:
+  cloud_firestore: 5e5bb98722f66e820bf1aa7b3c98ffc9b2450ffb
+  Firebase: f92fc551ead69c94168d36c2b26188263860acd9
+  firebase_core: bf59c32d2e53814f558efa20840c1902fa2fe461
+  FirebaseCore: 988754646ab3bd4bdcb740f1bfe26b9f6c0d5f2a
+  FirebaseCoreInternal: 29b76f784d607df8b2a1259d73c3f04f1210137b
+  FirebaseFirestore: ef5e47e1489c03dc978f94e8b43ad5f67a77df8c
+  Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
+  GoogleUtilities: bad72cb363809015b1f7f19beb1f1cd23c589f95
+  integration_test: a1e7d09bd98eca2fc37aefd79d4f41ad37bdbbe5
+  nanopb: b552cce312b6c8484180ef47159bc0f65a1f0431
+  PromisesObjC: ab77feca74fa2823e7af4249b8326368e61014cb
+
+PODFILE CHECKSUM: 723b60dd9e39dbff9c7f7ffc2d6a32ba9bb6ad7f
+
+COCOAPODS: 1.11.2

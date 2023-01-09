@@ -7,4 +7,4 @@ functions/lib/test/*.js
 stress_test/**/*.js
 
 functions/tasks.json
-clients/dart/.dart_tool
+clients/dart/.**
