@@ -8,6 +8,7 @@ interface TableRequiresUpdateOptions {
   config: FirestoreBigQueryEventHistoryTrackerConfig;
   documentIdColExists: boolean;
   pathParamsColExists: boolean;
+  oldDataColExists: boolean;
 }
 
 export async function tableRequiresUpdate({
@@ -15,6 +16,7 @@ export async function tableRequiresUpdate({
   config,
   documentIdColExists,
   pathParamsColExists,
+  oldDataColExists,
 }: TableRequiresUpdateOptions): Promise<boolean> {
   /* Setup checks */
   const { metadata } = table;
@@ -29,6 +31,9 @@ export async function tableRequiresUpdate({
 
   /** Check document id column */
   if (!documentIdColExists) return true;
+
+  /** Check old_data column exists */
+  if (!oldDataColExists) return true;
 
   /** Check partitioning */
   const partitioning = new Partitioning(config, table);
@@ -45,6 +50,7 @@ interface ViewRequiresUpdateOptions {
   config: FirestoreBigQueryEventHistoryTrackerConfig;
   documentIdColExists: boolean;
   pathParamsColExists: boolean;
+  oldDataColExists: boolean;
 }
 
 export function viewRequiresUpdate({
@@ -52,15 +58,16 @@ export function viewRequiresUpdate({
   config,
   documentIdColExists,
   pathParamsColExists,
+  oldDataColExists,
 }: ViewRequiresUpdateOptions): boolean {
-  /** Check if documentId column exists */
-  if (!documentIdColExists) return true;
-
   /** Check wildcards */
   if (!!config.wildcardIds !== pathParamsColExists) return true;
 
   /** Check document id column */
   if (!documentIdColExists) return true;
+
+  /** Check old_data column exists */
+  if (!oldDataColExists) return true;
 
   /* Using the new query syntax for snapshots */
   if (metadata) {

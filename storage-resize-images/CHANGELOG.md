@@ -1,3 +1,11 @@
+## Version 0.1.33
+
+fixed - re-add input object data to the complete event
+
+## Version 0.1.32
+
+feature - added lifecycle event to resize existing images
+
 ## Version 0.1.31
 
 feature - add AVIF codec support
