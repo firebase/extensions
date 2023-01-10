@@ -21,7 +21,7 @@ process.env.GOOGLE_CLOUD_PROJECT = "demo-test";
 process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
 
 describe("extension", () => {
-  beforeEach(async () => {
+  beforeAll(async () => {
     // if there is no app, initialize one
     if (!admin.apps.length) {
       admin.initializeApp({
@@ -34,11 +34,13 @@ describe("extension", () => {
     await storage.bucket().upload(__dirname + "/test-image.jpeg", {});
   });
 
-  test("should resize (test-image.jpeg) successfully, and copy failed image (not-an-image.jpeg) to failed directory", async () => {
+  test("should resize (test-image.jpeg) successfully", async () => {
     const successFilePath = `${process.env.RESIZED_IMAGES_PATH}/test-image_${process.env.IMG_SIZES}.${process.env.IMAGE_TYPE}`;
     // wait for file to be uploaded to storage:
     expect(await waitForFile(storage, successFilePath)).toBe(true);
+  });
 
+  test("should resize (test-image.jpeg) successfully, and copy failed image (not-an-image.jpeg) to failed directory", async () => {
     const failureFilePath = `${process.env.FAILED_IMAGES_PATH}/not-an-image.jpeg`;
 
     expect(await waitForFile(storage, failureFilePath)).toBe(true);
