@@ -23,6 +23,7 @@ import config from "./config";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
 import { setSmtpCredentials } from "./helpers";
+import * as events from "./events";
 
 logs.init();
 
@@ -45,6 +46,9 @@ async function initialize() {
       admin.firestore().collection(config.templatesCollection)
     );
   }
+
+  /** setup events */
+  events.setupEventChannel();
 }
 
 async function transportLayer() {
@@ -305,25 +309,39 @@ async function processWrite(change) {
 
   switch (payload.delivery.state) {
     case "SUCCESS":
+      await events.recordSuccessEvent(change);
     case "ERROR":
+      await events.recordErrorEvent(change, payload, payload.delivery.error);
       return null;
     case "PROCESSING":
+      await events.recordProcessingEvent(change);
+
       if (payload.delivery.leaseExpireTime.toMillis() < Date.now()) {
+        const error = "Message processing lease expired.";
+
+        /** Send error event */
+        await events.recordErrorEvent(change, payload, error);
+
         // Wrapping in transaction to allow for automatic retries (#48)
         return admin.firestore().runTransaction((transaction) => {
           transaction.update(change.after.ref, {
             "delivery.state": "ERROR",
             // Keeping error to avoid any breaking changes in the next minor update.
             // Error to be removed for the next major release.
-            error: "Message processing lease expired.",
+            error,
             "delivery.error": "Message processing lease expired.",
           });
+
           return Promise.resolve();
         });
       }
       return null;
     case "PENDING":
+      await events.recordPendingEvent(change, payload);
     case "RETRY":
+      /** Send retry event */
+      await events.recordRetryEvent(change, payload);
+
       // Wrapping in transaction to allow for automatic retries (#48)
       await admin.firestore().runTransaction((transaction) => {
         transaction.update(change.after.ref, {
@@ -342,12 +360,27 @@ export const processQueue = functions.firestore
   .document(config.mailCollection)
   .onWrite(async (change) => {
     await initialize();
+
     logs.start();
+
+    if (!change.before.exists) {
+      await events.recordStartEvent(change);
+    }
+
     try {
       await processWrite(change);
     } catch (err) {
+      await events.recordErrorEvent(
+        change,
+        change.after.data(),
+        `Unhandled error occurred during processing: ${err.message}"`
+      );
       logs.error(err);
       return null;
     }
+
+    /** record complete event */
+    await events.recordCompleteEvent(change);
+
     logs.complete();
   });

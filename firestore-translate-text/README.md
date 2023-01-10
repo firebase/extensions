@@ -69,7 +69,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Translations output field name: What is the name of the field where you want to store your translations?
 
 
-* Translate existing documents: Should existing documents in the Firestore collection be translated as well?  If you've added new languages since a document was translated, this will fill those in as well.
+* Translate existing documents?: Should existing documents in the Firestore collection be translated as well?  If you've added new languages since a document was translated, this will fill those in as well.
 
 
 
