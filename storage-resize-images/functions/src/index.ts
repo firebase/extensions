@@ -109,6 +109,7 @@ const generateResizedImageHandler = async (
         type: "firebase.extensions.storage-resize-images.v1.complete",
         subject: filePath,
         data: {
+          input: object,
           outputs: results,
         },
       }));
