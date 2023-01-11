@@ -37,8 +37,8 @@ jobs:
       - name: Install dependencies
         run: |
           cd firestore-counter/functions
-          npm run build
           npm i
+          npm run build
       - name: Build emulator functions
         run: |
           cd _emulator/functions
