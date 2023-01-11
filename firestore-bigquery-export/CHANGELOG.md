@@ -1,3 +1,75 @@
+## Version 0.1.29
+
+feature - added events with an initial sync start event
+
+feature - add flags for emulator and updated snapshot script in the import script
+
+fixed - add optional chaining to forEach method calls, to prevent undefined errors
+
+## Version 0.1.28
+
+fixed - improve table update checks
+
+fixed - Update to fix old_data bug, upgrade dependencies and fix broken tests
+
+## Version 0.1.27
+
+fixed - added fix for configuration setup
+
+fixed - update snapshot script
+
+feature - add oldData to the record
+
+fixed - updating table metadata too often
+
+## Version 0.1.26
+
+docs - correct service account name
+
+## Version 0.1.25
+
+feature - add version to the bigquery import script
+
+feature - add version to the bigquery gen-schema-view script
+
+fixed - updated bigquery.googleapis.com api reference (#1022)
+
+## Version 0.1.24
+
+fixed - generate new lib folder
+
+## Version 0.1.23
+
+fixed - dataset initialization time (#980)
+
+feature - update the import script to write path_params (#982)
+
+fixed - added updates and tests for improving change tracker initialisation (#946)
+
+feature - upgrade to the latest emulator updates (#995)
+
+fixed - updated type check on partitioned date fields (#906)
+
+fixed - updated the bq projectId to be required and to default as the current firebase project (#900)
+
+fixed - removed lib files and updated local test suite (#894)
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+feature - added merge partitioning, clustering, wildcard Ids & backup collections (#890) (#891)
+
+fixed - added fields null check when generating schemas (#845)
+
+fixed - import script date (#835)
+
+fixed - update validate workflow to use node14
+
+## Version 0.1.22
+
+fixed - updated type check on partitioned date fields (#906)
+
+fixed - updated the BigQuery projectId to be required and to default as the current firebase project (#900)
+
 ## Version 0.1.21
 
 fixed - removed lib files and updated local test suite (#894)

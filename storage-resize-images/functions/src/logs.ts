@@ -51,7 +51,7 @@ export const error = (err: Error) => {
 };
 
 export const errorDeleting = (err: Error) => {
-  logger.warn("Error when deleting temporary files", err);
+  logger.warn("Error when deleting files", err);
 };
 
 export const failed = () => {
@@ -159,4 +159,25 @@ export const remoteFileDeleted = (path: string) => {
 
 export const remoteFileDeleting = (path: string) => {
   logger.log(`Deleting original file from storage bucket: '${path}'`);
+};
+
+export const errorOutputOptionsParse = (err: any) => {
+  logger.error(
+    `Error while parsing "Output options for selected format". Parameter will be ignored`,
+    err
+  );
+};
+
+export const startBackfill = () => {
+  logger.log("Starting backfill job. Checking for existing images to resize.");
+};
+
+export const continueBackfill = (fileName: string) => {
+  logger.log(`Checking if '${fileName}' needs to resized`);
+};
+
+export const backfillComplete = (success: number, failures: number) => {
+  logger.log(
+    `Finished backfill. Successfully resized ${success} images. Failed to resize ${failures} images.`
+  );
 };

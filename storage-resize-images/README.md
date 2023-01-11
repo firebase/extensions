@@ -8,15 +8,20 @@
 
 **Details**: Use this extension to create resized versions of an image uploaded to a Cloud Storage bucket.
 
-When you upload an image file to your specified Cloud Storage bucket, this extension:
+When you upload a file to your specified Cloud Storage bucket, this extension:
 
-- Creates a resized image with your specified dimensions.
-- Names the resized image using the same name as the original uploaded image, but suffixed with your specified width and height.
-- Stores the resized image in the same Storage bucket as the original uploaded image.
+- Detects if the file is an image. If it is, then:
+  - Creates a resized image with your specified dimensions.
+  - Names the resized image using the same name as the original uploaded image, but suffixed with your specified width and height.
+  - Stores the resized image in the same Storage bucket as the original uploaded image.
 
 You can even configure the extension to create resized images of different dimensions for each original image upload. For example, you might want images that are 200x200, 400x400, and 680x680 - this extension can create these three resized images then store them in your bucket.
 
 The extension automatically copies the following metadata, if present, from the original image to the resized image(s): `Cache-Control`, `Content-Disposition`, `Content-Encoding`, `Content-Language`, `Content-Type`, and user-provided metadata (a new Firebase storage download token will be generated on the resized image(s) if the original metadata contains a token). Note that you can optionally configure the extension to overwrite the [`Cache-Control`](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control) value for the resized image(s).
+
+The extension supports resizing images in `JPEG`, `PNG`, `WebP`, `GIF`, `AVIF` and `TIFF` formats, and the output can be in one or more of these formats.
+
+The extension can publish a resize completion event which you can optionally enable when you install the extension. If you enable events, you can [write custom event handlers](https://firebase.google.com/docs/extensions/install-extensions#eventarc) that respond to these events. You can always enable or disable events later. Events will be emitted via Eventarc.
 
 #### Detailed configuration information
 
@@ -28,15 +33,31 @@ For example, say that you specify a max width of 200px and a max height of 100px
 
 Before installing this extension, make sure that you've [set up a Cloud Storage bucket](https://firebase.google.com/docs/storage) in your Firebase project.
 
+> **NOTE**: As mentioned above, this extension listens for all changes made to the specified Cloud Storage bucket. This may cause unnecessary function calls. It is recommended to create a separate Cloud Storage bucket, especially for images you want to resize, and set up this extension to listen to that bucket.
+
+#### Multiple instances of this extension
+
+You can install multiple instances of this extension for the same project to configure different resizing options for different paths. However, as mentioned before this extension listens for all changes made to the specified Cloud Storage bucket. That means all instances will be triggered every time a file is uploaded to the bucket. Therefore, it is recommended to use different buckets instead of different paths to prevent unnecessary function calls.
+
+#### Troubleshooting
+
+If events are enabled, and you want to create custom event handlers to respond to the events published by the extension, you must ensure that you have the appropriate [role/permissions](https://cloud.google.com/pubsub/docs/access-control#permissions_and_roles) to subscribe to Pub/Sub events.
+
 #### Billing
  
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
  
 - You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
-- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s free tier:
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
  - Cloud Storage
  - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
+- If you enable events [Eventarc fees apply](https://cloud.google.com/eventarc/pricing).
 
+#### Further reading & resources
+
+You can find more information about this extension in the following articles:
+
+- [Image Optimization With Firebase Extensions](https://invertase.link/ext-resize-images-tutorial)
 
 
 
@@ -44,13 +65,15 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * Cloud Functions location: Where do you want to deploy the functions created for this extension? You usually want a location close to your Storage bucket. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
-* Cloud Storage bucket for images: To which Cloud Storage bucket will you upload images that you want to resize? Resized images will be stored in this bucket. Depending on your extension configuration, original images are either kept or deleted.
+* Cloud Storage bucket for images: To which Cloud Storage bucket will you upload images that you want to resize? Resized images will be stored in this bucket. Depending on your extension configuration, original images are either kept or deleted. It is recommended to create a separate bucket for this extension. For more information, refer to the [pre-installation guide](https://firebase.google.com/products/extensions/storage-resize-images).
 
 
 * Sizes of resized images: What sizes of images would you like (in pixels)? Enter the sizes as a comma-separated list of WIDTHxHEIGHT values. Learn more about [how this parameter works](https://firebase.google.com/products/extensions/storage-resize-images).
 
 
-* Deletion of original file: Do you want to automatically delete the original file from the Cloud Storage bucket? Note that these deletions cannot be undone.
+* Deletion of original file: Do you want to automatically delete the original file from the Cloud Storage bucket? Warning: these deletions cannot be undone, and if you reconfigure this instance to use different image dimensions, you won't be able to backfill deleted images.
+
+* Make resized images public: Do you want to make the resized images public automatically? So you can access them by URL. For example: https://storage.googleapis.com/{bucket}/{path}
 
 * Cloud Storage path for resized images: A relative path in which to store resized images. For example, if you specify a path here of `thumbs` and you upload an image to `/images/original.jpg`, then the resized image is stored at `/images/thumbs/original_200x200.jpg`. If you prefer to store resized images at the root of your bucket, leave this field empty.
 
@@ -71,16 +94,24 @@ If you prefer to resize every image uploaded to your Storage bucket,  leave this
 * Convert image to preferred types: The image types you'd like your source image to convert to.  The default for this option will be to keep the original file type as the destination file type.
 
 
+* Output options for selected formats: Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion. eg. `{"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "pallete": true }}`
+
+
 * GIF and WEBP animated option: Keep animation of GIF and WEBP formats.
 
 
 * Cloud Function memory: Memory of the function responsible of resizing images.  Choose how much memory to give to the function that resize images. (For animated GIF => GIF we recommend using a minimum of 2GB).
+
+* Backfill existing images: Should existing, unresized images in the Storage bucket be resized as well?
+
 
 
 
 **Cloud Functions:**
 
 * **generateResizedImage:** Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images, then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
+
+* **backfillResizedImages:** Handles tasks from startBackfill to resize existing images.
 
 
 

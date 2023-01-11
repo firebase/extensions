@@ -22,6 +22,7 @@ import {
   RawChangelogSchema,
   RawChangelogViewSchema,
   documentIdField,
+  oldDataField,
   documentPathParams,
 } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
@@ -40,22 +41,24 @@ import {
 
 import { Partitioning } from "./partitioning";
 import { Clustering } from "./clustering";
+import { tableRequiresUpdate, viewRequiresUpdate } from "./checkUpdates";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
   tableId: string;
-  datasetLocation: string | undefined;
-  transformFunction: string | undefined;
-  timePartitioning: string;
-  timePartitioningField: string | undefined;
-  timePartitioningFieldType: string | undefined;
-  timePartitioningFirestoreField: string | undefined;
+  datasetLocation?: string | undefined;
+  transformFunction?: string | undefined;
+  timePartitioning?: string | undefined;
+  timePartitioningField?: string | undefined;
+  timePartitioningFieldType?: string | undefined;
+  timePartitioningFirestoreField?: string | undefined;
   clustering: string[] | null;
   wildcardIds?: boolean;
-  bqProjectId: string | undefined;
+  bqProjectId?: string | undefined;
   backupTableId?: string | undefined;
+  useNewSnapshotQuerySyntax?: boolean;
 }
 
 /**
@@ -69,9 +72,10 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
  */
 
 export class FirestoreBigQueryEventHistoryTracker
-  implements FirestoreEventHistoryTracker {
+  implements FirestoreEventHistoryTracker
+{
   bq: bigquery.BigQuery;
-  initialized: boolean = false;
+  _initialized: boolean = false;
 
   constructor(public config: FirestoreBigQueryEventHistoryTrackerConfig) {
     this.bq = new bigquery.BigQuery();
@@ -102,13 +106,18 @@ export class FirestoreBigQueryEventHistoryTracker
           document_id: event.documentId,
           operation: ChangeType[event.operation],
           data: JSON.stringify(this.serializeData(event.data)),
+          old_data: event.oldData
+            ? JSON.stringify(this.serializeData(event.oldData))
+            : null,
           ...partitionValue,
           ...(this.config.wildcardIds &&
             event.pathParams && { path_params: JSON.stringify(pathParams) }),
         },
       };
     });
+
     const transformedRows = await this.transformRows(rows);
+
     await this.insertData(transformedRows);
   }
 
@@ -130,7 +139,7 @@ export class FirestoreBigQueryEventHistoryTracker
       return undefined;
     }
 
-    const data = traverse<traverse.Traverse<any>>(eventData).map(function(
+    const data = traverse<traverse.Traverse<any>>(eventData).map(function (
       property
     ) {
       if (property && property.constructor) {
@@ -168,9 +177,9 @@ export class FirestoreBigQueryEventHistoryTracker
       e.response.insertErrors.errors
     ) {
       const errors = e.response.insertErrors.errors;
-      errors.forEach((error) => {
+      errors?.forEach((error) => {
         let isExpected = false;
-        expectedErrors.forEach((expectedError) => {
+        expectedErrors?.forEach((expectedError) => {
           if (
             error.message === expectedError.message &&
             error.location === expectedError.location
@@ -191,17 +200,26 @@ export class FirestoreBigQueryEventHistoryTracker
    * A half a second delay is added per check while the function
    * continually re-checks until the referenced dataset and table become available.
    */
-  private async waitForInitialization(dataset, table) {
+  private async waitForInitialization() {
     return new Promise((resolve) => {
       let handle = setInterval(async () => {
-        const [datasetExists] = await dataset.exists();
-        const [tableExists] = await table.exists();
+        try {
+          const dataset = this.bigqueryDataset();
+          const changelogName = this.rawChangeLogTableName();
+          const table = dataset.table(changelogName);
 
-        if (datasetExists && tableExists) {
+          const [datasetExists] = await dataset.exists();
+          const [tableExists] = await table.exists();
+
+          if (datasetExists && tableExists) {
+            clearInterval(handle);
+            return resolve(table);
+          }
+        } catch (ex) {
           clearInterval(handle);
-          return resolve(table);
+          logs.failedToInitializeWait(ex.message);
         }
-      }, 500);
+      }, 5000);
     });
   }
 
@@ -222,7 +240,6 @@ export class FirestoreBigQueryEventHistoryTracker
     try {
       const dataset = this.bigqueryDataset();
       const table = dataset.table(this.rawChangeLogTableName());
-      await this.waitForInitialization(dataset, table);
 
       logs.dataInserting(rows.length);
       await table.insert(rows, options);
@@ -238,13 +255,13 @@ export class FirestoreBigQueryEventHistoryTracker
         );
       }
 
-      // Exceeded number of retires, save in failed collection
+      // Exceeded number of retries, save in failed collection
       if (!retry && this.config.backupTableId) {
         await handleFailedTransactions(rows, this.config, e);
       }
 
       // Reinitializing in case the destintation table is modified.
-      this.initialized = false;
+      this._initialized = false;
       logs.bigQueryTableInsertErrors(e.errors);
       throw e;
     }
@@ -255,17 +272,22 @@ export class FirestoreBigQueryEventHistoryTracker
    * After the first invokation, it skips initialization assuming these resources are still there.
    */
   private async initialize() {
-    if (this.initialized) {
-      return;
+    try {
+      if (this._initialized) {
+        return;
+      }
+
+      await this.initializeDataset();
+
+      await this.initializeRawChangeLogTable();
+
+      await this.initializeLatestView();
+
+      this._initialized = true;
+    } catch (ex) {
+      await this.waitForInitialization();
+      this._initialized = true;
     }
-
-    await this.initializeDataset();
-
-    await this.initializeRawChangeLogTable();
-
-    await this.initializeLatestView();
-
-    this.initialized = true;
   }
 
   /**
@@ -314,6 +336,15 @@ export class FirestoreBigQueryEventHistoryTracker
         (column) => column.name === "path_params"
       );
 
+      const oldDataColExists = fields.find(
+        (column) => column.name === "old_data"
+      );
+
+      if (!oldDataColExists) {
+        fields.push(oldDataField);
+        logs.addNewColumn(this.rawChangeLogTableName(), oldDataField.name);
+      }
+
       if (!documentIdColExists) {
         fields.push(documentIdField);
         logs.addNewColumn(this.rawChangeLogTableName(), documentIdField.name);
@@ -325,10 +356,28 @@ export class FirestoreBigQueryEventHistoryTracker
           documentPathParams.name
         );
       }
-      await partitioning.addPartitioningToSchema(metadata.schema.fields);
 
-      if (!documentIdColExists || !pathParamsColExists) {
+      /** Updated table metadata if required */
+      const shouldUpdate = await tableRequiresUpdate({
+        table,
+        config: this.config,
+        documentIdColExists,
+        pathParamsColExists,
+        oldDataColExists,
+      });
+
+      if (shouldUpdate) {
+        /** set partitioning */
+        await partitioning.addPartitioningToSchema(metadata.schema.fields);
+
+        /** update table metadata with changes. */
         await table.setMetadata(metadata);
+        logs.updatingMetadata(this.rawChangeLogTableName(), {
+          config: this.config,
+          documentIdColExists,
+          pathParamsColExists,
+          oldDataColExists,
+        });
       }
     } else {
       logs.bigQueryTableCreating(changelogName);
@@ -341,6 +390,7 @@ export class FirestoreBigQueryEventHistoryTracker
 
       //Add partitioning
       await partitioning.addPartitioningToSchema(schema.fields);
+
       await partitioning.updateTableMetadata(options);
 
       // Add clustering
@@ -366,80 +416,69 @@ export class FirestoreBigQueryEventHistoryTracker
     const [viewExists] = await view.exists();
     const schema = RawChangelogViewSchema;
 
-    const partitioning = new Partitioning(this.config, view);
-
     if (viewExists) {
       logs.bigQueryViewAlreadyExists(view.id, dataset.id);
       const [metadata] = await view.getMetadata();
-      const fields = metadata.schema ? metadata.schema.fields : [];
+      // TODO: just casting this for now, needs properly fixing
+      const fields = (metadata.schema ? metadata.schema.fields : []) as {
+        name: string;
+      }[];
       if (this.config.wildcardIds) {
         schema.fields.push(documentPathParams);
       }
-      const documentIdColExists = fields.find(
-        (column) => column.name === "document_id"
-      );
 
-      const pathParamsColExists = fields.find(
-        (column) => column.name === "path_params"
-      );
+      const columnNames = fields.map((field) => field.name);
+      const documentIdColExists = columnNames.includes("document_id");
+      const pathParamsColExists = columnNames.includes("path_params");
+      const oldDataColExists = columnNames.includes("old_data");
 
-      if (!documentIdColExists) {
-        metadata.view = latestConsistentSnapshotView(
-          this.config.datasetId,
-          this.rawChangeLogTableName(),
-          schema
-        );
-        logs.addNewColumn(this.rawLatestView(), documentIdField.name);
+      /** If new view or opt-in to new query syntax **/
+      const updateView = viewRequiresUpdate({
+        metadata,
+        config: this.config,
+        documentIdColExists,
+        pathParamsColExists,
+        oldDataColExists,
+      });
+
+      if (updateView) {
+        metadata.view = latestConsistentSnapshotView({
+          datasetId: this.config.datasetId,
+          tableName: this.rawChangeLogTableName(),
+          schema,
+          useLegacyQuery: !this.config.useNewSnapshotQuerySyntax,
+        });
+
+        if (!documentIdColExists) {
+          logs.addNewColumn(this.rawLatestView(), documentIdField.name);
+        }
+
+        await view.setMetadata(metadata);
+        logs.updatingMetadata(this.rawLatestView(), {
+          config: this.config,
+          documentIdColExists,
+          pathParamsColExists,
+          oldDataColExists,
+        });
       }
-
-      if (!pathParamsColExists && this.config.wildcardIds) {
-        metadata.view = latestConsistentSnapshotView(
-          this.config.datasetId,
-          this.rawChangeLogTableName(),
-          schema
-        );
-        logs.addNewColumn(this.rawLatestView(), documentPathParams.name);
-      }
-
-      //Add partitioning
-      await partitioning.addPartitioningToSchema(schema.fields);
-
-      //TODO: Tidy up and format / add test cases?
-      // if (
-      //   !documentIdColExists ||
-      //   (!pathParamsColExists && this.config.wildcardIds) ||
-      //   partition.isValidPartitionForExistingTable(partitionColExists)
-      // ) {
-
-      await view.setMetadata(metadata);
-      // }
     } else {
       const schema = { fields: [...RawChangelogViewSchema.fields] };
-      //Add partitioning field
-      await partitioning.addPartitioningToSchema(schema.fields);
-      //TODO Create notification for a user that View cannot be Time Partitioned by the field.
-      // await partitioning.updateTableMetadata(options);
 
       if (this.config.wildcardIds) {
         schema.fields.push(documentPathParams);
       }
-      const latestSnapshot = latestConsistentSnapshotView(
-        this.config.datasetId,
-        this.rawChangeLogTableName(),
+      const latestSnapshot = latestConsistentSnapshotView({
+        datasetId: this.config.datasetId,
+        tableName: this.rawChangeLogTableName(),
         schema,
-        this.bq.projectId
-      );
+        bqProjectId: this.bq.projectId,
+        useLegacyQuery: !this.config.useNewSnapshotQuerySyntax,
+      });
       logs.bigQueryViewCreating(this.rawLatestView(), latestSnapshot.query);
       const options: TableMetadata = {
         friendlyName: this.rawLatestView(),
         view: latestSnapshot,
       };
-
-      if (this.config.timePartitioning) {
-        options.timePartitioning = {
-          type: this.config.timePartitioning,
-        };
-      }
 
       try {
         await view.create(options);

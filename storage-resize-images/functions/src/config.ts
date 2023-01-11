@@ -38,11 +38,14 @@ function paramToArray(param) {
 export default {
   bucket: process.env.IMG_BUCKET,
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
+  doBackfill: process.env.DO_BACKFILL === "true",
   imageSizes: process.env.IMG_SIZES.split(","),
+  makePublic: process.env.MAKE_PUBLIC === "true",
   resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
   includePathList: paramToArray(process.env.INCLUDE_PATH_LIST),
   excludePathList: paramToArray(process.env.EXCLUDE_PATH_LIST),
   deleteOriginalFile: deleteOriginalFile(process.env.DELETE_ORIGINAL_FILE),
   imageTypes: paramToArray(process.env.IMAGE_TYPE),
+  outputOptions: process.env.OUTPUT_OPTIONS,
   animated: process.env.IS_ANIMATED === "true" || undefined ? true : false,
 };

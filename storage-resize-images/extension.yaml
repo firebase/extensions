@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.26
+version: 0.1.33
 specVersion: v1beta
 
 displayName: Resize Images
@@ -62,6 +62,15 @@ resources:
       eventTrigger:
         eventType: google.storage.object.finalize
         resource: projects/_/buckets/${param:IMG_BUCKET}
+  - name: backfillResizedImages
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Handles tasks from startBackfill to resize existing images.
+    properties:
+      location: ${LOCATION}
+      runtime: nodejs14
+      availableMemoryMb: ${param:FUNCTION_MEMORY}
+      taskQueueTrigger: {}
 
 params:
   - param: LOCATION
@@ -127,7 +136,10 @@ params:
       To which Cloud Storage bucket will you upload images that you want to resize?
       Resized images will be stored in this bucket. Depending on your extension configuration,
       original images are either kept or deleted.
-    type: string
+      It is recommended to create a separate bucket for this extension. For more information,
+      refer to the [pre-installation guide](https://firebase.google.com/products/extensions/storage-resize-images).
+    type: selectResource
+    resourceType: storage.googleapis.com/Bucket
     example: my-project-12345.appspot.com
     validationRegex: ^([0-9a-z_.-]*)$
     validationErrorMessage: Invalid storage bucket
@@ -152,17 +164,31 @@ params:
     label: Deletion of original file
     description: >-
       Do you want to automatically delete the original file from the Cloud Storage
-      bucket? Note that these deletions cannot be undone.
+      bucket? Warning: these deletions cannot be undone, and if you reconfigure this
+      instance to use different image dimensions, you won't be able to backfill deleted images.
+    type: select
+    options:
+      - label: Don't delete
+        value: false
+      - label: Delete on any resize attempt
+        value: true
+      - label: Delete only on successful resize attempts
+        value: on_success
+    default: false
+    required: true
+
+  - param: MAKE_PUBLIC
+    label: Make resized images public
+    description: >-
+      Do you want to make the resized images public automatically? So you can access them by URL.
+      For example: https://storage.googleapis.com/{bucket}/{path}
     type: select
     options:
       - label: Yes
         value: true
       - label: No
         value: false
-      - label: Delete on successful resize
-        value: on_success  
     default: false
-    required: true
 
   - param: RESIZED_IMAGES_PATH
     label: Cloud Storage path for resized images
@@ -241,10 +267,22 @@ params:
         value: tiff
       - label: gif
         value: gif
+      - label: avif
+        value: avif
       - label: original
         value: false
     default: false
     required: true
+
+  - param: OUTPUT_OPTIONS
+    label: Output options for selected formats
+    description: >
+      Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion.
+      eg. `{"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "pallete": true }}`
+    type: string
+    validationRegex: ^({(.*?)})$
+    validationErrorMessage: Please provide a valid json object.
+    required: false
 
   - param: IS_ANIMATED
     label: GIF and WEBP animated option
@@ -275,3 +313,30 @@ params:
     default: 1024
     required: true
     immutable: false
+
+  - param: DO_BACKFILL
+    label: Backfill existing images
+    description: >
+      Should existing, unresized images in the Storage bucket be resized as well?
+    type: select
+    required: true
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+
+events:
+  - type: firebase.extensions.storage-resize-images.v1.complete
+    description: Occurs when image resizing completes. The event will contain further details about specific formats and sizes.
+
+lifecycleEvents:
+  onInstall:
+    function: backfillResizedImages
+    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
+  onUpdate:
+    function: backfillResizedImages
+    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
+  onConfigure:
+    function: backfillResizedImages
+    processingMessage: Resizing existing images in ${param:IMG_BUCKET}

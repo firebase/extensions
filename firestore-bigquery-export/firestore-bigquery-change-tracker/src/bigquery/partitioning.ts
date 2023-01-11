@@ -6,7 +6,9 @@ import * as logs from "../logs";
 import * as bigquery from "@google-cloud/bigquery";
 
 import { getNewPartitionField } from "./schema";
-import { TableMetadata } from "@google-cloud/bigquery";
+import { BigQuery, TableMetadata } from "@google-cloud/bigquery";
+
+import { PartitionFieldType } from "../types";
 
 export class Partitioning {
   public config: FirestoreBigQueryEventHistoryTrackerConfig;
@@ -50,7 +52,11 @@ export class Partitioning {
   }
 
   private isValidPartitionTypeDate(value) {
-    return value instanceof firebase.firestore.Timestamp;
+    /* Check if valid timestamp value from sdk */
+    if (value instanceof firebase.firestore.Timestamp) return true;
+
+    /* Check if valid date/time value from console */
+    return Object.prototype.toString.call(value) === "[object Date]";
   }
 
   private hasHourAndDatePartitionConfig() {
@@ -80,7 +86,7 @@ export class Partitioning {
       !timePartitioningFieldType &&
       !timePartitioningFirestoreField;
 
-    /* No custom congig has been set, use partition value option only */
+    /* No custom config has been set, use partition value option only */
     if (hasNoCustomOptions) return true;
 
     /* check if all options have been provided to be  */
@@ -147,7 +153,8 @@ export class Partitioning {
   }
 
   async isValidPartitionForExistingTable(): Promise<boolean> {
-    if (this.isTablePartitioned()) return false;
+    const isPartitioned = await this.isTablePartitioned();
+    if (isPartitioned) return Promise.resolve(false);
 
     return this.hasValidCustomPartitionConfig();
   }
@@ -156,6 +163,23 @@ export class Partitioning {
     if (!this.isPartitioningEnabled()) return false;
 
     return this.hasValidCustomPartitionConfig();
+  }
+
+  convertDateValue(fieldValue: Date): string {
+    const { timePartitioningFieldType } = this.config;
+
+    /* Return as Datetime value */
+    if (timePartitioningFieldType === PartitionFieldType.DATETIME) {
+      return BigQuery.datetime(fieldValue.toISOString()).value;
+    }
+
+    /* Return as Date value */
+    if (timePartitioningFieldType === PartitionFieldType.DATE) {
+      return BigQuery.date(fieldValue.toISOString().substring(0, 10)).value;
+    }
+
+    /* Return as Timestamp  */
+    return BigQuery.timestamp(fieldValue).value;
   }
 
   /*
@@ -181,8 +205,15 @@ export class Partitioning {
       return { [fieldName]: fieldValue };
     }
 
-    if (this.isValidPartitionTypeDate(fieldValue))
-      return { [fieldName]: fieldValue.toDate() };
+    if (this.isValidPartitionTypeDate(fieldValue)) {
+      /* Return converted console value */
+      if (fieldValue.toDate) {
+        return { [fieldName]: this.convertDateValue(fieldValue.toDate()) };
+      }
+
+      /* Return standard date value */
+      return { [fieldName]: fieldValue };
+    }
 
     logs.firestoreTimePartitionFieldError(
       event.documentName,

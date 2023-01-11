@@ -3,7 +3,7 @@ import * as sharp from "sharp";
 import * as path from "path";
 import * as fs from "fs";
 
-import { Bucket, File } from "@google-cloud/storage";
+import { Bucket } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
 import { uuid } from "uuidv4";
 
@@ -12,6 +12,7 @@ import * as logs from "./logs";
 
 export interface ResizedImageResult {
   size: string;
+  outputFilePath: string;
   success: boolean;
 }
 
@@ -35,34 +36,54 @@ export function resize(file, size) {
 }
 
 export function convertType(buffer, format) {
-  if (format === "jpg" || format === "jpeg") {
-    return sharp(buffer)
-      .jpeg()
-      .toBuffer();
+  let outputOptions = {
+    jpeg: {},
+    jpg: {},
+    png: {},
+    webp: {},
+    tiff: {},
+    tif: {},
+    avif: {},
+  };
+  if (config.outputOptions) {
+    try {
+      outputOptions = JSON.parse(config.outputOptions);
+    } catch (e) {
+      logs.errorOutputOptionsParse(e);
+    }
+  }
+  const { jpeg, jpg, png, webp, tiff, tif, avif } = outputOptions;
+
+  if (format === "jpeg") {
+    return sharp(buffer).jpeg(jpeg).toBuffer();
+  }
+
+  if (format === "jpg") {
+    return sharp(buffer).jpeg(jpg).toBuffer();
   }
 
   if (format === "png") {
-    return sharp(buffer)
-      .png()
-      .toBuffer();
+    return sharp(buffer).png(png).toBuffer();
   }
 
   if (format === "webp") {
-    return sharp(buffer, { animated: config.animated })
-      .webp()
-      .toBuffer();
+    return sharp(buffer, { animated: config.animated }).webp(webp).toBuffer();
   }
 
-  if (format === "tiff" || format === "tif") {
-    return sharp(buffer)
-      .tiff()
-      .toBuffer();
+  if (format === "tif") {
+    return sharp(buffer).tiff(tif).toBuffer();
+  }
+
+  if (format === "tiff") {
+    return sharp(buffer).tiff(tiff).toBuffer();
   }
 
   if (format === "gif") {
-    return sharp(buffer, { animated: config.animated })
-      .gif()
-      .toBuffer();
+    return sharp(buffer, { animated: config.animated }).gif().toBuffer();
+  }
+
+  if (format === "avif") {
+    return sharp(buffer).avif(avif).toBuffer();
   }
 
   return buffer;
@@ -77,6 +98,7 @@ export const supportedContentTypes = [
   "image/tiff",
   "image/webp",
   "image/gif",
+  "image/avif",
 ];
 
 export const supportedImageContentTypeMap = {
@@ -87,6 +109,7 @@ export const supportedImageContentTypeMap = {
   tiff: "image/tiff",
   webp: "image/webp",
   gif: "image/gif",
+  avif: "image/avif",
 };
 
 const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
@@ -96,9 +119,7 @@ const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
 export const modifyImage = async ({
   bucket,
   originalFile,
-  fileDir,
-  fileNameWithoutExtension,
-  fileExtension,
+  parsedPath,
   contentType,
   size,
   objectMetadata,
@@ -106,14 +127,17 @@ export const modifyImage = async ({
 }: {
   bucket: Bucket;
   originalFile: string;
-  fileDir: string;
-  fileNameWithoutExtension: string;
-  fileExtension: string;
+  parsedPath: path.ParsedPath;
   contentType: string;
   size: string;
   objectMetadata: ObjectMetadata;
   format: string;
 }): Promise<ResizedImageResult> => {
+  const {
+    ext: fileExtension,
+    dir: fileDir,
+    name: fileNameWithoutExtension,
+  } = parsedPath;
   const shouldFormatImage = format !== "false";
   const imageContentType = shouldFormatImage
     ? supportedImageContentTypeMap[format]
@@ -157,7 +181,7 @@ export const modifyImage = async ({
       contentEncoding: objectMetadata.contentEncoding,
       contentLanguage: objectMetadata.contentLanguage,
       contentType: imageContentType,
-      metadata: objectMetadata.metadata || {},
+      metadata: objectMetadata.metadata ? { ...objectMetadata.metadata } : {},
     };
     metadata.metadata.resizedImage = true;
     if (config.cacheControlHeader) {
@@ -192,16 +216,21 @@ export const modifyImage = async ({
 
     // Uploading the modified image.
     logs.imageUploading(modifiedFilePath);
-    await bucket.upload(modifiedFile, {
+    const uploadResponse = await bucket.upload(modifiedFile, {
       destination: modifiedFilePath,
       metadata,
     });
     logs.imageUploaded(modifiedFile);
 
-    return { size, success: true };
+    // Make uploaded image public.
+    if (config.makePublic) {
+      await uploadResponse[0].makePublic();
+    }
+
+    return { size, outputFilePath: modifiedFilePath, success: true };
   } catch (err) {
     logs.error(err);
-    return { size, success: false };
+    return { size, outputFilePath: modifiedFilePath, success: false };
   } finally {
     try {
       // Make sure the local resized file is cleaned up to free up disk space.

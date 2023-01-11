@@ -1,3 +1,39 @@
+## Version 0.1.33
+
+fixed - re-add input object data to the complete event
+
+## Version 0.1.32
+
+feature - added lifecycle event to resize existing images
+
+## Version 0.1.31
+
+feature - add AVIF codec support
+
+feature - update IMG_BUCKET param type to selectResource
+
+## Version 0.1.30
+
+feature - include original image data in events
+
+## Version 0.1.29
+
+fixed - add size to metadata
+
+feature - add an option to make the resized images public
+
+fixed - updated sharp lib dependency for improved compression algorithm
+
+## Version 0.1.28
+
+feature - added extension event for image resize completion (#967)
+
+## Version 0.1.27
+
+fixed - update to firebase-admin v10 (#935)
+
+feature - add output options param, to support [Sharp Output Options](https://sharp.pixelplumbing.com/api-output#jpeg) (#878)
+
 ## Version 0.1.26
 
 fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
