@@ -7,12 +7,12 @@ concurrency:
 on:
   pull_request:
     paths:
-      - "firestore-counter/clients/dart"
+      - "firestore-counter/clientst/**"
   push:
     branches:
       - "**"
     paths:
-      - "firestore-counter/clients/dart"
+      - "firestore-counter/clients/**"
 jobs:
   ios:
     runs-on: macos-12
