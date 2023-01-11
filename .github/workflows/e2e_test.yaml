@@ -31,10 +31,21 @@ jobs:
         with:
           channel: "stable"
           cache: true
-      - name: "Install Tools"
+      - name: Install Firebase Tools
         run: |
           sudo npm i -g firebase-tools
-      - name: "E2E Tests"
+      - name: Install dependencies
+        run: |
+          cd firestore-counter/functions
+          npm run build
+          npm i
+      - name: Build emulator functions
+        run: |
+          cd _emulator/functions
+          npm i
+          npm run build
+          cd ../..
+      - name: E2E Tests
         working-directory: _emulator
         # Web devices are not supported for the `flutter test` command yet. As a
         # workaround we can use the `flutter drive` command. Tracking issue:
