@@ -28,19 +28,16 @@
   "devDependencies": {
     "@types/jest": "^24.0.18",
     "codecov": "^3.8.1",
-    "concurrently": "^7.2.1",
     "husky": "^7.0.4",
+    "lint-staged": "^12.4.0",
+    "concurrently": "^7.2.1",
     "jest": "^24.9.0",
     "lerna": "^3.4.3",
-    "lint-staged": "^12.4.0",
     "prettier": "2.7.1",
     "ts-jest": "^24.1.0",
     "typescript": "^3.6.3"
   },
   "lint-staged": {
     "*.{js,md,yml,ts,json,yaml}": "prettier --write"
-  },
-  "dependencies": {
-    "chromedriver": "^108.0.0"
   }
 }
