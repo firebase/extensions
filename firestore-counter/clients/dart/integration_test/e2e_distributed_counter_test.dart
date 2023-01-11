@@ -14,7 +14,6 @@ void main() {
     await Firebase.initializeApp();
     firestore = FirebaseFirestore.instance;
     firestore.useFirestoreEmulator('localhost', 8080);
-
     document = firestore.doc('pages/hello-world');
     document.set({'visits': 0});
   });
