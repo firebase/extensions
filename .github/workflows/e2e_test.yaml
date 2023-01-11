@@ -45,6 +45,12 @@ jobs:
           npm i
           npm run build
           cd ../..
+      - name: Firebase Emulator Cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-v2-${{ github.run_id }}
+          restore-keys: firebase-emulators-v2
       - name: E2E Tests
         working-directory: _emulator
         # Web devices are not supported for the `flutter test` command yet. As a
