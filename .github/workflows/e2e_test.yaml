@@ -48,7 +48,7 @@ jobs:
         run: |
           sudo npm i -g firebase-tools
       - name: "E2E Tests"
-        working-directory: tests
+        working-directory: _emulator
         run: |
           # Boot simulator and wait for System app to be ready.
           SIMULATOR="iPhone 11"
