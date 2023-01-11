@@ -40,10 +40,6 @@ jobs:
           key:
             ${{ runner.os }}-pods-v3-${{ hashFiles('tests/ios/Podfile.lock') }}
           restore-keys: ${{ runner.os }}-ios-pods-v2
-      - name: Firebase Emulator
-        run: |
-          cd ./_emulator
-          firebase emulators:start
       - uses: subosito/flutter-action@v2
         with:
           channel: "stable"
