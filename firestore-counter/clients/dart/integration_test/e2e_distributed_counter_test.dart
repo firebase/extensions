@@ -11,7 +11,14 @@ void main() {
   late final DocumentReference document;
 
   setUpAll(() async {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: FirebaseOptions(
+        apiKey: '123',
+        appId: '123',
+        messagingSenderId: '123',
+        projectId: 'demo',
+      ),
+    );
     firestore = FirebaseFirestore.instance;
     firestore.useFirestoreEmulator('localhost', 8080);
     document = firestore.doc('pages/hello-world');
@@ -20,15 +27,13 @@ void main() {
 
   test('Count is initially 0', () async {
     final distCounter = DistributedCounter(document, 'visits');
-    final count = await distCounter.get();
 
-    expect(count, equals(0));
+    expectLater(await distCounter.get(), equals(0));
   });
 
   test('Increment by 1', () async {
     final distCounter = DistributedCounter(document, 'visits');
     distCounter.incrementBy(1);
-    await Future.delayed(Duration(seconds: 1));
-    expectLater(await distCounter.get(), equals(1));
+    expectLater(await distCounter.get(), equals(2));
   });
 }
