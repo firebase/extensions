@@ -35,14 +35,16 @@ jobs:
         run: |
           sudo npm i -g firebase-tools
       - name: "E2E Tests"
-        working-directory: tests
+        working-directory: _emulator
         # Web devices are not supported for the `flutter test` command yet. As a
         # workaround we can use the `flutter drive` command. Tracking issue:
         # https://github.com/flutter/flutter/issues/66264
         run: |
           chromedriver --port=4444 &
+          firebase emulators:exec 'cd ../firestore-counter/clients/dart && \
           flutter drive \
             --verbose-system-logs \
             -d web-server \
-            --driver=firestore-counter/clients/dart/test_driver/integration_test.dart \
-            --target=firestore-counter/clients/dart/integration_test/e2e_distributed_counter_test.dart
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/e2e_distributed_counter_test.dart' \
+            --project=extensions-testing
