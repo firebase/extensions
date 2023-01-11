@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firestore_counter/distributed_counter.dart';
-import 'package:firestore_counter/firebase_options.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -12,9 +11,7 @@ void main() {
   late final DocumentReference document;
 
   setUpAll(() async {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    await Firebase.initializeApp();
     firestore = FirebaseFirestore.instance;
     firestore.useFirestoreEmulator('localhost', 8080);
 
