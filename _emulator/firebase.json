@@ -1,5 +1,7 @@
 {
   "extensions": {
+    "firestore-send-email": "../firestore-send-email",
+    "delete-user-data": "../delete-user-data",
     "firestore-counter": "../firestore-counter"
   },
   "storage": {
