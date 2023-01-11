@@ -3,7 +3,6 @@ import * as firebase from "firebase-admin";
 import { pool } from "workerpool";
 
 import { CliConfig } from "./types";
-import { parseConfig } from "./config";
 
 const { BigQuery } = require("@google-cloud/bigquery");
 const bigquery = new BigQuery();
@@ -95,9 +94,7 @@ async function processCollectionGroup(config: CliConfig): Promise<number> {
 
   console.log("---------------------------------------------------------");
   console.log(
-    `Please see https://console.cloud.google.com/bigquery?p=${
-      config.projectId
-    }&d=${config.datasetId}&t=${config.tableId}_raw_changelog&page=table`
+    `Please see https://console.cloud.google.com/bigquery?p=${config.projectId}&d=${config.datasetId}&t=${config.tableId}_raw_changelog&page=table`
   );
   console.log("---------------------------------------------------------");
 
@@ -137,9 +134,7 @@ async function processCollection(config: CliConfig): Promise<number> {
       return {
         timestamp: new Date().toISOString(),
         operation: ChangeType.IMPORT,
-        documentName: `projects/${
-          config.projectId
-        }/databases/(default)/documents/${document.ref.path}`,
+        documentName: `projects/${config.projectId}/databases/(default)/documents/${document.ref.path}`,
         documentId: document.id,
         eventId: "",
         data: document.data(),
@@ -160,32 +155,19 @@ async function processCollection(config: CliConfig): Promise<number> {
   return total;
 }
 
-export async function runMultiThread(): Promise<number> {
-  const config: CliConfig = await parseConfig();
+export async function runMultiThread(
+  config: CliConfig,
+  rawChangeLogName: string
+): Promise<number> {
   const {
-    projectId,
-    queryCollectionGroup,
-    tableId,
-    datasetLocation,
+    sourceCollectionPath,
     datasetId,
+    tableId,
+    queryCollectionGroup,
+    datasetLocation,
   } = config;
 
-  // Initialize Firebase
-  // This uses applicationDefault to authenticate
-  // Please see https://cloud.google.com/docs/authentication/production
-  firebase.initializeApp({
-    credential: firebase.credential.applicationDefault(),
-    databaseURL: `https://${projectId}.firebaseio.com`,
-  });
-
-  // Set project ID so it can be used in BigQuery initialization
-  process.env.PROJECT_ID = projectId;
-  process.env.GOOGLE_CLOUD_PROJECT = projectId;
-
-  // Store whether the dataset exists before initialization
-  const rawChangeLogName = `${config.tableId}_raw_changelog`;
-
-  const dataset = bigquery.dataset(config.datasetId, {
+  const dataset = bigquery.dataset(datasetId, {
     location: datasetLocation,
   });
 
@@ -200,16 +182,14 @@ export async function runMultiThread(): Promise<number> {
 
   await dataSink.initialize();
   if (!exists) {
-    console.log("Intializing dataset, this may take upto 1 minute...");
-    await new Promise((resolve) => setTimeout(resolve, 60000, [])); // Wait 1 minute for dataset to initialize
+    console.log("Wait a few seconds for the dataset to initialize...");
+    await new Promise((resolve) => setTimeout(resolve, 5000, [])); // Wait for the dataset to initialize
   }
 
   console.log(
     `Importing data from Cloud Firestore Collection${
       queryCollectionGroup ? " (via a Collection Group query)" : ""
-    }: ${config.sourceCollectionPath}, to BigQuery Dataset: ${
-      config.datasetId
-    }, Table: ${rawChangeLogName}`
+    }: ${sourceCollectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${rawChangeLogName}`
   );
 
   return queryCollectionGroup

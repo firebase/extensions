@@ -19,6 +19,7 @@ import { logger } from "firebase-functions";
 
 export const obfuscatedConfig = Object.assign({}, config, {
   smtpConnectionUri: "<omitted>",
+  smtpPassword: "<omitted>",
 });
 
 export function init() {
@@ -54,11 +55,7 @@ export function delivered(
   }
 ) {
   logger.log(
-    `Delivered message: ${ref.path} successfully. messageId: ${
-      info.messageId
-    } accepted: ${info.accepted.length} rejected: ${
-      info.rejected.length
-    } pending: ${info.pending.length}`
+    `Delivered message: ${ref.path} successfully. messageId: ${info.messageId} accepted: ${info.accepted.length} rejected: ${info.rejected.length} pending: ${info.pending.length}`
   );
 }
 
@@ -93,8 +90,8 @@ export function partialRegistered(name) {
   logger.log(`registered partial '${name}'`);
 }
 
-export function templateLoaded(name) {
-  logger.log(`loaded template '${name}'`);
+export function templatesLoaded(names) {
+  logger.log(`loaded templates (${names})`);
 }
 
 export function invalidMessage(message) {

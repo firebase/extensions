@@ -26,12 +26,12 @@ import {
 
 export function latestConsistentSnapshotSchemaView(
   datasetId: string,
-  rawTableName: string,
+  rawViewName: string,
   schema: FirestoreSchema
 ): any {
   const result = buildLatestSchemaSnapshotViewQuery(
     datasetId,
-    rawTableName,
+    rawViewName,
     schema
   );
   return {
@@ -62,13 +62,19 @@ export const testBuildLatestSchemaSnapshotViewQuery = (
 
 export const buildLatestSchemaSnapshotViewQuery = (
   datasetId: string,
-  rawTableName: string,
-  schema: FirestoreSchema
+  rawViewName: string,
+  schema: FirestoreSchema,
+  useNewSqlSyntax = false
 ): any => {
+  const firstValue = (selector: string) => {
+    return `FIRST_VALUE(${selector}) OVER(PARTITION BY document_name ORDER BY timestamp DESC)`;
+  };
+
   // We need to pass the dataset id into the parser so that we can call the
   // fully qualified json2array persistent user-defined function in the proper
   // scope.
-  const result = processFirestoreSchema(datasetId, "data", schema);
+  const result = processFirestoreSchema(datasetId, "data", schema, firstValue);
+
   const [
     schemaFieldExtractors,
     schemaFieldArrays,
@@ -108,6 +114,10 @@ export const buildLatestSchemaSnapshotViewQuery = (
     );
   }
 
+  const fieldNameSelectorClauses = Object.keys(schemaFieldExtractors).join(
+    ", "
+  );
+
   const fieldValueSelectorClauses = Object.values(schemaFieldExtractors).join(
     ", "
   );
@@ -119,9 +129,21 @@ export const buildLatestSchemaSnapshotViewQuery = (
         document_name,
         document_id,
         timestamp,
-        operation${fieldValueSelectorClauses.length > 0 ? `,` : ``}
-        ${fieldValueSelectorClauses}
-      FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawTableName}\`
+        operation${fieldNameSelectorClauses.length > 0 ? `,` : ``}
+        ${fieldNameSelectorClauses}
+      FROM (
+        SELECT
+          document_name,
+          document_id,
+          ${firstValue(`timestamp`)} AS timestamp,
+          ${firstValue(`operation`)} AS operation,
+          ${firstValue(`operation`)} = "DELETE" AS is_deleted${
+    fieldValueSelectorClauses.length > 0 ? `,` : ``
+  }
+          ${fieldValueSelectorClauses}
+        FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawViewName}\`
+      )
+      WHERE NOT is_deleted
   `;
   const groupableExtractors = Object.keys(schemaFieldExtractors).filter(
     (name) =>
@@ -136,43 +158,46 @@ export const buildLatestSchemaSnapshotViewQuery = (
       document_id,
       timestamp,
       operation${groupableExtractors.length > 0 ? `,` : ``}
-      ${groupableExtractors.length > 0
-      ? `${groupableExtractors.join(`, `)}`
-      : ``
-    }
+      ${
+        groupableExtractors.length > 0
+          ? `${groupableExtractors.join(`, `)}`
+          : ``
+      }
   `;
   if (hasNonGroupableFields) {
     query = `
         ${subSelectQuery(
-      query,
+          query,
           /*except=*/ schemaFieldArrays.concat(schemaFieldGeopoints)
-    )}
-        ${rawTableName}
+        )}
+        ${rawViewName}
         ${schemaFieldArrays
-        .map(
-          (
-            arrayFieldName
-          ) => `LEFT JOIN UNNEST(${rawTableName}.${arrayFieldName})
+          .map(
+            (
+              arrayFieldName
+            ) => `LEFT JOIN UNNEST(${rawViewName}.${arrayFieldName})
             AS ${arrayFieldName}_member
             WITH OFFSET ${arrayFieldName}_index`
-        )
-        .join(" ")}
+          )
+          .join(" ")}
       `;
     query = `
         ${query}
         ${groupBy}
-        ${schemaHasArrays
-        ? `, ${schemaFieldArrays
-          .map((name) => `${name}_index, ${name}_member`)
-          .join(", ")}`
-        : ``
-      }
-        ${schemaHasGeopoints
-        ? `, ${schemaFieldGeopoints
-          .map((name) => `${name}_latitude, ${name}_longitude`)
-          .join(", ")}`
-        : ``
-      }
+        ${
+          schemaHasArrays
+            ? `, ${schemaFieldArrays
+                .map((name) => `${name}_index, ${name}_member`)
+                .join(", ")}`
+            : ``
+        }
+        ${
+          schemaHasGeopoints
+            ? `, ${schemaFieldGeopoints
+                .map((name) => `${name}_latitude, ${name}_longitude`)
+                .join(", ")}`
+            : ``
+        }
       `;
   } else {
     query = `
