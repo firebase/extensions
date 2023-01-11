@@ -46,5 +46,4 @@ jobs:
             --verbose-system-logs \
             -d web-server \
             --driver=test_driver/integration_test.dart \
-            --target=integration_test/e2e_distributed_counter_test.dart' \
-            --project=extensions-testing
+            --target=integration_test/e2e_distributed_counter_test.dart'
