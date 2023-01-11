@@ -10,6 +10,7 @@ class DistributedCounter {
   DistributedCounter(this.document, this.field) {
     this.shardId = Uuid().v4();
     final shardsRef = document.collection(SHARD_COLLECTION_ID);
+
     shards[document.path] = 0;
     shards[shardsRef.doc(shardId).path] = 0;
     shards[shardsRef.doc('\t' + shardId.substring(0, 4)).path] = 0;
