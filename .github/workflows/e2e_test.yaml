@@ -10,7 +10,7 @@ on:
       - "firestore-counter/clients/dart"
   push:
     branches:
-      - next
+      - "**"
     paths:
       - "firestore-counter/clients/dart"
 jobs:
