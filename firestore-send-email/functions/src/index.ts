@@ -78,21 +78,22 @@ function validateFieldArray(field: string, array?: string[]) {
 
 function getExpireAt(startTime: admin.firestore.Timestamp) {
   const now = startTime.toDate();
-  switch (config.firestoreExpireAt) {
+  const value = config.TTLExpireValue;
+  switch (config.TTLExpireType) {
     case "hour":
-      now.setHours(now.getHours() + 1);
+      now.setHours(now.getHours() + value);
       break;
     case "day":
-      now.setDate(now.getDate() + 1);
+      now.setDate(now.getDate() + value);
       break;
     case "week":
-      now.setDate(now.getDate() + 7);
+      now.setDate(now.getDate() + value);
       break;
     case "month":
-      now.setMonth(now.getMonth() + 1);
+      now.setMonth(now.getMonth() + value);
       break;
     case "year":
-      now.setFullYear(now.getFullYear() + 1);
+      now.setFullYear(now.getFullYear() + value);
       break;
   }
   return admin.firestore.Timestamp.fromDate(now);
@@ -110,7 +111,7 @@ async function processCreate(snap: FirebaseFirestore.DocumentSnapshot) {
     error: null,
   };
 
-  if (config.firestoreExpireAt && config.firestoreExpireAt !== "never") {
+  if (config.TTLExpireType && config.TTLExpireType !== "never") {
     delivery["expireAt"] = getExpireAt(startTime);
   }
 
