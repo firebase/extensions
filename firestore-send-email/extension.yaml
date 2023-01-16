@@ -181,12 +181,11 @@ params:
       if the template is specified in the added email document.
     type: string
 
-  - param: FIRESTORE_EXPIRE_AT
-    label: Firestore TTL support option
+  - param: TTL_EXPIRE_TYPE
+    label: Firestore TTL type
     description: >-
-      Do you want the firestore records to be marked with an expireAt field for a TTL policy? If so, how long do you want the records to stay ineligible for deletion by
-      your policy? Note you will have to set up the [TTL policy](https://firebase.google.com/docs/firestore/ttl) for your project yourself. If "Never" is selected then no
-      expireAt field will be added.
+      Do you want the firestore records to be marked with an expireAt field for a TTL policy? If "Never" is selected then no expireAt field will be added. Otherwise
+      you may specify the unit of time specified by the TTL_EXPIRE_VALUE parameter. Defaults to "Never".
     type: select
     options:
       - label: Never
@@ -201,7 +200,17 @@ params:
         value: month
       - label: Year
         value: year
-    default: disabled
+    default: never
+    required: true
+
+  - param: TTL_EXPIRE_VALUE
+    label: Firestore TTL value
+    description: >-
+      In the units specified by TTL_EXPIRE_TYPE, how long do you want records to be ineligible for deletion by a TTL policy? This parameter requires the Firestore TTL type paramter
+      to be set to a value other than "Never".
+    validationRegex: "^[1-9][0-9]*$"
+    validationErrorMessage: The value must be an integer value greater than zero.
+    default: "1"
     required: true
 events:
   - type: firebase.extensions.firestore-send-email.v1.onStart

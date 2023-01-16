@@ -10,7 +10,8 @@ export interface Config {
   usersCollection?: string;
   templatesCollection?: string;
   testing?: boolean;
-  firestoreExpireAt?: string;
+  TTLExpireType?: string;
+  TTLExpireValue?: number;
 }
 export interface Attachment {
   filename?: string;

@@ -44,7 +44,7 @@ describe("e2e testing", () => {
     });
   }, 12000);
 
-  test("the expireAt field should be added, with value a day later than startTime", async (): Promise<void> => {
+  test("the expireAt field should be added, with value 5 days later than startTime", async (): Promise<void> => {
     const record = {
       to: "test-assertion2@email.com",
       message: {
@@ -61,7 +61,7 @@ describe("e2e testing", () => {
         if (document.delivery && document.delivery.info) {
           const startAt = document.delivery.startTime.toDate();
           const expireAt = document.delivery.expireAt.toDate();
-          expect(expireAt.getTime() - startAt.getTime()).toEqual(86400000);
+          expect(expireAt.getTime() - startAt.getTime()).toEqual(5 * 86400000);
           unsubscribe();
           resolve();
         }
