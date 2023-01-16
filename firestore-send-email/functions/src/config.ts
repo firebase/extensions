@@ -26,6 +26,7 @@ const config: Config = {
   usersCollection: process.env.USERS_COLLECTION,
   templatesCollection: process.env.TEMPLATES_COLLECTION,
   testing: process.env.TESTING === "true",
+  firestoreExpireAt: process.env.FIRESTORE_EXPIRE_AT,
 };
 
 export default config;

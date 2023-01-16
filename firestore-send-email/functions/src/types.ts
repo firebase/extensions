@@ -10,6 +10,7 @@ export interface Config {
   usersCollection?: string;
   templatesCollection?: string;
   testing?: boolean;
+  firestoreExpireAt?: string;
 }
 export interface Attachment {
   filename?: string;
