@@ -19,6 +19,7 @@ const environment = {
   DEFAULT_REPLY_TO: "fakeemail@gmail.com",
   USERS_COLLECTION: "users",
   TESTING: "true",
+  firestoreExpireAt: "day",
 };
 
 describe("extensions config", () => {
@@ -38,6 +39,7 @@ describe("extensions config", () => {
       usersCollection: process.env.USERS_COLLECTION,
       templatesCollection: process.env.TEMPLATES_COLLECTION,
       testing: process.env.TESTING === "true",
+      firestoreExpireAt: process.env.FIRESTORE_EXPIRE_AT,
     };
     const functionsConfig = config();
     expect(functionsConfig).toStrictEqual(testConfig);
