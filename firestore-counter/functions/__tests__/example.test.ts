@@ -1,5 +1,6 @@
 import { Counter } from "./util";
 import * as admin from "firebase-admin";
+import waitForExpect from "wait-for-expect";
 
 process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
 
@@ -27,6 +28,10 @@ describe("e2e testing", () => {
       counter: 0,
     });
 
+    const observer = jest.fn();
+
+    const unsub = admin.firestore().doc("test/test").onSnapshot(observer);
+
     counter = new Counter(doc, "counter");
 
     await counter.incrementBy(1);
@@ -36,13 +41,20 @@ describe("e2e testing", () => {
     console.log(value);
 
     expect(value).toBe(1);
-
-    await counter.incrementBy(1);
-
+    for (let i = 0; i < 300; i++) {
+      await counter.incrementBy(1);
+    }
+    // sleep 500ms
     const value2 = await counter.get({});
 
-    console.log(value2);
+    expect(value2).toBe(301);
 
-    expect(value2).toBe(2);
-  });
+    await waitForExpect(() => {
+      expect(observer).toBeCalled();
+    });
+
+    const snapshot = observer.mock.calls[1][0];
+
+    expect(snapshot.data()).toEqual({ counter: 301 });
+  }, 70000);
 });

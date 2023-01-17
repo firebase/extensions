@@ -22,7 +22,8 @@
     "mocha-typescript": "*",
     "prettier": "1.15.3",
     "ts-jest": "^24.3.0",
-    "ts-node": "^7.0.1"
+    "ts-node": "^7.0.1",
+    "wait-for-expect": "^3.0.2"
   },
   "scripts": {
     "prepare": "npm run build",
