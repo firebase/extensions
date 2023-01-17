@@ -70,7 +70,7 @@ export class ShardedCounterController {
     limit: number,
     timeoutMillis: number
   ) {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       let aggrPromise: Promise<ControllerStatus> = null;
       let controllerData: ControllerData = EMPTY_CONTROLLER_DATA;
       let rounds = 0;
@@ -93,7 +93,7 @@ export class ShardedCounterController {
         limit
       ).onSnapshot(async (snap) => {
         if (snap.docs.length == limit) return;
-        if (controllerData.workers.length > 0) {
+        if (controllerData.workers && controllerData.workers.length > 0) {
           skippedRoundsDueToWorkers++;
           return;
         }
@@ -152,7 +152,7 @@ export class ShardedCounterController {
         const controllerData: ControllerData = controllerDoc.exists
           ? controllerDoc.data()
           : EMPTY_CONTROLLER_DATA;
-        if (controllerData.workers.length > 0)
+        if (controllerData.workers && controllerData.workers.length > 0)
           return ControllerStatus.WORKERS_RUNNING;
 
         let shards: firestore.QuerySnapshot = null;
