@@ -8,7 +8,7 @@ admin.initializeApp({
   projectId: "demo-test",
 });
 
-describe("e2e testing", () => {
+describe("e2e testing of firestore-counter", () => {
   let counter: Counter;
   const doc = admin.firestore().doc("test/test");
   const internalStatePath =
@@ -18,12 +18,7 @@ describe("e2e testing", () => {
 
   beforeEach(async () => {});
 
-  // afterEach(async () => {
-  //     await doc.delete();
-  //     await internalStateDoc.delete();
-  // });
-
-  test("example e2e", async () => {
+  test("should increment the counter, and aggregate eventually", async () => {
     await doc.set({
       counter: 0,
     });
@@ -38,13 +33,11 @@ describe("e2e testing", () => {
 
     const value = await counter.get({});
 
-    console.log(value);
-
     expect(value).toBe(1);
     for (let i = 0; i < 300; i++) {
       await counter.incrementBy(1);
     }
-    // sleep 500ms
+
     const value2 = await counter.get({});
 
     expect(value2).toBe(301);
@@ -53,8 +46,12 @@ describe("e2e testing", () => {
       expect(observer).toBeCalled();
     });
 
-    const snapshot = observer.mock.calls[1][0];
+    await waitForExpect(() => {
+      const calls = observer.mock.calls;
+      const snapshot = calls[calls.length - 1][0];
+      expect(snapshot.data().counter).toBe(301);
+    }, 60000);
 
-    expect(snapshot.data()).toEqual({ counter: 301 });
+    unsub();
   }, 70000);
 });
