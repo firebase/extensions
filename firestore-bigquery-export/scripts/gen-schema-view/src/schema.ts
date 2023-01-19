@@ -69,7 +69,7 @@ export type FirestoreSchema = {
  * a BigQuery schema in the same pass that generates the view generation query.
  */
 const firestoreToBigQueryFieldType: {
-  [f in FirestoreFieldType]: BigQueryFieldType
+  [f in FirestoreFieldType]: BigQueryFieldType;
 } = {
   boolean: "BOOLEAN",
   geopoint: "GEOGRAPHY",
