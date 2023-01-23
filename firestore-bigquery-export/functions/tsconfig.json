@@ -1,11 +1,14 @@
 {
-  "extends": "../../tsconfig.json",
   "files": ["./__tests__/test.types.d.ts"],
   "compilerOptions": {
     "lib": ["esnext.asynciterable"],
     "outDir": "lib",
     "types": ["node", "jest", "chai"],
-    "target": "ES2020"
+    "target": "ES2020",
+    "module": "commonjs",
+    "noImplicitReturns": true,
+    "sourceMap": false
   },
+  "compileOnSave": true,
   "include": ["src"]
 }

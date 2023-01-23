@@ -19,6 +19,7 @@ import { logger } from "firebase-functions";
 
 export const obfuscatedConfig = Object.assign({}, config, {
   smtpConnectionUri: "<omitted>",
+  smtpPassword: "<omitted>",
 });
 
 export function init() {
@@ -54,11 +55,7 @@ export function delivered(
   }
 ) {
   logger.log(
-    `Delivered message: ${ref.path} successfully. messageId: ${
-      info.messageId
-    } accepted: ${info.accepted.length} rejected: ${
-      info.rejected.length
-    } pending: ${info.pending.length}`
+    `Delivered message: ${ref.path} successfully. messageId: ${info.messageId} accepted: ${info.accepted.length} rejected: ${info.rejected.length} pending: ${info.pending.length}`
   );
 }
 
@@ -93,8 +90,14 @@ export function partialRegistered(name) {
   logger.log(`registered partial '${name}'`);
 }
 
-export function templateLoaded(name) {
-  logger.log(`loaded template '${name}'`);
+export function templatesLoaded(names) {
+  logger.log(`loaded templates (${names})`);
+}
+
+export function invalidMessage(message) {
+  logger.warn(
+    `message '${message}' is not a valid object - please add as an object or firestore map, otherwise you may experience unexpected results.`
+  );
 }
 
 export function checkingMissingTemplate(name) {
@@ -103,4 +106,10 @@ export function checkingMissingTemplate(name) {
 
 export function foundMissingTemplate(name) {
   logger.log(`template '${name}' has been found`);
+}
+
+export function invalidURI(uri) {
+  logger.warn(
+    `invalid url: '${uri}' , please reconfigure with a valid SMTP connection URI`
+  );
 }

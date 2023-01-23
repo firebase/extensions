@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-send-email
-version: 0.1.13
+version: 0.1.21
 specVersion: v1beta
 
 displayName: Trigger Email
@@ -117,11 +117,26 @@ params:
     label: SMTP connection URI
     description: >-
       A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465.
+      In order to keep passwords secure, it is recommended to omit the password from the connection string while using the `SMTP Password` field for entering secrets and passwords.
+      Passwords and secrets should now be included in `SMTP password` field.
+
+      Secure format:
+       `smtps://username@gmail.com@smtp.gmail.com:465` (username only)
+       `smtps://smtp.gmail.com:465` (No username and password)
+      Backwards Compatible (less secure):
+       `smtps://username@gmail.com:password@smtp.gmail.com:465`. (username and password)
     type: string
-    example: smtps://username:password@smtp.hostname.com:465
-    validationRegex: ^smtps?://[^:]+:[^:]+@.*$
-    validationErrorMessage: Invalid SMTP connection URI. Must be in the form `smtp(s)://username:password@hostname:port`.
+    example: smtps://username@smtp.hostname.com:465
+    validationRegex: ^(smtp[s]*://.*?:[0-9]+.*$)
+    validationErrorMessage: Invalid SMTP connection URI. Must be in the form `smtp(s)://username:password@hostname:port` or `smtp(s)://username@hostname:port`.
     required: true
+
+  - param: SMTP_PASSWORD
+    label: SMTP password
+    description: >-
+      User password for the SMTP server
+    type: secret
+    required: false
 
   - param: MAIL_COLLECTION
     label: Email documents collection
@@ -165,3 +180,25 @@ params:
       This extension can render an email using a [Handlebar](https://handlebarsjs.com/) template,
       if the template is specified in the added email document.
     type: string
+
+events:
+  - type: firebase.extensions.firestore-send-email.v1.onStart
+    description: Occurs when the extension starts execution.
+
+  - type: firebase.extensions.firestore-send-email.v1.onProcessing
+    description: Occurs when the extension attempts to process an email.
+
+  - type: firebase.extensions.firestore-send-email.v1.onRetry
+    description: Occurs when the extension attempts to resend an email.
+
+  - type: firebase.extensions.firestore-send-email.v1.onPending
+    description: Occurs when an email has a pending status.
+
+  - type: firebase.extensions.firestore-send-email.v1.onSuccess
+    description: Occurs when the extension successfully sends an email.
+  
+  - type: firebase.extensions.firestore-send-email.v1.onComplete
+    description: Occurs when the extension completes execution.
+
+  - type: firebase.extensions.firestore-send-email.v1.onError
+    description: Occurs when the extension fails to complete execution.
