@@ -76,8 +76,8 @@ export class ShardedCounterWorker {
     return new Promise((resolve, reject) => {
       let intervalTimer: any;
       let timeoutTimer: any;
-      let unsubscribeMetadataListener: (() => void);
-      let unsubscribeSliceListener: (() => void);
+      let unsubscribeMetadataListener: () => void;
+      let unsubscribeSliceListener: () => void;
 
       const shutdown = async () => {
         clearInterval(intervalTimer);
@@ -129,11 +129,7 @@ export class ShardedCounterWorker {
       }, 1000);
 
       timeoutTimer = setTimeout(
-        () =>
-          shutdown()
-            .then(writeStats)
-            .then(resolve)
-            .catch(reject),
+        () => shutdown().then(writeStats).then(resolve).catch(reject),
         WORKER_TIMEOUT_MS
       );
 
@@ -141,9 +137,7 @@ export class ShardedCounterWorker {
         // if something's changed in the worker metadata since we were called, abort.
         if (!snap.exists || !deepEqual(snap.data(), this.metadata)) {
           logger.log("Shutting down because metadoc changed.");
-          shutdown()
-            .then(resolve)
-            .catch(reject);
+          shutdown().then(resolve).catch(reject);
         }
       });
 
@@ -157,10 +151,7 @@ export class ShardedCounterWorker {
         this.shards = snap.docs;
         if (this.singleRun && this.shards.length === 0) {
           logger.log("Shutting down, single run mode.");
-          shutdown()
-            .then(writeStats)
-            .then(resolve)
-            .catch(reject);
+          shutdown().then(writeStats).then(resolve).catch(reject);
         }
       });
     });
@@ -194,28 +185,36 @@ export class ShardedCounterWorker {
           const paths = [];
 
           // Read metadata document in transaction to guarantee ownership of the slice.
-          const metadocPromise = t.get(this.metadoc.ref);
+          const metadocPromise = () => t.get(this.metadoc.ref);
 
-          const counterPromise = plan.isPartial
-            ? Promise.resolve(null)
-            : t.get(this.db.doc(plan.aggregate));
+          /**
+           * Resolve if plan is a partial shard or main counter
+           * Resolve if aggregate is a root document path (.)
+           */
+          const counterPromise = () =>
+            plan.isPartial || plan.aggregate === "."
+              ? Promise.resolve(null)
+              : t.get(this.db.doc(plan.aggregate));
 
           // Read all shards in a transaction since we want to delete them immediately.
           // Note that partials are not read here, because we use array transform to
           // update them and don't need transaction guarantees.
           const shardRefs = plan.shards.map((snap) => snap.ref);
-          const shardsPromise =
+
+          const shardsPromise = () =>
             shardRefs.length > 0
               ? t.getAll(shardRefs[0], ...shardRefs.slice(1))
               : Promise.resolve([]);
+
           let shards: firestore.DocumentSnapshot[];
           let counter: firestore.DocumentSnapshot;
           let metadoc: firestore.DocumentSnapshot;
+
           try {
             [shards, counter, metadoc] = await Promise.all([
-              shardsPromise,
-              counterPromise,
-              metadocPromise,
+              shardsPromise(),
+              counterPromise(),
+              metadocPromise(),
             ]);
           } catch (err) {
             logger.log(
@@ -234,7 +233,17 @@ export class ShardedCounterWorker {
           // Calculate aggregated value and save to aggregate shard.
           const aggr = new Aggregator();
           const update = aggr.aggregate(counter, plan.partials, shards);
-          t.set(this.db.doc(plan.aggregate), update, { merge: true });
+
+          /**
+           * Resolve if aggregate is a root document path (.)
+           */
+          if (plan.aggregate === ".") {
+            return [];
+          }
+
+          t.set(this.db.doc(plan.aggregate), update, {
+            merge: true,
+          });
 
           // Delete shards that have been aggregated.
           shards.forEach((snap) => {
@@ -248,9 +257,12 @@ export class ShardedCounterWorker {
           plan.partials.forEach((snap) => {
             if (snap.exists) {
               const decrement = aggr.subtractPartial(snap);
-              t.set(snap.ref, decrement, { merge: true });
+              t.set(snap.ref, decrement, {
+                merge: true,
+              });
             }
           });
+
           return paths;
         });
         this.allPaths.push(...paths);
@@ -319,7 +331,10 @@ export class ShardedCounterWorker {
                   update.mergeFrom(u["_data_"]);
                 });
               }
-              t.set(snap.ref, update.toPartialShard(() => uuid.v4()));
+              t.set(
+                snap.ref,
+                update.toPartialShard(() => uuid.v4())
+              );
             }
           } catch (err) {
             logger.log("Partial cleanup failed: " + partial.ref.path);

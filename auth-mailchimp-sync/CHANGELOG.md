@@ -1,3 +1,9 @@
+## Version 0.2.1
+
+fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
+
+fixed - update validate workflow to use node14
+
 ## Version 0.2.0
 
 feature - set Mailchimp API Key parameter type to `secret` so it is stored in Cloud Secret Manager

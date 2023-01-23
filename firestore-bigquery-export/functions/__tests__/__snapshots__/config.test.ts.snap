@@ -2,13 +2,38 @@
 
 exports[`extension config config loaded from environment variables 1`] = `
 Object {
+  "backupCollectionId": undefined,
+  "bqProjectId": undefined,
+  "clustering": Array [
+    "data",
+    "timestamp",
+  ],
   "collectionPath": undefined,
   "datasetId": "my_dataset",
   "datasetLocation": undefined,
   "initialized": false,
   "location": "us-central1",
   "tableId": "my_table",
-  "tablePartitioning": null,
+  "timePartitioning": null,
+  "timePartitioningField": undefined,
+  "timePartitioningFieldType": undefined,
+  "timePartitioningFirestoreField": undefined,
+  "transformFunction": "",
+  "useNewSnapshotQuerySyntax": false,
+  "wildcardIds": false,
+}
+`;
+
+exports[`extension config config.clustering param exists 1`] = `
+Object {
+  "description": "This parameter will allow you to set up Clustering for the BigQuery Table created by the extension. (for example: \`data,document_id,timestamp\`- no whitespaces). You can select up to 4 comma separated fields. The order of the specified columns determines the sort order of the data. Available schema extensions table fields for clustering: \`document_id, timestamp, event_id, operation, data\`.",
+  "example": "data,document_id,timestamp",
+  "label": "BigQuery SQL table clustering",
+  "param": "CLUSTERING",
+  "required": false,
+  "type": "string",
+  "validationErrorMessage": "No whitespaces. Max 4 fields. e.g. \`data,timestamp,event_id,operation\`",
+  "validationRegex": "^[^,\\\\s]+(?:,[^,\\\\s]+){0,3}$",
 }
 `;
 

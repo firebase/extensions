@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-translate-text
-version: 0.1.7
+version: 0.1.9
 specVersion: v1beta
 
 displayName: Translate Text
@@ -59,6 +59,18 @@ resources:
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{messageId}
+
+  - name: fstranslatebackfill
+    type: firebaseextensions.v1beta.function
+    description:
+     Searches your specified Cloud Firestore collection for existing documents, translates the strings into any missing languages,
+      then writes the translated strings back to the same document.
+    properties:
+      location: ${param:LOCATION}
+      runtime: nodejs14
+      availableMemoryMb: 1024
+      timeout: 540s
+      taskQueueTrigger: {}
 
 params:
   - param: LOCATION
@@ -156,3 +168,28 @@ params:
     example: translated
     default: translated
     required: true
+
+  - param: DO_BACKFILL
+    label: Translate existing documents?
+    description: >
+      Should existing documents in the Firestore collection be translated as well? 
+      If you've added new languages since a document was translated, this will fill those in as well.
+    type: select
+    required: true
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+
+
+lifecycleEvents:
+  onInstall:
+    function: fstranslatebackfill
+    processingMessage: "Translating existing documents in ${COLLECTION_PATH}"
+  onUpdate:
+    function: fstranslatebackfill
+    processingMessage: "Translating existing documents in ${COLLECTION_PATH}"
+  onConfigure:
+    function: fstranslatebackfill
+    processingMessage: "Translating existing documents in ${COLLECTION_PATH}"

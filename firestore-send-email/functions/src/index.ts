@@ -22,6 +22,8 @@ import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
+import { setSmtpCredentials } from "./helpers";
+import * as events from "./events";
 
 logs.init();
 
@@ -44,30 +46,24 @@ async function initialize() {
       admin.firestore().collection(config.templatesCollection)
     );
   }
+
+  /** setup events */
+  events.setupEventChannel();
 }
 
 async function transportLayer() {
   if (config.testing) {
-    return new Promise((resolve, reject) => {
-      nodemailer.createTestAccount((err, account) => {
-        if (err) {
-          reject(err);
-        }
-        const testSMTPCredentials = nodemailer.createTransport({
-          host: "smtp.ethereal.email",
-          port: 587,
-          secure: false, // true for 465, false for other ports
-          auth: {
-            user: account.user, // generated ethereal user
-            pass: account.pass, // generated ethereal password
-          },
-        });
-        resolve(testSMTPCredentials);
-      });
+    return nodemailer.createTransport({
+      host: "localhost",
+      port: 8132,
+      secure: false,
+      tls: {
+        rejectUnauthorized: false,
+      },
     });
-  } else {
-    return nodemailer.createTransport(config.smtpConnectionUri);
   }
+
+  return setSmtpCredentials(config);
 }
 
 function validateFieldArray(field: string, array?: string[]) {
@@ -302,6 +298,10 @@ async function processWrite(change) {
 
   const payload = change.after.data() as QueuePayload;
 
+  if (typeof payload.message !== "object") {
+    logs.invalidMessage(payload.message);
+  }
+
   if (!payload.delivery) {
     logs.missingDeliveryField(change.after.ref);
     return null;
@@ -309,25 +309,39 @@ async function processWrite(change) {
 
   switch (payload.delivery.state) {
     case "SUCCESS":
+      await events.recordSuccessEvent(change);
     case "ERROR":
+      await events.recordErrorEvent(change, payload, payload.delivery.error);
       return null;
     case "PROCESSING":
+      await events.recordProcessingEvent(change);
+
       if (payload.delivery.leaseExpireTime.toMillis() < Date.now()) {
+        const error = "Message processing lease expired.";
+
+        /** Send error event */
+        await events.recordErrorEvent(change, payload, error);
+
         // Wrapping in transaction to allow for automatic retries (#48)
         return admin.firestore().runTransaction((transaction) => {
           transaction.update(change.after.ref, {
             "delivery.state": "ERROR",
             // Keeping error to avoid any breaking changes in the next minor update.
             // Error to be removed for the next major release.
-            error: "Message processing lease expired.",
+            error,
             "delivery.error": "Message processing lease expired.",
           });
+
           return Promise.resolve();
         });
       }
       return null;
     case "PENDING":
+      await events.recordPendingEvent(change, payload);
     case "RETRY":
+      /** Send retry event */
+      await events.recordRetryEvent(change, payload);
+
       // Wrapping in transaction to allow for automatic retries (#48)
       await admin.firestore().runTransaction((transaction) => {
         transaction.update(change.after.ref, {
@@ -342,16 +356,31 @@ async function processWrite(change) {
   }
 }
 
-export const processQueue = functions.handler.firestore.document.onWrite(
-  async (change) => {
+export const processQueue = functions.firestore
+  .document(config.mailCollection)
+  .onWrite(async (change) => {
     await initialize();
+
     logs.start();
+
+    if (!change.before.exists) {
+      await events.recordStartEvent(change);
+    }
+
     try {
       await processWrite(change);
     } catch (err) {
+      await events.recordErrorEvent(
+        change,
+        change.after.data(),
+        `Unhandled error occurred during processing: ${err.message}"`
+      );
       logs.error(err);
       return null;
     }
+
+    /** record complete event */
+    await events.recordCompleteEvent(change);
+
     logs.complete();
-  }
-);
+  });

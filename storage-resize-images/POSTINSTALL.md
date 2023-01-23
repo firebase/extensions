@@ -38,6 +38,7 @@ Be aware of the following when using this extension:
   * image/png
   * image/tiff
   * image/webp
+  * image/gif
 
 If you are using raw image data in your application, you need to ensure you set the correct content type when uploading to the Firebase Storage bucket to trigger the extension image resize. Below is an example of how to set the content type:
 
@@ -74,6 +75,18 @@ function uploadImageToStorage(rawImage){
 
 - If you configured the `Cache-Control header for resized images` parameter, your specified value will overwrite the value copied from the original image. Learn more about image metadata in the [Cloud Storage documentation](https://firebase.google.com/docs/storage/).
 
+- If you would like to optionally configure `Output options for selected formats` you can create an JSON stringfied object where you can provide file [Sharp Output Options](https://sharp.pixelplumbing.com/api-output#jpeg). Please use file formats as object keys and pass correct options. Incorrect options parameters or not selected formats will be ignored. Provide it as stringfied JSON object without outer quote signs and indentation:
+
+```js
+{"jpeg": {"quality": 5,"chromaSubsampling": '4:4:4'}, "png": { "pallete": true}}
+```
+
 ### Monitoring
 
 As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.
+
+### Further reading & resources
+
+You can find more information about this extension in the following articles:
+
+- [Image Optimization With Firebase Extensions](https://invertase.link/ext-resize-images-tutorial)

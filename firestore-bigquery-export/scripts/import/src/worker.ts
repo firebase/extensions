@@ -54,11 +54,9 @@ async function processDocuments(
 
   const rows: FirestoreDocumentChangeEvent = docs.map((document) => {
     return {
-      timestamp: new Date(0).toISOString(),
+      timestamp: new Date().toISOString(),
       operation: ChangeType.IMPORT,
-      documentName: `projects/${projectId}/databases/(default)/documents/${
-        document.ref.path
-      }`,
+      documentName: `projects/${projectId}/databases/(default)/documents/${document.ref.path}`,
       documentId: document.id,
       eventId: "",
       data: document.data(),

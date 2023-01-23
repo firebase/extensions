@@ -1,6 +1,7 @@
 .vscode
 node_modules/
 *.env
+!emulator-params.env
 !install-params.env
 firebase-debug.log
 database-debug.log
@@ -14,5 +15,6 @@ build
 local.properties
 coverage
 yarn.lock
-
+_emulator/pubsub-debug.log
 firestore-debug.log
+pubsub-debug.log
