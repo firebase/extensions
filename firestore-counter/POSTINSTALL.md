@@ -67,7 +67,7 @@ match /databases/{database}/documents/pages/{page} {
 <html>
   <head> </head>
   <body>
-    <script src="../../../../invertase/extensions/firestore-counter/clients/web/dist/sharded-counter.js"></script>
+    <script src="clients/web/dist/sharded-counter.js"></script>
 
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
