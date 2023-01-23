@@ -62,12 +62,6 @@ export class Counter {
     this.shards[
       shardsRef.path + "/" + "\t\t\t" + this.shardId.substr(0, 1)
     ] = 0;
-
-    // this.shards[shardsRef.doc(this.shardId).path] = 0;
-    // this.shards[shardsRef.doc("\t" + this.shardId.substr(0, 4)).path] = 0;
-    // this.shards[shardsRef.doc("\t\t" + this.shardId.substr(0, 3)).path] = 0;
-    // this.shards[shardsRef.doc("\t\t\t" + this.shardId.substr(0, 2)).path] = 0;
-    // this.shards[shardsRef.doc("\t\t\t\t" + this.shardId.substr(0, 1)).path] = 0;
   }
 
   /**
