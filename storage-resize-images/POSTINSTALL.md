@@ -84,3 +84,9 @@ function uploadImageToStorage(rawImage){
 ### Monitoring
 
 As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.
+
+### Further reading & resources
+
+You can find more information about this extension in the following articles:
+
+- [Image Optimization With Firebase Extensions](https://invertase.link/ext-resize-images-tutorial)

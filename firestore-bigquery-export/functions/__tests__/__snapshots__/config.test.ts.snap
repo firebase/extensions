@@ -19,6 +19,7 @@ Object {
   "timePartitioningFieldType": undefined,
   "timePartitioningFirestoreField": undefined,
   "transformFunction": "",
+  "useNewSnapshotQuerySyntax": false,
   "wildcardIds": false,
 }
 `;
