@@ -1,3 +1,31 @@
+## Version 0.1.29
+
+feature - added events with an initial sync start event
+
+feature - add flags for emulator and updated snapshot script in the import script
+
+fixed - add optional chaining to forEach method calls, to prevent undefined errors
+
+## Version 0.1.28
+
+fixed - improve table update checks
+
+fixed - Update to fix old_data bug, upgrade dependencies and fix broken tests
+
+## Version 0.1.27
+
+fixed - added fix for configuration setup
+
+fixed - update snapshot script
+
+feature - add oldData to the record
+
+fixed - updating table metadata too often
+
+## Version 0.1.26
+
+docs - correct service account name
+
 ## Version 0.1.25
 
 feature - add version to the bigquery import script

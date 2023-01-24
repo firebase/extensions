@@ -1,7 +1,7 @@
 import * as inquirer from "inquirer";
 import * as program from "commander";
 
-import { CliConfig } from "./types";
+import { CliConfig, CliConfigError } from "./types";
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
@@ -60,7 +60,7 @@ const validateInput = (
     return `${name} must be at most ${sizeLimit} characters long`;
   }
   if (!value.match(regex)) {
-    return `The ${name} must only contain letters or spaces`;
+    return `The ${name} does not match the regular expression provided`;
   }
   return true;
 };
@@ -145,35 +145,67 @@ const questions = [
     type: "confirm",
     default: false,
   },
+  {
+    message: "Would you like to use the new optimized snapshot query script?",
+    name: "useNewSnapshotQuerySyntax",
+    type: "confirm",
+    default: false,
+  },
+  {
+    message: "Would you like to use a local firestore emulator?",
+    name: "useEmulator",
+    type: "confirm",
+    default: false,
+  },
 ];
 
-export async function parseConfig(): Promise<CliConfig> {
+export async function parseConfig(): Promise<CliConfig | CliConfigError> {
   program.parse(process.argv);
 
   if (program.nonInteractive) {
-    if (
-      program.project === undefined ||
-      program.sourceCollectionPath === undefined ||
-      program.dataset === undefined ||
-      program.tableNamePrefix === undefined ||
-      program.queryCollectionGroup === undefined ||
-      program.batchSize === undefined ||
-      program.datasetLocation === undefined ||
-      program.multiThreaded === undefined ||
-      !validateBatchSize(program.batchSize)
-    ) {
-      program.outputHelp();
-      process.exit(1);
+    const errors = [];
+    if (program.project === undefined) {
+      errors.push("Project is not specified.");
     }
+    if (program.sourceCollectionPath === undefined) {
+      errors.push("SourceCollectionPath is not specified.");
+    }
+    if (program.dataset === undefined) {
+      errors.push("Dataset ID is not specified.");
+    }
+    if (program.tableNamePrefix === undefined) {
+      errors.push("TableNamePrefix is not specified.");
+    }
+    if (program.queryCollectionGroup === undefined) {
+      errors.push("QueryCollectionGroup is not specified.");
+    }
+    if (program.batchSize === undefined) {
+      errors.push("BatchSize is not specified.");
+    }
+    if (program.datasetLocation === undefined) {
+      errors.push("DatasetLocation is not specified.");
+    }
+    if (!validateBatchSize(program.batchSize)) {
+      errors.push("Invalid batch size.");
+    }
+
+    if (errors.length !== 0) {
+      program.outputHelp();
+      return { kind: "ERROR", errors };
+    }
+
     return {
+      kind: "CONFIG",
       projectId: program.project,
       sourceCollectionPath: program.sourceCollectionPath,
       datasetId: program.dataset,
       tableId: program.tableNamePrefix,
-      batchSize: program.batchSize,
+      batchSize: parseInt(program.batchSize),
       queryCollectionGroup: program.queryCollectionGroup === "true",
       datasetLocation: program.datasetLocation,
       multiThreaded: program.multiThreaded === "true",
+      useNewSnapshotQuerySyntax: program.useNewSnapshotQuerySyntax === "true",
+      useEmulator: program.useEmulator === "true",
     };
   }
   const {
@@ -185,8 +217,12 @@ export async function parseConfig(): Promise<CliConfig> {
     queryCollectionGroup,
     datasetLocation,
     multiThreaded,
+    useNewSnapshotQuerySyntax,
+    useEmulator,
   } = await inquirer.prompt(questions);
+
   return {
+    kind: "CONFIG",
     projectId: project,
     sourceCollectionPath: sourceCollectionPath,
     datasetId: dataset,
@@ -195,6 +231,8 @@ export async function parseConfig(): Promise<CliConfig> {
     queryCollectionGroup: queryCollectionGroup,
     datasetLocation: datasetLocation,
     multiThreaded: multiThreaded,
+    useNewSnapshotQuerySyntax: useNewSnapshotQuerySyntax,
+    useEmulator: useEmulator,
   };
 }
 
