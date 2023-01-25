@@ -16,5 +16,6 @@ module.exports = {
   moduleNameMapper: {
     "firebase-admin/eventarc":
       "<rootDir>/node_modules/firebase-admin/lib/eventarc",
+    "firebase-admin/auth": "<rootDir>/node_modules/firebase-admin/lib/auth",
   },
 };

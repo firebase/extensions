@@ -18,15 +18,16 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "@types/node": "^12.6.9",
     "@types/nodemailer": "^6.2.1",
-    "firebase-admin": "^10.2.0",
+    "firebase-admin": "^11.4.1",
     "firebase-functions": "^3.20",
     "handlebars": "^4.5.3",
     "nodemailer": "^6.3.0",
     "rimraf": "^2.6.3",
     "smtp-server": "^3.10.0",
-    "typescript": "^4.7.4"
+    "typescript": "^4.7.4",
+    "@types/express-serve-static-core": "4.17.30",
+    "@types/node": "18.11.18"
   },
   "devDependencies": {
     "concurrently": "^7.2.1",
