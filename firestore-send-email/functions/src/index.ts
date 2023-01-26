@@ -402,7 +402,7 @@ async function processWrite(
       }
 
       if (payload.delivery.state === "RETRY") {
-        await events.recordPendingEvent(change, payload);
+        await events.recordRetryEvent(change, payload);
 
         // We can attempt to deliver the email in these states, so we set the state to PROCESSING
         // and set a lease time to prevent delivery from being attempted forever.
