@@ -80,8 +80,6 @@ function validateFieldArray(field: string, array?: string[]) {
 async function processCreate(snap: admin.firestore.DocumentSnapshot) {
   // Wrapping in transaction to allow for automatic retries (#48)
 
-  console.log(">>>>>>", admin.firestore);
-
   return admin.firestore().runTransaction((transaction) => {
     transaction.update(snap.ref, {
       delivery: {
