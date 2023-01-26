@@ -21,6 +21,9 @@ import {
   FirestoreBigQueryEventHistoryTracker,
   FirestoreEventHistoryTracker,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
+
+import * as admin from "firebase-admin";
+import { getEventarc } from "firebase-admin/eventarc";
 import * as logs from "./logs";
 import { getChangeType, getDocumentId } from "./util";
 
@@ -38,9 +41,17 @@ const eventTracker: FirestoreEventHistoryTracker =
     clustering: config.clustering,
     wildcardIds: config.wildcardIds,
     bqProjectId: config.bqProjectId,
+    useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
   });
 
 logs.init();
+admin.initializeApp();
+
+const eventChannel =
+  process.env.EVENTARC_CHANNEL &&
+  getEventarc().channel(process.env.EVENTARC_CHANNEL, {
+    allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
+  });
 
 exports.fsexportbigquery = functions.firestore
   .document(config.collectionPath)
@@ -49,6 +60,23 @@ exports.fsexportbigquery = functions.firestore
     try {
       const changeType = getChangeType(change);
       const documentId = getDocumentId(change);
+
+      if (eventChannel) {
+        await eventChannel.publish({
+          type: `firebase.extensions.big-query-export.v1.sync.start`,
+          data: {
+            documentId,
+            changeType,
+            before: {
+              data: change.before.data(),
+            },
+            after: {
+              data: change.after.data(),
+            },
+            context: context.resource,
+          },
+        });
+      }
 
       await eventTracker.record([
         {
@@ -60,6 +88,8 @@ exports.fsexportbigquery = functions.firestore
           eventId: context.eventId,
           data:
             changeType === ChangeType.DELETE ? undefined : change.after.data(),
+          oldData:
+            changeType === ChangeType.CREATE ? undefined : change.before.data(),
         },
       ]);
       logs.complete();

@@ -23,6 +23,7 @@ import config from "./config";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
 import { setSmtpCredentials } from "./helpers";
+import * as events from "./events";
 
 logs.init();
 
@@ -45,6 +46,9 @@ async function initialize() {
       admin.firestore().collection(config.templatesCollection)
     );
   }
+
+  /** setup events */
+  events.setupEventChannel();
 }
 
 async function transportLayer() {
@@ -214,7 +218,7 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
 }
 
 async function deliver(
-  ref: FirebaseFirestore.DocumentReference<QueuePayload>
+  ref: admin.firestore.DocumentReference<QueuePayload>
 ): Promise<void> {
   const snapshot = await ref.get();
   if (!snapshot.exists) {
@@ -282,7 +286,7 @@ async function deliver(
 }
 
 async function processWrite(
-  change: functions.Change<FirebaseFirestore.DocumentSnapshot<QueuePayload>>
+  change: functions.Change<admin.firestore.DocumentSnapshot<QueuePayload>>
 ): Promise<void> {
   const ref = change.after.ref;
 
@@ -350,23 +354,32 @@ async function processWrite(
 
       // The email has already been delivered, so we don't need to do anything.
       if (payload.delivery.state === "SUCCESS") {
+        await events.recordSuccessEvent(change);
         return false;
       }
 
       // The email has previously failed to be delivered, so we can't do anything.
       if (payload.delivery.state === "ERROR") {
+        await events.recordErrorEvent(change, payload, payload.delivery.error);
         return false;
       }
 
       if (payload.delivery.state === "PROCESSING") {
+        await events.recordProcessingEvent(change);
+
         if (payload.delivery.leaseExpireTime.toMillis() < Date.now()) {
+          const error = "Message processing lease expired.";
+
+          /** Send error event */
+          await events.recordErrorEvent(change, payload, error);
+
           // The lease has expired, so we should not attempt to deliver the email again,
           // but we set the state to ERROR so clients can see that the email failed.
           transaction.update(ref, {
             "delivery.state": "ERROR",
             // Keeping error to avoid any breaking changes in the next minor update.
             // Error to be removed for the next major release.
-            error: "Message processing lease expired.",
+            error: { type: "delivery", message: error },
             "delivery.error": "Message processing lease expired.",
           });
         }
@@ -374,10 +387,23 @@ async function processWrite(
         return false;
       }
 
-      if (
-        payload.delivery.state === "PENDING" ||
-        payload.delivery.state === "RETRY"
-      ) {
+      if (payload.delivery.state === "PENDING") {
+        await events.recordPendingEvent(change, payload);
+
+        // We can attempt to deliver the email in these states, so we set the state to PROCESSING
+        // and set a lease time to prevent delivery from being attempted forever.
+        transaction.update(ref, {
+          "delivery.state": "PROCESSING",
+          "delivery.leaseExpireTime": admin.firestore.Timestamp.fromMillis(
+            Date.now() + 60000
+          ),
+        });
+        return true;
+      }
+
+      if (payload.delivery.state === "RETRY") {
+        await events.recordPendingEvent(change, payload);
+
         // We can attempt to deliver the email in these states, so we set the state to PROCESSING
         // and set a lease time to prevent delivery from being attempted forever.
         transaction.update(ref, {
@@ -402,16 +428,30 @@ export const processQueue = functions.firestore
   .document(config.mailCollection)
   .onWrite(
     async (
-      change: functions.Change<FirebaseFirestore.DocumentSnapshot<QueuePayload>>
+      change: functions.Change<admin.firestore.DocumentSnapshot<QueuePayload>>
     ) => {
       await initialize();
       logs.start();
+
+      if (!change.before.exists) {
+        await events.recordStartEvent(change);
+      }
+
       try {
         await processWrite(change);
       } catch (err) {
+        await events.recordErrorEvent(
+          change,
+          change.after.data(),
+          `Unhandled error occurred during processing: ${err.message}"`
+        );
         logs.error(err);
         return null;
       }
+
+      /** record complete event */
+      await events.recordCompleteEvent(change);
+
       logs.complete();
     }
   );

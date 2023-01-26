@@ -43,7 +43,7 @@ describe("extension", () => {
   });
 
   describe("functions.fstranslate", () => {
-    let logMock;
+    let logMock = jest.fn();
     let errorLogMock;
     let admin;
     let wrappedMockTranslate;
@@ -177,16 +177,19 @@ describe("extension", () => {
         defaultEnvironment.OUTPUT_FIELD_NAME,
         testTranslations
       );
+      const languages = ["en", "es", "de", "fr"];
 
+      const translations = ["hello", "hola", "hallo", "salut"];
+
+      expect(logMock).toHaveBeenCalledWith(
+        messages.translateInputStringToAllLanguages("hello", languages)
+      );
       // confirm logs were printed
-      Object.keys(testTranslations).forEach((language) => {
+      languages.forEach((language, i) => {
         // logs.translateInputString
+        // logs.translateStringComplete TODO: fix this
         expect(logMock).toHaveBeenCalledWith(
-          messages.translateInputString("hello", language)
-        );
-        // logs.translateStringComplete
-        expect(logMock).toHaveBeenCalledWith(
-          messages.translateStringComplete("hello", language)
+          messages.translateStringComplete("hello", language, translations[i])
         );
       });
 
