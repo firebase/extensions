@@ -87,7 +87,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}`  can be returned in `path_params` as a JSON formatted string.
 
-* Wildcard Column field with Parent Firestore Document IDs: Creates a column containing a JSON object of all wildcard ids from a documents path.
+* Enable Wildcard Column field with Parent Firestore Document IDs: If enabled, creates a column containing a JSON object of all wildcard ids from a documents path.
 
 * Dataset ID: What ID would you like to use for your BigQuery dataset? This extension will create the dataset, if it doesn't already exist.
 
@@ -95,7 +95,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery SQL table Time Partitioning option type: This parameter will allow you to partition the BigQuery table and BigQuery view  created by the extension based on data ingestion time. You may select the granularity of partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will generate one partition per day, hour, month or year, respectively.
 
-* BigQuery Time Partitioning column name: BigQuery table column/schema field name for TimePartitioning. You can choose schema available as `timestamp` OR new custom defined column that will be assigned to the selected Firestore Document field below. Defaults to pseudo column _PARTITIONTIME if unspecified. Cannot be changed if Table is already partitioned.
+* BigQuery Time Partitioning column name: BigQuery table column/schema field name for TimePartitioning. You can choose schema available as `timestamp` OR a new custom defined column that will be assigned to the selected Firestore Document field below. Defaults to pseudo column _PARTITIONTIME if unspecified. Cannot be changed if Table is already partitioned.
 
 * Firestore Document field name for BigQuery SQL Time Partitioning field option: This parameter will allow you to partition the BigQuery table  created by the extension based on selected. The Firestore Document field value must be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or Firestore timestamp(will be converted to BigQuery TIMESTAMP). Cannot be changed if Table is already partitioned.
  example: `postDate`
@@ -108,6 +108,8 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * Transform function URL: Specify a function URL to call that will transform the payload that will be written to BigQuery. See the pre-install documentation for more details.
 
+* Use new query syntax for snapshots: If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential resource limitations.
+
 
 
 **Cloud Functions:**
@@ -118,7 +120,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 **APIs Used**:
 
-* bigquery-json.googleapis.com (Reason: Mirrors data from your Cloud Firestore collection in BigQuery.)
+* bigquery.googleapis.com (Reason: Mirrors data from your Cloud Firestore collection in BigQuery.)
 
 
 

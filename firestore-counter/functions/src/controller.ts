@@ -283,9 +283,8 @@ export class ShardedCounterController {
         })
       );
 
-      let [reshard, slices] = ShardedCounterController.balanceWorkers(
-        shardingInfo
-      );
+      let [reshard, slices] =
+        ShardedCounterController.balanceWorkers(shardingInfo);
       if (reshard) {
         logger.log(
           "Resharding workers, new workers: " +

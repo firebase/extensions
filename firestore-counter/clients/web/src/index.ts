@@ -73,7 +73,7 @@ export class Counter {
    * All local increments to this counter will be immediately visible in the
    * snapshot.
    */
-  public onSnapshot(observable: ((next: CounterSnapshot) => void)) {
+  public onSnapshot(observable: (next: CounterSnapshot) => void) {
     Object.keys(this.shards).forEach((path) => {
       this.db
         .doc(path)

@@ -17,7 +17,7 @@ export default async (
   let operationCounter = 0;
   let batchIndex = 0;
 
-  rows.forEach((row) => {
+  rows?.forEach((row) => {
     var ref = db.collection(config.backupTableId).doc(row.insertId);
 
     batchArray[batchIndex].set(ref, {
