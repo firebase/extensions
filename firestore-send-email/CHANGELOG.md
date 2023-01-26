@@ -1,3 +1,15 @@
+## Version 0.1.21
+
+feature - add lifecycle events
+
+## Version 0.1.20
+
+docs - add google app passwords guide
+
+## Version 0.1.19
+
+fixed - generate new lib folder
+
 ## Version 0.1.18
 
 fixed - added encoding for connection string passwords (#985)

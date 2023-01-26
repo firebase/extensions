@@ -10,12 +10,14 @@
     "build": "lerna run build",
     "local:emulator": "cd _emulator && firebase emulators:start -P demo-test",
     "test": "cd _emulator && firebase emulators:exec jest -P demo-test",
+    "test:ci": "cd _emulator && firebase emulators:exec \"CI_TEST=true jest --detectOpenHandles --forceExit\" -P demo-test",
     "test:local": "concurrently \"npm run local:emulator\" \"jest\"",
     "test:watch": "concurrently \"npm run local:emulator\" \"jest --watch\"",
     "test-coverage": "jest --coverage --detectOpenHandles --forceExit",
-    "postinstall": "lerna bootstrap --no-ci && lerna run --parallel clean && npm run build && npm run generate-package-locks",
+    "postinstall": "if test \"$SKIP_POSTINSTALL\" != \"yes\" ; then lerna bootstrap --no-ci && lerna run --parallel clean && npm run build && npm run generate-package-locks ; fi",
     "generate-package-locks": "lerna exec -- npm i --package-lock-only",
-    "generate-readmes": "lerna run --parallel --ignore delete-user-data generate-readme"
+    "generate-readmes": "lerna run --parallel --ignore delete-user-data generate-readme",
+    "prepare": "husky install"
   },
   "repository": "",
   "author": "Firebase (https://firebase.google.com/)",
@@ -26,11 +28,16 @@
   "devDependencies": {
     "@types/jest": "^24.0.18",
     "codecov": "^3.8.1",
+    "husky": "^7.0.4",
+    "lint-staged": "^12.4.0",
     "concurrently": "^7.2.1",
     "jest": "^24.9.0",
     "lerna": "^3.4.3",
-    "prettier": "1.15.3",
+    "prettier": "2.7.1",
     "ts-jest": "^24.1.0",
     "typescript": "^3.6.3"
+  },
+  "lint-staged": {
+    "*.{js,md,yml,ts,json,yaml}": "prettier --write"
   }
 }
