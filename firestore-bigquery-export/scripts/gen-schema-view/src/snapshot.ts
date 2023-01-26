@@ -26,12 +26,12 @@ import {
 
 export function latestConsistentSnapshotSchemaView(
   datasetId: string,
-  rawTableName: string,
+  rawViewName: string,
   schema: FirestoreSchema
 ): any {
   const result = buildLatestSchemaSnapshotViewQuery(
     datasetId,
-    rawTableName,
+    rawViewName,
     schema
   );
   return {
@@ -62,12 +62,14 @@ export const testBuildLatestSchemaSnapshotViewQuery = (
 
 export const buildLatestSchemaSnapshotViewQuery = (
   datasetId: string,
-  rawTableName: string,
-  schema: FirestoreSchema
+  rawViewName: string,
+  schema: FirestoreSchema,
+  useNewSqlSyntax = false
 ): any => {
   const firstValue = (selector: string) => {
     return `FIRST_VALUE(${selector}) OVER(PARTITION BY document_name ORDER BY timestamp DESC)`;
   };
+
   // We need to pass the dataset id into the parser so that we can call the
   // fully qualified json2array persistent user-defined function in the proper
   // scope.
@@ -111,6 +113,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
   const fieldNameSelectorClauses = Object.keys(schemaFieldExtractors).join(
     ", "
   );
+
   const fieldValueSelectorClauses = Object.values(schemaFieldExtractors).join(
     ", "
   );
@@ -134,7 +137,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
     fieldValueSelectorClauses.length > 0 ? `,` : ``
   }
           ${fieldValueSelectorClauses}
-        FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawTableName}\`
+        FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawViewName}\`
       )
       WHERE NOT is_deleted
   `;
@@ -163,12 +166,12 @@ export const buildLatestSchemaSnapshotViewQuery = (
           query,
           /*except=*/ schemaFieldArrays.concat(schemaFieldGeopoints)
         )}
-        ${rawTableName}
+        ${rawViewName}
         ${schemaFieldArrays
           .map(
             (
               arrayFieldName
-            ) => `LEFT JOIN UNNEST(${rawTableName}.${arrayFieldName})
+            ) => `LEFT JOIN UNNEST(${rawViewName}.${arrayFieldName})
             AS ${arrayFieldName}_member
             WITH OFFSET ${arrayFieldName}_index`
           )

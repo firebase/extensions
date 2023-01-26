@@ -1,4 +1,5 @@
 import mockedEnv from "mocked-env";
+import { mockGenerateResizedImage } from "./mocks/generateResizedImage";
 
 const environment = {
   LOCATION: "us-central1",
@@ -9,7 +10,6 @@ const environment = {
   DELETE_ORIGINAL_FILE: "true",
 };
 
-const { mockGenerateResizedImage } = global;
 let restoreEnv;
 describe("extension", () => {
   beforeEach(() => {
