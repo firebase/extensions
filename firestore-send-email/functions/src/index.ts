@@ -103,6 +103,10 @@ function getExpireAt(startTime: admin.firestore.Timestamp) {
 async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
   const { template } = payload;
 
+  if (typeof payload.message !== "object" && !template) {
+    logs.invalidMessage(payload.message);
+  }
+
   if (templates && template) {
     if (!template.name) {
       throw new Error(`Template object is missing a 'name' parameter.`);
@@ -350,16 +354,10 @@ async function processWrite(
       }
 
       const payload = snapshot.data();
-
-      // We expect the payload to contain a message object describing the email
-      // to be sent. If it doesn't, we can't do anything.
-      if (typeof payload.message !== "object") {
-        logs.invalidMessage(payload.message);
-        return false;
+      if (!payload.delivery) {
+        logs.missingDeliveryField(change.after.ref);
+        return null;
       }
-
-      // The record has most likely just been created by a client, so we need to
-      // initialize the delivery state.
 
       if (!payload.delivery) {
         const startTime = Timestamp.fromDate(new Date());
