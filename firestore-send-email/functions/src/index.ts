@@ -29,7 +29,7 @@ logs.init();
 
 let db;
 let transport;
-let templates;
+let templates: Templates;
 let initialized = false;
 
 /**
@@ -93,6 +93,10 @@ async function processCreate(snap: FirebaseFirestore.DocumentSnapshot) {
 
 async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
   const { template } = payload;
+
+  if (typeof payload.message !== "object" && !template) {
+    logs.invalidMessage(payload.message);
+  }
 
   if (templates && template) {
     if (!template.name) {
@@ -297,10 +301,6 @@ async function processWrite(change) {
   }
 
   const payload = change.after.data() as QueuePayload;
-
-  if (typeof payload.message !== "object") {
-    logs.invalidMessage(payload.message);
-  }
 
   if (!payload.delivery) {
     logs.missingDeliveryField(change.after.ref);
