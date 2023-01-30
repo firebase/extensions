@@ -184,8 +184,9 @@ params:
   - param: TTL_EXPIRE_TYPE
     label: Firestore TTL type
     description: >-
-      Do you want the firestore records to be marked with an expireAt field for a TTL policy? If "Never" is selected then no expireAt field will be added. Otherwise
-      you may specify the unit of time specified by the TTL_EXPIRE_VALUE parameter. Defaults to "Never".
+      Do you want the firestore records to be marked with an expireAt field for a TTL policy?
+      If "Never" is selected then no expireAt field will be added.
+      Otherwise you may specify the unit of time specified by the TTL_EXPIRE_VALUE parameter. Defaults to "Never".
     type: select
     options:
       - label: Never
