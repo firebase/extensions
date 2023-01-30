@@ -19,7 +19,8 @@ const environment = {
   DEFAULT_REPLY_TO: "fakeemail@gmail.com",
   USERS_COLLECTION: "users",
   TESTING: "true",
-  firestoreExpireAt: "day",
+  TTL_EXPIRE_TYPE: "day",
+  TTL_EXPIRE_VALUE: "1",
 };
 
 describe("extensions config", () => {
