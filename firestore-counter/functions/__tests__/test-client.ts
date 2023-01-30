@@ -19,13 +19,20 @@ import admin from "firebase-admin";
 
 const SHARD_COLLECTION_ID = "_counter_shards_";
 
+type FieldValueReducedObject =
+  | {
+      [key: string]: FieldValueReducedObject | FirebaseFirestore.FieldValue;
+    }
+  | FirebaseFirestore.FieldValue;
+
+// This class was essentially built based off of the node client '../../clients/node/index.js'.
 export class Counter {
   shards: Record<string, any>;
-  notifyPromise: any;
-  doc: any;
-  field: any;
-  db: any;
-  shardId: any;
+  notifyPromise: Promise<unknown> | null;
+  doc: FirebaseFirestore.DocumentReference;
+  field: string;
+  db: admin.firestore.Firestore;
+  shardId: string;
   /**
    * Constructs a sharded counter object that references to a field
    * in a document that is a counter.
@@ -33,7 +40,7 @@ export class Counter {
    * @param doc A reference to a document with a counter field.
    * @param field A path to a counter field in the above document.
    */
-  constructor(doc, field) {
+  constructor(doc: FirebaseFirestore.DocumentReference, field: string) {
     this.shards = {};
     this.notifyPromise = null;
     this.doc = doc;
@@ -56,9 +63,9 @@ export class Counter {
    * All local increments will be reflected in the counter even if the main
    * counter hasn't been updated yet.
    */
-  async get(options) {
+  async get() {
     const valuePromises = Object.keys(this.shards).map(async (path) => {
-      const shard = await this.db.doc(path).get(options);
+      const shard = await this.db.doc(path).get();
       return shard.get(this.field) || 0;
     });
     const values = await Promise.all(valuePromises);
@@ -100,7 +107,10 @@ export class Counter {
     const update = this.field
       .split(".")
       .reverse()
-      .reduce((value, name) => ({ [name]: value }), increment);
+      .reduce<FieldValueReducedObject>(
+        (value, name) => ({ [name]: value }),
+        increment
+      );
     return this.doc
       .collection(SHARD_COLLECTION_ID)
       .doc(this.shardId)

@@ -1,4 +1,4 @@
-import { Counter } from "./util";
+import { Counter } from "./test-client";
 import * as admin from "firebase-admin";
 import waitForExpect from "wait-for-expect";
 
@@ -31,14 +31,14 @@ describe("e2e testing of firestore-counter", () => {
 
     await counter.incrementBy(1);
 
-    const value = await counter.get({});
+    const value = await counter.get();
 
     expect(value).toBe(1);
     for (let i = 0; i < 300; i++) {
       await counter.incrementBy(1);
     }
 
-    const value2 = await counter.get({});
+    const value2 = await counter.get();
 
     expect(value2).toBe(301);
 
