@@ -6,7 +6,7 @@
   "description": "Auto-scalable counters for your app.",
   "dependencies": {
     "deep-equal": "^1.0.1",
-    "firebase-admin": "^8.3.0",
+    "firebase-admin": "^11.5.0",
     "firebase-functions": "^3.13.2",
     "uuid": "^3.3.2",
     "rimraf": "^2.6.3",
