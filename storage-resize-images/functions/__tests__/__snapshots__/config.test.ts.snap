@@ -8,6 +8,7 @@ Object {
   "deleteOriginalFile": 0,
   "doBackfill": false,
   "excludePathList": undefined,
+  "failedImagesPath": undefined,
   "imageSizes": Array [
     "200x200",
   ],
