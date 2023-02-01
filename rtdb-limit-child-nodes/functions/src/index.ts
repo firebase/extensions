@@ -21,8 +21,9 @@ import * as logs from "./logs";
 
 logs.init();
 
-export const rtdblimit = functions.handler.database.ref.onCreate(
-  async (snapshot): Promise<void> => {
+export const rtdblimit = functions.database
+  .ref(config.databaseInstance)
+  .onCreate(async (snapshot): Promise<void> => {
     logs.start();
 
     try {
@@ -51,5 +52,4 @@ export const rtdblimit = functions.handler.database.ref.onCreate(
     } catch (err) {
       logs.error(err);
     }
-  }
-);
+  });
