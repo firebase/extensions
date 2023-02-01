@@ -45,9 +45,9 @@ async function readBigQuerySchema(file: string): Promise<any> {
 }
 
 describe("changelog schema snapshot view sql generation", () => {
-  it("should generate the expected sql for fullSchemaChangeLog.txt", async () => {
+  it("should generate the expected sql for fullSchemaChangeLog.sql", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/fullSchemaChangeLog.txt`
+      `${sqlDir}/fullSchemaChangeLog.sql`
     );
     const result = testBuildSchemaViewQuery(
       testDataset,
@@ -58,7 +58,7 @@ describe("changelog schema snapshot view sql generation", () => {
   });
   it("should generate the expected sql for an empty schema", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/emptySchemaChangeLog.txt`
+      `${sqlDir}/emptySchemaChangeLog.sql`
     );
     const result = testBuildSchemaViewQuery(
       testDataset,
@@ -69,7 +69,7 @@ describe("changelog schema snapshot view sql generation", () => {
   });
   it("should handle nested maps", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/nestedMapSchemaChangeLog.txt`
+      `${sqlDir}/nestedMapSchemaChangeLog.sql`
     );
     const result = testBuildSchemaViewQuery(
       testDataset,
@@ -80,7 +80,7 @@ describe("changelog schema snapshot view sql generation", () => {
   });
   it("should handle arrays nested in maps with conflicting field names", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/arraysNestedInMapsSchema.txt`
+      `${sqlDir}/arraysNestedInMapsSchema.sql`
     );
     const result = testBuildSchemaViewQuery(
       testDataset,
@@ -91,7 +91,7 @@ describe("changelog schema snapshot view sql generation", () => {
   });
   it("should handle every possible type nested inside a map", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/fullSchemaSquared.txt`
+      `${sqlDir}/fullSchemaSquared.sql`
     );
     const result = testBuildSchemaViewQuery(
       testDataset,
@@ -102,7 +102,7 @@ describe("changelog schema snapshot view sql generation", () => {
   });
   it("should handle a map with no key-value pairs", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/emptyMapSchema.txt`
+      `${sqlDir}/emptyMapSchema.sql`
     );
     const result = testBuildSchemaViewQuery(
       testDataset,
@@ -113,7 +113,7 @@ describe("changelog schema snapshot view sql generation", () => {
   });
   it("should handle references in schemas, and conflicting names at various nesting levels", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/referenceSchema.txt`
+      `${sqlDir}/referenceSchema.sql`
     );
     const result = testBuildSchemaViewQuery(
       testDataset,
@@ -125,7 +125,7 @@ describe("changelog schema snapshot view sql generation", () => {
 
   it("should handle renaming properties extracted from JSON data", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/changelogColumnRenameSchema.txt`
+      `${sqlDir}/changelogColumnRenameSchema.sql`
     );
     const result = testBuildSchemaViewQuery(
       testDataset,
@@ -136,7 +136,7 @@ describe("changelog schema snapshot view sql generation", () => {
   });
 
   it("should handle extracting JSON data into a column", async () => {
-    const expectedQuery = await readFormattedSQL(`${sqlDir}/jsonColumn.txt`);
+    const expectedQuery = await readFormattedSQL(`${sqlDir}/jsonColumn.sql`);
     const result = testBuildSchemaViewQuery(
       testDataset,
       testTable,
