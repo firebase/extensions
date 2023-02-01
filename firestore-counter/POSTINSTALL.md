@@ -21,7 +21,7 @@ match /databases/{database}/documents/pages/{page} {
 
 #### Client/Admin samples for incrementing counter and retrieving its value
 
-##### Web Client
+##### Web Client (<v9 example)
 
 1.  Download and copy the [compiled client sample](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/dist/sharded-counter.js) into your application project.
 
@@ -59,6 +59,59 @@ match /databases/{database}/documents/pages/{page} {
       </script>
     </body>
   </html>
+  ```
+
+##### Web Client (v9+ example)
+
+```html
+<html>
+  <head> </head>
+  <body>
+    <script src="clients/web/dist/sharded-counter.js"></script>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+
+      // Add Firebase products that you want to use
+      import { getAuth } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+      import {
+        getFirestore,
+        getDoc,
+        doc,
+        onSnapshot,
+      } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+      // Initialize Firebase
+      const firebaseApp = initializeApp({ projectId: "extensions-testing" });
+
+      // initializeApp(firebaseConfig);
+      const db = getFirestore(firebaseApp);
+
+
+      const docRef = doc(db, "pages", "hello-world");
+
+
+      // Initialize the sharded counter.
+      var views = new sharded.Counter(docRef, "stats.views");
+
+      // // This will increment a field "stats.views" of the "pages/hello-world" document by 3.
+      views.incrementBy(4).then($ => console.log("returning document >>>>", $));
+
+      // // Listen to locally consistent values
+      views.onSnapshot(snap => {
+        console.log("Locally consistent view of visits: " + snap.data());
+      });
+
+      //Alternatively if you don't mind counter delays, you can listen to the document directly.
+      onSnapshot(doc(db, "pages", "hello-world"), snap => {
+        console.log(
+          "Eventually consistent view of visits: " + snap.get("stats.views")
+        );
+      });
+    </script>
+  </body>
+</html>
+
   ```
 
 ##### Android Client

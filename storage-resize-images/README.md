@@ -78,14 +78,14 @@ You can find more information about this extension in the following articles:
 * Cloud Storage path for resized images: A relative path in which to store resized images. For example, if you specify a path here of `thumbs` and you upload an image to `/images/original.jpg`, then the resized image is stored at `/images/thumbs/original_200x200.jpg`. If you prefer to store resized images at the root of your bucket, leave this field empty.
 
 
-* Paths that contain images you want to resize: Restrict storage-resize-images to only resize images in specific locations in your Storage bucket by  supplying a comma-separated list of absolute paths. For example, to only resize the images  stored in the `/users/pictures` and `/restaurants/menuItems` directories, specify the paths `/users/pictures,/restaurants/menuItems`.
-You may also use wildcard notation for directories in the path. For example, `/users/*/pictures`  would match `/users/profile/pictures/image.png` as well as  `/users/profile/pictures/any/sub/directory/image.png`. 
-If you prefer to resize every image uploaded to your Storage bucket,  leave this field empty.
+* Paths that contain images you want to resize: Restrict storage-resize-images to only resize images in specific locations in your Storage bucket by supplying a comma-separated list of absolute paths. For example, specifying the paths `/users/pictures,/restaurants/menuItems` will resize any images found in any subdirectories of `/users/pictures` and `/restaurants/menuItems`.
+You may also use wildcard notation for directories in the path. For example, `/users/*/pictures` would match images in any subdirectory of `/users/123/pictures`, as well as in any subdirectory of `/users/456/pictures`, but also any images in subdirectories of `/users/any/level/of/subdirectories/pictures`.
+If you prefer to resize every image uploaded to your Storage bucket, leave this field empty.
 
 
-* List of absolute paths not included for resized images: Ensure storage-resize-images does *not* resize images in _specific locations_ in your Storage bucket by  supplying a comma-separated list of absolute paths. For example, to *exclude* the images  stored in the `/users/pictures` and `/restaurants/menuItems` directories, specify the paths `/users/pictures,/restaurants/menuItems`.
-You may also use wildcard notation for directories in the path. For example, `/users/*/pictures`  would exclude `/users/profile/pictures/image.png` as well as `/users/profile/pictures/any/sub/directory/image.png`. 
-If you prefer to resize every image uploaded to your Storage bucket,  leave this field empty.
+* List of absolute paths not included for resized images: Ensure storage-resize-images does *not* resize images in _specific locations_ in your Storage bucket by  supplying a comma-separated list of absolute paths. For example, to *exclude* the images  stored in the `/foo/alpha` and its subdirectories and `/bar/beta` and its subdirectories, specify the paths `/foo/alpha,/bar/beta`.
+You may also use wildcard notation for directories in the path. For example, `/users/*/pictures`  would exclude any images in any subdirectories of `/users/foo/pictures` as well as any images in subdirectories of `/users/bar/pictures`, but also any images in subdirectories of `/users/any/level/of/subdirectories/pictures`.
+If you prefer not to explicitly exclude any directories of your Storage bucket, leave this field empty.
 
 
 * Cache-Control header for resized images: This extension automatically copies any `Cache-Control` metadata from the original image to the resized images. For the resized images, do you want to overwrite this copied `Cache-Control` metadata or add `Cache-Control` metadata? Learn more about [`Cache-Control` headers](https://developer.mozilla.org/docs/Web/HTTP/Headers/Cache-Control). If you prefer not to overwrite or add `Cache-Control` metadata, leave this field empty.

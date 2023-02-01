@@ -70,7 +70,7 @@ export class ShardedCounterController {
     limit: number,
     timeoutMillis: number
   ) {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       let aggrPromise: Promise<ControllerStatus> = null;
       let controllerData: ControllerData = EMPTY_CONTROLLER_DATA;
       let rounds = 0;
@@ -93,7 +93,7 @@ export class ShardedCounterController {
         limit
       ).onSnapshot(async (snap) => {
         if (snap.docs.length == limit) return;
-        if (controllerData.workers.length > 0) {
+        if (controllerData.workers && controllerData.workers.length > 0) {
           skippedRoundsDueToWorkers++;
           return;
         }
@@ -149,9 +149,21 @@ export class ShardedCounterController {
           );
           throw Error("Failed to read controller doc.");
         }
-        const controllerData: ControllerData = controllerDoc.exists
-          ? controllerDoc.data()
-          : EMPTY_CONTROLLER_DATA;
+        let controllerData: ControllerData;
+        if (controllerDoc.exists) {
+          controllerData = controllerDoc.data();
+        } else {
+          // If we arrive here, then it is the very first run of the function
+          // and the controllerDoc document has not been created, yet.
+          //
+          // We expect the controllerDoc document to have a certain structure.
+          // Therefore, We create an empty document here and exit immediately,
+          // mainly, because
+          // (a) its the first run and aggregrations will not be necessary
+          // (b) writes in transactions have to happen after all reads.
+          await t.set(this.controllerDocRef, EMPTY_CONTROLLER_DATA);
+          return ControllerStatus.SUCCESS;
+        }
         if (controllerData.workers.length > 0)
           return ControllerStatus.WORKERS_RUNNING;
 
