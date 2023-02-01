@@ -77,6 +77,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
 
   const [schemaFieldExtractors, schemaFieldArrays, schemaFieldGeopoints] =
     result.queryInfo;
+
   let bigQueryFields = result.fields;
   /*
    * Include additional array schema fields.
