@@ -157,3 +157,13 @@ params:
     validationErrorMessage: The number of minutes must be an integer value greater than zero.
     default: "1"
     required: true
+
+events:
+  - type: firebase.extensions.firestore-counter.v1.onStart
+    description: Occurs when a trigger has been called within the Extension, and will include data such as the context of the trigger request.
+
+  - type: firebase.extensions.firestore-counter.v1.onError
+    description: Occurs when an issue has been experienced in the Extension. This will include any error data that has been included within the Error Exception.
+    
+  - type: firebase.extensions.firestore-counter.v1.onCompletion
+    description: Occurs when the function is settled. Provides no customized data other than the context.
