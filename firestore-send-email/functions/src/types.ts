@@ -10,6 +10,8 @@ export interface Config {
   usersCollection?: string;
   templatesCollection?: string;
   testing?: boolean;
+  TTLExpireType?: string;
+  TTLExpireValue?: number;
 }
 export interface Attachment {
   filename?: string;
