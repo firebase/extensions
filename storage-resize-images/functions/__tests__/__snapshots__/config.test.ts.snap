@@ -13,6 +13,7 @@ Object {
   ],
   "imageTypes": undefined,
   "includePathList": undefined,
+  "location": "us-central1",
   "makePublic": false,
   "outputOptions": undefined,
   "resizedImagesPath": undefined,
