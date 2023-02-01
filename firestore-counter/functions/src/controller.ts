@@ -124,7 +124,7 @@ export class ShardedCounterController {
         unsubscribeControllerListener();
         unsubscribeSliceListener();
         if (aggrPromise === null) await aggrPromise;
-        resolve(true);
+        resolve();
       };
       setTimeout(shutdown, timeoutMillis);
     });
