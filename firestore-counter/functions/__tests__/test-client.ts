@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as uuid from "uuid";
 
-import firebase from "firebase/compat/app";
-import "firebase/compat/auth";
-import "firebase/compat/firestore";
-import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
+import { v4 } from "uuid";
+import admin from "firebase-admin";
 
 const SHARD_COLLECTION_ID = "_counter_shards_";
-const COOKIE_NAME = "FIRESTORE_COUNTER_SHARD_ID";
 
-export interface CounterSnapshot {
-  exists: boolean;
-  data: () => number;
-}
+type FieldValueReducedObject =
+  | {
+      [key: string]: FieldValueReducedObject | FirebaseFirestore.FieldValue;
+    }
+  | FirebaseFirestore.FieldValue;
 
+// This class was essentially built based off of the node client '../../clients/node/index.js'.
 export class Counter {
-  private db: firebase.firestore.Firestore = null;
-  private shardId = "";
-  private shards: { [key: string]: number } = {};
-  private notifyPromise: Promise<void> = null;
-
+  shards: Record<string, any>;
+  notifyPromise: Promise<unknown> | null;
+  doc: FirebaseFirestore.DocumentReference;
+  field: string;
+  db: admin.firestore.Firestore;
+  shardId: string;
   /**
    * Constructs a sharded counter object that references to a field
    * in a document that is a counter.
@@ -41,27 +40,21 @@ export class Counter {
    * @param doc A reference to a document with a counter field.
    * @param field A path to a counter field in the above document.
    */
-  constructor(
-    private doc: firebase.firestore.DocumentReference,
-    private field: string
-  ) {
+  constructor(doc: FirebaseFirestore.DocumentReference, field: string) {
+    this.shards = {};
+    this.notifyPromise = null;
+    this.doc = doc;
+    this.field = field;
     this.db = doc.firestore;
-    this.shardId = getShardId(COOKIE_NAME);
+    this.shardId = getShardId();
 
-    firebase.initializeApp(this.db.app.options);
-
-    const shardsRef = firebase.firestore().collection(SHARD_COLLECTION_ID);
+    const shardsRef = doc.collection(SHARD_COLLECTION_ID);
     this.shards[doc.path] = 0;
-
-    this.shards[shardsRef.path + "/" + this.shardId] = 0;
-    this.shards[shardsRef.path + "/" + "\t" + this.shardId.substr(0, 4)] = 0;
-    this.shards[shardsRef.path + "/" + "\t\t" + this.shardId.substr(0, 3)] = 0;
-    this.shards[
-      shardsRef.path + "/" + "\t\t\t" + this.shardId.substr(0, 2)
-    ] = 0;
-    this.shards[
-      shardsRef.path + "/" + "\t\t\t" + this.shardId.substr(0, 1)
-    ] = 0;
+    this.shards[shardsRef.doc(this.shardId).path] = 0;
+    this.shards[shardsRef.doc("\t" + this.shardId.slice(0, 4)).path] = 0;
+    this.shards[shardsRef.doc("\t\t" + this.shardId.slice(0, 3)).path] = 0;
+    this.shards[shardsRef.doc("\t\t\t" + this.shardId.slice(0, 2)).path] = 0;
+    this.shards[shardsRef.doc("\t\t\t\t" + this.shardId.slice(0, 1)).path] = 0;
   }
 
   /**
@@ -70,10 +63,10 @@ export class Counter {
    * All local increments will be reflected in the counter even if the main
    * counter hasn't been updated yet.
    */
-  public async get(options?: firebase.firestore.GetOptions): Promise<number> {
+  async get() {
     const valuePromises = Object.keys(this.shards).map(async (path) => {
-      const shard = await this.db.doc(path).get(options);
-      return <number>shard.get(this.field) || 0;
+      const shard = await this.db.doc(path).get();
+      return shard.get(this.field) || 0;
     });
     const values = await Promise.all(valuePromises);
     return values.reduce((a, b) => a + b, 0);
@@ -85,16 +78,17 @@ export class Counter {
    * All local increments to this counter will be immediately visible in the
    * snapshot.
    */
-  public onSnapshot(observable: (next: CounterSnapshot) => void) {
+  onSnapshot(observable) {
     Object.keys(this.shards).forEach((path) => {
-      const document = firebase.firestore().doc(path);
-
-      onSnapshot(document, (snap: firebase.firestore.DocumentData) => {
+      this.db.doc(path).onSnapshot((snap) => {
         this.shards[snap.ref.path] = snap.get(this.field) || 0;
         if (this.notifyPromise !== null) return;
         this.notifyPromise = schedule(() => {
           const sum = Object.values(this.shards).reduce((a, b) => a + b, 0);
-          observable({ exists: true, data: () => sum });
+          observable({
+            exists: true,
+            data: () => sum,
+          });
           this.notifyPromise = null;
         });
       });
@@ -108,17 +102,19 @@ export class Counter {
    * const counter = new sharded.Counter(db.doc("path/document"), "counter");
    * counter.incrementBy(1);
    */
-  public incrementBy(val: number): Promise<void> {
-    // @ts-ignore
-    const increment: any = firebase.firestore.FieldValue.increment(val);
-    const update: { [key: string]: any } = this.field
+  incrementBy(val) {
+    const increment = admin.firestore.FieldValue.increment(val);
+    const update = this.field
       .split(".")
       .reverse()
-      .reduce((value, name) => ({ [name]: value }), increment);
-
-    const shardRef = firebase.firestore().collection(SHARD_COLLECTION_ID);
-
-    return setDoc(doc(shardRef, this.shardId), update, { merge: true });
+      .reduce<FieldValueReducedObject>(
+        (value, name) => ({ [name]: value }),
+        increment
+      );
+    return this.doc
+      .collection(SHARD_COLLECTION_ID)
+      .doc(this.shardId)
+      .set(update, { merge: true });
   }
 
   /**
@@ -131,13 +127,13 @@ export class Counter {
    * shardRef.set({"counter1", firestore.FieldValue.Increment(1),
    *               "counter2", firestore.FieldValue.Increment(1));
    */
-  public shard(): firebase.firestore.DocumentReference {
+  shard() {
     return this.doc.collection(SHARD_COLLECTION_ID).doc(this.shardId);
   }
 }
 
-async function schedule<T>(func: () => T): Promise<T> {
-  return new Promise<T>(async (resolve) => {
+async function schedule(func) {
+  return new Promise(async (resolve) => {
     setTimeout(async () => {
       const result = func();
       resolve(result);
@@ -145,19 +141,7 @@ async function schedule<T>(func: () => T): Promise<T> {
   });
 }
 
-function getShardId(cookie: string): string {
-  const result = new RegExp(
-    "(?:^|; )" + encodeURIComponent(cookie) + "=([^;]*)"
-  ).exec(document.cookie);
-  if (result) return result[1];
-
-  const shardId = uuid.v4();
-
-  const date = new Date();
-  date.setTime(date.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const expires = "; expires=" + date.toUTCString();
-
-  document.cookie =
-    encodeURIComponent(cookie) + "=" + shardId + expires + "; path=/";
+function getShardId() {
+  const shardId = v4();
   return shardId;
 }

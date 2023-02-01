@@ -49,4 +49,5 @@ export default {
   imageTypes: paramToArray(process.env.IMAGE_TYPE),
   outputOptions: process.env.OUTPUT_OPTIONS,
   animated: process.env.IS_ANIMATED === "true" || undefined ? true : false,
+  location: process.env.LOCATION,
 };
