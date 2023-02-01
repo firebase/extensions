@@ -51,6 +51,10 @@ export function shouldResize(object: ObjectMetadata): boolean {
     logs.imageAlreadyResized();
     return false;
   }
+  if (object.metadata && object.metadata.resizeFailed) {
+    logs.imageFailedAttempt();
+    return false;
+  }
 
   return true;
 }

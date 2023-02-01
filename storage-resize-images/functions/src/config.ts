@@ -44,6 +44,7 @@ export default {
   resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
   includePathList: paramToArray(process.env.INCLUDE_PATH_LIST),
   excludePathList: paramToArray(process.env.EXCLUDE_PATH_LIST),
+  failedImagesPath: process.env.FAILED_IMAGES_PATH,
   deleteOriginalFile: deleteOriginalFile(process.env.DELETE_ORIGINAL_FILE),
   imageTypes: paramToArray(process.env.IMAGE_TYPE),
   outputOptions: process.env.OUTPUT_OPTIONS,
