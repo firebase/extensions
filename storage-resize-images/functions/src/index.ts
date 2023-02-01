@@ -233,7 +233,7 @@ export const backfillResizedImages = functions.tasks
 
     if (nextPageQuery) {
       const queue = getFunctions().taskQueue(
-        `backfillResizedImages`,
+        `locations/${config.location}/functions/backfillResizedImages`,
         process.env.EXT_INSTANCE_ID
       );
       await queue.enqueue({
