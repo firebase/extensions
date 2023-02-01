@@ -25,6 +25,7 @@ import {
 import * as admin from "firebase-admin";
 import { getEventarc } from "firebase-admin/eventarc";
 import * as logs from "./logs";
+import * as events from "./events";
 import { getChangeType, getDocumentId } from "./util";
 
 const eventTracker: FirestoreEventHistoryTracker =
@@ -51,11 +52,7 @@ if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 
-const eventChannel =
-  process.env.EVENTARC_CHANNEL &&
-  getEventarc().channel(process.env.EVENTARC_CHANNEL, {
-    allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
-  });
+events.setupEventChannel();
 
 exports.fsexportbigquery = functions.firestore
   .document(config.collectionPath)
@@ -65,22 +62,17 @@ exports.fsexportbigquery = functions.firestore
       const changeType = getChangeType(change);
       const documentId = getDocumentId(change);
 
-      if (eventChannel) {
-        await eventChannel.publish({
-          type: `firebase.extensions.big-query-export.v1.sync.start`,
-          data: {
-            documentId,
-            changeType,
-            before: {
-              data: change.before.data(),
-            },
-            after: {
-              data: change.after.data(),
-            },
-            context: context.resource,
-          },
-        });
-      }
+      await events.recordStartEvent({
+        documentId,
+        changeType,
+        before: {
+          data: change.before.data(),
+        },
+        after: {
+          data: change.after.data(),
+        },
+        context: context.resource,
+      });
 
       await eventTracker.record([
         {
@@ -96,8 +88,27 @@ exports.fsexportbigquery = functions.firestore
             changeType === ChangeType.CREATE ? undefined : change.before.data(),
         },
       ]);
+
+      await events.recordSuccessEvent({
+        subject: documentId,
+        data: {
+          timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
+          operation: changeType,
+          documentName: context.resource.name,
+          documentId: documentId,
+          pathParams: config.wildcardIds ? context.params : null,
+          eventId: context.eventId,
+          data:
+            changeType === ChangeType.DELETE ? undefined : change.after.data(),
+          oldData:
+            changeType === ChangeType.CREATE ? undefined : change.before.data(),
+        },
+      });
+
       logs.complete();
     } catch (err) {
+      await events.recordErrorEvent(err as Error);
       logs.error(err);
     }
+    await events.recordCompletionEvent({ context });
   });

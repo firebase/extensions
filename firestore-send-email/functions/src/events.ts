@@ -1,6 +1,6 @@
-import { getEventarc } from "firebase-admin/eventarc";
+import { Channel, getEventarc } from "firebase-admin/eventarc";
 
-let eventChannel;
+let eventChannel: Channel | undefined;
 
 /** setup events */
 export const setupEventChannel = () => {
