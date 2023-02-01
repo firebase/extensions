@@ -1,0 +1,23 @@
+name: firestore_counter
+description: A Dart client for using Firestore Distributed Counter.
+version: 0.0.1
+
+publish_to: none
+
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+  flutter: ">=3.0.0 <3.3.4"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  async: ^2.9.0
+  cloud_firestore: ^4.3.1
+  firebase_core: ^2.4.1
+  uuid: ^3.0.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
