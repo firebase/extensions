@@ -31,7 +31,7 @@
     "clean": "rimraf lib",
     "compile": "tsc",
     "format": "prettier --write {,**/}*.{yaml,ts,md}",
-    "test": "jest",
+    "test:local": "jest",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "private": true
