@@ -7,4 +7,7 @@ module.exports = {
   preset: "ts-jest",
   globalSetup: "./jest.setup.js",
   globalTeardown: "./jest.teardown.js",
+  moduleNameMapper: {
+    "firebase-admin/auth": "<rootDir>/node_modules/firebase-admin/lib/auth",
+  },
 };

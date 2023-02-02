@@ -104,6 +104,7 @@ const generateResizedImageHandler = async (
     });
 
     const results = await Promise.all(tasks);
+
     eventChannel &&
       (await eventChannel.publish({
         type: "firebase.extensions.storage-resize-images.v1.complete",
@@ -117,6 +118,27 @@ const generateResizedImageHandler = async (
     const failed = results.some((result) => result.success === false);
     if (failed) {
       logs.failed();
+
+      if (config.failedImagesPath) {
+        const filePath = object.name; // File path in the bucket.
+        const fileDir = parsedPath.dir;
+        const fileExtension = parsedPath.ext;
+        const fileNameWithoutExtension = path.basename(filePath, fileExtension);
+
+        const failedFilePath = path.join(
+          fileDir,
+          config.failedImagesPath,
+          `${fileNameWithoutExtension}${fileExtension}`
+        );
+
+        logs.failedImageUploading(failedFilePath);
+        await bucket.upload(localOriginalFile, {
+          destination: failedFilePath,
+          metadata: { metadata: { resizeFailed: "true" } },
+        });
+        logs.failedImageUploaded(failedFilePath);
+      }
+
       return;
     } else {
       if (config.deleteOriginalFile === deleteImage.onSuccess) {
@@ -211,7 +233,7 @@ export const backfillResizedImages = functions.tasks
 
     if (nextPageQuery) {
       const queue = getFunctions().taskQueue(
-        `backfillResizedImages`,
+        `locations/${config.location}/functions/backfillResizedImages`,
         process.env.EXT_INSTANCE_ID
       );
       await queue.enqueue({

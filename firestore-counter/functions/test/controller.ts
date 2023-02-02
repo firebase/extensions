@@ -113,6 +113,30 @@ class ControllerTest extends ShardedCounterController {
     await counter2Ref.delete();
   }
 
+  @test
+  @timeout(10000)
+  async "can create the internal state document on its first run"() {
+    const SHARDS_COLLECTION_ID = uuid.v4();
+    const TEST_PATH = uuid.v4();
+
+    const controllerDocRef = db.collection(TEST_PATH).doc("controller");
+    const controller = new ShardedCounterController(
+      controllerDocRef,
+      SHARDS_COLLECTION_ID
+    );
+
+    // on its first run the controller should create the controllerDocRef
+    const status = await controller.aggregateOnce({ start: "", end: "" }, 200);
+    expect(status).to.be.equal(ControllerStatus.SUCCESS);
+
+    const controllerDoc = await controllerDocRef.get();
+    expect(controllerDoc.data()).deep.equal({
+      workers: [],
+      timestamp: 0,
+    });
+    await controllerDocRef.delete();
+  }
+
   @test @timeout(100000) async "can continuously aggregate shards"() {
     const SHARDS_COLLECTION_ID = uuid.v4();
     const TEST_PATH = uuid.v4();

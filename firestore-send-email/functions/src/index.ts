@@ -15,6 +15,7 @@
  */
 
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
 import * as nodemailer from "nodemailer";
 
@@ -27,7 +28,7 @@ import * as events from "./events";
 
 logs.init();
 
-let db: FirebaseFirestore.Firestore;
+let db: admin.firestore.Firestore;
 let transport: nodemailer.Transporter;
 let templates: Templates;
 let initialized = false;
@@ -74,6 +75,29 @@ function validateFieldArray(field: string, array?: string[]) {
   if (array.find((item) => typeof item !== "string")) {
     throw new Error(`Invalid field "${field}". Expected an array of strings.`);
   }
+}
+
+function getExpireAt(startTime: admin.firestore.Timestamp) {
+  const now = startTime.toDate();
+  const value = config.TTLExpireValue;
+  switch (config.TTLExpireType) {
+    case "hour":
+      now.setHours(now.getHours() + value);
+      break;
+    case "day":
+      now.setDate(now.getDate() + value);
+      break;
+    case "week":
+      now.setDate(now.getDate() + value);
+      break;
+    case "month":
+      now.setMonth(now.getMonth() + value);
+      break;
+    case "year":
+      now.setFullYear(now.getFullYear() + value);
+      break;
+  }
+  return Timestamp.fromDate(now);
 }
 
 async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
@@ -232,8 +256,8 @@ async function deliver(
 
   logs.attemptingDelivery(ref);
   const update = {
-    "delivery.attempts": admin.firestore.FieldValue.increment(1),
-    "delivery.endTime": admin.firestore.FieldValue.serverTimestamp(),
+    "delivery.attempts": FieldValue.increment(1),
+    "delivery.endTime": FieldValue.serverTimestamp(),
     "delivery.error": null,
     "delivery.leaseExpireTime": null,
   };
@@ -336,15 +360,25 @@ async function processWrite(
 
       // The record has most likely just been created by a client, so we need to
       // initialize the delivery state.
+
       if (!payload.delivery) {
+        const startTime = Timestamp.fromDate(new Date());
+
+        const delivery = {
+          startTime: Timestamp.fromDate(new Date()),
+          state: "PENDING",
+          attempts: 0,
+          error: null,
+        };
+
+        if (config.TTLExpireType && config.TTLExpireType !== "never") {
+          delivery["expireAt"] = getExpireAt(startTime);
+        }
+
         transaction.update(ref, {
-          delivery: {
-            startTime: admin.firestore.FieldValue.serverTimestamp(),
-            state: "PENDING",
-            attempts: 0,
-            error: null,
-          },
-        } as QueuePayload);
+          //@ts-ignore
+          delivery,
+        });
         // We've updated the payload, so we need to attempt delivery, but we
         // don't want to do it in this transaction. Since the transaction will
         // update the record again the cloud function will be triggered again
@@ -379,7 +413,6 @@ async function processWrite(
             "delivery.state": "ERROR",
             // Keeping error to avoid any breaking changes in the next minor update.
             // Error to be removed for the next major release.
-            error: { type: "delivery", message: error },
             "delivery.error": "Message processing lease expired.",
           });
         }
@@ -394,9 +427,7 @@ async function processWrite(
         // and set a lease time to prevent delivery from being attempted forever.
         transaction.update(ref, {
           "delivery.state": "PROCESSING",
-          "delivery.leaseExpireTime": admin.firestore.Timestamp.fromMillis(
-            Date.now() + 60000
-          ),
+          "delivery.leaseExpireTime": Timestamp.fromMillis(Date.now() + 60000),
         });
         return true;
       }
@@ -408,9 +439,7 @@ async function processWrite(
         // and set a lease time to prevent delivery from being attempted forever.
         transaction.update(ref, {
           "delivery.state": "PROCESSING",
-          "delivery.leaseExpireTime": admin.firestore.Timestamp.fromMillis(
-            Date.now() + 60000
-          ),
+          "delivery.leaseExpireTime": Timestamp.fromMillis(Date.now() + 60000),
         });
         return true;
       }

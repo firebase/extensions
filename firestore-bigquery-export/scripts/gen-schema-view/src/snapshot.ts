@@ -76,6 +76,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
   const result = processFirestoreSchema(datasetId, "data", schema, firstValue);
   const [schemaFieldExtractors, schemaFieldArrays, schemaFieldGeopoints] =
     result.queryInfo;
+
   let bigQueryFields = result.fields;
   /*
    * Include additional array schema fields.
