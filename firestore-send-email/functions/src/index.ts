@@ -15,6 +15,7 @@
  */
 
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
 import * as nodemailer from "nodemailer";
 
@@ -96,13 +97,13 @@ function getExpireAt(startTime: admin.firestore.Timestamp) {
       now.setFullYear(now.getFullYear() + value);
       break;
   }
-  return admin.firestore.Timestamp.fromDate(now);
+  return Timestamp.fromDate(now);
 }
 
-async function processCreate(snap: FirebaseFirestore.DocumentSnapshot) {
+async function processCreate(snap: admin.firestore.DocumentSnapshot) {
   // Wrapping in transaction to allow for automatic retries (#48)
 
-  const startTime = admin.firestore.Timestamp.fromDate(new Date());
+  const startTime = Timestamp.fromDate(new Date());
 
   const delivery = {
     startTime,
@@ -266,12 +267,12 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
 
 async function deliver(
   payload: QueuePayload,
-  ref: FirebaseFirestore.DocumentReference
+  ref: admin.firestore.DocumentReference
 ): Promise<any> {
   logs.attemptingDelivery(ref);
   const update = {
-    "delivery.attempts": admin.firestore.FieldValue.increment(1),
-    "delivery.endTime": admin.firestore.FieldValue.serverTimestamp(),
+    "delivery.attempts": FieldValue.increment(1),
+    "delivery.endTime": FieldValue.serverTimestamp(),
     "delivery.error": null,
     "delivery.leaseExpireTime": null,
   };
@@ -378,9 +379,7 @@ async function processWrite(change) {
       await admin.firestore().runTransaction((transaction) => {
         transaction.update(change.after.ref, {
           "delivery.state": "PROCESSING",
-          "delivery.leaseExpireTime": admin.firestore.Timestamp.fromMillis(
-            Date.now() + 60000
-          ),
+          "delivery.leaseExpireTime": Timestamp.fromMillis(Date.now() + 60000),
         });
         return Promise.resolve();
       });
