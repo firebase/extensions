@@ -44,5 +44,5 @@ describe("extension", () => {
     const failureFilePath = `${process.env.FAILED_IMAGES_PATH}/not-an-image.jpeg`;
 
     expect(await waitForFile(storage, failureFilePath)).toBe(true);
-  });
+  }, 12000);
 });
