@@ -130,7 +130,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 
 
 // somewhere in your app code initialize Firestore instance
-FirebaseFirestore db = FirebaseFirestore.getInstance();
+FirebaseFirestore db = admin.firestore.getInstance();
 // create reference to the collection and the document you wish to use 
 DocumentReference doc = db.collection("pages").document("hello-world");
 // initialize FirestoreShardedCounter with the document and the property which will hold the counter value
