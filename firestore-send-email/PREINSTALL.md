@@ -40,6 +40,7 @@ Now you can use your Google username with the generated password to authorize th
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
 
 #### Billing
+TODO: @kevinthecheung: remove `a small amount` text
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 
 - You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).

@@ -10,6 +10,7 @@ Object {
     "de",
     "fr",
   ],
+  "languagesFieldName": undefined,
   "location": "us-central1",
   "outputFieldName": "translated",
 }
