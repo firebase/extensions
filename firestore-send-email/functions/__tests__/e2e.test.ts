@@ -58,7 +58,11 @@ describe("e2e testing", () => {
       const unsubscribe = doc.onSnapshot((snapshot) => {
         const document = snapshot.data();
 
-        if (document.delivery && document.delivery.info) {
+        if (
+          document.delivery &&
+          document.delivery.info &&
+          document.delivery.expireAt
+        ) {
           const startAt = document.delivery.startTime.toDate();
           const expireAt = document.delivery.expireAt.toDate();
           expect(expireAt.getTime() - startAt.getTime()).toEqual(5 * 86400000);

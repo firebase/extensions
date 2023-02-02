@@ -77,17 +77,48 @@ function validateFieldArray(field: string, array?: string[]) {
   }
 }
 
+function getExpireAt(startTime: admin.firestore.Timestamp) {
+  const now = startTime.toDate();
+  const value = config.TTLExpireValue;
+  switch (config.TTLExpireType) {
+    case "hour":
+      now.setHours(now.getHours() + value);
+      break;
+    case "day":
+      now.setDate(now.getDate() + value);
+      break;
+    case "week":
+      now.setDate(now.getDate() + value);
+      break;
+    case "month":
+      now.setMonth(now.getMonth() + value);
+      break;
+    case "year":
+      now.setFullYear(now.getFullYear() + value);
+      break;
+  }
+  return Timestamp.fromDate(now);
+}
+
 async function processCreate(snap: admin.firestore.DocumentSnapshot) {
   // Wrapping in transaction to allow for automatic retries (#48)
 
+  const startTime = Timestamp.fromDate(new Date());
+
+  const delivery = {
+    startTime,
+    state: "PENDING",
+    attempts: 0,
+    error: null,
+  };
+
+  if (config.TTLExpireType && config.TTLExpireType !== "never") {
+    delivery["expireAt"] = getExpireAt(startTime);
+  }
+
   return admin.firestore().runTransaction((transaction) => {
     transaction.update(snap.ref, {
-      delivery: {
-        startTime: FieldValue.serverTimestamp(),
-        state: "PENDING",
-        attempts: 0,
-        error: null,
-      },
+      delivery,
     });
     return Promise.resolve();
   });
