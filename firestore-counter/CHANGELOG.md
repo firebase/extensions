@@ -1,3 +1,9 @@
+## Version 0.2.6
+
+fixed - ts errors and updated packages
+
+feature - upgrade extensions to the latest firebase-admin sdk
+
 ## Version 0.2.5
 
 fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)
