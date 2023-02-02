@@ -19,6 +19,7 @@ import { Slice, WorkerStats, queryRange } from "./common";
 import { Planner } from "./planner";
 import { Aggregator } from "./aggregator";
 import { logger } from "firebase-functions";
+import { FieldValue } from "firebase-admin/firestore";
 
 export interface WorkerShardingInfo {
   slice: Slice; // shard range a single worker is responsible for
@@ -215,7 +216,7 @@ export class ShardedCounterController {
         }
         t.set(
           this.controllerDocRef,
-          { timestamp: firestore.FieldValue.serverTimestamp() },
+          { timestamp: FieldValue.serverTimestamp() },
           { merge: true }
         );
         logger.log("Aggregated " + plans.length + " counters.");
@@ -312,13 +313,13 @@ export class ShardedCounterController {
             ),
             {
               slice: slice,
-              timestamp: firestore.FieldValue.serverTimestamp(),
+              timestamp: FieldValue.serverTimestamp(),
             }
           );
         });
         t.set(this.controllerDocRef, {
           workers: slices,
-          timestamp: firestore.FieldValue.serverTimestamp(),
+          timestamp: FieldValue.serverTimestamp(),
         });
       } else {
         // Check workers that haven't updated stats for over 90s - they most likely failed.
@@ -327,7 +328,7 @@ export class ShardedCounterController {
           if (timestamp / 1000 - snap.updateTime.seconds > 90) {
             t.set(
               snap.ref,
-              { timestamp: firestore.FieldValue.serverTimestamp() },
+              { timestamp: FieldValue.serverTimestamp() },
               { merge: true }
             );
             failures++;
@@ -336,7 +337,7 @@ export class ShardedCounterController {
         logger.log("Detected " + failures + " failed workers.");
         t.set(
           this.controllerDocRef,
-          { timestamp: firestore.FieldValue.serverTimestamp() },
+          { timestamp: FieldValue.serverTimestamp() },
           { merge: true }
         );
       }
