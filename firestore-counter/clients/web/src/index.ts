@@ -18,7 +18,7 @@ import * as uuid from "uuid";
 import firebase from "firebase/compat/app";
 import "firebase/compat/auth";
 import "firebase/compat/firestore";
-import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
+import { doc, setDoc, onSnapshot } from "firebase/firestore";
 
 const SHARD_COLLECTION_ID = "_counter_shards_";
 const COOKIE_NAME = "FIRESTORE_COUNTER_SHARD_ID";
@@ -50,7 +50,9 @@ export class Counter {
 
     firebase.initializeApp(this.db.app.options);
 
-    const shardsRef = firebase.firestore().collection(SHARD_COLLECTION_ID);
+    const shardsRef = firebase
+      .firestore()
+      .collection(doc.path + "/" + SHARD_COLLECTION_ID);
     this.shards[doc.path] = 0;
 
     this.shards[shardsRef.path + "/" + this.shardId] = 0;
@@ -116,7 +118,9 @@ export class Counter {
       .reverse()
       .reduce((value, name) => ({ [name]: value }), increment);
 
-    const shardRef = firebase.firestore().collection(SHARD_COLLECTION_ID);
+    const shardRef = firebase
+      .firestore()
+      .collection(this.doc.path + "/" + SHARD_COLLECTION_ID);
 
     return setDoc(doc(shardRef, this.shardId), update, { merge: true });
   }
