@@ -11,8 +11,6 @@ on:
   push:
     branches:
       - "**"
-    paths:
-      - "firestore-counter/clients/**"
 jobs:
   run_e2e_tests:
     runs-on: macos-12
@@ -36,13 +34,13 @@ jobs:
           sudo npm i -g firebase-tools
       - name: Install dependencies
         run: |
-          npm i
-      - name: Build emulator functions
-        run: |
-          cd _emulator/functions
+          cd firestore-counter/functions
           npm i
           npm run build
-          cd ../..
+      - name: Build emulator functions
+        run: |
+          npm i
+          npm run build
       - name: Firebase Emulator Cache
         uses: actions/cache@v2
         with:
