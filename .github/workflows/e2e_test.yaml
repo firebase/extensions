@@ -1,8 +1,5 @@
 name: Testing e2e
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-
 on:
   pull_request:
     paths:
