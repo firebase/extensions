@@ -13,7 +13,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         name: Install Node.js 14
         with:
           node-version: "14"
@@ -38,7 +38,7 @@ jobs:
           npm i
           npm run build
       - name: Firebase Emulator Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/firebase/emulators
           key: firebase-emulators-v2-${{ github.run_id }}
