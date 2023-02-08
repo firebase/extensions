@@ -1,5 +1,7 @@
 ## Version 0.1.22
 
+fixed - fix typo in extension
+
 feature - upgrade extensions to the latest firebase-admin sdk
 
 feature - improve TTL params
