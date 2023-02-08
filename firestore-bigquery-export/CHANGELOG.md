@@ -1,5 +1,7 @@
 ## Version 0.1.30
 
+fixed - check if app already exists before init app when using events
+
 chore - ts errors and updated packages
 
 feature - upgrade extensions to the latest firebase-admin sdk

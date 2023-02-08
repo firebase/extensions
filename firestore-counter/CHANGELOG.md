@@ -1,5 +1,7 @@
 ## Version 0.2.6
 
+fixed - web client now uses the document sub collection for processing shards
+
 fixed - ts errors and updated packages
 
 feature - upgrade extensions to the latest firebase-admin sdk
