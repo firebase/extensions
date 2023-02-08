@@ -21,15 +21,21 @@ import * as logs from "./logs";
 
 logs.init();
 
-export const rtdblimit = functions.handler.database.ref.onCreate(
-  async (snapshot): Promise<void> => {
+export const rtdblimit = functions.database
+  .ref(config.databaseInstance)
+  .onCreate(async (snapshot): Promise<void> => {
     logs.start();
 
     try {
       const parentRef = snapshot.ref.parent;
       const parentSnapshot = await parentRef.once("value");
 
-      logs.childCount(parentRef.path, parentSnapshot.numChildren());
+      /** set reference for logging */
+      const reference = snapshot.ref
+        .toString()
+        .substring(snapshot.ref.root.toString().length - 1);
+
+      logs.childCount(reference, parentSnapshot.numChildren());
 
       if (parentSnapshot.numChildren() > config.maxCount) {
         let childCount = 0;
@@ -40,16 +46,15 @@ export const rtdblimit = functions.handler.database.ref.onCreate(
           }
         });
 
-        logs.pathTruncating(parentRef.path, config.maxCount);
+        logs.pathTruncating(reference, config.maxCount);
         await parentRef.update(updates);
-        logs.pathTruncated(parentRef.path, config.maxCount);
+        logs.pathTruncated(reference, config.maxCount);
       } else {
-        logs.pathSkipped(parentRef.path);
+        logs.pathSkipped(reference);
       }
 
       logs.complete();
     } catch (err) {
       logs.error(err);
     }
-  }
-);
+  });

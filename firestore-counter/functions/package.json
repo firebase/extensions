@@ -6,20 +6,24 @@
   "description": "Auto-scalable counters for your app.",
   "dependencies": {
     "deep-equal": "^1.0.1",
-    "firebase-admin": "^8.3.0",
-    "firebase-functions": "^3.13.2",
+    "firebase-admin": "^11.4.1",
+    "firebase-functions": "^4.2.0",
     "uuid": "^3.3.2",
     "rimraf": "^2.6.3",
-    "typescript": "^3.5.2",
+    "typescript": "^4.9.4",
     "@types/chai": "^4.1.6",
-    "@types/mocha": "^5.2.5"
+    "@types/mocha": "^5.2.5",
+    "@types/express-serve-static-core": "4.17.30"
   },
   "devDependencies": {
     "chai": "^4.2.0",
+    "jest": "^24.9.0",
     "mocha": "^5.2.0",
     "mocha-typescript": "*",
     "prettier": "1.15.3",
-    "ts-node": "^7.0.1"
+    "ts-jest": "^24.3.0",
+    "ts-node": "^7.0.1",
+    "wait-for-expect": "^3.0.2"
   },
   "scripts": {
     "prepare": "npm run build",
@@ -27,7 +31,7 @@
     "clean": "rimraf lib",
     "compile": "tsc",
     "format": "prettier --write {,**/}*.{yaml,ts,md}",
-    "test": "mocha --require ts-node/register test/**/*.ts",
+    "test:local": "jest",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "private": true

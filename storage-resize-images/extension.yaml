@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.33
+version: 0.1.34
 specVersion: v1beta
 
 displayName: Resize Images
@@ -205,14 +205,14 @@ params:
     label: Paths that contain images you want to resize
     description: >
       Restrict storage-resize-images to only resize images in specific locations in your Storage bucket by 
-      supplying a comma-separated list of absolute paths. For example, to only resize the images 
-      stored in the `/users/pictures` and `/restaurants/menuItems` directories, specify the paths `/users/pictures,/restaurants/menuItems`.
+      supplying a comma-separated list of absolute paths. For example, specifying the paths `/users/pictures,/restaurants/menuItems`
+      will resize any images found in any subdirectories of `/users/pictures` and `/restaurants/menuItems`.
       
-      You may also use wildcard notation for directories in the path. For example, `/users/*/pictures` 
-      would match `/users/profile/pictures/image.png` as well as  `/users/profile/pictures/any/sub/directory/image.png`. 
+      You may also use wildcard notation for directories in the path. For example, `/users/*/pictures`
+      would exclude any images in any subdirectories of `/users/foo/pictures` as well as any images in
+      subdirectories of `/users/bar/pictures`, but also any images in subdirectories of `/users/any/level/of/subdirectories/pictures`. 
       
-      If you prefer to resize every image uploaded to your Storage bucket, 
-      leave this field empty.
+      If you prefer not to explicitly exclude any directories of your Storage bucket, leave this field empty.
     type: string
     example: "/users/avatars,/design/pictures"
     validationRegex: ^(\/[^\s\/\,]+)+(\,(\/[^\s\/\,]+)+)*$
@@ -225,10 +225,12 @@ params:
     description: >
       Ensure storage-resize-images does *not* resize images in _specific locations_ in your Storage bucket by 
       supplying a comma-separated list of absolute paths. For example, to *exclude* the images 
-      stored in the `/users/pictures` and `/restaurants/menuItems` directories, specify the paths `/users/pictures,/restaurants/menuItems`.
+      stored in the `/foo/alpha` and its subdirectories and `/bar/beta` and its subdirectories, specify the
+      paths `/foo/alpha,/bar/beta`.
       
-      You may also use wildcard notation for directories in the path. For example, `/users/*/pictures` 
-      would exclude `/users/profile/pictures/image.png` as well as `/users/profile/pictures/any/sub/directory/image.png`. 
+      You may also use wildcard notation for directories in the path. For example, `/users/*/pictures` would
+      exclude any images in any subdirectories of `/users/foo/pictures` as well as any images in subdirectories of
+      `/users/bar/pictures`, but also any images in subdirectories of `/users/any/level/of/subdirectories/pictures`.
       
       If you prefer to resize every image uploaded to your Storage bucket, 
       leave this field empty.
@@ -237,6 +239,19 @@ params:
     validationRegex: ^(\/[^\s\/\,]+)+(\,(\/[^\s\/\,]+)+)*$
     validationErrorMessage:
       Invalid paths, must be a comma-separated list of absolute path values.
+    required: false
+
+  - param: FAILED_IMAGES_PATH
+    label: Cloud Storage path for failed images
+    description: >
+      A relative path in which to store failed images. For example,
+      if you specify a path here of `failed` and you upload an image to
+      `/images/original.jpg`, then resizing failed, the image will be
+      stored at `/images/failed/original.jpg`.
+      
+      Leave this field empty if you do not want to store failed images
+      in a separate directory.
+    example: failed
     required: false
 
   - param: CACHE_CONTROL_HEADER

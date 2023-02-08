@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-translate-text
-version: 0.1.9
+version: 0.1.10
 specVersion: v1beta
 
 displayName: Translate Text
@@ -168,6 +168,15 @@ params:
     example: translated
     default: translated
     required: true
+
+  - param: LANGUAGES_FIELD_NAME
+    label: Languages field name
+    description: >
+      What is the name of the field that contains the languages that you want to translate into? This field is
+      optional. If you don't specify it, the extension will use the languages specified in the LANGUAGES parameter.
+    example: languages
+    default: languages
+    required: false
 
   - param: DO_BACKFILL
     label: Translate existing documents?

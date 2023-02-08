@@ -45,7 +45,11 @@ const eventTracker: FirestoreEventHistoryTracker =
   });
 
 logs.init();
-admin.initializeApp();
+
+/** Init app, if not already initialized */
+if (admin.apps.length === 0) {
+  admin.initializeApp();
+}
 
 const eventChannel =
   process.env.EVENTARC_CHANNEL &&
