@@ -1,5 +1,3 @@
-import * as path from "path";
-
 export const startsWithArray = (
   userInputPaths: string[],
   imagePath: string

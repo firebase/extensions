@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as admin from "firebase-admin";
 import { expect } from "chai";
 import { suite, test, timeout } from "mocha-typescript";
 import { ShardedCounterWorker } from "../src/worker";
@@ -44,7 +45,7 @@ class StateTracker {
   private counterVal = 0;
   private partialSum = 0;
   private shardsSum = 0;
-  constructor(private db: FirebaseFirestore.Firestore) {}
+  constructor(private db: admin.firestore.Firestore) {}
 
   start(counterPath: string, collectionId: string) {
     this.shardsUnsubscribe = db
