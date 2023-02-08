@@ -207,8 +207,8 @@ params:
   - param: TTL_EXPIRE_VALUE
     label: Firestore TTL value
     description: >-
-      In the units specified by TTL_EXPIRE_TYPE, how long do you want records to be ineligible for deletion by a TTL policy? This parameter requires the Firestore TTL type paramter
-      to be set to a value other than "Never".
+      In the units specified by TTL_EXPIRE_TYPE, how long do you want records to be ineligible for deletion by a TTL policy? This parameter requires the Firestore TTL type parameter
+      to be set to a value other than `Never`. For example, if `Firestore TTL type` is set to `Day` then setting this parameter to `1` will specify a TTL of 1 day.
     validationRegex: "^[1-9][0-9]*$"
     validationErrorMessage: The value must be an integer value greater than zero.
     default: "1"
