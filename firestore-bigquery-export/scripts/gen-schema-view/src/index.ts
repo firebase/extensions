@@ -120,10 +120,12 @@ async function run(): Promise<number> {
   process.env.GOOGLE_CLOUD_PROJECT = config.projectId;
 
   // Initialize Firebase
-  firebase.initializeApp({
-    credential: firebase.credential.applicationDefault(),
-    databaseURL: `https://${config.projectId}.firebaseio.com`,
-  });
+  if (!firebase.apps.length) {
+    firebase.initializeApp({
+      credential: firebase.credential.applicationDefault(),
+      databaseURL: `https://${config.projectId}.firebaseio.com`,
+    });
+  }
 
   // @ts-ignore string not assignable to enum
   if (Object.keys(config.schemas).length === 0) {
