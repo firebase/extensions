@@ -126,6 +126,8 @@ async function run(): Promise<number> {
       databaseURL: `https://${config.projectId}.firebaseio.com`,
     });
   }
+  process.env.PROJECT_ID = config.projectId;
+  process.env.GOOGLE_CLOUD_PROJECT = config.projectId;
 
   // @ts-ignore string not assignable to enum
   if (Object.keys(config.schemas).length === 0) {
