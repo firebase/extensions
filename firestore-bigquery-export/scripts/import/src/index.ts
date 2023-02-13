@@ -55,12 +55,12 @@ program
     "Firebase Project ID for project containing the Cloud Firestore database."
   )
   .option(
-    "-s, --source-collection-path <source-collection-path>",
-    "The path of the the Cloud Firestore Collection to import from. (This may, or may not, be the same Collection for which you plan to mirror changes.)"
-  )
-  .option(
     "-q, --query-collection-group [true|false]",
     "Use 'true' for a collection group query, otherwise a collection query is performed."
+  )
+  .option(
+    "-s, --source-collection-path <source-collection-path>",
+    "The path of the the Cloud Firestore Collection to import from. (This may, or may not, be the same Collection for which you plan to mirror changes.)"
   )
   .option(
     "-d, --dataset <dataset>",
@@ -177,11 +177,14 @@ const run = async (): Promise<number> => {
     }
 
     let query: firebase.firestore.Query;
-
     if (queryCollectionGroup) {
       query = firebase
         .firestore()
-        .collectionGroup(sourceCollectionPath.split("/").at(-1));
+        .collectionGroup(
+          sourceCollectionPath.split("/")[
+            sourceCollectionPath.split("/").length - 1
+          ]
+        );
     } else {
       query = firebase.firestore().collection(sourceCollectionPath);
     }
@@ -200,13 +203,14 @@ const run = async (): Promise<number> => {
 
     let rows: FirestoreDocumentChangeEvent[] = [];
 
-    if (queryCollectionGroup) {
+    const templateSegments = sourceCollectionPath.split("/");
+
+    if (queryCollectionGroup && templateSegments.length > 1) {
       for (const doc of docs) {
         let pathParams = {};
         const path = doc.ref.path;
 
         const pathSegments = path.split("/");
-        const templateSegments = sourceCollectionPath.split("/");
         const isSameLength =
           pathSegments.length === templateSegments.length + 1;
 

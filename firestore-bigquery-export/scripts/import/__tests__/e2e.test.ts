@@ -4,6 +4,7 @@ import * as childProcess from "child_process";
 import * as path from "path";
 import * as admin from "firebase-admin";
 import { repeat } from "./helpers/waitFor";
+import axios from "axios";
 
 const scriptPath = path.join(__dirname, "../lib/index.js");
 const projectId = "extensions-testing";
@@ -81,6 +82,10 @@ describe("e2e test CLI", () => {
     // if ((await bigquery.dataset(datasetName).exists())[0]) {
     //   await bigquery.dataset(datasetName).delete({ force: true });
     // }
+    // delete all data from firestore via axios request
+    // await axios.delete(
+    //   `http://localhost:8080/emulator/v1/projects/extensions-testing/databases/(default)/documents`,
+    // )
   });
 
   test(`should import data with old script`, async () => {
@@ -216,7 +221,94 @@ describe("e2e test CLI", () => {
     expect(isOldQuery).toBe(false);
   });
 
-  test("collection group query", async () => {
+  test("basic collection group query", async () => {
+    process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
+    // if there is no app, initialize one
+    if (!admin.apps.length) {
+      admin.initializeApp();
+    }
+    firestore = admin.firestore();
+
+    await firestore
+      .collection("regions/europe/countries")
+      .doc("france")
+      .set({ name: "France" });
+
+    await firestore
+      .collection("notregions/asia/countries")
+      .doc("japan")
+      .set({ name: "Japan" });
+
+    const args = [
+      "--non-interactive",
+      "-P",
+      "extensions-testing",
+      "-u",
+      "-s",
+      "countries",
+      "-d",
+      datasetName,
+      "-t",
+      tableName,
+      "-q",
+      "true",
+      "-l",
+      "us",
+      "-u",
+      "true",
+      "-e",
+      "true",
+    ];
+
+    await runScript(
+      scriptPath,
+      () => {
+        console.log("complete!");
+      },
+      args
+    );
+
+    console.log(datasetName);
+
+    const [rows] = await repeat(
+      () =>
+        bigquery
+          .dataset(datasetName)
+          .table(`${tableName}_raw_changelog`)
+          .getRows(),
+      (rows) => rows[0].length > 1,
+      10,
+      20000
+    );
+
+    console.log(rows);
+    expect(rows.length).toBe(2);
+
+    const { operation, timestamp, event_id, old_data } = rows[0];
+
+    expect(operation).toBe("IMPORT");
+    // expect(document_name).toBe(
+    //   `projects/extensions-testing/databases/(default)/documents/${collectionName}/test`
+    // );
+    // expect(document_id).toBe("test");
+    // expect(JSON.parse(data)).toEqual({ test: "test" });
+
+    expect(event_id).toBe("");
+    expect(old_data).toBeNull();
+    expect(timestamp).toBeDefined();
+
+    const [view] = await bigquery
+      .dataset(datasetName)
+      .table(`${tableName}_raw_latest`)
+      .get();
+
+    const query = view.metadata.view.query;
+    expect(query).toBeDefined();
+    const isOldQuery = query.includes("FIRST_VALUE");
+    expect(isOldQuery).toBe(false);
+  });
+
+  test("wildcarded collection group query", async () => {
     process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
     process.env.FIREBASE_CONFIG = JSON.stringify({
       apiKey: "AIzaSyAJTgFI-OVRjgd_10JDWc9T3kxvxY-fUe4",
@@ -243,8 +335,6 @@ describe("e2e test CLI", () => {
       .collection("regions/asia/countries")
       .doc("japan")
       .set({ name: "Japan" });
-
-    console.log("here");
 
     const args = [
       "--non-interactive",
@@ -353,8 +443,6 @@ describe("e2e test CLI", () => {
       .doc("foo")
       .set({ name: "Bar" });
 
-    console.log("here");
-
     const args = [
       "--non-interactive",
       "-P",
@@ -383,6 +471,8 @@ describe("e2e test CLI", () => {
       },
       args
     );
+    //sleep for 2 seconds
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     console.log(datasetName);
 
