@@ -130,7 +130,7 @@ export class Partitioning {
   private async isTablePartitioned() {
     // No table provided, cannot evaluate
     if (!this.table) return Promise.resolve(false);
-    
+
     /*** No table exists, return */
     const [tableExists] = await this.table.exists();
     if (!tableExists) return Promise.resolve(false);
