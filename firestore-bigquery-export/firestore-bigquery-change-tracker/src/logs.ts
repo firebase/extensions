@@ -235,12 +235,6 @@ export const removedClustering = (tableName: string) => {
   logger.info(`Clustering removed on ${tableName}`);
 };
 
-export const cannotPartitionExistingTable = (table: Table) => {
-  logger.warn(
-    `Cannot partition an existing table ${table.dataset.id}_${table.id}`
-  );
-};
-
 export function invalidProjectIdWarning(bqProjectId: string) {
   logger.warn(`Invalid project Id ${bqProjectId}, data cannot be synchronized`);
 }
