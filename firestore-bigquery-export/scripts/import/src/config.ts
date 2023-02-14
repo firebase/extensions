@@ -4,10 +4,10 @@ import * as program from "commander";
 import { CliConfig, CliConfigError } from "./types";
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
-const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
+export const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
 
 const PROJECT_ID_MAX_CHARS = 6144;
-const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
+export const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
 const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
 
 const validateBatchSize = (value: string) => {
@@ -49,7 +49,7 @@ const validateLocation = (value: string) => {
   return index !== -1;
 };
 
-const validateInput = (
+export const validateInput = (
   value: string,
   name: string,
   regex: RegExp,
