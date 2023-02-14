@@ -354,12 +354,9 @@ async function processWrite(
       }
 
       const payload = snapshot.data();
-      if (!payload.delivery) {
-        logs.missingDeliveryField(change.after.ref);
-        return null;
-      }
 
       if (!payload.delivery) {
+        logs.missingDeliveryField(change.after.ref);
         const startTime = Timestamp.fromDate(new Date());
 
         const delivery = {
