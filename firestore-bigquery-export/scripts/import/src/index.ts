@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 /*
  * Copyright 2019 Google LLC
  *
@@ -15,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as firebase from "firebase-admin";
 import * as program from "commander";
 import * as fs from "fs";
@@ -23,24 +21,19 @@ import * as util from "util";
 import * as filenamify from "filenamify";
 import { runMultiThread } from "./run";
 import { resolveWildcardIds } from "./config";
-
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreDocumentChangeEvent,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import { parseConfig } from "./config";
-
 // For reading cursor position.
 const exists = util.promisify(fs.exists);
 const write = util.promisify(fs.writeFile);
 const read = util.promisify(fs.readFile);
 const unlink = util.promisify(fs.unlink);
-
 const FIRESTORE_DEFAULT_DATABASE = "(default)";
-
 const packageJson = require("../package.json");
-
 program
   .name("fs-bq-import-collection")
   .description(packageJson.description)
@@ -55,12 +48,12 @@ program
     "Firebase Project ID for project containing the Cloud Firestore database."
   )
   .option(
-    "-s, --source-collection-path <source-collection-path>",
-    "The path of the the Cloud Firestore Collection to import from. (This may, or may not, be the same Collection for which you plan to mirror changes.)"
-  )
-  .option(
     "-q, --query-collection-group [true|false]",
     "Use 'true' for a collection group query, otherwise a collection query is performed."
+  )
+  .option(
+    "-s, --source-collection-path <source-collection-path>",
+    "The path of the the Cloud Firestore Collection to import from. (This may, or may not, be the same Collection for which you plan to mirror changes.)"
   )
   .option(
     "-d, --dataset <dataset>",
@@ -92,14 +85,12 @@ program
     "-e, --use-emulator [true|false]",
     "Whether to use the firestore emulator"
   );
-
 const run = async (): Promise<number> => {
   const config = await parseConfig();
   if (config.kind === "ERROR") {
     config.errors?.forEach((e) => console.error(`[ERROR] ${e}`));
     process.exit(1);
   }
-
   const {
     projectId,
     sourceCollectionPath,
@@ -112,12 +103,10 @@ const run = async (): Promise<number> => {
     useNewSnapshotQuerySyntax,
     useEmulator,
   } = config;
-
   if (useEmulator) {
     console.log("Using emulator");
     process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
   }
-
   // Initialize Firebase
   // This uses applicationDefault to authenticate
   // Please see https://cloud.google.com/docs/authentication/production
@@ -130,9 +119,7 @@ const run = async (): Promise<number> => {
   // Set project ID, so it can be used in BigQuery initialization
   process.env.PROJECT_ID = projectId;
   process.env.GOOGLE_CLOUD_PROJECT = projectId;
-
   const rawChangeLogName = `${tableId}_raw_changelog`;
-
   if (multiThreaded) return runMultiThread(config, rawChangeLogName);
   // We pass in the application-level "tableId" here. The tracker determines
   // the name of the raw changelog from this field.
@@ -143,19 +130,15 @@ const run = async (): Promise<number> => {
     wildcardIds: queryCollectionGroup,
     useNewSnapshotQuerySyntax,
   });
-
   console.log(
     `Importing data from Cloud Firestore Collection${
       queryCollectionGroup ? " (via a Collection Group query)" : ""
     }: ${sourceCollectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${rawChangeLogName}`
   );
-
   // Build the data row with a 0 timestamp. This ensures that all other
   // operations supersede imports when listing the live documents.
   let cursor;
-
   const formattedPath = filenamify(sourceCollectionPath);
-
   let cursorPositionFile =
     __dirname +
     `/from-${formattedPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
@@ -168,24 +151,25 @@ const run = async (): Promise<number> => {
       } from document ${cursorDocumentId}.`
     );
   }
-
   let totalRowsImported = 0;
-
   do {
     if (cursor) {
       await write(cursorPositionFile, cursor.ref.path);
     }
 
     let query: firebase.firestore.Query;
-
     if (queryCollectionGroup) {
-      query = firebase.firestore().collectionGroup(sourceCollectionPath);
+      query = firebase
+        .firestore()
+        .collectionGroup(
+          sourceCollectionPath.split("/")[
+            sourceCollectionPath.split("/").length - 1
+          ]
+        );
     } else {
       query = firebase.firestore().collection(sourceCollectionPath);
     }
-
     query = query.limit(batchSize);
-
     if (cursor) {
       query = query.startAfter(cursor);
     }
@@ -195,21 +179,73 @@ const run = async (): Promise<number> => {
       break;
     }
     cursor = docs[docs.length - 1];
-    const rows: FirestoreDocumentChangeEvent[] = docs.map((snapshot) => {
-      return {
-        timestamp: new Date().toISOString(), // epoch
-        operation: ChangeType.IMPORT,
-        documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${snapshot.ref.path}`,
-        documentId: snapshot.id,
-        pathParams: resolveWildcardIds(sourceCollectionPath, snapshot.ref.path),
-        eventId: "",
-        data: snapshot.data(),
-      };
-    });
+
+    let rows: FirestoreDocumentChangeEvent[] = [];
+
+    const templateSegments = sourceCollectionPath.split("/");
+
+    if (queryCollectionGroup && templateSegments.length > 1) {
+      for (const doc of docs) {
+        let pathParams = {};
+        const path = doc.ref.path;
+
+        const pathSegments = path.split("/");
+        const isSameLength =
+          pathSegments.length === templateSegments.length + 1;
+
+        if (isSameLength) {
+          let isMatch = true;
+          for (let i = 0; i < templateSegments.length; i++) {
+            if (
+              templateSegments[i].startsWith("{") &&
+              templateSegments[i].endsWith("}")
+            ) {
+              const key = templateSegments[i].substring(
+                1,
+                templateSegments[i].length - 1
+              );
+              const value = pathSegments[i];
+              pathParams = {
+                ...pathParams,
+                [key]: value,
+              };
+            } else if (templateSegments[i] !== pathSegments[i]) {
+              isMatch = false;
+              break;
+            }
+          }
+          if (isMatch) {
+            rows.push({
+              timestamp: new Date().toISOString(), // epoch
+              operation: ChangeType.IMPORT,
+              documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${path}`,
+              documentId: doc.id,
+              pathParams,
+              eventId: "",
+              data: doc.data(),
+            });
+          }
+        }
+      }
+    } else {
+      rows = docs.map((snapshot) => {
+        return {
+          timestamp: new Date().toISOString(), // epoch
+          operation: ChangeType.IMPORT,
+          documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${snapshot.ref.path}`,
+          documentId: snapshot.id,
+          pathParams: resolveWildcardIds(
+            sourceCollectionPath,
+            snapshot.ref.path
+          ),
+          eventId: "",
+          data: snapshot.data(),
+        };
+      });
+    }
     await dataSink.record(rows);
     totalRowsImported += rows.length;
   } while (true);
-
   try {
     await unlink(cursorPositionFile);
   } catch (e) {
@@ -218,10 +254,8 @@ const run = async (): Promise<number> => {
       `Error unlinking journal file ${cursorPositionFile} after successful import: ${e.toString()}`
     );
   }
-
   return totalRowsImported;
 };
-
 run()
   .then((rowCount) => {
     console.log("---------------------------------------------------------");
