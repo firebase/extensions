@@ -21,7 +21,7 @@
     "@types/node": "^14.18.34",
     "chai": "^4.2.0",
     "firebase-admin": "^11.4.1",
-    "firebase-functions": "^3.24.1",
+    "firebase-functions": "^3.13.2",
     "firebase-functions-test": "^0.2.3",
     "generate-schema": "^2.6.0",
     "inquirer": "^6.4.0",
