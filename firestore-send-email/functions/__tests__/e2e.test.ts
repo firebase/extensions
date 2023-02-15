@@ -106,7 +106,7 @@ describe("e2e testing", () => {
     });
   }, 8000);
 
-  test.only("should successfully send an email with a basic template", async (): Promise<void> => {
+  test("should successfully send an email with a basic template", async (): Promise<void> => {
     /** create basic template */
     const template = await templatesCollection.add({
       subject: "@{{username}} is now following you!",
