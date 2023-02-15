@@ -1,3 +1,7 @@
+## Version 0.1.23
+
+fixed - added template check when no message exists
+
 ## Version 0.1.22
 
 fixed - fix typo in extension
