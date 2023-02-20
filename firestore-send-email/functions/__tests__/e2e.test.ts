@@ -14,6 +14,9 @@ const mailCollection = admin.firestore().collection(mail);
 const templates = "templates";
 const templatesCollection = admin.firestore().collection(templates);
 
+const users = "users";
+const usersCollection = admin.firestore().collection(users);
+
 let server = null;
 
 describe("e2e testing", () => {
@@ -119,6 +122,73 @@ describe("e2e testing", () => {
         name: template.id,
         data: {
           username: "ada",
+        },
+      },
+    };
+
+    /** Add a new mail document */
+    const doc = await mailCollection.add(record);
+
+    /** Check the email response  */
+    return new Promise((resolve, reject) => {
+      const unsubscribe = doc.onSnapshot((snapshot) => {
+        const document = snapshot.data();
+
+        if (document.delivery && document.delivery.info) {
+          expect(document.delivery.info.accepted[0]).toEqual(record.to);
+          expect(document.delivery.info.response).toContain("250 Accepted");
+
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+  });
+
+  test("should successfully send an email with a template containing attachment", async (): Promise<void> => {
+    /** create basic template */
+    // const template = await templatesCollection.add({
+    //   subject: "@{{username}} is now following you!",
+    //   html: "Just writing to let you know that @{{username}} ({{name}}) is now following you.",
+    //   attachments: [
+    //     {
+    //       filename: "{{username}}.jpg",
+    //       path: "{{imagePath}}"
+    //     }
+    //   ]
+    // });
+
+    // /** Add a record with the template and no message object */
+    // const record = {
+    //   to: ["jacob@invertase.io"],
+    //   template: {
+    //     name: template.id,
+    //     data: {
+    //       username: "ada",
+    //       name: "Ada Lovelace",
+    //       imagePath: "https://example.com/path/to/file/image-name.jpg"
+    //     },
+    //   }
+    // };
+
+    const template = await templatesCollection.add({
+      subject: "@{{username}} is now following you!",
+      attachments: [
+        {
+          filename: "{{username}}.jpg",
+          path: "{{imagePath}}",
+        },
+      ],
+    });
+
+    /** Add a record with the template and no message object */
+    const record = {
+      to: "test-assertion@email.com",
+      template: {
+        name: template.id,
+        data: {
+          username: "ada",
+          imagePath: "https://example.com/path/to/file/image-name.jpg",
         },
       },
     };

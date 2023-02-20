@@ -1,9 +1,6 @@
 {
   "extensions": {
-    "firestore-send-email": "../firestore-send-email",
-    "delete-user-data": "../delete-user-data",
-    "storage-resize-images": "../storage-resize-images",
-    "firestore-counter": "../firestore-counter"
+    "firestore-send-email": "../firestore-send-email"
   },
   "storage": {
     "rules": "storage.rules"
