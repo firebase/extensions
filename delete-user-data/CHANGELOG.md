@@ -1,3 +1,7 @@
+## Version 0.1.15
+
+feature - upgrade extensions to the latest firebase-admin sdk
+
 ## Version 0.1.14
 
 feature - add auto discovery mechanisms + update documentation

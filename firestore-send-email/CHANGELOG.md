@@ -1,3 +1,19 @@
+## Version 0.1.23
+
+fixed - added template check when no message exists
+
+## Version 0.1.22
+
+fixed - fix typo in extension
+
+feature - upgrade extensions to the latest firebase-admin sdk
+
+feature - improve TTL params
+
+feature - add TTL support
+
+fixed - read and write delivery status from inside a single transaction
+
 ## Version 0.1.21
 
 feature - add lifecycle events
