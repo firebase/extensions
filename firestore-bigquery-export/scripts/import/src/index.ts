@@ -121,11 +121,12 @@ const run = async (): Promise<number> => {
   // Initialize Firebase
   // This uses applicationDefault to authenticate
   // Please see https://cloud.google.com/docs/authentication/production
-  firebase.initializeApp({
-    credential: firebase.credential.applicationDefault(),
-    databaseURL: `https://${projectId}.firebaseio.com`,
-  });
-
+  if (!firebase.apps.length) {
+    firebase.initializeApp({
+      credential: firebase.credential.applicationDefault(),
+      databaseURL: `https://${projectId}.firebaseio.com`,
+    });
+  }
   // Set project ID, so it can be used in BigQuery initialization
   process.env.PROJECT_ID = projectId;
   process.env.GOOGLE_CLOUD_PROJECT = projectId;
