@@ -1,4 +1,4 @@
-# Stream Collections to BigQuery
+# Export Firestore Collections to BigQuery
 
 **Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
 
