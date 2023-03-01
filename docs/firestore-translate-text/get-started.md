@@ -1,8 +1,8 @@
 # Get started
 
-## **Using the Translate Text extension**
+## **Using the Translate Text in Firestore extension**
 
-The Translate Text extension (`firestore-translate-text`) lets you translate strings written to a Cloud Firestore collection into multiple languages using the [Cloud Translation API](https://cloud.google.com/translate). Adding a document to the collection triggers this extension to translate the contents of a field within a document to one or more languages. The extension supports either translating a single string or multiple strings at once.
+The Translate Text in Firestore extension (`firestore-translate-text`) lets you translate strings written to a Cloud Firestore collection into multiple languages using the [Cloud Translation API](https://cloud.google.com/translate). Adding a document to the collection triggers this extension to translate the contents of a field within a document to one or more languages. The extension supports either translating a single string or multiple strings at once.
 
 Here’s a basic example document write that would trigger this extension:
 
