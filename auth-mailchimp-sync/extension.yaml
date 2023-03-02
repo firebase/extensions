@@ -16,7 +16,7 @@ name: auth-mailchimp-sync
 version: 0.2.2
 specVersion: v1beta
 
-displayName: Sync with Mailchimp
+displayName: Sync Auth with Mailchimp
 description:
   Adds new users from Firebase Authentication to a specified Mailchimp audience.
 
