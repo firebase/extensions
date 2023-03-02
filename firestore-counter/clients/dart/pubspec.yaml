@@ -1,5 +1,5 @@
 name: firestore_counter
-description: A Dart client for using Firestore Distributed Counter.
+description: A Dart client for using Firestore Distributed Firestore Counter.
 version: 0.0.1
 
 publish_to: none

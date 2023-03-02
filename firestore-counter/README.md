@@ -1,4 +1,4 @@
-# Distributed Counter
+# Distributed Firestore Counter
 
 **Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
 
