@@ -1,4 +1,4 @@
-# Resize Images
+# Resize Images in Storage
 
 **Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
 

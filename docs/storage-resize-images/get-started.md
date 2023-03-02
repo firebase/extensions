@@ -1,8 +1,8 @@
 # Get started
 
-## Using the Resize Images extension
+## Using the Resize Images in Storage extension
 
-The Resize Images extension (`storage-resize-images`) lets you automatically change (in most cases, reduce) the size of images saved to a specified Cloud Storage bucket and optionally keep or delete the originals. Adding an image to the bucket triggers this extension to create a new resized copy or more of the image.
+The Resize Images in Storage extension (`storage-resize-images`) lets you automatically change (in most cases, reduce) the size of images saved to a specified Cloud Storage bucket and optionally keep or delete the originals. Adding an image to the bucket triggers this extension to create a new resized copy or more of the image.
 
 The extension supports the following features:
 
@@ -23,7 +23,7 @@ To install the extension, follow the steps on the [Install Firebase Extension](h
 
 - **Firebase console:** Click the following button:
 
-  [Install the Storage Resize Images extension](https://console.firebase.google.com/project/_/extensions/install?ref=firebase%2Fstorage-resize-images)
+  [Install the Resize Images in Storage extension](https://console.firebase.google.com/project/_/extensions/install?ref=firebase%2Fstorage-resize-images)
 
 - **CLI:** Run the following command:
 

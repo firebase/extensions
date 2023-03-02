@@ -16,7 +16,7 @@ name: storage-resize-images
 version: 0.1.34
 specVersion: v1beta
 
-displayName: Resize Images
+displayName: Resize Images in Storage
 description:
   Resizes images uploaded to Cloud Storage to a specified size, and optionally keeps or deletes the original image.
 
