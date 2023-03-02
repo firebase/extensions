@@ -1,4 +1,4 @@
-# Limit Child Nodes
+# Limit Child Nodes in RTDB
 
 **Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
 

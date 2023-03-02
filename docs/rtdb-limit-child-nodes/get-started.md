@@ -1,8 +1,8 @@
 # Get started
 
-## Use the \***\*Limit Child Nodes extension\*\***
+## Use the \***\*Limit Child Nodes in RTDB extension\*\***
 
-The Limit Child Nodes extension (`rtdb-limit-child-nodes`) lets you control the maximum number of nodes stored in a Firebase Realtime Database path. If the number of nodes in your specified Realtime Database path exceeds the specified max count, this extension deletes the oldest nodes first until there is the max count number of nodes remaining.
+The Limit Child Nodes in RTDB extension (`rtdb-limit-child-nodes`) lets you control the maximum number of nodes stored in a Firebase Realtime Database path. If the number of nodes in your specified Realtime Database path exceeds the specified max count, this extension deletes the oldest nodes first until there is the max count number of nodes remaining.
 
 ## Pre-installation setup
 
@@ -15,7 +15,7 @@ To install the extension, follow the steps on the [Install Firebase Extension](h
 
 - **Firebase console:** Click the following button:
 
-  [Install the Firestore Limit Child Nodes extensio](https://console.firebase.google.com/project/_/extensions/install?ref=firebase%2Frtdb-limit-child-nodes)[n](https://console.firebase.google.com/project/_/extensions/install?ref=firebase%2Ffirestore-bigquery-export)
+  [Install the Firestore Limit Child Nodes in RTDB extensio](https://console.firebase.google.com/project/_/extensions/install?ref=firebase%2Frtdb-limit-child-nodes)[n](https://console.firebase.google.com/project/_/extensions/install?ref=firebase%2Ffirestore-bigquery-export)
 
 - **CLI:** Run the following command:
 
