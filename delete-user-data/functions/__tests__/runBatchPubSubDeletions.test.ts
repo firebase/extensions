@@ -1,5 +1,4 @@
 import * as admin from "firebase-admin";
-import { UserRecord } from "firebase-functions/v1/auth";
 import { runBatchPubSubDeletions } from "../src/runBatchPubSubDeletions";
 import setupEnvironment from "./helpers/setupEnvironment";
 
@@ -17,7 +16,6 @@ const generateTopLevelUserCollection = async (name) => {
 };
 
 describe("runBatchPubSubDeletions", () => {
-  let user: UserRecord;
   let rootCollection: admin.firestore.CollectionReference;
 
   beforeEach(async () => {
