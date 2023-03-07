@@ -35,19 +35,22 @@ export const hasValidUserPath = async (
   uid: string
 ): Promise<boolean> => {
   /** Check path for valid user id */
-  if (path.includes(uid)) return Promise.resolve(true);
+  if (path.includes(uid)) return true;
 
   /** Check to find valid field */
   const snapshot = await ref.get();
 
   if (snapshot.exists) {
     for (const field of config.searchFields.split(",")) {
-      if (snapshot.get(new FieldPath(field)) === uid) {
-        return Promise.resolve(true);
+      const fieldValue = snapshot.get(new FieldPath(field));
+
+      /** Return if a matching string includes the id */
+      if (typeof fieldValue === "string" && fieldValue.includes(uid)) {
+        return true;
       }
     }
   }
 
   /** Return as invalid path */
-  return Promise.resolve(false);
+  return false;
 };
