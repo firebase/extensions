@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-import { expect } from "chai";
-import { suite, test } from "mocha-typescript";
 import { firestore } from "firebase-admin";
-
 import { Aggregator, NumericUpdate } from "../src/aggregator";
 
-@suite
-class AggregatorTest extends Aggregator {
-  @test "can aggregate"() {
+describe("unit testing aggregator", () => {
+  test("can aggregate", () => {
     const shards = [
       shard({ visits: 2, likes: 1 }),
       shard({ visits: 1, stars: 1 }),
@@ -42,7 +38,8 @@ class AggregatorTest extends Aggregator {
 
     const aggr = new Aggregator(() => "0000");
     const counterUpdate = aggr.aggregate(counter, partials, shards);
-    expect(counterUpdate).deep.equal({
+
+    expect(counterUpdate).toEqual({
       visits: 3,
       likes: 2,
       stars: 2,
@@ -56,7 +53,9 @@ class AggregatorTest extends Aggregator {
     });
 
     const partialUpdate = aggr.aggregate(null, partials, shards);
-    expect(partialUpdate).deep.equal({
+
+    expect(partialUpdate).toHaveProperty("_updates_");
+    expect(partialUpdate).toEqual({
       _updates_: firestore.FieldValue.arrayUnion({
         _id_: "0000",
         _data_: {
@@ -73,16 +72,16 @@ class AggregatorTest extends Aggregator {
         },
       }),
     });
-  }
+  });
 
-  @test "can subtract partial"() {
+  test("can subtract partials", () => {
     const p = partial([
       { foo: 4 },
       { a: { b: { c: 10 } } },
       { a: { b: { c: 5 } } },
     ]);
     const aggr = new Aggregator(() => "0000");
-    expect(aggr.subtractPartial(p)).to.deep.equal({
+    expect(aggr.subtractPartial(p)).toEqual({
       _updates_: firestore.FieldValue.arrayUnion({
         _id_: "0000",
         _data_: {
@@ -95,8 +94,88 @@ class AggregatorTest extends Aggregator {
         },
       }),
     });
-  }
-}
+  });
+});
+
+describe("unit testing numeric update", () => {
+  test("can merge from other object", () => {
+    const update = new NumericUpdateTest();
+
+    update.mergeFrom({ a: 1 });
+    expect(update.getData()).toEqual({ a: 1 });
+
+    update.mergeFrom({ b: 2 });
+    expect(update.getData()).toEqual({ a: 1, b: 2 });
+
+    update.mergeFrom({ c: { d: 4 } });
+    expect(update.getData()).toEqual({ a: 1, b: 2, c: { d: 4 } });
+
+    update.mergeFrom({ a: { b: 2 } });
+    expect(update.getData()).toEqual({ a: { b: 2 }, b: 2, c: { d: 4 } });
+
+    update.mergeFrom({ c: 3 });
+    expect(update.getData()).toEqual({ a: { b: 2 }, b: 2, c: 3 });
+  });
+
+  test("can export to counter update", () => {
+    const update = new NumericUpdate();
+    update.mergeFrom({
+      a: { aa: 1, ab: 2 },
+      b: { ba: 1 },
+      c: 3,
+    });
+
+    expect(update.toCounterUpdate({})).toEqual({
+      a: { aa: 1, ab: 2 },
+      b: { ba: 1 },
+      c: 3,
+    });
+
+    expect(update.toCounterUpdate({ c: 2, d: 4 })).toEqual({
+      a: { aa: 1, ab: 2 },
+      b: { ba: 1 },
+      c: 5,
+    });
+  });
+
+  test("can export to partial update", () => {
+    const update = new NumericUpdate();
+
+    update.mergeFrom({
+      a: { aa: 1, ab: 2 },
+      b: { ba: 1 },
+      c: 3,
+    });
+
+    expect(update.toPartialUpdate(() => "0000")).toEqual({
+      _updates_: firestore.FieldValue.arrayUnion({
+        _id_: "0000",
+        _data_: {
+          a: { aa: 1, ab: 2 },
+          b: { ba: 1 },
+          c: 3,
+        },
+      }),
+    });
+  });
+
+  test("can verify noop updates", () => {
+    const update = new NumericUpdateTest();
+    expect(update.isNoop()).toBe(true);
+    update.mergeFrom({ a: 0 });
+    expect(update.isNoop()).toBe(true);
+    update.mergeFrom({ b: { c: 0 } });
+    expect(update.isNoop()).toBe(true);
+    update.mergeFrom({ d: 3 });
+    expect(update.isNoop()).toBe(false);
+    update.subtractFrom({ d: 3 });
+    expect(update.isNoop()).toBe(true);
+    update.mergeFrom({ stats: { cnt: 2 } });
+    expect(update.isNoop()).toBe(false);
+    update.subtractFrom({ stats: { cnt: 2 } });
+    expect(update.isNoop()).toBe(true);
+  });
+});
 
 function shard(data: { [key: string]: any }): firestore.DocumentSnapshot {
   return <any>{
@@ -122,84 +201,8 @@ function partial(
   };
 }
 
-@suite
 class NumericUpdateTest extends NumericUpdate {
-  @test "can merge from other object"() {
-    const update = new NumericUpdateTest();
-
-    update.mergeFrom({ a: 1 });
-    expect(update.data).deep.equal({ a: 1 });
-
-    update.mergeFrom({ b: 2 });
-    expect(update.data).deep.equal({ a: 1, b: 2 });
-
-    update.mergeFrom({ c: { d: 4 } });
-    expect(update.data).deep.equal({ a: 1, b: 2, c: { d: 4 } });
-
-    update.mergeFrom({ a: { b: 2 } });
-    expect(update.data).deep.equal({ a: { b: 2 }, b: 2, c: { d: 4 } });
-
-    update.mergeFrom({ c: 3 });
-    expect(update.data).deep.equal({ a: { b: 2 }, b: 2, c: 3 });
-  }
-
-  @test "can export to counter update"() {
-    const update = new NumericUpdate();
-
-    update.mergeFrom({
-      a: { aa: 1, ab: 2 },
-      b: { ba: 1 },
-      c: 3,
-    });
-
-    expect(update.toCounterUpdate({})).deep.equal({
-      a: { aa: 1, ab: 2 },
-      b: { ba: 1 },
-      c: 3,
-    });
-
-    expect(update.toCounterUpdate({ c: 2, d: 4 })).deep.equal({
-      a: { aa: 1, ab: 2 },
-      b: { ba: 1 },
-      c: 5,
-    });
-  }
-
-  @test "can export to partial update"() {
-    const update = new NumericUpdate();
-
-    update.mergeFrom({
-      a: { aa: 1, ab: 2 },
-      b: { ba: 1 },
-      c: 3,
-    });
-
-    expect(update.toPartialUpdate(() => "0000")).deep.equal({
-      _updates_: firestore.FieldValue.arrayUnion({
-        _id_: "0000",
-        _data_: {
-          a: { aa: 1, ab: 2 },
-          b: { ba: 1 },
-          c: 3,
-        },
-      }),
-    });
-  }
-
-  @test "can verify noop updates"() {
-    const update = new NumericUpdateTest();
-    expect(update.isNoop()).true;
-    update.mergeFrom({ a: 0 });
-    expect(update.isNoop()).true;
-    update.mergeFrom({ b: { c: 0 } });
-    expect(update.isNoop()).true;
-    update.mergeFrom({ d: 3 });
-    expect(update.isNoop()).false;
-    update.subtractFrom({ d: 3 });
-    expect(update.isNoop()).true;
-    update.mergeFrom({ stats: { cnt: 2 } });
-    expect(update.isNoop()).false;
-    update.subtractFrom({ stats: { cnt: 2 } });
-    expect(update.isNoop()).true;
+  public getData(): any {
+    return this.data;
   }
 }
