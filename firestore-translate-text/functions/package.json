@@ -1,6 +1,6 @@
 {
   "name": "firestore-translate-text-functions",
-  "description": "Firebase Cloud Functions for the Firestore Translate Text Extension",
+  "description": "Firebase Cloud Functions for the Firestore Translate Text in Firestore Extension",
   "main": "lib/index.js",
   "license": "Apache-2.0",
   "scripts": {
