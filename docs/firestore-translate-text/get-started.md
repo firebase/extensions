@@ -36,7 +36,7 @@ Before installing this extension, make sure that you've [set up a Cloud Firesto
 To install the extension, follow the steps on the [Install Firebase Extension](https://firebase.google.com/docs/extensions/install-extensions) page. In summary, do one of the following:
 
 - **Firebase console:** Click the following button:
-  [Install the Trigger Email extension](https://console.firebase.google.com/project/_/extensions/install?ref=firebase%2Ffirestore-translate-text)
+  [Install the Trigger Email from Firestore extension](https://console.firebase.google.com/project/_/extensions/install?ref=firebase%2Ffirestore-translate-text)
 - **CLI:** Run the following command:
   ```bash
   firebase ext:install firebase/firestore-translate-text --project=projectId-or-alias
