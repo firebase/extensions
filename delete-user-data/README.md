@@ -71,6 +71,7 @@ Here's a series of examples. To delete all the files in your default bucket with
 * Search function URL: Specify a URL to call that will return a list of document paths to delete. The extension will send a `POST` request to the specified `URL`, with the `uid` of the deleted user will be provided in the body of the request. The endpoint specified should return an array of firestore paths to delete.
 
 
+
 **Cloud Functions:**
 
 * **clearData:** Listens for user accounts to be deleted from your project's authenticated users, then removes any associated user data (based on Firebase Authentication's User ID) from Realtime Database, Cloud Firestore, and/or Cloud Storage.
