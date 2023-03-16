@@ -1,3 +1,7 @@
+## Version 0.1.35
+
+feature - handle jfif extensions correctly
+
 ## Version 0.1.34
 
 feature - upgrade extensions to the latest firebase-admin sdk
