@@ -1,7 +1,3 @@
-## Version 0.2.7
-
-chore - replace deprecated String.prototype.substr()
-
 ## Version 0.2.6
 
 fixed - web client now uses the document sub collection for processing shards
