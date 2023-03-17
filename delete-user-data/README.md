@@ -68,7 +68,7 @@ Here's a series of examples. To delete all the files in your default bucket with
 
 * Auto discovery search fields: If auto discovery is enabled, specify what document fields are used to associate the UID with the document. The extension will delete documents where the value for one or more of these fields matches the deleting user’s UID. If left empty, document fields will not be used in auto discovery.
 
-* Search function URL: Specify a function URL to call that will return a list of document paths to delete.
+* Search function URL: Specify a URL to call that will return a list of document paths to delete. The extension will send a `POST` request to the specified `URL`, with the `uid` of the deleted user will be provided in the body of the request. The endpoint specified should return an array of firestore paths to delete.
 
 
 

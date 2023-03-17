@@ -13,10 +13,10 @@
 # limitations under the License.
 
 name: firestore-translate-text
-version: 0.1.10
+version: 0.1.11
 specVersion: v1beta
 
-displayName: Translate Text
+displayName: Translate Text in Firestore
 description:
   Translates strings written to a Cloud Firestore collection into multiple languages (uses Cloud Translation API).
 

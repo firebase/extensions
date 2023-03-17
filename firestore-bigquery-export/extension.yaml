@@ -13,10 +13,10 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.30
+version: 0.1.31
 specVersion: v1beta
 
-displayName: Stream Collections to BigQuery
+displayName: Stream Firestore to BigQuery
 description:
   Sends realtime, incremental updates from a specified Cloud Firestore
   collection to BigQuery.

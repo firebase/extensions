@@ -29,7 +29,7 @@ Some providers have specific guides for what credemtials can be used.
    2. 2-Step Verification is only set up for security keys.
    3. Your account is through work, school, or other organization.
    4. You turned on Advanced Protection.
-4. At the bottom, choose **Select app** and choose **Other** option and then write the name of the app password (e.g. `Firebase Trigger Email Extension`) and click **Generate**.
+4. At the bottom, choose **Select app** and choose **Other** option and then write the name of the app password (e.g. `Firebase Trigger Email from Firestore Extension`) and click **Generate**.
 5. Follow the instructions to enter the App Password. The App Password is the 16-character code in the yellow bar on your device.
 6. Tap **Done**.
 

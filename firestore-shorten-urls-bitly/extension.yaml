@@ -13,10 +13,10 @@
 # limitations under the License.
 
 name: firestore-shorten-urls-bitly
-version: 0.1.9
+version: 0.1.10
 specVersion: v1beta
 
-displayName: Shorten URLs
+displayName: Shorten URLs in Firestore
 description:
   Shortens URLs written to a specified Cloud Firestore collection (uses Bitly).
 
