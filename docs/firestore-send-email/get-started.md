@@ -1,8 +1,8 @@
 # Get started
 
-## Using the Trigger Email extension
+## Using the Trigger Email from Firestore extension
 
-The Trigger Email extension (`firestore-send-email`) lets you automatically send emails based on documents in a Cloud Firestore collection. Adding a document to the collection triggers this extension to send an email built from the document's fields. The document's top-level fields specify the email sender and recipients, including `to`, `cc`, and `bcc` options (each supporting UIDs). The document's `message` field specifies the other email elements, like the subject line and email body (either plaintext or HTML).
+The Trigger Email from Firestore extension (`firestore-send-email`) lets you automatically send emails based on documents in a Cloud Firestore collection. Adding a document to the collection triggers this extension to send an email built from the document's fields. The document's top-level fields specify the email sender and recipients, including `to`, `cc`, and `bcc` options (each supporting UIDs). The document's `message` field specifies the other email elements, like the subject line and email body (either plaintext or HTML).
 
 Here's a basic example document write that would trigger this extension:
 
@@ -27,11 +27,11 @@ Before you install the extension, complete these steps:
 
 1. Set up your outgoing mail service.
 
-   When you install the Trigger Email extension, you will need to specify the connection and authentication details of an SMTP server, which the extension uses to send emails. This is typically provided by an email delivery service such as Sendgrid, Mailgun, or Mailchimp Transactional Email, but it could also be a server you run yourself.
+   When you install the Trigger Email from Firestore extension, you will need to specify the connection and authentication details of an SMTP server, which the extension uses to send emails. This is typically provided by an email delivery service such as Sendgrid, Mailgun, or Mailchimp Transactional Email, but it could also be a server you run yourself.
 
 2. Create an email documents collection.
 
-   The Trigger Email extension listens for new documents in a Cloud Firestore collection that you specify. When it finds a new document, the extension sends an email based on the document's fields. You can use any Cloud Firestore collection for this purpose; the examples on this page use a collection named `email`.
+   The Trigger Email from Firestore extension listens for new documents in a Cloud Firestore collection that you specify. When it finds a new document, the extension sends an email based on the document's fields. You can use any Cloud Firestore collection for this purpose; the examples on this page use a collection named `email`.
 
 3. Set up security rules for your email documents collection.
 
@@ -50,7 +50,7 @@ Before you install the extension, complete these steps:
 
    You can render emails using [Handlebars templates](https://handlebarsjs.com/). To do so, you will need a Cloud Firestore collection to contain your templates.
 
-   See [Use Handlebars templates with the Trigger Email extension](https://firebase.google.com/docs/extensions/official/firestore-send-email/templates) for details.
+   See [Use Handlebars templates with the Trigger Email from Firestore extension](https://firebase.google.com/docs/extensions/official/firestore-send-email/templates) for details.
 
 ## Install the extension
 
@@ -58,7 +58,7 @@ To install the extension, follow the steps on the [Install a Firebase Extension
 
 - **Firebase console:** Click the following button:
 
-  [Install the Trigger Email extension](https://console.firebase.google.com/project/_/extensions/install?ref=firebase/firestore-send-email)
+  [Install the Trigger Email from Firestore extension](https://console.firebase.google.com/project/_/extensions/install?ref=firebase/firestore-send-email)
 
 - **CLI:** Run the following command:
 
@@ -118,5 +118,5 @@ Available properties for the `message` field are:
 
 Learn about more advanced use of this extension:
 
-- [Use Handlebars templates with the Trigger Email extension](https://firebase.google.com/docs/extensions/official/firestore-send-email/templates)
-- [Manage delivery status with the Trigger Email extension](https://firebase.google.com/docs/extensions/official/firestore-send-email/delivery-status)
+- [Use Handlebars templates with the Trigger Email from Firestore extension](https://firebase.google.com/docs/extensions/official/firestore-send-email/templates)
+- [Manage delivery status with the Trigger Email from Firestore extension](https://firebase.google.com/docs/extensions/official/firestore-send-email/delivery-status)

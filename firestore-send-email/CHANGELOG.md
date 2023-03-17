@@ -1,3 +1,9 @@
+## Version 0.1.24
+
+fixed - dont return early
+
+fixed - moved warning about no message and checked if templates are referenced
+
 ## Version 0.1.23
 
 fixed - added template check when no message exists

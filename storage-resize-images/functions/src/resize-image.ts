@@ -110,6 +110,7 @@ export const supportedImageContentTypeMap = {
   webp: "image/webp",
   gif: "image/gif",
   avif: "image/avif",
+  jfif: "image/jpeg",
 };
 
 const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(

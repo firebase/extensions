@@ -64,7 +64,7 @@ describe("discovery", () => {
         .add({ field1: user.uid });
       await search(user.uid, 1);
 
-      await waitForDocumentDeletion(document);
+      await waitForDocumentDeletion(document, 60000);
     }, 60000);
 
     test("can check a document without any field values", async () => {
@@ -159,6 +159,34 @@ describe("discovery", () => {
         return collection.docs.length > 0;
       });
 
+      expect(checkExists).toBe(true);
+    }, 60000);
+  });
+
+  describe("does not delete documents that do not match the search criteria", () => {
+    test("can delete a document named {uid}", async () => {
+      /** Create a collection to try and delete */
+      const collection = await db.collection(generateRandomId());
+      const document = await collection.add({ testing: "should-not-delete" });
+
+      await search(collection.id, -1, document);
+
+      /** Check document still exists */
+      const checkExists = await document.get().then((doc) => doc.exists);
+      expect(checkExists).toBe(true);
+    }, 60000);
+
+    test("cannot delete a document without a valid field named {uid}", async () => {
+      const document = await db
+        .collection(generateRandomId())
+        .add({ field1: "unknown" });
+      await search(user.uid, 1);
+
+      /** Wait 10 seconds */
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+
+      /** Check document still exists */
+      const checkExists = await document.get().then((doc) => doc.exists);
       expect(checkExists).toBe(true);
     }, 60000);
   });
