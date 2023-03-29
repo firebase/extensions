@@ -29,8 +29,7 @@ import { ResizedImageResult, modifyImage } from "./resize-image";
 import config, { deleteImage } from "./config";
 import * as logs from "./logs";
 import { shouldResize } from "./filters";
-import { v4 as uuidv4 } from 'uuid';
-
+import { v4 as uuidv4 } from "uuid";
 
 sharp.cache(false);
 
