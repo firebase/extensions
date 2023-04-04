@@ -1,3 +1,7 @@
+## Version 0.1.36
+
+fixed - added fixes for gcs vulnerabilities
+
 ## Version 0.1.35
 
 feature - handle jfif extensions correctly
