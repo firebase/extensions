@@ -90,7 +90,7 @@ program
   )
   .option(
     "-e, --use-emulator [true|false]",
-    "Whether to use updated latest snapshot query"
+    "Whether to use the firestore emulator"
   );
 
 const run = async (): Promise<number> => {
