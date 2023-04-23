@@ -20,7 +20,7 @@
   "dependencies": {
     "@types/nodemailer": "^6.2.1",
     "firebase-admin": "^11.4.1",
-    "firebase-functions": "^14.2.0",
+    "firebase-functions": "^4.2.0",
     "handlebars": "^4.5.3",
     "nodemailer": "^6.3.0",
     "rimraf": "^2.6.3",
