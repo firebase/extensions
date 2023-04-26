@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: delete-user-data
-version: 0.1.18
+version: 0.1.19
 specVersion: v1beta
 
 displayName: Delete User Data
@@ -66,22 +66,6 @@ resources:
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${param:PROJECT_ID}
-
-  - name: handleSearch
-    type: firebaseextensions.v1beta.function
-    properties:
-      location: ${LOCATION}
-      eventTrigger:
-        eventType: google.pubsub.topic.publish
-        resource: projects/${PROJECT_ID}/topics/ext-${EXT_INSTANCE_ID}-discovery
-
-  - name: handleDeletion
-    type: firebaseextensions.v1beta.function
-    properties:
-      location: ${LOCATION}
-      eventTrigger:
-        eventType: google.pubsub.topic.publish
-        resource: projects/${PROJECT_ID}/topics/ext-${EXT_INSTANCE_ID}-deletion
 
 params:
   - param: LOCATION
