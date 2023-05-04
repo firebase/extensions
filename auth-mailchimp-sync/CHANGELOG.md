@@ -1,5 +1,9 @@
 ## Version 0.2.2
 
+no changes
+
+## Version 0.2.2
+
 feature - upgrade extensions to the latest firebase-admin sdk
 
 ## Version 0.2.1
