@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: auth-mailchimp-sync
-version: 0.3.0
+version: 0.3.1
 specVersion: v1beta
 
 displayName: Sync with Mailchimp

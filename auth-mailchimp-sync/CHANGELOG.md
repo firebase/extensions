@@ -1,4 +1,4 @@
-## Version 0.3.0
+## Version 0.3.1
 
 feature - upgrade extensions to the latest firebase-admin sdk
 
