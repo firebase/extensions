@@ -11,7 +11,8 @@ const app = initializeApp();
 // Listens for new messages added to /messages/{pushId}/original and creates an
 // uppercase version of the message to /messages/{pushId}/uppercase
 // for all databases in 'us-central1'
-export const makeuppercase = database.ref(process.env.MESSAGE_PATH)
+export const makeuppercase = database
+  .ref(process.env.MESSAGE_PATH)
   .onCreate(async (snapshot, context) => {
     logger.log("Found new message at ", snapshot.ref);
 
@@ -37,16 +38,15 @@ export const makeuppercase = database.ref(process.env.MESSAGE_PATH)
     // If events are enabled, publish a `complete` event to the configured
     // channel.
     eventChannel &&
-    eventChannel.publish({
-      type: "test-publisher.rtdb-uppercase-messages.v1.complete",
-      subject: upperRef.toString(),
-      data: {
-        "original": original,
-        "uppercase": uppercase,
-      },
-    });
-  }
-);
+      eventChannel.publish({
+        type: "test-publisher.rtdb-uppercase-messages.v1.complete",
+        subject: upperRef.toString(),
+        data: {
+          original: original,
+          uppercase: uppercase,
+        },
+      });
+  });
 
 export const backfilldata = tasks.taskQueue().onDispatch(async () => {
   if (!process.env.DO_BACKFILL) {
