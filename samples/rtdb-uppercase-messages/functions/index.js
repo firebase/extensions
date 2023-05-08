@@ -27,8 +27,8 @@ export const makeuppercase = database
     const upperRef = snapshot.ref.parent.child("upper");
     await upperRef.set(uppercase);
 
-    // Set eventChannel to a newly-initialized channel, or `undefined` if events
-    // aren't enabled.
+    // Set eventChannel to a newly-initialized channel, or `undefined` if
+    // events aren't enabled.
     const eventChannel =
       process.env.EVENTARC_CHANNEL &&
       getEventarc().channel(process.env.EVENTARC_CHANNEL, {
