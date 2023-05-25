@@ -73,7 +73,7 @@ export const backfilldata = tasks.taskQueue().onDispatch(async () => {
 
   if (promises.length > 0) {
     const queue = getFunctions().taskQueue(
-      "backfilldata",
+      `locations/${process.env.LOCATION}/functions/backfilldata`,
       process.env.EXT_INSTANCE_ID
     );
     return queue.enqueue({});
