@@ -46,7 +46,7 @@ exports.backfillGreetTheWorld = functions.tasks.taskQueue.onDispatch(async (data
 
   const greeting = `${consumerProvidedGreeting} World from ${instanceId}`;
 
-  for (let i = 0; i < 9.5*60; i++) {
+  for (let i = 0; i < 11*60; i++) {
     logger.log(`B${generation}!!: Starting loop iteration number ${i}`);
     await new Promise(r => setTimeout(r, 1000));
   }
