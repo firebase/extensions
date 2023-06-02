@@ -1,0 +1,44 @@
+
+``` python
+from PyQt5.QtWidgets import QApplication, QWidget, QTableWidget, QHBoxLayout, QTableWidgetItem
+import sys
+
+class App(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.title = 'Calendar Table'
+        self.left = 0
+        self.top = 0
+        self.width = 300
+        self.height = 200
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle(self.title)
+        self.setGeometry(self.left, self.top, self.width, self.height)
+
+        self.createTable()
+
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.addWidget(self.tableWidget)
+        self.setLayout(self.horizontalLayout)
+
+        self.show()
+
+    def createTable(self):
+        self.tableWidget = QTableWidget()
+        self.tableWidget.setRowCount(3)
+        self.tableWidget.setColumnCount(2)
+        self.tableWidget.setItem(0,0,QTableWidgetItem("Meeting 1"))
+        self.tableWidget.setItem(0,1,QTableWidgetItem("10:00 AM"))
+        self.tableWidget.setItem(1,0,QTableWidgetItem("Meeting 2"))
+        self.tableWidget.setItem(1,1,QTableWidgetItem("03:00 PM"))
+        self.tableWidget.setItem(2,0,QTableWidgetItem("Meeting 3"))
+        self.tableWidget.setItem(2,1,QTableWidgetItem("05:00 PM"))
+        self.tableWidget.move(0,0)
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = App()
+    sys.exit(app.exec_())
+``` 
