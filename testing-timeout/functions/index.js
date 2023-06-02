@@ -10,10 +10,8 @@
  * Learn more about parameters in the docs
  */
 
-const functions = require('firebase-functions');
-const extensions = require('firebase-admin/extensions');
-const {logger} = functions;
-const {getExtensions} = extensions;
+import * as functions from 'firebase-functions';
+import { getExtensions } from "firebase-admin/extensions";
 
 exports.greetTheWorld = functions.handler.https.onRequest(async (req, res) => {
   // Here we reference a user-provided parameter (its value is provided by the user during installation)
@@ -42,7 +40,7 @@ exports.backfillGreetTheWorld = functions.tasks
     // Here we reference a user-provided parameter (its value is provided by the user during installation)
     const consumerProvidedGreeting = process.env.GREETING;
 
-    const generation = (data && data.generation) || 0
+    const generation = data?.generation || 0
     // And here we reference an auto-populated parameter (its value is provided by Firebase after installation)
     const instanceId = process.env.EXT_INSTANCE_ID;
 
