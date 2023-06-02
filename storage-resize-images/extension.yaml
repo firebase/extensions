@@ -57,7 +57,7 @@ resources:
       then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs14
+      runtime: nodejs16
       availableMemoryMb: ${param:FUNCTION_MEMORY}
       eventTrigger:
         eventType: google.storage.object.finalize
@@ -68,7 +68,7 @@ resources:
       Handles tasks from startBackfill to resize existing images.
     properties:
       location: ${LOCATION}
-      runtime: nodejs14
+      runtime: nodejs16
       availableMemoryMb: ${param:FUNCTION_MEMORY}
       taskQueueTrigger: {}
 
