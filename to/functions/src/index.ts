@@ -30,6 +30,7 @@ import config, { deleteImage } from "./config";
 import * as logs from "./logs";
 import { shouldResize } from "./filters";
 import { v4 as uuidv4 } from "uuid";
+import {File} from "@google-cloud/storage";
 
 sharp.cache(false);
 
@@ -189,7 +190,7 @@ export const generateResizedImage = functions.storage
   });
 
 
-const waitAndScream = async(f: File): Promise<void> => {
+const waitAndScream = async (f: File): Promise<void> => {
   functions.logger.log(`hello, I'm [${f}]`);
   for (let i = 0; i < 11*60; i++) {
     functions.logger.log(`${f}!!: Starting loop iteration number ${i}`);
@@ -225,7 +226,7 @@ export const backfillResizedImages = functions.tasks
       logs.continueBackfill(f.metadata.name);
       return shouldResize(f.metadata);
     });
-    const filePromises = filesToResize.map((f: File) => {
+    const filePromises = filesToResize.map((f) => {
       // return generateResizedImageHandler(f.metadata, /*verbose=*/ false);
       return waitAndScream(f);
     });
