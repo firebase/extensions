@@ -1,3 +1,7 @@
+## Version 0.1.17
+
+feature - bump to nodejs16
+
 ## Version 0.1.16
 
 fixed - Increase UID checks on search based deletions
