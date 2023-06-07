@@ -1,3 +1,7 @@
+## Version 0.2.7
+
+feature - bump to nodejs16
+
 ## Version 0.2.6
 
 fixed - web client now uses the document sub collection for processing shards

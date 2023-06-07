@@ -1,3 +1,7 @@
+## Version 0.1.32
+
+feature - bump to node 16
+
 ## Version 0.1.31
 
 fixed - Added support for callable transform functions
