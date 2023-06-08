@@ -52,7 +52,7 @@ resources:
       then deletes the oldest nodes first, as needed to maintain the max count.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs16
+      runtime: nodejs18
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.create
         resource: projects/_/instances/${param:SELECTED_DATABASE_INSTANCE}/refs/${param:NODE_PATH}/{messageid}
