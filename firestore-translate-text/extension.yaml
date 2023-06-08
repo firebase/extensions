@@ -55,7 +55,7 @@ resources:
       then writes the translated strings back to the same document.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs16
+      runtime: nodejs18
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{messageId}
@@ -67,7 +67,7 @@ resources:
       then writes the translated strings back to the same document.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs16
+      runtime: nodejs18
       availableMemoryMb: 1024
       timeout: 540s
       taskQueueTrigger: {}
