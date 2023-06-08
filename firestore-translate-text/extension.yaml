@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-translate-text
-version: 0.1.11
+version: 0.1.12
 specVersion: v1beta
 
 displayName: Translate Text in Firestore
@@ -55,7 +55,7 @@ resources:
       then writes the translated strings back to the same document.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs14
+      runtime: nodejs16
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{messageId}
@@ -67,7 +67,7 @@ resources:
       then writes the translated strings back to the same document.
     properties:
       location: ${param:LOCATION}
-      runtime: nodejs14
+      runtime: nodejs16
       availableMemoryMb: 1024
       timeout: 540s
       taskQueueTrigger: {}
