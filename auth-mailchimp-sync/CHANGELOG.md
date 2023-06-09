@@ -1,3 +1,7 @@
+## Version 0.2.3
+
+feature - bump to nodejs16
+
 ## Version 0.2.2
 
 feature - upgrade extensions to the latest firebase-admin sdk

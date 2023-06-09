@@ -1,3 +1,11 @@
+## Version 0.1.26
+
+feature - bump to nodejs16
+
+## Version 0.1.25
+
+fixed - change missingDeliveryField logging from `error` to `warn`
+
 ## Version 0.1.24
 
 fixed - dont return early

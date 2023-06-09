@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.35
+version: 0.1.37
 specVersion: v1beta
 
 displayName: Resize Images
@@ -56,7 +56,7 @@ resources:
       Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images,
       then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
     properties:
-      runtime: nodejs14
+      runtime: nodejs16
       availableMemoryMb: ${param:FUNCTION_MEMORY}
       eventTrigger:
         eventType: google.storage.object.finalize
@@ -66,7 +66,7 @@ resources:
     description: >-
       Handles tasks from startBackfill to resize existing images.
     properties:
-      runtime: nodejs14
+      runtime: nodejs16
       availableMemoryMb: ${param:FUNCTION_MEMORY}
       taskQueueTrigger: {}
 
@@ -150,10 +150,10 @@ params:
       will resize any images found in any subdirectories of `/users/pictures` and `/restaurants/menuItems`.
       
       You may also use wildcard notation for directories in the path. For example, `/users/*/pictures`
-      would exclude any images in any subdirectories of `/users/foo/pictures` as well as any images in
+      would include any images in any subdirectories of `/users/foo/pictures` as well as any images in
       subdirectories of `/users/bar/pictures`, but also any images in subdirectories of `/users/any/level/of/subdirectories/pictures`. 
       
-      If you prefer not to explicitly exclude any directories of your Storage bucket, leave this field empty.
+      If you prefer not to explicitly restrict to certain directories of your Storage bucket, leave this field empty.
     type: string
     example: "/users/avatars,/design/pictures"
     validationRegex: ^(\/[^\s\/\,]+)+(\,(\/[^\s\/\,]+)+)*$

@@ -1,3 +1,13 @@
+## Version 0.1.37
+
+feature - bump to nodejs16
+
+fixed - correct include path list description
+
+## Version 0.1.36
+
+fixed - added fixes for gcs vulnerabilities
+
 ## Version 0.1.35
 
 feature - handle jfif extensions correctly

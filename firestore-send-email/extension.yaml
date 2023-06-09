@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-send-email
-version: 0.1.24
+version: 0.1.26
 specVersion: v1beta
 
 displayName: Trigger Email from Firestore
@@ -49,7 +49,7 @@ resources:
       Processes document changes in the specified Cloud Firestore collection,
       delivers emails, and updates the document with delivery status information.
     properties:
-      runtime: nodejs14
+      runtime: nodejs16
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:MAIL_COLLECTION}/{id}
