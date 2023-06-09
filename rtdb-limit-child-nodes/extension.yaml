@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: rtdb-limit-child-nodes
-version: 0.1.8
+version: 0.1.9
 specVersion: v1beta
 
 displayName: Limit Child Nodes
@@ -51,7 +51,7 @@ resources:
       checks if the max count has been exceeded,
       then deletes the oldest nodes first, as needed to maintain the max count.
     properties:
-      runtime: nodejs14
+      runtime: nodejs16
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.create
         resource: projects/_/instances/${param:SELECTED_DATABASE_INSTANCE}/refs/${param:NODE_PATH}/{messageid}

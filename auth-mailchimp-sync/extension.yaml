@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: auth-mailchimp-sync
-version: 0.2.2
+version: 0.2.3
 specVersion: v1beta
 
 displayName: Sync with Mailchimp
@@ -48,7 +48,7 @@ resources:
       Listens for new user accounts (as managed by Firebase Authentication),
       then automatically adds the new user to your specified MailChimp audience.
     properties:
-      runtime: nodejs14
+      runtime: nodejs16
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.create
         resource: projects/${param:PROJECT_ID}
@@ -60,7 +60,7 @@ resources:
       Authentication), then automatically removes them from your specified
       MailChimp audience.
     properties:
-      runtime: nodejs14
+      runtime: nodejs16
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${param:PROJECT_ID}
