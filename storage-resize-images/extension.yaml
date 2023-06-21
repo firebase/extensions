@@ -56,7 +56,6 @@ resources:
       Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images,
       then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
     properties:
-      location: ${param:LOCATION}
       runtime: nodejs16
       availableMemoryMb: ${param:FUNCTION_MEMORY}
       eventTrigger:
@@ -67,69 +66,11 @@ resources:
     description: >-
       Handles tasks from startBackfill to resize existing images.
     properties:
-      location: ${LOCATION}
       runtime: nodejs16
       availableMemoryMb: ${param:FUNCTION_MEMORY}
       taskQueueTrigger: {}
 
 params:
-  - param: LOCATION
-    label: Cloud Functions location
-    description: >-
-      Where do you want to deploy the functions created for this extension?
-      You usually want a location close to your Storage bucket. For help selecting a
-      location, refer to the [location selection
-      guide](https://firebase.google.com/docs/functions/locations).
-    type: select
-    options:
-      - label: Iowa (us-central1)
-        value: us-central1
-      - label: South Carolina (us-east1)
-        value: us-east1
-      - label: Northern Virginia (us-east4)
-        value: us-east4
-      - label: Los Angeles (us-west2)
-        value: us-west2
-      - label: Salt Lake City (us-west3)
-        value: us-west3
-      - label: Las Vegas (us-west4)
-        value: us-west4
-      - label: Warsaw (europe-central2)
-        value: europe-central2
-      - label: Belgium (europe-west1)
-        value: europe-west1
-      - label: London (europe-west2)
-        value: europe-west2
-      - label: Frankfurt (europe-west3)
-        value: europe-west3
-      - label: Zurich (europe-west6)
-        value: europe-west6
-      - label: Taiwan (asia-east1)
-        value: asia-east1
-      - label: Hong Kong (asia-east2)
-        value: asia-east2
-      - label: Tokyo (asia-northeast1)
-        value: asia-northeast1
-      - label: Osaka (asia-northeast2)
-        value: asia-northeast2
-      - label: Seoul (asia-northeast3)
-        value: asia-northeast3
-      - label: Mumbai (asia-south1)
-        value: asia-south1
-      - label: Singapore (asia-southeast1)
-        value: asia-southeast1
-      - label: Jakarta (asia-southeast2)
-        value: asia-southeast2
-      - label: Montreal (northamerica-northeast1)
-        value: northamerica-northeast1
-      - label: Sao Paulo (southamerica-east1)
-        value: southamerica-east1
-      - label: Sydney (australia-southeast1)
-        value: australia-southeast1
-    default: us-central1
-    required: true
-    immutable: true
-
   - param: IMG_BUCKET
     label: Cloud Storage bucket for images
     description: >
