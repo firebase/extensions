@@ -264,10 +264,30 @@ export const buildSchemaViewQuery = (
   const bigQueryFields = result.fields;
   const fieldValueSelectorClauses = Object.values(fieldExtractors).join(", ");
   const schemaHasArrays = fieldArrays.length > 0;
+
+  let parentColumn = "";
+  if (
+    rawTableName.includes("_messages") ||
+    rawTableName.includes("_items") ||
+    rawTableName.includes("_products") ||
+    rawTableName.includes("_categories") ||
+    rawTableName.includes("_favorites") ||
+    rawTableName.includes("_features")
+  ) {
+    parentColumn = "JSON_EXTRACT_SCALAR(path_params, '$.uuid') AS parent_id,";
+    bigQueryFields.push({
+      name: `parent_id`,
+      type: "STRING",
+      mode: "NULLABLE",
+      description: `Parent id of this sub-collection.`,
+    });
+  }
+
   let query = `
     SELECT
       document_name,
       document_id,
+      ${parentColumn},
       timestamp,
       operation${fieldValueSelectorClauses.length > 0 ? `,` : ``}
       ${fieldValueSelectorClauses}

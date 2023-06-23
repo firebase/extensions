@@ -121,10 +121,34 @@ export const buildLatestSchemaSnapshotViewQuery = (
   const schemaHasArrays = schemaFieldArrays.length > 0;
   const schemaHasGeopoints = schemaFieldGeopoints.length > 0;
 
+  let parentSelector = "";
+  let parentGroupBy = "";
+  let parentSelectField = "";
+  if (
+    rawViewName.includes("_messages") ||
+    rawViewName.includes("_items") ||
+    rawViewName.includes("_products") ||
+    rawViewName.includes("_categories") ||
+    rawViewName.includes("_favorites") ||
+    rawViewName.includes("_features")
+  ) {
+    parentSelector = "parent_id, ";
+    parentSelectField =
+      "FIRST_VALUE(JSON_EXTRACT_SCALAR(path_params, '$.uuid')) OVER(PARTITION BY document_name ORDER BY timestamp DESC) AS parent_id, ";
+    parentGroupBy = "parent_id, ";
+    bigQueryFields.push({
+      name: `parent_id`,
+      type: "STRING",
+      mode: "NULLABLE",
+      description: `Parent id of this sub-collection.`,
+    });
+  }
+
   let query = `
       SELECT
         document_name,
         document_id,
+        ${parentSelector},
         timestamp,
         operation${fieldNameSelectorClauses.length > 0 ? `,` : ``}
         ${fieldNameSelectorClauses}
@@ -132,6 +156,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
         SELECT
           document_name,
           document_id,
+          ${parentSelectField},
           ${firstValue(`timestamp`)} AS timestamp,
           ${firstValue(`operation`)} AS operation,
           ${firstValue(`operation`)} = "DELETE" AS is_deleted${
@@ -153,6 +178,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
     GROUP BY
       document_name,
       document_id,
+      ${parentGroupBy},
       timestamp,
       operation${groupableExtractors.length > 0 ? `,` : ``}
       ${
