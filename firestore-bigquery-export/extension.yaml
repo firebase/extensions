@@ -60,6 +60,24 @@ resources:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
 
+  - name: syncBigQuery
+    type: firebaseextensions.v1beta.function
+    description: >-
+      A task-triggered function that gets called on BigQuery sync
+    properties:
+      location: ${LOCATION}
+      runtime: 'nodejs16'
+      taskQueueTrigger: {}
+
+  - name: setupBigQuerySync
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Runs configuration for sycning with BigQuery
+    properties:
+      location: ${LOCATION}
+      runtime: nodejs16
+      taskQueueTrigger: {}
+
 params:
   - param: DATASET_LOCATION
     label: BigQuery Dataset location
@@ -265,6 +283,17 @@ params:
     example: data,document_id,timestamp
     required: false
 
+  - param: MAX_DISPATCHES_PER_SECOND
+    label: Maximum number of synced documents per second
+    description: >-
+      This parameter will set the maximum number of syncronised documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota.
+      Ensure that you have a set a low enough number to componsate. Defaults to 10.
+    type: string
+    validationRegex: ^(?:[1-9]|\d{2,3}|[1-4]\d{3})$
+    validationErrorMessage: Please select a number between 1 and 100
+    example: 10
+    required: false
+
   - param: BACKUP_COLLECTION
     label: Backup Collection Name
     description: >-
@@ -298,3 +327,14 @@ params:
 events:
   - type: firebase.extensions.big-query-export.v1.sync.start
     description: Occurs on a firestore document write event.
+
+lifecycleEvents:
+  onInstall:
+    function: setupBigQuerySync
+    processingMessage: Configuring BigQuery Sync
+  onUpdate:
+    function: setupBigQuerySync
+    processingMessage: Configuring BigQuery Sync
+  onConfigure:
+    function: setupBigQuerySync
+    processingMessage: Configuring BigQuery Sync
