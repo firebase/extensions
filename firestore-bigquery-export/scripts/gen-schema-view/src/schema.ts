@@ -287,7 +287,7 @@ export const buildSchemaViewQuery = (
     SELECT
       document_name,
       document_id,
-      ${parentColumn},
+      ${parentColumn} 
       timestamp,
       operation${fieldValueSelectorClauses.length > 0 ? `,` : ``}
       ${fieldValueSelectorClauses}

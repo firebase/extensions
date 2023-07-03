@@ -148,7 +148,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
       SELECT
         document_name,
         document_id,
-        ${parentSelector},
+        ${parentSelector}
         timestamp,
         operation${fieldNameSelectorClauses.length > 0 ? `,` : ``}
         ${fieldNameSelectorClauses}
@@ -156,7 +156,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
         SELECT
           document_name,
           document_id,
-          ${parentSelectField},
+          ${parentSelectField}
           ${firstValue(`timestamp`)} AS timestamp,
           ${firstValue(`operation`)} AS operation,
           ${firstValue(`operation`)} = "DELETE" AS is_deleted${
@@ -178,7 +178,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
     GROUP BY
       document_name,
       document_id,
-      ${parentGroupBy},
+      ${parentGroupBy}
       timestamp,
       operation${groupableExtractors.length > 0 ? `,` : ``}
       ${
