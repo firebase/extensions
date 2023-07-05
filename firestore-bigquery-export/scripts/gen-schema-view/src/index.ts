@@ -44,7 +44,7 @@ function collect(value, previous) {
 const packageJson = require("../package.json");
 
 program
-  .name("gen-schema-views")
+  .name("gen-schema-views-loql")
   .description(packageJson.description)
   .version(packageJson.version)
   .option(

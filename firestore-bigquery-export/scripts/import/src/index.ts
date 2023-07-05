@@ -42,7 +42,7 @@ const FIRESTORE_DEFAULT_DATABASE = "(default)";
 const packageJson = require("../package.json");
 
 program
-  .name("fs-bq-import-collection")
+  .name("fs-bq-import-collection-loql")
   .description(packageJson.description)
   .version(packageJson.version)
   .option(
@@ -179,7 +179,10 @@ const run = async (): Promise<number> => {
     let query: firebase.firestore.Query;
 
     if (queryCollectionGroup) {
-      query = firebase.firestore().collectionGroup(sourceCollectionPath);
+      const subCollectionArr = sourceCollectionPath.split("/");
+      const subCollection = subCollectionArr[subCollectionArr.length - 1];
+      console.log("Importing into subcollection " + subCollection);
+      query = firebase.firestore().collectionGroup(subCollection);
     } else {
       query = firebase.firestore().collection(sourceCollectionPath);
     }
