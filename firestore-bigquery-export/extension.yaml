@@ -65,7 +65,7 @@ resources:
     description: >-
       A task-triggered function that gets called on BigQuery sync
     properties:
-      runtime: 'nodejs18'
+      runtime: nodejs18
       taskQueueTrigger: {}
 
   - name: setupBigQuerySync
