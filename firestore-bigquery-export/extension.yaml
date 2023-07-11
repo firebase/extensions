@@ -55,70 +55,28 @@ resources:
       Listens for document changes in your specified Cloud Firestore collection,
       then exports the changes into BigQuery.
     properties:
-      location: ${param:LOCATION}
       runtime: nodejs18
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
 
-params:
-  - param: LOCATION
-    label: Cloud Functions location
+  - name: syncBigQuery
+    type: firebaseextensions.v1beta.function
     description: >-
-      Where do you want to deploy the functions created for this extension?  You
-      usually want a location close to your database. For help selecting a
-      location, refer to the [location selection
-      guide](https://firebase.google.com/docs/functions/locations).
-    type: select
-    options:
-      - label: Iowa (us-central1)
-        value: us-central1
-      - label: South Carolina (us-east1)
-        value: us-east1
-      - label: Northern Virginia (us-east4)
-        value: us-east4
-      - label: Los Angeles (us-west2)
-        value: us-west2
-      - label: Salt Lake City (us-west3)
-        value: us-west3
-      - label: Las Vegas (us-west4)
-        value: us-west4
-      - label: Warsaw (europe-central2)
-        value: europe-central2
-      - label: Belgium (europe-west1)
-        value: europe-west1
-      - label: London (europe-west2)
-        value: europe-west2
-      - label: Frankfurt (europe-west3)
-        value: europe-west3
-      - label: Zurich (europe-west6)
-        value: europe-west6
-      - label: Taiwan (asia-east1)
-        value: asia-east1
-      - label: Hong Kong (asia-east2)
-        value: asia-east2
-      - label: Tokyo (asia-northeast1)
-        value: asia-northeast1
-      - label: Osaka (asia-northeast2)
-        value: asia-northeast2
-      - label: Seoul (asia-northeast3)
-        value: asia-northeast3
-      - label: Mumbai (asia-south1)
-        value: asia-south1
-      - label: Singapore (asia-southeast1)
-        value: asia-southeast1
-      - label: Jakarta (asia-southeast2)
-        value: asia-southeast2
-      - label: Montreal (northamerica-northeast1)
-        value: northamerica-northeast1
-      - label: Sao Paulo (southamerica-east1)
-        value: southamerica-east1
-      - label: Sydney (australia-southeast1)
-        value: australia-southeast1
-    default: us-central1
-    required: true
-    immutable: true
+      A task-triggered function that gets called on BigQuery sync
+    properties:
+      runtime: 'nodejs18'
+      taskQueueTrigger: {}
 
+  - name: setupBigQuerySync
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Runs configuration for sycning with BigQuery
+    properties:
+      runtime: nodejs18
+      taskQueueTrigger: {}
+
+params:
   - param: DATASET_LOCATION
     label: BigQuery Dataset location
     description: >-
@@ -323,6 +281,17 @@ params:
     example: data,document_id,timestamp
     required: false
 
+  - param: MAX_DISPATCHES_PER_SECOND
+    label: Maximum number of synced documents per second
+    description: >-
+      This parameter will set the maximum number of syncronised documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota.
+      Ensure that you have a set a low enough number to componsate. Defaults to 10.
+    type: string
+    validationRegex: ^(?:[1-9]|\d{2,3}|[1-4]\d{3})$
+    validationErrorMessage: Please select a number between 1 and 100
+    example: 10
+    required: false
+
   - param: BACKUP_COLLECTION
     label: Backup Collection Name
     description: >-
@@ -356,3 +325,14 @@ params:
 events:
   - type: firebase.extensions.big-query-export.v1.sync.start
     description: Occurs on a firestore document write event.
+
+lifecycleEvents:
+  onInstall:
+    function: setupBigQuerySync
+    processingMessage: Configuring BigQuery Sync
+  onUpdate:
+    function: setupBigQuerySync
+    processingMessage: Configuring BigQuery Sync
+  onConfigure:
+    function: setupBigQuerySync
+    processingMessage: Configuring BigQuery Sync
