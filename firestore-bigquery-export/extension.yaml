@@ -55,7 +55,7 @@ resources:
       Listens for document changes in your specified Cloud Firestore collection,
       then exports the changes into BigQuery.
     properties:
-      runtime: nodejs16
+      runtime: nodejs18
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
@@ -65,8 +65,7 @@ resources:
     description: >-
       A task-triggered function that gets called on BigQuery sync
     properties:
-      location: ${LOCATION}
-      runtime: 'nodejs16'
+      runtime: nodejs18
       taskQueueTrigger: {}
 
   - name: setupBigQuerySync
@@ -74,8 +73,7 @@ resources:
     description: >-
       Runs configuration for sycning with BigQuery
     properties:
-      location: ${LOCATION}
-      runtime: nodejs16
+      runtime: nodejs18
       taskQueueTrigger: {}
 
 params:
