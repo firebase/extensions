@@ -65,7 +65,6 @@ resources:
      Searches your specified Cloud Firestore collection for existing documents, translates the strings into any missing languages,
       then writes the translated strings back to the same document.
     properties:
-
       runtime: nodejs18
       availableMemoryMb: 1024
       timeout: 540s
