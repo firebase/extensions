@@ -24,7 +24,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@google-cloud/bigquery": "^4.7.0",
-    "@google-cloud/resource-manager": "^3.0.0",
+    "@google-cloud/resource-manager": "^4.3.0",
     "firebase-admin": "^11.4.1",
     "firebase-functions": "^3.13.2",
     "generate-schema": "^2.6.0",
