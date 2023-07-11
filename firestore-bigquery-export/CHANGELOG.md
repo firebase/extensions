@@ -1,3 +1,9 @@
+## Version 0.1.33
+
+feature - improved startup initialization and data synchronization
+
+feature - bump to node 18
+
 ## Version 0.1.32
 
 feature - bump to node 16
