@@ -17,5 +17,9 @@ module.exports = {
     "firebase-admin/eventarc":
       "<rootDir>/node_modules/firebase-admin/lib/eventarc",
     "firebase-functions/v2": "<rootDir>/node_modules/firebase-functions/lib/v2",
+    "firebase-admin/functions":
+      "<rootDir>/node_modules/firebase-admin/lib/functions",
+    "firebase-admin/extensions":
+      "<rootDir>/node_modules/firebase-admin/lib/extensions",
   },
 };
