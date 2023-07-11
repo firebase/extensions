@@ -53,7 +53,7 @@ resources:
       Listens for writes of new URLs to your specified Cloud Firestore collection, shortens the URLs,
       then writes the shortened form back to the same document.
     properties:
-      runtime: nodejs16
+      runtime: nodejs18
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
