@@ -59,6 +59,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   bqProjectId?: string | undefined;
   backupTableId?: string | undefined;
   useNewSnapshotQuerySyntax?: boolean;
+  skipInit?: boolean;
 }
 
 /**
@@ -88,7 +89,9 @@ export class FirestoreBigQueryEventHistoryTracker
   }
 
   async record(events: FirestoreDocumentChangeEvent[]) {
-    await this.initialize();
+    if (!this.config.skipInit) {
+      await this.initialize();
+    }
 
     const partitionHandler = new Partitioning(this.config);
 
@@ -272,7 +275,7 @@ export class FirestoreBigQueryEventHistoryTracker
    * Creates the BigQuery resources with the expected schema for {@link FirestoreEventHistoryTracker}.
    * After the first invokation, it skips initialization assuming these resources are still there.
    */
-  private async initialize() {
+  async initialize() {
     try {
       if (this._initialized) {
         return;

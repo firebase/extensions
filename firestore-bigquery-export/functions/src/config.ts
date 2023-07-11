@@ -52,4 +52,8 @@ export default {
   wildcardIds: process.env.WILDCARD_IDS === "true" ? true : false,
   useNewSnapshotQuerySyntax:
     process.env.USE_NEW_SNAPSHOT_QUERY_SYNTAX === "yes" ? true : false,
+  instanceId: process.env.EXT_INSTANCE_ID!,
+  maxDispatchesPerSecond: parseInt(
+    process.env.MAX_DISPATCHES_PER_SECOND || "10"
+  ),
 };
