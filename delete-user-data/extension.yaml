@@ -61,7 +61,7 @@ resources:
       Authentication's User ID) from Realtime Database, Cloud Firestore, and/or
       Cloud Storage.
     properties:
-      runtime: nodejs16
+      runtime: nodejs18
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${param:PROJECT_ID}
@@ -69,7 +69,7 @@ resources:
   - name: handleSearch
     type: firebaseextensions.v1beta.function
     properties:
-      runtime: nodejs16
+      runtime: nodejs18
       eventTrigger:
         eventType: google.pubsub.topic.publish
         resource: projects/${PROJECT_ID}/topics/ext-${EXT_INSTANCE_ID}-discovery
@@ -77,7 +77,7 @@ resources:
   - name: handleDeletion
     type: firebaseextensions.v1beta.function
     properties:
-      runtime: nodejs16
+      runtime: nodejs18
       eventTrigger:
         eventType: google.pubsub.topic.publish
         resource: projects/${PROJECT_ID}/topics/ext-${EXT_INSTANCE_ID}-deletion
