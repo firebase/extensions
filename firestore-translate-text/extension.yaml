@@ -54,7 +54,7 @@ resources:
       Listens for writes of new strings to your specified Cloud Firestore collection, translates the strings,
       then writes the translated strings back to the same document.
     properties:
-      runtime: nodejs16
+      runtime: nodejs18
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{messageId}
@@ -65,7 +65,7 @@ resources:
      Searches your specified Cloud Firestore collection for existing documents, translates the strings into any missing languages,
       then writes the translated strings back to the same document.
     properties:
-      runtime: nodejs16
+      runtime: nodejs18
       availableMemoryMb: 1024
       timeout: 540s
       taskQueueTrigger: {}
