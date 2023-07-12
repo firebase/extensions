@@ -1,3 +1,7 @@
+## Version 0.2.8
+
+feature - bump to node 18
+
 ## Version 0.2.7
 
 feature - bump to nodejs16
