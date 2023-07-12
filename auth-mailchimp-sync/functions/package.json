@@ -24,7 +24,7 @@
     "ts-jest": "^24.1.0"
   },
   "engines": {
-    "node": "16"
+    "node": "18"
   },
   "author": "Lauren Long <longlauren@google.com>",
   "license": "Apache-2.0",
