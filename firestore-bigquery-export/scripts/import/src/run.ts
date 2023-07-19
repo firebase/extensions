@@ -94,7 +94,7 @@ async function processCollectionGroup(config: CliConfig): Promise<number> {
 
   console.log("---------------------------------------------------------");
   console.log(
-    `Please see https://console.cloud.google.com/bigquery?p=${config.projectId}&d=${config.datasetId}&t=${config.tableId}_raw_changelog&page=table`
+    `Please see https://console.cloud.google.com/bigquery?p=${config.bigQueryProjectId}&d=${config.datasetId}&t=${config.tableId}_raw_changelog&page=table`
   );
   console.log("---------------------------------------------------------");
 
@@ -165,7 +165,10 @@ export async function runMultiThread(
     tableId,
     queryCollectionGroup,
     datasetLocation,
+    bigQueryProjectId
   } = config;
+  
+  const bigquery = new BigQuery({projectId: bigQueryProjectId});
 
   const dataset = bigquery.dataset(datasetId, {
     location: datasetLocation,

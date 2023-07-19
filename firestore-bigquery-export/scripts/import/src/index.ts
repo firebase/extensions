@@ -55,6 +55,10 @@ program
     "Firebase Project ID for project containing the Cloud Firestore database."
   )
   .option(
+    "-B, --bigquery-project <bigquery-project>",
+    "Google Cloud Project ID for BigQuery."
+  )
+  .option(
     "-s, --source-collection-path <source-collection-path>",
     "The path of the the Cloud Firestore Collection to import from. (This may, or may not, be the same Collection for which you plan to mirror changes.)"
   )
