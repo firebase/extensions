@@ -102,6 +102,7 @@ const run = async (): Promise<number> => {
 
   const {
     projectId,
+    bigQueryProjectId,
     sourceCollectionPath,
     datasetId,
     tableId,
@@ -128,8 +129,8 @@ const run = async (): Promise<number> => {
     });
   }
   // Set project ID, so it can be used in BigQuery initialization
-  process.env.PROJECT_ID = projectId;
-  process.env.GOOGLE_CLOUD_PROJECT = projectId;
+  process.env.PROJECT_ID = bigQueryProjectId;
+  process.env.GOOGLE_CLOUD_PROJECT = bigQueryProjectId;
 
   const rawChangeLogName = `${tableId}_raw_changelog`;
 
