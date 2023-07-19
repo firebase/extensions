@@ -79,6 +79,18 @@ const questions = [
       ),
   },
   {
+    message: "What is your BigQuery project ID?",
+    name: "bigQueryProject",
+    type: "input",
+    validate: (value) =>
+      validateInput(
+        value,
+        "BigQuery project ID",
+        BIGQUERY_VALID_CHARACTERS,
+        PROJECT_ID_MAX_CHARS
+      ),
+  },
+  {
     message:
       "What is the path of the the Cloud Firestore Collection you would like to import from? " +
       "(This may, or may not, be the same Collection for which you plan to mirror changes.)",
@@ -167,6 +179,9 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     if (program.project === undefined) {
       errors.push("Project is not specified.");
     }
+    if (program.bigQueryProject === undefined) {
+        errors.push("BigQuery Project is not specified.");
+    }
     if (program.sourceCollectionPath === undefined) {
       errors.push("SourceCollectionPath is not specified.");
     }
@@ -197,6 +212,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     return {
       kind: "CONFIG",
       projectId: program.project,
+      bigQueryProjectId: program.bigQueryProject,
       sourceCollectionPath: program.sourceCollectionPath,
       datasetId: program.dataset,
       tableId: program.tableNamePrefix,
@@ -210,6 +226,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
   }
   const {
     project,
+    bigQueryProject,
     sourceCollectionPath,
     dataset,
     table,
@@ -224,6 +241,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
   return {
     kind: "CONFIG",
     projectId: project,
+    bigQueryProjectId: bigQueryProject,
     sourceCollectionPath: sourceCollectionPath,
     datasetId: dataset,
     tableId: table,
