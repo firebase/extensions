@@ -3,7 +3,7 @@ import * as program from "commander";
 
 import { CliConfig, CliConfigError } from "./types";
 
-const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
+const BIGQUERY_VALID_CHARACTERS = /^[^\/]+$/;
 const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
 
 const PROJECT_ID_MAX_CHARS = 6144;
