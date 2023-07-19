@@ -1,48 +1,5 @@
 {
   "projects": {
     "default": "demo-test"
-  },
-  "targets": {},
-  "etags": {
-    "dev-extensions-testing": {
-      "extensionInstances": {
-        "storage-label-videos": "802403c9b8bbbd5202a1081309b026054805a5ff5c3752cac6a47eb4fcb01590",
-        "firestore-palm-chatbot": "83e26f50b79e1ce5ca2e4443a0bed58b86689de79607009011a3f444b4986549",
-        "firestore-validate-address": "a3d20f84215817f7441bb8a234a7661f6aa5c7fcad4ef7ae643bd0271b45ac81",
-        "text-to-speech": "d6dc458ae85efdca2098d074018b0e28883fb1461965d005e79ac3a84b8a1048",
-        "firestore-translate-text": "01b959d65168400a83a2ca987c15848a78a9e8d1228d887d909d9a5887aa50f0",
-        "firestore-bigquery-export-local-unchanged": "892c6d8da5e99f5a34d6ac751196aedae86abaf6d8f5f1e5d6a5a6f52c8ef2d3",
-        "firestore-bigquery-export": "64092cef1a83c003cc7e7c15fedc4d30463156e899d93d50fa93f01dca7c5230",
-        "firestore-bundle-builder": "d6031ba8376ed3cab276a4c56f54ce72ff1571936d3f7cbd79554822c780c7e6",
-        "storage-label-images": "218cc19b588872620340339b708996352fb6240e5fa21bb2ab645664302f23f6",
-        "bigquery-dlp-functions": "6d71d8467e78dbad7ab32a91903eeec29693f60103895a1ee58c722d84da8e85",
-        "firestore-shorten-urls-bitly": "c6f8c1539805f235086989b9e6965deadba4e507443b8a91f2fd8f2e1f8ecdfd",
-        "firestore-huggingface-inference-api-dyhe": "5f59767fc221f50b595543b6d5037d38e5214f8ed2c588511b4c33cbeba5098c",
-        "firestore-send-email": "c333e688c7464143415c07773f18ce10c40210ae0300c4f5b265935ab207f3f9",
-        "speech-to-text": "0823ab8f54ec6492845f8e2225c875177b3588632cd06224ad3e6ca1a35c3b11",
-        "firestore-semantic-search": "ed7323b779948c8c6edff5280acd3e2f9d1b5a50d0eed46ff0ac7569dcb33ab2",
-        "auth-mailchimp-sync": "db069ac2d50e48bdb75cf4d5cce1710eea9aa7b9f1bc4ed4ddd33614f467e530",
-        "storage-extract-image-text": "063b60ceae014b55bff6b48f9b9f7078322f493e34b799fbf519c12924ec9df0",
-        "firestore-bigquery-export-local-old": "88386984944f2e594cd388b261a1f56de123f5ba8cdc08d5de880a682cb71d7d",
-        "firestore-text-similarity": "2ed31a220244c32a1a52ce7736631dcf13f94f26d1bf6de3d55506098d826564",
-        "rtdb-limit-child-nodes": "567d81225a83946f91c72b0c9df5cc778e45f2ebd6113a621dc419a99fd5a30b",
-        "firestore-geo-functions": "842714978aa6a4dca2c25ccc982c676de0663d1012ddc33773e35da6e237bbb1",
-        "firestore-places-autocomplete": "e1dc11c3a80820eec9595bf30f7caab7c34ea209422b82a4679cd5a76db83099",
-        "delete-user-data-2": "1f5992489044059d2255ff84781f051e96817bae0f5194319c9d5081664e8cb3",
-        "firestore-schedule-writes": "c049f602247732bff697975416cd35451284ab03a374cb34b1afd1156072635f",
-        "storage-resize-images": "6d2c0fdbf196dd7f67ef6f828e808224edc12740e749b3d0aca6779e5d86b264",
-        "firestore-huggingface-inference-api": "2e41172b3c30f7843b106f77c94befcfa5966359f31616b1991dc9668b842fd5",
-        "firestore-counter": "fe42f6d88097e179c479e18c202e99abc7ec915b9b3938420c41e0a8d5792bf6",
-        "delete-user-data": "a7756ec03601931cbc7d05a24879b357246370cb0cc9a2e34c6de2e5a21cf458",
-        "firestore-bigquery-export-local": "803a6b5be2d3b7cec8b9ab763b0f509c893ae64907fb319bb0f56b06d187fbbb",
-        "sync-customerio": "2973f973b051256d7147ae7898026aabbff11eda76024c974688c15adc35b4be",
-        "puchasely-firebase-extension": "3b657014b57ec8b8e5977ca7854b3afe5d52ac23f0a374bf6f2b5bd8b2816fa1",
-        "firestore-glm-discuss": "4d423eee3266f25b3d3e2b3c51d66654288f16c51e24d5bfdf39eac0b1692c2a",
-        "firestore-audit-log": "b6b619c6d81a4d375fd14a5fe6f971c76995fd79f0a3d6ae8b0a91ea46715ff4",
-        "firestore-bigquery-export-testing": "ca31378c8df55ab9ce0465c36ffc263d854ca261e24b2798ff0238f2da78b410",
-        "firestore-bundle-server": "2e66ebb5590eeb0f1fb666e837f704d5bb520743508739f5e961f2c578e37f3f",
-        "firestore-algolia-search": "1a86c380ed65df472ef4bed172d305ce8cada22bc510e990897e1562e5f62009"
-      }
-    }
   }
 }
