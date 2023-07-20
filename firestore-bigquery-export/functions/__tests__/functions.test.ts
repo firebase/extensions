@@ -6,19 +6,33 @@ import mockedEnv from "../node_modules/mocked-env";
 import { mockConsoleLog } from "./__mocks__/console";
 import config from "../src/config";
 
-/** init application */
-admin.initializeApp();
-
 jest.mock("@firebaseextensions/firestore-bigquery-change-tracker", () => ({
   FirestoreBigQueryEventHistoryTracker: jest.fn(() => {
     return {
       record: jest.fn(() => {}),
+      serializeData: jest.fn(() => {}),
     };
   }),
   ChangeType: {
     DELETE: 2,
     UPDATE: 1,
     CREATE: 0,
+  },
+}));
+
+jest.mock("firebase-admin/functions", () => ({
+  getFunctions: () => {
+    return { taskQueue: jest.fn() };
+  },
+}));
+
+jest.mock("firebase-admin/functions", () => ({
+  getFunctions: () => {
+    return {
+      taskQueue: jest.fn(() => {
+        return { enqueue: jest.fn() };
+      }),
+    };
   },
 }));
 
