@@ -1,10 +1,13 @@
+import * as admin from "firebase-admin";
 import { logger } from "firebase-functions";
 import * as functionsTestInit from "../node_modules/firebase-functions-test";
 import mockedEnv from "../node_modules/mocked-env";
 
 import { mockConsoleLog } from "./__mocks__/console";
-
 import config from "../src/config";
+
+/** init application */
+admin.initializeApp();
 
 jest.mock("@firebaseextensions/firestore-bigquery-change-tracker", () => ({
   FirestoreBigQueryEventHistoryTracker: jest.fn(() => {
