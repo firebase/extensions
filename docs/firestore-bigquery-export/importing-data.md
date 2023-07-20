@@ -1,16 +1,16 @@
 # Importing Data
 
-The `fs-bq-import-collection` script is for use with the official Firebase Extension **[Export Collections to BiqQuery](https://github.com/firebase/extensions/tree/master/firestore-bigquery-export)**.
+The `fs-bq-import-collection` script is for use with the official Firebase Extension **[Stream Firestore to BigQuery](https://github.com/firebase/extensions/tree/master/firestore-bigquery-export)**.
 
 ## Overview
 
-The import script (`fs-bq-import-collection`) can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by the Export Collections to BigQuery extension. The import script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This ensures that any operation on an imported document supersedes the import record.
+The import script (`fs-bq-import-collection`) can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by the Stream Firestore to BigQuery extension. The import script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This ensures that any operation on an imported document supersedes the import record.
 
 You may pause and resume the import script from the last batch at any point.
 
 ## Important notes
 
-- You must run the import script over the entire collection **_after_** installing the Export Collections to BigQuery extension; otherwise the writes to your database during the import might not be exported to the dataset.
+- You must run the import script over the entire collection **_after_** installing the Stream Firestore to BigQuery extension; otherwise the writes to your database during the import might not be exported to the dataset.
 - The import script can take up to _O(collection size)_ time to finish. If your collection is large, you might want to consider [loading data from a Cloud Firestore export into BigQuery](https://cloud.google.com/bigquery/docs/loading-data-cloud-firestore).
 - You will see redundant rows in your raw changelog table if either of the following happen:
   - If document changes occur in the time between installing the extension and running the import script.

@@ -352,16 +352,16 @@ async function processWrite(
       const payload = snapshot.data();
 
       // We expect the payload to contain a message object describing the email
-      // to be sent. If it doesn't, we can't do anything.
-      if (typeof payload.message !== "object") {
+      // to be sent. If it doesn't and is not a template, we can't do anything.
+      if (typeof payload.message !== "object" && !payload.template) {
         logs.invalidMessage(payload.message);
         return false;
       }
 
       // The record has most likely just been created by a client, so we need to
       // initialize the delivery state.
-
       if (!payload.delivery) {
+        logs.missingDeliveryField(change.after.ref);
         const startTime = Timestamp.fromDate(new Date());
 
         const delivery = {
