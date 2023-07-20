@@ -1,3 +1,21 @@
+## Version 0.1.33
+
+feature - improved startup initialization and data synchronization
+
+feature - bump to node 18
+
+## Version 0.1.32
+
+feature - bump to node 16
+
+## Version 0.1.31
+
+fixed - Added support for callable transform functions
+
+fixed - set env variables after initializing app in gen-schema-view
+
+fixed - add checks for existing firebase apps in scripts
+
 ## Version 0.1.30
 
 fixed - check if app already exists before init app when using events

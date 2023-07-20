@@ -1,4 +1,5 @@
 import * as admin from "firebase-admin";
+import { Storage } from "firebase-admin/storage";
 import { config } from "dotenv";
 import * as path from "path";
 import { waitForFile } from "./util";
@@ -10,7 +11,7 @@ const envLocalPath = path.resolve(
 
 config({ path: envLocalPath, debug: true, override: true });
 
-let storage;
+let storage: Storage;
 
 process.env.FIREBASE_STORAGE_EMULATOR_HOST = "localhost:9199";
 process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
@@ -32,6 +33,9 @@ describe("extension", () => {
     storage = admin.storage();
     await storage.bucket().upload(__dirname + "/not-an-image.jpeg", {});
     await storage.bucket().upload(__dirname + "/test-image.jpeg", {});
+    await storage.bucket().upload(__dirname + "/test-img.jfif", {
+      metadata: { contentType: "image/jpeg" },
+    });
   });
 
   test("should resize (test-image.jpeg) successfully", async () => {
@@ -40,9 +44,29 @@ describe("extension", () => {
     expect(await waitForFile(storage, successFilePath)).toBe(true);
   }, 12000);
 
-  test("should resize (test-image.jpeg) successfully, and copy failed image (not-an-image.jpeg) to failed directory", async () => {
+  test("should copy failed image (not-an-image.jpeg) to failed directory", async () => {
     const failureFilePath = `${process.env.FAILED_IMAGES_PATH}/not-an-image.jpeg`;
 
     expect(await waitForFile(storage, failureFilePath)).toBe(true);
+  }, 12000);
+
+  test("should resize test-img.jfif successfully", async () => {
+    const successFilePath = `${process.env.RESIZED_IMAGES_PATH}/test-img_${process.env.IMG_SIZES}.${process.env.IMAGE_TYPE}`;
+
+    expect(await waitForFile(storage, successFilePath)).toBe(true);
+  }, 12000);
+
+  test("should resize an image with a jpg content type", async () => {
+    /** Setup the storage bucket */
+    const bucket = admin.storage().bucket();
+    await bucket.upload(__dirname + "/test-jpg.jpg", {
+      contentType: "image/jpg",
+    });
+
+    /** Define the success storage path */
+    const successFilePath = `${process.env.RESIZED_IMAGES_PATH}/test-jpg_${process.env.IMG_SIZES}.${process.env.IMAGE_TYPE}`;
+
+    /** wait for file to be uploaded to storage: */
+    expect(await waitForFile(storage, successFilePath)).toBe(true);
   }, 12000);
 });

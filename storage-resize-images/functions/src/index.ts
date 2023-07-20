@@ -29,6 +29,7 @@ import { ResizedImageResult, modifyImage } from "./resize-image";
 import config, { deleteImage } from "./config";
 import * as logs from "./logs";
 import { shouldResize } from "./filters";
+import { v4 as uuidv4 } from "uuid";
 
 sharp.cache(false);
 
@@ -65,7 +66,7 @@ const generateResizedImageHandler = async (
   let localOriginalFile;
   let remoteOriginalFile;
   try {
-    localOriginalFile = path.join(os.tmpdir(), filePath);
+    localOriginalFile = path.join(os.tmpdir(), uuidv4());
     const tempLocalDir = path.dirname(localOriginalFile);
 
     // Create the temp directory where the storage file will be downloaded.
