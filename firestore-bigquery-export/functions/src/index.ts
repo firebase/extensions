@@ -88,8 +88,9 @@ export const syncBigQuery = functions.tasks
     }
   );
 
-export const fsexportbigquery = functions.firestore
-  .document(config.collectionPath)
+export const fsexportbigquery = functions
+  .runWith({ failurePolicy: true })
+  .firestore.document(config.collectionPath)
   .onWrite(async (change, context) => {
     logs.start();
     try {
@@ -141,6 +142,14 @@ export const fsexportbigquery = functions.firestore
       });
     } catch (err) {
       logs.error(err);
+      const eventAgeMs = Date.now() - Date.parse(context.timestamp);
+      const eventMaxAgeMs = 10000;
+
+      if (eventAgeMs > eventMaxAgeMs) {
+        return;
+      }
+
+      throw err;
     }
 
     logs.complete();
