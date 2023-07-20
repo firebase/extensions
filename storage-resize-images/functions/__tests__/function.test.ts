@@ -1,4 +1,5 @@
 import mockedEnv from "mocked-env";
+import { mockGenerateResizedImage } from "./mocks/generateResizedImage";
 
 const environment = {
   LOCATION: "us-central1",
@@ -9,7 +10,6 @@ const environment = {
   DELETE_ORIGINAL_FILE: "true",
 };
 
-const { mockGenerateResizedImage } = global;
 let restoreEnv;
 describe("extension", () => {
   beforeEach(() => {
@@ -29,15 +29,17 @@ describe("extension", () => {
     let mockResizedImage;
     let logMock;
     let errorLogMock;
+    let warnLogMock;
 
     beforeEach(() => {
       mockResizedImage = mockGenerateResizedImage();
       logMock = jest.fn();
       errorLogMock = jest.fn();
-
+      warnLogMock = jest.fn();
       require("firebase-functions").logger = {
         log: logMock,
         error: errorLogMock,
+        warn: warnLogMock,
       };
     });
     test("image contentType does not exist", () => {

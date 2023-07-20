@@ -55,7 +55,10 @@ export class Partitioning {
     /* Check if valid timestamp value from sdk */
     if (value instanceof firebase.firestore.Timestamp) return true;
 
-    /* Check if valid date/time value from console */
+    /* Check if valid date/timstemap, expedted result from production  */
+    if (value && value.toDate && value.toDate()) return true;
+
+    /* Check if valid date/time value from the console, expected result from testing locally */
     return Object.prototype.toString.call(value) === "[object Date]";
   }
 
@@ -86,7 +89,7 @@ export class Partitioning {
       !timePartitioningFieldType &&
       !timePartitioningFirestoreField;
 
-    /* No custom congig has been set, use partition value option only */
+    /* No custom config has been set, use partition value option only */
     if (hasNoCustomOptions) return true;
 
     /* check if all options have been provided to be  */
@@ -153,7 +156,8 @@ export class Partitioning {
   }
 
   async isValidPartitionForExistingTable(): Promise<boolean> {
-    if (this.isTablePartitioned()) return false;
+    const isPartitioned = await this.isTablePartitioned();
+    if (isPartitioned) return Promise.resolve(false);
 
     return this.hasValidCustomPartitionConfig();
   }

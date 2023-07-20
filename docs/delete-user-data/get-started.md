@@ -95,7 +95,6 @@ The extension offers a configurable search depth value (defaulting to 3). Traver
 ```js
 /users = 1
 /users/<document-id> = 1
-
 /users/<document-id>/comments = 2
 /users/<document-id>/comments/<document-id> = 2
 ```

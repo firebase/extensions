@@ -28,6 +28,7 @@ import {
 import { Planner } from "./planner";
 import { Aggregator, NumericUpdate } from "./aggregator";
 import * as uuid from "uuid";
+import { FieldValue } from "firebase-admin/firestore";
 
 const SHARDS_LIMIT = 100;
 const WORKER_TIMEOUT_MS = 45000;
@@ -111,7 +112,7 @@ export class ShardedCounterWorker {
               const snap = await t.get(this.metadoc.ref);
               if (snap.exists && deepEqual(snap.data(), this.metadata)) {
                 t.update(snap.ref, {
-                  timestamp: firestore.FieldValue.serverTimestamp(),
+                  timestamp: FieldValue.serverTimestamp(),
                   stats: stats,
                 });
               }

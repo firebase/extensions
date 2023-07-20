@@ -1,6 +1,14 @@
+## Version 0.2.4
+
+feature - bump to node 18
+
+## Version 0.2.3
+
+feature - bump to nodejs16
+
 ## Version 0.2.2
 
-feature - adds lifecycle event to add existing users to a Mailchimp audience.
+feature - upgrade extensions to the latest firebase-admin sdk
 
 ## Version 0.2.1
 

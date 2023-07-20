@@ -1,4 +1,4 @@
-# Trigger Email
+# Trigger Email from Firestore
 
 **Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
 
@@ -26,6 +26,23 @@ You can also optionally configure this extension to render emails using [Handleb
 
 When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**. Note that this extension is for use with bulk email service providers, like SendGrid, Mailgun, etc.
 
+#### Setup Google App Passwords
+
+**Google** no longer allows **Gmail** users to use their own passwords to authorize third-party apps and services. Instead, you have to use the [Sign in with App Passwords](https://support.google.com/accounts/answer/185833) service to generate a special password for each app you want to authorize. To do so:
+
+1.  Go to your [Google Account](https://myaccount.google.com/).
+2.  Select **Security**.
+3.  Under "Signing in to Google," select **App Passwords**. You may need to sign in. If you don’t have this option, it might be because:
+    1.  2-Step Verification is not set up for your account.
+    2.  2-Step Verification is only set up for security keys.
+    3.  Your account is through work, school, or other organization.
+    4.  You turned on Advanced Protection.
+4.  At the bottom, choose **Select app** and choose **Other** option and then write the name of the app password (e.g. `Firebase Trigger Email from Firestore Extension`) and click **Generate**.
+5.  Follow the instructions to enter the App Password. The App Password is the 16-character code in the yellow bar on your device.
+6.  Tap **Done**.
+
+Now you can use your Google username with the generated password to authorize the extension.
+
 #### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
@@ -33,13 +50,17 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 
-- You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
 - This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
   - Cloud Firestore
   - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
 
 Usage of this extension also requires you to have SMTP credentials for mail delivery. You are responsible for any associated costs with your usage of your SMTP provider.
 
+#### Further reading & resources
+
+You can find more information about this extension in the following articles:
+
+- [Sending Emails Using Firestore And Firebase Extensions](https://invertase.link/Y6Nu)
 
 
 
@@ -65,6 +86,10 @@ Backwards Compatible (less secure):
 * Users collection: A collection of documents keyed by user UID. If the `toUids`, `ccUids`, and/or `bccUids` recipient options are used in the added email document, this extension delivers email to the `email` field based on lookups in this collection.
 
 * Templates collection: A collection of email templates keyed by name. This extension can render an email using a [Handlebar](https://handlebarsjs.com/) template, if the template is specified in the added email document.
+
+* Firestore TTL type: Do you want the firestore records to be marked with an expireAt field for a TTL policy? If "Never" is selected then no expireAt field will be added. Otherwise you may specify the unit of time specified by the TTL_EXPIRE_VALUE parameter. Defaults to "Never".
+
+* Firestore TTL value: In the units specified by TTL_EXPIRE_TYPE, how long do you want records to be ineligible for deletion by a TTL policy? This parameter requires the Firestore TTL type parameter to be set to a value other than `Never`. For example, if `Firestore TTL type` is set to `Day` then setting this parameter to `1` will specify a TTL of 1 day.
 
 
 

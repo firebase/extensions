@@ -1,7 +1,10 @@
 {
   "extensions": {
     "firestore-send-email": "../firestore-send-email",
-    "delete-user-data": "../delete-user-data"
+    "delete-user-data": "../delete-user-data",
+    "storage-resize-images": "../storage-resize-images",
+    "firestore-counter": "../firestore-counter",
+    "firestore-bigquery-export": "../firestore-bigquery-export"
   },
   "storage": {
     "rules": "storage.rules"
@@ -24,6 +27,10 @@
     },
     "ui": {
       "enabled": true
+    },
+    "firestore": {
+      "host": "127.0.0.1",
+      "port": 8080
     }
   },
   "functions": {

@@ -43,6 +43,7 @@ export function convertType(buffer, format) {
     webp: {},
     tiff: {},
     tif: {},
+    avif: {},
   };
   if (config.outputOptions) {
     try {
@@ -51,7 +52,7 @@ export function convertType(buffer, format) {
       logs.errorOutputOptionsParse(e);
     }
   }
-  const { jpeg, jpg, png, webp, tiff, tif } = outputOptions;
+  const { jpeg, jpg, png, webp, tiff, tif, avif } = outputOptions;
 
   if (format === "jpeg") {
     return sharp(buffer).jpeg(jpeg).toBuffer();
@@ -81,6 +82,10 @@ export function convertType(buffer, format) {
     return sharp(buffer, { animated: config.animated }).gif().toBuffer();
   }
 
+  if (format === "avif") {
+    return sharp(buffer).avif(avif).toBuffer();
+  }
+
   return buffer;
 }
 
@@ -88,11 +93,13 @@ export function convertType(buffer, format) {
  * Supported file types
  */
 export const supportedContentTypes = [
+  "image/jpg",
   "image/jpeg",
   "image/png",
   "image/tiff",
   "image/webp",
   "image/gif",
+  "image/avif",
 ];
 
 export const supportedImageContentTypeMap = {
@@ -103,6 +110,8 @@ export const supportedImageContentTypeMap = {
   tiff: "image/tiff",
   webp: "image/webp",
   gif: "image/gif",
+  avif: "image/avif",
+  jfif: "image/jpeg",
 };
 
 const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
@@ -112,9 +121,7 @@ const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
 export const modifyImage = async ({
   bucket,
   originalFile,
-  fileDir,
-  fileNameWithoutExtension,
-  fileExtension,
+  parsedPath,
   contentType,
   size,
   objectMetadata,
@@ -122,14 +129,17 @@ export const modifyImage = async ({
 }: {
   bucket: Bucket;
   originalFile: string;
-  fileDir: string;
-  fileNameWithoutExtension: string;
-  fileExtension: string;
+  parsedPath: path.ParsedPath;
   contentType: string;
   size: string;
   objectMetadata: ObjectMetadata;
   format: string;
 }): Promise<ResizedImageResult> => {
+  const {
+    ext: fileExtension,
+    dir: fileDir,
+    name: fileNameWithoutExtension,
+  } = parsedPath;
   const shouldFormatImage = format !== "false";
   const imageContentType = shouldFormatImage
     ? supportedImageContentTypeMap[format]
@@ -149,13 +159,13 @@ export const modifyImage = async ({
   // Path where modified image will be uploaded to in Storage.
   const modifiedFilePath = path.normalize(
     config.resizedImagesPath
-      ? path.join(fileDir, config.resizedImagesPath, modifiedFileName)
-      : path.join(fileDir, modifiedFileName)
+      ? path.posix.join(fileDir, config.resizedImagesPath, modifiedFileName)
+      : path.posix.join(fileDir, modifiedFileName)
   );
   let modifiedFile: string;
 
   try {
-    modifiedFile = path.join(os.tmpdir(), modifiedFileName);
+    modifiedFile = path.join(os.tmpdir(), uuid());
 
     // filename\*=utf-8''  selects any string match the filename notation.
     // [^;\s]+ searches any following string until either a space or semi-colon.

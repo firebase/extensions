@@ -76,6 +76,14 @@ export const documentPathParams = {
     "JSON string representing wildcard params with Firestore Document ids",
 };
 
+export const oldDataField = {
+  name: "old_data",
+  mode: "NULLABLE",
+  type: "STRING",
+  description:
+    "The full JSON representation of the document state before the indicated operation is applied. This field will be null for CREATE operations.",
+};
+
 /*
  * We cannot specify a schema for view creation, and all view columns default
  * to the NULLABLE mode.
@@ -117,6 +125,13 @@ export const RawChangelogViewSchema = {
       description:
         "The full JSON representation of the current document state.",
     },
+    {
+      name: "old_data",
+      mode: "NULLABLE",
+      type: "STRING",
+      description:
+        "The full JSON representation of the document state before the indicated operation is applied.",
+    },
     documentIdField,
   ],
 };
@@ -156,6 +171,13 @@ export const RawChangelogSchema = {
       type: "STRING",
       description:
         "The full JSON representation of the document state after the indicated operation is applied. This field will be null for DELETE operations.",
+    },
+    {
+      name: "old_data",
+      mode: "NULLABLE",
+      type: "STRING",
+      description:
+        "The full JSON representation of the document state before the indicated operation is applied. This field will be null for CREATE operations.",
     },
     documentIdField,
   ],
