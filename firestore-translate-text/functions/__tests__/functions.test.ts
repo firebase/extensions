@@ -11,6 +11,7 @@ const defaultEnvironment = {
   COLLECTION_PATH: "translations",
   INPUT_FIELD_NAME: "input",
   OUTPUT_FIELD_NAME: "translated",
+  LANGUAGES_FIELD_NAME: "langs",
 };
 
 const {
@@ -43,7 +44,7 @@ describe("extension", () => {
   });
 
   describe("functions.fstranslate", () => {
-    let logMock;
+    let logMock = jest.fn();
     let errorLogMock;
     let admin;
     let wrappedMockTranslate;
@@ -177,16 +178,19 @@ describe("extension", () => {
         defaultEnvironment.OUTPUT_FIELD_NAME,
         testTranslations
       );
+      const languages = ["en", "es", "de", "fr"];
 
+      const translations = ["hello", "hola", "hallo", "salut"];
+
+      expect(logMock).toHaveBeenCalledWith(
+        messages.translateInputStringToAllLanguages("hello", languages)
+      );
       // confirm logs were printed
-      Object.keys(testTranslations).forEach((language) => {
+      languages.forEach((language, i) => {
         // logs.translateInputString
+        // logs.translateStringComplete TODO: fix this
         expect(logMock).toHaveBeenCalledWith(
-          messages.translateInputString("hello", language)
-        );
-        // logs.translateStringComplete
-        expect(logMock).toHaveBeenCalledWith(
-          messages.translateStringComplete("hello", language)
+          messages.translateStringComplete("hello", language, translations[i])
         );
       });
 
@@ -203,7 +207,50 @@ describe("extension", () => {
       );
     });
 
-    test("function updates translation document with multiple translations", async () => {
+    test("function updates translation document with translations", async () => {
+      await wrappedMockTranslate(documentChange);
+
+      // confirm Google Translation API was called
+      expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "en");
+      expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "es");
+      expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "fr");
+      expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "de");
+
+      // confirm document update was called
+      expect(mockFirestoreUpdate).toHaveBeenCalledWith(
+        defaultEnvironment.OUTPUT_FIELD_NAME,
+        testTranslations
+      );
+      const languages = ["en", "es", "de", "fr"];
+
+      const translations = ["hello", "hola", "hallo", "salut"];
+
+      expect(logMock).toHaveBeenCalledWith(
+        messages.translateInputStringToAllLanguages("hello", languages)
+      );
+      // confirm logs were printed
+      languages.forEach((language, i) => {
+        // logs.translateInputString
+        // logs.translateStringComplete TODO: fix this
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateStringComplete("hello", language, translations[i])
+        );
+      });
+
+      // logs.translateInputStringToAllLanguages
+      expect(logMock).toHaveBeenCalledWith(
+        messages.translateInputStringToAllLanguages(
+          "hello",
+          defaultEnvironment.LANGUAGES.split(",")
+        )
+      );
+      // logs.translateInputToAllLanguagesComplete
+      expect(logMock).toHaveBeenCalledWith(
+        messages.translateInputToAllLanguagesComplete("hello")
+      );
+    });
+
+    test('should only translate to english if languages has "English" as a single array item', async () => {
       beforeSnapshot = snapshot();
 
       afterSnapshot = snapshot({
@@ -211,6 +258,8 @@ describe("extension", () => {
           one: "hello",
           two: "hello",
         },
+        //@ts-ignore
+        langs: ["en"],
       });
 
       documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
@@ -220,16 +269,59 @@ describe("extension", () => {
       // confirm document update was called
       expect(mockFirestoreUpdate).toHaveBeenCalledWith("translated", {
         one: {
-          de: "hallo",
           en: "hello",
-          es: "hola",
-          fr: "salut",
         },
         two: {
-          de: "hallo",
+          en: "hello",
+        },
+      });
+
+      // confirm logs were printed
+      Object.entries((key, value) => {
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateInputString(value, key)
+        );
+
+        // logs.translateInputStringToAllLanguages
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateInputStringToAllLanguages(
+            key,
+            defaultEnvironment.LANGUAGES.split(",")
+          )
+        );
+
+        // logs.translateInputToAllLanguagesComplete
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateInputToAllLanguagesComplete(value)
+        );
+      });
+    });
+
+    test('should only translate "English" and "Spanish" if languages field contains English and Spanish as array items', async () => {
+      beforeSnapshot = snapshot();
+
+      afterSnapshot = snapshot({
+        input: {
+          one: "hello",
+          two: "hello",
+        },
+        //@ts-ignore
+        langs: ["en", "es"],
+      });
+
+      documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
+
+      await wrappedMockTranslate(documentChange);
+
+      // confirm document update was called
+      expect(mockFirestoreUpdate).toHaveBeenCalledWith("translated", {
+        one: {
           en: "hello",
           es: "hola",
-          fr: "salut",
+        },
+        two: {
+          en: "hello",
+          es: "hola",
         },
       });
 

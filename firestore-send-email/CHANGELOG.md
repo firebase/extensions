@@ -1,3 +1,45 @@
+## Version 0.1.27
+
+feature - bump to node 18
+
+## Version 0.1.26
+
+feature - bump to nodejs16
+
+## Version 0.1.25
+
+fixed - change missingDeliveryField logging from `error` to `warn`
+
+## Version 0.1.24
+
+fixed - dont return early
+
+fixed - moved warning about no message and checked if templates are referenced
+
+## Version 0.1.23
+
+fixed - added template check when no message exists
+
+## Version 0.1.22
+
+fixed - fix typo in extension
+
+feature - upgrade extensions to the latest firebase-admin sdk
+
+feature - improve TTL params
+
+feature - add TTL support
+
+fixed - read and write delivery status from inside a single transaction
+
+## Version 0.1.21
+
+feature - add lifecycle events
+
+## Version 0.1.20
+
+docs - add google app passwords guide
+
 ## Version 0.1.19
 
 fixed - generate new lib folder

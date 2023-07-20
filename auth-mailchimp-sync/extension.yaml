@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: auth-mailchimp-sync
-version: 0.2.1
+version: 0.2.4
 specVersion: v1beta
 
 displayName: Sync with Mailchimp
@@ -52,8 +52,7 @@ resources:
       Listens for new user accounts (as managed by Firebase Authentication),
       then automatically adds the new user to your specified MailChimp audience.
     properties:
-      location: ${param:LOCATION}
-      runtime: nodejs14
+      runtime: nodejs18
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.create
         resource: projects/${param:PROJECT_ID}
@@ -65,8 +64,7 @@ resources:
       Authentication), then automatically removes them from your specified
       Mailchimp audience.
     properties:
-      location: ${param:LOCATION}
-      runtime: nodejs14
+      runtime: nodejs18
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${param:PROJECT_ID}
@@ -81,58 +79,6 @@ resources:
       taskQueueTrigger: {}
 
 params:
-  - param: LOCATION
-    label: Cloud Functions location
-    description: >-
-      Where do you want to deploy the functions created for this extension?
-    type: select
-    options:
-      - label: Iowa (us-central1)
-        value: us-central1
-      - label: South Carolina (us-east1)
-        value: us-east1
-      - label: Northern Virginia (us-east4)
-        value: us-east4
-      - label: Los Angeles (us-west2)
-        value: us-west2
-      - label: Salt Lake City (us-west3)
-        value: us-west3
-      - label: Las Vegas (us-west4)
-        value: us-west4
-      - label: Belgium (europe-west1)
-        value: europe-west1
-      - label: London (europe-west2)
-        value: europe-west2
-      - label: Frankfurt (europe-west3)
-        value: europe-west3
-      - label: Zurich (europe-west6)
-        value: europe-west6
-      - label: Taiwan (asia-east1)
-        value: asia-east1
-      - label: Hong Kong (asia-east2)
-        value: asia-east2
-      - label: Tokyo (asia-northeast1)
-        value: asia-northeast1
-      - label: Osaka (asia-northeast2)
-        value: asia-northeast2
-      - label: Seoul (asia-northeast3)
-        value: asia-northeast3
-      - label: Mumbai (asia-south1)
-        value: asia-south1
-      - label: Singapore (asia-southeast1)
-        value: asia-southeast1
-      - label: Jakarta (asia-southeast2)
-        value: asia-southeast2
-      - label: Montreal (northamerica-northeast1)
-        value: northamerica-northeast1
-      - label: Sao Paulo (southamerica-east1)
-        value: southamerica-east1
-      - label: Sydney (australia-southeast1)
-        value: australia-southeast1
-    default: us-central1
-    required: true
-    immutable: true
-
   - param: MAILCHIMP_API_KEY
     label: Mailchimp API key
     description: >-

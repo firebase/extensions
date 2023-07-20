@@ -60,7 +60,6 @@ describe("extension", () => {
 
   describe("functions.fsexportbigquery", () => {
     let functionsConfig;
-    let callResult;
 
     beforeEach(async () => {
       jest.resetModules();
@@ -70,8 +69,14 @@ describe("extension", () => {
     });
 
     test("functions runs with a deletion", async () => {
-      const beforeSnapshot = { foo: "bar" };
-      const afterSnapshot = { foo: "bars" };
+      const beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { foo: "bar" },
+        "document/path"
+      );
+      const afterSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { foo: "bars" },
+        "document/path"
+      );
 
       const documentChange = functionsTest.makeChange(
         beforeSnapshot,
@@ -91,12 +96,21 @@ describe("extension", () => {
         functionsConfig
       );
 
+      // sleep for 10 seconds
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+
       expect(mockConsoleLog).toBeCalledWith("Completed execution of extension");
-    });
+    }, 20000);
 
     test("function runs with updated data", async () => {
-      const beforeSnapshot = { foo: "bar" };
-      const afterSnapshot = { foo: "bars", exists: true };
+      const beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { foo: "bar" },
+        "document/path"
+      );
+      const afterSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { foo: "bars" },
+        "document/path"
+      );
 
       const documentChange = functionsTest.makeChange(
         beforeSnapshot,

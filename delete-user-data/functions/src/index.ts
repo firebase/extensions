@@ -17,8 +17,7 @@
 import * as admin from "firebase-admin";
 import { FieldPath, DocumentReference } from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
-import * as firebase_tools from "firebase-tools";
-import { getDatabaseUrl } from "./helpers";
+import { getDatabaseUrl, hasValidUserPath } from "./helpers";
 import chunk from "lodash.chunk";
 import { getEventarc } from "firebase-admin/eventarc";
 
@@ -27,6 +26,7 @@ import * as logs from "./logs";
 import { search } from "./search";
 import { runCustomSearchFunction } from "./runCustomSearchFunction";
 import { runBatchPubSubDeletions } from "./runBatchPubSubDeletions";
+import { recursiveDelete } from "./recursiveDelete";
 
 // Helper function for selecting correct domain adrress
 const databaseURL = getDatabaseUrl(
@@ -62,19 +62,37 @@ export const handleDeletion = functions.pubsub
     const uid = data.uid as string;
 
     const batchArray = [];
+    let invalidPaths = [];
 
-    chunk<string>(paths, 450).forEach((chunk) => {
+    /** Get all chunks to process */
+    const chunks = chunk<string>(paths, 450);
+
+    /** Loop through each chunk */
+    for (const chunk of chunks) {
       const batch = db.batch();
+
       /** Loop through each path query */
       for (const path of chunk) {
         const docRef = db.doc(path);
+
+        const isValidPath = await hasValidUserPath(docRef, path, uid);
+
+        if (!isValidPath) {
+          invalidPaths.push(path);
+          continue;
+        }
+
         batch.delete(docRef);
       }
 
       batchArray.push(batch);
-    });
+    }
 
     await Promise.all(batchArray.map((batch) => batch.commit()));
+
+    if (invalidPaths.length > 0) {
+      logs.warnInvalidPaths(invalidPaths.length, uid);
+    }
 
     if (eventChannel) {
       await eventChannel.publish({
@@ -82,6 +100,7 @@ export const handleDeletion = functions.pubsub
         data: {
           uid,
           documentPaths: paths,
+          invalidPaths,
         },
       });
     }
@@ -105,11 +124,7 @@ export const handleSearch = functions.pubsub
     if (depth <= config.searchDepth) {
       // If the collection ID is the same as the UID, delete the entire collection and sub-collections
       if (collection.id === uid) {
-        await firebase_tools.firestore.delete(path, {
-          project: process.env.PROJECT_ID,
-          recursive: true,
-          yes: true, // auto-confirmation
-        });
+        await recursiveDelete(path);
 
         if (eventChannel) {
           /** Publish event to EventArc */
@@ -309,11 +324,9 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
         logs.firestorePathDeleted(path, false);
       } else {
         logs.firestorePathDeleting(path, true);
-        await firebase_tools.firestore.delete(path, {
-          project: process.env.PROJECT_ID,
-          recursive: true,
-          yes: true, // auto-confirmation
-        });
+
+        await recursiveDelete(path);
+
         logs.firestorePathDeleted(path, true);
       }
     } catch (err) {

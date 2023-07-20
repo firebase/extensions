@@ -12,13 +12,16 @@ Object {
   "datasetId": "my_dataset",
   "datasetLocation": undefined,
   "initialized": false,
+  "instanceId": undefined,
   "location": "us-central1",
+  "maxDispatchesPerSecond": 10,
   "tableId": "my_table",
   "timePartitioning": null,
   "timePartitioningField": undefined,
   "timePartitioningFieldType": undefined,
   "timePartitioningFirestoreField": undefined,
   "transformFunction": "",
+  "useNewSnapshotQuerySyntax": false,
   "wildcardIds": false,
 }
 `;

@@ -1,3 +1,55 @@
+## Version 0.1.33
+
+feature - improved startup initialization and data synchronization
+
+feature - bump to node 18
+
+## Version 0.1.32
+
+feature - bump to node 16
+
+## Version 0.1.31
+
+fixed - Added support for callable transform functions
+
+fixed - set env variables after initializing app in gen-schema-view
+
+fixed - add checks for existing firebase apps in scripts
+
+## Version 0.1.30
+
+fixed - check if app already exists before init app when using events
+
+chore - ts errors and updated packages
+
+feature - upgrade extensions to the latest firebase-admin sdk
+
+fixed - fixed partition data sync
+
+## Version 0.1.29
+
+feature - added events with an initial sync start event
+
+feature - add flags for emulator and updated snapshot script in the import script
+
+fixed - add optional chaining to forEach method calls, to prevent undefined errors
+
+## Version 0.1.28
+
+fixed - improve table update checks
+
+fixed - Update to fix old_data bug, upgrade dependencies and fix broken tests
+
+## Version 0.1.27
+
+fixed - added fix for configuration setup
+
+fixed - update snapshot script
+
+feature - add oldData to the record
+
+fixed - updating table metadata too often
+
 ## Version 0.1.26
 
 docs - correct service account name

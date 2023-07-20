@@ -1,8 +1,8 @@
 # Get started
 
-## **Using the Translate Text extension**
+## **Using the Translate Text in Firestore extension**
 
-The Translate Text extension (`firestore-translate-text`) lets you translate strings written to a Cloud Firestore collection into multiple languages using the [Cloud Translation API](https://cloud.google.com/translate). Adding a document to the collection triggers this extension to translate the contents of a field within a document to one or more languages. The extension supports either translating a single string or multiple strings at once.
+The Translate Text in Firestore extension (`firestore-translate-text`) lets you translate strings written to a Cloud Firestore collection into multiple languages using the [Cloud Translation API](https://cloud.google.com/translate). Adding a document to the collection triggers this extension to translate the contents of a field within a document to one or more languages. The extension supports either translating a single string or multiple strings at once.
 
 Here’s a basic example document write that would trigger this extension:
 
@@ -36,7 +36,7 @@ Before installing this extension, make sure that you've [set up a Cloud Firesto
 To install the extension, follow the steps on the [Install Firebase Extension](https://firebase.google.com/docs/extensions/install-extensions) page. In summary, do one of the following:
 
 - **Firebase console:** Click the following button:
-  [Install the Trigger Email extension](https://console.firebase.google.com/project/_/extensions/install?ref=firebase%2Ffirestore-translate-text)
+  [Install the Trigger Email from Firestore extension](https://console.firebase.google.com/project/_/extensions/install?ref=firebase%2Ffirestore-translate-text)
 - **CLI:** Run the following command:
   ```bash
   firebase ext:install firebase/firestore-translate-text --project=projectId-or-alias
