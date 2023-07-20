@@ -124,12 +124,20 @@ export const fsexportbigquery = functions.firestore
         config.instanceId
       );
 
+      /**
+       * enqueue data cannot currently handle documentdata
+       * Serialize early before queueing in clopud task
+       * Cloud tasks currently have a limit of 1mb, this also ensures payloads are kept to a minimum
+       */
+      const seializedData = eventTracker.serializeData(data);
+      const serializedOldData = eventTracker.serializeData(oldData);
+
       await queue.enqueue({
         context,
         changeType,
         documentId,
-        data,
-        oldData,
+        data: seializedData,
+        oldData: serializedOldData,
       });
     } catch (err) {
       logs.error(err);

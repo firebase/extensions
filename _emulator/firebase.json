@@ -3,7 +3,8 @@
     "firestore-send-email": "../firestore-send-email",
     "delete-user-data": "../delete-user-data",
     "storage-resize-images": "../storage-resize-images",
-    "firestore-counter": "../firestore-counter"
+    "firestore-counter": "../firestore-counter",
+    "firestore-bigquery-export": "../firestore-bigquery-export"
   },
   "storage": {
     "rules": "storage.rules"
