@@ -55,4 +55,18 @@ describe("extension", () => {
 
     expect(await waitForFile(storage, successFilePath)).toBe(true);
   }, 12000);
+
+  test("should resize an image with a jpg content type", async () => {
+    /** Setup the storage bucket */
+    const bucket = admin.storage().bucket();
+    await bucket.upload(__dirname + "/test-jpg.jpg", {
+      contentType: "image/jpg",
+    });
+
+    /** Define the success storage path */
+    const successFilePath = `${process.env.RESIZED_IMAGES_PATH}/test-jpg_${process.env.IMG_SIZES}.${process.env.IMAGE_TYPE}`;
+
+    /** wait for file to be uploaded to storage: */
+    expect(await waitForFile(storage, successFilePath)).toBe(true);
+  }, 12000);
 });
