@@ -1,3 +1,3 @@
 # Flutter/Dart Client
 
-The Flutter/Dart client for Distrobuted Counter.
+The Flutter/Dart client for Distributed Counter.

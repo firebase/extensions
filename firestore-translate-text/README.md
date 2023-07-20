@@ -1,4 +1,4 @@
-# Translate Text
+# Translate Text in Firestore
 
 **Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
 

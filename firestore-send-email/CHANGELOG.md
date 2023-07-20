@@ -1,3 +1,21 @@
+## Version 0.1.27
+
+feature - bump to node 18
+
+## Version 0.1.26
+
+feature - bump to nodejs16
+
+## Version 0.1.25
+
+fixed - change missingDeliveryField logging from `error` to `warn`
+
+## Version 0.1.24
+
+fixed - dont return early
+
+fixed - moved warning about no message and checked if templates are referenced
+
 ## Version 0.1.23
 
 fixed - added template check when no message exists

@@ -56,14 +56,10 @@ export class Counter {
     this.shards[doc.path] = 0;
 
     this.shards[shardsRef.path + "/" + this.shardId] = 0;
-    this.shards[shardsRef.path + "/" + "\t" + this.shardId.substr(0, 4)] = 0;
-    this.shards[shardsRef.path + "/" + "\t\t" + this.shardId.substr(0, 3)] = 0;
-    this.shards[
-      shardsRef.path + "/" + "\t\t\t" + this.shardId.substr(0, 2)
-    ] = 0;
-    this.shards[
-      shardsRef.path + "/" + "\t\t\t" + this.shardId.substr(0, 1)
-    ] = 0;
+    this.shards[shardsRef.path + "/" + "\t" + this.shardId.slice(0, 4)] = 0;
+    this.shards[shardsRef.path + "/" + "\t\t" + this.shardId.slice(0, 3)] = 0;
+    this.shards[shardsRef.path + "/" + "\t\t\t" + this.shardId.slice(0, 2)] = 0;
+    this.shards[shardsRef.path + "/" + "\t\t\t" + this.shardId.slice(0, 1)] = 0;
   }
 
   /**
