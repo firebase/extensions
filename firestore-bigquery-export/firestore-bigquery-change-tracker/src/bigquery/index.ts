@@ -15,7 +15,7 @@
  */
 
 import * as bigquery from "@google-cloud/bigquery";
-import * as firebase from "firebase-admin";
+import { DocumentReference } from "firebase-admin/firestore";
 import * as traverse from "traverse";
 import fetch from "node-fetch";
 import {
@@ -151,10 +151,7 @@ export class FirestoreBigQueryEventHistoryTracker
           this.remove();
         }
 
-        if (
-          property.constructor.name ===
-          firebase.firestore.DocumentReference.name
-        ) {
+        if (property.constructor.name === DocumentReference.name) {
           this.update(property.path);
         }
       }

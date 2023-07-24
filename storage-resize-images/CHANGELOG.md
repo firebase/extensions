@@ -1,3 +1,7 @@
+## Version 0.1.39
+
+fixed - add support for jpg content types
+
 ## Version 0.1.38
 
 feature - bump to node 18

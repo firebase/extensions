@@ -1,3 +1,11 @@
+## Version 0.1.34
+
+feat - added failure policy
+
+fixed - use module instead namespace
+
+fixed - ensure data is correctly serialized before queuing
+
 ## Version 0.1.33
 
 feature - improved startup initialization and data synchronization
