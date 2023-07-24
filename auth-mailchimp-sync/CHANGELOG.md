@@ -1,3 +1,7 @@
+## Version 0.2.5
+
+feature - Added lifecycle events
+
 ## Version 0.2.4
 
 feature - bump to node 18

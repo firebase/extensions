@@ -93,6 +93,7 @@ export function convertType(buffer, format) {
  * Supported file types
  */
 export const supportedContentTypes = [
+  "image/jpg",
   "image/jpeg",
   "image/png",
   "image/tiff",
