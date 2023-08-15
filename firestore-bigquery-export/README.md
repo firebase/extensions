@@ -77,8 +77,6 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 **Configuration Parameters:**
 
-* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
-
 * BigQuery Dataset location: Where do you want to deploy the BigQuery dataset created for this extension? For help selecting a location, refer to the [location selection guide](https://cloud.google.com/bigquery/docs/locations).
 
 * Project Id: Override the default project bigquery instance. This can allow updates to be directed to a bigquery instance on another project.
@@ -102,17 +100,25 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery SQL table clustering: This parameter will allow you to set up Clustering for the BigQuery Table created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 comma separated fields. The order of the specified columns determines the sort order of the data. Available schema extensions table fields for clustering: `document_id, timestamp, event_id, operation, data`.
 
+* Maximum number of synced documents per second: This parameter will set the maximum number of syncronised documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota. Ensure that you have a set a low enough number to componsate. Defaults to 10.
+
 * Backup Collection Name: This (optional) parameter will allow you to specify a collection for which failed BigQuery updates will be written to.
 
 * Transform function URL: Specify a function URL to call that will transform the payload that will be written to BigQuery. See the pre-install documentation for more details.
 
 * Use new query syntax for snapshots: If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential resource limitations.
 
+* Cloud KMS key name: Instead of Google managing the key encryption keys that protect your data, you control and manage key encryption keys in Cloud KMS. If this parameter is set, the extension will specify the KMS key name when creating the BQ table.
+
 
 
 **Cloud Functions:**
 
 * **fsexportbigquery:** Listens for document changes in your specified Cloud Firestore collection, then exports the changes into BigQuery.
+
+* **syncBigQuery:** A task-triggered function that gets called on BigQuery sync
+
+* **setupBigQuerySync:** Runs configuration for sycning with BigQuery
 
 
 

@@ -60,6 +60,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   backupTableId?: string | undefined;
   useNewSnapshotQuerySyntax?: boolean;
   skipInit?: boolean;
+  kmsKeyName?: string | undefined;
 }
 
 /**
@@ -388,6 +389,12 @@ export class FirestoreBigQueryEventHistoryTracker
         schema.fields.push(documentPathParams);
       }
       const options: TableMetadata = { friendlyName: changelogName, schema };
+
+      if (this.config.kmsKeyName) {
+        options["encryptionConfiguration"] = {
+          kmsKeyName: this.config.kmsKeyName,
+        };
+      }
 
       //Add partitioning
       await partitioning.addPartitioningToSchema(schema.fields);

@@ -13,7 +13,7 @@
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.26",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.27",
     "@google-cloud/bigquery": "^4.7.0",
     "@types/chai": "^4.1.6",
     "@types/express-serve-static-core": "4.17.30",
