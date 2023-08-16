@@ -56,4 +56,5 @@ export default {
   maxDispatchesPerSecond: parseInt(
     process.env.MAX_DISPATCHES_PER_SECOND || "10"
   ),
+  kmsKeyName: process.env.KMS_KEY_NAME,
 };
