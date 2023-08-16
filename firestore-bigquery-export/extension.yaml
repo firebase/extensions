@@ -322,6 +322,14 @@ params:
     default: no
     required: true
 
+  - param: KMS_KEY_NAME
+    label: Cloud KMS key name
+    description: >-
+      Instead of Google managing the key encryption keys that protect your data, you control and manage key encryption keys in Cloud KMS.
+      If this parameter is set, the extension will specify the KMS key name when creating the BQ table.
+    type: string
+    required: false
+
 events:
   - type: firebase.extensions.big-query-export.v1.sync.start
     description: Occurs on a firestore document write event.
