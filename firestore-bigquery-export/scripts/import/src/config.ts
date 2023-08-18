@@ -24,6 +24,8 @@ const validateLocation = (value: string) => {
     "us-west3",
     "southamerica-east1",
     "us-east1",
+    "europe-central2",
+    "europe-north1",
     "europe-west1",
     "europe-north1",
     "europe-west3",
