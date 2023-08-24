@@ -1,3 +1,11 @@
+## Version 0.1.35
+
+fixed - add missing locations back in
+
+fixed - use module instead namespace
+
+fixed - added e2e testing, upgraded dependencies
+
 ## Version 0.1.34
 
 feat - added failure policy

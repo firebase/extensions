@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.34
+version: 0.1.35
 specVersion: v1beta
 
 displayName: Stream Firestore to BigQuery
@@ -321,6 +321,16 @@ params:
         value: no
     default: no
     required: true
+
+  - param: KMS_KEY_NAME
+    label: Cloud KMS key name
+    description: >-
+      Instead of Google managing the key encryption keys that protect your data, you control and manage key encryption keys in Cloud KMS.
+      If this parameter is set, the extension will specify the KMS key name when creating the BQ table. See the PREINSTALL.md for more details.
+    type: string
+    validationRegex: 'projects/([^/]+)/locations/([^/]+)/keyRings/([^/]+)/cryptoKeys/([^/]+)'
+    validationErrorMessage: The key name must be of the format 'projects/PROJECT_NAME/locations/KEY_RING_LOCATION/keyRings/KEY_RING_ID/cryptoKeys/KEY_ID'.
+    required: false
 
 events:
   - type: firebase.extensions.big-query-export.v1.sync.start
