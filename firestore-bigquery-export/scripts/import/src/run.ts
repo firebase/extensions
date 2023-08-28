@@ -165,10 +165,10 @@ export async function runMultiThread(
     tableId,
     queryCollectionGroup,
     datasetLocation,
-    bigQueryProjectId
+    bigQueryProjectId,
   } = config;
-  
-  const bigquery = new BigQuery({projectId: bigQueryProjectId});
+
+  const bigquery = new BigQuery({ projectId: bigQueryProjectId });
 
   const dataset = bigquery.dataset(datasetId, {
     location: datasetLocation,

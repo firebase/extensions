@@ -183,7 +183,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       errors.push("Project is not specified.");
     }
     if (program.bigQueryProject === undefined) {
-        errors.push("BigQuery Project is not specified.");
+      errors.push("BigQuery Project is not specified.");
     }
     if (program.sourceCollectionPath === undefined) {
       errors.push("SourceCollectionPath is not specified.");
