@@ -1,4 +1,4 @@
-# Stream Collections to BigQuery
+# Stream Firestore to BigQuery
 
 **Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
 
@@ -55,6 +55,33 @@ Prior to sending the document change to BigQuery, you have an opportunity to tra
 
 The response should be indentical in structure.
 
+#### Using Customer Managed Encryption Keys
+
+By default, BigQuery encrypts your content stored at rest. BigQuery handles and manages this default encryption for you without any additional actions on your part.
+
+If you want to control encryption yourself, you can use customer-managed encryption keys (CMEK) for BigQuery. Instead of Google managing the key encryption keys that protect your data, you control and manage key encryption keys in Cloud KMS.
+
+For more general information on this, see [the docs](https://cloud.google.com/bigquery/docs/customer-managed-encryption).
+
+To use CMEK and the Key Management Service (KMS) with this extension
+1. [Enable the KMS API in your Google Cloud Project](https://console.cloud.google.com/apis/enableflow?apiid=cloudkms.googleapis.com).
+2. Create a keyring and keychain in the KMS. Note that the region of the keyring and key *must* match the region of your bigquery dataset
+3. Grant the BigQuery service account permission to encrypt and decrypt using that key. The Cloud KMS CryptoKey Encrypter/Decrypter role grants this permission. First find your project number. You can find this for example on the cloud console dashboard `https://console.cloud.google.com/home/dashboard?project={PROJECT_ID}`. The service account which needs the Encrypter/Decrypter role is then `bq-PROJECT_NUMBER@bigquery-encryption.iam.gserviceaccount.com`. You can grant this role through the credentials service in the console, or through the CLI:
+```
+gcloud kms keys add-iam-policy-binding \
+--project=KMS_PROJECT_ID \
+--member serviceAccount:bq-PROJECT_NUMBER@bigquery-encryption.iam.gserviceaccount.com \
+--role roles/cloudkms.cryptoKeyEncrypterDecrypter \
+--location=KMS_KEY_LOCATION \
+--keyring=KMS_KEY_RING \
+KMS_KEY
+```
+4. When installing this extension, enter the resource name of your key. It will look something like the following:
+```
+projects/<YOUR PROJECT ID>/locations/<YOUR REGION>/keyRings/<YOUR KEY RING NAME>/cryptoKeys/<YOUR KEY NAME>
+```
+If you follow these steps, your changelog table should be created using your customer-managed encryption.
+
 #### Backfill your BigQuery dataset
 
 To import documents that already exist at installation time into BigQuery, answer **Yes** when the installer asks "Import existing Firestore documents into BigQuery?" The extension will export existing documents as part of the installation and update processes.
@@ -70,10 +97,8 @@ If you don't either enable automatic import or run the import script, the extens
 After your data is in BigQuery, you can run the [schema-views script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/GENERATE_SCHEMA_VIEWS.md) (provided by this extension) to create views that make it easier to query relevant data. You only need to provide a JSON schema file that describes your data structure, and the schema-views script will create the views.
 
 #### Billing
- 
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
- 
-- You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
+
 - This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
   - BigQuery (this extension writes to BigQuery with [streaming inserts](https://cloud.google.com/bigquery/pricing#streaming_pricing))
   - Cloud Firestore
@@ -82,8 +107,6 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 
 **Configuration Parameters:**
-
-* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
 * BigQuery Dataset location: Where do you want to deploy the BigQuery dataset created for this extension? For help selecting a location, refer to the [location selection guide](https://cloud.google.com/bigquery/docs/locations).
 
@@ -108,17 +131,15 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery SQL table clustering: This parameter will allow you to set up Clustering for the BigQuery Table created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 comma separated fields. The order of the specified columns determines the sort order of the data. Available schema extensions table fields for clustering: `document_id, timestamp, event_id, operation, data`.
 
+* Maximum number of synced documents per second: This parameter will set the maximum number of syncronised documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota. Ensure that you have a set a low enough number to componsate. Defaults to 10.
+
 * Backup Collection Name: This (optional) parameter will allow you to specify a collection for which failed BigQuery updates will be written to.
 
 * Transform function URL: Specify a function URL to call that will transform the payload that will be written to BigQuery. See the pre-install documentation for more details.
 
 * Use new query syntax for snapshots: If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential resource limitations.
 
-* Import existing Firestore documents into BigQuery?: Do you want to import existing documents from your Firestore collection into BigQuery? These documents  will have each have a special changelog with the operation of `IMPORT` and the timestamp of epoch. This ensures that any operation on an imported document supersedes the import record.
-
-* Existing documents collection: What is the path of the the Cloud Firestore Collection you would like to import from? (This may, or may not, be the same Collection for which you plan to mirror changes.)
-
-* Docs per backfill: When importing existing documents, how many should be imported at once? The default value of 200 should be ok for most users. If you are using a transform function or have very large documents, you may need to set this to a lower number. If the lifecycle event function times out, lower this value.
+* Cloud KMS key name: Instead of Google managing the key encryption keys that protect your data, you control and manage key encryption keys in Cloud KMS. If this parameter is set, the extension will specify the KMS key name when creating the BQ table. See the PREINSTALL.md for more details.
 
 
 
@@ -126,7 +147,9 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * **fsexportbigquery:** Listens for document changes in your specified Cloud Firestore collection, then exports the changes into BigQuery.
 
-* **fsimportexistingdocs:** Imports exisitng documents in ${param:IMPORT_COLLECTION_PATH} into BigQuery. Imported documents will have a special changelog with the operation of `IMPORT` and the timestamp of epoch.
+* **syncBigQuery:** A task-triggered function that gets called on BigQuery sync
+
+* **setupBigQuerySync:** Runs configuration for sycning with BigQuery
 
 
 

@@ -46,20 +46,10 @@ export const fstranslate = functions.firestore
   .document(process.env.COLLECTION_PATH)
   .onWrite(async (change): Promise<void> => {
     logs.start(config);
-    const { languages, inputFieldName, outputFieldName } = config;
+    const { inputFieldName, outputFieldName } = config;
 
     if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
       logs.fieldNamesNotDifferent();
-      return;
-    }
-    if (
-      validators.fieldNameIsTranslationPath(
-        inputFieldName,
-        outputFieldName,
-        languages
-      )
-    ) {
-      logs.inputFieldNameIsOutputPath();
       return;
     }
 
@@ -128,7 +118,7 @@ export const fstranslatebackfill = functions.tasks
       // Stil have more documents to translate, enqueue another task.
       logs.enqueueNext(offset + DOCS_PER_BACKFILL);
       const queue = getFunctions().taskQueue(
-        "fstranslatebackfill",
+        `locations/${config.location}/functions/fstranslatebackfill`,
         process.env.EXT_INSTANCE_ID
       );
       await queue.enqueue({
@@ -170,6 +160,13 @@ const extractInput = (snapshot: admin.firestore.DocumentSnapshot): any => {
 
 const extractOutput = (snapshot: admin.firestore.DocumentSnapshot): any => {
   return snapshot.get(config.outputFieldName);
+};
+
+const extractLanguages = (
+  snapshot: admin.firestore.DocumentSnapshot
+): string[] => {
+  if (!config.languagesFieldName) return config.languages;
+  return snapshot.get(config.languagesFieldName) || config.languages;
 };
 
 const getChangeType = (
@@ -224,6 +221,9 @@ const handleUpdateDocument = async (
   const inputBefore = extractInput(before);
   const inputAfter = extractInput(after);
 
+  const languagesBefore = extractLanguages(before);
+  const languagesAfter = extractLanguages(after);
+
   // If previous and updated documents have no input, skip.
   if (inputBefore === undefined && inputAfter === undefined) {
     logs.documentUpdatedNoInput();
@@ -237,7 +237,10 @@ const handleUpdateDocument = async (
     return;
   }
 
-  if (JSON.stringify(inputBefore) === JSON.stringify(inputAfter)) {
+  if (
+    JSON.stringify(inputBefore) === JSON.stringify(inputAfter) &&
+    JSON.stringify(languagesBefore) === JSON.stringify(languagesAfter)
+  ) {
     logs.documentUpdatedUnchangedInput();
   } else {
     logs.documentUpdatedChangedInput();
@@ -259,11 +262,12 @@ const filterLanguagesFn = (
 
 const translateSingle = async (
   input: string,
+  languages: string[],
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
-  logs.translateInputStringToAllLanguages(input, config.languages);
+  logs.translateInputStringToAllLanguages(input, languages);
 
-  const tasks = config.languages.map(
+  const tasks = languages.map(
     async (targetLanguage: string): Promise<Translation> => {
       return {
         language: targetLanguage,
@@ -349,17 +353,18 @@ const translateSingleBackfill = async (
 
 const translateMultiple = async (
   input: object,
+  languages: string[],
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
   let translations = {};
   let promises = [];
 
   Object.entries(input).forEach(([input, value]) => {
-    config.languages.forEach((language) => {
+    languages.forEach((language) => {
       promises.push(
         () =>
           new Promise<void>(async (resolve) => {
-            logs.translateInputStringToAllLanguages(value, config.languages);
+            logs.translateInputStringToAllLanguages(value, languages);
 
             const output =
               typeof value === "string"
@@ -457,12 +462,24 @@ const translateDocument = async (
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
   const input: any = extractInput(snapshot);
+  const languages = extractLanguages(snapshot);
 
-  if (typeof input === "object") {
-    return translateMultiple(input, snapshot);
+  if (
+    validators.fieldNameIsTranslationPath(
+      config.inputFieldName,
+      config.outputFieldName,
+      languages
+    )
+  ) {
+    logs.inputFieldNameIsOutputPath();
+    return;
   }
 
-  await translateSingle(input, snapshot);
+  if (typeof input === "object") {
+    return translateMultiple(input, languages, snapshot);
+  }
+
+  await translateSingle(input, languages, snapshot);
 };
 
 const translateString = async (

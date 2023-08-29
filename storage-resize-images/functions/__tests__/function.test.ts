@@ -29,15 +29,17 @@ describe("extension", () => {
     let mockResizedImage;
     let logMock;
     let errorLogMock;
+    let warnLogMock;
 
     beforeEach(() => {
       mockResizedImage = mockGenerateResizedImage();
       logMock = jest.fn();
       errorLogMock = jest.fn();
-
+      warnLogMock = jest.fn();
       require("firebase-functions").logger = {
         log: logMock,
         error: errorLogMock,
+        warn: warnLogMock,
       };
     });
     test("image contentType does not exist", () => {

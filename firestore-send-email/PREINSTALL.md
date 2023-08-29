@@ -29,7 +29,7 @@ When you configure this extension, you'll need to supply your **SMTP credentials
     2.  2-Step Verification is only set up for security keys.
     3.  Your account is through work, school, or other organization.
     4.  You turned on Advanced Protection.
-4.  At the bottom, choose **Select app** and choose **Other** option and then write the name of the app password (e.g. `Firebase Trigger Email Extension`) and click **Generate**.
+4.  At the bottom, choose **Select app** and choose **Other** option and then write the name of the app password (e.g. `Firebase Trigger Email from Firestore Extension`) and click **Generate**.
 5.  Follow the instructions to enter the App Password. The App Password is the 16-character code in the yellow bar on your device.
 6.  Tap **Done**.
 
@@ -42,7 +42,6 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 
-- You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
 - This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
   - Cloud Firestore
   - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))

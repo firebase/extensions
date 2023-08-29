@@ -21,10 +21,9 @@ Make sure that you've set up [Firebase Authentication](https://firebase.google.c
 You must also have a Mailchimp account before installing this extension.
 
 #### Billing
- 
+
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
- 
-- You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
+
 - This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
   - Cloud Functions (Node.js 10+ runtime. See [FAQs](https://firebase.google.com/support/faq#expandable-24))
 
@@ -43,10 +42,14 @@ Usage of this extension also requires you to have a Mailchimp account. You are r
 
 * Contact status: When the extension adds a new user to the Mailchimp audience, what is their initial status? This value can be `subscribed` or `pending`. `subscribed` means the user can receive campaigns; `pending` means the user still needs to opt-in to receive campaigns.
 
+* Import existing users into Mailchimp audience: Do you want to add existing users to the Mailchimp audience?
+
 
 
 **Cloud Functions:**
 
 * **addUserToList:** Listens for new user accounts (as managed by Firebase Authentication), then automatically adds the new user to your specified MailChimp audience.
 
-* **removeUserFromList:** Listens for existing user accounts to be deleted (as managed by Firebase Authentication), then automatically removes them from your specified MailChimp audience.
+* **removeUserFromList:** Listens for existing user accounts to be deleted (as managed by Firebase Authentication), then automatically removes them from your specified Mailchimp audience.
+
+* **addExistingUsersToList:** Adds existing users into the specified Mailchimp audience.

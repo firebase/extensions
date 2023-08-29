@@ -44,10 +44,16 @@ const eventTracker: FirestoreEventHistoryTracker =
     wildcardIds: config.wildcardIds,
     bqProjectId: config.bqProjectId,
     useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
+    skipInit: true,
+    kmsKeyName: config.kmsKeyName,
   });
 
 logs.init();
-admin.initializeApp();
+
+/** Init app, if not already initialized */
+if (admin.apps.length === 0) {
+  admin.initializeApp();
+}
 
 const eventChannel =
   process.env.EVENTARC_CHANNEL &&
@@ -55,18 +61,48 @@ const eventChannel =
     allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
   });
 
-if (!admin.apps.length) {
-  admin.initializeApp();
-  admin.firestore().settings({ ignoreUndefinedProperties: true });
-}
+export const syncBigQuery = functions.tasks
+  .taskQueue({
+    retryConfig: {
+      maxAttempts: 5,
+      minBackoffSeconds: 60,
+    },
+    rateLimits: {
+      maxConcurrentDispatches: 1000,
+      maxDispatchesPerSecond: 500,
+    },
+  })
+  .onDispatch(
+    async ({ context, changeType, documentId, data, oldData }, ctx) => {
+      await eventTracker.record([
+        {
+          timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
+          operation: changeType,
+          documentName: context.resource.name,
+          documentId: documentId,
+          pathParams: config.wildcardIds ? context.params : null,
+          eventId: context.eventId,
+          data,
+          oldData,
+        },
+      ]);
+    }
+  );
 
-exports.fsexportbigquery = functions.firestore
-  .document(config.collectionPath)
+export const fsexportbigquery = functions
+  .runWith({ failurePolicy: true })
+  .firestore.document(config.collectionPath)
   .onWrite(async (change, context) => {
     logs.start();
     try {
       const changeType = getChangeType(change);
       const documentId = getDocumentId(change);
+
+      const isCreated = changeType === ChangeType.CREATE;
+      const isDeleted = changeType === ChangeType.DELETE;
+
+      const data = isDeleted ? undefined : change.after.data();
+      const oldData = isCreated ? undefined : change.before.data();
 
       if (eventChannel) {
         await eventChannel.publish({
@@ -85,24 +121,54 @@ exports.fsexportbigquery = functions.firestore
         });
       }
 
-      await eventTracker.record([
-        {
-          timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
-          operation: changeType,
-          documentName: context.resource.name,
-          documentId: documentId,
-          pathParams: config.wildcardIds ? context.params : null,
-          eventId: context.eventId,
-          data:
-            changeType === ChangeType.DELETE ? undefined : change.after.data(),
-          oldData:
-            changeType === ChangeType.CREATE ? undefined : change.before.data(),
-        },
-      ]);
-      logs.complete();
+      const queue = getFunctions().taskQueue(
+        `locations/${config.location}/functions/syncBigQuery`,
+        config.instanceId
+      );
+
+      /**
+       * enqueue data cannot currently handle documentdata
+       * Serialize early before queueing in clopud task
+       * Cloud tasks currently have a limit of 1mb, this also ensures payloads are kept to a minimum
+       */
+      const seializedData = eventTracker.serializeData(data);
+      const serializedOldData = eventTracker.serializeData(oldData);
+
+      await queue.enqueue({
+        context,
+        changeType,
+        documentId,
+        data: seializedData,
+        oldData: serializedOldData,
+      });
     } catch (err) {
       logs.error(err);
+      const eventAgeMs = Date.now() - Date.parse(context.timestamp);
+      const eventMaxAgeMs = 10000;
+
+      if (eventAgeMs > eventMaxAgeMs) {
+        return;
+      }
+
+      throw err;
     }
+
+    logs.complete();
+  });
+
+export const setupBigQuerySync = functions.tasks
+  .taskQueue()
+  .onDispatch(async () => {
+    /** Init the BigQuery sync */
+    await eventTracker.initialize();
+
+    /** Run Backfill */
+    await getFunctions()
+      .taskQueue(
+        `locations/${config.location}/functions/fsimportexistingdocs`,
+        config.instanceId
+      )
+      .enqueue({ offset: 0, docsCount: 0 });
   });
 
 exports.fsimportexistingdocs = functions.tasks
@@ -112,7 +178,7 @@ exports.fsimportexistingdocs = functions.tasks
     if (!config.doBackfill) {
       await runtime.setProcessingState(
         "PROCESSING_COMPLETE",
-        "No existing documents imported into BigQuery."
+        "Compledted. No existing documents imported into BigQuery."
       );
       return;
     }
@@ -122,6 +188,7 @@ exports.fsimportexistingdocs = functions.tasks
     const query = config.useCollectionGroupQuery
       ? admin.firestore().collectionGroup(config.importCollectionPath)
       : admin.firestore().collection(config.importCollectionPath);
+
     const snapshot = await query
       .offset(offset)
       .limit(config.docsPerBackfill)
@@ -135,7 +202,7 @@ exports.fsimportexistingdocs = functions.tasks
         documentId: d.id,
         eventId: "",
         pathParams: resolveWildcardIds(config.importCollectionPath, d.ref.path),
-        data: d.data(),
+        data: eventTracker.serializeData(d.data()),
       };
     });
     try {
