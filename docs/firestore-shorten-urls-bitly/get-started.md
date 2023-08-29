@@ -1,8 +1,8 @@
 # Get started
 
-## Use the Firestore Shorten Urls Bitly extension
+## Use the Shorten URLs in Firestore extension
 
-The Firestore Shorten Urls Bitly extension (`firestore-shorten-urls-bitly`) lets you create shortened URLs from URLs written to Cloud Firestore. These shortened URLs are useful as display URLs.
+The Shorten URLs in Firestore extension (`firestore-shorten-urls-bitly`) lets you create shortened URLs from URLs written to Cloud Firestore. These shortened URLs are useful as display URLs.
 
 This extension listens to your specified Cloud Firestore collection. If you add a URL to a specified field in any document within that collection, this extension:
 
@@ -26,7 +26,7 @@ To install the extension, follow the steps on the [Install a Firebase Extension
 
 - **Firebase console:** Click the following button:
 
-  [Install the Firestore Shorten Urls Bitly extension](https://console.firebase.google.com/project/_/extensions/install?ref=firebase%2Ffirestore-shorten-urls-bitly)
+  [Install the Shorten URLs in Firestore extension](https://console.firebase.google.com/project/_/extensions/install?ref=firebase%2Ffirestore-shorten-urls-bitly)
 
 - **CLI:** Run the following command:
 

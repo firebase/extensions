@@ -1,3 +1,35 @@
+## Version 0.1.39
+
+fixed - add support for jpg content types
+
+## Version 0.1.38
+
+feature - bump to node 18
+
+## Version 0.1.37
+
+feature - bump to nodejs16
+
+fixed - correct include path list description
+
+## Version 0.1.36
+
+fixed - added fixes for gcs vulnerabilities
+
+## Version 0.1.35
+
+feature - handle jfif extensions correctly
+
+## Version 0.1.34
+
+feature - upgrade extensions to the latest firebase-admin sdk
+
+fixed - support backfill task in custom region
+
+feature - add description to the failedImagesPath param
+
+feature - put failed resizes in separate directory #563
+
 ## Version 0.1.33
 
 fixed - re-add input object data to the complete event

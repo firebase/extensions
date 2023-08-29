@@ -19,6 +19,8 @@ const environment = {
   DEFAULT_REPLY_TO: "fakeemail@gmail.com",
   USERS_COLLECTION: "users",
   TESTING: "true",
+  TTL_EXPIRE_TYPE: "day",
+  TTL_EXPIRE_VALUE: "1",
 };
 
 describe("extensions config", () => {
@@ -38,6 +40,8 @@ describe("extensions config", () => {
       usersCollection: process.env.USERS_COLLECTION,
       templatesCollection: process.env.TEMPLATES_COLLECTION,
       testing: process.env.TESTING === "true",
+      TTLExpireType: process.env.TTL_EXPIRE_TYPE,
+      TTLExpireValue: parseInt(process.env.TTL_EXPIRE_VALUE),
     };
     const functionsConfig = config();
     expect(functionsConfig).toStrictEqual(testConfig);

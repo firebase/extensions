@@ -10,12 +10,13 @@
     "logs": "firebase functions:log"
   },
   "engines": {
-    "node": "16"
+    "node": "18"
   },
   "main": "lib/index.js",
   "dependencies": {
-    "firebase-admin": "^10.2.0",
-    "firebase-functions": "^4.1.0"
+    "firebase-admin": "^11.4.1",
+    "firebase-functions": "^4.1.0",
+    "@types/express-serve-static-core": "4.17.30"
   },
   "devDependencies": {
     "typescript": "^4.6.4"
