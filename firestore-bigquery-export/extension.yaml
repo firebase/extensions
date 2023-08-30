@@ -63,7 +63,7 @@ resources:
   - name: fsimportexistingdocs
     type: firebaseextensions.v1beta.function
     description:
-      Imports exisitng documents in ${param:PROJECT_ID}  ${IMPORT_COLLECTION_PATH} into BigQuery. Imported documents will have 
+      Imports exisitng documents from the specified collection into BigQuery. Imported documents will have 
       a special changelog with the operation of `IMPORT` and the timestamp of epoch.
     properties:
       runtime: nodejs14
