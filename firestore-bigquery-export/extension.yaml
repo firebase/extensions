@@ -59,13 +59,13 @@ resources:
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
+
   - name: fsimportexistingdocs
     type: firebaseextensions.v1beta.function
     description:
-      Imports exisitng documents in ${param:IMPORT_COLLECTION_PATH} into BigQuery. Imported documents will have 
+      Imports exisitng documents in ${param:PROJECT_ID}  ${IMPORT_COLLECTION_PATH} into BigQuery. Imported documents will have 
       a special changelog with the operation of `IMPORT` and the timestamp of epoch.
     properties:
-      location: ${param:LOCATION}
       runtime: nodejs14
       taskQueueTrigger: {}
 
