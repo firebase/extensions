@@ -35,7 +35,7 @@
     "generate-schema": "^2.6.0",
     "inquirer": "^6.4.0",
     "sql-formatter": "^2.3.3",
-    "workerpool": "^6.1.4"
+    "workerpool": "^6.4.0"
   },
   "devDependencies": {
     "@types/chai": "^4.2.0",
