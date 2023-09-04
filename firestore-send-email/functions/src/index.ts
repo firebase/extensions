@@ -55,7 +55,7 @@ async function initialize() {
 async function transportLayer() {
   if (config.testing) {
     return nodemailer.createTransport({
-      host: "localhost",
+      host: "127.0.0.1",
       port: 8132,
       secure: false,
       tls: {
