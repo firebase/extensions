@@ -54,7 +54,7 @@ describe("CLI", () => {
     datasetName = `testDataset_${randomID}`;
 
     //This is live config, should be emulator?
-    process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
+    process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
     process.env.FIREBASE_CONFIG = JSON.stringify({
       apiKey: "AIzaSyAJTgFI-OVRjgd_10JDWc9T3kxvxY-fUe4",
       authDomain: "extensions-testing.firebaseapp.com",
