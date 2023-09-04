@@ -196,3 +196,10 @@ export const failedImageUploading = (path: string) => {
 export const failedImageUploaded = (path: string) => {
   logger.log(`Uploaded failed image to the failed images directory: '${path}'`);
 };
+
+export function errorConstuctorOptionsParse(err: any) {
+  logger.warn(
+    `Error while parsing "Constructor options". Parameter will be ignored`,
+    err
+  );
+}
