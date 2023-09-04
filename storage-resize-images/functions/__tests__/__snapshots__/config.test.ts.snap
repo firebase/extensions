@@ -5,6 +5,7 @@ Object {
   "animated": false,
   "bucket": "extensions-testing.appspot.com",
   "cacheControlHeader": undefined,
+  "constructorOptions": undefined,
   "deleteOriginalFile": 0,
   "doBackfill": false,
   "excludePathList": undefined,
