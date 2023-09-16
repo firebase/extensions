@@ -16,6 +16,11 @@ name: firestore-translate-text
 version: 0.1.13
 specVersion: v1beta
 
+tags:
+  [
+    ai
+  ]
+
 displayName: Translate Text in Firestore
 description:
   Translates strings written to a Cloud Firestore collection into multiple languages (uses Cloud Translation API).
