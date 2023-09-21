@@ -150,10 +150,10 @@ params:
       will resize any images found in any subdirectories of `/users/pictures` and `/restaurants/menuItems`.
       
       You may also use wildcard notation for directories in the path. For example, `/users/*/pictures`
-      would include any images in any subdirectories of `/users/foo/pictures` as well as any images in
+      would exclude any images in any subdirectories of `/users/foo/pictures` as well as any images in
       subdirectories of `/users/bar/pictures`, but also any images in subdirectories of `/users/any/level/of/subdirectories/pictures`. 
       
-      If you prefer not to explicitly restrict to certain directories of your Storage bucket, leave this field empty.
+      If you prefer not to explicitly exclude any directories of your Storage bucket, leave this field empty.
     type: string
     example: "/users/avatars,/design/pictures"
     validationRegex: ^(\/[^\s\/\,]+)+(\,(\/[^\s\/\,]+)+)*$
