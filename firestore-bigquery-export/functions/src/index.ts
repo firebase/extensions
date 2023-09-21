@@ -45,6 +45,7 @@ const eventTracker: FirestoreEventHistoryTracker =
     bqProjectId: config.bqProjectId,
     useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
     skipInit: true,
+    kmsKeyName: config.kmsKeyName,
   });
 
 logs.init();
