@@ -74,7 +74,8 @@ resources:
     description:
       Adds existing users into the specified Mailchimp audience.
     properties:
-      runtime: nodejs18
+      location: ${param:LOCATION}
+      runtime: nodejs14
       taskQueueTrigger: {}
 
 params:
