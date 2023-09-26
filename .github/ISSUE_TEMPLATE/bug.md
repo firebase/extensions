@@ -1,8 +1,10 @@
 ---
-name: ⚠️ Report a Bug
+name: "⚠️ Report a Bug"
 about: Think you found a bug in an extension? Report it here.
 title: "\U0001F41B [EXTENSION_NAME_HERE] Your issue title here"
-labels: "type: bug"
+labels: ''
+assignees: ''
+
 ---
 
 <!-- DO NOT DELETE

@@ -1,8 +1,10 @@
 ---
-name: 💡 Feature Request
+name: "\U0001F4A1 Feature Request"
 about: Have a feature you'd like to see in an extension? Request it here.
 title: "\U0001F41B [EXTENSION_NAME_HERE] Your request title here"
-labels: "type: feature request"
+labels: ''
+assignees: ''
+
 ---
 
 <!-- DO NOT DELETE
