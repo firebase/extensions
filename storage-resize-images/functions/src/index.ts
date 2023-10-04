@@ -126,12 +126,31 @@ const generateResizedImageHandler = async (
         const fileExtension = parsedPath.ext;
         const fileNameWithoutExtension = path.basename(filePath, fileExtension);
 
+        /** Set the expected failed images directory */
+        const expectedFailedImagesDir = path.normalize(
+          path.resolve(fileDir, config.failedImagesPath)
+        );
+
+        /** Check for negative traversal */
+        if (!expectedFailedImagesDir.startsWith(fileDir)) {
+          logs.invalidFailedResizePath(expectedFailedImagesDir);
+          return;
+        }
+
+        /** Get the expected failed image path */
         const failedFilePath = path.join(
           fileDir,
           config.failedImagesPath,
           `${fileNameWithoutExtension}${fileExtension}`
         );
 
+        /** Additional check for negative traversal on the final path **/
+        if (!failedFilePath.startsWith(expectedFailedImagesDir)) {
+          logs.invalidFailedResizePath(failedFilePath);
+          return;
+        }
+
+        /** Checks passed, upload the failed image to the failed image directory */
         logs.failedImageUploading(failedFilePath);
         await bucket.upload(localOriginalFile, {
           destination: failedFilePath,
