@@ -6,7 +6,6 @@ set -e
 PUBLISHER_ID=$1
 shift
 ALL_EXTENSIONS=(
-  "auth-mailchimp-sync"
   "delete-user-data"
   "firestore-bigquery-export"
   "firestore-counter"
