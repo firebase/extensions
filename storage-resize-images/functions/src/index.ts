@@ -30,6 +30,7 @@ import config, { deleteImage } from "./config";
 import * as logs from "./logs";
 import { shouldResize } from "./filters";
 import { v4 as uuidv4 } from "uuid";
+import { countNegativeTraversals } from "./util";
 
 sharp.cache(false);
 
@@ -126,26 +127,27 @@ const generateResizedImageHandler = async (
         const fileExtension = parsedPath.ext;
         const fileNameWithoutExtension = path.basename(filePath, fileExtension);
 
-        /** Set the expected failed images directory */
-        const expectedFailedImagesDir = path.normalize(
-          path.resolve(fileDir, config.failedImagesPath)
-        );
-
-        /** Check for negative traversal */
-        if (!expectedFailedImagesDir.startsWith(fileDir)) {
-          logs.invalidFailedResizePath(expectedFailedImagesDir);
+        /** Check for negetaive traversal in the configuration */
+        if (countNegativeTraversals(config.failedImagesPath)) {
+          logs.invalidFailedResizePath(config.failedImagesPath);
           return;
         }
 
-        /** Get the expected failed image path */
+        /** Find the base directory */
+        const baseDir = filePath.substring(0, filePath.lastIndexOf("/") + 1);
+
+        /** Set the failed path */
         const failedFilePath = path.join(
           fileDir,
           config.failedImagesPath,
           `${fileNameWithoutExtension}${fileExtension}`
         );
 
-        /** Additional check for negative traversal on the final path **/
-        if (!failedFilePath.startsWith(expectedFailedImagesDir)) {
+        /** Normalize for gcp storage */
+        const normalizedPath = path.normalize(failedFilePath);
+
+        /** Check if safe path */
+        if (!normalizedPath.startsWith(baseDir)) {
           logs.invalidFailedResizePath(failedFilePath);
           return;
         }
