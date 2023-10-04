@@ -4,7 +4,6 @@
     "firestore-translate-text/functions",
     "rtdb-limit-child-nodes/functions",
     "firestore-shorten-urls-bitly/functions",
-    "auth-mailchimp-sync/functions",
     "firestore-send-email/functions",
     "firestore-counter/functions",
     "delete-user-data/functions",
