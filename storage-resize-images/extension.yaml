@@ -193,6 +193,10 @@ params:
       Leave this field empty if you do not want to store failed images
       in a separate directory.
     example: failed
+    validationRegex: ^([^\/.]*|)$
+
+    validationErrorMessage:
+      Values cannot include "/", ".".
     required: false
 
   - param: CACHE_CONTROL_HEADER
