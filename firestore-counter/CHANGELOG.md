@@ -1,3 +1,7 @@
+## Version 0.2.9
+
+build - updated depenencies
+
 ## Version 0.2.8
 
 feature - bump to node 18

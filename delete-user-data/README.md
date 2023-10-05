@@ -37,8 +37,6 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 **Configuration Parameters:**
 
-* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your database or Storage bucket. For help selecting a location, refer to the [location selection  guide](https://firebase.google.com/docs/functions/locations).
-
 * Cloud Firestore paths: Which paths in your Cloud Firestore instance contain data keyed on a user ID? Leave empty if you don't use Cloud Firestore.
 Enter the full paths, separated by commas. Use `{UID}` as a placeholder for the user's UID.
 For example, if you have the collections `users` and `admins`, and each collection has documents with User ID as document IDs, then enter `users/{UID},admins/{UID}`.
