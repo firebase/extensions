@@ -30,6 +30,7 @@ import config, { deleteImage } from "./config";
 import * as logs from "./logs";
 import { shouldResize } from "./filters";
 import { v4 as uuidv4 } from "uuid";
+import { countNegativeTraversals } from "./util";
 
 sharp.cache(false);
 
@@ -126,12 +127,32 @@ const generateResizedImageHandler = async (
         const fileExtension = parsedPath.ext;
         const fileNameWithoutExtension = path.basename(filePath, fileExtension);
 
+        /** Check for negetaive traversal in the configuration */
+        if (countNegativeTraversals(config.failedImagesPath)) {
+          logs.invalidFailedResizePath(config.failedImagesPath);
+          return;
+        }
+
+        /** Find the base directory */
+        const baseDir = filePath.substring(0, filePath.lastIndexOf("/") + 1);
+
+        /** Set the failed path */
         const failedFilePath = path.join(
           fileDir,
           config.failedImagesPath,
           `${fileNameWithoutExtension}${fileExtension}`
         );
 
+        /** Normalize for gcp storage */
+        const normalizedPath = path.normalize(failedFilePath);
+
+        /** Check if safe path */
+        if (!normalizedPath.startsWith(baseDir)) {
+          logs.invalidFailedResizePath(failedFilePath);
+          return;
+        }
+
+        /** Checks passed, upload the failed image to the failed image directory */
         logs.failedImageUploading(failedFilePath);
         await bucket.upload(localOriginalFile, {
           destination: failedFilePath,
