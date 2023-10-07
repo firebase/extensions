@@ -1,3 +1,9 @@
+## Version 0.1.40
+
+fixed - added safeguards for travsersed paths on failed image uploads
+
+build - updated depenencies
+
 ## Version 0.1.39
 
 fixed - add support for jpg content types
