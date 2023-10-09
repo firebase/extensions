@@ -1,4 +1,4 @@
-## Version 0.1.40
+## Version 0.2.0
 
 fixed - added safeguards for travsersed paths on failed image uploads
 
