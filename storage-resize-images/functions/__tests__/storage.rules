@@ -1,0 +1,17 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    match /users/{userId}/images/{documents=**} {
+      allow read, write;
+    }
+  
+    match /users/{userId}/images/thumbs/{image} {
+      allow read: if image.matches('.*\\.png');
+    }
+    
+    match /config.json {
+      allow read, write;
+    }
+  }
+}

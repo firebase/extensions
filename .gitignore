@@ -18,3 +18,5 @@ yarn.lock
 _emulator/pubsub-debug.log
 firestore-debug.log
 pubsub-debug.log
+tmp/
+fixtures/
