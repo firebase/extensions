@@ -1,0 +1,25 @@
+name: testv2ext  
+version: 0.0.1
+specVersion: v1beta
+
+displayName: Test V2 Extension
+
+description: >-
+  Testing V2 Functions.
+
+license: Apache-2.0  # https://spdx.org/licenses/
+
+sourceUrl: https://github.com/apascal07/testv2ext
+
+billingRequired: true
+
+resources:
+  - name: testv2func
+    type: firebaseextensions.v1beta.v2function
+    description: >-
+      Testing v2 function functionality.
+    properties:
+      buildConfig:
+        runtime: nodejs18
+      serviceConfig:
+        availableMemory: 512M
