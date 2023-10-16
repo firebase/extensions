@@ -26,7 +26,25 @@ export function resize(file, size) {
     throw new Error("height and width are not delimited by a ',' or a 'x'");
   }
 
-  return sharp(file, { failOnError: false, animated: config.animated })
+  let sharpOptions = {};
+  try {
+    sharpOptions = JSON.parse(config.sharpOptions);
+  } catch (e) {
+    logs.errorConstuctorOptionsParse(e);
+  }
+
+  /**
+   * Allows customisation of sharp constructor options
+   * Maintains the original config for failOnError
+   * Ensure animated option overrides custom options
+   */
+  const ops = {
+    failOnError: false,
+    ...(sharpOptions || {}),
+    animited: config.animated,
+  };
+
+  return sharp(file, ops)
     .rotate()
     .resize(parseInt(width, 10), parseInt(height, 10), {
       fit: "inside",
