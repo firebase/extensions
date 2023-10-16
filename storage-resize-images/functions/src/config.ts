@@ -35,8 +35,8 @@ function paramToArray(param) {
   return typeof param === "string" ? param.split(",") : undefined;
 }
 
-function allowAnimated(sharpOptions, overrideIsAnimated) {
-  const ops = JSON.parse(sharpOptions || {});
+function allowAnimated(sharpOptions = "{}", overrideIsAnimated) {
+  const ops = JSON.parse(sharpOptions);
   if (ops && ops.animated) {
     return true;
   }
