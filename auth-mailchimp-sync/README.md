@@ -53,3 +53,13 @@ Usage of this extension also requires you to have a Mailchimp account. You are r
 * **removeUserFromList:** Listens for existing user accounts to be deleted (as managed by Firebase Authentication), then automatically removes them from your specified Mailchimp audience.
 
 * **addExistingUsersToList:** Adds existing users into the specified Mailchimp audience.
+
+
+
+**Access Required**:
+
+
+
+This extension will operate with the following project IAM roles:
+
+* firebaseauth.viewer (Reason: Allows the extension to read existing users while handling lifecycle events.)

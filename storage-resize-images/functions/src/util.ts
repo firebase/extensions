@@ -15,3 +15,7 @@ export const startsWithArray = (
   }
   return false;
 };
+
+export function countNegativeTraversals(path: string): number {
+  return (path.match(/\/\.\.\//g) || []).length;
+}
