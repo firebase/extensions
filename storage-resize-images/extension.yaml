@@ -240,8 +240,8 @@ params:
     validationErrorMessage: Please provide a valid json object.
     required: false
 
-  - param: CONSTRUCTOR_OPTIONS
-    label: Constructor options for resizing images
+  - param: SHARP_OPTIONS
+    label: Sharp constructor options for resizing images
     description: >
       Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion.
       eg. `{ failOnError: false, limitInputPixels: true }`
