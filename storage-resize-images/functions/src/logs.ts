@@ -203,3 +203,9 @@ export function errorConstuctorOptionsParse(err: any) {
     err
   );
 }
+
+export function invalidFailedResizePath(failedFilePath: string) {
+  logger.warn(
+    `Cannot upload failed resize image '${failedFilePath}' in the failed images directory (${config.failedImagesPath})`
+  );
+}

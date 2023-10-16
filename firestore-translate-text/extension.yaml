@@ -13,8 +13,13 @@
 # limitations under the License.
 
 name: firestore-translate-text
-version: 0.1.13
+version: 0.1.14
 specVersion: v1beta
+
+tags:
+  [
+    ai
+  ]
 
 displayName: Translate Text in Firestore
 description:
