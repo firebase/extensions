@@ -196,3 +196,8 @@ export const failedImageUploading = (path: string) => {
 export const failedImageUploaded = (path: string) => {
   logger.log(`Uploaded failed image to the failed images directory: '${path}'`);
 };
+export function invalidFailedResizePath(failedFilePath: string) {
+  logger.warn(
+    `Cannot upload failed resize image '${failedFilePath}' in the failed images directory (${config.failedImagesPath})`
+  );
+}

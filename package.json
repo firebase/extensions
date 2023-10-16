@@ -16,7 +16,7 @@
     "test-coverage": "jest --coverage --detectOpenHandles --forceExit",
     "postinstall": "if test \"$SKIP_POSTINSTALL\" != \"yes\" ; then lerna bootstrap --no-ci && lerna run --parallel clean && npm run build && npm run generate-package-locks ; fi",
     "generate-package-locks": "lerna exec -- npm i --package-lock-only",
-    "generate-readmes": "lerna run --parallel --ignore delete-user-data generate-readme",
+    "generate-readmes": "lerna run --parallel generate-readme",
     "prepare": "husky install"
   },
   "repository": "",
