@@ -1,14 +1,14 @@
-The `fs-bq-import-collection` script is for use with the official Firebase Extension [**Export Collections to BiqQuery**](https://github.com/firebase/extensions/tree/master/firestore-bigquery-export).
+The `fs-bq-import-collection` script is for use with the official Firebase Extension [**Stream Firestore to BigQuery**](https://github.com/firebase/extensions/tree/master/firestore-bigquery-export).
 
 ### Overview
 
-The import script (`fs-bq-import-collection`) can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by the Export Collections to BigQuery extension. The import script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This ensures that any operation on an imported document supersedes the import record.
+The import script (`fs-bq-import-collection`) can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by the Stream Firestore to BigQuery extension. The import script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This ensures that any operation on an imported document supersedes the import record.
 
 You may pause and resume the import script from the last batch at any point.
 
 #### Important notes
 
-- You must run the import script over the entire collection **_after_** installing the Export Collections to BigQuery extension; otherwise the writes to your database during the import might not be exported to the dataset.
+- You must run the import script over the entire collection **_after_** installing the Stream Firestore to BigQuery extension; otherwise the writes to your database during the import might not be exported to the dataset.
 
 - The import script can take up to _O(collection size)_ time to finish. If your collection is large, you might want to consider [loading data from a Cloud Firestore export into BigQuery](https://cloud.google.com/bigquery/docs/loading-data-cloud-firestore).
 
@@ -18,6 +18,8 @@ You may pause and resume the import script from the last batch at any point.
   - If you run the import script multiple times over the same collection.
 
 - You cannot use wildcard notation in the collection path (i.e. `/collection/{document}/sub_collection}`). Instead, you can use a [collectionGroup](https://firebase.google.com/docs/firestore/query-data/queries#collection-group-query) query. To use a `collectionGroup` query, provide the collection name value as `${COLLECTION_PATH}`, and set `${COLLECTION_GROUP_QUERY}` to `true`.
+
+- Warning: The import operation is not idempotent; running it twice, or running it after documents have been imported will likely produce duplicate data in your bigquery table.
 
   Warning: A `collectionGroup` query will target every collection in your Firestore project with the provided `${COLLECTION_PATH}`. For example, if you have 10,000 documents with a sub-collection named: `landmarks`, the import script will query every document in 10,000 `landmarks` collections.
 

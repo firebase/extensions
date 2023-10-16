@@ -13,7 +13,7 @@
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "dependencies": {
-    "axios": "^0.19.1",
+    "axios": "^0.21.2",
     "firebase-admin": "^11.4.1",
     "firebase-functions": "^4.2.0",
     "rimraf": "^2.6.3",

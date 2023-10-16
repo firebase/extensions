@@ -1,6 +1,6 @@
 # Use Handlebars templates
 
-## Use Handlebars templates with the Trigger Email extension
+## Use Handlebars templates with the Trigger Email from Firestore extension
 
 If you specified a "Templates collection" parameter during configuration of the extension, you can create and manage [Handlebars templates](https://handlebarsjs.com/) templates for your emails.
 

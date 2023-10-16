@@ -90,7 +90,7 @@ program
   )
   .option(
     "-e, --use-emulator [true|false]",
-    "Whether to use updated latest snapshot query"
+    "Whether to use the firestore emulator"
   );
 
 const run = async (): Promise<number> => {
@@ -115,7 +115,7 @@ const run = async (): Promise<number> => {
 
   if (useEmulator) {
     console.log("Using emulator");
-    process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
+    process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
   }
 
   // Initialize Firebase

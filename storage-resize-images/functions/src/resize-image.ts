@@ -93,6 +93,7 @@ export function convertType(buffer, format) {
  * Supported file types
  */
 export const supportedContentTypes = [
+  "image/jpg",
   "image/jpeg",
   "image/png",
   "image/tiff",
@@ -110,6 +111,7 @@ export const supportedImageContentTypeMap = {
   webp: "image/webp",
   gif: "image/gif",
   avif: "image/avif",
+  jfif: "image/jpeg",
 };
 
 const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
@@ -163,7 +165,7 @@ export const modifyImage = async ({
   let modifiedFile: string;
 
   try {
-    modifiedFile = path.join(os.tmpdir(), modifiedFileName);
+    modifiedFile = path.join(os.tmpdir(), uuid());
 
     // filename\*=utf-8''  selects any string match the filename notation.
     // [^;\s]+ searches any following string until either a space or semi-colon.
