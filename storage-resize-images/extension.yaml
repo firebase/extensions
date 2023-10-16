@@ -244,6 +244,16 @@ params:
     validationErrorMessage: Please provide a valid json object.
     required: false
 
+  - param: SHARP_OPTIONS
+    label: Sharp constructor options for resizing images
+    description: >
+      Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion.
+      eg. `{ failOnError: false, limitInputPixels: true }`
+    type: string
+    validationRegex: ^({(.*?)})$
+    validationErrorMessage: Please provide a valid json object.
+    required: false
+
   - param: IS_ANIMATED
     label: GIF and WEBP animated option
     description: >
