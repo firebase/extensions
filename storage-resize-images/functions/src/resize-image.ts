@@ -26,9 +26,9 @@ export function resize(file, size) {
     throw new Error("height and width are not delimited by a ',' or a 'x'");
   }
 
-  let constructorOptions = {};
+  let sharpOptions = {};
   try {
-    constructorOptions = JSON.parse(config.constructorOptions);
+    sharpOptions = JSON.parse(config.sharpOptions);
   } catch (e) {
     logs.errorConstuctorOptionsParse(e);
   }
@@ -40,7 +40,7 @@ export function resize(file, size) {
    */
   const ops = {
     failOnError: false,
-    ...(constructorOptions || {}),
+    ...(sharpOptions || {}),
     animited: config.animated,
   };
 
