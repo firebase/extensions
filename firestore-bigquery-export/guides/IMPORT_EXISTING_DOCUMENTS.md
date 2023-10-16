@@ -17,7 +17,7 @@ You may pause and resume the import script from the last batch at any point.
   - If document changes occur in the time between installing the extension and running the import script.
   - If you run the import script multiple times over the same collection.
 
-- You cannot use wildcard notation in the collection path (i.e. `/collection/{document}/sub_collection}`). Instead, you can use a [collectionGroup](https://firebase.google.com/docs/firestore/query-data/queries#collection-group-query) query. To use a `collectionGroup` query, provide the collection name value as `${COLLECTION_PATH}`, and set `${COLLECTION_GROUP_QUERY}` to `true`.
+- You cannot use wildcard notation in the collection path (i.e. `/collection/{document}/sub_collection}`). Instead, you can use a [collectionGroup](https://firebase.google.com/docs/firestore/query-data/queries#collection-group-query) query. To use a `collectionGroup` query, provide the collection name value as `${COLLECTION_PATH}`, and set `${COLLECTION_GROUP_QUERY}` to `true`. For example, if you are trying to import `/collection/{document}/sub_collection`, the value for the `${COLLECTION_PATH}` should be provided as `sub_collection`. Keep in mind that if you have another sub collection with the same name (e.g. `/collection2/{document}/sub_collection`, that will be imported too.
 
 - Warning: The import operation is not idempotent; running it twice, or running it after documents have been imported will likely produce duplicate data in your bigquery table.
 
@@ -25,7 +25,7 @@ You may pause and resume the import script from the last batch at any point.
 
 ### Run the script
 
-The import script uses several values from your installation of the extension:
+The import script requires several values from your installation of the extension:
 
 - `${PROJECT_ID}`: the project ID for the Firebase project in which you installed the extension
 - `${COLLECTION_PATH}`: the collection path that you specified during extension installation
