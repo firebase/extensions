@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.1.39
+version: 0.2.0
 specVersion: v1beta
 
 displayName: Resize Images
@@ -193,6 +193,10 @@ params:
       Leave this field empty if you do not want to store failed images
       in a separate directory.
     example: failed
+    validationRegex: ^([^\/.]*|)$
+
+    validationErrorMessage:
+      Values cannot include "/", ".".
     required: false
 
   - param: CACHE_CONTROL_HEADER

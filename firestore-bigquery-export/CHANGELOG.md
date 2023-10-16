@@ -1,3 +1,7 @@
+## Version 0.1.36
+
+build - updated depenencies
+
 ## Version 0.1.35
 
 fixed - add missing locations back in

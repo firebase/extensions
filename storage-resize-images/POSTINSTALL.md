@@ -16,7 +16,7 @@ You can upload images using the [Cloud Storage for Firebase SDK](https://firebas
 
 Whenever you upload an image file to `${param:IMG_BUCKET}`, this extension does the following:
 
-- Creates resized image(s) with your specfied dimensions.
+- Creates resized image(s) with your specified dimensions.
 - Names resized image(s) using the same name as the original uploaded image, but suffixed with the specified width and height.
 - Stores the resized image(s) in the bucket `${param:IMG_BUCKET}` (and, if configured, under the path `${param:RESIZED_IMAGES_PATH}`).
 
@@ -28,8 +28,8 @@ The extension also copies the following [metadata](https://cloud.google.com/stor
 - `Content-Language`
 - `Content-Type`
 - [user-provided metadata](https://cloud.google.com/storage/docs/metadata#custom-metadata)
- - If the original image contains a download token (publically accessible via a unique download URL), a new download token is generated for the resized image(s). 
- - If the orginal image does not contain a download token, resized image(s) will not be created with unique tokens. To make a resized image publically accessible, call the [`getDownloadURL`](https://firebase.google.com/docs/reference/js/firebase.storage.Reference#getdownloadurl) method.
+ - If the original image contains a download token (publicly accessible via a unique download URL), a new download token is generated for the resized image(s). 
+ - If the original image does not contain a download token, resized image(s) will not be created with unique tokens. To make a resized image publicly accessible, call the [`getDownloadURL`](https://firebase.google.com/docs/reference/js/firebase.storage.Reference#getdownloadurl) method.
 
 Be aware of the following when using this extension:
 
@@ -67,7 +67,7 @@ function uploadImageToStorage(rawImage){
       if (error) {
         throw error;
       }
-      console.log("Sucessfully uploaded image");
+      console.log("Successfully uploaded image");
     }
   );
 }
@@ -75,7 +75,7 @@ function uploadImageToStorage(rawImage){
 
 - If you configured the `Cache-Control header for resized images` parameter, your specified value will overwrite the value copied from the original image. Learn more about image metadata in the [Cloud Storage documentation](https://firebase.google.com/docs/storage/).
 
-- If you would like to optionally configure `Output options for selected formats` you can create an JSON stringfied object where you can provide file [Sharp Output Options](https://sharp.pixelplumbing.com/api-output#jpeg). Please use file formats as object keys and pass correct options. Incorrect options parameters or not selected formats will be ignored. Provide it as stringfied JSON object without outer quote signs and indentation:
+- If you would like to optionally configure `Output options for selected formats` you can create an JSON stringified object where you can provide file [Sharp Output Options](https://sharp.pixelplumbing.com/api-output#jpeg). Please use file formats as object keys and pass correct options. Incorrect options parameters or not selected formats will be ignored. Provide it as stringified JSON object without outer quote signs and indentation:
 
 ```js
 {"jpeg": {"quality": 5,"chromaSubsampling": '4:4:4'}, "png": { "pallete": true}}
