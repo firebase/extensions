@@ -77,6 +77,14 @@ resources:
       runtime: nodejs18
       taskQueueTrigger: {}
 
+  - name: initBigQuerySync
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Runs configuration for sycning with BigQuery
+    properties:
+      runtime: nodejs18
+      taskQueueTrigger: {}
+
   - name: setupBigQuerySync
     type: firebaseextensions.v1beta.function
     description: >-
@@ -341,9 +349,9 @@ params:
     required: true
     options:
       - label: Yes
-        value: true
+        value: yes
       - label: No
-        value: false
+        value: no
   
   - param: IMPORT_COLLECTION_PATH
     label: Existing documents collection
@@ -353,11 +361,10 @@ params:
       If you want to use a collectionGroup query, provide the collection name value here,
       and set 'Use Collection Group query' to true.
     type: string
-    example: posts
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Firestore collection paths must be an odd number of segments separated by slashes, e.g. "path/to/collection".
-    default: posts
-    required: true
+    example: posts
+    required: false
 
   - param: USE_COLLECTION_GROUP_QUERY
     label: Use Collection Group query
@@ -403,8 +410,8 @@ events:
 
 lifecycleEvents:
   onInstall:
-    function: setupBigQuerySync
-    processingMessage: Configuring BigQuery Sync
+    function: initBigQuerySync
+    processingMessage: Configuring BigQuery Sync and running import if configured.
   onUpdate:
     function: setupBigQuerySync
     processingMessage: Configuring BigQuery Sync
