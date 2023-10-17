@@ -159,29 +159,57 @@ export const fsexportbigquery = functions
 export const setupBigQuerySync = functions.tasks
   .taskQueue()
   .onDispatch(async () => {
+    /** Setup runtime environment */
+    const runtime = getExtensions().runtime();
+
+    /** Init the BigQuery sync */
+    await eventTracker.initialize();
+
+    await runtime.setProcessingState(
+      "PROCESSING_COMPLETE",
+      "Sync setup completed"
+    );
+  });
+
+export const initBigQuerySync = functions.tasks
+  .taskQueue()
+  .onDispatch(async () => {
+    /** Setup runtime environment */
+    const runtime = getExtensions().runtime();
+
     /** Init the BigQuery sync */
     await eventTracker.initialize();
 
     /** Run Backfill */
-    await getFunctions()
-      .taskQueue(
-        `locations/${config.location}/functions/fsimportexistingdocs`,
-        config.instanceId
-      )
-      .enqueue({ offset: 0, docsCount: 0 });
+    if (config.doBackfill) {
+      await getFunctions()
+        .taskQueue(
+          `locations/${config.location}/functions/fsimportexistingdocs`,
+          config.instanceId
+        )
+        .enqueue({ offset: 0, docsCount: 0 });
+      return;
+    }
+
+    await runtime.setProcessingState(
+      "PROCESSING_COMPLETE",
+      "Sync setup completed"
+    );
+    return;
   });
 
 exports.fsimportexistingdocs = functions.tasks
   .taskQueue()
   .onDispatch(async (data) => {
     const runtime = getExtensions().runtime();
-    if (!config.doBackfill) {
+    if (!config.doBackfill || !config.importCollectionPath) {
       await runtime.setProcessingState(
         "PROCESSING_COMPLETE",
-        "Compledted. No existing documents imported into BigQuery."
+        "Completed. No existing documents imported into BigQuery."
       );
       return;
     }
+
     const offset = (data["offset"] as number) ?? 0;
     const docsCount = (data["docsCount"] as number) ?? 0;
 
@@ -208,8 +236,6 @@ exports.fsimportexistingdocs = functions.tasks
     try {
       await eventTracker.record(rows);
     } catch (err: any) {
-      // eventTracker will already try to write failures back to BACKUP_COLLECTION if configured.
-      // TODO: Decide how this should behave/what this should log if BACKUP_COLLECTION is undefined.
       functions.logger.log(err);
     }
     if (rows.length == config.docsPerBackfill) {
