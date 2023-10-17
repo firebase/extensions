@@ -236,6 +236,7 @@ exports.fsimportexistingdocs = functions.tasks
     try {
       await eventTracker.record(rows);
     } catch (err: any) {
+      /** If configured, event tracker wil handle failed rows in a backup collection  */
       functions.logger.log(err);
     }
     if (rows.length == config.docsPerBackfill) {
