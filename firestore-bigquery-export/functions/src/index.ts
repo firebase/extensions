@@ -16,18 +16,18 @@
 
 import config from "./config";
 import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
+import { getExtensions } from "firebase-admin/extensions";
+import { getFunctions } from "firebase-admin/functions";
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreEventHistoryTracker,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 
-import * as admin from "firebase-admin";
-import { getFunctions } from "firebase-admin/functions";
-import { getExtensions } from "firebase-admin/extensions";
 import { getEventarc } from "firebase-admin/eventarc";
 import * as logs from "./logs";
-import { getChangeType, getDocumentId } from "./util";
+import { getChangeType, getDocumentId, resolveWildcardIds } from "./util";
 
 const eventTracker: FirestoreEventHistoryTracker =
   new FirestoreBigQueryEventHistoryTracker({
@@ -159,13 +159,103 @@ export const fsexportbigquery = functions
 export const setupBigQuerySync = functions.tasks
   .taskQueue()
   .onDispatch(async () => {
-    /** Get extensions runtime */
+    /** Setup runtime environment */
     const runtime = getExtensions().runtime();
 
     /** Init the BigQuery sync */
-
     await eventTracker.initialize();
 
-    /** Set status to complete */
-    await runtime.setProcessingState("PROCESSING_COMPLETE", "Sync complete");
+    await runtime.setProcessingState(
+      "PROCESSING_COMPLETE",
+      "Sync setup completed"
+    );
+  });
+
+export const initBigQuerySync = functions.tasks
+  .taskQueue()
+  .onDispatch(async () => {
+    /** Setup runtime environment */
+    const runtime = getExtensions().runtime();
+
+    /** Init the BigQuery sync */
+    await eventTracker.initialize();
+
+    /** Run Backfill */
+    if (config.doBackfill) {
+      await getFunctions()
+        .taskQueue(
+          `locations/${config.location}/functions/fsimportexistingdocs`,
+          config.instanceId
+        )
+        .enqueue({ offset: 0, docsCount: 0 });
+      return;
+    }
+
+    await runtime.setProcessingState(
+      "PROCESSING_COMPLETE",
+      "Sync setup completed"
+    );
+    return;
+  });
+
+exports.fsimportexistingdocs = functions.tasks
+  .taskQueue()
+  .onDispatch(async (data) => {
+    const runtime = getExtensions().runtime();
+    if (!config.doBackfill || !config.importCollectionPath) {
+      await runtime.setProcessingState(
+        "PROCESSING_COMPLETE",
+        "Completed. No existing documents imported into BigQuery."
+      );
+      return;
+    }
+
+    const offset = (data["offset"] as number) ?? 0;
+    const docsCount = (data["docsCount"] as number) ?? 0;
+
+    const query = config.useCollectionGroupQuery
+      ? admin.firestore().collectionGroup(config.importCollectionPath)
+      : admin.firestore().collection(config.importCollectionPath);
+
+    const snapshot = await query
+      .offset(offset)
+      .limit(config.docsPerBackfill)
+      .get();
+
+    const rows = snapshot.docs.map((d) => {
+      return {
+        timestamp: new Date().toISOString(),
+        operation: ChangeType.IMPORT,
+        documentName: `projects/${config.bqProjectId}/databases/(default)/documents/${d.ref.path}`,
+        documentId: d.id,
+        eventId: "",
+        pathParams: resolveWildcardIds(config.importCollectionPath, d.ref.path),
+        data: eventTracker.serializeData(d.data()),
+      };
+    });
+    try {
+      await eventTracker.record(rows);
+    } catch (err: any) {
+      /** If configured, event tracker wil handle failed rows in a backup collection  */
+      functions.logger.log(err);
+    }
+    if (rows.length == config.docsPerBackfill) {
+      // There are more documents to import - enqueue another task to continue the backfill.
+      const queue = getFunctions().taskQueue(
+        "fsimportexistingdocs",
+        process.env.EXT_INSTANCE_ID
+      );
+      await queue.enqueue({
+        offset: offset + config.docsPerBackfill,
+        docsCount: docsCount + rows.length,
+      });
+    } else {
+      // We are finished, set the processing state to report back how many docs were imported.
+      runtime.setProcessingState(
+        "PROCESSING_COMPLETE",
+        `Successfully imported ${
+          docsCount + rows.length
+        } documents into BigQuery`
+      );
+    }
   });
