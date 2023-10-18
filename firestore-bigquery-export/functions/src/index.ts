@@ -16,17 +16,19 @@
 
 import config from "./config";
 import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
+import { getExtensions } from "firebase-admin/extensions";
+import { getFunctions } from "firebase-admin/functions";
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreEventHistoryTracker,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 
-import * as admin from "firebase-admin";
 import { getEventarc } from "firebase-admin/eventarc";
 import * as logs from "./logs";
 import * as events from "./events";
-import { getChangeType, getDocumentId } from "./util";
+import { getChangeType, getDocumentId, resolveWildcardIds } from "./util";
 
 const eventTracker: FirestoreEventHistoryTracker =
   new FirestoreBigQueryEventHistoryTracker({
@@ -43,6 +45,8 @@ const eventTracker: FirestoreEventHistoryTracker =
     wildcardIds: config.wildcardIds,
     bqProjectId: config.bqProjectId,
     useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
+    skipInit: true,
+    kmsKeyName: config.kmsKeyName,
   });
 
 logs.init();
@@ -54,13 +58,59 @@ if (admin.apps.length === 0) {
 
 events.setupEventChannel();
 
-exports.fsexportbigquery = functions.firestore
-  .document(config.collectionPath)
+export const syncBigQuery = functions.tasks
+  .taskQueue({
+    retryConfig: {
+      maxAttempts: 5,
+      minBackoffSeconds: 60,
+    },
+    rateLimits: {
+      maxConcurrentDispatches: 1000,
+      maxDispatchesPerSecond: 500,
+    },
+  })
+  .onDispatch(
+    async ({ context, changeType, documentId, data, oldData }, ctx) => {
+      const update = {
+        timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
+        operation: changeType,
+        documentName: context.resource.name,
+        documentId: documentId,
+        pathParams: config.wildcardIds ? context.params : null,
+        eventId: context.eventId,
+        data,
+        oldData,
+      };
+
+      /** Record the chnages in the change tracker */
+      await eventTracker.record([{ ...update }]);
+
+      /** Send an event Arc update , if configured */
+      await events.recordSuccessEvent({
+        subject: documentId,
+        data: {
+          ...update,
+        },
+      });
+
+      logs.complete();
+    }
+  );
+
+export const fsexportbigquery = functions
+  .runWith({ failurePolicy: true })
+  .firestore.document(config.collectionPath)
   .onWrite(async (change, context) => {
     logs.start();
     try {
       const changeType = getChangeType(change);
       const documentId = getDocumentId(change);
+
+      const isCreated = changeType === ChangeType.CREATE;
+      const isDeleted = changeType === ChangeType.DELETE;
+
+      const data = isDeleted ? undefined : change.after.data();
+      const oldData = isCreated ? undefined : change.before.data();
 
       await events.recordStartEvent({
         documentId,
@@ -74,41 +124,143 @@ exports.fsexportbigquery = functions.firestore
         context: context.resource,
       });
 
-      await eventTracker.record([
-        {
-          timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
-          operation: changeType,
-          documentName: context.resource.name,
-          documentId: documentId,
-          pathParams: config.wildcardIds ? context.params : null,
-          eventId: context.eventId,
-          data:
-            changeType === ChangeType.DELETE ? undefined : change.after.data(),
-          oldData:
-            changeType === ChangeType.CREATE ? undefined : change.before.data(),
-        },
-      ]);
+      const queue = getFunctions().taskQueue(
+        `locations/${config.location}/functions/syncBigQuery`,
+        config.instanceId
+      );
 
-      await events.recordSuccessEvent({
-        subject: documentId,
-        data: {
-          timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
-          operation: changeType,
-          documentName: context.resource.name,
-          documentId: documentId,
-          pathParams: config.wildcardIds ? context.params : null,
-          eventId: context.eventId,
-          data:
-            changeType === ChangeType.DELETE ? undefined : change.after.data(),
-          oldData:
-            changeType === ChangeType.CREATE ? undefined : change.before.data(),
-        },
+      /**
+       * enqueue data cannot currently handle documentdata
+       * Serialize early before queueing in clopud task
+       * Cloud tasks currently have a limit of 1mb, this also ensures payloads are kept to a minimum
+       */
+      const seializedData = eventTracker.serializeData(data);
+      const serializedOldData = eventTracker.serializeData(oldData);
+
+      await queue.enqueue({
+        context,
+        changeType,
+        documentId,
+        data: seializedData,
+        oldData: serializedOldData,
       });
-
-      logs.complete();
     } catch (err) {
       await events.recordErrorEvent(err as Error);
       logs.error(err);
+      const eventAgeMs = Date.now() - Date.parse(context.timestamp);
+      const eventMaxAgeMs = 10000;
+
+      if (eventAgeMs > eventMaxAgeMs) {
+        return;
+      }
+
+      throw err;
+    }
+
+    logs.complete();
+  });
+
+export const setupBigQuerySync = functions.tasks
+  .taskQueue()
+  .onDispatch(async () => {
+    /** Setup runtime environment */
+    const runtime = getExtensions().runtime();
+
+    /** Init the BigQuery sync */
+    await eventTracker.initialize();
+
+    await runtime.setProcessingState(
+      "PROCESSING_COMPLETE",
+      "Sync setup completed"
+    );
+  });
+
+export const initBigQuerySync = functions.tasks
+  .taskQueue()
+  .onDispatch(async () => {
+    /** Setup runtime environment */
+    const runtime = getExtensions().runtime();
+
+    /** Init the BigQuery sync */
+    await eventTracker.initialize();
+
+    /** Run Backfill */
+    if (config.doBackfill) {
+      await getFunctions()
+        .taskQueue(
+          `locations/${config.location}/functions/fsimportexistingdocs`,
+          config.instanceId
+        )
+        .enqueue({ offset: 0, docsCount: 0 });
+      return;
+    }
+
+    await runtime.setProcessingState(
+      "PROCESSING_COMPLETE",
+      "Sync setup completed"
+    );
+    return;
+  });
+
+exports.fsimportexistingdocs = functions.tasks
+  .taskQueue()
+  .onDispatch(async (data, context) => {
+    const runtime = getExtensions().runtime();
+    if (!config.doBackfill || !config.importCollectionPath) {
+      await runtime.setProcessingState(
+        "PROCESSING_COMPLETE",
+        "Completed. No existing documents imported into BigQuery."
+      );
+      return;
+    }
+
+    const offset = (data["offset"] as number) ?? 0;
+    const docsCount = (data["docsCount"] as number) ?? 0;
+
+    const query = config.useCollectionGroupQuery
+      ? admin.firestore().collectionGroup(config.importCollectionPath)
+      : admin.firestore().collection(config.importCollectionPath);
+
+    const snapshot = await query
+      .offset(offset)
+      .limit(config.docsPerBackfill)
+      .get();
+
+    const rows = snapshot.docs.map((d) => {
+      return {
+        timestamp: new Date().toISOString(),
+        operation: ChangeType.IMPORT,
+        documentName: `projects/${config.bqProjectId}/databases/(default)/documents/${d.ref.path}`,
+        documentId: d.id,
+        eventId: "",
+        pathParams: resolveWildcardIds(config.importCollectionPath, d.ref.path),
+        data: eventTracker.serializeData(d.data()),
+      };
+    });
+    try {
+      await eventTracker.record(rows);
+    } catch (err: any) {
+      /** If configured, event tracker wil handle failed rows in a backup collection  */
+      functions.logger.log(err);
+    }
+    if (rows.length == config.docsPerBackfill) {
+      // There are more documents to import - enqueue another task to continue the backfill.
+      const queue = getFunctions().taskQueue(
+        "fsimportexistingdocs",
+        process.env.EXT_INSTANCE_ID
+      );
+      await queue.enqueue({
+        offset: offset + config.docsPerBackfill,
+        docsCount: docsCount + rows.length,
+      });
+    } else {
+      // We are finished, set the processing state to report back how many docs were imported.
+      runtime.setProcessingState(
+        "PROCESSING_COMPLETE",
+        `Successfully imported ${
+          docsCount + rows.length
+        } documents into BigQuery`
+      );
     }
     await events.recordCompletionEvent({ context });
   });

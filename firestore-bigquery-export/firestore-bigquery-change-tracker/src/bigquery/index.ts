@@ -15,7 +15,7 @@
  */
 
 import * as bigquery from "@google-cloud/bigquery";
-import * as firebase from "firebase-admin";
+import { DocumentReference } from "firebase-admin/firestore";
 import * as traverse from "traverse";
 import fetch from "node-fetch";
 import {
@@ -59,6 +59,8 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   bqProjectId?: string | undefined;
   backupTableId?: string | undefined;
   useNewSnapshotQuerySyntax?: boolean;
+  skipInit?: boolean;
+  kmsKeyName?: string | undefined;
 }
 
 /**
@@ -88,7 +90,9 @@ export class FirestoreBigQueryEventHistoryTracker
   }
 
   async record(events: FirestoreDocumentChangeEvent[]) {
-    await this.initialize();
+    if (!this.config.skipInit) {
+      await this.initialize();
+    }
 
     const partitionHandler = new Partitioning(this.config);
 
@@ -129,7 +133,8 @@ export class FirestoreBigQueryEventHistoryTracker
         headers: { "Content-Type": "application/json" },
       });
       const responseJson = await response.json();
-      return responseJson.data;
+      // To support callable functions, first check result.data
+      return responseJson?.result?.data ?? responseJson.data;
     }
     return rows;
   }
@@ -139,22 +144,19 @@ export class FirestoreBigQueryEventHistoryTracker
       return undefined;
     }
 
-    const data = traverse<traverse.Traverse<any>>(eventData).map(function (
-      property
-    ) {
-      if (property && property.constructor) {
-        if (property.constructor.name === "Buffer") {
-          this.remove();
-        }
+    const data = traverse<traverse.Traverse<any>>(eventData).map(
+      function (property) {
+        if (property && property.constructor) {
+          if (property.constructor.name === "Buffer") {
+            this.remove();
+          }
 
-        if (
-          property.constructor.name ===
-          firebase.firestore.DocumentReference.name
-        ) {
-          this.update(property.path);
+          if (property.constructor.name === DocumentReference.name) {
+            this.update(property.path);
+          }
         }
       }
-    });
+    );
 
     return data;
   }
@@ -271,7 +273,7 @@ export class FirestoreBigQueryEventHistoryTracker
    * Creates the BigQuery resources with the expected schema for {@link FirestoreEventHistoryTracker}.
    * After the first invokation, it skips initialization assuming these resources are still there.
    */
-  private async initialize() {
+  async initialize() {
     try {
       if (this._initialized) {
         return;
@@ -387,6 +389,12 @@ export class FirestoreBigQueryEventHistoryTracker
         schema.fields.push(documentPathParams);
       }
       const options: TableMetadata = { friendlyName: changelogName, schema };
+
+      if (this.config.kmsKeyName) {
+        options["encryptionConfiguration"] = {
+          kmsKeyName: this.config.kmsKeyName,
+        };
+      }
 
       //Add partitioning
       await partitioning.addPartitioningToSchema(schema.fields);

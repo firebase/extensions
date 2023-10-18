@@ -90,7 +90,7 @@ program
   )
   .option(
     "-e, --use-emulator [true|false]",
-    "Whether to use updated latest snapshot query"
+    "Whether to use the firestore emulator"
   );
 
 const run = async (): Promise<number> => {
@@ -115,17 +115,18 @@ const run = async (): Promise<number> => {
 
   if (useEmulator) {
     console.log("Using emulator");
-    process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
+    process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
   }
 
   // Initialize Firebase
   // This uses applicationDefault to authenticate
   // Please see https://cloud.google.com/docs/authentication/production
-  firebase.initializeApp({
-    credential: firebase.credential.applicationDefault(),
-    databaseURL: `https://${projectId}.firebaseio.com`,
-  });
-
+  if (!firebase.apps.length) {
+    firebase.initializeApp({
+      credential: firebase.credential.applicationDefault(),
+      databaseURL: `https://${projectId}.firebaseio.com`,
+    });
+  }
   // Set project ID, so it can be used in BigQuery initialization
   process.env.PROJECT_ID = projectId;
   process.env.GOOGLE_CLOUD_PROJECT = projectId;
