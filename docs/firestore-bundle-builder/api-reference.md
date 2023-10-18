@@ -90,7 +90,7 @@ type QueryCondition = {
       | "not-in"
       | "array-contains-any"
     ),
-    any
+    any,
   ];
   orderBy?: [string, ("asc" | "desc")?];
   limit?: number;
