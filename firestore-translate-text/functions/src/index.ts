@@ -23,6 +23,7 @@ import { Translate } from "@google-cloud/translate";
 import config from "./config";
 import * as logs from "./logs";
 import * as validators from "./validators";
+import * as events from "./events";
 
 type Translation = {
   language: string;
@@ -39,17 +40,31 @@ const translate = new Translate({ projectId: process.env.PROJECT_ID });
 
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
+events.setupEventChannel();
 
 logs.init(config);
 
 export const fstranslate = functions.firestore
   .document(process.env.COLLECTION_PATH)
-  .onWrite(async (change): Promise<void> => {
+  .onWrite(async (change, context): Promise<void> => {
     logs.start(config);
-    const { inputFieldName, outputFieldName } = config;
+    await events.recordStartEvent({ change, context });
+    const { languages, inputFieldName, outputFieldName } = config;
 
     if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
       logs.fieldNamesNotDifferent();
+      await events.recordCompletionEvent({ context });
+      return;
+    }
+    if (
+      validators.fieldNameIsTranslationPath(
+        inputFieldName,
+        outputFieldName,
+        languages
+      )
+    ) {
+      logs.inputFieldNameIsOutputPath();
+      await events.recordCompletionEvent({ context });
       return;
     }
 
@@ -71,7 +86,9 @@ export const fstranslate = functions.firestore
       logs.complete();
     } catch (err) {
       logs.error(err);
+      events.recordErrorEvent(err as Error);
     }
+    await events.recordCompletionEvent({ context });
   });
 
 export const fstranslatebackfill = functions.tasks
@@ -194,6 +211,7 @@ const handleExistingDocument = async (
     }
   } catch (err) {
     logs.translateInputToAllLanguagesError(input, err);
+    await events.recordErrorEvent(err as Error);
     throw err;
   }
 };
@@ -292,6 +310,7 @@ const translateSingle = async (
     return updateTranslations(snapshot, translationsMap);
   } catch (err) {
     logs.translateInputToAllLanguagesError(input, err);
+    await events.recordErrorEvent(err as Error);
     throw err;
   }
 };
@@ -495,6 +514,7 @@ const translateString = async (
     return translatedString;
   } catch (err) {
     logs.translateStringError(string, targetLanguage, err);
+    await events.recordErrorEvent(err as Error);
     throw err;
   }
 };
@@ -511,4 +531,8 @@ const updateTranslations = async (
   });
 
   logs.updateDocumentComplete(snapshot.ref.path);
+  await events.recordSuccessEvent({
+    subject: snapshot.ref.path,
+    data: { outputFieldName: config.outputFieldName, translations },
+  });
 };
