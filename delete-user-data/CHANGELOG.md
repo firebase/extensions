@@ -1,3 +1,23 @@
+## Version 0.1.19
+
+chore(delete-user-data): remove firebase-tools dependency
+
+## Version 0.1.18
+
+feature - bump to node 18
+
+## Version 0.1.17
+
+feature - bump to nodejs16
+
+## Version 0.1.16
+
+fixed - Increase UID checks on search based deletions
+
+## Version 0.1.15
+
+feature - upgrade extensions to the latest firebase-admin sdk
+
 ## Version 0.1.14
 
 feature - add auto discovery mechanisms + update documentation

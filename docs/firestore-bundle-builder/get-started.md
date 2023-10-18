@@ -4,7 +4,7 @@
 
 The extension deploys an HTTP function that serves [Cloud Firestore data bundles](https://firebase.google.com/docs/firestore/bundles). You define the bundles in Firestore documents, and the extension serves static binary file data bundle via HTTP requests, along with various built-in caching mechanisms using Firebase Hosting CDN or Cloud Storage. When no bundle exists or existing bundles have expired, this function will build and cache a new bundle on demand.
 
-To use this extension, you need to first create one or more bundle specifications in Firestore using the extension’s [admin dashboard](https://github.com/FirebaseExtended/experimental-extensions/tree/%40invertase/bundle-admin/firestore-bundle-server/admin-dashboard). The bundle specification is how you define named queries (collection queries and specific document paths to add to the bundle).
+To use this extension, you need to first create one or more bundle specifications in Firestore using the extension’s [admin dashboard](https://github.com/firebase/firestore-bundle-builder/tree/main/admin-dashboard). The bundle specification is how you define named queries (collection queries and specific document paths to add to the bundle).
 
 Inside the bundle spec, you can also define parameters meant to be used in named queries. You set values for these parameters using URL query params when you call the HTTP function.
 

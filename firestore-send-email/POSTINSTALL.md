@@ -48,3 +48,9 @@ As a best practice, you can [monitor the activity](https://firebase.google.com/d
 [admin_sdk]: https://firebase.google.com/docs/admin/setup
 [amp4email]: https://amp.dev/documentation/guides-and-tutorials/learn/email-spec/amp-email-format/
 [handlebars]: https://handlebarsjs.com/
+
+### Further reading & resources
+
+You can find more information about this extension in the following articles:
+
+- [Sending Emails Using Firestore And Firebase Extensions](https://invertase.link/Y6Nu)

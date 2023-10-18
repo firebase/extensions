@@ -70,8 +70,8 @@ const urlShortener = new FirestoreBitlyUrlShortener(
   config.bitlyAccessToken
 );
 
-export const fsurlshortener = functions.handler.firestore.document.onWrite(
-  async (change) => {
+export const fsurlshortener = functions.firestore
+  .document(config.collectionPath)
+  .onWrite(async (change) => {
     return urlShortener.onDocumentWrite(change);
-  }
-);
+  });
