@@ -15,7 +15,7 @@
  */
 
 import { firestore } from "firebase-admin";
-import * as deepEqual from "deep-equal";
+import deepEqual from "deep-equal";
 import { logger } from "firebase-functions";
 
 import {
