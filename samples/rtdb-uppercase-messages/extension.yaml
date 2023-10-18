@@ -1,0 +1,73 @@
+name: rtdb-uppercase-messages
+version: 0.0.1
+specVersion: v1beta  # Firebase Extensions specification version; don’t change
+
+# Friendly display name for your extension (~3-5 words)
+displayName: Convert messages to upper case
+
+# Brief description of the task your extension performs (~1 sentence)
+description: >-
+  Converts messages in RTDB to upper case
+
+author:
+  authorName: Your Name
+  url: https://your-site.example.com
+
+license: Apache-2.0  # https://spdx.org/licenses/
+
+# Public URL for the source code of your extension
+sourceUrl: https://github.com/firebase/extensions/tree/master/samples/rtdb-uppercase-messages
+
+resources:
+  - name: makeuppercase
+    type: firebaseextensions.v1beta.function
+    properties:
+      eventTrigger:
+        eventType: providers/google.firebase.database/eventTypes/ref.create
+        # DATABASE_INSTANCE (project's default instance) is an auto-populated
+        # parameter value. You can also specify an instance.
+        resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${param:MESSAGE_PATH}
+      runtime: "nodejs18"  
+  - name: backfilldata
+    type: firebaseextensions.v1beta.function
+    description: >- 
+      Backfill existing messages with uppercase versions
+    properties:
+      taskQueueTrigger: {}
+      runtime: "nodejs18"  
+
+roles:
+  - role: firebasedatabase.admin
+    reason: Allows the extension to write to RTDB.
+
+params:
+  - param: MESSAGE_PATH
+    label: Message path
+    description: >-
+      What is the path at which a message's original text can be found?
+    type: string
+    default: /messages/{pushId}/original
+    required: true
+    immutable: false
+  - param: DO_BACKFILL
+    label: Backfill existing messages
+    description: >-
+      Generate uppercase versions of existing messages?
+    type: select
+    required: true
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+
+events:
+  - type: test-publisher.rtdb-uppercase-messages.v1.complete
+    description: >-
+      Occurs when message uppercasing completes. The event subject will contain
+      the RTDB URL of the uppercase message.
+
+lifecycleEvents:
+  onInstall:
+    function: backfilldata 
+    processingMessage: Uppercasing existing messages

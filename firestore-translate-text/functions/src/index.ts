@@ -135,7 +135,7 @@ export const fstranslatebackfill = functions.tasks
       // Stil have more documents to translate, enqueue another task.
       logs.enqueueNext(offset + DOCS_PER_BACKFILL);
       const queue = getFunctions().taskQueue(
-        "fstranslatebackfill",
+        `locations/${config.location}/functions/fstranslatebackfill`,
         process.env.EXT_INSTANCE_ID
       );
       await queue.enqueue({

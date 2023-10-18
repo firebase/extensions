@@ -26,7 +26,25 @@ export function resize(file, size) {
     throw new Error("height and width are not delimited by a ',' or a 'x'");
   }
 
-  return sharp(file, { failOnError: false, animated: config.animated })
+  let sharpOptions = {};
+  try {
+    sharpOptions = JSON.parse(config.sharpOptions);
+  } catch (e) {
+    logs.errorConstuctorOptionsParse(e);
+  }
+
+  /**
+   * Allows customisation of sharp constructor options
+   * Maintains the original config for failOnError
+   * Ensure animated option overrides custom options
+   */
+  const ops = {
+    failOnError: false,
+    ...(sharpOptions || {}),
+    animited: config.animated,
+  };
+
+  return sharp(file, ops)
     .rotate()
     .resize(parseInt(width, 10), parseInt(height, 10), {
       fit: "inside",
@@ -93,6 +111,7 @@ export function convertType(buffer, format) {
  * Supported file types
  */
 export const supportedContentTypes = [
+  "image/jpg",
   "image/jpeg",
   "image/png",
   "image/tiff",
@@ -110,6 +129,7 @@ export const supportedImageContentTypeMap = {
   webp: "image/webp",
   gif: "image/gif",
   avif: "image/avif",
+  jfif: "image/jpeg",
 };
 
 const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
@@ -163,7 +183,7 @@ export const modifyImage = async ({
   let modifiedFile: string;
 
   try {
-    modifiedFile = path.join(os.tmpdir(), modifiedFileName);
+    modifiedFile = path.join(os.tmpdir(), uuid());
 
     // filename\*=utf-8''  selects any string match the filename notation.
     // [^;\s]+ searches any following string until either a space or semi-colon.

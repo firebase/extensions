@@ -68,7 +68,7 @@ export function deliveryError(
 }
 
 export function missingDeliveryField(ref: admin.firestore.DocumentReference) {
-  logger.error(`message=${ref.path} is missing 'delivery' field`);
+  logger.warn(`message=${ref.path} is missing 'delivery' field`);
 }
 
 export function missingUids(uids: string[]) {
@@ -97,7 +97,7 @@ export function templatesLoaded(names) {
 
 export function invalidMessage(message) {
   logger.warn(
-    `message '${message}' is not a valid object - please add as an object or firestore map, otherwise you may experience unexpected results.`
+    `message '${message}' is not a valid object and no handlebars template has been provided instead - please add as an object or firestore map, otherwise you may experience unexpected results.`
   );
 }
 

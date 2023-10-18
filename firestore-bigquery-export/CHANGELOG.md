@@ -1,3 +1,41 @@
+## Version 0.1.36
+
+build - updated depenencies
+
+## Version 0.1.35
+
+fixed - add missing locations back in
+
+fixed - use module instead namespace
+
+fixed - added e2e testing, upgraded dependencies
+
+## Version 0.1.34
+
+feat - added failure policy
+
+fixed - use module instead namespace
+
+fixed - ensure data is correctly serialized before queuing
+
+## Version 0.1.33
+
+feature - improved startup initialization and data synchronization
+
+feature - bump to node 18
+
+## Version 0.1.32
+
+feature - bump to node 16
+
+## Version 0.1.31
+
+fixed - Added support for callable transform functions
+
+fixed - set env variables after initializing app in gen-schema-view
+
+fixed - add checks for existing firebase apps in scripts
+
 ## Version 0.1.30
 
 fixed - check if app already exists before init app when using events
@@ -31,6 +69,8 @@ fixed - update snapshot script
 feature - add oldData to the record
 
 fixed - updating table metadata too often
+
+feature - add lifecycle event to export existing documents to Bigquery
 
 ## Version 0.1.26
 
