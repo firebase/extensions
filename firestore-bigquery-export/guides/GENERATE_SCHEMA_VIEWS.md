@@ -1,19 +1,19 @@
 The `fs-bq-schema-views` script is for use with the official Firebase Extension
-[_Export Collections to BigQuery_](https://github.com/firebase/extensions/tree/master/firestore-bigquery-export).
+[_Stream Firestore to BigQuery_](https://github.com/firebase/extensions/tree/master/firestore-bigquery-export).
 
 ## Overview
 
 The `fs-bq-schema-views` script (referred to as the "schema-views script")
 generates richly-typed BigQuery views of your raw changelog.
 
-The _Export Collections to BigQuery_ extension only mirrors raw data, but it
+The _Stream Firestore to BigQuery_ extension only mirrors raw data, but it
 doesn't apply schemas or types. This decoupling makes schema validation less
 risky because no data can be lost due to schema mismatch or unknown fields.
 
 The schema-views script creates a BigQuery view, based on a JSON schema
 configuration file, using
 [BigQuery's built-in JSON functions](https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions).
-The _Export Collections to BigQuery_ extension also provides some BigQuery
+The _Stream Firestore to BigQuery_ extension also provides some BigQuery
 [user-defined functions](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/scripts/gen-schema-view/src/udf.ts)
 that are helpful in converting Firestore document properties to richly-typed
 BigQuery cells.

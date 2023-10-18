@@ -13,10 +13,10 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.26
+version: 0.1.36
 specVersion: v1beta
 
-displayName: Stream Collections to BigQuery
+displayName: Stream Firestore to BigQuery
 description:
   Sends realtime, incremental updates from a specified Cloud Firestore
   collection to BigQuery.
@@ -55,70 +55,45 @@ resources:
       Listens for document changes in your specified Cloud Firestore collection,
       then exports the changes into BigQuery.
     properties:
-      location: ${param:LOCATION}
-      runtime: nodejs14
+      runtime: nodejs18
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
 
-params:
-  - param: LOCATION
-    label: Cloud Functions location
-    description: >-
-      Where do you want to deploy the functions created for this extension?  You
-      usually want a location close to your database. For help selecting a
-      location, refer to the [location selection
-      guide](https://firebase.google.com/docs/functions/locations).
-    type: select
-    options:
-      - label: Iowa (us-central1)
-        value: us-central1
-      - label: South Carolina (us-east1)
-        value: us-east1
-      - label: Northern Virginia (us-east4)
-        value: us-east4
-      - label: Los Angeles (us-west2)
-        value: us-west2
-      - label: Salt Lake City (us-west3)
-        value: us-west3
-      - label: Las Vegas (us-west4)
-        value: us-west4
-      - label: Warsaw (europe-central2)
-        value: europe-central2
-      - label: Belgium (europe-west1)
-        value: europe-west1
-      - label: London (europe-west2)
-        value: europe-west2
-      - label: Frankfurt (europe-west3)
-        value: europe-west3
-      - label: Zurich (europe-west6)
-        value: europe-west6
-      - label: Taiwan (asia-east1)
-        value: asia-east1
-      - label: Hong Kong (asia-east2)
-        value: asia-east2
-      - label: Tokyo (asia-northeast1)
-        value: asia-northeast1
-      - label: Osaka (asia-northeast2)
-        value: asia-northeast2
-      - label: Seoul (asia-northeast3)
-        value: asia-northeast3
-      - label: Mumbai (asia-south1)
-        value: asia-south1
-      - label: Singapore (asia-southeast1)
-        value: asia-southeast1
-      - label: Jakarta (asia-southeast2)
-        value: asia-southeast2
-      - label: Montreal (northamerica-northeast1)
-        value: northamerica-northeast1
-      - label: Sao Paulo (southamerica-east1)
-        value: southamerica-east1
-      - label: Sydney (australia-southeast1)
-        value: australia-southeast1
-    default: us-central1
-    required: true
-    immutable: true
+  - name: fsimportexistingdocs
+    type: firebaseextensions.v1beta.function
+    description:
+      Imports exisitng documents from the specified collection into BigQuery. Imported documents will have 
+      a special changelog with the operation of `IMPORT` and the timestamp of epoch.
+    properties:
+      runtime: nodejs14
+      taskQueueTrigger: {}
 
+  - name: syncBigQuery
+    type: firebaseextensions.v1beta.function
+    description: >-
+      A task-triggered function that gets called on BigQuery sync
+    properties:
+      runtime: nodejs18
+      taskQueueTrigger: {}
+
+  - name: initBigQuerySync
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Runs configuration for sycning with BigQuery
+    properties:
+      runtime: nodejs18
+      taskQueueTrigger: {}
+
+  - name: setupBigQuerySync
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Runs configuration for sycning with BigQuery
+    properties:
+      runtime: nodejs18
+      taskQueueTrigger: {}
+
+params:
   - param: DATASET_LOCATION
     label: BigQuery Dataset location
     description: >-
@@ -275,7 +250,7 @@ params:
       - label: none
         value: NONE
     default: NONE
-    required: true
+    required: false
 
   - param: TIME_PARTITIONING_FIELD
     label: BigQuery Time Partitioning column name
@@ -323,6 +298,17 @@ params:
     example: data,document_id,timestamp
     required: false
 
+  - param: MAX_DISPATCHES_PER_SECOND
+    label: Maximum number of synced documents per second
+    description: >-
+      This parameter will set the maximum number of syncronised documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota.
+      Ensure that you have a set a low enough number to componsate. Defaults to 10.
+    type: string
+    validationRegex: ^(?:[1-9]|\d{2,3}|[1-4]\d{3})$
+    validationErrorMessage: Please select a number between 1 and 100
+    example: 10
+    required: false
+
   - param: BACKUP_COLLECTION
     label: Backup Collection Name
     description: >-
@@ -338,3 +324,97 @@ params:
     example: https://us-west1-my-project-id.cloudfunctions.net/myTransformFunction
     type: string
     required: false
+
+  - param: USE_NEW_SNAPSHOT_QUERY_SYNTAX
+    label: Use new query syntax for snapshots
+    description: >-
+      If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential
+      resource limitations.
+    type: select
+    options:
+      - label: Yes
+        value: yes
+      - label: No
+        value: no
+    default: no
+    required: true
+        
+  - param: DO_BACKFILL
+    label: Import existing Firestore documents into BigQuery?
+    description: >-
+      Do you want to import existing documents from your Firestore collection into BigQuery? These documents 
+      will have each have a special changelog with the operation of `IMPORT` and the timestamp of epoch.
+      This ensures that any operation on an imported document supersedes the import record.
+    type: select
+    required: true
+    options:
+      - label: Yes
+        value: yes
+      - label: No
+        value: no
+  
+  - param: IMPORT_COLLECTION_PATH
+    label: Existing documents collection
+    description:  >-
+      What is the path of the the Cloud Firestore Collection you would like to import from?
+      (This may, or may not, be the same Collection for which you plan to mirror changes.)
+      If you want to use a collectionGroup query, provide the collection name value here,
+      and set 'Use Collection Group query' to true.
+    type: string
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Firestore collection paths must be an odd number of segments separated by slashes, e.g. "path/to/collection".
+    example: posts
+    required: false
+
+  - param: USE_COLLECTION_GROUP_QUERY
+    label: Use Collection Group query
+    description: >-
+      Do you want to use a [collection group](https://firebase.google.com/docs/firestore/query-data/queries#collection-group-query) query for importing existing documents?
+      Warning: A collectionGroup query will target every collection in your Firestore project that matches the 'Existing documents collection'.
+      For example, if you have 10,000 documents with a sub-collection named: landmarks, this will query every document in 10,000 landmarks collections.
+    type: select
+    default: false
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+  - param: DOCS_PER_BACKFILL
+    label: Docs per backfill
+    description:  >-
+      When importing existing documents, how many should be imported at once?
+      The default value of 200 should be ok for most users.
+      If you are using a transform function or have very large documents, you may need to set this to a lower number.
+      If the lifecycle event function times out, lower this value.
+    type: string
+    example: 200
+    validationRegex: "^[1-9][0-9]*$"
+    validationErrorMessage: Must be a postive integer.
+    default: 200
+    required: true
+
+
+  - param: KMS_KEY_NAME
+    label: Cloud KMS key name
+    description: >-
+      Instead of Google managing the key encryption keys that protect your data, you control and manage key encryption keys in Cloud KMS.
+      If this parameter is set, the extension will specify the KMS key name when creating the BQ table. See the PREINSTALL.md for more details.
+    type: string
+    validationRegex: 'projects/([^/]+)/locations/([^/]+)/keyRings/([^/]+)/cryptoKeys/([^/]+)'
+    validationErrorMessage: The key name must be of the format 'projects/PROJECT_NAME/locations/KEY_RING_LOCATION/keyRings/KEY_RING_ID/cryptoKeys/KEY_ID'.
+    required: false
+
+events:
+  - type: firebase.extensions.big-query-export.v1.sync.start
+    description: Occurs on a firestore document write event.
+
+lifecycleEvents:
+  onInstall:
+    function: initBigQuerySync
+    processingMessage: Configuring BigQuery Sync and running import if configured.
+  onUpdate:
+    function: setupBigQuerySync
+    processingMessage: Configuring BigQuery Sync
+  onConfigure:
+    function: setupBigQuerySync
+    processingMessage: Configuring BigQuery Sync

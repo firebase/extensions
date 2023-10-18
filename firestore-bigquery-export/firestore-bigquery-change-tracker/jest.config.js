@@ -10,8 +10,12 @@ module.exports = {
     },
   },
   preset: "ts-jest",
-  testMatch: ["**/src/__tests__/bigquery/*.test.ts"],
+  testMatch: ["**/src/__tests__/**/*.test.ts"],
   testEnvironment: "node",
-  testTimeout: 16000,
+  testTimeout: 180000,
   collectCoverage: true,
+  moduleNameMapper: {
+    "firebase-admin/firestore":
+      "<rootDir>/node_modules/firebase-admin/lib/firestore",
+  },
 };

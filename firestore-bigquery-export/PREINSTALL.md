@@ -47,21 +47,50 @@ Prior to sending the document change to BigQuery, you have an opportunity to tra
 
 The response should be indentical in structure.
 
+#### Using Customer Managed Encryption Keys
+
+By default, BigQuery encrypts your content stored at rest. BigQuery handles and manages this default encryption for you without any additional actions on your part.
+
+If you want to control encryption yourself, you can use customer-managed encryption keys (CMEK) for BigQuery. Instead of Google managing the key encryption keys that protect your data, you control and manage key encryption keys in Cloud KMS.
+
+For more general information on this, see [the docs](https://cloud.google.com/bigquery/docs/customer-managed-encryption).
+
+To use CMEK and the Key Management Service (KMS) with this extension
+1. [Enable the KMS API in your Google Cloud Project](https://console.cloud.google.com/apis/enableflow?apiid=cloudkms.googleapis.com).
+2. Create a keyring and keychain in the KMS. Note that the region of the keyring and key *must* match the region of your bigquery dataset
+3. Grant the BigQuery service account permission to encrypt and decrypt using that key. The Cloud KMS CryptoKey Encrypter/Decrypter role grants this permission. First find your project number. You can find this for example on the cloud console dashboard `https://console.cloud.google.com/home/dashboard?project={PROJECT_ID}`. The service account which needs the Encrypter/Decrypter role is then `bq-PROJECT_NUMBER@bigquery-encryption.iam.gserviceaccount.com`. You can grant this role through the credentials service in the console, or through the CLI:
+```
+gcloud kms keys add-iam-policy-binding \
+--project=KMS_PROJECT_ID \
+--member serviceAccount:bq-PROJECT_NUMBER@bigquery-encryption.iam.gserviceaccount.com \
+--role roles/cloudkms.cryptoKeyEncrypterDecrypter \
+--location=KMS_KEY_LOCATION \
+--keyring=KMS_KEY_RING \
+KMS_KEY
+```
+4. When installing this extension, enter the resource name of your key. It will look something like the following:
+```
+projects/<YOUR PROJECT ID>/locations/<YOUR REGION>/keyRings/<YOUR KEY RING NAME>/cryptoKeys/<YOUR KEY NAME>
+```
+If you follow these steps, your changelog table should be created using your customer-managed encryption.
+
 #### Backfill your BigQuery dataset
 
-This extension only sends the content of documents that have been changed -- it does not export your full dataset of existing documents into BigQuery. So, to backfill your BigQuery dataset with all the documents in your collection, you can run the [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md) provided by this extension.
+To import documents that already exist at installation time into BigQuery, answer **Yes** when the installer asks "Import existing Firestore documents into BigQuery?" The extension will export existing documents as part of the installation and update processes.
 
-**Important:** Run the import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
+Alternatively, you can run the external [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md) to backfill existing documents. If you plan to use this script, answer **No** when prompted to import existing documents.
+
+**Important:** Run the external import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
+
+If you don't either enable automatic import or run the import script, the extension only exports the content of documents that are created or changed after installation.
 
 #### Generate schema views
 
 After your data is in BigQuery, you can run the [schema-views script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/GENERATE_SCHEMA_VIEWS.md) (provided by this extension) to create views that make it easier to query relevant data. You only need to provide a JSON schema file that describes your data structure, and the schema-views script will create the views.
 
 #### Billing
- 
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
- 
-- You will be charged a small amount (typically around $0.01/month) for the Firebase resources required by this extension (even if it is not used).
+
 - This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
   - BigQuery (this extension writes to BigQuery with [streaming inserts](https://cloud.google.com/bigquery/pricing#streaming_pricing))
   - Cloud Firestore
