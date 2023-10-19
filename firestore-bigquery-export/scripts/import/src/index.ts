@@ -53,7 +53,7 @@ program
   )
   .option(
     "-s, --source-collection-path <source-collection-path>",
-    "The path of the the Cloud Firestore Collection to import from. (This may, or may not, be the same Collection for which you plan to mirror changes.)"
+    "The path of the the Cloud Firestore Collection to import from. (This may or may not be the same Collection for which you plan to mirror changes.)"
   )
   .option(
     "-d, --dataset <dataset>",
