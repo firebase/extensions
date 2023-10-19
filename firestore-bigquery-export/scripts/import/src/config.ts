@@ -2,6 +2,7 @@ import * as inquirer from "inquirer";
 import * as program from "commander";
 
 import { CliConfig, CliConfigError } from "./types";
+import * as filenamify from "filenamify";
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 export const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
@@ -196,6 +197,14 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       return { kind: "ERROR", errors };
     }
 
+    const rawChangeLogName = `${program.tableNamePrefix}_raw_changelog`;
+    const cursorPositionFile = getCursorPositionFile(
+      program.sourceCollectionPath,
+      program.project,
+      program.dataset,
+      rawChangeLogName
+    );
+
     return {
       kind: "CONFIG",
       projectId: program.project,
@@ -208,6 +217,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       multiThreaded: program.multiThreaded === "true",
       useNewSnapshotQuerySyntax: program.useNewSnapshotQuerySyntax === "true",
       useEmulator: program.useEmulator === "true",
+      rawChangeLogName,
+      cursorPositionFile,
     };
   }
   const {
@@ -223,6 +234,14 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     useEmulator,
   } = await inquirer.prompt(questions);
 
+  const rawChangeLogName = `${table}_raw_changelog`;
+  const cursorPositionFile = getCursorPositionFile(
+    sourceCollectionPath,
+    project,
+    dataset,
+    rawChangeLogName
+  );
+
   return {
     kind: "CONFIG",
     projectId: project,
@@ -235,6 +254,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     multiThreaded: multiThreaded,
     useNewSnapshotQuerySyntax: useNewSnapshotQuerySyntax,
     useEmulator: useEmulator,
+    rawChangeLogName,
+    cursorPositionFile,
   };
 }
 
@@ -256,3 +277,17 @@ export const resolveWildcardIds = (template: string, text: string) => {
       return previousValue;
     }, {});
 };
+
+function getCursorPositionFile(
+  sourceCollectionPath: string,
+  projectId: string,
+  datasetId: string,
+  rawChangeLogName: string
+) {
+  // TODO: make this part of config, set it in CliConfig
+  const formattedPath = filenamify(sourceCollectionPath);
+  return (
+    __dirname +
+    `/from-${formattedPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`
+  );
+}
