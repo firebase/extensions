@@ -13,28 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import { expect } from "chai";
-import { suite, test } from "mocha-typescript";
-
 import { Planner } from "../src/planner";
 
-@suite
-class PlannerTest extends Planner {
-  @test "can handle empty shards"() {
-    const plans = PlannerTest.planAggregations(
+describe("Planner test", () => {
+  test("can handle empty shards", () => {
+    const plans = Planner.planAggregations(
       "/exp/cnt/_counter_shards_/\t\t\t\t0",
       []
     );
-    expect(plans).deep.equals([]);
-  }
+    expect(plans).toEqual([]);
+  });
 
-  @test "can aggregate one shard"() {
-    const plans = PlannerTest.planAggregations(
+  test("can aggregate one shard", () => {
+    const plans = Planner.planAggregations(
       "/exp/cnt/__counter_shards_/\t\t\t\t0",
       [snap("/exp/cnt/__counter_shards__/00ec08a7")]
     );
-    expect(plans).deep.equals([
+    expect(plans).toEqual([
       {
         aggregate: "/exp/cnt",
         isPartial: false,
@@ -42,10 +37,10 @@ class PlannerTest extends Planner {
         shards: [snap("/exp/cnt/__counter_shards__/00ec08a7")],
       },
     ]);
-  }
+  });
 
-  @test "aggregates shards into partials"() {
-    let plans = PlannerTest.planAggregations(
+  test("aggregates shards into partials", () => {
+    let plans = Planner.planAggregations(
       "/exp/cnt/__counter_shards__/22222222",
       [
         snap("/exp/cnt/__counter_shards__/22222222"),
@@ -53,7 +48,7 @@ class PlannerTest extends Planner {
         snap("/exp/cnt/__counter_shards__/44444444"),
       ]
     );
-    expect(plans).deep.equals([
+    expect(plans).toEqual([
       {
         aggregate: "/exp/cnt/__counter_shards__/\t\t\t\t2",
         isPartial: true,
@@ -74,14 +69,11 @@ class PlannerTest extends Planner {
       },
     ]);
 
-    plans = PlannerTest.planAggregations(
-      "/exp/cnt/__counter_shards__/00000000",
-      [
-        snap("/exp/cnt/__counter_shards__/00ec08a7"),
-        snap("/exp/cnt/__counter_shards__/01234567"),
-      ]
-    );
-    expect(plans).deep.equals([
+    plans = Planner.planAggregations("/exp/cnt/__counter_shards__/00000000", [
+      snap("/exp/cnt/__counter_shards__/00ec08a7"),
+      snap("/exp/cnt/__counter_shards__/01234567"),
+    ]);
+    expect(plans).toEqual([
       {
         aggregate: "/exp/cnt/__counter_shards__/\t\t\t00",
         isPartial: true,
@@ -96,14 +88,11 @@ class PlannerTest extends Planner {
       },
     ]);
 
-    plans = PlannerTest.planAggregations(
-      "/exp/cnt/__counter_shards__/01234567",
-      [
-        snap("/exp/cnt/__counter_shards__/012fffff"),
-        snap("/exp/cnt/__counter_shards__/013fffff"),
-      ]
-    );
-    expect(plans).deep.equals([
+    plans = Planner.planAggregations("/exp/cnt/__counter_shards__/01234567", [
+      snap("/exp/cnt/__counter_shards__/012fffff"),
+      snap("/exp/cnt/__counter_shards__/013fffff"),
+    ]);
+    expect(plans).toEqual([
       {
         aggregate: "/exp/cnt/__counter_shards__/\t\t012",
         isPartial: true,
@@ -117,17 +106,16 @@ class PlannerTest extends Planner {
         shards: [snap("/exp/cnt/__counter_shards__/013fffff")],
       },
     ]);
-  }
-
-  @test "aggregates shards into counter"() {
-    const plans = PlannerTest.planAggregations(
+  });
+  test("aggregates shards into counter", () => {
+    const plans = Planner.planAggregations(
       "/exp/cnt/__counter_shards__/\t\t\t\t0",
       [
         snap("/exp/cnt/__counter_shards__/00ec08a7"),
         snap("/exp/cnt/__counter_shards__/01234567"),
       ]
     );
-    expect(plans).deep.equals([
+    expect(plans).toEqual([
       {
         aggregate: "/exp/cnt",
         isPartial: false,
@@ -138,17 +126,16 @@ class PlannerTest extends Planner {
         ],
       },
     ]);
-  }
-
-  @test "does not aggregate partials into themselves"() {
-    const plans = PlannerTest.planAggregations(
+  });
+  test("does not aggregate partials into themselves", () => {
+    const plans = Planner.planAggregations(
       "/exp/cnt/__counter_shards__/\t\t012",
       [
         snap("/exp/cnt/__counter_shards__/\t\t014"),
         snap("/exp/cnt/__counter_shards__/\t\t015"),
       ]
     );
-    expect(plans).deep.equals([
+    expect(plans).toEqual([
       {
         aggregate: "/exp/cnt/__counter_shards__/\t\t\t01",
         isPartial: true,
@@ -159,18 +146,14 @@ class PlannerTest extends Planner {
         shards: [],
       },
     ]);
-  }
-
-  @test "can aggregate many counters"() {
-    const plans = PlannerTest.planAggregations(
-      "/exp/cnt1/__counter_shards__/\0",
-      [
-        snap("/exp/cnt1/__counter_shards__/00ec08a7"),
-        snap("/exp/cnt2/__counter_shards__/00ec08a7"),
-        snap("/exp/cnt2/__counter_shards__/00ec08a8"),
-      ]
-    );
-    expect(plans).deep.equals([
+  });
+  test("can aggregate many counters", () => {
+    const plans = Planner.planAggregations("/exp/cnt1/__counter_shards__/\0", [
+      snap("/exp/cnt1/__counter_shards__/00ec08a7"),
+      snap("/exp/cnt2/__counter_shards__/00ec08a7"),
+      snap("/exp/cnt2/__counter_shards__/00ec08a8"),
+    ]);
+    expect(plans).toEqual([
       {
         aggregate: "/exp/cnt1",
         isPartial: false,
@@ -187,9 +170,9 @@ class PlannerTest extends Planner {
         ],
       },
     ]);
-  }
-  @test "can aggregate partials and shards"() {
-    const plans = PlannerTest.planAggregations(
+  });
+  test("can aggregate partials and shards", () => {
+    const plans = Planner.planAggregations(
       "/exp/cnt/__counter_shards__/\t\t000",
       [
         snap("/exp/cnt/__counter_shards__/\t\t000"),
@@ -198,7 +181,7 @@ class PlannerTest extends Planner {
         snap("/exp/cnt/__counter_shards__/00ec08a9"),
       ]
     );
-    expect(plans).deep.equals([
+    expect(plans).toEqual([
       {
         aggregate: "/exp/cnt",
         isPartial: false,
@@ -210,8 +193,8 @@ class PlannerTest extends Planner {
         ],
       },
     ]);
-  }
-}
+  });
+});
 
 function snap(path): any {
   return {

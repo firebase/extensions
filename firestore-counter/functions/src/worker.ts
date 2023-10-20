@@ -15,9 +15,9 @@
  */
 
 import { firestore } from "firebase-admin";
-import * as deepEqual from "deep-equal";
+import deepEqual from "deep-equal";
 import { logger } from "firebase-functions";
-
+import * as events from "./events";
 import {
   Slice,
   WorkerStats,
@@ -28,6 +28,7 @@ import {
 import { Planner } from "./planner";
 import { Aggregator, NumericUpdate } from "./aggregator";
 import * as uuid from "uuid";
+import { FieldValue } from "firebase-admin/firestore";
 
 const SHARDS_LIMIT = 100;
 const WORKER_TIMEOUT_MS = 45000;
@@ -88,6 +89,7 @@ export class ShardedCounterWorker {
           try {
             await this.aggregation;
           } catch (err) {
+            await events.recordErrorEvent(err as Error);
             // Not much here we can do, transaction is over.
           }
         }
@@ -111,16 +113,24 @@ export class ShardedCounterWorker {
               const snap = await t.get(this.metadoc.ref);
               if (snap.exists && deepEqual(snap.data(), this.metadata)) {
                 t.update(snap.ref, {
-                  timestamp: firestore.FieldValue.serverTimestamp(),
+                  timestamp: FieldValue.serverTimestamp(),
                   stats: stats,
                 });
               }
             } catch (err) {
               logger.log("Failed to save writer stats.", err);
+              await events.recordErrorEvent(
+                err as Error,
+                "Failed to save writer stats."
+              );
             }
           });
         } catch (err) {
           logger.log("Failed to save writer stats.", err);
+          await events.recordErrorEvent(
+            err as Error,
+            "Failed to save writer stats."
+          );
         }
       };
 
@@ -221,6 +231,10 @@ export class ShardedCounterWorker {
               "Unable to read shards during aggregation round, skipping...",
               err
             );
+            await events.recordErrorEvent(
+              err as Error,
+              "Unable to read shards during aggregation round, skipping..."
+            );
             return [];
           }
 
@@ -270,6 +284,10 @@ export class ShardedCounterWorker {
         logger.log(
           "transaction to: " + plan.aggregate + " failed, skipping...",
           err
+        );
+        await events.recordErrorEvent(
+          err as Error,
+          "transaction to: " + plan.aggregate + " failed, skipping..."
         );
       }
     });
@@ -338,12 +356,20 @@ export class ShardedCounterWorker {
             }
           } catch (err) {
             logger.log("Partial cleanup failed: " + partial.ref.path);
+            await events.recordErrorEvent(
+              err as Error,
+              "Partial cleanup failed: " + partial.ref.path
+            );
           }
         });
       } catch (err) {
         logger.log(
           "transaction to delete: " + partial.ref.path + " failed, skipping",
           err
+        );
+        await events.recordErrorEvent(
+          err as Error,
+          "transaction to delete: " + partial.ref.path + " failed, skipping"
         );
       }
     });

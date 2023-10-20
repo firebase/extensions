@@ -1,3 +1,25 @@
+## Version 0.1.14
+
+build - updated depenencies
+
+## Version 0.1.13
+
+feature - bump to node 18
+
+## Version 0.1.12
+
+feature - bump to nodejs16
+
+## Version 0.1.11
+
+No changes.
+
+## Version 0.1.10
+
+feature - upgrade extensions to the latest firebase-admin sdk
+
+feature - add optional languages field param
+
 ## Version 0.1.9
 
 feature - add lifecycle event to translate existing documents in the collection.

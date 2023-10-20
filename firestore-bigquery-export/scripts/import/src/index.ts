@@ -83,12 +83,20 @@ program
   .option(
     "-m, --multi-threaded [true|false]",
     "Whether to run standard or multi-thread import version"
+  )
+  .option(
+    "-u, --use-new-snapshot-query-syntax [true|false]",
+    "Whether to use updated latest snapshot query"
+  )
+  .option(
+    "-e, --use-emulator [true|false]",
+    "Whether to use the firestore emulator"
   );
 
 const run = async (): Promise<number> => {
   const config = await parseConfig();
   if (config.kind === "ERROR") {
-    config.errors.forEach((e) => console.error(`[ERROR] ${e}`));
+    config.errors?.forEach((e) => console.error(`[ERROR] ${e}`));
     process.exit(1);
   }
 
@@ -101,16 +109,24 @@ const run = async (): Promise<number> => {
     queryCollectionGroup,
     datasetLocation,
     multiThreaded,
+    useNewSnapshotQuerySyntax,
+    useEmulator,
   } = config;
+
+  if (useEmulator) {
+    console.log("Using emulator");
+    process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
+  }
 
   // Initialize Firebase
   // This uses applicationDefault to authenticate
   // Please see https://cloud.google.com/docs/authentication/production
-  firebase.initializeApp({
-    credential: firebase.credential.applicationDefault(),
-    databaseURL: `https://${projectId}.firebaseio.com`,
-  });
-
+  if (!firebase.apps.length) {
+    firebase.initializeApp({
+      credential: firebase.credential.applicationDefault(),
+      databaseURL: `https://${projectId}.firebaseio.com`,
+    });
+  }
   // Set project ID, so it can be used in BigQuery initialization
   process.env.PROJECT_ID = projectId;
   process.env.GOOGLE_CLOUD_PROJECT = projectId;
@@ -118,7 +134,6 @@ const run = async (): Promise<number> => {
   const rawChangeLogName = `${tableId}_raw_changelog`;
 
   if (multiThreaded) return runMultiThread(config, rawChangeLogName);
-
   // We pass in the application-level "tableId" here. The tracker determines
   // the name of the raw changelog from this field.
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
@@ -126,6 +141,7 @@ const run = async (): Promise<number> => {
     datasetId: datasetId,
     datasetLocation,
     wildcardIds: queryCollectionGroup,
+    useNewSnapshotQuerySyntax,
   });
 
   console.log(
@@ -197,6 +213,7 @@ const run = async (): Promise<number> => {
   try {
     await unlink(cursorPositionFile);
   } catch (e) {
+    console.log(e);
     console.log(
       `Error unlinking journal file ${cursorPositionFile} after successful import: ${e.toString()}`
     );

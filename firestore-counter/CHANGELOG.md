@@ -1,3 +1,23 @@
+## Version 0.2.9
+
+build - updated depenencies
+
+## Version 0.2.8
+
+feature - bump to node 18
+
+## Version 0.2.7
+
+feature - bump to nodejs16
+
+## Version 0.2.6
+
+fixed - web client now uses the document sub collection for processing shards
+
+fixed - ts errors and updated packages
+
+feature - upgrade extensions to the latest firebase-admin sdk
+
 ## Version 0.2.5
 
 fixed - generate correct `package-lock.json` files after `lerna bootstrap` (#779)

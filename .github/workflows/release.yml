@@ -10,7 +10,7 @@ jobs:
     name: "Create Releases"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: Release Script
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

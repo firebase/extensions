@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as admin from "firebase-admin";
 import config from "./config";
 import { logger } from "firebase-functions";
 
@@ -41,12 +42,12 @@ export function complete() {
   logger.log("Completed execution of extension");
 }
 
-export function attemptingDelivery(ref: FirebaseFirestore.DocumentReference) {
+export function attemptingDelivery(ref: admin.firestore.DocumentReference) {
   logger.log(`Attempting delivery for message: ${ref.path}`);
 }
 
 export function delivered(
-  ref: FirebaseFirestore.DocumentReference,
+  ref: admin.firestore.DocumentReference,
   info: {
     messageId: string;
     accepted: string[];
@@ -60,14 +61,14 @@ export function delivered(
 }
 
 export function deliveryError(
-  ref: FirebaseFirestore.DocumentReference,
+  ref: admin.firestore.DocumentReference,
   e: Error
 ) {
   logger.error(`Error when delivering message=${ref.path}: ${e.toString()}`);
 }
 
-export function missingDeliveryField(ref: FirebaseFirestore.DocumentReference) {
-  logger.error(`message=${ref.path} is missing 'delivery' field`);
+export function missingDeliveryField(ref: admin.firestore.DocumentReference) {
+  logger.warn(`message=${ref.path} is missing 'delivery' field`);
 }
 
 export function missingUids(uids: string[]) {
@@ -96,7 +97,7 @@ export function templatesLoaded(names) {
 
 export function invalidMessage(message) {
   logger.warn(
-    `message '${message}' is not a valid object - please add as an object or firestore map, otherwise you may experience unexpected results.`
+    `message '${message}' is not a valid object and no handlebars template has been provided instead - please add as an object or firestore map, otherwise you may experience unexpected results.`
   );
 }
 

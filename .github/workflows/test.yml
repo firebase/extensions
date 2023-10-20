@@ -16,21 +16,23 @@ jobs:
         node: ["14", "16"]
     name: node.js_${{ matrix.node }}_test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
-      - name: NPM install
-        run: npm install
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+      - name: NPM INSTALL
+        run: npm i
+      - name: build emulator functions
+        run: cd _emulator/functions && npm i && npm run build & cd ../..
       - name: Install firebase CLI
         uses: nick-invision/retry@v1
         with:
           timeout_minutes: 10
           retry_wait_seconds: 60
           max_attempts: 3
-          command: npm i -g firebase-tools
-      - name: Submit coverage
-        run: ./node_modules/.bin/codecov
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          command: npm i -g firebase-tools@11
+      - name: npm test
+        run: npm run test:ci
