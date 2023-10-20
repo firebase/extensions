@@ -1,13 +1,14 @@
 import { BigQuery } from "@google-cloud/bigquery";
-
+import axios from "axios";
 import * as childProcess from "child_process";
-import * as path from "path";
 import * as admin from "firebase-admin";
+import * as path from "path";
+
 import { repeat } from "./helpers/waitFor";
 
 const scriptPath = path.join(__dirname, "../lib/index.js");
 const projectId = "extensions-testing";
-import axios from "axios";
+
 const bigquery = new BigQuery({ projectId });
 
 async function runScript(scriptPath: string, callback, args?: string[]) {

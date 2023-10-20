@@ -1,9 +1,9 @@
-import { cpus } from "os";
 import * as firebase from "firebase-admin";
+import { cpus } from "os";
 import { pool } from "workerpool";
 
-import { CliConfig } from "./types";
 import * as logs from "./logs";
+import { CliConfig } from "./types";
 
 // import {
 //   ChangeType,

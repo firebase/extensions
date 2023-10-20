@@ -1,6 +1,7 @@
-import { BigQuery } from "@google-cloud/bigquery";
-import { CliConfig } from "./types";
 import { FirestoreBigQueryEventHistoryTracker } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import { BigQuery } from "@google-cloud/bigquery";
+
+import { CliConfig } from "./types";
 
 // TODO: do we need this logic?
 export const initializeDataSink = async (
