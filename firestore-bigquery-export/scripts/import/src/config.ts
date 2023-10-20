@@ -1,11 +1,13 @@
-import * as inquirer from "inquirer";
 import * as program from "commander";
+import * as filenamify from "filenamify";
+import * as inquirer from "inquirer";
 
 import { CliConfig, CliConfigError } from "./types";
-import * as filenamify from "filenamify";
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
-export const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
+// regex of ^[^/]+(/[^/]+/[^/]+)*$
+export const FIRESTORE_VALID_CHARACTERS = new RegExp("^[^/]+(/[^/]+/[^/]+)*$");
+// export const FIRESTORE_VALID_CHARACTERS = /^[^/]+(/[^/]+/[^/]+)*$/;
 
 const PROJECT_ID_MAX_CHARS = 6144;
 export const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;

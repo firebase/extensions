@@ -1,20 +1,17 @@
-import * as firebase from "firebase-admin";
 import {
   ChangeType,
-  // FirestoreBigQueryEventHistoryTracker,
   FirestoreDocumentChangeEvent,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
-import { resolveWildcardIds } from "./config";
-import { CliConfig } from "./types";
+import { FirestoreBigQueryEventHistoryTracker } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import * as firebase from "firebase-admin";
 import * as fs from "fs";
 import * as util from "util";
-const exists = util.promisify(fs.exists);
+
+import { resolveWildcardIds } from "./config";
+import { CliConfig } from "./types";
+
 const write = util.promisify(fs.writeFile);
-const read = util.promisify(fs.readFile);
-const unlink = util.promisify(fs.unlink);
-import * as filenamify from "filenamify";
-import * as logs from "./logs";
-import { FirestoreBigQueryEventHistoryTracker } from "@firebaseextensions/firestore-bigquery-change-tracker";
+
 const FIRESTORE_DEFAULT_DATABASE = "(default)";
 
 export function getRowsFromDocs(
@@ -104,6 +101,7 @@ export function getQuery(
         ]
       );
   } else {
+    console.log("\x1b[36m%s\x1b[0m", "HERE 1.75"); //cyan
     collectionOrCollectionGroup = firebase
       .firestore()
       .collection(sourceCollectionPath);
@@ -111,8 +109,10 @@ export function getQuery(
 
   let query = collectionOrCollectionGroup.limit(batchSize);
   if (cursor) {
+    console.log("\x1b[36m%s\x1b[0m", "we have cursor"); //cyan
     query = query.startAfter(cursor);
   }
+  console.log("\x1b[36m%s\x1b[0m", `QUERY: ${JSON.stringify(query)}`); //cyan
   return query;
 }
 

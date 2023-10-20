@@ -1,12 +1,12 @@
-import * as firebase from "firebase-admin";
-import { CliConfig, SerializableQuery, QueryOptions } from "./types";
-import { worker } from "workerpool";
-
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreDocumentChangeEvent,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import * as firebase from "firebase-admin";
+import { worker } from "workerpool";
+
+import { CliConfig, QueryOptions, SerializableQuery } from "./types";
 
 async function processDocuments(
   serializableQuery: SerializableQuery,
