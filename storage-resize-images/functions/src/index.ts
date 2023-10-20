@@ -15,7 +15,6 @@
  */
 
 import * as admin from "firebase-admin";
-import { getEventarc } from "firebase-admin/eventarc";
 import { getFunctions } from "firebase-admin/functions";
 import { getExtensions } from "firebase-admin/extensions";
 import * as fs from "fs";
@@ -29,17 +28,16 @@ import { ResizedImageResult, modifyImage } from "./resize-image";
 import config, { deleteImage } from "./config";
 import * as logs from "./logs";
 import { shouldResize } from "./filters";
+import * as events from "./events";
+import { v4 as uuidv4 } from "uuid";
+import { countNegativeTraversals } from "./util";
 
 sharp.cache(false);
 
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 
-const eventChannel =
-  process.env.EVENTARC_CHANNEL &&
-  getEventarc().channel(process.env.EVENTARC_CHANNEL, {
-    allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
-  });
+events.setupEventChannel();
 
 logs.init();
 
@@ -49,7 +47,7 @@ logs.init();
  */
 
 const generateResizedImageHandler = async (
-  object,
+  object: functions.storage.ObjectMetadata,
   verbose = true
 ): Promise<void> => {
   !verbose || logs.start();
@@ -65,7 +63,7 @@ const generateResizedImageHandler = async (
   let localOriginalFile;
   let remoteOriginalFile;
   try {
-    localOriginalFile = path.join(os.tmpdir(), filePath);
+    localOriginalFile = path.join(os.tmpdir(), uuidv4());
     const tempLocalDir = path.dirname(localOriginalFile);
 
     // Create the temp directory where the storage file will be downloaded.
@@ -104,18 +102,56 @@ const generateResizedImageHandler = async (
     });
 
     const results = await Promise.all(tasks);
-    eventChannel &&
-      (await eventChannel.publish({
-        type: "firebase.extensions.storage-resize-images.v1.complete",
-        subject: filePath,
-        data: {
-          outputs: results,
-        },
-      }));
+
+    await events.recordSuccessEvent({
+      subject: filePath,
+      data: { input: object, outputs: results },
+    });
 
     const failed = results.some((result) => result.success === false);
     if (failed) {
       logs.failed();
+
+      if (config.failedImagesPath) {
+        const filePath = object.name; // File path in the bucket.
+        const fileDir = parsedPath.dir;
+        const fileExtension = parsedPath.ext;
+        const fileNameWithoutExtension = path.basename(filePath, fileExtension);
+
+        /** Check for negetaive traversal in the configuration */
+        if (countNegativeTraversals(config.failedImagesPath)) {
+          logs.invalidFailedResizePath(config.failedImagesPath);
+          return;
+        }
+
+        /** Find the base directory */
+        const baseDir = filePath.substring(0, filePath.lastIndexOf("/") + 1);
+
+        /** Set the failed path */
+        const failedFilePath = path.join(
+          fileDir,
+          config.failedImagesPath,
+          `${fileNameWithoutExtension}${fileExtension}`
+        );
+
+        /** Normalize for gcp storage */
+        const normalizedPath = path.normalize(failedFilePath);
+
+        /** Check if safe path */
+        if (!normalizedPath.startsWith(baseDir)) {
+          logs.invalidFailedResizePath(failedFilePath);
+          return;
+        }
+
+        /** Checks passed, upload the failed image to the failed image directory */
+        logs.failedImageUploading(failedFilePath);
+        await bucket.upload(localOriginalFile, {
+          destination: failedFilePath,
+          metadata: { metadata: { resizeFailed: "true" } },
+        });
+        logs.failedImageUploaded(failedFilePath);
+      }
+
       return;
     } else {
       if (config.deleteOriginalFile === deleteImage.onSuccess) {
@@ -133,6 +169,7 @@ const generateResizedImageHandler = async (
     }
   } catch (err) {
     logs.error(err);
+    events.recordErrorEvent(err as Error);
   } finally {
     if (localOriginalFile) {
       !verbose || logs.tempOriginalFileDeleting(filePath);
@@ -152,6 +189,7 @@ const generateResizedImageHandler = async (
           logs.remoteFileDeleted(filePath);
         } catch (err) {
           logs.errorDeleting(err);
+          events.recordErrorEvent(err as Error);
         }
       }
     }
@@ -160,8 +198,10 @@ const generateResizedImageHandler = async (
 
 export const generateResizedImage = functions.storage
   .object()
-  .onFinalize(async (object) => {
+  .onFinalize(async (object, context) => {
+    // await events.recordStartEvent({ object, context });
     await generateResizedImageHandler(object);
+    await events.recordCompletionEvent({ context });
   });
 
 /**
@@ -210,7 +250,7 @@ export const backfillResizedImages = functions.tasks
 
     if (nextPageQuery) {
       const queue = getFunctions().taskQueue(
-        `backfillResizedImages`,
+        `locations/${config.location}/functions/backfillResizedImages`,
         process.env.EXT_INSTANCE_ID
       );
       await queue.enqueue({

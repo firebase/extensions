@@ -1,3 +1,5 @@
+import * as admin from "firebase-admin";
+
 export interface CliConfig {
   kind: "CONFIG";
   projectId: string;
@@ -8,6 +10,8 @@ export interface CliConfig {
   queryCollectionGroup: boolean;
   datasetLocation: string;
   multiThreaded: boolean;
+  useNewSnapshotQuerySyntax: boolean;
+  useEmulator: boolean;
 }
 
 export interface CliConfigError {
@@ -16,13 +20,13 @@ export interface CliConfigError {
 }
 
 export interface SerializableQuery {
-  startAt: FirebaseFirestore.Query<FirebaseFirestore.DocumentData>;
-  endAt: FirebaseFirestore.Query<FirebaseFirestore.DocumentData>;
-  limit: FirebaseFirestore.Query<FirebaseFirestore.DocumentData>;
-  offset: FirebaseFirestore.Query<FirebaseFirestore.DocumentData>;
+  startAt: admin.firestore.Query<admin.firestore.DocumentData>;
+  endAt: admin.firestore.Query<admin.firestore.DocumentData>;
+  limit: admin.firestore.Query<admin.firestore.DocumentData>;
+  offset: admin.firestore.Query<admin.firestore.DocumentData>;
 }
 
 export interface QueryOptions
-  extends FirebaseFirestore.Query<FirebaseFirestore.DocumentSnapshot<any>> {
+  extends admin.firestore.Query<admin.firestore.DocumentSnapshot<any>> {
   _queryOptions: SerializableQuery;
 }

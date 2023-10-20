@@ -23,6 +23,7 @@ import { Translate } from "@google-cloud/translate";
 import config from "./config";
 import * as logs from "./logs";
 import * as validators from "./validators";
+import * as events from "./events";
 
 type Translation = {
   language: string;
@@ -39,17 +40,20 @@ const translate = new Translate({ projectId: process.env.PROJECT_ID });
 
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
+events.setupEventChannel();
 
 logs.init(config);
 
 export const fstranslate = functions.firestore
   .document(process.env.COLLECTION_PATH)
-  .onWrite(async (change): Promise<void> => {
+  .onWrite(async (change, context): Promise<void> => {
     logs.start(config);
+    await events.recordStartEvent({ change, context });
     const { languages, inputFieldName, outputFieldName } = config;
 
     if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
       logs.fieldNamesNotDifferent();
+      await events.recordCompletionEvent({ context });
       return;
     }
     if (
@@ -60,6 +64,7 @@ export const fstranslate = functions.firestore
       )
     ) {
       logs.inputFieldNameIsOutputPath();
+      await events.recordCompletionEvent({ context });
       return;
     }
 
@@ -81,7 +86,9 @@ export const fstranslate = functions.firestore
       logs.complete();
     } catch (err) {
       logs.error(err);
+      events.recordErrorEvent(err as Error);
     }
+    await events.recordCompletionEvent({ context });
   });
 
 export const fstranslatebackfill = functions.tasks
@@ -128,7 +135,7 @@ export const fstranslatebackfill = functions.tasks
       // Stil have more documents to translate, enqueue another task.
       logs.enqueueNext(offset + DOCS_PER_BACKFILL);
       const queue = getFunctions().taskQueue(
-        "fstranslatebackfill",
+        `locations/${config.location}/functions/fstranslatebackfill`,
         process.env.EXT_INSTANCE_ID
       );
       await queue.enqueue({
@@ -172,6 +179,13 @@ const extractOutput = (snapshot: admin.firestore.DocumentSnapshot): any => {
   return snapshot.get(config.outputFieldName);
 };
 
+const extractLanguages = (
+  snapshot: admin.firestore.DocumentSnapshot
+): string[] => {
+  if (!config.languagesFieldName) return config.languages;
+  return snapshot.get(config.languagesFieldName) || config.languages;
+};
+
 const getChangeType = (
   change: functions.Change<admin.firestore.DocumentSnapshot>
 ): ChangeType => {
@@ -197,6 +211,7 @@ const handleExistingDocument = async (
     }
   } catch (err) {
     logs.translateInputToAllLanguagesError(input, err);
+    await events.recordErrorEvent(err as Error);
     throw err;
   }
 };
@@ -224,6 +239,9 @@ const handleUpdateDocument = async (
   const inputBefore = extractInput(before);
   const inputAfter = extractInput(after);
 
+  const languagesBefore = extractLanguages(before);
+  const languagesAfter = extractLanguages(after);
+
   // If previous and updated documents have no input, skip.
   if (inputBefore === undefined && inputAfter === undefined) {
     logs.documentUpdatedNoInput();
@@ -237,7 +255,10 @@ const handleUpdateDocument = async (
     return;
   }
 
-  if (JSON.stringify(inputBefore) === JSON.stringify(inputAfter)) {
+  if (
+    JSON.stringify(inputBefore) === JSON.stringify(inputAfter) &&
+    JSON.stringify(languagesBefore) === JSON.stringify(languagesAfter)
+  ) {
     logs.documentUpdatedUnchangedInput();
   } else {
     logs.documentUpdatedChangedInput();
@@ -259,11 +280,12 @@ const filterLanguagesFn = (
 
 const translateSingle = async (
   input: string,
+  languages: string[],
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
-  logs.translateInputStringToAllLanguages(input, config.languages);
+  logs.translateInputStringToAllLanguages(input, languages);
 
-  const tasks = config.languages.map(
+  const tasks = languages.map(
     async (targetLanguage: string): Promise<Translation> => {
       return {
         language: targetLanguage,
@@ -288,6 +310,7 @@ const translateSingle = async (
     return updateTranslations(snapshot, translationsMap);
   } catch (err) {
     logs.translateInputToAllLanguagesError(input, err);
+    await events.recordErrorEvent(err as Error);
     throw err;
   }
 };
@@ -349,17 +372,18 @@ const translateSingleBackfill = async (
 
 const translateMultiple = async (
   input: object,
+  languages: string[],
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
   let translations = {};
   let promises = [];
 
   Object.entries(input).forEach(([input, value]) => {
-    config.languages.forEach((language) => {
+    languages.forEach((language) => {
       promises.push(
         () =>
           new Promise<void>(async (resolve) => {
-            logs.translateInputStringToAllLanguages(value, config.languages);
+            logs.translateInputStringToAllLanguages(value, languages);
 
             const output =
               typeof value === "string"
@@ -457,12 +481,24 @@ const translateDocument = async (
   snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
   const input: any = extractInput(snapshot);
+  const languages = extractLanguages(snapshot);
 
-  if (typeof input === "object") {
-    return translateMultiple(input, snapshot);
+  if (
+    validators.fieldNameIsTranslationPath(
+      config.inputFieldName,
+      config.outputFieldName,
+      languages
+    )
+  ) {
+    logs.inputFieldNameIsOutputPath();
+    return;
   }
 
-  await translateSingle(input, snapshot);
+  if (typeof input === "object") {
+    return translateMultiple(input, languages, snapshot);
+  }
+
+  await translateSingle(input, languages, snapshot);
 };
 
 const translateString = async (
@@ -478,6 +514,7 @@ const translateString = async (
     return translatedString;
   } catch (err) {
     logs.translateStringError(string, targetLanguage, err);
+    await events.recordErrorEvent(err as Error);
     throw err;
   }
 };
@@ -494,4 +531,8 @@ const updateTranslations = async (
   });
 
   logs.updateDocumentComplete(snapshot.ref.path);
+  await events.recordSuccessEvent({
+    subject: snapshot.ref.path,
+    data: { outputFieldName: config.outputFieldName, translations },
+  });
 };

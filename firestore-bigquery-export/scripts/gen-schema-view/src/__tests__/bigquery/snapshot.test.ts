@@ -48,9 +48,9 @@ async function readBigQuerySchema(file: string): Promise<any> {
 }
 
 describe("view schema snapshot view sql generation", () => {
-  it("should generate the expected sql for fullSchemaLatest.txt", async () => {
+  it("should generate the expected sql for fullSchemaLatest.sql", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/fullSchemaLatest.txt`
+      `${sqlDir}/fullSchemaLatest.sql`
     );
     const result = testBuildLatestSchemaSnapshotViewQuery(
       testDataset,
@@ -61,7 +61,7 @@ describe("view schema snapshot view sql generation", () => {
   });
   it("should generate the expected sql for ", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/fullSchemaLatestFromView.txt`
+      `${sqlDir}/fullSchemaLatestFromView.sql`
     );
     const result = buildLatestSchemaSnapshotViewQueryFromLatestView(
       testDataset,
@@ -72,7 +72,7 @@ describe("view schema snapshot view sql generation", () => {
   });
   it("should generate the expected sql for an empty schema", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/emptySchemaLatest.txt`
+      `${sqlDir}/emptySchemaLatest.sql`
     );
     const result = buildLatestSchemaSnapshotViewQuery(
       testDataset,
@@ -83,7 +83,7 @@ describe("view schema snapshot view sql generation", () => {
   });
   it("should generate the expected sql", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/emptySchemaLatestFromView.txt`
+      `${sqlDir}/emptySchemaLatestFromView.sql`
     );
     const result = buildLatestSchemaSnapshotViewQueryFromLatestView(
       testDataset,
@@ -95,7 +95,7 @@ describe("view schema snapshot view sql generation", () => {
 
   it("should handle renaming properties extracted from JSON data", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/viewColumnRenameSchema.txt`
+      `${sqlDir}/viewColumnRenameSchema.sql`
     );
     const result = testBuildLatestSchemaSnapshotViewQuery(
       testDataset,

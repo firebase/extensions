@@ -21,7 +21,7 @@ import axios, { AxiosInstance } from "axios";
 import { FirestoreUrlShortener } from "./abstract-shortener";
 import config from "./config";
 import * as logs from "./logs";
-
+import * as events from "./events";
 class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
   private instance: AxiosInstance;
 
@@ -70,8 +70,12 @@ const urlShortener = new FirestoreBitlyUrlShortener(
   config.bitlyAccessToken
 );
 
-export const fsurlshortener = functions.handler.firestore.document.onWrite(
-  async (change) => {
-    return urlShortener.onDocumentWrite(change);
-  }
-);
+events.setupEventChannel();
+
+export const fsurlshortener = functions.firestore
+  .document(config.collectionPath)
+  .onWrite(async (change, context) => {
+    await events.recordStartEvent({ context, change });
+    await urlShortener.onDocumentWrite(change);
+    await events.recordCompletionEvent({ context });
+  });

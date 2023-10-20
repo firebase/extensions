@@ -15,7 +15,7 @@ export const smtpServer = () => {
   });
 
   const port = 8132;
-  const host = "localhost";
+  const host = "127.0.0.1";
 
   server.listen(port, () => console.log(`Server listening on ${host}:${port}`));
 

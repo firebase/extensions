@@ -55,7 +55,10 @@ export class Partitioning {
     /* Check if valid timestamp value from sdk */
     if (value instanceof firebase.firestore.Timestamp) return true;
 
-    /* Check if valid date/time value from console */
+    /* Check if valid date/timstemap, expedted result from production  */
+    if (value && value.toDate && value.toDate()) return true;
+
+    /* Check if valid date/time value from the console, expected result from testing locally */
     return Object.prototype.toString.call(value) === "[object Date]";
   }
 

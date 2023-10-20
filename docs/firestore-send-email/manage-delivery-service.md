@@ -1,6 +1,6 @@
 # Manage delivery status
 
-## Manage delivery status with the Trigger Email extension
+## Manage delivery status with the Trigger Email from Firestore extension
 
 When a document is added to the collection, the extension picks it up for email delivery processing. The extension creates and updates a `delivery` field in the document as it processes the email.
 

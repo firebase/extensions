@@ -35,9 +35,12 @@ export default {
   bqProjectId: process.env.BIGQUERY_PROJECT_ID,
   collectionPath: process.env.COLLECTION_PATH,
   datasetId: process.env.DATASET_ID,
+  doBackfill: process.env.DO_BACKFILL === "true",
+  docsPerBackfill: parseInt(process.env.DOCS_PER_BACKFILL) || 200,
   tableId: process.env.TABLE_ID,
   location: process.env.LOCATION,
   initialized: false,
+  importCollectionPath: process.env.IMPORT_COLLECTION_PATH,
   datasetLocation: process.env.DATASET_LOCATION,
   backupCollectionId: process.env.BACKUP_COLLECTION,
   transformFunction: process.env.TRANSFORM_FUNCTION,
@@ -49,7 +52,13 @@ export default {
       : undefined,
   timePartitioningFirestoreField: process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
   clustering: clustering(process.env.CLUSTERING),
-  wildcardIds: process.env.WILDCARD_IDS === "true" ? true : false,
+  wildcardIds: process.env.WILDCARD_IDS === "true",
   useNewSnapshotQuerySyntax:
     process.env.USE_NEW_SNAPSHOT_QUERY_SYNTAX === "yes" ? true : false,
+  instanceId: process.env.EXT_INSTANCE_ID!,
+  maxDispatchesPerSecond: parseInt(
+    process.env.MAX_DISPATCHES_PER_SECOND || "10"
+  ),
+  kmsKeyName: process.env.KMS_KEY_NAME,
+  useCollectionGroupQuery: process.env.USE_COLLECTION_GROUP_QUERY === "yes",
 };

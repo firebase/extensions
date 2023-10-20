@@ -1,21 +1,38 @@
+import * as admin from "firebase-admin";
 import { logger } from "firebase-functions";
 import * as functionsTestInit from "../node_modules/firebase-functions-test";
 import mockedEnv from "../node_modules/mocked-env";
 
 import { mockConsoleLog } from "./__mocks__/console";
-
 import config from "../src/config";
 
 jest.mock("@firebaseextensions/firestore-bigquery-change-tracker", () => ({
   FirestoreBigQueryEventHistoryTracker: jest.fn(() => {
     return {
       record: jest.fn(() => {}),
+      serializeData: jest.fn(() => {}),
     };
   }),
   ChangeType: {
     DELETE: 2,
     UPDATE: 1,
     CREATE: 0,
+  },
+}));
+
+jest.mock("firebase-admin/functions", () => ({
+  getFunctions: () => {
+    return { taskQueue: jest.fn() };
+  },
+}));
+
+jest.mock("firebase-admin/functions", () => ({
+  getFunctions: () => {
+    return {
+      taskQueue: jest.fn(() => {
+        return { enqueue: jest.fn() };
+      }),
+    };
   },
 }));
 
@@ -60,7 +77,6 @@ describe("extension", () => {
 
   describe("functions.fsexportbigquery", () => {
     let functionsConfig;
-    let callResult;
 
     beforeEach(async () => {
       jest.resetModules();
@@ -70,8 +86,14 @@ describe("extension", () => {
     });
 
     test("functions runs with a deletion", async () => {
-      const beforeSnapshot = { foo: "bar" };
-      const afterSnapshot = { foo: "bars" };
+      const beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { foo: "bar" },
+        "document/path"
+      );
+      const afterSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { foo: "bars" },
+        "document/path"
+      );
 
       const documentChange = functionsTest.makeChange(
         beforeSnapshot,
@@ -91,12 +113,21 @@ describe("extension", () => {
         functionsConfig
       );
 
+      // sleep for 10 seconds
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+
       expect(mockConsoleLog).toBeCalledWith("Completed execution of extension");
-    });
+    }, 20000);
 
     test("function runs with updated data", async () => {
-      const beforeSnapshot = { foo: "bar" };
-      const afterSnapshot = { foo: "bars", exists: true };
+      const beforeSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { foo: "bar" },
+        "document/path"
+      );
+      const afterSnapshot = functionsTest.firestore.makeDocumentSnapshot(
+        { foo: "bars" },
+        "document/path"
+      );
 
       const documentChange = functionsTest.makeChange(
         beforeSnapshot,

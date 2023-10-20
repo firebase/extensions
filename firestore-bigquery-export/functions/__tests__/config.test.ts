@@ -17,8 +17,10 @@ const environment = {
   TABLE_ID: "my_table",
   TRANSFORM_FUNCTION: "",
   CLUSTERING: "data,timestamp",
+  KMS_KEY_NAME: "test",
 };
 
+//@ts-ignore
 const { config } = global;
 
 describe("extension config", () => {
@@ -46,8 +48,8 @@ describe("extension config", () => {
       datasetId: environment.DATASET_ID,
       tableId: environment.TABLE_ID,
       clustering: clustering(environment.CLUSTERING),
+      kmsKeyName: environment.KMS_KEY_NAME,
     };
-
     expect(config()).toMatchSnapshot(env);
   });
 
