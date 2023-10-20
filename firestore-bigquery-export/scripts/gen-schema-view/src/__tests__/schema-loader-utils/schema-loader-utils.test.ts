@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import * as fs_find from "fs-find";
+import * as chai from "chai";
 import { readdirSync } from "fs";
+import * as fs_find from "fs-find";
 import { dirname } from "path";
 import { promisify } from "util";
 
-import * as chai from "chai";
 import * as schema_loader_utils from "../../schema-loader-utils";
 
 const expect = chai.expect;

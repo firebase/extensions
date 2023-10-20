@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import { existsSync, lstatSync, readdirSync } from "fs";
 import * as glob from "glob";
 import * as path from "path";
 
 import { FirestoreSchema } from "./schema";
-
-import { existsSync, readdirSync, lstatSync } from "fs";
 
 export function readSchemas(globs: string[]): {
   [schemaName: string]: FirestoreSchema;

@@ -1,17 +1,17 @@
 import { BigQuery, Dataset, Table } from "@google-cloud/bigquery";
-const { logger } = require("firebase-functions");
+import { firestore } from "firebase-admin";
 
+import { FirestoreDocumentChangeEvent } from "../..";
 import {
   RawChangelogSchema,
   RawChangelogViewSchema,
 } from "../../bigquery/schema";
-
-import { FirestoreDocumentChangeEvent } from "../..";
 import { latestConsistentSnapshotView } from "../../bigquery/snapshot";
-import { deleteTable } from "../fixtures/clearTables";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
+import { deleteTable } from "../fixtures/clearTables";
 import { getBigQueryTableData } from "../fixtures/queries";
-import { firestore } from "firebase-admin";
+
+const { logger } = require("firebase-functions");
 
 process.env.PROJECT_ID = "extensions-testing";
 

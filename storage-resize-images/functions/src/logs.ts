@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import { logger } from "firebase-functions";
+
 import config from "./config";
 
 export const complete = () => {

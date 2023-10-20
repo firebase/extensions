@@ -1,8 +1,8 @@
-import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
-
-import * as logs from "../logs";
 import * as bigquery from "@google-cloud/bigquery";
 import { TableMetadata } from "@google-cloud/bigquery";
+
+import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+import * as logs from "../logs";
 
 export class Clustering {
   public config: FirestoreBigQueryEventHistoryTrackerConfig;

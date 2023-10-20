@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as admin from "firebase-admin";
-import { FieldPath, DocumentReference } from "firebase-admin/firestore";
-import * as functions from "firebase-functions";
-import { getDatabaseUrl, hasValidUserPath } from "./helpers";
-import chunk from "lodash.chunk";
 import { getEventarc } from "firebase-admin/eventarc";
+import { DocumentReference, FieldPath } from "firebase-admin/firestore";
+import * as functions from "firebase-functions";
+import chunk from "lodash.chunk";
 
 import config from "./config";
+import { getDatabaseUrl, hasValidUserPath } from "./helpers";
 import * as logs from "./logs";
-import { search } from "./search";
-import { runCustomSearchFunction } from "./runCustomSearchFunction";
-import { runBatchPubSubDeletions } from "./runBatchPubSubDeletions";
 import { recursiveDelete } from "./recursiveDelete";
+import { runBatchPubSubDeletions } from "./runBatchPubSubDeletions";
+import { runCustomSearchFunction } from "./runCustomSearchFunction";
+import { search } from "./search";
 
 // Helper function for selecting correct domain adrress
 const databaseURL = getDatabaseUrl(

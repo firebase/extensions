@@ -1,14 +1,12 @@
-import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
-import { FirestoreDocumentChangeEvent } from "..";
+import * as bigquery from "@google-cloud/bigquery";
+import { BigQuery, TableMetadata } from "@google-cloud/bigquery";
 import * as firebase from "firebase-admin";
 
+import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+import { FirestoreDocumentChangeEvent } from "..";
 import * as logs from "../logs";
-import * as bigquery from "@google-cloud/bigquery";
-
-import { getNewPartitionField } from "./schema";
-import { BigQuery, TableMetadata } from "@google-cloud/bigquery";
-
 import { PartitionFieldType } from "../types";
+import { getNewPartitionField } from "./schema";
 
 export class Partitioning {
   public config: FirestoreBigQueryEventHistoryTrackerConfig;

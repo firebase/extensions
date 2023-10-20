@@ -1,4 +1,5 @@
 import mockedEnv from "mocked-env";
+
 import { mockGenerateResizedImage } from "./mocks/generateResizedImage";
 
 const environment = {

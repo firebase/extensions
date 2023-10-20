@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as admin from "firebase-admin";
-import { getFunctions } from "firebase-admin/functions";
 import { getExtensions } from "firebase-admin/extensions";
-import * as fs from "fs";
+import { getFunctions } from "firebase-admin/functions";
 import * as functions from "firebase-functions";
+import * as fs from "fs";
 import * as mkdirp from "mkdirp";
 import * as os from "os";
 import * as path from "path";
 import * as sharp from "sharp";
-
-import { ResizedImageResult, modifyImage } from "./resize-image";
-import config, { deleteImage } from "./config";
-import * as logs from "./logs";
-import { shouldResize } from "./filters";
-import * as events from "./events";
 import { v4 as uuidv4 } from "uuid";
+
+import config, { deleteImage } from "./config";
+import * as events from "./events";
+import { shouldResize } from "./filters";
+import * as logs from "./logs";
+import { ResizedImageResult, modifyImage } from "./resize-image";
 import { countNegativeTraversals } from "./util";
 
 sharp.cache(false);

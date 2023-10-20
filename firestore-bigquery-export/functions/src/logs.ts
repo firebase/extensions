@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { logger } from "firebase-functions";
+
 import config from "./config";
 
 export const arrayFieldInvalid = (fieldName: string) => {

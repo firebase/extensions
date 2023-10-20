@@ -1,4 +1,5 @@
 import { firestore } from "firebase-admin";
+
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,

@@ -1,8 +1,7 @@
-import { logger } from "firebase-functions/v1";
-import { onCustomEventPublished } from "firebase-functions/v2/eventarc";
-
 import { initializeApp } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
+import { logger } from "firebase-functions/v1";
+import { onCustomEventPublished } from "firebase-functions/v2/eventarc";
 
 const app = initializeApp();
 

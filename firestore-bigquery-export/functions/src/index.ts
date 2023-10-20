@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import config from "./config";
-import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
-import { getExtensions } from "firebase-admin/extensions";
-import { getFunctions } from "firebase-admin/functions";
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreEventHistoryTracker,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
-
+import * as admin from "firebase-admin";
 import { getEventarc } from "firebase-admin/eventarc";
-import * as logs from "./logs";
+import { getExtensions } from "firebase-admin/extensions";
+import { getFunctions } from "firebase-admin/functions";
+import * as functions from "firebase-functions";
+
+import config from "./config";
 import * as events from "./events";
+import * as logs from "./logs";
 import { getChangeType, getDocumentId, resolveWildcardIds } from "./util";
 
 const eventTracker: FirestoreEventHistoryTracker =

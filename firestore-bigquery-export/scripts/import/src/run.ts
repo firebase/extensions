@@ -1,17 +1,16 @@
-import { cpus } from "os";
+import {
+  ChangeType,
+  FirestoreBigQueryEventHistoryTracker,
+  FirestoreDocumentChangeEvent,
+} from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as firebase from "firebase-admin";
+import { cpus } from "os";
 import { pool } from "workerpool";
 
 import { CliConfig } from "./types";
 
 const { BigQuery } = require("@google-cloud/bigquery");
 const bigquery = new BigQuery();
-
-import {
-  ChangeType,
-  FirestoreBigQueryEventHistoryTracker,
-  FirestoreDocumentChangeEvent,
-} from "@firebaseextensions/firestore-bigquery-change-tracker";
 
 /**
  * Import data from a collection group in parallel using workers.

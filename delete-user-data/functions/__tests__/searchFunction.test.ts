@@ -1,7 +1,8 @@
 import * as admin from "firebase-admin";
 import { UserRecord } from "firebase-functions/v1/auth";
-import { createFirebaseUser, waitForDocumentDeletion } from "./helpers";
+
 import setupEnvironment from "../__tests__/helpers/setupEnvironment";
+import { createFirebaseUser, waitForDocumentDeletion } from "./helpers";
 
 setupEnvironment();
 

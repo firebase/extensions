@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as admin from "firebase-admin";
-import { ShardedCounterWorker } from "../src/worker";
 import * as uuid from "uuid";
+
+import { ShardedCounterWorker } from "../src/worker";
 
 process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
 

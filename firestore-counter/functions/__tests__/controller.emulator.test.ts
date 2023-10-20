@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import {
-  WorkerShardingInfo,
-  ShardedCounterController as Controller,
-  ControllerStatus,
-} from "../src/controller";
 import * as admin from "firebase-admin";
 import * as uuid from "uuid";
+
+import {
+  ShardedCounterController as Controller,
+  ControllerStatus,
+  WorkerShardingInfo,
+} from "../src/controller";
 
 process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
 

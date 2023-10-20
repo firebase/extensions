@@ -1,5 +1,5 @@
-import * as inquirer from "inquirer";
 import * as program from "commander";
+import * as inquirer from "inquirer";
 
 import { CliConfig, CliConfigError } from "./types";
 

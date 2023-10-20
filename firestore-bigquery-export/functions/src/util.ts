@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import { DocumentSnapshot } from "firebase-functions/lib/providers/firestore";
-import { Change } from "firebase-functions";
-
 import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import { Change } from "firebase-functions";
+import { DocumentSnapshot } from "firebase-functions/lib/providers/firestore";
 
 export function getChangeType(change: Change<DocumentSnapshot>): ChangeType {
   if (!change.after.exists) {

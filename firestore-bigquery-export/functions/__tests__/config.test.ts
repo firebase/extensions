@@ -1,9 +1,7 @@
 import { readFileSync } from "fs";
-
-import { resolve as pathResolve } from "path";
-
 import * as yaml from "js-yaml";
 import mockedEnv from "mocked-env";
+import { resolve as pathResolve } from "path";
 
 import { clustering } from "../src/config";
 

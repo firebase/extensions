@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import { Translate } from "@google-cloud/translate";
 import * as admin from "firebase-admin";
-import * as functions from "firebase-functions";
 import { getExtensions } from "firebase-admin/extensions";
 import { getFunctions } from "firebase-admin/functions";
-import { Translate } from "@google-cloud/translate";
+import * as functions from "firebase-functions";
 
 import config from "./config";
+import * as events from "./events";
 import * as logs from "./logs";
 import * as validators from "./validators";
-import * as events from "./events";
 
 type Translation = {
   language: string;

@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
-import { smtpServer } from "./createSMTPServer";
 import { FieldValue } from "firebase-admin/firestore";
+
+import { smtpServer } from "./createSMTPServer";
 
 process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
 

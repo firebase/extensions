@@ -1,5 +1,7 @@
-import * as admin from "firebase-admin";
 import { BigQuery } from "@google-cloud/bigquery";
+import * as admin from "firebase-admin";
+
+import { documentData } from "./fixtures/documentData";
 
 /** Set defaults */
 const bqProjectId = "dev-extensions-testing";
@@ -9,7 +11,6 @@ const tableId = "bq_e2e_test_raw_changelog";
 /** Init resources */
 admin.initializeApp({ projectId: bqProjectId });
 const bq = new BigQuery({ projectId: "dev-extensions-testing" });
-import { documentData } from "./fixtures/documentData";
 
 /***
  * Must have a current installed version of the extension to run this test.

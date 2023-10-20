@@ -15,21 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import * as firebase from "firebase-admin";
-import * as program from "commander";
-import * as fs from "fs";
-import * as util from "util";
-import * as filenamify from "filenamify";
-import { runMultiThread } from "./run";
-import { resolveWildcardIds } from "./config";
-
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreDocumentChangeEvent,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import * as program from "commander";
+import * as filenamify from "filenamify";
+import * as firebase from "firebase-admin";
+import * as fs from "fs";
+import * as util from "util";
+
+import { resolveWildcardIds } from "./config";
 import { parseConfig } from "./config";
+import { runMultiThread } from "./run";
 
 // For reading cursor position.
 const exists = util.promisify(fs.exists);

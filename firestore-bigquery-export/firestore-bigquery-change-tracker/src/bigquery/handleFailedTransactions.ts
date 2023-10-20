@@ -1,4 +1,5 @@
 import * as firebase from "firebase-admin";
+
 import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
 
 if (!firebase.apps.length) {

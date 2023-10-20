@@ -1,8 +1,7 @@
 import { BigQuery } from "@google-cloud/bigquery";
+
 import { FirestoreDocumentChangeEvent } from "../..";
-
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
-
 import { deleteTable } from "../fixtures/clearTables";
 import { getBigQueryTableData } from "../fixtures/queries";
 

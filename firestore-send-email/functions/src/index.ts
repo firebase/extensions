@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as admin from "firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
 import * as nodemailer from "nodemailer";
 
-import * as logs from "./logs";
 import config from "./config";
+import * as events from "./events";
+import { setSmtpCredentials } from "./helpers";
+import * as logs from "./logs";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
-import { setSmtpCredentials } from "./helpers";
-import * as events from "./events";
 
 logs.init();
 

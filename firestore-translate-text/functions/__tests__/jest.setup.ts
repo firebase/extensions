@@ -1,15 +1,15 @@
 import {
-  snapshot,
   mockDocumentSnapshotFactory,
-  mockFirestoreUpdate,
   mockFirestoreTransaction,
+  mockFirestoreUpdate,
+  snapshot,
 } from "./mocks/firestore";
 import {
-  testTranslations,
   mockTranslate,
-  mockTranslateClassMethod,
   mockTranslateClass,
+  mockTranslateClassMethod,
   mockTranslateModuleFactory,
+  testTranslations,
 } from "./mocks/translate";
 
 global.config = () => require("../src/config").default;

@@ -61,7 +61,8 @@ Once loaded, you can use the data from the bundle:
 If you specified an array of document paths when you defined the bundle, you can get the document data on your client via the bundle:
 
 ```js
-import { getFirestore, doc, getDocFromCache } from "firebase/firestore";
+import { doc, getDocFromCache, getFirestore } from "firebase/firestore";
+
 // Bundle Document IDs: ['users/92x1NgSWYKUC4AG4s2nHGMR2ikZ2']
 
 const ref = doc(getFirestore(), "users/92x1NgSWYKUC4AG4s2nHGMR2ikZ2");
@@ -72,6 +73,7 @@ If you specified queries, you can use the `namedQuery` API to run a query from t
 
 ```js
 import { getFirestore, namedQuery } from "firebase/firestore";
+
 const query = await namedQuery(getFirestore(), "queryId");
 const snapshot = await getDocsFromCache(query);
 ```

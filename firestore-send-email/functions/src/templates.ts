@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as admin from "firebase-admin";
 import { create } from "handlebars";
 
-import { TemplateGroup, TemplateData, Attachment } from "./types";
-
 import {
-  registeredPartial,
-  noPartialAttachmentSupport,
   checkingMissingTemplate,
   foundMissingTemplate,
+  noPartialAttachmentSupport,
+  registeredPartial,
   templatesLoaded,
 } from "./logs";
+import { Attachment, TemplateData, TemplateGroup } from "./types";
 
 const subjHandlebars = create();
 const htmlHandlebars = create();

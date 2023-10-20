@@ -1,13 +1,14 @@
 import * as admin from "firebase-admin";
 import { UserRecord } from "firebase-admin/lib/auth/user-record";
+
+import setupEnvironment from "../__tests__/helpers/setupEnvironment";
+import config from "../src/config";
 import { search } from "../src/search";
 import {
   createFirebaseUser,
   waitForCollectionDeletion,
   waitForDocumentDeletion,
 } from "./helpers";
-import setupEnvironment from "../__tests__/helpers/setupEnvironment";
-import config from "../src/config";
 
 const environment = {
   queryCollection: "queries",

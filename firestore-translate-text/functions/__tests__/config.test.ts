@@ -1,9 +1,8 @@
-import { readFileSync } from "fs";
-import { resolve as pathResolve } from "path";
 import * as functionsTestInit from "firebase-functions-test";
-
+import { readFileSync } from "fs";
 import * as yaml from "js-yaml";
 import mockedEnv from "mocked-env";
+import { resolve as pathResolve } from "path";
 
 import { messages } from "../src/logs/messages";
 

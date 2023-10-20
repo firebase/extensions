@@ -1,10 +1,10 @@
+import { ObjectMetadata } from "firebase-functions/v1/storage";
 import * as path from "path";
 
-import * as logs from "./logs";
 import config from "./config";
+import * as logs from "./logs";
 import { supportedContentTypes } from "./resize-image";
 import { startsWithArray } from "./util";
-import { ObjectMetadata } from "firebase-functions/v1/storage";
 
 export function shouldResize(object: ObjectMetadata): boolean {
   const { contentType } = object; // This is the image MIME type

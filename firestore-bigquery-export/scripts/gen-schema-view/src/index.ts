@@ -15,13 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as program from "commander";
 import * as firebase from "firebase-admin";
 import * as inquirer from "inquirer";
 
 import { FirestoreBigQuerySchemaViewFactory, FirestoreSchema } from "./schema";
-
 import { readSchemas } from "./schema-loader-utils";
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;

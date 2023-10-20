@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import axios, { AxiosInstance } from "axios";
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import axios, { AxiosInstance } from "axios";
 
 import { FirestoreUrlShortener } from "./abstract-shortener";
 import config from "./config";
-import * as logs from "./logs";
 import * as events from "./events";
+import * as logs from "./logs";
+
 class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
   private instance: AxiosInstance;
 

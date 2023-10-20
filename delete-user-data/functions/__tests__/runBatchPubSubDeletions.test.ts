@@ -1,8 +1,8 @@
 import * as admin from "firebase-admin";
-import { runBatchPubSubDeletions } from "../src/runBatchPubSubDeletions";
-import setupEnvironment from "./helpers/setupEnvironment";
 
+import { runBatchPubSubDeletions } from "../src/runBatchPubSubDeletions";
 import { Paths } from "../src/types";
+import setupEnvironment from "./helpers/setupEnvironment";
 
 admin.initializeApp();
 setupEnvironment();

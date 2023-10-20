@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as crypto from "crypto";
 import * as admin from "firebase-admin";
-import * as functions from "firebase-functions";
 import { getAuth } from "firebase-admin/auth";
 import { getExtensions } from "firebase-admin/extensions";
 import { getFunctions } from "firebase-admin/functions";
+import * as functions from "firebase-functions";
 // @ts-ignore incorrect typescript typings
 import * as Mailchimp from "mailchimp-api-v3";
 

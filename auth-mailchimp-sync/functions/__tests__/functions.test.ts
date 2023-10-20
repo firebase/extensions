@@ -1,10 +1,10 @@
+import * as exportedFunctions from "../src";
+import functionsConfig from "../src/config";
+import { obfuscatedConfig } from "../src/logs";
+
 const { logger } = require("firebase-functions");
 
 const consoleLogSpy = jest.spyOn(logger, "log").mockImplementation();
-
-import functionsConfig from "../src/config";
-import { obfuscatedConfig } from "../src/logs";
-import * as exportedFunctions from "../src";
 
 describe("extension", () => {
   beforeEach(() => {});

@@ -1,4 +1,5 @@
 import { BigQuery, Dataset, Table } from "@google-cloud/bigquery";
+
 import { FirestoreDocumentChangeEvent } from "../..";
 import { RawChangelogSchema } from "../../bigquery/schema";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";

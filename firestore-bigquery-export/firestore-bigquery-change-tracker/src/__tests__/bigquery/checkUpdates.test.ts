@@ -1,12 +1,12 @@
 import { BigQuery } from "@google-cloud/bigquery";
-import { FirestoreDocumentChangeEvent } from "../..";
-import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
-import { deleteTable } from "../fixtures/clearTables";
 
+import { FirestoreDocumentChangeEvent } from "../..";
 import {
   tableRequiresUpdate,
   viewRequiresUpdate,
 } from "../../bigquery/checkUpdates";
+import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
+import { deleteTable } from "../fixtures/clearTables";
 
 process.env.PROJECT_ID = "extensions-testing";
 

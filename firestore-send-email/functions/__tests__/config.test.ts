@@ -1,5 +1,6 @@
 import * as functionsTestInit from "firebase-functions-test";
 import mockedEnv from "mocked-env";
+
 import { Config } from "../src/types";
 
 const { config } = global;

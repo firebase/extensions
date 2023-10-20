@@ -13,35 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as bigquery from "@google-cloud/bigquery";
-import { DocumentReference } from "firebase-admin/firestore";
-import * as traverse from "traverse";
-import fetch from "node-fetch";
-import {
-  RawChangelogSchema,
-  RawChangelogViewSchema,
-  documentIdField,
-  oldDataField,
-  documentPathParams,
-} from "./schema";
-import { latestConsistentSnapshotView } from "./snapshot";
-import handleFailedTransactions from "./handleFailedTransactions";
-
-import {
-  ChangeType,
-  FirestoreEventHistoryTracker,
-  FirestoreDocumentChangeEvent,
-} from "../tracker";
-import * as logs from "../logs";
 import {
   InsertRowsOptions,
   TableMetadata,
 } from "@google-cloud/bigquery/build/src/table";
+import { DocumentReference } from "firebase-admin/firestore";
+import fetch from "node-fetch";
+import * as traverse from "traverse";
 
-import { Partitioning } from "./partitioning";
-import { Clustering } from "./clustering";
+import * as logs from "../logs";
+import {
+  ChangeType,
+  FirestoreDocumentChangeEvent,
+  FirestoreEventHistoryTracker,
+} from "../tracker";
 import { tableRequiresUpdate, viewRequiresUpdate } from "./checkUpdates";
+import { Clustering } from "./clustering";
+import handleFailedTransactions from "./handleFailedTransactions";
+import { Partitioning } from "./partitioning";
+import {
+  RawChangelogSchema,
+  RawChangelogViewSchema,
+  documentIdField,
+  documentPathParams,
+  oldDataField,
+} from "./schema";
+import { latestConsistentSnapshotView } from "./snapshot";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 

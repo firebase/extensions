@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import { initializeApp, credential } from "firebase-admin";
+import { credential, initializeApp } from "firebase-admin";
 import * as uuid from "uuid";
 
 let serviceAccount = require("../../test-project-key.json");

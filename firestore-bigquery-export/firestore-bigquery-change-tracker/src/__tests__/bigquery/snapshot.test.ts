@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import * as bigquery from "@google-cloud/bigquery";
 import * as chai from "chai";
 import * as fs from "fs";
 import * as sqlFormatter from "sql-formatter";
 import * as util from "util";
-import * as bigquery from "@google-cloud/bigquery";
 
-import { buildLatestSnapshotViewQuery } from "../../bigquery/snapshot";
 import { FirestoreBigQueryEventHistoryTracker } from "../../bigquery";
+import { buildLatestSnapshotViewQuery } from "../../bigquery/snapshot";
 
 const fixturesDir = __dirname + "/../fixtures";
 const sqlDir = fixturesDir + "/sql";

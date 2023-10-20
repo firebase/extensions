@@ -1,4 +1,5 @@
 import * as eventArc from "firebase-admin/eventarc";
+
 const { getEventarc } = eventArc;
 
 const EXTENSION_NAME = "firestore-translate-text";

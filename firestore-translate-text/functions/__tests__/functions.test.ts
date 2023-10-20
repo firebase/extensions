@@ -1,5 +1,5 @@
-import mockedEnv from "mocked-env";
 import * as functionsTestInit from "firebase-functions-test";
+import mockedEnv from "mocked-env";
 
 import { messages } from "../src/logs/messages";
 

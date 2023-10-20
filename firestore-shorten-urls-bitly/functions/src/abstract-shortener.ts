@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 
-import * as logs from "./logs";
 import * as events from "./events";
+import * as logs from "./logs";
 
 enum ChangeType {
   CREATE,

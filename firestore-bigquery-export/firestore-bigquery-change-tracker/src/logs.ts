@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import { Table } from "@google-cloud/bigquery";
 import { firestore } from "firebase-admin";
 import { logger } from "firebase-functions";

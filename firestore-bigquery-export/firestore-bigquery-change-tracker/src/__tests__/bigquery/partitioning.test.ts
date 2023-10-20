@@ -1,8 +1,7 @@
+import { BigQuery, Dataset, Table } from "@google-cloud/bigquery";
 import * as admin from "firebase-admin";
 
-import { BigQuery, Dataset, Table } from "@google-cloud/bigquery";
 import { ChangeType, FirestoreDocumentChangeEvent } from "../..";
-
 import { FirestoreBigQueryEventHistoryTrackerConfig } from "../../bigquery";
 import { Partitioning } from "../../bigquery/partitioning";
 import { deleteTable } from "../fixtures/clearTables";

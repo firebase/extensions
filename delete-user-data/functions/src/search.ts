@@ -1,5 +1,7 @@
 import * as admin from "firebase-admin";
+
 import * as config from "./config";
+
 const { PubSub } = require("@google-cloud/pubsub");
 
 export const search = async (

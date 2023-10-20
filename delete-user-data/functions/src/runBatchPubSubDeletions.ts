@@ -1,7 +1,8 @@
 import chunk from "lodash.chunk";
-const { PubSub } = require("@google-cloud/pubsub");
 
 import * as config from "./config";
+
+const { PubSub } = require("@google-cloud/pubsub");
 
 type Paths = {
   firestorePaths: string[];

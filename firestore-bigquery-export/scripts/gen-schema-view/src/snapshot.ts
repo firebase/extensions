@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as sqlFormatter from "sql-formatter";
+
 import {
-  buildSchemaViewQuery,
   FirestoreSchema,
+  buildSchemaViewQuery,
   latest,
   processFirestoreSchema,
   subSelectQuery,

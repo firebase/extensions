@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import { v4 } from "uuid";
 import admin from "firebase-admin";
+import { v4 } from "uuid";
 
 const SHARD_COLLECTION_ID = "_counter_shards_";
 

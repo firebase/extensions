@@ -1,5 +1,6 @@
 import { createTransport } from "nodemailer";
 import { URL } from "url";
+
 import { invalidURI } from "./logs";
 import { Config } from "./types";
 

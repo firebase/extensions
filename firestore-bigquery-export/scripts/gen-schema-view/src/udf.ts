@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as sqlFormatter from "sql-formatter";
 
 // Persistent UDFs to be created on schema view initialization.

@@ -1,8 +1,8 @@
 import { BigQuery } from "@google-cloud/bigquery";
-
 import * as childProcess from "child_process";
-import * as path from "path";
 import * as admin from "firebase-admin";
+import * as path from "path";
+
 import { repeat } from "./helpers/waitFor";
 
 const scriptPath = path.join(__dirname, "../lib/index.js");

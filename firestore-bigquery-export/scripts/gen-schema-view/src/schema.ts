@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import { RawChangelogViewSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as bigquery from "@google-cloud/bigquery";
 import * as sqlFormatter from "sql-formatter";
+
 import * as logs from "./logs";
 import { latestConsistentSnapshotSchemaView } from "./snapshot";
 import {

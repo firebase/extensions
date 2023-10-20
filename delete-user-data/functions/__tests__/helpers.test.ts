@@ -1,9 +1,9 @@
 import * as admin from "firebase-admin";
 import { UserRecord } from "firebase-functions/v1/auth";
-import setupEnvironment from "./helpers/setupEnvironment";
 
-import { hasValidUserPath, getDatabaseUrl } from "../src/helpers";
+import { getDatabaseUrl, hasValidUserPath } from "../src/helpers";
 import { createFirebaseUser } from "./helpers";
+import setupEnvironment from "./helpers/setupEnvironment";
 
 admin.initializeApp();
 setupEnvironment();

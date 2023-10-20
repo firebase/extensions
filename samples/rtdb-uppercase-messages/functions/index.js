@@ -1,10 +1,9 @@
-import { database, tasks, logger } from "firebase-functions/v1";
-
 import { initializeApp } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
 import { getEventarc } from "firebase-admin/eventarc";
 import { getExtensions } from "firebase-admin/extensions";
 import { getFunctions } from "firebase-admin/functions";
+import { database, logger, tasks } from "firebase-functions/v1";
 
 const app = initializeApp();
 

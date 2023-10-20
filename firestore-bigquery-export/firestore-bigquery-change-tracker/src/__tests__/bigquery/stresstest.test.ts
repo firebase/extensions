@@ -1,10 +1,12 @@
 import { BigQuery, Dataset, Table } from "@google-cloud/bigquery";
+
 import { FirestoreDocumentChangeEvent } from "../..";
+import { ChangeType } from "../..";
 import { RawChangelogSchema } from "../../bigquery";
+import { buildLatestSnapshotViewQuery } from "../../bigquery/snapshot";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { deleteTable } from "../fixtures/clearTables";
-import { ChangeType } from "../..";
-import { buildLatestSnapshotViewQuery } from "../../bigquery/snapshot";
+
 process.env.PROJECT_ID = "extensions-testing";
 
 const bq = new BigQuery();

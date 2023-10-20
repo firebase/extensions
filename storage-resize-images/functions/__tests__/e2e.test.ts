@@ -1,7 +1,8 @@
+import { config } from "dotenv";
 import * as admin from "firebase-admin";
 import { Storage } from "firebase-admin/storage";
-import { config } from "dotenv";
 import * as path from "path";
+
 import { waitForFile } from "./util";
 
 const envLocalPath = path.resolve(

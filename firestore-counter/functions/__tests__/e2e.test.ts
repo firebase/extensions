@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import { Counter } from "./test-client";
 import * as admin from "firebase-admin";
 import waitForExpect from "wait-for-expect";
+
+import { Counter } from "./test-client";
 
 process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
 

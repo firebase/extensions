@@ -1,7 +1,8 @@
 import fetch from "node-fetch";
-import { runBatchPubSubDeletions } from "./runBatchPubSubDeletions";
-import * as logs from "./logs";
+
 import config from "./config";
+import * as logs from "./logs";
+import { runBatchPubSubDeletions } from "./runBatchPubSubDeletions";
 
 export const runCustomSearchFunction = async (uid: string): Promise<void> => {
   const response = await fetch(config.searchFunction, {

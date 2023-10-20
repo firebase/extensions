@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { ShardedCounterWorker } from "./worker";
-import { ShardedCounterController, ControllerStatus } from "./controller";
+import * as functions from "firebase-functions";
+
+import { ControllerStatus, ShardedCounterController } from "./controller";
 import * as events from "./events";
+import { ShardedCounterWorker } from "./worker";
 
 admin.initializeApp();
 

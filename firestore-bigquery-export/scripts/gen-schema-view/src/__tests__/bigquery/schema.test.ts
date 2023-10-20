@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as chai from "chai";
 import * as fs from "fs";
 import * as sqlFormatter from "sql-formatter";

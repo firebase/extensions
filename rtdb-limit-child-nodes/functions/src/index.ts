@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as functions from "firebase-functions";
 
 import config from "./config";
