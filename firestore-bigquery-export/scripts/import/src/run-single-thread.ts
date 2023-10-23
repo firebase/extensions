@@ -7,14 +7,10 @@ import * as firebase from "firebase-admin";
 import * as fs from "fs";
 import * as util from "util";
 
-import { resolveWildcardIds } from "./config";
 import { getRowsFromDocs } from "./helper";
 import { CliConfig } from "./types";
 
 const write = util.promisify(fs.writeFile);
-
-const FIRESTORE_DEFAULT_DATABASE = "(default)";
-
 export function getQuery(
   config: CliConfig,
   cursor?: firebase.firestore.DocumentSnapshot<firebase.firestore.DocumentData>

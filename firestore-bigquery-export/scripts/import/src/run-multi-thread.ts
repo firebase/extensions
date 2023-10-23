@@ -5,12 +5,6 @@ import { pool } from "workerpool";
 import * as logs from "./logs";
 import { CliConfig } from "./types";
 
-// import {
-//   ChangeType,
-//   FirestoreBigQueryEventHistoryTracker,
-//   FirestoreDocumentChangeEvent,
-// } from "@firebaseextensions/firestore-bigquery-change-tracker";
-
 /**
  * Import data from a collection group in parallel using workers.
  */
@@ -96,16 +90,3 @@ export async function runMultiThread(config: CliConfig): Promise<number> {
 
   return Promise.resolve(total);
 }
-
-// export async function runMultiThread(
-//   config: CliConfig,
-//   dataSink: FirestoreBigQueryEventHistoryTracker
-// ): Promise<number> {
-//   const {
-//     datasetId,
-//     datasetLocation,
-//     rawChangeLogName,
-//   } = config;
-
-//   return processCollectionGroup(config)
-// }
