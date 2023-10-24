@@ -5,6 +5,8 @@
       "type": "string"
     },
     {
+      "name": "order",
+      "type": "map",
       "fields": [
         {
           "name": "orderNumber",
