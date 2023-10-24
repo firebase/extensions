@@ -1,0 +1,68 @@
+import { FirestoreSchema, processFirestoreSchemaHelper } from "../../../schema";
+
+const generateProcessFirestoreSchemaHelper = ({
+  datasetId = "testDataset",
+  dataFieldName = "data",
+  prefix = [],
+  schema = { fields: [] },
+  arrays = null,
+  geopoints = null,
+  extractors = {},
+  transformer = (selector: string) => selector,
+  bigQueryFields = [],
+  extractPrefix = [],
+  subArrays = null,
+}) => {
+  return processFirestoreSchemaHelper(
+    datasetId,
+    dataFieldName,
+    prefix,
+    schema,
+    arrays,
+    geopoints,
+    extractors,
+    transformer,
+    bigQueryFields,
+    extractPrefix,
+    subArrays
+  );
+};
+
+describe("schema", () => {
+  describe("processFirestoreSchemaHelper", () => {
+    test("Should process a string field", () => {
+      /** Setup test data */
+      const dataFieldName = "data";
+      const schema = {
+        fields: [
+          {
+            name: "stringField",
+            type: "string",
+          },
+        ],
+      };
+      const result = generateProcessFirestoreSchemaHelper({
+        dataFieldName,
+        schema,
+      });
+
+      console.log(result);
+
+      //   expect(result).toEqual({
+      //     fields: [
+      //       {
+      //         name: "mapField",
+      //         type: "record",
+      //         fields: [
+      //           {
+      //             name: "stringField",
+      //             type: "string",
+      //             mode: "nullable",
+      //           },
+      //         ],
+      //       },
+      //     ],
+      //   });
+    });
+  });
+});
