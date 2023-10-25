@@ -1,0 +1,9 @@
+{
+  "fields": [
+    {
+      "name": "name",
+      "column_name": "name",
+      "type": "string"
+    }
+  ]
+}
