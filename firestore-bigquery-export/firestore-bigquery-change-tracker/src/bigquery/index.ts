@@ -15,8 +15,6 @@
  */
 
 import * as bigquery from "@google-cloud/bigquery";
-import { DocumentReference } from "firebase-admin/firestore";
-import * as traverse from "traverse";
 import fetch from "node-fetch";
 import { documentIdField, documentPathParams } from "./schema";
 import handleFailedTransactions from "./handleFailedTransactions";
@@ -36,6 +34,7 @@ import {
 import { initializeDataset } from "./initialize/initializeDataset";
 import { initializeRawChangeLogTable } from "./initialize/initializeRawChangeLogTable";
 import { initializeLatestView } from "./initialize/initializeLatestView";
+import { serializeData } from "./serializeData";
 
 /**
  * An FirestoreEventHistoryTracker that exports data to BigQuery.
@@ -121,26 +120,9 @@ export class FirestoreBigQueryEventHistoryTracker {
     return rows;
   }
 
+  // TODO: remove any
   serializeData(eventData: any) {
-    if (typeof eventData === "undefined") {
-      return undefined;
-    }
-
-    const data = traverse<traverse.Traverse<any>>(eventData).map(function (
-      property
-    ) {
-      if (property && property.constructor) {
-        if (property.constructor.name === "Buffer") {
-          this.remove();
-        }
-
-        if (property.constructor.name === DocumentReference.name) {
-          this.update(property.path);
-        }
-      }
-    });
-
-    return data;
+    return serializeData(eventData);
   }
 
   /**
