@@ -233,6 +233,7 @@ export function userSchemaView(
   schema: FirestoreSchema
 ): any {
   let result = buildSchemaViewQuery(datasetId, tableName, schema);
+
   return {
     viewInfo: {
       query: result.query,
