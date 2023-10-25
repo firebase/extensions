@@ -153,6 +153,7 @@ export class FirestoreBigQuerySchemaViewFactory {
         firestoreSchema,
         result.viewInfo.query
       );
+
       await changeLogSchemaView.create(changelogOptions);
       logs.bigQuerySchemaViewCreated(changeLogSchemaViewName);
     }
@@ -279,8 +280,8 @@ export const buildSchemaViewQuery = (
      */
     query = `${subSelectQuery(
       query,
-      null,
-      rawTableName
+      null
+      // rawTableName
     )} ${rawTableName} ${fieldArrays
       .map(
         (arrayFieldName) =>
@@ -491,8 +492,8 @@ export function subSelectQuery(
 ): string {
   return `SELECT * ${
     filter && filter.length > 0 ? `EXCEPT (${filter.join(", ")})` : ``
-  } FROM (${query})`;
-  // } FROM (${query} ${tblname} ${joins})`;
+    // } FROM (${query})`;
+  } FROM (${query} ${tblname || ""} ${joins || ""})`;
 }
 
 export function qualifyFieldName(

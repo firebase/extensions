@@ -107,7 +107,7 @@ describe("view schema snapshot view sql generation", () => {
 
   xit("should handle multiple nested arrays and maps extracted from JSON data", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/complexSchemaLatest.txt`
+      `${sqlDir}/complexSchemaLatest.sql`
     );
 
     console.log("expectedQuery: ", expectedQuery);
