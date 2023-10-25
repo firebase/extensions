@@ -23,6 +23,7 @@ import * as inquirer from "inquirer";
 import { FirestoreBigQuerySchemaViewFactory, FirestoreSchema } from "./schema";
 
 import { readSchemas } from "./schema-loader-utils";
+import createSchemaFiles from "./createSchemaFiles";
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
@@ -69,6 +70,10 @@ program
     "A collection of files from which to read schemas.",
     collect,
     []
+  )
+  .option(
+    "-generate-sql, --generate-sql <generateSql>",
+    "Generate the view SQL to the terminal instead of creating the view."
   );
 
 const questions = [
@@ -101,6 +106,14 @@ const questions = [
     name: "schemaFiles",
     type: "input",
   },
+  {
+    message:
+      "Would you like to generate SQL for the views instead of creating them?",
+    name: "generateSQL",
+    type: "input",
+    default: "no",
+    validate: (value) => !!value && ["yes", "no"].includes(value),
+  },
 ];
 
 interface CliConfig {
@@ -108,6 +121,7 @@ interface CliConfig {
   datasetId: string;
   tableNamePrefix: string;
   schemas: { [schemaName: string]: FirestoreSchema };
+  generateSQL?: boolean;
 }
 
 async function run(): Promise<number> {
@@ -133,12 +147,21 @@ async function run(): Promise<number> {
   }
   const viewFactory = new FirestoreBigQuerySchemaViewFactory();
   for (const schemaName in config.schemas) {
-    await viewFactory.initializeSchemaViewResources(
-      config.datasetId,
-      config.tableNamePrefix,
-      schemaName,
-      config.schemas[schemaName]
-    );
+    if (config.generateSQL) {
+      createSchemaFiles(
+        config.datasetId,
+        config.tableNamePrefix,
+        schemaName,
+        config.schemas[schemaName]
+      );
+    } else {
+      await viewFactory.initializeSchemaViewResources(
+        config.datasetId,
+        config.tableNamePrefix,
+        schemaName,
+        config.schemas[schemaName]
+      );
+    }
   }
   return 0;
 }
@@ -155,14 +178,16 @@ async function parseConfig(): Promise<CliConfig> {
       program.outputHelp();
       process.exit(1);
     }
+
     return {
       projectId: program.project,
       datasetId: program.dataset,
       tableNamePrefix: program.tableNamePrefix,
       schemas: readSchemas(program.schemaFiles),
+      generateSQL: program.generateSql === "yes",
     };
   }
-  const { project, dataset, tableNamePrefix, schemaFiles } =
+  const { project, dataset, tableNamePrefix, schemaFiles, generateSQL } =
     await inquirer.prompt(questions);
   return {
     projectId: project,
@@ -171,6 +196,7 @@ async function parseConfig(): Promise<CliConfig> {
     schemas: readSchemas(
       schemaFiles.split(",").map((schemaFileName) => schemaFileName.trim())
     ),
+    generateSQL: generateSQL === "yes",
   };
 }
 
