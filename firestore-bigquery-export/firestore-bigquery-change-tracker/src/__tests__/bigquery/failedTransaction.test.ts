@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import { FirestoreBigQueryEventHistoryTrackerConfig } from "../../bigquery";
+import { FirestoreBigQueryEventHistoryTrackerConfig } from "../../bigquery/types";
 
 import handleFailedTransactions from "../../bigquery/handleFailedTransactions";
 

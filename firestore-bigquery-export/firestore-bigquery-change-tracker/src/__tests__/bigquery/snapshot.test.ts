@@ -59,7 +59,7 @@ describe("FirestoreBigQueryEventHistoryTracker functionality", () => {
   });
 
   it("should create a dataset with the location property set", () => {
-    expect(trackerInstance.bigqueryDataset()).instanceOf(bigquery.Dataset);
+    expect(trackerInstance.bigqueryDataset).instanceOf(bigquery.Dataset);
   });
 });
 

@@ -37,3 +37,24 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   skipInit?: boolean;
   kmsKeyName?: string | undefined;
 }
+
+export enum BigQueryFieldMode {
+  "NULLABLE" = "NULLABLE",
+  "REPEATED" = "REPEATED",
+  "REQUIRED" = "REQUIRED",
+}
+
+export enum BigQueryFieldType {
+  "BOOLEAN" = "BOOLEAN",
+  "NUMERIC" = "NUMERIC",
+  "RECORD" = "RECORD",
+  "STRING" = "STRING",
+  "TIMESTAMP" = "TIMESTAMP",
+}
+
+export type BigQueryField = {
+  fields?: BigQueryField[];
+  mode: BigQueryFieldMode;
+  name: string;
+  type: BigQueryFieldType;
+};

@@ -15,20 +15,7 @@
  */
 
 import { FirestoreBigQueryEventHistoryTrackerConfig } from "./types";
-
-export type BigQueryFieldMode = "NULLABLE" | "REPEATED" | "REQUIRED";
-export type BigQueryFieldType =
-  | "BOOLEAN"
-  | "NUMERIC"
-  | "RECORD"
-  | "STRING"
-  | "TIMESTAMP";
-export type BigQueryField = {
-  fields?: BigQueryField[];
-  mode: BigQueryFieldMode;
-  name: string;
-  type: BigQueryFieldType;
-};
+import { BigQueryFieldMode, BigQueryFieldType, BigQueryField } from "./types";
 
 const bigQueryField = (
   name: string,
@@ -37,7 +24,7 @@ const bigQueryField = (
   fields?: BigQueryField[]
 ): BigQueryField => ({
   fields,
-  mode: mode || "NULLABLE",
+  mode: mode || BigQueryFieldMode.NULLABLE,
   name,
   type,
 });
@@ -45,29 +32,29 @@ const bigQueryField = (
 // These field types form the basis of the `raw` data table
 export const timestampField = bigQueryField(
   "timestamp",
-  "TIMESTAMP",
-  "REQUIRED"
+  BigQueryFieldType.TIMESTAMP,
+  BigQueryFieldMode.REQUIRED
 );
 
 export const documentIdField = {
   name: "document_id",
-  mode: "NULLABLE",
-  type: "STRING",
+  mode: BigQueryFieldMode.NULLABLE,
+  type: BigQueryFieldType.STRING,
   description: "The document id as defined in the firestore database.",
 };
 
 export const documentPathParams = {
   name: "path_params",
-  mode: "NULLABLE",
-  type: "STRING",
+  mode: BigQueryFieldMode.NULLABLE,
+  type: BigQueryFieldType.STRING,
   description:
     "JSON string representing wildcard params with Firestore Document ids",
 };
 
 export const oldDataField = {
   name: "old_data",
-  mode: "NULLABLE",
-  type: "STRING",
+  mode: BigQueryFieldMode.NULLABLE,
+  type: BigQueryFieldType.STRING,
   description:
     "The full JSON representation of the document state before the indicated operation is applied. This field will be null for CREATE operations.",
 };
@@ -81,44 +68,44 @@ export const RawChangelogViewSchema = {
   fields: [
     {
       name: "timestamp",
-      mode: "NULLABLE",
-      type: "TIMESTAMP",
+      mode: BigQueryFieldMode.NULLABLE,
+      type: BigQueryFieldType.TIMESTAMP,
       description:
         "The commit timestamp of this change in Cloud Firestore. If the operation is IMPORT, this timestamp is epoch to ensure that any operation on an imported document supersedes the IMPORT.",
     },
     {
       name: "event_id",
-      mode: "NULLABLE",
-      type: "STRING",
+      mode: BigQueryFieldMode.NULLABLE,
+      type: BigQueryFieldType.STRING,
       description:
         "The ID of the most-recent document change event that triggered the Cloud Function created by the extension. Empty for imports.",
     },
     {
       name: "document_name",
-      mode: "NULLABLE",
-      type: "STRING",
+      mode: BigQueryFieldMode.NULLABLE,
+      type: BigQueryFieldType.STRING,
       description:
         "The full name of the changed document, for example, projects/collection/databases/(default)/documents/users/me).",
     },
     {
       name: "operation",
-      mode: "NULLABLE",
-      type: "STRING",
+      mode: BigQueryFieldMode.NULLABLE,
+      type: BigQueryFieldType.STRING,
       description: "One of CREATE, UPDATE, IMPORT.",
     },
     {
       name: "data",
-      mode: "NULLABLE",
-      type: "STRING",
+      mode: BigQueryFieldMode.NULLABLE,
+      type: BigQueryFieldType.STRING,
       description:
         "The full JSON representation of the current document state.",
     },
     {
       name: "old_data",
-      mode: "NULLABLE",
-      type: "STRING",
+      mode: BigQueryFieldMode.NULLABLE,
+      type: BigQueryFieldType.STRING,
       description:
-        "The full JSON representation of the document state before the indicated operation is applied.",
+        "The full JSON representation of the document state before the indicated operation is applied. This field will be null for CREATE operations.",
     },
     documentIdField,
   ],
@@ -128,42 +115,42 @@ export const RawChangelogSchema = {
   fields: [
     {
       name: "timestamp",
-      mode: "REQUIRED",
-      type: "TIMESTAMP",
+      mode: BigQueryFieldMode.REQUIRED,
+      type: BigQueryFieldType.TIMESTAMP,
       description:
         "The commit timestamp of this change in Cloud Firestore. If the operation is IMPORT, this timestamp is epoch to ensure that any operation on an imported document supersedes the IMPORT.",
     },
     {
       name: "event_id",
-      mode: "REQUIRED",
-      type: "STRING",
+      mode: BigQueryFieldMode.REQUIRED,
+      type: BigQueryFieldType.STRING,
       description:
         "The ID of the document change event that triggered the Cloud Function created by the extension. Empty for imports.",
     },
     {
       name: "document_name",
-      mode: "REQUIRED",
-      type: "STRING",
+      mode: BigQueryFieldMode.REQUIRED,
+      type: BigQueryFieldType.STRING,
       description:
         "The full name of the changed document, for example, projects/collection/databases/(default)/documents/users/me).",
     },
     {
       name: "operation",
-      mode: "REQUIRED",
-      type: "STRING",
+      mode: BigQueryFieldMode.REQUIRED,
+      type: BigQueryFieldType.STRING,
       description: "One of CREATE, UPDATE, IMPORT, or DELETE.",
     },
     {
       name: "data",
-      mode: "NULLABLE",
-      type: "STRING",
+      mode: BigQueryFieldMode.NULLABLE,
+      type: BigQueryFieldType.STRING,
       description:
         "The full JSON representation of the document state after the indicated operation is applied. This field will be null for DELETE operations.",
     },
     {
       name: "old_data",
-      mode: "NULLABLE",
-      type: "STRING",
+      mode: BigQueryFieldMode.NULLABLE,
+      type: BigQueryFieldType.STRING,
       description:
         "The full JSON representation of the document state before the indicated operation is applied. This field will be null for CREATE operations.",
     },
@@ -179,7 +166,7 @@ export const getNewPartitionField = (
 
   return {
     name: timePartitioningField,
-    mode: "NULLABLE",
+    mode: BigQueryFieldMode.NULLABLE,
     type: timePartitioningFieldType,
     description: "The document TimePartition partition field selected by user",
   };
