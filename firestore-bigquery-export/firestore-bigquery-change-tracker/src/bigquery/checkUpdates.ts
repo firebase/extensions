@@ -1,7 +1,7 @@
 import { Table, TableMetadata } from "@google-cloud/bigquery/build/src/table";
 import { Partitioning } from "./partitioning";
 
-import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+import { FirestoreBigQueryEventHistoryTrackerConfig } from "./types";
 
 interface TableRequiresUpdateOptions {
   table: Table;

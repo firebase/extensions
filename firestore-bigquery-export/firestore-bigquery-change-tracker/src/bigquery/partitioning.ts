@@ -1,4 +1,4 @@
-import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+import { FirestoreBigQueryEventHistoryTrackerConfig } from "./types";
 import { FirestoreDocumentChangeEvent } from "..";
 import * as firebase from "firebase-admin";
 

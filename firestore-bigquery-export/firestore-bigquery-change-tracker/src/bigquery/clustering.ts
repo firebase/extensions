@@ -1,4 +1,4 @@
-import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+import { FirestoreBigQueryEventHistoryTrackerConfig } from "./types";
 
 import * as logs from "../logs";
 import * as bigquery from "@google-cloud/bigquery";

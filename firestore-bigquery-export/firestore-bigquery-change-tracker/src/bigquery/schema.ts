@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+import { FirestoreBigQueryEventHistoryTrackerConfig } from "./types";
 
 export type BigQueryFieldMode = "NULLABLE" | "REPEATED" | "REQUIRED";
 export type BigQueryFieldType =
@@ -43,23 +43,11 @@ const bigQueryField = (
 });
 
 // These field types form the basis of the `raw` data table
-export const dataField = bigQueryField("data", "STRING", "NULLABLE");
-export const documentNameField = bigQueryField(
-  "document_name",
-  "STRING",
-  "REQUIRED"
-);
-export const eventIdField = bigQueryField("event_id", "STRING", "REQUIRED");
-export const operationField = bigQueryField("operation", "STRING", "REQUIRED");
 export const timestampField = bigQueryField(
   "timestamp",
   "TIMESTAMP",
   "REQUIRED"
 );
-
-// These field types are used for the Firestore GeoPoint data type
-export const latitudeField = bigQueryField("latitude", "NUMERIC");
-export const longitudeField = bigQueryField("longitude", "NUMERIC");
 
 export const documentIdField = {
   name: "document_id",

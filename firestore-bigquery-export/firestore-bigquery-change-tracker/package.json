@@ -10,6 +10,7 @@
   "main": "./lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
+    "build:watch": "npm run clean && tsc --watch",
     "clean": "rimraf lib",
     "compile": "tsc",
     "test:local": "firebase ext:dev:emulators:exec ./node_modules/.bin/jest --test-params=./src/__tests__/emulator-params.env --project=extensions-testing --config=./src/__tests__/firebase.json",
