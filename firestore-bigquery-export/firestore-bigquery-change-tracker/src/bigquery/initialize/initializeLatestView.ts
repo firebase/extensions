@@ -14,6 +14,7 @@ interface InitializeLatestViewParams {
   config: FirestoreBigQueryEventHistoryTrackerConfig;
   rawChangeLogTableName: string;
   rawLatestView: string;
+  bqProjectId: string;
 }
 
 /**
@@ -25,6 +26,7 @@ export async function initializeLatestView({
   config,
   rawChangeLogTableName,
   rawLatestView,
+  bqProjectId,
 }: InitializeLatestViewParams) {
   const view = bigqueryDataset.table(rawLatestView);
   const [viewExists] = await view.exists();
@@ -85,7 +87,7 @@ export async function initializeLatestView({
       datasetId: config.datasetId,
       tableName: rawChangeLogTableName,
       schema,
-      bqProjectId: this.bq.projectId,
+      bqProjectId,
       useLegacyQuery: !config.useNewSnapshotQuerySyntax,
     });
     logs.bigQueryViewCreating(rawLatestView, latestSnapshot.query);

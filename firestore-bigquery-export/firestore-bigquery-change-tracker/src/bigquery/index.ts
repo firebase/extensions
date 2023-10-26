@@ -259,6 +259,7 @@ export class FirestoreBigQueryEventHistoryTracker {
         config: this.config,
         rawChangeLogTableName: this.rawChangeLogTableName,
         rawLatestView: this.rawLatestView,
+        bqProjectId: this.config.bqProjectId,
       });
 
       this._initialized = true;

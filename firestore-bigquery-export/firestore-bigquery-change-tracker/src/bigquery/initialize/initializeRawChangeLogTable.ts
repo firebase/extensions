@@ -52,16 +52,16 @@ export async function initializeRawChangeLogTable({
 
     if (!oldDataColExists) {
       fields.push(oldDataField);
-      logs.addNewColumn(this.rawChangeLogTableName, oldDataField.name);
+      logs.addNewColumn(rawChangeLogTableName, oldDataField.name);
     }
 
     if (!documentIdColExists) {
       fields.push(documentIdField);
-      logs.addNewColumn(this.rawChangeLogTableName, documentIdField.name);
+      logs.addNewColumn(rawChangeLogTableName, documentIdField.name);
     }
     if (!pathParamsColExists && config.wildcardIds) {
       fields.push(documentPathParams);
-      logs.addNewColumn(this.rawChangeLogTableName, documentPathParams.name);
+      logs.addNewColumn(rawChangeLogTableName, documentPathParams.name);
     }
 
     /** Updated table metadata if required */
@@ -79,7 +79,7 @@ export async function initializeRawChangeLogTable({
 
       /** update table metadata with changes. */
       await table.setMetadata(metadata);
-      logs.updatingMetadata(this.rawChangeLogTableName, {
+      logs.updatingMetadata(rawChangeLogTableName, {
         config: config,
         documentIdColExists,
         pathParamsColExists,

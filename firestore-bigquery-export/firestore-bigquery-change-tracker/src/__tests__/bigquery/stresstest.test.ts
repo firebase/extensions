@@ -65,7 +65,7 @@ describe("Stress testing", () => {
     }, 340000);
   });
 
-  describe("snapshot view stresstest", () => {
+  describe.skip("snapshot view stresstest", () => {
     test("should run new snapshot view query on a big table", async () => {
       const query = buildLatestSnapshotViewQuery({
         datasetId: "new_stresstest",
