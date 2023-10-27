@@ -15,148 +15,142 @@
  */
 
 import { FirestoreBigQueryEventHistoryTrackerConfig } from "./types";
-import { BigQueryFieldMode, BigQueryFieldType, BigQueryField } from "./types";
+import { BigQueryFieldMode, BigQueryFieldType } from "./types";
 
-const bigQueryField = (
-  name: string,
-  type: BigQueryFieldType,
-  mode?: BigQueryFieldMode,
-  fields?: BigQueryField[]
-): BigQueryField => ({
-  fields,
-  mode: mode || BigQueryFieldMode.NULLABLE,
-  name,
-  type,
-});
+const NULLABLE = BigQueryFieldMode.NULLABLE;
+const REQUIRED = BigQueryFieldMode.REQUIRED;
+const TIMESTAMP = BigQueryFieldType.TIMESTAMP;
+const STRING = BigQueryFieldType.STRING;
+const JSON = BigQueryFieldType.JSON;
 
-// These field types form the basis of the `raw` data table
-export const timestampField = bigQueryField(
+class BigQueryField {
+  name: string;
+  type: BigQueryFieldType;
+  mode: BigQueryFieldMode;
+  description?: string;
+  fields?: BigQueryField[];
+
+  constructor(
+    name: string,
+    type?: BigQueryFieldType,
+    mode?: BigQueryFieldMode,
+    description?: string,
+    fields?: BigQueryField[]
+  ) {
+    this.name = name;
+    this.mode = mode || BigQueryFieldMode.NULLABLE;
+    this.type = type || BigQueryFieldType.STRING;
+    if (this.description) {
+      this.description = description;
+    }
+    if (this.fields) {
+      this.fields = fields;
+    }
+  }
+
+  withDescription(description: string): BigQueryField {
+    this.description = description;
+    return this;
+  }
+  withMode(mode: BigQueryFieldMode): BigQueryField {
+    this.mode = mode;
+    return this;
+  }
+  withType(type: BigQueryFieldType): BigQueryField {
+    this.type = type;
+    return this;
+  }
+  withFields(fields: BigQueryField[]): BigQueryField {
+    this.fields = fields;
+    return this;
+  }
+  addToDescription(descriptionSuffix: string): BigQueryField {
+    if (this.description) {
+      this.description += descriptionSuffix;
+      return this;
+    }
+    this.description = descriptionSuffix;
+    return this;
+  }
+}
+
+export const timestampField = new BigQueryField(
   "timestamp",
-  BigQueryFieldType.TIMESTAMP,
-  BigQueryFieldMode.REQUIRED
+  TIMESTAMP
+).withMode(REQUIRED);
+
+export const documentIdField = new BigQueryField("document_id").withDescription(
+  "The document id as defined in the firestore database."
 );
 
-export const documentIdField = {
-  name: "document_id",
-  mode: BigQueryFieldMode.NULLABLE,
-  type: BigQueryFieldType.STRING,
-  description: "The document id as defined in the firestore database.",
-};
+export const documentPathParamsField = new BigQueryField(
+  "path_params"
+).withDescription(
+  "JSON string representing wildcard params with Firestore Document ids"
+);
 
-export const documentPathParams = {
-  name: "path_params",
-  mode: BigQueryFieldMode.NULLABLE,
-  type: BigQueryFieldType.STRING,
-  description:
-    "JSON string representing wildcard params with Firestore Document ids",
-};
+const eventIdField = new BigQueryField("event_id").withDescription(
+  "The ID of the most-recent document change event that triggered the Cloud Function created by the extension. Empty for imports."
+);
 
-export const oldDataField = {
-  name: "old_data",
-  mode: BigQueryFieldMode.NULLABLE,
-  type: BigQueryFieldType.STRING,
-  description:
-    "The full JSON representation of the document state before the indicated operation is applied. This field will be null for CREATE operations.",
-};
+const documentNameField = new BigQueryField("document_name").withDescription(
+  "The full name of the changed document, for example, projects/collection/databases/(default)/documents/users/me)."
+);
+
+const operationField = new BigQueryField("operation").withDescription(
+  "One of CREATE, UPDATE, IMPORT"
+);
+
+const dataField = new BigQueryField("data").withDescription(
+  "The full JSON representation of the document state after the indicated operation is applied."
+);
+
+export const oldDataField = new BigQueryField("old_data").withDescription(
+  "The full JSON representation of the document state before the indicated operation is applied. This field will be null for CREATE operations."
+);
 
 /*
  * We cannot specify a schema for view creation, and all view columns default
  * to the NULLABLE mode.
  */
 
-export const RawChangelogViewSchema = {
+export const RawChangelogViewSchema = (
+  dataFormat: BigQueryFieldType.STRING | BigQueryFieldType.JSON
+) => ({
   fields: [
-    {
-      name: "timestamp",
-      mode: BigQueryFieldMode.NULLABLE,
-      type: BigQueryFieldType.TIMESTAMP,
-      description:
-        "The commit timestamp of this change in Cloud Firestore. If the operation is IMPORT, this timestamp is epoch to ensure that any operation on an imported document supersedes the IMPORT.",
-    },
-    {
-      name: "event_id",
-      mode: BigQueryFieldMode.NULLABLE,
-      type: BigQueryFieldType.STRING,
-      description:
-        "The ID of the most-recent document change event that triggered the Cloud Function created by the extension. Empty for imports.",
-    },
-    {
-      name: "document_name",
-      mode: BigQueryFieldMode.NULLABLE,
-      type: BigQueryFieldType.STRING,
-      description:
-        "The full name of the changed document, for example, projects/collection/databases/(default)/documents/users/me).",
-    },
-    {
-      name: "operation",
-      mode: BigQueryFieldMode.NULLABLE,
-      type: BigQueryFieldType.STRING,
-      description: "One of CREATE, UPDATE, IMPORT.",
-    },
-    {
-      name: "data",
-      mode: BigQueryFieldMode.NULLABLE,
-      type: BigQueryFieldType.STRING,
-      description:
-        "The full JSON representation of the current document state.",
-    },
-    {
-      name: "old_data",
-      mode: BigQueryFieldMode.NULLABLE,
-      type: BigQueryFieldType.STRING,
-      description:
-        "The full JSON representation of the document state before the indicated operation is applied. This field will be null for CREATE operations.",
-    },
+    timestampField
+      .withMode(NULLABLE)
+      .withDescription(
+        "The commit timestamp of this change in Cloud Firestore. If the operation is IMPORT, this timestamp is epoch to ensure that any operation on an imported document supersedes the IMPORT."
+      ),
+    eventIdField,
+    documentNameField,
+    operationField.addToDescription("."),
+    dataField.withType(dataFormat),
+    oldDataField,
     documentIdField,
   ],
-};
+});
 
-export const RawChangelogSchema = {
+export const RawChangelogSchema = (
+  dataFormat: BigQueryFieldType.STRING | BigQueryFieldType.JSON
+) => ({
   fields: [
-    {
-      name: "timestamp",
-      mode: BigQueryFieldMode.REQUIRED,
-      type: BigQueryFieldType.TIMESTAMP,
-      description:
-        "The commit timestamp of this change in Cloud Firestore. If the operation is IMPORT, this timestamp is epoch to ensure that any operation on an imported document supersedes the IMPORT.",
-    },
-    {
-      name: "event_id",
-      mode: BigQueryFieldMode.REQUIRED,
-      type: BigQueryFieldType.STRING,
-      description:
-        "The ID of the document change event that triggered the Cloud Function created by the extension. Empty for imports.",
-    },
-    {
-      name: "document_name",
-      mode: BigQueryFieldMode.REQUIRED,
-      type: BigQueryFieldType.STRING,
-      description:
-        "The full name of the changed document, for example, projects/collection/databases/(default)/documents/users/me).",
-    },
-    {
-      name: "operation",
-      mode: BigQueryFieldMode.REQUIRED,
-      type: BigQueryFieldType.STRING,
-      description: "One of CREATE, UPDATE, IMPORT, or DELETE.",
-    },
-    {
-      name: "data",
-      mode: BigQueryFieldMode.NULLABLE,
-      type: BigQueryFieldType.STRING,
-      description:
-        "The full JSON representation of the document state after the indicated operation is applied. This field will be null for DELETE operations.",
-    },
-    {
-      name: "old_data",
-      mode: BigQueryFieldMode.NULLABLE,
-      type: BigQueryFieldType.STRING,
-      description:
-        "The full JSON representation of the document state before the indicated operation is applied. This field will be null for CREATE operations.",
-    },
+    timestampField
+      .withMode(REQUIRED)
+      .withDescription(
+        "The commit timestamp of this change in Cloud Firestore. If the operation is IMPORT, this timestamp is epoch to ensure that any operation on an imported document supersedes the IMPORT."
+      ),
+    eventIdField.withMode(REQUIRED),
+    documentNameField.withMode(REQUIRED),
+    operationField.withMode(REQUIRED).addToDescription(", or DELETE."),
+    dataField
+      .addToDescription(" This field will be null for DELETE operations.")
+      .withType(dataFormat),
+    oldDataField,
     documentIdField,
   ],
-};
+});
 
 // Helper function for Partitioned Changelogs field
 export const getNewPartitionField = (

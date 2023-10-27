@@ -3,11 +3,14 @@ import * as logs from "../../logs";
 import { viewRequiresUpdate } from "../checkUpdates";
 import {
   documentIdField,
-  documentPathParams,
+  documentPathParamsField,
   RawChangelogViewSchema,
 } from "../schema";
 import { latestConsistentSnapshotView } from "../snapshot";
-import { FirestoreBigQueryEventHistoryTrackerConfig } from "../types";
+import {
+  BigQueryFieldType,
+  FirestoreBigQueryEventHistoryTrackerConfig,
+} from "../types";
 
 interface InitializeLatestViewParams {
   bigqueryDataset: Dataset;
@@ -15,6 +18,7 @@ interface InitializeLatestViewParams {
   rawChangeLogTableName: string;
   rawLatestView: string;
   bqProjectId: string;
+  dataFormat: BigQueryFieldType.STRING | BigQueryFieldType.JSON;
 }
 
 /**
@@ -27,10 +31,11 @@ export async function initializeLatestView({
   rawChangeLogTableName,
   rawLatestView,
   bqProjectId,
+  dataFormat,
 }: InitializeLatestViewParams) {
   const view = bigqueryDataset.table(rawLatestView);
   const [viewExists] = await view.exists();
-  const schema = RawChangelogViewSchema;
+  const schema = RawChangelogViewSchema(dataFormat);
 
   if (viewExists) {
     logs.bigQueryViewAlreadyExists(view.id, bigqueryDataset.id);
@@ -40,7 +45,7 @@ export async function initializeLatestView({
       name: string;
     }[];
     if (config.wildcardIds) {
-      schema.fields.push(documentPathParams);
+      schema.fields.push(documentPathParamsField);
     }
 
     const columnNames = fields.map((field) => field.name);
@@ -78,10 +83,10 @@ export async function initializeLatestView({
       });
     }
   } else {
-    const schema = { fields: [...RawChangelogViewSchema.fields] };
+    const schema = { fields: [...RawChangelogViewSchema(dataFormat).fields] };
 
     if (config.wildcardIds) {
-      schema.fields.push(documentPathParams);
+      schema.fields.push(documentPathParamsField);
     }
     const latestSnapshot = latestConsistentSnapshotView({
       datasetId: config.datasetId,
@@ -98,7 +103,7 @@ export async function initializeLatestView({
 
     try {
       await view.create(options);
-      await view.setMetadata({ schema: RawChangelogViewSchema });
+      await view.setMetadata({ schema: RawChangelogViewSchema(dataFormat) });
       logs.bigQueryViewCreated(rawLatestView);
     } catch (ex) {
       logs.tableCreationError(rawLatestView, ex.message);

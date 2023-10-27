@@ -1,6 +1,7 @@
 import { BigQuery, Dataset, Table } from "@google-cloud/bigquery";
 import { FirestoreDocumentChangeEvent } from "../..";
 import { RawChangelogSchema } from "../../bigquery";
+import { BigQueryFieldType } from "../../bigquery/types";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { deleteTable } from "../fixtures/clearTables";
 
@@ -139,7 +140,7 @@ describe("Configuring a document wildcard column ", () => {
       [dataset] = await bq.dataset(datasetId).create();
       [table] = await dataset.createTable(tableId, {
         timePartitioning: { type: "HOUR" },
-        schema: RawChangelogSchema,
+        schema: RawChangelogSchema(BigQueryFieldType.STRING),
       });
     });
 

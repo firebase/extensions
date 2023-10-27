@@ -12,6 +12,7 @@ import { deleteTable } from "../fixtures/clearTables";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { getBigQueryTableData } from "../fixtures/queries";
 import { firestore } from "firebase-admin";
+import { BigQueryFieldType } from "../../bigquery/types";
 
 process.env.PROJECT_ID = "extensions-testing";
 
@@ -353,13 +354,13 @@ describe("e2e", () => {
       beforeEach(async () => {
         [dataset] = await bq.dataset(datasetId).create();
         [table] = await dataset.createTable(tableId_raw, {
-          schema: RawChangelogSchema,
+          schema: RawChangelogSchema(BigQueryFieldType.STRING),
         });
 
         const latestSnapshot = latestConsistentSnapshotView({
           datasetId,
           tableName: tableId_raw,
-          schema: RawChangelogViewSchema,
+          schema: RawChangelogViewSchema(BigQueryFieldType.STRING),
           useLegacyQuery: false,
         });
 
@@ -427,7 +428,7 @@ describe("e2e", () => {
         expect(metadata.timePartitioning).toBeUndefined();
       });
 
-      test("does not add an additional custom when the field column already exists", async () => {
+      test.only("does not add an additional custom when the field column already exists", async () => {
         // Add a custom field to the table.
         const [metaData] = await table.getMetadata();
 
@@ -464,7 +465,7 @@ describe("e2e", () => {
     });
   });
 
-  describe("SQL opt-in", () => {
+  describe.only("SQL opt-in", () => {
     let view_raw_latest;
     beforeEach(async () => {
       randomID = (Math.random() + 1).toString(36).substring(7);

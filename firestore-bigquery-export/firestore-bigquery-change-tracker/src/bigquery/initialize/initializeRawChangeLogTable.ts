@@ -3,18 +3,22 @@ import { Partitioning } from "../partitioning";
 import * as logs from "../../logs";
 import {
   documentIdField,
-  documentPathParams,
+  documentPathParamsField,
   oldDataField,
   RawChangelogSchema,
 } from "../schema";
 import { tableRequiresUpdate } from "../checkUpdates";
 import { Dataset, TableMetadata } from "@google-cloud/bigquery";
-import { FirestoreBigQueryEventHistoryTrackerConfig } from "../types";
+import {
+  BigQueryFieldType,
+  FirestoreBigQueryEventHistoryTrackerConfig,
+} from "../types";
 
 interface InitializeChangeLogTableParams {
   bigqueryDataset: Dataset;
   config: FirestoreBigQueryEventHistoryTrackerConfig;
   rawChangeLogTableName: string;
+  dataFormat: BigQueryFieldType.STRING | BigQueryFieldType.JSON;
 }
 
 /**
@@ -24,6 +28,7 @@ export async function initializeRawChangeLogTable({
   bigqueryDataset,
   config,
   rawChangeLogTableName,
+  dataFormat,
 }: InitializeChangeLogTableParams) {
   const table = bigqueryDataset.table(rawChangeLogTableName);
   const [tableExists] = await table.exists();
@@ -60,8 +65,8 @@ export async function initializeRawChangeLogTable({
       logs.addNewColumn(rawChangeLogTableName, documentIdField.name);
     }
     if (!pathParamsColExists && config.wildcardIds) {
-      fields.push(documentPathParams);
-      logs.addNewColumn(rawChangeLogTableName, documentPathParams.name);
+      fields.push(documentPathParamsField);
+      logs.addNewColumn(rawChangeLogTableName, documentPathParamsField.name);
     }
 
     /** Updated table metadata if required */
@@ -88,10 +93,13 @@ export async function initializeRawChangeLogTable({
     }
   } else {
     logs.bigQueryTableCreating(rawChangeLogTableName);
-    const schema = { fields: [...RawChangelogSchema.fields] };
+
+    console.log("dataFormat", dataFormat);
+
+    const schema = RawChangelogSchema(dataFormat);
 
     if (config.wildcardIds) {
-      schema.fields.push(documentPathParams);
+      schema.fields.push(documentPathParamsField);
     }
     const options: TableMetadata = {
       friendlyName: rawChangeLogTableName,

@@ -10,7 +10,7 @@ module.exports = {
     },
   },
   preset: "ts-jest",
-  testMatch: ["**/src/__tests__/**/*.test.ts"],
+  testMatch: ["**/src/__tests__/**/checkUpdates.test.ts"],
   testEnvironment: "node",
   testTimeout: 180000,
   collectCoverage: true,

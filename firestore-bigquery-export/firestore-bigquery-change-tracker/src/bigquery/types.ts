@@ -36,6 +36,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   useNewSnapshotQuerySyntax?: boolean;
   skipInit?: boolean;
   kmsKeyName?: string | undefined;
+  dataFormat?: BigQueryFieldType.STRING | BigQueryFieldType.JSON;
 }
 
 export enum BigQueryFieldMode {
@@ -50,6 +51,7 @@ export enum BigQueryFieldType {
   "RECORD" = "RECORD",
   "STRING" = "STRING",
   "TIMESTAMP" = "TIMESTAMP",
+  "JSON" = "JSON",
 }
 
 export type BigQueryField = {
@@ -57,4 +59,5 @@ export type BigQueryField = {
   mode: BigQueryFieldMode;
   name: string;
   type: BigQueryFieldType;
+  description?: string;
 };

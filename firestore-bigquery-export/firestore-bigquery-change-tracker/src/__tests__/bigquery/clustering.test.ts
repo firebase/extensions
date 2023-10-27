@@ -1,6 +1,7 @@
 import { BigQuery, Dataset, Table } from "@google-cloud/bigquery";
 import { FirestoreDocumentChangeEvent } from "../..";
 import { RawChangelogSchema } from "../../bigquery/schema";
+import { BigQueryFieldType } from "../../bigquery/types";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { deleteTable } from "../fixtures/clearTables";
 
@@ -131,7 +132,7 @@ describe("Clustering ", () => {
     test("successfully adds clustering with a table that has already been partitioned with schema", async () => {
       [myTable] = await myDataset.createTable(tableId_raw, {
         timePartitioning: { type: "HOUR" },
-        schema: RawChangelogSchema,
+        schema: RawChangelogSchema(BigQueryFieldType.STRING),
       });
 
       await changeTracker({
@@ -148,7 +149,7 @@ describe("Clustering ", () => {
     test("delete clustering from partitioned table", async () => {
       [myTable] = await myDataset.createTable(tableId_raw, {
         timePartitioning: { type: "HOUR" },
-        schema: RawChangelogSchema,
+        schema: RawChangelogSchema(BigQueryFieldType.STRING),
         clustering: { fields: ["timestamp", "data"] },
       });
       await changeTracker({
@@ -165,7 +166,7 @@ describe("Clustering ", () => {
     test("update clustering with different fields for partitioned table", async () => {
       [myTable] = await myDataset.createTable(tableId_raw, {
         timePartitioning: { type: "HOUR" },
-        schema: RawChangelogSchema,
+        schema: RawChangelogSchema(BigQueryFieldType.STRING),
         clustering: { fields: ["timestamp", "document_id"] },
       });
 
@@ -185,7 +186,7 @@ describe("Clustering ", () => {
     test("update clustering with the same values and length but different order for partitioned table", async () => {
       [myTable] = await myDataset.createTable(tableId_raw, {
         timePartitioning: { type: "HOUR" },
-        schema: RawChangelogSchema,
+        schema: RawChangelogSchema(BigQueryFieldType.STRING),
         clustering: { fields: ["timestamp", "document_id"] },
       });
 
@@ -204,7 +205,7 @@ describe("Clustering ", () => {
 
     test("update clustering with different values for unpartitioned table", async () => {
       [myTable] = await myDataset.createTable(tableId_raw, {
-        schema: RawChangelogSchema,
+        schema: RawChangelogSchema(BigQueryFieldType.STRING),
         clustering: { fields: ["timestamp", "document_id"] },
       });
 
@@ -223,7 +224,7 @@ describe("Clustering ", () => {
 
     test("delete clustering with different values for unpartitioned table", async () => {
       [myTable] = await myDataset.createTable(tableId_raw, {
-        schema: RawChangelogSchema,
+        schema: RawChangelogSchema(BigQueryFieldType.STRING),
         clustering: { fields: ["timestamp", "document_id"] },
       });
 
@@ -242,7 +243,7 @@ describe("Clustering ", () => {
       [myTable] = await myDataset.createTable(tableId_raw, {
         schema: {
           fields: [
-            ...RawChangelogSchema.fields,
+            ...RawChangelogSchema(BigQueryFieldType.STRING).fields,
             {
               name: "custom",
               mode: "NULLABLE",
@@ -267,7 +268,7 @@ describe("Clustering ", () => {
     test("keeps existing clustering and warns the user when an invalid field has been provided", async () => {
       [myTable] = await myDataset.createTable(tableId_raw, {
         schema: {
-          fields: [...RawChangelogSchema.fields],
+          fields: [...RawChangelogSchema(BigQueryFieldType.STRING).fields],
         },
         clustering: { fields: ["data", "timestamp"] },
       });
@@ -287,7 +288,7 @@ describe("Clustering ", () => {
     test("does not add clustering and warns the user when an invalid field has been provided when clustering does exist", async () => {
       [myTable] = await myDataset.createTable(tableId_raw, {
         schema: {
-          fields: [...RawChangelogSchema.fields],
+          fields: [...RawChangelogSchema(BigQueryFieldType.STRING).fields],
         },
       });
 

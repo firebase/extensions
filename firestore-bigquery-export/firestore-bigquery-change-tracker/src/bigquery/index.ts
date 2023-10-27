@@ -16,7 +16,7 @@
 
 import * as bigquery from "@google-cloud/bigquery";
 import fetch from "node-fetch";
-import { documentIdField, documentPathParams } from "./schema";
+import { documentIdField, documentPathParamsField } from "./schema";
 import handleFailedTransactions from "./handleFailedTransactions";
 
 import * as logs from "../logs";
@@ -30,6 +30,7 @@ import {
   FirestoreDocumentChangeEvent,
   ChangeType,
   FirestoreBigQueryEventHistoryTrackerConfig,
+  BigQueryFieldType,
 } from "./types";
 import { initializeDataset } from "./initialize/initializeDataset";
 import { initializeRawChangeLogTable } from "./initialize/initializeRawChangeLogTable";
@@ -49,7 +50,7 @@ import { serializeData } from "./serializeData";
 export class FirestoreBigQueryEventHistoryTracker {
   bq: bigquery.BigQuery;
   _initialized: boolean = false;
-  private rawChangeLogTableName: string;
+  rawChangeLogTableName: string;
   private rawLatestView: string;
   bigqueryDataset: bigquery.Dataset;
 
@@ -61,7 +62,9 @@ export class FirestoreBigQueryEventHistoryTracker {
     if (!this.config.datasetLocation) {
       this.config.datasetLocation = "us";
     }
-
+    if (!this.config.dataFormat) {
+      this.config.dataFormat = BigQueryFieldType.STRING;
+    }
     this.rawChangeLogTableName = `${this.config.tableId}_raw_changelog`;
     this.rawLatestView = `${this.config.tableId}_raw_latest`;
 
@@ -135,7 +138,7 @@ export class FirestoreBigQueryEventHistoryTracker {
     let isRetryable = true;
     const expectedErrors = [
       { message: "no such field.", location: documentIdField.name },
-      { message: "no such field.", location: documentPathParams.name },
+      { message: "no such field.", location: documentPathParamsField.name },
     ];
     if (
       e.response &&
@@ -251,6 +254,7 @@ export class FirestoreBigQueryEventHistoryTracker {
         config: this.config,
         bigqueryDataset: this.bigqueryDataset,
         rawChangeLogTableName: this.rawChangeLogTableName,
+        dataFormat: this.config.dataFormat,
       });
 
       // await this.initializeLatestView();
@@ -260,6 +264,7 @@ export class FirestoreBigQueryEventHistoryTracker {
         rawChangeLogTableName: this.rawChangeLogTableName,
         rawLatestView: this.rawLatestView,
         bqProjectId: this.config.bqProjectId,
+        dataFormat: this.config.dataFormat,
       });
 
       this._initialized = true;

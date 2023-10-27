@@ -17,13 +17,16 @@
 import * as sqlFormatter from "sql-formatter";
 
 import { timestampField } from "./schema";
+import { BigQueryField, BigQueryFieldType } from "./types";
 
 const excludeFields: string[] = ["document_name", "document_id"];
 
 interface LatestConsistentSnapshotViewOptions {
   datasetId: string;
   tableName: string;
-  schema: any;
+  schema: {
+    fields: BigQueryField[];
+  };
   bqProjectId?: string;
   useLegacyQuery?: boolean;
 }
