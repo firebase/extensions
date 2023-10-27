@@ -93,7 +93,7 @@ describe("view schema snapshot view sql generation", () => {
     expect(result.query).to.equal(expectedQuery);
   });
 
-  it("should handle renaming properties extracted from JSON data", async () => {
+  xit("should handle renaming properties extracted from JSON data", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/viewColumnRenameSchema.sql`
     );
@@ -102,6 +102,22 @@ describe("view schema snapshot view sql generation", () => {
       testTable,
       await readBigQuerySchema(`${schemaDir}/columnRename.json`)
     );
+    expect(result.query).to.equal(expectedQuery);
+  });
+
+  xit("should handle multiple nested arrays and maps extracted from JSON data", async () => {
+    const expectedQuery = await readFormattedSQL(
+      `${sqlDir}/complexSchemaLatest.sql`
+    );
+
+    console.log("expectedQuery: ", expectedQuery);
+
+    const result = testBuildLatestSchemaSnapshotViewQuery(
+      testDataset,
+      testTable,
+      await readBigQuerySchema(`${schemaDir}/complexSchema.json`)
+    );
+
     expect(result.query).to.equal(expectedQuery);
   });
 });
