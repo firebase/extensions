@@ -41,3 +41,14 @@ export const setSmtpCredentials = (config: Config) => {
 
   return transport;
 };
+
+export const parseTlsOptions = (tlsOptions: string) => {
+  let tls = { rejectUnauthorized: false };
+  try {
+    tls = JSON.parse(tlsOptions);
+  } catch (ex) {
+    console.log("Error parsing tls options, invalid JSON: " + ex);
+  }
+
+  return tls;
+};
