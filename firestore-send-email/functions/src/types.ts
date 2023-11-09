@@ -12,6 +12,7 @@ export interface Config {
   testing?: boolean;
   TTLExpireType?: string;
   TTLExpireValue?: number;
+  tls?: string;
 }
 export interface Attachment {
   filename?: string;
