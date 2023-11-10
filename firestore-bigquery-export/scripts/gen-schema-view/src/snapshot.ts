@@ -27,12 +27,14 @@ import {
 export function latestConsistentSnapshotSchemaView(
   datasetId: string,
   rawViewName: string,
-  schema: FirestoreSchema
+  schema: FirestoreSchema,
+  includePathParams = false
 ): any {
   const result = buildLatestSchemaSnapshotViewQuery(
     datasetId,
     rawViewName,
-    schema
+    schema,
+    includePathParams
   );
   return {
     viewInfo: {
@@ -46,9 +48,15 @@ export function latestConsistentSnapshotSchemaView(
 export function buildLatestSchemaSnapshotViewQueryFromLatestView(
   datasetId: string,
   tableName: string,
-  schema: FirestoreSchema
+  schema: FirestoreSchema,
+  includePathParams = false
 ): any {
-  return buildSchemaViewQuery(datasetId, latest(tableName), schema);
+  return buildSchemaViewQuery(
+    datasetId,
+    latest(tableName),
+    schema,
+    includePathParams
+  );
 }
 
 export const testBuildLatestSchemaSnapshotViewQuery = (
@@ -64,7 +72,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
   datasetId: string,
   rawViewName: string,
   schema: FirestoreSchema,
-  useNewSqlSyntax = false
+  includePathParams = false
 ): any => {
   const firstValue = (selector: string, isArrayType?: boolean) => {
     if (isArrayType) return selector;
@@ -140,8 +148,10 @@ export const buildLatestSchemaSnapshotViewQuery = (
         document_name,
         document_id,
         timestamp,
+        ${includePathParams ? `path_params,` : ``}
         operation${fieldNameSelectorClauses.length > 0 ? `,` : ``}
         ${fieldNameSelectorClauses}
+
       FROM (
         SELECT
           document_name,

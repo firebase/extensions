@@ -239,4 +239,73 @@ describe("e2e", () => {
     expect(result[0].isGift).toBe("Yes");
     expect(result[0].total).toBe("1");
   }, 80000);
+
+  test("should successfully include path params in the result", async () => {
+    /** Set the schema to be tested */
+    const schemaName = "mappedArray";
+
+    /** Create the test for the db */
+    const testData = {
+      name: "test",
+      date: new Date(),
+      total: 1,
+      cartItems: [
+        {
+          productName: "test",
+          quantity: "test",
+          isGift: "Yes",
+        },
+      ],
+    };
+
+    const pathParams = {
+      test: "test",
+      testTwo: "testTwo",
+    };
+
+    /** Generate Id */
+    const id = randomId();
+
+    /** Set the dataset and table names */
+    const datasetId = `${datasetPrefix}${id}`;
+    const tableId = `table_${id}`;
+
+    /** Create dataset and table */
+    const { dataset, rawChangeLogTable, rawLatestTable } = await setupBQ(
+      datasetId,
+      tableId,
+      testData,
+      pathParams
+    );
+
+    console.log("Testing with dataset: ", dataset.id);
+    console.log("Testing with table: ", rawChangeLogTable.id);
+    console.log("Testing with table: ", rawLatestTable.id);
+
+    /** await 5 seconds for the table to propogate */
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    /** Run the gen-schema script */
+    await executeScript(dataset.id, tableId, schemaName);
+
+    console.log("Done executing");
+
+    /* wait 10 seconds for the view to propogate */
+    await new Promise((resolve) => setTimeout(resolve, 10000));
+
+    /** Get the query result */
+    const result = await getQueryResult(dataset.id, tableId, schemaName);
+
+    /** Assert data */
+    expect(result.length).toBe(1);
+
+    console.log("result: ", result[0]);
+    console.log("result: ", result[0].map_array);
+
+    expect(result[0].productName).toBe("test");
+    expect(result[0].quantity).toBe("test");
+    expect(result[0].isGift).toBe("Yes");
+    expect(result[0].total).toBe("1");
+    expect(JSON.parse(result[0].path_params)).toEqual(pathParams);
+  }, 80000);
 });

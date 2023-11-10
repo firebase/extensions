@@ -69,6 +69,11 @@ program
     "A collection of files from which to read schemas.",
     collect,
     []
+  )
+  .option(
+    "--include-path-params",
+    "Include path params in the schema? (This will add a column for each path parameter in the schema view.)",
+    false
   );
 
 const questions = [
@@ -108,6 +113,7 @@ interface CliConfig {
   datasetId: string;
   tableNamePrefix: string;
   schemas: { [schemaName: string]: FirestoreSchema };
+  includePathParams: boolean;
 }
 
 async function run(): Promise<number> {
@@ -137,7 +143,8 @@ async function run(): Promise<number> {
       config.datasetId,
       config.tableNamePrefix,
       schemaName,
-      config.schemas[schemaName]
+      config.schemas[schemaName],
+      config.includePathParams
     );
   }
   return 0;
@@ -160,6 +167,7 @@ async function parseConfig(): Promise<CliConfig> {
       datasetId: program.dataset,
       tableNamePrefix: program.tableNamePrefix,
       schemas: readSchemas(program.schemaFiles),
+      includePathParams: program.includePathParams,
     };
   }
   const { project, dataset, tableNamePrefix, schemaFiles } =
@@ -171,6 +179,7 @@ async function parseConfig(): Promise<CliConfig> {
     schemas: readSchemas(
       schemaFiles.split(",").map((schemaFileName) => schemaFileName.trim())
     ),
+    includePathParams: program.includePathParams,
   };
 }
 
