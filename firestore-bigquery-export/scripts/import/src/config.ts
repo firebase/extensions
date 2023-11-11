@@ -180,7 +180,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     if (program.project === undefined) {
       errors.push("Project is not specified.");
     }
-    if (program.bigQueryProject === undefined) {
+    if (program.bigqueryProject === undefined) {
       errors.push("BigQuery Project is not specified.");
     }
     if (program.sourceCollectionPath === undefined) {
@@ -213,7 +213,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     return {
       kind: "CONFIG",
       projectId: program.project,
-      bigQueryProjectId: program.bigQueryProject,
+      bigQueryProjectId: program.bigqueryProject,
       sourceCollectionPath: program.sourceCollectionPath,
       datasetId: program.dataset,
       tableId: program.tableNamePrefix,
@@ -227,7 +227,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
   }
   const {
     project,
-    bigQueryProject,
+    bigqueryProject,
     sourceCollectionPath,
     dataset,
     table,
@@ -242,7 +242,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
   return {
     kind: "CONFIG",
     projectId: project,
-    bigQueryProjectId: bigQueryProject,
+    bigQueryProjectId: bigqueryProject,
     sourceCollectionPath: sourceCollectionPath,
     datasetId: dataset,
     tableId: table,
