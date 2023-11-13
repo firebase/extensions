@@ -1,3 +1,7 @@
+## Version 0.1.37
+
+fix - serialize timestamps to date string
+
 ## Version 0.1.36
 
 build - updated depenencies
