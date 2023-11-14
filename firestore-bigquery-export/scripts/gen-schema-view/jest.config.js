@@ -11,9 +11,10 @@ module.exports = {
   },
   preset: "ts-jest",
   testMatch: [
-    "<rootDir>/src/__tests__/bigquery/*.test.ts",
+    "<rootDir>/src/__tests__/**/*.test.ts",
     "<rootDir>/src/__tests__/schema-loader-utils/*.test.ts",
   ],
+  testPathIgnorePatterns: process.env.CI_TEST === "true" ? ["e2e"] : [],
   moduleNameMapper: {
     "firebase-admin/eventarc":
       "<rootDir>/node_modules/firebase-admin/lib/eventarc",
