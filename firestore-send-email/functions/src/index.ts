@@ -361,7 +361,6 @@ async function processWrite(
       // The record has most likely just been created by a client, so we need to
       // initialize the delivery state.
       if (!payload.delivery) {
-        logs.missingDeliveryField(change.after.ref);
         const startTime = Timestamp.fromDate(new Date());
 
         const delivery = {
