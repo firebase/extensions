@@ -1,3 +1,7 @@
+## Version 0.1.29
+
+fixed - remove missingDeliveryField log
+
 ## Version 0.1.28
 
 build - updated depenencies

@@ -67,10 +67,6 @@ export function deliveryError(
   logger.error(`Error when delivering message=${ref.path}: ${e.toString()}`);
 }
 
-export function missingDeliveryField(ref: admin.firestore.DocumentReference) {
-  logger.warn(`message=${ref.path} is missing 'delivery' field`);
-}
-
 export function missingUids(uids: string[]) {
   logger.log(
     `The following uids were provided, however a document does not exist or has no 'email' field: ${uids.join(
