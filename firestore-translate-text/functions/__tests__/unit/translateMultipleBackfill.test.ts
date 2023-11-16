@@ -5,7 +5,34 @@ import {
   translateMultipleBackfill,
 } from "../../src/translate/translateMultiple";
 import { updateTranslations } from "../../src/translate/common";
+
 const languages = ["en", "es", "fr"];
+
+const expectedMockArrayTranslations = {
+  "0": {
+    en: 'mock translated string "hello" in en',
+    es: 'mock translated string "hello" in es',
+    fr: 'mock translated string "hello" in fr',
+  },
+  "1": {
+    en: 'mock translated string "how are you?" in en',
+    es: 'mock translated string "how are you?" in es',
+    fr: 'mock translated string "how are you?" in fr',
+  },
+};
+
+const expectedMockObjectTranslations = {
+  test0: {
+    en: 'mock translated string "hello" in en',
+    es: 'mock translated string "hello" in es',
+    fr: 'mock translated string "hello" in fr',
+  },
+  test1: {
+    en: 'mock translated string "how are you?" in en',
+    es: 'mock translated string "how are you?" in es',
+    fr: 'mock translated string "how are you?" in fr',
+  },
+};
 
 jest.mock("../../src/config", () => ({
   default: {
@@ -18,9 +45,7 @@ const testFft = fft();
 
 jest.mock("../../src/translate/common", () => ({
   ...jest.requireActual("../../src/translate/common"),
-  updateTranslations: jest.fn().mockImplementation((snap, translations) => {
-    console.log(translations);
-  }),
+  updateTranslations: jest.fn().mockImplementation((snap, translations) => {}),
   translateString: jest.fn().mockImplementation((string, language) => {
     return Promise.resolve(
       `mock translated string \"${string}\" in ${language}`
@@ -28,9 +53,7 @@ jest.mock("../../src/translate/common", () => ({
   }),
 }));
 
-const mockBulkWriterUpdate = jest.fn().mockImplementation((args) => {
-  console.log(args);
-});
+const mockBulkWriterUpdate = jest.fn().mockImplementation((args) => {});
 
 describe("translateMultipleBackfill", () => {
   // Setup common variables if needed
@@ -45,7 +68,7 @@ describe("translateMultipleBackfill", () => {
     jest.clearAllMocks();
   });
 
-  test("should handle valid input correctly", async () => {
+  test("should handle array input correctly", async () => {
     input = ["hello", "how are you?"];
 
     snapshot = testFft.firestore.makeDocumentSnapshot(
@@ -55,18 +78,31 @@ describe("translateMultipleBackfill", () => {
 
     await translateMultipleBackfill(input, snapshot, bulkWriter);
 
-    expect(bulkWriter.update).toBeCalledWith(snapshot.ref, "translations", {
-      "0": {
-        en: "mock translated string for hello in en",
-        es: "mock translated string for hello in es",
-        fr: "mock translated string for hello in fr",
-      },
-      "1": {
-        en: "mock translated string for how are you? in en",
-        es: "mock translated string for how are you? in es",
-        fr: "mock translated string for how are you? in fr",
-      },
-    });
+    expect(bulkWriter.update).toBeCalledWith(
+      snapshot.ref,
+      "translations",
+      expectedMockArrayTranslations
+    );
+  });
+
+  test("should handle object input correctly", async () => {
+    input = {
+      test0: "hello",
+      test1: "how are you?",
+    };
+
+    snapshot = testFft.firestore.makeDocumentSnapshot(
+      { foo: "bar" },
+      "document/path"
+    );
+
+    await translateMultipleBackfill(input, snapshot, bulkWriter);
+
+    expect(bulkWriter.update).toBeCalledWith(
+      snapshot.ref,
+      "translations",
+      expectedMockObjectTranslations
+    );
   });
   // Add more test cases for different scenarios
 });
@@ -84,7 +120,7 @@ describe("translateMultiple", () => {
     jest.clearAllMocks();
   });
 
-  test("should handle valid input correctly", async () => {
+  test("should handle array input correctly", async () => {
     input = ["hello", "how are you?"];
 
     snapshot = testFft.firestore.makeDocumentSnapshot(
@@ -94,18 +130,28 @@ describe("translateMultiple", () => {
 
     await translateMultiple(input, languages, snapshot);
 
-    expect(updateTranslations).toBeCalledWith(snapshot, {
-      "0": {
-        en: 'mock translated string "hello" in en',
-        es: 'mock translated string "hello" in es',
-        fr: 'mock translated string "hello" in fr',
-      },
-      "1": {
-        en: 'mock translated string "how are you?" in en',
-        es: 'mock translated string "how are you?" in es',
-        fr: 'mock translated string "how are you?" in fr',
-      },
-    });
+    expect(updateTranslations).toBeCalledWith(
+      snapshot,
+      expectedMockArrayTranslations
+    );
+  });
+  test("should handle object input correctly", async () => {
+    input = {
+      test0: "hello",
+      test1: "how are you?",
+    };
+
+    snapshot = testFft.firestore.makeDocumentSnapshot(
+      { foo: "bar" },
+      "document/path"
+    );
+
+    await translateMultiple(input, languages, snapshot);
+
+    expect(updateTranslations).toBeCalledWith(
+      snapshot,
+      expectedMockObjectTranslations
+    );
   });
   // Add more test cases for different scenarios
 });
