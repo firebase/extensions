@@ -49,7 +49,8 @@ export const translateMultipleBackfill = async (
   snapshot: admin.firestore.DocumentSnapshot,
   bulkWriter: admin.firestore.BulkWriter
 ): Promise<void> => {
-  const existingTranslations = extractOutput(snapshot);
+  const existingTranslations = extractOutput(snapshot) ?? {};
+
   let translations = existingTranslations;
   let promises: Promise<void>[] = [];
 
