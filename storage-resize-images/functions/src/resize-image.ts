@@ -175,10 +175,10 @@ export const modifyImage = async ({
   }
 
   // Path where modified image will be uploaded to in Storage.
-  const modifiedFilePath = path.posix.normalize(
-    config.resizedImagesPath
-      ? path.posix.join(fileDir, config.resizedImagesPath, modifiedFileName)
-      : path.posix.join(fileDir, modifiedFileName)
+  const modifiedFilePath = getModifiedFilePath(
+    fileDir,
+    config.resizedImagesPath,
+    modifiedFileName
   );
   let modifiedFile: string;
 
@@ -280,14 +280,20 @@ export const constructMetadata = (
   return metadata;
 };
 
+const convertToPosixPath = (filePath: string, locale?: "win32" | "posix") => {
+  const sep = locale ? path[locale].sep : path.sep;
+  return filePath.split(sep).join(path.posix.sep);
+};
 export const getModifiedFilePath = (
   fileDir,
   resizedImagesPath,
   modifiedFileName
 ) => {
-  return path.posix.normalize(
-    resizedImagesPath
-      ? path.posix.join(fileDir, resizedImagesPath, modifiedFileName)
-      : path.posix.join(fileDir, modifiedFileName)
+  return convertToPosixPath(
+    path.posix.normalize(
+      resizedImagesPath
+        ? path.posix.join(fileDir, resizedImagesPath, modifiedFileName)
+        : path.posix.join(fileDir, modifiedFileName)
+    )
   );
 };
