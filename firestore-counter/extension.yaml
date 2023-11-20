@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-counter
-version: 0.2.9
+version: 0.2.10
 specVersion: v1beta
 
 displayName: Distributed Counter
