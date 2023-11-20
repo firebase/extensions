@@ -11,8 +11,14 @@ function compileUrl($: string): URL | null {
   }
 }
 
+function checkMicrosoftServer($: string): boolean {
+  return (
+    $.includes("outlook") || $.includes("office365") || $.includes("hotmail")
+  );
+}
+
 export const setSmtpCredentials = (config: Config) => {
-  let url;
+  let url: URL;
   let transport;
 
   const { smtpConnectionUri, smtpPassword } = config;
@@ -37,7 +43,18 @@ export const setSmtpCredentials = (config: Config) => {
     url.password = encodeURIComponent(smtpPassword);
   }
 
-  transport = createTransport(url.href);
+  // Outlook requires explicit configuration
+  if (checkMicrosoftServer(url.hostname)) {
+    transport = createTransport({
+      service: "hotmail",
+      auth: {
+        user: decodeURIComponent(url.username),
+        pass: decodeURIComponent(url.password),
+      },
+    });
+  } else {
+    transport = createTransport(url.href);
+  }
 
   return transport;
 };

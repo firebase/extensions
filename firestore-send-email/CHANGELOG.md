@@ -1,6 +1,7 @@
 ## Version 0.1.29
 
 fixed - remove missingDeliveryField log
+fixed - support hotmail service
 
 ## Version 0.1.28
 
