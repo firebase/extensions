@@ -18,6 +18,6 @@ Object {
   "makePublic": false,
   "outputOptions": undefined,
   "resizedImagesPath": undefined,
-  "sharpOptions": undefined,
+  "sharpOptions": "{}",
 }
 `;
