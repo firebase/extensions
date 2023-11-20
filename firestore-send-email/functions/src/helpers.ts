@@ -49,7 +49,7 @@ export const setSmtpCredentials = (config: Config) => {
       service: "hotmail",
       auth: {
         user: decodeURIComponent(url.username),
-        pass: url.password,
+        pass: decodeURIComponent(url.password),
       },
     });
   } else {
