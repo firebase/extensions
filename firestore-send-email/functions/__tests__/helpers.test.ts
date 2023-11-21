@@ -175,13 +175,6 @@ describe("set server credentials helper function", () => {
     );
 
     expect(regex.test(config.smtpConnectionUri)).toBe(true);
-
-    // const credentials = setSmtpCredentials(config);
-
-    // expect(credentials).toBeNull();
-    // expect(consoleLogSpy).toBeCalledWith(
-    //   `invalid url: '${config.smtpConnectionUri}' , please reconfigure with a valid SMTP connection URI`
-    // );
   });
 
   test("return invalid smtpConnectionUri credentials with invalid seprator", () => {
@@ -198,12 +191,5 @@ describe("set server credentials helper function", () => {
     );
 
     expect(regex.test(config.smtpConnectionUri)).toBe(false);
-
-    // const credentials = setSmtpCredentials(config);
-
-    // expect(credentials).toBeNull();
-    // expect(consoleLogSpy).toBeCalledWith(
-    //   `invalid url: '${config.smtpConnectionUri}' , please reconfigure with a valid SMTP connection URI`
-    // );
   });
 });
