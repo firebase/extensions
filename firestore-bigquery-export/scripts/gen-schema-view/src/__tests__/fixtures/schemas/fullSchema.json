@@ -17,14 +17,14 @@
       "type": "geopoint"
     },
     {
+      "name": "friends",
+      "type": "map",
       "fields": [
         {
           "name": "name",
           "type": "string"
         }
-      ],
-      "name": "friends",
-      "type": "map"
+      ]
     }
   ]
 }

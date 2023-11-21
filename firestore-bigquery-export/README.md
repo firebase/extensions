@@ -22,6 +22,13 @@ Enabling wildcard references will provide an additional STRING based column. The
 
 `Partition` settings cannot be updated on a pre-existing table, if these options are required then a new table must be created.
 
+Note: To enable partitioning for a Big Query database, the following fields are required:
+
+ - Time Partitioning option type
+ - Time partitioning column name
+ - Time partiitioning table schema
+ - Firestore document field name
+
 `Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
 
 
@@ -84,9 +91,13 @@ If you follow these steps, your changelog table should be created using your cus
 
 #### Backfill your BigQuery dataset
 
-This extension only sends the content of documents that have been changed -- it does not export your full dataset of existing documents into BigQuery. So, to backfill your BigQuery dataset with all the documents in your collection, you can run the [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md) provided by this extension.
+To import documents that already exist at installation time into BigQuery, answer **Yes** when the installer asks "Import existing Firestore documents into BigQuery?" The extension will export existing documents as part of the installation and update processes.
 
-**Important:** Run the import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
+Alternatively, you can run the external [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md) to backfill existing documents. If you plan to use this script, answer **No** when prompted to import existing documents.
+
+**Important:** Run the external import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
+
+If you don't either enable automatic import or run the import script, the extension only exports the content of documents that are created or changed after installation.
 
 #### Generate schema views
 
@@ -135,6 +146,14 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * Use new query syntax for snapshots: If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential resource limitations.
 
+* Import existing Firestore documents into BigQuery?: Do you want to import existing documents from your Firestore collection into BigQuery? These documents  will have each have a special changelog with the operation of `IMPORT` and the timestamp of epoch. This ensures that any operation on an imported document supersedes the import record.
+
+* Existing documents collection: What is the path of the the Cloud Firestore Collection you would like to import from? (This may, or may not, be the same Collection for which you plan to mirror changes.) If you want to use a collectionGroup query, provide the collection name value here, and set 'Use Collection Group query' to true.
+
+* Use Collection Group query: Do you want to use a [collection group](https://firebase.google.com/docs/firestore/query-data/queries#collection-group-query) query for importing existing documents? Warning: A collectionGroup query will target every collection in your Firestore project that matches the 'Existing documents collection'. For example, if you have 10,000 documents with a sub-collection named: landmarks, this will query every document in 10,000 landmarks collections.
+
+* Docs per backfill: When importing existing documents, how many should be imported at once? The default value of 200 should be ok for most users. If you are using a transform function or have very large documents, you may need to set this to a lower number. If the lifecycle event function times out, lower this value.
+
 * Cloud KMS key name: Instead of Google managing the key encryption keys that protect your data, you control and manage key encryption keys in Cloud KMS. If this parameter is set, the extension will specify the KMS key name when creating the BQ table. See the PREINSTALL.md for more details.
 
 
@@ -143,7 +162,11 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * **fsexportbigquery:** Listens for document changes in your specified Cloud Firestore collection, then exports the changes into BigQuery.
 
+* **fsimportexistingdocs:** Imports exisitng documents from the specified collection into BigQuery. Imported documents will have a special changelog with the operation of `IMPORT` and the timestamp of epoch.
+
 * **syncBigQuery:** A task-triggered function that gets called on BigQuery sync
+
+* **initBigQuerySync:** Runs configuration for sycning with BigQuery
 
 * **setupBigQuerySync:** Runs configuration for sycning with BigQuery
 

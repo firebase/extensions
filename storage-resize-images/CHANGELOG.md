@@ -1,3 +1,9 @@
+## Version 0.2.1
+
+feature - allow custom sharp.js options
+
+fix - convert storage path separators on windows
+
 ## Version 0.2.0
 
 fixed - added safeguards for travsersed paths on failed image uploads
