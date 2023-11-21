@@ -5,6 +5,11 @@ import { Config } from "../src/types";
 const { logger } = require("firebase-functions");
 const consoleLogSpy = jest.spyOn(logger, "warn").mockImplementation();
 
+// This is a regex to validate the smtpConnectionUri in extension.yaml
+const regex = new RegExp(
+  "^(smtp[s]*://.*?(:[^:@]*)?@[^:@]+:[0-9]+(\\?[^ ]*)?)$"
+);
+
 describe("set server credentials helper function", () => {
   test(" return smtpServerDomain credentials with new password", () => {
     const config: Config = {
@@ -170,10 +175,6 @@ describe("set server credentials helper function", () => {
       defaultFrom: "",
     };
 
-    const regex = new RegExp(
-      "^(smtp[s]*://.*?(:[^:@]*)?@[^:@]+:[0-9]+(\\?[^ ]*)?)$"
-    );
-
     expect(regex.test(config.smtpConnectionUri)).toBe(true);
   });
 
@@ -185,10 +186,6 @@ describe("set server credentials helper function", () => {
       mailCollection: "",
       defaultFrom: "",
     };
-
-    const regex = new RegExp(
-      "^(smtp[s]*://.*?(:[^:@]*)?@[^:@]+:[0-9]+(\\?[^ ]*)?)$"
-    );
 
     expect(regex.test(config.smtpConnectionUri)).toBe(false);
   });
