@@ -97,6 +97,9 @@ Leave this field empty if you do not want to store failed images in a separate d
 * Output options for selected formats: Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion. eg. `{"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "pallete": true }}`
 
 
+* Sharp constructor options for resizing images: Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion. eg. `{ failOnError: false, limitInputPixels: true }`
+
+
 * GIF and WEBP animated option: Keep animation of GIF and WEBP formats.
 
 

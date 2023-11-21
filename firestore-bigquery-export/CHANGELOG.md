@@ -1,3 +1,7 @@
+## Version 0.1.37
+
+fix - serialize timestamps to date string
+
 ## Version 0.1.36
 
 build - updated depenencies
@@ -69,6 +73,8 @@ fixed - update snapshot script
 feature - add oldData to the record
 
 fixed - updating table metadata too often
+
+feature - add lifecycle event to export existing documents to Bigquery
 
 ## Version 0.1.26
 
