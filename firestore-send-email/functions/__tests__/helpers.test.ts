@@ -161,4 +161,49 @@ describe("set server credentials helper function", () => {
       `invalid url: '${config.smtpConnectionUri}' , please reconfigure with a valid SMTP connection URI`
     );
   });
+  test("return valid smtpConnectionUri credentials with correct seprator", () => {
+    const config: Config = {
+      smtpConnectionUri:
+        "smtp://fakeemail@gmail.com:4,h?dhuNTbv9zMrP4&7&7%*3@smtp.gmail.com:465?pool=true&service=gmail",
+      location: "",
+      mailCollection: "",
+      defaultFrom: "",
+    };
+
+    const regex = new RegExp(
+      "^(smtp[s]*://.*?(:[^:@]*)?@[^:@]+:[0-9]+(\\?[^ ]*)?)$"
+    );
+
+    expect(regex.test(config.smtpConnectionUri)).toBe(true);
+
+    // const credentials = setSmtpCredentials(config);
+
+    // expect(credentials).toBeNull();
+    // expect(consoleLogSpy).toBeCalledWith(
+    //   `invalid url: '${config.smtpConnectionUri}' , please reconfigure with a valid SMTP connection URI`
+    // );
+  });
+
+  test("return invalid smtpConnectionUri credentials with invalid seprator", () => {
+    const config: Config = {
+      smtpConnectionUri:
+        "smtp://fakeemail@gmail.com:4,h?dhuNTbv9zMrP4&7&7%*3:smtp.gmail.com:465?pool=true&service=gmail",
+      location: "",
+      mailCollection: "",
+      defaultFrom: "",
+    };
+
+    const regex = new RegExp(
+      "^(smtp[s]*://.*?(:[^:@]*)?@[^:@]+:[0-9]+(\\?[^ ]*)?)$"
+    );
+
+    expect(regex.test(config.smtpConnectionUri)).toBe(false);
+
+    // const credentials = setSmtpCredentials(config);
+
+    // expect(credentials).toBeNull();
+    // expect(consoleLogSpy).toBeCalledWith(
+    //   `invalid url: '${config.smtpConnectionUri}' , please reconfigure with a valid SMTP connection URI`
+    // );
+  });
 });
