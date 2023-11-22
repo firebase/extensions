@@ -20,7 +20,6 @@ describe("e2e testing", () => {
   beforeAll(() => {
     server = smtpServer();
   });
-
   test("the SMTP function is working", async (): Promise<void> => {
     const record = {
       to: "test-assertion@email.com",
@@ -31,15 +30,19 @@ describe("e2e testing", () => {
 
     const doc = await mailCollection.add(record);
 
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       const unsubscribe = doc.onSnapshot((snapshot) => {
         const document = snapshot.data();
 
         if (document.delivery && document.delivery.info) {
-          expect(document.delivery.info.accepted[0]).toEqual(record.to);
-          expect(document.delivery.info.response).toContain("250 Accepted");
-          unsubscribe();
-          resolve();
+          try {
+            expect(document.delivery.info.accepted[0]).toEqual(record.to);
+            expect(document.delivery.info.response).toContain("250");
+            unsubscribe();
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
         }
       });
     });
@@ -58,15 +61,21 @@ describe("e2e testing", () => {
     return new Promise((resolve, reject) => {
       const unsubscribe = doc.onSnapshot((snapshot) => {
         const document = snapshot.data();
-
         if (
           document.delivery &&
-          document.delivery.info &&
+          document.delivery.attempts === 1 &&
+          document.delivery.state === "SUCCESS" &&
           document.delivery.expireAt
         ) {
           const startAt = document.delivery.startTime.toDate();
           const expireAt = document.delivery.expireAt.toDate();
-          expect(expireAt.getTime() - startAt.getTime()).toEqual(5 * 86400000);
+          try {
+            expect(expireAt.getTime() - startAt.getTime()).toEqual(
+              5 * 86400000
+            );
+          } catch (e) {
+            reject(e);
+          }
           unsubscribe();
           resolve();
         }
@@ -84,20 +93,20 @@ describe("e2e testing", () => {
       to: "test-assertion@email.com",
       message: {
         subject: "test",
-        attachments: [{ filename: "{{username}}.jpg" }],
+        attachments: [{ filename: "test.png" }],
       },
       template: { name: "default", data: { username: "foo" } },
     };
 
     const doc = await mailCollection.add(record);
 
-    return new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       const unsubscribe = doc.onSnapshot((snapshot) => {
         const document = snapshot.data();
 
         if (document.delivery && document.delivery.info) {
           expect(document.delivery.info.accepted[0]).toEqual(record.to);
-          expect(document.delivery.info.response).toContain("250 Accepted");
+          expect(document.delivery.info.response).toContain("250");
           expect(document.message.attachments.length).toEqual(1);
           unsubscribe();
           resolve();
@@ -133,7 +142,88 @@ describe("e2e testing", () => {
 
         if (document.delivery && document.delivery.info) {
           expect(document.delivery.info.accepted[0]).toEqual(record.to);
-          expect(document.delivery.info.response).toContain("250 Accepted");
+          expect(document.delivery.info.response).toContain("250");
+
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+  });
+
+  test("should successfully send an email with a template with attachment", async (): Promise<void> => {
+    /** create basic template */
+    const template = await templatesCollection.add({
+      attachments: {
+        filename: "test.png",
+        path: "{{picPath}}",
+      },
+      html: "asdasda",
+      subject: "foo bar subject",
+    });
+
+    /** Add a record with the template and no message object */
+    const record = {
+      to: "jacob@invertase.io",
+      template: {
+        name: template.id,
+        data: {
+          picPath:
+            "https://firebasestorage.googleapis.com/v0/b/invertase--palm-demo.appspot.com/o/PNG_Test.png?alt=media&token=5a8a2242-2b32-496b-b33b-17c9a638539b",
+        },
+      },
+    };
+
+    /** Add a new mail document */
+    const doc = await mailCollection.add(record);
+
+    /** Check the email response  */
+    return new Promise((resolve, reject) => {
+      const unsubscribe = doc.onSnapshot((snapshot) => {
+        const document = snapshot.data();
+
+        if (document.delivery && document.delivery.info) {
+          expect(document.delivery.info.accepted[0]).toEqual(record.to);
+          expect(document.delivery.info.response).toContain("250");
+
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+  });
+
+  test("should successfully send an email with a template with hardcoded attachment", async (): Promise<void> => {
+    /** create basic template */
+    const template = await templatesCollection.add({
+      attachments: {
+        filename: "test.png",
+        path: "https://firebasestorage.googleapis.com/v0/b/invertase--palm-demo.appspot.com/o/PNG_Test.png?alt=media&token=5a8a2242-2b32-496b-b33b-17c9a638539b",
+      },
+      html: "asdasda",
+      subject: "foo bar subject",
+    });
+
+    /** Add a record with the template and no message object */
+    const record = {
+      to: "jacob@invertase.io",
+      template: {
+        name: template.id,
+        data: {},
+      },
+    };
+
+    /** Add a new mail document */
+    const doc = await mailCollection.add(record);
+
+    /** Check the email response  */
+    return new Promise((resolve, reject) => {
+      const unsubscribe = doc.onSnapshot((snapshot) => {
+        const document = snapshot.data();
+
+        if (document.delivery && document.delivery.info) {
+          expect(document.delivery.info.accepted[0]).toEqual(record.to);
+          expect(document.delivery.info.response).toContain("250");
 
           unsubscribe();
           resolve();

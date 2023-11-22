@@ -99,6 +99,15 @@ export default class Templates {
         tgroup.amp = ampHandlebars.compile(t.amp);
       }
       if (t.attachments) {
+        const unescapeProperties = ["path", "filename"];
+        for (const property of unescapeProperties) {
+          if (t.attachments[property]) {
+            t.attachments[property] = t.attachments[property]
+              .replace("{{", "{{{")
+              .replace("}}", "}}}");
+          }
+        }
+
         tgroup.attachments = attachmentsHandlebars.compile(
           JSON.stringify(t.attachments),
           { strict: true }
