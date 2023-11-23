@@ -1,3 +1,7 @@
+## Version 0.1.38
+
+fix - backfill value mismatch
+
 ## Version 0.1.37
 
 fix - serialize timestamps to date string
