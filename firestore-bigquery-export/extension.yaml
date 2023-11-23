@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.36
+version: 0.1.38
 specVersion: v1beta
 
 displayName: Stream Firestore to BigQuery
@@ -66,7 +66,7 @@ resources:
       Imports exisitng documents from the specified collection into BigQuery. Imported documents will have 
       a special changelog with the operation of `IMPORT` and the timestamp of epoch.
     properties:
-      runtime: nodejs14
+      runtime: nodejs18
       taskQueueTrigger: {}
 
   - name: syncBigQuery
