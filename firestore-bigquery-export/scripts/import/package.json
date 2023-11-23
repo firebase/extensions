@@ -1,6 +1,6 @@
 {
   "name": "@firebaseextensions/fs-bq-import-collection",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "Import a Firestore Collection into a BigQuery Changelog Table",
   "main": "./lib/index.js",
   "repository": {
@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "npm run clean && npm run compile",
-    "build-watch": "npm run clean && tsc --watch",
+    "build:watch": "npm run clean && tsc --watch",
     "clean": "rimraf ./lib",
     "compile": "tsc",
     "import": "node ./lib/index.js",
@@ -35,11 +35,10 @@
     "generate-schema": "^2.6.0",
     "inquirer": "^6.4.0",
     "sql-formatter": "^2.3.3",
-    "workerpool": "^6.1.4"
+    "workerpool": "^6.5.1"
   },
   "devDependencies": {
     "@types/chai": "^4.2.0",
-    "@types/workerpool": "^6.0.0",
     "axios": "^1.3.2",
     "chai": "^4.2.0",
     "dotenv": "^16.3.1",

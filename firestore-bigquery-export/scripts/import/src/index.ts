@@ -80,7 +80,7 @@ const run = async (): Promise<number> => {
   await initializeDataSink(dataSink, config);
 
   logs.importingData(config);
-  if (multiThreaded && queryCollectionGroup) {
+  if (multiThreaded) {
     if (queryCollectionGroup) {
       return runMultiThread(config);
     }

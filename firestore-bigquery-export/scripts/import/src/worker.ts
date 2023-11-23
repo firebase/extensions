@@ -55,6 +55,8 @@ async function processDocuments(
     tableId,
     datasetId,
     datasetLocation,
+    // we always want to use wildcardIds, because we're using collectionGroup queries
+    wildcardIds: true,
   });
 
   const rows: FirestoreDocumentChangeEvent = getRowsFromDocs(docs, config);
