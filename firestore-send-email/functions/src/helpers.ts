@@ -53,7 +53,9 @@ export const setSmtpCredentials = (config: Config) => {
       },
     });
   } else {
-    transport = createTransport(url.href);
+    transport = createTransport(url.href, {
+      tls: parseTlsOptions(config.tls),
+    });
   }
 
   return transport;
