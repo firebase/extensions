@@ -157,7 +157,7 @@ params:
     required: true
 
   - param: TLS_OPTIONS
-    label: Tls Options
+    label: TLS Options
     description: >-
       A JSON value representing TLS options. For more information, see https://nodejs.org/api/tls.html#tls_class_tls_tlssocket
     required: false
