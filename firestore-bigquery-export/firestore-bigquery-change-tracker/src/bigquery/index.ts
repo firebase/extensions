@@ -155,9 +155,6 @@ export class FirestoreBigQueryEventHistoryTracker
         if (property.constructor.name === DocumentReference.name) {
           this.update(property.path);
         }
-        if (property instanceof admin.firestore.Timestamp) {
-          this.update(property.toDate());
-        }
       }
     });
 
