@@ -58,7 +58,9 @@ async function transportLayer() {
       host: "127.0.0.1",
       port: 8132,
       secure: false,
-      tls: parseTlsOptions(config.tls),
+      tls: {
+        rejectUnauthorized: false,
+      },
     });
   }
 
