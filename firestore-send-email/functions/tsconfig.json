@@ -7,6 +7,5 @@
     "sourceMap": false
   },
   "compileOnSave": true,
-
   "include": ["src"]
 }
