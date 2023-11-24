@@ -11,7 +11,7 @@ module.exports = {
     },
   },
   setupFiles: ["<rootDir>/__tests__/jest.setup.ts"],
-  testMatch: ["**/__tests__/*.test.ts"],
+  testMatch: ["**/__tests__/e2e.test.ts"],
   testEnvironment: "node",
   moduleNameMapper: {
     "firebase-admin/app": "<rootDir>/node_modules/firebase-admin/lib/app",

@@ -2,6 +2,10 @@ import * as admin from "firebase-admin";
 import { smtpServer } from "./createSMTPServer";
 import { FieldValue } from "firebase-admin/firestore";
 
+// import wait-for-expect
+import waitForExpect from "wait-for-expect";
+import { firestore } from "firebase-admin";
+
 process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
 
 admin.initializeApp({
@@ -21,7 +25,7 @@ describe("e2e testing", () => {
     server = smtpServer();
   });
 
-  test("the SMTP function is working", async (): Promise<void> => {
+  test.only("the SMTP function is working", async (): Promise<void> => {
     const record = {
       to: "test-assertion@email.com",
       message: {
@@ -29,19 +33,25 @@ describe("e2e testing", () => {
       },
     };
 
-    const doc = await mailCollection.add(record);
+    const doc = mailCollection.doc();
 
-    return new Promise((resolve, reject) => {
-      const unsubscribe = doc.onSnapshot((snapshot) => {
-        const document = snapshot.data();
+    let currentSnapshot: firestore.DocumentSnapshot;
 
-        if (document.delivery && document.delivery.info) {
-          expect(document.delivery.info.accepted[0]).toEqual(record.to);
-          expect(document.delivery.info.response).toContain("250 Accepted");
-          unsubscribe();
-          resolve();
-        }
-      });
+    const unsubscribe = doc.onSnapshot((snapshot) => {
+      currentSnapshot = snapshot;
+    });
+
+    await doc.create(record);
+
+    await waitForExpect(() => {
+      expect(currentSnapshot).toHaveProperty("exists");
+      expect(currentSnapshot.exists).toBeTruthy();
+      const currentDocumentData = currentSnapshot.data();
+      expect(currentDocumentData).toHaveProperty("delivery");
+      expect(currentDocumentData.delivery).toHaveProperty("info");
+      expect(currentDocumentData.delivery.info.accepted[0]).toEqual(record.to);
+      expect(currentDocumentData.delivery.info.response).toContain("250");
+      unsubscribe();
     });
   }, 12000);
 
