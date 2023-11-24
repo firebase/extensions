@@ -1,6 +1,6 @@
 import { createTransport } from "nodemailer";
 import { URL } from "url";
-import { invalidURI } from "./logs";
+import { invalidTlsOptions, invalidURI } from "./logs";
 import { Config } from "./types";
 
 function compileUrl($: string): URL | null {
@@ -17,7 +17,19 @@ function checkMicrosoftServer($: string): boolean {
   );
 }
 
-export const setSmtpCredentials = (config: Config) => {
+export function parseTlsOptions(tlsOptions: string) {
+  let tls = { rejectUnauthorized: false };
+
+  try {
+    tls = JSON.parse(tlsOptions);
+  } catch (ex) {
+    invalidTlsOptions();
+  }
+
+  return tls;
+}
+
+export function setSmtpCredentials(config: Config) {
   let url: URL;
   let transport;
 
@@ -28,9 +40,10 @@ export const setSmtpCredentials = (config: Config) => {
 
   /** return null if invalid url */
   if (!url) {
-    invalidURI(smtpConnectionUri);
-
-    return null;
+    invalidURI();
+    throw new Error(
+      `Invalid URI: please reconfigure with a valid SMTP connection URI`
+    );
   }
 
   /** encode uri password if exists */
@@ -53,8 +66,10 @@ export const setSmtpCredentials = (config: Config) => {
       },
     });
   } else {
-    transport = createTransport(url.href);
+    transport = createTransport(url.href, {
+      tls: parseTlsOptions(config.tls),
+    });
   }
 
   return transport;
-};
+}

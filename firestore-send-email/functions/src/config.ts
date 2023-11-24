@@ -28,6 +28,7 @@ const config: Config = {
   testing: process.env.TESTING === "true",
   TTLExpireType: process.env.TTL_EXPIRE_TYPE,
   TTLExpireValue: parseInt(process.env.TTL_EXPIRE_VALUE),
+  tls: process.env.TLS_OPTIONS || "{}",
 };
 
 export default config;
