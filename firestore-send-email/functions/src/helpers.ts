@@ -1,7 +1,8 @@
-import { createTransport } from "nodemailer";
+import { createTransport, Transporter } from "nodemailer";
 import { URL } from "url";
 import { invalidURI } from "./logs";
 import { Config } from "./types";
+import { logger } from "firebase-functions/v1";
 
 function compileUrl($: string): URL | null {
   try {
@@ -17,9 +18,23 @@ function checkMicrosoftServer($: string): boolean {
   );
 }
 
-export const setSmtpCredentials = (config: Config) => {
+export function parseTlsOptions(tlsOptions: string) {
+  let tls = { rejectUnauthorized: false };
+
+  try {
+    tls = JSON.parse(tlsOptions);
+  } catch (ex) {
+    logger.warn(
+      "Invalid TLS options provided, using default TLS options instead: `{ rejectUnauthorized: false }`"
+    );
+  }
+
+  return tls;
+}
+
+export function setSmtpCredentials(config: Config): Transporter {
   let url: URL;
-  let transport;
+  let transport: Transporter;
 
   const { smtpConnectionUri, smtpPassword } = config;
 
@@ -28,9 +43,10 @@ export const setSmtpCredentials = (config: Config) => {
 
   /** return null if invalid url */
   if (!url) {
-    invalidURI(smtpConnectionUri);
-
-    return null;
+    invalidURI();
+    throw new Error(
+      `Invalid URI: please reconfigure with a valid SMTP connection URI`
+    );
   }
 
   /** encode uri password if exists */
@@ -59,15 +75,4 @@ export const setSmtpCredentials = (config: Config) => {
   }
 
   return transport;
-};
-
-export const parseTlsOptions = (tlsOptions: string) => {
-  let tls = { rejectUnauthorized: false };
-  try {
-    tls = JSON.parse(tlsOptions);
-  } catch (ex) {
-    console.log("Error parsing tls options, invalid JSON: " + ex);
-  }
-
-  return tls;
-};
+}
