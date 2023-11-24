@@ -1,3 +1,7 @@
+## Version 0.1.39
+
+fix - rollback timestamp serialization
+
 ## Version 0.1.38
 
 fix - backfill value mismatch
