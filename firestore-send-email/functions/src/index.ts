@@ -23,7 +23,7 @@ import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
-import { setSmtpCredentials } from "./helpers";
+import { parseTlsOptions, setSmtpCredentials } from "./helpers";
 import * as events from "./events";
 
 logs.init();
