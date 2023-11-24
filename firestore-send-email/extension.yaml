@@ -162,8 +162,6 @@ params:
       A JSON value representing TLS options. For more information, see https://nodejs.org/api/tls.html#tls_class_tls_tlssocket
     required: false
 
-
-
 events:
   - type: firebase.extensions.firestore-send-email.v1.onStart
     description: Occurs when the extension starts execution.
