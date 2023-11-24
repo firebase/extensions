@@ -1,8 +1,7 @@
-import { createTransport, Transporter } from "nodemailer";
+import { createTransport } from "nodemailer";
 import { URL } from "url";
-import { invalidURI } from "./logs";
+import { invalidTlsOptions, invalidURI } from "./logs";
 import { Config } from "./types";
-import { logger } from "firebase-functions/v1";
 
 function compileUrl($: string): URL | null {
   try {
@@ -24,17 +23,15 @@ export function parseTlsOptions(tlsOptions: string) {
   try {
     tls = JSON.parse(tlsOptions);
   } catch (ex) {
-    logger.warn(
-      "Invalid TLS options provided, using default TLS options instead: `{ rejectUnauthorized: false }`"
-    );
+    invalidTlsOptions();
   }
 
   return tls;
 }
 
-export function setSmtpCredentials(config: Config): Transporter {
+export function setSmtpCredentials(config: Config) {
   let url: URL;
-  let transport: Transporter;
+  let transport;
 
   const { smtpConnectionUri, smtpPassword } = config;
 
