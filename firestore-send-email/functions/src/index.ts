@@ -52,16 +52,13 @@ async function initialize() {
   events.setupEventChannel();
 }
 
-/** Extract JSON tsl options */
-const tls = parseTlsOptions(config.tls);
-
 async function transportLayer() {
   if (config.testing) {
     return nodemailer.createTransport({
       host: "127.0.0.1",
       port: 8132,
       secure: false,
-      tls,
+      tls: parseTlsOptions(config.tls),
     });
   }
 

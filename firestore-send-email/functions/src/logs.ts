@@ -105,8 +105,8 @@ export function foundMissingTemplate(name) {
   logger.log(`template '${name}' has been found`);
 }
 
-export function invalidURI(uri) {
+export function invalidURI() {
   logger.warn(
-    `invalid url: '${uri}' , please reconfigure with a valid SMTP connection URI`
+    `Invalid URI: please reconfigure with a valid SMTP connection URI`
   );
 }
