@@ -69,7 +69,7 @@ params:
        `smtps://username@gmail.com:password@smtp.gmail.com:465`. (username and password)
     type: string
     example: smtps://username@smtp.hostname.com:465
-    validationRegex: ^(smtp[s]*://.*?:[0-9]+.*$)
+    validationRegex: ^(smtp[s]*://(.*?(:[^:@]*)?@)?[^:@]+:[0-9]+(\\?[^ ]*)?)$
     validationErrorMessage: Invalid SMTP connection URI. Must be in the form `smtp(s)://username:password@hostname:port` or `smtp(s)://username@hostname:port`.
     required: true
 
