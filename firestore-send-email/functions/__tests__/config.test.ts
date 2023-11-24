@@ -21,7 +21,7 @@ const environment = {
   TESTING: "true",
   TTL_EXPIRE_TYPE: "day",
   TTL_EXPIRE_VALUE: "1",
-  tls: "{}",
+  TLS_OPTIONS: "{}",
 };
 
 describe("extensions config", () => {
