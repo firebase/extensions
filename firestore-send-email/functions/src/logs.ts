@@ -107,6 +107,12 @@ export function foundMissingTemplate(name) {
 
 export function invalidURI() {
   logger.warn(
-    `Invalid URI: please reconfigure with a valid SMTP connection URI`
+    "Invalid URI: please reconfigure with a valid SMTP connection URI"
+  );
+}
+
+export function invalidTlsOptions() {
+  logger.warn(
+    "Invalid TLS options provided, using default TLS options instead: `{ rejectUnauthorized: false }`"
   );
 }

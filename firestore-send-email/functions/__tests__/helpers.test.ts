@@ -1,8 +1,9 @@
 import Mail = require("nodemailer/lib/mailer");
+const { logger } = require("firebase-functions");
+
 import { setSmtpCredentials } from "../src/helpers";
 import { Config } from "../src/types";
 
-const { logger } = require("firebase-functions");
 const consoleLogSpy = jest.spyOn(logger, "warn").mockImplementation();
 
 describe("set server credentials helper function", () => {
@@ -154,11 +155,12 @@ describe("set server credentials helper function", () => {
       mailCollection: "",
       defaultFrom: "",
     };
-    const credentials = setSmtpCredentials(config);
 
-    expect(credentials).toBeNull();
+    // Expect an error to be thrown
+    expect(() => setSmtpCredentials(config)).toThrow(Error);
+
     expect(consoleLogSpy).toBeCalledWith(
-      `invalid url: '${config.smtpConnectionUri}' , please reconfigure with a valid SMTP connection URI`
+      "Invalid URI: please reconfigure with a valid SMTP connection URI"
     );
   });
 });
