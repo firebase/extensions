@@ -376,9 +376,9 @@ params:
     default: false
     options:
       - label: Yes
-        value: true
+        value: yes
       - label: No
-        value: false
+        value: no
   - param: DOCS_PER_BACKFILL
     label: Docs per backfill
     description:  >-
