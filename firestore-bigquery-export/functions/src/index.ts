@@ -218,7 +218,13 @@ exports.fsimportexistingdocs = functions.tasks
     const docsCount = (data["docsCount"] as number) ?? 0;
 
     const query = config.useCollectionGroupQuery
-      ? admin.firestore().collectionGroup(config.importCollectionPath)
+      ? admin
+          .firestore()
+          .collectionGroup(
+            config.importCollectionPath.split("/")[
+              config.importCollectionPath.split("/").length - 1
+            ]
+          )
       : admin.firestore().collection(config.importCollectionPath);
 
     const snapshot = await query
