@@ -1,3 +1,7 @@
+## Version 0.1.41
+
+fix - rollback backfill feature
+
 ## Version 0.1.40
 
 fix - correct default value for use collection group query param
