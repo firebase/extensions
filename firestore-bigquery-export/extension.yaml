@@ -373,12 +373,13 @@ params:
       Warning: A collectionGroup query will target every collection in your Firestore project that matches the 'Existing documents collection'.
       For example, if you have 10,000 documents with a sub-collection named: landmarks, this will query every document in 10,000 landmarks collections.
     type: select
-    default: false
+    default: no
     options:
       - label: Yes
         value: yes
       - label: No
         value: no
+
   - param: DOCS_PER_BACKFILL
     label: Docs per backfill
     description:  >-
