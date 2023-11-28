@@ -198,7 +198,7 @@ describe("processing partitions on a new table", () => {
       expect(value.end_date).toBeDefined();
     });
 
-    test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined", async () => {
+    test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined, with a timestamp-like value", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
         datasetId: "",
         tableId: "",
@@ -283,8 +283,9 @@ describe("processing partitions on a new table", () => {
       };
 
       // a Timestamp-Like object (we lose the instance after serialization)
-      const end_date = JSON.parse(JSON.stringify(admin.firestore.Timestamp.now()));
-
+      const end_date = JSON.parse(
+        JSON.stringify(admin.firestore.Timestamp.now())
+      );
 
       const event: FirestoreDocumentChangeEvent = {
         timestamp: "",
@@ -445,8 +446,6 @@ describe("processing partitions on a new table", () => {
       expect(value).toEqual({});
     });
   });
-
-  
 
   test("partition return false if table is not provided", async () => {
     const config: FirestoreBigQueryEventHistoryTrackerConfig = {
