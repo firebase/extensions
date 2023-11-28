@@ -190,7 +190,7 @@ export class Partitioning {
     Extracts a valid Partition field from the Document Change Event.
     Matches result based on a pre-defined Firestore field matching the event data object.
     Return an empty object if no field name or value provided. 
-    Returns empty object if not a string or timestamp
+    Returns empty object if not a string or timestamp (or result of serializing a timestamp)
     Logs warning if not a valid datatype
     Delete changes events have no data, return early as cannot partition on empty data.
   **/
