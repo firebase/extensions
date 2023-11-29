@@ -6,6 +6,7 @@ import { ChangeType, FirestoreDocumentChangeEvent } from "../..";
 import { FirestoreBigQueryEventHistoryTrackerConfig } from "../../bigquery";
 import { Partitioning } from "../../bigquery/partitioning";
 import { deleteTable } from "../fixtures/clearTables";
+import { changeTracker } from "../fixtures/changeTracker";
 
 let bq: BigQuery;
 let dataset: Dataset;
@@ -181,6 +182,110 @@ describe("processing partitions on a new table", () => {
       };
 
       const end_date = admin.firestore.Timestamp.now();
+
+      const event: FirestoreDocumentChangeEvent = {
+        timestamp: "",
+        operation: ChangeType.CREATE,
+        documentName: "",
+        eventId: "",
+        documentId: "",
+        data: { end_date },
+      };
+
+      const partitioning = new Partitioning(config, table);
+      const value = partitioning.getPartitionValue(event);
+
+      expect(value.end_date).toBeDefined();
+    });
+
+    test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined, with a timestamp-like value", async () => {
+      const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        datasetId: "",
+        tableId: "",
+        datasetLocation: "",
+        timePartitioning: "",
+        timePartitioningField: "end_date",
+        timePartitioningFieldType: "DATETIME",
+        timePartitioningFirestoreField: "end_date",
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: null,
+      };
+
+      // a Timestamp-Like object (we lose the instance after serialization)
+      const end_date = {
+        _seconds: 1614153600,
+        _nanoseconds: 0,
+      };
+
+      const event: FirestoreDocumentChangeEvent = {
+        timestamp: "",
+        operation: ChangeType.CREATE,
+        documentName: "",
+        eventId: "",
+        documentId: "",
+        data: { end_date },
+      };
+
+      const partitioning = new Partitioning(config, table);
+      const value = partitioning.getPartitionValue(event);
+
+      expect(value.end_date).toBeDefined();
+    });
+
+    test("returns an empty object when _seconds or _nanoseconds is not a number", async () => {
+      const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        datasetId: "",
+        tableId: "",
+        datasetLocation: "",
+        timePartitioning: "",
+        timePartitioningField: "end_date",
+        timePartitioningFieldType: "DATETIME",
+        timePartitioningFirestoreField: "end_date",
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: null,
+      };
+
+      // a Timestamp-Like object (we lose the instance after serialization)
+      const end_date = {
+        _seconds: "not a number",
+        _nanoseconds: 0,
+      };
+
+      const event: FirestoreDocumentChangeEvent = {
+        timestamp: "",
+        operation: ChangeType.CREATE,
+        documentName: "",
+        eventId: "",
+        documentId: "",
+        data: { end_date },
+      };
+
+      const partitioning = new Partitioning(config, table);
+      const value = partitioning.getPartitionValue(event);
+
+      expect(value).toEqual({});
+    });
+
+    test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined, and is timestamp-like", async () => {
+      const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        datasetId: "",
+        tableId: "",
+        datasetLocation: "",
+        timePartitioning: "",
+        timePartitioningField: "end_date",
+        timePartitioningFieldType: "DATETIME",
+        timePartitioningFirestoreField: "end_date",
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: null,
+      };
+
+      // a Timestamp-Like object (we lose the instance after serialization)
+      const end_date = JSON.parse(
+        JSON.stringify(admin.firestore.Timestamp.now())
+      );
 
       const event: FirestoreDocumentChangeEvent = {
         timestamp: "",
