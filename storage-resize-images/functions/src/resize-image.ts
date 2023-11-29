@@ -40,6 +40,7 @@ export function resize(file, size) {
    */
   const ops = {
     failOnError: false,
+    ...(sharpOptions || {}),
     animited: config.animated,
   };
 
