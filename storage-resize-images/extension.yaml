@@ -280,6 +280,10 @@ params:
         value: 1024
       - label: 2 GB
         value: 2048
+      - label: 4 GB
+        value: 4096
+      - label: 8 GB
+        value: 8192
     default: 1024
     required: true
     immutable: false
