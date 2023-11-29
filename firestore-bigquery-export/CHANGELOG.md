@@ -1,3 +1,7 @@
+## Version 0.1.42
+
+fix - correctly extract timestamps from firestore fields to partition columns
+
 ## Version 0.1.41
 
 fix - rollback backfill feature
