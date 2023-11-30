@@ -1,6 +1,6 @@
 ## Version 0.1.19
 
-chore(delete-user-data): remove firebase-tools dependency asdasdasdasd
+chore(delete-user-data): remove firebase-tools dependency asdasdasdasd asdasdad
 
 ## Version 0.1.18
 
