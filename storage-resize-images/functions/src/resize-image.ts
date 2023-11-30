@@ -41,14 +41,14 @@ export function resize(file, size) {
   const ops = {
     failOnError: false,
     ...(sharpOptions || {}),
-    animited: config.animated,
+    animated: config.animated,
   };
 
   return sharp(file, ops)
     .rotate()
     .resize(parseInt(width, 10), parseInt(height, 10), {
-      fit: "inside",
       withoutEnlargement: true,
+      ...sharpOptions,
     })
     .toBuffer();
 }

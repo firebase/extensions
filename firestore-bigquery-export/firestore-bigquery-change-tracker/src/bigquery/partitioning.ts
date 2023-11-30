@@ -53,7 +53,8 @@ export class Partitioning {
 
   private isValidPartitionTypeDate(value) {
     /* Check if valid timestamp value from sdk */
-    if (value instanceof firebase.firestore.Timestamp) return true;
+    // if (value instanceof firebase.firestore.Timestamp) return true;
+    if (isTimestampLike(value)) return true;
 
     /* Check if valid date/timstemap, expedted result from production  */
     if (value && value.toDate && value.toDate()) return true;
@@ -189,7 +190,7 @@ export class Partitioning {
     Extracts a valid Partition field from the Document Change Event.
     Matches result based on a pre-defined Firestore field matching the event data object.
     Return an empty object if no field name or value provided. 
-    Returns empty object if not a string or timestamp
+    Returns empty object if not a string or timestamp (or result of serializing a timestamp)
     Logs warning if not a valid datatype
     Delete changes events have no data, return early as cannot partition on empty data.
   **/
@@ -210,6 +211,15 @@ export class Partitioning {
 
     if (this.isValidPartitionTypeDate(fieldValue)) {
       /* Return converted console value */
+      if (isTimestampLike(fieldValue)) {
+        const convertedTimestampFieldValue = convertToTimestamp(fieldValue);
+        return {
+          [fieldName]: this.convertDateValue(
+            convertedTimestampFieldValue.toDate()
+          ),
+        };
+      }
+
       if (fieldValue.toDate) {
         return { [fieldName]: this.convertDateValue(fieldValue.toDate()) };
       }
@@ -309,3 +319,27 @@ export class Partitioning {
     }
   }
 }
+
+type TimestampLike = {
+  _seconds: number;
+  _nanoseconds: number;
+};
+
+const isTimestampLike = (value: any): value is TimestampLike => {
+  if (value instanceof firebase.firestore.Timestamp) return true;
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "_seconds" in value &&
+    typeof value["_seconds"] === "number" &&
+    "_nanoseconds" in value &&
+    typeof value["_nanoseconds"] === "number"
+  );
+};
+
+const convertToTimestamp = (
+  value: TimestampLike
+): firebase.firestore.Timestamp => {
+  if (value instanceof firebase.firestore.Timestamp) return value;
+  return new firebase.firestore.Timestamp(value._seconds, value._nanoseconds);
+};
