@@ -479,3 +479,53 @@ describe("processing partitions on a new table", () => {
     });
   });
 });
+
+describe("updateTableMetadata", () => {
+  test("updates the table metadata with the timestamp field", async () => {
+    const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+      datasetId: "",
+      tableId: "",
+      datasetLocation: "",
+      timePartitioning: "MONTH",
+      timePartitioningField: "timestamp",
+      timePartitioningFieldType: undefined,
+      timePartitioningFirestoreField: undefined,
+      transformFunction: "",
+      clustering: [],
+      bqProjectId: null,
+    };
+    const options = {};
+
+    const partitioning = new Partitioning(config, table);
+
+    await partitioning.updateTableMetadata(options);
+
+    expect(options).toEqual({
+      timePartitioning: {
+        field: "timestamp",
+        type: "MONTH",
+      },
+    });
+  });
+  test("Should not update if there is a custom option with the timestamp option", async () => {
+    const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+      datasetId: "",
+      tableId: "",
+      datasetLocation: "",
+      timePartitioning: "MONTH",
+      timePartitioningField: "timestamp",
+      timePartitioningFieldType: "DATETIME",
+      timePartitioningFirestoreField: undefined,
+      transformFunction: "",
+      clustering: [],
+      bqProjectId: null,
+    };
+    const options = {};
+
+    const partitioning = new Partitioning(config, table);
+
+    await partitioning.updateTableMetadata(options);
+
+    expect(options).toEqual({});
+  });
+});
