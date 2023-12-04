@@ -95,7 +95,7 @@ export class Partitioning {
     /* check if all valid combinations have been provided*/
     const hasOnlyTimestamp =
       timePartitioningField === "timestamp" &&
-      !timePartitioningFieldType &&
+      timePartitioningFieldType === "omit" &&
       !timePartitioningFirestoreField;
     return (
       hasOnlyTimestamp ||

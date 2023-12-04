@@ -488,7 +488,7 @@ describe("updateTableMetadata", () => {
       datasetLocation: "",
       timePartitioning: "MONTH",
       timePartitioningField: "timestamp",
-      timePartitioningFieldType: undefined,
+      timePartitioningFieldType: "omit",
       timePartitioningFirestoreField: undefined,
       transformFunction: "",
       clustering: [],
