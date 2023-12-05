@@ -89,15 +89,19 @@ export class Partitioning {
       !timePartitioningField &&
       !timePartitioningFieldType &&
       !timePartitioningFirestoreField;
-
     /* No custom config has been set, use partition value option only */
     if (hasNoCustomOptions) return true;
 
-    /* check if all options have been provided to be  */
+    /* check if all valid combinations have been provided*/
+    const hasOnlyTimestamp =
+      timePartitioningField === "timestamp" &&
+      !timePartitioningFieldType &&
+      !timePartitioningFirestoreField;
     return (
-      !!timePartitioningField &&
-      !!timePartitioningFieldType &&
-      !!timePartitioningFirestoreField
+      hasOnlyTimestamp ||
+      (!!timePartitioningField &&
+        !!timePartitioningFieldType &&
+        !!timePartitioningFirestoreField)
     );
   }
 
@@ -248,33 +252,31 @@ export class Partitioning {
 
   async addPartitioningToSchema(fields = []): Promise<void> {
     /** check if class has valid table reference */
-    if (!this.hasValidTableReference()) return Promise.resolve();
+    if (!this.hasValidTableReference()) return;
 
     /** return if table is already partitioned **/
-    if (await this.isTablePartitioned()) return Promise.resolve();
+    if (await this.isTablePartitioned()) return;
 
     /** return if an invalid partition type has been requested**/
-    if (!this.hasValidTimePartitionType()) return Promise.resolve();
-
+    if (!this.hasValidTimePartitionType()) return;
     /** Return if invalid partitioning and field type combination */
-    if (this.hasHourAndDatePartitionConfig()) return Promise.resolve();
+    if (this.hasHourAndDatePartitionConfig()) return;
 
     /** return if an invalid partition type has been requested**/
-    if (!this.hasValidCustomPartitionConfig()) return Promise.resolve();
+    if (!this.hasValidCustomPartitionConfig()) return;
 
     /** return if an invalid partition type has been requested**/
-    if (!this.hasValidCustomPartitionConfig()) return Promise.resolve();
+    if (!this.hasValidCustomPartitionConfig()) return;
 
     /** update fields with new schema option ** */
-    if (!this.hasValidTimePartitionOption()) return Promise.resolve();
-
+    if (!this.hasValidTimePartitionOption()) return;
     /* Check if partition field has been provided */
-    if (!this.config.timePartitioningField) return Promise.resolve();
+    if (!this.config.timePartitioningField) return;
 
     // if (await !this.hasExistingSchema) return Promise.resolve();
 
     // Field already exists on schema, skip
-    if (this.customFieldExists(fields)) return Promise.resolve();
+    if (this.customFieldExists(fields)) return;
 
     fields.push(getNewPartitionField(this.config));
 
@@ -284,24 +286,24 @@ export class Partitioning {
       this.config.timePartitioningField
     );
 
-    return Promise.resolve();
+    return;
   }
 
   async updateTableMetadata(options: bigquery.TableMetadata): Promise<void> {
     /** return if table is already partitioned **/
-    if (await this.isTablePartitioned()) return Promise.resolve();
+    if (await this.isTablePartitioned()) return;
 
     /** return if an invalid partition type has been requested**/
-    if (!this.hasValidTimePartitionType()) return Promise.resolve();
+    if (!this.hasValidTimePartitionType()) return;
 
     /** update fields with new schema option ** */
-    if (!this.hasValidTimePartitionOption()) return Promise.resolve();
+    if (!this.hasValidTimePartitionOption()) return;
 
     /** Return if invalid partitioning and field type combination */
-    if (this.hasHourAndDatePartitionConfig()) return Promise.resolve();
+    if (this.hasHourAndDatePartitionConfig()) return;
 
     /** return if an invalid partition type has been requested**/
-    if (!this.hasValidCustomPartitionConfig()) return Promise.resolve();
+    if (!this.hasValidCustomPartitionConfig()) return;
 
     // if (await !this.hasExistingSchema) return Promise.resolve();
 
