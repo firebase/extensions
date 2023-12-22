@@ -1,10 +1,9 @@
 import * as admin from "firebase-admin";
+import { firestore } from "firebase-admin";
 import { smtpServer } from "./createSMTPServer";
-import { FieldValue } from "firebase-admin/firestore";
 
 // import wait-for-expect
 import waitForExpect from "wait-for-expect";
-import { firestore } from "firebase-admin";
 
 process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
 
@@ -149,6 +148,60 @@ describe("e2e testing", () => {
           resolve();
         }
       });
+    });
+  });
+
+  test("should successfully send an email with a SendGrid template", async (): Promise<void> => {
+    /** Add a record with the template and no message object */
+    const record = {
+      to: "test-assertion@email.com",
+      sendGridDynamicTemplate: {
+        templateId: "d-61eb136ddb8146f2b6e1fe7b54a1dcf0",
+      },
+    };
+
+    let currentSnapshot: firestore.DocumentSnapshot;
+
+    /** Add a new mail document */
+    const doc = await firestore().collection("mail-sg").add(record);
+
+    const unsubscribe = doc.onSnapshot((snapshot) => {
+      currentSnapshot = snapshot;
+    });
+
+    await waitForExpect(() => {
+      const document = currentSnapshot.data();
+      expect(document.delivery.state).toEqual("SUCCESS");
+
+      unsubscribe();
+    });
+  });
+
+  test("should error when sending an email with an empty SendGrid template", async (): Promise<void> => {
+    /** Add a record with the template and no message object */
+    const record = {
+      to: "test-assertion@email.com",
+      sendGridDynamicTemplate: {},
+    };
+
+    /** Add a new mail document */
+    const doc = await firestore().collection("mail-sg").add(record);
+
+    let currentSnapshot: firestore.DocumentSnapshot;
+
+    const unsubscribe = doc.onSnapshot((snapshot) => {
+      currentSnapshot = snapshot;
+    });
+
+    await waitForExpect(() => {
+      const document = currentSnapshot.data();
+
+      expect(document.delivery.state).toEqual("ERROR");
+      expect(document.delivery.error).toEqual(
+        "Error: SendGrid templateId is not provided, if you're using SendGrid Dynamic Templates, please provide a valid templateId, otherwise provide a `text` or `html` content."
+      );
+
+      unsubscribe();
     });
   });
 
