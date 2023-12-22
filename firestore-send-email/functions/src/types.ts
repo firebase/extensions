@@ -67,6 +67,10 @@ export interface QueuePayload {
     name: string;
     data?: { [key: string]: any };
   };
+  sendGridDynamicTemplate?: {
+    templateId: string;
+    dynamicTemplateData?: { [key: string]: any };
+  };
   to: string[];
   toUids?: string[];
   cc: string[];

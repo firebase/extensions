@@ -241,6 +241,21 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
   return payload;
 }
 
+function verifySendGridContent(payload: QueuePayload) {
+  if (
+    transport.transporter.name === "nodemailer-sendgrid" &&
+    !payload.message.text &&
+    !payload.message.html
+  ) {
+    if (!payload.sendGridDynamicTemplate?.templateId) {
+      logs.invalidSendGridTemplateId();
+      throw new Error(
+        "SendGrid templateId is not provided, if you're using SendGrid Dynamic Templates, please provide a valid templateId, otherwise provide a `text` or `html` content."
+      );
+    }
+  }
+}
+
 async function deliver(
   ref: admin.firestore.DocumentReference<QueuePayload>
 ): Promise<void> {
@@ -265,22 +280,29 @@ async function deliver(
   try {
     payload = await preparePayload(payload);
 
+    // If the SMTP provider is SendGrid, we need to check if the payload contains
+    // either a text or html content, or if the payload contains a SendGrid Dynamic Template.
+    verifySendGridContent(payload);
+
     if (!payload.to.length && !payload.cc.length && !payload.bcc.length) {
       throw new Error(
         "Failed to deliver email. Expected at least 1 recipient."
       );
     }
 
-    const result = await transport.sendMail(
-      Object.assign(payload.message, {
+    const result = await transport.sendMail({
+      ...Object.assign(payload.message, {
         from: payload.from || config.defaultFrom,
         replyTo: payload.replyTo || config.defaultReplyTo,
         to: payload.to,
         cc: payload.cc,
         bcc: payload.bcc,
         headers: payload.headers || {},
-      })
-    );
+        template_id: payload.sendGridDynamicTemplate?.templateId,
+        dynamic_template_data:
+          payload.sendGridDynamicTemplate?.dynamicTemplateData || {},
+      }),
+    });
     const info = {
       messageId: result.messageId || null,
       accepted: result.accepted || [],
