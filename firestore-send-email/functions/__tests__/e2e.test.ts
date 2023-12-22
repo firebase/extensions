@@ -8,7 +8,7 @@ import waitForExpect from "wait-for-expect";
 process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
 
 admin.initializeApp({
-  projectId: "demo-test",
+  projectId: "dev-extensions-testing",
 });
 
 const mail = "mail";
@@ -154,6 +154,7 @@ describe("e2e testing", () => {
   test("should successfully send an email with a SendGrid template", async (): Promise<void> => {
     /** Add a record with the template and no message object */
     const record = {
+      from: process.env.SENDGRID_FROM_EMAIL,
       to: "test-assertion@email.com",
       sendGridDynamicTemplate: {
         templateId: "d-61eb136ddb8146f2b6e1fe7b54a1dcf0",
