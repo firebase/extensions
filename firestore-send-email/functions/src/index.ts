@@ -241,12 +241,26 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
   return payload;
 }
 
+/**
+ * If the SMTP provider is SendGrid, we need to check if the payload contains
+ * either a text or html content, or if the payload contains a SendGrid Dynamic Template.
+ *
+ * Throws an error if all of the above are not provided.
+ *
+ * @param payload the payload from Firestore.
+ */
 function verifySendGridContent(payload: QueuePayload) {
   if (
     transport.transporter.name === "nodemailer-sendgrid" &&
-    !payload.message.text &&
-    !payload.message.html
+    !payload.message?.text &&
+    !payload.message?.html
   ) {
+    if (typeof payload.sendGridDynamicTemplate !== "object") {
+      throw new Error(
+        "`sendGridDynamicTemplate` must be a valid Firestore map."
+      );
+    }
+
     if (!payload.sendGridDynamicTemplate?.templateId) {
       logs.invalidSendGridTemplateId();
       throw new Error(
@@ -291,7 +305,7 @@ async function deliver(
     }
 
     const result = await transport.sendMail({
-      ...Object.assign(payload.message, {
+      ...Object.assign(payload.message ?? {}, {
         from: payload.from || config.defaultFrom,
         replyTo: payload.replyTo || config.defaultReplyTo,
         to: payload.to,
@@ -374,8 +388,13 @@ async function processWrite(
       const payload = snapshot.data();
 
       // We expect the payload to contain a message object describing the email
-      // to be sent. If it doesn't and is not a template, we can't do anything.
-      if (typeof payload.message !== "object" && !payload.template) {
+      // to be sent, or a template, or a SendGrid template.
+      // If it doesn't and is not a template, we can't do anything.
+      if (
+        typeof payload.message !== "object" &&
+        !payload.template &&
+        typeof payload.sendGridDynamicTemplate !== "object"
+      ) {
         logs.invalidMessage(payload.message);
         return false;
       }
