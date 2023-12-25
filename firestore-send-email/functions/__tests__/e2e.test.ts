@@ -154,10 +154,14 @@ describe("e2e testing", () => {
   test("should successfully send an email with a SendGrid template", async (): Promise<void> => {
     /** Add a record with the template and no message object */
     const record = {
-      from: process.env.SENDGRID_FROM_EMAIL,
       to: "test-assertion@email.com",
-      sendGridDynamicTemplate: {
+      sendGrid: {
         templateId: "d-61eb136ddb8146f2b6e1fe7b54a1dcf0",
+        mailSettings: {
+          sandbox_mode: {
+            enable: true,
+          },
+        },
       },
     };
 
@@ -182,7 +186,13 @@ describe("e2e testing", () => {
     /** Add a record with the template and no message object */
     const record = {
       to: "test-assertion@email.com",
-      sendGridDynamicTemplate: {},
+      sendGrid: {
+        mailSettings: {
+          sandbox_mode: {
+            enable: true,
+          },
+        },
+      },
     };
 
     /** Add a new mail document */

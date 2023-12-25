@@ -255,13 +255,11 @@ function verifySendGridContent(payload: QueuePayload) {
     !payload.message?.text &&
     !payload.message?.html
   ) {
-    if (typeof payload.sendGridDynamicTemplate !== "object") {
-      throw new Error(
-        "`sendGridDynamicTemplate` must be a valid Firestore map."
-      );
+    if (typeof payload.sendGrid !== "object") {
+      throw new Error("`sendGrid` must be a valid Firestore map.");
     }
 
-    if (!payload.sendGridDynamicTemplate?.templateId) {
+    if (!payload.sendGrid?.templateId) {
       logs.invalidSendGridTemplateId();
       throw new Error(
         "SendGrid templateId is not provided, if you're using SendGrid Dynamic Templates, please provide a valid templateId, otherwise provide a `text` or `html` content."
@@ -312,9 +310,9 @@ async function deliver(
         cc: payload.cc,
         bcc: payload.bcc,
         headers: payload.headers || {},
-        template_id: payload.sendGridDynamicTemplate?.templateId,
-        dynamic_template_data:
-          payload.sendGridDynamicTemplate?.dynamicTemplateData || {},
+        template_id: payload.sendGrid?.templateId,
+        dynamic_template_data: payload.sendGrid?.dynamicTemplateData || {},
+        mail_settings: payload.sendGrid?.mailSettings || {},
       }),
     });
     const info = {
@@ -393,7 +391,7 @@ async function processWrite(
       if (
         typeof payload.message !== "object" &&
         !payload.template &&
-        typeof payload.sendGridDynamicTemplate !== "object"
+        typeof payload.sendGrid !== "object"
       ) {
         logs.invalidMessage(payload.message);
         return false;

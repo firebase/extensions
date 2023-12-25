@@ -67,9 +67,10 @@ export interface QueuePayload {
     name: string;
     data?: { [key: string]: any };
   };
-  sendGridDynamicTemplate?: {
-    templateId: string;
+  sendGrid?: {
+    templateId?: string;
     dynamicTemplateData?: { [key: string]: any };
+    mailSettings?: { [key: string]: any };
   };
   to: string[];
   toUids?: string[];
