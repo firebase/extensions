@@ -1,9 +1,5 @@
 import * as admin from "firebase-admin";
-import { firestore } from "firebase-admin";
 import { smtpServer } from "./createSMTPServer";
-
-// import wait-for-expect
-import waitForExpect from "wait-for-expect";
 
 process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
 
@@ -13,6 +9,9 @@ admin.initializeApp({
 
 const mail = "mail";
 const mailCollection = admin.firestore().collection(mail);
+
+const mailSg = "mail-sg";
+const mailSgCollection = admin.firestore().collection(mailSg);
 
 const templates = "templates";
 const templatesCollection = admin.firestore().collection(templates);
@@ -32,27 +31,24 @@ describe("e2e testing", () => {
       },
     };
 
-    const doc = mailCollection.doc();
+    const doc = await mailCollection.add(record);
 
-    let currentSnapshot: firestore.DocumentSnapshot;
-
-    const unsubscribe = doc.onSnapshot((snapshot) => {
-      currentSnapshot = snapshot;
+    return new Promise((resolve, reject) => {
+      const unsubscribe = doc.onSnapshot(async (snapshot) => {
+        const currentDocumentData = snapshot.data();
+        if (currentDocumentData.delivery && currentDocumentData.delivery.info) {
+          expect(currentDocumentData).toHaveProperty("delivery");
+          expect(currentDocumentData.delivery).toHaveProperty("info");
+          expect(currentDocumentData.delivery.info.accepted[0]).toEqual(
+            record.to
+          );
+          expect(currentDocumentData.delivery.info.response).toContain("250");
+          unsubscribe();
+          resolve();
+        }
+      });
     });
-
-    await doc.create(record);
-
-    await waitForExpect(() => {
-      expect(currentSnapshot).toHaveProperty("exists");
-      expect(currentSnapshot.exists).toBeTruthy();
-      const currentDocumentData = currentSnapshot.data();
-      expect(currentDocumentData).toHaveProperty("delivery");
-      expect(currentDocumentData.delivery).toHaveProperty("info");
-      expect(currentDocumentData.delivery.info.accepted[0]).toEqual(record.to);
-      expect(currentDocumentData.delivery.info.response).toContain("250");
-      unsubscribe();
-    });
-  }, 12000);
+  });
 
   test("the expireAt field should be added, with value 5 days later than startTime", async (): Promise<void> => {
     const record = {
@@ -65,23 +61,22 @@ describe("e2e testing", () => {
     const doc = await mailCollection.add(record);
 
     return new Promise((resolve, reject) => {
-      const unsubscribe = doc.onSnapshot((snapshot) => {
-        const document = snapshot.data();
-
+      const unsubscribe = doc.onSnapshot(async (snapshot) => {
+        const currentDocumentData = snapshot.data();
         if (
-          document.delivery &&
-          document.delivery.info &&
-          document.delivery.expireAt
+          currentDocumentData.delivery &&
+          currentDocumentData.delivery.info &&
+          currentDocumentData.delivery.expireAt
         ) {
-          const startAt = document.delivery.startTime.toDate();
-          const expireAt = document.delivery.expireAt.toDate();
+          const startAt = currentDocumentData.delivery.startTime.toDate();
+          const expireAt = currentDocumentData.delivery.expireAt.toDate();
           expect(expireAt.getTime() - startAt.getTime()).toEqual(5 * 86400000);
           unsubscribe();
           resolve();
         }
       });
     });
-  }, 12000);
+  });
 
   test("empty template attachments should default to message attachments", async (): Promise<void> => {
     //create template
@@ -100,11 +95,13 @@ describe("e2e testing", () => {
 
     const doc = await mailCollection.add(record);
 
-    return new Promise((resolve, reject) => {
-      const unsubscribe = doc.onSnapshot((snapshot) => {
+    return new Promise((resolve) => {
+      const unsubscribe = doc.onSnapshot(async (snapshot) => {
         const document = snapshot.data();
 
         if (document.delivery && document.delivery.info) {
+          const startAt = document.delivery.startTime.toDate();
+          const expireAt = document.delivery.expireAt.toDate();
           expect(document.delivery.info.accepted[0]).toEqual(record.to);
           expect(document.delivery.info.response).toContain("250 Accepted");
           expect(document.message.attachments.length).toEqual(1);
@@ -113,7 +110,7 @@ describe("e2e testing", () => {
         }
       });
     });
-  }, 8000);
+  });
 
   test("should successfully send an email with a basic template", async (): Promise<void> => {
     /** create basic template */
@@ -135,17 +132,18 @@ describe("e2e testing", () => {
     /** Add a new mail document */
     const doc = await mailCollection.add(record);
 
-    /** Check the email response  */
-    return new Promise((resolve, reject) => {
-      const unsubscribe = doc.onSnapshot((snapshot) => {
+    return new Promise((resolve) => {
+      const unsubscribe = doc.onSnapshot(async (snapshot) => {
         const document = snapshot.data();
 
         if (document.delivery && document.delivery.info) {
-          expect(document.delivery.info.accepted[0]).toEqual(record.to);
-          expect(document.delivery.info.response).toContain("250 Accepted");
+          if (document.delivery && document.delivery.info) {
+            expect(document.delivery.info.accepted[0]).toEqual(record.to);
+            expect(document.delivery.info.response).toContain("250 Accepted");
 
-          unsubscribe();
-          resolve();
+            unsubscribe();
+            resolve();
+          }
         }
       });
     });
@@ -165,25 +163,21 @@ describe("e2e testing", () => {
       },
     };
 
-    let currentSnapshot: firestore.DocumentSnapshot;
+    const doc = await mailSgCollection.add(record);
 
-    /** Add a new mail document */
-    const doc = await firestore().collection("mail-sg").add(record);
-
-    const unsubscribe = doc.onSnapshot((snapshot) => {
-      currentSnapshot = snapshot;
+    return new Promise((resolve) => {
+      const unsubscribe = doc.onSnapshot((snapshot) => {
+        const document = snapshot.data();
+        if (document.delivery && document.delivery.info) {
+          expect(document.delivery.state).toEqual("SUCCESS");
+          unsubscribe();
+          resolve();
+        }
+      });
     });
-
-    await waitForExpect(() => {
-      const document = currentSnapshot.data();
-      expect(document.delivery.state).toEqual("SUCCESS");
-
-      unsubscribe();
-    });
-  });
+  }, 12000);
 
   test("should error when sending an email with an empty SendGrid template", async (): Promise<void> => {
-    /** Add a record with the template and no message object */
     const record = {
       to: "test-assertion@email.com",
       sendGrid: {
@@ -195,26 +189,23 @@ describe("e2e testing", () => {
       },
     };
 
-    /** Add a new mail document */
-    const doc = await firestore().collection("mail-sg").add(record);
+    const doc = await mailSgCollection.add(record);
 
-    let currentSnapshot: firestore.DocumentSnapshot;
+    return new Promise((resolve) => {
+      const unsubscribe = doc.onSnapshot(async (snapshot) => {
+        const document = snapshot.data();
 
-    const unsubscribe = doc.onSnapshot((snapshot) => {
-      currentSnapshot = snapshot;
+        if (document.delivery && document.delivery.error) {
+          expect(document.delivery.state).toEqual("ERROR");
+          expect(document.delivery.error).toEqual(
+            `Error: SendGrid templateId is not provided, if you're using SendGrid Dynamic Templates, please provide a valid templateId, otherwise provide a \`text\` or \`html\` content.`
+          );
+          unsubscribe();
+          resolve();
+        }
+      });
     });
-
-    await waitForExpect(() => {
-      const document = currentSnapshot.data();
-
-      expect(document.delivery.state).toEqual("ERROR");
-      expect(document.delivery.error).toEqual(
-        "Error: SendGrid templateId is not provided, if you're using SendGrid Dynamic Templates, please provide a valid templateId, otherwise provide a `text` or `html` content."
-      );
-
-      unsubscribe();
-    });
-  });
+  }, 12000);
 
   afterAll(() => {
     server.close();
