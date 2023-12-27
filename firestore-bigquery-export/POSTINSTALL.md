@@ -64,7 +64,9 @@ When defining a specific BigQuery project, a manual step to set up permissions i
 
 ### _(Optional)_ Import existing documents
 
-This extension only sends the content of documents that have been changed -- it does not export your full dataset of existing documents into BigQuery. So, to backfill your BigQuery dataset with all the documents in your collection, you can run the import script provided by this extension.
+If you chose not to automatically import existing documents when you installed this extension, you can backfill your BigQuery dataset with all the documents in your collection using the import script.
+
+If you don't either enable automatic import or run the import script, the extension only exports the content of documents that are created or changed after installation.
 
 The import script can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by this extension. The script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This is to ensure that any operation on an imported document supersedes the `IMPORT`.
 

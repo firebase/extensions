@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.36
+version: 0.1.43
 specVersion: v1beta
 
 displayName: Stream Firestore to BigQuery
@@ -60,10 +60,27 @@ resources:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
 
+  - name: fsimportexistingdocs
+    type: firebaseextensions.v1beta.function
+    description:
+      Imports exisitng documents from the specified collection into BigQuery. Imported documents will have 
+      a special changelog with the operation of `IMPORT` and the timestamp of epoch.
+    properties:
+      runtime: nodejs18
+      taskQueueTrigger: {}
+
   - name: syncBigQuery
     type: firebaseextensions.v1beta.function
     description: >-
       A task-triggered function that gets called on BigQuery sync
+    properties:
+      runtime: nodejs18
+      taskQueueTrigger: {}
+
+  - name: initBigQuerySync
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Runs configuration for sycning with BigQuery
     properties:
       runtime: nodejs18
       taskQueueTrigger: {}
@@ -333,13 +350,24 @@ params:
     required: false
 
 events:
+  - type: firebase.extensions.firestore-counter.v1.onStart
+    description: Occurs when a trigger has been called within the Extension, and will include data such as the context of the trigger request.
+
+  - type: firebase.extensions.firestore-counter.v1.onSuccess
+    description: Occurs when image resizing completes successfully. The event will contain further details about specific formats and sizes.
+
+  - type: firebase.extensions.firestore-counter.v1.onError
+    description: Occurs when an issue has been experienced in the Extension. This will include any error data that has been included within the Error Exception.
+    
+  - type: firebase.extensions.firestore-counter.v1.onCompletion
+    description: Occurs when the function is settled. Provides no customized data other than the context.
   - type: firebase.extensions.big-query-export.v1.sync.start
     description: Occurs on a firestore document write event.
 
 lifecycleEvents:
   onInstall:
-    function: setupBigQuerySync
-    processingMessage: Configuring BigQuery Sync
+    function: initBigQuerySync
+    processingMessage: Configuring BigQuery Sync and running import if configured.
   onUpdate:
     function: setupBigQuerySync
     processingMessage: Configuring BigQuery Sync

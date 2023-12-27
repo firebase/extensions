@@ -18,8 +18,12 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { ShardedCounterWorker } from "./worker";
 import { ShardedCounterController, ControllerStatus } from "./controller";
+import * as events from "./events";
 
 admin.initializeApp();
+
+events.setupEventChannel();
+
 const firestore = admin.firestore();
 firestore.settings({ timestampsInSnapshots: true });
 
@@ -75,10 +79,12 @@ export const worker = functions.firestore
 export const onWrite = functions.firestore
   .document(process.env.INTERNAL_STATE_PATH)
   .onWrite(async (change, context) => {
+    await events.recordStartEvent({ change, context });
     const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new ShardedCounterController(
       metadocRef,
       SHARDS_COLLECTION_ID
     );
     await controller.aggregateContinuously({ start: "", end: "" }, 200, 60000);
+    await events.recordCompletionEvent({ context });
   });
