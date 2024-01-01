@@ -4,7 +4,7 @@ import { smtpServer } from "./createSMTPServer";
 process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
 
 admin.initializeApp({
-  projectId: "dev-extensions-testing",
+  projectId: "demo-test",
 });
 
 const mail = "mail";
@@ -165,13 +165,18 @@ describe("e2e testing", () => {
 
     const doc = await mailSgCollection.add(record);
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const unsubscribe = doc.onSnapshot((snapshot) => {
         const document = snapshot.data();
         if (document.delivery && document.delivery.info) {
           expect(document.delivery.state).toEqual("SUCCESS");
           unsubscribe();
           resolve();
+        } else {
+          if (document.delivery && document.delivery.error) {
+            unsubscribe();
+            reject(document.delivery.error);
+          }
         }
       });
     });
