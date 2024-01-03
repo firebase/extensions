@@ -120,6 +120,8 @@ params:
     description: >-
       A collection of email templates keyed by name.
       This extension can render an email using a [Handlebar](https://handlebarsjs.com/) template,
+      It's recommended to use triple curly braces `{{{  }}}` in your Handlebars templates when the substitution value is a URL or otherwise sensitive to html escaping.
+       This ensures that Handlebars doesn't perform additional escaping or modifications to the URL. For example, `<img src="{{{picPath}}}" alt="PDF Attachment">`
       if the template is specified in the added email document.
     type: string
 
