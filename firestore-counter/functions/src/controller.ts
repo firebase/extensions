@@ -21,6 +21,7 @@ import { Aggregator } from "./aggregator";
 import { logger } from "firebase-functions";
 import { FieldValue } from "firebase-admin/firestore";
 
+import * as events from "./events";
 export interface WorkerShardingInfo {
   slice: Slice; // shard range a single worker is responsible for
   hasData: boolean; // has this worker run at least once and we got stats
@@ -148,6 +149,7 @@ export class ShardedCounterController {
           logger.log(
             "Failed to read controller doc: " + this.controllerDocRef.path
           );
+          await events.recordErrorEvent(err as Error);
           throw Error("Failed to read controller doc.");
         }
         let controllerData: ControllerData;
@@ -181,6 +183,7 @@ export class ShardedCounterController {
           );
         } catch (err) {
           logger.log("Query to find shards to aggregate failed.", err);
+          await events.recordErrorEvent(err as Error);
           throw Error("Query to find shards to aggregate failed.");
         }
         if (shards.docs.length == 200) return ControllerStatus.TOO_MANY_SHARDS;
@@ -198,6 +201,7 @@ export class ShardedCounterController {
             counter = await t.get(this.db.doc(plan.aggregate));
           } catch (err) {
             logger.log("Failed to read document: " + plan.aggregate, err);
+            await events.recordErrorEvent(err as Error);
             throw Error("Failed to read counter " + plan.aggregate);
           }
           // Calculate aggregated value and save to aggregate shard.
@@ -212,6 +216,7 @@ export class ShardedCounterController {
           await Promise.all(promises);
         } catch (err) {
           logger.log("Some counter aggregation failed, bailing out.");
+          await events.recordErrorEvent(err as Error);
           throw Error("Some counter aggregation failed, bailing out.");
         }
         t.set(
@@ -225,6 +230,7 @@ export class ShardedCounterController {
       return status;
     } catch (err) {
       logger.log("Transaction to aggregate shards failed.", err);
+      await events.recordErrorEvent(err as Error);
       return ControllerStatus.FAILURE;
     }
   }
@@ -253,6 +259,7 @@ export class ShardedCounterController {
         );
       } catch (err) {
         logger.log("Failed to read worker docs.", err);
+        await events.recordErrorEvent(err as Error);
         throw Error("Failed to read worker docs.");
       }
       let shardingInfo: WorkerShardingInfo[] = await Promise.all(
@@ -291,6 +298,7 @@ export class ShardedCounterController {
             logger.log(
               "Failed to calculate additional splits for worker: " + worker.id
             );
+            await events.recordErrorEvent(err as Error);
           }
           return { slice, hasData, overloaded, splits };
         })

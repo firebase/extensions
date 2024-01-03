@@ -35,6 +35,10 @@ When you configure this extension, you'll need to supply your **SMTP credentials
 
 Now you can use your Google username with the generated password to authorize the extension.
 
+#### Setup Hotmail Passwords
+
+To use your Outlook/Hotmail email account with this extension, you'll need to have 2FA enabled on your account, and [Create an App Password](https://support.microsoft.com/en-us/help/12409/microsoft-account-app-passwords-and-two-step-verification).
+
 #### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.

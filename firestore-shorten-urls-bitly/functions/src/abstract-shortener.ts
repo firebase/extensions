@@ -17,8 +17,8 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 
-import config from "./config";
 import * as logs from "./logs";
+import * as events from "./events";
 
 enum ChangeType {
   CREATE,
@@ -63,7 +63,9 @@ export abstract class FirestoreUrlShortener {
         await this.handleUpdateDocument(change.before, change.after);
         break;
       default: {
-        throw new Error(`Invalid change type: ${changeType}`);
+        const err = new Error(`Invalid change type: ${changeType}`);
+        await events.recordErrorEvent(err);
+        throw err;
       }
     }
 
@@ -138,5 +140,9 @@ export abstract class FirestoreUrlShortener {
       return Promise.resolve();
     });
     this.logs.updateDocumentComplete(snapshot.ref.path);
+    await events.recordSuccessEvent({
+      subject: snapshot.ref.path,
+      data: { url },
+    });
   }
 }
