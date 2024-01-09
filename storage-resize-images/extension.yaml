@@ -237,8 +237,8 @@ params:
   - param: OUTPUT_OPTIONS
     label: Output options for selected formats
     description: >
-      Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion.
-      eg. `{"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "pallete": true }}`
+      Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion. eg. {"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "pallete": true }} and {"png":{"compressionLevel":9}}". The "compressionLevel": 9 is specifying the level of compression for PNG images. Higher numbers here indicate greater compression, leading to smaller file sizes at the cost of potentially increased processing time and possible loss of image quality. 
+
     type: string
     validationRegex: ^({(.*?)})$
     validationErrorMessage: Please provide a valid json object.
