@@ -110,7 +110,8 @@ export const fsexportbigquery = functions
       const isDeleted = changeType === ChangeType.DELETE;
 
       const data = isDeleted ? undefined : change.after.data();
-      const oldData = isCreated || config.excludeOldData ? undefined : change.before.data();
+      const oldData =
+        isCreated || config.excludeOldData ? undefined : change.before.data();
 
       await events.recordStartEvent({
         documentId,
@@ -219,12 +220,12 @@ exports.fsimportexistingdocs = functions.tasks
 
     const query = config.useCollectionGroupQuery
       ? admin
-        .firestore()
-        .collectionGroup(
-          config.importCollectionPath.split("/")[
-          config.importCollectionPath.split("/").length - 1
-          ]
-        )
+          .firestore()
+          .collectionGroup(
+            config.importCollectionPath.split("/")[
+              config.importCollectionPath.split("/").length - 1
+            ]
+          )
       : admin.firestore().collection(config.importCollectionPath);
 
     const snapshot = await query
@@ -263,7 +264,8 @@ exports.fsimportexistingdocs = functions.tasks
       // We are finished, set the processing state to report back how many docs were imported.
       runtime.setProcessingState(
         "PROCESSING_COMPLETE",
-        `Successfully imported ${docsCount + rows.length
+        `Successfully imported ${
+          docsCount + rows.length
         } documents into BigQuery`
       );
     }
