@@ -339,6 +339,20 @@ params:
     default: no
     required: true
 
+  - param: EXCLUDE_OLD_DATA
+    label: Exclude old data payloads
+    description: >-
+      If enabled, table rows will never contain old data (document snapshot before the update), which should be more performant, and avoid potential
+      resource limitations.
+    type: select
+    options:
+      - label: Yes
+        value: yes
+      - label: No
+        value: no
+    default: no
+    required: true
+
   - param: KMS_KEY_NAME
     label: Cloud KMS key name
     description: >-
