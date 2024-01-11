@@ -15,7 +15,6 @@
  */
 
 import * as admin from "firebase-admin";
-import { getEventarc } from "firebase-admin/eventarc";
 import { getFunctions } from "firebase-admin/functions";
 import { getExtensions } from "firebase-admin/extensions";
 import * as fs from "fs";
@@ -29,6 +28,7 @@ import { ResizedImageResult, modifyImage } from "./resize-image";
 import config, { deleteImage } from "./config";
 import * as logs from "./logs";
 import { shouldResize } from "./filters";
+import * as events from "./events";
 import { v4 as uuidv4 } from "uuid";
 import { countNegativeTraversals } from "./util";
 
@@ -37,11 +37,7 @@ sharp.cache(false);
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 
-const eventChannel =
-  process.env.EVENTARC_CHANNEL &&
-  getEventarc().channel(process.env.EVENTARC_CHANNEL, {
-    allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
-  });
+events.setupEventChannel();
 
 logs.init();
 
@@ -51,7 +47,7 @@ logs.init();
  */
 
 const generateResizedImageHandler = async (
-  object,
+  object: functions.storage.ObjectMetadata,
   verbose = true
 ): Promise<void> => {
   !verbose || logs.start();
@@ -107,15 +103,10 @@ const generateResizedImageHandler = async (
 
     const results = await Promise.all(tasks);
 
-    eventChannel &&
-      (await eventChannel.publish({
-        type: "firebase.extensions.storage-resize-images.v1.complete",
-        subject: filePath,
-        data: {
-          input: object,
-          outputs: results,
-        },
-      }));
+    await events.recordSuccessEvent({
+      subject: filePath,
+      data: { input: object, outputs: results },
+    });
 
     const failed = results.some((result) => result.success === false);
     if (failed) {
@@ -178,6 +169,7 @@ const generateResizedImageHandler = async (
     }
   } catch (err) {
     logs.error(err);
+    events.recordErrorEvent(err as Error);
   } finally {
     if (localOriginalFile) {
       !verbose || logs.tempOriginalFileDeleting(filePath);
@@ -197,6 +189,7 @@ const generateResizedImageHandler = async (
           logs.remoteFileDeleted(filePath);
         } catch (err) {
           logs.errorDeleting(err);
+          events.recordErrorEvent(err as Error);
         }
       }
     }
@@ -205,8 +198,10 @@ const generateResizedImageHandler = async (
 
 export const generateResizedImage = functions.storage
   .object()
-  .onFinalize(async (object) => {
+  .onFinalize(async (object, context) => {
+    // await events.recordStartEvent({ object, context });
     await generateResizedImageHandler(object);
+    await events.recordCompletionEvent({ context });
   });
 
 /**

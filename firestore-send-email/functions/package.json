@@ -9,8 +9,9 @@
     "clean": "rimraf lib",
     "compile": "tsc",
     "local:emulator": "cd ../../_emulator && firebase emulators:start -P demo-test",
-    "test": "cd ../../_emulator && firebase emulators:exec jest -P demo-test",
-    "test:local": "concurrently \"npm run local:emulator\" \"jest\"",
+    "test": "cd ../../_emulator && firebase emulators:exec --only extensions jest -P demo-test",
+    "testIfEmulatorRunning": "wait-on tcp:4001 && jest",
+    "test:local": "concurrently --kill-others \"npm run local:emulator\" \"npm run testIfEmulatorRunning\"",
     "test:watch": "concurrently \"npm run local:emulator\" \"jest --watch\"",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
@@ -18,16 +19,18 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
+    "@types/express-serve-static-core": "4.17.30",
+    "@types/node": "14.18.34",
     "@types/nodemailer": "^6.2.1",
     "firebase-admin": "^11.4.1",
     "firebase-functions": "^4.2.0",
     "handlebars": "^4.5.3",
-    "nodemailer": "^6.3.0",
+    "nodemailer": "^6.9.7",
     "rimraf": "^2.6.3",
     "smtp-server": "^3.10.0",
     "typescript": "^4.7.4",
-    "@types/express-serve-static-core": "4.17.30",
-    "@types/node": "14.18.34"
+    "wait-for-expect": "^3.0.2",
+    "wait-on": "^7.2.0"
   },
   "devDependencies": {
     "concurrently": "^7.2.1",

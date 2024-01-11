@@ -12,7 +12,7 @@ Through the extension, adding clustering is as simple as adding a comma-separate
 
 Clustering allows up to a maximum of four fields and can be configured similar to
 
-`document_id, timestamp, event_id, data`
+`document_id, document_name, timestamp, event_id, data`
 
 ![example](/docs/firestore-bigquery-export/media/clustering.png)
 

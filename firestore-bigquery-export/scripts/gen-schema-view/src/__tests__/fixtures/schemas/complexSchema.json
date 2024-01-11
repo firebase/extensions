@@ -1,0 +1,44 @@
+{
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "order",
+      "type": "map",
+      "fields": [
+        {
+          "name": "orderNumber",
+          "type": "int"
+        },
+        {
+          "name": "orderDate",
+          "type": "string"
+        },
+        {
+          "name": "orderTotal",
+          "type": "double"
+        },
+        {
+          "name": "cartItems",
+          "type": "array",
+          "fields": [
+            {
+              "name": "productName",
+              "type": "string"
+            },
+            {
+              "name": "quantity",
+              "type": "int"
+            },
+            {
+              "name": "isGift",
+              "type": "boolean"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

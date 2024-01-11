@@ -27,6 +27,7 @@ import {
 
 import { getEventarc } from "firebase-admin/eventarc";
 import * as logs from "./logs";
+import * as events from "./events";
 import { getChangeType, getDocumentId, resolveWildcardIds } from "./util";
 
 const eventTracker: FirestoreEventHistoryTracker =
@@ -55,11 +56,7 @@ if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 
-const eventChannel =
-  process.env.EVENTARC_CHANNEL &&
-  getEventarc().channel(process.env.EVENTARC_CHANNEL, {
-    allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
-  });
+events.setupEventChannel();
 
 export const syncBigQuery = functions.tasks
   .taskQueue({
@@ -69,23 +66,34 @@ export const syncBigQuery = functions.tasks
     },
     rateLimits: {
       maxConcurrentDispatches: 1000,
-      maxDispatchesPerSecond: 500,
+      maxDispatchesPerSecond: config.maxDispatchesPerSecond,
     },
   })
   .onDispatch(
     async ({ context, changeType, documentId, data, oldData }, ctx) => {
-      await eventTracker.record([
-        {
-          timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
-          operation: changeType,
-          documentName: context.resource.name,
-          documentId: documentId,
-          pathParams: config.wildcardIds ? context.params : null,
-          eventId: context.eventId,
-          data,
-          oldData,
+      const update = {
+        timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
+        operation: changeType,
+        documentName: context.resource.name,
+        documentId: documentId,
+        pathParams: config.wildcardIds ? context.params : null,
+        eventId: context.eventId,
+        data,
+        oldData,
+      };
+
+      /** Record the chnages in the change tracker */
+      await eventTracker.record([{ ...update }]);
+
+      /** Send an event Arc update , if configured */
+      await events.recordSuccessEvent({
+        subject: documentId,
+        data: {
+          ...update,
         },
-      ]);
+      });
+
+      logs.complete();
     }
   );
 
@@ -104,22 +112,17 @@ export const fsexportbigquery = functions
       const data = isDeleted ? undefined : change.after.data();
       const oldData = isCreated ? undefined : change.before.data();
 
-      if (eventChannel) {
-        await eventChannel.publish({
-          type: `firebase.extensions.big-query-export.v1.sync.start`,
-          data: {
-            documentId,
-            changeType,
-            before: {
-              data: change.before.data(),
-            },
-            after: {
-              data: change.after.data(),
-            },
-            context: context.resource,
-          },
-        });
-      }
+      await events.recordStartEvent({
+        documentId,
+        changeType,
+        before: {
+          data: change.before.data(),
+        },
+        after: {
+          data: change.after.data(),
+        },
+        context: context.resource,
+      });
 
       const queue = getFunctions().taskQueue(
         `locations/${config.location}/functions/syncBigQuery`,
@@ -142,6 +145,7 @@ export const fsexportbigquery = functions
         oldData: serializedOldData,
       });
     } catch (err) {
+      await events.recordErrorEvent(err as Error);
       logs.error(err);
       const eventAgeMs = Date.now() - Date.parse(context.timestamp);
       const eventMaxAgeMs = 10000;
@@ -200,7 +204,7 @@ export const initBigQuerySync = functions.tasks
 
 exports.fsimportexistingdocs = functions.tasks
   .taskQueue()
-  .onDispatch(async (data) => {
+  .onDispatch(async (data, context) => {
     const runtime = getExtensions().runtime();
     if (!config.doBackfill || !config.importCollectionPath) {
       await runtime.setProcessingState(
@@ -214,7 +218,13 @@ exports.fsimportexistingdocs = functions.tasks
     const docsCount = (data["docsCount"] as number) ?? 0;
 
     const query = config.useCollectionGroupQuery
-      ? admin.firestore().collectionGroup(config.importCollectionPath)
+      ? admin
+          .firestore()
+          .collectionGroup(
+            config.importCollectionPath.split("/")[
+              config.importCollectionPath.split("/").length - 1
+            ]
+          )
       : admin.firestore().collection(config.importCollectionPath);
 
     const snapshot = await query
@@ -258,4 +268,5 @@ exports.fsimportexistingdocs = functions.tasks
         } documents into BigQuery`
       );
     }
+    await events.recordCompletionEvent({ context });
   });

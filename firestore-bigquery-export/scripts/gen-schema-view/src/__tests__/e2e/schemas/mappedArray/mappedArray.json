@@ -1,0 +1,34 @@
+{
+  "fields": [
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "date",
+      "type": "string"
+    },
+    {
+      "name": "total",
+      "type": "string"
+    },
+    {
+      "name": "cartItems",
+      "type": "array_map",
+      "fields": [
+        {
+          "name": "productName",
+          "type": "string"
+        },
+        {
+          "name": "quantity",
+          "type": "string"
+        },
+        {
+          "name": "isGift",
+          "type": "string"
+        }
+      ]
+    }
+  ]
+}
