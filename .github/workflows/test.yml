@@ -2,11 +2,9 @@ name: Testing
 
 on:
   push:
-    branches:
-      - next
+    branches: [next]
   pull_request:
-    branches:
-      - "**"
+    branches: ["**"]
 
 jobs:
   nodejs:
