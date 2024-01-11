@@ -1,3 +1,9 @@
+## Version 0.2.2
+
+feature - allow custom fit option
+
+feature - add 4 and 8 GB memory options
+
 ## Version 0.2.1
 
 feature - allow custom sharp.js options
