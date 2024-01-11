@@ -66,7 +66,7 @@ export const syncBigQuery = functions.tasks
     },
     rateLimits: {
       maxConcurrentDispatches: 1000,
-      maxDispatchesPerSecond: 500,
+      maxDispatchesPerSecond: config.maxDispatchesPerSecond,
     },
   })
   .onDispatch(
