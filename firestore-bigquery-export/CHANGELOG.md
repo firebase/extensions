@@ -1,3 +1,11 @@
+## Version 0.1.43
+
+fix - correctly partition when only "timestamp" is selected for partition options
+
+## Version 0.1.42
+
+fix - correctly extract timestamps from firestore fields to partition columns
+
 ## Version 0.1.41
 
 fix - rollback backfill feature
