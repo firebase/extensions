@@ -117,7 +117,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery Dataset location: Where do you want to deploy the BigQuery dataset created for this extension? For help selecting a location, refer to the [location selection guide](https://cloud.google.com/bigquery/docs/locations).
 
-* Project Id: Override the default project bigquery instance. This can allow updates to be directed to a bigquery instance on another project.
+* BigQuery Project ID: Override the default project for BigQuery instance. This can allow updates to be directed to a BigQuery instance on another GCP project.
 
 * Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}`  can be returned in `path_params` as a JSON formatted string.
 
