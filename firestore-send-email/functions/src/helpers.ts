@@ -1,6 +1,6 @@
 import { createTransport } from "nodemailer";
 import { URL } from "url";
-import { invalidURI } from "./logs";
+import { invalidTlsOptions, invalidURI } from "./logs";
 import { Config } from "./types";
 
 function compileUrl($: string): URL | null {
@@ -11,8 +11,26 @@ function compileUrl($: string): URL | null {
   }
 }
 
-export const setSmtpCredentials = (config: Config) => {
-  let url;
+function checkMicrosoftServer($: string): boolean {
+  return (
+    $.includes("outlook") || $.includes("office365") || $.includes("hotmail")
+  );
+}
+
+export function parseTlsOptions(tlsOptions: string) {
+  let tls = { rejectUnauthorized: false };
+
+  try {
+    tls = JSON.parse(tlsOptions);
+  } catch (ex) {
+    invalidTlsOptions();
+  }
+
+  return tls;
+}
+
+export function setSmtpCredentials(config: Config) {
+  let url: URL;
   let transport;
 
   const { smtpConnectionUri, smtpPassword } = config;
@@ -22,9 +40,10 @@ export const setSmtpCredentials = (config: Config) => {
 
   /** return null if invalid url */
   if (!url) {
-    invalidURI(smtpConnectionUri);
-
-    return null;
+    invalidURI();
+    throw new Error(
+      `Invalid URI: please reconfigure with a valid SMTP connection URI`
+    );
   }
 
   /** encode uri password if exists */
@@ -37,7 +56,20 @@ export const setSmtpCredentials = (config: Config) => {
     url.password = encodeURIComponent(smtpPassword);
   }
 
-  transport = createTransport(url.href);
+  // Outlook requires explicit configuration
+  if (checkMicrosoftServer(url.hostname)) {
+    transport = createTransport({
+      service: "hotmail",
+      auth: {
+        user: decodeURIComponent(url.username),
+        pass: decodeURIComponent(url.password),
+      },
+    });
+  } else {
+    transport = createTransport(url.href, {
+      tls: parseTlsOptions(config.tls),
+    });
+  }
 
   return transport;
-};
+}

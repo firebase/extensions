@@ -89,7 +89,7 @@ During installation, you will be prompted to specify a number of configuration p
 
   This parameter will allow you to set up Clustering for the BigQuery Table
   created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 comma-separated fields(order matters).
-  Available schema extensions table fields for clustering: `document_id, timestamp, event_id, operation, data`.
+  Available schema extensions table fields for clustering: `document_id, document_name, timestamp, event_id, operation, data`.
 
 - **Backup Collection Name:**
 

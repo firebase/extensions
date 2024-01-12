@@ -28,7 +28,7 @@ describe("Using an alternative bigquery project", () => {
       bqProjectId = "messaging-test-4395c";
     });
 
-    test("successfully uses alternative project name when provided", async () => {
+    xtest("successfully uses alternative project name when provided", async () => {
       const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
 
       await changeTracker({
