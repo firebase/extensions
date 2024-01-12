@@ -1,0 +1,75 @@
+name: Check READMEs are up to date
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    branches:
+      - "next"
+      - "master"
+
+concurrency:
+  group:
+    ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "npm"
+          cache-dependency-path: "**/functions/package-lock.json"
+
+      - name: Set up global dependencies directory
+        id: global-deps-setup
+        run: |
+          mkdir -p ~/.npm-global
+          npm config set prefix '~/.npm-global'
+          echo "::set-output name=dir::$(npm config get prefix)"
+
+      - name: Cache global dependencies
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.global-deps-setup.outputs.dir }}
+          key:
+            ${{ runner.os }}-npm-global-deps-${{
+            hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-global-deps-
+
+      - name: Install Firebase and Lerna
+        run: |
+          echo "${{ steps.global-deps-setup.outputs.dir }}/bin" >> $GITHUB_PATH
+          npm install -g firebase-tools lerna
+
+      - name: Install local dependencies
+        run: npm ci
+
+      - name: Run Lerna generate-readme
+        run: lerna run --parallel generate-readme
+
+      - name: Check READMEs are up to date and push changes if possible.
+        run: |
+          changed_files=$(git status -s -- '**/README.md' | cut -c4-)
+          if [[ ! -z "$changed_files" ]]; then
+            echo "Changes detected in README.md files:"
+            echo "$changed_files"
+            echo "Please run 'lerna run --parallel generate-readme' locally and commit the changes."
+            exit 1
+          fi
