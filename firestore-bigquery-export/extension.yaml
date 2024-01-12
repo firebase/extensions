@@ -165,10 +165,10 @@ params:
     immutable: true
 
   - param: BIGQUERY_PROJECT_ID
-    label: Project Id
+    label: BigQuery Project ID
     description: >-
-      Override the default project bigquery instance.
-      This can allow updates to be directed to a bigquery instance on another project.
+      Override the default project for BigQuery instance.
+      This can allow updates to be directed to a BigQuery instance on another GCP project.
     type: string
     default: ${PROJECT_ID}
     required: true
