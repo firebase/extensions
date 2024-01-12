@@ -64,6 +64,7 @@ const run = async (): Promise<number> => {
   // Please see https://cloud.google.com/docs/authentication/production
   if (!firebase.apps.length) {
     firebase.initializeApp({
+      projectId: projectId,
       credential: firebase.credential.applicationDefault(),
       databaseURL: `https://${projectId}.firebaseio.com`,
     });
