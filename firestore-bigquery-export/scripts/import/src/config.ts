@@ -88,6 +88,7 @@ const questions = [
     message: "What is your BigQuery project ID?",
     name: "bigQueryProject",
     type: "input",
+    default: process.env.PROJECT_ID,
     validate: (value) =>
       validateInput(
         value,
@@ -185,7 +186,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     if (program.project === undefined) {
       errors.push("Project is not specified.");
     }
-    if (program.bigqueryProject === undefined) {
+    if (program.bigQueryProject === undefined) {
       errors.push("BigQuery Project is not specified.");
     }
     if (program.sourceCollectionPath === undefined) {
@@ -226,7 +227,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     return {
       kind: "CONFIG",
       projectId: program.project,
-      bigQueryProjectId: program.bigqueryProject,
+      bigQueryProjectId: program.bigQueryProject,
       sourceCollectionPath: program.sourceCollectionPath,
       datasetId: program.dataset,
       tableId: program.tableNamePrefix,
@@ -243,7 +244,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
   const {
     project,
     sourceCollectionPath,
-    bigqueryProject,
+    bigQueryProject,
     dataset,
     table,
     batchSize,
@@ -265,7 +266,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
   return {
     kind: "CONFIG",
     projectId: project,
-    bigQueryProjectId: bigqueryProject,
+    bigQueryProjectId: bigQueryProject,
     sourceCollectionPath: sourceCollectionPath,
     datasetId: dataset,
     tableId: table,

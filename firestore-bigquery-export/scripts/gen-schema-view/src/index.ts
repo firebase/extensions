@@ -57,7 +57,7 @@ program
     "Firebase Project ID for project containing Cloud Firestore database."
   )
   .option(
-    "-B, --bigquery-project <bigquery-project>",
+    "-B, --big-query-project <big-query-project>",
     "Google Cloud Project ID for BigQuery."
   )
   .option(
