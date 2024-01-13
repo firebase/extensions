@@ -2,16 +2,18 @@ name: Testing
 
 on:
   push:
-    branches: [next]
+    branches:
+      - "**"
   pull_request:
-    branches: ["**"]
+    branches:
+      - "**"
 
 jobs:
   nodejs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["16", "18"]
+        node: ["14", "16", "18"]
     name: node.js_${{ matrix.node }}_test
     steps:
       - uses: actions/checkout@v3
