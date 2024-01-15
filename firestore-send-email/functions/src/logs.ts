@@ -67,10 +67,6 @@ export function deliveryError(
   logger.error(`Error when delivering message=${ref.path}: ${e.toString()}`);
 }
 
-export function missingDeliveryField(ref: admin.firestore.DocumentReference) {
-  logger.warn(`message=${ref.path} is missing 'delivery' field`);
-}
-
 export function missingUids(uids: string[]) {
   logger.log(
     `The following uids were provided, however a document does not exist or has no 'email' field: ${uids.join(
@@ -109,8 +105,14 @@ export function foundMissingTemplate(name) {
   logger.log(`template '${name}' has been found`);
 }
 
-export function invalidURI(uri) {
+export function invalidURI() {
   logger.warn(
-    `invalid url: '${uri}' , please reconfigure with a valid SMTP connection URI`
+    "Invalid URI: please reconfigure with a valid SMTP connection URI"
+  );
+}
+
+export function invalidTlsOptions() {
+  logger.warn(
+    "Invalid TLS options provided, using default TLS options instead: `{ rejectUnauthorized: false }`"
   );
 }

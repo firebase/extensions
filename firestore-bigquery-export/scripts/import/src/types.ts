@@ -12,6 +12,8 @@ export interface CliConfig {
   multiThreaded: boolean;
   useNewSnapshotQuerySyntax: boolean;
   useEmulator: boolean;
+  rawChangeLogName: string;
+  cursorPositionFile: string;
 }
 
 export interface CliConfigError {

@@ -23,7 +23,7 @@ import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
-import { setSmtpCredentials } from "./helpers";
+import { parseTlsOptions, setSmtpCredentials } from "./helpers";
 import * as events from "./events";
 
 logs.init();
@@ -55,7 +55,7 @@ async function initialize() {
 async function transportLayer() {
   if (config.testing) {
     return nodemailer.createTransport({
-      host: "localhost",
+      host: "127.0.0.1",
       port: 8132,
       secure: false,
       tls: {
@@ -361,7 +361,6 @@ async function processWrite(
       // The record has most likely just been created by a client, so we need to
       // initialize the delivery state.
       if (!payload.delivery) {
-        logs.missingDeliveryField(change.after.ref);
         const startTime = Timestamp.fromDate(new Date());
 
         const delivery = {
