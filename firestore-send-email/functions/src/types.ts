@@ -1,5 +1,6 @@
 import * as nodemailer from "nodemailer";
 import * as admin from "firebase-admin";
+
 export interface Config {
   location: string;
   mailCollection: string;
@@ -12,6 +13,7 @@ export interface Config {
   testing?: boolean;
   TTLExpireType?: string;
   TTLExpireValue?: number;
+  tls?: string;
 }
 export interface Attachment {
   filename?: string;
