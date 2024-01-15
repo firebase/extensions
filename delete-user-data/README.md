@@ -37,15 +37,13 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 **Configuration Parameters:**
 
-* Cloud Functions location: Where do you want to deploy the functions created for this extension?  You usually want a location close to your database or Storage bucket. For help selecting a location, refer to the [location selection  guide](https://firebase.google.com/docs/functions/locations).
-
 * Cloud Firestore paths: Which paths in your Cloud Firestore instance contain data keyed on a user ID? Leave empty if you don't use Cloud Firestore.
 Enter the full paths, separated by commas. Use `{UID}` as a placeholder for the user's UID.
 For example, if you have the collections `users` and `admins`, and each collection has documents with User ID as document IDs, then enter `users/{UID},admins/{UID}`.
 
 * Cloud Firestore delete mode: (Only applicable if you use the `Cloud Firestore paths` parameter.) How do you want to delete Cloud Firestore documents? To also delete documents in subcollections, set this parameter to `recursive`.
 
-* Realtime Database instance: From which Realtime Database instance do you want to delete data keyed on a user ID?
+* Realtime Database instance: What is the ID of the Realtime Database instance from which you want to delete user data (keyed on user ID)?
 
 
 * Realtime Database location: (Only applicable if you provided the `Realtime Database instance` parameter.) From which Realtime Database location do you want to delete data keyed on a user ID?
