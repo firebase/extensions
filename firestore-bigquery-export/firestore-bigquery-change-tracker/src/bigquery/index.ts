@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import * as admin from "firebase-admin";
 import * as bigquery from "@google-cloud/bigquery";
-import * as firebase from "firebase-admin";
+import { DocumentReference } from "firebase-admin/firestore";
 import * as traverse from "traverse";
 import fetch from "node-fetch";
 import {
@@ -60,6 +60,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   backupTableId?: string | undefined;
   useNewSnapshotQuerySyntax?: boolean;
   skipInit?: boolean;
+  kmsKeyName?: string | undefined;
 }
 
 /**
@@ -151,10 +152,7 @@ export class FirestoreBigQueryEventHistoryTracker
           this.remove();
         }
 
-        if (
-          property.constructor.name ===
-          firebase.firestore.DocumentReference.name
-        ) {
+        if (property.constructor.name === DocumentReference.name) {
           this.update(property.path);
         }
       }
@@ -391,6 +389,12 @@ export class FirestoreBigQueryEventHistoryTracker
         schema.fields.push(documentPathParams);
       }
       const options: TableMetadata = { friendlyName: changelogName, schema };
+
+      if (this.config.kmsKeyName) {
+        options["encryptionConfiguration"] = {
+          kmsKeyName: this.config.kmsKeyName,
+        };
+      }
 
       //Add partitioning
       await partitioning.addPartitioningToSchema(schema.fields);

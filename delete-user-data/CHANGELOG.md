@@ -1,3 +1,11 @@
+## Version 0.1.20
+
+fix - update regex for RTDB instance param
+
+## Version 0.1.19
+
+chore(delete-user-data): remove firebase-tools dependency
+
 ## Version 0.1.18
 
 feature - bump to node 18

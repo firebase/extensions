@@ -13,11 +13,11 @@
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.25",
-    "@google-cloud/bigquery": "^2.1.0",
-    "@types/express-serve-static-core": "4.17.30",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.31",
+    "@google-cloud/bigquery": "^4.7.0",
     "@types/chai": "^4.1.6",
-    "@types/jest": "^24.9.0",
+    "@types/express-serve-static-core": "4.17.30",
+    "@types/jest": "^24.0.18",
     "@types/node": "^14.18.34",
     "chai": "^4.2.0",
     "firebase-admin": "^11.9.0",
@@ -30,7 +30,7 @@
     "rimraf": "^2.6.3",
     "sql-formatter": "^2.3.3",
     "ts-node": "^7.0.1",
-    "typescript": "^4.7.4"
+    "typescript": "^4.8.4"
   },
   "private": true,
   "devDependencies": {

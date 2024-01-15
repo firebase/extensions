@@ -1,3 +1,51 @@
+## Version 0.1.43
+
+fix - correctly partition when only "timestamp" is selected for partition options
+
+## Version 0.1.42
+
+fix - correctly extract timestamps from firestore fields to partition columns
+
+## Version 0.1.41
+
+fix - rollback backfill feature
+
+## Version 0.1.40
+
+fix - correct default value for use collection group query param
+
+## Version 0.1.39
+
+fix - rollback timestamp serialization
+
+## Version 0.1.38
+
+fix - backfill value mismatch
+
+## Version 0.1.37
+
+fix - serialize timestamps to date string
+
+## Version 0.1.36
+
+build - updated depenencies
+
+## Version 0.1.35
+
+fixed - add missing locations back in
+
+fixed - use module instead namespace
+
+fixed - added e2e testing, upgraded dependencies
+
+## Version 0.1.34
+
+feat - added failure policy
+
+fixed - use module instead namespace
+
+fixed - ensure data is correctly serialized before queuing
+
 ## Version 0.1.33
 
 feature - improved startup initialization and data synchronization
@@ -49,6 +97,8 @@ fixed - update snapshot script
 feature - add oldData to the record
 
 fixed - updating table metadata too often
+
+feature - add lifecycle event to export existing documents to Bigquery
 
 ## Version 0.1.26
 

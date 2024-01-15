@@ -1,3 +1,11 @@
+## Version 0.1.15
+
+fix - handle array values correctly in backfill
+
+## Version 0.1.14
+
+build - updated depenencies
+
 ## Version 0.1.13
 
 feature - bump to node 18

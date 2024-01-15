@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: delete-user-data
-version: 0.1.18
+version: 0.1.20
 specVersion: v1beta
 
 displayName: Delete User Data
@@ -116,11 +116,11 @@ params:
   - param: SELECTED_DATABASE_INSTANCE
     label: Realtime Database instance
     description: >
-      From which Realtime Database instance do you want to delete data keyed on a user ID?
+      What is the ID of the Realtime Database instance from which you want to delete user data (keyed on user ID)?
     type: string
     example: my-instance
-    validationRegex: ^([0-9a-z_.-]*)$
-    validationErrorMessage: Invalid database instance
+    validationRegex: ^[^\.\$\#\]\[\/\x00-\x1F\x7F]+$
+    validationErrorMessage: Invalid database instance. Make sure that you have entered just the instance ID, and not the entire database URL.
     required: false
 
   - param: SELECTED_DATABASE_LOCATION

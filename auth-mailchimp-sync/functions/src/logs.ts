@@ -70,6 +70,10 @@ export const userAdding = (userId: string, audienceId: string) => {
   logger.log(`Adding user: ${userId} to Mailchimp audience: ${audienceId}`);
 };
 
+export const userAlreadyInAudience = (userId: string, audienceId: string) => {
+  logger.log(`User: ${userId} is already in Mailchimp audience: ${audienceId}`);
+};
+
 export const userNoEmail = () => {
   logger.log("User does not have an email");
 };
@@ -91,5 +95,11 @@ export const userRemoving = (
 ) => {
   logger.log(
     `Removing user: ${userId} with hashed email: ${hashedEmail} from Mailchimp audience: ${audienceId}`
+  );
+};
+
+export const backfillComplete = (successCount: number, errorCount: number) => {
+  logger.log(
+    `Finished adding existing users to Mailchimp audience. ${successCount} users added, ${errorCount} errors.`
   );
 };

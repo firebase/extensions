@@ -1,0 +1,26 @@
+{
+  "fields": [
+    {
+      "name": "super",
+      "type": "map",
+      "fields": [
+        {
+          "name": "nested",
+          "type": "map",
+          "fields": [
+            {
+              "name": "schema",
+              "type": "map",
+              "fields": [
+                {
+                  "name": "value",
+                  "type": "number"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
