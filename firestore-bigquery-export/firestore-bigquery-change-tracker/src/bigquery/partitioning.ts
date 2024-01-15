@@ -53,7 +53,8 @@ export class Partitioning {
 
   private isValidPartitionTypeDate(value) {
     /* Check if valid timestamp value from sdk */
-    if (value instanceof firebase.firestore.Timestamp) return true;
+    // if (value instanceof firebase.firestore.Timestamp) return true;
+    if (isTimestampLike(value)) return true;
 
     /* Check if valid date/timstemap, expedted result from production  */
     if (value && value.toDate && value.toDate()) return true;
@@ -88,15 +89,19 @@ export class Partitioning {
       !timePartitioningField &&
       !timePartitioningFieldType &&
       !timePartitioningFirestoreField;
-
     /* No custom config has been set, use partition value option only */
     if (hasNoCustomOptions) return true;
 
-    /* check if all options have been provided to be  */
+    /* check if all valid combinations have been provided*/
+    const hasOnlyTimestamp =
+      timePartitioningField === "timestamp" &&
+      !timePartitioningFieldType &&
+      !timePartitioningFirestoreField;
     return (
-      !!timePartitioningField &&
-      !!timePartitioningFieldType &&
-      !!timePartitioningFirestoreField
+      hasOnlyTimestamp ||
+      (!!timePartitioningField &&
+        !!timePartitioningFieldType &&
+        !!timePartitioningFirestoreField)
     );
   }
 
@@ -189,7 +194,7 @@ export class Partitioning {
     Extracts a valid Partition field from the Document Change Event.
     Matches result based on a pre-defined Firestore field matching the event data object.
     Return an empty object if no field name or value provided. 
-    Returns empty object if not a string or timestamp
+    Returns empty object if not a string or timestamp (or result of serializing a timestamp)
     Logs warning if not a valid datatype
     Delete changes events have no data, return early as cannot partition on empty data.
   **/
@@ -210,6 +215,15 @@ export class Partitioning {
 
     if (this.isValidPartitionTypeDate(fieldValue)) {
       /* Return converted console value */
+      if (isTimestampLike(fieldValue)) {
+        const convertedTimestampFieldValue = convertToTimestamp(fieldValue);
+        return {
+          [fieldName]: this.convertDateValue(
+            convertedTimestampFieldValue.toDate()
+          ),
+        };
+      }
+
       if (fieldValue.toDate) {
         return { [fieldName]: this.convertDateValue(fieldValue.toDate()) };
       }
@@ -238,33 +252,31 @@ export class Partitioning {
 
   async addPartitioningToSchema(fields = []): Promise<void> {
     /** check if class has valid table reference */
-    if (!this.hasValidTableReference()) return Promise.resolve();
+    if (!this.hasValidTableReference()) return;
 
     /** return if table is already partitioned **/
-    if (await this.isTablePartitioned()) return Promise.resolve();
+    if (await this.isTablePartitioned()) return;
 
     /** return if an invalid partition type has been requested**/
-    if (!this.hasValidTimePartitionType()) return Promise.resolve();
-
+    if (!this.hasValidTimePartitionType()) return;
     /** Return if invalid partitioning and field type combination */
-    if (this.hasHourAndDatePartitionConfig()) return Promise.resolve();
+    if (this.hasHourAndDatePartitionConfig()) return;
 
     /** return if an invalid partition type has been requested**/
-    if (!this.hasValidCustomPartitionConfig()) return Promise.resolve();
+    if (!this.hasValidCustomPartitionConfig()) return;
 
     /** return if an invalid partition type has been requested**/
-    if (!this.hasValidCustomPartitionConfig()) return Promise.resolve();
+    if (!this.hasValidCustomPartitionConfig()) return;
 
     /** update fields with new schema option ** */
-    if (!this.hasValidTimePartitionOption()) return Promise.resolve();
-
+    if (!this.hasValidTimePartitionOption()) return;
     /* Check if partition field has been provided */
-    if (!this.config.timePartitioningField) return Promise.resolve();
+    if (!this.config.timePartitioningField) return;
 
     // if (await !this.hasExistingSchema) return Promise.resolve();
 
     // Field already exists on schema, skip
-    if (this.customFieldExists(fields)) return Promise.resolve();
+    if (this.customFieldExists(fields)) return;
 
     fields.push(getNewPartitionField(this.config));
 
@@ -274,24 +286,24 @@ export class Partitioning {
       this.config.timePartitioningField
     );
 
-    return Promise.resolve();
+    return;
   }
 
   async updateTableMetadata(options: bigquery.TableMetadata): Promise<void> {
     /** return if table is already partitioned **/
-    if (await this.isTablePartitioned()) return Promise.resolve();
+    if (await this.isTablePartitioned()) return;
 
     /** return if an invalid partition type has been requested**/
-    if (!this.hasValidTimePartitionType()) return Promise.resolve();
+    if (!this.hasValidTimePartitionType()) return;
 
     /** update fields with new schema option ** */
-    if (!this.hasValidTimePartitionOption()) return Promise.resolve();
+    if (!this.hasValidTimePartitionOption()) return;
 
     /** Return if invalid partitioning and field type combination */
-    if (this.hasHourAndDatePartitionConfig()) return Promise.resolve();
+    if (this.hasHourAndDatePartitionConfig()) return;
 
     /** return if an invalid partition type has been requested**/
-    if (!this.hasValidCustomPartitionConfig()) return Promise.resolve();
+    if (!this.hasValidCustomPartitionConfig()) return;
 
     // if (await !this.hasExistingSchema) return Promise.resolve();
 
@@ -309,3 +321,27 @@ export class Partitioning {
     }
   }
 }
+
+type TimestampLike = {
+  _seconds: number;
+  _nanoseconds: number;
+};
+
+const isTimestampLike = (value: any): value is TimestampLike => {
+  if (value instanceof firebase.firestore.Timestamp) return true;
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "_seconds" in value &&
+    typeof value["_seconds"] === "number" &&
+    "_nanoseconds" in value &&
+    typeof value["_nanoseconds"] === "number"
+  );
+};
+
+const convertToTimestamp = (
+  value: TimestampLike
+): firebase.firestore.Timestamp => {
+  if (value instanceof firebase.firestore.Timestamp) return value;
+  return new firebase.firestore.Timestamp(value._seconds, value._nanoseconds);
+};
