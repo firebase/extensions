@@ -1,3 +1,19 @@
+## Version 0.2.10
+
+feature - add custom EventArc events
+
+## Version 0.2.9
+
+build - updated depenencies
+
+## Version 0.2.8
+
+feature - bump to node 18
+
+## Version 0.2.7
+
+feature - bump to nodejs16
+
 ## Version 0.2.6
 
 fixed - web client now uses the document sub collection for processing shards

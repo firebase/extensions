@@ -1,3 +1,15 @@
+## Version 0.1.11
+
+build - updated depenencies
+
+## Version 0.1.10
+
+feature - bump to node 18
+
+## Version 0.1.9
+
+feature - bump to nodejs16
+
 ## Version 0.1.8
 
 No changes.

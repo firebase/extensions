@@ -1,13 +1,16 @@
-import * as inquirer from "inquirer";
 import * as program from "commander";
+import * as filenamify from "filenamify";
+import * as inquirer from "inquirer";
 
 import { CliConfig, CliConfigError } from "./types";
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
-const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
+// regex of ^[^/]+(/[^/]+/[^/]+)*$
+export const FIRESTORE_VALID_CHARACTERS = new RegExp("^[^/]+(/[^/]+/[^/]+)*$");
+// export const FIRESTORE_VALID_CHARACTERS = /^[^/]+(/[^/]+/[^/]+)*$/;
 
 const PROJECT_ID_MAX_CHARS = 6144;
-const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
+export const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
 const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
 
 const validateBatchSize = (value: string) => {
@@ -24,6 +27,8 @@ const validateLocation = (value: string) => {
     "us-west3",
     "southamerica-east1",
     "us-east1",
+    "europe-central2",
+    "europe-north1",
     "europe-west1",
     "europe-north1",
     "europe-west3",
@@ -47,7 +52,7 @@ const validateLocation = (value: string) => {
   return index !== -1;
 };
 
-const validateInput = (
+export const validateInput = (
   value: string,
   name: string,
   regex: RegExp,
@@ -194,6 +199,14 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       return { kind: "ERROR", errors };
     }
 
+    const rawChangeLogName = `${program.tableNamePrefix}_raw_changelog`;
+    const cursorPositionFile = getCursorPositionFile(
+      program.sourceCollectionPath,
+      program.project,
+      program.dataset,
+      rawChangeLogName
+    );
+
     return {
       kind: "CONFIG",
       projectId: program.project,
@@ -206,6 +219,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       multiThreaded: program.multiThreaded === "true",
       useNewSnapshotQuerySyntax: program.useNewSnapshotQuerySyntax === "true",
       useEmulator: program.useEmulator === "true",
+      rawChangeLogName,
+      cursorPositionFile,
     };
   }
   const {
@@ -221,6 +236,14 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     useEmulator,
   } = await inquirer.prompt(questions);
 
+  const rawChangeLogName = `${table}_raw_changelog`;
+  const cursorPositionFile = getCursorPositionFile(
+    sourceCollectionPath,
+    project,
+    dataset,
+    rawChangeLogName
+  );
+
   return {
     kind: "CONFIG",
     projectId: project,
@@ -233,6 +256,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     multiThreaded: multiThreaded,
     useNewSnapshotQuerySyntax: useNewSnapshotQuerySyntax,
     useEmulator: useEmulator,
+    rawChangeLogName,
+    cursorPositionFile,
   };
 }
 
@@ -254,3 +279,17 @@ export const resolveWildcardIds = (template: string, text: string) => {
       return previousValue;
     }, {});
 };
+
+function getCursorPositionFile(
+  sourceCollectionPath: string,
+  projectId: string,
+  datasetId: string,
+  rawChangeLogName: string
+) {
+  // TODO: make this part of config, set it in CliConfig
+  const formattedPath = filenamify(sourceCollectionPath);
+  return (
+    __dirname +
+    `/from-${formattedPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`
+  );
+}

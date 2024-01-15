@@ -35,3 +35,22 @@ export function getDocumentId(change: Change<DocumentSnapshot>): string {
   }
   return change.before.id;
 }
+
+/**
+ *
+ * @param template - eg, regions/{regionId}/countries
+ * @param text - eg, regions/asia/countries
+ *
+ * @return - eg, { regionId: "asia" }
+ */
+export const resolveWildcardIds = (template: string, text: string) => {
+  const textSegments = text.split("/");
+  return template
+    .split("/")
+    .reduce((previousValue, currentValue, currentIndex) => {
+      if (currentValue.startsWith("{") && currentValue.endsWith("}")) {
+        previousValue[currentValue.slice(1, -1)] = textSegments[currentIndex];
+      }
+      return previousValue;
+    }, {});
+};

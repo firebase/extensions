@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import * as admin from "firebase-admin";
 import * as bigquery from "@google-cloud/bigquery";
-import * as firebase from "firebase-admin";
+import { DocumentReference } from "firebase-admin/firestore";
 import * as traverse from "traverse";
 import fetch from "node-fetch";
 import {
@@ -59,6 +59,8 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   bqProjectId?: string | undefined;
   backupTableId?: string | undefined;
   useNewSnapshotQuerySyntax?: boolean;
+  skipInit?: boolean;
+  kmsKeyName?: string | undefined;
 }
 
 /**
@@ -88,7 +90,9 @@ export class FirestoreBigQueryEventHistoryTracker
   }
 
   async record(events: FirestoreDocumentChangeEvent[]) {
-    await this.initialize();
+    if (!this.config.skipInit) {
+      await this.initialize();
+    }
 
     const partitionHandler = new Partitioning(this.config);
 
@@ -148,10 +152,7 @@ export class FirestoreBigQueryEventHistoryTracker
           this.remove();
         }
 
-        if (
-          property.constructor.name ===
-          firebase.firestore.DocumentReference.name
-        ) {
+        if (property.constructor.name === DocumentReference.name) {
           this.update(property.path);
         }
       }
@@ -272,7 +273,7 @@ export class FirestoreBigQueryEventHistoryTracker
    * Creates the BigQuery resources with the expected schema for {@link FirestoreEventHistoryTracker}.
    * After the first invokation, it skips initialization assuming these resources are still there.
    */
-  private async initialize() {
+  async initialize() {
     try {
       if (this._initialized) {
         return;
@@ -388,6 +389,12 @@ export class FirestoreBigQueryEventHistoryTracker
         schema.fields.push(documentPathParams);
       }
       const options: TableMetadata = { friendlyName: changelogName, schema };
+
+      if (this.config.kmsKeyName) {
+        options["encryptionConfiguration"] = {
+          kmsKeyName: this.config.kmsKeyName,
+        };
+      }
 
       //Add partitioning
       await partitioning.addPartitioningToSchema(schema.fields);
