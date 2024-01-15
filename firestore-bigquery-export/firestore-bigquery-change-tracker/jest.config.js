@@ -14,4 +14,8 @@ module.exports = {
   testEnvironment: "node",
   testTimeout: 180000,
   collectCoverage: true,
+  moduleNameMapper: {
+    "firebase-admin/firestore":
+      "<rootDir>/node_modules/firebase-admin/lib/firestore",
+  },
 };

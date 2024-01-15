@@ -2,18 +2,16 @@ name: Testing
 
 on:
   push:
-    branches:
-      - "**"
+    branches: [next]
   pull_request:
-    branches:
-      - "**"
+    branches: ["**"]
 
 jobs:
   nodejs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["14", "16"]
+        node: ["16", "18"]
     name: node.js_${{ matrix.node }}_test
     steps:
       - uses: actions/checkout@v3
@@ -33,6 +31,6 @@ jobs:
           timeout_minutes: 10
           retry_wait_seconds: 60
           max_attempts: 3
-          command: npm i -g firebase-tools
+          command: npm i -g firebase-tools@11
       - name: npm test
         run: npm run test:ci
