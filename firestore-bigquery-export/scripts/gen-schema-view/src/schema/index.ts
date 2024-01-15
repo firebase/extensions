@@ -16,17 +16,12 @@
 
 import { RawChangelogViewSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as bigquery from "@google-cloud/bigquery";
+import * as logs from "../logs";
+import { latestConsistentSnapshotSchemaView } from "../snapshot";
+import { udfs } from "../udf";
+import { processLeafField } from "./processLeafField";
+
 import * as sqlFormatter from "sql-formatter";
-import * as logs from "./logs";
-import { latestConsistentSnapshotSchemaView } from "./snapshot";
-import {
-  firestoreArray,
-  firestoreBoolean,
-  firestoreGeopoint,
-  firestoreNumber,
-  firestoreTimestamp,
-  udfs,
-} from "./udf";
 
 export type FirestoreFieldType =
   | "boolean"
@@ -37,6 +32,7 @@ export type FirestoreFieldType =
   | "null"
   | "string"
   | "stringified_map"
+  | "array_map"
   | "timestamp"
   | "reference";
 
@@ -68,7 +64,7 @@ export type FirestoreSchema = {
  * A static mapping from Firestore types to BigQuery column types. We generate
  * a BigQuery schema in the same pass that generates the view generation query.
  */
-const firestoreToBigQueryFieldType: {
+export const firestoreToBigQueryFieldType: {
   [f in FirestoreFieldType]: BigQueryFieldType;
 } = {
   boolean: "BOOLEAN",
@@ -80,6 +76,7 @@ const firestoreToBigQueryFieldType: {
   reference: "STRING",
   array: null /* mode: REPEATED type: STRING */,
   map: null,
+  array_map: null,
   stringified_map: "STRING",
 };
 
@@ -149,12 +146,14 @@ export class FirestoreBigQuerySchemaViewFactory {
       friendlyName: changeLogSchemaViewName,
       view: result.viewInfo,
     };
+
     if (!changeLogSchemaViewExists) {
       logs.bigQuerySchemaViewCreating(
         changeLogSchemaViewName,
         firestoreSchema,
         result.viewInfo.query
       );
+
       await changeLogSchemaView.create(changelogOptions);
       logs.bigQuerySchemaViewCreated(changeLogSchemaViewName);
     }
@@ -242,15 +241,6 @@ export function userSchemaView(
   };
 }
 
-export const testBuildSchemaViewQuery = (
-  datasetId: string,
-  rawTableName: string,
-  schema: FirestoreSchema
-) => {
-  schema.fields = updateFirestoreSchemaFields(schema.fields);
-  return buildSchemaViewQuery(datasetId, rawTableName, schema);
-};
-
 /**
  * Constructs a query for building a view over a raw changelog table name.
  */
@@ -260,10 +250,12 @@ export const buildSchemaViewQuery = (
   schema: FirestoreSchema
 ): any => {
   const result = processFirestoreSchema(datasetId, "data", schema);
-  const [fieldExtractors, fieldArrays] = result.queryInfo;
+  const [fieldExtractors, fieldArrays, geoPoints, subArrays] = result.queryInfo;
   const bigQueryFields = result.fields;
   const fieldValueSelectorClauses = Object.values(fieldExtractors).join(", ");
   const schemaHasArrays = fieldArrays.length > 0;
+  const schemaHasSubArrays = subArrays.length > 0;
+
   let query = `
     SELECT
       document_name,
@@ -274,6 +266,7 @@ export const buildSchemaViewQuery = (
       FROM
         \`${process.env.PROJECT_ID}.${datasetId}.${rawTableName}\`
   `;
+
   if (schemaHasArrays) {
     /**
      * If the schema we are generating has arrays, we perform a LEFT JOIN with
@@ -285,7 +278,11 @@ export const buildSchemaViewQuery = (
      * of additional rows added per document will be the product of the lengths
      * of all the arrays.
      */
-    query = `${subSelectQuery(query)} ${rawTableName} ${fieldArrays
+    query = `${subSelectQuery(
+      query,
+      null
+      // rawTableName
+    )} ${rawTableName} ${fieldArrays
       .map(
         (arrayFieldName) =>
           `LEFT JOIN UNNEST(${rawTableName}.${arrayFieldName})
@@ -309,11 +306,34 @@ export const buildSchemaViewQuery = (
       });
     }
   }
+
+  if (schemaHasSubArrays) {
+    const joins = subArrays
+      .map(
+        (s) =>
+          `LEFT JOIN UNNEST(json_extract_array(${rawTableName}.${s.key}, '$.${s.value}'))
+     ${s.value}
+     WITH OFFSET _${s.value}`
+      )
+      .join(" ");
+
+    query = `${subSelectQuery(query, null, rawTableName, joins)}`;
+  }
+
   query = sqlFormatter.format(query);
   return {
     query: query,
     fields: bigQueryFields,
   };
+};
+
+export const testBuildSchemaViewQuery = (
+  datasetId: string,
+  rawTableName: string,
+  schema: FirestoreSchema
+) => {
+  schema.fields = updateFirestoreSchemaFields(schema.fields);
+  return buildSchemaViewQuery(datasetId, rawTableName, schema);
 };
 
 /**
@@ -338,6 +358,7 @@ export function processFirestoreSchema(
   }
   let extractors: { [fieldName: string]: string } = {};
   let arrays: string[] = [];
+  let subArrays: Record<string, string>[] = [];
   let geopoints: string[] = [];
   let bigQueryFields: { [property: string]: string }[] = [];
   processFirestoreSchemaHelper(
@@ -350,10 +371,11 @@ export function processFirestoreSchema(
     extractors,
     transformer,
     bigQueryFields,
-    []
+    [],
+    subArrays
   );
   return {
-    queryInfo: [extractors, arrays, geopoints],
+    queryInfo: [extractors, arrays, geopoints, subArrays],
     fields: bigQueryFields,
   };
 }
@@ -365,13 +387,10 @@ export function processFirestoreSchema(
  * geopoints separately because they require handling in a context that
  * this function doesn't have access to:
  *
- * - Arrays must be unnested in the non-snapshot query (buildSchemaView) and
- *   filtered out in the snapshot query (buildLatestSnapshotViewQuery) because
- *   they are not groupable
  * - Geopoints must be filtered out in the snapshot query
  *   (buildLatestSnapshotViewQuery) because they are not groupable
  */
-function processFirestoreSchemaHelper(
+export function processFirestoreSchemaHelper(
   datasetId: string,
   dataFieldName: string,
   prefix: string[],
@@ -379,9 +398,10 @@ function processFirestoreSchemaHelper(
   arrays: string[],
   geopoints: string[],
   extractors: { [fieldName: string]: string },
-  transformer: (selector: string) => string,
+  transformer: (selector: string, isArrayType?: boolean) => string,
   bigQueryFields: { [property: string]: string }[],
-  extractPrefix: string[]
+  extractPrefix: string[],
+  subArrays?: Record<string, string>[]
 ) {
   const { fields = [] } = schema;
   if (!fields.length) return null;
@@ -404,6 +424,28 @@ function processFirestoreSchemaHelper(
       );
       return;
     }
+
+    if (field.type === "array_map") {
+      const isArrayValue = true;
+      subArrays.push({ key: "data", value: field.name });
+      for (let f of field.fields) {
+        const fieldNameToSelector = processLeafField(
+          datasetId,
+          field.extractor,
+          prefix,
+          f,
+          transformer,
+          bigQueryFields,
+          [f.name],
+          isArrayValue
+        );
+        for (let fieldName in fieldNameToSelector) {
+          extractors[fieldName] = fieldNameToSelector[fieldName];
+        }
+      }
+      return;
+    }
+
     const fieldNameToSelector = processLeafField(
       datasetId,
       "data",
@@ -413,9 +455,11 @@ function processFirestoreSchemaHelper(
       bigQueryFields,
       extractPrefix
     );
+
     for (let fieldName in fieldNameToSelector) {
       extractors[fieldName] = fieldNameToSelector[fieldName];
     }
+
     // For "latest" data views, certain types of fields cannot be used in
     // "GROUP BY" clauses. We keep track of them so they can be explicitly
     // transformed into groupable types later.
@@ -430,212 +474,6 @@ function processFirestoreSchemaHelper(
 }
 
 /**
- * Once we have reached the field in the JSON tree, we must determine what type
- * it is in the schema and then perform any conversions needed to coerce it into
- * the BigQuery type.
- */
-const processLeafField = (
-  datasetId: string,
-  dataFieldName: string,
-  prefix: string[],
-  field: FirestoreField,
-  transformer: (selector: string) => string,
-  bigQueryFields: { [property: string]: string }[],
-  extractPrefix: string[]
-) => {
-  const extractPrefixJoined = `${extractPrefix.join(".")}`;
-
-  let fieldNameToSelector = {};
-  let selector;
-  switch (field.type) {
-    case "null":
-      selector = transformer(`NULL`);
-      break;
-    case "stringified_map":
-      selector = jsonExtract(
-        dataFieldName,
-        extractPrefixJoined,
-        field,
-        "",
-        transformer
-      );
-      break;
-    case "string":
-    case "reference":
-      selector = jsonExtractScalar(
-        dataFieldName,
-        extractPrefixJoined,
-        field,
-        ``,
-        transformer
-      );
-      break;
-    case "array":
-      selector = firestoreArray(
-        datasetId,
-        jsonExtract(dataFieldName, extractPrefixJoined, field, ``, transformer)
-      );
-      break;
-    case "boolean":
-      selector = firestoreBoolean(
-        datasetId,
-        jsonExtractScalar(
-          dataFieldName,
-          extractPrefixJoined,
-          field,
-          ``,
-          transformer
-        )
-      );
-      break;
-    case "number":
-      selector = firestoreNumber(
-        datasetId,
-        jsonExtractScalar(
-          dataFieldName,
-          extractPrefixJoined,
-          field,
-          ``,
-          transformer
-        )
-      );
-      break;
-    case "timestamp":
-      selector = firestoreTimestamp(
-        datasetId,
-        jsonExtract(dataFieldName, extractPrefixJoined, field, ``, transformer)
-      );
-      break;
-    case "geopoint":
-      const latitude = jsonExtractScalar(
-        dataFieldName,
-        extractPrefixJoined,
-        field,
-        `._latitude`,
-        transformer
-      );
-      const longitude = jsonExtractScalar(
-        dataFieldName,
-        extractPrefixJoined,
-        field,
-        `._longitude`,
-        transformer
-      );
-      /*
-       * We return directly from this branch because it's the only one that
-       * generates multiple selector clauses.
-       */
-      fieldNameToSelector[
-        qualifyFieldName(prefix, field.name)
-      ] = `${firestoreGeopoint(
-        datasetId,
-        jsonExtract(dataFieldName, extractPrefixJoined, field, ``, transformer)
-      )} AS ${prefix.concat(field.name).join("_")}`;
-
-      bigQueryFields.push({
-        name: qualifyFieldName(prefix, field.name),
-        mode: "NULLABLE",
-        type: firestoreToBigQueryFieldType[field.type],
-        description: field.description,
-      });
-
-      fieldNameToSelector[
-        qualifyFieldName(prefix, `${field.name}_latitude`)
-      ] = `SAFE_CAST(${latitude} AS NUMERIC) AS ${qualifyFieldName(
-        prefix,
-        `${field.name}_latitude`
-      )}`;
-
-      bigQueryFields.push({
-        name: qualifyFieldName(prefix, `${field.name}_latitude`),
-        mode: "NULLABLE",
-        type: "NUMERIC",
-        description: `Numeric latitude component of ${field.name}.`,
-      });
-
-      fieldNameToSelector[
-        qualifyFieldName(prefix, `${field.name}_longitude`)
-      ] = `SAFE_CAST(${longitude} AS NUMERIC) AS ${qualifyFieldName(
-        prefix,
-        `${field.name}_longitude`
-      )}`;
-
-      bigQueryFields.push({
-        name: qualifyFieldName(prefix, `${field.name}_longitude`),
-        mode: "NULLABLE",
-        type: "NUMERIC",
-        description: `Numeric longitude component of ${field.name}.`,
-      });
-      return fieldNameToSelector;
-  }
-  fieldNameToSelector[
-    qualifyFieldName(prefix, field.name)
-  ] = `${selector} AS ${qualifyFieldName(prefix, field.name)}`;
-  if (field.type === "array") {
-    bigQueryFields.push({
-      name: qualifyFieldName(prefix, field.name),
-      mode: "REPEATED",
-      type: "STRING",
-      description: field.description,
-    });
-  } else {
-    bigQueryFields.push({
-      name: qualifyFieldName(prefix, field.name),
-      mode: "NULLABLE",
-      type: firestoreToBigQueryFieldType[field.type],
-      description: field.description,
-    });
-  }
-
-  return fieldNameToSelector;
-};
-
-/**
- * Extract a field from a raw JSON string that lives in the column
- * `dataFieldName`. The result of this function is a clause which can be used in
- * the argument of a SELECT query to create a corresponding BigQuery-typed
- * column in the result set.
- *
- * @param dataFieldName the source column containing raw JSON
- * @param prefix the path we need to follow from the root of the JSON to arrive
- * at the named field
- * @param field the field we are extracting
- * @param subselector the path we want to follow within the named field. As an
- * example, this is useful when extracting latitude and longitude from a
- * serialized geopoint field.
- * @param transformer any transformation we want to apply to the result of
- * JSON_EXTRACT. This is typically a BigQuery CAST, or an UNNEST (in the case
- * where the result is an ARRAY).
- */
-const jsonExtractScalar = (
-  dataFieldName: string,
-  prefix: string,
-  field: FirestoreField,
-  subselector: string = "",
-  transformer: (selector: string) => string
-) => {
-  return transformer(
-    `JSON_EXTRACT_SCALAR(${dataFieldName}, \'\$.${
-      prefix.length > 0 ? `${prefix}.` : ``
-    }${field.extractor}${subselector}\')`
-  );
-};
-
-const jsonExtract = (
-  dataFieldName: string,
-  prefix: string,
-  field: FirestoreField,
-  subselector: string = "",
-  transformer: (selector: string) => string
-) => {
-  return transformer(
-    `JSON_EXTRACT(${dataFieldName}, \'\$.${
-      prefix.length > 0 ? `${prefix}.` : ``
-    }${field.extractor}${subselector}\')`
-  );
-};
-
-/**
  * Given a select query, $QUERY, return a query that wraps the result in an
  * outer-select, optionally filtering some fields out using the SQL `EXCEPT`
  * clause. This is used when generating the latest view of a schema change-log
@@ -646,16 +484,27 @@ const jsonExtract = (
  * @param query a SELECT query
  * @param filter an array of field names to filter out from `query`
  */
-export function subSelectQuery(query: string, filter?: string[]): string {
+export function subSelectQuery(
+  query: string,
+  filter?: string[],
+  tblname?: string,
+  joins?: string[]
+): string {
   return `SELECT * ${
     filter && filter.length > 0 ? `EXCEPT (${filter.join(", ")})` : ``
-  } FROM (${query})`;
+    // } FROM (${query})`;
+  } FROM (${query} ${tblname || ""} ${joins || ""})`;
 }
 
-function qualifyFieldName(prefix: string[], name: string): string {
+export function qualifyFieldName(
+  prefix: string[],
+  name: string,
+  concat: boolean | null = true
+): string {
   const notAlphanumericUnderscore = /([^a-zA-Z0-9_])/g;
   const cleanName = name.replace(notAlphanumericUnderscore, "_");
 
+  if (!concat) return cleanName;
   return prefix.concat(cleanName).join("_");
 }
 

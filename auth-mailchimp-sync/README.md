@@ -34,15 +34,13 @@ Usage of this extension also requires you to have a Mailchimp account. You are r
 
 **Configuration Parameters:**
 
-* Cloud Functions location: Where do you want to deploy the functions created for this extension?
-
 * Mailchimp API key: What is your Mailchimp API key? To obtain a Mailchimp API key, go to your [Mailchimp account](https://admin.mailchimp.com/account/api/).
 
 * Audience ID: What is the Mailchimp Audience ID to which you want to subscribe new users? To find your Audience ID: visit https://admin.mailchimp.com/lists, click on the desired audience or create a new audience, then select **Settings**. Look for **Audience ID** (for example, `27735fc60a`).
 
 * Contact status: When the extension adds a new user to the Mailchimp audience, what is their initial status? This value can be `subscribed` or `pending`. `subscribed` means the user can receive campaigns; `pending` means the user still needs to opt-in to receive campaigns.
 
-* Import existing users into Mailchimp audience: Do you want to add existing users to the Mailchimp audience?
+* Import existing users into Mailchimp audience: Do you want to add existing users to the Mailchimp audience when you install or update this extension?
 
 
 
@@ -53,3 +51,13 @@ Usage of this extension also requires you to have a Mailchimp account. You are r
 * **removeUserFromList:** Listens for existing user accounts to be deleted (as managed by Firebase Authentication), then automatically removes them from your specified Mailchimp audience.
 
 * **addExistingUsersToList:** Adds existing users into the specified Mailchimp audience.
+
+
+
+**Access Required**:
+
+
+
+This extension will operate with the following project IAM roles:
+
+* firebaseauth.viewer (Reason: Allows the extension to read existing users while handling lifecycle events.)
