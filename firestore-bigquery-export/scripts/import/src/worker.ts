@@ -1,12 +1,13 @@
-import * as firebase from "firebase-admin";
-import { CliConfig, SerializableQuery, QueryOptions } from "./types";
-import { worker } from "workerpool";
-
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreDocumentChangeEvent,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import * as firebase from "firebase-admin";
+import { worker } from "workerpool";
+import { getRowsFromDocs } from "./helper";
+
+import { CliConfig, QueryOptions, SerializableQuery } from "./types";
 
 async function processDocuments(
   serializableQuery: SerializableQuery,
@@ -30,7 +31,11 @@ async function processDocuments(
 
   const query = firebase
     .firestore()
-    .collectionGroup(sourceCollectionPath)
+    .collectionGroup(
+      sourceCollectionPath.split("/")[
+        sourceCollectionPath.split("/").length - 1
+      ]
+    )
     .orderBy(firebase.firestore.FieldPath.documentId(), "asc") as QueryOptions;
 
   query._queryOptions.startAt = serializableQuery.startAt;
@@ -52,16 +57,7 @@ async function processDocuments(
     datasetLocation,
   });
 
-  const rows: FirestoreDocumentChangeEvent = docs.map((document) => {
-    return {
-      timestamp: new Date().toISOString(),
-      operation: ChangeType.IMPORT,
-      documentName: `projects/${projectId}/databases/(default)/documents/${document.ref.path}`,
-      documentId: document.id,
-      eventId: "",
-      data: document.data(),
-    };
-  });
+  const rows: FirestoreDocumentChangeEvent = getRowsFromDocs(docs, config);
 
   await dataSink.record(rows);
   return rows.length;
