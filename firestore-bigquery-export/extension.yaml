@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.43
+version: 0.1.44
 specVersion: v1beta
 
 displayName: Stream Firestore to BigQuery
@@ -75,7 +75,13 @@ resources:
       A task-triggered function that gets called on BigQuery sync
     properties:
       runtime: nodejs18
-      taskQueueTrigger: {}
+      taskQueueTrigger: 
+        rateLimits:
+          maxConcurrentDispatches: 500
+          maxDispatchesPerSecond: ${param:MAX_DISPATCHES_PER_SECOND}
+        retryConfig:
+          maxAttempts: 5
+          minBackoffSeconds: 60
 
   - name: initBigQuerySync
     type: firebaseextensions.v1beta.function
@@ -264,7 +270,8 @@ params:
     label: Firestore Document field name for BigQuery SQL Time Partitioning field option
     description: >-
      This parameter will allow you to partition the BigQuery table  created by the extension based on selected. The Firestore Document field value must be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or Firestore timestamp(will be converted to BigQuery TIMESTAMP). Cannot be changed if Table is already partitioned.
-      example: `postDate`
+      example: `postDate`(Ensure that the Firestore-BigQuery export extension creates the dataset and table before initiating any backfill scripts.
+      This step is crucial for the partitioning to function correctly. It is essential for the script to insert data into an already partitioned table.)
     type: string
     required: false
 
@@ -291,7 +298,7 @@ params:
     description: >-
       This parameter will allow you to set up Clustering for the BigQuery Table
       created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 comma separated fields. The order of the specified columns determines the sort order of the data.
-      Available schema extensions table fields for clustering: `document_id, timestamp, event_id, operation, data`.
+      Available schema extensions table fields for clustering: `document_id, document_name, timestamp, event_id, operation, data`.
     type: string
     validationRegex: ^[^,\s]+(?:,[^,\s]+){0,3}$
     validationErrorMessage: No whitespaces. Max 4 fields. e.g. `data,timestamp,event_id,operation`
@@ -304,9 +311,9 @@ params:
       This parameter will set the maximum number of syncronised documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota.
       Ensure that you have a set a low enough number to componsate. Defaults to 10.
     type: string
-    validationRegex: ^(?:[1-9]|\d{2,3}|[1-4]\d{3})$
-    validationErrorMessage: Please select a number between 1 and 100
-    example: 10
+    validationRegex: ^([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)$
+    validationErrorMessage: Please select a number between 1 and 500
+    default: 100
     required: false
 
   - param: BACKUP_COLLECTION
