@@ -1,3 +1,8 @@
+## Version 0.1.44
+
+fix - apply the task queue configurations in `syncBigQuery` and set max attempts to 5
+fix - MAX_DISPATCHES_PER_SECOND is now set to take effect based on user's configuration
+
 ## Version 0.1.43
 
 fix - correctly partition when only "timestamp" is selected for partition options
