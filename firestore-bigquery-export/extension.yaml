@@ -313,7 +313,7 @@ params:
     type: string
     validationRegex: ^([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)$
     validationErrorMessage: Please select a number between 1 and 500
-    example: 10
+    default: 100
     required: false
 
   - param: BACKUP_COLLECTION
