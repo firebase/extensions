@@ -1,3 +1,12 @@
+## Version 0.1.30
+
+feature - add a new field "Tls Options" to allow users to specify TLS options for SMTP connections
+
+## Version 0.1.29
+
+fixed - remove missingDeliveryField log
+fixed - support hotmail service
+
 ## Version 0.1.28
 
 build - updated depenencies

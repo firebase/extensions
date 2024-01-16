@@ -16,6 +16,13 @@ Enabling wildcard references will provide an additional STRING based column. The
 
 `Partition` settings cannot be updated on a pre-existing table, if these options are required then a new table must be created.
 
+Note: To enable partitioning for a Big Query database, the following fields are required:
+
+ - Time Partitioning option type
+ - Time partitioning column name
+ - Time partiitioning table schema
+ - Firestore document field name
+
 `Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
 
 
