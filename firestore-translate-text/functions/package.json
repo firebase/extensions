@@ -12,7 +12,7 @@
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "dependencies": {
-    "@google-cloud/translate": "^4.0.1",
+    "@google-cloud/translate": "^8.0.3",
     "@types/express-serve-static-core": "4.17.30",
     "@types/node": "14.18.34",
     "firebase-admin": "^11.4.1",
