@@ -66,7 +66,8 @@ export const buildLatestSchemaSnapshotViewQuery = (
   schema: FirestoreSchema,
   useNewSqlSyntax = false
 ): any => {
-  const firstValue = (selector: string) => {
+  const firstValue = (selector: string, isArrayType?: boolean) => {
+    if (isArrayType) return selector;
     return `FIRST_VALUE(${selector}) OVER(PARTITION BY document_name ORDER BY timestamp DESC)`;
   };
 
@@ -74,9 +75,13 @@ export const buildLatestSchemaSnapshotViewQuery = (
   // fully qualified json2array persistent user-defined function in the proper
   // scope.
   const result = processFirestoreSchema(datasetId, "data", schema, firstValue);
-  const [schemaFieldExtractors, schemaFieldArrays, schemaFieldGeopoints] =
-    result.queryInfo;
 
+  const [
+    schemaFieldExtractors,
+    schemaFieldArrays,
+    schemaFieldGeopoints,
+    schemaArrays,
+  ] = result.queryInfo;
   let bigQueryFields = result.fields;
   /*
    * Include additional array schema fields.
@@ -101,6 +106,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
       description: `String representation of ${arrayFieldName}_member at index ${arrayFieldName}_index in ${arrayFieldName}.`,
     });
   }
+
   /*
    * latitude and longitude component fields have already been added
    * during firestore schema processing.
@@ -121,6 +127,14 @@ export const buildLatestSchemaSnapshotViewQuery = (
   const schemaHasArrays = schemaFieldArrays.length > 0;
   const schemaHasGeopoints = schemaFieldGeopoints.length > 0;
 
+  const offsetJoins = schemaArrays
+    .map(({ key, value }) => {
+      return `LEFT JOIN
+  unnest(json_extract_array(\`${process.env.PROJECT_ID}.${datasetId}.${rawViewName}\`.${key}, '$.${value}')
+  ) ${value} WITH OFFSET _${value}`;
+    })
+    .join(" ");
+
   let query = `
       SELECT
         document_name,
@@ -139,6 +153,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
   }
           ${fieldValueSelectorClauses}
         FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawViewName}\`
+        ${offsetJoins}
       )
       WHERE NOT is_deleted
   `;
