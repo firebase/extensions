@@ -54,9 +54,9 @@ Enabling wildcard references will provide an additional STRING based column. The
 
 `Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
 
-### Configuring Alternative BigQuery Project
+### Configuring Cross-Platform BigQuery Setup
 
-When defining a specific BigQuery project, a manual step to set up permissions is required:
+When defining a specific BigQuery project ID, a manual step to set up permissions is required:
 
 1. Navigate to https://console.cloud.google.com/iam-admin/iam?project=${param:BIGQUERY_PROJECT_ID}
 2. Add the **BigQuery Data Editor** role to the following service account:
