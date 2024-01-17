@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-shorten-urls-bitly
-version: 0.1.13
+version: 0.1.14
 specVersion: v1beta
 
 displayName: Shorten URLs in Firestore
@@ -96,3 +96,16 @@ params:
     example: shortUrl
     default: shortUrl
     required: true
+
+events:
+  - type: firebase.extensions.firestore-shorten-urls-bitly.v1.onStart
+    description: Occurs when a trigger has been called within the Extension, and will include data such as the context of the trigger request.
+
+  - type: firebase.extensions.firestore-shorten-urls-bitly.v1.onSuccess
+    description: Occurs when image resizing completes successfully. The event will contain further details about specific formats and sizes.
+
+  - type: firebase.extensions.firestore-shorten-urls-bitly.v1.onError
+    description: Occurs when an issue has been experienced in the Extension. This will include any error data that has been included within the Error Exception.
+    
+  - type: firebase.extensions.firestore-shorten-urls-bitly.v1.onCompletion
+    description: Occurs when the function is settled. Provides no customized data other than the context.
