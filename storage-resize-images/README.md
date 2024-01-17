@@ -97,7 +97,7 @@ Leave this field empty if you do not want to store failed images in a separate d
 * Output options for selected formats: Provide an optional output option as a stringified object containing Sharp Output Options for selected image types conversion. eg. `{"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "palette": true }}` and `{"png":{"compressionLevel":9}}`. The `"compressionLevel": 9` specifies the level of compression for PNG images. Higher numbers here indicate greater compression, leading to smaller file sizes at the cost of potentially increased processing time and possible loss of image quality.  
 
 
-* Sharp constructor options for resizing images: Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion. eg. `{ failOnError: false, limitInputPixels: true, fit: 'inside' }` The`fit: 'inside'` option ensures image fits within given dimensions, maintaining aspect ratio, scaling down as needed without cropping or distortion. Learn more about [`Sharp constructor options`](https://sharp.pixelplumbing.com/api-resize#resize).
+* Sharp constructor options for resizing images: Provide an optional output option stringified object containing Sharp Output Options for selected image types conversion. eg. `{ "failOnError": false, "limitInputPixels": true, "fit": "inside" }` The `"fit": "inside"` option ensures the image fits within given dimensions, maintaining aspect ratio, scaling down as needed without cropping or distortion. Learn more about [`Sharp constructor options`](https://sharp.pixelplumbing.com/api-resize#resize).
 
 
 * GIF and WEBP animated option: Keep animation of GIF and WEBP formats.
