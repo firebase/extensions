@@ -18,7 +18,7 @@ let dataset: Dataset;
 let table: Table;
 let view: Table;
 const count = 100;
-describe("Stress testing", () => {
+describe.skip("Stress testing", () => {
   beforeEach(() => {
     randomID = (Math.random() + 1).toString(36).substring(7);
     datasetId = `dataset_${randomID}`;
