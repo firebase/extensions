@@ -1,3 +1,15 @@
+## Version 0.2.2
+
+feature - allow custom fit option
+
+feature - add 4 and 8 GB memory options
+
+## Version 0.2.1
+
+feature - allow custom sharp.js options
+
+fix - convert storage path separators on windows
+
 ## Version 0.2.0
 
 fixed - added safeguards for travsersed paths on failed image uploads
