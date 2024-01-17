@@ -21,6 +21,7 @@ const environment = {
   TESTING: "true",
   TTL_EXPIRE_TYPE: "day",
   TTL_EXPIRE_VALUE: "1",
+  TLS_OPTIONS: "{}",
 };
 
 describe("extensions config", () => {
@@ -42,6 +43,7 @@ describe("extensions config", () => {
       testing: process.env.TESTING === "true",
       TTLExpireType: process.env.TTL_EXPIRE_TYPE,
       TTLExpireValue: parseInt(process.env.TTL_EXPIRE_VALUE),
+      tls: process.env.TLS_OPTIONS,
     };
     const functionsConfig = config();
     expect(functionsConfig).toStrictEqual(testConfig);

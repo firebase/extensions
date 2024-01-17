@@ -56,11 +56,8 @@ export default {
   failedImagesPath: process.env.FAILED_IMAGES_PATH,
   deleteOriginalFile: deleteOriginalFile(process.env.DELETE_ORIGINAL_FILE),
   imageTypes: paramToArray(process.env.IMAGE_TYPE),
-  sharpOptions: process.env.SHARP_OPTIONS,
+  sharpOptions: process.env.SHARP_OPTIONS || "{}",
   outputOptions: process.env.OUTPUT_OPTIONS,
-  animated: allowAnimated(
-    process.env.SHARP_OPTIONS,
-    process.env.OVERRIDE_IS_ANIMATED
-  ),
+  animated: allowAnimated(process.env.SHARP_OPTIONS, process.env.IS_ANIMATED),
   location: process.env.LOCATION,
 };
