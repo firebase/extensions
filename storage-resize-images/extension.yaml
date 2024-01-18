@@ -241,16 +241,16 @@ params:
 
     type: string
     validationRegex: ^({(.*?)})$
-    validationErrorMessage: Please provide a valid json object.
+    validationErrorMessage: Please provide a valid JSON object.
     required: false
 
   - param: SHARP_OPTIONS
     label: Sharp constructor options for resizing images
     description: >
-      Provide an optional output option stringified object containing Sharp Output Options for selected image types conversion. eg. `{ "failOnError": false, "limitInputPixels": true, "fit": "inside" }` The `"fit": "inside"` option ensures the image fits within given dimensions, maintaining aspect ratio, scaling down as needed without cropping or distortion. Learn more about [`Sharp constructor options`](https://sharp.pixelplumbing.com/api-resize#resize).
+      Provide an optional stringified Sharp ResizeOptions object to customize resizing behavior, eg. `{ "fastShrinkOnLoad": false, "position": “centre”, "fit": "inside" }` The `"fit": "inside"` option ensures the image fits within given dimensions, maintaining aspect ratio, scaling down as needed without cropping or distortion. Learn more about [`Sharp constructor options`](https://sharp.pixelplumbing.com/api-resize#resize).
     type: string
     validationRegex: ^({(.*?)})$
-    validationErrorMessage: Please provide a valid json object.
+    validationErrorMessage: Please provide a valid JSON object.
     required: false
 
   - param: IS_ANIMATED
