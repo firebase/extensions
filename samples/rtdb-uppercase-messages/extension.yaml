@@ -1,6 +1,6 @@
 name: rtdb-uppercase-messages
 version: 0.0.1
-specVersion: v1beta  # Firebase Extensions specification version; don’t change
+specVersion: v1beta # Firebase Extensions specification version; don’t change
 
 # Friendly display name for your extension (~3-5 words)
 displayName: Convert messages to upper case
@@ -13,7 +13,7 @@ author:
   authorName: Your Name
   url: https://your-site.example.com
 
-license: Apache-2.0  # https://spdx.org/licenses/
+license: Apache-2.0 # https://spdx.org/licenses/
 
 # Public URL for the source code of your extension
 sourceUrl: https://github.com/firebase/extensions/tree/master/samples/rtdb-uppercase-messages
@@ -27,14 +27,14 @@ resources:
         # DATABASE_INSTANCE (project's default instance) is an auto-populated
         # parameter value. You can also specify an instance.
         resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${param:MESSAGE_PATH}
-      runtime: "nodejs18"  
+      runtime: "nodejs18"
   - name: backfilldata
     type: firebaseextensions.v1beta.function
-    description: >- 
+    description: >-
       Backfill existing messages with uppercase versions
     properties:
       taskQueueTrigger: {}
-      runtime: "nodejs18"  
+      runtime: "nodejs18"
 
 roles:
   - role: firebasedatabase.admin
@@ -69,5 +69,5 @@ events:
 
 lifecycleEvents:
   onInstall:
-    function: backfilldata 
+    function: backfilldata
     processingMessage: Uppercasing existing messages

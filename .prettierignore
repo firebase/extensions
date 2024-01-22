@@ -1,5 +1,4 @@
 package.json
-extension.yaml
 package-lock.json
 
 **/node_modules/**

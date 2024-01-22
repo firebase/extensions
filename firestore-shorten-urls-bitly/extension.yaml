@@ -50,8 +50,9 @@ resources:
   - name: fsurlshortener
     type: firebaseextensions.v1beta.function
     description:
-      Listens for writes of new URLs to your specified Cloud Firestore collection, shortens the URLs,
-      then writes the shortened form back to the same document.
+      Listens for writes of new URLs to your specified Cloud Firestore
+      collection, shortens the URLs, then writes the shortened form back to the
+      same document.
     properties:
       runtime: nodejs18
       eventTrigger:
@@ -67,14 +68,16 @@ params:
     label: Bitly access token
     type: secret
     description: >
-      What is your Bitly access token? Generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
+      What is your Bitly access token? Generate this access token using
+      [Bitly](https://bitly.com/a/oauth_apps).
     example: a1b2c3d4e5f6g7
     required: true
 
   - param: COLLECTION_PATH
     label: Collection path
     description: >
-      What is the path to the collection that contains the URLs that you want to shorten?
+      What is the path to the collection that contains the URLs that you want to
+      shorten?
     example: urls
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore collection
@@ -84,7 +87,8 @@ params:
   - param: URL_FIELD_NAME
     label: URL field name
     description: >
-      What is the name of the field that contains the original long URLs that you want to shorten?
+      What is the name of the field that contains the original long URLs that
+      you want to shorten?
     example: url
     default: url
     required: true
@@ -99,13 +103,21 @@ params:
 
 events:
   - type: firebase.extensions.firestore-shorten-urls-bitly.v1.onStart
-    description: Occurs when a trigger has been called within the Extension, and will include data such as the context of the trigger request.
+    description:
+      Occurs when a trigger has been called within the Extension, and will
+      include data such as the context of the trigger request.
 
   - type: firebase.extensions.firestore-shorten-urls-bitly.v1.onSuccess
-    description: Occurs when image resizing completes successfully. The event will contain further details about specific formats and sizes.
+    description:
+      Occurs when image resizing completes successfully. The event will contain
+      further details about specific formats and sizes.
 
   - type: firebase.extensions.firestore-shorten-urls-bitly.v1.onError
-    description: Occurs when an issue has been experienced in the Extension. This will include any error data that has been included within the Error Exception.
-    
+    description:
+      Occurs when an issue has been experienced in the Extension. This will
+      include any error data that has been included within the Error Exception.
+
   - type: firebase.extensions.firestore-shorten-urls-bitly.v1.onCompletion
-    description: Occurs when the function is settled. Provides no customized data other than the context.
+    description:
+      Occurs when the function is settled. Provides no customized data other
+      than the context.
