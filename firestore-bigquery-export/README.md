@@ -149,6 +149,14 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * Use new query syntax for snapshots: If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential resource limitations.
 
+* Import existing Firestore documents into BigQuery?: Do you want to import existing documents from your Firestore collection into BigQuery? These documents  will have each have a special changelog with the operation of `IMPORT` and the timestamp of epoch. This ensures that any operation on an imported document supersedes the import record.
+
+* Existing Documents Collection: Specify the path of the Cloud Firestore Collection you would like to import from. This may or may not be the same Collection for which you plan to mirror changes. If you want to use a collectionGroup query, provide the collection name value here, and set 'Use Collection Group query' to true. You may use `{wildcard}` notation with an enabled collectionGroup query to match a subcollection of all documents in a collection (e.g., `chatrooms/{chatid}/posts`).
+
+* Use Collection Group query: Do you want to use a [collection group](https://firebase.google.com/docs/firestore/query-data/queries#collection-group-query) query for importing existing documents? You have to enable collectionGroup query if your import path contains subcollections. Warning: A collectionGroup query will target every collection in your Firestore project that matches the 'Existing documents collection'. For example, if you have 10,000 documents with a subcollection named: landmarks, this will query every document in 10,000 landmarks collections.
+
+* Docs per backfill: When importing existing documents, how many should be imported at once? The default value of 200 should be ok for most users. If you are using a transform function or have very large documents, you may need to set this to a lower number. If the lifecycle event function times out, lower this value.
+
 * Cloud KMS key name: Instead of Google managing the key encryption keys that protect your data, you control and manage key encryption keys in Cloud KMS. If this parameter is set, the extension will specify the KMS key name when creating the BQ table. See the PREINSTALL.md for more details.
 
 
