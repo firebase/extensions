@@ -43,7 +43,9 @@ billingRequired: true
 
 roles:
   - role: firebaseauth.viewer
-    reason: Allows the extension to read existing users while handling lifecycle events.
+    reason:
+      Allows the extension to read existing users while handling lifecycle
+      events.
 
 resources:
   - name: addUserToList
@@ -68,11 +70,10 @@ resources:
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
         resource: projects/${param:PROJECT_ID}
-        
+
   - name: addExistingUsersToList
     type: firebaseextensions.v1beta.function
-    description:
-      Adds existing users into the specified Mailchimp audience.
+    description: Adds existing users into the specified Mailchimp audience.
     properties:
       runtime: nodejs18
       taskQueueTrigger: {}
@@ -117,7 +118,8 @@ params:
   - param: DO_BACKFILL
     label: Import existing users into Mailchimp audience
     description: >-
-      Do you want to add existing users to the Mailchimp audience when you install or update this extension?
+      Do you want to add existing users to the Mailchimp audience when you
+      install or update this extension?
     type: select
     required: true
     options:
@@ -125,7 +127,6 @@ params:
         value: true
       - label: No
         value: false
-
 
 lifecycleEvents:
   onInstall:
