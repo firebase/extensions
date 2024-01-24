@@ -250,7 +250,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     sourceCollectionPath: sourceCollectionPath,
     datasetId: dataset,
     tableId: table,
-    batchSize: batchSize,
+    batchSize: parseInt(batchSize),
     queryCollectionGroup: queryCollectionGroup,
     datasetLocation: datasetLocation,
     multiThreaded: multiThreaded,
