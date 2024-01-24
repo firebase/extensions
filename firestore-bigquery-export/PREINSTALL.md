@@ -5,6 +5,8 @@ The extension creates and updates a [dataset](https://cloud.google.com/bigquery/
 - A [table](https://cloud.google.com/bigquery/docs/tables-intro) of raw data that stores a full change history of the documents within your collection. This table includes a number of metadata fields so that BigQuery can display the current state of your data. The principle metadata fields are `timestamp`, `document_name`, and the `operation` for the document change.
 - A [view](https://cloud.google.com/bigquery/docs/views-intro) which represents the current state of the data within your collection. It also shows a log of the latest `operation` for each document (`CREATE`, `UPDATE`, or `IMPORT`).
 
+*Warning*: A BigQuery table corresponding to your configuration will be automatically generated upon installing or updating this extension. Manual table creation may result in discrepancies with your configured settings.
+
 If you create, update, delete, or import a document in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset.
 
 Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`). 
@@ -31,6 +33,19 @@ Before installing this extension, you'll need to:
 
 - [Set up Cloud Firestore in your Firebase project.](https://firebase.google.com/docs/firestore/quickstart)
 - [Link your Firebase project to BigQuery.](https://support.google.com/firebase/answer/6318765)
+
+
+#### Import existing documents
+
+There are two ways to import existing Firestore documents into BigQuery - the backfill feature and the import script.
+
+To import documents that already exist at installation time into BigQuery, answer **Yes** when the installer asks "Import existing Firestore documents into BigQuery?" The extension will export existing documents as part of the installation and update processes.
+
+Alternatively, you can run the external [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md) to backfill existing documents. If you plan to use this script, answer **No** when prompted to import existing documents.
+
+**Important:** Run the external import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
+
+If you don't either enable automatic import or run the import script, the extension only exports the content of documents that are created or changed after installation.
 
 #### Transform function
 
@@ -80,16 +95,6 @@ KMS_KEY
 projects/<YOUR PROJECT ID>/locations/<YOUR REGION>/keyRings/<YOUR KEY RING NAME>/cryptoKeys/<YOUR KEY NAME>
 ```
 If you follow these steps, your changelog table should be created using your customer-managed encryption.
-
-#### Backfill your BigQuery dataset
-
-To import documents that already exist at installation time into BigQuery, answer **Yes** when the installer asks "Import existing Firestore documents into BigQuery?" The extension will export existing documents as part of the installation and update processes.
-
-Alternatively, you can run the external [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md) to backfill existing documents. If you plan to use this script, answer **No** when prompted to import existing documents.
-
-**Important:** Run the external import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
-
-If you don't either enable automatic import or run the import script, the extension only exports the content of documents that are created or changed after installation.
 
 #### Generate schema views
 

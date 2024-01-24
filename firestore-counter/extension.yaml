@@ -17,7 +17,9 @@ version: 0.2.10
 specVersion: v1beta
 
 displayName: Distributed Counter
-description: Records event counters at scale to accommodate high-velocity writes to Cloud Firestore.
+description:
+  Records event counters at scale to accommodate high-velocity writes to Cloud
+  Firestore.
 
 license: Apache-2.0
 
@@ -47,7 +49,9 @@ roles:
 resources:
   - name: controllerCore
     type: firebaseextensions.v1beta.function
-    description: This scheduled function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
+    description:
+      This scheduled function either aggregates shards itself, or it schedules
+      and monitors workers to aggregate shards.
     properties:
       runtime: nodejs18
       maxInstances: 1
@@ -56,7 +60,9 @@ resources:
 
   - name: onWrite
     type: firebaseextensions.v1beta.function
-    description: Listens for changes on counter shards that may need aggregating. This function is limited to max 1 instance.
+    description:
+      Listens for changes on counter shards that may need aggregating. This
+      function is limited to max 1 instance.
     properties:
       runtime: nodejs18
       maxInstances: 1
@@ -67,9 +73,10 @@ resources:
 
   - name: worker
     type: firebaseextensions.v1beta.function
-    description: Monitors a range of shards and aggregates them, as needed.
-      There may be 0 or more worker functions running at any point in time.
-      The controllerCore function is responsible for scheduling and monitoring these workers.
+    description:
+      Monitors a range of shards and aggregates them, as needed. There may be 0
+      or more worker functions running at any point in time. The controllerCore
+      function is responsible for scheduling and monitoring these workers.
     properties:
       runtime: nodejs18
       eventTrigger:
@@ -80,12 +87,14 @@ params:
   - param: INTERNAL_STATE_PATH
     label: Document path for internal state
     description: >-
-      What is the path to the document where the extension can keep its internal state?
+      What is the path to the document where the extension can keep its internal
+      state?
     example: _firebase_ext_/sharded_counter
     validationRegex: "^[^/]+/[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage:
-      Enter a document path, not a collection path. The path must have an even number of segments,
-      for example, `my_collection/doc` or `my_collection/doc/subcollection/doc`, but not `my_collection`.
+      Enter a document path, not a collection path. The path must have an even
+      number of segments, for example, `my_collection/doc` or
+      `my_collection/doc/subcollection/doc`, but not `my_collection`.
     default: _firebase_ext_/sharded_counter
     required: true
 
@@ -94,16 +103,23 @@ params:
     description: >-
       In minutes, how often should the function to aggregate shards be run?
     validationRegex: "^[1-9][0-9]*$"
-    validationErrorMessage: The number of minutes must be an integer value greater than zero.
+    validationErrorMessage:
+      The number of minutes must be an integer value greater than zero.
     default: "1"
     required: true
 
 events:
   - type: firebase.extensions.firestore-counter.v1.onStart
-    description: Occurs when a trigger has been called within the Extension, and will include data such as the context of the trigger request.
+    description:
+      Occurs when a trigger has been called within the Extension, and will
+      include data such as the context of the trigger request.
 
   - type: firebase.extensions.firestore-counter.v1.onError
-    description: Occurs when an issue has been experienced in the Extension. This will include any error data that has been included within the Error Exception.
-    
+    description:
+      Occurs when an issue has been experienced in the Extension. This will
+      include any error data that has been included within the Error Exception.
+
   - type: firebase.extensions.firestore-counter.v1.onCompletion
-    description: Occurs when the function is settled. Provides no customized data other than the context.
+    description:
+      Occurs when the function is settled. Provides no customized data other
+      than the context.
