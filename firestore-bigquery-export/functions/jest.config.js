@@ -4,10 +4,14 @@ module.exports = {
   name: packageJson.name,
   displayName: packageJson.name,
   rootDir: "./",
-  globals: {
-    "ts-jest": {
-      tsConfig: "<rootDir>/tsconfig.json",
-    },
+  transform: {
+    "^.+\\.tsx?$": [
+      "ts-jest",
+      {
+        //the content you'd placed at "global"
+        tsConfig: "<rootDir>/tsconfig.json",
+      },
+    ],
   },
   preset: "ts-jest",
   setupFiles: ["<rootDir>/__tests__/jest.setup.ts"],
