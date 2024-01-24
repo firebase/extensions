@@ -75,7 +75,8 @@ Secure format:
  `smtps://username@gmail.com@smtp.gmail.com:465` (username only)
  `smtps://smtp.gmail.com:465` (No username and password)
 Backwards Compatible (less secure):
- `smtps://username@gmail.com:password@smtp.gmail.com:465`. (username and password)
+ `smtps://username@gmail.com:password@smtp.gmail.com:465`. (username and
+password)
 
 * SMTP password: User password for the SMTP server
 
