@@ -174,8 +174,8 @@ params:
   - param: BIGQUERY_PROJECT_ID
     label: BigQuery Project ID
     description: >-
-      Override the default project bigquery instance. This can allow updates to
-      be directed to to a BigQuery instance on another GCP project.
+      Override the default project for BigQuery instance. This can allow updates
+      to be directed to to a BigQuery instance on another GCP project.
     type: string
     default: ${PROJECT_ID}
     required: true
