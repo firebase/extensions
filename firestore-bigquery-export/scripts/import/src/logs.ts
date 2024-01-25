@@ -43,7 +43,7 @@ export const finishedImportingParallel = (
 
   console.log("---------------------------------------------------------");
   console.log(
-    `Please see https://console.cloud.google.com/bigquery?p=${config.projectId}&d=${config.datasetId}&t=${config.tableId}_raw_changelog&page=table`
+    `Please see https://console.cloud.google.com/bigquery?p=${config.bigQueryProjectId}&d=${config.datasetId}&t=${config.tableId}_raw_changelog&page=table`
   );
   console.log("---------------------------------------------------------");
 };
