@@ -13,12 +13,13 @@
 # limitations under the License.
 
 name: rtdb-limit-child-nodes
-version: 0.1.10
+version: 0.1.11
 specVersion: v1beta
 
 displayName: Limit Child Nodes
 description:
-  Limits the number of nodes to a specified maximum count in a specified Realtime Database path.
+  Limits the number of nodes to a specified maximum count in a specified
+  Realtime Database path.
 
 license: Apache-2.0
 
@@ -41,15 +42,16 @@ billingRequired: true
 
 roles:
   - role: firebasedatabase.admin
-    reason: Allows the extension to delete nodes from your Realtime Database instance.
+    reason:
+      Allows the extension to delete nodes from your Realtime Database instance.
 
 resources:
   - name: rtdblimit
     type: firebaseextensions.v1beta.function
     description:
       Listens for new child nodes in your specified Realtime Database path,
-      checks if the max count has been exceeded,
-      then deletes the oldest nodes first, as needed to maintain the max count.
+      checks if the max count has been exceeded, then deletes the oldest nodes
+      first, as needed to maintain the max count.
     properties:
       runtime: nodejs18
       eventTrigger:
@@ -60,7 +62,8 @@ params:
   - param: NODE_PATH
     label: Realtime Database path
     description: >-
-      What is the Realtime Database path for which you want to limit the number of child nodes?
+      What is the Realtime Database path for which you want to limit the number
+      of child nodes?
     type: string
     example: path/to/limit
     validationRegex: ^\S+$
@@ -70,7 +73,7 @@ params:
   - param: SELECTED_DATABASE_INSTANCE
     label: Realtime Database
     description: >
-       From which Realtime Database instance do you want to limit child nodes?
+      From which Realtime Database instance do you want to limit child nodes?
     type: string
     example: my-instance
     validationRegex: ^([0-9a-z_.-]*)$
@@ -78,12 +81,11 @@ params:
     default: ${DATABASE_INSTANCE}
     required: true
 
-
   - param: MAX_COUNT
     label: Maximum count of nodes to keep
     description: >-
-      What is the maximum count of nodes to keep in your specified database path?
-      The oldest nodes will be deleted first to maintain this max count.
+      What is the maximum count of nodes to keep in your specified database
+      path? The oldest nodes will be deleted first to maintain this max count.
     type: string
     example: 10
     validationRegex: ^\d+$

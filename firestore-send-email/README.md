@@ -43,6 +43,10 @@ When you configure this extension, you'll need to supply your **SMTP credentials
 
 Now you can use your Google username with the generated password to authorize the extension.
 
+#### Setup Hotmail Passwords
+
+To use your Outlook/Hotmail email account with this extension, you'll need to have 2FA enabled on your account, and [Create an App Password](https://support.microsoft.com/en-us/help/12409/microsoft-account-app-passwords-and-two-step-verification).
+
 #### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
@@ -66,14 +70,13 @@ You can find more information about this extension in the following articles:
 
 **Configuration Parameters:**
 
-* Cloud Functions location: Where do you want to deploy the functions created for this extension? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
-
 * SMTP connection URI: A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465. In order to keep passwords secure, it is recommended to omit the password from the connection string while using the `SMTP Password` field for entering secrets and passwords. Passwords and secrets should now be included in `SMTP password` field.
 Secure format:
  `smtps://username@gmail.com@smtp.gmail.com:465` (username only)
  `smtps://smtp.gmail.com:465` (No username and password)
 Backwards Compatible (less secure):
- `smtps://username@gmail.com:password@smtp.gmail.com:465`. (username and password)
+ `smtps://username@gmail.com:password@smtp.gmail.com:465`. (username and
+password)
 
 * SMTP password: User password for the SMTP server
 
@@ -90,6 +93,8 @@ Backwards Compatible (less secure):
 * Firestore TTL type: Do you want the firestore records to be marked with an expireAt field for a TTL policy? If "Never" is selected then no expireAt field will be added. Otherwise you may specify the unit of time specified by the TTL_EXPIRE_VALUE parameter. Defaults to "Never".
 
 * Firestore TTL value: In the units specified by TTL_EXPIRE_TYPE, how long do you want records to be ineligible for deletion by a TTL policy? This parameter requires the Firestore TTL type parameter to be set to a value other than `Never`. For example, if `Firestore TTL type` is set to `Day` then setting this parameter to `1` will specify a TTL of 1 day.
+
+* TLS Options: A JSON value representing TLS options. For more information, see https://nodejs.org/api/tls.html#tls_class_tls_tlssocket
 
 
 

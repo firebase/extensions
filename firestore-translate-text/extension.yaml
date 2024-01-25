@@ -13,17 +13,15 @@
 # limitations under the License.
 
 name: firestore-translate-text
-version: 0.1.13
+version: 0.1.15
 specVersion: v1beta
 
-tags:
-  [
-    ai
-  ]
+tags: [ai]
 
 displayName: Translate Text in Firestore
 description:
-  Translates strings written to a Cloud Firestore collection into multiple languages (uses Cloud Translation API).
+  Translates strings written to a Cloud Firestore collection into multiple
+  languages (uses Cloud Translation API).
 
 license: Apache-2.0
 
@@ -46,7 +44,9 @@ billingRequired: true
 
 apis:
   - apiName: translate.googleapis.com
-    reason: To use Google Translate to translate strings into your specified target languages.
+    reason:
+      To use Google Translate to translate strings into your specified target
+      languages.
 
 roles:
   - role: datastore.user
@@ -56,8 +56,9 @@ resources:
   - name: fstranslate
     type: firebaseextensions.v1beta.function
     description:
-      Listens for writes of new strings to your specified Cloud Firestore collection, translates the strings,
-      then writes the translated strings back to the same document.
+      Listens for writes of new strings to your specified Cloud Firestore
+      collection, translates the strings, then writes the translated strings
+      back to the same document.
     properties:
       runtime: nodejs18
       eventTrigger:
@@ -67,8 +68,9 @@ resources:
   - name: fstranslatebackfill
     type: firebaseextensions.v1beta.function
     description:
-     Searches your specified Cloud Firestore collection for existing documents, translates the strings into any missing languages,
-      then writes the translated strings back to the same document.
+      Searches your specified Cloud Firestore collection for existing documents,
+      translates the strings into any missing languages, then writes the
+      translated strings back to the same document.
     properties:
       runtime: nodejs18
       availableMemoryMb: 1024
@@ -79,9 +81,10 @@ params:
   - param: LANGUAGES
     label: Target languages for translations, as a comma-separated list
     description: >
-      Into which target languages do you want to translate new strings?
-      The languages are identified using ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr.
-      For these codes, visit the [supported languages list](https://cloud.google.com/translate/docs/languages).
+      Into which target languages do you want to translate new strings? The
+      languages are identified using ISO-639-1 codes in a comma-separated list,
+      for example: en,es,de,fr. For these codes, visit the [supported languages
+      list](https://cloud.google.com/translate/docs/languages).
     example: en,es,de,fr
     validationRegex: "^[a-zA-Z,-]*[a-zA-Z-]{2,}$"
     validationErrorMessage:
@@ -92,7 +95,8 @@ params:
   - param: COLLECTION_PATH
     label: Collection path
     description: >
-      What is the path to the collection that contains the strings that you want to translate?
+      What is the path to the collection that contains the strings that you want
+      to translate?
     example: translations
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore Collection
@@ -102,7 +106,8 @@ params:
   - param: INPUT_FIELD_NAME
     label: Input field name
     description: >
-      What is the name of the field that contains the string that you want to translate?
+      What is the name of the field that contains the string that you want to
+      translate?
     example: input
     default: input
     required: true
@@ -118,8 +123,9 @@ params:
   - param: LANGUAGES_FIELD_NAME
     label: Languages field name
     description: >
-      What is the name of the field that contains the languages that you want to translate into? This field is
-      optional. If you don't specify it, the extension will use the languages specified in the LANGUAGES parameter.
+      What is the name of the field that contains the languages that you want to
+      translate into? This field is optional. If you don't specify it, the
+      extension will use the languages specified in the LANGUAGES parameter.
     example: languages
     default: languages
     required: false
@@ -127,8 +133,9 @@ params:
   - param: DO_BACKFILL
     label: Translate existing documents?
     description: >
-      Should existing documents in the Firestore collection be translated as well? 
-      If you've added new languages since a document was translated, this will fill those in as well.
+      Should existing documents in the Firestore collection be translated as
+      well?  If you've added new languages since a document was translated, this
+      will fill those in as well.
     type: select
     required: true
     options:
@@ -137,6 +144,26 @@ params:
       - label: No
         value: false
 
+events:
+  - type: firebase.extensions.firestore-translate-text.v1.onStart
+    description:
+      Occurs when a trigger has been called within the Extension, and will
+      include data such as the context of the trigger request.
+
+  - type: firebase.extensions.firestore-translate-text.v1.onSuccess
+    description:
+      Occurs when image resizing completes successfully. The event will contain
+      further details about specific formats and sizes.
+
+  - type: firebase.extensions.firestore-translate-text.v1.onError
+    description:
+      Occurs when an issue has been experienced in the Extension. This will
+      include any error data that has been included within the Error Exception.
+
+  - type: firebase.extensions.firestore-translate-text.v1.onCompletion
+    description:
+      Occurs when the function is settled. Provides no customized data other
+      than the context.
 
 lifecycleEvents:
   onInstall:
