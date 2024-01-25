@@ -22,14 +22,8 @@ export const initializeDataSink = async (
   dataSink: FirestoreBigQueryEventHistoryTracker,
   config: CliConfig
 ) => {
-  const bigQueryProjectId = config.bigQueryProjectId;
-
-  const bigquery = new BigQuery({ projectId: bigQueryProjectId });
-
-  const dataset = bigquery.dataset(config.datasetId, {
-    location: config.datasetLocation,
-  });
-
+  const bigquery = new BigQuery();
+  const dataset = bigquery.dataset(config.datasetId);
   const table = dataset.table(config.rawChangeLogName);
   const [tableExists] = await table.exists();
   await dataSink.initialize();

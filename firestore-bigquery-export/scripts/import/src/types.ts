@@ -3,7 +3,6 @@ import * as admin from "firebase-admin";
 export interface CliConfig {
   kind: "CONFIG";
   projectId: string;
-  bigQueryProjectId: string;
   sourceCollectionPath: string;
   datasetId: string;
   tableId: string;

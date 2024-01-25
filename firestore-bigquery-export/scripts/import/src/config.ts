@@ -8,7 +8,6 @@ const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 // regex of ^[^/]+(/[^/]+/[^/]+)*$
 export const FIRESTORE_VALID_CHARACTERS = new RegExp("^[^/]+(/[^/]+/[^/]+)*$");
 // export const FIRESTORE_VALID_CHARACTERS = /^[^/]+(/[^/]+/[^/]+)*$/;
-const GCP_PROJECT_VALID_CHARACTERS = /^[a-z][a-z0-9-]{0,29}$/;
 
 const PROJECT_ID_MAX_CHARS = 6144;
 export const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
@@ -80,20 +79,7 @@ const questions = [
       validateInput(
         value,
         "project ID",
-        GCP_PROJECT_VALID_CHARACTERS,
-        PROJECT_ID_MAX_CHARS
-      ),
-  },
-  {
-    message: "What is your BigQuery project ID?",
-    name: "bigQueryProject",
-    type: "input",
-    default: process.env.PROJECT_ID,
-    validate: (value) =>
-      validateInput(
-        value,
-        "BigQuery project ID",
-        GCP_PROJECT_VALID_CHARACTERS,
+        FIRESTORE_VALID_CHARACTERS,
         PROJECT_ID_MAX_CHARS
       ),
   },
@@ -186,9 +172,6 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     if (program.project === undefined) {
       errors.push("Project is not specified.");
     }
-    if (program.bigQueryProject === undefined) {
-      errors.push("BigQuery Project is not specified.");
-    }
     if (program.sourceCollectionPath === undefined) {
       errors.push("SourceCollectionPath is not specified.");
     }
@@ -227,7 +210,6 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     return {
       kind: "CONFIG",
       projectId: program.project,
-      bigQueryProjectId: program.bigQueryProject,
       sourceCollectionPath: program.sourceCollectionPath,
       datasetId: program.dataset,
       tableId: program.tableNamePrefix,
@@ -244,7 +226,6 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
   const {
     project,
     sourceCollectionPath,
-    bigQueryProject,
     dataset,
     table,
     batchSize,
@@ -266,7 +247,6 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
   return {
     kind: "CONFIG",
     projectId: project,
-    bigQueryProjectId: bigQueryProject,
     sourceCollectionPath: sourceCollectionPath,
     datasetId: dataset,
     tableId: table,

@@ -57,10 +57,6 @@ program
     "Firebase Project ID for project containing Cloud Firestore database."
   )
   .option(
-    "-B, --big-query-project <big-query-project>",
-    "Google Cloud Project ID for BigQuery."
-  )
-  .option(
     "-d, --dataset <dataset>",
     "The ID of the BigQuery dataset containing a raw Cloud Firestore document changelog."
   )
