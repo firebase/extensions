@@ -12,7 +12,7 @@ export default async (
   config: FirestoreBigQueryEventHistoryTrackerConfig,
   e: Error
 ): Promise<void> => {
-  const db = getFirestore(config.databaseId);
+  const db = getFirestore();
   const batchArray = [db.batch()];
 
   let operationCounter = 0;
