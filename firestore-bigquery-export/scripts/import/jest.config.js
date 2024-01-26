@@ -9,6 +9,7 @@ module.exports = {
     },
   },
   preset: "ts-jest",
+  testEnvironment: "node",
   testMatch: ["**/__tests__/**/*.test.ts"],
   testEnvironment: "node",
   testTimeout: 180000,
