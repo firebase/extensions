@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { DocumentSnapshot } from "firebase-functions/lib/providers/firestore";
+import { DocumentSnapshot } from "firebase-functions/lib/v1/providers/firestore";
 import { Change } from "firebase-functions";
 
 import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
