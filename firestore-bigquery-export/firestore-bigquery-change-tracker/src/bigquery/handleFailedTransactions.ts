@@ -1,4 +1,5 @@
 import * as firebase from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
 
 if (!firebase.apps.length) {
@@ -11,7 +12,7 @@ export default async (
   config: FirestoreBigQueryEventHistoryTrackerConfig,
   e: Error
 ): Promise<void> => {
-  const db = firebase.firestore();
+  const db = getFirestore(config.databaseId);
   const batchArray = [db.batch()];
 
   let operationCounter = 0;
