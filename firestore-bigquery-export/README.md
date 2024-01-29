@@ -13,6 +13,8 @@ The extension creates and updates a [dataset](https://cloud.google.com/bigquery/
 - A [table](https://cloud.google.com/bigquery/docs/tables-intro) of raw data that stores a full change history of the documents within your collection. This table includes a number of metadata fields so that BigQuery can display the current state of your data. The principle metadata fields are `timestamp`, `document_name`, and the `operation` for the document change.
 - A [view](https://cloud.google.com/bigquery/docs/views-intro) which represents the current state of the data within your collection. It also shows a log of the latest `operation` for each document (`CREATE`, `UPDATE`, or `IMPORT`).
 
+*Warning*: A BigQuery table corresponding to your configuration will be automatically generated upon installing or updating this extension. Manual table creation may result in discrepancies with your configured settings.
+
 If you create, update, delete, or import a document in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset.
 
 Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`). 
@@ -39,6 +41,19 @@ Before installing this extension, you'll need to:
 
 - [Set up Cloud Firestore in your Firebase project.](https://firebase.google.com/docs/firestore/quickstart)
 - [Link your Firebase project to BigQuery.](https://support.google.com/firebase/answer/6318765)
+
+
+#### Import existing documents
+
+There are two ways to import existing Firestore documents into BigQuery - the backfill feature and the import script.
+
+To import documents that already exist at installation time into BigQuery, answer **Yes** when the installer asks "Import existing Firestore documents into BigQuery?" The extension will export existing documents as part of the installation and update processes.
+
+Alternatively, you can run the external [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md) to backfill existing documents. If you plan to use this script, answer **No** when prompted to import existing documents.
+
+**Important:** Run the external import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
+
+If you don't either enable automatic import or run the import script, the extension only exports the content of documents that are created or changed after installation.
 
 #### Transform function
 
@@ -89,16 +104,6 @@ projects/<YOUR PROJECT ID>/locations/<YOUR REGION>/keyRings/<YOUR KEY RING NAME>
 ```
 If you follow these steps, your changelog table should be created using your customer-managed encryption.
 
-#### Backfill your BigQuery dataset
-
-To import documents that already exist at installation time into BigQuery, answer **Yes** when the installer asks "Import existing Firestore documents into BigQuery?" The extension will export existing documents as part of the installation and update processes.
-
-Alternatively, you can run the external [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md) to backfill existing documents. If you plan to use this script, answer **No** when prompted to import existing documents.
-
-**Important:** Run the external import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
-
-If you don't either enable automatic import or run the import script, the extension only exports the content of documents that are created or changed after installation.
-
 #### Generate schema views
 
 After your data is in BigQuery, you can run the [schema-views script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/GENERATE_SCHEMA_VIEWS.md) (provided by this extension) to create views that make it easier to query relevant data. You only need to provide a JSON schema file that describes your data structure, and the schema-views script will create the views.
@@ -117,7 +122,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery Dataset location: Where do you want to deploy the BigQuery dataset created for this extension? For help selecting a location, refer to the [location selection guide](https://cloud.google.com/bigquery/docs/locations).
 
-* Project Id: Override the default project bigquery instance. This can allow updates to be directed to a bigquery instance on another project.
+* BigQuery Project ID: Override the default project for BigQuery instance. This can allow updates to be directed to to a BigQuery instance on another GCP project.
 
 * Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}`  can be returned in `path_params` as a JSON formatted string.
 
@@ -132,11 +137,14 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * BigQuery Time Partitioning column name: BigQuery table column/schema field name for TimePartitioning. You can choose schema available as `timestamp` OR a new custom defined column that will be assigned to the selected Firestore Document field below. Defaults to pseudo column _PARTITIONTIME if unspecified. Cannot be changed if Table is already partitioned.
 
 * Firestore Document field name for BigQuery SQL Time Partitioning field option: This parameter will allow you to partition the BigQuery table  created by the extension based on selected. The Firestore Document field value must be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or Firestore timestamp(will be converted to BigQuery TIMESTAMP). Cannot be changed if Table is already partitioned.
- example: `postDate`
+ example: `postDate`(Ensure that the Firestore-BigQuery export extension
+creates the dataset and table before initiating any backfill scripts.
+ This step is crucial for the partitioning to function correctly. It is
+essential for the script to insert data into an already partitioned table.)
 
 * BigQuery SQL Time Partitioning table schema field(column) type: Parameter for BigQuery SQL schema field type for the selected Time Partitioning Firestore Document field option. Cannot be changed if Table is already partitioned.
 
-* BigQuery SQL table clustering: This parameter will allow you to set up Clustering for the BigQuery Table created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 comma separated fields. The order of the specified columns determines the sort order of the data. Available schema extensions table fields for clustering: `document_id, timestamp, event_id, operation, data`.
+* BigQuery SQL table clustering: This parameter will allow you to set up Clustering for the BigQuery Table created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 comma separated fields. The order of the specified columns determines the sort order of the data. Available schema extensions table fields for clustering: `document_id, document_name, timestamp, event_id, operation, data`.
 
 * Maximum number of synced documents per second: This parameter will set the maximum number of syncronised documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota. Ensure that you have a set a low enough number to componsate. Defaults to 10.
 
@@ -147,6 +155,14 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Use new query syntax for snapshots: If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential resource limitations.
 
 * Exclude old data payloads: If enabled, table rows will never contain old data (document snapshot before the update), which should be more performant, and avoid potential resource limitations.
+
+* Import existing Firestore documents into BigQuery?: Do you want to import existing documents from your Firestore collection into BigQuery? These documents  will have each have a special changelog with the operation of `IMPORT` and the timestamp of epoch. This ensures that any operation on an imported document supersedes the import record.
+
+* Existing Documents Collection: Specify the path of the Cloud Firestore Collection you would like to import from. This may or may not be the same Collection for which you plan to mirror changes. If you want to use a collectionGroup query, provide the collection name value here, and set 'Use Collection Group query' to true. You may use `{wildcard}` notation with an enabled collectionGroup query to match a subcollection of all documents in a collection (e.g., `chatrooms/{chatid}/posts`).
+
+* Use Collection Group query: Do you want to use a [collection group](https://firebase.google.com/docs/firestore/query-data/queries#collection-group-query) query for importing existing documents? You have to enable collectionGroup query if your import path contains subcollections. Warning: A collectionGroup query will target every collection in your Firestore project that matches the 'Existing documents collection'. For example, if you have 10,000 documents with a subcollection named: landmarks, this will query every document in 10,000 landmarks collections.
+
+* Docs per backfill: When importing existing documents, how many should be imported at once? The default value of 200 should be ok for most users. If you are using a transform function or have very large documents, you may need to set this to a lower number. If the lifecycle event function times out, lower this value.
 
 * Cloud KMS key name: Instead of Google managing the key encryption keys that protect your data, you control and manage key encryption keys in Cloud KMS. If this parameter is set, the extension will specify the KMS key name when creating the BQ table. See the PREINSTALL.md for more details.
 

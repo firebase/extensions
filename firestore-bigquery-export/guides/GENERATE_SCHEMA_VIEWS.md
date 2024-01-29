@@ -94,6 +94,8 @@ installation of the extension:
 
 - `${param:PROJECT_ID}`: the project ID for the Firebase project in
   which you installed the extension
+- `${param:BIGQUERY_PROJECT_ID}`: the project ID for the GCP project that contains
+  the BigQuery instance.
 - `${param:DATASET_ID}`: the ID that you specified for your dataset during
   extension installation
 - `${param:TABLE_ID}`: the common prefix of BigQuery views to generate
@@ -116,6 +118,7 @@ via `npm` (the Node Package Manager).
     $ npx @firebaseextensions/fs-bq-schema-views \
       --non-interactive \
       --project=${param:PROJECT_ID} \
+      --big-query-project=${param:BIGQUERY_PROJECT_ID} \
       --dataset=${param:DATASET_ID} \
       --table-name-prefix=${param:TABLE_ID} \
       --schema-files=./test_schema.json

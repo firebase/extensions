@@ -10,6 +10,7 @@ module.exports = {
     },
   },
   preset: "ts-jest",
+  testEnvironment: "node",
   setupFiles: ["<rootDir>/__tests__/jest.setup.ts"],
   testMatch: ["**/__tests__/*.test.ts"],
   testPathIgnorePatterns: process.env.CI_TEST === "true" ? ["e2e"] : [],

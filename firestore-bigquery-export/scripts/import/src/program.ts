@@ -17,6 +17,10 @@ export const getCLIOptions = () => {
       "Firebase Project ID for project containing the Cloud Firestore database."
     )
     .option(
+      "-B, --big-query-project <big-query-project>",
+      "Google Cloud Project ID for BigQuery."
+    )
+    .option(
       "-q, --query-collection-group [true|false]",
       "Use 'true' for a collection group query, otherwise a collection query is performed."
     )
