@@ -371,6 +371,14 @@ params:
     default: no
     required: true
 
+  - param: EXCLUDE_OLD_DATA
+    label: Exclude old data payloads
+    description: >-
+      If enabled, table rows will never contain old data (document snapshot
+      before the update), which should be more performant, and avoid potential
+      resource limitations.
+    type: select
+
   - param: DO_BACKFILL
     label: Import existing Firestore documents into BigQuery?
     description: >-
