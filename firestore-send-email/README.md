@@ -82,7 +82,7 @@ password)
 
 * Email documents collection: What is the path to the collection that contains the documents used to build and send the emails?
 
-* Default FROM address: The email address to use as the sender's address (if it's not specified in the added email document).  You can optionally include a name with the email address (`Friendly Firebaser <foobar@example.com>`).
+* Default FROM address: The email address to use as the sender's address (if it's not specified in the added email document). You can optionally include a name with the email address (`Friendly Firebaser <foobar@example.com>`). This parameter does not work with [Gmail SMTP](https://nodemailer.com/usage/using-gmail/).
 
 * Default REPLY-TO address: The email address to use as the reply-to address (if it's not specified in the added email document).
 
