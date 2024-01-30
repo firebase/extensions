@@ -34,8 +34,6 @@ jobs:
           command: npm i -g firebase-tools@11
       - name: Setup e2e secrets
         run: |
-          cat << EOF > _emulator/extensions/firestore-send-email-sendgrid.secret.local 
-          SMTP_PASSWORD=${{ secrets.SENDGRID_API_KEY }}
-          EOF
+          echo SMTP_PASSWORD=${{ secrets.SENDGRID_API_KEY }} >> _emulator/extensions/firestore-send-email-sendgrid.secret.local
       - name: npm test
         run: npm run test:ci
