@@ -326,7 +326,7 @@ params:
       Should resized images have a new access token assigned to them,  different
       from the original image?
     type: select
-    required: true
+    required: false
     default: true
     options:
       - label: Yes
