@@ -136,8 +136,10 @@ params:
     label: Templates collection
     description: >-
       A collection of email templates keyed by name. This extension can render
-      an email using a [Handlebar](https://handlebarsjs.com/) template, if the
-      template is specified in the added email document.
+      an email using a [Handlebar](https://handlebarsjs.com/) template, it's
+      recommended to use triple curly braces `{{{  }}}` in your Handlebars
+      templates when the substitution value is a URL or otherwise sensitive to
+      HTML escaping.
     type: string
 
   - param: TTL_EXPIRE_TYPE
