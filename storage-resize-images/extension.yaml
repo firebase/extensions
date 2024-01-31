@@ -320,6 +320,20 @@ params:
       - label: No
         value: false
 
+  - param: REGENERATE_TOKEN
+    label: Assign new access token
+    description: >
+      Should resized images have a new access token assigned to them,  different
+      from the original image?
+    type: select
+    required: false
+    default: true
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+
 events:
   - type: firebase.extensions.storage-resize-images.v1.onStart
     description:
