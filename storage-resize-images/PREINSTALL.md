@@ -20,6 +20,7 @@ Furthermore, you can choose if you want to receive events upon the successful co
 ```typescript
 import * as functions from 'firebase-functions';
 import { onCustomEventPublished } from 'firebase-functions/v2/eventarc';
+
 export const onImageResized = onCustomEventPublished(
     "firebase.extensions.storage-resize-images.v1.onSuccess",
     (event) => {
