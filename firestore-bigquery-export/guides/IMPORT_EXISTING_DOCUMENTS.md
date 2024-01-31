@@ -32,6 +32,7 @@ Warning: A `collectionGroup` query will target every collection in your Firestor
 The import script requires several values from your installation of the extension:
 
 - `${PROJECT_ID}`: the project ID for the Firebase project in which you installed the extension
+- `${BIGQUERY_PROJECT_ID}`: the project ID for the GCP project in which the BigQuery instance is located. Defaults to Firebase project ID.
 - `${COLLECTION_PATH}`: the collection path that you specified during extension installation
 - `${COLLECTION_GROUP_QUERY}`: uses a `collectionGroup` query if this value is `"true"`. For any other value, a `collection` query is used.
 - `${DATASET_ID}`: the ID that you specified for your dataset during extension installation
@@ -60,6 +61,8 @@ Run the import script using [`npx` (the Node Package Runner)](https://www.npmjs.
     ```
 
     **Note**: The script can be run non-interactively. To see its usage, run the above command with `--help`.
+
+1.  _(Optional)_ When prompted, you can enter the BigQuery project ID to use a BigQuery instance located in a GCP project other than your Firebase project.
 
 1.  When prompted, enter the Cloud Firestore collection path that you specified during extension installation, `${COLLECTION_PATH}`.
 

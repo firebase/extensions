@@ -81,7 +81,7 @@ If you prefer not to explicitly restrict to certain directories of your Storage 
 
 * List of absolute paths not included for resized images: Ensure storage-resize-images does *not* resize images in _specific locations_ in your Storage bucket by  supplying a comma-separated list of absolute paths. For example, to *exclude* the images  stored in the `/foo/alpha` and its subdirectories and `/bar/beta` and its subdirectories, specify the paths `/foo/alpha,/bar/beta`.
 You may also use wildcard notation for directories in the path. For example, `/users/*/pictures` would exclude any images in any subdirectories of `/users/foo/pictures` as well as any images in subdirectories of `/users/bar/pictures`, but also any images in subdirectories of `/users/any/level/of/subdirectories/pictures`.
-If you prefer to resize every image uploaded to your Storage bucket,  leave this field empty.
+If you prefer to resize every image uploaded to your Storage bucket, leave this field empty.
 
 
 * Cloud Storage path for failed images: A relative path in which to store failed images. For example, if you specify a path here of `failed` and you upload an image to `/images/original.jpg`, then resizing failed, the image will be stored at `/images/failed/original.jpg`.
@@ -106,6 +106,9 @@ Leave this field empty if you do not want to store failed images in a separate d
 * Cloud Function memory: Memory of the function responsible of resizing images.  Choose how much memory to give to the function that resize images. (For animated GIF => GIF we recommend using a minimum of 2GB).
 
 * Backfill existing images: Should existing, unresized images in the Storage bucket be resized as well?
+
+
+* Assign new access token: Should resized images have a new access token assigned to them,  different from the original image?
 
 
 

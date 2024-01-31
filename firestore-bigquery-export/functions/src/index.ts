@@ -66,7 +66,7 @@ export const syncBigQuery = functions.tasks
     },
     rateLimits: {
       maxConcurrentDispatches: 1000,
-      maxDispatchesPerSecond: 500,
+      maxDispatchesPerSecond: config.maxDispatchesPerSecond,
     },
   })
   .onDispatch(
@@ -110,7 +110,8 @@ export const fsexportbigquery = functions
       const isDeleted = changeType === ChangeType.DELETE;
 
       const data = isDeleted ? undefined : change.after.data();
-      const oldData = isCreated ? undefined : change.before.data();
+      const oldData =
+        isCreated || config.excludeOldData ? undefined : change.before.data();
 
       await events.recordStartEvent({
         documentId,

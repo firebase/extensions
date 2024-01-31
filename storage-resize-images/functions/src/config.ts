@@ -49,6 +49,7 @@ export default {
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
   doBackfill: process.env.DO_BACKFILL === "true",
   imageSizes: process.env.IMG_SIZES.split(","),
+  regenerateToken: process.env.REGENERATE_TOKEN == "true",
   makePublic: process.env.MAKE_PUBLIC === "true",
   resizedImagesPath: process.env.RESIZED_IMAGES_PATH,
   includePathList: paramToArray(process.env.INCLUDE_PATH_LIST),

@@ -24,6 +24,7 @@ async function processDocuments(
   if (!firebase.apps.length) {
     // Initialize Firebase
     firebase.initializeApp({
+      projectId: projectId,
       credential: firebase.credential.applicationDefault(),
       databaseURL: `https://${projectId}.firebaseio.com`,
     });
