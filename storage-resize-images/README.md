@@ -30,7 +30,7 @@ import { onCustomEventPublished } from 'firebase-functions/v2/eventarc';
 export const onImageResized = onCustomEventPublished(
     "firebase.extensions.storage-resize-images.v1.onSuccess",
     (event) => {
-        functions.logger.info("Test and Debug Resize Image has been completed", event);
+        functions.logger.info("Resize Image is successful", event);
         // Additional operations based on the event data can be performed here
         return Promise.resolve();
     }
