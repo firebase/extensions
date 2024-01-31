@@ -108,6 +108,9 @@ Leave this field empty if you do not want to store failed images in a separate d
 * Backfill existing images: Should existing, unresized images in the Storage bucket be resized as well?
 
 
+* Assign new access token: Should resized images have a new access token assigned to them,  different from the original image?
+
+
 
 
 **Cloud Functions:**
