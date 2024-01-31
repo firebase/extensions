@@ -21,7 +21,22 @@ The extension automatically copies the following metadata, if present, from the 
 
 The extension supports resizing images in `JPEG`, `PNG`, `WebP`, `GIF`, `AVIF` and `TIFF` formats, and the output can be in one or more of these formats.
 
-The extension can publish a resize completion event which you can optionally enable when you install the extension. If you enable events, you can [write custom event handlers](https://firebase.google.com/docs/extensions/install-extensions#eventarc) that respond to these events. You can always enable or disable events later. Events will be emitted via Eventarc.
+The extension can publish a resize completion event, which you can optionally enable when you install the extension. If you enable events, you can write custom event handlers that respond to these events. You can always enable or disable events later. Events will be emitted via Eventarc.
+
+Furthermore, you can choose if you want to receive events upon the successful completion of the image resizing. Hence, you can do anything based on the event you will receive. For example, you can use [EventArc gen2 functions](https://firebase.google.com/docs/functions/custom-events#handle-events) to be triggered on events published by the extension.
+### Example Event Handler for Successful Resize Operation
+```typescript
+import * as functions from 'firebase-functions';
+import { onCustomEventPublished } from 'firebase-functions/v2/eventarc';
+
+export const onImageResized = onCustomEventPublished(
+    "firebase.extensions.storage-resize-images.v1.onSuccess",
+    (event) => {
+        functions.logger.info("Resize Image is successful", event);
+        // Additional operations based on the event data can be performed here
+        return Promise.resolve();
+    }
+);
 
 #### Detailed configuration information
 
