@@ -1,18 +1,16 @@
 ## Version 0.1.45
 
-feature - bring back the backfill parameter
+feature - bring back the backfill parameter `DO_BACKFILL`
 
-feature - add a new parameter EXCLUDE_OLD_DATA to reduce payload size
-
-feature - add a new parameter DATABASE_ID to support Firestore database selection
+feature - add a new parameter `EXCLUDE_OLD_DATA` to reduce payload size by excluding old snapshot data
 
 feature - update Firebase dependencies
 
 feature - optimize partitioning validation flow
 
-feature - support cross-project import with BIGQUERY_PROJECT_ID
+feature - support cross-project import with the `BIGQUERY_PROJECT_ID` parameter
 
-fix (import script) - incorrect batchSize parsing
+fix (import script) - incorrect parsing of the `batchSize` parameter
 
 ## Version 0.1.44
 
