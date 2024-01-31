@@ -259,8 +259,7 @@ params:
       and `{"png":{"compressionLevel":9}}`. The `"compressionLevel": 9`
       specifies the level of compression for PNG images. Higher numbers here
       indicate greater compression, leading to smaller file sizes at the cost of
-      potentially increased processing time and possible loss of image
-      quality.
+      potentially increased processing time and possible loss of image quality.
     type: string
     validationRegex: ^({(.*?)})$
     validationErrorMessage: Please provide a valid JSON object.
