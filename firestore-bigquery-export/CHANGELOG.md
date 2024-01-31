@@ -1,3 +1,19 @@
+## Version 0.1.45
+
+feature - bring back the backfill parameter
+
+feature - add a new parameter EXCLUDE_OLD_DATA to reduce payload size
+
+feature - add a new parameter DATABASE_ID to support Firestore database selection
+
+feature - update Firebase dependencies
+
+feature - optimize partitioning validation flow
+
+feature - support cross-project import with BIGQUERY_PROJECT_ID
+
+fix (import script) - incorrect batchSize parsing
+
 ## Version 0.1.44
 
 fix - apply the task queue configurations in `syncBigQuery` and set max attempts to 5
