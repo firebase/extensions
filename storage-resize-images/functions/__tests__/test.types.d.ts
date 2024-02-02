@@ -1,7 +1,7 @@
 declare namespace NodeJS {
   interface Global {
-    config: () => jest.ModuleMocker;
-    deleteImage: () => jest.ModuleMocker;
+    config: () => any;
+    deleteImage: () => any;
     mockGenerateResizedImage: () => jest.MockedFunction<any>;
   }
 }

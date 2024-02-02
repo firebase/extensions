@@ -30,7 +30,7 @@ const oldGetModifiedFilePath = (
 };
 
 jest.mock("path", () => ({
-  ...jest.requireActual("path"),
+  ...jest.requireActual<any>("path"),
   sep: "\\",
 }));
 
