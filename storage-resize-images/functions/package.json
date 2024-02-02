@@ -38,7 +38,8 @@
     "ts-jest": "29.1.2"
   },
   "optionalDependencies": {
-    "@img/sharp-linux-x64": "^0.33.2"    
+    "@img/sharp-darwin-arm64": "^0.33.2",
+    "@img/sharp-linux-x64": "^0.33.2"
   },
   "private": true
 }
