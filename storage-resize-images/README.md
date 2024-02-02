@@ -21,7 +21,22 @@ The extension automatically copies the following metadata, if present, from the 
 
 The extension supports resizing images in `JPEG`, `PNG`, `WebP`, `GIF`, `AVIF` and `TIFF` formats, and the output can be in one or more of these formats.
 
-The extension can publish a resize completion event which you can optionally enable when you install the extension. If you enable events, you can [write custom event handlers](https://firebase.google.com/docs/extensions/install-extensions#eventarc) that respond to these events. You can always enable or disable events later. Events will be emitted via Eventarc.
+The extension can publish a resize completion event, which you can optionally enable when you install the extension. If you enable events, you can write custom event handlers that respond to these events. You can always enable or disable events later. Events will be emitted via Eventarc.
+
+Furthermore, you can choose if you want to receive events upon the successful completion of the image resizing. Hence, you can do anything based on the event you will receive. For example, you can use [EventArc gen2 functions](https://firebase.google.com/docs/functions/custom-events#handle-events) to be triggered on events published by the extension.
+### Example Event Handler for Successful Resize Operation
+```typescript
+import * as functions from 'firebase-functions';
+import { onCustomEventPublished } from 'firebase-functions/v2/eventarc';
+
+export const onImageResized = onCustomEventPublished(
+    "firebase.extensions.storage-resize-images.v1.onSuccess",
+    (event) => {
+        functions.logger.info("Resize Image is successful", event);
+        // Additional operations based on the event data can be performed here
+        return Promise.resolve();
+    }
+);
 
 #### Detailed configuration information
 
@@ -94,10 +109,10 @@ Leave this field empty if you do not want to store failed images in a separate d
 * Convert image to preferred types: The image types you'd like your source image to convert to.  The default for this option will be to keep the original file type as the destination file type.
 
 
-* Output options for selected formats: Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion. eg. `{"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "pallete": true }}`
+* Output options for selected formats: Provide an optional output option as a stringified object containing Sharp Output Options for selected image types conversion. eg. `{"jpeg": { "quality": 5, "chromaSubsampling": "4:4:4" }, "png": { "palette": true }}` and `{"png":{"compressionLevel":9}}`. The `"compressionLevel": 9` specifies the level of compression for PNG images. Higher numbers here indicate greater compression, leading to smaller file sizes at the cost of potentially increased processing time and possible loss of image quality.
 
 
-* Sharp constructor options for resizing images: Provide a optional output option stringified object containing Sharp Output Options for selected image types conversion. eg. `{ failOnError: false, limitInputPixels: true }`
+* Sharp constructor options for resizing images: Provide an optional stringified Sharp ResizeOptions object to customize resizing behavior, eg. `{ "fastShrinkOnLoad": false, "position": “centre”, "fit": "inside" }` The `"fit": "inside"` option ensures the image fits within given dimensions, maintaining aspect ratio, scaling down as needed without cropping or distortion. Learn more about [`Sharp constructor options`](https://sharp.pixelplumbing.com/api-resize#resize).
 
 
 * GIF and WEBP animated option: Keep animation of GIF and WEBP formats.
@@ -106,6 +121,9 @@ Leave this field empty if you do not want to store failed images in a separate d
 * Cloud Function memory: Memory of the function responsible of resizing images.  Choose how much memory to give to the function that resize images. (For animated GIF => GIF we recommend using a minimum of 2GB).
 
 * Backfill existing images: Should existing, unresized images in the Storage bucket be resized as well?
+
+
+* Assign new access token: Should resized images have a new access token assigned to them,  different from the original image?
 
 
 
