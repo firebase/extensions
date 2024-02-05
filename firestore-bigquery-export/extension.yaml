@@ -378,6 +378,13 @@ params:
       before the update), which should be more performant, and avoid potential
       resource limitations.
     type: select
+    required: false
+    default: no
+    options:
+      - label: Yes
+        value: yes
+      - label: No
+        value: no
 
   - param: DO_BACKFILL
     label: Import existing Firestore documents into BigQuery?
