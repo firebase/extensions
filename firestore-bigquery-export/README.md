@@ -156,7 +156,7 @@ essential for the script to insert data into an already partitioned table.)
 
 * Exclude old data payloads: If enabled, table rows will never contain old data (document snapshot before the update), which should be more performant, and avoid potential resource limitations.
 
-* Import existing Firestore documents into BigQuery?: Do you want to import existing documents from your Firestore collection into BigQuery? These documents will have each have a special changelog with the operation of `IMPORT` and the timestamp of epoch. This ensures that any operation on an imported document supersedes the import record.
+* Import existing Firestore documents into BigQuery?: Do you want to import existing documents from your Firestore collection into BigQuery? These documents  will have each have a special changelog with the operation of `IMPORT` and the timestamp of epoch. This ensures that any operation on an imported document supersedes the import record.
 
 * Existing Documents Collection: Specify the path of the Cloud Firestore Collection you would like to import from. This may or may not be the same Collection for which you plan to mirror changes. If you want to use a collectionGroup query, provide the collection name value here, and set 'Use Collection Group query' to true. You may use `{wildcard}` notation with an enabled collectionGroup query to match a subcollection of all documents in a collection (e.g., `chatrooms/{chatid}/posts`).
 
