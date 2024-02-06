@@ -25,6 +25,14 @@ export function resize(file, size) {
   } else {
     throw new Error("height and width are not delimited by a ',' or a 'x'");
   }
+  const format = path.extname(file).slice(1); // Extract format from file name
+
+  if (format === "svg") {
+    // Bypass resizing for SVG but allow for format conversion
+    return Promise.resolve(fs.readFileSync(file));
+  }
+
+
 
   let sharpOptions = {};
   try {
@@ -62,6 +70,7 @@ export function convertType(buffer, format) {
     tiff: {},
     tif: {},
     avif: {},
+    svg: {}, // Although SVG output is rare, included for consistency
   };
   if (config.outputOptions) {
     try {
@@ -103,7 +112,9 @@ export function convertType(buffer, format) {
   if (format === "avif") {
     return sharp(buffer).avif(avif).toBuffer();
   }
-
+  if (format === "svg") {
+    return Promise.resolve(buffer); 
+  }
   return buffer;
 }
 
@@ -118,6 +129,7 @@ export const supportedContentTypes = [
   "image/webp",
   "image/gif",
   "image/avif",
+  "image/svg+xml", 
 ];
 
 export const supportedImageContentTypeMap = {
@@ -130,6 +142,7 @@ export const supportedImageContentTypeMap = {
   gif: "image/gif",
   avif: "image/avif",
   jfif: "image/jpeg",
+  svg: "image/svg+xml", 
 };
 
 const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
