@@ -31,6 +31,7 @@ import { shouldResize } from "./filters";
 import * as events from "./events";
 import { v4 as uuidv4 } from "uuid";
 import { countNegativeTraversals } from "./util";
+import { File } from "@google-cloud/storage";
 
 sharp.cache(false);
 
@@ -60,8 +61,8 @@ const generateResizedImageHandler = async (
   const parsedPath = path.parse(filePath);
   const objectMetadata = object;
 
-  let localOriginalFile;
-  let remoteOriginalFile;
+  let localOriginalFile: string;
+  let remoteOriginalFile: File;
   try {
     localOriginalFile = path.join(os.tmpdir(), uuidv4());
     const tempLocalDir = path.dirname(localOriginalFile);

@@ -1,3 +1,11 @@
+## Version 0.2.3
+
+docs - add a sample explaining how to use custom events
+
+docs - update the description of the `SHARP_OPTIONS` param to include an explanation of the `fit` option
+
+feat - allow regenerating new tokens for resized images
+
 ## Version 0.2.2
 
 feature - allow custom fit option

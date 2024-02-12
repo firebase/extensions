@@ -35,7 +35,7 @@ export default {
   bqProjectId: process.env.BIGQUERY_PROJECT_ID,
   collectionPath: process.env.COLLECTION_PATH,
   datasetId: process.env.DATASET_ID,
-  doBackfill: false,
+  doBackfill: process.env.DO_BACKFILL === "yes",
   docsPerBackfill: parseInt(process.env.DOCS_PER_BACKFILL) || 200,
   tableId: process.env.TABLE_ID,
   location: process.env.LOCATION,
@@ -55,6 +55,7 @@ export default {
   wildcardIds: process.env.WILDCARD_IDS === "true",
   useNewSnapshotQuerySyntax:
     process.env.USE_NEW_SNAPSHOT_QUERY_SYNTAX === "yes" ? true : false,
+  excludeOldData: process.env.EXCLUDE_OLD_DATA === "yes" ? true : false,
   instanceId: process.env.EXT_INSTANCE_ID!,
   maxDispatchesPerSecond: parseInt(
     process.env.MAX_DISPATCHES_PER_SECOND || "10"

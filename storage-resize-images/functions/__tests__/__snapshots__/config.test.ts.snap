@@ -17,6 +17,7 @@ Object {
   "location": "us-central1",
   "makePublic": false,
   "outputOptions": undefined,
+  "regenerateToken": false,
   "resizedImagesPath": undefined,
   "sharpOptions": "{}",
 }

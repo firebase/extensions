@@ -13,12 +13,13 @@
 # limitations under the License.
 
 name: firestore-send-email
-version: 0.1.30
+version: 0.1.31
 specVersion: v1beta
 
 displayName: Trigger Email from Firestore
 description:
-  Composes and sends an email based on the contents of a document written to a specified Cloud Firestore collection.
+  Composes and sends an email based on the contents of a document written to a
+  specified Cloud Firestore collection.
 
 license: Apache-2.0
 
@@ -40,14 +41,17 @@ billingRequired: true
 
 roles:
   - role: datastore.user
-    reason: Allows this extension to access Cloud Firestore to read and process added email documents.
+    reason:
+      Allows this extension to access Cloud Firestore to read and process added
+      email documents.
 
 resources:
   - name: processQueue
     type: firebaseextensions.v1beta.function
     description:
       Processes document changes in the specified Cloud Firestore collection,
-      delivers emails, and updates the document with delivery status information.
+      delivers emails, and updates the document with delivery status
+      information.
     properties:
       runtime: nodejs18
       eventTrigger:
@@ -58,19 +62,27 @@ params:
   - param: SMTP_CONNECTION_URI
     label: SMTP connection URI
     description: >-
-      A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465.
-      In order to keep passwords secure, it is recommended to omit the password from the connection string while using the `SMTP Password` field for entering secrets and passwords.
-      Passwords and secrets should now be included in `SMTP password` field.
+      A URI representing an SMTP server this extension can use to deliver email.
+      Note that port 25 is blocked by Google Cloud Platform, so we recommend
+      using port 587 for SMTP connections. If you're using the SMTPS protocol,
+      we recommend using port 465. In order to keep passwords secure, it is
+      recommended to omit the password from the connection string while using
+      the `SMTP Password` field for entering secrets and passwords. Passwords
+      and secrets should now be included in `SMTP password` field.
 
       Secure format:
        `smtps://username@gmail.com@smtp.gmail.com:465` (username only)
        `smtps://smtp.gmail.com:465` (No username and password)
       Backwards Compatible (less secure):
-       `smtps://username@gmail.com:password@smtp.gmail.com:465`. (username and password)
+       `smtps://username@gmail.com:password@smtp.gmail.com:465`. (username and
+      password)
     type: string
     example: smtps://username@smtp.hostname.com:465
     validationRegex: ^(smtp[s]*://(.*?(:[^:@]*)?@)?[^:@]+:[0-9]+(\\?[^ ]*)?)$
-    validationErrorMessage: Invalid SMTP connection URI. Must be in the form `smtp(s)://username:password@hostname:port` or `smtp(s)://username@hostname:port`.
+    validationErrorMessage:
+      Invalid SMTP connection URI. Must be in the form
+      `smtp(s)://username:password@hostname:port` or
+      `smtp(s)://username@hostname:port`.
     required: true
 
   - param: SMTP_PASSWORD
@@ -83,7 +95,8 @@ params:
   - param: MAIL_COLLECTION
     label: Email documents collection
     description: >-
-      What is the path to the collection that contains the documents used to build and send the emails?
+      What is the path to the collection that contains the documents used to
+      build and send the emails?
     type: string
     default: mail
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
@@ -93,42 +106,51 @@ params:
   - param: DEFAULT_FROM
     label: Default FROM address
     description: >-
-      The email address to use as the sender's address (if it's not specified in the added email document). 
-      You can optionally include a name with the email address (`Friendly Firebaser <foobar@example.com>`).
+      The email address to use as the sender's address (if it's not specified in
+      the added email document). You can optionally include a name with the
+      email address (`Friendly Firebaser <foobar@example.com>`). This parameter
+      does not work with [Gmail
+      SMTP](https://nodemailer.com/usage/using-gmail/).
     type: string
     example: foobar@example.com
     validationRegex: ^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$|^.*<(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})>$
-    validationErrorMessage: Must be a valid email address or valid name plus email address
+    validationErrorMessage:
+      Must be a valid email address or valid name plus email address
     required: true
 
   - param: DEFAULT_REPLY_TO
     label: Default REPLY-TO address
     description: >-
-      The email address to use as the reply-to address (if it's not specified in the added email document).
+      The email address to use as the reply-to address (if it's not specified in
+      the added email document).
     type: string
 
   - param: USERS_COLLECTION
     label: Users collection
     description: >-
-      A collection of documents keyed by user UID.
-      If the `toUids`, `ccUids`, and/or `bccUids` recipient options are used in the added email document,
-      this extension delivers email to the `email` field based on lookups in this collection.
+      A collection of documents keyed by user UID. If the `toUids`, `ccUids`,
+      and/or `bccUids` recipient options are used in the added email document,
+      this extension delivers email to the `email` field based on lookups in
+      this collection.
     type: string
 
   - param: TEMPLATES_COLLECTION
     label: Templates collection
     description: >-
-      A collection of email templates keyed by name.
-      This extension can render an email using a [Handlebar](https://handlebarsjs.com/) template,
-      if the template is specified in the added email document.
+      A collection of email templates keyed by name. This extension can render
+      an email using a [Handlebar](https://handlebarsjs.com/) template, it's
+      recommended to use triple curly braces `{{{  }}}` in your Handlebars
+      templates when the substitution value is a URL or otherwise sensitive to
+      HTML escaping.
     type: string
 
   - param: TTL_EXPIRE_TYPE
     label: Firestore TTL type
     description: >-
-      Do you want the firestore records to be marked with an expireAt field for a TTL policy?
-      If "Never" is selected then no expireAt field will be added.
-      Otherwise you may specify the unit of time specified by the TTL_EXPIRE_VALUE parameter. Defaults to "Never".
+      Do you want the firestore records to be marked with an expireAt field for
+      a TTL policy? If "Never" is selected then no expireAt field will be added.
+      Otherwise you may specify the unit of time specified by the
+      TTL_EXPIRE_VALUE parameter. Defaults to "Never".
     type: select
     options:
       - label: Never
@@ -149,17 +171,22 @@ params:
   - param: TTL_EXPIRE_VALUE
     label: Firestore TTL value
     description: >-
-      In the units specified by TTL_EXPIRE_TYPE, how long do you want records to be ineligible for deletion by a TTL policy? This parameter requires the Firestore TTL type parameter
-      to be set to a value other than `Never`. For example, if `Firestore TTL type` is set to `Day` then setting this parameter to `1` will specify a TTL of 1 day.
+      In the units specified by TTL_EXPIRE_TYPE, how long do you want records to
+      be ineligible for deletion by a TTL policy? This parameter requires the
+      Firestore TTL type parameter to be set to a value other than `Never`. For
+      example, if `Firestore TTL type` is set to `Day` then setting this
+      parameter to `1` will specify a TTL of 1 day.
     validationRegex: "^[1-9][0-9]*$"
-    validationErrorMessage: The value must be an integer value greater than zero.
+    validationErrorMessage:
+      The value must be an integer value greater than zero.
     default: "1"
     required: true
 
   - param: TLS_OPTIONS
     label: TLS Options
     description: >-
-      A JSON value representing TLS options. For more information, see https://nodejs.org/api/tls.html#tls_class_tls_tlssocket
+      A JSON value representing TLS options. For more information, see
+      https://nodejs.org/api/tls.html#tls_class_tls_tlssocket
     required: false
 
 events:
@@ -177,7 +204,7 @@ events:
 
   - type: firebase.extensions.firestore-send-email.v1.onSuccess
     description: Occurs when the extension successfully sends an email.
-  
+
   - type: firebase.extensions.firestore-send-email.v1.onComplete
     description: Occurs when the extension completes execution.
 
