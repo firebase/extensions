@@ -1,3 +1,7 @@
+## Version 0.1.31
+
+docs - updated the description of the `TEMPLATES_COLLECTION` parameter to clarify the use of handlebars templates.
+
 ## Version 0.1.30
 
 feature - add a new field "Tls Options" to allow users to specify TLS options for SMTP connections
