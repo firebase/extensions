@@ -253,8 +253,8 @@ exports.fsimportexistingdocs = functions.tasks
     if (rows.length == config.docsPerBackfill) {
       // There are more documents to import - enqueue another task to continue the backfill.
       const queue = getFunctions().taskQueue(
-        "fsimportexistingdocs",
-        process.env.EXT_INSTANCE_ID
+        `locations/${config.location}/functions/fsimportexistingdocs`,
+        config.instanceId
       );
       await queue.enqueue({
         offset: offset + config.docsPerBackfill,
