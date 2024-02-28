@@ -19,6 +19,8 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { getExtensions } from "firebase-admin/extensions";
 import { getFunctions } from "firebase-admin/functions";
+import { getFirestore } from "firebase-admin/firestore";
+
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
@@ -41,6 +43,7 @@ const eventTracker: FirestoreEventHistoryTracker =
     timePartitioningField: config.timePartitioningField,
     timePartitioningFieldType: config.timePartitioningFieldType,
     timePartitioningFirestoreField: config.timePartitioningFirestoreField,
+    databaseId: config.databaseId,
     clustering: config.clustering,
     wildcardIds: config.wildcardIds,
     bqProjectId: config.bqProjectId,
@@ -99,7 +102,8 @@ export const syncBigQuery = functions.tasks
 
 export const fsexportbigquery = functions
   .runWith({ failurePolicy: true })
-  .firestore.document(config.collectionPath)
+  .firestore.database(config.databaseId)
+  .document(config.collectionPath)
   .onWrite(async (change, context) => {
     logs.start();
     try {
@@ -219,14 +223,12 @@ exports.fsimportexistingdocs = functions.tasks
     const docsCount = (data["docsCount"] as number) ?? 0;
 
     const query = config.useCollectionGroupQuery
-      ? admin
-          .firestore()
-          .collectionGroup(
-            config.importCollectionPath.split("/")[
-              config.importCollectionPath.split("/").length - 1
-            ]
-          )
-      : admin.firestore().collection(config.importCollectionPath);
+      ? getFirestore(config.databaseId).collectionGroup(
+          config.importCollectionPath.split("/")[
+            config.importCollectionPath.split("/").length - 1
+          ]
+        )
+      : getFirestore(config.databaseId).collection(config.importCollectionPath);
 
     const snapshot = await query
       .offset(offset)

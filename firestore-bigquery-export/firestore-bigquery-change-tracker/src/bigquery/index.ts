@@ -55,6 +55,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   timePartitioningFieldType?: string | undefined;
   timePartitioningFirestoreField?: string | undefined;
   clustering: string[] | null;
+  databaseId?: string | undefined;
   wildcardIds?: boolean;
   bqProjectId?: string | undefined;
   backupTableId?: string | undefined;
