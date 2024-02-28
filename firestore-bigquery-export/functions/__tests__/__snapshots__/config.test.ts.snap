@@ -14,6 +14,7 @@ Object {
   "datasetLocation": undefined,
   "doBackfill": false,
   "docsPerBackfill": 200,
+  "excludeOldData": false,
   "importCollectionPath": undefined,
   "initialized": false,
   "instanceId": undefined,

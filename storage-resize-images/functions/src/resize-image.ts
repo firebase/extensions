@@ -274,7 +274,10 @@ export const constructMetadata = (
 
   // If the original image has a download token, add a
   // new token to the image being resized #323
-  if (metadata.metadata.firebaseStorageDownloadTokens) {
+  if (
+    config.regenerateToken &&
+    metadata.metadata.firebaseStorageDownloadTokens
+  ) {
     metadata.metadata.firebaseStorageDownloadTokens = uuid();
   }
   return metadata;
