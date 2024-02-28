@@ -58,7 +58,7 @@ resources:
       runtime: nodejs18
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${param:PROJECT_ID}/databases/${param:DATABASE_ID}/documents/${param:COLLECTION_PATH}/{documentId}
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
 
   - name: fsimportexistingdocs
     type: firebaseextensions.v1beta.function
@@ -178,16 +178,6 @@ params:
       to be directed to to a BigQuery instance on another GCP project.
     type: string
     default: ${PROJECT_ID}
-    required: true
-
-  - param: DATABASE_ID
-    label: Database ID
-    description: >-
-      Override the default project Firestore database. Learn more about managing
-      multiple Firestore databases
-      [here](https://cloud.google.com/firestore/docs/manage-databases).
-    type: string
-    default: (default)
     required: true
 
   - param: COLLECTION_PATH

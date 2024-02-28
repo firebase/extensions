@@ -9,7 +9,6 @@ Object {
     "timestamp",
   ],
   "collectionPath": undefined,
-  "databaseId": "(default)",
   "datasetId": "my_dataset",
   "datasetLocation": undefined,
   "doBackfill": false,
