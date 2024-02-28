@@ -1,7 +1,5 @@
 ## Version 0.1.46
 
-feature - allow firestore database selection
-
 docs - remove mention of bigquery updating on import
 
 ## Version 0.1.45
