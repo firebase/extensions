@@ -1,3 +1,7 @@
+## Version 0.1.46
+
+fix - cloud task location in the BigQuery export extension
+
 ## Version 0.1.45
 
 feature - bring back the backfill parameter `DO_BACKFILL`
