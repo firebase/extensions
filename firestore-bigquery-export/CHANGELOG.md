@@ -1,3 +1,9 @@
+## Version 0.1.46
+
+feature - allow firestore database selection
+
+docs - remove mention of bigquery updating on import
+
 ## Version 0.1.45
 
 feature - bring back the backfill parameter `DO_BACKFILL`
