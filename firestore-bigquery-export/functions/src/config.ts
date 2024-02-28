@@ -33,6 +33,7 @@ export function clustering(clusters: string | undefined) {
 
 export default {
   bqProjectId: process.env.BIGQUERY_PROJECT_ID,
+  databaseId: process.env.DATABASE_ID || "(default)",
   collectionPath: process.env.COLLECTION_PATH,
   datasetId: process.env.DATASET_ID,
   doBackfill: process.env.DO_BACKFILL === "yes",
