@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-send-email
-version: 0.1.30
+version: 0.1.31
 specVersion: v1beta
 
 displayName: Trigger Email from Firestore
@@ -107,8 +107,10 @@ params:
     label: Default FROM address
     description: >-
       The email address to use as the sender's address (if it's not specified in
-      the added email document).  You can optionally include a name with the
-      email address (`Friendly Firebaser <foobar@example.com>`).
+      the added email document). You can optionally include a name with the
+      email address (`Friendly Firebaser <foobar@example.com>`). This parameter
+      does not work with [Gmail
+      SMTP](https://nodemailer.com/usage/using-gmail/).
     type: string
     example: foobar@example.com
     validationRegex: ^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$|^.*<(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})>$

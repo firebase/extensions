@@ -1,3 +1,23 @@
+## Version 0.1.46
+
+fix - cloud task location in the BigQuery export extension
+
+docs - remove mention of bigquery updating on import
+
+## Version 0.1.45
+
+feature - bring back the backfill parameter `DO_BACKFILL`
+
+feature - add a new parameter `EXCLUDE_OLD_DATA` to reduce payload size by excluding old snapshot data
+
+feature - update Firebase dependencies
+
+feature - optimize partitioning validation flow
+
+feature - support cross-project import with the `BIGQUERY_PROJECT_ID` parameter
+
+fix (import script) - incorrect parsing of the `batchSize` parameter
+
 ## Version 0.1.44
 
 fix - apply the task queue configurations in `syncBigQuery` and set max attempts to 5

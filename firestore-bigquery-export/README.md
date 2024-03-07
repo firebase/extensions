@@ -15,7 +15,7 @@ The extension creates and updates a [dataset](https://cloud.google.com/bigquery/
 
 *Warning*: A BigQuery table corresponding to your configuration will be automatically generated upon installing or updating this extension. Manual table creation may result in discrepancies with your configured settings.
 
-If you create, update, delete, or import a document in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset.
+If you create, update, or delete a document in the specified collection, this extension sends that update to BigQuery. You can then run queries on this mirrored dataset.
 
 Note that this extension only listens for _document_ changes in the collection, but not changes in any _subcollection_. You can, though, install additional instances of this extension to specifically listen to a subcollection or other collections in your database. Or if you have the same subcollection across documents in a given collection, you can use `{wildcard}` notation to listen to all those subcollections (for example: `chats/{chatid}/posts`). 
 
@@ -123,6 +123,8 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * BigQuery Dataset location: Where do you want to deploy the BigQuery dataset created for this extension? For help selecting a location, refer to the [location selection guide](https://cloud.google.com/bigquery/docs/locations).
 
 * BigQuery Project ID: Override the default project for BigQuery instance. This can allow updates to be directed to to a BigQuery instance on another GCP project.
+
+* Database ID: Override the default project Firestore database. Learn more about managing multiple Firestore databases [here](https://cloud.google.com/firestore/docs/manage-databases).
 
 * Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}`  can be returned in `path_params` as a JSON formatted string.
 

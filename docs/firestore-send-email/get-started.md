@@ -89,7 +89,7 @@ message: {
 
 The top-level fields of the document supply the email sender and recipient information. Available fields are:
 
-- **from:** The sender's email address. If not specified in the document, uses the configured "Default FROM address" parameter.
+- **from:** The sender's email address. If not specified in the document, uses the configured "Default FROM address" parameter. This parameter does not work with [Gmail SMTP](https://nodemailer.com/usage/using-gmail/).
 - **replyTo:** The reply-to email address. If not specified in the document, uses the configured "Default REPLY-TO address" parameter.
 - **to:** A single recipient email address or an array containing multiple recipient email addresses.
 - **toUids:** An array containing the recipient UIDs.
