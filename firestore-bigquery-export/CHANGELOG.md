@@ -1,6 +1,6 @@
 ## Version 0.1.46
 
-feature - allow firestore database selection
+fix - cloud task location in the BigQuery export extension
 
 docs - remove mention of bigquery updating on import
 
