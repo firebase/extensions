@@ -1,4 +1,5 @@
 import { createTransport } from "nodemailer";
+import * as sg from "nodemailer-sendgrid";
 import { URL } from "url";
 import { invalidTlsOptions, invalidURI } from "./logs";
 import { Config } from "./types";
@@ -15,6 +16,10 @@ function checkMicrosoftServer($: string): boolean {
   return (
     $.includes("outlook") || $.includes("office365") || $.includes("hotmail")
   );
+}
+
+function checkSendGrid($: string): boolean {
+  return $.includes("sendgrid");
 }
 
 export function parseTlsOptions(tlsOptions: string) {
@@ -65,6 +70,12 @@ export function setSmtpCredentials(config: Config) {
         pass: decodeURIComponent(url.password),
       },
     });
+  } else if (checkSendGrid(url.hostname)) {
+    const options: sg.SendgridOptions = {
+      apiKey: decodeURIComponent(url.password),
+    };
+
+    transport = createTransport(sg(options));
   } else {
     transport = createTransport(url.href, {
       tls: parseTlsOptions(config.tls),
