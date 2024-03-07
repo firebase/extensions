@@ -241,6 +241,33 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
   return payload;
 }
 
+/**
+ * If the SMTP provider is SendGrid, we need to check if the payload contains
+ * either a text or html content, or if the payload contains a SendGrid Dynamic Template.
+ *
+ * Throws an error if all of the above are not provided.
+ *
+ * @param payload the payload from Firestore.
+ */
+function verifySendGridContent(payload: QueuePayload) {
+  if (
+    transport.transporter.name === "nodemailer-sendgrid" &&
+    !payload.message?.text &&
+    !payload.message?.html
+  ) {
+    if (typeof payload.sendGrid !== "object") {
+      throw new Error("`sendGrid` must be a valid Firestore map.");
+    }
+
+    if (!payload.sendGrid?.templateId) {
+      logs.invalidSendGridTemplateId();
+      throw new Error(
+        "SendGrid templateId is not provided, if you're using SendGrid Dynamic Templates, please provide a valid templateId, otherwise provide a `text` or `html` content."
+      );
+    }
+  }
+}
+
 async function deliver(
   ref: admin.firestore.DocumentReference<QueuePayload>
 ): Promise<void> {
@@ -265,22 +292,29 @@ async function deliver(
   try {
     payload = await preparePayload(payload);
 
+    // If the SMTP provider is SendGrid, we need to check if the payload contains
+    // either a text or html content, or if the payload contains a SendGrid Dynamic Template.
+    verifySendGridContent(payload);
+
     if (!payload.to.length && !payload.cc.length && !payload.bcc.length) {
       throw new Error(
         "Failed to deliver email. Expected at least 1 recipient."
       );
     }
 
-    const result = await transport.sendMail(
-      Object.assign(payload.message, {
+    const result = await transport.sendMail({
+      ...Object.assign(payload.message ?? {}, {
         from: payload.from || config.defaultFrom,
         replyTo: payload.replyTo || config.defaultReplyTo,
         to: payload.to,
         cc: payload.cc,
         bcc: payload.bcc,
         headers: payload.headers || {},
-      })
-    );
+        template_id: payload.sendGrid?.templateId,
+        dynamic_template_data: payload.sendGrid?.dynamicTemplateData || {},
+        mail_settings: payload.sendGrid?.mailSettings || {},
+      }),
+    });
     const info = {
       messageId: result.messageId || null,
       accepted: result.accepted || [],
@@ -352,8 +386,13 @@ async function processWrite(
       const payload = snapshot.data();
 
       // We expect the payload to contain a message object describing the email
-      // to be sent. If it doesn't and is not a template, we can't do anything.
-      if (typeof payload.message !== "object" && !payload.template) {
+      // to be sent, or a template, or a SendGrid template.
+      // If it doesn't and is not a template, we can't do anything.
+      if (
+        typeof payload.message !== "object" &&
+        !payload.template &&
+        typeof payload.sendGrid !== "object"
+      ) {
         logs.invalidMessage(payload.message);
         return false;
       }
