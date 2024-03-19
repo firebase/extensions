@@ -343,7 +343,7 @@ params:
       This parameter will set the maximum number of syncronised documents per
       second with BQ. Please note, any other external updates to a Big Query
       table will be included within this quota. Ensure that you have a set a low
-      enough number to componsate. Defaults to 10.
+      enough number to compensate. Defaults to 10.
     type: string
     validationRegex: ^([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)$
     validationErrorMessage: Please select a number between 1 and 500
