@@ -70,7 +70,7 @@ resources:
       runtime: nodejs18
       taskQueueTrigger:
         retryConfig:
-          maxAttempts: 10
+          maxAttempts: 15
           minBackoffSeconds: 60
 
   - name: syncBigQuery
@@ -95,7 +95,7 @@ resources:
       runtime: nodejs18
       taskQueueTrigger:
         retryConfig:
-          maxAttempts: 10
+          maxAttempts: 15
           minBackoffSeconds: 60
 
   - name: setupBigQuerySync
@@ -106,7 +106,7 @@ resources:
       runtime: nodejs18
       taskQueueTrigger:
         retryConfig:
-          maxAttempts: 10
+          maxAttempts: 15
           minBackoffSeconds: 60
 
 params:
