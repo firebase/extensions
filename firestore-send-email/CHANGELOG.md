@@ -1,3 +1,7 @@
+## Version 0.1.32
+
+feature - added support for SendGrid dynamic templates
+
 ## Version 0.1.31
 
 docs - updated the description of the `TEMPLATES_COLLECTION` parameter to clarify the use of handlebars templates.
