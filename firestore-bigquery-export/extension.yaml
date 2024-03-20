@@ -68,7 +68,10 @@ resources:
       `IMPORT` and the timestamp of epoch.
     properties:
       runtime: nodejs18
-      taskQueueTrigger: {}
+      taskQueueTrigger:
+        retryConfig:
+          maxAttempts: 15
+          minBackoffSeconds: 60
 
   - name: syncBigQuery
     type: firebaseextensions.v1beta.function
@@ -90,7 +93,10 @@ resources:
       Runs configuration for sycning with BigQuery
     properties:
       runtime: nodejs18
-      taskQueueTrigger: {}
+      taskQueueTrigger:
+        retryConfig:
+          maxAttempts: 15
+          minBackoffSeconds: 60
 
   - name: setupBigQuerySync
     type: firebaseextensions.v1beta.function
@@ -98,7 +104,10 @@ resources:
       Runs configuration for sycning with BigQuery
     properties:
       runtime: nodejs18
-      taskQueueTrigger: {}
+      taskQueueTrigger:
+        retryConfig:
+          maxAttempts: 15
+          minBackoffSeconds: 60
 
 params:
   - param: DATASET_LOCATION
