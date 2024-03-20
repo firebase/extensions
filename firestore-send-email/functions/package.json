@@ -25,7 +25,7 @@
     "firebase-admin": "^11.4.1",
     "firebase-functions": "^4.2.0",
     "handlebars": "^4.5.3",
-    "nodemailer": "^6.9.7",
+    "nodemailer": "^6.9.9",
     "nodemailer-sendgrid": "^1.0.3",
     "rimraf": "^2.6.3",
     "smtp-server": "^3.10.0",
