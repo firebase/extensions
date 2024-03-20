@@ -1,3 +1,7 @@
+## Version 0.1.47
+
+fix - add cloud task retry config to the yaml config
+
 ## Version 0.1.46
 
 fix - cloud task location in the BigQuery export extension
