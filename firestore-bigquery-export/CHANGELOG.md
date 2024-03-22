@@ -1,8 +1,12 @@
-## Version 0.1.46
+## Version 0.1.47
 
-fix - cloud task location in the BigQuery export extension
+feature - add the ability to select Firestore database instance
 
-docs - remove mention of bigquery updating on import
+fix - specify Cloud Task task retry config in `extension.yaml`
+
+fix - specify the location in the `fsimportexistingdocs` Cloud Task
+
+docs - fix typos, remove mention of BigQuery updating on import
 
 ## Version 0.1.45
 
