@@ -87,8 +87,8 @@ export const firestoreToBigQueryFieldType: {
 export class FirestoreBigQuerySchemaViewFactory {
   bq: bigquery.BigQuery;
 
-  constructor() {
-    this.bq = new bigquery.BigQuery();
+  constructor(bqProjectId: string) {
+    this.bq = new bigquery.BigQuery({ projectId: bqProjectId });
   }
 
   /**
