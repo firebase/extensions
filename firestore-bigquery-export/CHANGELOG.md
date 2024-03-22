@@ -1,4 +1,4 @@
-## Version 0.1.47
+## Version 0.1.46
 
 feature - add the ability to select Firestore database instance
 
