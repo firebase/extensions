@@ -116,3 +116,9 @@ export function invalidTlsOptions() {
     "Invalid TLS options provided, using default TLS options instead: `{ rejectUnauthorized: false }`"
   );
 }
+
+export function invalidSendGridTemplateId() {
+  logger.error(
+    "SendGrid templateId is not provided, if you're using SendGrid Dynamic Templates, please provide a valid templateId, otherwise provide a `text` or `html` content."
+  );
+}
