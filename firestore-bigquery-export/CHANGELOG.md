@@ -1,3 +1,13 @@
+## Version 0.1.46
+
+feature - add the ability to select Firestore database instance
+
+fix - specify Cloud Task task retry config in `extension.yaml`
+
+fix - specify the location in the `fsimportexistingdocs` Cloud Task
+
+docs - fix typos, remove mention of BigQuery updating on import
+
 ## Version 0.1.45
 
 feature - bring back the backfill parameter `DO_BACKFILL`
