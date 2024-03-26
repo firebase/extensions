@@ -1,3 +1,7 @@
+## Version 0.1.48
+
+fix - fix the error "no resource found for `fsimportexistingdocs`"
+
 ## Version 0.1.47
 
 fix - temporarily disable backfill feature
