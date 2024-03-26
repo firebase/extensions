@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.46
+version: 0.1.47
 specVersion: v1beta
 
 displayName: Stream Firestore to BigQuery
@@ -60,18 +60,18 @@ resources:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/${param:DATABASE_ID}/documents/${param:COLLECTION_PATH}/{documentId}
 
-  # - name: fsimportexistingdocs
-  #   type: firebaseextensions.v1beta.function
-  #   description:
-  #     Imports exisitng documents from the specified collection into BigQuery.
-  #     Imported documents will have a special changelog with the operation of
-  #     `IMPORT` and the timestamp of epoch.
-  #   properties:
-  #     runtime: nodejs18
-  #     taskQueueTrigger:
-  #       retryConfig:
-  #         maxAttempts: 15
-  #         minBackoffSeconds: 60
+  - name: fsimportexistingdocs
+    type: firebaseextensions.v1beta.function
+    description:
+      Imports existing documents from the specified collection into BigQuery.
+      Imported documents will have a special changelog with the operation of
+      `IMPORT` and the timestamp of epoch.
+    properties:
+      runtime: nodejs18
+      taskQueueTrigger:
+        retryConfig:
+          maxAttempts: 15
+          minBackoffSeconds: 60
 
   - name: syncBigQuery
     type: firebaseextensions.v1beta.function
@@ -513,8 +513,7 @@ events:
 lifecycleEvents:
   onInstall:
     function: initBigQuerySync
-    processingMessage:
-      Configuring BigQuery Sync.
+    processingMessage: Configuring BigQuery Sync.
   onUpdate:
     function: setupBigQuerySync
     processingMessage: Configuring BigQuery Sync
