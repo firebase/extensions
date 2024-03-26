@@ -207,69 +207,75 @@ export const initBigQuerySync = functions.tasks
     return;
   });
 
-// exports.fsimportexistingdocs = functions.tasks
-//   .taskQueue()
-//   .onDispatch(async (data, context) => {
-//     const runtime = getExtensions().runtime();
-//     if (!config.doBackfill || !config.importCollectionPath) {
-//       await runtime.setProcessingState(
-//         "PROCESSING_COMPLETE",
-//         "Completed. No existing documents imported into BigQuery."
-//       );
-//       return;
-//     }
+exports.fsimportexistingdocs = functions.tasks
+  .taskQueue()
+  .onDispatch(async (data, context) => {
+    const runtime = getExtensions().runtime();
+    await runtime.setProcessingState(
+      "PROCESSING_COMPLETE",
+      "Completed. No existing documents imported into BigQuery."
+    );
+    return;
 
-//     const offset = (data["offset"] as number) ?? 0;
-//     const docsCount = (data["docsCount"] as number) ?? 0;
+    // if (!config.doBackfill || !config.importCollectionPath) {
+    //   await runtime.setProcessingState(
+    //     "PROCESSING_COMPLETE",
+    //     "Completed. No existing documents imported into BigQuery."
+    //   );
+    //   return;
+    // }
 
-//     const query = config.useCollectionGroupQuery
-//       ? getFirestore(config.databaseId).collectionGroup(
-//           config.importCollectionPath.split("/")[
-//             config.importCollectionPath.split("/").length - 1
-//           ]
-//         )
-//       : getFirestore(config.databaseId).collection(config.importCollectionPath);
+    // const offset = (data["offset"] as number) ?? 0;
+    // const docsCount = (data["docsCount"] as number) ?? 0;
 
-//     const snapshot = await query
-//       .offset(offset)
-//       .limit(config.docsPerBackfill)
-//       .get();
+    // const query = config.useCollectionGroupQuery
+    //   ? getFirestore(config.databaseId).collectionGroup(
+    //       config.importCollectionPath.split("/")[
+    //         config.importCollectionPath.split("/").length - 1
+    //       ]
+    //     )
+    //   : getFirestore(config.databaseId).collection(config.importCollectionPath);
 
-//     const rows = snapshot.docs.map((d) => {
-//       return {
-//         timestamp: new Date().toISOString(),
-//         operation: ChangeType.IMPORT,
-//         documentName: `projects/${config.bqProjectId}/databases/(default)/documents/${d.ref.path}`,
-//         documentId: d.id,
-//         eventId: "",
-//         pathParams: resolveWildcardIds(config.importCollectionPath, d.ref.path),
-//         data: eventTracker.serializeData(d.data()),
-//       };
-//     });
-//     try {
-//       await eventTracker.record(rows);
-//     } catch (err: any) {
-//       /** If configured, event tracker wil handle failed rows in a backup collection  */
-//       functions.logger.log(err);
-//     }
-//     if (rows.length == config.docsPerBackfill) {
-//       // There are more documents to import - enqueue another task to continue the backfill.
-//       const queue = getFunctions().taskQueue(
-//         `locations/${config.location}/functions/fsimportexistingdocs`,
-//         config.instanceId
-//       );
-//       await queue.enqueue({
-//         offset: offset + config.docsPerBackfill,
-//         docsCount: docsCount + rows.length,
-//       });
-//     } else {
-//       // We are finished, set the processing state to report back how many docs were imported.
-//       runtime.setProcessingState(
-//         "PROCESSING_COMPLETE",
-//         `Successfully imported ${
-//           docsCount + rows.length
-//         } documents into BigQuery`
-//       );
-//     }
-//     await events.recordCompletionEvent({ context });
-//   });
+    // const snapshot = await query
+    //   .offset(offset)
+    //   .limit(config.docsPerBackfill)
+    //   .get();
+
+    // const rows = snapshot.docs.map((d) => {
+    //   return {
+    //     timestamp: new Date().toISOString(),
+    //     operation: ChangeType.IMPORT,
+    //     documentName: `projects/${config.bqProjectId}/databases/(default)/documents/${d.ref.path}`,
+    //     documentId: d.id,
+    //     eventId: "",
+    //     pathParams: resolveWildcardIds(config.importCollectionPath, d.ref.path),
+    //     data: eventTracker.serializeData(d.data()),
+    //   };
+    // });
+    // try {
+    //   await eventTracker.record(rows);
+    // } catch (err: any) {
+    //   /** If configured, event tracker wil handle failed rows in a backup collection  */
+    //   functions.logger.log(err);
+    // }
+    // if (rows.length == config.docsPerBackfill) {
+    //   // There are more documents to import - enqueue another task to continue the backfill.
+    //   const queue = getFunctions().taskQueue(
+    //     `locations/${config.location}/functions/fsimportexistingdocs`,
+    //     config.instanceId
+    //   );
+    //   await queue.enqueue({
+    //     offset: offset + config.docsPerBackfill,
+    //     docsCount: docsCount + rows.length,
+    //   });
+    // } else {
+    //   // We are finished, set the processing state to report back how many docs were imported.
+    //   runtime.setProcessingState(
+    //     "PROCESSING_COMPLETE",
+    //     `Successfully imported ${
+    //       docsCount + rows.length
+    //     } documents into BigQuery`
+    //   );
+    // }
+    // await events.recordCompletionEvent({ context });
+  });
