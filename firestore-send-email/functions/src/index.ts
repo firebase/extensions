@@ -23,7 +23,11 @@ import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
-import { parseTlsOptions, setSmtpCredentials } from "./helpers";
+import {
+  parseTlsOptions,
+  setSendGridTransport,
+  setSmtpCredentials,
+} from "./helpers";
 import * as events from "./events";
 
 logs.init();
@@ -292,14 +296,29 @@ async function deliver(
   try {
     payload = await preparePayload(payload);
 
-    // If the SMTP provider is SendGrid, we need to check if the payload contains
-    // either a text or html content, or if the payload contains a SendGrid Dynamic Template.
-    verifySendGridContent(payload);
-
     if (!payload.to.length && !payload.cc.length && !payload.bcc.length) {
       throw new Error(
         "Failed to deliver email. Expected at least 1 recipient."
       );
+    }
+
+    // Switch to SendGrid transport if SendGrid config is provided.
+    if (payload.sendGrid) {
+      transport = setSendGridTransport(config);
+
+      // Convert text and html to undefined if they are null
+      if (payload.message) {
+        if (payload.message.text == null) {
+          payload.message.text = undefined;
+        }
+        if (payload.message.html == null) {
+          payload.message.text = undefined;
+        }
+      }
+
+      // If the SMTP provider is SendGrid, we need to check if the payload contains
+      // either a text or html content, or if the payload contains a SendGrid Dynamic Template.
+      verifySendGridContent(payload);
     }
 
     const result = await transport.sendMail({
@@ -315,6 +334,7 @@ async function deliver(
         mail_settings: payload.sendGrid?.mailSettings || {},
       }),
     });
+
     const info = {
       messageId: result.messageId || null,
       accepted: result.accepted || [],
@@ -325,6 +345,7 @@ async function deliver(
 
     update["delivery.state"] = "SUCCESS";
     update["delivery.info"] = info;
+
     logs.delivered(ref, info);
   } catch (e) {
     update["delivery.state"] = "ERROR";

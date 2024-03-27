@@ -70,12 +70,6 @@ export function setSmtpCredentials(config: Config) {
         pass: decodeURIComponent(url.password),
       },
     });
-  } else if (checkSendGrid(url.hostname)) {
-    const options: sg.SendgridOptions = {
-      apiKey: decodeURIComponent(url.password),
-    };
-
-    transport = createTransport(sg(options));
   } else {
     transport = createTransport(url.href, {
       tls: parseTlsOptions(config.tls),
@@ -83,4 +77,14 @@ export function setSmtpCredentials(config: Config) {
   }
 
   return transport;
+}
+
+export function setSendGridTransport(config: Config) {
+  const { smtpPassword } = config;
+
+  const options: sg.SendgridOptions = {
+    apiKey: smtpPassword,
+  };
+
+  return createTransport(sg(options));
 }

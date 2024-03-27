@@ -216,6 +216,7 @@ describe("set server credentials helper function", () => {
     expect(regex.test(config.smtpConnectionUri)).toBe(false);
   });
 
+  /* Test removed due to the new SendGrid transporter logic - see setSendGridTransport()
   test("return a SendGrid transporter if the host is smtp.sendgrid.net", () => {
     const config: Config = {
       smtpConnectionUri: "smtps://apikey@smtp.sendgrid.net:465",
@@ -227,4 +228,5 @@ describe("set server credentials helper function", () => {
     const credentials = setSmtpCredentials(config);
     expect(credentials.transporter.name === "nodemailer-sendgrid").toBe(true);
   });
+  */
 });
