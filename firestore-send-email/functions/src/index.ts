@@ -23,7 +23,11 @@ import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
-import { setSendGridTransport, setSmtpCredentials } from "./helpers";
+import {
+  parseTlsOptions,
+  setSendGridTransport,
+  setSmtpCredentials,
+} from "./helpers";
 import * as events from "./events";
 
 logs.init();
@@ -282,6 +286,7 @@ async function deliver(
   }
 
   logs.attemptingDelivery(ref);
+  functions.logger.warn("here 0");
   const update = {
     "delivery.attempts": FieldValue.increment(1),
     "delivery.endTime": FieldValue.serverTimestamp(),
@@ -290,11 +295,8 @@ async function deliver(
   };
 
   try {
+    functions.logger.warn("here 1");
     payload = await preparePayload(payload);
-
-    // If the SMTP provider is SendGrid, we need to check if the payload contains
-    // either a text or html content, or if the payload contains a SendGrid Dynamic Template.
-    verifySendGridContent(payload);
 
     if (!payload.to.length && !payload.cc.length && !payload.bcc.length) {
       throw new Error(
@@ -302,17 +304,26 @@ async function deliver(
       );
     }
 
+    functions.logger.warn("here 2");
+
     // Switch to SendGrid transport if SendGrid config is provided
     if (payload.sendGrid) {
+      functions.logger.warn("here 3");
       transport = setSendGridTransport(config);
-    }
 
-    if (payload.message?.text == null) {
-      delete payload.message.text;
-    }
+      // Convert text and html to undefined if they are null
+      if (payload.message) {
+        if (payload.message.text == null) {
+          payload.message.text = undefined;
+        }
+        if (payload.message.html == null) {
+          payload.message.text = undefined;
+        }
+      }
 
-    if (payload.message?.html == null) {
-      delete payload.message.html;
+      // If the SMTP provider is SendGrid, we need to check if the payload contains
+      // either a text or html content, or if the payload contains a SendGrid Dynamic Template.
+      verifySendGridContent(payload);
     }
 
     const result = await transport.sendMail({
@@ -328,6 +339,7 @@ async function deliver(
         mail_settings: payload.sendGrid?.mailSettings || {},
       }),
     });
+    functions.logger.warn("here 6");
     const info = {
       messageId: result.messageId || null,
       accepted: result.accepted || [],
@@ -338,11 +350,15 @@ async function deliver(
 
     update["delivery.state"] = "SUCCESS";
     update["delivery.info"] = info;
+    functions.logger.warn("here 7");
     logs.delivered(ref, info);
+    functions.logger.warn("here 8");
   } catch (e) {
+    functions.logger.warn("here 9");
     update["delivery.state"] = "ERROR";
     update["delivery.error"] = e.toString();
     logs.deliveryError(ref, e);
+    functions.logger.warn("here 10");
   }
 
   // Wrapping in transaction to allow for automatic retries (#48)
@@ -351,6 +367,7 @@ async function deliver(
     // since the email sending will have been attempted regardless of what the
     // delivery state was at that point, so we just update the state to reflect
     // the result of the last attempt so as to not potentially cause duplicate sends.
+    functions.logger.warn("here 11");
     transaction.update(ref, update);
     return Promise.resolve();
   });

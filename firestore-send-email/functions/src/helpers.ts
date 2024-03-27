@@ -91,7 +91,7 @@ export function setSendGridTransport(config: Config) {
   const { smtpPassword } = config;
 
   const options: sg.SendgridOptions = {
-    apiKey: decodeURIComponent(smtpPassword),
+    apiKey: smtpPassword,
   };
 
   return createTransport(sg(options));
