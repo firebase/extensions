@@ -70,16 +70,13 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Languages field name: What is the name of the field that contains the languages that you want to translate into? This field is optional. If you don't specify it, the extension will use the languages specified in the LANGUAGES parameter.
 
 
-* Translate existing documents?: Should existing documents in the Firestore collection be translated as well?  If you've added new languages since a document was translated, this will fill those in as well.
-
-
 
 
 **Cloud Functions:**
 
 * **fstranslate:** Listens for writes of new strings to your specified Cloud Firestore collection, translates the strings, then writes the translated strings back to the same document.
 
-<!-- * **fstranslatebackfill:** Searches your specified Cloud Firestore collection for existing documents, translates the strings into any missing languages, then writes the translated strings back to the same document. -->
+* **fstranslatebackfill:** Searches your specified Cloud Firestore collection for existing documents, translates the strings into any missing languages, then writes the translated strings back to the same document.
 
 
 
