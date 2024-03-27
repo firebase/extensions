@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-translate-text
-version: 0.1.15
+version: 0.1.16
 specVersion: v1beta
 
 tags: [ai]
@@ -130,19 +130,19 @@ params:
     default: languages
     required: false
 
-  - param: DO_BACKFILL
-    label: Translate existing documents?
-    description: >
-      Should existing documents in the Firestore collection be translated as
-      well?  If you've added new languages since a document was translated, this
-      will fill those in as well.
-    type: select
-    required: true
-    options:
-      - label: Yes
-        value: true
-      - label: No
-        value: false
+  # - param: DO_BACKFILL
+  #   label: Translate existing documents?
+  #   description: >
+  #     Should existing documents in the Firestore collection be translated as
+  #     well?  If you've added new languages since a document was translated, this
+  #     will fill those in as well.
+  #   type: select
+  #   required: true
+  #   options:
+  #     - label: Yes
+  #       value: true
+  #     - label: No
+  #       value: false
 
 events:
   - type: firebase.extensions.firestore-translate-text.v1.onStart
@@ -164,14 +164,13 @@ events:
     description:
       Occurs when the function is settled. Provides no customized data other
       than the context.
-
-lifecycleEvents:
-  onInstall:
-    function: fstranslatebackfill
-    processingMessage: "Translating existing documents in ${COLLECTION_PATH}"
-  onUpdate:
-    function: fstranslatebackfill
-    processingMessage: "Translating existing documents in ${COLLECTION_PATH}"
-  onConfigure:
-    function: fstranslatebackfill
-    processingMessage: "Translating existing documents in ${COLLECTION_PATH}"
+# lifecycleEvents:
+#   onInstall:
+#     function: fstranslatebackfill
+#     processingMessage: "Translating existing documents in ${COLLECTION_PATH}"
+#   onUpdate:
+#     function: fstranslatebackfill
+#     processingMessage: "Translating existing documents in ${COLLECTION_PATH}"
+#   onConfigure:
+#     function: fstranslatebackfill
+#     processingMessage: "Translating existing documents in ${COLLECTION_PATH}"
