@@ -1,3 +1,7 @@
+## Version 0.1.16
+
+fix - temporarily disable backfill feature
+
 ## Version 0.1.15
 
 fix - handle array values correctly in backfill
