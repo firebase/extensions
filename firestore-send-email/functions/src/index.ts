@@ -23,7 +23,7 @@ import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
 import { QueuePayload } from "./types";
-import { parseTlsOptions, setSmtpCredentials } from "./helpers";
+import { setSendGridTransport, setSmtpCredentials } from "./helpers";
 import * as events from "./events";
 
 logs.init();
@@ -300,6 +300,19 @@ async function deliver(
       throw new Error(
         "Failed to deliver email. Expected at least 1 recipient."
       );
+    }
+
+    // Switch to SendGrid transport if SendGrid config is provided
+    if (payload.sendGrid) {
+      transport = setSendGridTransport(config);
+    }
+
+    if (payload.message?.text == null) {
+      delete payload.message.text;
+    }
+
+    if (payload.message?.html == null) {
+      delete payload.message.html;
     }
 
     const result = await transport.sendMail({
