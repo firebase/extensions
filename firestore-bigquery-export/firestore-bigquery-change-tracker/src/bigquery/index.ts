@@ -314,7 +314,8 @@ export class FirestoreBigQueryEventHistoryTracker
   }
 
   /**
-   * Creates the raw change log table if it doesn't already exist.
+   * Creates the raw change log table.
+   * If the table does already exist, it applies changes to metadata and partitioning.
    */
   private async initializeRawChangeLogTable() {
     const changelogName = this.rawChangeLogTableName();
