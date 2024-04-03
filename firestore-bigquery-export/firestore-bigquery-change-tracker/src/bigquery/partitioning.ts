@@ -135,6 +135,10 @@ export class Partitioning {
   }
 
   private async isTablePartitioned() {
+    /* Return false if table does not exist */
+    const [tableExists] = await this.table.exists();
+    if (!tableExists) return Promise.resolve(false);
+
     /* Return true if partition metadata already exists */
     const [metadata] = await this.table.getMetadata();
     if (!!metadata.timePartitioning) {
