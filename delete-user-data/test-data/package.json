@@ -8,7 +8,7 @@
   "author": "Chris Bianca <chris@csfrequency.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "firebase-admin": "^11.4.1"
+    "firebase-admin": "^12.0.0"
   },
   "devDependencies": {
     "inquirer": "^8.1.2",
