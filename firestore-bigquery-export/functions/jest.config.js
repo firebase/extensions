@@ -9,8 +9,15 @@ module.exports = {
       tsConfig: "<rootDir>/tsconfig.json",
     },
   },
+  snapshotFormat: {
+    escapeString: true,
+    printBasicPrototype: true,
+  },
   preset: "ts-jest",
   testEnvironment: "node",
+  testEnvironmentOptions: {
+    NODE_ENV: "test",
+  },
   setupFiles: ["<rootDir>/__tests__/jest.setup.ts"],
   testMatch: ["**/__tests__/*.test.ts"],
   testPathIgnorePatterns: process.env.CI_TEST === "true" ? ["e2e"] : [],
