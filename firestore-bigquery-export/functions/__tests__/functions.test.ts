@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, jest, test } from '@jest/globals';
+import { beforeEach, describe, expect, jest, test } from "@jest/globals";
 
 import * as admin from "firebase-admin";
 import { logger } from "firebase-functions";
@@ -11,8 +11,8 @@ import config from "../src/config";
 jest.mock("@firebaseextensions/firestore-bigquery-change-tracker", () => ({
   FirestoreBigQueryEventHistoryTracker: jest.fn(() => {
     return {
-      record: jest.fn(() => { }),
-      serializeData: jest.fn(() => { }),
+      record: jest.fn(() => {}),
+      serializeData: jest.fn(() => {}),
     };
   }),
   ChangeType: {
@@ -42,8 +42,8 @@ jest.mock("../src/logs", () => ({
   start: jest.fn(() =>
     logger.log("Started execution of extension with configuration", config)
   ),
-  init: jest.fn(() => { }),
-  error: jest.fn(() => { }),
+  init: jest.fn(() => {}),
+  error: jest.fn(() => {}),
   complete: jest.fn(() => logger.log("Completed execution of extension")),
 }));
 
@@ -62,7 +62,7 @@ export const mockExport = (document, data) => {
   return wrapped(document, data);
 };
 
-export const mockedFirestoreBigQueryEventHistoryTracker = () => { };
+export const mockedFirestoreBigQueryEventHistoryTracker = () => {};
 
 let restoreEnv;
 let functionsTest = functionsTestInit();

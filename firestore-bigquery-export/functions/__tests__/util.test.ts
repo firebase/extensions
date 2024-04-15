@@ -1,4 +1,4 @@
-import { describe, expect, test } from '@jest/globals';
+import { describe, expect, test } from "@jest/globals";
 
 import { getChangeType } from "../src/util";
 import * as functionsTestInit from "firebase-functions-test";
