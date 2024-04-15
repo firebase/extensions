@@ -1,5 +1,5 @@
 declare namespace NodeJS {
   interface Global {
-    config: () => jest.ModuleMocker;
+    conf: () => jest.ModuleMocker;
   }
 }
