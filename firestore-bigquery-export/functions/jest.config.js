@@ -1,6 +1,10 @@
+/** @type {import('ts-jest').JestConfigWithTsJest} */
+
 const packageJson = require("./package.json");
 
 module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
   name: packageJson.name,
   displayName: packageJson.name,
   rootDir: "./",
