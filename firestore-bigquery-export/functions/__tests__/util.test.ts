@@ -1,3 +1,5 @@
+import { describe, expect, test } from '@jest/globals';
+
 import { getChangeType } from "../src/util";
 import * as functionsTestInit from "firebase-functions-test";
 import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
