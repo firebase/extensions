@@ -24,7 +24,7 @@
     "firebase-functions-test": "^0.3.3",
     "generate-schema": "^2.6.0",
     "inquirer": "^6.4.0",
-    "jest-environment-jsdom": "^29.7.0",
+    "jest-environment-node": "^29.7.0",
     "lodash": "^4.17.14",
     "nyc": "^14.0.0",
     "rimraf": "^2.6.3",
