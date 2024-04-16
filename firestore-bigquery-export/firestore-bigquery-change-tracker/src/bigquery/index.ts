@@ -319,9 +319,7 @@ export class FirestoreBigQueryEventHistoryTracker
   private async initializeRawChangeLogTable() {
     const changelogName = this.rawChangeLogTableName();
     const dataset = this.bigqueryDataset();
-    const table = dataset.table(changelogName, {
-      location: this.config.datasetLocation,
-    });
+    const table = dataset.table(changelogName);
     const [tableExists] = await table.exists();
     const partitioning = new Partitioning(this.config, table);
     const clustering = new Clustering(this.config, table);
@@ -423,9 +421,7 @@ export class FirestoreBigQueryEventHistoryTracker
    */
   private async initializeLatestView() {
     const dataset = this.bigqueryDataset();
-    const view = dataset.table(this.rawLatestView(), {
-      location: this.config.datasetLocation,
-    });
+    const view = dataset.table(this.rawLatestView());
     const [viewExists] = await view.exists();
     const schema = RawChangelogViewSchema;
 
