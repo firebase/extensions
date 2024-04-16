@@ -1,4 +1,3 @@
-import { jest } from "@jest/globals";
 import * as functionsTestInit from "firebase-functions-test";
 
 export const snapshot = (
