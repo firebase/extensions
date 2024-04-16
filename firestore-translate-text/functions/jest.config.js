@@ -9,6 +9,10 @@ module.exports = {
       tsConfig: "<rootDir>/__tests__/tsconfig.json",
     },
   },
+  snapshotFormat: {
+    escapeString: true,
+    printBasicPrototype: true,
+  },
   preset: "ts-jest",
   setupFiles: ["<rootDir>/__tests__/jest.setup.ts"],
   testMatch: ["**/__tests__/unit/translateMultipleBackfill.test.ts"],
