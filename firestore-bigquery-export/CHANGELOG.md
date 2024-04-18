@@ -1,3 +1,7 @@
+## Version 0.1.49
+
+fix - fix the issue "not creating table on install"
+
 ## Version 0.1.48
 
 fix - fix the error "no resource found for `fsimportexistingdocs`"
