@@ -71,7 +71,7 @@ describe("extension", () => {
   });
 
   test("functions are exported", () => {
-    const exportedFunctions = jest.requireActual("../src");
+    const exportedFunctions: any = jest.requireActual("../src");
     expect(exportedFunctions.fsexportbigquery).toBeInstanceOf(Function);
   });
 

@@ -4,11 +4,11 @@ import * as path from "path";
 import * as fs from "fs";
 
 import { Bucket } from "@google-cloud/storage";
-import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
 import { uuid } from "uuidv4";
 
 import config from "./config";
 import * as logs from "./logs";
+import { ObjectMetadata } from "firebase-functions/v1/storage";
 
 export interface ResizedImageResult {
   size: string;

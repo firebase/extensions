@@ -6,6 +6,7 @@
     "types": ["node", "jest", "chai"],
     "target": "ES2020",
     "module": "commonjs",
+    "skipLibCheck": true,
     "noImplicitReturns": true,
     "sourceMap": false
   },
