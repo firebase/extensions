@@ -25,14 +25,14 @@ import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreEventHistoryTracker,
-} from "@firebaseextensions/firestore-bigquery-change-tracker";
+} from "./change_tracker";
 
 import { getEventarc } from "firebase-admin/eventarc";
 import * as logs from "./logs";
 import * as events from "./events";
 import { getChangeType, getDocumentId, resolveWildcardIds } from "./util";
 
-const eventTracker: FirestoreEventHistoryTracker =
+const eventTracker: FirestoreBigQueryEventHistoryTracker =
   new FirestoreBigQueryEventHistoryTracker({
     tableId: config.tableId,
     datasetId: config.datasetId,

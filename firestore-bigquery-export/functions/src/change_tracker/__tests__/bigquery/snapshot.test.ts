@@ -1,0 +1,117 @@
+/*
+ * Copyright 2019 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import * as fs from "fs";
+import * as sqlFormatter from "sql-formatter";
+import * as util from "util";
+import * as bigquery from "@google-cloud/bigquery";
+import { buildLatestSnapshotViewQuery } from "../../bigquery/snapshot";
+import { FirestoreBigQueryEventHistoryTracker } from "../../bigquery";
+
+const fixturesDir = __dirname + "/../fixtures";
+const sqlDir = fixturesDir + "/sql";
+
+const testProjectId = "test";
+const testDataset = "test_dataset";
+const testTable = "test_table";
+
+const readFile = util.promisify(fs.readFile);
+
+process.env.PROJECT_ID = testProjectId;
+
+const trackerInstance = new FirestoreBigQueryEventHistoryTracker({
+  datasetId: "id",
+  datasetLocation: undefined,
+  tableId: "id",
+  transformFunction: "",
+  timePartitioning: null,
+  timePartitioningField: undefined,
+  timePartitioningFieldType: undefined,
+  timePartitioningFirestoreField: undefined,
+  clustering: null,
+  bqProjectId: null,
+});
+
+async function readFormattedSQL(file: string): Promise<string> {
+  const query = await readFile(file, "utf8");
+  return sqlFormatter.format(query);
+}
+
+describe("FirestoreBigQueryEventHistoryTracker functionality", () => {
+  it('should have a default dataset location of "us"', () => {
+    expect(trackerInstance.config.datasetLocation).toBe("us");
+  });
+
+  it("should create a dataset with the location property set", () => {
+    expect(trackerInstance.getBigqueryDataset()).toBeInstanceOf(
+      bigquery.Dataset
+    );
+  });
+});
+
+describe("latest snapshot view sql generation", () => {
+  it("should generate the expected sql", async () => {
+    const expectedQuery = await readFormattedSQL(
+      `${sqlDir}/latestConsistentSnapshot.sql`
+    );
+    const query = buildLatestSnapshotViewQuery({
+      datasetId: testDataset,
+      tableName: testTable,
+      timestampColumnName: "timestamp",
+      groupByColumns: ["timestamp", "event_id", "operation", "data"],
+      useLegacyQuery: false,
+    });
+    expect(query).toBe(expectedQuery);
+  });
+
+  it("should generate correct sql with no groupBy columns", async () => {
+    const expectedQuery = await readFormattedSQL(
+      `${sqlDir}/latestConsistentSnapshotNoGroupBy.sql`
+    );
+    const query = buildLatestSnapshotViewQuery({
+      datasetId: testDataset,
+      tableName: testTable,
+      timestampColumnName: "timestamp",
+      groupByColumns: [],
+      useLegacyQuery: false,
+    });
+    expect(query).toBe(expectedQuery);
+  });
+
+  it("should throw an error for empty group by columns", async () => {
+    expect(() =>
+      buildLatestSnapshotViewQuery({
+        datasetId: testDataset,
+        tableName: testTable,
+        timestampColumnName: "timestamp",
+        groupByColumns: [""],
+        useLegacyQuery: false,
+      })
+    ).toThrow();
+  });
+
+  it("should throw an error for empty timestamp field", async () => {
+    expect(() =>
+      buildLatestSnapshotViewQuery({
+        datasetId: testDataset,
+        tableName: testTable,
+        timestampColumnName: "",
+        groupByColumns: [],
+        useLegacyQuery: false,
+      })
+    ).toThrow();
+  });
+});
