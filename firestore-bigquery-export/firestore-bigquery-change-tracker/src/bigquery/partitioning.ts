@@ -4,7 +4,7 @@ import * as firebase from "firebase-admin";
 
 import * as logs from "../logs";
 import * as bigquery from "@google-cloud/bigquery";
-
+import * as functions from "firebase-functions";
 import { getNewPartitionField } from "./schema";
 import { BigQuery, TableMetadata } from "@google-cloud/bigquery";
 
@@ -135,18 +135,22 @@ export class Partitioning {
   }
 
   private async isTablePartitioned() {
+    const [tableExists] = await this.table.exists();
+
+    if (!this.table || !tableExists) return false;
+
     /* Return true if partition metadata already exists */
     const [metadata] = await this.table.getMetadata();
-    if (!!metadata.timePartitioning) {
+    if (metadata.timePartitioning) {
       logs.cannotPartitionExistingTable(this.table);
-      return Promise.resolve(true);
+      return true;
     }
 
     /** Find schema fields **/
     const schemaFields = await this.metaDataSchemaFields();
 
     /** Return false if no schema exists */
-    if (!schemaFields) return Promise.resolve(false);
+    if (!schemaFields) return false;
 
     /* Return false if time partition field not found */
     return schemaFields.some(
@@ -156,11 +160,11 @@ export class Partitioning {
 
   async isValidPartitionForExistingTable(): Promise<boolean> {
     /** Return false if partition type option has not been set */
-    if (!this.isPartitioningEnabled()) return Promise.resolve(false);
+    if (!this.isPartitioningEnabled()) return false;
 
     /* Return false if table is already partitioned */
     const isPartitioned = await this.isTablePartitioned();
-    if (isPartitioned) return Promise.resolve(false);
+    if (isPartitioned) return false;
 
     return this.hasValidCustomPartitionConfig();
   }
@@ -242,44 +246,54 @@ export class Partitioning {
     return fields.map(($) => $.name).includes(timePartitioningField);
   }
 
+  private async shouldAddPartitioningToSchema(): Promise<{
+    proceed: boolean;
+    message: string;
+  }> {
+    if (!this.isPartitioningEnabled()) {
+      return { proceed: false, message: "Partitioning not enabled" };
+    }
+    if (!this.hasValidTableReference()) {
+      return { proceed: false, message: "Invalid table reference" };
+    }
+    if (!this.hasValidCustomPartitionConfig()) {
+      return { proceed: false, message: "Invalid partition config" };
+    }
+    if (!this.hasValidTimePartitionType()) {
+      return { proceed: false, message: "Invalid partition type" };
+    }
+    if (!this.hasValidTimePartitionOption()) {
+      return { proceed: false, message: "Invalid partition option" };
+    }
+    if (this.hasHourAndDatePartitionConfig()) {
+      return {
+        proceed: false,
+        message: "Invalid partitioning and field type combination",
+      };
+    }
+    if (this.customFieldExists()) {
+      return { proceed: false, message: "Field already exists on schema" };
+    }
+    if (await this.isTablePartitioned()) {
+      return { proceed: false, message: "Table is already partitioned" };
+    }
+    if (!this.config.timePartitioningField) {
+      return { proceed: false, message: "Partition field not provided" };
+    }
+    return { proceed: true, message: "" };
+  }
+
   async addPartitioningToSchema(fields = []): Promise<void> {
-    /** Return if partition type option has not been set */
-    if (!this.isPartitioningEnabled()) return;
-
-    /** Return if class has invalid table reference */
-    if (!this.hasValidTableReference()) return;
-
-    /** Return if table is already partitioned **/
-    if (await this.isTablePartitioned()) return;
-
-    /** Return if partition config is invalid */
-    if (!this.hasValidCustomPartitionConfig()) return;
-
-    /** Return if an invalid partition type has been requested */
-    if (!this.hasValidTimePartitionType()) return;
-
-    /** Return if an invalid partition option has been requested */
-    if (!this.hasValidTimePartitionOption()) return;
-
-    /** Return if invalid partitioning and field type combination */
-    if (this.hasHourAndDatePartitionConfig()) return;
-
-    /** Return if partition field has not been provided */
-    if (!this.config.timePartitioningField) return;
-
-    /** Return if field already exists on schema */
-    if (this.customFieldExists(fields)) return;
-
-    /** Add new partitioning field **/
+    const { proceed, message } = await this.shouldAddPartitioningToSchema();
+    if (!proceed) {
+      functions.logger.warn(`Did not add partitioning to schema: ${message}`);
+      return;
+    }
+    // Add new partitioning field
     fields.push(getNewPartitionField(this.config));
-
-    /** Log successful addition of partition column */
-    logs.addPartitionFieldColumn(
-      this.table.id,
-      this.config.timePartitioningField
+    functions.logger.log(
+      `Added new partition field: ${this.config.timePartitioningField} to table ID: ${this.table.id}`
     );
-
-    return;
   }
 
   async updateTableMetadata(options: bigquery.TableMetadata): Promise<void> {
