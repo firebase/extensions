@@ -9,6 +9,10 @@ module.exports = {
       tsConfig: "<rootDir>/__tests__/tsconfig.json",
     },
   },
+  snapshotFormat: {
+    escapeString: true,
+    printBasicPrototype: true,
+  },
   testEnvironment: "node",
   preset: "ts-jest",
   globalSetup: "./jest.setup.js",

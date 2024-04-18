@@ -12,4 +12,8 @@ module.exports = {
       "<rootDir>/node_modules/firebase-admin/lib/firestore",
     "firebase-admin/auth": "<rootDir>/node_modules/firebase-admin/lib/auth",
   },
+  snapshotFormat: {
+    escapeString: true,
+    printBasicPrototype: true,
+  },
 };
