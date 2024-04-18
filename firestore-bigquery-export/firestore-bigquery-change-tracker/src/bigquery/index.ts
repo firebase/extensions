@@ -42,6 +42,7 @@ import {
 import { Partitioning } from "./partitioning";
 import { Clustering } from "./clustering";
 import { tableRequiresUpdate, viewRequiresUpdate } from "./checkUpdates";
+import { parseErrorMessage, waitForInitialization } from "./utils";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
@@ -203,27 +204,10 @@ export class FirestoreBigQueryEventHistoryTracker
    * A half a second delay is added per check while the function
    * continually re-checks until the referenced dataset and table become available.
    */
-  private async waitForInitialization() {
-    return new Promise((resolve) => {
-      let handle = setInterval(async () => {
-        try {
-          const dataset = this.bigqueryDataset();
-          const changelogName = this.rawChangeLogTableName();
-          const table = dataset.table(changelogName);
-
-          const [datasetExists] = await dataset.exists();
-          const [tableExists] = await table.exists();
-
-          if (datasetExists && tableExists) {
-            clearInterval(handle);
-            return resolve(table);
-          }
-        } catch (ex) {
-          clearInterval(handle);
-          logs.failedToInitializeWait(ex.message);
-        }
-      }, 5000);
-    });
+  private async _waitForInitialization() {
+    const dataset = this.bigqueryDataset();
+    const changelogName = this.rawChangeLogTableName();
+    return waitForInitialization({ dataset, changelogName });
   }
 
   /**
@@ -279,17 +263,39 @@ export class FirestoreBigQueryEventHistoryTracker
       if (this._initialized) {
         return;
       }
+      try {
+        await this.initializeDataset();
+      } catch (error) {
+        const message = parseErrorMessage(error, "initializing dataset");
+        throw new Error(`Error initializing dataset: ${message}`);
+      }
 
-      await this.initializeDataset();
+      try {
+        await this.initializeRawChangeLogTable();
+      } catch (error) {
+        const message = parseErrorMessage(
+          error,
+          "initializing raw change log table"
+        );
+        throw new Error(`Error initializing raw change log table: ${message}`);
+      }
 
-      await this.initializeRawChangeLogTable();
-
-      await this.initializeLatestView();
+      try {
+        await this.initializeLatestView();
+      } catch (error) {
+        const message = parseErrorMessage(error, "initializing latest view");
+        throw new Error(`Error initializing latest view: ${message}`);
+      }
+      await this._waitForInitialization();
 
       this._initialized = true;
-    } catch (ex) {
-      await this.waitForInitialization();
-      this._initialized = true;
+    } catch (error) {
+      const message = parseErrorMessage(
+        error,
+        "initializing BigQuery resources"
+      );
+      console.error("Error initializing BigQuery resources: ", message);
+      throw error;
     }
   }
 
@@ -396,7 +402,6 @@ export class FirestoreBigQueryEventHistoryTracker
           kmsKeyName: this.config.kmsKeyName,
         };
       }
-
       //Add partitioning
       await partitioning.addPartitioningToSchema(schema.fields);
 
