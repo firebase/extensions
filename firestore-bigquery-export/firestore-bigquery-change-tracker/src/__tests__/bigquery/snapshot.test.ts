@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import * as chai from "chai";
 import * as fs from "fs";
 import * as sqlFormatter from "sql-formatter";
 import * as util from "util";
 import * as bigquery from "@google-cloud/bigquery";
-
 import { buildLatestSnapshotViewQuery } from "../../bigquery/snapshot";
 import { FirestoreBigQueryEventHistoryTracker } from "../../bigquery";
 
@@ -30,7 +28,6 @@ const testProjectId = "test";
 const testDataset = "test_dataset";
 const testTable = "test_table";
 
-const expect = chai.expect;
 const readFile = util.promisify(fs.readFile);
 
 process.env.PROJECT_ID = testProjectId;
@@ -55,11 +52,13 @@ async function readFormattedSQL(file: string): Promise<string> {
 
 describe("FirestoreBigQueryEventHistoryTracker functionality", () => {
   it('should have a default dataset location of "us"', () => {
-    expect(trackerInstance.config.datasetLocation).to.equal("us");
+    expect(trackerInstance.config.datasetLocation).toBe("us");
   });
 
   it("should create a dataset with the location property set", () => {
-    expect(trackerInstance.bigqueryDataset()).instanceOf(bigquery.Dataset);
+    expect(trackerInstance.getBigqueryDataset()).toBeInstanceOf(
+      bigquery.Dataset
+    );
   });
 });
 
@@ -75,8 +74,9 @@ describe("latest snapshot view sql generation", () => {
       groupByColumns: ["timestamp", "event_id", "operation", "data"],
       useLegacyQuery: false,
     });
-    expect(query).to.equal(expectedQuery);
+    expect(query).toBe(expectedQuery);
   });
+
   it("should generate correct sql with no groupBy columns", async () => {
     const expectedQuery = await readFormattedSQL(
       `${sqlDir}/latestConsistentSnapshotNoGroupBy.sql`
@@ -88,28 +88,30 @@ describe("latest snapshot view sql generation", () => {
       groupByColumns: [],
       useLegacyQuery: false,
     });
-    expect(query).to.equal(expectedQuery);
+    expect(query).toBe(expectedQuery);
   });
+
   it("should throw an error for empty group by columns", async () => {
-    expect(
-      buildLatestSnapshotViewQuery.bind(null, {
+    expect(() =>
+      buildLatestSnapshotViewQuery({
         datasetId: testDataset,
         tableName: testTable,
         timestampColumnName: "timestamp",
         groupByColumns: [""],
         useLegacyQuery: false,
       })
-    ).to.throw();
+    ).toThrow();
   });
+
   it("should throw an error for empty timestamp field", async () => {
-    expect(
-      buildLatestSnapshotViewQuery.bind(null, {
+    expect(() =>
+      buildLatestSnapshotViewQuery({
         datasetId: testDataset,
         tableName: testTable,
         timestampColumnName: "",
         groupByColumns: [],
         useLegacyQuery: false,
       })
-    ).to.throw();
+    ).toThrow();
   });
 });
