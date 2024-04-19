@@ -18,7 +18,7 @@ import * as admin from "firebase-admin";
 import { getFunctions } from "firebase-admin/functions";
 import { getExtensions } from "firebase-admin/extensions";
 import * as fs from "fs";
-import * as functions from "firebase-functions";
+import * as functions from "firebase-functions/v1";
 import * as mkdirp from "mkdirp";
 import * as os from "os";
 import * as path from "path";
@@ -30,8 +30,9 @@ import * as logs from "./logs";
 import { shouldResize } from "./filters";
 import * as events from "./events";
 import { v4 as uuidv4 } from "uuid";
-import { countNegativeTraversals } from "./util";
+import { convertToObjectMetadata, countNegativeTraversals } from "./util";
 import { File } from "@google-cloud/storage";
+import { ObjectMetadata } from "firebase-functions/v1/storage";
 
 sharp.cache(false);
 
@@ -48,7 +49,7 @@ logs.init();
  */
 
 const generateResizedImageHandler = async (
-  object: functions.storage.ObjectMetadata,
+  object: ObjectMetadata,
   verbose = true
 ): Promise<void> => {
   !verbose || logs.start();
@@ -200,7 +201,6 @@ const generateResizedImageHandler = async (
 export const generateResizedImage = functions.storage
   .object()
   .onFinalize(async (object, context) => {
-    // await events.recordStartEvent({ object, context });
     await generateResizedImageHandler(object);
     await events.recordCompletionEvent({ context });
   });
@@ -223,18 +223,23 @@ export const backfillResizedImages = functions.tasks
     if (data?.nextPageQuery == undefined) {
       logs.startBackfill();
     }
+
     const bucket = admin.storage().bucket(process.env.IMG_BUCKET);
     const query = data.nextPageQuery || {
       autoPaginate: false,
       maxResults: 3, // We only grab 3 images at a time to minimize the chance of OOM errors.
     };
     const [files, nextPageQuery] = await bucket.getFiles(query);
-    const filesToResize = files.filter((f) => {
+    const filesToResize = files.filter((f: File) => {
       logs.continueBackfill(f.metadata.name);
-      return shouldResize(f.metadata);
+      return shouldResize(convertToObjectMetadata(f.metadata));
     });
+
     const filePromises = filesToResize.map((f) => {
-      return generateResizedImageHandler(f.metadata, /*verbose=*/ false);
+      return generateResizedImageHandler(
+        convertToObjectMetadata(f.metadata),
+        /*verbose=*/ false
+      );
     });
     const results = await Promise.allSettled(filePromises);
 
