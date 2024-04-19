@@ -1,0 +1,62 @@
+name: Conditional Testing
+
+on:
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  check_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      changed_extensions: ${{ steps.set_changed.outputs.changed_extensions }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Get changed directories
+        id: set_changed
+        run: |
+          echo "::group::Determining Changed Directories"
+          # List specific directories you want to check
+          DIRECTORIES="auth-mailchimp-sync delete-user-data firestore-bigquery-export firestore-counter firestore-send-email firestore-shorten-urls-bitly firestore-translate-text rtdb-limit-child-nodes storage-resize-images"
+
+          # Initialize an empty string to hold the paths of changed directories
+          CHANGED_EXTENSIONS=""
+
+          # Loop through each directory and check if there have been any changes
+          for dir in $DIRECTORIES; do
+            if git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -q "^extensions/$dir/"; then
+              CHANGED_EXTENSIONS+="$dir "
+            fi
+          done
+
+          # Trim any trailing whitespace and print the output
+          CHANGED_EXTENSIONS=$(echo $CHANGED_EXTENSIONS | xargs)
+          echo "Changed extensions: $CHANGED_EXTENSIONS"
+          echo "::endgroup::"
+          echo "::set-output name=changed_extensions::$CHANGED_EXTENSIONS"
+
+  test_extensions:
+    needs: check_changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        extension:
+          ${{ fromJson(needs.check_changes.outputs.changed_extensions) }}
+    defaults:
+      run:
+        working-directory: extensions/${{ matrix.extension }}/functions
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+      - name: Install dependencies
+        run: npm install
+      - name: Build
+        run: npm run build
+      - name: Run tests
+        run: npm test
