@@ -28,6 +28,31 @@ let dataset: Dataset;
 let table: Table;
 let view: Table;
 describe("e2e", () => {
+  describe("initialization", () => {
+    beforeEach(async () => {
+      randomID = (Math.random() + 1).toString(36).substring(7);
+      datasetId = `dataset_${randomID}`;
+      tableId = `table_${randomID}`;
+      tableId_raw = `${tableId}_raw_changelog`;
+      dataset = bq.dataset(datasetId);
+    });
+
+    afterEach(async () => {
+      await deleteTable({
+        datasetId,
+      });
+    });
+    test("successfully creates a dataset and table", async () => {
+      await changeTracker({
+        datasetId,
+        tableId,
+      }).record([event]);
+
+      const [metadata] = await dataset.table(tableId_raw).getMetadata();
+
+      expect(metadata).toBeDefined();
+    });
+  });
   describe("Partitioning", () => {
     beforeEach(async () => {
       randomID = (Math.random() + 1).toString(36).substring(7);
@@ -108,13 +133,14 @@ describe("e2e", () => {
 
         const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
+        expect(metadata.timePartitioning).toBeDefined();
+
         const [changeLogRows] = await getBigQueryTableData(
           process.env.PROJECT_ID,
           datasetId,
           tableId
         );
 
-        expect(metadata.timePartitioning).toBeDefined();
         expect(changeLogRows[0].created.value).toBe(
           BigQuery.timestamp(created.toDate()).value
         );
@@ -369,6 +395,10 @@ describe("e2e", () => {
       });
 
       test("does not update an existing non partitioned table, that has a valid schema with timePartitioning only", async () => {
+        const tableExists = await dataset.table(tableId_raw).exists();
+
+        expect(tableExists[0]).toBe(true);
+
         await changeTracker({
           datasetId,
           tableId,
@@ -380,7 +410,7 @@ describe("e2e", () => {
         expect(metadata.timePartitioning).toBeUndefined();
 
         expect(consoleLogSpyWarn).toBeCalledWith(
-          `Cannot partition an existing table ${datasetId}_${tableId_raw}`
+          `Did not add partitioning to schema: Partition field not provided`
         );
         expect(consoleLogSpy).toBeCalledWith(
           `BigQuery dataset already exists: ${datasetId}`
