@@ -1,4 +1,4 @@
-import { Translate } from "@google-cloud/translate";
+import { v2 } from "@google-cloud/translate";
 import * as logs from "../logs";
 import * as events from "../events";
 import * as admin from "firebase-admin";
@@ -9,7 +9,9 @@ export type Translation = {
   output: string;
 };
 
-export const translate = new Translate({ projectId: process.env.PROJECT_ID });
+export const translate = new v2.Translate({
+  projectId: process.env.PROJECT_ID,
+});
 
 export const translateString = async (
   string: string,
