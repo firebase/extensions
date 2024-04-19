@@ -1,14 +1,12 @@
+process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
+process.env.FIREBASE_PUBSUB_EMULATOR_HOST = "127.0.0.1:8085";
 // Import your function and any necessary Firebase modules
 import { recursiveDelete } from "../src/recursiveDelete"; // Update with your actual file path
 import * as admin from "firebase-admin";
 
-const bulkWriterMock = () => ({
-  onWriteError: jest.fn(),
-  close: jest.fn(() => Promise.resolve()),
-});
 // Mock admin and firestore
 
-admin.initializeApp();
+admin.initializeApp({ projectId: "demo-test" });
 
 describe("recursiveDelete", () => {
   // Common setup

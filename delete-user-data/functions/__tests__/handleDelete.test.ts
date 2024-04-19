@@ -1,10 +1,11 @@
+process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
+process.env.FIREBASE_PUBSUB_EMULATOR_HOST = "127.0.0.1:8085";
 import { handleDeletion } from "../src";
 import * as admin from "firebase-admin"; // Import Firebase admin to mock Firestore
 import firebaseFunctionsTest from "firebase-functions-test";
-import { search } from "../src/search";
-import { Message } from "@google-cloud/pubsub";
+// Mock admin and firestore
 
-const testEnv = firebaseFunctionsTest();
+const testEnv = firebaseFunctionsTest({ projectId: "demo-test" });
 const { wrap } = testEnv;
 
 jest.mock("../src/config", () => ({
