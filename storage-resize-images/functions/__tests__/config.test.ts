@@ -4,15 +4,17 @@ const environment = {
   LOCATION: "us-central1",
   IMG_BUCKET: "extensions-testing.appspot.com",
   CACHE_CONTROL_HEADER: undefined,
-  IMG_SIZES: "200x200",
+  IMG_SIZES: `200x200`,
   RESIZED_IMAGES_PATH: undefined,
   DELETE_ORIGINAL_FILE: "true",
 };
 
 let restoreEnv;
 
-const { config, deleteImage } = global;
 let deleteTypeCounter = 0;
+
+let config;
+let deleteImage;
 
 describe("extension", () => {
   beforeEach(() => {
@@ -27,33 +29,27 @@ describe("extension", () => {
         DELETE_ORIGINAL_FILE: "on_success",
       });
     }
+    const actualConfigModule = jest.requireActual("../src/config");
+    config = actualConfigModule.config;
+    deleteImage = actualConfigModule.deleteImage;
   });
 
   afterEach(() => restoreEnv());
 
   test("configuration detected from environment variables", async () => {
-    const mockConfig = config();
-
-    expect(mockConfig).toMatchSnapshot({});
+    expect(config).toMatchSnapshot({});
   });
 
   test("always delete original file", async () => {
-    const mockConfig = config();
-    const mockDeleteImage = deleteImage();
     deleteTypeCounter++;
-    expect(mockConfig.deleteOriginalFile).toEqual(mockDeleteImage.always);
+    expect(config.deleteOriginalFile).toEqual(deleteImage.always);
   });
 
   test("never delete original file", async () => {
-    const mockConfig = config();
-    const mockDeleteImage = deleteImage();
     deleteTypeCounter++;
-    expect(mockConfig.deleteOriginalFile).toEqual(mockDeleteImage.never);
+    expect(config.deleteOriginalFile).toEqual(deleteImage.never);
   });
   test("delete original file on success", async () => {
-    const mockConfig = config();
-    const mockDeleteImage = deleteImage();
-
-    expect(mockConfig.deleteOriginalFile).toEqual(mockDeleteImage.onSuccess);
+    expect(config.deleteOriginalFile).toEqual(deleteImage.onSuccess);
   });
 });
