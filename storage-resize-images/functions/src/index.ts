@@ -25,7 +25,7 @@ import * as path from "path";
 import * as sharp from "sharp";
 
 import { ResizedImageResult, modifyImage } from "./resize-image";
-import config, { deleteImage } from "./config";
+import { config, deleteImage } from "./config";
 import * as logs from "./logs";
 import { shouldResize } from "./filters";
 import * as events from "./events";
