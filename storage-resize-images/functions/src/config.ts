@@ -44,7 +44,7 @@ function allowAnimated(sharpOptions = "{}", overrideIsAnimated) {
   return overrideIsAnimated === "true" || undefined ? true : false;
 }
 
-export default {
+export const config = {
   bucket: process.env.IMG_BUCKET,
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
   doBackfill: process.env.DO_BACKFILL === "true",

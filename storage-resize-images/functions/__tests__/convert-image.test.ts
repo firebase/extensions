@@ -2,7 +2,7 @@ import mockedEnv from "mocked-env";
 import imageType from "image-type";
 import * as util from "util";
 import * as fs from "fs";
-
+import * as path from "path";
 const env = {
   IMG_BUCKET: "IMG_BUCKET",
   CACHE_CONTROL_HEADER: "CACHE_CONTROL_HEADER",
@@ -15,7 +15,9 @@ const env = {
 mockedEnv(env);
 
 import { convertType } from "../src/resize-image";
-import config from "../src/config";
+import { config } from "../src/config";
+
+jest.mock("../src/config");
 
 const readFile = util.promisify(fs.readFile);
 
@@ -23,9 +25,9 @@ let bufferJPG;
 let bufferPNG;
 let bufferGIF;
 beforeAll(async () => {
-  bufferJPG = await readFile(__dirname + "/test-image.jpeg");
-  bufferPNG = await readFile(__dirname + "/test-image.png");
-  bufferGIF = await readFile(__dirname + "/test-image.gif");
+  bufferJPG = await readFile(path.join(__dirname, "/test-image.jpeg"));
+  bufferPNG = await readFile(path.join(__dirname, "/test-image.png"));
+  bufferGIF = await readFile(path.join(__dirname, "/test-image.gif"));
 });
 
 describe("convertType", () => {

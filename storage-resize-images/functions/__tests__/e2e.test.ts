@@ -3,7 +3,7 @@ import { Storage } from "firebase-admin/storage";
 import { config } from "dotenv";
 import * as path from "path";
 import { waitForFile } from "./util";
-
+jest.mock("../src/config");
 const envLocalPath = path.resolve(
   __dirname,
   "../../../_emulator/extensions/storage-resize-images.env.local"
@@ -31,9 +31,11 @@ describe("extension", () => {
       });
     }
     storage = admin.storage();
-    await storage.bucket().upload(__dirname + "/not-an-image.jpeg", {});
-    await storage.bucket().upload(__dirname + "/test-image.jpeg", {});
-    await storage.bucket().upload(__dirname + "/test-img.jfif", {
+    await storage
+      .bucket()
+      .upload(path.join(__dirname, "/not-an-image.jpeg"), {});
+    await storage.bucket().upload(path.join(__dirname, "/test-image.jpeg"), {});
+    await storage.bucket().upload(path.join(__dirname, "/test-img.jfif"), {
       metadata: { contentType: "image/jpeg" },
     });
   });
