@@ -6,7 +6,7 @@ import * as fs from "fs";
 import { Bucket } from "@google-cloud/storage";
 import { uuid } from "uuidv4";
 
-import config from "./config";
+import { config } from "./config";
 import * as logs from "./logs";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
 

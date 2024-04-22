@@ -14,11 +14,11 @@
   "main": "index.js",
   "type": "module",
   "dependencies": {
-    "firebase-admin": "^11.5.0",
-    "firebase-functions": "^4.2.0"
+    "firebase-admin": "^12.1.0",
+    "firebase-functions": "^4.9.0"
   },
   "devDependencies": {
-    "firebase-functions-test": "^3.0.0"
+    "firebase-functions-test": "^3.2.0"
   },
   "private": true
 }

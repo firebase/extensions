@@ -22,8 +22,9 @@ import {
   supportedImageContentTypeMap,
 } from "../src/resize-image";
 
-// 100x100
-const TEST_IMAGE = `${__dirname}/test-image.png`;
+import * as path from "path";
+
+const TEST_IMAGE = path.join(__dirname, "test-image.png");
 
 describe("extension", () => {
   beforeEach(() => {

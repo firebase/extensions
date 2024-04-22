@@ -1,7 +1,7 @@
 import * as path from "path";
 
 import * as logs from "./logs";
-import config from "./config";
+import { config } from "./config";
 import { supportedContentTypes } from "./resize-image";
 import { startsWithArray } from "./util";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
