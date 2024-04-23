@@ -1,3 +1,9 @@
+## Version 0.1.21
+
+fixed - fix autodiscovery recursive deletion
+
+fixed - update dependencies and fix vulnerabilities
+
 ## Version 0.1.20
 
 fix - update regex for RTDB instance param
