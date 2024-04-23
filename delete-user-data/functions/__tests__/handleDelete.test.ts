@@ -67,12 +67,6 @@ describe("handleDelete", () => {
       await db.doc(`${path}/subcollection/doc`).set({ foo: "bar" });
     }
 
-    const message = {
-      data: Buffer.from(JSON.stringify({ uid: "testUid", paths })).toString(
-        "base64"
-      ),
-    };
-
     await wrappedHandleDelete({ uid: "testUid", paths });
 
     const checkExists = await Promise.all(

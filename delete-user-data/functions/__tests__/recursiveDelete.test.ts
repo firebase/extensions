@@ -1,5 +1,5 @@
 // Import your function and any necessary Firebase modules
-import { recursiveDelete } from "./recursiveDelete"; // Update with your actual file path
+import { recursiveDelete } from "../src/recursiveDelete"; // Update with your actual file path
 import * as admin from "firebase-admin";
 
 const bulkWriterMock = () => ({
