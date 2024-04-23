@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
 import {
   WorkerShardingInfo,
   ShardedCounterController as Controller,
@@ -21,8 +22,6 @@ import {
 } from "../src/controller";
 import * as admin from "firebase-admin";
 import * as uuid from "uuid";
-
-process.env.FIRESTORE_EMULATOR_HOST = "localhost:8080";
 
 // let serviceAccount = require("../../test-project-key.json");
 
@@ -32,7 +31,7 @@ class ControllerTest extends Controller {
   }
 }
 
-const app = admin.initializeApp();
+const app = admin.initializeApp({ projectId: "demo-test" });
 
 const db = app.firestore();
 db.settings({ timestampsInSnapshots: true });

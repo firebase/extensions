@@ -10,7 +10,7 @@
     "compile": "tsc",
     "local:emulator": "cd ../../_emulator && ./emulator_wrapper.sh",
     "test": "cd ../../_emulator && firebase emulators:exec jest -P demo-test",
-    "testIfEmulatorRunning": "wait-on tcp:4001 && jest",
+    "testIfEmulatorRunning": "wait-on tcp:4001 &&CI_TEST=true && jest",
     "test:local": "concurrently --kill-others \"npm run local:emulator || exit 0\" \"npm run testIfEmulatorRunning\"",
     "test:watch": "concurrently \"npm run local:emulator\" \"jest --watch\"",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"

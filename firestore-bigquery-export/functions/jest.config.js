@@ -26,7 +26,7 @@ module.exports = {
     NODE_ENV: "test",
   },
   setupFiles: ["<rootDir>/__tests__/jest.setup.ts"],
-  testMatch: ["**/__tests__/*.test.ts"],
+  testMatch: ["<rootDir>/__tests__/*.test.ts"],
   testPathIgnorePatterns: process.env.CI_TEST === "true" ? ["e2e"] : [],
   moduleNameMapper: {
     "firebase-admin/eventarc":

@@ -33,8 +33,6 @@ const databaseURL = getDatabaseUrl(
   config.selectedDatabaseInstance,
   config.selectedDatabaseLocation
 );
-console.log("");
-
 // Initialize the Firebase Admin SDK
 admin.initializeApp({
   credential: admin.credential.applicationDefault(),

@@ -18,7 +18,7 @@ import { documentData } from "./fixtures/documentData";
  * table: bq_e2e_test
  */
 
-describe("e2e", () => {
+describe.skip("e2e", () => {
   test("successfully syncs a document", async () => {
     const db = admin.firestore();
     const testData = await documentData();

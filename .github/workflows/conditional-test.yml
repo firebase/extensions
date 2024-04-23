@@ -69,21 +69,25 @@ jobs:
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
       - name: Install Firebase CLI
-        uses: nick-invision/retry@v1
+        uses: nick-invision/retry@v3
         with:
           timeout_minutes: 10
           retry_wait_seconds: 60
           max_attempts: 3
-          command: npm i -g firebase-tools@11
+          command: npm i -g firebase-tools@13
 
       - name: Setup e2e secrets
         run: |
           echo SMTP_PASSWORD=${{ secrets.SENDGRID_API_KEY }} >> _emulator/extensions/firestore-send-email-sendgrid.secret.local
 
-      - run: cd ${{ matrix.extension }}/functions && npm install
+      - run: npm install -g rimraf
+      - run:
+          export NODE_ENV=development && cd ${{ matrix.extension }}/functions &&
+          npm install
       - run: cd ${{ matrix.extension }}/functions && npm run build
       - run: node scripts/changeFirebaseJson.cjs ${{ matrix.extension }}
       - name: Start Firebase Emulator
         run: cd _emulator && firebase emulators:start &
       - run:
-          cd ${{ matrix.extension }}/functions && npm run testIfEmulatorRunning
+          export CI_TEST=true && GOOGLE_CLOUD_PROJECT=demo-test && cd ${{
+          matrix.extension }}/functions && npm run testIfEmulatorRunning

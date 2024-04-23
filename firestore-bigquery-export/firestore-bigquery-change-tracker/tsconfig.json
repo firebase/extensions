@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "lib",
     "types": ["node"],
+    "typeRoots": ["node_modules/@types"],
     "target": "ES2020",
     "skipLibCheck": true
   },
