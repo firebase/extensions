@@ -2,7 +2,7 @@ import * as admin from "firebase-admin";
 
 const MAX_RETRY_ATTEMPTS = 3;
 
-export const recursiveDelete = async (ref: string) => {
+export const recursiveDelete = async (path: string) => {
   const db = admin.firestore();
   // Recursively delete a reference and log the references of failures.
   const bulkWriter = db.bulkWriter();
@@ -16,9 +16,9 @@ export const recursiveDelete = async (ref: string) => {
     }
   });
 
-  const isDocument = ref.split("/").length % 2 === 0;
+  const isDocument = path.split("/").length % 2 === 0;
 
-  const reference = isDocument ? db.doc(ref) : db.collection(ref);
+  const reference = isDocument ? db.doc(path) : db.collection(path);
 
   await db.recursiveDelete(reference, bulkWriter);
 };
