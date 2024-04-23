@@ -3,8 +3,6 @@ name: Testing
 on:
   push:
     branches: [next]
-  pull_request:
-    branches: ["**"]
 
 jobs:
   nodejs:
