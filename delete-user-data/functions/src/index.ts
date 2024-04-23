@@ -81,8 +81,11 @@ export const handleDeletion = functions.pubsub
           invalidPaths.push(path);
           continue;
         }
-
-        batch.delete(docRef);
+        if (config.firestoreDeleteMode === "recursive") {
+          await recursiveDelete(path);
+        } else {
+          batch.delete(docRef);
+        }
       }
 
       batchArray.push(batch);
@@ -155,7 +158,7 @@ export const handleSearch = functions.pubsub
           if (reference.id === uid) {
             pathsToDelete.push(reference.path);
           }
-          // If the user has search fields, all the document to the list of documents to search.
+          // If the user has search fields, add the document to the list of documents to search.
           else if (config.searchFields) {
             documentReferencesToSearch.push(reference);
           }
