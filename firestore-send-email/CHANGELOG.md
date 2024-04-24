@@ -1,3 +1,9 @@
+## Version 0.1.33
+
+fixed - fix issue with sendgrid fields
+
+fixed - fix vulnerabilities and update dependencies
+
 ## Version 0.1.32
 
 feature - added support for SendGrid dynamic templates
