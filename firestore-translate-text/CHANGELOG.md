@@ -1,3 +1,7 @@
+## Version 0.1.17
+
+fixed - updated vulnerable dependencies
+
 ## Version 0.1.16
 
 fix - temporarily disable backfill feature

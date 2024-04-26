@@ -1,3 +1,7 @@
+## Version 0.1.15
+
+fixed - updated vulnerable dependencies
+
 ## Version 0.1.14
 
 feature - add optional custom events
