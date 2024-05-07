@@ -31,7 +31,6 @@ import {
 import * as events from "./events";
 
 logs.init();
-
 let db: admin.firestore.Firestore;
 let transport: nodemailer.Transporter;
 let templates: Templates;

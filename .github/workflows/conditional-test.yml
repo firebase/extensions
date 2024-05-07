@@ -1,0 +1,93 @@
+name: Conditional Testing
+
+on:
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  check_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      changed_extensions: ${{ steps.set_changed.outputs.changed_extensions }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history for all branches and tags
+          ref: ${{ github.head_ref }} # Ensure PR's head is checked out
+      - name: Get changed directories
+        id: set_changed
+        run: |
+          echo "::group::Determining Changed Directories"
+          DIRECTORIES="auth-mailchimp-sync delete-user-data firestore-bigquery-export firestore-counter firestore-send-email firestore-shorten-urls-bitly firestore-translate-text rtdb-limit-child-nodes storage-resize-images"
+
+          # Set commit SHAs for comparison
+          BASE_SHA=${{ github.event.pull_request.base.sha }}
+          HEAD_SHA=${{ github.event.pull_request.head.sha }}
+
+          # Initialize an empty JSON array
+          CHANGED_EXTENSIONS_JSON="["
+
+          if ! git diff --name-only $BASE_SHA $HEAD_SHA > /dev/null 2>&1; then
+            echo "Error detecting changes using PR base and head SHAs, falling back to default branch comparison."
+            git fetch --no-tags --depth=1 origin +refs/heads/next:refs/remotes/origin/next
+            BASE_SHA=$(git rev-parse origin/next)
+          fi
+
+          first_entry=true
+          for dir in $DIRECTORIES; do
+            if git diff --name-only $BASE_SHA $HEAD_SHA | grep -q "^$dir/"; then
+              if [ "$first_entry" = true ]; then
+                first_entry=false
+              else
+                CHANGED_EXTENSIONS_JSON+=", "
+              fi
+              CHANGED_EXTENSIONS_JSON+="\"$dir\""
+            fi
+          done
+
+          CHANGED_EXTENSIONS_JSON+="]"
+
+          # Output the JSON array to the workflow
+          echo "changed_extensions=$CHANGED_EXTENSIONS_JSON" >> $GITHUB_OUTPUT
+          echo "Changed extensions: $CHANGED_EXTENSIONS_JSON"
+          echo "::endgroup::"
+
+  test_extensions:
+    needs: check_changes
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        extension:
+          ${{ fromJson(needs.check_changes.outputs.changed_extensions) }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+      - name: Install Firebase CLI
+        uses: nick-invision/retry@v3
+        with:
+          timeout_minutes: 10
+          retry_wait_seconds: 60
+          max_attempts: 3
+          command: npm i -g firebase-tools@13
+
+      - name: Setup e2e secrets
+        run: |
+          echo SMTP_PASSWORD=${{ secrets.SENDGRID_API_KEY }} >> _emulator/extensions/firestore-send-email-sendgrid.secret.local
+
+      - run: npm install -g rimraf
+      - run:
+          export NODE_ENV=development && cd ${{ matrix.extension }}/functions &&
+          npm install
+      - run: cd ${{ matrix.extension }}/functions && npm run build
+      - run: node scripts/changeFirebaseJson.cjs ${{ matrix.extension }}
+      - name: Start Firebase Emulator
+        run: cd _emulator && firebase emulators:start &
+      - run:
+          export CI_TEST=true && GOOGLE_CLOUD_PROJECT=demo-test && cd ${{
+          matrix.extension }}/functions && npm run testIfEmulatorRunning
