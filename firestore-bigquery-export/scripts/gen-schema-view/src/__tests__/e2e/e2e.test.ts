@@ -2,7 +2,7 @@ import { BigQuery } from "@google-cloud/bigquery";
 import { getQueryResult, randomId, setupBQ } from "./helpers/setup";
 import executeScript from "./helpers/executeScript";
 
-const bq = new BigQuery({ projectId: "dev-extensions-testing" });
+const bq = new BigQuery({ projectId: "extensions-testing" });
 
 const datasetPrefix = "e2e_test_";
 
