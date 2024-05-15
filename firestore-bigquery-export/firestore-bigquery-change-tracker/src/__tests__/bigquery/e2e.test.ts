@@ -267,7 +267,7 @@ describe("e2e", () => {
         );
       });
 
-      test("successfully partitions with a valid Firebase Timestamp value with a timestamp field and Timestamp type", async () => {
+      test("successfully partitions with a valid Firebase Timestamp value with `timestamp` as field name and Timestamp type", async () => {
         const created = firestore.Timestamp.now();
         const expectedDate = created.toDate().toISOString().substring(0, 22);
 
