@@ -9,7 +9,7 @@ export const defaultQuery = (
       LIMIT 1`;
 
 export const getBigQueryTableData = async (bqProjectId, datasetId, tableId) => {
-  const bq = new BigQuery();
+  const bq = new BigQuery({ projectId: bqProjectId });
 
   // Setup queries
   const [changeLogQuery] = await bq.createQueryJob({
