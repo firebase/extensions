@@ -267,6 +267,41 @@ describe("e2e", () => {
         );
       });
 
+      test("successfully partitions with a valid Firebase Timestamp value with a timestamp field and Timestamp type", async () => {
+        const created = firestore.Timestamp.now();
+        const expectedDate = created.toDate().toISOString().substring(0, 22);
+
+        const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
+          data: { created },
+        });
+
+        await changeTracker({
+          datasetId,
+          tableId,
+          timePartitioning: "DAY",
+          timePartitioningField: "timestamp",
+          timePartitioningFieldType: "TIMESTAMP",
+          timePartitioningFirestoreField: "created",
+        }).record([event]);
+
+        const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
+
+        const [changeLogRows] = await getBigQueryTableData(
+          process.env.PROJECT_ID,
+          datasetId,
+          tableId
+        );
+
+        expect(metadata.timePartitioning).toBeDefined();
+        expect(metadata.timePartitioning.type).toEqual("DAY");
+        expect(metadata.timePartitioning.field).toEqual("timestamp");
+
+        //TODO: check data has been added successfully
+        expect(changeLogRows[0].timestamp.value).toBe(
+          BigQuery.timestamp(created.toDate()).value
+        );
+      });
+
       test("old_data is null if is not provided", async () => {
         const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
           data: { foo: "foo" },
