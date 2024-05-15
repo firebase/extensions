@@ -239,41 +239,48 @@ export class Partitioning {
   }
 
   customFieldExists(fields = []) {
-    if (!fields.length) return false;
-
+    /** Extract the time partioning field name */
     const { timePartitioningField } = this.config;
 
+    /** Return based the field already exist */
     return fields.map(($) => $.name).includes(timePartitioningField);
   }
 
-  private async shouldAddPartitioningToSchema(): Promise<{
+  private async shouldAddPartitioningToSchema(fields: string[]): Promise<{
     proceed: boolean;
     message: string;
   }> {
     if (!this.isPartitioningEnabled()) {
       return { proceed: false, message: "Partitioning not enabled" };
     }
+
     if (!this.hasValidTableReference()) {
       return { proceed: false, message: "Invalid table reference" };
     }
+
     if (!this.hasValidCustomPartitionConfig()) {
       return { proceed: false, message: "Invalid partition config" };
     }
+
     if (!this.hasValidTimePartitionType()) {
       return { proceed: false, message: "Invalid partition type" };
     }
+
     if (!this.hasValidTimePartitionOption()) {
       return { proceed: false, message: "Invalid partition option" };
     }
+
     if (this.hasHourAndDatePartitionConfig()) {
       return {
         proceed: false,
         message: "Invalid partitioning and field type combination",
       };
     }
-    if (this.customFieldExists()) {
+
+    if (this.customFieldExists(fields)) {
       return { proceed: false, message: "Field already exists on schema" };
     }
+
     if (await this.isTablePartitioned()) {
       return { proceed: false, message: "Table is already partitioned" };
     }
@@ -284,7 +291,10 @@ export class Partitioning {
   }
 
   async addPartitioningToSchema(fields = []): Promise<void> {
-    const { proceed, message } = await this.shouldAddPartitioningToSchema();
+    const { proceed, message } = await this.shouldAddPartitioningToSchema(
+      fields
+    );
+
     if (!proceed) {
       functions.logger.warn(`Did not add partitioning to schema: ${message}`);
       return;
