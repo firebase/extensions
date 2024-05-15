@@ -18,7 +18,7 @@ process.env.PROJECT_ID = "extensions-testing";
 const consoleLogSpy = jest.spyOn(logger, "log").mockImplementation();
 const consoleLogSpyWarn = jest.spyOn(logger, "warn").mockImplementation();
 
-const bq: BigQuery = new BigQuery();
+const bq: BigQuery = new BigQuery({ projectId: process.env.PROJECT_ID });
 const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
 let randomID: string;
 let datasetId: string;

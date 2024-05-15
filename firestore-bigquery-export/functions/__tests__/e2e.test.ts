@@ -2,13 +2,13 @@ import * as admin from "firebase-admin";
 import { BigQuery } from "@google-cloud/bigquery";
 
 /** Set defaults */
-const bqProjectId = "dev-extensions-testing";
+const bqProjectId = "extensions-testing";
 const datasetId = "firestore_export";
 const tableId = "bq_e2e_test_raw_changelog";
 
 /** Init resources */
 admin.initializeApp({ projectId: bqProjectId });
-const bq = new BigQuery({ projectId: "dev-extensions-testing" });
+const bq = new BigQuery({ projectId: "extensions-testing" });
 import { documentData } from "./fixtures/documentData";
 
 /***

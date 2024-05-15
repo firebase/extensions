@@ -6,7 +6,6 @@ import { ChangeType, FirestoreDocumentChangeEvent } from "../..";
 import { FirestoreBigQueryEventHistoryTrackerConfig } from "../../bigquery";
 import { Partitioning } from "../../bigquery/partitioning";
 import { deleteTable } from "../fixtures/clearTables";
-import { changeTracker } from "../fixtures/changeTracker";
 
 let bq: BigQuery;
 let dataset: Dataset;
@@ -16,7 +15,7 @@ let datasetId: string;
 
 describe("processing partitions on a new table", () => {
   beforeAll(async () => {
-    bq = new BigQuery();
+    bq = new BigQuery({ projectId: process.env.PROJECT_ID });
     randomID = (Math.random() + 1).toString(36).substring(7);
     datasetId = `bq_${randomID}`;
     [dataset] = await bq.createDataset(datasetId, {
