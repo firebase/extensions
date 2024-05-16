@@ -10,7 +10,7 @@ import {
 
 process.env.PROJECT_ID = "extensions-testing";
 
-const bq: BigQuery = new BigQuery();
+const bq: BigQuery = new BigQuery({ projectId: process.env.PROJECT_ID });
 const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
 let randomID: string;
 let datasetId: string;
@@ -736,6 +736,7 @@ describe("Checking updates", () => {
         }).record([event]);
 
         const raw_changelog_table = bq.dataset(datasetId).table(tableId_raw);
+
         const [metadata] = await raw_changelog_table.getMetadata();
 
         expect(

@@ -7,7 +7,7 @@ import { ChangeType } from "../..";
 import { buildLatestSnapshotViewQuery } from "../../bigquery/snapshot";
 process.env.PROJECT_ID = "extensions-testing";
 
-const bq = new BigQuery();
+const bq = new BigQuery({ projectId: process.env.PROJECT_ID });
 let event: FirestoreDocumentChangeEvent;
 let randomID: string;
 let datasetId: string;

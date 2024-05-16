@@ -1,3 +1,7 @@
+## Version 0.2.6
+
+fixed - updated vulnerable dependencies
+
 ## Version 0.2.5
 
 feature - Added lifecycle events
