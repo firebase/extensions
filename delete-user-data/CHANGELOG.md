@@ -1,3 +1,7 @@
+## Version 0.1.22
+
+fixed - recursive delete searched docs if enabled (#2073)
+
 ## Version 0.1.21
 
 fixed - fix autodiscovery recursive deletion

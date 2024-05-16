@@ -1,3 +1,13 @@
+## Version 0.1.50
+
+fixed - fixed timestamp as a fieldname partitioning
+
+fixed - bump dependencies, fix vulnerabilities (#2061)
+
+fixed - separate tsconfigs (#2065)
+
+fixed - resolve npm vulnerabilities (#2050)
+
 ## Version 0.1.49
 
 fix - fix the issue "not creating table on install"

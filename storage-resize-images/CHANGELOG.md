@@ -1,3 +1,11 @@
+## Version 0.2.5
+
+fixed - bump dependencies, fix vulnerabilities (#2061)
+
+## Version 0.2.4
+
+fixed - bumped dependencies to latest versions, addressing dependency vulnerabilities
+
 ## Version 0.2.3
 
 docs - add a sample explaining how to use custom events
