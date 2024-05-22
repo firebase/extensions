@@ -62,16 +62,7 @@ if (admin.apps.length === 0) {
 events.setupEventChannel();
 
 export const syncBigQuery = functions.tasks
-  .taskQueue({
-    retryConfig: {
-      maxAttempts: 5,
-      minBackoffSeconds: 60,
-    },
-    rateLimits: {
-      maxConcurrentDispatches: 1000,
-      maxDispatchesPerSecond: config.maxDispatchesPerSecond,
-    },
-  })
+  .taskQueue()
   .onDispatch(
     async ({ context, changeType, documentId, data, oldData }, ctx) => {
       const update = {
