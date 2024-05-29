@@ -19,7 +19,11 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { getExtensions } from "firebase-admin/extensions";
 import { getFunctions } from "firebase-admin/functions";
-import { getFirestore } from "firebase-admin/firestore";
+
+import {
+  taskThreadTaskHandler,
+  taskThreadTrigger,
+} from "@invertase/firebase-extension-utilities";
 
 import {
   ChangeType,
@@ -197,6 +201,32 @@ export const initBigQuerySync = functions.tasks
     );
     return;
   });
+
+const extensionInstanceId = "firestore-bigquery-export";
+
+const taskParams = {
+  test: "test",
+};
+
+export const backfillTrigger = functions.tasks.taskQueue().onDispatch(
+  taskThreadTrigger({
+    tasksDoc: "tasks",
+    queueName: "queueName",
+    batchSize: 500,
+    extensionInstanceId,
+    taskParams,
+  })
+);
+
+export const backfillHandler = functions.tasks
+  .taskQueue()
+  .onDispatch(
+    taskThreadTaskHandler(
+      async (chunk) => ({ success: 0 }),
+      "queueName",
+      extensionInstanceId
+    )
+  );
 
 exports.fsimportexistingdocs = functions.tasks
   .taskQueue()
