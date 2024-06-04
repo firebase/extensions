@@ -1,9 +1,7 @@
 import {
   FirestoreBackfillOptions,
   taskThreadTaskHandler,
-  firestoreProcessBackfillTrigger,
 } from "@invertase/firebase-extension-utilities";
-import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import config from "../config";
 import { getFirestore } from "firebase-admin/firestore";
@@ -11,6 +9,7 @@ import { getExtensions } from "firebase-admin/extensions";
 import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import { resolveWildcardIds } from "../util";
 import { eventTracker } from "../event_tracker";
+import * as eventArc from "../event_arc";
 
 const { queueName, metadataDocumentPath, doBackfill, collectionPath } =
   config.backfillOptions;
@@ -23,19 +22,9 @@ const backfillOptions: FirestoreBackfillOptions = {
   extensionInstanceId: config.instanceId,
 };
 
-export const backfillHandler = functions.tasks
-  .taskQueue()
-  .onDispatch(
-    taskThreadTaskHandler<string>(
-      async (chunk) => ({ success: 0 }),
-      backfillOptions.queueName,
-      backfillOptions.extensionInstanceId
-    )
-  );
-
 export const importDocumentsHandler = async (
   chunk: string[]
-): Promise<{ success: number }> => {
+): Promise<{ success: number; failed: number }> => {
   const runtime = getExtensions().runtime();
 
   if (!config.doBackfill || !config.importCollectionPath) {
@@ -43,11 +32,13 @@ export const importDocumentsHandler = async (
       "PROCESSING_COMPLETE",
       "Completed. No existing documents imported into BigQuery."
     );
-    return { success: 0 };
+    return { success: 0, failed: 0 };
   }
 
   const db = getFirestore(config.databaseId);
-  const docsRef = chunk.map((docPath) => db.doc(docPath));
+  const docsRef = chunk.map((docPath) =>
+    db.collection(config.backfillOptions.collectionPath).doc(docPath)
+  );
 
   const snapshots = await Promise.all(docsRef.map((docRef) => docRef.get()));
 
@@ -73,6 +64,7 @@ export const importDocumentsHandler = async (
   }
 
   const success = rows.length;
+  const failed = chunk.length - success;
 
   if (success > 0) {
     await runtime.setProcessingState(
@@ -81,7 +73,22 @@ export const importDocumentsHandler = async (
     );
   }
 
-  await eventTracker.recordCompletionEvent({ context: {} });
+  await eventArc.recordCompletionEvent({ context: {} });
 
-  return { success };
+  return { success, failed };
 };
+
+export const backfillHandler = functions.tasks.taskQueue().onDispatch(
+  taskThreadTaskHandler<string>(importDocumentsHandler, {
+    queueName: backfillOptions.queueName,
+    extensionInstanceId: backfillOptions.extensionInstanceId,
+    onComplete: async (total: number) => {
+      const runtime = getExtensions().runtime();
+
+      await runtime.setProcessingState(
+        "PROCESSING_COMPLETE",
+        `Successfully imported ${total} documents into BigQuery`
+      );
+    },
+  })
+);

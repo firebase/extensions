@@ -16,7 +16,6 @@
 import * as admin from "firebase-admin";
 import * as logs from "./logs";
 import * as eventArc from "./event_arc";
-
 logs.init();
 
 /** Init app, if not already initialized */
