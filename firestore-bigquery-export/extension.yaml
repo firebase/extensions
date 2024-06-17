@@ -34,6 +34,9 @@ contributors:
   - authorName: Jan Wyszynski
     email: wyszynski@google.com
     url: https://github.com/IanWyszynski
+  - authorName: Jacob Cable
+    email: jacob@invertase.com
+    url: https://github.com/cabljac
 
 billingRequired: true
 
@@ -60,54 +63,27 @@ resources:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
 
-  - name: fsimportexistingdocs
-    type: firebaseextensions.v1beta.function
-    description:
-      Imports existing documents from the specified collection into BigQuery.
-      Imported documents will have a special changelog with the operation of
-      `IMPORT` and the timestamp of epoch.
-    properties:
-      runtime: nodejs18
-      taskQueueTrigger:
-        retryConfig:
-          maxAttempts: 15
-          minBackoffSeconds: 60
-
-  - name: syncBigQuery
+  - name: backfillTrigger
     type: firebaseextensions.v1beta.function
     description: >-
-      A task-triggered function that gets called on BigQuery sync
+      Queues the backfill tasks
     properties:
+      availableMemoryMb: 2048
       runtime: nodejs18
-      taskQueueTrigger:
-        rateLimits:
-          maxConcurrentDispatches: 500
-          maxDispatchesPerSecond: ${param:MAX_DISPATCHES_PER_SECOND}
-        retryConfig:
-          maxAttempts: 5
-          minBackoffSeconds: 60
+      timeout: 540s
+      taskQueueTrigger: {}
 
-  - name: initBigQuerySync
+  - name: backfillHandler
     type: firebaseextensions.v1beta.function
     description: >-
-      Runs configuration for sycning with BigQuery
+      Handles the backfill tasks
     properties:
+      availableMemoryMb: 2048
       runtime: nodejs18
+      timeout: 540s
       taskQueueTrigger:
         retryConfig:
-          maxAttempts: 15
-          minBackoffSeconds: 60
-
-  - name: setupBigQuerySync
-    type: firebaseextensions.v1beta.function
-    description: >-
-      Runs configuration for sycning with BigQuery
-    properties:
-      runtime: nodejs18
-      taskQueueTrigger:
-        retryConfig:
-          maxAttempts: 15
-          minBackoffSeconds: 60
+          maxAttempts: 50
 
 params:
   - param: DATASET_LOCATION
@@ -396,52 +372,15 @@ params:
       - label: No
         value: no
 
-  # - param: DO_BACKFILL
-  #   label: Import existing Firestore documents into BigQuery?
-  #   description: >-
-  #     Do you want to import existing documents from your Firestore collection
-  #     into BigQuery? These documents  will have each have a special changelog
-  #     with the operation of `IMPORT` and the timestamp of epoch. This ensures
-  #     that any operation on an imported document supersedes the import record.
-  #   type: select
-  #   required: true
-  #   default: no
-  #   options:
-  #     - label: Yes
-  #       value: yes
-  #     - label: No
-  #       value: no
-
-  # - param: IMPORT_COLLECTION_PATH
-  #   label: Existing Documents Collection
-  #   description: >-
-  #     Specify the path of the Cloud Firestore Collection you would like to
-  #     import from. This may or may not be the same Collection for which you plan
-  #     to mirror changes. If you want to use a collectionGroup query, provide the
-  #     collection name value here, and set 'Use Collection Group query' to true.
-  #     You may use `{wildcard}` notation with an enabled collectionGroup query to
-  #     match a subcollection of all documents in a collection (e.g.,
-  #     `chatrooms/{chatid}/posts`).
-  #   type: string
-  #   validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
-  #   validationErrorMessage:
-  #     Firestore collection paths must be an odd number of segments separated by
-  #     slashes, e.g. "path/to/collection".
-  #   example: posts
-  #   required: false
-
-  - param: USE_COLLECTION_GROUP_QUERY
-    label: Use Collection Group query
+  - param: DO_BACKFILL
+    label: Import existing Firestore documents into BigQuery?
     description: >-
-      Do you want to use a [collection
-      group](https://firebase.google.com/docs/firestore/query-data/queries#collection-group-query)
-      query for importing existing documents? You have to enable collectionGroup
-      query if your import path contains subcollections. Warning: A
-      collectionGroup query will target every collection in your Firestore
-      project that matches the 'Existing documents collection'. For example, if
-      you have 10,000 documents with a subcollection named: landmarks, this will
-      query every document in 10,000 landmarks collections.
+      Do you want to import existing documents from your Firestore collection
+      into BigQuery? These documents  will have each have a special changelog
+      with the operation of `IMPORT` and the timestamp of epoch. This ensures
+      that any operation on an imported document supersedes the import record.
     type: select
+    required: true
     default: no
     options:
       - label: Yes
@@ -449,20 +388,57 @@ params:
       - label: No
         value: no
 
-  # - param: DOCS_PER_BACKFILL
-  #   label: Docs per backfill
+  - param: IMPORT_COLLECTION_PATH
+    label: Existing Documents Collection
+    description: >-
+      Specify the path of the Cloud Firestore Collection you would like to
+      import from. This may or may not be the same Collection for which you plan
+      to mirror changes. If you want to use a collectionGroup query, provide the
+      collection name value here, and set 'Use Collection Group query' to true.
+      You may use `{wildcard}` notation with an enabled collectionGroup query to
+      match a subcollection of all documents in a collection (e.g.,
+      `chatrooms/{chatid}/posts`).
+    type: string
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage:
+      Firestore collection paths must be an odd number of segments separated by
+      slashes, e.g. "path/to/collection".
+    example: posts
+    required: false
+
+  # - param: USE_COLLECTION_GROUP_QUERY
+  #   label: Use Collection Group query
   #   description: >-
-  #     When importing existing documents, how many should be imported at once?
-  #     The default value of 200 should be ok for most users. If you are using a
-  #     transform function or have very large documents, you may need to set this
-  #     to a lower number. If the lifecycle event function times out, lower this
-  #     value.
-  #   type: string
-  #   example: 200
-  #   validationRegex: "^[1-9][0-9]*$"
-  #   validationErrorMessage: Must be a postive integer.
-  #   default: 200
-  #   required: true
+  #     Do you want to use a [collection
+  #     group](https://firebase.google.com/docs/firestore/query-data/queries#collection-group-query)
+  #     query for importing existing documents? You have to enable collectionGroup
+  #     query if your import path contains subcollections. Warning: A
+  #     collectionGroup query will target every collection in your Firestore
+  #     project that matches the 'Existing documents collection'. For example, if
+  #     you have 10,000 documents with a subcollection named: landmarks, this will
+  #     query every document in 10,000 landmarks collections.
+  #   type: select
+  #   default: no
+  #   options:
+  #     - label: Yes
+  #       value: yes
+  #     - label: No
+  #       value: no
+
+  - param: DOCS_PER_BACKFILL
+    label: Docs per backfill
+    description: >-
+      When importing existing documents, how many should be imported at once?
+      The default value of 200 should be ok for most users. If you are using a
+      transform function or have very large documents, you may need to set this
+      to a lower number. If the lifecycle event function times out, lower this
+      value.
+    type: string
+    example: 200
+    validationRegex: "^[1-9][0-9]*$"
+    validationErrorMessage: Must be a postive integer.
+    default: 200
+    required: true
 
   - param: KMS_KEY_NAME
     label: Cloud KMS key name
@@ -503,11 +479,11 @@ events:
 
 lifecycleEvents:
   onInstall:
-    function: initBigQuerySync
-    processingMessage: Configuring BigQuery Sync.
+    function: backfillTrigger
+    processingMessage: Configuring BigQuery Sync and trigger backfill tasks
   onUpdate:
-    function: setupBigQuerySync
-    processingMessage: Configuring BigQuery Sync
+    function: backfillTrigger
+    processingMessage: Configuring BigQuery Sync and trigger backfill tasks
   onConfigure:
-    function: setupBigQuerySync
-    processingMessage: Configuring BigQuery Sync
+    function: backfillTrigger
+    processingMessage: Configuring BigQuery Sync and trigger backfill tasks

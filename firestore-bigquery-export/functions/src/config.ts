@@ -63,4 +63,13 @@ export default {
   ),
   kmsKeyName: process.env.KMS_KEY_NAME,
   useCollectionGroupQuery: process.env.USE_COLLECTION_GROUP_QUERY === "yes",
+  // new backfill strategy
+  backfillOptions: {
+    queueName: `locations/${process.env.LOCATION}/functions/backfillHandler`,
+    triggerQueueName: `locations/${process.env.LOCATION}/functions/backfillTriggerHandler`,
+    metadataDocumentPath: `_${process.env.EXT_INSTANCE_ID}/index`,
+    doBackfill: process.env.DO_BACKFILL === "yes",
+    collectionPath: process.env.IMPORT_COLLECTION_PATH,
+    batchSize: parseInt(process.env.DOCS_PER_BACKFILL) || 200,
+  },
 };
