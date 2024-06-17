@@ -7,40 +7,47 @@ import { resolveWildcardIds } from "../../util";
 import { chunkArray } from "../chunkArray";
 import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
 
+const { batchSize } = config.backfillOptions;
+
 export const backfillTaskHandler = async (
   task: any,
   _ctx: functions.tasks.TaskContext
 ) => {
   const { paths } = task;
-  const chunks = chunkArray(paths, 500);
+  const chunks = chunkArray(paths, batchSize);
   let chunkIndex = 0;
   let chunk: string[] = [];
   try {
     while (chunkIndex < chunks.length) {
       chunk = chunks[chunkIndex] as string[];
 
-      const docRefs = chunk.map((docPath) => firestore.doc(docPath));
+      const docRefs = [];
+      for (const docPath of chunk) {
+        docRefs.push(firestore.doc(docPath));
+      }
 
       const documents = await firestore.getAll(...docRefs);
-
-      const rows = documents
-        .filter((doc) => doc.exists)
-        .map((doc) => {
-          const data = doc.data() || {};
-
-          return {
-            timestamp: new Date().toISOString(),
-            operation: ChangeType.IMPORT,
-            documentName: `projects/${config.bqProjectId}/databases/(default)/documents/${doc.ref.path}`,
-            documentId: doc.id,
-            eventId: "",
-            pathParams: resolveWildcardIds(
-              config.backfillOptions.collectionPath,
-              doc.id
-            ),
-            data: eventTracker.serializeData(data),
-          };
+      const rows = [];
+      for (const doc of documents) {
+        if (!doc.exists) {
+          functions.logger.error(
+            `Document ${doc.ref.path} does not exist. Skipping.`
+          );
+          continue;
+        }
+        rows.push({
+          timestamp: new Date().toISOString(),
+          operation: ChangeType.IMPORT,
+          documentName: `projects/${config.bqProjectId}/databases/(default)/documents/${doc.ref.path}`,
+          documentId: doc.id,
+          eventId: "",
+          pathParams: resolveWildcardIds(
+            config.backfillOptions.collectionPath,
+            doc.id
+          ),
+          data: eventTracker.serializeData(doc.data() || {}),
         });
+      }
       await eventTracker.record(rows);
 
       chunkIndex++;

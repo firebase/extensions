@@ -2,8 +2,7 @@ import * as admin from "firebase-admin";
 import config from "../../../config";
 const firestore = admin.firestore();
 
-// Doesn't need to be user configurable
-const batchSize = config.backfillOptions.batchSize;
+const READ_BATCH_SIZE = 5000;
 
 export const getDocumentsBatch = async (
   lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null
@@ -12,7 +11,7 @@ export const getDocumentsBatch = async (
     .collection(config.backfillOptions.collectionPath)
     .orderBy("__name__")
     .select("__name__")
-    .limit(batchSize);
+    .limit(READ_BATCH_SIZE);
 
   if (lastDoc) query = query.startAfter(lastDoc);
 
