@@ -48,6 +48,9 @@ roles:
   - role: bigquery.dataEditor
     reason: Allows the extension to configure and export data into BigQuery.
 
+  - role: bigquery.jobUser
+    reason: Allows the extension to create and manage BigQuery jobs.
+
   - role: datastore.user
     reason: Allows the extension to write updates to the database.
 

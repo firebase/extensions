@@ -133,6 +133,14 @@ export const complete = () => {
   logger.log("Completed mod execution");
 };
 
+export const dataUpserted = (rowCount: number) => {
+  logger.log(`Upserted ${rowCount} row(s) of data into BigQuery`);
+};
+
+export const dataUpsertError = (error: Error) => {
+  logger.error(`Error upserting row(s) of data into BigQuery`, error);
+};
+
 export const dataInserted = (rowCount: number) => {
   logger.log(`Inserted ${rowCount} row(s) of data into BigQuery`);
 };

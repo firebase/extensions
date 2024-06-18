@@ -6,6 +6,8 @@ import { eventTracker } from "../../event_tracker";
 import { resolveWildcardIds } from "../../util";
 import { chunkArray } from "../chunkArray";
 import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import { isTimeExceeded } from "./isTimeExceeded";
+import { createExportTask } from "../backfillTriggerHandler/utils/createExportTask";
 
 const { batchSize } = config.backfillOptions;
 
@@ -13,12 +15,21 @@ export const backfillTaskHandler = async (
   task: any,
   _ctx: functions.tasks.TaskContext
 ) => {
+  const startTime = performance.now();
+
   const { paths } = task;
-  const chunks = chunkArray(paths, batchSize);
+  const chunks: string[][] = chunkArray(paths, batchSize);
   let chunkIndex = 0;
   let chunk: string[] = [];
   try {
     while (chunkIndex < chunks.length) {
+      if (isTimeExceeded(startTime)) {
+        const remainingPaths = chunks.slice(chunkIndex).flat();
+
+        await createExportTask(remainingPaths);
+        break;
+      }
+
       chunk = chunks[chunkIndex] as string[];
 
       const docRefs = [];
@@ -27,6 +38,14 @@ export const backfillTaskHandler = async (
       }
 
       const documents = await firestore.getAll(...docRefs);
+
+      if (isTimeExceeded(startTime)) {
+        const remainingPaths = chunks.slice(chunkIndex).flat();
+
+        await createExportTask(remainingPaths);
+        break;
+      }
+
       const rows = [];
       for (const doc of documents) {
         if (!doc.exists) {
@@ -48,7 +67,15 @@ export const backfillTaskHandler = async (
           data: eventTracker.serializeData(doc.data() || {}),
         });
       }
-      await eventTracker.record(rows);
+      await eventTracker.record(rows, true);
+
+      if (isTimeExceeded(startTime)) {
+        // we have processed the current chunk, but we have run out of time
+        const remainingPaths = chunks.slice(chunkIndex + 1).flat();
+
+        await createExportTask(remainingPaths);
+        break;
+      }
 
       chunkIndex++;
     }

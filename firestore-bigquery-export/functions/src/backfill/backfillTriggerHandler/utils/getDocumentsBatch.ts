@@ -2,7 +2,7 @@ import * as admin from "firebase-admin";
 import config from "../../../config";
 const firestore = admin.firestore();
 
-const READ_BATCH_SIZE = 5000;
+const READ_BATCH_SIZE = 1_000_000;
 
 export const getDocumentsBatch = async (
   lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null
