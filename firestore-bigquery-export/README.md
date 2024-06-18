@@ -124,8 +124,6 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery Project ID: Override the default project for BigQuery instance. This can allow updates to be directed to to a BigQuery instance on another GCP project.
 
-* Database ID: Override the default project Firestore database. Learn more about managing multiple Firestore databases [here](https://cloud.google.com/firestore/docs/manage-databases).
-
 * Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}`  can be returned in `path_params` as a JSON formatted string.
 
 * Enable Wildcard Column field with Parent Firestore Document IDs: If enabled, creates a column containing a JSON object of all wildcard ids from a documents path.
