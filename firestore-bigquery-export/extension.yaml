@@ -58,7 +58,7 @@ resources:
       runtime: nodejs18
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${param:PROJECT_ID}/databases/${param:DATABASE_ID}/documents/${param:COLLECTION_PATH}/{documentId}
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
 
   - name: fsimportexistingdocs
     type: firebaseextensions.v1beta.function
