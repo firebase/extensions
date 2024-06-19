@@ -6,7 +6,7 @@ You can test out this extension right away!
 
 1.  If it doesn't exist already, create a collection called `${param:COLLECTION_PATH}`.
 
-1.  Create a document with a field named `${param:URL_FIELD_NAME}` and make its value a URL such as `https://github.com/firebase/firebase-tools`.
+1.  Create a document with a field named `${param:URL_FIELD_NAME}` and make its value a URL such as `https://github.com/firebase/firebase-tools`. Make sure that the URL always includes the `https` or `http` protocol.
 
 1.  In a few seconds, you'll see a new field called `${param:SHORT_URL_FIELD_NAME}` pop up in the same document you just created; it will contain the shortened URL.
 
