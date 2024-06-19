@@ -1,3 +1,9 @@
+## Version 0.1.51
+
+fixed - medium npm vulnerabilities
+
+fixed - rollback broken multiple database parameter option
+
 ## Version 0.1.50
 
 fixed - fixed timestamp as a fieldname partitioning

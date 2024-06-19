@@ -124,8 +124,6 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery Project ID: Override the default project for BigQuery instance. This can allow updates to be directed to to a BigQuery instance on another GCP project.
 
-* Database ID: Override the default project Firestore database. Learn more about managing multiple Firestore databases [here](https://cloud.google.com/firestore/docs/manage-databases).
-
 * Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}`  can be returned in `path_params` as a JSON formatted string.
 
 * Enable Wildcard Column field with Parent Firestore Document IDs: If enabled, creates a column containing a JSON object of all wildcard ids from a documents path.
@@ -156,7 +154,7 @@ essential for the script to insert data into an already partitioned table.)
 
 * Use new query syntax for snapshots: If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential resource limitations.
 
-* Exclude old data payloads: If enabled, table rows will never contain old data (document snapshot before the update), which should be more performant, and avoid potential resource limitations.
+* Exclude old data payloads: If enabled, table rows will never contain old data (document snapshot before the Firestore onDocumentUpdate event: `change.before.data()`). The reduction in data should be more performant, and avoid potential resource limitations.
 
 * Use Collection Group query: Do you want to use a [collection group](https://firebase.google.com/docs/firestore/query-data/queries#collection-group-query) query for importing existing documents? You have to enable collectionGroup query if your import path contains subcollections. Warning: A collectionGroup query will target every collection in your Firestore project that matches the 'Existing documents collection'. For example, if you have 10,000 documents with a subcollection named: landmarks, this will query every document in 10,000 landmarks collections.
 
