@@ -154,7 +154,7 @@ essential for the script to insert data into an already partitioned table.)
 
 * Use new query syntax for snapshots: If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential resource limitations.
 
-* Exclude old data payloads: If enabled, table rows will never contain old data (document snapshot before the update), which should be more performant, and avoid potential resource limitations.
+* Exclude old data payloads: If enabled, table rows will never contain old data (document snapshot before the Firestore onDocumentUpdate event: `change.before.data()`). The reduction in data should be more performant, and avoid potential resource limitations.
 
 * Use Collection Group query: Do you want to use a [collection group](https://firebase.google.com/docs/firestore/query-data/queries#collection-group-query) query for importing existing documents? You have to enable collectionGroup query if your import path contains subcollections. Warning: A collectionGroup query will target every collection in your Firestore project that matches the 'Existing documents collection'. For example, if you have 10,000 documents with a subcollection named: landmarks, this will query every document in 10,000 landmarks collections.
 
