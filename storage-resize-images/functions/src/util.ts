@@ -49,6 +49,12 @@ export function convertToObjectMetadata(
       etag: aclEntry.etag,
     }))[0] || undefined;
 
+  const stringifiedMetadata: { [key: string]: string } = {};
+
+  for (const [key, value] of Object.entries(rest.metadata)) {
+    stringifiedMetadata[key] = value.toString();
+  }
+
   return {
     kind: "storage#object",
     id: rest.id,
@@ -70,7 +76,7 @@ export function convertToObjectMetadata(
     contentDisposition: rest.contentDisposition,
     contentLanguage: rest.contentLanguage,
     cacheControl: rest.cacheControl,
-    metadata: rest.metadata,
+    metadata: stringifiedMetadata,
     owner: rest.owner,
     crc32c: rest.crc32c,
     componentCount: rest.componentCount?.toString(),

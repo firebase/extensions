@@ -45,6 +45,7 @@ export function resize(file, size) {
   };
 
   return sharp(file, ops)
+    .keepMetadata()
     .rotate()
     .resize(parseInt(width, 10), parseInt(height, 10), {
       withoutEnlargement: true,
@@ -207,9 +208,9 @@ export const modifyImage = async ({
     }
 
     // Generate a image file using Sharp.
-    await sharp(modifiedImageBuffer, { animated: config.animated }).toFile(
-      modifiedFile
-    );
+    await sharp(modifiedImageBuffer, { animated: config.animated })
+      .keepMetadata()
+      .toFile(modifiedFile);
 
     // Uploading the modified image.
     logs.imageUploading(modifiedFilePath);
