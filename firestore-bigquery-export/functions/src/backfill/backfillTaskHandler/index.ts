@@ -11,36 +11,55 @@ import { createExportTask } from "../backfillTriggerHandler/utils/createExportTa
 
 const { batchSize } = config.backfillOptions;
 
+const logger = functions.logger;
+
 export const backfillTaskHandler = async (
   task: any,
   _ctx: functions.tasks.TaskContext
 ) => {
   const startTime = performance.now();
+  logger.info("Backfill task handler started.", { task });
 
   const { paths } = task;
+  logger.info("Paths received.", { paths });
+
   const chunks: string[][] = chunkArray(paths, batchSize);
+  logger.info("Paths chunked.", { chunks });
+
   let chunkIndex = 0;
   let chunk: string[] = [];
   try {
     while (chunkIndex < chunks.length) {
       if (isTimeExceeded(startTime)) {
         const remainingPaths = chunks.slice(chunkIndex).flat();
+        logger.info(
+          "Time exceeded, creating export task for remaining paths.",
+          { remainingPaths }
+        );
 
         await createExportTask(remainingPaths);
         break;
       }
 
       chunk = chunks[chunkIndex] as string[];
+      logger.info("Processing chunk.", { chunkIndex, chunk });
 
       const docRefs = [];
       for (const docPath of chunk) {
         docRefs.push(firestore.doc(docPath));
       }
 
+      logger.info("Fetching documents for chunk.", { docRefs });
+
       const documents = await firestore.getAll(...docRefs);
+      logger.info("Documents fetched.", { documents });
 
       if (isTimeExceeded(startTime)) {
         const remainingPaths = chunks.slice(chunkIndex).flat();
+        logger.info(
+          "Time exceeded after fetching documents, creating export task for remaining paths.",
+          { remainingPaths }
+        );
 
         await createExportTask(remainingPaths);
         break;
@@ -49,9 +68,7 @@ export const backfillTaskHandler = async (
       const rows = [];
       for (const doc of documents) {
         if (!doc.exists) {
-          functions.logger.error(
-            `Document ${doc.ref.path} does not exist. Skipping.`
-          );
+          logger.error(`Document ${doc.ref.path} does not exist. Skipping.`);
           continue;
         }
         rows.push({
@@ -67,19 +84,27 @@ export const backfillTaskHandler = async (
           data: eventTracker.serializeData(doc.data() || {}),
         });
       }
+      logger.info("Rows prepared for event tracker.", { rows });
+
       await eventTracker.record(rows, true);
+      logger.info("Event tracker recorded rows.");
 
       if (isTimeExceeded(startTime)) {
         // we have processed the current chunk, but we have run out of time
         const remainingPaths = chunks.slice(chunkIndex + 1).flat();
+        logger.info(
+          "Time exceeded after recording rows, creating export task for remaining paths.",
+          { remainingPaths }
+        );
 
         await createExportTask(remainingPaths);
         break;
       }
 
       chunkIndex++;
+      logger.info("Moving to next chunk.", { chunkIndex });
     }
   } catch (error) {
-    functions.logger.error("Error handling task:", error);
+    logger.error("Error handling task:", { error });
   }
 };
