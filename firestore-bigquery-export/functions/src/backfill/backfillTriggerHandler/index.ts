@@ -6,13 +6,35 @@ import { isTimeExceeded } from "./utils/isTimeExceeded";
 import { saveCompletionFlag } from "./utils/saveCompletionFlag";
 import { getDocumentsBatch } from "./utils/getDocumentsBatch";
 import { enqueueNextTriggerTask } from "./enqueueNextTriggerTask";
-
+import config from "../../config";
+import { getExtensions } from "firebase-admin/extensions";
+import * as admin from "firebase-admin";
 const logger = functions.logger;
+
+function setComplete() {
+  const runtime = getExtensions().runtime();
+  return runtime.setProcessingState(
+    "PROCESSING_COMPLETE",
+    "Backfill completed successfully."
+  );
+}
 
 export const backfillTriggerHandler = async (
   data: any,
   _ctx: functions.tasks.TaskContext
 ) => {
+  if (!config.doBackfill) {
+    await setComplete();
+    logger.info("Backfill is disabled. Marking completion.");
+    return;
+  }
+
+  // const collection = admin
+  //   .firestore()
+  //   .collection(config.backfillOptions.collectionPath);
+
+  // const count = await collection.count().get();
+
   logger.info("Backfill trigger handler started.", { data });
 
   await eventTracker.initialize();
@@ -49,7 +71,6 @@ export const backfillTriggerHandler = async (
         logger.info("Creating export task for current chunk.", {
           currentChunk,
         });
-        await createExportTask(currentChunk);
       } catch (taskError) {
         logger.error("Error creating task.", {
           taskError,
@@ -71,5 +92,6 @@ export const backfillTriggerHandler = async (
     }
   } catch (error) {
     logger.error("Error during backfill.", { error });
+    throw error;
   }
 };

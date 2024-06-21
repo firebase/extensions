@@ -66,7 +66,7 @@ export default {
   // new backfill strategy
   backfillOptions: {
     queueName: `locations/${process.env.LOCATION}/functions/backfillHandler`,
-    triggerQueueName: `locations/${process.env.LOCATION}/functions/backfillTriggerHandler`,
+    triggerQueueName: `locations/${process.env.LOCATION}/functions/backfillTrigger`,
     metadataDocumentPath: `_${process.env.EXT_INSTANCE_ID}/index`,
     doBackfill: process.env.DO_BACKFILL === "yes",
     collectionPath: process.env.IMPORT_COLLECTION_PATH,

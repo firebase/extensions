@@ -86,7 +86,7 @@ export const backfillTaskHandler = async (
       }
       logger.info("Rows prepared for event tracker.", { rows });
 
-      await eventTracker.record(rows, true);
+      await eventTracker.record(rows);
       logger.info("Event tracker recorded rows.");
 
       if (isTimeExceeded(startTime)) {
