@@ -4,10 +4,14 @@ import { getFunctions } from "firebase-admin/functions";
 const { triggerQueueName } = config.backfillOptions;
 const extensionInstanceId = config.instanceId;
 
-export const enqueueNextTriggerTask = async (
-  lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null
-) => {
-  const task = { lastDoc: lastDoc ? lastDoc.ref.path : null };
+export const enqueueNextTriggerTask = async ({
+  lastDoc,
+  startPolling,
+}: {
+  lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null;
+  startPolling: boolean;
+}) => {
+  const task = { lastDoc: lastDoc ? lastDoc.ref.path : null, startPolling };
   try {
     const queue = getFunctions().taskQueue(
       triggerQueueName,

@@ -9,6 +9,7 @@ import { enqueueNextTriggerTask } from "./enqueueNextTriggerTask";
 import config from "../../config";
 import { getExtensions } from "firebase-admin/extensions";
 import * as admin from "firebase-admin";
+import { pollBackfillTaskQueue } from "./utils/pollBackfillTaskQueue";
 const logger = functions.logger;
 
 function setComplete() {
@@ -29,13 +30,12 @@ export const backfillTriggerHandler = async (
     return;
   }
 
-  // const collection = admin
-  //   .firestore()
-  //   .collection(config.backfillOptions.collectionPath);
-
-  // const count = await collection.count().get();
-
   logger.info("Backfill trigger handler started.", { data });
+
+  if (data.startPolling) {
+    logger.info("Starting polling for backfill task queue.");
+    await pollBackfillTaskQueue();
+  }
 
   await eventTracker.initialize();
   logger.info("Event tracker initialized.");
@@ -52,7 +52,7 @@ export const backfillTriggerHandler = async (
         logger.info("Time exceeded, enqueueing next trigger task.", {
           lastDoc,
         });
-        await enqueueNextTriggerTask(lastDoc);
+        await enqueueNextTriggerTask({ lastDoc, startPolling: false });
         break;
       }
 
@@ -60,9 +60,9 @@ export const backfillTriggerHandler = async (
       logger.info("Fetched documents batch.", { lastDoc, newLastDoc });
 
       if (snapshot.empty) {
-        logger.info("Document snapshot is empty. Saving completion flag.");
-        await saveCompletionFlag();
-        logger.log("Backfill completed successfully.");
+        logger.info("Document snapshot is empty. Starting polling.");
+        await enqueueNextTriggerTask({ lastDoc, startPolling: true });
+        logger.log("All backfill tasks enqueued successfully.");
         break;
       }
 
@@ -86,7 +86,7 @@ export const backfillTriggerHandler = async (
         logger.info("Time exceeded, enqueueing next trigger task.", {
           lastDoc,
         });
-        await enqueueNextTriggerTask(lastDoc);
+        await enqueueNextTriggerTask({ lastDoc, startPolling: false });
         break;
       }
     }

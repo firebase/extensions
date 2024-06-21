@@ -54,6 +54,9 @@ roles:
   - role: datastore.user
     reason: Allows the extension to write updates to the database.
 
+  - role: cloudtasks.viewer
+    reason: Allows the extension to view Cloud Tasks queues.
+
 resources:
   - name: fsexportbigquery
     type: firebaseextensions.v1beta.function
