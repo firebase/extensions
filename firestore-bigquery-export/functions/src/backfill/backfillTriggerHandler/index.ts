@@ -8,8 +8,7 @@ import { getDocumentsBatch } from "./utils/getDocumentsBatch";
 import { enqueueNextTriggerTask } from "./enqueueNextTriggerTask";
 import config from "../../config";
 import { getExtensions } from "firebase-admin/extensions";
-import * as admin from "firebase-admin";
-import { pollBackfillTaskQueue } from "./utils/pollBackfillTaskQueue";
+// import { pollBackfillTaskQueue } from "./utils/pollBackfillTaskQueue";
 const logger = functions.logger;
 
 function setComplete() {
@@ -32,10 +31,11 @@ export const backfillTriggerHandler = async (
 
   logger.info("Backfill trigger handler started.", { data });
 
-  if (data.startPolling) {
-    logger.info("Starting polling for backfill task queue.");
-    await pollBackfillTaskQueue();
-  }
+  // if (data.startPolling) {
+  //   logger.info("Starting polling for backfill task queue.");
+  //   await pollBackfillTaskQueue();
+  // break;
+  // }
 
   await eventTracker.initialize();
   logger.info("Event tracker initialized.");
@@ -52,7 +52,8 @@ export const backfillTriggerHandler = async (
         logger.info("Time exceeded, enqueueing next trigger task.", {
           lastDoc,
         });
-        await enqueueNextTriggerTask({ lastDoc, startPolling: false });
+        // await enqueueNextTriggerTask({ lastDoc, startPolling: false });
+        await enqueueNextTriggerTask({ lastDoc });
         break;
       }
 
@@ -60,9 +61,10 @@ export const backfillTriggerHandler = async (
       logger.info("Fetched documents batch.", { lastDoc, newLastDoc });
 
       if (snapshot.empty) {
-        logger.info("Document snapshot is empty. Starting polling.");
-        await enqueueNextTriggerTask({ lastDoc, startPolling: true });
+        // logger.info("Document snapshot is empty. Starting polling.");
+        // await enqueueNextTriggerTask({ lastDoc, startPolling: true });
         logger.log("All backfill tasks enqueued successfully.");
+        await setComplete();
         break;
       }
 
@@ -86,7 +88,7 @@ export const backfillTriggerHandler = async (
         logger.info("Time exceeded, enqueueing next trigger task.", {
           lastDoc,
         });
-        await enqueueNextTriggerTask({ lastDoc, startPolling: false });
+        await enqueueNextTriggerTask({ lastDoc });
         break;
       }
     }

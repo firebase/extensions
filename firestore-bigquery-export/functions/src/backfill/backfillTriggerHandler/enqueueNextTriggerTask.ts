@@ -6,12 +6,12 @@ const extensionInstanceId = config.instanceId;
 
 export const enqueueNextTriggerTask = async ({
   lastDoc,
-  startPolling,
 }: {
   lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null;
-  startPolling: boolean;
+  // startPolling: boolean;
 }) => {
-  const task = { lastDoc: lastDoc ? lastDoc.ref.path : null, startPolling };
+  // const task = { lastDoc: lastDoc ? lastDoc.ref.path : null, startPolling };
+  const task = { lastDoc: lastDoc ? lastDoc.ref.path : null };
   try {
     const queue = getFunctions().taskQueue(
       triggerQueueName,
