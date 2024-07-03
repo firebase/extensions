@@ -2,16 +2,15 @@ import * as functions from "firebase-functions";
 import { createExportTask } from "./utils/createExportTask";
 import { eventTracker } from "../../event_tracker";
 import { getLastDoc } from "./utils/getLastDoc";
-import { isTimeExceeded } from "./utils/isTimeExceeded";
-import { saveCompletionFlag } from "./utils/saveCompletionFlag";
-import { getDocumentsBatch } from "./utils/getDocumentsBatch";
+import { isTimeExceeded } from "../utils/isTimeExceeded";
+import { getDocumentsChunk } from "./utils/getDocumentsChunk";
 import { enqueueNextTriggerTask } from "./enqueueNextTriggerTask";
 import config from "../../config";
 import { getExtensions } from "firebase-admin/extensions";
-// import { pollBackfillTaskQueue } from "./utils/pollBackfillTaskQueue";
+import { BackfillMetadata } from "../metadata";
 const logger = functions.logger;
 
-function setComplete() {
+export function setProcessingStateComplete() {
   const runtime = getExtensions().runtime();
   return runtime.setProcessingState(
     "PROCESSING_COMPLETE",
@@ -24,18 +23,16 @@ export const backfillTriggerHandler = async (
   _ctx: functions.tasks.TaskContext
 ) => {
   if (!config.doBackfill) {
-    await setComplete();
+    await setProcessingStateComplete();
     logger.info("Backfill is disabled. Marking completion.");
     return;
   }
 
-  logger.info("Backfill trigger handler started.", { data });
+  const metadata = await BackfillMetadata.fromFirestore({
+    path: `${config.instanceId}/backfillMetadata`,
+  });
 
-  // if (data.startPolling) {
-  //   logger.info("Starting polling for backfill task queue.");
-  //   await pollBackfillTaskQueue();
-  // break;
-  // }
+  logger.info("Backfill trigger handler started.", { data });
 
   await eventTracker.initialize();
   logger.info("Event tracker initialized.");
@@ -57,22 +54,19 @@ export const backfillTriggerHandler = async (
         break;
       }
 
-      const { snapshot, newLastDoc } = await getDocumentsBatch(lastDoc);
+      const { snapshot, newLastDoc } = await getDocumentsChunk(lastDoc);
       logger.info("Fetched documents batch.", { lastDoc, newLastDoc });
 
       if (snapshot.empty) {
-        // logger.info("Document snapshot is empty. Starting polling.");
-        // await enqueueNextTriggerTask({ lastDoc, startPolling: true });
         logger.log("All backfill tasks enqueued successfully.");
-        await setComplete();
+        await metadata.setAllChunksEnqueued();
         break;
       }
 
       try {
         const currentChunk = snapshot.docs.map((doc) => doc.ref.path);
-        logger.info("Creating export task for current chunk.", {
-          currentChunk,
-        });
+        await createExportTask(currentChunk);
+        await metadata.incrementChunksEnqueued();
       } catch (taskError) {
         logger.error("Error creating task.", {
           taskError,

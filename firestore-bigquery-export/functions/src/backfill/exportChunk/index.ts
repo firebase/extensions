@@ -4,11 +4,12 @@ import * as admin from "firebase-admin";
 const firestore = admin.firestore();
 import { eventTracker } from "../../event_tracker";
 import { resolveWildcardIds } from "../../util";
-import { chunkArray } from "../chunkArray";
+import { chunkArray } from "../utils/chunkArray";
 import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
-import { isTimeExceeded } from "./isTimeExceeded";
-import { createExportTask } from "../backfillTriggerHandler/utils/createExportTask";
-
+import { isTimeExceeded } from "../utils/isTimeExceeded";
+import { createExportTask } from "../chunkCollection/utils/createExportTask";
+import { setProcessingStateComplete } from "../chunkCollection";
+import { BackfillMetadata } from "../metadata";
 const { batchSize } = config.backfillOptions;
 
 const logger = functions.logger;
@@ -23,15 +24,14 @@ export const backfillTaskHandler = async (
   const { paths } = task;
   logger.info("Paths received.", { paths });
 
-  const chunks: string[][] = chunkArray(paths, batchSize);
-  logger.info("Paths chunked.", { chunks });
+  const batches: string[][] = chunkArray(paths, batchSize);
 
-  let chunkIndex = 0;
-  let chunk: string[] = [];
+  let batchIndex = 0;
+  let batch: string[] = [];
   try {
-    while (chunkIndex < chunks.length) {
+    while (batchIndex < batches.length) {
       if (isTimeExceeded(startTime)) {
-        const remainingPaths = chunks.slice(chunkIndex).flat();
+        const remainingPaths = batches.slice(batchIndex).flat();
         logger.info(
           "Time exceeded, creating export task for remaining paths.",
           { remainingPaths }
@@ -41,21 +41,24 @@ export const backfillTaskHandler = async (
         break;
       }
 
-      chunk = chunks[chunkIndex] as string[];
-      logger.info("Processing chunk.", { chunkIndex, chunk });
+      batch = batches[batchIndex] as string[];
+      logger.info("Processing batch.", {
+        batchIndex,
+        batch,
+      });
 
       const docRefs = [];
-      for (const docPath of chunk) {
+      for (const docPath of batch) {
         docRefs.push(firestore.doc(docPath));
       }
 
-      logger.info("Fetching documents for chunk.", { docRefs });
+      logger.info("Fetching documents for batch.", { docRefs });
 
       const documents = await firestore.getAll(...docRefs);
       logger.info("Documents fetched.", { documents });
 
       if (isTimeExceeded(startTime)) {
-        const remainingPaths = chunks.slice(chunkIndex).flat();
+        const remainingPaths = batches.slice(batchIndex).flat();
         logger.info(
           "Time exceeded after fetching documents, creating export task for remaining paths.",
           { remainingPaths }
@@ -90,8 +93,8 @@ export const backfillTaskHandler = async (
       logger.info("Event tracker recorded rows.");
 
       if (isTimeExceeded(startTime)) {
-        // we have processed the current chunk, but we have run out of time
-        const remainingPaths = chunks.slice(chunkIndex + 1).flat();
+        // we have processed the current batch, but we have run out of time
+        const remainingPaths = batches.slice(batchIndex + 1).flat();
         logger.info(
           "Time exceeded after recording rows, creating export task for remaining paths.",
           { remainingPaths }
@@ -101,8 +104,31 @@ export const backfillTaskHandler = async (
         break;
       }
 
-      chunkIndex++;
-      logger.info("Moving to next chunk.", { chunkIndex });
+      batchIndex++;
+      logger.info("Moving to next batch.", { batchIndex });
+    }
+
+    // All batches processed, increment the chunksProcessed count
+    const metadata = await BackfillMetadata.fromFirestore({
+      path: `${config.instanceId}/backfillMetadata`,
+    });
+    try {
+      await metadata.incrementChunksProcessed();
+      logger.info("Incremented chunksProcessed count.");
+
+      const newMetadata = await BackfillMetadata.fromFirestore({
+        path: `${config.instanceId}/backfillMetadata`,
+      });
+
+      if (newMetadata.checkIfComplete()) {
+        logger.info(
+          "All chunks processed, setting processing state to complete."
+        );
+        await setProcessingStateComplete();
+      }
+    } catch (error) {
+      logger.error("Error incrementing chunksProcessed count.", { error });
+      await createExportTask([]);
     }
   } catch (error) {
     logger.error("Error handling task:", { error });

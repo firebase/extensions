@@ -5,9 +5,9 @@ import * as functions from "firebase-functions";
 
 const logger = functions.logger;
 
-const READ_BATCH_SIZE = 10000;
+const READ_CHUNK_SIZE = 10000;
 
-export const getDocumentsBatch = async (
+export const getDocumentsChunk = async (
   lastDoc: FirebaseFirestore.QueryDocumentSnapshot | null
 ) => {
   logger.info("Starting getDocumentsBatch function.", { lastDoc });
@@ -16,7 +16,7 @@ export const getDocumentsBatch = async (
     .collection(config.backfillOptions.collectionPath)
     .orderBy("__name__")
     .select("__name__")
-    .limit(READ_BATCH_SIZE);
+    .limit(READ_CHUNK_SIZE);
 
   if (lastDoc) {
     query = query.startAfter(lastDoc);

@@ -30,11 +30,11 @@ import * as admin from "firebase-admin";
 
 admin.initializeApp();
 
-import { getDocumentsBatch } from "./getDocumentsBatch";
+import { getDocumentsChunk } from "./getDocumentsChunk";
 
 describe("getDocumentsBatch", () => {
   test("getDocumentsBatch returns batch of documents without lastDoc", async () => {
-    const result = await getDocumentsBatch(null);
+    const result = await getDocumentsChunk(null);
     expect(mockCollection).toHaveBeenCalledWith(
       config.backfillOptions.collectionPath
     );
@@ -49,7 +49,7 @@ describe("getDocumentsBatch", () => {
   test("getDocumentsBatch returns batch of documents with lastDoc", async () => {
     const mockLastDoc = { id: "abc123" };
 
-    const result = await getDocumentsBatch(
+    const result = await getDocumentsChunk(
       mockLastDoc as FirebaseFirestore.QueryDocumentSnapshot
     );
     expect(mockCollection).toHaveBeenCalledWith(

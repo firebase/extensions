@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
-import { backfillTaskHandler } from "./backfillTaskHandler";
-import { backfillTriggerHandler } from "./backfillTriggerHandler";
+import { backfillTaskHandler } from "./exportChunk";
+import { backfillTriggerHandler } from "./chunkCollection";
 
 // TODO we should create an index on __name__ field
 export const backfillTrigger = functions.tasks
