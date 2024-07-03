@@ -91,7 +91,10 @@ export class FirestoreBigQueryEventHistoryTracker
     }
   }
 
-  async record(events: FirestoreDocumentChangeEvent[]) {
+  async record(
+    events: FirestoreDocumentChangeEvent[],
+    upsert: boolean = false
+  ) {
     if (!this.config.skipInit) {
       await this.initialize();
     }
@@ -124,7 +127,11 @@ export class FirestoreBigQueryEventHistoryTracker
 
     const transformedRows = await this.transformRows(rows);
 
-    await this.insertData(transformedRows);
+    if (upsert) {
+      await this.upsertData(transformedRows);
+    } else {
+      await this.insertData(transformedRows);
+    }
   }
 
   private async transformRows(rows: any[]) {
@@ -251,6 +258,74 @@ export class FirestoreBigQueryEventHistoryTracker
       this._initialized = false;
       logs.bigQueryTableInsertErrors(e.errors);
       throw e;
+    }
+  }
+
+  /**
+   * Upserts rows of data into the BigQuery raw change log table.
+   */
+  private async upsertData(rows: bigquery.RowMetadata[]) {
+    const dataset = this.bigqueryDataset();
+    const table = dataset.table(this.rawChangeLogTableName());
+    const tableId = table.id;
+    const tempTableId = `${tableId}_temp_${Date.now()}`;
+
+    const tempTable = dataset.table(tempTableId);
+    try {
+      // Create a temporary table
+      await tempTable.create({ schema: RawChangelogSchema });
+
+      // Insert data into the temporary table
+      logs.dataInserting(rows.length);
+      await tempTable.insert(rows, { raw: true });
+      logs.dataInserted(rows.length);
+
+      // Perform the upsert operation using a merge statement
+      const query = `
+        MERGE \`${dataset.id}.${tableId}\` AS target
+        USING \`${dataset.id}.${tempTableId}\` AS source
+        ON target.document_id = source.document_id
+        AND target.operation = source.operation
+        WHEN MATCHED THEN
+          UPDATE SET
+            timestamp = source.timestamp,
+            event_id = source.event_id,
+            document_name = source.document_name,
+            operation = source.operation,
+            data = source.data,
+            old_data = source.old_data
+        WHEN NOT MATCHED THEN
+          INSERT (
+            timestamp,
+            event_id,
+            document_name,
+            document_id,
+            operation,
+            data,
+            old_data
+          )
+          VALUES (
+            source.timestamp,
+            source.event_id,
+            source.document_name,
+            source.document_id,
+            source.operation,
+            source.data,
+            source.old_data
+          )
+      `;
+
+      // Run the query
+      const [job] = await this.bq.createQueryJob({ query });
+      await job.getQueryResults();
+
+      logs.dataUpserted(rows.length);
+    } catch (e) {
+      logs.dataUpsertError(e);
+      throw e;
+    } finally {
+      // Clean up the temporary table
+      await tempTable.delete();
     }
   }
 

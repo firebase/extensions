@@ -68,7 +68,12 @@ If you chose _not_ to automatically import existing documents when you installed
 
 If you don't either enable automatic import or run the import script, the extension only exports the content of documents that are created or changed after installation.
 
-The import script can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by this extension. The script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This is to ensure that any operation on an imported document supersedes the `IMPORT`.
+
+If you choose **Yes** to "Import existing Firestore documents into BigQuery" a backfill process will begin on installation of the extension. A Cloud Task queue will be created and tasks will be enqueued to import existing documents into Bigquery.
+
+To monitor the progress of the import, view the cloud tasks UI [here](https://console.cloud.google.com/cloudtasks/queue/${param:LOCATION}/ext-${EXT_INSTANCE_ID}-backfillHandler/metrics?authuser=0&project=${param:PROJECT_ID}).
+
+The import script can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by this extension. Both the script and automatic import add a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This is to ensure that any operation on an imported document supersedes the `IMPORT`.
 
 **Warning:** Make sure to not run the import script if you enabled automatic backfill during the extension installation, as it might result in data loss.
 
