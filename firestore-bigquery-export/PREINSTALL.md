@@ -41,6 +41,10 @@ There are two ways to import existing Firestore documents into BigQuery - the ba
 
 To import documents that already exist at installation time into BigQuery, answer **Yes** when the installer asks "Import existing Firestore documents into BigQuery?" The extension will export existing documents as part of the installation and update processes.
 
+If you choose **Yes** to "Import existing Firestore documents into BigQuery" a backfill process will begin on installation of the extension. A Cloud Task queue will be created and tasks will be enqueued to import existing documents into Bigquery.
+
+**Important** The processing state of the extension will be updated to "complete" after all tasks have been enqueued. This does not mean the backfill has completed, especially for larger collections, as tasks will likely still be being processed. Instead you may monitor the backfill process through the Cloud Task Queue UI. A specific link to the metrics of the relevant task queue is provided in the post-installation documentation.
+
 Alternatively, you can run the external [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md) to backfill existing documents. If you plan to use this script, answer **No** when prompted to import existing documents.
 
 **Important:** Run the external import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
