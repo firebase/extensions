@@ -14,6 +14,20 @@ admin.firestore().collection('mail').add({
 })
 ```
 
+Alternatively, the same payload can be sent to this extension via an EventArc event. The `data` field will be written to the specified Firestore collection and trigger the send operation.
+
+```js
+getEventarc().channel().publish({
+  type: "firebase.extensions.firestore-send-email.v1.onSend",
+  data: {
+    to: 'someone@example.com',
+    message: {
+      subject: 'Hello from Firebase!',
+      html: 'This is an <code>HTML</code> email body.',
+    },
+});
+```
+
 You can also optionally configure this extension to render emails using [Handlebar](https://handlebarsjs.com/) templates. Each template is a document stored in a Cloud Firestore collection.
 
 When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**. Note that this extension is for use with bulk email service providers, like SendGrid, Mailgun, etc.
