@@ -1,4 +1,5 @@
 {
+  "files": ["./__tests__/test.types.d.ts"],
   "compilerOptions": {
     "outDir": "lib",
     "target": "ES2020",
