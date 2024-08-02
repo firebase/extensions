@@ -3,7 +3,8 @@ import { BigQuery, Table } from "@google-cloud/bigquery";
 export const setupBQ = async (
   datasetId: string,
   tableId: string,
-  data: any
+  data: any,
+  pathParams: any = {}
 ) => {
   const bq = new BigQuery({ projectId: "dev-extensions-testing" });
 
@@ -45,6 +46,11 @@ export const setupBQ = async (
       type: "STRING",
       mode: "NULLABLE",
     },
+    {
+      name: "path_params",
+      type: "STRING",
+      mode: "NULLABLE",
+    },
   ];
 
   /** create a changelog table with a random name */
@@ -64,6 +70,7 @@ export const setupBQ = async (
     timestamp: new Date(),
     data: JSON.stringify(data),
     operation: "INSERT",
+    path_params: JSON.stringify(pathParams),
   };
 
   await rawChangeLogTable.insert(testData);
