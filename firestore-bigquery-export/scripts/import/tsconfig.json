@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "lib": ["es2018"],
+    "lib": ["es2018", "dom"],
     "module": "commonjs",
     "noImplicitReturns": true,
     "outDir": "lib",

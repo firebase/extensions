@@ -1,13 +1,10 @@
-import * as program from "commander";
+import { Command } from "commander";
 import * as filenamify from "filenamify";
 import * as inquirer from "inquirer";
-
 import { CliConfig, CliConfigError } from "./types";
 
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
-// regex of ^[^/]+(/[^/]+/[^/]+)*$
 export const FIRESTORE_VALID_CHARACTERS = new RegExp("^[^/]+(/[^/]+/[^/]+)*$");
-// export const FIRESTORE_VALID_CHARACTERS = /^[^/]+(/[^/]+/[^/]+)*$/;
 const GCP_PROJECT_VALID_CHARACTERS = /^[a-z][a-z0-9-]{0,29}$/;
 
 const PROJECT_ID_MAX_CHARS = 6144;
@@ -179,68 +176,81 @@ const questions = [
 ];
 
 export async function parseConfig(): Promise<CliConfig | CliConfigError> {
+  const program = new Command();
+
+  program
+    .option("--nonInteractive", "Run in non-interactive mode")
+    .option("--project <project>", "Firebase project ID")
+    .option("--bigQueryProject <bigQueryProject>", "BigQuery project ID")
+    .option(
+      "--sourceCollectionPath <sourceCollectionPath>",
+      "Source Collection Path"
+    )
+    .option("--dataset <dataset>", "BigQuery dataset ID")
+    .option("--tableNamePrefix <tableNamePrefix>", "BigQuery table name prefix")
+    .option("--queryCollectionGroup", "Query Collection Group")
+    .option("--batchSize <batchSize>", "Batch size for import", parseInt)
+    .option("--datasetLocation <datasetLocation>", "BigQuery dataset location")
+    .option("--multiThreaded", "Run import across multiple threads")
+    .option(
+      "--useNewSnapshotQuerySyntax",
+      "Use the new optimized snapshot query script"
+    )
+    .option("--useEmulator", "Use a local Firestore emulator");
+
   program.parse(process.argv);
 
-  if (program.nonInteractive) {
+  const options = program.opts();
+
+  if (options.nonInteractive) {
     const errors = [];
-    if (program.project === undefined) {
-      errors.push("Project is not specified.");
-    }
-    if (program.bigQueryProject === undefined) {
+    if (!options.project) errors.push("Project is not specified.");
+    if (!options.bigQueryProject)
       errors.push("BigQuery Project is not specified.");
-    }
-    if (program.sourceCollectionPath === undefined) {
+    if (!options.sourceCollectionPath)
       errors.push("SourceCollectionPath is not specified.");
-    }
-    if (program.dataset === undefined) {
-      errors.push("Dataset ID is not specified.");
-    }
-    if (program.tableNamePrefix === undefined) {
+    if (!options.dataset) errors.push("Dataset ID is not specified.");
+    if (!options.tableNamePrefix)
       errors.push("TableNamePrefix is not specified.");
-    }
-    if (program.queryCollectionGroup === undefined) {
+    if (options.queryCollectionGroup === undefined)
       errors.push("QueryCollectionGroup is not specified.");
-    }
-    if (program.batchSize === undefined) {
-      errors.push("BatchSize is not specified.");
-    }
-    if (program.datasetLocation === undefined) {
+    if (!options.batchSize) errors.push("BatchSize is not specified.");
+    if (!options.datasetLocation)
       errors.push("DatasetLocation is not specified.");
-    }
-    if (!validateBatchSize(program.batchSize)) {
+    if (!validateBatchSize(options.batchSize))
       errors.push("Invalid batch size.");
-    }
 
     if (errors.length !== 0) {
       program.outputHelp();
       return { kind: "ERROR", errors };
     }
 
-    const rawChangeLogName = `${program.tableNamePrefix}_raw_changelog`;
+    const rawChangeLogName = `${options.tableNamePrefix}_raw_changelog`;
     const cursorPositionFile = getCursorPositionFile(
-      program.sourceCollectionPath,
-      program.project,
-      program.dataset,
+      options.sourceCollectionPath,
+      options.project,
+      options.dataset,
       rawChangeLogName
     );
 
     return {
       kind: "CONFIG",
-      projectId: program.project,
-      bigQueryProjectId: program.bigQueryProject,
-      sourceCollectionPath: program.sourceCollectionPath,
-      datasetId: program.dataset,
-      tableId: program.tableNamePrefix,
-      batchSize: parseInt(program.batchSize),
-      queryCollectionGroup: program.queryCollectionGroup === "true",
-      datasetLocation: program.datasetLocation,
-      multiThreaded: program.multiThreaded === "true",
-      useNewSnapshotQuerySyntax: program.useNewSnapshotQuerySyntax === "true",
-      useEmulator: program.useEmulator === "true",
+      projectId: options.project,
+      bigQueryProjectId: options.bigQueryProject,
+      sourceCollectionPath: options.sourceCollectionPath,
+      datasetId: options.dataset,
+      tableId: options.tableNamePrefix,
+      batchSize: options.batchSize,
+      queryCollectionGroup: options.queryCollectionGroup,
+      datasetLocation: options.datasetLocation,
+      multiThreaded: options.multiThreaded,
+      useNewSnapshotQuerySyntax: options.useNewSnapshotQuerySyntax,
+      useEmulator: options.useEmulator,
       rawChangeLogName,
       cursorPositionFile,
     };
   }
+
   const {
     project,
     sourceCollectionPath,
@@ -281,23 +291,17 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
   };
 }
 
-/**
- *
- * @param template - eg, regions/{regionId}/countries
- * @param text - eg, regions/asia/countries
- *
- * @return - eg, { regionId: "asia" }
- */
 export const resolveWildcardIds = (template: string, text: string) => {
   const textSegments = text.split("/");
-  return template
-    .split("/")
-    .reduce((previousValue, currentValue, currentIndex) => {
+  return template.split("/").reduce(
+    (previousValue, currentValue, currentIndex) => {
       if (currentValue.startsWith("{") && currentValue.endsWith("}")) {
         previousValue[currentValue.slice(1, -1)] = textSegments[currentIndex];
       }
       return previousValue;
-    }, {});
+    },
+    {} as { [key: string]: string }
+  );
 };
 
 function getCursorPositionFile(
@@ -306,10 +310,6 @@ function getCursorPositionFile(
   datasetId: string,
   rawChangeLogName: string
 ) {
-  // TODO: make this part of config, set it in CliConfig
   const formattedPath = filenamify(sourceCollectionPath);
-  return (
-    __dirname +
-    `/from-${formattedPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`
-  );
+  return `${__dirname}/from-${formattedPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
 }

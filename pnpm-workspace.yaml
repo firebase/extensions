@@ -1,0 +1,30 @@
+packages:
+  # emulator
+  - "_emulator/functions"
+  # firestore extensions
+  - "firestore-bigquery-export/functions"
+  - "firestore-counter/functions"
+  - "firestore-send-email/functions"
+  - "firestore-shorten-urls-bitly/functions"
+  - "firestore-translate-text/functions"
+  # firestore-counter clients
+  - "firestore-counter/clients/web"
+  - "firestore-counter/clients/node"
+  # - "firestore-counter/stress_test/bin"
+  # - "firestore-counter/stress_test/functions"
+  # firestore-bigquery-export scripts
+  - "firestore-bigquery-export/firestore-bigquery-change-tracker"
+  - "firestore-bigquery-export/scripts/gen-schema-view"
+  - "firestore-bigquery-export/scripts/import"
+  # samples
+  - "samples/rtdb-uppercase-messages/functions"
+  - "samples/rtdb-uppercase-messages/functions/integration-tests/functions"
+  # delete-user-data
+  # - "delete-user-data/test-data"
+  - "delete-user-data/functions"
+  # storage extensions
+  - "storage-resize-images/functions"
+  # rtdb extensions
+  - "rtdb-limit-child-nodes/function"
+  # root directory
+  - "."

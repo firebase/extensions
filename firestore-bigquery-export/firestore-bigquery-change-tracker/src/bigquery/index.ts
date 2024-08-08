@@ -146,19 +146,19 @@ export class FirestoreBigQueryEventHistoryTracker
       return undefined;
     }
 
-    const data = traverse<traverse.Traverse<any>>(eventData).map(function (
-      property
-    ) {
-      if (property && property.constructor) {
-        if (property.constructor.name === "Buffer") {
-          this.remove();
-        }
+    const data = traverse<traverse.Traverse<any>>(eventData).map(
+      function (property) {
+        if (property && property.constructor) {
+          if (property.constructor.name === "Buffer") {
+            this.remove();
+          }
 
-        if (property.constructor.name === DocumentReference.name) {
-          this.update(property.path);
+          if (property.constructor.name === DocumentReference.name) {
+            this.update(property.path);
+          }
         }
       }
-    });
+    );
 
     return data;
   }

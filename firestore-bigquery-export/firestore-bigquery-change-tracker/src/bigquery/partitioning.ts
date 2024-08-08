@@ -291,9 +291,8 @@ export class Partitioning {
   }
 
   async addPartitioningToSchema(fields = []): Promise<void> {
-    const { proceed, message } = await this.shouldAddPartitioningToSchema(
-      fields
-    );
+    const { proceed, message } =
+      await this.shouldAddPartitioningToSchema(fields);
 
     if (!proceed) {
       functions.logger.warn(`Did not add partitioning to schema: ${message}`);

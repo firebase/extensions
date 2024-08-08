@@ -112,12 +112,17 @@ export const processLeafField = (
        * We return directly from this branch because it's the only one that
        * generates multiple selector clauses.
        */
-      fieldNameToSelector[
-        qualifyFieldName(prefix, field.name)
-      ] = `${firestoreGeopoint(
-        datasetId,
-        jsonExtract(dataFieldName, extractPrefixJoined, field, ``, transformer)
-      )} AS ${prefix.concat(field.name).join("_")}`;
+      fieldNameToSelector[qualifyFieldName(prefix, field.name)] =
+        `${firestoreGeopoint(
+          datasetId,
+          jsonExtract(
+            dataFieldName,
+            extractPrefixJoined,
+            field,
+            ``,
+            transformer
+          )
+        )} AS ${prefix.concat(field.name).join("_")}`;
 
       bigQueryFields.push({
         name: qualifyFieldName(prefix, field.name),
@@ -126,12 +131,11 @@ export const processLeafField = (
         description: field.description,
       });
 
-      fieldNameToSelector[
-        qualifyFieldName(prefix, `${field.name}_latitude`)
-      ] = `SAFE_CAST(${latitude} AS NUMERIC) AS ${qualifyFieldName(
-        prefix,
-        `${field.name}_latitude`
-      )}`;
+      fieldNameToSelector[qualifyFieldName(prefix, `${field.name}_latitude`)] =
+        `SAFE_CAST(${latitude} AS NUMERIC) AS ${qualifyFieldName(
+          prefix,
+          `${field.name}_latitude`
+        )}`;
 
       bigQueryFields.push({
         name: qualifyFieldName(prefix, `${field.name}_latitude`),
@@ -140,12 +144,11 @@ export const processLeafField = (
         description: `Numeric latitude component of ${field.name}.`,
       });
 
-      fieldNameToSelector[
-        qualifyFieldName(prefix, `${field.name}_longitude`)
-      ] = `SAFE_CAST(${longitude} AS NUMERIC) AS ${qualifyFieldName(
-        prefix,
-        `${field.name}_longitude`
-      )}`;
+      fieldNameToSelector[qualifyFieldName(prefix, `${field.name}_longitude`)] =
+        `SAFE_CAST(${longitude} AS NUMERIC) AS ${qualifyFieldName(
+          prefix,
+          `${field.name}_longitude`
+        )}`;
 
       bigQueryFields.push({
         name: qualifyFieldName(prefix, `${field.name}_longitude`),
@@ -156,9 +159,8 @@ export const processLeafField = (
       return fieldNameToSelector;
   }
 
-  fieldNameToSelector[
-    qualifyFieldName(prefix, field.name)
-  ] = `${selector} AS ${qualifyFieldName(prefix, field.name)}`;
+  fieldNameToSelector[qualifyFieldName(prefix, field.name)] =
+    `${selector} AS ${qualifyFieldName(prefix, field.name)}`;
 
   if (field.type === "array") {
     bigQueryFields.push({
