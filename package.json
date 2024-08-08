@@ -34,5 +34,12 @@
   },
   "lint-staged": {
     "*.{js,md,yml,ts,json,yaml}": "prettier --write"
+  },
+  "pnpm": {
+    "overrides": {
+      "@grpc/grpc-js@<1.8.22": ">=1.8.22",
+      "protobufjs@>=7.0.0 <7.2.5": ">=7.2.5",
+      "braces@<3.0.3": ">=3.0.3"
+    }
   }
 }
