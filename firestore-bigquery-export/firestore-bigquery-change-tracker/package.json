@@ -9,7 +9,7 @@
   "description": "Core change-tracker library for Cloud Firestore Collection BigQuery Exports",
   "main": "./lib/index.js",
   "scripts": {
-    "build": "npm run clean && npm run compile",
+    "build": "pnpm run clean && pnpm run compile",
     "clean": "rimraf lib",
     "compile": "tsc",
     "test:local": "jest",

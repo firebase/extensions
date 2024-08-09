@@ -212,7 +212,7 @@ export const bigQueryTableInsertErrors = (
     {
       row: object;
       errors: Array<{ message: string }>;
-    }
+    },
   ]
 ) => {
   logger.warn(`Error when inserting data to table.`);

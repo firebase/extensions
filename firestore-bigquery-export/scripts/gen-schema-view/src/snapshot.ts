@@ -149,8 +149,8 @@ export const buildLatestSchemaSnapshotViewQuery = (
           ${firstValue(`timestamp`)} AS timestamp,
           ${firstValue(`operation`)} AS operation,
           ${firstValue(`operation`)} = "DELETE" AS is_deleted${
-    fieldValueSelectorClauses.length > 0 ? `,` : ``
-  }
+            fieldValueSelectorClauses.length > 0 ? `,` : ``
+          }
           ${fieldValueSelectorClauses}
         FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawViewName}\`
         ${offsetJoins}

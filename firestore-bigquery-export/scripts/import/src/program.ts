@@ -1,4 +1,6 @@
-import * as program from "commander";
+import { Command } from "commander";
+
+const program = new Command();
 
 const packageJson = require("../package.json");
 
