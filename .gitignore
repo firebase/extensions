@@ -20,3 +20,4 @@ firestore-debug.log
 pubsub-debug.log
 tmp/
 fixtures/
+**/dist
