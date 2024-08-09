@@ -29,6 +29,9 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: "**/pnpm-lock.yaml"
 
+      - name: build
+        run: pnpm build
+
       - name: Build emulator functions
         run: cd _emulator/functions && pnpm install && pnpm run build & cd ../..
 
