@@ -15,25 +15,34 @@ jobs:
     name: node.js_${{ matrix.node }}_test
     steps:
       - uses: actions/checkout@v3
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+          run_install: true
+
       - name: Setup node
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
-          cache: "npm"
-          cache-dependency-path: "**/package-lock.json"
-      - name: npm install
-        run: npm i
+          cache: "pnpm"
+          cache-dependency-path: "**/pnpm-lock.yaml"
+
       - name: Build emulator functions
-        run: cd _emulator/functions && npm i && npm run build & cd ../..
+        run: cd _emulator/functions && pnpm install && pnpm run build & cd ../..
+
       - name: Install Firebase CLI
         uses: nick-invision/retry@v1
         with:
           timeout_minutes: 10
           retry_wait_seconds: 60
           max_attempts: 3
-          command: npm i -g firebase-tools@11
+          command: pnpm add -g firebase-tools@11
+
       - name: Setup e2e secrets
         run: |
           echo SMTP_PASSWORD=${{ secrets.SENDGRID_API_KEY }} >> _emulator/extensions/firestore-send-email-sendgrid.secret.local
-      - name: npm test
-        run: npm run test:ci
+
+      - name: Run tests
+        run: pnpm run test:ci
