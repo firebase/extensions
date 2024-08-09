@@ -39,6 +39,13 @@ export function parseTlsOptions(tlsOptions: string) {
 }
 
 /**
+ * Function to validate and sanitize the hostname for SendGrid
+ */
+function isSendGridHost(hostname: string): boolean {
+  return hostname === "smtp.sendgrid.net";
+}
+
+/**
  * Function to set SMTP credentials
  */
 export function setSmtpCredentials(config: Config) {
@@ -77,8 +84,8 @@ export function setSmtpCredentials(config: Config) {
         pass: decodeURIComponent(url.password),
       },
     });
-  } else if (url.hostname && url.hostname.includes("sendgrid.net")) {
-    // SendGrid configuration via SMTP
+  } else if (isSendGridHost(url.hostname)) {
+    // SendGrid configuration via SMTP with strict hostname validation
     transport = createTransport({
       host: "smtp.sendgrid.net",
       port: 587,
