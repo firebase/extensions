@@ -29,6 +29,7 @@ import {
   setSmtpCredentials,
 } from "./helpers";
 import * as events from "./events";
+import { eventarc } from "firebase-functions/v2";
 
 logs.init();
 
@@ -541,5 +542,21 @@ export const processQueue = functions.firestore
       await events.recordCompleteEvent(change);
 
       logs.complete();
+    }
+  );
+
+  export const onsend = eventarc.onCustomEventPublished(
+    "firebase.extensions.firestore-send-email.v1.onSend",
+    async (event) => {
+      try {
+        await initialize();
+
+        return admin.firestore()
+          .collection(config.mailCollection)
+          .add(event.data)
+
+      } catch(err) {
+        return Promise.reject(err);
+      }
     }
   );
