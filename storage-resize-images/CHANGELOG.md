@@ -1,3 +1,7 @@
+## Version 0.2.6
+
+fixed - bump dependencies, fix vulnerabilities
+
 ## Version 0.2.5
 
 fixed - bump dependencies, fix vulnerabilities (#2061)
