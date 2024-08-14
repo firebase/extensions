@@ -1,3 +1,7 @@
+## Version 0.1.23
+
+fixed - bump dependencies to fix vulnerabilities
+
 ## Version 0.1.22
 
 fixed - recursive delete searched docs if enabled (#2073)
