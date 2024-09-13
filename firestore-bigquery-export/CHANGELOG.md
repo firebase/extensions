@@ -1,3 +1,7 @@
+## Version 0.1.54
+
+fixed - bump changetracker and fix more vulnerabilities
+
 ## Version 0.1.53
 
 fixed - bump changetracker to fix npm vulnerabilities
