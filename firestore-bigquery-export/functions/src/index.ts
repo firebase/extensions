@@ -32,27 +32,25 @@ import * as logs from "./logs";
 import * as events from "./events";
 import { getChangeType, getDocumentId, resolveWildcardIds } from "./util";
 
-const eventTrackerConfig = {
-  tableId: config.tableId,
-  datasetId: config.datasetId,
-  datasetLocation: config.datasetLocation,
-  backupTableId: config.backupCollectionId,
-  transformFunction: config.transformFunction,
-  timePartitioning: config.timePartitioning,
-  timePartitioningField: config.timePartitioningField,
-  timePartitioningFieldType: config.timePartitioningFieldType,
-  timePartitioningFirestoreField: config.timePartitioningFirestoreField,
-  databaseId: config.databaseId,
-  clustering: config.clustering,
-  wildcardIds: config.wildcardIds,
-  bqProjectId: config.bqProjectId,
-  useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
-  skipInit: true,
-  kmsKeyName: config.kmsKeyName,
-};
-
 const eventTracker: FirestoreEventHistoryTracker =
-  new FirestoreBigQueryEventHistoryTracker(eventTrackerConfig);
+  new FirestoreBigQueryEventHistoryTracker({
+    tableId: config.tableId,
+    datasetId: config.datasetId,
+    datasetLocation: config.datasetLocation,
+    backupTableId: config.backupCollectionId,
+    transformFunction: config.transformFunction,
+    timePartitioning: config.timePartitioning,
+    timePartitioningField: config.timePartitioningField,
+    timePartitioningFieldType: config.timePartitioningFieldType,
+    timePartitioningFirestoreField: config.timePartitioningFirestoreField,
+    databaseId: config.databaseId,
+    clustering: config.clustering,
+    wildcardIds: config.wildcardIds,
+    bqProjectId: config.bqProjectId,
+    useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
+    skipInit: true,
+    kmsKeyName: config.kmsKeyName,
+  });
 
 logs.init();
 
@@ -99,81 +97,60 @@ export const fsexportbigquery = functions
   .document(config.collectionPath)
   .onWrite(async (change, context) => {
     logs.start();
-    const changeType = getChangeType(change);
-    const documentId = getDocumentId(change);
-
-    const isCreated = changeType === ChangeType.CREATE;
-    const isDeleted = changeType === ChangeType.DELETE;
-
-    const data = isDeleted ? undefined : change.after?.data();
-    const oldData =
-      isCreated || config.excludeOldData ? undefined : change.before?.data();
-
-    /**
-     * Serialize early before queueing in cloud task
-     * Cloud tasks currently have a limit of 1mb, this also ensures payloads are kept to a minimum
-     */
-    let serializedData: any;
-    let serializedOldData: any;
-
     try {
-      serializedData = eventTracker.serializeData(data);
-      serializedOldData = eventTracker.serializeData(oldData);
-    } catch (err) {
-      logs.error(false, "Failed to serialize data", err, null, null);
-      throw err;
-    }
+      const changeType = getChangeType(change);
+      const documentId = getDocumentId(change);
 
-    try {
+      const isCreated = changeType === ChangeType.CREATE;
+      const isDeleted = changeType === ChangeType.DELETE;
+
+      const data = isDeleted ? undefined : change.after.data();
+      const oldData =
+        isCreated || config.excludeOldData ? undefined : change.before.data();
+
       await events.recordStartEvent({
         documentId,
         changeType,
-        before: { data: change.before.data() },
-        after: { data: change.after.data() },
+        before: {
+          data: change.before.data(),
+        },
+        after: {
+          data: change.after.data(),
+        },
         context: context.resource,
       });
-    } catch (err) {
-      logs.error(false, "Failed to record start event", err, null, null);
-      throw err;
-    }
 
-    try {
       const queue = getFunctions().taskQueue(
         `locations/${config.location}/functions/syncBigQuery`,
         config.instanceId
       );
 
+      /**
+       * enqueue data cannot currently handle documentdata
+       * Serialize early before queueing in clopud task
+       * Cloud tasks currently have a limit of 1mb, this also ensures payloads are kept to a minimum
+       */
+      const seializedData = eventTracker.serializeData(data);
+      const serializedOldData = eventTracker.serializeData(oldData);
+
       await queue.enqueue({
         context,
         changeType,
         documentId,
-        data: serializedData,
+        data: seializedData,
         oldData: serializedOldData,
       });
     } catch (err) {
-      const event = {
-        timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
-        operation: changeType,
-        documentName: context.resource.name,
-        documentId: documentId,
-        pathParams: config.wildcardIds ? context.params : null,
-        eventId: context.eventId,
-        data: serializedData,
-        oldData: serializedOldData,
-      };
-
       await events.recordErrorEvent(err as Error);
-      // Only log the error once here
-      if (!err.logged) {
-        logs.error(
-          config.logFailedExportData,
-          "Failed to enqueue task to syncBigQuery",
-          err,
-          event,
-          eventTrackerConfig
-        );
+      logs.error(err);
+      const eventAgeMs = Date.now() - Date.parse(context.timestamp);
+      const eventMaxAgeMs = 10000;
+
+      if (eventAgeMs > eventMaxAgeMs) {
+        return;
       }
-      return;
+
+      throw err;
     }
 
     logs.complete();

@@ -1,7 +1,3 @@
-## Version 0.1.55
-
-feat - log failed queued tasks
-
 ## Version 0.1.54
 
 fixed - bump changetracker and fix more vulnerabilities

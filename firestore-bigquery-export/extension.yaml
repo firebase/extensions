@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.55
+version: 0.1.54
 specVersion: v1beta
 
 displayName: Stream Firestore to BigQuery
@@ -204,19 +204,6 @@ params:
       Firestore collection paths must be an odd number of segments separated by
       slashes, e.g. "path/to/collection".
     default: posts
-    required: true
-
-  - param: LOG_FAILED_EXPORTS
-    label: Enable logging failed exports
-    description: >-
-      If enabled, the extension will exports that failed to enqueue to the
-      Firebase console, to prevent data loss.
-    type: select
-    options:
-      - label: Yes
-        value: yes
-      - label: No
-        value: no
     required: true
 
   - param: WILDCARD_IDS
