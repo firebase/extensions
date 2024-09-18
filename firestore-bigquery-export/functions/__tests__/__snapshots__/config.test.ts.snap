@@ -20,6 +20,7 @@ Object {
   "instanceId": undefined,
   "kmsKeyName": "test",
   "location": "us-central1",
+  "logFailedExportData": false,
   "maxDispatchesPerSecond": 10,
   "tableId": "my_table",
   "timePartitioning": null,
