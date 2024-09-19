@@ -149,8 +149,24 @@ export const dataTypeInvalid = (
   );
 };
 
-export const error = (err: Error) => {
-  logger.error("Error when mirroring data to BigQuery", err);
+export const error = (
+  includeEvent: boolean,
+  message: string,
+  err: Error,
+  event: any,
+  eventTrackerConfig: any
+) => {
+  if (includeEvent) {
+    logger.error(`Error when mirroring data to BigQuery: ${message}`, {
+      error: err,
+      event,
+      eventTrackerConfig,
+    });
+  } else {
+    logger.error(`Error when mirroring data to BigQuery: ${message}`, {
+      error: err,
+    });
+  }
 };
 
 export const init = () => {
