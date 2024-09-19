@@ -32,6 +32,7 @@ export function clustering(clusters: string | undefined) {
 }
 
 export default {
+  logFailedExportData: process.env.LOG_FAILED_EXPORTS === "yes",
   bqProjectId: process.env.BIGQUERY_PROJECT_ID,
   databaseId: "(default)",
   collectionPath: process.env.COLLECTION_PATH,
