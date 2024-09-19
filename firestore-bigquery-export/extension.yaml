@@ -210,7 +210,7 @@ params:
     label: Enable logging failed exports
     description: >-
       If enabled, the extension will export what failed to enqueue to the
-      Firebase console, to prevent data loss.
+      Firebase console, to mitigate data loss.
     type: select
     options:
       - label: Yes
