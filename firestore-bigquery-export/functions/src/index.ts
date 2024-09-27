@@ -19,7 +19,7 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { getExtensions } from "firebase-admin/extensions";
 import { getFunctions } from "firebase-admin/functions";
-import { getFirestore } from "firebase-admin/firestore";
+import { DocumentSnapshot } from "firebase-admin/firestore";
 
 import {
   ChangeType,
@@ -67,29 +67,42 @@ export const syncBigQuery = functions.tasks
   .taskQueue()
   .onDispatch(
     async ({ context, changeType, documentId, data, oldData }, ctx) => {
-      const update = {
-        timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
-        operation: changeType,
-        documentName: context.resource.name,
-        documentId: documentId,
-        pathParams: config.wildcardIds ? context.params : null,
-        eventId: context.eventId,
-        data,
-        oldData,
-      };
+      try {
+        // Use the shared function to write the event to BigQuery
+        await writeEventToBigQuery(
+          changeType,
+          documentId,
+          data,
+          oldData,
+          context
+        );
 
-      /** Record the chnages in the change tracker */
-      await eventTracker.record([{ ...update }]);
+        // Record a success event in EventArc, if configured
+        await events.recordSuccessEvent({
+          subject: documentId,
+          data: {
+            timestamp: context.timestamp,
+            operation: changeType,
+            documentName: context.resource.name,
+            documentId,
+            pathParams: config.wildcardIds ? context.params : null,
+            eventId: context.eventId,
+            data,
+            oldData,
+          },
+        });
 
-      /** Send an event Arc update , if configured */
-      await events.recordSuccessEvent({
-        subject: documentId,
-        data: {
-          ...update,
-        },
-      });
-
-      logs.complete();
+        logs.complete();
+      } catch (err) {
+        logs.error(true, "Failed to process syncBigQuery task", err, {
+          context,
+          changeType,
+          documentId,
+          data,
+          oldData,
+        });
+        throw err;
+      }
     }
   );
 
@@ -109,10 +122,6 @@ export const fsexportbigquery = functions
     const oldData =
       isCreated || config.excludeOldData ? undefined : change.before?.data();
 
-    /**
-     * Serialize early before queueing in cloud task
-     * Cloud tasks currently have a limit of 1mb, this also ensures payloads are kept to a minimum
-     */
     let serializedData: any;
     let serializedOldData: any;
 
@@ -120,64 +129,129 @@ export const fsexportbigquery = functions
       serializedData = eventTracker.serializeData(data);
       serializedOldData = eventTracker.serializeData(oldData);
     } catch (err) {
-      logs.error(false, "Failed to serialize data", err, null, null);
+      logs.error(true, "Failed to serialize data", err, { data, oldData });
       throw err;
     }
 
     try {
-      await events.recordStartEvent({
-        documentId,
-        changeType,
-        before: { data: change.before.data() },
-        after: { data: change.after.data() },
-        context: context.resource,
-      });
+      await recordEventArcStartEvent(documentId, changeType, change, context);
     } catch (err) {
-      logs.error(false, "Failed to record start event", err, null, null);
+      logs.error(false, "Failed to record start event", err);
       throw err;
     }
 
     try {
-      const queue = getFunctions().taskQueue(
-        `locations/${config.location}/functions/syncBigQuery`,
-        config.instanceId
+      await writeEventToBigQuery(
+        changeType,
+        documentId,
+        serializedData,
+        serializedOldData,
+        context
       );
-
-      await queue.enqueue({
+    } catch (err) {
+      await handleEnqueueError(
+        err,
         context,
         changeType,
         documentId,
-        data: serializedData,
-        oldData: serializedOldData,
-      });
-    } catch (err) {
-      const event = {
-        timestamp: context.timestamp, // This is a Cloud Firestore commit timestamp with microsecond precision.
-        operation: changeType,
-        documentName: context.resource.name,
-        documentId: documentId,
-        pathParams: config.wildcardIds ? context.params : null,
-        eventId: context.eventId,
-        data: serializedData,
-        oldData: serializedOldData,
-      };
-
-      await events.recordErrorEvent(err as Error);
-      // Only log the error once here
-      if (!err.logged) {
-        logs.error(
-          config.logFailedExportData,
-          "Failed to enqueue task to syncBigQuery",
-          err,
-          event,
-          eventTrackerConfig
-        );
-      }
-      return;
+        serializedData,
+        serializedOldData
+      );
     }
 
     logs.complete();
   });
+
+/**
+ * Record the start event for tracking purposes.
+ */
+async function recordEventArcStartEvent(
+  documentId: string,
+  changeType: string,
+  change: functions.Change<DocumentSnapshot>,
+  context: functions.EventContext
+) {
+  await events.recordStartEvent({
+    documentId,
+    changeType,
+    before: { data: change.before.data() },
+    after: { data: change.after.data() },
+    context: context.resource,
+  });
+}
+
+/**
+ * Record the event to the event tracker.
+ */
+async function writeEventToBigQuery(
+  changeType: string,
+  documentId: string,
+  serializedData: any,
+  serializedOldData: any,
+  context: functions.EventContext
+) {
+  const event = {
+    timestamp: context.timestamp,
+    operation: changeType,
+    documentName: context.resource.name,
+    documentId,
+    pathParams: config.wildcardIds ? context.params : null,
+    eventId: context.eventId,
+    data: serializedData,
+    oldData: serializedOldData,
+  };
+
+  eventTracker.record([event]);
+}
+
+/**
+ * Handle errors when enqueueing tasks to sync BigQuery.
+ */
+async function handleEnqueueError(
+  err: Error,
+  context: functions.EventContext,
+  changeType: string,
+  documentId: string,
+  serializedData: any,
+  serializedOldData: any
+) {
+  try {
+    const queue = getFunctions().taskQueue(
+      `locations/${config.location}/functions/syncBigQuery`,
+      config.instanceId
+    );
+
+    await queue.enqueue({
+      context,
+      changeType,
+      documentId,
+      data: serializedData,
+      oldData: serializedOldData,
+    });
+  } catch (enqueueErr) {
+    const event = {
+      timestamp: context.timestamp,
+      operation: changeType,
+      documentName: context.resource.name,
+      documentId,
+      pathParams: config.wildcardIds ? context.params : null,
+      eventId: context.eventId,
+      data: serializedData,
+      oldData: serializedOldData,
+    };
+
+    await events.recordErrorEvent(enqueueErr as Error);
+
+    if (!enqueueErr.logged) {
+      logs.error(
+        true,
+        "Failed to enqueue task to syncBigQuery",
+        enqueueErr,
+        event
+      );
+    }
+  }
+}
 
 export const setupBigQuerySync = functions.tasks
   .taskQueue()
