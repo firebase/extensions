@@ -37,8 +37,6 @@ export default {
   databaseId: "(default)",
   collectionPath: process.env.COLLECTION_PATH,
   datasetId: process.env.DATASET_ID,
-  doBackfill: process.env.DO_BACKFILL === "yes",
-  docsPerBackfill: parseInt(process.env.DOCS_PER_BACKFILL) || 200,
   tableId: process.env.TABLE_ID,
   location: process.env.LOCATION,
   initialized: false,
@@ -63,5 +61,4 @@ export default {
     process.env.MAX_DISPATCHES_PER_SECOND || "10"
   ),
   kmsKeyName: process.env.KMS_KEY_NAME,
-  useCollectionGroupQuery: process.env.USE_COLLECTION_GROUP_QUERY === "yes",
 };
