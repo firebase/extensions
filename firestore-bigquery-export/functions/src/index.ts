@@ -19,7 +19,6 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { getExtensions } from "firebase-admin/extensions";
 import { getFunctions } from "firebase-admin/functions";
-import { DocumentSnapshot } from "firebase-admin/firestore";
 
 import {
   ChangeType,
@@ -27,11 +26,11 @@ import {
   FirestoreEventHistoryTracker,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 
-import { getEventarc } from "firebase-admin/eventarc";
 import * as logs from "./logs";
 import * as events from "./events";
 import { getChangeType, getDocumentId, resolveWildcardIds } from "./util";
 
+// Configuration for the Firestore Event History Tracker.
 const eventTrackerConfig = {
   tableId: config.tableId,
   datasetId: config.datasetId,
@@ -42,34 +41,42 @@ const eventTrackerConfig = {
   timePartitioningField: config.timePartitioningField,
   timePartitioningFieldType: config.timePartitioningFieldType,
   timePartitioningFirestoreField: config.timePartitioningFirestoreField,
+  // Database related configurations
   databaseId: config.databaseId,
   clustering: config.clustering,
   wildcardIds: config.wildcardIds,
   bqProjectId: config.bqProjectId,
+  // Optional configurations
   useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
   skipInit: true,
   kmsKeyName: config.kmsKeyName,
 };
 
+// Initialize the Firestore Event History Tracker with the given configuration.
 const eventTracker: FirestoreEventHistoryTracker =
   new FirestoreBigQueryEventHistoryTracker(eventTrackerConfig);
 
+// Initialize logging.
 logs.init();
 
-/** Init app, if not already initialized */
+/** Initialize Firebase Admin SDK if not already initialized */
 if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 
+// Setup the event channel for EventArc.
 events.setupEventChannel();
 
+/**
+ * Cloud Function to handle enqueued tasks to synchronize Firestore changes to BigQuery.
+ */
 export const syncBigQuery = functions.tasks
   .taskQueue()
   .onDispatch(
     async ({ context, changeType, documentId, data, oldData }, ctx) => {
       try {
         // Use the shared function to write the event to BigQuery
-        await writeEventToBigQuery(
+        await recordEventToBigQuery(
           changeType,
           documentId,
           data,
@@ -92,8 +99,10 @@ export const syncBigQuery = functions.tasks
           },
         });
 
+        // Log completion of the task.
         logs.complete();
       } catch (err) {
+        // Log error and throw it to handle in the calling function.
         logs.error(true, "Failed to process syncBigQuery task", err, {
           context,
           changeType,
@@ -106,18 +115,26 @@ export const syncBigQuery = functions.tasks
     }
   );
 
+/**
+ * Cloud Function triggered on Firestore document changes to export data to BigQuery.
+ */
 export const fsexportbigquery = functions
   .runWith({ failurePolicy: true })
   .firestore.database(config.databaseId)
   .document(config.collectionPath)
   .onWrite(async (change, context) => {
+    // Start logging the function execution.
     logs.start();
+
+    // Determine the type of change (CREATE, UPDATE, DELETE).
     const changeType = getChangeType(change);
     const documentId = getDocumentId(change);
 
+    // Check if the document is newly created or deleted.
     const isCreated = changeType === ChangeType.CREATE;
     const isDeleted = changeType === ChangeType.DELETE;
 
+    // Get the new data (after change) and old data (before change).
     const data = isDeleted ? undefined : change.after?.data();
     const oldData =
       isCreated || config.excludeOldData ? undefined : change.before?.data();
@@ -126,22 +143,33 @@ export const fsexportbigquery = functions
     let serializedOldData: any;
 
     try {
+      // Serialize the data before processing.
       serializedData = eventTracker.serializeData(data);
       serializedOldData = eventTracker.serializeData(oldData);
     } catch (err) {
+      // Log serialization error and throw it.
       logs.error(true, "Failed to serialize data", err, { data, oldData });
       throw err;
     }
 
     try {
-      await recordEventArcStartEvent(documentId, changeType, change, context);
+      // Record the start event for the change in EventArc, if configured.
+      await events.recordStartEvent({
+        documentId,
+        changeType,
+        before: { data: change.before.data() },
+        after: { data: change.after.data() },
+        context: context.resource,
+      });
     } catch (err) {
+      // Log the error if recording start event fails and throw it.
       logs.error(false, "Failed to record start event", err);
       throw err;
     }
 
     try {
-      await writeEventToBigQuery(
+      // Write the change event to BigQuery.
+      await recordEventToBigQuery(
         changeType,
         documentId,
         serializedData,
@@ -149,6 +177,7 @@ export const fsexportbigquery = functions
         context
       );
     } catch (err) {
+      // Handle enqueue errors with retries.
       await handleEnqueueError(
         err,
         context,
@@ -159,31 +188,20 @@ export const fsexportbigquery = functions
       );
     }
 
+    // Log the successful completion of the function.
     logs.complete();
   });
 
 /**
- * Record the start event for tracking purposes.
+ * Record the event to the Firestore Event History Tracker and BigQuery.
+ *
+ * @param changeType - The type of change (CREATE, UPDATE, DELETE).
+ * @param documentId - The ID of the Firestore document.
+ * @param serializedData - The serialized new data of the document.
+ * @param serializedOldData - The serialized old data of the document.
+ * @param context - The event context from Firestore.
  */
-async function recordEventArcStartEvent(
-  documentId: string,
-  changeType: string,
-  change: functions.Change<DocumentSnapshot>,
-  context: functions.EventContext
-) {
-  await events.recordStartEvent({
-    documentId,
-    changeType,
-    before: { data: change.before.data() },
-    after: { data: change.after.data() },
-    context: context.resource,
-  });
-}
-
-/**
- * Record the event to the event tracker.
- */
-async function writeEventToBigQuery(
+async function recordEventToBigQuery(
   changeType: string,
   documentId: string,
   serializedData: any,
@@ -191,21 +209,29 @@ async function writeEventToBigQuery(
   context: functions.EventContext
 ) {
   const event = {
-    timestamp: context.timestamp,
-    operation: changeType,
-    documentName: context.resource.name,
-    documentId,
-    pathParams: config.wildcardIds ? context.params : null,
-    eventId: context.eventId,
-    data: serializedData,
-    oldData: serializedOldData,
+    timestamp: context.timestamp, // Cloud Firestore commit timestamp
+    operation: changeType, // The type of operation performed
+    documentName: context.resource.name, // The document name
+    documentId, // The document ID
+    pathParams: config.wildcardIds ? context.params : null, // Path parameters, if any
+    eventId: context.eventId, // The event ID from Firestore
+    data: serializedData, // Serialized new data
+    oldData: serializedOldData, // Serialized old data
   };
 
+  // Record the event in the Firestore Event History Tracker and BigQuery.
   eventTracker.record([event]);
 }
 
 /**
  * Handle errors when enqueueing tasks to sync BigQuery.
+ *
+ * @param err - The error object.
+ * @param context - The event context from Firestore.
+ * @param changeType - The type of change (CREATE, UPDATE, DELETE).
+ * @param documentId - The ID of the Firestore document.
+ * @param serializedData - The serialized new data of the document.
+ * @param serializedOldData - The serialized old data of the document.
  */
 async function handleEnqueueError(
   err: Error,
@@ -221,14 +247,39 @@ async function handleEnqueueError(
       config.instanceId
     );
 
-    await queue.enqueue({
-      context,
-      changeType,
-      documentId,
-      data: serializedData,
-      oldData: serializedOldData,
-    });
+    let attempts = 0;
+    const jitter = Math.random() * 100; // Adding jitter to avoid collision
+
+    // Exponential backoff formula with a maximum of 5 + jitter seconds
+    const backoff = (attempt: number) =>
+      Math.min(Math.pow(2, attempt) * 100, 5000) + jitter;
+
+    while (attempts < config.maxEnqueueAttempts) {
+      if (attempts > 0) {
+        // Wait before retrying to enqueue the task.
+        await new Promise((resolve) => setTimeout(resolve, backoff(attempts)));
+      }
+
+      attempts++;
+      try {
+        // Attempt to enqueue the task to the queue.
+        await queue.enqueue({
+          context,
+          changeType,
+          documentId,
+          data: serializedData,
+          oldData: serializedOldData,
+        });
+        break; // Break the loop if enqueuing is successful.
+      } catch (enqueueErr) {
+        // Throw the error if max attempts are reached.
+        if (attempts === config.maxEnqueueAttempts) {
+          throw enqueueErr;
+        }
+      }
+    }
   } catch (enqueueErr) {
+    // Prepare the event object for error logging.
     const event = {
       timestamp: context.timestamp,
       operation: changeType,
@@ -240,8 +291,10 @@ async function handleEnqueueError(
       oldData: serializedOldData,
     };
 
+    // Record the error event.
     await events.recordErrorEvent(enqueueErr as Error);
 
+    // Log the error if it has not been logged already.
     if (!enqueueErr.logged) {
       logs.error(
         true,
@@ -253,30 +306,38 @@ async function handleEnqueueError(
   }
 }
 
+/**
+ * Cloud Function to set up BigQuery sync by initializing the event tracker.
+ */
 export const setupBigQuerySync = functions.tasks
   .taskQueue()
   .onDispatch(async () => {
     /** Setup runtime environment */
     const runtime = getExtensions().runtime();
 
-    /** Init the BigQuery sync */
+    // Initialize the BigQuery sync.
     await eventTracker.initialize();
 
+    // Update the processing state.
     await runtime.setProcessingState(
       "PROCESSING_COMPLETE",
       "Sync setup completed"
     );
   });
 
+/**
+ * Cloud Function to initialize BigQuery sync.
+ */
 export const initBigQuerySync = functions.tasks
   .taskQueue()
   .onDispatch(async () => {
     /** Setup runtime environment */
     const runtime = getExtensions().runtime();
 
-    /** Init the BigQuery sync */
+    // Initialize the BigQuery sync.
     await eventTracker.initialize();
 
+    // Update the processing state.
     await runtime.setProcessingState(
       "PROCESSING_COMPLETE",
       "Sync setup completed"

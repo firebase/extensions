@@ -19,6 +19,11 @@ import { Change } from "firebase-functions";
 
 import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
 
+/**
+ * Get the change type (CREATE, UPDATE, DELETE) from the Firestore change.
+ * @param change Firestore document change object.
+ * @returns {ChangeType} The type of change.
+ */
 export function getChangeType(change: Change<DocumentSnapshot>): ChangeType {
   if (!change.after.exists) {
     return ChangeType.DELETE;
@@ -29,6 +34,11 @@ export function getChangeType(change: Change<DocumentSnapshot>): ChangeType {
   return ChangeType.UPDATE;
 }
 
+/**
+ * Get the document ID from the Firestore change.
+ * @param change Firestore document change object.
+ * @returns {string} The document ID.
+ */
 export function getDocumentId(change: Change<DocumentSnapshot>): string {
   if (change.after.exists) {
     return change.after.id;
