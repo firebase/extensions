@@ -423,6 +423,18 @@ params:
       'projects/PROJECT_NAME/locations/KEY_RING_LOCATION/keyRings/KEY_RING_ID/cryptoKeys/KEY_ID'.
     required: false
 
+  - param: MAX_ENQUEUE_ATTEMPTS
+    label: Maximum number of enqueue attempts
+    description: >-
+      This parameter will set the maximum number of attempts to enqueue a
+      document to cloud tasks for export to BigQuery. If the maximum number of
+      attempts is reached, the failed export will be handled according to the
+      `LOG_FAILED_EXPORTS` parameter.
+    type: string
+    validationRegex: ^(10|[1-9])$
+    validationErrorMessage: Please select an integer between 1 and 10
+    default: 3
+
 events:
   - type: firebase.extensions.firestore-counter.v1.onStart
     description:
