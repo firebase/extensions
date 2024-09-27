@@ -60,19 +60,6 @@ resources:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
 
-  - name: fsimportexistingdocs
-    type: firebaseextensions.v1beta.function
-    description:
-      Imports existing documents from the specified collection into BigQuery.
-      Imported documents will have a special changelog with the operation of
-      `IMPORT` and the timestamp of epoch.
-    properties:
-      runtime: nodejs18
-      taskQueueTrigger:
-        retryConfig:
-          maxAttempts: 15
-          minBackoffSeconds: 60
-
   - name: syncBigQuery
     type: firebaseextensions.v1beta.function
     description: >-

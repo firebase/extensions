@@ -168,8 +168,6 @@ essential for the script to insert data into an already partitioned table.)
 
 * **fsexportbigquery:** Listens for document changes in your specified Cloud Firestore collection, then exports the changes into BigQuery.
 
-* **fsimportexistingdocs:** Imports existing documents from the specified collection into BigQuery. Imported documents will have a special changelog with the operation of `IMPORT` and the timestamp of epoch.
-
 * **syncBigQuery:** A task-triggered function that gets called on BigQuery sync
 
 * **initBigQuerySync:** Runs configuration for sycning with BigQuery
