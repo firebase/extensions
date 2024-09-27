@@ -111,16 +111,16 @@ export const syncBigQuery = functions.tasks
           oldData,
         });
 
-        if (config.backupToGCS) {
-          // Backup to Google Cloud Storage as a last resort.
-          await backupToGCS(config.backupBucketName, config.backupDir, {
-            changeType,
-            documentId,
-            serializedData: data,
-            serializedOldData: oldData,
-            context,
-          });
-        }
+        // if (config.backupToGCS) {
+        //   // Backup to Google Cloud Storage as a last resort.
+        //   await backupToGCS(config.backupBucketName, config.backupDir, {
+        //     changeType,
+        //     documentId,
+        //     serializedData: data,
+        //     serializedOldData: oldData,
+        //     context,
+        //   });
+        // }
 
         throw err;
       }
@@ -130,9 +130,8 @@ export const syncBigQuery = functions.tasks
 /**
  * Cloud Function triggered on Firestore document changes to export data to BigQuery.
  */
-export const fsexportbigquery = functions
-  .runWith({ failurePolicy: true })
-  .firestore.database(config.databaseId)
+export const fsexportbigquery = functions.firestore
+  .database(config.databaseId)
   .document(config.collectionPath)
   .onWrite(async (change, context) => {
     // Start logging the function execution.
@@ -189,8 +188,12 @@ export const fsexportbigquery = functions
         context
       );
     } catch (err) {
+      functions.logger.warn(
+        "Failed to write event to BigQuery Immediately. Will attempt to Enqueue to Cloud Tasks.",
+        err
+      );
       // Handle enqueue errors with retries and backup to GCS.
-      await handleEnqueueError(
+      await attemptToEnqueue(
         err,
         context,
         changeType,
@@ -232,7 +235,7 @@ async function recordEventToBigQuery(
   };
 
   // Record the event in the Firestore Event History Tracker and BigQuery.
-  eventTracker.record([event]);
+  await eventTracker.record([event]);
 }
 
 /**
@@ -245,7 +248,7 @@ async function recordEventToBigQuery(
  * @param serializedData - The serialized new data of the document.
  * @param serializedOldData - The serialized old data of the document.
  */
-async function handleEnqueueError(
+async function attemptToEnqueue(
   err: Error,
   context: functions.EventContext,
   changeType: string,
@@ -316,16 +319,16 @@ async function handleEnqueueError(
       );
     }
 
-    if (config.backupToGCS) {
-      // Backup to Google Cloud Storage as a last resort.
-      await backupToGCS(config.backupBucketName, config.backupDir, {
-        changeType,
-        documentId,
-        serializedData,
-        serializedOldData,
-        context,
-      });
-    }
+    // if (config.backupToGCS) {
+    //   // Backup to Google Cloud Storage as a last resort.
+    //   await backupToGCS(config.backupBucketName, config.backupDir, {
+    //     changeType,
+    //     documentId,
+    //     serializedData,
+    //     serializedOldData,
+    //     context,
+    //   });
+    // }
   }
 }
 

@@ -425,25 +425,25 @@ params:
     validationErrorMessage: Please select an integer between 1 and 10
     default: 3
 
-  - param: BACKUP_TO_GCS
-    label: Backup to GCS
-    description: >-
-      If enabled, failed BigQuery updates will be written to a GCS bucket.
-    type: select
-    options:
-      - label: Yes
-        value: yes
-      - label: No
-        value: no
-    default: no
-    required: true
+  # - param: BACKUP_TO_GCS
+  #   label: Backup to GCS
+  #   description: >-
+  #     If enabled, failed BigQuery updates will be written to a GCS bucket.
+  #   type: select
+  #   options:
+  #     - label: Yes
+  #       value: yes
+  #     - label: No
+  #       value: no
+  #   default: no
+  #   required: true
 
-  - param: BACKUP_GCS_BUCKET
-    label: Backup GCS Bucket Name
-    description: >-
-      This (optional) parameter will allow you to specify a GCS bucket for which
-      failed BigQuery updates will be written to, if this feature is enabled.
-    type: string
+  # - param: BACKUP_GCS_BUCKET
+  #   label: Backup GCS Bucket Name
+  #   description: >-
+  #     This (optional) parameter will allow you to specify a GCS bucket for which
+  #     failed BigQuery updates will be written to, if this feature is enabled.
+  #   type: string
 
 events:
   - type: firebase.extensions.firestore-counter.v1.onStart

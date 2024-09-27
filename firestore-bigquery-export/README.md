@@ -162,10 +162,6 @@ essential for the script to insert data into an already partitioned table.)
 
 * Maximum number of enqueue attempts: This parameter will set the maximum number of attempts to enqueue a document to cloud tasks for export to BigQuery. If the maximum number of attempts is reached, the failed export will be handled according to the `LOG_FAILED_EXPORTS` parameter.
 
-* Backup to GCS: If enabled, failed BigQuery updates will be written to a GCS bucket.
-
-* Backup GCS Bucket Name: This (optional) parameter will allow you to specify a GCS bucket for which failed BigQuery updates will be written to, if this feature is enabled.
-
 
 
 **Cloud Functions:**
