@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { backupToGCS } from "./cloud_storage_backups";
+
 function timePartitioning(type) {
   if (
     type === "HOUR" ||
@@ -62,4 +64,9 @@ export default {
   ),
   kmsKeyName: process.env.KMS_KEY_NAME,
   maxEnqueueAttempts: parseInt(process.env.MAX_ENQUEUE_ATTEMPTS || "3"),
+  // backup bucket defaults to default firebase cloud storage bucket
+  backupToGCS: process.env.BACKUP_TO_GCS === "yes" ? true : false,
+  backupBucketName:
+    process.env.BACKUP_GCS_BUCKET || `${process.env.PROJECT_ID}.appspot.com`,
+  backupDir: `_${process.env.INSTANCE_ID || "firestore-bigquery-export"}`,
 };

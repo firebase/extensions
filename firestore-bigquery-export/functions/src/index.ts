@@ -19,7 +19,6 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { getExtensions } from "firebase-admin/extensions";
 import { getFunctions } from "firebase-admin/functions";
-
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
@@ -29,6 +28,7 @@ import {
 import * as logs from "./logs";
 import * as events from "./events";
 import { getChangeType, getDocumentId, resolveWildcardIds } from "./util";
+import { backupToGCS } from "./cloud_storage_backups";
 
 // Configuration for the Firestore Event History Tracker.
 const eventTrackerConfig = {
@@ -110,6 +110,18 @@ export const syncBigQuery = functions.tasks
           data,
           oldData,
         });
+
+        if (config.backupToGCS) {
+          // Backup to Google Cloud Storage as a last resort.
+          await backupToGCS(config.backupBucketName, config.backupDir, {
+            changeType,
+            documentId,
+            serializedData: data,
+            serializedOldData: oldData,
+            context,
+          });
+        }
+
         throw err;
       }
     }
@@ -177,7 +189,7 @@ export const fsexportbigquery = functions
         context
       );
     } catch (err) {
-      // Handle enqueue errors with retries.
+      // Handle enqueue errors with retries and backup to GCS.
       await handleEnqueueError(
         err,
         context,
@@ -302,6 +314,17 @@ async function handleEnqueueError(
         enqueueErr,
         event
       );
+    }
+
+    if (config.backupToGCS) {
+      // Backup to Google Cloud Storage as a last resort.
+      await backupToGCS(config.backupBucketName, config.backupDir, {
+        changeType,
+        documentId,
+        serializedData,
+        serializedOldData,
+        context,
+      });
     }
   }
 }
