@@ -21,8 +21,8 @@ import * as path from "path";
 import * as fs from "fs";
 import { promisify } from "util";
 
-// Promisify the writeFile function to use async/await
-const writeFileAsync = promisify(fs.writeFile);
+// TODO: we dont need to promisify in node 18+
+const writeFile = promisify(fs.writeFile);
 
 // Initialize Google Cloud Storage client
 const storage = new Storage();
@@ -51,11 +51,8 @@ export async function backupToGCS(
     context: functions.EventContext;
   }
 ) {
-  // Create a timestamp for the backup file
-  const timestamp = new Date().toISOString();
-
   // Define the filename using documentId and timestamp to ensure uniqueness
-  const fileName = `${dirName}/${documentId}_${timestamp}.csv`;
+  const fileName = `${dirName}/${documentId}_${context.eventId}.csv`;
 
   // Create a CSV string from the event data
   const csvData = `
@@ -68,8 +65,11 @@ timestamp,event_id,document_name,operation,data,old_data,document_id
 
   try {
     // Write the CSV data to a temporary local file
-    const tempFilePath = path.join("/tmp", `${documentId}_${timestamp}.csv`);
-    await writeFileAsync(tempFilePath, csvData, "utf8");
+    const tempFilePath = path.join(
+      "/tmp",
+      `${documentId}_${context.eventId}.csv`
+    );
+    await writeFile(tempFilePath, csvData, "utf8");
 
     // Upload the file to Google Cloud Storage
     await storage.bucket(bucketName).upload(tempFilePath, {

@@ -5,6 +5,7 @@ Object {
   "backupBucketName": "undefined.appspot.com",
   "backupCollectionId": undefined,
   "backupDir": "_firestore-bigquery-export",
+  "backupToGCS": false,
   "bqProjectId": undefined,
   "clustering": Array [
     "data",
