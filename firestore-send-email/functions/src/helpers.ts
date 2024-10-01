@@ -2,6 +2,7 @@ import { createTransport } from "nodemailer";
 import { URL } from "url";
 import { invalidTlsOptions, invalidURI } from "./logs";
 import { Config } from "./types";
+import transports, { SendGridTransportOptions } from "./transports";
 
 /**
  * Utility function to compile a URL object
@@ -111,13 +112,9 @@ export function setSmtpCredentials(config: Config) {
 export function setSendGridTransport(config: Config) {
   const { smtpPassword } = config;
 
-  return createTransport({
-    host: "smtp.sendgrid.net",
-    port: 587,
-    auth: {
-      user: "apikey",
-      pass: smtpPassword,
-    },
-    tls: parseTlsOptions(config.tls),
-  });
+  const options: SendGridTransportOptions = {
+    apiKey: smtpPassword,
+  };
+
+  return createTransport(transports.sendGrid(options));
 }
