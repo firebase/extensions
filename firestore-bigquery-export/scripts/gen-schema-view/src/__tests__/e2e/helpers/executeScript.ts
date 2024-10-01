@@ -12,7 +12,7 @@ export default async function executeScript(
     __dirname + `/../../../__tests__/e2e/schemas/${schemaName}`
   );
 
-  const cmd = `node ${libPath} --project dev-extensions-testing -d ${datasetId} -t ${tableId}  -f ${schemaPath} --non-interactive`;
+  const cmd = `node ${libPath} --project dev-extensions-testing -d ${datasetId} -t ${tableId}  -f ${schemaPath} --include-path-params --non-interactive`;
   console.log("Executing: ", cmd);
 
   function execAsync(command: string): Promise<void> {
