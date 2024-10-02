@@ -16,7 +16,7 @@ class SendGridTransport implements Transport<SendGridTransportOptions> {
 
   constructor(options: SendGridTransportOptions) {
     this.options = options || {};
-    this.name = "SendGrid";
+    this.name = "sendgrid";
     this.version = undefined;
     if (options.apiKey) {
       sgMail.setApiKey(options.apiKey);
