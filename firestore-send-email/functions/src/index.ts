@@ -255,7 +255,7 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
  */
 function verifySendGridContent(payload: QueuePayload) {
   if (
-    transport.transporter.name === "nodemailer-sendgrid" &&
+    transport.transporter.name === "sendgrid" &&
     !payload.message?.text &&
     !payload.message?.html
   ) {
