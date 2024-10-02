@@ -1,3 +1,7 @@
+## Version 0.1.56
+
+feat - improve sync strategy
+
 ## Version 0.1.55
 
 feat - log failed queued tasks
