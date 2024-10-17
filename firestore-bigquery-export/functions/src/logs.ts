@@ -153,20 +153,20 @@ export const error = (
   includeEvent: boolean,
   message: string,
   err: Error,
-  event: any,
-  eventTrackerConfig: any
+  event?: any, // Made optional, as it is not always required
+  eventTrackerConfig?: any // Made optional, as it is not always required
 ) => {
-  if (includeEvent) {
-    logger.error(`Error when mirroring data to BigQuery: ${message}`, {
-      error: err,
-      event,
-      eventTrackerConfig,
-    });
-  } else {
-    logger.error(`Error when mirroring data to BigQuery: ${message}`, {
-      error: err,
-    });
+  const logDetails: Record<string, any> = { error: err };
+
+  if (includeEvent && event) {
+    logDetails.event = event;
   }
+
+  if (includeEvent && eventTrackerConfig) {
+    logDetails.eventTrackerConfig = eventTrackerConfig;
+  }
+
+  logger.error(`Error when mirroring data to BigQuery: ${message}`, logDetails);
 };
 
 export const init = () => {
