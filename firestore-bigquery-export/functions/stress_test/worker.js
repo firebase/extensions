@@ -10,10 +10,15 @@ admin.initializeApp({
 
 // Get a reference to the Firestore service
 const db = admin.firestore();
-const collectionName = "posts_2";
 
-// Generate a random document
+// Generate a large random document closer to 1MB
 const generateRandomDocument = () => {
+  // const largeString = "x".repeat(300000); // A string of 300,000 characters (~300 KB)
+  // const largeArray = new Array(5000).fill().map((_, i) => ({
+  //   index: i,
+  //   value: `Value_${Math.random().toString(36).substring(7)}`,
+  // }));
+
   return {
     id: uuidv4(),
     name: `Name_${Math.random().toString(36).substring(7)}`,
@@ -21,18 +26,32 @@ const generateRandomDocument = () => {
     email: `user_${Math.random().toString(36).substring(7)}@example.com`,
     isActive: Math.random() > 0.5, // Random boolean value
     createdAt: admin.firestore.Timestamp.now(),
+    // largeString, // Large string field
+    // largeArray, // Large array field
   };
 };
 
-// Write a batch of documents to Firestore
-const writeBatch = async (start, end, batchSize) => {
+// Delay function for rate control
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Write a batch of documents to a specific collection in Firestore
+const writeBatch = async (
+  start,
+  end,
+  batchSize,
+  collectionPath,
+  delayBetweenBatches
+) => {
   let count = start;
   while (count < end) {
     const batchStartTime = performance.now();
 
     let batch = db.batch();
-    for (let i = 0; i < batchSize && count < end; i++) {
-      let docRef = db.collection(collectionName).doc();
+    const remainingDocs = end - count;
+    const adjustedBatchSize = Math.min(batchSize, remainingDocs); // Adjust batch size if remaining docs < batchSize
+
+    for (let i = 0; i < adjustedBatchSize && count < end; i++) {
+      let docRef = db.collection(collectionPath).doc();
       batch.set(docRef, generateRandomDocument());
       count++;
     }
@@ -42,15 +61,24 @@ const writeBatch = async (start, end, batchSize) => {
     const batchEndTime = performance.now();
     const batchDuration = (batchEndTime - batchStartTime) / 1000; // Convert to seconds
     parentPort.postMessage(
-      `Batch of ${batchSize} documents written in ${batchDuration.toFixed(
+      `Batch of ${adjustedBatchSize} documents written in ${batchDuration.toFixed(
         2
-      )} seconds.`
+      )} seconds to ${collectionPath}.`
     );
+
+    // Introduce delay between batches to meet target rate
+    await delay(delayBetweenBatches);
   }
 };
 
 // Start writing in batches
-writeBatch(workerData.start, workerData.end, workerData.batchSize)
+writeBatch(
+  workerData.start,
+  workerData.end,
+  workerData.batchSize,
+  workerData.collectionPath,
+  workerData.delayBetweenBatches // Pass the delay for rate control
+)
   .then(() => {
     parentPort.postMessage("Completed writing documents.");
   })

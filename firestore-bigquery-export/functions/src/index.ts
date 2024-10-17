@@ -310,7 +310,7 @@ async function attemptToEnqueue(
     await events.recordErrorEvent(enqueueErr as Error);
 
     // Log the error if it has not been logged already.
-    if (!enqueueErr.logged) {
+    if (!enqueueErr.logged && config.logFailedExportData) {
       logs.error(
         true,
         "Failed to enqueue task to syncBigQuery",

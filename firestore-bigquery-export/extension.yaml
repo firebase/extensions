@@ -48,8 +48,8 @@ roles:
   - role: datastore.user
     reason: Allows the extension to write updates to the database.
 
-  - role: storage.objectAdmin
-    reason: Allows the extension to create objects in the storage bucket.
+  # - role: storage.objectAdmin
+  #   reason: Allows the extension to create objects in the storage bucket.
 
 resources:
   - name: fsexportbigquery
@@ -207,7 +207,7 @@ params:
         value: yes
       - label: No
         value: no
-    required: true
+    default: yes
 
   - param: WILDCARD_IDS
     label: Enable Wildcard Column field with Parent Firestore Document IDs
