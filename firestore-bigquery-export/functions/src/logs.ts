@@ -182,3 +182,7 @@ export const timestampMissingValue = (fieldName: string) => {
     `Missing value for timestamp field: ${fieldName}, using default timestamp instead.`
   );
 };
+
+export const emergencyDebug = (message: string, err?: any) => {
+  logger.warn(`EMERGENCY DEBUG: ${message}`, JSON.stringify(err, null, 2));
+};

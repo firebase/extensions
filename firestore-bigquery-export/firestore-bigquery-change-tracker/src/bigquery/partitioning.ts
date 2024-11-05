@@ -23,11 +23,16 @@ export class Partitioning {
     this.config = config;
     this.table = table;
     this.schema = schema;
+
+    logs.emergencyDebugChangetracker("Initialized Partitioning class", {
+      config,
+      tableId: table?.id,
+      schema,
+    });
   }
 
   private isPartitioningEnabled(): boolean {
     const { timePartitioning } = this.config;
-
     return !!timePartitioning;
   }
 
@@ -42,6 +47,9 @@ export class Partitioning {
       [metadata] = await this.table.getMetadata();
     } catch {
       console.log("No metadata found");
+      logs.emergencyDebugChangetracker("No metadata found for table", {
+        tableId: this.table.id,
+      });
       return null;
     }
 
@@ -69,6 +77,13 @@ export class Partitioning {
       this.config.timePartitioningFieldType === "DATE"
     ) {
       logs.hourAndDatePartitioningWarning();
+      logs.emergencyDebugChangetracker(
+        "Invalid combination of partitioning and field type",
+        {
+          timePartitioning: this.config.timePartitioning,
+          timePartitioningFieldType: this.config.timePartitioningFieldType,
+        }
+      );
       return true;
     }
 
@@ -97,6 +112,7 @@ export class Partitioning {
       timePartitioningField === "timestamp" &&
       !timePartitioningFieldType &&
       !timePartitioningFirestoreField;
+
     return (
       hasOnlyTimestamp ||
       (!!timePartitioningField &&
@@ -131,6 +147,9 @@ export class Partitioning {
     if (!this.table) {
       logs.invalidTableReference();
     }
+    logs.emergencyDebugChangetracker("Table reference validity check", {
+      tableExists: !!this.table,
+    });
     return !!this.table;
   }
 
@@ -143,6 +162,9 @@ export class Partitioning {
     const [metadata] = await this.table.getMetadata();
     if (metadata.timePartitioning) {
       logs.cannotPartitionExistingTable(this.table);
+      logs.emergencyDebugChangetracker("Table already partitioned", {
+        tableId: this.table.id,
+      });
       return true;
     }
 
@@ -297,6 +319,9 @@ export class Partitioning {
 
     if (!proceed) {
       functions.logger.warn(`Did not add partitioning to schema: ${message}`);
+      logs.emergencyDebugChangetracker("Skipping partitioning addition", {
+        reason: message,
+      });
       return;
     }
     // Add new partitioning field

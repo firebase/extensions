@@ -122,6 +122,7 @@ export class FirestoreBigQueryEventHistoryTracker
       };
     });
 
+    logs.emergencyDebugChangetracker("Record events rows prepared", rows);
     const transformedRows = await this.transformRows(rows);
 
     await this.insertData(transformedRows);
@@ -129,6 +130,10 @@ export class FirestoreBigQueryEventHistoryTracker
 
   private async transformRows(rows: any[]) {
     if (this.config.transformFunction && this.config.transformFunction !== "") {
+      logs.emergencyDebugChangetracker("Transforming rows via function", {
+        rows,
+        transformFunction: this.config.transformFunction,
+      });
       const response = await fetch(this.config.transformFunction, {
         method: "post",
         body: JSON.stringify({ data: rows }),
@@ -171,6 +176,7 @@ export class FirestoreBigQueryEventHistoryTracker
    */
   private async isRetryableInsertionError(e) {
     let isRetryable = true;
+    logs.emergencyDebugChangetracker("Checking retryable error status", e);
     const expectedErrors = [
       { message: "no such field.", location: documentIdField.name },
       { message: "no such field.", location: documentPathParams.name },
@@ -207,6 +213,10 @@ export class FirestoreBigQueryEventHistoryTracker
   private async _waitForInitialization() {
     const dataset = this.bigqueryDataset();
     const changelogName = this.rawChangeLogTableName();
+    logs.emergencyDebugChangetracker("Waiting for initialization", {
+      dataset,
+      changelogName,
+    });
     return waitForInitialization({ dataset, changelogName });
   }
 
@@ -267,6 +277,10 @@ export class FirestoreBigQueryEventHistoryTracker
         await this.initializeDataset();
       } catch (error) {
         const message = parseErrorMessage(error, "initializing dataset");
+        logs.emergencyDebugChangetracker(
+          "Dataset initialization error",
+          message
+        );
         throw new Error(`Error initializing dataset: ${message}`);
       }
 
@@ -277,6 +291,10 @@ export class FirestoreBigQueryEventHistoryTracker
           error,
           "initializing raw change log table"
         );
+        logs.emergencyDebugChangetracker(
+          "Raw change log table initialization error",
+          message
+        );
         throw new Error(`Error initializing raw change log table: ${message}`);
       }
 
@@ -284,6 +302,10 @@ export class FirestoreBigQueryEventHistoryTracker
         await this.initializeLatestView();
       } catch (error) {
         const message = parseErrorMessage(error, "initializing latest view");
+        logs.emergencyDebugChangetracker(
+          "Latest view initialization error",
+          message
+        );
         throw new Error(`Error initializing latest view: ${message}`);
       }
       await this._waitForInitialization();
@@ -295,6 +317,10 @@ export class FirestoreBigQueryEventHistoryTracker
         "initializing BigQuery resources"
       );
       console.error("Error initializing BigQuery resources: ", message);
+      logs.emergencyDebugChangetracker(
+        "BigQuery resource initialization error",
+        message
+      );
       throw error;
     }
   }

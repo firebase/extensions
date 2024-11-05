@@ -1,6 +1,7 @@
 import * as firebase from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+import * as logs from "../logs";
 
 if (!firebase.apps.length) {
   firebase.initializeApp();
@@ -18,6 +19,12 @@ export default async (
   let operationCounter = 0;
   let batchIndex = 0;
 
+  logs.emergencyDebugChangetracker("Starting backup process", {
+    rowsCount: rows?.length,
+    backupTableId: config.backupTableId,
+    errorMessage: e.message,
+  });
+
   rows?.forEach((row) => {
     var ref = db.collection(config.backupTableId).doc(row.insertId);
 
@@ -33,11 +40,25 @@ export default async (
       batchArray.push(db.batch());
       batchIndex++;
       operationCounter = 0;
+      logs.emergencyDebugChangetracker("Created new batch due to limit", {
+        currentBatchIndex: batchIndex,
+      });
     }
   });
 
-  for (let batch of batchArray) {
-    await batch.commit();
+  for (let i = 0; i < batchArray.length; i++) {
+    const batch = batchArray[i];
+    try {
+      await batch.commit();
+      logs.emergencyDebugChangetracker("Committed batch successfully", {
+        batchIndex: i,
+      });
+    } catch (commitError) {
+      logs.emergencyDebugChangetracker("Error committing batch", {
+        batchIndex: i,
+        error: commitError.message,
+      });
+    }
   }
 
   return Promise.resolve();

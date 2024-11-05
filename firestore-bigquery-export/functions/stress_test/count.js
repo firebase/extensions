@@ -1,33 +1,37 @@
-const admin = require("firebase-admin");
+// count.js
 
-// Initialize Firebase Admin with your credentials
-// Make sure you've already set up your Firebase Admin SDK
+const admin = require("firebase-admin");
+const winston = require("winston");
+
+// Load configuration from environment variables or use defaults
+const COLLECTION_PATH =
+  process.env.COLLECTION_PATH || "subcollection/to/export";
+
 admin.initializeApp({
-  projectId: "vertex-testing-1efc3",
+  projectId: "firestore-bigquery-testing",
 });
 
-const firestore = admin.firestore();
+// Get a reference to the Firestore service
+const db = admin.firestore();
 
-async function countDocuments(collectionPath) {
+// Set up logging with Winston
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.simple(),
+  transports: [new winston.transports.Console()],
+});
+
+// Function to query Firestore for the total document count using count() aggregation
+const getCollectionCount = async () => {
   try {
-    const collectionRef = firestore.collection(collectionPath);
-
-    // Perform an aggregate query to count the documents
-    const snapshot = await collectionRef.count().get();
-
-    // Access the count from the snapshot
-    const docCount = snapshot.data().count;
-
-    console.log(
-      `Number of documents in collection '${collectionPath}':`,
-      docCount
-    );
-    return docCount;
+    const collectionRef = db.collection(COLLECTION_PATH);
+    const snapshot = await collectionRef.count().get(); // Use the count aggregation query
+    const count = snapshot.data().count;
+    logger.info(`Collection "${COLLECTION_PATH}" has ${count} documents.`);
   } catch (error) {
-    console.error("Error counting documents:", error);
-    throw error;
+    logger.error(`Error counting documents: ${error.message}`);
   }
-}
+};
 
-// Call the function and pass the collection path
-countDocuments("posts_2");
+// Start the count
+getCollectionCount();

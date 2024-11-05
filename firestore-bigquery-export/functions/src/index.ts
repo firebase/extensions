@@ -28,7 +28,7 @@ import {
 import * as logs from "./logs";
 import * as events from "./events";
 import { getChangeType, getDocumentId, resolveWildcardIds } from "./util";
-import { backupToGCS } from "./cloud_storage_backups";
+import { emergencyDebug } from "./logs";
 
 // Configuration for the Firestore Event History Tracker.
 const eventTrackerConfig = {
@@ -74,6 +74,15 @@ export const syncBigQuery = functions.tasks
   .taskQueue()
   .onDispatch(
     async ({ context, changeType, documentId, data, oldData }, ctx) => {
+      // Log the start of syncBigQuery function
+      emergencyDebug("Starting syncBigQuery function", {
+        context,
+        changeType,
+        documentId,
+        data,
+        oldData,
+      });
+
       try {
         // Use the shared function to write the event to BigQuery
         await recordEventToBigQuery(
@@ -83,6 +92,10 @@ export const syncBigQuery = functions.tasks
           oldData,
           context
         );
+
+        emergencyDebug("Successfully recorded event to BigQuery", {
+          documentId,
+        });
 
         // Record a success event in EventArc, if configured
         await events.recordSuccessEvent({
@@ -103,6 +116,7 @@ export const syncBigQuery = functions.tasks
         logs.complete();
       } catch (err) {
         // Log error and throw it to handle in the calling function.
+        emergencyDebug("Error in syncBigQuery task", err);
         logs.error(true, "Failed to process syncBigQuery task", err, {
           context,
           changeType,
@@ -110,18 +124,6 @@ export const syncBigQuery = functions.tasks
           data,
           oldData,
         });
-
-        // if (config.backupToGCS) {
-        //   // Backup to Google Cloud Storage as a last resort.
-        //   await backupToGCS(config.backupBucketName, config.backupDir, {
-        //     changeType,
-        //     documentId,
-        //     serializedData: data,
-        //     serializedOldData: oldData,
-        //     context,
-        //   });
-        // }
-
         throw err;
       }
     }
@@ -136,6 +138,7 @@ export const fsexportbigquery = functions.firestore
   .onWrite(async (change, context) => {
     // Start logging the function execution.
     logs.start();
+    emergencyDebug("Starting fsexportbigquery function", { change, context });
 
     // Determine the type of change (CREATE, UPDATE, DELETE).
     const changeType = getChangeType(change);
@@ -157,8 +160,13 @@ export const fsexportbigquery = functions.firestore
       // Serialize the data before processing.
       serializedData = eventTracker.serializeData(data);
       serializedOldData = eventTracker.serializeData(oldData);
+      emergencyDebug("Serialized data successfully", {
+        serializedData,
+        serializedOldData,
+      });
     } catch (err) {
       // Log serialization error and throw it.
+      emergencyDebug("Error serializing data", err);
       logs.error(true, "Failed to serialize data", err, { data, oldData });
       throw err;
     }
@@ -172,8 +180,10 @@ export const fsexportbigquery = functions.firestore
         after: { data: change.after.data() },
         context: context.resource,
       });
+      emergencyDebug("Recorded start event successfully", { documentId });
     } catch (err) {
       // Log the error if recording start event fails and throw it.
+      emergencyDebug("Error recording start event", err);
       logs.error(false, "Failed to record start event", err);
       throw err;
     }
@@ -188,6 +198,8 @@ export const fsexportbigquery = functions.firestore
         context
       );
     } catch (err) {
+      // Log the error if BigQuery write fails and attempt enqueue.
+      emergencyDebug("Error writing to BigQuery, attempting enqueue", err);
       functions.logger.warn(
         "Failed to write event to BigQuery Immediately. Will attempt to Enqueue to Cloud Tasks.",
         err
@@ -205,6 +217,7 @@ export const fsexportbigquery = functions.firestore
 
     // Log the successful completion of the function.
     logs.complete();
+    emergencyDebug("Completed fsexportbigquery function");
   });
 
 /**
@@ -234,6 +247,8 @@ async function recordEventToBigQuery(
     oldData: serializedOldData, // Serialized old data
   };
 
+  emergencyDebug("Recording event to BigQuery", event);
+
   // Record the event in the Firestore Event History Tracker and BigQuery.
   await eventTracker.record([event]);
 }
@@ -256,6 +271,14 @@ async function attemptToEnqueue(
   serializedData: any,
   serializedOldData: any
 ) {
+  emergencyDebug("Attempting to enqueue task", {
+    context,
+    changeType,
+    documentId,
+    serializedData,
+    serializedOldData,
+  });
+
   try {
     const queue = getFunctions().taskQueue(
       `locations/${config.location}/functions/syncBigQuery`,
@@ -285,10 +308,15 @@ async function attemptToEnqueue(
           data: serializedData,
           oldData: serializedOldData,
         });
+        emergencyDebug("Enqueued task successfully", { documentId });
         break; // Break the loop if enqueuing is successful.
       } catch (enqueueErr) {
         // Throw the error if max attempts are reached.
         if (attempts === config.maxEnqueueAttempts) {
+          emergencyDebug(
+            "Failed to enqueue task after max attempts",
+            enqueueErr
+          );
           throw enqueueErr;
         }
       }
@@ -318,17 +346,6 @@ async function attemptToEnqueue(
         event
       );
     }
-
-    // if (config.backupToGCS) {
-    //   // Backup to Google Cloud Storage as a last resort.
-    //   await backupToGCS(config.backupBucketName, config.backupDir, {
-    //     changeType,
-    //     documentId,
-    //     serializedData,
-    //     serializedOldData,
-    //     context,
-    //   });
-    // }
   }
 }
 
@@ -338,6 +355,8 @@ async function attemptToEnqueue(
 export const setupBigQuerySync = functions.tasks
   .taskQueue()
   .onDispatch(async () => {
+    emergencyDebug("Setting up BigQuery sync");
+
     /** Setup runtime environment */
     const runtime = getExtensions().runtime();
 
@@ -357,6 +376,8 @@ export const setupBigQuerySync = functions.tasks
 export const initBigQuerySync = functions.tasks
   .taskQueue()
   .onDispatch(async () => {
+    emergencyDebug("Initializing BigQuery sync");
+
     /** Setup runtime environment */
     const runtime = getExtensions().runtime();
 
