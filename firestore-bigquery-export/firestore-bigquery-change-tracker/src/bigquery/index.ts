@@ -238,9 +238,19 @@ export class FirestoreBigQueryEventHistoryTracker
       const dataset = this.bigqueryDataset();
       const table = dataset.table(this.rawChangeLogTableName());
 
+      logs.emergencyDebugChangetracker("Inserting data into BigQuery", {
+        table: table.id,
+        dataset: dataset.id,
+        rowsLength: rows.length,
+      });
       logs.dataInserting(rows.length);
       await table.insert(rows, options);
       logs.dataInserted(rows.length);
+      logs.emergencyDebugChangetracker("Data inserted into BigQuery", {
+        table: table.id,
+        dataset: dataset.id,
+        rowsLength: rows.length,
+      });
     } catch (e) {
       if (retry && this.isRetryableInsertionError(e)) {
         retry = false;
