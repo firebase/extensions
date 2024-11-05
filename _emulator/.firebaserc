@@ -1,5 +1,14 @@
 {
   "projects": {
     "default": "demo-test"
-  }
+  },
+  "targets": {},
+  "etags": {
+    "firestore-bigquery-testing": {
+      "extensionInstances": {
+        "fs-bq-0": "0e2dc97812f4a95fc191d493b3b5941b72198b7fbcde4baf5593ab8e5d78f137"
+      }
+    }
+  },
+  "dataconnectEmulatorConfig": {}
 }

@@ -1,11 +1,6 @@
 {
   "extensions": {
-    "firestore-send-email": "../firestore-send-email",
-    "delete-user-data": "../delete-user-data",
-    "storage-resize-images": "../storage-resize-images",
-    "firestore-counter": "../firestore-counter",
-    "firestore-bigquery-export": "../firestore-bigquery-export",
-    "firestore-send-email-sendgrid": "../firestore-send-email"
+    "fs-bq-0": "../firestore-bigquery-export"
   },
   "storage": {
     "rules": "storage.rules"

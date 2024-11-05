@@ -271,3 +271,10 @@ export const updatingMetadata = (tableName, resources) => {
     `Updated Metadata on ${tableName}, ${JSON.stringify(resources)})`
   );
 };
+
+export const emergencyDebugChangetracker = (message: string, err?: any) => {
+  logger.warn(
+    `EMERGENCY DEBUG CHANGETRACKER: ${message}`,
+    JSON.stringify(err, null, 2)
+  );
+};
