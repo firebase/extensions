@@ -51,7 +51,7 @@ const eventTrackerConfig = {
   kmsKeyName: config.kmsKeyName,
 };
 
-const eventTracker: FirestoreEventHistoryTracker =
+const eventTracker: FirestoreBigQueryEventHistoryTracker =
   new FirestoreBigQueryEventHistoryTracker(eventTrackerConfig);
 
 logs.init();
