@@ -158,7 +158,7 @@ essential for the script to insert data into an already partitioned table.)
 
 * Cloud KMS key name: Instead of Google managing the key encryption keys that protect your data, you control and manage key encryption keys in Cloud KMS. If this parameter is set, the extension will specify the KMS key name when creating the BQ table. See the PREINSTALL.md for more details.
 
-* Maximum number of enqueue attempts: This parameter will set the maximum number of attempts to enqueue a document to cloud tasks for export to BigQuery. If the maximum number of attempts is reached, the failed export will be handled according to the `LOG_FAILED_EXPORTS` parameter.
+* Maximum number of enqueue attempts: This parameter will set the maximum number of attempts to enqueue a document to cloud tasks for export to BigQuery.
 
 
 
