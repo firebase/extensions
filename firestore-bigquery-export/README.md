@@ -126,8 +126,6 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}`  can be returned in `path_params` as a JSON formatted string.
 
-* Enable logging failed exports: If enabled, the extension will log event exports that failed to enqueue to Cloud Logging, to mitigate data loss.
-
 * Enable Wildcard Column field with Parent Firestore Document IDs: If enabled, creates a column containing a JSON object of all wildcard ids from a documents path.
 
 * Dataset ID: What ID would you like to use for your BigQuery dataset? This extension will create the dataset, if it doesn't already exist.
@@ -191,5 +189,3 @@ This extension will operate with the following project IAM roles:
 * bigquery.dataEditor (Reason: Allows the extension to configure and export data into BigQuery.)
 
 * datastore.user (Reason: Allows the extension to write updates to the database.)
-
-* storage.objectAdmin (Reason: Allows the extension to create objects in the storage bucket.)

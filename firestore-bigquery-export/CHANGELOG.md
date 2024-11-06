@@ -1,6 +1,6 @@
 ## Version 0.1.56
 
-feat - improve sync strategy
+feat - improve sync strategy by immediately writing to BQ
 
 ## Version 0.1.55
 
