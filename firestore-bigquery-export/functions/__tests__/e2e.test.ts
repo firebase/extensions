@@ -2,9 +2,9 @@ import * as admin from "firebase-admin";
 import { BigQuery } from "@google-cloud/bigquery";
 
 /** Set defaults */
-const bqProjectId = "dev-extensions-testing";
-const datasetId = "firestore_export";
-const tableId = "bq_e2e_test_raw_changelog";
+const bqProjectId = process.env.BQ_PROJECT_ID || "dev-extensions-testing";
+const datasetId = process.env.DATASET_ID || "firestore_export";
+const tableId = process.env.TABLE_ID || "bq_e2e_test_raw_changelog";
 
 /** Init resources */
 admin.initializeApp({ projectId: bqProjectId });
@@ -34,7 +34,7 @@ describe("e2e", () => {
 
     /** Get the latest record from this table */
     const [changeLogQuery] = await bq.createQueryJob({
-      query: `SELECT * FROM \`${bqProjectId}.${datasetId}.${tableId}\` ORDER BY timestamp DESC \ LIMIT 1`,
+      query: `SELECT * FROM \`${bqProjectId}.${datasetId}.${tableId}\` ORDER BY timestamp DESC LIMIT 1`,
     });
 
     const [rows] = await changeLogQuery.getQueryResults();
