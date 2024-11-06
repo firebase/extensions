@@ -22,13 +22,12 @@ import { getFunctions } from "firebase-admin/functions";
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
-  FirestoreEventHistoryTracker,
+  FirestoreDocumentChangeEvent,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 
 import * as logs from "./logs";
 import * as events from "./events";
-import { getChangeType, getDocumentId, resolveWildcardIds } from "./util";
-import { backupToGCS } from "./cloud_storage_backups";
+import { getChangeType, getDocumentId } from "./util";
 
 // Configuration for the Firestore Event History Tracker.
 const eventTrackerConfig = {
@@ -53,7 +52,7 @@ const eventTrackerConfig = {
 };
 
 // Initialize the Firestore Event History Tracker with the given configuration.
-const eventTracker: FirestoreEventHistoryTracker =
+const eventTracker: FirestoreBigQueryEventHistoryTracker =
   new FirestoreBigQueryEventHistoryTracker(eventTrackerConfig);
 
 // Initialize logging.
@@ -74,6 +73,17 @@ export const syncBigQuery = functions.tasks
   .taskQueue()
   .onDispatch(
     async ({ context, changeType, documentId, data, oldData }, ctx) => {
+      const documentName = context.resource.name;
+      const eventId = context.eventId;
+      const operation = changeType;
+
+      logs.logEventAction(
+        "Firestore event received by onDispatch trigger",
+        documentName,
+        eventId,
+        operation
+      );
+
       try {
         // Use the shared function to write the event to BigQuery
         await recordEventToBigQuery(
@@ -103,24 +113,13 @@ export const syncBigQuery = functions.tasks
         logs.complete();
       } catch (err) {
         // Log error and throw it to handle in the calling function.
-        logs.error(true, "Failed to process syncBigQuery task", err, {
-          context,
-          changeType,
-          documentId,
-          data,
-          oldData,
-        });
-
-        // if (config.backupToGCS) {
-        //   // Backup to Google Cloud Storage as a last resort.
-        //   await backupToGCS(config.backupBucketName, config.backupDir, {
-        //     changeType,
-        //     documentId,
-        //     serializedData: data,
-        //     serializedOldData: oldData,
-        //     context,
-        //   });
-        // }
+        logs.logFailedEventAction(
+          "Failed to write event to BigQuery from onDispatch handler",
+          documentName,
+          eventId,
+          operation,
+          err as Error
+        );
 
         throw err;
       }
@@ -150,6 +149,17 @@ export const fsexportbigquery = functions.firestore
     const oldData =
       isCreated || config.excludeOldData ? undefined : change.before?.data();
 
+    const documentName = context.resource.name;
+    const eventId = context.eventId;
+    const operation = changeType;
+
+    logs.logEventAction(
+      "Firestore event received by onWrite trigger",
+      documentName,
+      eventId,
+      operation
+    );
+
     let serializedData: any;
     let serializedOldData: any;
 
@@ -159,7 +169,13 @@ export const fsexportbigquery = functions.firestore
       serializedOldData = eventTracker.serializeData(oldData);
     } catch (err) {
       // Log serialization error and throw it.
-      logs.error(true, "Failed to serialize data", err, { data, oldData });
+      logs.logFailedEventAction(
+        "Failed to serialize data",
+        documentName,
+        eventId,
+        operation,
+        err as Error
+      );
       throw err;
     }
 
@@ -217,18 +233,20 @@ export const fsexportbigquery = functions.firestore
  * @param context - The event context from Firestore.
  */
 async function recordEventToBigQuery(
-  changeType: string,
+  changeType: ChangeType,
   documentId: string,
   serializedData: any,
   serializedOldData: any,
   context: functions.EventContext
 ) {
-  const event = {
+  const event: FirestoreDocumentChangeEvent = {
     timestamp: context.timestamp, // Cloud Firestore commit timestamp
     operation: changeType, // The type of operation performed
     documentName: context.resource.name, // The document name
     documentId, // The document ID
-    pathParams: config.wildcardIds ? context.params : null, // Path parameters, if any
+    pathParams: (config.wildcardIds ? context.params : null) as
+      | FirestoreDocumentChangeEvent["pathParams"]
+      | null, // Path parameters, if any
     eventId: context.eventId, // The event ID from Firestore
     data: serializedData, // Serialized new data
     oldData: serializedOldData, // Serialized old data
@@ -251,7 +269,7 @@ async function recordEventToBigQuery(
 async function attemptToEnqueue(
   err: Error,
   context: functions.EventContext,
-  changeType: string,
+  changeType: ChangeType,
   documentId: string,
   serializedData: any,
   serializedOldData: any
@@ -295,40 +313,21 @@ async function attemptToEnqueue(
     }
   } catch (enqueueErr) {
     // Prepare the event object for error logging.
-    const event = {
-      timestamp: context.timestamp,
-      operation: changeType,
-      documentName: context.resource.name,
-      documentId,
-      pathParams: config.wildcardIds ? context.params : null,
-      eventId: context.eventId,
-      data: serializedData,
-      oldData: serializedOldData,
-    };
 
     // Record the error event.
     await events.recordErrorEvent(enqueueErr as Error);
 
-    // Log the error if it has not been logged already.
-    if (!enqueueErr.logged && config.logFailedExportData) {
-      logs.error(
-        true,
-        "Failed to enqueue task to syncBigQuery",
-        enqueueErr,
-        event
-      );
-    }
+    const documentName = context.resource.name;
+    const eventId = context.eventId;
+    const operation = changeType;
 
-    // if (config.backupToGCS) {
-    //   // Backup to Google Cloud Storage as a last resort.
-    //   await backupToGCS(config.backupBucketName, config.backupDir, {
-    //     changeType,
-    //     documentId,
-    //     serializedData,
-    //     serializedOldData,
-    //     context,
-    //   });
-    // }
+    logs.logFailedEventAction(
+      "Failed to enqueue event to Cloud Tasks from onWrite handler",
+      documentName,
+      eventId,
+      operation,
+      enqueueErr as Error
+    );
   }
 }
 

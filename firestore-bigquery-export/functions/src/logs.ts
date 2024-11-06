@@ -15,6 +15,7 @@
  */
 import { logger } from "firebase-functions";
 import config from "./config";
+import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
 
 export const arrayFieldInvalid = (fieldName: string) => {
   logger.warn(`Array field '${fieldName}' does not contain an array, skipping`);
@@ -181,4 +182,32 @@ export const timestampMissingValue = (fieldName: string) => {
   logger.warn(
     `Missing value for timestamp field: ${fieldName}, using default timestamp instead.`
   );
+};
+
+export const logEventAction = (
+  action: string,
+  document_name: string,
+  event_id: string,
+  operation: ChangeType
+) => {
+  logger.info(action, {
+    document_name,
+    event_id,
+    operation,
+  });
+};
+
+export const logFailedEventAction = (
+  action: string,
+  document_name: string,
+  event_id: string,
+  operation: ChangeType,
+  error: Error
+) => {
+  logger.error(action, {
+    document_name,
+    event_id,
+    operation,
+    error,
+  });
 };

@@ -196,19 +196,6 @@ params:
     default: posts
     required: true
 
-  - param: LOG_FAILED_EXPORTS
-    label: Enable logging failed exports
-    description: >-
-      If enabled, the extension will log event exports that failed to enqueue to
-      Cloud Logging, to mitigate data loss.
-    type: select
-    options:
-      - label: Yes
-        value: yes
-      - label: No
-        value: no
-    default: yes
-
   - param: WILDCARD_IDS
     label: Enable Wildcard Column field with Parent Firestore Document IDs
     description: >-
