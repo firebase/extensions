@@ -8,6 +8,8 @@ chore - remove legacy backfill code
 
 fix - improved usage of the types from change tracker package
 
+feat - remove log failed exports param
+
 ## Version 0.1.55
 
 feat - log failed queued tasks
