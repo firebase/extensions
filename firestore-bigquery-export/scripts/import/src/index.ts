@@ -80,7 +80,6 @@ const run = async (): Promise<number> => {
     datasetLocation,
     wildcardIds: queryCollectionGroup,
     useNewSnapshotQuerySyntax,
-    clustering: null,
   });
 
   await initializeDataSink(dataSink, config);
