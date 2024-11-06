@@ -404,9 +404,7 @@ params:
     label: Maximum number of enqueue attempts
     description: >-
       This parameter will set the maximum number of attempts to enqueue a
-      document to cloud tasks for export to BigQuery. If the maximum number of
-      attempts is reached, the failed export will be handled according to the
-      `LOG_FAILED_EXPORTS` parameter.
+      document to cloud tasks for export to BigQuery.
     type: string
     validationRegex: ^(10|[1-9])$
     validationErrorMessage: Please select an integer between 1 and 10
