@@ -48,9 +48,6 @@ roles:
   - role: datastore.user
     reason: Allows the extension to write updates to the database.
 
-  # - role: storage.objectAdmin
-  #   reason: Allows the extension to create objects in the storage bucket.
-
 resources:
   - name: fsexportbigquery
     type: firebaseextensions.v1beta.function
