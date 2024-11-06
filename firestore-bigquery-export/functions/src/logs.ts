@@ -204,10 +204,17 @@ export const logFailedEventAction = (
   operation: ChangeType,
   error: Error
 ) => {
+  const changeTypeMap = {
+    0: "CREATE",
+    1: "DELETE",
+    2: "UPDATE",
+    3: "IMPORT",
+  };
+
   logger.error(action, {
     document_name,
     event_id,
-    operation,
+    operation: changeTypeMap[operation],
     error,
   });
 };
