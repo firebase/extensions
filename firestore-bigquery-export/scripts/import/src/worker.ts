@@ -51,16 +51,22 @@ async function processDocuments(
       docs[docs.length - 1].id
     }`
   );
-
+  // TODO: fix this type. I think these parameters might need to be optional.
+  // @ts-expect-error
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
     tableId,
     datasetId,
     datasetLocation,
   });
-
+  // TODO: fix type
+  // @ts-expect-error
   const rows: FirestoreDocumentChangeEvent = getRowsFromDocs(docs, config);
 
+  // TODO: fix type
+  // @ts-expect-error
   await dataSink.record(rows);
+  // TODO: fix type
+  // @ts-expect-error
   return rows.length;
 }
 
