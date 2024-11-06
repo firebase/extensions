@@ -72,13 +72,14 @@ const run = async (): Promise<number> => {
 
   // We pass in the application-level "tableId" here. The tracker determines
   // the name of the raw changelog from this field.
+  // TODO: fix this type, it should include clustering apparently
+  // @ts-expect-error
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
     tableId: tableId,
     datasetId: datasetId,
     datasetLocation,
     wildcardIds: queryCollectionGroup,
     useNewSnapshotQuerySyntax,
-    clustering: null,
   });
 
   await initializeDataSink(dataSink, config);
