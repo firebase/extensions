@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { backupToGCS } from "./cloud_storage_backups";
-
 function timePartitioning(type) {
   if (
     type === "HOUR" ||

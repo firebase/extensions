@@ -1,6 +1,12 @@
 ## Version 0.1.56
 
-feat - improve sync strategy by immediately writing to BQ
+feat - improve sync strategy by immediately writing to BQ, and using cloud tasks only as a last resort
+
+refactor - improve observability/logging of events
+
+chore - remove legacy backfill code
+
+fix - improved usage of the types from change tracker package
 
 ## Version 0.1.55
 
