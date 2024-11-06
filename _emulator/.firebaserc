@@ -1,5 +1,13 @@
 {
   "projects": {
     "default": "demo-test"
+  },
+  "targets": {},
+  "etags": {
+    "dev-extensions-testing": {
+      "extensionInstances": {
+        "firestore-bigquery-export": "02acbd8b443b9635716d52d65758a78db1e51140191caecaaf60d932d314a62a"
+      }
+    }
   }
 }
