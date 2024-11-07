@@ -190,7 +190,7 @@ This query shows logs from the syncBigQuery function where Firestore events were
 
 ### "Firestore event received by onDispatch trigger"
 
-**Description**: Indicates that the syncBigQuery function received a task dispatched via the onDispatch trigger to synchronize data with BigQuery.
+**Description**: Indicates that the `syncBigQuery` function received a task dispatched via the onDispatch trigger to synchronize data with BigQuery.
 
 **Action**: No action needed if everything is working as expected.
 
