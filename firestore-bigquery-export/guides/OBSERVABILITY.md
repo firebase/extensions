@@ -184,7 +184,7 @@ This query shows logs from the syncBigQuery function where Firestore events were
 
 ### "Firestore event received by onWrite trigger"
 
-**Description**: Indicates that the fsexportbigquery function received a Firestore event via the onWrite trigger. This is a normal informational message.
+**Description**: Indicates that the `fsexportbigquery` function received a Firestore event via the onWrite trigger. This is a normal informational message.
 
 **Action**: No action needed if everything is working as expected.
 
