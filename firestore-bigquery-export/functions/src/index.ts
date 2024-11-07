@@ -106,6 +106,7 @@ export const syncBigQuery = functions.tasks
             eventId: context.eventId,
             data,
             oldData,
+            clientId: context.params?.clientId
           },
         });
 
@@ -250,6 +251,7 @@ async function recordEventToBigQuery(
     eventId: context.eventId, // The event ID from Firestore
     data: serializedData, // Serialized new data
     oldData: serializedOldData, // Serialized old data
+    clientId: context?.clientId
   };
 
   // Record the event in the Firestore Event History Tracker and BigQuery.
