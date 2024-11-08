@@ -110,6 +110,7 @@ export class FirestoreBigQueryEventHistoryTracker
           event_id: event.eventId,
           document_name: event.documentName,
           document_id: event.documentId,
+          tenant_id: this.getTenantId(event.documentName),
           operation: ChangeType[event.operation],
           data: JSON.stringify(this.serializeData(event.data)),
           old_data: event.oldData
@@ -125,6 +126,13 @@ export class FirestoreBigQueryEventHistoryTracker
     const transformedRows = await this.transformRows(rows);
 
     await this.insertData(transformedRows);
+  }
+
+  getTenantId(document_name) {
+    const regex = /clients\/([^\/]+)/;
+    const match = document_name.match(regex);
+    const tenantid = match ? match[1] : 'INVALID';
+    return tenantid;
   }
 
   private async transformRows(rows: any[]) {
