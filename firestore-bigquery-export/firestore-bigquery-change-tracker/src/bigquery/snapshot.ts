@@ -89,6 +89,7 @@ export function buildLatestSnapshotViewQuery({
     SELECT
       document_name,
       document_id,
+      tenant_id,
       ${groupByColumns
         .map(
           (columnName) => `FIRST_VALUE(${columnName})

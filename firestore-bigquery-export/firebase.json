@@ -1,0 +1,5 @@
+{
+  "extensions": {
+    "firestore-bigquery-export": "../firestore-bigquery-export"
+  }
+}

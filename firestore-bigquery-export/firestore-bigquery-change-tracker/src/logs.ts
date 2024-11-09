@@ -57,12 +57,17 @@ export const bigQueryTableAlreadyExists = (
 };
 
 export const bigQueryTableCreated = (tableName: string) => {
-  logger.log(`Created BigQuery table: ${tableName}`);
+  logger.log(`Created BigQuery table XX: ${tableName}`);
 };
 
 export const bigQueryTableCreating = (tableName: string) => {
-  logger.log(`Creating BigQuery table: ${tableName}`);
+  logger.log(`Creating BigQuery table XX: ${tableName}`);
 };
+
+export const bigQueryTableSchema = (schema: any) => {
+  logger.log(`Creating BigQuery table : ${JSON.stringify(schema)}`);
+};
+
 
 export const bigQueryTableUpdated = (tableName: string) => {
   logger.log(`Updated existing BigQuery table: ${tableName}`);

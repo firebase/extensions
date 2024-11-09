@@ -24,6 +24,7 @@ import {
   documentIdField,
   oldDataField,
   documentPathParams,
+  tenantIdField,
 } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 import handleFailedTransactions from "./handleFailedTransactions";
@@ -357,6 +358,10 @@ export class FirestoreBigQueryEventHistoryTracker
         (column) => column.name === "old_data"
       );
 
+      const tenantIdExists = fields.find(
+        (column) => column.name === "tenant_id"
+      );
+
       if (!oldDataColExists) {
         fields.push(oldDataField);
         logs.addNewColumn(this.rawChangeLogTableName(), oldDataField.name);
@@ -366,12 +371,18 @@ export class FirestoreBigQueryEventHistoryTracker
         fields.push(documentIdField);
         logs.addNewColumn(this.rawChangeLogTableName(), documentIdField.name);
       }
+
       if (!pathParamsColExists && this.config.wildcardIds) {
         fields.push(documentPathParams);
         logs.addNewColumn(
           this.rawChangeLogTableName(),
           documentPathParams.name
         );
+      }
+
+      if (!tenantIdExists) {
+        fields.push(tenantIdField);
+        logs.addNewColumn(this.rawChangeLogTableName(), tenantIdField.name);
       }
 
       /** Updated table metadata if required */
@@ -388,7 +399,9 @@ export class FirestoreBigQueryEventHistoryTracker
         await partitioning.addPartitioningToSchema(metadata.schema.fields);
 
         /** update table metadata with changes. */
-        await table.setMetadata(metadata);
+        logs.bigQueryTableSchema(metadata);
+        await table.setMetadata(metadata);        
+        
         logs.updatingMetadata(this.rawChangeLogTableName(), {
           config: this.config,
           documentIdColExists,
@@ -414,6 +427,7 @@ export class FirestoreBigQueryEventHistoryTracker
       await partitioning.addPartitioningToSchema(schema.fields);
 
       await partitioning.updateTableMetadata(options);
+      logs.bigQueryTableSchema(options);
 
       // Add clustering
       await clustering.updateClustering(options);

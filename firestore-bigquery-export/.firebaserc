@@ -1,0 +1,12 @@
+{
+  "projects": {
+    "default": "pos-dev-47526"
+  },
+  "targets": {},
+  "etags": {
+    "pos-dev-47526": {
+      "extensionInstances": {}
+    }
+  },
+  "dataconnectEmulatorConfig": {}
+}
