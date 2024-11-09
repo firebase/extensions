@@ -23,8 +23,8 @@ description:
 
 license: Apache-2.0
 
-sourceUrl: https://github.com/firebase/extensions/tree/master/firestore-bigquery-export
-releaseNotesUrl: https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/CHANGELOG.md
+sourceUrl: https://github.com/VibinKesavan/extensions/tree/master/firestore-bigquery-export
+releaseNotesUrl: https://github.com/VibinKesavan/extensions/blob/next/firestore-bigquery-export/CHANGELOG.md
 
 author:
   authorName: Firebase
