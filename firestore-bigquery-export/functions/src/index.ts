@@ -23,7 +23,7 @@ import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreDocumentChangeEvent,
-} from "@firebaseextensions/firestore-bigquery-change-tracker";
+} from "./change-tracker";
 
 import * as logs from "./logs";
 import * as events from "./events";

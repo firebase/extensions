@@ -17,7 +17,7 @@
 import { DocumentSnapshot } from "firebase-functions/lib/v1/providers/firestore";
 import { Change } from "firebase-functions";
 
-import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import { ChangeType } from "./change-tracker";
 
 /**
  * Get the change type (CREATE, UPDATE, DELETE) from the Firestore change.

@@ -39,5 +39,12 @@
   },
   "lint-staged": {
     "*.{js,md,yml,ts,json,yaml}": "prettier --write"
+  },
+  "dependencies": {
+    "@google-cloud/resource-manager": "^5.1.0",
+    "inquirer": "^6.4.0",
+    "node-fetch": "^2.6.1",
+    "sql-formatter": "^2.3.3",
+    "traverse": "^0.6.6"
   }
 }
