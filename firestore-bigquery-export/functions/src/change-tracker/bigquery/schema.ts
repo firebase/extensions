@@ -76,6 +76,13 @@ export const documentPathParams = {
     "JSON string representing wildcard params with Firestore Document ids",
 };
 
+export const documentPathParamField = {
+  name: "fieldName",
+  mode: "NULLABLE",
+  type: "STRING",
+  description: "Path Parameter Field",
+};
+
 export const oldDataField = {
   name: "old_data",
   mode: "NULLABLE",
@@ -204,4 +211,16 @@ export const getNewPartitionField = (
     type: timePartitioningFieldType,
     description: "The document TimePartition partition field selected by user",
   };
+};
+
+export const getClusteringFields = (
+  config: FirestoreBigQueryEventHistoryTrackerConfig
+) => {
+  const { clustering } = config;
+  return clustering.slice(0, 4).map((fieldName) => ({
+    name: fieldName,
+    mode: "NULLABLE",
+    type: "STRING",
+    description: "Clustering Field",
+  }));
 };

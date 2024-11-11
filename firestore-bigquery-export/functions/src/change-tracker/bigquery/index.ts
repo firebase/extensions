@@ -25,6 +25,7 @@ import {
   oldDataField,
   documentPathParams,
   tenantIdField,
+  getClusteringFields,
 } from "./schema";
 import { latestConsistentSnapshotView } from "./snapshot";
 import handleFailedTransactions from "./handleFailedTransactions";
@@ -114,6 +115,7 @@ export class FirestoreBigQueryEventHistoryTracker
           tenant_id: this.getTenantId(event.documentName),
           operation: ChangeType[event.operation],
           data: JSON.stringify(this.serializeData(event.data)),
+          ...event.pathParams,
           old_data: event.oldData
             ? JSON.stringify(this.serializeData(event.oldData))
             : null,
@@ -385,6 +387,13 @@ export class FirestoreBigQueryEventHistoryTracker
         logs.addNewColumn(this.rawChangeLogTableName(), tenantIdField.name);
       }
 
+      if (this.config.clustering) {
+        getClusteringFields(this.config).map((x) => {
+          fields.fields.push(x);
+          logs.addNewColumn(this.rawChangeLogTableName(), x.name);
+        });
+      }
+
       /** Updated table metadata if required */
       const shouldUpdate = await tableRequiresUpdate({
         table,
@@ -423,6 +432,11 @@ export class FirestoreBigQueryEventHistoryTracker
           kmsKeyName: this.config.kmsKeyName,
         };
       }
+
+      if (this.config.clustering) {
+        getClusteringFields(this.config).map((x) => schema.fields.push(x));
+      }
+
       //Add partitioning
       await partitioning.addPartitioningToSchema(schema.fields);
 
@@ -451,6 +465,7 @@ export class FirestoreBigQueryEventHistoryTracker
     const view = dataset.table(this.rawLatestView());
     const [viewExists] = await view.exists();
     const schema = RawChangelogViewSchema;
+    const clusterFields = getClusteringFields(this.config);
 
     if (viewExists) {
       logs.bigQueryViewAlreadyExists(view.id, dataset.id);
@@ -462,6 +477,8 @@ export class FirestoreBigQueryEventHistoryTracker
       if (this.config.wildcardIds) {
         schema.fields.push(documentPathParams);
       }
+
+      clusterFields.map((x) => schema.fields.push(x));
 
       const columnNames = fields.map((field) => field.name);
       const documentIdColExists = columnNames.includes("document_id");
@@ -500,6 +517,7 @@ export class FirestoreBigQueryEventHistoryTracker
       }
     } else {
       const schema = { fields: [...RawChangelogViewSchema.fields] };
+      clusterFields.map((x) => schema.fields.push(x));
 
       if (this.config.wildcardIds) {
         schema.fields.push(documentPathParams);
