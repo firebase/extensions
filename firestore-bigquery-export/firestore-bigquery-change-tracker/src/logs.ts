@@ -65,9 +65,8 @@ export const bigQueryTableCreating = (tableName: string) => {
 };
 
 export const bigQueryTableSchema = (schema: any) => {
-  logger.log(`Creating BigQuery table : ${JSON.stringify(schema)}`);
+  logger.log(`Creating BigQuery table  : ${JSON.stringify(schema)}`);
 };
-
 
 export const bigQueryTableUpdated = (tableName: string) => {
   logger.log(`Updated existing BigQuery table: ${tableName}`);
