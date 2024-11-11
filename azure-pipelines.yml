@@ -39,32 +39,25 @@ steps:
   displayName: 'Clone Extension Repository'
 
 - script: |
-    echo "Generating params.env.json... $(firebaseProjectId)"
-    cat <<EOF > params.env.json
-    {
-      "BIGQUERY_PROJECT_ID": "$(firebaseProjectId)",
-      "CLUSTERING": "tenant_id",
-      "COLLECTION_PATH": "clients/{clientId}/salesorders",
-      "DATASET_ID": "pos_main",
-      "DATASET_LOCATION": "europe-west2",
-      "EXCLUDE_OLD_DATA": "yes",
-      "firebaseextensions.v1beta.function/location": "europe-west2",
-      "MAX_DISPATCHES_PER_SECOND": 100,
-      "MAX_ENQUEUE_ATTEMPTS": 3,
-      "TABLE_ID": "tbl_sale_orders",
-      "TABLE_PARTITIONING": "MONTH",
-      "TIME_PARTITIONING_FIELD": "createdDate",
-      "TIME_PARTITIONING_FIELD_TYPE": "TIMESTAMP",
-      "TIME_PARTITIONING_FIRESTORE_FIELD": "createdDate",
-      "USE_NEW_SNAPSHOT_QUERY_SYNTAX": "yes",
-      "WILDCARD_IDS": true
-    }
-    EOF
-  displayName: 'Generate Params File'
-
-- script: |
     echo "Deploying Firebase Extension from custom GitHub branch... $(firebaseProjectId)"
-    firebase ext:install ./extensions/firestore-bigquery-export --params=params.env.json --project=$(firebaseProjectId) --token $(FIREBASE_TOKEN) --force
+    firebase ext:install ./extensions/firestore-bigquery-export \
+          --param=BIGQUERY_PROJECT_ID=$(firebaseProjectId) \
+          --param=CLUSTERING="tenant_id" \
+          --param=COLLECTION_PATH="clients/{clientId}/salesorders" \
+          --param=DATASET_ID="pos_main" \
+          --param=DATASET_LOCATION="europe-west2" \
+          --param=EXCLUDE_OLD_DATA="yes" \
+          --param=firebaseextensions.v1beta.function/location="europe-west2" \
+          --param=MAX_DISPATCHES_PER_SECOND=100 \
+          --param=MAX_ENQUEUE_ATTEMPTS=3 \
+          --param=TABLE_ID="tbl_sale_orders" \
+          --param=TABLE_PARTITIONING="MONTH" \
+          --param=TIME_PARTITIONING_FIELD="createdDate" \
+          --param=TIME_PARTITIONING_FIELD_TYPE="TIMESTAMP" \
+          --param=TIME_PARTITIONING_FIRESTORE_FIELD="createdDate" \
+          --param=USE_NEW_SNAPSHOT_QUERY_SYNTAX="yes" \
+          --param=WILDCARD_IDS="true" \
+          --project=$(firebaseProjectId) --token $(FIREBASE_TOKEN) --force
   env:
     FIREBASE_PROJECT_ID: $(firebaseProjectId)
   displayName: 'Deploy Firebase Extensions'
