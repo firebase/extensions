@@ -1,5 +1,5 @@
 {
   "extensions": {
-    "firestore-bigquery-export": "../firestore-bigquery-export"
+    "extn-saleorder-export": "../firestore-bigquery-export"
   }
 }
