@@ -1,7 +1,6 @@
 trigger:
   branches:
     include:
-    - next
     - staging
     - develop
 
@@ -35,7 +34,12 @@ steps:
   displayName: 'Install firebase tools'
 
 - script: |
-    echo "Generating params.env.json..."
+    echo "Cloning custom Firebase extension from GitHub... $(firebaseProjectId)"
+    git clone --branch next https://github.com/VibinKesavan/extensions.git
+  displayName: 'Clone Extension Repository'
+
+- script: |
+    echo "Generating params.env.json... $(firebaseProjectId)"
     cat <<EOF > params.env.json
     {
       "BIGQUERY_PROJECT_ID": "$(firebaseProjectId)",
@@ -59,8 +63,8 @@ steps:
   displayName: 'Generate Params File'
 
 - script: |
-    echo "Deploying Firebase Extension from custom GitHub branch..."
-    firebase ext:install --token $(FIREBASE_TOKEN) --source https://github.com/VibinKesavan/extensions/tree/$(buildToken)/firestore-bigquery-export --params=params.env.json --project=$(firebaseProjectId) --force
+    echo "Deploying Firebase Extension from custom GitHub branch... $(firebaseProjectId)"
+    firebase ext:install ./extensions/firestore-bigquery-export --params=params.env.json --project=$(firebaseProjectId) --token $(FIREBASE_TOKEN) --force
   env:
     FIREBASE_PROJECT_ID: $(firebaseProjectId)
   displayName: 'Deploy Firebase Extensions'
