@@ -17,11 +17,11 @@ variables:
     value: 'develop'
 - name: firebaseProjectId
   ${{ if eq(variables['Build.SourceBranchName'], 'next') }}: 
-    value: 'pos-dev-47526'
+    value: 'pos-prod-35f28'
   ${{ if eq(variables['Build.SourceBranchName'], 'staging') }}: 
     value: 'pos-staging-d2244'
   ${{ if eq(variables['Build.SourceBranchName'], 'develop') }}: 
-    value: 'pos-prod-35f28'
+    value: 'pos-dev-47526'
 
 steps:
 - task: NodeTool@0
