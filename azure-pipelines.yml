@@ -9,7 +9,6 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-- group: ${{ variables['Build.SourceBranchName'] }}
 - name: buildToken
   ${{ if eq(variables['Build.SourceBranchName'], 'next') }}: 
     value: 'prod'
@@ -31,7 +30,7 @@ steps:
     versionSpec: '18.x'
   displayName: 'Install Node.js'
   
-  - script: |
+- script: |
     npm install -g firebase-tools
   displayName: 'Install firebase tools'
 
@@ -66,7 +65,7 @@ steps:
 
 - script: |
     echo "Deploying Firebase Extension from custom GitHub branch..."
-    firebase ext:install --source https://github.com/VibinKesavan/extensions/tree/$(buildToken)/firestore-bigquery-export --params=params.env.json --project=$(firebaseProjectId) --force
+    firebase ext:install --token $(FIREBASE_TOKEN) --source https://github.com/VibinKesavan/extensions/tree/$(buildToken)/firestore-bigquery-export --params=params.env.json --project=$(firebaseProjectId) --force
   env:
     FIREBASE_PROJECT_ID: $(firebaseProjectId)
   displayName: 'Deploy Firebase Extensions'
