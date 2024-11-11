@@ -6,7 +6,7 @@ trigger:
     - develop
 
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'ubuntu-latest'
 
 variables:
 - name: buildToken
@@ -33,11 +33,6 @@ steps:
 - script: |
     npm install -g firebase-tools
   displayName: 'Install firebase tools'
-
-- script: |
-    cd $(System.DefaultWorkingDirectory)/functions
-    npm install -f
-  displayName: 'Npm install'
 
 - script: |
     echo "Generating params.env.json..."
