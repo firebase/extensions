@@ -140,6 +140,7 @@ export const RawChangelogViewSchema = {
         "The full JSON representation of the document state before the indicated operation is applied.",
     },
     documentIdField,
+    tenantIdField,
   ],
 };
 

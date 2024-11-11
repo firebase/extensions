@@ -46,6 +46,10 @@ export const bigQuerySchemaViewCreated = (name: string) => {
   logger.log(`BigQuery created schema view ${name}\n`);
 };
 
+export const bigQueryCreateViewSchema = (schema: any) => {
+  logger.log(`$$$Creating BigQuery View Schema : ${JSON.stringify(schema)}`);
+};
+
 export const bigQueryTableAlreadyExists = (
   tableName: string,
   datasetName: string
@@ -57,11 +61,11 @@ export const bigQueryTableAlreadyExists = (
 };
 
 export const bigQueryTableCreated = (tableName: string) => {
-  logger.log(`Created BigQuery table XX: ${tableName}`);
+  logger.log(`Created BigQuery table: ${tableName}`);
 };
 
 export const bigQueryTableCreating = (tableName: string) => {
-  logger.log(`Creating BigQuery table XX: ${tableName}`);
+  logger.log(`Creating BigQuery table: ${tableName}`);
 };
 
 export const bigQueryTableSchema = (schema: any) => {

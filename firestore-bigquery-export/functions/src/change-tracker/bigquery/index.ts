@@ -489,6 +489,7 @@ export class FirestoreBigQueryEventHistoryTracker
           logs.addNewColumn(this.rawLatestView(), documentIdField.name);
         }
 
+        logs.bigQueryCreateViewSchema(metadata);
         await view.setMetadata(metadata);
         logs.updatingMetadata(this.rawLatestView(), {
           config: this.config,
@@ -503,6 +504,8 @@ export class FirestoreBigQueryEventHistoryTracker
       if (this.config.wildcardIds) {
         schema.fields.push(documentPathParams);
       }
+
+      logs.bigQueryCreateViewSchema(schema);
       const latestSnapshot = latestConsistentSnapshotView({
         datasetId: this.config.datasetId,
         tableName: this.rawChangeLogTableName(),
