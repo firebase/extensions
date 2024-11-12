@@ -32,7 +32,7 @@ export function clustering(clusters: string | undefined) {
 }
 
 export default {
-  bqProjectId: process.env.PROJECT_ID,
+  bqProjectId: process.env.BIGQUERY_PROJECT_ID,
   databaseId: "(default)",
   collectionPath: process.env.COLLECTION_PATH,
   datasetId: process.env.DATASET_ID,
