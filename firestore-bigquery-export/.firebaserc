@@ -6,8 +6,8 @@
   "etags": {
     "pos-dev-47526": {
       "extensionInstances": {
-        "extn-saleorder-export": "43b32ae12ee26aad265db973da9f7655e4690de4f098f945691feb1002a7c998",
-        "extn-saleorder-items-export": "a5fc37f807d3d497e36dbc099cf60548d654b9714fbca04df91e9739be0a93d7"
+        "extn-saleorder-export": "96b210a6554db279f996e78e77dca073daf5b134833b46670091e0475b439154",
+        "extn-saleorder-items-export": "6fad3e10eb76a245033baec4f2f665eabb3d6781973b37e8011e202410021300"
       }
     }
   },
