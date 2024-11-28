@@ -63,8 +63,10 @@ function resolveFilePath(filePath: string): string {
 
 function expandGlobs(globs: string[]): string[] {
   let results = [];
-  for (var i = 0; i < globs.length; i++) {
-    const globResults = glob.sync(globs[i]);
+  // Split any comma-separated globs into individual paths
+  const expandedGlobs = globs.flatMap((g) => g.split(",").map((s) => s.trim()));
+  for (const globPath of expandedGlobs) {
+    const globResults = glob.sync(globPath);
     results = results.concat(globResults);
   }
   return results;
