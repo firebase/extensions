@@ -103,7 +103,8 @@ export class FirestoreBigQuerySchemaViewFactory {
     datasetId: string,
     tableNamePrefix: string,
     schemaName: string,
-    firestoreSchema: FirestoreSchema
+    firestoreSchema: FirestoreSchema,
+    includePathParams: boolean
   ): Promise<void> {
     const rawChangeLogTableName = changeLog(raw(tableNamePrefix));
     const latestRawViewName = latest(raw(tableNamePrefix));
@@ -138,7 +139,8 @@ export class FirestoreBigQuerySchemaViewFactory {
     let result = userSchemaView(
       datasetId,
       rawChangeLogTableName,
-      firestoreSchema
+      firestoreSchema,
+      includePathParams
     );
     let bigQueryFields = result.fields;
 
@@ -229,9 +231,15 @@ function decorateSchemaWithChangelogFields(schema: any): any {
 export function userSchemaView(
   datasetId: string,
   tableName: string,
-  schema: FirestoreSchema
+  schema: FirestoreSchema,
+  includePathParams = false
 ): any {
-  let result = buildSchemaViewQuery(datasetId, tableName, schema);
+  let result = buildSchemaViewQuery(
+    datasetId,
+    tableName,
+    schema,
+    includePathParams
+  );
   return {
     viewInfo: {
       query: result.query,
@@ -247,7 +255,8 @@ export function userSchemaView(
 export const buildSchemaViewQuery = (
   datasetId: string,
   rawTableName: string,
-  schema: FirestoreSchema
+  schema: FirestoreSchema,
+  includePathParams = false
 ): any => {
   const result = processFirestoreSchema(datasetId, "data", schema);
   const [fieldExtractors, fieldArrays, geoPoints, subArrays] = result.queryInfo;
@@ -261,6 +270,7 @@ export const buildSchemaViewQuery = (
       document_name,
       document_id,
       timestamp,
+      ${includePathParams ? "path_params," : ""}
       operation${fieldValueSelectorClauses.length > 0 ? `,` : ``}
       ${fieldValueSelectorClauses}
       FROM
