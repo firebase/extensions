@@ -47,10 +47,19 @@ apis:
     reason:
       To use Google Translate to translate strings into your specified target
       languages.
+  - apiName: aiplatform.googleapis.com
+    reason:
+      This extension uses the Vertex AI multimodal model for embedding images,
+      if configured to do so.
 
 roles:
   - role: datastore.user
     reason: Allows the extension to write translated strings to Cloud Firestore.
+
+  - role: aiplatform.user
+    reason: >-
+      This extension requires access to Vertex AI to create, update and query a
+      Vertex Matching Engine index.
 
 resources:
   - name: fstranslate
@@ -128,6 +137,41 @@ params:
       extension will use the languages specified in the LANGUAGES parameter.
     example: languages
     default: languages
+    required: false
+
+  - param: USE_GENKIT
+    label: Use Genkit for translations?
+    description: >
+      If you want to use Genkit to perform translations, select "Yes" and
+      provide the necessary configuration parameters. If you select "No", the
+      extension will use Google Cloud Translation API.
+    type: select
+    required: true
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+
+  - param: GEMINI_PROVIDER
+    label: Genkit Gemini provider
+    description: >
+      If you selected to use Genkit to perform translations, please provide the
+      name of the provider you want to use.
+    type: select
+    required: false
+    options:
+      - label: Google AI
+        value: googleai
+      - label: Vertex AI
+        value: vertexai
+
+  - param: GOOGLE_AI_API_KEY
+    label: Google AI API key
+    description: >
+      If you selected to use Genkit with Google AI to perform translations,
+      please provide a Google AI API key
+    type: secret
     required: false
 
   # - param: DO_BACKFILL

@@ -5,7 +5,8 @@
     "module": "commonjs",
     "noImplicitReturns": true,
     "sourceMap": false,
-    "outDir": "lib"
+    "outDir": "lib",
+    "skipLibCheck": true
   },
   "compileOnSave": true,
   "include": ["src"]
