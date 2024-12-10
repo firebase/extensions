@@ -115,5 +115,3 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 This extension will operate with the following project IAM roles:
 
 * datastore.user (Reason: Allows the extension to write translated strings to Cloud Firestore.)
-
-* aiplatform.user (Reason: This extension requires access to Vertex AI to create, update and query a Vertex Matching Engine index.)
