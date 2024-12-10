@@ -83,7 +83,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Languages field name: What is the name of the field that contains the languages that you want to translate into? This field is optional. If you don't specify it, the extension will use the languages specified in the LANGUAGES parameter.
 
 
-* Translation Model: This extension now provides the option to use Gemini 1.5 Pro for translations, which may provide more accurate and context-aware translations. The extension accesses the Gemini API using a Google AI API key that you can provide as a secret during installation.
+* Translation Model: This extension provides the option to use Gemini 1.5 Pro for translations, which may provide more accurate and context-aware translations. The extension accesses the Gemini API using a Google AI API key that you can provide as a secret during installation.
 
 
 * Google AI API key: If you selected AI Translations Using Gemini to perform translations, please provide a Google AI API key, which you can create here https://ai.google.dev/gemini-api/docs/api-key

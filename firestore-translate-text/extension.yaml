@@ -138,10 +138,10 @@ params:
   - param: TRANSLATION_MODEL
     label: Translation Model
     description: >
-      This extension now provides the option to use Gemini 1.5 Pro for
-      translations, which may provide more accurate and context-aware
-      translations. The extension accesses the Gemini API using a Google AI API
-      key that you can provide as a secret during installation.
+      This extension provides the option to use Gemini 1.5 Pro for translations,
+      which may provide more accurate and context-aware translations. The
+      extension accesses the Gemini API using a Google AI API key that you can
+      provide as a secret during installation.
     type: select
     required: true
     options:
