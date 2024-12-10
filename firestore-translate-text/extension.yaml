@@ -154,7 +154,7 @@ params:
     label: Google AI API key
     description: >
       If you selected AI Translations Using Gemini to perform translations,
-      please provide a Google AI API key, which you can create here
+      please provide a Google AI API key, which you can create here:
       https://ai.google.dev/gemini-api/docs/api-key
     type: secret
     required: false
