@@ -1,3 +1,7 @@
+## Version 0.1.20
+
+feat - add optional Gemini translations powered by Firebase Genkit
+
 ## Version 0.1.19
 
 fixed - bump dependencies, fix vulnerabilities
