@@ -94,7 +94,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Genkit Gemini provider: If you selected to use Genkit to perform translations, please provide the name of the Gemini API you want to use.
 
 
-* Google AI API key: If you selected to use Genkit with Google AI to perform translations, please provide a Google AI API key
+* Google AI API key: If you selected to use Genkit with Google AI to perform translations, please provide a Google AI API key.
 
 
 
