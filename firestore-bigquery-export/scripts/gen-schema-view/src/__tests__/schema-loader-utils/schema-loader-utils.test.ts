@@ -76,4 +76,19 @@ describe("filesystem schema loading", () => {
     const schemas = schema_loader_utils.readSchemas([globPattern]);
     expect(Object.keys(schemas)).to.have.members(results);
   });
+  it("should load schemas from a comma-separated list of file paths", () => {
+    const schemaFiles = `${schemaDir}/full-directory/schema-1.json,${schemaDir}/full-directory/schema-2.json`;
+    const schemas = Object.keys(schema_loader_utils.readSchemas([schemaFiles]));
+    expect(schemas.length).to.equal(2);
+    expect(schemas).to.include(
+      schema_loader_utils.filePathToSchemaName(
+        `${schemaDir}/full-directory/schema-1.json`
+      )
+    );
+    expect(schemas).to.include(
+      schema_loader_utils.filePathToSchemaName(
+        `${schemaDir}/full-directory/schema-2.json`
+      )
+    );
+  });
 });

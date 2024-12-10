@@ -33,6 +33,24 @@ of languages, such as `en,fr,de`. See the [supported languages list](https://clo
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
 
+#### Optional Genkit Integration
+
+This extension optionally supports Genkit as an alternative to the Google Cloud Translation API for performing translations. With Genkit, you can leverage large language models such as Google AI Gemini or Vertex AI Gemini to generate translations.
+
+##### How it works:
+Genkit Integration allows you to use the powerful Gemini 1.5 Pro model for translations. When enabled, the extension uses the specified Genkit provider to perform the translations instead of the default Cloud Translation API.
+
+You can choose between:
+
+- Google AI: Uses the googleai plugin with an API key.
+- Vertex AI: Uses the vertexai plugin and connects to your Google Cloud Vertex AI endpoint.
+
+In theory, a large language model like Gemini 1.5 Pro may have more contextual understanding. For example in the sentence `I left my keys in the bank` the model may understand whether `bank` refers to a financial institution or a riverbank, and may provide a more accurate translation.
+
+##### Notes:
+- Using Genkit may incur additional charges based on your model provider (Google AI or Vertex AI).
+- If you do not wish to use Genkit, the extension defaults to the Cloud Translation API.
+
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 
