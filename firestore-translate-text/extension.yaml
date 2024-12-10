@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-translate-text
-version: 0.1.20
+version: 0.1.21
 specVersion: v1beta
 
 tags: [ai]
@@ -47,10 +47,6 @@ apis:
     reason:
       To use Google Translate to translate strings into your specified target
       languages.
-  - apiName: aiplatform.googleapis.com
-    reason:
-      This extension uses the Vertex AI multimodal model for embedding images,
-      if configured to do so.
 
 roles:
   - role: datastore.user
@@ -139,12 +135,36 @@ params:
     default: languages
     required: false
 
-  - param: USE_GENKIT
-    label: Use Genkit for translations?
+  - param: TRANSLATION_MODEL
+    label: Translation Model
     description: >
-      If you want to use Genkit to perform translations, select "Yes" and
-      provide the necessary configuration parameters. If you select "No", the
-      extension will use Google Cloud Translation API.
+      This extension now provides the option to use Gemini 1.5 Pro for
+      translations, which may provide more accurate and context-aware
+      translations. The extension accesses the Gemini API using a Google AI API
+      key that you can provide as a secret during installation.
+    type: select
+    required: true
+    options:
+      - label: AI Translations Using Gemini
+        value: gemini
+      - label: Cloud Translation API
+        value: translate
+
+  - param: GOOGLE_AI_API_KEY
+    label: Google AI API key
+    description: >
+      If you selected AI Translations Using Gemini to perform translations,
+      please provide a Google AI API key, which you can create here
+      https://ai.google.dev/gemini-api/docs/api-key
+    type: secret
+    required: false
+
+  - param: DO_BACKFILL
+    label: Translate existing documents?
+    description: >
+      Should existing documents in the Firestore collection be translated as
+      well?  If you've added new languages since a document was translated, this
+      will fill those in as well.
     type: select
     required: true
     options:
@@ -152,41 +172,6 @@ params:
         value: true
       - label: No
         value: false
-
-  - param: GEMINI_PROVIDER
-    label: Genkit Gemini provider
-    description: >
-      If you selected to use Genkit to perform translations, please provide the
-      name of the Gemini API you want to use.
-    type: select
-    required: false
-    options:
-      - label: Google AI
-        value: googleai
-      - label: Vertex AI
-        value: vertexai
-
-  - param: GOOGLE_AI_API_KEY
-    label: Google AI API key
-    description: >
-      If you selected to use Genkit with Google AI to perform translations,
-      please provide a Google AI API key.
-    type: secret
-    required: false
-
-  # - param: DO_BACKFILL
-  #   label: Translate existing documents?
-  #   description: >
-  #     Should existing documents in the Firestore collection be translated as
-  #     well?  If you've added new languages since a document was translated, this
-  #     will fill those in as well.
-  #   type: select
-  #   required: true
-  #   options:
-  #     - label: Yes
-  #       value: true
-  #     - label: No
-  #       value: false
 
 events:
   - type: firebase.extensions.firestore-translate-text.v1.onStart
