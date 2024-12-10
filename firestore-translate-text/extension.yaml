@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-translate-text
-version: 0.1.19
+version: 0.1.20
 specVersion: v1beta
 
 tags: [ai]
@@ -157,7 +157,7 @@ params:
     label: Genkit Gemini provider
     description: >
       If you selected to use Genkit to perform translations, please provide the
-      name of the provider you want to use.
+      name of the Gemini API you want to use.
     type: select
     required: false
     options:

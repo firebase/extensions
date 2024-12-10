@@ -91,7 +91,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Use Genkit for translations?: If you want to use Genkit to perform translations, select "Yes" and provide the necessary configuration parameters. If you select "No", the extension will use Google Cloud Translation API.
 
 
-* Genkit Gemini provider: If you selected to use Genkit to perform translations, please provide the name of the provider you want to use.
+* Genkit Gemini provider: If you selected to use Genkit to perform translations, please provide the name of the Gemini API you want to use.
 
 
 * Google AI API key: If you selected to use Genkit with Google AI to perform translations, please provide a Google AI API key
