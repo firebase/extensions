@@ -52,11 +52,6 @@ roles:
   - role: datastore.user
     reason: Allows the extension to write translated strings to Cloud Firestore.
 
-  - role: aiplatform.user
-    reason: >-
-      This extension requires access to Vertex AI to create, update and query a
-      Vertex Matching Engine index.
-
 resources:
   - name: fstranslate
     type: firebaseextensions.v1beta.function
