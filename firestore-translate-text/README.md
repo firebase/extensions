@@ -41,23 +41,18 @@ of languages, such as `en,fr,de`. See the [supported languages list](https://clo
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
 
-#### Optional Genkit Integration
+#### AI Translations using Gemini
 
-This extension optionally supports Genkit as an alternative to the Google Cloud Translation API for performing translations. With Genkit, you can leverage large language models such as Google AI Gemini or Vertex AI Gemini to generate translations.
+This extension optionally supports using Gemini 1.5 Pro as an alternative to the Google Cloud Translation API for performing translations.
 
-##### How it works:
-Genkit Integration allows you to use the powerful Gemini 1.5 Pro model for translations. When enabled, the extension uses the specified Genkit provider to perform the translations instead of the default Cloud Translation API.
+The extension accesses the Gemini API via Google AI, and will require an API key to be provided upon installation. You may create an API key [here](https://ai.google.dev/gemini-api/docs/api-key).
 
-You can choose between:
+A large language model like Gemini 1.5 Pro may have more contextual understanding. For example in the sentence `I left my keys in the bank` the model may understand whether `bank` refers to a financial institution or a riverbank, and may provide a more accurate translation.
 
-- Google AI: Uses the googleai plugin with an API key.
-- Vertex AI: Uses the vertexai plugin and connects to your Google Cloud Vertex AI endpoint.
-
-In theory, a large language model like Gemini 1.5 Pro may have more contextual understanding. For example in the sentence `I left my keys in the bank` the model may understand whether `bank` refers to a financial institution or a riverbank, and may provide a more accurate translation.
+It is important to note that Gemini should only be used with sanitized input, as prompt injection is a possibility.
 
 ##### Notes:
-- Using Genkit may incur additional charges based on your model provider (Google AI or Vertex AI).
-- If you do not wish to use Genkit, the extension defaults to the Cloud Translation API.
+- Using the Gemini API may have a different pricing model than the Cloud Translation API.
 
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
@@ -88,13 +83,13 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Languages field name: What is the name of the field that contains the languages that you want to translate into? This field is optional. If you don't specify it, the extension will use the languages specified in the LANGUAGES parameter.
 
 
-* Use Genkit for translations?: If you want to use Genkit to perform translations, select "Yes" and provide the necessary configuration parameters. If you select "No", the extension will use Google Cloud Translation API.
+* Translation Model: This extension now provides the option to use Gemini 1.5 Pro for translations, which may provide more accurate and context-aware translations. The extension accesses the Gemini API using a Google AI API key that you can provide as a secret during installation.
 
 
-* Genkit Gemini provider: If you selected to use Genkit to perform translations, please provide the name of the Gemini API you want to use.
+* Google AI API key: If you selected AI Translations Using Gemini to perform translations, please provide a Google AI API key, which you can create here https://ai.google.dev/gemini-api/docs/api-key
 
 
-* Google AI API key: If you selected to use Genkit with Google AI to perform translations, please provide a Google AI API key.
+* Translate existing documents?: Should existing documents in the Firestore collection be translated as well?  If you've added new languages since a document was translated, this will fill those in as well.
 
 
 
@@ -110,8 +105,6 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 **APIs Used**:
 
 * translate.googleapis.com (Reason: To use Google Translate to translate strings into your specified target languages.)
-
-* aiplatform.googleapis.com (Reason: This extension uses the Vertex AI multimodal model for embedding images, if configured to do so.)
 
 
 
