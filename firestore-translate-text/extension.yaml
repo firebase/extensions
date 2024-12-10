@@ -170,7 +170,7 @@ params:
     label: Google AI API key
     description: >
       If you selected to use Genkit with Google AI to perform translations,
-      please provide a Google AI API key
+      please provide a Google AI API key.
     type: secret
     required: false
 
