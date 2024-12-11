@@ -17,6 +17,7 @@ The extension can publish a resize completion event, which you can optionally en
 
 Furthermore, you can choose if you want to receive events upon the successful completion of the image resizing. Hence, you can do anything based on the event you will receive. For example, you can use [EventArc gen2 functions](https://firebase.google.com/docs/functions/custom-events#handle-events) to be triggered on events published by the extension.
 ### Example Event Handler for Successful Resize Operation
+
 ```typescript
 import * as functions from 'firebase-functions';
 import { onCustomEventPublished } from 'firebase-functions/v2/eventarc';
@@ -29,6 +30,7 @@ export const onImageResized = onCustomEventPublished(
         return Promise.resolve();
     }
 );
+```
 
 #### Detailed configuration information
 
