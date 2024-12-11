@@ -174,6 +174,7 @@ async function parseConfig(): Promise<CliConfig> {
       program.outputHelp();
       process.exit(1);
     }
+
     return {
       projectId: program.project,
       bigQueryProjectId: program.bigQueryProject,

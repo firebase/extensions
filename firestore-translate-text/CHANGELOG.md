@@ -1,3 +1,13 @@
+## Version 0.1.21
+
+feat - update docs and config setup for AI Translations with Gemini
+
+docs - add disclaimer about prompt injection
+
+## Version 0.1.20
+
+feat - add optional Gemini translations powered by Firebase Genkit
+
 ## Version 0.1.19
 
 fixed - bump dependencies, fix vulnerabilities

@@ -15,6 +15,7 @@
  */
 import { logger } from "firebase-functions";
 import config from "./config";
+import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
 
 export const arrayFieldInvalid = (fieldName: string) => {
   logger.warn(`Array field '${fieldName}' does not contain an array, skipping`);
@@ -149,8 +150,24 @@ export const dataTypeInvalid = (
   );
 };
 
-export const error = (err: Error) => {
-  logger.error("Error when mirroring data to BigQuery", err);
+export const error = (
+  includeEvent: boolean,
+  message: string,
+  err: Error,
+  event?: any, // Made optional, as it is not always required
+  eventTrackerConfig?: any // Made optional, as it is not always required
+) => {
+  const logDetails: Record<string, any> = { error: err };
+
+  if (includeEvent && event) {
+    logDetails.event = event;
+  }
+
+  if (includeEvent && eventTrackerConfig) {
+    logDetails.eventTrackerConfig = eventTrackerConfig;
+  }
+
+  logger.error(`Error when mirroring data to BigQuery: ${message}`, logDetails);
 };
 
 export const init = () => {
@@ -165,4 +182,39 @@ export const timestampMissingValue = (fieldName: string) => {
   logger.warn(
     `Missing value for timestamp field: ${fieldName}, using default timestamp instead.`
   );
+};
+
+export const logEventAction = (
+  action: string,
+  document_name: string,
+  event_id: string,
+  operation: ChangeType
+) => {
+  logger.info(action, {
+    document_name,
+    event_id,
+    operation,
+  });
+};
+
+export const logFailedEventAction = (
+  action: string,
+  document_name: string,
+  event_id: string,
+  operation: ChangeType,
+  error: Error
+) => {
+  const changeTypeMap = {
+    0: "CREATE",
+    1: "DELETE",
+    2: "UPDATE",
+    3: "IMPORT",
+  };
+
+  logger.error(action, {
+    document_name,
+    event_id,
+    operation: changeTypeMap[operation],
+    error,
+  });
 };

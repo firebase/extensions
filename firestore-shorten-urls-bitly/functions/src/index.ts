@@ -16,14 +16,18 @@
 
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import axios, { AxiosInstance } from "axios";
 
 import { FirestoreUrlShortener } from "./abstract-shortener";
 import config from "./config";
 import * as logs from "./logs";
 import * as events from "./events";
+
+interface BitlyResponse {
+  link?: string;
+}
+
 class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
-  private instance: AxiosInstance;
+  private bitlyAccessToken: string;
 
   constructor(
     urlFieldName: string,
@@ -31,14 +35,7 @@ class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
     bitlyAccessToken: string
   ) {
     super(urlFieldName, shortUrlFieldName);
-    this.instance = axios.create({
-      headers: {
-        Authorization: `Bearer ${bitlyAccessToken}`,
-        "Content-Type": "application/json",
-      },
-      baseURL: "https://api-ssl.bitly.com/v4/",
-    });
-
+    this.bitlyAccessToken = bitlyAccessToken;
     logs.init();
   }
 
@@ -49,15 +46,27 @@ class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
     logs.shortenUrl(url);
 
     try {
-      const response: any = await this.instance.post("bitlinks", {
-        long_url: url,
+      const response = await fetch("https://api-ssl.bitly.com/v4/bitlinks", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.bitlyAccessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ long_url: url }),
       });
 
-      const { link } = response.data;
+      if (!response.ok) {
+        throw new Error(`Error shortening URL: ${response.statusText}`);
+      }
 
-      logs.shortenUrlComplete(link);
+      const data: BitlyResponse = await response.json();
 
-      await this.updateShortUrl(snapshot, link);
+      if (data.link) {
+        logs.shortenUrlComplete(data.link);
+        await this.updateShortUrl(snapshot, data.link);
+      } else {
+        throw new Error("Bitly response did not contain a link.");
+      }
     } catch (err) {
       logs.error(err);
     }

@@ -2,7 +2,10 @@
 
 exports[`extension config config loaded from environment variables 1`] = `
 Object {
+  "backupBucketName": "undefined.appspot.com",
   "backupCollectionId": undefined,
+  "backupDir": "_firestore-bigquery-export",
+  "backupToGCS": false,
   "bqProjectId": undefined,
   "clustering": Array [
     "data",
@@ -12,8 +15,6 @@ Object {
   "databaseId": "(default)",
   "datasetId": "my_dataset",
   "datasetLocation": undefined,
-  "doBackfill": false,
-  "docsPerBackfill": 200,
   "excludeOldData": false,
   "importCollectionPath": undefined,
   "initialized": false,
@@ -21,13 +22,13 @@ Object {
   "kmsKeyName": "test",
   "location": "us-central1",
   "maxDispatchesPerSecond": 10,
+  "maxEnqueueAttempts": 3,
   "tableId": "my_table",
   "timePartitioning": null,
   "timePartitioningField": undefined,
   "timePartitioningFieldType": undefined,
   "timePartitioningFirestoreField": undefined,
   "transformFunction": "",
-  "useCollectionGroupQuery": false,
   "useNewSnapshotQuerySyntax": false,
   "wildcardIds": false,
 }

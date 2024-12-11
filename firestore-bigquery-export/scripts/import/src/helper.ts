@@ -82,6 +82,8 @@ export function getRowsFromDocs(
             operation: ChangeType.IMPORT,
             documentName: `projects/${config.projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${path}`,
             documentId: doc.id,
+            // TODO: fix this type
+            // @ts-expect-error
             pathParams,
             eventId: "",
             data: doc.data(),
@@ -90,6 +92,8 @@ export function getRowsFromDocs(
       }
     }
   } else {
+    // TODO: fix this type
+    // @ts-expect-error
     rows = docs.map((snapshot) => {
       return {
         timestamp: new Date().toISOString(), // epoch
