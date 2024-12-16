@@ -108,6 +108,45 @@ If you follow these steps, your changelog table should be created using your cus
 
 After your data is in BigQuery, you can run the [schema-views script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/GENERATE_SCHEMA_VIEWS.md) (provided by this extension) to create views that make it easier to query relevant data. You only need to provide a JSON schema file that describes your data structure, and the schema-views script will create the views.
 
+#### Cross-project Streaming
+
+By default, the extension exports data to BigQuery in the same project as your Firebase project. However, you can configure it to export to a BigQuery instance in a different Google Cloud project. To do this:
+
+1. During installation, set the `BIGQUERY_PROJECT_ID` parameter to your target BigQuery project ID.
+
+2. After installation, you'll need to grant the extension's service account the necessary BigQuery permissions on the target project. You can use our provided scripts:
+
+**For Linux/Mac (Bash):**
+```bash
+curl -O https://raw.githubusercontent.com/firebase/extensions/master/firestore-bigquery-export/scripts/grant-crossproject-access.sh
+chmod +x grant-crossproject-access.sh
+./grant-crossproject-access.sh -f SOURCE_FIREBASE_PROJECT -b TARGET_BIGQUERY_PROJECT [-i EXTENSION_INSTANCE_ID]
+```
+
+**For Windows (PowerShell):**
+```powershell
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/firebase/extensions/master/firestore-bigquery-export/scripts/grant-crossproject-access.ps1" -OutFile "grant-crossproject-access.ps1"
+.\grant-crossproject-access.ps1 -FirebaseProject SOURCE_FIREBASE_PROJECT -BigQueryProject TARGET_BIGQUERY_PROJECT [-ExtensionInstanceId EXTENSION_INSTANCE_ID]
+```
+
+**Parameters:**
+For Bash script:
+- `-f`: Your Firebase (source) project ID
+- `-b`: Your target BigQuery project ID
+- `-i`: (Optional) Extension instance ID if different from default "firestore-bigquery-export"
+
+For PowerShell script:
+- `-FirebaseProject`: Your Firebase (source) project ID
+- `-BigQueryProject`: Your target BigQuery project ID
+- `-ExtensionInstanceId`: (Optional) Extension instance ID if different from default "firestore-bigquery-export"
+
+**Prerequisites:**
+- You must have the [gcloud CLI](https://cloud.google.com/sdk/docs/install) installed and configured
+- You must have permission to grant IAM roles on the target BigQuery project
+- The extension must be installed before running the script
+
+**Note:** If extension installation is failing to create a dataset on the target project initially due to missing permissions, don't worry. The extension will automatically retry once you've granted the necessary permissions using these scripts.
+
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 
