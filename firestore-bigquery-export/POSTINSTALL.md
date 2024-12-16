@@ -54,13 +54,44 @@ Enabling wildcard references will provide an additional STRING based column. The
 
 `Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
 
-### Configuring Cross-Platform BigQuery Setup
+#### Cross-project Streaming
 
-When defining a specific BigQuery project ID, a manual step to set up permissions is required:
+By default, the extension exports data to BigQuery in the same project as your Firebase project. However, you can configure it to export to a BigQuery instance in a different Google Cloud project. To do this:
 
-1. Navigate to https://console.cloud.google.com/iam-admin/iam?project=${param:BIGQUERY_PROJECT_ID}
-2. Add the **BigQuery Data Editor** role to the following service account:
-   `ext-${param:EXT_INSTANCE_ID}@${param:PROJECT_ID}.iam.gserviceaccount.com`.
+1. During installation, set the `BIGQUERY_PROJECT_ID` parameter to your target BigQuery project ID.
+
+2. After installation, you'll need to grant the extension's service account the necessary BigQuery permissions on the target project. You can use our provided scripts:
+
+**For Linux/Mac (Bash):**
+```bash
+curl -O https://raw.githubusercontent.com/firebase/extensions/master/firestore-bigquery-export/scripts/grant-crossproject-access.sh
+chmod +x grant-crossproject-access.sh
+./grant-crossproject-access.sh -f SOURCE_FIREBASE_PROJECT -b TARGET_BIGQUERY_PROJECT [-i EXTENSION_INSTANCE_ID]
+```
+
+**For Windows (PowerShell):**
+```powershell
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/firebase/extensions/master/firestore-bigquery-export/scripts/grant-crossproject-access.ps1" -OutFile "grant-crossproject-access.ps1"
+.\grant-crossproject-access.ps1 -FirebaseProject SOURCE_FIREBASE_PROJECT -BigQueryProject TARGET_BIGQUERY_PROJECT [-ExtensionInstanceId EXTENSION_INSTANCE_ID]
+```
+
+**Parameters:**
+For Bash script:
+- `-f`: Your Firebase (source) project ID
+- `-b`: Your target BigQuery project ID
+- `-i`: (Optional) Extension instance ID if different from default "firestore-bigquery-export"
+
+For PowerShell script:
+- `-FirebaseProject`: Your Firebase (source) project ID
+- `-BigQueryProject`: Your target BigQuery project ID
+- `-ExtensionInstanceId`: (Optional) Extension instance ID if different from default "firestore-bigquery-export"
+
+**Prerequisites:**
+- You must have the [gcloud CLI](https://cloud.google.com/sdk/docs/install) installed and configured
+- You must have permission to grant IAM roles on the target BigQuery project
+- The extension must be installed before running the script
+
+**Note:** If extension installation is failing to create a dataset on the target project initially due to missing permissions, don't worry. The extension will automatically retry once you've granted the necessary permissions using these scripts.
 
 ### _(Optional)_ Import existing documents
 
