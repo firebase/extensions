@@ -296,7 +296,7 @@ async function run(): Promise<number> {
       console.log("Initializing Gemini Agent...");
       const chat = runAgent(
         config.googleAiKey!,
-        config.schemaDirectory,
+        config.schemaDirectory || "./schemas",
         config.tableNamePrefix,
         config.collectionPath!,
         sampleData
@@ -305,13 +305,46 @@ async function run(): Promise<number> {
       console.log("Generating schema from sample data...");
       await chat.send(
         `Please analyze these documents and generate an appropriate BigQuery schema. ` +
-          `Then use the writeSchema tool to save it as "${config.tableNamePrefix}_generated.json". ` +
+          `Then use the writeSchema tool to save it as "${config.tableNamePrefix}.json". ` +
           `Let me know once you've created the schema file.`
       );
 
       console.log("Schema generation complete. Reading generated schema...");
-      const schemaName = `${config.tableNamePrefix}_generated`;
+      const schemaName = `${config.tableNamePrefix}`;
       const schemas = readSchemas([`./schemas/${schemaName}.json`]);
+
+      if (!schemas[schemaName]) {
+        console.error(
+          `Error reading schema file: ./schemas/${schemaName}.json. Gemini may have failed to generate the schema.
+          If the issue persists, please manually create the schema file and run the script again.`
+        );
+        process.exit(1);
+      }
+
+      const schemaPath = `./schemas/${config.tableNamePrefix}.json`;
+      console.log(
+        `\nSchema generation complete. The schema file has been created at: ${schemaPath}`
+      );
+      console.log(
+        "Please review the schema file and confirm if you want to proceed."
+      );
+
+      const confirmation = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "proceed",
+          message:
+            "Have you reviewed the schema and want to proceed with creating the views?",
+          default: false,
+        },
+      ]);
+
+      if (!confirmation.proceed) {
+        console.log(
+          "Operation cancelled. Please modify the schema file and run the script again."
+        );
+        process.exit(0);
+      }
 
       for (const name in schemas) {
         await viewFactory.initializeSchemaViewResources(
