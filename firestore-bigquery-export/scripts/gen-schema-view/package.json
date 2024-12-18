@@ -38,6 +38,7 @@
     "firebase-functions": "^4.2.0",
     "fs-find": "^0.4.0",
     "generate-schema": "^2.6.0",
+    "genkit": "^0.9.12",
     "glob": "7.1.5",
     "inquirer": "^6.4.0",
     "sql-formatter": "^2.3.3"
