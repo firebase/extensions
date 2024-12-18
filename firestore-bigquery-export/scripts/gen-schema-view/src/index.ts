@@ -187,8 +187,9 @@ const questions = [
       validateInput(value, "dataset ID", BIGQUERY_VALID_CHARACTERS),
   },
   {
+    // TODO: why was this collection path?
     message:
-      "What is the name of the Cloud Firestore collection for which you want to generate a schema view?",
+      "What is the table name prefix for which you want to generate a schema view?",
     name: "tableNamePrefix",
     type: "input",
     validate: (value) =>
@@ -208,7 +209,6 @@ const questions = [
     when: (answers) => answers.useGeminiAgent,
     validate: (value) =>
       validateInput(value, "collection path", FIRESTORE_VALID_CHARACTERS),
-    default: (answers) => answers.tableNamePrefix,
   },
   {
     message: "Please provide your Google AI API Key:",
