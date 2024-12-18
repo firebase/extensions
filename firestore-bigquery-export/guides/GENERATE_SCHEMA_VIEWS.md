@@ -314,6 +314,64 @@ Since all document data is stored in the schemaless changelog, mistakes in
 schema configuration don't affect the underlying data and can be resolved by
 re-running the schema-views script against an updated schema file.
 
+### Using the Gemini AI Agent
+
+Instead of manually creating schema files, you can use the built-in Gemini AI Agent to automatically analyze your Firestore collection and generate an appropriate schema. The agent will:
+
+1. Sample documents from your collection
+2. Analyze the data structure
+3. Generate a well-documented schema file
+4. Create the corresponding BigQuery views
+
+#### Running with the Agent
+
+You can use the agent in either interactive or non-interactive mode:
+
+```bash
+# Interactive mode
+npx @firebaseextensions/fs-bq-schema-views
+
+# Non-interactive mode
+npx @firebaseextensions/fs-bq-schema-views \
+  --non-interactive \
+  --project=${param:PROJECT_ID} \
+  --big-query-project=${param:BIGQUERY_PROJECT_ID} \
+  --dataset=${param:DATASET_ID} \
+  --table-name-prefix=${param:TABLE_ID} \
+  --use-gemini-agent \
+  --collection-path=your_collection_path \
+  --google-ai-key=your_api_key \
+  --agent-sample-size=50 \
+  --schema-dir=./schemas
+```
+
+#### Agent Parameters
+
+- `--use-gemini-agent`: Enable the Gemini AI Agent for schema generation
+- `--collection-path`: Path to the Firestore collection to analyze
+- `--google-ai-key`: Your Google AI API key for the Gemini model
+- `--agent-sample-size`: Number of documents to sample (default: 10, max: 100)
+- `--schema-dir`: Directory where generated schema files will be stored (default: "./schemas")
+
+#### Generated Schema
+
+The agent will create a schema file named `${param:TABLE_ID}.json` in your specified schema directory. This schema should include:
+
+- Appropriate field types based on your data
+- Detailed descriptions for each field
+- Proper handling of nested objects and arrays
+- BigQuery-compatible type mappings
+
+The generated schema follows the same format as manually created schemas and supports all standard Firestore data types. The agent aims to produce schemas that are both accurate and performant for BigQuery views.
+
+Note that although Gemini is good at producing these schema files and the prompts have been tested, the generative AI models are inherently probabilistic, and you should double check the generated schema before continuing.
+
+### Next Steps
+
+- [Learn about the columns in a schema view](#columns-in-a-schema-view)
+- [Take a look at more SQL examples](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/EXAMPLE_QUERIES.md)
+- [Troubleshoot common issues](#common-schema-file-configuration-mistakes)
+
 ## About Schema Views
 
 ### Views created by the script
