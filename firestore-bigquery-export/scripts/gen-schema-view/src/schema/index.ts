@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 import { RawChangelogViewSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as bigquery from "@google-cloud/bigquery";
 import * as logs from "../logs";
