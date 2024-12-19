@@ -135,7 +135,7 @@ program
   )
   .option(
     "-c, --collection-path <path>",
-    "Firestore collection path to analyze"
+    "Firestore collection path for Gemini to analyze"
   )
   .option(
     "-f, --schema-files <schema-files>",
@@ -187,7 +187,6 @@ const questions = [
       validateInput(value, "dataset ID", BIGQUERY_VALID_CHARACTERS),
   },
   {
-    // TODO: why was this collection path?
     message:
       "What is the table name prefix for which you want to generate a schema view?",
     name: "tableNamePrefix",
@@ -305,7 +304,7 @@ async function run(): Promise<number> {
       console.log("Generating schema from sample data...");
       await chat.send(
         `Please analyze these documents and generate an appropriate BigQuery schema. ` +
-          `Then use the writeSchema tool to save it as "${config.tableNamePrefix}.json". ` +
+          `**Then use the writeSchema tool to save it as "${config.tableNamePrefix}.json**". ` +
           `Let me know once you've created the schema file.`
       );
 
