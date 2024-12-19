@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-// TODO: collection name vs table name prefix split them up, they're different.
 
 import { RawChangelogViewSchema } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as bigquery from "@google-cloud/bigquery";
