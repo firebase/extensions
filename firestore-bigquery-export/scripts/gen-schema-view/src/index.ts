@@ -27,9 +27,7 @@ import { runAgent } from "./schema/genkit";
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
 const GCP_PROJECT_VALID_CHARACTERS = /^[a-z][a-z0-9-]{0,29}$/;
-const MIN_SAMPLE_SIZE = 1;
-const MAX_SAMPLE_SIZE = 100;
-const DEFAULT_SAMPLE_SIZE = 10;
+const DEFAULT_SAMPLE_SIZE = 100;
 
 const validateInput = (value: any, name: string, regex: RegExp) => {
   if (!value || value === "" || value.trim() === "") {
@@ -145,13 +143,8 @@ program
   )
   .option(
     "--use-gemini-agent",
-    "Use Gemini AI Agent to automatically analyze your data and generate the schema",
+    "Use Gemini to automatically analyze your data and generate a draft schema. You will have a chance to manually view and approve this schema before it is used.",
     false
-  )
-  .option(
-    "--agent-sample-size <size>",
-    `Number of documents for the Gemini Agent to analyze (${MIN_SAMPLE_SIZE}-${MAX_SAMPLE_SIZE})`,
-    DEFAULT_SAMPLE_SIZE.toString()
   )
   .option(
     "--schema-dir <directory>",
@@ -196,7 +189,7 @@ const questions = [
   },
   {
     message:
-      "Would you like to use a Gemini AI Agent to automatically analyze your data and generate the schema?",
+      "Would you like to use a Gemini to automatically analyze your data and generate a draft schema?",
     name: "useGeminiAgent",
     type: "confirm",
     default: false,
@@ -217,22 +210,6 @@ const questions = [
     validate: (value) => {
       if (!value || value.trim() === "") {
         return "Google AI API Key is required";
-      }
-      return true;
-    },
-  },
-  {
-    message: `How many documents should the Gemini Agent analyze? (${MIN_SAMPLE_SIZE}-${MAX_SAMPLE_SIZE})`,
-    name: "agentSampleSize",
-    type: "number",
-    default: DEFAULT_SAMPLE_SIZE,
-    when: (answers) => answers.useGeminiAgent,
-    validate: (value) => {
-      if (isNaN(value) || value < MIN_SAMPLE_SIZE) {
-        return `Please provide a number greater than or equal to ${MIN_SAMPLE_SIZE}`;
-      }
-      if (value > MAX_SAMPLE_SIZE) {
-        return `Sample size must not exceed ${MAX_SAMPLE_SIZE} documents`;
       }
       return true;
     },
@@ -285,14 +262,10 @@ async function run(): Promise<number> {
 
   if (config.useGeminiAgent) {
     try {
-      console.log("\nStarting Gemini Agent schema generation process...");
-
       const sampleData = await sampleFirestoreDocuments(
         config.collectionPath!,
         config.agentSampleSize!
       );
-
-      console.log("Initializing Gemini Agent...");
       const chat = runAgent(
         config.googleAiKey!,
         config.schemaDirectory || "./schemas",
@@ -300,15 +273,11 @@ async function run(): Promise<number> {
         config.collectionPath!,
         sampleData
       );
-
-      console.log("Generating schema from sample data...");
       await chat.send(
         `Please analyze these documents and generate an appropriate BigQuery schema. ` +
           `**Then use the writeSchema tool to save it as "${config.tableNamePrefix}.json**". ` +
           `Let me know once you've created the schema file.`
       );
-
-      console.log("Schema generation complete. Reading generated schema...");
       const schemaName = `${config.tableNamePrefix}`;
       const schemas = readSchemas([`./schemas/${schemaName}.json`]);
 
@@ -322,10 +291,7 @@ async function run(): Promise<number> {
 
       const schemaPath = `./schemas/${config.tableNamePrefix}.json`;
       console.log(
-        `\nSchema generation complete. The schema file has been created at: ${schemaPath}`
-      );
-      console.log(
-        "Please review the schema file and confirm if you want to proceed."
+        `\nSchema generation complete. The schema file has been created at: ${schemaPath}. Please review the schema file and confirm if you want to proceed.`
       );
 
       const confirmation = await inquirer.prompt([
@@ -405,18 +371,6 @@ async function parseConfig(): Promise<CliConfig> {
         );
         process.exit(1);
       }
-
-      const sampleSize = parseInt(program.agentSampleSize);
-      if (
-        isNaN(sampleSize) ||
-        sampleSize < MIN_SAMPLE_SIZE ||
-        sampleSize > MAX_SAMPLE_SIZE
-      ) {
-        console.error(
-          `Agent sample size must be between ${MIN_SAMPLE_SIZE} and ${MAX_SAMPLE_SIZE}.`
-        );
-        process.exit(1);
-      }
     }
 
     return {
@@ -427,9 +381,7 @@ async function parseConfig(): Promise<CliConfig> {
       collectionPath: program.collectionPath,
       schemas: program.useGeminiAgent ? {} : readSchemas(program.schemaFiles),
       useGeminiAgent: program.useGeminiAgent,
-      agentSampleSize: program.useGeminiAgent
-        ? parseInt(program.agentSampleSize)
-        : undefined,
+      agentSampleSize: DEFAULT_SAMPLE_SIZE,
       googleAiKey: program.googleAiKey,
     };
   }
