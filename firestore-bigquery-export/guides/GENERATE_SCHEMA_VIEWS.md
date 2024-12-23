@@ -314,7 +314,7 @@ Since all document data is stored in the schemaless changelog, mistakes in
 schema configuration don't affect the underlying data and can be resolved by
 re-running the schema-views script against an updated schema file.
 
-### Using the Gemini AI Agent
+### Using Gemini to generate draft schema files
 
 Instead of manually creating schema files, you can use the built-in Gemini AI Agent to automatically analyze your Firestore collection and generate an appropriate schema. The agent will:
 
@@ -323,9 +323,7 @@ Instead of manually creating schema files, you can use the built-in Gemini AI Ag
 3. Generate a well-documented schema file
 4. Create the corresponding BigQuery views
 
-#### Running with the Agent
-
-You can use the agent in either interactive or non-interactive mode:
+You can use Gemini in either interactive or non-interactive mode:
 
 ```bash
 # Interactive mode
@@ -338,7 +336,7 @@ npx @firebaseextensions/fs-bq-schema-views \
   --big-query-project=${param:BIGQUERY_PROJECT_ID} \
   --dataset=${param:DATASET_ID} \
   --table-name-prefix=${param:TABLE_ID} \
-  --use-gemini-agent \
+  --use-gemini \
   --collection-path=your_collection_path \
   --google-ai-key=your_api_key \
   --agent-sample-size=50 \
