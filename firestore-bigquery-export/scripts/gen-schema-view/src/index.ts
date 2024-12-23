@@ -43,12 +43,11 @@ function collect(value, previous) {
   return previous.concat([value]);
 }
 
-async function sampleFirestoreDocuments(
+export async function sampleFirestoreDocuments(
   collectionPath: string,
   sampleSize: number
 ): Promise<any[]> {
   const db = firebase.firestore();
-  console.log(`Sampling ${sampleSize} documents from ${collectionPath}...`);
 
   try {
     const snapshot = await db
@@ -142,7 +141,7 @@ program
     []
   )
   .option(
-    "--use-gemini-agent",
+    "--use-gemini",
     "Use Gemini to automatically analyze your data and generate a draft schema. You will have a chance to manually view and approve this schema before it is used.",
     false
   )
@@ -151,7 +150,7 @@ program
     "Directory to store generated schemas",
     "./schemas"
   )
-  .option("--google-ai-key <key>", "Google AI API Key for Gemini Agent");
+  .option("--google-ai-key <key>", "Google AI API Key for Gemini");
 
 const questions = [
   {
@@ -190,7 +189,7 @@ const questions = [
   {
     message:
       "Would you like to use a Gemini to automatically analyze your data and generate a draft schema?",
-    name: "useGeminiAgent",
+    name: "useGemini",
     type: "confirm",
     default: false,
   },
@@ -198,7 +197,7 @@ const questions = [
     message: "What is the Firestore collection path you want to analyze?",
     name: "collectionPath",
     type: "input",
-    when: (answers) => answers.useGeminiAgent,
+    when: (answers) => answers.useGemini,
     validate: (value) =>
       validateInput(value, "collection path", FIRESTORE_VALID_CHARACTERS),
   },
@@ -206,7 +205,7 @@ const questions = [
     message: "Please provide your Google AI API Key:",
     name: "googleAiKey",
     type: "password",
-    when: (answers) => answers.useGeminiAgent,
+    when: (answers) => answers.useGemini,
     validate: (value) => {
       if (!value || value.trim() === "") {
         return "Google AI API Key is required";
@@ -219,13 +218,13 @@ const questions = [
       "Where should this script look for schema definitions? (Enter a comma-separated list of, optionally globbed, paths to files or directories).",
     name: "schemaFiles",
     type: "input",
-    when: (answers) => !answers.useGeminiAgent,
+    when: (answers) => !answers.useGemini,
   },
   {
     message: "Where should the generated schema files be stored?",
     name: "schemaDirectory",
     type: "input",
-    when: (answers) => answers.useGeminiAgent,
+    when: (answers) => answers.useGemini,
     default: "./schemas",
   },
 ];
@@ -238,7 +237,7 @@ interface CliConfig {
   collectionPath?: string;
   schemaDirectory?: string;
   schemas: { [schemaName: string]: FirestoreSchema };
-  useGeminiAgent?: boolean;
+  useGemini?: boolean;
   agentSampleSize?: number;
   googleAiKey?: string;
 }
@@ -260,7 +259,7 @@ async function run(): Promise<number> {
     config.bigQueryProjectId
   );
 
-  if (config.useGeminiAgent) {
+  if (config.useGemini) {
     try {
       const sampleData = await sampleFirestoreDocuments(
         config.collectionPath!,
@@ -346,7 +345,7 @@ async function parseConfig(): Promise<CliConfig> {
   program.parse(process.argv);
   if (program.nonInteractive) {
     if (
-      !program.useGeminiAgent &&
+      !program.useGemini &&
       (program.project === undefined ||
         program.bigQueryProject === undefined ||
         program.dataset === undefined ||
@@ -357,7 +356,7 @@ async function parseConfig(): Promise<CliConfig> {
       process.exit(1);
     }
 
-    if (program.useGeminiAgent) {
+    if (program.useGemini) {
       if (!program.googleAiKey) {
         console.error(
           "Google AI API Key is required when using the Gemini Agent"
@@ -379,8 +378,8 @@ async function parseConfig(): Promise<CliConfig> {
       datasetId: program.dataset,
       tableNamePrefix: program.tableNamePrefix,
       collectionPath: program.collectionPath,
-      schemas: program.useGeminiAgent ? {} : readSchemas(program.schemaFiles),
-      useGeminiAgent: program.useGeminiAgent,
+      schemas: program.useGemini ? {} : readSchemas(program.schemaFiles),
+      useGemini: program.useGemini,
       agentSampleSize: DEFAULT_SAMPLE_SIZE,
       googleAiKey: program.googleAiKey,
     };
@@ -393,28 +392,27 @@ async function parseConfig(): Promise<CliConfig> {
     datasetId: answers.dataset,
     tableNamePrefix: answers.tableNamePrefix,
     collectionPath: answers.collectionPath,
-    schemas: answers.useGeminiAgent
+    schemas: answers.useGemini
       ? {}
       : readSchemas(
           answers.schemaFiles
             .split(",")
             .map((schemaFileName) => schemaFileName.trim())
         ),
-    useGeminiAgent: answers.useGeminiAgent,
-    agentSampleSize: answers.useGeminiAgent
-      ? answers.agentSampleSize
-      : undefined,
+    useGemini: answers.useGemini,
+    agentSampleSize: DEFAULT_SAMPLE_SIZE,
     googleAiKey: answers.googleAiKey,
   };
 }
-
-run()
-  .then((result) => {
-    console.log("done.");
-    process.exit();
-  })
-  .catch((error) => {
-    console.log(JSON.stringify(error));
-    console.error(error.message);
-    process.exit();
-  });
+if (process.env.NODE_ENV !== "test") {
+  run()
+    .then((result) => {
+      console.log("done.");
+      process.exit();
+    })
+    .catch((error) => {
+      console.log(JSON.stringify(error));
+      console.error(error.message);
+      process.exit();
+    });
+}
