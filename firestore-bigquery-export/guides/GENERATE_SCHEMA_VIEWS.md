@@ -316,7 +316,7 @@ re-running the schema-views script against an updated schema file.
 
 ### Using Gemini to generate draft schema files
 
-Instead of manually creating schema files, you can use the built-in Gemini AI Agent to automatically analyze your Firestore collection and generate an appropriate schema. The agent will:
+Instead of manually creating schema files, you can use the built-in Gemini Agent to automatically analyze your Firestore collection and generate an appropriate schema. The agent will:
 
 1. Sample documents from your collection
 2. Analyze the data structure
