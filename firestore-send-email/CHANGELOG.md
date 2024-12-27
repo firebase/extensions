@@ -1,3 +1,9 @@
+## Version 0.1.35
+
+fixed - SendGrid "no-categories" issues (#2053)
+
+fixed - fix vulnerabilities and update dependencies
+
 ## Version 0.1.34
 
 fixed - SendGrid v3 issues (#2020)
