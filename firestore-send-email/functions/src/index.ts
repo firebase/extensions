@@ -85,6 +85,10 @@ function getExpireAt(startTime: admin.firestore.Timestamp) {
   const now = startTime.toDate();
   const value = config.TTLExpireValue;
   switch (config.TTLExpireType) {
+    case "minute":
+    case "minutes": // Add this to support plural
+      now.setMinutes(now.getMinutes() + value);
+      break;
     case "hour":
       now.setHours(now.getHours() + value);
       break;

@@ -36,6 +36,21 @@ admin
   .then(() => console.log("Queued email for delivery!"));
 ```
 
+### Automatic Deletion of Email Documents
+To use Firestore's TTL feature for automatic deletion of expired email documents:
+
+1. Enable Firestore TTL in your Firebase project settings.
+2. Configure a TTL policy targeting the `delivery.expireAt` field:
+   - Open the Firebase Console.
+   - Navigate to the Firestore database settings (gear icon).
+   - Add a new TTL policy for `delivery.expireAt` (use dot notation for nested fields).
+   - Save the configuration.
+
+3. Ensure your `.env` file is updated with:
+   ```env
+   TTL_EXPIRE_TYPE=minutes
+   TTL_EXPIRE_VALUE=2
+
 ### Using this extension
 
 See the [official documentation](https://firebase.google.com/docs/extensions/official/firestore-send-email) for information on using this extension, including advanced use cases such as using Handlebars templates and managing email delivery status.
