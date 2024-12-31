@@ -4,30 +4,30 @@ You can test out this extension right away!
 
 1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:BIGQUERY_PROJECT_ID}/firestore/data) in the Firebase console.
 
-1.  If it doesn't already exist, create the collection you specified during installation: `${param:COLLECTION_PATH}`
+2.  If it doesn't already exist, create the collection you specified during installation: `${param:COLLECTION_PATH}`
 
-1.  Create a document in the collection called `bigquery-mirror-test` that contains any fields with any values that you'd like.
+3.  Create a document in the collection called `bigquery-mirror-test` that contains any fields with any values that you'd like.
 
-1.  Go to the [BigQuery web UI](https://console.cloud.google.com/bigquery?project=${param:BIGQUERY_PROJECT_ID}&p=${param:BIGQUERY_PROJECT_ID}&d=${param:DATASET_ID}) in the Google Cloud Platform console.
+4.  Go to the [BigQuery web UI](https://console.cloud.google.com/bigquery?project=${param:BIGQUERY_PROJECT_ID}&p=${param:BIGQUERY_PROJECT_ID}&d=${param:DATASET_ID}) in the Google Cloud Platform console.
 
-1.  Query your **raw changelog table**, which should contain a single log of creating the `bigquery-mirror-test` document.
+5.  Query your **raw changelog table**, which should contain a single log of creating the `bigquery-mirror-test` document.
 
     ```
     SELECT *
     FROM `${param:BIGQUERY_PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_changelog`
     ```
 
-1.  Query your **latest view**, which should return the latest change event for the only document present -- `bigquery-mirror-test`.
+6.  Query your **latest view**, which should return the latest change event for the only document present -- `bigquery-mirror-test`.
 
     ```
     SELECT *
     FROM `${param:BIGQUERY_PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_raw_latest`
     ```
 
-1.  Delete the `bigquery-mirror-test` document from [Cloud Firestore](https://console.firebase.google.com/project/${param:BIGQUERY_PROJECT_ID}/firestore/data).
+7.  Delete the `bigquery-mirror-test` document from [Cloud Firestore](https://console.firebase.google.com/project/${param:BIGQUERY_PROJECT_ID}/firestore/data).
     The `bigquery-mirror-test` document will disappear from the **latest view** and a `DELETE` event will be added to the **raw changelog table**.
 
-1.  You can check the changelogs of a single document with this query:
+8.  You can check the changelogs of a single document with this query:
 
     ```
     SELECT *
@@ -55,11 +55,19 @@ Enabling wildcard references will provide an additional STRING based column. The
 `Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
 
 
+
 ### Verifying Service Account Name
+
 Before granting permissions, confirm the actual service account name generated during installation.
+
 1. Navigate to **IAM & Admin > IAM** in your Google Cloud Console.
-2. Search for accounts prefixed with `ext-`.
+
+2. Locate the service account starting with `ext-` followed by your extension instance name.
+
 3. Use this name in all subsequent configurations.
+
+
+
 #### Cross-project Streaming
 
 By default, the extension exports data to BigQuery in the same project as your Firebase project. However, you can configure it to export to a BigQuery instance in a different Google Cloud project. To do this:

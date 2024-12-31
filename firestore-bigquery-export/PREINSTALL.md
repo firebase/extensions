@@ -32,7 +32,7 @@ Note: To enable partitioning for a Big Query database, the following fields are 
 When configuring cross-project setups, the actual service account name may differ from the documented naming format.
 Follow these steps to find and use the correct service account name:
 - Go to **IAM & Admin** in the Google Cloud Console for your Firebase project.
-- Locate the service account starting with `ext-`.
+- Locate the service account starting with `ext-` followed by your extension instance name.
 - Use this name for cross-project permissions, ensuring alignment with the generated account.
 #### Additional setup
 
