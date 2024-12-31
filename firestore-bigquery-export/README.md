@@ -121,7 +121,24 @@ By default, the extension exports data to BigQuery in the same project as your F
 
 1. During installation, set the `BIGQUERY_PROJECT_ID` parameter to your target BigQuery project ID.
 
-2. After installation, you'll need to grant the extension's service account the necessary BigQuery permissions on the target project. You can use our provided scripts:
+2. 
+    After installation, you'll need to grant the extension's service account the necessary BigQuery permissions on the target project.
+
+    ### Service Account Naming Discrepancy
+    Please note that the actual service account generated may differ from the `EXTENSION_INSTANCE_ID` specified during installation. 
+    This discrepancy occurs due to backend constraints such as character limits or unique naming requirements.
+    
+    **Example:**
+    - `EXTENSION_INSTANCE_ID`: `firestore-bigquery-export-y8oz`
+    - Generated Service Account: `ext-firestore-bigquery-ex-5hog@[project-id].iam.gserviceaccount.com`
+    
+    To find the exact service account name:
+    1. Navigate to the **Google Cloud Console**.
+    2. Go to **IAM & Admin > IAM**.
+    3. Search for accounts starting with `ext-`. Use this name for configuring cross-project permissions.
+
+    Update your permission settings to reflect the correct service account name as identified above.
+     You can use our provided scripts:
 
 **For Linux/Mac (Bash):**
 ```bash
