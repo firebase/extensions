@@ -54,6 +54,12 @@ Enabling wildcard references will provide an additional STRING based column. The
 
 `Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
 
+
+### Verifying Service Account Name
+Before granting permissions, confirm the actual service account name generated during installation.
+1. Navigate to **IAM & Admin > IAM** in your Google Cloud Console.
+2. Search for accounts prefixed with `ext-`.
+3. Use this name in all subsequent configurations.
 #### Cross-project Streaming
 
 By default, the extension exports data to BigQuery in the same project as your Firebase project. However, you can configure it to export to a BigQuery instance in a different Google Cloud project. To do this:
