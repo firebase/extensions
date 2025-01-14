@@ -46,6 +46,49 @@ It is important to note that Gemini should only be used with sanitized input, as
 ##### Notes:
 - Using the Gemini API may have a different pricing model than the Cloud Translation API.
 
+### How to Use Glossaries with the Cloud Translation API
+
+#### Enabling Glossaries
+
+1. **Glossary Requirement**: Glossaries enable domain-specific translations and are case-sensitive. Ensure that the glossary's name matches exactly, as mismatches will result in errors.
+2. **Enable Translation Hub**: Before using glossaries, make sure that the [Translation Hub](https://cloud.google.com/translation-hub/docs/overview) is enabled for your project.
+3. **Source Language Code**: When using glossaries, you must specify the source language. If no glossary is used, the source language can be automatically detected.
+4. **Case Sensitivity**: Glossary names are case-sensitive and must be entered precisely as created.
+
+#### Steps to Create and Use a Glossary
+
+1. **Create a Glossary**:
+   - Use the [Google Cloud Translation API glossary creation guide](https://cloud.google.com/translate/docs/advanced/glossary) to create a glossary.
+   - Store the glossary in the correct Google Cloud Storage bucket and ensure that the bucket's location matches your project's region.
+   - Glossaries must be unique to the project and region.
+
+2. **Specify the Glossary in the Extension**:
+   - Provide the `GLOSSARY_ID` parameter during installation. This should match the ID of the glossary you created.
+   - If using a glossary, also provide the `SOURCE_LANGUAGE_CODE` parameter to define the source language for your translations.
+
+3. **Set Up Service Account**:
+   - The extension uses a service account for authorization. If needed, provide the `GOOGLE_APPLICATION_CREDENTIALS` secret containing the service account key JSON file.
+
+#### Example Usage
+
+- Glossary ID: `city_names_glossary`
+- Source Language Code: `en`
+
+For example, if translating the phrase *"Paris is beautiful"* and your glossary specifies `Paris` to remain untranslated, the extension will ensure it remains in the source form.
+
+#### Common Errors and Troubleshooting
+
+- **Invalid Glossary ID**: Ensure the glossary ID is correct and case-sensitive.
+- **Missing Source Language Code**: If using a glossary, a source language code is mandatory.
+- **Glossary Not Found**: Confirm that the glossary exists in the correct project and region.
+
+#### Links and Resources
+
+- [Glossary Documentation](https://cloud.google.com/translate/docs/advanced/glossary)
+- [Supported Languages List](https://cloud.google.com/translate/docs/languages)
+- [Service Account Key Documentation](https://cloud.google.com/iam/docs/creating-managing-service-account-keys)
+
+
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 

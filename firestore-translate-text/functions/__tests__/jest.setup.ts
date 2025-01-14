@@ -6,7 +6,6 @@ import {
 } from "./mocks/firestore";
 import {
   testTranslations,
-  mockTranslate,
   mockTranslateClassMethod,
   mockTranslateClass,
   mockTranslateModuleFactory,
@@ -19,8 +18,6 @@ global.snapshot = snapshot;
 global.testTranslations = testTranslations;
 
 global.mockDocumentSnapshotFactory = mockDocumentSnapshotFactory;
-
-global.mockTranslate = mockTranslate;
 
 global.mockTranslateClassMethod = mockTranslateClassMethod;
 

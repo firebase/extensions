@@ -154,6 +154,47 @@ params:
     type: secret
     required: false
 
+  - param: GLOSSARY_ID
+    label: Glossary ID (Cloud Translation Only)
+    description: >
+      (Optional) Specify the ID of the glossary you want to use for
+      domain-specific translations. This parameter is applicable only when using
+      Cloud Translation. **Note**: The glossary ID is case-sensitive. Ensure
+      that the ID matches exactly as defined. Additionally, the Translation Hub
+      must be enabled in your Google Cloud project to use glossaries. For more
+      details on creating a glossary, refer to the [glossary
+      documentation](https://cloud.google.com/translate/docs/advanced/glossary).
+    default: ""
+    required: false
+
+  - param: GOOGLE_APPLICATION_CREDENTIALS
+    label: Service Account Key JSON Path (Cloud Translation Only)
+    description: >
+      (Optional) Provide the path to the service account key JSON file used for
+      authentication with the Google Translation API. This parameter is
+      applicable only when using Cloud Translation. If not specified, the
+      extension will use the default credentials associated with the project.
+      For more information on creating and using service accounts, refer to the
+      [service account
+      documentation](https://cloud.google.com/iam/docs/creating-managing-service-account-keys).
+    default: ""
+    type: secret
+    required: false
+
+  - param: SOURCE_LANGUAGE_CODE
+    label:
+      Source Language Code (Cloud Translation Only, Required if using a
+      glossary)
+    description: >
+      The language code of the source text (e.g., "en" for English). This field
+      is required only when using glossaries with Cloud Translation. Leave this
+      blank if no glossary is used to allow auto-detection of the source
+      language. **Note**: The Translation Hub must be enabled to use glossaries
+      with a source language. Refer to the [supported languages
+      list](https://cloud.google.com/translate/docs/languages).
+    default: ""
+    required: false
+
   - param: DO_BACKFILL
     label: Translate existing documents?
     description: >

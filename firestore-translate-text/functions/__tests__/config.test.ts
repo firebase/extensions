@@ -111,3 +111,17 @@ describe("extension config", () => {
     });
   });
 });
+
+it("should correctly read GLOSSARY_ID from config", () => {
+  process.env.GLOSSARY_ID = "test_glossary";
+  const config = require("../config").default;
+
+  expect(config.glossaryId).toBe("test_glossary");
+});
+
+it("should fallback to default source language if not provided", () => {
+  delete process.env.SOURCE_LANGUAGE_CODE;
+  const config = require("../config").default;
+
+  expect(config.sourceLanguageCode).toBeUndefined(); // or check for default behavior
+});

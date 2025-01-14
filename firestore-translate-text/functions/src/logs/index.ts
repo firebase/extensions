@@ -101,7 +101,8 @@ export const translateStringError = (
 
 export const translateInputStringToAllLanguages = (
   string: string,
-  languages: string[]
+  languages: string[],
+  glossaryId?: string
 ) => {
   logger.log(messages.translateInputStringToAllLanguages(string, languages));
 };
@@ -143,4 +144,8 @@ export const skippingLanguage = (language: string) => {
 
 export const enqueueNext = (offset: number) => {
   logger.log(messages.enqueueNext(offset));
+};
+
+export const info = (message: string) => {
+  logger.log(`[INFO]: ${message}`);
 };

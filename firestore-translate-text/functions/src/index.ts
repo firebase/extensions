@@ -48,7 +48,7 @@ export const fstranslate = functions.firestore
   .onWrite(async (change, context): Promise<void> => {
     logs.start(config);
     await events.recordStartEvent({ change, context });
-    const { languages, inputFieldName, outputFieldName } = config;
+    const { languages, inputFieldName, outputFieldName, glossaryId } = config;
 
     if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
       logs.fieldNamesNotDifferent();
@@ -72,13 +72,13 @@ export const fstranslate = functions.firestore
     try {
       switch (changeType) {
         case ChangeType.CREATE:
-          await handleCreateDocument(change.after);
+          await handleCreateDocument(change.after, glossaryId);
           break;
         case ChangeType.DELETE:
           handleDeleteDocument();
           break;
         case ChangeType.UPDATE:
-          await handleUpdateDocument(change.before, change.after);
+          await handleUpdateDocument(change.before, change.after, glossaryId);
           break;
       }
 
@@ -105,6 +105,7 @@ export const fstranslatebackfill = functions.tasks
     const offset = (data["offset"] as number) ?? 0;
     const pastSuccessCount = (data["successCount"] as number) ?? 0;
     const pastErrorCount = (data["errorCount"] as number) ?? 0;
+    const glossaryId = config.glossaryId;
     // We also track the start time of the first invocation, so that we can report the full length at the end.
     const startTime = (data["startTime"] as number) ?? Date.now();
 
@@ -118,7 +119,7 @@ export const fstranslatebackfill = functions.tasks
     const writer = admin.firestore().bulkWriter();
     const translations = await Promise.allSettled(
       snapshot.docs.map((doc) => {
-        return handleExistingDocument(doc, writer);
+        return handleExistingDocument(doc, writer, glossaryId);
       })
     );
     // Close the writer to commit the changes to Firestore.
@@ -184,12 +185,17 @@ const getChangeType = (
 
 const handleExistingDocument = async (
   snapshot: admin.firestore.DocumentSnapshot,
-  bulkWriter: admin.firestore.BulkWriter
+  bulkWriter: admin.firestore.BulkWriter,
+  glossaryId?: string
 ): Promise<void> => {
   const input = extractInput(snapshot);
   try {
     if (input) {
-      return await translateDocumentBackfill(snapshot, bulkWriter);
+      // Validate glossaryId
+      if (glossaryId && !validators.isValidGlossaryId(glossaryId)) {
+        return; // Skip translation for invalid glossary
+      }
+      return await translateDocumentBackfill(snapshot, bulkWriter, glossaryId);
     } else {
       logs.documentFoundNoInput();
     }
@@ -201,12 +207,16 @@ const handleExistingDocument = async (
 };
 
 const handleCreateDocument = async (
-  snapshot: admin.firestore.DocumentSnapshot
+  snapshot: admin.firestore.DocumentSnapshot,
+  glossaryId?: string
 ): Promise<void> => {
   const input = extractInput(snapshot);
   if (input) {
     logs.documentCreatedWithInput();
-    await translateDocument(snapshot);
+    if (glossaryId && !validators.isValidGlossaryId(glossaryId)) {
+      return; // Skip translation for invalid glossary
+    }
+    await translateDocument(snapshot, glossaryId);
   } else {
     logs.documentCreatedNoInput();
   }
@@ -218,7 +228,8 @@ const handleDeleteDocument = (): void => {
 
 const handleUpdateDocument = async (
   before: admin.firestore.DocumentSnapshot,
-  after: admin.firestore.DocumentSnapshot
+  after: admin.firestore.DocumentSnapshot,
+  glossaryId?: string
 ): Promise<void> => {
   const inputBefore = extractInput(before);
   const inputAfter = extractInput(after);
@@ -237,6 +248,10 @@ const handleUpdateDocument = async (
     await updateTranslations(after, admin.firestore.FieldValue.delete());
     logs.documentUpdatedDeletedInput();
     return;
+  }
+
+  if (glossaryId && !validators.isValidGlossaryId(glossaryId)) {
+    return; // Skip translation for invalid glossary
   }
 
   if (

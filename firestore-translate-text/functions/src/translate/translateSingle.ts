@@ -13,7 +13,8 @@ import {
 export const translateSingle = async (
   input: string,
   languages: string[],
-  snapshot: admin.firestore.DocumentSnapshot
+  snapshot: admin.firestore.DocumentSnapshot,
+  glossaryId?: string
 ): Promise<void> => {
   logs.translateInputStringToAllLanguages(input, languages);
 
@@ -21,7 +22,7 @@ export const translateSingle = async (
     async (targetLanguage: string): Promise<Translation> => {
       return {
         language: targetLanguage,
-        output: await translateString(input, targetLanguage),
+        output: await translateString(input, targetLanguage, glossaryId),
       };
     }
   );
@@ -50,7 +51,8 @@ export const translateSingle = async (
 export const translateSingleBackfill = async (
   input: string,
   snapshot: admin.firestore.DocumentSnapshot,
-  bulkWriter: admin.firestore.BulkWriter
+  bulkWriter: admin.firestore.BulkWriter,
+  glossaryId?: string
 ): Promise<void> => {
   const existingTranslations = extractOutput(snapshot) || {};
   // During backfills, we filter out languages that we already have translations for.
@@ -62,7 +64,7 @@ export const translateSingleBackfill = async (
     async (targetLanguage: string): Promise<Translation> => {
       return {
         language: targetLanguage,
-        output: await translateString(input, targetLanguage),
+        output: await translateString(input, targetLanguage, glossaryId),
       };
     }
   );

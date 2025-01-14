@@ -24,4 +24,7 @@ export default {
   useGenkit: process.env.TRANSLATION_MODEL === "gemini",
   geminiProvider: "googleai",
   googleAIAPIKey: process.env.GOOGLE_AI_API_KEY,
+  glossaryId: process.env.GLOSSARY_ID || "",
+  projectId: process.env.GCLOUD_PROJECT || "",
+  sourceLanguageCode: process.env.SOURCE_LANGUAGE_CODE || "",
 };
