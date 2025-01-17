@@ -6,7 +6,7 @@ import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { deleteTable } from "../fixtures/clearTables";
 import { getBigQueryTableData } from "../fixtures/queries";
 
-process.env.PROJECT_ID = "extensions-testing";
+process.env.PROJECT_ID = "dev-extensions-testing";
 
 let bq: BigQuery;
 let randomID: string;

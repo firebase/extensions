@@ -13,7 +13,7 @@ import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { getBigQueryTableData } from "../fixtures/queries";
 import { firestore } from "firebase-admin";
 
-process.env.PROJECT_ID = "extensions-testing";
+process.env.PROJECT_ID = "dev-extensions-testing";
 
 const consoleLogSpy = jest.spyOn(logger, "log").mockImplementation();
 const consoleLogSpyWarn = jest.spyOn(logger, "warn").mockImplementation();
