@@ -1,7 +1,7 @@
 import { BigQuery } from "@google-cloud/bigquery";
 
 export const deleteTable = async ({
-  projectId = "extensions-testing",
+  projectId = "dev-extensions-testing",
   datasetId = "",
 }) => {
   const bq = new BigQuery({ projectId });

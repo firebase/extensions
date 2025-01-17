@@ -4,7 +4,7 @@ import { RawChangelogSchema } from "../../bigquery/schema";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { deleteTable } from "../fixtures/clearTables";
 
-process.env.PROJECT_ID = "extensions-testing";
+process.env.PROJECT_ID = "dev-extensions-testing";
 
 const bq: BigQuery = new BigQuery({ projectId: process.env.PROJECT_ID });
 const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
@@ -18,6 +18,7 @@ let myDataset: Dataset;
 const { logger } = require("firebase-functions");
 
 const consoleLogSpy = jest.spyOn(logger, "log").mockImplementation();
+
 
 describe("Clustering ", () => {
   beforeEach(() => {

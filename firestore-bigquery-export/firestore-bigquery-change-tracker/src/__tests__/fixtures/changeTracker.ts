@@ -16,7 +16,7 @@ export const changeTracker = ({
   timePartitioningFirestoreField = null,
   transformFunction = null,
   clustering = null,
-  bqProjectId = "extensions-testing",
+  bqProjectId = "dev-extensions-testing",
   useNewSnapshotQuerySyntax = false,
 }): FirestoreBigQueryEventHistoryTracker => {
   return new FirestoreBigQueryEventHistoryTracker({

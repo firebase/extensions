@@ -8,7 +8,7 @@ import {
   viewRequiresUpdate,
 } from "../../bigquery/checkUpdates";
 
-process.env.PROJECT_ID = "extensions-testing";
+process.env.PROJECT_ID = "dev-extensions-testing";
 
 const bq: BigQuery = new BigQuery({ projectId: process.env.PROJECT_ID });
 const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
