@@ -4,7 +4,7 @@ module.exports = {
   name: packageJson.name,
   displayName: packageJson.name,
   rootDir: "./",
-  types: ['jest', 'node'],
+  types: ["jest", "node"],
   globals: {
     "ts-jest": {
       tsConfig: "<rootDir>/tsconfig.test.json",
