@@ -19,7 +19,6 @@ const { logger } = require("firebase-functions");
 
 const consoleLogSpy = jest.spyOn(logger, "log").mockImplementation();
 
-
 describe("Clustering ", () => {
   beforeEach(() => {
     randomID = (Math.random() + 1).toString(36).substring(7);

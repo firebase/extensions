@@ -15,7 +15,6 @@
  */
 
 import * as sqlFormatter from "sql-formatter";
-
 import { timestampField } from "./schema";
 
 const excludeFields: string[] = ["document_name", "document_id"];
@@ -39,16 +38,14 @@ export const latestConsistentSnapshotView = ({
     datasetId,
     tableName,
     timestampColumnName: timestampField.name,
-    groupByColumns: schema["fields"]
-      .map((field) => field.name)
-      .filter((name) => excludeFields.indexOf(name) === -1),
+    groupByColumns: extractGroupByColumns(schema),
     bqProjectId,
     useLegacyQuery,
   }),
   useLegacySql: false,
 });
 
-interface buildLatestSnapshotViewQueryOptions {
+interface BuildLatestSnapshotViewQueryOptions {
   datasetId: string;
   tableName: string;
   timestampColumnName: string;
@@ -64,90 +61,137 @@ export function buildLatestSnapshotViewQuery({
   groupByColumns,
   bqProjectId,
   useLegacyQuery = true,
-}: buildLatestSnapshotViewQueryOptions): string {
-  if (datasetId === "" || tableName === "" || timestampColumnName === "") {
-    throw Error(`Missing some query parameters!`);
-  }
-  for (let columnName of groupByColumns) {
-    if (columnName === "") {
-      throw Error(`Found empty group by column!`);
-    }
-  }
+}: BuildLatestSnapshotViewQueryOptions): string {
+  validateInputs({ datasetId, tableName, timestampColumnName, groupByColumns });
 
-  const legacyQuery =
-    sqlFormatter.format(` -- Retrieves the latest document change events for all live documents.
-  --   timestamp: The Firestore timestamp at which the event took place.
-  --   operation: One of INSERT, UPDATE, DELETE, IMPORT.
-  --   event_id: The id of the event that triggered the cloud function mirrored the event.
-  --   data: A raw JSON payload of the current state of the document.
-  --   document_id: The document id as defined in the Firestore database
-  SELECT
-  document_name,
-  document_id${groupByColumns.length > 0 ? `,` : ``}
-    ${groupByColumns.join(",")}
-  FROM (
+  const projectId = bqProjectId || process.env.PROJECT_ID;
+
+  return useLegacyQuery
+    ? buildLegacyQuery(
+        projectId,
+        datasetId,
+        tableName,
+        timestampColumnName,
+        groupByColumns
+      )
+    : buildStandardQuery(
+        projectId,
+        datasetId,
+        tableName,
+        timestampColumnName,
+        groupByColumns
+      );
+}
+
+function extractGroupByColumns(schema: any): string[] {
+  return schema["fields"]
+    .map((field: { name: string }) => field.name)
+    .filter((name: string) => !excludeFields.includes(name));
+}
+
+function validateInputs({
+  datasetId,
+  tableName,
+  timestampColumnName,
+  groupByColumns,
+}: {
+  datasetId: string;
+  tableName: string;
+  timestampColumnName: string;
+  groupByColumns: string[];
+}) {
+  if (!datasetId || !tableName || !timestampColumnName) {
+    throw new Error("Missing required query parameters!");
+  }
+  if (groupByColumns.some((columnName) => !columnName)) {
+    throw new Error("Group by columns must not contain empty values!");
+  }
+}
+
+function buildLegacyQuery(
+  projectId: string,
+  datasetId: string,
+  tableName: string,
+  timestampColumnName: string,
+  groupByColumns: string[]
+): string {
+  return sqlFormatter.format(`
+    -- Retrieves the latest document change events for all live documents.
+    --   timestamp: The Firestore timestamp at which the event took place.
+    --   operation: One of INSERT, UPDATE, DELETE, IMPORT.
+    --   event_id: The id of the event that triggered the cloud function mirrored the event.
+    --   data: A raw JSON payload of the current state of the document.
+    --   document_id: The document id as defined in the Firestore database
     SELECT
       document_name,
-      document_id,
-      ${groupByColumns
-        .map(
-          (columnName) => `FIRST_VALUE(${columnName})
-          OVER(PARTITION BY document_name ORDER BY ${timestampColumnName} DESC)
-          AS ${columnName}`
-        )
-        .join(",")}${groupByColumns.length > 0 ? `,` : ``}
-      FIRST_VALUE(operation)
-        OVER(PARTITION BY document_name ORDER BY ${timestampColumnName} DESC) = "DELETE"
-        AS is_deleted
-    FROM \`${bqProjectId || process.env.PROJECT_ID}.${datasetId}.${tableName}\`
-    ORDER BY document_name, ${timestampColumnName} DESC
-  )
-  WHERE NOT is_deleted
-  GROUP BY document_name, document_id${
-    groupByColumns.length > 0 ? `, ` : ``
-  }${groupByColumns.join(",")}`);
+      document_id${groupByColumns.length > 0 ? `,` : ``}
+      ${groupByColumns.join(",")}
+    FROM (
+      SELECT
+        document_name,
+        document_id,
+        ${groupByColumns
+          .map(
+            (columnName) => `FIRST_VALUE(${columnName}) OVER (
+              PARTITION BY document_name
+              ORDER BY ${timestampColumnName} DESC
+            ) AS ${columnName}`
+          )
+          .join(",")}${groupByColumns.length > 0 ? "," : ""}
+        FIRST_VALUE(operation) OVER (
+          PARTITION BY document_name
+          ORDER BY ${timestampColumnName} DESC
+        ) = "DELETE" AS is_deleted
+      FROM \`${projectId}.${datasetId}.${tableName}\`
+      ORDER BY document_name, ${timestampColumnName} DESC
+    )
+    WHERE NOT is_deleted
+    GROUP BY document_name, document_id${
+      groupByColumns.length > 0 ? ", " : ""
+    }${groupByColumns.join(",")}`);
+}
 
+function buildStandardQuery(
+  projectId: string,
+  datasetId: string,
+  tableName: string,
+  timestampColumnName: string,
+  groupByColumns: string[]
+): string {
   const nonGroupFields = ["event_id", "data", "old_data"];
-  const joinFields = ["document_name"];
 
-  const addSelectField = (field) => {
-    if (joinFields.includes(field)) return `t.${field}`;
-
-    return nonGroupFields.includes(field)
-      ? `ANY_VALUE(${field}) as ${field}`
-      : `${field} as ${field}`;
-  };
-
-  const filterGroupField = (field) => {
-    return nonGroupFields.includes(field);
-  };
-
-  const query =
-    sqlFormatter.format(` -- Retrieves the latest document change events for all live documents.
+  return sqlFormatter.format(`
+    -- Retrieves the latest document change events for all live documents.
     --   timestamp: The Firestore timestamp at which the event took place.
     --   operation: One of INSERT, UPDATE, DELETE, IMPORT.
     --   event_id: The id of the event that triggered the cloud function mirrored the event.
     --   data: A raw JSON payload of the current state of the document.
     --   document_id: The document id as defined in the Firestore database
     WITH latest AS (
-      SELECT max(${timestampColumnName}) as latest_timestamp, document_name
-      FROM \`${
-        bqProjectId || process.env.PROJECT_ID
-      }.${datasetId}.${tableName}\`
+      SELECT MAX(${timestampColumnName}) AS latest_timestamp, document_name
+      FROM \`${projectId}.${datasetId}.${tableName}\`
       GROUP BY document_name
     )
     SELECT
-    t.document_name,
-    document_id${groupByColumns.length > 0 ? `,` : ``}
-      ${groupByColumns.map((f) => addSelectField(f)).join(",")}
-    FROM \`${
-      bqProjectId || process.env.PROJECT_ID
-    }.${datasetId}.${tableName}\` AS t
-    JOIN latest ON (t.document_name = latest.document_name AND (IFNULL(t.${timestampColumnName}, timestamp("1970-01-01 00:00:00+00"))) = (IFNULL(latest.latest_timestamp, timestamp("1970-01-01 00:00:00+00"))))
+      t.document_name,
+      document_id${groupByColumns.length > 0 ? "," : ""}
+      ${groupByColumns
+        .map((field) =>
+          nonGroupFields.includes(field)
+            ? `ANY_VALUE(${field}) AS ${field}`
+            : `${field} AS ${field}`
+        )
+        .join(",")}
+    FROM \`${projectId}.${datasetId}.${tableName}\` AS t
+    JOIN latest ON (
+      t.document_name = latest.document_name AND
+      IFNULL(t.${timestampColumnName}, TIMESTAMP("1970-01-01 00:00:00+00")) =
+      IFNULL(latest.latest_timestamp, TIMESTAMP("1970-01-01 00:00:00+00"))
+    )
     WHERE operation != "DELETE"
     GROUP BY document_name, document_id${
-      groupByColumns.length > 0 ? `, ` : ``
-    }${groupByColumns.filter((c) => !filterGroupField(c)).join(",")}`);
-
-  return useLegacyQuery ? legacyQuery : query;
+      groupByColumns.length > 0 ? ", " : ""
+    }${groupByColumns
+    .filter((field) => !nonGroupFields.includes(field))
+    .join(",")}`);
 }
