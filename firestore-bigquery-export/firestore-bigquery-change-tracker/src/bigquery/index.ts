@@ -41,7 +41,7 @@ import {
 
 import { Partitioning } from "./partitioning";
 import { Clustering } from "./clustering";
-import { tableRequiresUpdate, viewRequiresUpdate } from "./checkUpdates";
+import { tableRequiresUpdate } from "./checkUpdates";
 import { parseErrorMessage, waitForInitialization } from "./utils";
 import { initializeLatestView } from "./initializeLatestView";
 
@@ -64,6 +64,10 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   useNewSnapshotQuerySyntax?: boolean;
   skipInit?: boolean;
   kmsKeyName?: string | undefined;
+  useMaterializedView?: boolean;
+  useIncrementalMaterializedView?: boolean;
+  maxStaleness?: string;
+  refreshIntervalMinutes?: number;
 }
 
 /**
@@ -208,7 +212,18 @@ export class FirestoreBigQueryEventHistoryTracker
   private async _waitForInitialization() {
     const dataset = this.bigqueryDataset();
     const changelogName = this.rawChangeLogTableName();
-    return waitForInitialization({ dataset, changelogName });
+
+    let materializedViewName;
+
+    if (this.config.useMaterializedView) {
+      materializedViewName = this.rawLatestView();
+    }
+
+    return waitForInitialization({
+      dataset,
+      changelogName,
+      materializedViewName,
+    });
   }
 
   /**

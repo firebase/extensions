@@ -18,7 +18,8 @@ import * as sqlFormatter from "sql-formatter";
 import { timestampField } from "./schema";
 
 const excludeFields: string[] = ["document_name", "document_id"];
-
+const nonGroupFields = ["event_id", "data", "old_data"];
+import { TableMetadata } from "@google-cloud/bigquery";
 interface LatestConsistentSnapshotViewOptions {
   datasetId: string;
   tableName: string;
@@ -158,8 +159,6 @@ function buildStandardQuery(
   timestampColumnName: string,
   groupByColumns: string[]
 ): string {
-  const nonGroupFields = ["event_id", "data", "old_data"];
-
   return sqlFormatter.format(`
     -- Retrieves the latest document change events for all live documents.
     --   timestamp: The Firestore timestamp at which the event took place.
@@ -194,4 +193,151 @@ function buildStandardQuery(
     }${groupByColumns
     .filter((field) => !nonGroupFields.includes(field))
     .join(",")}`);
+}
+interface MaterializedViewOptions {
+  projectId: string;
+  datasetId: string;
+  tableName: string;
+  rawLatestViewName: string;
+  schema: any;
+  refreshIntervalMinutes?: number;
+  maxStaleness?: string;
+}
+
+// type ITimePartitioning = {
+//   /**
+//    * Optional. Number of milliseconds for which to keep the storage for a partition. A wrapper is used here because 0 is an invalid value.
+//    */
+//   expirationMs?: string;
+//   /**
+//    * Optional. If not set, the table is partitioned by pseudo column '_PARTITIONTIME'; if set, the table is partitioned by this field. The field must be a top-level TIMESTAMP or DATE field. Its mode must be NULLABLE or REQUIRED. A wrapper is used here because an empty string is an invalid value.
+//    */
+//   field?: string;
+//   /**
+//    * If set to true, queries over this table require a partition filter that can be used for partition elimination to be specified. This field is deprecated; please set the field with the same name on the table itself instead. This field needs a wrapper because we want to output the default value, false, if the user explicitly set it.
+//    */
+//   requirePartitionFilter?: boolean;
+//   /**
+//    * Required. The supported types are DAY, HOUR, MONTH, and YEAR, which will generate one partition per day, hour, month, and year, respectively.
+//    */
+//   type?: string;
+// };
+
+interface NonIncrementalMaterializedViewOptions
+  extends MaterializedViewOptions {
+  enableRefresh?: boolean;
+}
+
+// Helper function to extract fields from schema
+function extractFieldsFromSchema(schema: any): string[] {
+  if (!schema || !schema.fields) {
+    throw new Error("Invalid schema: must contain fields array");
+  }
+  return schema.fields.map((field: { name: string }) => field.name);
+}
+
+export function buildMaterializedViewQuery({
+  projectId,
+  datasetId,
+  tableName,
+  rawLatestViewName,
+  schema,
+}: MaterializedViewOptions): { target: string; source: string; query: string } {
+  const fields = extractFieldsFromSchema(schema);
+
+  // Build the select fields string
+  const selectFields = fields
+    .map((fieldName) => {
+      if (fieldName === "document_name") {
+        return "document_name";
+      }
+      if (fieldName === "timestamp") {
+        return "MAX(timestamp) AS timestamp";
+      }
+      return `MAX_BY(${fieldName}, timestamp) AS ${fieldName}`;
+    })
+    .join(",\n    ");
+
+  const target = `CREATE MATERIALIZED VIEW \`${projectId}.${datasetId}.${rawLatestViewName}\` AS (`;
+  const source = `
+      SELECT 
+        ${selectFields}
+      FROM \`${projectId}.${datasetId}.${tableName}\`
+      GROUP BY document_name`;
+
+  const fullQuery = sqlFormatter.format(`${target} ${source} )`);
+
+  return { target, source, query: fullQuery };
+}
+export function buildNonIncrementalMaterializedViewQuery({
+  projectId,
+  datasetId,
+  tableName,
+  rawLatestViewName,
+  schema,
+  refreshIntervalMinutes,
+  maxStaleness,
+  enableRefresh = true,
+}: NonIncrementalMaterializedViewOptions): {
+  target: string;
+  source: string;
+  query: string;
+} {
+  // Build the options string
+  const options = [];
+  options.push("allow_non_incremental_definition = true");
+
+  if (enableRefresh !== undefined) {
+    options.push(`enable_refresh = ${enableRefresh}`);
+  }
+
+  if (refreshIntervalMinutes !== undefined) {
+    options.push(`refresh_interval_minutes = ${refreshIntervalMinutes}`);
+  }
+
+  if (maxStaleness) {
+    options.push(`max_staleness = INTERVAL "${maxStaleness}" HOUR TO SECOND`);
+  }
+
+  const optionsString =
+    options.length > 0
+      ? `OPTIONS (
+    ${options.join(",\n  ")}
+  )`
+      : "";
+
+  // Extract fields from schema
+  const fields = extractFieldsFromSchema(schema);
+
+  // Build the aggregated fields for the CTE
+  const aggregatedFields = fields
+    .map((fieldName) => {
+      if (fieldName === "document_name") {
+        return "  document_name";
+      }
+      if (fieldName === "timestamp") {
+        return "  MAX(timestamp) AS timestamp";
+      }
+      return `  MAX_BY(${fieldName}, timestamp) AS ${fieldName}`;
+    })
+    .join(",\n        ");
+
+  const target = `CREATE MATERIALIZED VIEW \`${projectId}.${datasetId}.${rawLatestViewName}\` ${optionsString}`;
+
+  const source = `
+    WITH latests AS (
+      SELECT 
+      ${aggregatedFields}
+      FROM \`${projectId}.${datasetId}.${tableName}\`
+      GROUP BY document_name
+    )
+    SELECT *
+    FROM latests
+    WHERE operation != "DELETE"
+  `;
+
+  // Combine all parts with options before AS
+  const fullQuery = sqlFormatter.format(`${target} AS (${source});`);
+
+  return { target, source, query: fullQuery };
 }

@@ -126,7 +126,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "DAY",
-          timePartitioningField: "created",
+          timePartitioningField: "timestamp",
           timePartitioningFieldType: "TIMESTAMP",
           timePartitioningFirestoreField: "created",
         }).record([event]);

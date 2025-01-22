@@ -13,6 +13,7 @@ import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
 import * as logs from "../logs";
 import { latestConsistentSnapshotView } from "./snapshot";
 import { viewRequiresUpdate } from "./checkUpdates";
+import { initializeLatestMaterializedView } from "./initializeLatestMaterializedView";
 
 interface InitializeLatestViewOptions {
   bq: BigQuery;
@@ -22,11 +23,14 @@ interface InitializeLatestViewOptions {
   viewExists: boolean;
   rawChangeLogTableName: string;
   rawLatestViewName: string;
+  useMaterializedView?: boolean;
+  useIncrementalMaterializedView?: boolean;
+  useLegacyQuery?: boolean;
+  refreshIntervalMinutes?: number;
+  maxStaleness?: string;
 }
-
 /**
- * Creates the latest snapshot view, which returns only latest operations
- * of all existing documents over the raw change log table.
+ * Creates the latest snapshot view or materialized view.
  */
 export async function initializeLatestView({
   changeTrackerConfig: config,
@@ -37,12 +41,28 @@ export async function initializeLatestView({
   rawLatestViewName,
   bq,
 }: InitializeLatestViewOptions): Promise<Table> {
+  if (config.useMaterializedView) {
+    const schema = { fields: [...RawChangelogViewSchema.fields] };
+
+    if (config.wildcardIds) {
+      schema.fields.push(documentPathParams);
+    }
+    return initializeLatestMaterializedView({
+      bq,
+      changeTrackerConfig: config,
+      view,
+      viewExists,
+      rawChangeLogTableName,
+      rawLatestViewName,
+      schema,
+    });
+  }
+
   const schema = RawChangelogViewSchema;
 
   if (viewExists) {
     logs.bigQueryViewAlreadyExists(view.id, dataset.id);
     const [metadata] = await view.getMetadata();
-    // TODO: just casting this for now, needs properly fixing
     const fields = (metadata.schema ? metadata.schema.fields : []) as {
       name: string;
     }[];
@@ -55,7 +75,6 @@ export async function initializeLatestView({
     const pathParamsColExists = columnNames.includes("path_params");
     const oldDataColExists = columnNames.includes("old_data");
 
-    /** If new view or opt-in to new query syntax **/
     const updateView = viewRequiresUpdate({
       metadata,
       config,
@@ -78,7 +97,7 @@ export async function initializeLatestView({
 
       await view.setMetadata(metadata);
       logs.updatingMetadata(rawLatestViewName, {
-        config: config,
+        config,
         documentIdColExists,
         pathParamsColExists,
         oldDataColExists,
@@ -107,8 +126,8 @@ export async function initializeLatestView({
       await view.create(options);
       await view.setMetadata({ schema: RawChangelogViewSchema });
       logs.bigQueryViewCreated(rawLatestViewName);
-    } catch (ex) {
-      logs.tableCreationError(rawLatestViewName, ex.message);
+    } catch (error) {
+      logs.tableCreationError(rawLatestViewName, error.message);
     }
   }
   return view;
