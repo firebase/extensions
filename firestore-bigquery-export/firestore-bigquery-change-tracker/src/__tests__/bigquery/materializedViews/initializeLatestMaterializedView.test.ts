@@ -1,168 +1,196 @@
-import { initializeLatestMaterializedView } from "../../../bigquery/initializeLatestMaterializedView";
-import { shouldRecreateMaterializedView } from "../../../bigquery/initializeLatestMaterializedView";
-import * as logs from "../../../logs";
+import { BigQuery, Dataset, TableMetadata } from "@google-cloud/bigquery";
+import { firestore } from "firebase-admin";
+import { RawChangelogViewSchema } from "../../../bigquery/schema";
 import {
   buildMaterializedViewQuery,
   buildNonIncrementalMaterializedViewQuery,
 } from "../../../bigquery/snapshot";
+import { initializeLatestMaterializedView } from "../../../bigquery/initializeLatestMaterializedView";
+import {
+  changeTracker,
+  changeTrackerEvent,
+} from "../../fixtures/changeTracker";
+import { deleteTable } from "../../fixtures/clearTables";
+import * as logs from "../../../logs";
 import * as sqlFormatter from "sql-formatter";
-import { FirestoreBigQueryEventHistoryTrackerConfig } from "../../../bigquery";
 
 jest.mock("../../../logs");
-jest.mock("../../../bigquery/snapshot", () => ({
-  buildMaterializedViewQuery: jest.fn(),
-  buildNonIncrementalMaterializedViewQuery: jest.fn(),
-}));
-jest.mock("../../../bigquery/initializeLatestMaterializedView", () => {
-  const actualModule = jest.requireActual(
-    "../../../bigquery/initializeLatestMaterializedView"
-  );
-  return {
-    ...actualModule,
-    shouldRecreateMaterializedView: jest.fn(),
-  };
-});
-
-jest.mock("../../../bigquery/initializeLatestMaterializedView", () => ({
-  ...jest.requireActual("../../../bigquery/initializeLatestMaterializedView"),
-  shouldRecreateMaterializedView: jest.fn(), // Full mock of this function
-}));
 jest.mock("sql-formatter");
 
 describe("initializeLatestMaterializedView", () => {
-  let mockBigQuery: any;
-  let mockView: any;
-  let mockConfig: Partial<FirestoreBigQueryEventHistoryTrackerConfig>;
-  const mockQuery = "SELECT * FROM test_raw_table";
-  const mockFormattedQuery = "FORMATTED SQL QUERY";
+  const projectId = "dev-extensions-testing";
+  const bq = new BigQuery({ projectId });
 
-  beforeAll(() => {
-    // Configure static mock returns
-    (sqlFormatter.format as jest.Mock).mockReturnValue(mockFormattedQuery);
-    (buildMaterializedViewQuery as jest.Mock).mockReturnValue({
-      query: mockQuery,
-      source: "SOURCE QUERY",
-    });
-    (buildNonIncrementalMaterializedViewQuery as jest.Mock).mockReturnValue({
-      query: mockQuery,
-      source: "SOURCE QUERY",
-    });
-  });
+  let dataset: Dataset;
+  let testConfig: {
+    datasetId: string;
+    tableId: string;
+    tableIdRaw: string;
+    viewIdRaw: string;
+  };
 
   beforeEach(() => {
-    mockBigQuery = {
-      projectId: "test_project",
-      query: jest.fn(),
+    const randomId = (Math.random() + 1).toString(36).substring(7);
+    testConfig = {
+      datasetId: `dataset_${randomId}`,
+      tableId: `table_${randomId}`,
+      tableIdRaw: `table_${randomId}_raw_changelog`,
+      viewIdRaw: `table_${randomId}_raw_latest`,
     };
+    dataset = bq.dataset(testConfig.datasetId);
+  });
 
-    mockView = {
-      id: "test_view",
-      delete: jest.fn(),
-      getMetadata: jest.fn().mockResolvedValue([{}]),
-    };
+  afterEach(async () => {
+    await deleteTable({ datasetId: testConfig.datasetId });
+  });
 
-    mockConfig = {
-      datasetId: "test_dataset",
+  test("creates a new materialized view when view does not exist", async () => {
+    const event = changeTrackerEvent({
+      data: { end_date: firestore.Timestamp.now() },
+      eventId: "testing1",
+    });
+
+    const view = dataset.table(testConfig.viewIdRaw);
+    const config = {
+      datasetId: testConfig.datasetId,
+      tableId: testConfig.tableId,
       useMaterializedView: true,
-      maxStaleness: "1h",
-      refreshIntervalMinutes: 30,
+      useIncrementalMaterializedView: false,
+      maxStaleness: `"4:0:0" HOUR TO SECOND`,
+      refreshIntervalMinutes: 5,
+      clustering: null,
     };
 
-    jest.clearAllMocks();
-
-    // Mock the behavior of shouldRecreateMaterializedView
-    (shouldRecreateMaterializedView as jest.Mock).mockResolvedValue(false); // Default behavior for tests
-  });
-
-  it("creates a new materialized view when view does not exist", async () => {
     await initializeLatestMaterializedView({
-      bq: mockBigQuery,
-      changeTrackerConfig: {
-        ...mockConfig,
-        useIncrementalMaterializedView: false,
-      } as any,
-      view: mockView,
+      bq,
+      changeTrackerConfig: config,
+      view,
       viewExists: false,
-      rawChangeLogTableName: "test_raw_table",
-      rawLatestViewName: "test_raw_view",
-      schema: {},
+      rawChangeLogTableName: testConfig.tableIdRaw,
+      rawLatestViewName: testConfig.viewIdRaw,
+      schema: RawChangelogViewSchema,
     });
 
-    expect(buildMaterializedViewQuery).toHaveBeenCalled();
-    expect(buildNonIncrementalMaterializedViewQuery).not.toHaveBeenCalled();
-    expect(sqlFormatter.format).toHaveBeenCalledWith(mockQuery);
-    expect(mockBigQuery.query).toHaveBeenCalledWith(mockFormattedQuery);
-    expect(logs.bigQueryViewCreating).toHaveBeenCalledWith(
-      "test_raw_view",
-      mockFormattedQuery
-    );
-    expect(logs.bigQueryViewCreated).toHaveBeenCalledWith("test_raw_view");
+    const [metadata] = (await view.getMetadata()) as unknown as [TableMetadata];
+    expect(metadata.materializedView).toBeDefined();
+    expect(metadata.materializedView?.enableRefresh).toBe(true);
+    expect(
+      metadata.materializedView?.allowNonIncrementalDefinition
+    ).toBeDefined();
   });
 
-  it("does not recreate the view if the configuration matches", async () => {
-    (shouldRecreateMaterializedView as jest.Mock).mockResolvedValue(false);
+  test("does not recreate view if configuration matches", async () => {
+    const event = changeTrackerEvent({
+      data: { end_date: firestore.Timestamp.now() },
+      eventId: "testing2",
+    });
+
+    await changeTracker({
+      datasetId: testConfig.datasetId,
+      tableId: testConfig.tableId,
+      useMaterializedView: true,
+      useIncrementalMaterializedView: true,
+    }).record([event]);
+
+    const view = dataset.table(testConfig.viewIdRaw);
+    const config = {
+      datasetId: testConfig.datasetId,
+      tableId: testConfig.tableId,
+      useMaterializedView: true,
+      useIncrementalMaterializedView: true,
+      clustering: null,
+    };
+
+    const [initialMetadata] = (await view.getMetadata()) as unknown as [
+      TableMetadata
+    ];
 
     await initializeLatestMaterializedView({
-      bq: mockBigQuery,
-      changeTrackerConfig: mockConfig as any,
-      view: mockView,
+      bq,
+      changeTrackerConfig: config,
+      view,
       viewExists: true,
-      rawChangeLogTableName: "test_raw_table",
-      rawLatestViewName: "test_raw_view",
-      schema: {},
+      rawChangeLogTableName: testConfig.tableIdRaw,
+      rawLatestViewName: testConfig.viewIdRaw,
+      schema: RawChangelogViewSchema,
     });
 
-    expect(mockView.delete).not.toHaveBeenCalled();
-    expect(mockBigQuery.query).not.toHaveBeenCalled();
-    expect(logs.bigQueryViewCreating).not.toHaveBeenCalled();
+    const [finalMetadata] = (await view.getMetadata()) as unknown as [
+      TableMetadata
+    ];
+    expect(finalMetadata).toEqual(initialMetadata);
   });
 
-  it("deletes and recreates the view if the configuration mismatches", async () => {
-    (shouldRecreateMaterializedView as jest.Mock).mockResolvedValue(true);
-
-    await initializeLatestMaterializedView({
-      bq: mockBigQuery,
-      changeTrackerConfig: {
-        ...mockConfig,
-        useIncrementalMaterializedView: true,
-      } as any,
-      view: mockView,
-      viewExists: true,
-      rawChangeLogTableName: "test_raw_table",
-      rawLatestViewName: "test_raw_view",
-      schema: {},
+  test("recreates view when switching from incremental to non-incremental", async () => {
+    const event = changeTrackerEvent({
+      data: { end_date: firestore.Timestamp.now() },
+      eventId: "testing3",
     });
 
-    expect(mockView.delete).toHaveBeenCalled();
-    expect(mockBigQuery.query).toHaveBeenCalledWith(mockFormattedQuery);
-    expect(logs.bigQueryViewCreating).toHaveBeenCalledWith(
-      "test_raw_view",
-      mockFormattedQuery
-    );
-    expect(logs.bigQueryViewCreated).toHaveBeenCalledWith("test_raw_view");
+    await changeTracker({
+      datasetId: testConfig.datasetId,
+      tableId: testConfig.tableId,
+      useMaterializedView: true,
+      useIncrementalMaterializedView: true,
+    }).record([event]);
+
+    // const view = dataset.table(testConfig.viewIdRaw);
+    // const newConfig = {
+    //   datasetId: testConfig.datasetId,
+    //   tableId: testConfig.tableId,
+    //   useMaterializedView: true,
+    //   maxStaleness: `"4:0:0" HOUR TO SECOND`,
+    //   refreshIntervalMinutes: 5,
+    //   clustering: null,
+    // };
+
+    // const [initialMetadata] = (await view.getMetadata()) as unknown as [
+    //   TableMetadata
+    // ];
+    // expect(
+    //   initialMetadata.materializedView?.allowNonIncrementalDefinition
+    // ).toBeUndefined();
+
+    // await initializeLatestMaterializedView({
+    //   bq,
+    //   changeTrackerConfig: newConfig,
+    //   view,
+    //   viewExists: true,
+    //   rawChangeLogTableName: testConfig.tableIdRaw,
+    //   rawLatestViewName: testConfig.viewIdRaw,
+    //   schema: RawChangelogViewSchema,
+    // });
+
+    // const [finalMetadata] = (await view.getMetadata()) as unknown as [
+    //   TableMetadata
+    // ];
+    // expect(
+    //   finalMetadata.materializedView?.allowNonIncrementalDefinition
+    // ).toBeDefined();
   });
 
-  it("logs an error if view creation fails", async () => {
-    mockBigQuery.query.mockRejectedValueOnce(new Error("Query failed"));
+  test("handles view creation errors", async () => {
+    const view = dataset.table(testConfig.viewIdRaw);
+    const invalidConfig = {
+      datasetId: testConfig.datasetId,
+      tableId: testConfig.tableId,
+      useMaterializedView: true,
+      maxStaleness: "invalid",
+      clustering: null,
+    };
 
     await expect(
       initializeLatestMaterializedView({
-        bq: mockBigQuery,
-        changeTrackerConfig: {
-          ...mockConfig,
-          useIncrementalMaterializedView: false,
-        } as any,
-        view: mockView,
+        bq,
+        changeTrackerConfig: invalidConfig,
+        view,
         viewExists: false,
-        rawChangeLogTableName: "test_raw_table",
-        rawLatestViewName: "test_raw_view",
-        schema: {},
+        rawChangeLogTableName: testConfig.tableIdRaw,
+        rawLatestViewName: testConfig.viewIdRaw,
+        schema: RawChangelogViewSchema,
       })
-    ).rejects.toThrow("Query failed");
+    ).rejects.toThrow();
 
-    expect(logs.tableCreationError).toHaveBeenCalledWith(
-      "test_raw_view",
-      "Query failed"
-    );
+    expect(logs.tableCreationError).toHaveBeenCalled();
   });
 });

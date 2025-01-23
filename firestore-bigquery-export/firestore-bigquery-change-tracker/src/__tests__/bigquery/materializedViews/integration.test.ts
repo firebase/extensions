@@ -83,6 +83,7 @@ describe("integration", () => {
         datasetId,
         tableId,
         useMaterializedView: true,
+        useIncrementalMaterializedView: true,
       }).record([event]);
 
       const [m] = await dataset.table(viewId_raw).getMetadata();
@@ -103,7 +104,7 @@ describe("integration", () => {
         datasetId,
         tableId,
         useMaterializedView: true,
-        maxStaleness: "4:0:0",
+        maxStaleness: `"4:0:0" HOUR TO SECOND`,
         refreshIntervalMinutes: 5,
       }).record([event]);
 
@@ -159,12 +160,12 @@ describe("integration", () => {
       ).not.toBeDefined();
     });
 
-    test("successfully recreates a view when it already exists (incremental -> non-incremental)", async () => {
+    test("successfully recreates a view when it already exists (non incremental -> incremental)", async () => {
       await changeTracker({
         datasetId,
         tableId,
         useMaterializedView: true,
-        maxStaleness: "4:0:0",
+        maxStaleness: `"4:0:0" HOUR TO SECOND`,
         refreshIntervalMinutes: 5,
       }).record([event]);
 

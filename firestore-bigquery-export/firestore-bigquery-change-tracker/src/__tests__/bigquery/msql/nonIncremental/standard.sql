@@ -1,9 +1,9 @@
-CREATE MATERIALIZED VIEW test.test_dataset.materialized_view_test
+CREATE MATERIALIZED VIEW `test.test_dataset.materialized_view_test`
   OPTIONS (
     allow_non_incremental_definition = true,
     enable_refresh = true,
     refresh_interval_minutes = 60,
-    max_staleness = INTERVAL "4 HOUR"
+    max_staleness = INTERVAL "4:0:0" HOUR TO SECOND
   )
   AS (
     WITH latests AS (

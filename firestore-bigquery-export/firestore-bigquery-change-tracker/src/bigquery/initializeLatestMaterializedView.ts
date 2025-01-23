@@ -25,11 +25,11 @@ export async function shouldRecreateMaterializedView(
 ): Promise<boolean> {
   const [viewMetadata] = await view.getMetadata();
 
-  const isIncremental = (viewMetadata as TableMetadata).materializedView
+  const isIncremental = !(viewMetadata as TableMetadata).materializedView
     ?.allowNonIncrementalDefinition;
 
   const incrementalMatch =
-    isIncremental === config.useIncrementalMaterializedView;
+    isIncremental === !!config.useIncrementalMaterializedView;
 
   const viewQuery =
     (viewMetadata as TableMetadata).materializedView?.query || "";
@@ -94,8 +94,6 @@ export async function initializeLatestMaterializedView({
       );
 
       await view.delete();
-
-      const exists = await view.exists();
 
       return await initializeLatestMaterializedView({
         bq,

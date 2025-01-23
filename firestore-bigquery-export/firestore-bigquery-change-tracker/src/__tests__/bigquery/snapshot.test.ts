@@ -117,7 +117,7 @@ describe("materialized view sql generation", () => {
         rawLatestViewName: "materialized_view_test",
         schema: testSchema,
         refreshIntervalMinutes: 60,
-        maxStaleness: "4 HOUR",
+        maxStaleness: `"4:0:0" HOUR TO SECOND`,
       });
 
       expect(query).to.equal(sqlFormatter.format(expectedQuery));

@@ -269,6 +269,7 @@ export function buildMaterializedViewQuery({
 
   return { target, source, query: fullQuery };
 }
+
 export function buildNonIncrementalMaterializedViewQuery({
   projectId,
   datasetId,
@@ -296,7 +297,7 @@ export function buildNonIncrementalMaterializedViewQuery({
   }
 
   if (maxStaleness) {
-    options.push(`max_staleness = INTERVAL "${maxStaleness}" HOUR TO SECOND`);
+    options.push(`max_staleness = INTERVAL ${maxStaleness}`);
   }
 
   const optionsString =
@@ -337,7 +338,7 @@ export function buildNonIncrementalMaterializedViewQuery({
   `;
 
   // Combine all parts with options before AS
-  const fullQuery = sqlFormatter.format(`${target} AS (${source});`);
+  const fullQuery = sqlFormatter.format(`${target} AS (${source})`);
 
   return { target, source, query: fullQuery };
 }
