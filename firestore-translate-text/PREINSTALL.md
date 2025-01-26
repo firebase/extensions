@@ -53,7 +53,7 @@ It is important to note that Gemini should only be used with sanitized input, as
 
 #### Enabling Glossaries
 
-1. **Enable Translation Hub**: Before using glossaries, make sure that the [Translation Hub](https://cloud.google.com/translation-hub/docs/overview) is enabled for your project.
+1. **Enable Translation Hub**: Before using glossaries, make sure that the [Translation Hub](https://console.cloud.google.com/translation/hub) is enabled for your project.
 2. **Source Language Code**: When using glossaries, you must specify the source language. If no glossary is used, the source language can be automatically detected.
 3. **Case Sensitivity**: Glossary names are case-sensitive and must be entered precisely as created.
 

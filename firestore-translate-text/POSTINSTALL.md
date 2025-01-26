@@ -72,7 +72,7 @@ will result in the following translated output in `${param:OUTPUT_FIELD_NAME}`:
 
 #### Enabling Glossaries
 
-1. **Enable Translation Hub**: Before using glossaries, make sure that the [Translation Hub](https://cloud.google.com/translation-hub/docs/overview) is enabled for your project.
+1. **Enable Translation Hub**: Before using glossaries, make sure that the [Translation Hub](https://console.cloud.google.com/translation/hub) is enabled for your project.
 2. **Source Language Code**: When using glossaries, you must specify the source language. If no glossary is used, the source language can be automatically detected.
 
 #### Steps to Create and Use a Glossary
