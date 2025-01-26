@@ -2,19 +2,18 @@
 
 You can test out this extension right away!
 
-1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/firestore/data) in the Firebase console.
+1. Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/firestore/data) in the Firebase console.
 
-1.  If it doesn't exist already, create a collection called `${param:COLLECTION_PATH}`.
+1. If it doesn't exist already, create a collection called `${param:COLLECTION_PATH}`.
 
-1.  Create a document with a field named `${param:INPUT_FIELD_NAME}`, then make its value a word or phrase that you want to translate.
+1. Create a document with a field named `${param:INPUT_FIELD_NAME}`, then make its value a word or phrase that you want to translate.
 
-1.  In a few seconds, you'll see a new field called `${param:OUTPUT_FIELD_NAME}` pop up in the same document you just created. It will contain the translations for each language you specified during installation. 
+1. In a few seconds, you'll see a new field called `${param:OUTPUT_FIELD_NAME}` pop up in the same document you just created. It will contain the translations for each language you specified during installation.
 
 ### Using the extension
 
 This extension translates the input string(s) into your specified target language(s); the source language of the string is automatically detected. If the `${param:INPUT_FIELD_NAME}` field of the document is updated,
  then the translations will be automatically updated as well.
-
 
 #### Input field as a string
 
@@ -73,10 +72,8 @@ will result in the following translated output in `${param:OUTPUT_FIELD_NAME}`:
 
 #### Enabling Glossaries
 
-1. **Glossary Requirement**: Glossaries enable domain-specific translations and are case-sensitive. Ensure that the glossary's name matches exactly, as mismatches will result in errors.
-2. **Enable Translation Hub**: Before using glossaries, make sure that the [Translation Hub](https://cloud.google.com/translation-hub/docs/overview) is enabled for your project.
-3. **Source Language Code**: When using glossaries, you must specify the source language. If no glossary is used, the source language can be automatically detected.
-4. **Case Sensitivity**: Glossary names are case-sensitive and must be entered precisely as created.
+1. **Enable Translation Hub**: Before using glossaries, make sure that the [Translation Hub](https://cloud.google.com/translation-hub/docs/overview) is enabled for your project.
+2. **Source Language Code**: When using glossaries, you must specify the source language. If no glossary is used, the source language can be automatically detected.
 
 #### Steps to Create and Use a Glossary
 
@@ -88,9 +85,6 @@ will result in the following translated output in `${param:OUTPUT_FIELD_NAME}`:
 2. **Specify the Glossary in the Extension**:
    - Provide the `GLOSSARY_ID` parameter during installation. This should match the ID of the glossary you created.
    - If using a glossary, also provide the `SOURCE_LANGUAGE_CODE` parameter to define the source language for your translations.
-
-3. **Set Up Service Account**:
-   - The extension uses a service account for authorization. If needed, provide the `GOOGLE_APPLICATION_CREDENTIALS` secret containing the service account key JSON file.
 
 #### Example Usage
 
@@ -109,7 +103,6 @@ For example, if translating the phrase *"Paris is beautiful"* and your glossary 
 
 - [Glossary Documentation](https://cloud.google.com/translate/docs/advanced/glossary)
 - [Supported Languages List](https://cloud.google.com/translate/docs/languages)
-- [Service Account Key Documentation](https://cloud.google.com/iam/docs/creating-managing-service-account-keys)
 
 ### Monitoring
 

@@ -167,20 +167,6 @@ params:
     default: ""
     required: false
 
-  - param: GOOGLE_APPLICATION_CREDENTIALS
-    label: Service Account Key JSON Path (Cloud Translation Only)
-    description: >
-      (Optional) Provide the path to the service account key JSON file used for
-      authentication with the Google Translation API. This parameter is
-      applicable only when using Cloud Translation. If not specified, the
-      extension will use the default credentials associated with the project.
-      For more information on creating and using service accounts, refer to the
-      [service account
-      documentation](https://cloud.google.com/iam/docs/creating-managing-service-account-keys).
-    default: ""
-    type: secret
-    required: false
-
   - param: SOURCE_LANGUAGE_CODE
     label:
       Source Language Code (Cloud Translation Only, Required if using a

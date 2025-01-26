@@ -15,5 +15,3 @@ You can also browse official Firebase extensions on the [Extensions Marketplace]
 ## Documentation
 
 Documentation for the [Extensions by Firebase](https://firebase.google.com/docs/extensions) section are now stored in this repository.
-
-They can be found under [Docs](https://github.com/firebase/extensions/docs)

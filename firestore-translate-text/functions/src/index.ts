@@ -195,7 +195,7 @@ const handleExistingDocument = async (
       if (glossaryId && !validators.isValidGlossaryId(glossaryId)) {
         return; // Skip translation for invalid glossary
       }
-      return await translateDocumentBackfill(snapshot, bulkWriter, glossaryId);
+      return translateDocumentBackfill(snapshot, bulkWriter, glossaryId);
     } else {
       logs.documentFoundNoInput();
     }
