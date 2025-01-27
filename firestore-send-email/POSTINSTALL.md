@@ -61,6 +61,14 @@ Add this document to the Firestore mail collection to send categorized emails.
 
 For more details, see the [SendGrid Categories documentation](https://docs.sendgrid.com/ui/sending-email/categories).
 
+### Automatic Deletion of Email Documents
+
+To use Firestore's TTL feature for automatic deletion of expired email documents, the extension provides several configuration parameters.
+
+The extension will set a TTL field in the email documents, but you will need to manually configure a TTL policy for the collection/collection group the extension targets, on the `delivery.expireAt` field.
+
+Detailed instructions for creating a TTL field can be found in the [Firestore TTL Policy documentation](https://firebase.google.com/docs/firestore/ttl).
+
 
 ### Monitoring
 
