@@ -244,10 +244,6 @@ const handleUpdateDocument = async (
     return;
   }
 
-  if (glossaryId && !validators.isValidGlossaryId(glossaryId)) {
-    return; // Skip translation for invalid glossary
-  }
-
   if (
     JSON.stringify(inputBefore) === JSON.stringify(inputAfter) &&
     JSON.stringify(languagesBefore) === JSON.stringify(languagesAfter)
