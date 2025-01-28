@@ -68,17 +68,6 @@ will result in the following translated output in `${param:OUTPUT_FIELD_NAME}`:
 }
 ```
 
-#### Common Errors and Troubleshooting
-
-- **Invalid Glossary ID**: Ensure the glossary ID is correct and case-sensitive.
-- **Missing Source Language Code**: If using a glossary, a source language code is mandatory.
-- **Glossary Not Found**: Confirm that the glossary exists in the correct project and region.
-
-#### Links and Resources
-
-- [Glossary Documentation](https://cloud.google.com/translate/docs/advanced/glossary)
-- [Supported Languages List](https://cloud.google.com/translate/docs/languages)
-
 ### Monitoring
 
 As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.
