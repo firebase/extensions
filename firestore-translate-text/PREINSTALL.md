@@ -85,7 +85,6 @@ For example, if translating the phrase *"Paris is beautiful"* and your glossary 
 
 - [Glossary Documentation](https://cloud.google.com/translate/docs/advanced/glossary)
 - [Supported Languages List](https://cloud.google.com/translate/docs/languages)
-- [Service Account Key Documentation](https://cloud.google.com/iam/docs/creating-managing-service-account-keys)
 
 #### Billing
 

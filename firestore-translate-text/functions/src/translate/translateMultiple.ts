@@ -63,29 +63,15 @@ export const translateMultipleBackfill = async (
     for (const language of languages) {
       promises.push(
         new Promise<void>(async (resolve, reject) => {
-          try {
-            logs.info(
-              `Translating input: ${JSON.stringify(input)} with glossary: ${
-                config.glossaryId
-              }`
-            );
-            const output =
-              typeof value === "string"
-                ? await translateString(value, language, config.glossaryId)
-                : null;
+          const output =
+            typeof value === "string"
+              ? await translateString(value, language, config.glossaryId)
+              : null;
 
-            if (!translations[entry]) translations[entry] = {};
-            translations[entry][language] = output;
+          if (!translations[entry]) translations[entry] = {};
+          translations[entry][language] = output;
 
-            resolve();
-          } catch (err) {
-            logs.error(
-              new Error(
-                `Error translating entry '${entry}' to language '${language}': ${err.message}`
-              )
-            );
-            reject(err); // Propagate the error
-          }
+          resolve();
         })
       );
     }
