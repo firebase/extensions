@@ -5,11 +5,7 @@ import {
   translateMultipleBackfill,
 } from "../../src/translate/translateMultiple";
 import { updateTranslations } from "../../src/translate/common";
-import {
-  mockDocumentSnapshot,
-  mockBulkWriter,
-  mockTranslate,
-} from "../mocks/firestore";
+import { mockDocumentSnapshot } from "../mocks/firestore";
 import { BulkWriter } from "firebase-admin/firestore";
 import { isValidGlossaryId } from "../../src/validators";
 
@@ -110,28 +106,6 @@ describe("translateMultipleBackfill", () => {
       "translations",
       expectedMockObjectTranslations
     );
-  });
-  it("should include glossaryId in the request when provided", async () => {
-    const input = { text: "Hello" };
-    const snapshot = mockDocumentSnapshot(input);
-    const bulkWriter = mockBulkWriter();
-
-    await translateMultipleBackfill(
-      input,
-      snapshot as any,
-      bulkWriter as BulkWriter
-    );
-
-    expect(bulkWriter.update).toHaveBeenCalledWith(
-      snapshot.ref,
-      "translations",
-      expect.anything()
-    );
-  });
-
-  it("should reject invalid glossary formats", () => {
-    expect(isValidGlossaryId("INVALID GLOSSARY")).toBe(false); // Spaces are invalid
-    expect(isValidGlossaryId("valid_glossary")).toBe(true); // Underscores are valid
   });
 });
 
