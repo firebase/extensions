@@ -52,8 +52,7 @@ export const translateMultiple = async (
 export const translateMultipleBackfill = async (
   input: object,
   snapshot: admin.firestore.DocumentSnapshot,
-  bulkWriter: admin.firestore.BulkWriter,
-  glossaryId?: string
+  bulkWriter: admin.firestore.BulkWriter
 ): Promise<void> => {
   const existingTranslations = extractOutput(snapshot) ?? {};
 
@@ -71,13 +70,13 @@ export const translateMultipleBackfill = async (
         new Promise<void>(async (resolve, reject) => {
           try {
             logs.info(
-              `Translating input: ${JSON.stringify(
-                input
-              )} with glossary: ${glossaryId}`
+              `Translating input: ${JSON.stringify(input)} with glossary: ${
+                config.glossaryId
+              }`
             );
             const output =
               typeof value === "string"
-                ? await translateString(value, language, glossaryId)
+                ? await translateString(value, language, config.glossaryId)
                 : null;
 
             if (!translations[entry]) translations[entry] = {};

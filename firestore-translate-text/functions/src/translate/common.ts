@@ -48,7 +48,9 @@ export class GoogleTranslator implements ITranslator {
    * Creates a new instance of GoogleTranslator
    */
   constructor() {
-    this.client = new v3.TranslationServiceClient();
+    this.client = new v3.TranslationServiceClient({
+      projectId: config.projectId,
+    });
   }
 
   /**

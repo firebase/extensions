@@ -68,31 +68,6 @@ will result in the following translated output in `${param:OUTPUT_FIELD_NAME}`:
 }
 ```
 
-### How to Use Glossaries with the Cloud Translation API
-
-#### Enabling Glossaries
-
-1. **Enable Translation Hub**: Before using glossaries, make sure that the [Translation Hub](https://console.cloud.google.com/translation/hub) is enabled for your project.
-2. **Source Language Code**: When using glossaries, you must specify the source language. If no glossary is used, the source language can be automatically detected.
-
-#### Steps to Create and Use a Glossary
-
-1. **Create a Glossary**:
-   - Use the [Google Cloud Translation API glossary creation guide](https://cloud.google.com/translate/docs/advanced/glossary) to create a glossary.
-   - Store the glossary in the correct Google Cloud Storage bucket and ensure that the bucket's location matches your project's region.
-   - Glossaries must be unique to the project and region.
-
-2. **Specify the Glossary in the Extension**:
-   - Provide the `GLOSSARY_ID` parameter during installation. This should match the ID of the glossary you created.
-   - If using a glossary, also provide the `SOURCE_LANGUAGE_CODE` parameter to define the source language for your translations.
-
-#### Example Usage
-
-- Glossary ID: `city_names_glossary`
-- Source Language Code: `en`
-
-For example, if translating the phrase *"Paris is beautiful"* and your glossary specifies `Paris` to remain untranslated, the extension will ensure it remains in the source form.
-
 #### Common Errors and Troubleshooting
 
 - **Invalid Glossary ID**: Ensure the glossary ID is correct and case-sensitive.

@@ -13,8 +13,7 @@ import {
 export const translateSingle = async (
   input: string,
   languages: string[],
-  snapshot: admin.firestore.DocumentSnapshot,
-  glossaryId?: string
+  snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
   logs.translateInputStringToAllLanguages(input, languages);
 
@@ -22,7 +21,7 @@ export const translateSingle = async (
     async (targetLanguage: string): Promise<Translation> => {
       return {
         language: targetLanguage,
-        output: await translateString(input, targetLanguage, glossaryId),
+        output: await translateString(input, targetLanguage),
       };
     }
   );

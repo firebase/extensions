@@ -11,26 +11,19 @@ import { translateSingle, translateSingleBackfill } from "./translateSingle";
 
 export const translateDocumentBackfill = async (
   snapshot: admin.firestore.DocumentSnapshot,
-  bulkWriter: admin.firestore.BulkWriter,
-  glossaryId?: string
+  bulkWriter: admin.firestore.BulkWriter
 ): Promise<void> => {
   const input: any = extractInput(snapshot);
 
   if (typeof input === "object") {
-    return translateMultipleBackfill(
-      input,
-      snapshot,
-      bulkWriter,
-      config.glossaryId
-    );
+    return translateMultipleBackfill(input, snapshot, bulkWriter);
   }
 
-  await translateSingleBackfill(input, snapshot, bulkWriter, config.glossaryId);
+  await translateSingleBackfill(input, snapshot, bulkWriter);
 };
 
 export const translateDocument = async (
-  snapshot: admin.firestore.DocumentSnapshot,
-  glossaryId?: string
+  snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
   const input: any = extractInput(snapshot);
   const languages = extractLanguages(snapshot);
@@ -47,8 +40,8 @@ export const translateDocument = async (
   }
 
   if (typeof input === "object") {
-    return translateMultiple(input, languages, snapshot, config.glossaryId);
+    return translateMultiple(input, languages, snapshot);
   }
 
-  await translateSingle(input, languages, snapshot, config.glossaryId);
+  await translateSingle(input, languages, snapshot);
 };

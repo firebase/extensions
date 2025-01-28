@@ -191,11 +191,7 @@ const handleExistingDocument = async (
   const input = extractInput(snapshot);
   try {
     if (input) {
-      // Validate glossaryId
-      if (glossaryId && !validators.isValidGlossaryId(glossaryId)) {
-        return; // Skip translation for invalid glossary
-      }
-      return translateDocumentBackfill(snapshot, bulkWriter, glossaryId);
+      return translateDocumentBackfill(snapshot, bulkWriter);
     } else {
       logs.documentFoundNoInput();
     }
@@ -213,10 +209,8 @@ const handleCreateDocument = async (
   const input = extractInput(snapshot);
   if (input) {
     logs.documentCreatedWithInput();
-    if (glossaryId && !validators.isValidGlossaryId(glossaryId)) {
-      return; // Skip translation for invalid glossary
-    }
-    await translateDocument(snapshot, glossaryId);
+
+    await translateDocument(snapshot);
   } else {
     logs.documentCreatedNoInput();
   }
