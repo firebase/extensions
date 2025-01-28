@@ -52,7 +52,7 @@ roles:
   - role: datastore.user
     reason: Allows the extension to write translated strings to Cloud Firestore.
   - role: cloudtranslate.editor
-    reason: Allows the extensions to use the cloud tranlsate api.
+    reason: Allows the extensions to use the latest Cloud Tranlsate Api.
 
 resources:
   - name: fstranslate
