@@ -439,10 +439,10 @@ describe("extension", () => {
         ...messages.translateInputToAllLanguagesError("hello", error)
       );
     });
+
     it("should process document with glossary", async () => {
       const change = mockFirestoreChange({ input: "Test" }, { input: null });
       const context = mockContext();
-      const config = { glossaryId: "test_glossary", sourceLanguageCode: "en" };
 
       await fstranslate(change, context);
 

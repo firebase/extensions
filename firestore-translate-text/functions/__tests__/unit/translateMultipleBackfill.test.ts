@@ -115,13 +115,11 @@ describe("translateMultipleBackfill", () => {
     const input = { text: "Hello" };
     const snapshot = mockDocumentSnapshot(input);
     const bulkWriter = mockBulkWriter();
-    const glossaryId = "test_glossary";
 
     await translateMultipleBackfill(
       input,
       snapshot as any,
-      bulkWriter as BulkWriter,
-      glossaryId
+      bulkWriter as BulkWriter
     );
 
     expect(bulkWriter.update).toHaveBeenCalledWith(
@@ -135,8 +133,6 @@ describe("translateMultipleBackfill", () => {
     expect(isValidGlossaryId("INVALID GLOSSARY")).toBe(false); // Spaces are invalid
     expect(isValidGlossaryId("valid_glossary")).toBe(true); // Underscores are valid
   });
-
-  // Add more test cases for different scenarios
 });
 
 describe("translateMultiple", () => {
