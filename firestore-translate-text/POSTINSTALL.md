@@ -4,11 +4,11 @@ You can test out this extension right away!
 
 1. Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/firestore/data) in the Firebase console.
 
-1. If it doesn't exist already, create a collection called `${param:COLLECTION_PATH}`.
+2. If it doesn't exist already, create a collection called `${param:COLLECTION_PATH}`.
 
-1. Create a document with a field named `${param:INPUT_FIELD_NAME}`, then make its value a word or phrase that you want to translate.
+3. Create a document with a field named `${param:INPUT_FIELD_NAME}`, then make its value a word or phrase that you want to translate.
 
-1. In a few seconds, you'll see a new field called `${param:OUTPUT_FIELD_NAME}` pop up in the same document you just created. It will contain the translations for each language you specified during installation.
+4. In a few seconds, you'll see a new field called `${param:OUTPUT_FIELD_NAME}` pop up in the same document you just created. It will contain the translations for each language you specified during installation.
 
 ### Using the extension
 
