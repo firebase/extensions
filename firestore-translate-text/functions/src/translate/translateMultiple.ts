@@ -11,8 +11,7 @@ import {
 export const translateMultiple = async (
   input: object,
   languages: string[],
-  snapshot: admin.firestore.DocumentSnapshot,
-  glossaryId?: string
+  snapshot: admin.firestore.DocumentSnapshot
 ): Promise<void> => {
   let translations = {};
   let promises = [];
@@ -22,11 +21,7 @@ export const translateMultiple = async (
       promises.push(
         () =>
           new Promise<void>(async (resolve) => {
-            logs.translateInputStringToAllLanguages(
-              value,
-              languages,
-              glossaryId
-            );
+            logs.translateInputStringToAllLanguages(value, languages);
 
             const output =
               typeof value === "string"

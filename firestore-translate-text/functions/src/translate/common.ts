@@ -31,11 +31,7 @@ interface ITranslator {
    * @param glossaryId - Optional glossary ID to use during translation
    * @returns A promise resolving to the translated text
    */
-  translate(
-    text: string,
-    targetLanguage: string,
-    glossaryId?: string
-  ): Promise<string>;
+  translate(text: string, targetLanguage: string): Promise<string>;
 }
 
 /**
@@ -141,15 +137,10 @@ export class GenkitTranslator implements ITranslator {
    * Translates text using Genkit with either Vertex AI or Google AI
    * @param text - The text to translate
    * @param targetLanguage - The language code to translate to
-   * @param glossaryId - Optional glossary ID to use during translation
    * @returns A promise resolving to the translated text
    * @throws Will throw an error if translation fails or no output is returned
    */
-  async translate(
-    text: string,
-    targetLanguage: string,
-    glossaryId?: string
-  ): Promise<string> {
+  async translate(text: string, targetLanguage: string): Promise<string> {
     try {
       const sanitizedText = text
         .replace(/\\/g, "\\\\")
@@ -165,7 +156,7 @@ export class GenkitTranslator implements ITranslator {
         - Maintain the original formatting
       </instructions>
       <text_to_translate>${sanitizedText}</text_to_translate>
-      ${glossaryId ? `<glossary>${glossaryId}</glossary>` : ""}
+      ${config.glossaryId ? `<glossary>${config.glossaryId}</glossary>` : ""}
       </translation_task>`;
 
       const response = await this.client.generate({
@@ -210,12 +201,8 @@ export class TranslationService {
    * @param glossaryId - Optional glossary ID to use during translation
    * @returns A promise resolving to the translated text
    */
-  async translateString(
-    text: string,
-    targetLanguage: string,
-    glossaryId?: string
-  ): Promise<string> {
-    return this.translator.translate(text, targetLanguage, glossaryId);
+  async translateString(text: string, targetLanguage: string): Promise<string> {
+    return this.translator.translate(text, targetLanguage);
   }
 
   /**

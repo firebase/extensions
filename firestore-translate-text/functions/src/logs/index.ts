@@ -101,8 +101,7 @@ export const translateStringError = (
 
 export const translateInputStringToAllLanguages = (
   string: string,
-  languages: string[],
-  glossaryId?: string
+  languages: string[]
 ) => {
   logger.log(messages.translateInputStringToAllLanguages(string, languages));
 };

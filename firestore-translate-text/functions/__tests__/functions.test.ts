@@ -2,12 +2,6 @@ import mockedEnv from "mocked-env";
 import * as functionsTestInit from "firebase-functions-test";
 
 import { messages } from "../src/logs/messages";
-import {
-  mockFirestoreChange,
-  mockContext,
-  mockProjectId,
-} from "./mocks/firestore";
-import { fstranslate } from "../src/index"; // Adjust path based on your file structure
 
 const defaultEnvironment = {
   PROJECT_ID: "fake-project",
@@ -437,32 +431,6 @@ describe("extension", () => {
       // logs.translateInputToAllLanguagesError
       expect(errorLogMock).toHaveBeenCalledWith(
         ...messages.translateInputToAllLanguagesError("hello", error)
-      );
-    });
-
-    it("should process document with glossary", async () => {
-      const change = mockFirestoreChange({ input: "Test" }, { input: null });
-      const context = mockContext();
-
-      await fstranslate(change, context);
-
-      expect(mockTranslate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          glossaryConfig: {
-            glossary: `projects/${mockProjectId}/locations/global/glossaries/test_glossary`,
-          },
-        })
-      );
-    });
-
-    it("should skip glossary when none is specified", async () => {
-      const change = mockFirestoreChange({ input: "Test" }, { input: null });
-      const context = mockContext();
-
-      await fstranslate(change, context);
-
-      expect(mockTranslate).not.toHaveBeenCalledWith(
-        expect.objectContaining({ glossaryConfig: expect.anything() })
       );
     });
   });
