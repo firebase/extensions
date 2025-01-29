@@ -103,12 +103,12 @@ describe("Materialized View Recreation", () => {
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
-      maxStaleness: "4:0:0",
+      maxStaleness: `"4:0:0" HOUR TO SECOND`,
       refreshIntervalMinutes: 5,
       clustering: null,
     }).record([event]);
 
-    // Verify view metadata
+    // // Verify view metadata
     const [metadata] = (await dataset
       .table(testConfig.viewIdRaw)
       .getMetadata()) as unknown as [TableMetadata];
@@ -125,7 +125,7 @@ describe("Materialized View Recreation", () => {
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
-      maxStaleness: "4:0:0",
+      maxStaleness: `"4:0:0" HOUR TO SECOND`,
       refreshIntervalMinutes: 5,
       clustering: null,
     };
@@ -178,7 +178,7 @@ describe("Materialized View Recreation", () => {
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
-      maxStaleness: "4:0:0",
+      maxStaleness: `"4:0:0" HOUR TO SECOND`,
       refreshIntervalMinutes: 5,
       clustering: null,
     };
@@ -211,7 +211,7 @@ describe("Materialized View Recreation", () => {
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
-      maxStaleness: "4:0:0",
+      maxStaleness: `"4:0:0" HOUR TO SECOND`,
       refreshIntervalMinutes: 5,
       clustering: null,
     }).record([event]);
