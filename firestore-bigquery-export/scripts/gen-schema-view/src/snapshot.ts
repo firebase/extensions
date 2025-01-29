@@ -130,7 +130,8 @@ export const buildLatestSchemaSnapshotViewQuery = (
     rawViewName.includes("_products") ||
     rawViewName.includes("_categories") ||
     rawViewName.includes("_favorites") ||
-    rawViewName.includes("_features")
+    rawViewName.includes("_features") ||
+    rawViewName.includes("_product_metadata")
   ) {
     parentSelector = "parent_id, ";
     parentSelectField =

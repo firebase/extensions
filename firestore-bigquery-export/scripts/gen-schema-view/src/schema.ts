@@ -272,7 +272,8 @@ export const buildSchemaViewQuery = (
     rawTableName.includes("_products") ||
     rawTableName.includes("_categories") ||
     rawTableName.includes("_favorites") ||
-    rawTableName.includes("_features")
+    rawTableName.includes("_features") ||
+    rawTableName.includes("_product_metadata")
   ) {
     parentColumn = "JSON_EXTRACT_SCALAR(path_params, '$.uuid') AS parent_id,";
     bigQueryFields.push({
