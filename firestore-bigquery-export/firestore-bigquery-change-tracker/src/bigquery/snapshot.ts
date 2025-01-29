@@ -242,30 +242,62 @@ export function buildMaterializedViewQuery({
   tableName,
   rawLatestViewName,
   schema,
-}: MaterializedViewOptions): { target: string; source: string; query: string } {
+  refreshIntervalMinutes,
+  maxStaleness,
+}: NonIncrementalMaterializedViewOptions): {
+  target: string;
+  source: string;
+  query: string;
+} {
+  // Build the options string
+  const options = [];
+
+  if (refreshIntervalMinutes !== undefined) {
+    options.push(`refresh_interval_minutes = ${refreshIntervalMinutes}`);
+  }
+
+  if (maxStaleness) {
+    options.push(`max_staleness = ${maxStaleness}`);
+  }
+
+  const optionsString =
+    options.length > 0
+      ? `OPTIONS (
+    ${options.join(",\n  ")}
+  )`
+      : "";
+
+  // Extract fields from schema
   const fields = extractFieldsFromSchema(schema);
 
-  // Build the select fields string
-  const selectFields = fields
+  // Build the aggregated fields for the CTE
+  const aggregatedFields = fields
     .map((fieldName) => {
       if (fieldName === "document_name") {
-        return "document_name";
+        return "  document_name";
       }
       if (fieldName === "timestamp") {
-        return "MAX(timestamp) AS timestamp";
+        return "  MAX(timestamp) AS timestamp";
       }
-      return `MAX_BY(${fieldName}, timestamp) AS ${fieldName}`;
+      return `  MAX_BY(${fieldName}, timestamp) AS ${fieldName}`;
     })
-    .join(",\n    ");
+    .join(",\n        ");
 
-  const target = `CREATE MATERIALIZED VIEW \`${projectId}.${datasetId}.${rawLatestViewName}\` AS (`;
+  const target = `CREATE MATERIALIZED VIEW \`${projectId}.${datasetId}.${rawLatestViewName}\` ${optionsString}`;
+
   const source = `
+    WITH latests AS (
       SELECT 
-        ${selectFields}
+      ${aggregatedFields}
       FROM \`${projectId}.${datasetId}.${tableName}\`
-      GROUP BY document_name`;
+      GROUP BY document_name
+    )
+    SELECT *
+    FROM latests
+  `;
 
-  const fullQuery = sqlFormatter.format(`${target} ${source} )`);
+  // Combine all parts with options before AS
+  const fullQuery = sqlFormatter.format(`${target} AS (${source})`);
 
   return { target, source, query: fullQuery };
 }
@@ -297,7 +329,7 @@ export function buildNonIncrementalMaterializedViewQuery({
   }
 
   if (maxStaleness) {
-    options.push(`max_staleness = INTERVAL ${maxStaleness}`);
+    options.push(`max_staleness = ${maxStaleness}`);
   }
 
   const optionsString =

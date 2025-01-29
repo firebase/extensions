@@ -103,7 +103,7 @@ describe("Materialized View Recreation", () => {
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
-      maxStaleness: `"4:0:0" HOUR TO SECOND`,
+      maxStaleness: `INTERVAL "4:0:0" HOUR TO SECOND`,
       refreshIntervalMinutes: 5,
       clustering: null,
     }).record([event]);
@@ -125,7 +125,7 @@ describe("Materialized View Recreation", () => {
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
-      maxStaleness: `"4:0:0" HOUR TO SECOND`,
+      maxStaleness: `INTERVAL "4:0:0" HOUR TO SECOND`,
       refreshIntervalMinutes: 5,
       clustering: null,
     };
@@ -178,7 +178,7 @@ describe("Materialized View Recreation", () => {
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
-      maxStaleness: `"4:0:0" HOUR TO SECOND`,
+      maxStaleness: `INTERVAL "4:0:0" HOUR TO SECOND`,
       refreshIntervalMinutes: 5,
       clustering: null,
     };
@@ -211,7 +211,7 @@ describe("Materialized View Recreation", () => {
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
-      maxStaleness: `"4:0:0" HOUR TO SECOND`,
+      maxStaleness: `INTERVAL "4:0:0" HOUR TO SECOND`,
       refreshIntervalMinutes: 5,
       clustering: null,
     }).record([event]);

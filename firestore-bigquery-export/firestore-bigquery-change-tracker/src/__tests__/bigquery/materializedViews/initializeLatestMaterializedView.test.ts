@@ -59,7 +59,7 @@ describe("initializeLatestMaterializedView", () => {
       tableId: testConfig.tableId,
       useMaterializedView: true,
       useIncrementalMaterializedView: false,
-      maxStaleness: `"4:0:0" HOUR TO SECOND`,
+      maxStaleness: `INTERVAL "4:0:0" HOUR TO SECOND`,
       refreshIntervalMinutes: 5,
       clustering: null,
     };
@@ -137,39 +137,39 @@ describe("initializeLatestMaterializedView", () => {
       useIncrementalMaterializedView: true,
     }).record([event]);
 
-    // const view = dataset.table(testConfig.viewIdRaw);
-    // const newConfig = {
-    //   datasetId: testConfig.datasetId,
-    //   tableId: testConfig.tableId,
-    //   useMaterializedView: true,
-    //   maxStaleness: `"4:0:0" HOUR TO SECOND`,
-    //   refreshIntervalMinutes: 5,
-    //   clustering: null,
-    // };
+    const view = dataset.table(testConfig.viewIdRaw);
+    const newConfig = {
+      datasetId: testConfig.datasetId,
+      tableId: testConfig.tableId,
+      useMaterializedView: true,
+      maxStaleness: `INTERVAL "4:0:0" HOUR TO SECOND`,
+      refreshIntervalMinutes: 5,
+      clustering: null,
+    };
 
-    // const [initialMetadata] = (await view.getMetadata()) as unknown as [
-    //   TableMetadata
-    // ];
-    // expect(
-    //   initialMetadata.materializedView?.allowNonIncrementalDefinition
-    // ).toBeUndefined();
+    const [initialMetadata] = (await view.getMetadata()) as unknown as [
+      TableMetadata
+    ];
+    expect(
+      initialMetadata.materializedView?.allowNonIncrementalDefinition
+    ).toBeUndefined();
 
-    // await initializeLatestMaterializedView({
-    //   bq,
-    //   changeTrackerConfig: newConfig,
-    //   view,
-    //   viewExists: true,
-    //   rawChangeLogTableName: testConfig.tableIdRaw,
-    //   rawLatestViewName: testConfig.viewIdRaw,
-    //   schema: RawChangelogViewSchema,
-    // });
+    await initializeLatestMaterializedView({
+      bq,
+      changeTrackerConfig: newConfig,
+      view,
+      viewExists: true,
+      rawChangeLogTableName: testConfig.tableIdRaw,
+      rawLatestViewName: testConfig.viewIdRaw,
+      schema: RawChangelogViewSchema,
+    });
 
-    // const [finalMetadata] = (await view.getMetadata()) as unknown as [
-    //   TableMetadata
-    // ];
-    // expect(
-    //   finalMetadata.materializedView?.allowNonIncrementalDefinition
-    // ).toBeDefined();
+    const [finalMetadata] = (await view.getMetadata()) as unknown as [
+      TableMetadata
+    ];
+    expect(
+      finalMetadata.materializedView?.allowNonIncrementalDefinition
+    ).toBeDefined();
   });
 
   test("handles view creation errors", async () => {

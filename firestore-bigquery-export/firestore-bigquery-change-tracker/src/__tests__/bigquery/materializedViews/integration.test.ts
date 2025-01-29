@@ -104,7 +104,7 @@ describe("integration", () => {
         datasetId,
         tableId,
         useMaterializedView: true,
-        maxStaleness: `"4:0:0" HOUR TO SECOND`,
+        maxStaleness: `INTERVAL "4:0:0" HOUR TO SECOND`,
         refreshIntervalMinutes: 5,
       }).record([event]);
 
@@ -165,7 +165,7 @@ describe("integration", () => {
         datasetId,
         tableId,
         useMaterializedView: true,
-        maxStaleness: `"4:0:0" HOUR TO SECOND`,
+        maxStaleness: `INTERVAL "4:0:0" HOUR TO SECOND`,
         refreshIntervalMinutes: 5,
       }).record([event]);
 
