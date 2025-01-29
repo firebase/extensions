@@ -72,11 +72,7 @@ export async function initializeLatestMaterializedView({
           schema,
         });
 
-    console.log("query", query);
-
     const desiredQuery = sqlFormatter.format(query);
-
-    console.log("desiredQuery", desiredQuery);
 
     if (viewExists) {
       const shouldRecreate = await shouldRecreateMaterializedView(

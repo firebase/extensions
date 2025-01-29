@@ -51,8 +51,6 @@ describe("initializeLatestMaterializedView", () => {
   });
 
   test("creates a new materialized view when view does not exist", async () => {
-    console.log("testConfig.tableIdRaw", testConfig.tableIdRaw);
-
     const view = dataset.table(testConfig.viewIdRaw);
     const config = {
       datasetId: testConfig.datasetId,
@@ -74,12 +72,12 @@ describe("initializeLatestMaterializedView", () => {
       schema: RawChangelogViewSchema,
     });
 
-    // const [metadata] = (await view.getMetadata()) as unknown as [TableMetadata];
-    // expect(metadata.materializedView).toBeDefined();
-    // expect(metadata.materializedView?.enableRefresh).toBe(true);
-    // expect(
-    //   metadata.materializedView?.allowNonIncrementalDefinition
-    // ).toBeDefined();
+    const [metadata] = (await view.getMetadata()) as unknown as [TableMetadata];
+    expect(metadata.materializedView).toBeDefined();
+    expect(metadata.materializedView?.enableRefresh).toBe(true);
+    expect(
+      metadata.materializedView?.allowNonIncrementalDefinition
+    ).toBeDefined();
   });
 
   test("does not recreate view if configuration matches", async () => {
