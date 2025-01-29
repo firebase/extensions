@@ -336,6 +336,50 @@ params:
     default: 100
     required: false
 
+  - param: VIEW_TYPE
+    label: View Type
+    description: >-
+      Select the type of view to create in BigQuery. A regular view is a virtual
+      table defined by a SQL query.  A materialized view persists the results of
+      a query for faster access, with either incremental or  non-incremental
+      updates. Please note that materialized views in this extension come with
+      several  important caveats and limitations - carefully review the
+      pre-install documentation before selecting  these options to ensure they
+      are appropriate for your use case.
+    type: select
+    options:
+      - label: View
+        value: view
+      - label: Materialized View (Incremental)
+        value: materialized_incremental
+      - label: Materialized View (Non-incremental)
+        value: materialized_non_incremental
+    default: view
+    required: true
+
+  - param: MAX_STALENESS
+    label: Maximum Staleness Duration
+    description: >-
+      For materialized views only: Specifies the maximum staleness acceptable
+      for the materialized view.  Should be specified as an INTERVAL value
+      following BigQuery SQL syntax.  This parameter will only take effect if
+      View Type is set to a materialized view option.
+    type: string
+    example: INTERVAL "8:0:0" HOUR TO SECOND
+    required: false
+
+  - param: REFRESH_INTERVAL_MINUTES
+    label: Refresh Interval (Minutes)
+    description: >-
+      For materialized views only: Specifies how often the materialized view
+      should be refreshed, in minutes.  This parameter will only take effect if
+      View Type is set to a materialized view option.
+    type: number
+    example: 60
+    validationRegex: ^[1-9][0-9]*$
+    validationErrorMessage: Must be a positive integer
+    required: false
+
   - param: BACKUP_COLLECTION
     label: Backup Collection Name
     description: >-

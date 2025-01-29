@@ -55,6 +55,11 @@ export default {
   useNewSnapshotQuerySyntax:
     process.env.USE_NEW_SNAPSHOT_QUERY_SYNTAX === "yes" ? true : false,
   excludeOldData: process.env.EXCLUDE_OLD_DATA === "yes" ? true : false,
+  viewType: process.env.VIEW_TYPE || "view",
+  maxStaleness: process.env.MAX_STALENESS,
+  refreshIntervalMinutes: process.env.REFRESH_INTERVAL_MINUTES
+    ? parseInt(process.env.REFRESH_INTERVAL_MINUTES)
+    : undefined,
   instanceId: process.env.EXT_INSTANCE_ID!,
   maxDispatchesPerSecond: parseInt(
     process.env.MAX_DISPATCHES_PER_SECOND || "10"
