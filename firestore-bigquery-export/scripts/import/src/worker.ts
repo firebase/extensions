@@ -19,10 +19,10 @@ async function processDocuments(
     tableId,
     datasetId,
     datasetLocation,
+    batchSize,
   } = config;
 
   if (!firebase.apps.length) {
-    // Initialize Firebase
     firebase.initializeApp({
       projectId: projectId,
       credential: firebase.credential.applicationDefault(),
@@ -30,46 +30,111 @@ async function processDocuments(
     });
   }
 
-  const query = firebase
+  // Create base query
+  let query = firebase
     .firestore()
     .collectionGroup(
       sourceCollectionPath.split("/")[
         sourceCollectionPath.split("/").length - 1
       ]
     )
-    .orderBy(firebase.firestore.FieldPath.documentId(), "asc") as QueryOptions;
+    .orderBy(firebase.firestore.FieldPath.documentId(), "asc");
 
-  query._queryOptions.startAt = serializableQuery.startAt;
-  query._queryOptions.endAt = serializableQuery.endAt;
-  query._queryOptions.limit = serializableQuery.limit;
-  query._queryOptions.offset = serializableQuery.offset;
+  // Apply the serialized query constraints
+  if (serializableQuery.startAt?.values?.[0]?.referenceValue) {
+    const startPath = serializableQuery.startAt.values[0].referenceValue;
+    const docRef = firebase
+      .firestore()
+      .doc(
+        startPath.replace(
+          "projects/" + projectId + "/databases/(default)/documents/",
+          ""
+        )
+      );
+    query = query.startAt(docRef);
+  }
+  if (serializableQuery.endAt?.values?.[0]?.referenceValue) {
+    const endPath = serializableQuery.endAt.values[0].referenceValue;
+    const docRef = firebase
+      .firestore()
+      .doc(
+        endPath.replace(
+          "projects/" + projectId + "/databases/(default)/documents/",
+          ""
+        )
+      );
+    // Use endBefore to prevent overlap
+    query = query.endBefore(docRef);
+  }
+  if (serializableQuery.offset) {
+    query = query.offset(serializableQuery.offset);
+  }
 
-  const { docs } = await query.get();
+  let lastDocumentSnapshot = null;
+  let totalProcessed = 0;
 
-  console.log(
-    `worker got ${docs.length} docs, starting at ${docs[0].id} and ending at ${
-      docs[docs.length - 1].id
-    }`
-  );
-  // TODO: fix this type. I think these parameters might need to be optional.
   // @ts-expect-error
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
     tableId,
     datasetId,
     datasetLocation,
     wildcardIds: true,
+    skipInit: true,
     useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
   });
-  // TODO: fix type
-  // @ts-expect-error
-  const rows: FirestoreDocumentChangeEvent = getRowsFromDocs(docs, config);
 
-  // TODO: fix type
-  // @ts-expect-error
-  await dataSink.record(rows);
-  // TODO: fix type
-  // @ts-expect-error
-  return rows.length;
+  while (true) {
+    let batchQuery = query;
+
+    if (lastDocumentSnapshot) {
+      batchQuery = batchQuery.startAfter(lastDocumentSnapshot);
+    }
+
+    batchQuery = batchQuery.limit(batchSize);
+    const { docs } = await batchQuery.get();
+
+    if (docs.length === 0) {
+      break;
+    }
+
+    lastDocumentSnapshot = docs[docs.length - 1];
+
+    // Log the batch range for debugging
+    console.log(
+      `Processing batch of ${docs.length} docs: ${docs[0].ref.path} -> ${
+        docs[docs.length - 1].ref.path
+      }`
+    );
+
+    // Get matching rows
+    const rows: FirestoreDocumentChangeEvent[] = getRowsFromDocs(docs, config);
+
+    // Only try to record if we have matching rows
+    if (rows.length > 0) {
+      await dataSink.record(rows);
+      totalProcessed += rows.length;
+      console.log(`Processed ${rows.length} matching documents in this batch`);
+    } else {
+      console.log(
+        "No matching documents in this batch, continuing to next batch"
+      );
+    }
+
+    // If we've reached the partition boundary, break
+    const lastDocId = lastDocumentSnapshot.id;
+    if (serializableQuery.endAt?.values?.[0]?.referenceValue) {
+      const endAtRef = serializableQuery.endAt.values[0].referenceValue;
+      const endAtId = endAtRef.split("/").pop();
+      if (lastDocId >= endAtId) {
+        break;
+      }
+    }
+  }
+
+  console.log(
+    `Worker completed. Processed ${totalProcessed} matching documents`
+  );
+  return totalProcessed;
 }
 
 worker({
