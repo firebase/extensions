@@ -29,7 +29,6 @@ export function getQuery(
         ]
       );
   } else {
-    console.log("\x1b[36m%s\x1b[0m", "HERE 1.75"); //cyan
     collectionOrCollectionGroup = firebase
       .firestore()
       .collection(sourceCollectionPath);
@@ -37,7 +36,6 @@ export function getQuery(
 
   let query = collectionOrCollectionGroup.limit(batchSize);
   if (cursor) {
-    console.log("\x1b[36m%s\x1b[0m", "we have cursor"); //cyan
     query = query.startAfter(cursor);
   }
   console.log("\x1b[36m%s\x1b[0m", `QUERY: ${JSON.stringify(query)}`); //cyan

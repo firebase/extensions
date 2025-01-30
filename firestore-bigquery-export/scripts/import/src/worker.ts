@@ -57,6 +57,8 @@ async function processDocuments(
     tableId,
     datasetId,
     datasetLocation,
+    wildcardIds: true,
+    useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
   });
   // TODO: fix type
   // @ts-expect-error
