@@ -15,6 +15,7 @@ export interface CliConfig {
   useEmulator: boolean;
   rawChangeLogName: string;
   cursorPositionFile: string;
+  failedBatchOutput?: string;
 }
 
 export interface CliConfigError {

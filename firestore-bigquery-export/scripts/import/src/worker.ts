@@ -1,13 +1,14 @@
 import {
-  ChangeType,
   FirestoreBigQueryEventHistoryTracker,
   FirestoreDocumentChangeEvent,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as firebase from "firebase-admin";
+import * as fs from "fs";
 import { worker } from "workerpool";
 import { getRowsFromDocs } from "./helper";
+import { CliConfig, SerializableQuery } from "./types";
 
-import { CliConfig, QueryOptions, SerializableQuery } from "./types";
+const appendFile = fs.promises.appendFile;
 
 async function processDocuments(
   serializableQuery: SerializableQuery,
@@ -20,6 +21,7 @@ async function processDocuments(
     datasetId,
     datasetLocation,
     batchSize,
+    failedBatchOutput,
   } = config;
 
   if (!firebase.apps.length) {
@@ -30,41 +32,18 @@ async function processDocuments(
     });
   }
 
-  // Create base query
   let query = firebase
     .firestore()
-    .collectionGroup(
-      sourceCollectionPath.split("/")[
-        sourceCollectionPath.split("/").length - 1
-      ]
-    )
+    .collectionGroup(sourceCollectionPath.split("/").pop()!)
     .orderBy(firebase.firestore.FieldPath.documentId(), "asc");
 
-  // Apply the serialized query constraints
   if (serializableQuery.startAt?.values?.[0]?.referenceValue) {
     const startPath = serializableQuery.startAt.values[0].referenceValue;
-    const docRef = firebase
-      .firestore()
-      .doc(
-        startPath.replace(
-          "projects/" + projectId + "/databases/(default)/documents/",
-          ""
-        )
-      );
-    query = query.startAt(docRef);
+    query = query.startAt(firebase.firestore().doc(startPath));
   }
   if (serializableQuery.endAt?.values?.[0]?.referenceValue) {
     const endPath = serializableQuery.endAt.values[0].referenceValue;
-    const docRef = firebase
-      .firestore()
-      .doc(
-        endPath.replace(
-          "projects/" + projectId + "/databases/(default)/documents/",
-          ""
-        )
-      );
-    // Use endBefore to prevent overlap
-    query = query.endBefore(docRef);
+    query = query.endBefore(firebase.firestore().doc(endPath));
   }
   if (serializableQuery.offset) {
     query = query.offset(serializableQuery.offset);
@@ -72,7 +51,6 @@ async function processDocuments(
 
   let lastDocumentSnapshot = null;
   let totalProcessed = 0;
-
   // @ts-expect-error
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
     tableId,
@@ -85,39 +63,45 @@ async function processDocuments(
 
   while (true) {
     let batchQuery = query;
-
-    if (lastDocumentSnapshot) {
+    if (lastDocumentSnapshot)
       batchQuery = batchQuery.startAfter(lastDocumentSnapshot);
-    }
-
     batchQuery = batchQuery.limit(batchSize);
-    const { docs } = await batchQuery.get();
 
-    if (docs.length === 0) {
-      break;
-    }
+    const { docs } = await batchQuery.get();
+    if (docs.length === 0) break;
 
     lastDocumentSnapshot = docs[docs.length - 1];
 
-    // Log the batch range for debugging
     console.log(
       `Processing batch of ${docs.length} docs: ${docs[0].ref.path} -> ${
         docs[docs.length - 1].ref.path
       }`
     );
 
-    // Get matching rows
     const rows: FirestoreDocumentChangeEvent[] = getRowsFromDocs(docs, config);
 
-    // Only try to record if we have matching rows
-    if (rows.length > 0) {
+    try {
       await dataSink.record(rows);
       totalProcessed += rows.length;
       console.log(`Processed ${rows.length} matching documents in this batch`);
-    } else {
-      console.log(
-        "No matching documents in this batch, continuing to next batch"
-      );
+    } catch (error) {
+      console.error(`Error processing batch in worker: ${error}`);
+
+      // Log failed batch to JSON file safely
+      const failedBatch = {
+        documents: docs.map((d) => d.ref.path),
+      };
+      if (failedBatchOutput) {
+        // Ensure JSON integrity in a multi-threaded environment
+        try {
+          await appendFile(
+            failedBatchOutput,
+            JSON.stringify(failedBatch, null, 2) + ",\n"
+          );
+        } catch (fsError) {
+          console.error(`Error writing to failed batch file: ${fsError}`);
+        }
+      }
     }
 
     // If we've reached the partition boundary, break
@@ -137,6 +121,4 @@ async function processDocuments(
   return totalProcessed;
 }
 
-worker({
-  processDocuments: processDocuments,
-});
+worker({ processDocuments });

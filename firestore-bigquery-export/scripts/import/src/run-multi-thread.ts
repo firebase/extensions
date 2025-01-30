@@ -1,7 +1,7 @@
 import * as firebase from "firebase-admin";
 import { cpus } from "os";
 import { pool } from "workerpool";
-
+import * as fs from "fs";
 import * as logs from "./logs";
 import { CliConfig } from "./types";
 
@@ -9,6 +9,19 @@ import { CliConfig } from "./types";
  * Import data from a collection group in parallel using workers.
  */
 export async function runMultiThread(config: CliConfig): Promise<number> {
+  if (config.failedBatchOutput) {
+    // delete JSON file if it exists
+    if (fs.existsSync(config.failedBatchOutput)) {
+      fs.unlink(config.failedBatchOutput, (err) => {
+        if (err) {
+          throw new Error(`Error deleting ${config.failedBatchOutput}: ${err}`);
+        } else {
+          console.log(`${config.failedBatchOutput} was deleted successfully.`);
+        }
+      });
+    }
+  }
+
   const maxWorkers = Math.ceil(cpus().length / 2);
   const workerPool = pool(__dirname + "/worker.js", {
     maxWorkers,
@@ -17,6 +30,7 @@ export async function runMultiThread(config: CliConfig): Promise<number> {
         PROJECT_ID: config.projectId,
         GOOGLE_CLOUD_PROJECT: config.projectId,
         GCLOUD_PROJECT: config.projectId,
+        FAILED_BATCH_OUTPUT: config.failedBatchOutput || "",
         ...process.env,
       },
     },
@@ -35,12 +49,16 @@ export async function runMultiThread(config: CliConfig): Promise<number> {
   let total = 0;
   let partitions = 0;
 
+  if (config.failedBatchOutput) {
+    // Initialize failed batch JSON file
+    fs.writeFileSync(config.failedBatchOutput, "[\n", "utf8");
+  }
+
   while (true) {
     const inProgressTasks =
       workerPool.stats().activeTasks + workerPool.stats().pendingTasks;
     if (inProgressTasks >= maxWorkers) {
-      // A timeout is needed here to stop infinite rechecking of workpool.stats().
-      await new Promise((resolve) => setTimeout(resolve, 150, []));
+      await new Promise((resolve) => setTimeout(resolve, 150));
       continue;
     }
 
@@ -73,18 +91,23 @@ export async function runMultiThread(config: CliConfig): Promise<number> {
           JSON.stringify(serializedQuery)
         );
         console.error(error);
-        process.exit(1);
       });
   }
 
-  // Wait for all tasks to be complete.
   while (workerPool.stats().activeTasks + workerPool.stats().pendingTasks > 0) {
-    // Return a default promise
-    // A timeout is needed here to stop infinite rechecking of workpool.stats().
-    await new Promise((resolve) => setTimeout(resolve, 150, []));
+    await new Promise((resolve) => setTimeout(resolve, 150));
   }
 
   await workerPool.terminate();
+
+  if (config.failedBatchOutput) {
+    // Read the file and remove the trailing comma
+    const failedBatches = fs.readFileSync(config.failedBatchOutput, "utf8");
+    const fixedJson = failedBatches.replace(/,\s*$/, ""); // Remove last comma
+    fs.writeFileSync(config.failedBatchOutput, fixedJson + "\n]", "utf8");
+
+    console.log(`Failed batches written to ${config.failedBatchOutput}`);
+  }
 
   logs.finishedImportingParallel(config, total, partitions);
 
