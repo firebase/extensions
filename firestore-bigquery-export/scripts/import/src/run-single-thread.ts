@@ -53,7 +53,7 @@ export async function runSingleThread(
   let totalRowsImported = 0;
 
   if (config.failedBatchOutput) {
-    // delete JSON file if it exists
+    // delete failed output  file if it exists
     if (fs.existsSync(config.failedBatchOutput)) {
       fs.unlink(config.failedBatchOutput, (err) => {
         if (err) {
@@ -63,8 +63,8 @@ export async function runSingleThread(
         }
       });
     }
-    // Initialize failed batch JSON file
-    fs.writeFileSync(config.failedBatchOutput, "[\n", "utf8");
+    // Initialize failed batch text file
+    fs.writeFileSync(config.failedBatchOutput, "", "utf8"); // Clear file content
   }
 
   while (true) {
@@ -88,34 +88,13 @@ export async function runSingleThread(
       totalRowsImported += rows.length;
     } catch (error) {
       console.error(`Error processing batch: ${error}`);
-
-      // Log failed batch to JSON file
-      const failedBatch = {
-        documents: docs.map((d) => d.ref.path),
-      };
+      console.error(`Failed batch: ${docs.map((d) => d.ref.path).join("\n")}`);
       if (config.failedBatchOutput) {
         await appendFile(
           config.failedBatchOutput,
-          JSON.stringify(failedBatch, null, 2) + ",\n"
+          docs.map((d) => d.ref.path).join("\n") + "\n"
         );
       }
-    }
-  }
-
-  if (config.failedBatchOutput) {
-    // Read the file and remove the trailing comma
-    const failedBatches = fs.readFileSync(config.failedBatchOutput, "utf8");
-    const fixedJson = failedBatches.replace(/,\s*$/, ""); // Remove last comma
-    fs.writeFileSync(config.failedBatchOutput, fixedJson + "\n]", "utf8");
-
-    const finalJson = JSON.parse(
-      fs.readFileSync(config.failedBatchOutput, "utf8")
-    );
-
-    if (finalJson.length === 0) {
-      fs.unlinkSync(config.failedBatchOutput);
-    } else {
-      console.log(`Failed batches written to ${config.failedBatchOutput}`);
     }
   }
 

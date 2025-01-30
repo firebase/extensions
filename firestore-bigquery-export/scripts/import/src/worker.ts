@@ -86,17 +86,14 @@ async function processDocuments(
       console.log(`Processed ${rows.length} matching documents in this batch`);
     } catch (error) {
       console.error(`Error processing batch in worker: ${error}`);
+      console.error(`Failed batch: ${docs.map((d) => d.ref.path).join("\n")}`);
 
-      // Log failed batch to JSON file safely
-      const failedBatch = {
-        documents: docs.map((d) => d.ref.path),
-      };
       if (failedBatchOutput) {
         // Ensure JSON integrity in a multi-threaded environment
         try {
           await appendFile(
             failedBatchOutput,
-            JSON.stringify(failedBatch, null, 2) + ",\n"
+            docs.map((d) => d.ref.path).join("\n") + "\n"
           );
         } catch (fsError) {
           console.error(`Error writing to failed batch file: ${fsError}`);
