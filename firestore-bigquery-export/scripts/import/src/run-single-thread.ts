@@ -108,7 +108,15 @@ export async function runSingleThread(
     const fixedJson = failedBatches.replace(/,\s*$/, ""); // Remove last comma
     fs.writeFileSync(config.failedBatchOutput, fixedJson + "\n]", "utf8");
 
-    console.log(`Failed batches written to ${config.failedBatchOutput}`);
+    const finalJson = JSON.parse(
+      fs.readFileSync(config.failedBatchOutput, "utf8")
+    );
+
+    if (finalJson.length === 0) {
+      fs.unlinkSync(config.failedBatchOutput);
+    } else {
+      console.log(`Failed batches written to ${config.failedBatchOutput}`);
+    }
   }
 
   return totalRowsImported;

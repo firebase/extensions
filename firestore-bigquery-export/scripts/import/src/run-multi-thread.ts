@@ -105,8 +105,15 @@ export async function runMultiThread(config: CliConfig): Promise<number> {
     const failedBatches = fs.readFileSync(config.failedBatchOutput, "utf8");
     const fixedJson = failedBatches.replace(/,\s*$/, ""); // Remove last comma
     fs.writeFileSync(config.failedBatchOutput, fixedJson + "\n]", "utf8");
+    const finalJson = JSON.parse(
+      fs.readFileSync(config.failedBatchOutput, "utf8")
+    );
 
-    console.log(`Failed batches written to ${config.failedBatchOutput}`);
+    if (finalJson.length === 0) {
+      fs.unlinkSync(config.failedBatchOutput);
+    } else {
+      console.log(`Failed batches written to ${config.failedBatchOutput}`);
+    }
   }
 
   logs.finishedImportingParallel(config, total, partitions);
