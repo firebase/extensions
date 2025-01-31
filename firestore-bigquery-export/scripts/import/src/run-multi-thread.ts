@@ -1,28 +1,18 @@
 import * as firebase from "firebase-admin";
 import { cpus } from "os";
 import { pool } from "workerpool";
-import * as fs from "fs";
 import * as logs from "./logs";
+import { initializeFailedBatchOutput } from "./helper";
 import { CliConfig } from "./types";
 
 /**
  * Import data from a collection group in parallel using workers.
  */
 export async function runMultiThread(config: CliConfig): Promise<number> {
-  if (config.failedBatchOutput) {
-    // delete JSON file if it exists
-    if (fs.existsSync(config.failedBatchOutput)) {
-      fs.unlink(config.failedBatchOutput, (err) => {
-        if (err) {
-          throw new Error(`Error deleting ${config.failedBatchOutput}: ${err}`);
-        } else {
-          console.log(`${config.failedBatchOutput} was deleted successfully.`);
-        }
-      });
-    }
-  }
+  await initializeFailedBatchOutput(config.failedBatchOutput);
 
   const maxWorkers = Math.ceil(cpus().length / 2);
+
   const workerPool = pool(__dirname + "/worker.js", {
     maxWorkers,
     forkOpts: {
@@ -48,11 +38,6 @@ export async function runMultiThread(config: CliConfig): Promise<number> {
 
   let total = 0;
   let partitions = 0;
-
-  if (config.failedBatchOutput) {
-    // Initialize failed batch JSON file
-    fs.writeFileSync(config.failedBatchOutput, "[\n", "utf8");
-  }
 
   while (true) {
     const inProgressTasks =

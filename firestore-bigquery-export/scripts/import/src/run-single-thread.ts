@@ -6,11 +6,15 @@ import * as firebase from "firebase-admin";
 import * as fs from "fs";
 import * as util from "util";
 
-import { getRowsFromDocs } from "./helper";
+import {
+  getRowsFromDocs,
+  initializeFailedBatchOutput,
+  recordFailedBatch,
+} from "./helper";
+
 import { CliConfig } from "./types";
 
 const write = util.promisify(fs.writeFile);
-const appendFile = util.promisify(fs.appendFile);
 
 export function getQuery(
   config: CliConfig,
@@ -52,20 +56,7 @@ export async function runSingleThread(
 ) {
   let totalRowsImported = 0;
 
-  if (config.failedBatchOutput) {
-    // delete failed output  file if it exists
-    if (fs.existsSync(config.failedBatchOutput)) {
-      fs.unlink(config.failedBatchOutput, (err) => {
-        if (err) {
-          throw new Error(`Error deleting ${config.failedBatchOutput}: ${err}`);
-        } else {
-          console.log(`${config.failedBatchOutput} was deleted successfully.`);
-        }
-      });
-    }
-    // Initialize failed batch text file
-    fs.writeFileSync(config.failedBatchOutput, "", "utf8"); // Clear file content
-  }
+  await initializeFailedBatchOutput(config.failedBatchOutput);
 
   while (true) {
     if (cursor) {
@@ -89,12 +80,7 @@ export async function runSingleThread(
     } catch (error) {
       console.error(`Error processing batch: ${error}`);
       console.error(`Failed batch: ${docs.map((d) => d.ref.path).join("\n")}`);
-      if (config.failedBatchOutput) {
-        await appendFile(
-          config.failedBatchOutput,
-          docs.map((d) => d.ref.path).join("\n") + "\n"
-        );
-      }
+      await recordFailedBatch(config.failedBatchOutput, docs);
     }
   }
 
