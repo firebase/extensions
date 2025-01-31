@@ -380,7 +380,7 @@ params:
       For materialized views only: Specifies how often the materialized view
       should be refreshed, in minutes.  This parameter will only take effect if
       View Type is set to a materialized view option.
-    type: number
+    type: string
     example: 60
     validationRegex: ^[1-9][0-9]*$
     validationErrorMessage: Must be a positive integer
