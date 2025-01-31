@@ -19,12 +19,21 @@ import * as fs from "fs";
 import * as sqlFormatter from "sql-formatter";
 import * as util from "util";
 import * as bigquery from "@google-cloud/bigquery";
-
-import { buildLatestSnapshotViewQuery } from "../../bigquery/snapshot";
-import { FirestoreBigQueryEventHistoryTracker } from "../../bigquery";
+import * as path from "path";
+import {
+  buildNonIncrementalMaterializedViewQuery,
+  buildLatestSnapshotViewQuery,
+  buildMaterializedViewQuery,
+} from "../../bigquery/snapshot";
+import {
+  FirestoreBigQueryEventHistoryTracker,
+  RawChangelogViewSchema,
+} from "../../bigquery";
 
 const fixturesDir = __dirname + "/../fixtures";
 const sqlDir = fixturesDir + "/sql";
+
+const msqlDir = path.join(__dirname, "/msql");
 
 const testProjectId = "test";
 const testDataset = "test_dataset";
@@ -63,53 +72,55 @@ describe("FirestoreBigQueryEventHistoryTracker functionality", () => {
   });
 });
 
-describe("latest snapshot view sql generation", () => {
-  it("should generate the expected sql", async () => {
-    const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/latestConsistentSnapshot.sql`
-    );
-    const query = buildLatestSnapshotViewQuery({
-      datasetId: testDataset,
-      tableName: testTable,
-      timestampColumnName: "timestamp",
-      groupByColumns: ["timestamp", "event_id", "operation", "data"],
-      useLegacyQuery: false,
-    });
-    expect(query).to.equal(expectedQuery);
-  });
-  it("should generate correct sql with no groupBy columns", async () => {
-    const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/latestConsistentSnapshotNoGroupBy.sql`
-    );
-    const query = buildLatestSnapshotViewQuery({
-      datasetId: testDataset,
-      tableName: testTable,
-      timestampColumnName: "timestamp",
-      groupByColumns: [],
-      useLegacyQuery: false,
-    });
-    expect(query).to.equal(expectedQuery);
-  });
-  it("should throw an error for empty group by columns", async () => {
-    expect(
-      buildLatestSnapshotViewQuery.bind(null, {
+describe("materialized view sql generation", () => {
+  const testSchema = {
+    fields: [
+      { name: "document_name" },
+      { name: "document_id" },
+      { name: "timestamp" },
+      { name: "event_id" },
+      { name: "operation" },
+      { name: "data" },
+      { name: "old_data" },
+      { name: "extra_field" },
+    ],
+  };
+
+  describe("incremental materialized view", () => {
+    it("should generate correct SQL", async () => {
+      const expectedQuery = await readFormattedSQL(
+        path.join(msqlDir, "incremental/standard.sql")
+      );
+
+      const { query } = buildMaterializedViewQuery({
+        projectId: testProjectId,
         datasetId: testDataset,
         tableName: testTable,
-        timestampColumnName: "timestamp",
-        groupByColumns: [""],
-        useLegacyQuery: false,
-      })
-    ).to.throw();
+        rawLatestViewName: "materialized_view_test",
+        schema: testSchema,
+      });
+
+      expect(query).to.equal(sqlFormatter.format(expectedQuery));
+    });
   });
-  it("should throw an error for empty timestamp field", async () => {
-    expect(
-      buildLatestSnapshotViewQuery.bind(null, {
+
+  describe("non-incremental materialized view", () => {
+    it("should generate correct SQL", async () => {
+      const expectedQuery = await readFormattedSQL(
+        path.join(msqlDir, "nonIncremental/standard.sql")
+      );
+
+      const { query } = buildNonIncrementalMaterializedViewQuery({
+        projectId: testProjectId,
         datasetId: testDataset,
         tableName: testTable,
-        timestampColumnName: "",
-        groupByColumns: [],
-        useLegacyQuery: false,
-      })
-    ).to.throw();
+        rawLatestViewName: "materialized_view_test",
+        schema: testSchema,
+        refreshIntervalMinutes: 60,
+        maxStaleness: `INTERVAL "4:0:0" HOUR TO SECOND`,
+      });
+
+      expect(query).to.equal(sqlFormatter.format(expectedQuery));
+    });
   });
 });

@@ -18,6 +18,10 @@ export const changeTracker = ({
   clustering = null,
   bqProjectId = "dev-extensions-testing",
   useNewSnapshotQuerySyntax = false,
+  useMaterializedView = false,
+  useIncrementalMaterializedView = false,
+  maxStaleness = undefined,
+  refreshIntervalMinutes = undefined,
 }): FirestoreBigQueryEventHistoryTracker => {
   return new FirestoreBigQueryEventHistoryTracker({
     datasetId,
@@ -32,6 +36,10 @@ export const changeTracker = ({
     clustering,
     bqProjectId,
     useNewSnapshotQuerySyntax,
+    useMaterializedView,
+    useIncrementalMaterializedView,
+    maxStaleness,
+    refreshIntervalMinutes,
   });
 };
 
