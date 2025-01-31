@@ -258,7 +258,9 @@ essential for the script to insert data into an already partitioned table.)
 
 * BigQuery SQL Time Partitioning table schema field(column) type: Parameter for BigQuery SQL schema field type for the selected Time Partitioning Firestore Document field option. Cannot be changed if Table is already partitioned.
 
-* BigQuery SQL table clustering: This parameter will allow you to set up Clustering for the BigQuery Table created by the extension. (for example: `data,document_id,timestamp`- no whitespaces). You can select up to 4 comma separated fields. The order of the specified columns determines the sort order of the data. Available schema extensions table fields for clustering: `document_id, document_name, timestamp, event_id, operation, data`.
+* BigQuery SQL table clustering: This parameter allows you to set up clustering for the BigQuery table created by the extension. Specify up to 4 comma-separated fields (for example:  `data,document_id,timestamp` - no whitespaces). The order of the specified  columns determines the sort order of the data. 
+Note: Cluster columns must be top-level, non-repeated columns of one of the  following types: BIGNUMERIC, BOOL, DATE, DATETIME, GEOGRAPHY, INT64, NUMERIC,  RANGE, STRING, TIMESTAMP. Clustering will not be added if a field with an invalid type is present in this parameter.
+Available schema extensions table fields for clustering include: `document_id, document_name, timestamp, event_id,  operation, data`.
 
 * Maximum number of synced documents per second: This parameter will set the maximum number of syncronised documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota. Ensure that you have a set a low enough number to compensate. Defaults to 10.
 

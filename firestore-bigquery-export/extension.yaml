@@ -310,12 +310,18 @@ params:
   - param: CLUSTERING
     label: BigQuery SQL table clustering
     description: >-
-      This parameter will allow you to set up Clustering for the BigQuery Table
-      created by the extension. (for example: `data,document_id,timestamp`- no
-      whitespaces). You can select up to 4 comma separated fields. The order of
-      the specified columns determines the sort order of the data. Available
-      schema extensions table fields for clustering: `document_id,
-      document_name, timestamp, event_id, operation, data`.
+      This parameter allows you to set up clustering for the BigQuery table
+      created by the extension. Specify up to 4 comma-separated fields (for
+      example:  `data,document_id,timestamp` - no whitespaces). The order of the
+      specified  columns determines the sort order of the data. 
+
+      Note: Cluster columns must be top-level, non-repeated columns of one of
+      the  following types: BIGNUMERIC, BOOL, DATE, DATETIME, GEOGRAPHY, INT64,
+      NUMERIC,  RANGE, STRING, TIMESTAMP. Clustering will not be added if a
+      field with an invalid type is present in this parameter.
+
+      Available schema extensions table fields for clustering include:
+      `document_id, document_name, timestamp, event_id,  operation, data`.
     type: string
     validationRegex: ^[^,\s]+(?:,[^,\s]+){0,3}$
     validationErrorMessage:
