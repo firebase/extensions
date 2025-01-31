@@ -222,6 +222,25 @@ For PowerShell script:
 
 **Note:** If extension installation is failing to create a dataset on the target project initially due to missing permissions, don't worry. The extension will automatically retry once you've granted the necessary permissions using these scripts.
 
+#### Mitigating Data Loss During Extension Updates
+
+When updating or reconfiguring this extension, there may be a brief period where data streaming from Firestore to BigQuery is interrupted. While this limitation exists within the Extensions platform, we provide two strategies to mitigate potential data loss.
+
+##### Strategy 1: Post-Update Import
+After reconfiguring the extension, run the import script on your collection to ensure all data is captured. Refer to the "Import Existing Documents" section above for detailed steps.
+
+##### Strategy 2: Parallel Instance Method
+1. Install a second instance of the extension that streams to a new BigQuery table
+2. Reconfigure the original extension
+3. Once the original extension is properly configured and streaming events
+4. Uninstall the second instance
+5. Run a BigQuery merge job to combine the data from both tables
+
+##### Considerations
+- Strategy 1 is simpler but may result in duplicate records that need to be deduplicated
+- Strategy 2 requires more setup but provides better data continuity
+- Choose the strategy that best aligns with your data consistency requirements and operational constraints
+
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 

@@ -8,6 +8,8 @@ docs - improve cross-project IAM documentation
 
 fix - emit correct events to extension, backwardly compatible.
 
+docs - add documentation on workarounds to mitigate data loss during extension updates
+
 ## Version 0.1.56
 
 feat - improve sync strategy by immediately writing to BQ, and using cloud tasks only as a last resort
