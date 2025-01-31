@@ -253,6 +253,13 @@ export function hourAndDatePartitioningWarning() {
     `Cannot partition table with hour partitioning and Date. For DATE columns, the partitions can have daily, monthly, or yearly granularity. Skipping partitioning`
   );
 }
+
+export function invalidClusteringTypes(fields: string) {
+  logger.warn(
+    `Unable to add clustering, field(s) ${fields} have invalid types.`
+  );
+}
+
 export function invalidClustering(fields: string) {
   logger.warn(
     `Unable to add clustering, field(s) ${fields} do not exist on the expected table`

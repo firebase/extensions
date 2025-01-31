@@ -1,3 +1,15 @@
+## Version 0.1.57
+
+feat - add basic materialized views support, incremental and non-incremental.
+
+fix - do not add/update clustering if an invalid clustering field is present.
+
+docs - improve cross-project IAM documentation
+
+fix - emit correct events to extension, backwardly compatible.
+
+docs - add documentation on workarounds to mitigate data loss during extension updates
+
 ## Version 0.1.56
 
 feat - improve sync strategy by immediately writing to BQ, and using cloud tasks only as a last resort

@@ -2,11 +2,10 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "lib",
-    "types": ["node"],
+    "types": ["node", "jest"],
     "target": "ES2020",
     "skipLibCheck": true,
     "declaration": true
   },
-  "include": ["src"],
-  "exclude": ["src/**/*.test.ts"]
+  "include": ["src"]
 }
