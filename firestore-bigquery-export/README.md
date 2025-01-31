@@ -330,3 +330,5 @@ This extension will operate with the following project IAM roles:
 * bigquery.dataEditor (Reason: Allows the extension to configure and export data into BigQuery.)
 
 * datastore.user (Reason: Allows the extension to write updates to the database.)
+
+* bigquery.user (Reason: Allows the extension to create and manage BigQuery materialized views.)
