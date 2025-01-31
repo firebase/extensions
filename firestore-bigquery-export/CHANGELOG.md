@@ -1,6 +1,6 @@
 ## Version 0.1.57
 
-feat - add basic materialized views support
+feat - add basic materialized views support, incremental and non-incremental.
 
 fix - do not add/update clustering if an invalid clustering field is present.
 
