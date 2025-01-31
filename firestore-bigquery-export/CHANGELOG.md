@@ -1,3 +1,7 @@
+## Version 0.1.57
+
+feat - add basic materialized views support
+
 ## Version 0.1.56
 
 feat - improve sync strategy by immediately writing to BQ, and using cloud tasks only as a last resort
