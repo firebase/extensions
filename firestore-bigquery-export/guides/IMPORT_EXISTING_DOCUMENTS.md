@@ -139,3 +139,35 @@ This helps you quickly identify problematic documents and take action accordingl
 To retry the failed imports, you can use the output file to manually inspect or reprocess the documents. For example, you could create a script that reads the failed paths and reattempts the import.
 
 > **Note:** If the specified file already exists, it will be **cleared** before writing new failed batch paths.
+
+### Using a Transform Function
+
+You can optionally provide a transform function URL (`--transform-function-url` or `-f`) that will transform document data before it's written to BigQuery. The transform function should should recieve document data and return transformed data. The payload will contain the following:
+
+```
+{
+  data: [{
+    insertId: int;
+    json: {
+      timestamp: int;
+      event_id: int;
+      document_name: string;
+      document_id: int;
+      operation: ChangeType;
+      data: string;
+    },
+  }]
+}
+```
+
+The response should be identical in structure.
+
+Example usage of the script with transform function option:
+
+```shell
+npx @firebaseextensions/fs-bq-import-collection --non-interactive \
+ -P <PROJECT_ID> \
+ -s <COLLECTION_PATH> \
+ -d <DATASET_ID> \
+ -f https://us-west1-my-project.cloudfunctions.net/transformFunction
+```
