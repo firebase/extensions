@@ -48,6 +48,10 @@ roles:
   - role: datastore.user
     reason: Allows the extension to write updates to the database.
 
+  - role: bigquery.user
+    reason:
+      Allows the extension to create and manage BigQuery materialized views.
+
 resources:
   - name: fsexportbigquery
     type: firebaseextensions.v1beta.function
