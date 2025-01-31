@@ -1,16 +1,21 @@
 import {
-  ChangeType,
+  FirestoreBigQueryEventHistoryTracker,
   FirestoreDocumentChangeEvent,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
-import { FirestoreBigQueryEventHistoryTracker } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as firebase from "firebase-admin";
 import * as fs from "fs";
 import * as util from "util";
 
-import { getRowsFromDocs } from "./helper";
+import {
+  getRowsFromDocs,
+  initializeFailedBatchOutput,
+  recordFailedBatch,
+} from "./helper";
+
 import { CliConfig } from "./types";
 
 const write = util.promisify(fs.writeFile);
+
 export function getQuery(
   config: CliConfig,
   cursor?: firebase.firestore.DocumentSnapshot<firebase.firestore.DocumentData>
@@ -29,7 +34,6 @@ export function getQuery(
         ]
       );
   } else {
-    console.log("\x1b[36m%s\x1b[0m", "HERE 1.75"); //cyan
     collectionOrCollectionGroup = firebase
       .firestore()
       .collection(sourceCollectionPath);
@@ -37,7 +41,6 @@ export function getQuery(
 
   let query = collectionOrCollectionGroup.limit(batchSize);
   if (cursor) {
-    console.log("\x1b[36m%s\x1b[0m", "we have cursor"); //cyan
     query = query.startAfter(cursor);
   }
   console.log("\x1b[36m%s\x1b[0m", `QUERY: ${JSON.stringify(query)}`); //cyan
@@ -53,15 +56,15 @@ export async function runSingleThread(
 ) {
   let totalRowsImported = 0;
 
+  await initializeFailedBatchOutput(config.failedBatchOutput);
+
   while (true) {
     if (cursor) {
       await write(config.cursorPositionFile, cursor.ref.path);
     }
 
     let query = getQuery(config, cursor);
-
     const snapshot = await query.get();
-
     const docs = snapshot.docs;
 
     if (docs.length === 0) {
@@ -71,8 +74,15 @@ export async function runSingleThread(
 
     const rows: FirestoreDocumentChangeEvent[] = getRowsFromDocs(docs, config);
 
-    await dataSink.record(rows);
-    totalRowsImported += rows.length;
+    try {
+      await dataSink.record(rows);
+      totalRowsImported += rows.length;
+    } catch (error) {
+      console.error(`Error processing batch: ${error}`);
+      console.error(`Failed batch: ${docs.map((d) => d.ref.path).join("\n")}`);
+      await recordFailedBatch(config.failedBatchOutput, docs);
+    }
   }
+
   return totalRowsImported;
 }

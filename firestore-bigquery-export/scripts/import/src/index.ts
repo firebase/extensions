@@ -55,9 +55,9 @@ const run = async (): Promise<number> => {
     process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
   }
   // Set project ID, so it can be used in BigQuery initialization
-  process.env.PROJECT_ID = bigQueryProjectId;
-  process.env.GOOGLE_CLOUD_PROJECT = bigQueryProjectId;
-  process.env.GCLOUD_PROJECT = bigQueryProjectId;
+  process.env.PROJECT_ID = projectId;
+  process.env.GOOGLE_CLOUD_PROJECT = projectId;
+  process.env.GCLOUD_PROJECT = projectId;
 
   // Initialize Firebase
   // This uses applicationDefault to authenticate
@@ -80,6 +80,7 @@ const run = async (): Promise<number> => {
     datasetLocation,
     wildcardIds: queryCollectionGroup,
     useNewSnapshotQuerySyntax,
+    bqProjectId: bigQueryProjectId,
   });
 
   await initializeDataSink(dataSink, config);
