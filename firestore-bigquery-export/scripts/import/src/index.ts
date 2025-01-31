@@ -81,6 +81,7 @@ const run = async (): Promise<number> => {
     wildcardIds: queryCollectionGroup,
     useNewSnapshotQuerySyntax,
     bqProjectId: bigQueryProjectId,
+    transformFunction: config.transformFunctionUrl,
   });
 
   await initializeDataSink(dataSink, config);

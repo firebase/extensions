@@ -171,6 +171,21 @@ const questions = [
     default: false,
   },
   {
+    message: "What's the URL of your transform function? (Optional)",
+    name: "transformFunctionUrl",
+    type: "input",
+    default: "",
+    validate: (value) => {
+      if (!value) return true;
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        return "Please enter a valid URL or leave empty";
+      }
+    },
+  },
+  {
     message: "Would you like to use a local firestore emulator?",
     name: "useEmulator",
     type: "confirm",
@@ -213,6 +228,15 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     if (program.datasetLocation === undefined) {
       errors.push("DatasetLocation is not specified.");
     }
+
+    if (program.transformFunctionUrl) {
+      try {
+        new URL(program.transformFunctionUrl);
+      } catch {
+        errors.push("Transform function URL is invalid");
+      }
+    }
+
     if (!validateBatchSize(program.batchSize)) {
       errors.push("Invalid batch size.");
     }

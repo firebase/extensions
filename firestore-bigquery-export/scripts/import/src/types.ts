@@ -16,6 +16,7 @@ export interface CliConfig {
   rawChangeLogName: string;
   cursorPositionFile: string;
   failedBatchOutput?: string;
+  transformFunctionUrl?: string;
 }
 
 export interface CliConfigError {

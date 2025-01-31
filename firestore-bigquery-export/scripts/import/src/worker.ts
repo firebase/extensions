@@ -73,6 +73,7 @@ async function processDocuments(
     wildcardIds: true,
     skipInit: true,
     useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
+    transformFunction: config.transformFunctionUrl,
   });
 
   // Process documents in batches until we've covered the entire partition
