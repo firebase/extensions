@@ -23,6 +23,8 @@ Object {
   "location": "us-central1",
   "maxDispatchesPerSecond": 10,
   "maxEnqueueAttempts": 3,
+  "maxStaleness": undefined,
+  "refreshIntervalMinutes": undefined,
   "tableId": "my_table",
   "timePartitioning": null,
   "timePartitioningField": undefined,
@@ -30,6 +32,7 @@ Object {
   "timePartitioningFirestoreField": undefined,
   "transformFunction": "",
   "useNewSnapshotQuerySyntax": false,
+  "viewType": "view",
   "wildcardIds": false,
 }
 `;

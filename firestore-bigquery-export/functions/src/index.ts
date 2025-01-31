@@ -49,6 +49,14 @@ const eventTrackerConfig = {
   useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
   skipInit: true,
   kmsKeyName: config.kmsKeyName,
+  // View configurations
+  useMaterializedView:
+    config.viewType === "materialized_incremental" ||
+    config.viewType === "materialized_non_incremental",
+  useIncrementalMaterializedView:
+    config.viewType === "materialized_incremental",
+  maxStaleness: config.maxStaleness,
+  refreshIntervalMinutes: config.refreshIntervalMinutes,
 };
 
 // Initialize the Firestore Event History Tracker with the given configuration.
