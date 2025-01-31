@@ -4,6 +4,7 @@ import * as logs from "../logs";
 interface WaitForInitializationParams {
   dataset: Dataset;
   changelogName: string;
+  materializedViewName?: string;
 }
 
 /**
@@ -14,7 +15,7 @@ interface WaitForInitializationParams {
  * @throws {Error} Throws an error if the dataset or table cannot be verified to exist after multiple attempts or if an unexpected error occurs.
  */
 export async function waitForInitialization(
-  { dataset, changelogName }: WaitForInitializationParams,
+  { dataset, changelogName, materializedViewName }: WaitForInitializationParams,
   maxAttempts = 12
 ): Promise<Table> {
   return new Promise((resolve, reject) => {
@@ -25,7 +26,15 @@ export async function waitForInitialization(
         const table = dataset.table(changelogName);
         const [tableExists] = await table.exists();
 
-        if (datasetExists && tableExists) {
+        let waitingForMaterializedView = false;
+
+        if (materializedViewName) {
+          const materializedView = dataset.table(materializedViewName);
+          const [materializedViewExists] = await materializedView.exists();
+          waitingForMaterializedView = !materializedViewExists;
+        }
+
+        if (datasetExists && tableExists && !waitingForMaterializedView) {
           clearInterval(handle);
           resolve(table);
         } else {

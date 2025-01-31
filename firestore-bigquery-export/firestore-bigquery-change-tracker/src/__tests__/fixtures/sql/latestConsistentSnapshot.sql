@@ -6,7 +6,7 @@
     --   document_id: The document id as defined in the Firestore database
     WITH latest AS (
       SELECT
-        max(timestamp) as latest_timestamp,
+        MAX(timestamp) AS latest_timestamp,
         document_name
       FROM
        `test.test_dataset.test_table`
@@ -16,22 +16,18 @@
     SELECT
       t.document_name,
       document_id,
-      timestamp as timestamp,
-      ANY_VALUE(event_id) as event_id,
-      operation as operation,
-      ANY_VALUE(data) as data
+      timestamp AS timestamp,
+      ANY_VALUE(event_id) AS event_id,
+      operation AS operation,
+      ANY_VALUE(data) AS data
     FROM
        `test.test_dataset.test_table` AS t
       JOIN latest ON (
         t.document_name = latest.document_name
-        AND (
-          IFNULL(t.timestamp, timestamp("1970-01-01 00:00:00+00"))
-        ) = (
-          IFNULL(
+        AND IFNULL(t.timestamp, TIMESTAMP("1970-01-01 00:00:00+00")) = IFNULL(
             latest.latest_timestamp,
-            timestamp("1970-01-01 00:00:00+00")
+            TIMESTAMP("1970-01-01 00:00:00+00")
           )
-        )
       )
     WHERE
       operation != "DELETE"

@@ -126,7 +126,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "DAY",
-          timePartitioningField: "created",
+          timePartitioningField: "timestamp",
           timePartitioningFieldType: "TIMESTAMP",
           timePartitioningFirestoreField: "created",
         }).record([event]);
@@ -141,7 +141,7 @@ describe("e2e", () => {
           tableId
         );
 
-        expect(changeLogRows[0].created.value).toBe(
+        expect(changeLogRows[0].timestamp.value).toBe(
           BigQuery.timestamp(created.toDate()).value
         );
       });
