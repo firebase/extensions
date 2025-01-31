@@ -4,7 +4,7 @@ import { RawChangelogSchema } from "../../bigquery/schema";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { deleteTable } from "../fixtures/clearTables";
 
-process.env.PROJECT_ID = "extensions-testing";
+process.env.PROJECT_ID = "dev-extensions-testing";
 
 const bq: BigQuery = new BigQuery({ projectId: process.env.PROJECT_ID });
 const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
@@ -18,6 +18,7 @@ let myDataset: Dataset;
 const { logger } = require("firebase-functions");
 
 const consoleLogSpy = jest.spyOn(logger, "log").mockImplementation();
+const consoleWarnSpy = jest.spyOn(logger, "warn").mockImplementation();
 
 describe("Clustering ", () => {
   beforeEach(() => {
@@ -280,6 +281,10 @@ describe("Clustering ", () => {
 
       const [metadata] = await myDataset.table(tableId_raw).getMetadata();
 
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        "Unable to add clustering, field(s) unknown do not exist on the expected table"
+      );
+
       expect(metadata.clustering.fields[0]).toBe("data");
       expect(metadata.clustering.fields[1]).toBe("timestamp");
     });
@@ -299,6 +304,40 @@ describe("Clustering ", () => {
 
       const [metadata] = await myDataset.table(tableId_raw).getMetadata();
 
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        "Unable to add clustering, field(s) data,unknown,timestamp do not exist on the expected table"
+      );
+      expect(metadata.clustering).toBeUndefined();
+    });
+
+    test("does not add clustering and warns the user when an invalid type has been provided", async () => {
+      const schema = {
+        fields: [
+          ...RawChangelogSchema.fields,
+          {
+            name: "custom",
+            mode: "NULLABLE",
+            type: "JSON",
+            description: "Custom field",
+          },
+        ],
+      };
+
+      [myTable] = await myDataset.createTable(tableId_raw, {
+        schema,
+      });
+
+      await changeTracker({
+        datasetId,
+        tableId,
+        clustering: ["custom"],
+      }).record([event]);
+
+      const [metadata] = await myDataset.table(tableId_raw).getMetadata();
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        "Unable to add clustering, field(s) custom (JSON) have invalid types."
+      );
       expect(metadata.clustering).toBeUndefined();
     });
   });

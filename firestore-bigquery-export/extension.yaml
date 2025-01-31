@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.56
+version: 0.1.57
 specVersion: v1beta
 
 displayName: Stream Firestore to BigQuery
@@ -47,6 +47,10 @@ roles:
 
   - role: datastore.user
     reason: Allows the extension to write updates to the database.
+
+  - role: bigquery.user
+    reason:
+      Allows the extension to create and manage BigQuery materialized views.
 
 resources:
   - name: fsexportbigquery
@@ -310,12 +314,18 @@ params:
   - param: CLUSTERING
     label: BigQuery SQL table clustering
     description: >-
-      This parameter will allow you to set up Clustering for the BigQuery Table
-      created by the extension. (for example: `data,document_id,timestamp`- no
-      whitespaces). You can select up to 4 comma separated fields. The order of
-      the specified columns determines the sort order of the data. Available
-      schema extensions table fields for clustering: `document_id,
-      document_name, timestamp, event_id, operation, data`.
+      This parameter allows you to set up clustering for the BigQuery table
+      created by the extension. Specify up to 4 comma-separated fields (for
+      example:  `data,document_id,timestamp` - no whitespaces). The order of the
+      specified  columns determines the sort order of the data. 
+
+      Note: Cluster columns must be top-level, non-repeated columns of one of
+      the  following types: BIGNUMERIC, BOOL, DATE, DATETIME, GEOGRAPHY, INT64,
+      NUMERIC,  RANGE, STRING, TIMESTAMP. Clustering will not be added if a
+      field with an invalid type is present in this parameter.
+
+      Available schema extensions table fields for clustering include:
+      `document_id, document_name, timestamp, event_id,  operation, data`.
     type: string
     validationRegex: ^[^,\s]+(?:,[^,\s]+){0,3}$
     validationErrorMessage:
@@ -334,6 +344,50 @@ params:
     validationRegex: ^([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)$
     validationErrorMessage: Please select a number between 1 and 500
     default: 100
+    required: false
+
+  - param: VIEW_TYPE
+    label: View Type
+    description: >-
+      Select the type of view to create in BigQuery. A regular view is a virtual
+      table defined by a SQL query.  A materialized view persists the results of
+      a query for faster access, with either incremental or  non-incremental
+      updates. Please note that materialized views in this extension come with
+      several  important caveats and limitations - carefully review the
+      pre-install documentation before selecting  these options to ensure they
+      are appropriate for your use case.
+    type: select
+    options:
+      - label: View
+        value: view
+      - label: Materialized View (Incremental)
+        value: materialized_incremental
+      - label: Materialized View (Non-incremental)
+        value: materialized_non_incremental
+    default: view
+    required: true
+
+  - param: MAX_STALENESS
+    label: Maximum Staleness Duration
+    description: >-
+      For materialized views only: Specifies the maximum staleness acceptable
+      for the materialized view.  Should be specified as an INTERVAL value
+      following BigQuery SQL syntax.  This parameter will only take effect if
+      View Type is set to a materialized view option.
+    type: string
+    example: INTERVAL "8:0:0" HOUR TO SECOND
+    required: false
+
+  - param: REFRESH_INTERVAL_MINUTES
+    label: Refresh Interval (Minutes)
+    description: >-
+      For materialized views only: Specifies how often the materialized view
+      should be refreshed, in minutes.  This parameter will only take effect if
+      View Type is set to a materialized view option.
+    type: string
+    example: 60
+    validationRegex: ^[1-9][0-9]*$
+    validationErrorMessage: Must be a positive integer
     required: false
 
   - param: BACKUP_COLLECTION
@@ -408,6 +462,7 @@ params:
     default: 3
 
 events:
+  # OLD event types for backward compatibility
   - type: firebase.extensions.firestore-counter.v1.onStart
     description:
       Occurs when a trigger has been called within the Extension, and will
@@ -415,8 +470,8 @@ events:
 
   - type: firebase.extensions.firestore-counter.v1.onSuccess
     description:
-      Occurs when image resizing completes successfully. The event will contain
-      further details about specific formats and sizes.
+      Occurs when a task completes successfully. The event will contain further
+      details about specific results.
 
   - type: firebase.extensions.firestore-counter.v1.onError
     description:
@@ -427,6 +482,28 @@ events:
     description:
       Occurs when the function is settled. Provides no customized data other
       than the context.
+
+  # NEW event types following the updated naming convention
+  - type: firebase.extensions.firestore-bigquery-export.v1.onStart
+    description:
+      Occurs when a trigger has been called within the Extension, and will
+      include data such as the context of the trigger request.
+
+  - type: firebase.extensions.firestore-bigquery-export.v1.onSuccess
+    description:
+      Occurs when a task completes successfully. The event will contain further
+      details about specific results.
+
+  - type: firebase.extensions.firestore-bigquery-export.v1.onError
+    description:
+      Occurs when an issue has been experienced in the Extension. This will
+      include any error data that has been included within the Error Exception.
+
+  - type: firebase.extensions.firestore-bigquery-export.v1.onCompletion
+    description:
+      Occurs when the function is settled. Provides no customized data other
+      than the context.
+
   - type: firebase.extensions.big-query-export.v1.sync.start
     description: Occurs on a firestore document write event.
 

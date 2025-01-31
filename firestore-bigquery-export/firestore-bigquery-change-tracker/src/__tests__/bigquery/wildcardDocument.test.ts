@@ -4,7 +4,7 @@ import { RawChangelogSchema } from "../../bigquery";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { deleteTable } from "../fixtures/clearTables";
 
-process.env.PROJECT_ID = "extensions-testing";
+process.env.PROJECT_ID = "dev-extensions-testing";
 
 const bq = new BigQuery({ projectId: process.env.PROJECT_ID });
 let event: FirestoreDocumentChangeEvent;
@@ -28,9 +28,9 @@ describe("Configuring a document wildcard column ", () => {
   });
 
   afterEach(async () => {
-    await deleteTable({
-      datasetId,
-    });
+    // await deleteTable({
+    //   datasetId,
+    // });
   });
 
   describe("A non existing table", () => {

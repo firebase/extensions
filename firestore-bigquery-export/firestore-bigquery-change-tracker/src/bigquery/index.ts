@@ -41,8 +41,9 @@ import {
 
 import { Partitioning } from "./partitioning";
 import { Clustering } from "./clustering";
-import { tableRequiresUpdate, viewRequiresUpdate } from "./checkUpdates";
+import { tableRequiresUpdate } from "./checkUpdates";
 import { parseErrorMessage, waitForInitialization } from "./utils";
+import { initializeLatestView } from "./initializeLatestView";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
@@ -63,6 +64,10 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   useNewSnapshotQuerySyntax?: boolean;
   skipInit?: boolean;
   kmsKeyName?: string | undefined;
+  useMaterializedView?: boolean;
+  useIncrementalMaterializedView?: boolean;
+  maxStaleness?: string;
+  refreshIntervalMinutes?: number;
 }
 
 /**
@@ -207,7 +212,18 @@ export class FirestoreBigQueryEventHistoryTracker
   private async _waitForInitialization() {
     const dataset = this.bigqueryDataset();
     const changelogName = this.rawChangeLogTableName();
-    return waitForInitialization({ dataset, changelogName });
+
+    let materializedViewName;
+
+    if (this.config.useMaterializedView) {
+      materializedViewName = this.rawLatestView();
+    }
+
+    return waitForInitialization({
+      dataset,
+      changelogName,
+      materializedViewName,
+    });
   }
 
   /**
@@ -281,7 +297,7 @@ export class FirestoreBigQueryEventHistoryTracker
       }
 
       try {
-        await this.initializeLatestView();
+        await this._initializeLatestView();
       } catch (error) {
         const message = parseErrorMessage(error, "initializing latest view");
         throw new Error(`Error initializing latest view: ${message}`);
@@ -424,85 +440,20 @@ export class FirestoreBigQueryEventHistoryTracker
    * Creates the latest snapshot view, which returns only latest operations
    * of all existing documents over the raw change log table.
    */
-  private async initializeLatestView() {
+  private async _initializeLatestView() {
     const dataset = this.bigqueryDataset();
     const view = dataset.table(this.rawLatestView());
     const [viewExists] = await view.exists();
-    const schema = RawChangelogViewSchema;
 
-    if (viewExists) {
-      logs.bigQueryViewAlreadyExists(view.id, dataset.id);
-      const [metadata] = await view.getMetadata();
-      // TODO: just casting this for now, needs properly fixing
-      const fields = (metadata.schema ? metadata.schema.fields : []) as {
-        name: string;
-      }[];
-      if (this.config.wildcardIds) {
-        schema.fields.push(documentPathParams);
-      }
-
-      const columnNames = fields.map((field) => field.name);
-      const documentIdColExists = columnNames.includes("document_id");
-      const pathParamsColExists = columnNames.includes("path_params");
-      const oldDataColExists = columnNames.includes("old_data");
-
-      /** If new view or opt-in to new query syntax **/
-      const updateView = viewRequiresUpdate({
-        metadata,
-        config: this.config,
-        documentIdColExists,
-        pathParamsColExists,
-        oldDataColExists,
-      });
-
-      if (updateView) {
-        metadata.view = latestConsistentSnapshotView({
-          datasetId: this.config.datasetId,
-          tableName: this.rawChangeLogTableName(),
-          schema,
-          useLegacyQuery: !this.config.useNewSnapshotQuerySyntax,
-        });
-
-        if (!documentIdColExists) {
-          logs.addNewColumn(this.rawLatestView(), documentIdField.name);
-        }
-
-        await view.setMetadata(metadata);
-        logs.updatingMetadata(this.rawLatestView(), {
-          config: this.config,
-          documentIdColExists,
-          pathParamsColExists,
-          oldDataColExists,
-        });
-      }
-    } else {
-      const schema = { fields: [...RawChangelogViewSchema.fields] };
-
-      if (this.config.wildcardIds) {
-        schema.fields.push(documentPathParams);
-      }
-      const latestSnapshot = latestConsistentSnapshotView({
-        datasetId: this.config.datasetId,
-        tableName: this.rawChangeLogTableName(),
-        schema,
-        bqProjectId: this.bq.projectId,
-        useLegacyQuery: !this.config.useNewSnapshotQuerySyntax,
-      });
-      logs.bigQueryViewCreating(this.rawLatestView(), latestSnapshot.query);
-      const options: TableMetadata = {
-        friendlyName: this.rawLatestView(),
-        view: latestSnapshot,
-      };
-
-      try {
-        await view.create(options);
-        await view.setMetadata({ schema: RawChangelogViewSchema });
-        logs.bigQueryViewCreated(this.rawLatestView());
-      } catch (ex) {
-        logs.tableCreationError(this.rawLatestView(), ex.message);
-      }
-    }
-    return view;
+    return await initializeLatestView({
+      bq: this.bq,
+      changeTrackerConfig: this.config,
+      dataset,
+      view,
+      viewExists,
+      rawChangeLogTableName: this.rawChangeLogTableName(),
+      rawLatestViewName: this.rawLatestView(),
+    });
   }
 
   bigqueryDataset() {

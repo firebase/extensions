@@ -89,3 +89,85 @@ Run the import script using [`npx` (the Node Package Runner)](https://www.npmjs.
     ```
 
     The result set will contain the number of documents in your source collection.
+
+### Handling Failed Batches (`-f, --failed-batch-output`)
+
+#### Overview
+
+If any document batches fail to import due to errors, you can use the `-f` or `--failed-batch-output` option to specify a file where failed document paths will be recorded. This allows you to review and retry failed imports later.
+
+---
+
+#### Usage
+
+```sh
+npx @firebaseextensions/fs-bq-import-collection -f failed_batches.txt
+```
+
+In the example above, any documents that fail to import will have their paths written to `failed_batches.txt`.
+
+---
+
+#### Example Output
+
+If some documents fail, the output file will contain paths like:
+
+```
+projects/my-project/databases/(default)/documents/users/user123
+projects/my-project/databases/(default)/documents/orders/order456
+projects/my-project/databases/(default)/documents/posts/post789
+```
+
+Each line corresponds to a document that failed to import.
+
+---
+
+#### Console Logging of Failed Batches
+
+The import script will also log failed imports to the console. You may see output like this:
+
+```
+Failed batch: <paths of failed documents in batch>
+```
+
+This helps you quickly identify problematic documents and take action accordingly.
+
+---
+
+#### Retrying Failed Imports
+
+To retry the failed imports, you can use the output file to manually inspect or reprocess the documents. For example, you could create a script that reads the failed paths and reattempts the import.
+
+> **Note:** If the specified file already exists, it will be **cleared** before writing new failed batch paths.
+
+### Using a Transform Function
+
+You can optionally provide a transform function URL (`--transform-function-url` or `-f`) that will transform document data before it's written to BigQuery. The transform function should should recieve document data and return transformed data. The payload will contain the following:
+
+```
+{
+  data: [{
+    insertId: int;
+    json: {
+      timestamp: int;
+      event_id: int;
+      document_name: string;
+      document_id: int;
+      operation: ChangeType;
+      data: string;
+    },
+  }]
+}
+```
+
+The response should be identical in structure.
+
+Example usage of the script with transform function option:
+
+```shell
+npx @firebaseextensions/fs-bq-import-collection --non-interactive \
+ -P <PROJECT_ID> \
+ -s <COLLECTION_PATH> \
+ -d <DATASET_ID> \
+ -f https://us-west1-my-project.cloudfunctions.net/transformFunction
+```
