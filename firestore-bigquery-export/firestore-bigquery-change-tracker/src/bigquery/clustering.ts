@@ -4,6 +4,26 @@ import * as logs from "../logs";
 import * as bigquery from "@google-cloud/bigquery";
 import { TableMetadata } from "@google-cloud/bigquery";
 
+const VALID_CLUSTERING_TYPES = [
+  "BIGNUMERIC",
+  "BOOL",
+  "DATE",
+  "DATETIME",
+  "GEOGRAPHY",
+  "INT64",
+  "NUMERIC",
+  "RANGE",
+  "STRING",
+  "TIMESTAMP",
+] as const;
+
+type ValidClusteringType = typeof VALID_CLUSTERING_TYPES[number];
+
+interface InvalidFieldType {
+  fieldName: string;
+  type: string;
+}
+
 export class Clustering {
   public config: FirestoreBigQueryEventHistoryTrackerConfig;
   public table: bigquery.Table;
@@ -27,20 +47,54 @@ export class Clustering {
   private async hasInvalidFields(metaData: TableMetadata): Promise<boolean> {
     const { clustering = [] } = this.config;
 
-    if (!clustering) return Promise.resolve(false);
-
-    const fieldNames = metaData
-      ? metaData.schema.fields.map(($) => $.name)
-      : [];
-
-    const invalidFields = clustering.filter(($) => !fieldNames.includes($));
-
-    if (invalidFields.length) {
-      logs.invalidClustering(invalidFields.join(","));
-      return Promise.resolve(true);
+    if (!clustering) {
+      return false;
     }
 
-    return Promise.resolve(false);
+    if (!clustering.length) {
+      return false;
+    }
+
+    if (!metaData?.schema.fields.length) {
+      return false;
+    }
+
+    const fields = metaData.schema.fields;
+    const fieldNameToType = new Map(
+      fields.map((field) => [field.name, field.type])
+    );
+
+    // First check if all clustering fields exist in the schema
+    const nonExistentFields = clustering.filter(
+      (fieldName) => !fieldNameToType.has(fieldName)
+    );
+
+    if (nonExistentFields.length) {
+      logs.invalidClustering(nonExistentFields.join(","));
+      return true;
+    }
+
+    // Then check for invalid types among existing clustering fields
+    const invalidFieldTypes: InvalidFieldType[] = clustering
+      .map((fieldName) => ({
+        fieldName,
+        type: fieldNameToType.get(fieldName)!,
+      }))
+      .filter(
+        ({ type }) =>
+          !VALID_CLUSTERING_TYPES.includes(type as ValidClusteringType)
+      );
+
+    if (invalidFieldTypes.length) {
+      logs.invalidClusteringTypes(
+        invalidFieldTypes
+          .map(({ fieldName, type }) => `${fieldName} (${type})`)
+          .join(", ")
+      );
+      return true;
+    }
+
+    return false;
   }
 
   private updateCluster = async (metaData) => {
