@@ -57,5 +57,9 @@ export const getCLIOptions = () => {
     .option(
       "-e, --use-emulator [true|false]",
       "Whether to use the firestore emulator"
+    )
+    .option(
+      "-f, --failed-batch-output <file>",
+      "Path to the JSON file where failed batches will be recorded."
     );
 };

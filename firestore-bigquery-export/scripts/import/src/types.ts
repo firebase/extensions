@@ -15,6 +15,7 @@ export interface CliConfig {
   useEmulator: boolean;
   rawChangeLogName: string;
   cursorPositionFile: string;
+  failedBatchOutput?: string;
 }
 
 export interface CliConfigError {
@@ -23,10 +24,22 @@ export interface CliConfigError {
 }
 
 export interface SerializableQuery {
-  startAt: admin.firestore.Query<admin.firestore.DocumentData>;
-  endAt: admin.firestore.Query<admin.firestore.DocumentData>;
-  limit: admin.firestore.Query<admin.firestore.DocumentData>;
-  offset: admin.firestore.Query<admin.firestore.DocumentData>;
+  startAt?: {
+    before: boolean;
+    values: Array<{
+      referenceValue: string;
+      valueType: string;
+    }>;
+  };
+  endAt?: {
+    before: boolean;
+    values: Array<{
+      referenceValue: string;
+      valueType: string;
+    }>;
+  };
+  limit?: number;
+  offset?: number;
 }
 
 export interface QueryOptions

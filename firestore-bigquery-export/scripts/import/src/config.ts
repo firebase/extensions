@@ -176,6 +176,12 @@ const questions = [
     type: "confirm",
     default: false,
   },
+  {
+    message:
+      "Where would you like to output the failed imports? (Leave blank to skip)",
+    name: "failedBatchOutput",
+    type: "input",
+  },
 ];
 
 export async function parseConfig(): Promise<CliConfig | CliConfigError> {
@@ -187,7 +193,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       errors.push("Project is not specified.");
     }
     if (program.bigQueryProject === undefined) {
-      errors.push("BigQuery Project is not specified.");
+      program.bigQueryProject = program.project;
     }
     if (program.sourceCollectionPath === undefined) {
       errors.push("SourceCollectionPath is not specified.");
@@ -239,6 +245,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       useEmulator: program.useEmulator === "true",
       rawChangeLogName,
       cursorPositionFile,
+      failedBatchOutput: program.failedBatchOutput,
     };
   }
   const {
@@ -253,6 +260,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     multiThreaded,
     useNewSnapshotQuerySyntax,
     useEmulator,
+    failedBatchOutput,
   } = await inquirer.prompt(questions);
 
   const rawChangeLogName = `${table}_raw_changelog`;
@@ -278,6 +286,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     useEmulator: useEmulator,
     rawChangeLogName,
     cursorPositionFile,
+    failedBatchOutput,
   };
 }
 
