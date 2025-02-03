@@ -18,6 +18,27 @@ You can also optionally configure this extension to render emails using [Handleb
 
 When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**. Note that this extension is for use with bulk email service providers, like SendGrid, Mailgun, etc.
 
+#### Firestore-Send-Email: SendGrid Categories
+
+When using SendGrid (`SMTP_CONNECTION_URI` includes `sendgrid.net`), you can assign categories to your emails.
+
+## Example JSON with Categories:
+```json
+{
+  "to": ["example@example.com"],
+  "categories": ["Example_Category"],
+  "message": {
+    "subject": "Test Email with Categories",
+    "text": "This is a test email to see if categories work.",
+    "html": "<strong>This is a test email to see if categories work.</strong>"
+  }
+}
+```
+
+Add this document to the Firestore mail collection to send categorized emails.
+
+For more details, see the [SendGrid Categories documentation](https://docs.sendgrid.com/ui/sending-email/categories).
+
 #### Setup Google App Passwords
 
 **Google** no longer allows **Gmail** users to use their own passwords to authorize third-party apps and services. Instead, you have to use the [Sign in with App Passwords](https://support.google.com/accounts/answer/185833) service to generate a special password for each app you want to authorize. To do so:
@@ -42,6 +63,14 @@ To use your Outlook/Hotmail email account with this extension, you'll need to ha
 #### Additional setup
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
+
+#### Automatic Deletion of Email Documents
+
+To use Firestore's TTL feature for automatic deletion of expired email documents, the extension provides several configuration parameters.
+
+The extension will set a TTL field in the email documents, but you will need to manually configure a TTL policy for the collection/collection group the extension targets, on the `delivery.expireAt` field.
+
+Detailed instructions for creating a TTL field can be found in the [Firestore TTL Policy documentation](https://firebase.google.com/docs/firestore/ttl).
 
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)

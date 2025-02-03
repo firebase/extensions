@@ -1,3 +1,9 @@
+## Version 0.1.35
+
+feat - add SendGrid category support
+
+docs - add instructions for setting up Firestore TTL policies for the `delivery.expireAt` field.
+
 ## Version 0.1.34
 
 fixed - SendGrid v3 issues (#2020)
