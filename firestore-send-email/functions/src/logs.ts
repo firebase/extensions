@@ -122,3 +122,7 @@ export function invalidSendGridTemplateId() {
     "SendGrid templateId is not provided, if you're using SendGrid Dynamic Templates, please provide a valid templateId, otherwise provide a `text` or `html` content."
   );
 }
+
+export function info(message: string, details?: Record<string, unknown>) {
+  logger.info(message, details);
+}
