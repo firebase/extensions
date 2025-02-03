@@ -82,4 +82,14 @@ export interface QueuePayload {
   replyTo?: string;
   headers?: any;
   attachments: Attachment[];
+  categories?: string[];
 }
+
+// Define the expected format for SendGrid attachments
+export type SendGridAttachment = {
+  content: string; // Base64-encoded string
+  filename: string;
+  type?: string;
+  disposition?: string;
+  contentId?: string;
+};

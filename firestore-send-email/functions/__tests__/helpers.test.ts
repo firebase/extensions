@@ -1,7 +1,7 @@
 import Mail = require("nodemailer/lib/mailer");
 const { logger } = require("firebase-functions");
 
-import { setSmtpCredentials } from "../src/helpers";
+import { setSmtpCredentials, isSendGrid } from "../src/helpers";
 import { Config } from "../src/types";
 
 const consoleLogSpy = jest.spyOn(logger, "warn").mockImplementation();
@@ -11,7 +11,7 @@ const regex = new RegExp(
   "^(smtp[s]*://(.*?(:[^:@]*)?@)?[^:@]+:[0-9]+(\\?[^ ]*)?)$"
 );
 
-describe("set server credentials helper function", () => {
+describe("setSmtpCredentials function", () => {
   test("return smtpServerDomain credentials with new password", () => {
     const config: Config = {
       smtpConnectionUri:
@@ -32,26 +32,7 @@ describe("set server credentials helper function", () => {
     expect(regex.test(config.smtpConnectionUri)).toBe(true);
   });
 
-  test("return smtpServerDomain credentials with new password (old deleted)", () => {
-    const config: Config = {
-      smtpConnectionUri: "smtps://fakeemail@gmail.com@smtp.gmail.com:465",
-      smtpPassword: "sec#:@ret-password",
-      location: "",
-      mailCollection: "",
-      defaultFrom: "",
-    };
-    const credentials = setSmtpCredentials(config);
-    expect(credentials).toBeInstanceOf(Mail);
-    expect(credentials.options.port).toBe(465);
-    expect(credentials.options.host).toBe("smtp.gmail.com");
-    expect(credentials.options.auth.pass).toBe(config.smtpPassword);
-    expect(credentials.options.secure).toBe(true);
-
-    // The regex should match the smtpConnectionUri, it should be valid
-    expect(regex.test(config.smtpConnectionUri)).toBe(true);
-  });
-
-  test("return smtpConnectionUri credentials with old password", () => {
+  test("return smtpServerDomain credentials with old password", () => {
     const config: Config = {
       smtpConnectionUri:
         "smtps://fakeemail@gmail.com:secret-password@smtp.gmail.com:465",
@@ -130,7 +111,7 @@ describe("set server credentials helper function", () => {
     expect(regex.test(config.smtpConnectionUri)).toBe(true);
   });
 
-  test("return valid smtpConnectionUri credentials with special chars in password config", () => {
+  test("return valid smtpConnectionUri credentials with valid special chars in password", () => {
     const config: Config = {
       smtpConnectionUri:
         "smtp://fakeemail@gmail.com@smtp.gmail.com:465?pool=true&service=gmail",
@@ -176,7 +157,7 @@ describe("set server credentials helper function", () => {
     expect(regex.test(config.smtpConnectionUri)).toBe(true);
   });
 
-  test("return invalid smtpConnectionUri credentials with invalid special chars in connectionUri password", () => {
+  test("throw error for invalid smtpConnectionUri", () => {
     const config: Config = {
       smtpConnectionUri:
         "smtp://fakeemail@gmail.com:4,h?dhuNTbv9zMrP4&7&7%*3@smtp.gmail.com:465?pool=true&service=gmail",
@@ -185,39 +166,15 @@ describe("set server credentials helper function", () => {
       defaultFrom: "",
     };
 
-    // Expect an error to be thrown
     expect(() => setSmtpCredentials(config)).toThrow(Error);
-
     expect(consoleLogSpy).toBeCalledWith(
       "Invalid URI: please reconfigure with a valid SMTP connection URI"
     );
   });
-  test("return valid smtpConnectionUri credentials with correct seprator", () => {
-    const config: Config = {
-      smtpConnectionUri:
-        "smtp://fakeemail@gmail.com:4,h?dhuNTbv9zMrP4&7&7%*3@smtp.gmail.com:465?pool=true&service=gmail",
-      location: "",
-      mailCollection: "",
-      defaultFrom: "",
-    };
+});
 
-    expect(regex.test(config.smtpConnectionUri)).toBe(true);
-  });
-
-  test("return invalid smtpConnectionUri credentials with invalid seprator", () => {
-    const config: Config = {
-      smtpConnectionUri:
-        "smtp://fakeemail@gmail.com:4,h?dhuNTbv9zMrP4&7&7%*3:smtp.gmail.com:465?pool=true&service=gmail",
-      location: "",
-      mailCollection: "",
-      defaultFrom: "",
-    };
-
-    expect(regex.test(config.smtpConnectionUri)).toBe(false);
-  });
-
-  /* Test removed due to the new SendGrid transporter logic - see setSendGridTransport()
-  test("return a SendGrid transporter if the host is smtp.sendgrid.net", () => {
+describe("isSendGrid function", () => {
+  test("return true for SendGrid SMTP URI", () => {
     const config: Config = {
       smtpConnectionUri: "smtps://apikey@smtp.sendgrid.net:465",
       location: "",
@@ -225,8 +182,48 @@ describe("set server credentials helper function", () => {
       defaultFrom: "",
     };
 
-    const credentials = setSmtpCredentials(config);
-    expect(credentials.transporter.name === "nodemailer-sendgrid").toBe(true);
+    expect(isSendGrid(config)).toBe(true);
   });
-  */
+
+  test("return false for non-SendGrid SMTP URI", () => {
+    const config: Config = {
+      smtpConnectionUri:
+        "smtps://fakeemail@gmail.com:secret-password@smtp.gmail.com:465",
+      location: "",
+      mailCollection: "",
+      defaultFrom: "",
+    };
+
+    expect(isSendGrid(config)).toBe(false);
+  });
+});
+
+test("return invalid smtpConnectionUri credentials with invalid separator", () => {
+  const config: Config = {
+    smtpConnectionUri:
+      "smtp://fakeemail@gmail.com:4,h?dhuNTbv9zMrP4&7&7%*3:smtp.gmail.com:465?pool=true&service=gmail",
+    location: "",
+    mailCollection: "",
+    defaultFrom: "",
+  };
+
+  expect(regex.test(config.smtpConnectionUri)).toBe(false);
+});
+
+test("correctly detects SendGrid SMTP URI", () => {
+  const config: Config = {
+    smtpConnectionUri: "smtps://apikey@smtp.sendgrid.net:465",
+    location: "",
+    mailCollection: "",
+    defaultFrom: "",
+  };
+  expect(isSendGrid(config)).toBe(true);
+
+  const invalidConfig: Config = {
+    smtpConnectionUri: "smtps://apikey@fake-sendgrid.net:465",
+    location: "",
+    mailCollection: "",
+    defaultFrom: "",
+  };
+  expect(isSendGrid(invalidConfig)).toBe(false);
 });

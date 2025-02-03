@@ -1,3 +1,7 @@
+## Version 0.1.35
+
+feat - add SendGrid category support
+
 ## Version 0.1.34
 
 fixed - SendGrid v3 issues (#2020)
