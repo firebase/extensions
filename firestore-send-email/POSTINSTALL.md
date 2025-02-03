@@ -40,6 +40,28 @@ admin
 
 See the [official documentation](https://firebase.google.com/docs/extensions/official/firestore-send-email) for information on using this extension, including advanced use cases such as using Handlebars templates and managing email delivery status.
 
+#### Firestore-Send-Email: SendGrid Categories
+
+When using SendGrid (`SMTP_CONNECTION_URI` includes `sendgrid.net`), you can assign categories to your emails.
+
+## Example JSON with Categories:
+```json
+{
+  "to": ["example@example.com"],
+  "categories": ["Example_Category"],
+  "message": {
+    "subject": "Test Email with Categories",
+    "text": "This is a test email to see if categories work.",
+    "html": "<strong>This is a test email to see if categories work.</strong>"
+  }
+}
+```
+
+Add this document to the Firestore mail collection to send categorized emails.
+
+For more details, see the [SendGrid Categories documentation](https://docs.sendgrid.com/ui/sending-email/categories).
+
+
 ### Monitoring
 
 As a best practice, you can [monitor the activity](https://firebase.google.com/docs/extensions/manage-installed-extensions#monitor) of your installed extension, including checks on its health, usage, and logs.
