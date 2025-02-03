@@ -64,6 +64,14 @@ To use your Outlook/Hotmail email account with this extension, you'll need to ha
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
 
+#### Automatic Deletion of Email Documents
+
+To use Firestore's TTL feature for automatic deletion of expired email documents, the extension provides several configuration parameters.
+
+The extension will set a TTL field in the email documents, but you will need to manually configure a TTL policy for the collection/collection group the extension targets, on the `delivery.expireAt` field.
+
+Detailed instructions for creating a TTL field can be found in the [Firestore TTL Policy documentation](https://firebase.google.com/docs/firestore/ttl).
+
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 
