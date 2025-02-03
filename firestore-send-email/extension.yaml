@@ -39,6 +39,12 @@ contributors:
 
 billingRequired: true
 
+apis:
+  - apiName: eventarc.googleapis.com
+    reason: Powers all events and triggers
+  - apiName: run.googleapis.com
+    reason: Powers v2 functions
+
 roles:
   - role: datastore.user
     reason:
@@ -57,6 +63,20 @@ resources:
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:MAIL_COLLECTION}/{id}
+  - name: onsend
+    type: firebaseextensions.v1beta.v2function
+    description:
+      Listens for events emitted from your application or other extensions, that you granted permission to emit this event, and sends the provided message.
+    properties:
+      location: ${param:LOCATION}
+      buildConfig:
+        runtime: nodejs14
+      serviceConfig:
+        availableMemory: 512M
+        timeoutSeconds: 60
+      eventTrigger:
+        eventType: firebase.extensions.firestore-send-email.v1.onSend
+        channel: projects/${param:PROJECT_ID}/locations/${param:LOCATION}/channels/firebase
 
 params:
   - param: SMTP_CONNECTION_URI

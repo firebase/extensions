@@ -36,6 +36,21 @@ admin
   .then(() => console.log("Queued email for delivery!"));
 ```
 
+Or, send the payload to be written to the `${param:MAIL_COLLECTION}` collection via an EventArc event. Other extensions with permissions to send the `firebase.extensions.firestore-send-email.v1.onSend` event type will also be able to trigger email send operations.
+
+```js
+getEventarc().channel().publish({
+  type: "firebase.extensions.firestore-send-email.v1.onSend",
+  data: {
+    to: "someone@example.com",
+    message: {
+      subject: "Hello from Firebase!",
+      text: "This is the plaintext section of the email body.",
+      html: "This is the <code>HTML</code> section of the email body.",
+    },
+});
+```
+
 ### Using this extension
 
 See the [official documentation](https://firebase.google.com/docs/extensions/official/firestore-send-email) for information on using this extension, including advanced use cases such as using Handlebars templates and managing email delivery status.
