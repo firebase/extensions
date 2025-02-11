@@ -89,6 +89,7 @@ export function convertToObjectMetadata(
     contentDisposition: rest.contentDisposition,
     contentLanguage: rest.contentLanguage,
     cacheControl: rest.cacheControl,
+    // @ts-ignore - conflict between storage packages
     metadata: rest.metadata,
     owner: rest.owner,
     crc32c: rest.crc32c,

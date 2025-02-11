@@ -19,7 +19,7 @@ import { getFunctions } from "firebase-admin/functions";
 import { getExtensions } from "firebase-admin/extensions";
 import * as fs from "fs";
 import * as functions from "firebase-functions/v1";
-import * as mkdirp from "mkdirp";
+import { mkdirp } from "mkdirp";
 import * as os from "os";
 import * as path from "path";
 import * as sharp from "sharp";
