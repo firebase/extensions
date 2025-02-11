@@ -1,5 +1,5 @@
 import mockedEnv from "mocked-env";
-import imageType from "image-type";
+const imageType = require("image-type");
 import * as util from "util";
 import * as fs from "fs";
 import * as path from "path";
@@ -34,42 +34,42 @@ describe("convertType", () => {
   it("converts to png image type", async () => {
     const buffer = await convertType(bufferJPG, "png");
 
-    expect(imageType(buffer).mime).toBe("image/png");
+    expect((await imageType(buffer)).mime).toBe("image/png");
   });
 
   it("converts to jpeg image type", async () => {
     const buffer = await convertType(bufferPNG, "jpeg");
 
-    expect(imageType(buffer).mime).toBe("image/jpeg");
+    expect((await imageType(buffer)).mime).toBe("image/jpeg");
   });
 
   it("converts to webp image type", async () => {
     const buffer = await convertType(bufferPNG, "webp");
 
-    expect(imageType(buffer).mime).toBe("image/webp");
+    expect((await imageType(buffer)).mime).toBe("image/webp");
   });
 
   it("converts to tiff image type", async () => {
     const buffer = await convertType(bufferPNG, "tiff");
 
-    expect(imageType(buffer).mime).toBe("image/tiff");
+    expect((await imageType(buffer)).mime).toBe("image/tiff");
   });
 
   it("converts to gif image type", async () => {
     const buffer = await convertType(bufferGIF, "gif");
 
-    expect(imageType(buffer).mime).toBe("image/gif");
+    expect((await imageType(buffer)).mime).toBe("image/gif");
   });
 
   it("remains jpeg image type when different image type is not supported", async () => {
     const buffer = await convertType(bufferJPG, "raw");
 
-    expect(imageType(buffer).mime).toBe("image/jpeg");
+    expect((await imageType(buffer)).mime).toBe("image/jpeg");
   });
 
   it("remains gif image type when different image type is not supported", async () => {
     const buffer = await convertType(bufferGIF, "raw");
 
-    expect(imageType(buffer).mime).toBe("image/gif");
+    expect((await imageType(buffer)).mime).toBe("image/gif");
   });
 });
