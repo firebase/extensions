@@ -1,3 +1,7 @@
+## Version 0.2.7
+
+feat - move to Node.js 20 runtimes
+
 ## Version 0.2.6
 
 fixed - bump dependencies, fix vulnerabilities
