@@ -1,5 +1,7 @@
 ## Version 0.2.9
 
+chore - bump to nodejs20 runtimes
+
 chore - bump dependencies
 
 ## Version 0.2.8
