@@ -11,6 +11,7 @@
     "clean": "rimraf lib",
     "compile": "tsc",
     "test": "jest",
+    "test:vulnerability": "RUN_VUNERABILITY_TEST=true jest",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "dependencies": {
