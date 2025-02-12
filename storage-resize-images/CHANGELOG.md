@@ -1,5 +1,7 @@
 ## Version 0.2.7
 
+chore - bump to nodejs20 runtimes
+
 chore - bump dependencies
 
 fix - resize images (don't crop) by default
