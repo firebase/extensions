@@ -1,3 +1,9 @@
+## Version 0.2.7
+
+chore - bump dependencies
+
+fix - resize images (don't crop) by default
+
 ## Version 0.2.6
 
 fixed - bump dependencies, fix vulnerabilities
