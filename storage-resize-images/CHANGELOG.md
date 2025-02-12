@@ -1,3 +1,7 @@
+## Version 0.2.9
+
+chore - bump dependencies
+
 ## Version 0.2.8
 
 fixed - support '+' character in paths
