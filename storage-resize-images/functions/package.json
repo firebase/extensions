@@ -30,7 +30,7 @@
     "@types/mkdirp": "^1.0.1",
     "child_process": "^1.0.2",
     "dotenv": "^16.4.7",
-    "firebase": "^10.4.0",
+    "firebase": "^11.3.1",
     "firebase-functions-test": "^3.4.0",
     "image-size": "^1.2.0",
     "image-type": "^4.1.0",
