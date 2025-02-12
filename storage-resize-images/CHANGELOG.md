@@ -1,3 +1,7 @@
+## Version 0.2.7
+
+docs - fix typo in PREINSTALL.md
+
 ## Version 0.2.6
 
 fixed - bump dependencies, fix vulnerabilities
