@@ -1,11 +1,12 @@
 {
-  "extends": "../tsconfig.json",
-  "files": ["test.types.d.ts"],
   "compilerOptions": {
     "outDir": "lib",
-    "types": ["node", "jest"],
     "target": "ES2020",
-    "skipLibCheck": true
+    "module": "commonjs",
+    "noImplicitReturns": true,
+    "skipLibCheck": true,
+    "sourceMap": false
   },
-  "include": ["**/*"]
+  "compileOnSave": true,
+  "include": ["src"]
 }
