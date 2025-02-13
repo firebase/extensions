@@ -1,3 +1,7 @@
+## Version 0.2.12
+
+fixed - updated vulnerable dependencies
+
 ## Version 0.2.11
 
 fixed - updated vulnerable dependencies
