@@ -23,6 +23,17 @@ export function countNegativeTraversals(path: string): number {
   return (path.match(/\/\.\.\//g) || []).length;
 }
 
+export function convertPathToPosix(path: string): string {
+  // handle drive
+  if (path.includes("\\")) {
+    // likely Windows
+    path = path.substring(2);
+  }
+
+  // replace "\\" with "/"
+  return path.replace(/\\/g, "/");
+}
+
 export function convertToObjectMetadata(
   fileMetadata: FileMetadata
 ): ObjectMetadata {
