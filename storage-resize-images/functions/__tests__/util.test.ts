@@ -1,4 +1,4 @@
-import { startsWithArray } from "../src/util";
+import { startsWithArray, convertPathToPosix } from "../src/util";
 
 const imagePath = ["/test/picture"];
 
@@ -57,6 +57,45 @@ describe("startsWithArray function for testing image path", () => {
     imagePaths.forEach((path) => {
       let allowResize = startsWithArray(allowed, path);
       expect(allowResize).toBe(true);
+    });
+  });
+});
+
+describe("convertPathToPosix function for converting path to posix", () => {
+  it("converts windows path to posix", () => {
+    const windowsPaths = [
+      "C:\\Users\\test\\image.jpg",
+      "D:\\Users\\test\\image.jpg",
+      "E:\\Users\\test\\image.jpg",
+      "Z:\\Users\\test\\image.jpg",
+      "C:\\Users\\test:user\\image.jpg",
+    ];
+
+    const expectedPosixPaths = [
+      "/Users/test/image.jpg",
+      "/Users/test/image.jpg",
+      "/Users/test/image.jpg",
+      "/Users/test/image.jpg",
+      "/Users/test:user/image.jpg",
+    ];
+
+    windowsPaths.forEach((windowsPath, index) => {
+      const outPosixPath = convertPathToPosix(windowsPath);
+      expect(outPosixPath).toBe(expectedPosixPaths[index]);
+    });
+  });
+
+  it("converts posix path to posix (no change)", () => {
+    const posixPaths = ["/Users/test/image.jpg", "/Users/test:user/image.jpg"];
+
+    const expectedPosixPaths = [
+      "/Users/test/image.jpg",
+      "/Users/test:user/image.jpg",
+    ];
+
+    posixPaths.forEach((posixPath, index) => {
+      const outPosixPath = convertPathToPosix(posixPath);
+      expect(outPosixPath).toBe(expectedPosixPaths[index]);
     });
   });
 });

@@ -3,20 +3,15 @@ import * as path from "path";
 import * as logs from "./logs";
 import { config } from "./config";
 import { supportedContentTypes } from "./resize-image";
-import { startsWithArray } from "./util";
+import { convertPathToPosix, startsWithArray } from "./util";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
 
 export function shouldResize(object: ObjectMetadata): boolean {
   const { contentType } = object; // This is the image MIME type
 
-  let tmpFilePath = path.resolve("/", path.dirname(object.name)); // Absolute path to dirname
-
-  // Remove Windows drive (e.g "C:") and replace "\\" with "/"
-  if (tmpFilePath.includes("\\")) {
-    // likely Windows
-    tmpFilePath = tmpFilePath.substring(2);
-    tmpFilePath = tmpFilePath.replace(/\\/g, "/");
-  }
+  let tmpFilePath = convertPathToPosix(
+    path.resolve("/", path.dirname(object.name))
+  ); // Absolute path to dirname
 
   if (!contentType) {
     logs.noContentType();
