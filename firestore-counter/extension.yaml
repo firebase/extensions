@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-counter
-version: 0.2.11
+version: 0.2.12
 specVersion: v1beta
 
 displayName: Distributed Counter
@@ -53,7 +53,7 @@ resources:
       This scheduled function either aggregates shards itself, or it schedules
       and monitors workers to aggregate shards.
     properties:
-      runtime: nodejs18
+      runtime: nodejs20
       maxInstances: 1
       scheduleTrigger:
         schedule: "every ${param:SCHEDULE_FREQUENCY} minutes"
@@ -64,7 +64,7 @@ resources:
       Listens for changes on counter shards that may need aggregating. This
       function is limited to max 1 instance.
     properties:
-      runtime: nodejs18
+      runtime: nodejs20
       maxInstances: 1
       timeout: 120s
       eventTrigger:
@@ -78,7 +78,7 @@ resources:
       or more worker functions running at any point in time. The controllerCore
       function is responsible for scheduling and monitoring these workers.
     properties:
-      runtime: nodejs18
+      runtime: nodejs20
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:INTERNAL_STATE_PATH}/workers/{workerId}

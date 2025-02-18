@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-translate-text
-version: 0.1.21
+version: 0.1.22
 specVersion: v1beta
 
 tags: [ai]
@@ -60,7 +60,7 @@ resources:
       collection, translates the strings, then writes the translated strings
       back to the same document.
     properties:
-      runtime: nodejs18
+      runtime: nodejs20
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{messageId}
@@ -72,7 +72,7 @@ resources:
       translates the strings into any missing languages, then writes the
       translated strings back to the same document.
     properties:
-      runtime: nodejs18
+      runtime: nodejs20
       availableMemoryMb: 1024
       timeout: 540s
       taskQueueTrigger: {}

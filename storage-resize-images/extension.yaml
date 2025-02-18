@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.2.6
+version: 0.2.7
 specVersion: v1beta
 
 displayName: Resize Images
@@ -58,7 +58,7 @@ resources:
       resizes the images, then stores the resized images in the same bucket.
       Optionally keeps or deletes the original images.
     properties:
-      runtime: nodejs18
+      runtime: nodejs20
       availableMemoryMb: ${param:FUNCTION_MEMORY}
       eventTrigger:
         eventType: google.storage.object.finalize
@@ -68,7 +68,7 @@ resources:
     description: >-
       Handles tasks from startBackfill to resize existing images.
     properties:
-      runtime: nodejs18
+      runtime: nodejs20
       availableMemoryMb: ${param:FUNCTION_MEMORY}
       taskQueueTrigger: {}
 

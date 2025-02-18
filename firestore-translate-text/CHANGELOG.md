@@ -1,3 +1,7 @@
+## Version 0.1.22
+
+feat - move to Node.js 20 runtimes
+
 ## Version 0.1.21
 
 feat - update docs and config setup for AI Translations with Gemini

@@ -1,3 +1,9 @@
+## Version 0.2.7
+
+fixed - maintain aspect ratio of resized images (#2115)
+
+feat - move to Node.js 20 runtimes
+
 ## Version 0.2.6
 
 fixed - bump dependencies, fix vulnerabilities
