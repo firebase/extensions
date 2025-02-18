@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-shorten-urls-bitly
-version: 0.1.17
+version: 0.1.18
 specVersion: v1beta
 
 displayName: Shorten URLs in Firestore
@@ -54,7 +54,7 @@ resources:
       collection, shortens the URLs, then writes the shortened form back to the
       same document.
     properties:
-      runtime: nodejs18
+      runtime: nodejs20
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
