@@ -62,7 +62,7 @@ describe("startsWithArray function for testing image path", () => {
 });
 
 describe("convertPathToPosix function for converting path to posix", () => {
-  it("converts windows path to posix", () => {
+  it("converts windows path to posix without drive", () => {
     const windowsPaths = [
       "C:\\Users\\test\\image.jpg",
       "D:\\Users\\test\\image.jpg",
@@ -80,7 +80,30 @@ describe("convertPathToPosix function for converting path to posix", () => {
     ];
 
     windowsPaths.forEach((windowsPath, index) => {
-      const outPosixPath = convertPathToPosix(windowsPath);
+      const outPosixPath = convertPathToPosix(windowsPath, true);
+      expect(outPosixPath).toBe(expectedPosixPaths[index]);
+    });
+  });
+
+  it("converts windows path to posix with drive", () => {
+    const windowsPaths = [
+      "C:\\Users\\test\\image.jpg",
+      "D:\\Users\\test\\image.jpg",
+      "E:\\Users\\test\\image.jpg",
+      "Z:\\Users\\test\\image.jpg",
+      "C:\\Users\\test:user\\image.jpg",
+    ];
+
+    const expectedPosixPaths = [
+      "C:/Users/test/image.jpg",
+      "D:/Users/test/image.jpg",
+      "E:/Users/test/image.jpg",
+      "Z:/Users/test/image.jpg",
+      "C:/Users/test:user/image.jpg",
+    ];
+
+    windowsPaths.forEach((windowsPath, index) => {
+      const outPosixPath = convertPathToPosix(windowsPath, false);
       expect(outPosixPath).toBe(expectedPosixPaths[index]);
     });
   });

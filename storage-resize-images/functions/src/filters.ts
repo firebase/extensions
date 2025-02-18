@@ -10,7 +10,8 @@ export function shouldResize(object: ObjectMetadata): boolean {
   const { contentType } = object; // This is the image MIME type
 
   let tmpFilePath = convertPathToPosix(
-    path.resolve("/", path.dirname(object.name))
+    path.resolve("/", path.dirname(object.name)),
+    true
   ); // Absolute path to dirname
 
   if (!contentType) {

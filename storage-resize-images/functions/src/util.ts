@@ -1,3 +1,5 @@
+import * as path from "path";
+
 import { FileMetadata } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
 
@@ -23,15 +25,21 @@ export function countNegativeTraversals(path: string): number {
   return (path.match(/\/\.\.\//g) || []).length;
 }
 
-export function convertPathToPosix(path: string): string {
-  // handle drive
-  if (path.includes("\\")) {
-    // likely Windows
-    path = path.substring(2);
+export function convertPathToPosix(
+  filePath: string,
+  removeDrive?: boolean
+): string {
+  const winSep = path.win32.sep;
+  const posixSep = path.posix.sep;
+
+  // likely Windows (as contains windows path separator)
+  if (filePath.includes(winSep) && removeDrive) {
+    // handle drive (e.g. C:)
+    filePath = filePath.substring(2);
   }
 
-  // replace "\\" with "/"
-  return path.replace(/\\/g, "/");
+  // replace Windows path separator with posix path separator
+  return filePath.split(winSep).join(posixSep);
 }
 
 export function convertToObjectMetadata(
