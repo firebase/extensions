@@ -9,6 +9,7 @@ import { uuid } from "uuidv4";
 import { config } from "./config";
 import * as logs from "./logs";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
+import { convertPathToPosix } from "./util";
 
 export interface ResizedImageResult {
   size: string;
@@ -284,16 +285,12 @@ export const constructMetadata = (
   return metadata;
 };
 
-const convertToPosixPath = (filePath: string, locale?: "win32" | "posix") => {
-  const sep = locale ? path[locale].sep : path.sep;
-  return filePath.split(sep).join(path.posix.sep);
-};
 export const getModifiedFilePath = (
   fileDir,
   resizedImagesPath,
   modifiedFileName
 ) => {
-  return convertToPosixPath(
+  return convertPathToPosix(
     path.posix.normalize(
       resizedImagesPath
         ? path.posix.join(fileDir, resizedImagesPath, modifiedFileName)
