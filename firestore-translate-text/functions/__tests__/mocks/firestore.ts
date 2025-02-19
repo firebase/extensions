@@ -1,4 +1,25 @@
 import * as functionsTestInit from "firebase-functions-test";
+import * as admin from "firebase-admin";
+import {
+  DocumentSnapshot,
+  BulkWriter,
+  WriteResult,
+} from "firebase-admin/firestore";
+import { jest } from "@jest/globals";
+
+// Mock DocumentSnapshot
+export const mockDocumentSnapshot = (data: object): DocumentSnapshot => {
+  return {
+    data: () => data,
+    exists: true,
+    id: "mockId",
+    ref: {
+      path: "mockPath",
+      update: jest.fn(),
+    } as any,
+    get: jest.fn((field: string) => (data as any)[field]),
+  } as unknown as DocumentSnapshot;
+};
 
 export const snapshot = (
   input = { input: "hello" },

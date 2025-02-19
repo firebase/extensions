@@ -2,15 +2,7 @@ import * as logs from "../logs";
 import * as admin from "firebase-admin";
 import * as validators from "../validators";
 import config from "../config";
-import {
-  extractInput,
-  extractLanguages,
-  extractOutput,
-  filterLanguagesFn,
-  translateString,
-  Translation,
-  updateTranslations,
-} from "./common";
+import { extractInput, extractLanguages } from "./common";
 import {
   translateMultiple,
   translateMultipleBackfill,

@@ -48,7 +48,7 @@ export const fstranslate = functions.firestore
   .onWrite(async (change, context): Promise<void> => {
     logs.start(config);
     await events.recordStartEvent({ change, context });
-    const { languages, inputFieldName, outputFieldName } = config;
+    const { languages, inputFieldName, outputFieldName, glossaryId } = config;
 
     if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
       logs.fieldNamesNotDifferent();
@@ -105,6 +105,7 @@ export const fstranslatebackfill = functions.tasks
     const offset = (data["offset"] as number) ?? 0;
     const pastSuccessCount = (data["successCount"] as number) ?? 0;
     const pastErrorCount = (data["errorCount"] as number) ?? 0;
+    const glossaryId = config.glossaryId;
     // We also track the start time of the first invocation, so that we can report the full length at the end.
     const startTime = (data["startTime"] as number) ?? Date.now();
 
@@ -189,7 +190,7 @@ const handleExistingDocument = async (
   const input = extractInput(snapshot);
   try {
     if (input) {
-      return await translateDocumentBackfill(snapshot, bulkWriter);
+      return translateDocumentBackfill(snapshot, bulkWriter);
     } else {
       logs.documentFoundNoInput();
     }
@@ -206,6 +207,7 @@ const handleCreateDocument = async (
   const input = extractInput(snapshot);
   if (input) {
     logs.documentCreatedWithInput();
+
     await translateDocument(snapshot);
   } else {
     logs.documentCreatedNoInput();

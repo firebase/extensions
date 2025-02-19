@@ -62,7 +62,7 @@ export const translateSingleBackfill = async (
     async (targetLanguage: string): Promise<Translation> => {
       return {
         language: targetLanguage,
-        output: await translateString(input, targetLanguage),
+        output: await translateString(input, targetLanguage, config.glossaryId),
       };
     }
   );

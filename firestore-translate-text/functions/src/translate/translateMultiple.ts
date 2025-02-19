@@ -62,25 +62,29 @@ export const translateMultipleBackfill = async (
 
     for (const language of languages) {
       promises.push(
-        new Promise<void>(async (resolve) => {
+        new Promise<void>(async (resolve, reject) => {
           const output =
             typeof value === "string"
-              ? await translateString(value, language)
+              ? await translateString(value, language, config.glossaryId)
               : null;
 
           if (!translations[entry]) translations[entry] = {};
           translations[entry][language] = output;
 
-          return resolve();
+          resolve();
         })
       );
     }
   }
 
   const results = await Promise.allSettled(promises);
+
+  // Process successful translations
   const successfulTranslations = results.filter(
     (p) => p.status === "fulfilled"
   );
+
+  // Process failed translations
   const failedTranslations = results
     .filter((p) => p.status === "rejected")
     .map((p: PromiseRejectedResult) => p.reason);
@@ -88,17 +92,26 @@ export const translateMultipleBackfill = async (
   // Use firestore.BulkWriter for better performance when writing many docs to Firestore.
   bulkWriter.update(snapshot.ref, config.outputFieldName, translations);
 
-  if (failedTranslations.length && !successfulTranslations.length) {
+  // Log and handle failures
+  if (failedTranslations.length) {
     logs.partialTranslateError(
       JSON.stringify(input),
       failedTranslations,
       translations.length
     );
-    // If any translations failed, throw so it is reported as an error.
-    throw `${
-      failedTranslations.length
-    } error(s) while translating '${input}': ${failedTranslations.join("\n")}`;
-  } else {
-    logs.translateInputToAllLanguagesComplete(JSON.stringify(input));
+
+    // Only throw an error if all translations failed
+    if (!successfulTranslations.length) {
+      throw new Error(
+        `${
+          failedTranslations.length
+        } error(s) while translating '${JSON.stringify(
+          input
+        )}': ${failedTranslations.join("\n")}`
+      );
+    }
   }
+
+  // Log successful completion
+  logs.translateInputToAllLanguagesComplete(JSON.stringify(input));
 };

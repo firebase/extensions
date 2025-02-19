@@ -1,4 +1,6 @@
 import * as eventArc from "firebase-admin/eventarc";
+import * as logs from "./logs";
+
 const { getEventarc } = eventArc;
 
 const EXTENSION_NAME = "firestore-translate-text";
@@ -58,4 +60,10 @@ export const recordCompletionEvent = async (data: string | object) => {
     type: getEventType("onCompletion"),
     data,
   });
+};
+
+export const recordGlossaryUsedEvent = async (
+  glossaryId: string
+): Promise<void> => {
+  logs.info(`Glossary used: ${glossaryId}`);
 };

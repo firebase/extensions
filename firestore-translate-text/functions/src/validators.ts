@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import * as logs from "./logs";
 
 export const fieldNamesMatch = (field1: string, field2: string): boolean =>
   field1 === field2;
@@ -28,4 +29,14 @@ export const fieldNameIsTranslationPath = (
     }
   }
   return false;
+};
+
+export const isValidGlossaryId = (glossaryId: string): boolean => {
+  const glossaryIdPattern = /^[a-zA-Z0-9_-]+$/;
+  if (!glossaryIdPattern.test(glossaryId)) {
+    const err = new Error(`Invalid glossary ID: ${glossaryId}`);
+    logs.error(err); // Log the error here
+    return false;
+  }
+  return true;
 };

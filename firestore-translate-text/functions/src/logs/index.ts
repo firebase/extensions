@@ -144,3 +144,7 @@ export const skippingLanguage = (language: string) => {
 export const enqueueNext = (offset: number) => {
   logger.log(messages.enqueueNext(offset));
 };
+
+export const info = (message: string) => {
+  logger.log(`[INFO]: ${message}`);
+};

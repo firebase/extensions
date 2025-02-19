@@ -5,6 +5,9 @@ import {
   translateMultipleBackfill,
 } from "../../src/translate/translateMultiple";
 import { updateTranslations } from "../../src/translate/common";
+import { mockDocumentSnapshot } from "../mocks/firestore";
+import { BulkWriter } from "firebase-admin/firestore";
+import { isValidGlossaryId } from "../../src/validators";
 
 const languages = ["en", "es", "fr"];
 
@@ -104,7 +107,6 @@ describe("translateMultipleBackfill", () => {
       expectedMockObjectTranslations
     );
   });
-  // Add more test cases for different scenarios
 });
 
 describe("translateMultiple", () => {

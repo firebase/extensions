@@ -14,7 +14,7 @@
   "dependencies": {
     "@genkit-ai/googleai": "^0.9.7",
     "@genkit-ai/vertexai": "^0.9.7",
-    "@google-cloud/translate": "^8.2.0",
+    "@google-cloud/translate": "^8.5.0",
     "@google-cloud/vertexai": "^1.9.2",
     "@types/express-serve-static-core": "4.19.0",
     "@types/node": "^20.10.3",
