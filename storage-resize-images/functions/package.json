@@ -28,7 +28,7 @@
     "@types/mkdirp": "^1.0.1",
     "child_process": "^1.0.2",
     "dotenv": "^16.0.3",
-    "firebase": "^10.4.0",
+    "firebase": "^10.9.0",
     "firebase-functions-test": "3.2.0",
     "image-size": "^0.9.3",
     "image-type": "^4.1.0",
