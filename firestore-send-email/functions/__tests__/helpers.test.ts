@@ -215,6 +215,7 @@ test("return invalid smtpConnectionUri credentials with invalid separator", () =
     location: "",
     mailCollection: "",
     defaultFrom: "",
+    secure: false,
     authenticationType: AuthenticatonType.UsernamePassword,
   };
 
@@ -227,6 +228,7 @@ test("correctly detects SendGrid SMTP URI", () => {
     location: "",
     mailCollection: "",
     defaultFrom: "",
+    secure: false,
     authenticationType: AuthenticatonType.ApiKey,
   };
   expect(isSendGrid(config)).toBe(true);
@@ -236,6 +238,7 @@ test("correctly detects SendGrid SMTP URI", () => {
     location: "",
     mailCollection: "",
     defaultFrom: "",
+    secure: false,
     authenticationType: AuthenticatonType.UsernamePassword,
   };
   expect(isSendGrid(invalidConfig)).toBe(false);
@@ -253,6 +256,7 @@ test("correctly uses oAuth credentials when provided", () => {
     clientSecret: "fakeClientSecret",
     refreshToken: "test_refresh_token",
     accessToken: "test_access_token",
+    secure: true,
     authenticationType: AuthenticatonType.OAuth2,
     user: "test@test.com",
   };

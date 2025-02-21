@@ -54,6 +54,7 @@ describe("extensions config", () => {
       tls: process.env.TLS_OPTIONS,
       host: process.env.HOST,
       port: parseInt(process.env.OAUTH_PORT, null),
+      secure: process.env.SECURE === "true",
       authenticationType: process.env.AUTH_TYPE as AuthenticatonType,
       clientId: process.env.CLIENT_ID,
       clientSecret: process.env.CLIENT_SECRET,

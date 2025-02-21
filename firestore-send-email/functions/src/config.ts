@@ -31,6 +31,7 @@ const config: Config = {
   tls: process.env.TLS_OPTIONS || "{}",
   host: process.env.HOST,
   port: parseInt(process.env.OAUTH_PORT, null),
+  secure: process.env.SECURE === "true",
   user: process.env.USER,
   clientId: process.env.CLIENT_ID,
   clientSecret: process.env.CLIENT_SECRET,

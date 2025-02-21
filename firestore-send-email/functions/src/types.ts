@@ -16,6 +16,7 @@ export interface Config {
   tls?: string;
   host?: Hosts | string;
   port?: number;
+  secure?: boolean;
   user?: string;
   clientId?: string;
   clientSecret?: string;
@@ -103,7 +104,7 @@ export type SendGridAttachment = {
 };
 
 export enum AuthenticatonType {
-  OAuth2 = "oauth2",
+  OAuth2 = "OAuth2",
   UsernamePassword = "UsernamePassword",
   ApiKey = "ApiKey",
 }

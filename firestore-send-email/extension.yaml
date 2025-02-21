@@ -71,7 +71,7 @@ params:
       - label: ApiKey
         value: ApiKey
       - label: OAuth2
-        value: oauth2
+        value: OAuth2
     default: UsernamePassword
     required: true
 
@@ -124,6 +124,15 @@ params:
     type: number
     required: false
     default: 465
+
+  - param: OAUTH_SECURE
+    label: Use Secure OAuth2 Connection
+    description: >-
+      Set to true to enable a secure connection (TLS/SSL) when using OAuth2
+      authentication for the SMTP server.
+    type: boolean
+    required: false
+    default: true
 
   - param: CLIENT_ID
     label: OAuth2 Client ID

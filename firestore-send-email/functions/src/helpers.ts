@@ -33,7 +33,7 @@ export function setSmtpCredentials(config: Config) {
   /** Check if 0Auth2 authentication type */
   if (config.authenticationType === AuthenticatonType.OAuth2) {
     /** Return an 0Auth2 based transport */
-    return setupoAuth2(config);
+    return setupOAuth2(config);
   }
 
   let url: URL;
@@ -90,7 +90,7 @@ export function isSendGrid(config: Config): boolean {
   }
 }
 
-export function setupoAuth2(config: Config) {
+export function setupOAuth2(config: Config) {
   const {
     clientId,
     clientSecret,
@@ -99,13 +99,14 @@ export function setupoAuth2(config: Config) {
     user,
     host,
     port,
+    secure,
   } = config;
   return createTransport({
     host,
     port,
-    secure: true,
+    secure,
     auth: {
-      type: "OAuth2",
+      type: AuthenticatonType.OAuth2,
       clientId,
       clientSecret,
       user,
