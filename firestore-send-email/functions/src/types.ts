@@ -14,6 +14,14 @@ export interface Config {
   TTLExpireType?: string;
   TTLExpireValue?: number;
   tls?: string;
+  host?: Hosts | string;
+  port?: number;
+  user?: string;
+  clientId?: string;
+  clientSecret?: string;
+  refreshToken?: string;
+  accessToken?: string;
+  authenticationType: AuthenticatonType;
 }
 export interface Attachment {
   filename?: string;
@@ -93,3 +101,16 @@ export type SendGridAttachment = {
   disposition?: string;
   contentId?: string;
 };
+
+export enum AuthenticatonType {
+  OAuth2 = "oauth2",
+  UsernamePassword = "UsernamePassword",
+  ApiKey = "ApiKey",
+}
+
+export enum Hosts {
+  Gmail = "smtp.gmail.com",
+  SendGrid = "smtp.sendgrid.net",
+  Outlook = "smtp-mail.outlook.com",
+  Hotmail = "smtp.live.com",
+}

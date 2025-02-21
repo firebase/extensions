@@ -2,7 +2,7 @@ import Mail = require("nodemailer/lib/mailer");
 const { logger } = require("firebase-functions");
 
 import { setSmtpCredentials, isSendGrid } from "../src/helpers";
-import { Config } from "../src/types";
+import { AuthenticatonType, Config } from "../src/types";
 
 const consoleLogSpy = jest.spyOn(logger, "warn").mockImplementation();
 
@@ -20,6 +20,7 @@ describe("setSmtpCredentials function", () => {
       location: "",
       mailCollection: "",
       defaultFrom: "",
+      authenticationType: AuthenticatonType.UsernamePassword,
     };
     const credentials = setSmtpCredentials(config);
     expect(credentials).toBeInstanceOf(Mail);
@@ -39,6 +40,7 @@ describe("setSmtpCredentials function", () => {
       location: "",
       mailCollection: "",
       defaultFrom: "",
+      authenticationType: AuthenticatonType.UsernamePassword,
     };
     const credentials = setSmtpCredentials(config);
     expect(credentials).toBeInstanceOf(Mail);
@@ -58,6 +60,7 @@ describe("setSmtpCredentials function", () => {
       location: "",
       mailCollection: "",
       defaultFrom: "",
+      authenticationType: AuthenticatonType.UsernamePassword,
     };
     const credentials = setSmtpCredentials(config);
     expect(credentials).toBeInstanceOf(Mail);
@@ -77,6 +80,7 @@ describe("setSmtpCredentials function", () => {
       location: "",
       mailCollection: "",
       defaultFrom: "",
+      authenticationType: AuthenticatonType.UsernamePassword,
     };
     const credentials = setSmtpCredentials(config);
     expect(credentials).toBeInstanceOf(Mail);
@@ -96,6 +100,7 @@ describe("setSmtpCredentials function", () => {
       location: "",
       mailCollection: "",
       defaultFrom: "",
+      authenticationType: AuthenticatonType.UsernamePassword,
     };
     const credentials = setSmtpCredentials(config);
     expect(credentials).toBeInstanceOf(Mail);
@@ -119,6 +124,7 @@ describe("setSmtpCredentials function", () => {
       location: "",
       mailCollection: "",
       defaultFrom: "",
+      authenticationType: AuthenticatonType.UsernamePassword,
     };
     const credentials = setSmtpCredentials(config);
     expect(credentials).toBeInstanceOf(Mail);
@@ -141,6 +147,7 @@ describe("setSmtpCredentials function", () => {
       location: "",
       mailCollection: "",
       defaultFrom: "",
+      authenticationType: AuthenticatonType.UsernamePassword,
     };
     const credentials = setSmtpCredentials(config);
 
@@ -164,6 +171,7 @@ describe("setSmtpCredentials function", () => {
       location: "",
       mailCollection: "",
       defaultFrom: "",
+      authenticationType: AuthenticatonType.UsernamePassword,
     };
 
     expect(() => setSmtpCredentials(config)).toThrow(Error);
@@ -180,6 +188,7 @@ describe("isSendGrid function", () => {
       location: "",
       mailCollection: "",
       defaultFrom: "",
+      authenticationType: AuthenticatonType.ApiKey,
     };
 
     expect(isSendGrid(config)).toBe(true);
@@ -192,6 +201,7 @@ describe("isSendGrid function", () => {
       location: "",
       mailCollection: "",
       defaultFrom: "",
+      authenticationType: AuthenticatonType.UsernamePassword,
     };
 
     expect(isSendGrid(config)).toBe(false);
@@ -205,6 +215,7 @@ test("return invalid smtpConnectionUri credentials with invalid separator", () =
     location: "",
     mailCollection: "",
     defaultFrom: "",
+    authenticationType: AuthenticatonType.UsernamePassword,
   };
 
   expect(regex.test(config.smtpConnectionUri)).toBe(false);
@@ -216,6 +227,7 @@ test("correctly detects SendGrid SMTP URI", () => {
     location: "",
     mailCollection: "",
     defaultFrom: "",
+    authenticationType: AuthenticatonType.ApiKey,
   };
   expect(isSendGrid(config)).toBe(true);
 
@@ -224,6 +236,38 @@ test("correctly detects SendGrid SMTP URI", () => {
     location: "",
     mailCollection: "",
     defaultFrom: "",
+    authenticationType: AuthenticatonType.UsernamePassword,
   };
   expect(isSendGrid(invalidConfig)).toBe(false);
+});
+
+test("correctly uses oAuth credentials when provided", () => {
+  const config: Config = {
+    smtpConnectionUri:
+      "smtps://fakeemail@gmail.com:secret-password@smtp.gmail.com:465",
+    location: "",
+    mailCollection: "",
+    defaultFrom: "",
+    host: "smtp.gmail.com",
+    clientId: "fakeClientId",
+    clientSecret: "fakeClientSecret",
+    refreshToken: "test_refresh_token",
+    accessToken: "test_access_token",
+    authenticationType: AuthenticatonType.OAuth2,
+    user: "test@test.com",
+  };
+  const credentials = setSmtpCredentials(config);
+  expect(credentials).toBeInstanceOf(Mail);
+  expect(credentials.options.secure).toBe(true);
+  expect(credentials.options.host).toBe("smtp.gmail.com");
+  expect(credentials.options.auth.type).toBe("OAuth2");
+  expect(credentials.options.auth.clientId).toBe("fakeClientId");
+  expect(credentials.options.auth.clientSecret).toBe("fakeClientSecret");
+  expect(credentials.options.auth.user).toBe("test@test.com");
+  expect(credentials.options.auth.refreshToken).toBe("test_refresh_token");
+  expect(credentials.options.auth.accessToken).toBe("test_access_token");
+  expect(credentials.options.auth.user).toBe("test@test.com");
+
+  // The regex should match the smtpConnectionUri, it should be valid
+  expect(regex.test(config.smtpConnectionUri)).toBe(true);
 });

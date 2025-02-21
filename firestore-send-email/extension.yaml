@@ -59,6 +59,22 @@ resources:
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:MAIL_COLLECTION}/{id}
 
 params:
+  - param: AUTH_TYPE
+    label: Authentication Type
+    description: >-
+      The authentication type to be used for the SMTP server (e.g., OAuth2,
+      LOGIN, PLAIN).
+    type: select
+    options:
+      - label: Username & Password
+        value: UsernamePassword
+      - label: ApiKey
+        value: ApiKey
+      - label: OAuth2
+        value: oauth2
+    default: UsernamePassword
+    required: true
+
   - param: SMTP_CONNECTION_URI
     label: SMTP connection URI
     description: >-
@@ -78,12 +94,13 @@ params:
       password)
     type: string
     example: smtps://username@smtp.hostname.com:465
-    validationRegex: ^(smtp[s]*://(.*?(:[^:@]*)?@)?[^:@]+:[0-9]+(\\?[^ ]*)?)$
+    validationRegex:
+      "^(smtp[s]*://(.*?(:[^:@]*)?@)?[^:@]+:[0-9]+(\\?[^ ]*)?)|^$"
     validationErrorMessage:
       Invalid SMTP connection URI. Must be in the form
       `smtp(s)://username:password@hostname:port` or
-      `smtp(s)://username@hostname:port`.
-    required: true
+      `smtp(s)://username@hostname:port` or to be left blank.
+    required: false
 
   - param: SMTP_PASSWORD
     label: SMTP password
@@ -91,6 +108,56 @@ params:
       User password for the SMTP server
     type: secret
     required: false
+
+  - param: HOST
+    label: OAuth2 SMTP Host
+    description: >-
+      The hostname of the SMTP server (e.g., smtp.gmail.com).
+    type: string
+    required: false
+
+  - param: OAUTH_PORT
+    label: OAuth2 SMTP Port
+    description: >-
+      The port number for the SMTP server (e.g., 465 for SMTPS, 587 for
+      STARTTLS).
+    type: number
+    required: false
+    default: 465
+
+  - param: CLIENT_ID
+    label: OAuth2 Client ID
+    description: >-
+      The Client ID for OAuth2 authentication with the SMTP server.
+    type: secret
+    required: false
+
+  - param: CLIENT_SECRET
+    label: OAuth2 Client Secret
+    description: >-
+      The Client Secret for OAuth2 authentication with the SMTP server.
+    type: secret
+    required: false
+  - param: ACCESS_TOKEN
+    label: OAuth2 Access Token
+    description: >-
+      The Access Token for OAuth2 authentication with the SMTP server.
+    type: secret
+    required: false
+
+  - param: REFRESH_TOKEN
+    label: OAuth2 Refresh Token
+    description: >-
+      The Refresh Token for OAuth2 authentication with the SMTP server.
+    type: secret
+    required: false
+
+  - param: USER
+    label: SMTP User
+    description: >-
+      The oAuth user email or username for SMTP authentication.
+    type: string
+    required: true
 
   - param: MAIL_COLLECTION
     label: Email documents collection
