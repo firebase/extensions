@@ -87,6 +87,7 @@ export async function initializeLatestView({
       metadata.view = latestConsistentSnapshotView({
         datasetId: config.datasetId,
         tableName: rawChangeLogTableName,
+        bqProjectId: bq.projectId,
         schema,
         useLegacyQuery: !config.useNewSnapshotQuerySyntax,
       });
