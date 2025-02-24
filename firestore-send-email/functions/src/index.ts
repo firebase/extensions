@@ -269,13 +269,15 @@ async function sendWithSendGrid(payload: QueuePayload) {
     }));
   };
 
+  const replyTo = { email: payload.replyTo || config.defaultReplyTo };
+
   // Build the message object for SendGrid
   const msg: sgMail.MailDataRequired = {
     to: formatEmails(payload.to),
     cc: formatEmails(payload.cc),
     bcc: formatEmails(payload.bcc),
     from: { email: payload.from || config.defaultFrom },
-    replyTo: { email: payload.replyTo || config.defaultReplyTo },
+    replyTo: replyTo.email ? replyTo : undefined,
     subject: payload.message?.subject,
     text:
       typeof payload.message?.text === "string"
