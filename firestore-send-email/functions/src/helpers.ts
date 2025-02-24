@@ -1,7 +1,7 @@
 import { createTransport } from "nodemailer";
 import { URL } from "url";
 import { invalidTlsOptions, invalidURI } from "./logs";
-import { Config } from "./types";
+import { AuthenticatonType, Config } from "./types";
 
 function compileUrl($: string): URL | null {
   try {
@@ -30,6 +30,12 @@ export function parseTlsOptions(tlsOptions: string) {
 }
 
 export function setSmtpCredentials(config: Config) {
+  /** Check if 0Auth2 authentication type */
+  if (config.authenticationType === AuthenticatonType.OAuth2) {
+    /** Return an 0Auth2 based transport */
+    return setupOAuth2(config);
+  }
+
   let url: URL;
   let transport;
 
@@ -82,4 +88,30 @@ export function isSendGrid(config: Config): boolean {
   } catch (err) {
     return false;
   }
+}
+
+export function setupOAuth2(config: Config) {
+  const {
+    clientId,
+    clientSecret,
+    refreshToken,
+    accessToken,
+    user,
+    host,
+    port,
+    secure,
+  } = config;
+  return createTransport({
+    host,
+    port,
+    secure,
+    auth: {
+      type: AuthenticatonType.OAuth2,
+      clientId,
+      clientSecret,
+      user,
+      refreshToken,
+      accessToken,
+    },
+  });
 }
