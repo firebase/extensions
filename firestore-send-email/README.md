@@ -282,19 +282,19 @@ password)
 
 * SMTP password: User password for the SMTP server
 
-* OAuth2 SMTP Host: The hostname of the SMTP server (e.g., smtp.gmail.com).
+* OAuth2 SMTP Host: The OAuth2 hostname of the SMTP server (e.g., smtp.gmail.com).
 
-* OAuth2 SMTP Port: The port number for the SMTP server (e.g., 465 for SMTPS, 587 for STARTTLS).
+* OAuth2 SMTP Port: The OAuth2 port number for the SMTP server (e.g., 465 for SMTPS, 587 for STARTTLS).
 
 * Use secure OAuth2 connection?: Set to true to enable a secure connection (TLS/SSL) when using OAuth2 authentication for the SMTP server.
 
-* OAuth2 Client ID: The Client ID for OAuth2 authentication with the SMTP server.
+* OAuth2 Client ID: The OAuth2 Client ID for authentication with the SMTP server.
 
-* OAuth2 Client Secret: The Client Secret for OAuth2 authentication with the SMTP server.
+* OAuth2 Client Secret: The OAuth2 Client Secret for authentication with the SMTP server.
 
-* OAuth2 Refresh Token: The Refresh Token for OAuth2 authentication with the SMTP server.
+* OAuth2 Refresh Token: The OAuth2 Refresh Token for authentication with the SMTP server.
 
-* SMTP User: The oAuth user email or username for SMTP authentication.
+* OAuth2 SMTP User: The OAuth2 user email or username for SMTP authentication.
 
 * Email documents collection: What is the path to the collection that contains the documents used to build and send the emails?
 

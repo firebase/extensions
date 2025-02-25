@@ -110,14 +110,14 @@ params:
   - param: HOST
     label: OAuth2 SMTP Host
     description: >-
-      The hostname of the SMTP server (e.g., smtp.gmail.com).
+      The OAuth2 hostname of the SMTP server (e.g., smtp.gmail.com).
     type: string
     required: false
 
   - param: OAUTH_PORT
     label: OAuth2 SMTP Port
     description: >-
-      The port number for the SMTP server (e.g., 465 for SMTPS, 587 for
+      The OAuth2 port number for the SMTP server (e.g., 465 for SMTPS, 587 for
       STARTTLS).
     type: number
     required: false
@@ -135,28 +135,28 @@ params:
   - param: CLIENT_ID
     label: OAuth2 Client ID
     description: >-
-      The Client ID for OAuth2 authentication with the SMTP server.
+      The OAuth2 Client ID for authentication with the SMTP server.
     type: secret
     required: false
 
   - param: CLIENT_SECRET
     label: OAuth2 Client Secret
     description: >-
-      The Client Secret for OAuth2 authentication with the SMTP server.
+      The OAuth2 Client Secret for authentication with the SMTP server.
     type: secret
     required: false
 
   - param: REFRESH_TOKEN
     label: OAuth2 Refresh Token
     description: >-
-      The Refresh Token for OAuth2 authentication with the SMTP server.
+      The OAuth2 Refresh Token for authentication with the SMTP server.
     type: secret
     required: false
 
   - param: USER
-    label: SMTP User
+    label: OAuth2 SMTP User
     description: >-
-      The oAuth user email or username for SMTP authentication.
+      The OAuth2 user email or username for SMTP authentication.
     type: string
     required: true
 
