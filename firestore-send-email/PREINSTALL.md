@@ -43,6 +43,8 @@ For more details, see the [SendGrid Categories documentation](https://docs.sendg
 
 This section will help you set up OAuth2 authentication for the extension, using GCP (Gmail) as an example.
 
+The extension is agnostic with respect to OAuth2 provider. You just need to provide it with valid Client ID, Client Secret, and Refresh Token parameters.
+
 ##### Step 1: Create OAuth Credentials in Google Cloud Platform
 
 1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
@@ -51,7 +53,7 @@ This section will help you set up OAuth2 authentication for the extension, using
 4. Click Create Credentials and select **OAuth client ID**
 5. Set the application type to **Web application**
 6. Give your OAuth client a name (e.g., "Firestore Send Email Extension")
-7. Under **Authorized redirect URIs**, add the URI where you'll receive the OAuth callback, for example `http://localhost:8080/oauth/callback`.
+7. Under **Authorized redirect URIs**, add the URI where you'll receive the OAuth callback, for example, `http://localhost:8080/oauth/callback`.
 
    **Note**: The redirect URI in your OAuth client settings MUST match exactly the callback URL in your code.
 
@@ -68,141 +70,86 @@ This section will help you set up OAuth2 authentication for the extension, using
 
 ##### Step 3: Generate a Refresh Token
 
-You'll need to create a simple web application to generate a refresh token. In this subsection we illustrate how to do so with Node.js.
+You can use a standalone helper script (`oauth2-refresh-token-helper.js`) that generates a refresh token without requiring any npm installations. 
 
-Here's how to set it up:
+**Prerequisites:**
+- You must have Node.js installed on your machine
 
-1. Create a new Node.js project:
+**Download the script:**
+1. Download the script using curl, wget, or directly from your browser:
    ```bash
-   mkdir oauth-helper
-   cd oauth-helper
-   npm init -y
-   npm install express google-auth-library dotenv
+   # Using curl
+   curl -o oauth2-refresh-token-helper.js https://raw.githubusercontent.com/firebase/extensions/refs/heads/master/firestore-send-email/scripts/oauth2-refresh-token-helper.js
+   
+   # Using wget
+   wget https://raw.githubusercontent.com/firebase/extensions/refs/heads/master/firestore-send-email/scripts/oauth2-refresh-token-helper.js
    ```
 
-2. Create a `.env` file with your credentials:
-   ```
-   CLIENT_ID=your_client_id
-   CLIENT_SECRET=your_client_secret
-   ```
+   You can also [view the script on GitHub](https://github.com/firebase/extensions/blob/master/firestore-send-email/scripts/oauth2-refresh-token-helper.js) and download it manually.
 
-3. Create an application with:
-   - A root route that redirects users to Google's OAuth consent page
-   - A callback route that receives the authorization code and exchanges it for tokens
-   (See the sample application included below)
+> **Note**: If you are creating your own application to obtain a refresh token, in a Node.js environment where you can use npm packages, consider using the official google-auth-library instead:
+> 
+> 1. Install the library: `npm install google-auth-library`
+> 2. Then use it like this:
+>    ```javascript
+>    import { OAuth2Client } from "google-auth-library";
+>    
+>    // Initialize OAuth client
+>    const oAuth2Client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+>    
+>    // Generate authorization URL
+>    const authorizeUrl = oAuth2Client.generateAuthUrl({
+>      access_type: "offline",
+>      prompt: "consent",
+>      scope: ["https://mail.google.com/"],  // Full Gmail access
+>    });
+>    
+>    // After receiving the code from the callback:
+>    const { tokens } = await oAuth2Client.getToken(code);
+>    const refreshToken = tokens.refresh_token;
+>    ```
 
-4. **Important**: The redirect URI in your code (e.g., `http://localhost:8080/oauth/callback`) **MUST** match exactly what you configured in the Google Cloud Console OAuth client settings.
+2. Run the script with Node.js:
 
-5. In your application code:
-   - Use the `generateAuthUrl()` method with `access_type: "offline"` and `prompt: "consent"` to request a refresh token
-   - Set the appropriate scope, such as `["https://mail.google.com/"]` for Gmail access
-   - Create a callback handler that exchanges the authorization code for tokens using `oAuth2Client.getToken(code)`
-
-6. Run the application and access it in your browser:
    ```bash
-   node index.js
+   node oauth2-refresh-token-helper.js
    ```
 
-7. Complete the OAuth flow:
-   - Navigate to your application URL (e.g., `http://localhost:8080`)
-   - Click the login button and authorize the application
-   - After successful authorization, you'll receive a JSON response containing your tokens
-   - Copy the `refresh_token` value for use in the extension configuration
+3. The script supports the following command-line options:
+   ```
+   --port, -p     Port to run the server on (default: 8080 or PORT env var)
+   --id, -i       Google OAuth Client ID
+   --secret, -s   Google OAuth Client Secret
+   --output, -o   Output file to save the refresh token (default: refresh_token.txt)
+   --help, -h     Show help information
+   ```
 
+4. You can either provide your credentials as command-line arguments or set them as environment variables:
+   ```bash
+   # Using environment variables
+   export CLIENT_ID=your_client_id
+   export CLIENT_SECRET=your_client_secret
+   node oauth2-refresh-token-helper.js
 
-##### Sample Typescript Refresh Token App
+   # Using command-line arguments
+   node oauth2-refresh-token-helper.js --id=your_client_id --secret=your_client_secret
+   ```
 
-```javascript
-const express = require("express");
-const { OAuth2Client } = require("google-auth-library");
-require("dotenv").config();
+5. The script will:
+   - Start a local web server
+   - Open your browser to the OAuth consent page
+   - Receive the authorization code
+   - Exchange the code for tokens
+   - Save the refresh token to a file (default: `refresh_token.txt`)
+   - Display the refresh token in your browser
 
-// Load environment variables
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
+6. **Important**: The redirect URI in the script (`http://localhost:8080/oauth/callback` by default) **MUST** match exactly what you configured in the Google Cloud Console OAuth client settings.
 
-// Initialize express
-const app = express();
-
-const REDIRECT_URI = "http://localhost:8080/oauth/callback";
-
-// Initialize OAuth client
-const oAuth2Client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
-
-// Root route handler - immediately redirect to Google OAuth
-const rootHandler = (_req, res) => {
-  const authorizeUrl = oAuth2Client.generateAuthUrl({
-    access_type: "offline",
-    prompt: "consent",
-    scope: ["https://mail.google.com/"], // Full Gmail access
-  });
-
-  // Redirect user directly to Google OAuth consent page
-  res.redirect(authorizeUrl);
-};
-
-// OAuth callback handler
-const callbackHandler = async (req, res) => {
-  const code = req.query.code;
-
-  if (!code) {
-    res.status(400).send("No code provided");
-    return;
-  }
-
-  try {
-    console.log("Exchanging code for tokens...");
-    const { tokens } = await oAuth2Client.getToken(code);
-    
-    // Log all tokens for debugging
-    console.log("\nToken response:");
-    console.log(tokens);
-    
-    // Check if refresh token exists
-    if (!tokens.refresh_token) {
-      return res.status(400).send("No refresh token received. Make sure you've set 'prompt: consent' and 'access_type: offline' in the authorization URL.");
-    }
-
-    // Send the refresh token in a simple HTML page with just a paragraph
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>OAuth Refresh Token</title>
-        <style>
-          body { font-family: sans-serif; margin: 20px; }
-          p { word-break: break-all; font-family: monospace; }
-        </style>
-      </head>
-      <body>
-        <h1>Your OAuth Refresh Token</h1>
-        <p>${tokens.refresh_token}</p>
-      </body>
-      </html>
-    `);
-  } catch (error) {
-    console.error(
-      "Error exchanging code for tokens:",
-      error instanceof Error ? error.message : "Unknown error"
-    );
-    res.status(500).send("Error getting tokens");
-  }
-};
-
-// Routes
-app.get("/", rootHandler);
-app.get("/oauth/callback", callbackHandler);
-
-// Start server
-const PORT = 8080;
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
-```
+7. The script automatically requests the appropriate scope for Gmail access (`https://mail.google.com/`) and sets the authorization parameters to always receive a refresh token (`access_type: "offline"` and `prompt: "consent"`).
 
 ##### Step 4: Configure the Firestore Send Email Extension
 
-When installing the extension, select "OAuth2" as the Authentication Type and provide the following parameters:
+When installing the extension, select "OAuth2" as the **Authentication Type** and provide the following parameters:
 
 - **OAuth2 SMTP Host**: `smtp.gmail.com` (for Gmail)
 - **OAuth2 SMTP Port**: `465` (for SMTPS) or `587` (for STARTTLS)
@@ -221,15 +168,15 @@ Leave `Use secure OAuth2 connection?` as the default value `true`.
 - **Testing Status**: If your OAuth consent screen is in "Testing" status, refresh tokens expire after 7 days unless User Type is set to "Internal"
 - **Solution**: Either publish your app or ensure User Type is set to "Internal" in the OAuth consent screen settings
 
+###### No Refresh Token Received
+
+- **Problem**: If you don't receive a refresh token during the OAuth flow
+- **Solution**: Make sure you've revoked previous access or forced consent by going to [Google Account Security](https://myaccount.google.com/security) > Third-party apps with account access
+
 ###### Scope Issues
 
 - **Problem**: If you see authentication errors, you might not have the correct scopes
-- **Solution**: Ensure you've added `https://mail.google.com/` as a scope in both the OAuth consent screen and in the OAuth URL generation code
-
-###### Access Denied
-
-- **Problem**: "Access denied" errors when sending emails
-- **Solution**: Make sure the Gmail account has allowed less secure app access or that you've correctly set up OAuth2
+- **Solution**: Ensure you've added `https://mail.google.com/` as a scope in the OAuth consent screen
 
 ###### Additional Resources
 
