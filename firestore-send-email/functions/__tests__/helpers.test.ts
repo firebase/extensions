@@ -255,7 +255,6 @@ test("correctly uses oAuth credentials when provided", () => {
     clientId: "fakeClientId",
     clientSecret: "fakeClientSecret",
     refreshToken: "test_refresh_token",
-    accessToken: "test_access_token",
     secure: true,
     authenticationType: AuthenticatonType.OAuth2,
     user: "test@test.com",
@@ -269,7 +268,6 @@ test("correctly uses oAuth credentials when provided", () => {
   expect(credentials.options.auth.clientSecret).toBe("fakeClientSecret");
   expect(credentials.options.auth.user).toBe("test@test.com");
   expect(credentials.options.auth.refreshToken).toBe("test_refresh_token");
-  expect(credentials.options.auth.accessToken).toBe("test_access_token");
   expect(credentials.options.auth.user).toBe("test@test.com");
 
   // The regex should match the smtpConnectionUri, it should be valid
