@@ -47,32 +47,23 @@ Add this document to the Firestore mail collection to send categorized emails.
 
 For more details, see the [SendGrid Categories documentation](https://docs.sendgrid.com/ui/sending-email/categories).
 
-#### Setting Up OAuth2 Authentication for Firestore Send Email
+#### Setting Up OAuth2 Authentication
 
-This guide will help you set up OAuth2 authentication for the Firestore Send Email extension, which is especially useful when working with Gmail and other providers that require OAuth2.
-
-##### Prerequisites
-
-- A Firebase project with the Blaze (pay as you go) plan
-- [Firebase CLI](https://firebase.google.com/docs/cli) installed
-- Google Cloud Platform (GCP) account with access to your Firebase project
-- Basic knowledge of Node.js if you want to run the helper script
+This section will help you set up OAuth2 authentication for the extension, using GCP (Gmail) as an example.
 
 ##### Step 1: Create OAuth Credentials in Google Cloud Platform
 
 1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
 2. Select your project
 3. In the left sidebar, navigate to **APIs & Services > Credentials**
-4. Click **+ CREATE CREDENTIALS** and select **OAuth client ID**
+4. Click Create Credentials and select **OAuth client ID**
 5. Set the application type to **Web application**
 6. Give your OAuth client a name (e.g., "Firestore Send Email Extension")
-7. Under **Authorized redirect URIs**, add the URI where you'll receive the OAuth callback
-   - For local testing: `http://localhost:8080/oauth/callback`
-   - For production: Use your Cloud Function URL (e.g., `https://<region>-<project-id>.cloudfunctions.net/oauth/callback`)
-   
-   **Note**: The redirect URI in your OAuth client settings MUST match exactly the callback URL in your code. Even small differences will cause authentication to fail.
-8. Click **Create**
-9. Note your **Client ID** and **Client Secret**
+7. Under **Authorized redirect URIs**, add the URI where you'll receive the OAuth callback, for example `http://localhost:8080/oauth/callback`.
+
+   **Note**: The redirect URI in your OAuth client settings MUST match exactly the callback URL in your code.
+
+8. Click **Create**.
 
 ##### Step 2: Configure OAuth Consent Screen
 
@@ -85,7 +76,7 @@ This guide will help you set up OAuth2 authentication for the Firestore Send Ema
 
 ##### Step 3: Generate a Refresh Token
 
-You'll need to create a simple web application to generate a refresh token. At the end of this section there is an example implemented in typescript.
+You'll need to create a simple web application to generate a refresh token. In this subsection we illustrate how to do so with Node.js.
 
 Here's how to set it up:
 
@@ -106,6 +97,7 @@ Here's how to set it up:
 3. Create an application with:
    - A root route that redirects users to Google's OAuth consent page
    - A callback route that receives the authorization code and exchanges it for tokens
+   (See the sample application included below)
 
 4. **Important**: The redirect URI in your code (e.g., `http://localhost:8080/oauth/callback`) **MUST** match exactly what you configured in the Google Cloud Console OAuth client settings.
 
