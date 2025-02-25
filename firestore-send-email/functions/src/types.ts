@@ -1,6 +1,8 @@
 import * as nodemailer from "nodemailer";
 import * as admin from "firebase-admin";
+import * as Handlebars from "handlebars";
 
+type HandlebarsTemplateDelegate = Handlebars.TemplateDelegate;
 export interface Config {
   location: string;
   mailCollection: string;
