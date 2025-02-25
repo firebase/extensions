@@ -21,7 +21,6 @@ export interface Config {
   clientId?: string;
   clientSecret?: string;
   refreshToken?: string;
-  accessToken?: string;
   authenticationType: AuthenticatonType;
 }
 export interface Attachment {

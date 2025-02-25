@@ -31,12 +31,11 @@ const config: Config = {
   tls: process.env.TLS_OPTIONS || "{}",
   host: process.env.HOST,
   port: parseInt(process.env.OAUTH_PORT, null),
-  secure: process.env.SECURE === "true",
+  secure: process.env.OAUTH_SECURE === "true",
   user: process.env.USER,
   clientId: process.env.CLIENT_ID,
   clientSecret: process.env.CLIENT_SECRET,
   refreshToken: process.env.REFRESH_TOKEN,
-  accessToken: process.env.ACCESS_TOKEN,
   authenticationType: process.env.AUTH_TYPE as AuthenticatonType,
 };
 
