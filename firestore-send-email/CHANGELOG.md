@@ -1,3 +1,7 @@
+## Version 0.1.37
+
+feat: add support for OAuth2 authentication
+
 ## Version 0.1.36
 
 feat - move to Node.js 20 runtimes
