@@ -356,7 +356,6 @@ async function deliver(
       logs.info("Using standard transport for email delivery.", {
         msg: payload,
       });
-      // TODO: this is timing out
       // Use the default transport for other SMTP providers
       result = await transport.sendMail({
         ...Object.assign(payload.message ?? {}, {
@@ -550,7 +549,6 @@ async function processWrite(
   }
 }
 
-// TODO: why is this called processQueue? It's not processing a queue, it's processing a single document.
 export const processQueue = functions.firestore
   .document(config.mailCollection)
   .onWrite(

@@ -220,6 +220,8 @@ When installing the extension, select "OAuth2" as the Authentication Type and pr
 - **OAuth2 Refresh Token**: The refresh token generated in Step 3
 - **SMTP User**: Your full Gmail email address
 
+Leave `Use secure OAuth2 connection?` as the default value `true`.
+
 ##### Troubleshooting
 
 ###### Refresh Token Expiration
