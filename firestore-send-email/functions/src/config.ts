@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Config } from "./types";
+import { AuthenticatonType, Config } from "./types";
 
 const config: Config = {
   location: process.env.LOCATION,
@@ -29,6 +29,14 @@ const config: Config = {
   TTLExpireType: process.env.TTL_EXPIRE_TYPE,
   TTLExpireValue: parseInt(process.env.TTL_EXPIRE_VALUE),
   tls: process.env.TLS_OPTIONS || "{}",
+  host: process.env.HOST,
+  port: parseInt(process.env.OAUTH_PORT, null),
+  secure: process.env.OAUTH_SECURE === "true",
+  user: process.env.USER,
+  clientId: process.env.CLIENT_ID,
+  clientSecret: process.env.CLIENT_SECRET,
+  refreshToken: process.env.REFRESH_TOKEN,
+  authenticationType: process.env.AUTH_TYPE as AuthenticatonType,
 };
 
 export default config;

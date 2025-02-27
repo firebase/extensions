@@ -1,7 +1,8 @@
 import { createTransport } from "nodemailer";
 import { URL } from "url";
 import { invalidTlsOptions, invalidURI } from "./logs";
-import { Config } from "./types";
+import { AuthenticatonType, Config } from "./types";
+import { logger } from "firebase-functions/v1";
 
 function compileUrl($: string): URL | null {
   try {
@@ -30,6 +31,16 @@ export function parseTlsOptions(tlsOptions: string) {
 }
 
 export function setSmtpCredentials(config: Config) {
+  /** Check if 0Auth2 authentication type */
+  if (config.authenticationType === AuthenticatonType.OAuth2) {
+    /** Return an 0Auth2 based transport */
+
+    const transporter = setupOAuth2(config);
+
+    logger.info("OAuth2 transport setup successfully");
+    return transporter;
+  }
+
   let url: URL;
   let transport;
 
@@ -81,5 +92,26 @@ export function isSendGrid(config: Config): boolean {
     return url.hostname === "smtp.sendgrid.net";
   } catch (err) {
     return false;
+  }
+}
+
+export function setupOAuth2(config: Config) {
+  const { clientId, clientSecret, refreshToken, user, host, port, secure } =
+    config;
+  try {
+    return createTransport({
+      host,
+      port,
+      secure,
+      auth: {
+        type: AuthenticatonType.OAuth2,
+        clientId,
+        clientSecret,
+        user,
+        refreshToken,
+      },
+    });
+  } catch (err) {
+    throw new Error("Error setting up OAuth2 transport");
   }
 }
