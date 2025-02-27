@@ -331,11 +331,8 @@ async function deliver(
   };
 
   try {
-    functions.logger.info("Preparing payload for delivery", { ref });
     // Prepare the payload for delivery (e.g., formatting recipients, templates)
     payload = await preparePayload(payload);
-
-    functions.logger.info("Prepared payload for delivery", { ref, payload });
 
     // Validate that there is at least one recipient (to, cc, or bcc)
     if (!payload.to.length && !payload.cc.length && !payload.bcc.length) {
@@ -544,7 +541,6 @@ async function processWrite(
     });
 
   if (shouldAttemptDelivery) {
-    functions.logger.info("Attempting delivery of email", { ref });
     await deliver(ref);
   }
 }

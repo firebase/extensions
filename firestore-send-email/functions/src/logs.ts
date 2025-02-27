@@ -21,6 +21,9 @@ import { logger } from "firebase-functions";
 export const obfuscatedConfig = Object.assign({}, config, {
   smtpConnectionUri: "<omitted>",
   smtpPassword: "<omitted>",
+  clientId: "<omitted>",
+  clientSecret: "<omitted>",
+  refreshToken: "<omitted>",
 });
 
 export function init() {

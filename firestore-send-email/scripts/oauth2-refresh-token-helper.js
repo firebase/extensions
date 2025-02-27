@@ -45,33 +45,60 @@ const path = require("path");
 const readline = require("readline");
 const os = require("os");
 
-// Parse command line arguments
-const args = process.argv.slice(2);
-let port = 8080;
-let clientId = "";
-let clientSecret = "";
-let outputFile = "refresh_token.txt";
-let showHelp = false;
+// Configuration constants
+const DEFAULT_PORT = 8080;
+const DEFAULT_OUTPUT_FILE = "refresh_token.txt";
+const AUTH_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+const SERVER_SHUTDOWN_DELAY_MS = 3000;
 
-// Parse arguments
-for (let i = 0; i < args.length; i++) {
-  const arg = args[i];
+/**
+ * Parses command line arguments
+ * @returns {Object} Parsed arguments
+ */
+function parseArguments() {
+  const args = process.argv.slice(2);
+  const config = {
+    port: DEFAULT_PORT,
+    clientId: "",
+    clientSecret: "",
+    outputFile: DEFAULT_OUTPUT_FILE,
+    showHelp: false,
+  };
 
-  if (arg === "--port" || arg === "-p") {
-    port = parseInt(args[++i], 10) || 8080;
-  } else if (arg === "--id" || arg === "-i") {
-    clientId = args[++i] || "";
-  } else if (arg === "--secret" || arg === "-s") {
-    clientSecret = args[++i] || "";
-  } else if (arg === "--output" || arg === "-o") {
-    outputFile = args[++i] || "refresh_token.txt";
-  } else if (arg === "--help" || arg === "-h") {
-    showHelp = true;
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    switch (arg) {
+      case "--port":
+      case "-p":
+        config.port = parseInt(args[++i], 10) || DEFAULT_PORT;
+        break;
+      case "--id":
+      case "-i":
+        config.clientId = args[++i] || "";
+        break;
+      case "--secret":
+      case "-s":
+        config.clientSecret = args[++i] || "";
+        break;
+      case "--output":
+      case "-o":
+        config.outputFile = args[++i] || DEFAULT_OUTPUT_FILE;
+        break;
+      case "--help":
+      case "-h":
+        config.showHelp = true;
+        break;
+    }
   }
+
+  return config;
 }
 
-// Show help if requested
-if (showHelp) {
+/**
+ * Shows help information
+ */
+function displayHelp() {
   console.log("Google OAuth Refresh Token Generator");
   console.log("\nThis tool helps you obtain a refresh token for Google APIs.");
   console.log(
@@ -98,250 +125,22 @@ if (showHelp) {
   console.log(
     "  CLIENT_SECRET  Google OAuth Client Secret (if --secret not specified)"
   );
-  process.exit(0);
 }
 
-// Check environment variable if port not provided
-if (!port) {
-  const portEnv = process.env.PORT;
-  if (portEnv) {
-    port = parseInt(portEnv, 10);
-    if (isNaN(port) || port <= 0 || port > 65535) {
-      console.log(`Invalid PORT environment variable: ${portEnv}`);
-      port = 8080;
-    }
-  } else {
-    port = 8080;
-  }
-}
-
-console.log("====================================");
-console.log("Google OAuth Refresh Token Generator");
-console.log("====================================\n");
-
-// Create readline interface for user input
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-
-// Main function to start the OAuth flow
-async function main() {
-  try {
-    // Get credentials
-    clientId = clientId || process.env.CLIENT_ID;
-    clientSecret = clientSecret || process.env.CLIENT_SECRET;
-
-    if (!clientId) {
-      clientId = await new Promise((resolve) => {
-        rl.question("Enter your Google OAuth Client ID: ", (answer) =>
-          resolve(answer)
-        );
-      });
-    }
-
-    if (!clientSecret) {
-      clientSecret = await new Promise((resolve) => {
-        rl.question("Enter your Google OAuth Client Secret: ", (answer) =>
-          resolve(answer)
-        );
-      });
-    }
-
-    if (!clientId || !clientSecret) {
-      console.error("Error: Client ID and Client Secret are required");
-      process.exit(1);
-    }
-
-    // Set up OAuth parameters
-    const redirectUrl = `http://localhost:${port}/oauth/callback`;
-    console.log(`\nUsing redirect URI: ${redirectUrl}`);
-    console.log(
-      "Make sure this exact URI is added to your OAuth consent screen redirects\n"
-    );
-
-    // Channels for communication between server and main thread
-    let resolveCode;
-    const codePromise = new Promise((resolve) => {
-      resolveCode = resolve;
-    });
-
-    let refreshToken = null;
-
-    // Create HTTP server
-    const server = http.createServer(async (req, res) => {
-      const parsedUrl = url.parse(req.url, true);
-      const pathname = parsedUrl.pathname;
-
-      // Root route - redirect to Google OAuth
-      if (pathname === "/") {
-        const authUrl =
-          `https://accounts.google.com/o/oauth2/v2/auth?` +
-          `client_id=${encodeURIComponent(clientId)}` +
-          `&redirect_uri=${encodeURIComponent(redirectUrl)}` +
-          `&response_type=code` +
-          `&scope=${encodeURIComponent("https://mail.google.com/")}` +
-          `&access_type=offline` +
-          `&prompt=consent`;
-
-        res.writeHead(302, { Location: authUrl });
-        res.end();
-        return;
-      }
-
-      // OAuth callback route
-      if (pathname === "/oauth/callback") {
-        const code = parsedUrl.query.code;
-
-        if (!code) {
-          res.writeHead(400);
-          res.end("No code provided");
-          return;
-        }
-
-        try {
-          // Exchange code for tokens
-          resolveCode(code);
-
-          // Exchange code for tokens using fetch
-          const tokenResponse = await fetch(
-            "https://oauth2.googleapis.com/token",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-              },
-              body: new URLSearchParams({
-                code,
-                client_id: clientId,
-                client_secret: clientSecret,
-                redirect_uri: redirectUrl,
-                grant_type: "authorization_code",
-              }),
-            }
-          );
-
-          const tokens = await tokenResponse.json();
-          refreshToken = tokens.refresh_token;
-
-          if (!refreshToken) {
-            res.writeHead(400, { "Content-Type": "text/html" });
-            res.end(`
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <meta charset="UTF-8">
-                <title>OAuth Error</title>
-                <style>
-                  body { font-family: sans-serif; margin: 20px; max-width: 800px; line-height: 1.6; }
-                </style>
-              </head>
-              <body>
-                <h1>Error: No Refresh Token Received</h1>
-                <p>Make sure you've revoked previous access or forced consent.</p>
-              </body>
-              </html>
-            `);
-            return;
-          }
-
-          // Save the refresh token to a file
-          const tokenFilePath = path.join(process.cwd(), outputFile);
-          fs.writeFileSync(tokenFilePath, refreshToken, { mode: 0o600 });
-
-          // Send success page
-          res.writeHead(200, { "Content-Type": "text/html" });
-          res.end(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="UTF-8">
-              <title>OAuth Refresh Token</title>
-              <style>
-                body { font-family: sans-serif; margin: 20px; max-width: 800px; line-height: 1.6; }
-                p { word-break: break-all; font-family: monospace; background: #f0f0f0; padding: 10px; }
-                .success { color: green; font-weight: bold; }
-              </style>
-            </head>
-            <body>
-              <h1>OAuth Successful!</h1>
-              <div class="success">✅ Token successfully generated</div>
-              <h2>Your OAuth Refresh Token:</h2>
-              <p>${refreshToken}</p>
-              <h3>Next Steps:</h3>
-              <ul>
-                <li>Your refresh token has been saved to <code>${outputFile}</code></li>
-                <li>Keep this token secure - it provides access to your Gmail account</li>
-                <li>You can now close this window and the program will exit automatically</li>
-              </ul>
-            </body>
-            </html>
-          `);
-
-          console.log("\n✅ Successfully obtained refresh token!");
-          console.log(`\n✅ Saved refresh token to ${tokenFilePath}`);
-
-          // Wait a bit before shutting down
-          setTimeout(() => {
-            console.log("\nToken generation complete! Shutting down...");
-            server.close();
-            rl.close();
-            process.exit(0);
-          }, 3000);
-        } catch (error) {
-          console.error("Error exchanging code for token:", error);
-          res.writeHead(500);
-          res.end("Error exchanging code for token");
-        }
-        return;
-      }
-
-      // Not found for all other routes
-      res.writeHead(404);
-      res.end("Not found");
-    });
-
-    // Start the server
-    server.listen(port, () => {
-      console.log(`Server running at http://localhost:${port}`);
-      openBrowser(`http://localhost:${port}`);
-    });
-
-    // Set a timeout for the entire process
-    const timeout = setTimeout(() => {
-      console.log("Timeout waiting for authentication");
-      server.close();
-      rl.close();
-      process.exit(1);
-    }, 2 * 60 * 1000); // 2 minutes
-
-    // Wait for the code from the callback
-    const code = await codePromise;
-    console.log("Exchanging code for tokens...");
-
-    // Clear the timeout when we get the code
-    clearTimeout(timeout);
-  } catch (error) {
-    console.error("Error:", error);
-    process.exit(1);
-  }
-}
-
-// Function to open the browser
+/**
+ * Opens a browser with the specified URL
+ * @param {string} url - URL to open
+ */
 function openBrowser(url) {
   console.log("Opening browser...");
 
-  let command;
-  switch (os.platform()) {
-    case "win32":
-      command = `start ${url}`;
-      break;
-    case "darwin":
-      command = `open ${url}`;
-      break;
-    default:
-      command = `xdg-open ${url}`;
-  }
+  const commands = {
+    win32: `start ${url}`,
+    darwin: `open ${url}`,
+    default: `xdg-open ${url}`,
+  };
+
+  const command = commands[os.platform()] || commands.default;
 
   exec(command, (error) => {
     if (error) {
@@ -349,6 +148,311 @@ function openBrowser(url) {
       console.log(`Please open your browser and navigate to ${url}`);
     }
   });
+}
+
+/**
+ * Creates the HTTP server to handle OAuth flow
+ * @param {Object} options - Server configuration options
+ * @returns {Promise<string>} The refresh token
+ */
+function createAuthServer({
+  clientId,
+  clientSecret,
+  port,
+  redirectUrl,
+  outputFile,
+}) {
+  return new Promise((resolve, reject) => {
+    let codeResolver;
+    const codePromise = new Promise((resolve) => {
+      codeResolver = resolve;
+    });
+
+    const server = http.createServer(async (req, res) => {
+      const parsedUrl = url.parse(req.url, true);
+      const pathname = parsedUrl.pathname;
+
+      // Handle routes
+      if (pathname === "/") {
+        handleRootRoute(res, { clientId, redirectUrl });
+      } else if (pathname === "/oauth/callback") {
+        await handleCallbackRoute(req, res, {
+          clientId,
+          clientSecret,
+          redirectUrl,
+          outputFile,
+          codeResolver,
+          server,
+          resolve,
+        });
+      } else {
+        // Not found for all other routes
+        res.writeHead(404);
+        res.end("Not found");
+      }
+    });
+
+    // Set a timeout for the entire process
+    const timeout = setTimeout(() => {
+      console.log("Timeout waiting for authentication");
+      server.close();
+      reject(new Error("Authentication timeout"));
+    }, AUTH_TIMEOUT_MS);
+
+    // Start the server
+    server.listen(port, () => {
+      console.log(`Server running at http://localhost:${port}`);
+      openBrowser(`http://localhost:${port}`);
+    });
+
+    // Wait for the code and process it
+    codePromise
+      .then((code) => {
+        console.log("Exchanging code for tokens...");
+        clearTimeout(timeout);
+      })
+      .catch((error) => {
+        clearTimeout(timeout);
+        server.close();
+        reject(error);
+      });
+  });
+}
+
+/**
+ * Handles the root route - redirects to Google OAuth
+ */
+function handleRootRoute(res, { clientId, redirectUrl }) {
+  const authUrl =
+    `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${encodeURIComponent(clientId)}` +
+    `&redirect_uri=${encodeURIComponent(redirectUrl)}` +
+    `&response_type=code` +
+    `&scope=${encodeURIComponent("https://mail.google.com/")}` +
+    `&access_type=offline` +
+    `&prompt=consent`;
+
+  res.writeHead(302, { Location: authUrl });
+  res.end();
+}
+
+/**
+ * Handles the OAuth callback route
+ */
+async function handleCallbackRoute(req, res, options) {
+  const {
+    clientId,
+    clientSecret,
+    redirectUrl,
+    outputFile,
+    codeResolver,
+    server,
+    resolve,
+  } = options;
+
+  const parsedUrl = url.parse(req.url, true);
+  const code = parsedUrl.query.code;
+
+  if (!code) {
+    res.writeHead(400);
+    res.end("No code provided");
+    return;
+  }
+
+  try {
+    // Notify that we received the code
+    codeResolver(code);
+
+    // Exchange code for tokens
+    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUrl,
+        grant_type: "authorization_code",
+      }),
+    });
+
+    const tokens = await tokenResponse.json();
+    const refreshToken = tokens.refresh_token;
+
+    if (!refreshToken) {
+      sendErrorResponse(res);
+      return;
+    }
+
+    // Save the refresh token to file
+    const tokenFilePath = path.join(process.cwd(), outputFile);
+    fs.writeFileSync(tokenFilePath, refreshToken, { mode: 0o600 });
+
+    // Send success response
+    sendSuccessResponse(res, { refreshToken, outputFile });
+
+    console.log("\n✅ Successfully obtained refresh token!");
+    console.log(`\n✅ Saved refresh token to ${tokenFilePath}`);
+
+    // Wait a bit before shutting down
+    setTimeout(() => {
+      console.log("\nToken generation complete! Shutting down...");
+      server.close();
+      resolve(refreshToken);
+    }, SERVER_SHUTDOWN_DELAY_MS);
+  } catch (error) {
+    console.error("Error exchanging code for token:", error);
+    res.writeHead(500);
+    res.end("Error exchanging code for token");
+  }
+}
+
+/**
+ * Sends an error response when no refresh token is received
+ */
+function sendErrorResponse(res) {
+  res.writeHead(400, { "Content-Type": "text/html" });
+  res.end(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>OAuth Error</title>
+      <style>
+        body { font-family: sans-serif; margin: 20px; max-width: 800px; line-height: 1.6; }
+      </style>
+    </head>
+    <body>
+      <h1>Error: No Refresh Token Received</h1>
+      <p>Make sure you've revoked previous access or forced consent.</p>
+    </body>
+    </html>
+  `);
+}
+
+/**
+ * Sends a success response with the refresh token
+ */
+function sendSuccessResponse(res, { refreshToken, outputFile }) {
+  res.writeHead(200, { "Content-Type": "text/html" });
+  res.end(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>OAuth Refresh Token</title>
+      <style>
+        body { font-family: sans-serif; margin: 20px; max-width: 800px; line-height: 1.6; }
+        p { word-break: break-all; font-family: monospace; background: #f0f0f0; padding: 10px; }
+        .success { color: green; font-weight: bold; }
+      </style>
+    </head>
+    <body>
+      <h1>OAuth Successful!</h1>
+      <div class="success">✅ Token successfully generated</div>
+      <h2>Your OAuth Refresh Token:</h2>
+      <p>${refreshToken}</p>
+      <h3>Next Steps:</h3>
+      <ul>
+        <li>Your refresh token has been saved to <code>${outputFile}</code></li>
+        <li>Keep this token secure - it provides access to your Gmail account</li>
+        <li>You can now close this window and the program will exit automatically</li>
+      </ul>
+    </body>
+    </html>
+  `);
+}
+
+/**
+ * Main function to start the OAuth flow
+ */
+async function main() {
+  try {
+    // Initialize config
+    const config = parseArguments();
+
+    // Show help if requested
+    if (config.showHelp) {
+      displayHelp();
+      process.exit(0);
+    }
+
+    // Setup console display
+    console.log("====================================");
+    console.log("Google OAuth Refresh Token Generator");
+    console.log("====================================\n");
+
+    // Check environment variable if port not provided
+    if (!config.port) {
+      const portEnv = process.env.PORT;
+      if (portEnv) {
+        const parsedPort = parseInt(portEnv, 10);
+        if (!isNaN(parsedPort) && parsedPort > 0 && parsedPort <= 65535) {
+          config.port = parsedPort;
+        } else {
+          console.log(`Invalid PORT environment variable: ${portEnv}`);
+          config.port = DEFAULT_PORT;
+        }
+      } else {
+        config.port = DEFAULT_PORT;
+      }
+    }
+
+    // Create readline interface for user input
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    // Get credentials
+    config.clientId = config.clientId || process.env.CLIENT_ID;
+    config.clientSecret = config.clientSecret || process.env.CLIENT_SECRET;
+
+    if (!config.clientId) {
+      config.clientId = await new Promise((resolve) => {
+        rl.question("Enter your Google OAuth Client ID: ", (answer) =>
+          resolve(answer)
+        );
+      });
+    }
+
+    if (!config.clientSecret) {
+      config.clientSecret = await new Promise((resolve) => {
+        rl.question("Enter your Google OAuth Client Secret: ", (answer) =>
+          resolve(answer)
+        );
+      });
+    }
+
+    if (!config.clientId || !config.clientSecret) {
+      console.error("Error: Client ID and Client Secret are required");
+      rl.close();
+      process.exit(1);
+    }
+
+    // Set up OAuth parameters
+    const redirectUrl = `http://localhost:${config.port}/oauth/callback`;
+    console.log(`\nUsing redirect URI: ${redirectUrl}`);
+    console.log(
+      "Make sure this exact URI is added to your OAuth consent screen redirects\n"
+    );
+
+    // Start the authentication server
+    await createAuthServer({
+      clientId: config.clientId,
+      clientSecret: config.clientSecret,
+      port: config.port,
+      redirectUrl,
+      outputFile: config.outputFile,
+    });
+
+    rl.close();
+  } catch (error) {
+    console.error("Error:", error);
+    process.exit(1);
+  }
 }
 
 // Run the main function

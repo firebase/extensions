@@ -63,7 +63,7 @@ params:
     label: Authentication Type
     description: >-
       The authentication type to be used for the SMTP server (e.g., OAuth2,
-      LOGIN, PLAIN).
+      Username & Password.
     type: select
     options:
       - label: Username & Password

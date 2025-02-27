@@ -219,7 +219,7 @@ You can find more information about this extension in the following articles:
 
 **Configuration Parameters:**
 
-* Authentication Type: The authentication type to be used for the SMTP server (e.g., OAuth2, LOGIN, PLAIN).
+* Authentication Type: The authentication type to be used for the SMTP server (e.g., OAuth2, Username & Password.
 
 * SMTP connection URI: A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465. In order to keep passwords secure, it is recommended to omit the password from the connection string while using the `SMTP Password` field for entering secrets and passwords. Passwords and secrets should now be included in `SMTP password` field.
 Secure format:
