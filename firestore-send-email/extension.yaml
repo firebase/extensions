@@ -119,7 +119,7 @@ params:
     description: >-
       The OAuth2 port number for the SMTP server (e.g., 465 for SMTPS, 587 for
       STARTTLS).
-    type: number
+    type: string
     required: false
     default: 465
 
@@ -128,7 +128,12 @@ params:
     description: >-
       Set to true to enable a secure connection (TLS/SSL) when using OAuth2
       authentication for the SMTP server.
-    type: boolean
+    type: select
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
     required: false
     default: true
 
