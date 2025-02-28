@@ -16,19 +16,6 @@ The extension supports resizing images in `JPEG`, `PNG`, `WebP`, `GIF`, `AVIF` a
 The extension can publish a resize completion event, which you can optionally enable when you install the extension. If you enable events, you can write custom event handlers that respond to these events. You can always enable or disable events later. Events will be emitted via Eventarc.
 
 Furthermore, you can choose if you want to receive events upon the successful completion of the image resizing. Hence, you can do anything based on the event you will receive. For example, you can use [EventArc gen2 functions](https://firebase.google.com/docs/functions/custom-events#handle-events) to be triggered on events published by the extension.
-### Example Event Handler for Successful Resize Operation
-```typescript
-import * as functions from 'firebase-functions';
-import { onCustomEventPublished } from 'firebase-functions/v2/eventarc';
-
-export const onImageResized = onCustomEventPublished(
-    "firebase.extensions.storage-resize-images.v1.onSuccess",
-    (event) => {
-        functions.logger.info("Resize Image is successful", event);
-        // Additional operations based on the event data can be performed here
-        return Promise.resolve();
-    }
-);
 
 #### Detailed configuration information
 
@@ -50,6 +37,21 @@ You can install multiple instances of this extension for the same project to con
 
 If events are enabled, and you want to create custom event handlers to respond to the events published by the extension, you must ensure that you have the appropriate [role/permissions](https://cloud.google.com/pubsub/docs/access-control#permissions_and_roles) to subscribe to Pub/Sub events.
 
+#### Example Event Handler for Successful Resize Operation
+Here is a an example of a custom event handler for events you can choose to emit from this extension:
+```typescript
+import * as functions from 'firebase-functions';
+import { onCustomEventPublished } from 'firebase-functions/v2/eventarc';
+
+export const onImageResized = onCustomEventPublished(
+    "firebase.extensions.storage-resize-images.v1.onSuccess",
+    (event) => {
+        functions.logger.info("Resize Image is successful", event);
+        // Additional operations based on the event data can be performed here
+        return Promise.resolve();
+    }
+);
+```
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 
