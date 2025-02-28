@@ -2,6 +2,8 @@
 
 feat: add support for OAuth2 authentication
 
+fix: default replyTo issue introduced in 0.1.35
+
 ## Version 0.1.36
 
 feat - move to Node.js 20 runtimes
