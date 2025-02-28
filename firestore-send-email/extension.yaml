@@ -158,7 +158,7 @@ params:
     description: >-
       The OAuth2 user email or username for SMTP authentication.
     type: string
-    required: true
+    required: false
 
   - param: MAIL_COLLECTION
     label: Email documents collection
