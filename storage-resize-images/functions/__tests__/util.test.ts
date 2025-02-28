@@ -49,4 +49,14 @@ describe("startsWithArray function for testing image path", () => {
       expect(allowResize).toBe(false);
     });
   });
+
+  it("can handle '+' when replacing '*' in globbed paths", () => {
+    const allowed = ["/test/picture", "/test/*/picture"];
+    const imagePaths = ["/test/picture", "/test/+/picture"];
+
+    imagePaths.forEach((path) => {
+      let allowResize = startsWithArray(allowed, path);
+      expect(allowResize).toBe(true);
+    });
+  });
 });

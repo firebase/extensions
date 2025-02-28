@@ -1,3 +1,7 @@
+## Version 0.2.8
+
+fixed - support '+' character in paths
+
 ## Version 0.2.7
 
 fixed - maintain aspect ratio of resized images (#2115)
