@@ -4,6 +4,8 @@ fixed - support '+' character in paths
 
 docs - fix typo in PREINSTALL.md
 
+fixed - handle paths correctly on windows
+
 ## Version 0.2.7
 
 fixed - maintain aspect ratio of resized images (#2115)
