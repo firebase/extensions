@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-send-email
-version: 0.1.36
+version: 0.1.37
 specVersion: v1beta
 
 displayName: Trigger Email from Firestore
@@ -59,6 +59,20 @@ resources:
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:MAIL_COLLECTION}/{id}
 
 params:
+  - param: AUTH_TYPE
+    label: Authentication Type
+    description: >-
+      The authentication type to be used for the SMTP server (e.g., OAuth2,
+      Username & Password.
+    type: select
+    options:
+      - label: Username & Password
+        value: UsernamePassword
+      - label: OAuth2
+        value: OAuth2
+    default: UsernamePassword
+    required: true
+
   - param: SMTP_CONNECTION_URI
     label: SMTP connection URI
     description: >-
@@ -78,18 +92,77 @@ params:
       password)
     type: string
     example: smtps://username@smtp.hostname.com:465
-    validationRegex: ^(smtp[s]*://(.*?(:[^:@]*)?@)?[^:@]+:[0-9]+(\\?[^ ]*)?)$
+    validationRegex:
+      "^(smtp[s]*://(.*?(:[^:@]*)?@)?[^:@]+:[0-9]+(\\?[^ ]*)?)|^$"
     validationErrorMessage:
       Invalid SMTP connection URI. Must be in the form
       `smtp(s)://username:password@hostname:port` or
-      `smtp(s)://username@hostname:port`.
-    required: true
+      `smtp(s)://username@hostname:port` or to be left blank.
+    required: false
 
   - param: SMTP_PASSWORD
     label: SMTP password
     description: >-
       User password for the SMTP server
     type: secret
+    required: false
+
+  - param: HOST
+    label: OAuth2 SMTP Host
+    description: >-
+      The OAuth2 hostname of the SMTP server (e.g., smtp.gmail.com).
+    type: string
+    required: false
+
+  - param: OAUTH_PORT
+    label: OAuth2 SMTP Port
+    description: >-
+      The OAuth2 port number for the SMTP server (e.g., 465 for SMTPS, 587 for
+      STARTTLS).
+    type: string
+    required: false
+    default: 465
+
+  - param: OAUTH_SECURE
+    label: Use secure OAuth2 connection?
+    description: >-
+      Set to true to enable a secure connection (TLS/SSL) when using OAuth2
+      authentication for the SMTP server.
+    type: select
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+    required: false
+    default: true
+
+  - param: CLIENT_ID
+    label: OAuth2 Client ID
+    description: >-
+      The OAuth2 Client ID for authentication with the SMTP server.
+    type: secret
+    required: false
+
+  - param: CLIENT_SECRET
+    label: OAuth2 Client Secret
+    description: >-
+      The OAuth2 Client Secret for authentication with the SMTP server.
+    type: secret
+    required: false
+
+  - param: REFRESH_TOKEN
+    label: OAuth2 Refresh Token
+    description: >-
+      The OAuth2 Refresh Token for authentication with the SMTP server.
+    type: secret
+    required: false
+
+  - param: USER
+    label: OAuth2 SMTP User
+    description: >-
+      The OAuth2 user email or username for SMTP authentication.
+    type: string
     required: false
 
   - param: MAIL_COLLECTION
