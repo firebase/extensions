@@ -1,3 +1,7 @@
+## Version 0.1.23
+
+fixed - backfill feature is disabled for now
+
 ## Version 0.1.22
 
 feat - move to Node.js 20 runtimes
