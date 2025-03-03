@@ -45,15 +45,11 @@ Before installing this extension, you'll need to:
 
 #### Import existing documents
 
-There are two ways to import existing Firestore documents into BigQuery - the backfill feature and the import script.
-
-To import documents that already exist at installation time into BigQuery, answer **Yes** when the installer asks "Import existing Firestore documents into BigQuery?" The extension will export existing documents as part of the installation and update processes.
-
-Alternatively, you can run the external [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md) to backfill existing documents. If you plan to use this script, answer **No** when prompted to import existing documents.
+To import existing documents you can run the external [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
 
 **Important:** Run the external import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
 
-If you don't either enable automatic import or run the import script, the extension only exports the content of documents that are created or changed after installation.
+Without use of this import script, the extension only exports the content of documents that are created or changed after installation.
 
 #### Transform function
 

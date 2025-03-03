@@ -1,6 +1,10 @@
+## Version 0.1.59
+
+docs - remove references to lifecycle backfill feature.
+
 ## Version 0.1.58
 
-feat - move to Node.js 20 runtimes
+feat - move to Node.js 20 runtimes.
 
 ## Version 0.1.57
 

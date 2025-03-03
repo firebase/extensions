@@ -101,13 +101,11 @@ For PowerShell script:
 
 ### _(Optional)_ Import existing documents
 
-If you chose _not_ to automatically import existing documents when you installed this extension, you can backfill your BigQuery dataset with all the documents in your collection using the import script.
+You can backfill your BigQuery dataset with all the documents in your collection using the import script.
 
-If you don't either enable automatic import or run the import script, the extension only exports the content of documents that are created or changed after installation.
+If you don't run the import script, the extension only exports the content of documents that are created or changed after installation.
 
 The import script can read all existing documents in a Cloud Firestore collection and insert them into the raw changelog table created by this extension. The script adds a special changelog for each document with the operation of `IMPORT` and the timestamp of epoch. This is to ensure that any operation on an imported document supersedes the `IMPORT`.
-
-**Warning:** Make sure to not run the import script if you enabled automatic backfill during the extension installation, as it might result in data loss.
 
 **Important:** Run the import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
 
