@@ -258,10 +258,10 @@ async function sendWithSendGrid(payload: QueuePayload) {
 
   // Transform attachments to match SendGrid's expected format
   const formatAttachments = (
-    attachments: Attachment[] = []
+    attachments: QueuePayload["message"]["attachments"] = []
   ): SendGridAttachment[] => {
     return attachments.map((attachment) => ({
-      content: attachment.content || "", // Base64-encoded string
+      content: (attachment.content as string | undefined) || "", // Base64-encoded string
       filename: attachment.filename || "attachment",
       type: attachment.contentType,
       disposition: attachment.contentDisposition,
@@ -269,13 +269,17 @@ async function sendWithSendGrid(payload: QueuePayload) {
     }));
   };
 
+  const replyTo = { email: payload.replyTo || config.defaultReplyTo };
+
+  const attachments = payload.message.attachments;
+
   // Build the message object for SendGrid
   const msg: sgMail.MailDataRequired = {
     to: formatEmails(payload.to),
     cc: formatEmails(payload.cc),
     bcc: formatEmails(payload.bcc),
     from: { email: payload.from || config.defaultFrom },
-    replyTo: { email: payload.replyTo || config.defaultReplyTo },
+    replyTo: replyTo.email ? replyTo : undefined,
     subject: payload.message?.subject,
     text:
       typeof payload.message?.text === "string"
@@ -287,7 +291,7 @@ async function sendWithSendGrid(payload: QueuePayload) {
         : undefined,
     categories: payload.categories, // SendGrid-specific field
     headers: payload.headers,
-    attachments: formatAttachments(payload.attachments), // Transform attachments to SendGrid format
+    attachments: formatAttachments(attachments), // Transform attachments to SendGrid format
     mailSettings: payload.sendGrid?.mailSettings || {}, // SendGrid-specific mail settings
   };
 
