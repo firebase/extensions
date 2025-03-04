@@ -5,7 +5,9 @@ import { parseProgram, validateNonInteractiveParams } from "./non-interactive";
 
 const DEFAULT_SAMPLE_SIZE = 100;
 
-interface CliConfig {
+//  TODO: if you dont pass in a schema file (e.g use gemini to create one, the script fails)
+
+export interface CliConfig {
   projectId: string;
   bigQueryProjectId: string;
   datasetId: string;

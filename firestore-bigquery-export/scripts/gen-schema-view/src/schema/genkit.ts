@@ -1,34 +1,79 @@
-import { gemini20Flash, googleAI } from "@genkit-ai/googleai";
-import { Genkit, genkit, z } from "genkit";
+import type { CliConfig } from "../config";
+import firebase = require("firebase-admin");
+import { genkit } from "genkit";
+import { googleAI, gemini20Flash } from "@genkit-ai/googleai";
 import * as fs from "fs/promises";
 import * as path from "path";
-import { SchemaSchema } from "./genkitSchema"; // Assuming the schema is in a separate file
+import inquirer from "inquirer";
 
-/**
- * Initializes Genkit with the Google AI plugin.
- *
- * @param {string} apiKey - The API key for Google AI.
- * @returns {ReturnType<typeof genkit>} - An instance of Genkit configured with the Google AI plugin.
- */
-const initializeGenkit = (apiKey: string) => {
-  return genkit({ plugins: [googleAI({ apiKey })] });
-};
+const ai = genkit({
+  plugins: [
+    googleAI({
+      // TODO: we need to pass in the api key
+      // apiKey: config.googleAiKey,
+    }),
+  ],
+});
 
-/**
- * Validates the content of a schema against the SchemaSchema.
- *
- * @param {string} content - The JSON string representation of the schema to validate.
- * @throws {Error} - Throws an error if the schema is invalid.
- * @returns {boolean} - Returns true if the schema is valid.
- */
-const validateSchemaContent = (content: string) => {
+export async function sampleFirestoreDocuments(
+  collectionPath: string,
+  sampleSize: number
+): Promise<any[]> {
+  const db = firebase.firestore();
+
   try {
-    SchemaSchema.parse(JSON.parse(content));
-    return true;
+    const snapshot = await db
+      .collection(collectionPath)
+      .where("__name__", ">=", Math.random().toString())
+      .limit(sampleSize)
+      .get();
+
+    const documents = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return serializeDocument(data);
+    });
+
+    console.log(`Successfully sampled ${documents.length} documents.`);
+    return documents;
   } catch (error) {
-    throw new Error(`Invalid schema content: ${error.message}`);
+    console.error("Error sampling documents:", error);
+    throw error;
   }
-};
+}
+
+function serializeDocument(data: any): any {
+  if (!data) return null;
+
+  if (data instanceof Date) {
+    return { _type: "timestamp", value: data.toISOString() };
+  }
+
+  if (data instanceof firebase.firestore.GeoPoint) {
+    return {
+      _type: "geopoint",
+      latitude: data.latitude,
+      longitude: data.longitude,
+    };
+  }
+
+  if (data instanceof firebase.firestore.DocumentReference) {
+    return { _type: "reference", path: data.path };
+  }
+
+  if (Array.isArray(data)) {
+    return data.map((item) => serializeDocument(item));
+  }
+
+  if (typeof data === "object") {
+    const result = {};
+    for (const [key, value] of Object.entries(data)) {
+      result[key] = serializeDocument(value);
+    }
+    return result;
+  }
+
+  return data;
+}
 
 /**
  * Writes a schema file to the specified directory if it does not already exist.
@@ -53,76 +98,19 @@ const writeSchemaFile = async (
   }
 };
 
-/**
- * Defines the writeSchema tool for the Genkit agent.
- *
- * @param {ReturnType<typeof genkit>} ai - The Genkit instance.
- * @param {string} schemaDirectory - The directory where schema files are stored.
- * @returns {object} - The defined tool instance.
- */
-const defineWriteSchemaTool = (
-  ai: ReturnType<typeof genkit>,
-  schemaDirectory: string
-) => {
-  return ai.defineTool(
-    {
-      name: "writeSchema",
-      description: "Creates a new schema file",
-      inputSchema: z.object({
-        fileName: z.string().describe("Name of the schema file to create"),
-        content: z.string().describe("JSON content of the schema"),
-      }),
-      outputSchema: z.string().describe("Result of the operation"),
-    },
-    async ({
-      fileName,
-      content,
-    }: {
-      fileName: string;
-      content: string;
-    }): Promise<string> => {
-      try {
-        validateSchemaContent(content);
-        return await writeSchemaFile(schemaDirectory, fileName, content);
-      } catch (error) {
-        return `Error creating schema: ${error.message}`;
-      }
-    }
-  );
-};
-
-/**
- * Defines the schema management agent for Genkit.
- *
- * @param {ReturnType<typeof genkit>} ai - The Genkit instance.
- * @param {string} schemaDirectory - The directory where schema files are stored.
- * @param {string} collectionName - The name of the Firestore collection.
- * @param {string} tablePrefix - The prefix for the generated BigQuery table schema.
- * @param {any[]} sampleData - Sample documents from the Firestore collection.
- * @returns {object} - The defined prompt instance.
- */
-const defineSchemaAgent = (
-  ai: Genkit,
-  schemaDirectory: string,
-  collectionName: string,
-  tablePrefix: string,
-  sampleData: any[]
-): object => {
-  const writeSchemaTool = defineWriteSchemaTool(ai, schemaDirectory);
-
-  return ai.definePrompt(
-    {
-      name: "schemaAgent",
-      description: "Agent for managing BigQuery schema files",
-      tools: [writeSchemaTool],
-      model: gemini20Flash,
-    },
-    `
+const biqquerySchemaPrompt = ({
+  collectionName,
+  sampleData,
+  tablePrefix,
+}: {
+  collectionName: string;
+  sampleData: any[];
+  tablePrefix: string;
+}) => `
     You are a Schema Management Agent for Generating BigQuery schemas from Firestore Collections. 
     Your primary tasks are:
     1. Analyze the provided sample documents
     2. Generate an appropriate BigQuery schema
-    3. Save the schema using the writeSchema tool
   
     I will provide you with sample documents from the collection "${collectionName}".
   
@@ -188,55 +176,61 @@ const defineSchemaAgent = (
   
     IMPORTANT: After analyzing the sample data:
     1. Generate a schema with detailed descriptions for ALL fields
-    2. Use the writeSchema tool to save it as "${tablePrefix}.json"
-    3. Confirm the schema was successfully saved
-    4. Make sure all fields are correctly represented in the schema, and described and formatted
-    5. SQL has a number of reserved keywords that can cause conflicts when creating a schema, timestamp is one such example.
+    2. Make sure all fields are correctly represented in the schema, and described and formatted
+    3. SQL has a number of reserved keywords that can cause conflicts when creating a schema, timestamp is one such example.
         To ensure your Firestore document field names do not conflict, use the column_name option to override the field name.
     for example:
         {
     "fields": [
         {
-        "name": "name",
-        "type": "string"
+          "name": "name",
+          "type": "string"
         },
         {
-        "name": "age",
-        "type": "number",
-        "column_name": "new_column_name"
+          "name": "age",
+          "type": "number",
+          "column_name": "new_column_name"
         }
     ]
     }
   
-    Begin by analyzing the sample data and create a well-documented schema.`
-  );
-};
+    Begin by analyzing the sample data and then create a well-documented schema.`;
 
-/**
- * Main function to run the Genkit agent for schema management.
- *
- * @param {string} apiKey - The API key for Google AI.
- * @param {string} schemaDirectory - The directory where schema files are stored.
- * @param {string} collectionName - The name of the Firestore collection.
- * @param {string} tablePrefix - The prefix for the generated BigQuery table schema.
- * @param {any[]} sampleData - Sample documents from the Firestore collection.
- * @returns {Promise<any>} - The chat interface with the schema management agent.
- */
-export const runAgent = (
-  apiKey: string,
-  schemaDirectory: string,
-  collectionName: string,
-  tablePrefix: string,
-  sampleData: any[]
-) => {
-  const ai = initializeGenkit(apiKey);
-  const schemaAgent = defineSchemaAgent(
-    ai,
-    schemaDirectory,
-    collectionName,
-    tablePrefix,
-    sampleData
+export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
+  //  get sample data from Firestore
+  const sampleData = await sampleFirestoreDocuments(
+    config.collectionPath!,
+    config.agentSampleSize!
   );
 
-  return ai.chat(schemaAgent);
+  const prompt = biqquerySchemaPrompt({
+    collectionName: config.collectionPath!,
+    sampleData,
+    tablePrefix: config.tableNamePrefix,
+  });
+
+  // prompt gemini with sample data to generate a schema file
+  const { text } = await ai.generate({
+    model: gemini20Flash,
+    prompt,
+  });
+
+  await writeSchemaFile("./schemas", `${config.tableNamePrefix}.json`, text);
+  // confirm with user that schema file is correct
+  const confirmation = await inquirer.prompt([
+    {
+      type: "confirm",
+      name: "proceed",
+      message:
+        "Have you reviewed the schema and want to proceed with creating the views?",
+      default: false,
+    },
+  ]);
+
+  if (!confirmation.proceed) {
+    console.log(
+      "Operation cancelled. Please modify the schema file and run the script again."
+    );
+    process.exit(0);
+  }
 };
