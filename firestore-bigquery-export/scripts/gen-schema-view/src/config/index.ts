@@ -12,8 +12,6 @@ export interface CliConfig {
   bigQueryProjectId: string;
   datasetId: string;
   tableNamePrefix: string;
-  // TODO: isn't this the same as tableNamePrefix? check.
-  collectionPath?: string;
   schemas: { [schemaName: string]: FirestoreSchema };
   useGemini?: boolean;
   agentSampleSize?: number;
@@ -33,9 +31,8 @@ export async function parseConfig(): Promise<CliConfig> {
       bigQueryProjectId: program.bigQueryProject || program.project,
       datasetId: program.dataset,
       tableNamePrefix: program.tableNamePrefix,
-      collectionPath: program.collectionPath,
-      schemas: readSchemas(program.schemaFiles),
       useGemini: program.useGemini,
+      schemas: !program.useGemini ? readSchemas(program.schemaFiles) : {},
       agentSampleSize: DEFAULT_SAMPLE_SIZE,
       googleAiKey: program.googleAiKey,
     };
@@ -46,7 +43,6 @@ export async function parseConfig(): Promise<CliConfig> {
     dataset,
     tableNamePrefix,
     schemaFiles,
-    collectionPath,
     useGemini,
     // TODO: rename?
     googleAiKey,
@@ -57,10 +53,9 @@ export async function parseConfig(): Promise<CliConfig> {
     bigQueryProjectId: bigQueryProject,
     datasetId: dataset,
     tableNamePrefix: tableNamePrefix,
-    collectionPath: collectionPath,
-    schemas: readSchemas(
+    schemas: !useGemini ? readSchemas(
       schemaFiles.split(",").map((schemaFileName) => schemaFileName.trim())
-    ),
+    ) : {},
     useGemini: useGemini,
     agentSampleSize: DEFAULT_SAMPLE_SIZE,
     googleAiKey: googleAiKey,

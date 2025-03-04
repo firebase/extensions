@@ -50,27 +50,28 @@ export const questions = [
   },
   {
     message:
-      "Where should this script look for schema definitions? (Enter a comma-separated list of, optionally globbed, paths to files or directories).",
-    name: "schemaFiles",
-    type: "input",
-  },
-  {
-    message:
       "Would you like to use a Gemini to automatically analyze your data and generate a draft schema?",
     name: "useGemini",
     type: "confirm",
     default: false,
   },
+  {
+    message:
+      "Where should this script look for schema definitions? (Enter a comma-separated list of, optionally globbed, paths to files or directories).",
+    name: "schemaFiles",
+    type: "input",
+    when: (answers) => !answers.useGemini,
+  },
   // TODO: I dont think this is required as we have it above
   // TODO: can we make the questions conditional? if we select useGemini then dont ask about finding schema files?
-  {
-    message: "What is the Firestore collection path you want to analyze?",
-    name: "collectionPath",
-    type: "input",
-    when: (answers) => answers.useGemini,
-    validate: (value) =>
-      validateInput(value, "collection path", FIRESTORE_VALID_CHARACTERS),
-  },
+  // {
+  //   message: "What is the Firestore collection path you want to analyze?",
+  //   name: "collectionPath",
+  //   type: "input",
+  //   when: (answers) => answers.useGemini,
+  //   validate: (value) =>
+  //     validateInput(value, "collection path", FIRESTORE_VALID_CHARACTERS),
+  // },
   {
     message: "Please provide your Google AI API Key:",
     name: "googleAiKey",
