@@ -17,71 +17,10 @@
  */
 
 import firebase = require("firebase-admin");
-import inquirer from "inquirer";
 import { FirestoreBigQuerySchemaViewFactory, FirestoreSchema } from "./schema";
 import { readSchemas } from "./schema-loader-utils";
-import { runAgent } from "./schema/genkit";
 import { parseConfig } from "./config";
-
-export async function sampleFirestoreDocuments(
-  collectionPath: string,
-  sampleSize: number
-): Promise<any[]> {
-  const db = firebase.firestore();
-
-  try {
-    const snapshot = await db
-      .collection(collectionPath)
-      .where("__name__", ">=", Math.random().toString())
-      .limit(sampleSize)
-      .get();
-
-    const documents = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return serializeDocument(data);
-    });
-
-    console.log(`Successfully sampled ${documents.length} documents.`);
-    return documents;
-  } catch (error) {
-    console.error("Error sampling documents:", error);
-    throw error;
-  }
-}
-
-function serializeDocument(data: any): any {
-  if (!data) return null;
-
-  if (data instanceof Date) {
-    return { _type: "timestamp", value: data.toISOString() };
-  }
-
-  if (data instanceof firebase.firestore.GeoPoint) {
-    return {
-      _type: "geopoint",
-      latitude: data.latitude,
-      longitude: data.longitude,
-    };
-  }
-
-  if (data instanceof firebase.firestore.DocumentReference) {
-    return { _type: "reference", path: data.path };
-  }
-
-  if (Array.isArray(data)) {
-    return data.map((item) => serializeDocument(item));
-  }
-
-  if (typeof data === "object") {
-    const result = {};
-    for (const [key, value] of Object.entries(data)) {
-      result[key] = serializeDocument(value);
-    }
-    return result;
-  }
-
-  return data;
-}
+import { generateSchemaFilesWithGemini } from "./schema/genkit";
 
 async function run(): Promise<number> {
   const config = await parseConfig();
@@ -101,58 +40,11 @@ async function run(): Promise<number> {
   );
 
   if (config.useGemini) {
-    // TODO: move to genkit subdirectory
     try {
-      const sampleData = await sampleFirestoreDocuments(
-        config.collectionPath!,
-        config.agentSampleSize!
-      );
-      const chat = runAgent(
-        config.googleAiKey!,
-        // TODO: set this somehow from user input
-        "./schemas",
-        config.tableNamePrefix,
-        config.collectionPath!,
-        sampleData
-      );
-      await chat.send(
-        `Please analyze these documents and generate an appropriate BigQuery schema. ` +
-          `**Then use the writeSchema tool to save it as "${config.tableNamePrefix}.json**". ` +
-          `Let me know once you've created the schema file.`
-      );
-      const schemaName = `${config.tableNamePrefix}`;
-      const schemas = readSchemas([`./schemas/${schemaName}.json`]);
+      await generateSchemaFilesWithGemini(config);
+      const schemas = readSchemas([`./schemas/${config.tableNamePrefix}.json`]);
 
-      if (!schemas[schemaName]) {
-        console.error(
-          `Error reading schema file: ./schemas/${schemaName}.json. Gemini may have failed to generate the schema.
-          If the issue persists, please manually create the schema file and run the script again.`
-        );
-        process.exit(1);
-      }
-
-      const schemaPath = `./schemas/${config.tableNamePrefix}.json`;
-      console.log(
-        `\nSchema generation complete. The schema file has been created at: ${schemaPath}. Please review the schema file and confirm if you want to proceed.`
-      );
-
-      const confirmation = await inquirer.prompt([
-        {
-          type: "confirm",
-          name: "proceed",
-          message:
-            "Have you reviewed the schema and want to proceed with creating the views?",
-          default: false,
-        },
-      ]);
-
-      if (!confirmation.proceed) {
-        console.log(
-          "Operation cancelled. Please modify the schema file and run the script again."
-        );
-        process.exit(0);
-      }
-
+      // TODO: move this out of the block so we're not repeating ourselves.
       for (const name in schemas) {
         await viewFactory.initializeSchemaViewResources(
           config.datasetId,

@@ -1,4 +1,4 @@
-import * as program from "commander";
+import program from "commander";
 
 /**
  * Helper function to collect multiple values for an option into an array
