@@ -194,12 +194,12 @@ const biqquerySchemaPrompt = ({
 export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
   //  get sample data from Firestore
   const sampleData = await sampleFirestoreDocuments(
-    config.collectionPath!,
+    config.tableNamePrefix!,
     config.agentSampleSize!
   );
 
   const prompt = biqquerySchemaPrompt({
-    collectionName: config.collectionPath!,
+    collectionName: config.tableNamePrefix!,
     sampleData,
     tablePrefix: config.tableNamePrefix,
   });
@@ -214,20 +214,14 @@ export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
   });
 
   // prompt gemini with sample data to generate a schema file
-  const { text, output } = await ai.generate({
+  const { text } = await ai.generate({
     model: gemini20Flash,
     prompt,
     output: {
       format: 'json',
-      schema: z.any()
+      schema: SchemaSchema
     }
   });
-
-  throw new Error(`gets to here ${JSON.stringify(output)}`)
-
-  console.log("this is output",output)
-
-  console.log(text);
 
   await writeSchemaFile("./schemas", `${config.tableNamePrefix}.json`, text);
   // confirm with user that schema file is correct
