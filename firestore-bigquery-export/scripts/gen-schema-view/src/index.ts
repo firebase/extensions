@@ -39,20 +39,13 @@ async function run(): Promise<number> {
     config.bigQueryProjectId
   );
 
+  // Generate schema files using Gemini if enabled
+  // Otherwise, read schema files from the filesystem
+  let schemas = config.schemas;
   if (config.useGemini) {
     try {
       await generateSchemaFilesWithGemini(config);
-      const schemas = readSchemas([`./schemas/${config.tableNamePrefix}.json`]);
-
-      // TODO: move this out of the block so we're not repeating ourselves.
-      for (const name in schemas) {
-        await viewFactory.initializeSchemaViewResources(
-          config.datasetId,
-          config.tableNamePrefix,
-          name,
-          schemas[name]
-        );
-      }
+      schemas = readSchemas([`./schemas/${config.tableNamePrefix}.json`]);
 
       console.log("Schema views created successfully.");
     } catch (error) {
@@ -63,16 +56,18 @@ async function run(): Promise<number> {
     if (Object.keys(config.schemas).length === 0) {
       console.log(`No schema files found!`);
     }
-
-    for (const schemaName in config.schemas) {
-      await viewFactory.initializeSchemaViewResources(
-        config.datasetId,
-        config.tableNamePrefix,
-        schemaName,
-        config.schemas[schemaName]
-      );
-    }
   }
+
+  // Initialize schema views
+  for (const name in schemas) {
+    await viewFactory.initializeSchemaViewResources(
+      config.datasetId,
+      config.tableNamePrefix,
+      name,
+      schemas[name]
+    );
+  }
+
   return 0;
 }
 
