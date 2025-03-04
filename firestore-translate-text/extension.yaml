@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-translate-text
-version: 0.1.22
+version: 0.1.23
 specVersion: v1beta
 
 tags: [ai]
@@ -154,19 +154,20 @@ params:
     type: secret
     required: false
 
-  - param: DO_BACKFILL
-    label: Translate existing documents?
-    description: >
-      Should existing documents in the Firestore collection be translated as
-      well?  If you've added new languages since a document was translated, this
-      will fill those in as well.
-    type: select
-    required: true
-    options:
-      - label: Yes
-        value: true
-      - label: No
-        value: false
+  # ! DO NOT UNCOMMENT THIS PARAMETER, IT IS CURRENTLY PROBLEMATIC
+  # - param: DO_BACKFILL
+  #   label: Translate existing documents?
+  #   description: >
+  #     Should existing documents in the Firestore collection be translated as
+  #     well?  If you've added new languages since a document was translated, this
+  #     will fill those in as well.
+  #   type: select
+  #   required: true
+  #   options:
+  #     - label: Yes
+  #       value: true
+  #     - label: No
+  #       value: false
 
 events:
   - type: firebase.extensions.firestore-translate-text.v1.onStart
@@ -188,6 +189,7 @@ events:
     description:
       Occurs when the function is settled. Provides no customized data other
       than the context.
+# ! DO NOT UNCOMMENT THE BELOW, IT IS CURRENTLY PROBLEMATIC
 # lifecycleEvents:
 #   onInstall:
 #     function: fstranslatebackfill
