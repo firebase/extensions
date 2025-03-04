@@ -277,7 +277,7 @@ essential for the script to insert data into an already partitioned table.)
 Note: Cluster columns must be top-level, non-repeated columns of one of the  following types: BIGNUMERIC, BOOL, DATE, DATETIME, GEOGRAPHY, INT64, NUMERIC,  RANGE, STRING, TIMESTAMP. Clustering will not be added if a field with an invalid type is present in this parameter.
 Available schema extensions table fields for clustering include: `document_id, document_name, timestamp, event_id,  operation, data`.
 
-* Maximum number of synced documents per second: This parameter will set the maximum number of syncronised documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota. Ensure that you have a set a low enough number to compensate. Defaults to 10.
+* Maximum number of synced documents per second: This parameter will set the maximum number of syncronised documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota. Ensure that you have a set a low enough number to compensate. Defaults to 100.
 
 * View Type: Select the type of view to create in BigQuery. A regular view is a virtual table defined by a SQL query.  A materialized view persists the results of a query for faster access, with either incremental or  non-incremental updates. Please note that materialized views in this extension come with several  important caveats and limitations - carefully review the pre-install documentation before selecting  these options to ensure they are appropriate for your use case.
 
