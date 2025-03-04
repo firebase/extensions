@@ -1,19 +1,11 @@
 import type { CliConfig } from "../config";
 import firebase = require("firebase-admin");
-import { genkit } from "genkit";
+import { genkit, z } from "genkit";
 import { googleAI, gemini20Flash } from "@genkit-ai/googleai";
 import * as fs from "fs/promises";
 import * as path from "path";
 import inquirer from "inquirer";
-
-const ai = genkit({
-  plugins: [
-    googleAI({
-      // TODO: we need to pass in the api key
-      // apiKey: config.googleAiKey,
-    }),
-  ],
-});
+import {SchemaSchema} from './genkitSchema'
 
 export async function sampleFirestoreDocuments(
   collectionPath: string,
@@ -194,7 +186,10 @@ const biqquerySchemaPrompt = ({
     ]
     }
   
-    Begin by analyzing the sample data and then create a well-documented schema.`;
+    Begin by analyzing the sample data and then create a well-documented schema.
+    
+    Please respond ONLY with the schema in json format
+    `;
 
 export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
   //  get sample data from Firestore
@@ -209,11 +204,30 @@ export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
     tablePrefix: config.tableNamePrefix,
   });
 
+  // initialize genkit with googleAI plugin
+  const ai = genkit({
+    plugins: [
+      googleAI({
+        apiKey: config.googleAiKey,
+      }),
+    ],
+  });
+
   // prompt gemini with sample data to generate a schema file
-  const { text } = await ai.generate({
+  const { text, output } = await ai.generate({
     model: gemini20Flash,
     prompt,
+    output: {
+      format: 'json',
+      schema: z.any()
+    }
   });
+
+  throw new Error(`gets to here ${JSON.stringify(output)}`)
+
+  console.log("this is output",output)
+
+  console.log(text);
 
   await writeSchemaFile("./schemas", `${config.tableNamePrefix}.json`, text);
   // confirm with user that schema file is correct
