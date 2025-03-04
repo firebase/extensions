@@ -1,11 +1,14 @@
 {
   "compilerOptions": {
-    "lib": ["es6"],
-    "module": "commonjs",
+    "lib": ["ESNext"],
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "noImplicitReturns": true,
     "outDir": "lib",
     "sourceMap": false,
-    "target": "es6"
+    "target": "ES2020",
+    "esModuleInterop": true,
+    "skipLibCheck": true
   },
   "compileOnSave": true,
   "include": ["src"]
