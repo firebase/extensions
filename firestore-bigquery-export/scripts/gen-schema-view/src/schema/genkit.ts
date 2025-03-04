@@ -1,4 +1,4 @@
-import { gemini20FlashExp, googleAI } from "@genkit-ai/googleai";
+import { gemini20Flash, googleAI } from "@genkit-ai/googleai";
 import { Genkit, genkit, z } from "genkit";
 import * as fs from "fs/promises";
 import * as path from "path";
@@ -115,7 +115,7 @@ const defineSchemaAgent = (
       name: "schemaAgent",
       description: "Agent for managing BigQuery schema files",
       tools: [writeSchemaTool],
-      model: gemini20FlashExp,
+      model: gemini20Flash,
     },
     `
     You are a Schema Management Agent for Generating BigQuery schemas from Firestore Collections. 
@@ -237,5 +237,6 @@ export const runAgent = (
     tablePrefix,
     sampleData
   );
+
   return ai.chat(schemaAgent);
 };
