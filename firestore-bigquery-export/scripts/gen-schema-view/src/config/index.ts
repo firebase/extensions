@@ -14,8 +14,10 @@ export interface CliConfig {
   tableNamePrefix: string;
   schemas: { [schemaName: string]: FirestoreSchema };
   useGemini?: boolean;
+  geminiAnalyzeCollectionPath?: string;
   agentSampleSize?: number;
   googleAiKey?: string;
+  schemaDirectory?: string;
 }
 
 export async function parseConfig(): Promise<CliConfig> {
@@ -33,8 +35,10 @@ export async function parseConfig(): Promise<CliConfig> {
       tableNamePrefix: program.tableNamePrefix,
       useGemini: program.useGemini,
       schemas: !program.useGemini ? readSchemas(program.schemaFiles) : {},
+      geminiAnalyzeCollectionPath: program.geminiAnalyzeCollectionPath,
       agentSampleSize: DEFAULT_SAMPLE_SIZE,
       googleAiKey: program.googleAiKey,
+      schemaDirectory: program.schemaDirectory,
     };
   }
   const {
@@ -44,20 +48,23 @@ export async function parseConfig(): Promise<CliConfig> {
     tableNamePrefix,
     schemaFiles,
     useGemini,
-    // TODO: rename?
+    geminiAnalyzeCollectionPath,
     googleAiKey,
+    schemaDirectory,
   } = await promptInquirer();
 
   return {
     projectId: project,
     bigQueryProjectId: bigQueryProject,
     datasetId: dataset,
-    tableNamePrefix: tableNamePrefix,
+    tableNamePrefix,
     schemas: !useGemini ? readSchemas(
       schemaFiles.split(",").map((schemaFileName) => schemaFileName.trim())
     ) : {},
-    useGemini: useGemini,
+    useGemini,
+    geminiAnalyzeCollectionPath,
     agentSampleSize: DEFAULT_SAMPLE_SIZE,
-    googleAiKey: googleAiKey,
+    googleAiKey,
+    schemaDirectory,
   };
 }

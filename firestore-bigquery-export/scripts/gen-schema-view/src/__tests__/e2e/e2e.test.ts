@@ -19,7 +19,7 @@ describe("e2e", () => {
     }
   });
 
-  test("should generate a schame view based on a basic dataset and schema", async () => {
+  test("should generate a schema view based on a basic dataset and schema", async () => {
     /** Set the schema to be tested */
     const schemaName = "basic";
 

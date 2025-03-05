@@ -2,10 +2,9 @@ import type { CliConfig } from "../config";
 import firebase = require("firebase-admin");
 import { genkit, z } from "genkit";
 import { googleAI, gemini20Flash } from "@genkit-ai/googleai";
-import * as fs from "fs/promises";
+import * as fs from "fs";
 import * as path from "path";
 import inquirer from "inquirer";
-import {SchemaSchema} from './genkitSchema'
 
 export async function sampleFirestoreDocuments(
   collectionPath: string,
@@ -25,7 +24,6 @@ export async function sampleFirestoreDocuments(
       return serializeDocument(data);
     });
 
-    console.log(`Successfully sampled ${documents.length} documents.`);
     return documents;
   } catch (error) {
     console.error("Error sampling documents:", error);
@@ -67,44 +65,19 @@ function serializeDocument(data: any): any {
   return data;
 }
 
-/**
- * Writes a schema file to the specified directory if it does not already exist.
- *
- * @param {string} schemaDirectory - The directory where schema files are stored.
- * @param {string} fileName - The name of the schema file to write.
- * @param {string} content - The content of the schema file as a JSON string.
- * @returns {Promise<string>} - A message indicating success or an error if the file already exists.
- */
-const writeSchemaFile = async (
-  schemaDirectory: string,
-  fileName: string,
-  content: string
-): Promise<string> => {
-  const filePath = path.join(schemaDirectory, fileName);
-  try {
-    await fs.access(filePath);
-    return "Error: Schema file already exists";
-  } catch {
-    await fs.writeFile(filePath, content);
-    return "Schema created successfully";
-  }
-};
-
 const biqquerySchemaPrompt = ({
-  collectionName,
+  collectionPath,
   sampleData,
-  tablePrefix,
 }: {
-  collectionName: string;
+  collectionPath: string;
   sampleData: any[];
-  tablePrefix: string;
 }) => `
     You are a Schema Management Agent for Generating BigQuery schemas from Firestore Collections. 
     Your primary tasks are:
     1. Analyze the provided sample documents
     2. Generate an appropriate BigQuery schema
   
-    I will provide you with sample documents from the collection "${collectionName}".
+    I will provide you with sample documents from the collection "${collectionPath}".
   
     Here are the sample documents to analyze:
     ${JSON.stringify(sampleData, null, 2)}
@@ -194,14 +167,19 @@ const biqquerySchemaPrompt = ({
 export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
   //  get sample data from Firestore
   const sampleData = await sampleFirestoreDocuments(
-    config.tableNamePrefix!,
+    config.geminiAnalyzeCollectionPath!,
     config.agentSampleSize!
   );
 
+  if (sampleData.length === 0) {
+    console.log("Operation cancelled. No sample data found. Either the collection is empty or the collection path is incorrect.");
+    process.exit(0);
+  }
+  console.log(`Successfully sampled ${sampleData.length} documents from collection ${config.geminiAnalyzeCollectionPath}`);
+
   const prompt = biqquerySchemaPrompt({
-    collectionName: config.tableNamePrefix!,
+    collectionPath: config.geminiAnalyzeCollectionPath!,
     sampleData,
-    tablePrefix: config.tableNamePrefix,
   });
 
   // initialize genkit with googleAI plugin
@@ -218,12 +196,49 @@ export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
     model: gemini20Flash,
     prompt,
     output: {
-      format: 'json',
-      schema: SchemaSchema
-    }
-  });
+      format: "json",
+      schema: z.object({
+        fields: z.array(z.object({
+          name: z.string(),
+          type: z.string(),
+          description: z.string(),
+          fields: z.array(z.object({
+            name: z.string(),
+            type: z.string(),
+            description: z.string(),
+            fields: z.array(z.object({
+              name: z.string(),
+              type: z.string(),
+              description: z.string(),
+              column_name: z.string().optional(),
+            })),
+        })),
+      })),
+    })
+  }});
 
-  await writeSchemaFile("./schemas", `${config.tableNamePrefix}.json`, text);
+  const filePath = path.join(config.schemaDirectory, `${config.tableNamePrefix}.json`);
+
+  // Check if a file exists
+  if (fs.existsSync(filePath)) {
+    const overwriteConfirm = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "proceed",
+        message:
+          "Schema file already exists. Would you like to overwrite it?",
+        default: false,
+      },
+    ]);
+
+    if (!overwriteConfirm.proceed) {
+      console.log("Operation cancelled. Please choose a different schema file name.");
+      process.exit(0);
+    }
+
+    await fs.promises.writeFile(filePath, text);
+  }
+
   // confirm with user that schema file is correct
   const confirmation = await inquirer.prompt([
     {

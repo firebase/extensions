@@ -50,7 +50,7 @@ export const configureProgram = () => {
       false
     )
     .option(
-      "-c, --collection-path <path>",
+      "-c, --gemini-analyze-collection-path <path>",
       "Firestore collection path for Gemini to analyze"
     )
     .option(
