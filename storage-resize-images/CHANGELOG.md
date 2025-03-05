@@ -1,6 +1,6 @@
 ## Version 0.2.9
 
-chore - bump to nodejs20 runtimes
+feature - support upscaling images with Imagen3
 
 chore - bump dependencies
 

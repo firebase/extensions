@@ -49,6 +49,10 @@ apis:
 roles:
   - role: storage.admin
     reason: Allows the extension to store resized images in Cloud Storage
+  - role: aiplatform.user
+    reason:
+      Allows use of Imagen models to upscale images to higher resolution, if
+      selected.
 
 resources:
   - name: generateResizedImage
