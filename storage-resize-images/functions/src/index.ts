@@ -93,6 +93,7 @@ const generateResizedImageHandler = async (
       const shouldUpscale = imageSizes.delete(upscaleFactor);
 
       if (shouldUpscale) {
+        console.log(`Upscaling image by ${upscaleFactor}`);
         // upscale the image and save to local file, the same way modify image does
         tasks.push(
           upscale(
@@ -105,6 +106,8 @@ const generateResizedImageHandler = async (
         );
       }
     }
+
+    console.log(`Image sizes: ${imageSizes.size}`);
 
     imageTypes.forEach((format) => {
       imageSizes.forEach((size) => {
@@ -122,14 +125,16 @@ const generateResizedImageHandler = async (
       });
     });
 
-    const results = await Promise.all(tasks);
+    const results = await Promise.allSettled(tasks);
 
     await events.recordSuccessEvent({
       subject: filePath,
       data: { input: object, outputs: results },
     });
 
-    const failed = results.some((result) => result.success === false);
+    console.log(results);
+
+    const failed = results.some((result) => result.status === "rejected");
     if (failed) {
       logs.failed();
 
