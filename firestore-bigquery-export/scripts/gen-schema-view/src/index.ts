@@ -22,7 +22,7 @@ import { readSchemas } from "./schema-loader-utils";
 import { parseConfig } from "./config";
 import { generateSchemaFilesWithGemini } from "./schema/genkit";
 
-async function run(): Promise<number> {
+export async function run(): Promise<number> {
   const config = await parseConfig();
 
   process.env.PROJECT_ID = config.projectId;

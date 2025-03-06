@@ -5,8 +5,6 @@ import { parseProgram, validateNonInteractiveParams } from "./non-interactive";
 
 const DEFAULT_SAMPLE_SIZE = 100;
 
-//  TODO: if you dont pass in a schema file (e.g use gemini to create one, the script fails)
-
 export interface CliConfig {
   projectId: string;
   bigQueryProjectId: string;
@@ -58,9 +56,7 @@ export async function parseConfig(): Promise<CliConfig> {
     bigQueryProjectId: bigQueryProject,
     datasetId: dataset,
     tableNamePrefix,
-    schemas: !useGemini ? readSchemas(
-      schemaFiles.split(",").map((schemaFileName) => schemaFileName.trim())
-    ) : {},
+    schemas: !useGemini ? readSchemas([schemaFiles]) : {},
     useGemini,
     geminiAnalyzeCollectionPath,
     agentSampleSize: DEFAULT_SAMPLE_SIZE,

@@ -172,10 +172,14 @@ export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
   );
 
   if (sampleData.length === 0) {
-    console.log("Operation cancelled. No sample data found. Either the collection is empty or the collection path is incorrect.");
+    console.log(
+      "Operation cancelled. No sample data found. Either the collection is empty or the collection path is incorrect."
+    );
     process.exit(0);
   }
-  console.log(`Successfully sampled ${sampleData.length} documents from collection ${config.geminiAnalyzeCollectionPath}`);
+  console.log(
+    `Successfully sampled ${sampleData.length} documents from collection ${config.geminiAnalyzeCollectionPath}`
+  );
 
   const prompt = biqquerySchemaPrompt({
     collectionPath: config.geminiAnalyzeCollectionPath!,
@@ -198,26 +202,36 @@ export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
     output: {
       format: "json",
       schema: z.object({
-        fields: z.array(z.object({
-          name: z.string(),
-          type: z.string(),
-          description: z.string(),
-          fields: z.array(z.object({
+        fields: z.array(
+          z.object({
             name: z.string(),
             type: z.string(),
             description: z.string(),
-            fields: z.array(z.object({
-              name: z.string(),
-              type: z.string(),
-              description: z.string(),
-              column_name: z.string().optional(),
-            })),
-        })),
-      })),
-    })
-  }});
+            fields: z.array(
+              z.object({
+                name: z.string(),
+                type: z.string(),
+                description: z.string(),
+                fields: z.array(
+                  z.object({
+                    name: z.string(),
+                    type: z.string(),
+                    description: z.string(),
+                    column_name: z.string().optional(),
+                  })
+                ),
+              })
+            ),
+          })
+        ),
+      }),
+    },
+  });
 
-  const filePath = path.join(config.schemaDirectory, `${config.tableNamePrefix}.json`);
+  const filePath = path.join(
+    config.schemaDirectory,
+    `${config.tableNamePrefix}.json`
+  );
 
   // Check if a file exists
   if (fs.existsSync(filePath)) {
@@ -225,14 +239,15 @@ export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
       {
         type: "confirm",
         name: "proceed",
-        message:
-          "Schema file already exists. Would you like to overwrite it?",
+        message: "Schema file already exists. Would you like to overwrite it?",
         default: false,
       },
     ]);
 
     if (!overwriteConfirm.proceed) {
-      console.log("Operation cancelled. Please choose a different schema file name.");
+      console.log(
+        "Operation cancelled. Please choose a different schema file name."
+      );
       process.exit(0);
     }
 

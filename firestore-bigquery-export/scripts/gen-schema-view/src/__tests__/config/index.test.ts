@@ -58,11 +58,16 @@ describe("parseConfig", () => {
       expect(validateNonInteractiveParams).toHaveBeenCalledWith(mockProgram);
       expect(readSchemas).toHaveBeenCalledWith(mockProgram.schemaFiles);
       expect(result).toEqual({
+        agentSampleSize: 100,
         projectId: "test-project",
         bigQueryProjectId: "test-bq-project",
         datasetId: "test-dataset",
         tableNamePrefix: "test-prefix",
         schemas: mockSchemas,
+        geminiAnalyzeCollectionPath: undefined,
+        googleAiKey: undefined,
+        schemaDirectory: undefined,
+        useGemini: undefined,
       });
     });
 
@@ -89,7 +94,7 @@ describe("parseConfig", () => {
       expect(result.bigQueryProjectId).toBe("test-project");
     });
 
-    it("should use gemini if specified", async () => { // TODO: This test needs completed
+    it("should use gemini if specified", async () => {
       // Setup mocks with useGemini = true
       const mockProgram = {
         nonInteractive: true,
@@ -114,6 +119,7 @@ describe("parseConfig", () => {
       expect(result.googleAiKey).toBe("test-key");
       expect(result.geminiAnalyzeCollectionPath).toBe("test-collection");
       expect(result.schemaDirectory).toBe("test-directory");
+      expect(result.agentSampleSize).toBe(100);
     });
 
     it("should exit if required parameters are missing", async () => {
@@ -160,20 +166,23 @@ describe("parseConfig", () => {
 
       expect(parseProgram).toHaveBeenCalled();
       expect(promptInquirer).toHaveBeenCalled();
-      expect(readSchemas).toHaveBeenCalledWith([
-        "schema1.json",
-        "schema2.json",
-      ]);
+      // Expect the schemaFiles string to be passed as-is in an array
+      expect(readSchemas).toHaveBeenCalledWith(["schema1.json, schema2.json"]);
       expect(result).toEqual({
+        agentSampleSize: 100,
         projectId: "interactive-project",
         bigQueryProjectId: "interactive-bq-project",
         datasetId: "interactive-dataset",
         tableNamePrefix: "interactive-prefix",
         schemas: mockSchemas,
+        geminiAnalyzeCollectionPath: undefined,
+        googleAiKey: undefined,
+        schemaDirectory: undefined,
+        useGemini: false,
       });
     });
 
-    it("should properly trim and split schema file paths", async () => {
+    it("should properly handle schema file paths without trimming or splitting", async () => {
       const mockProgram = {
         nonInteractive: false,
       };
@@ -193,16 +202,14 @@ describe("parseConfig", () => {
 
       await parseConfig();
 
-      // Verify that file paths are properly trimmed and split
+      // Verify that the schemaFiles string is passed as-is within an array
       expect(readSchemas).toHaveBeenCalledWith([
-        "schema1.json",
-        "schema2.json",
-        "schema3.json",
+        " schema1.json,  schema2.json , schema3.json",
       ]);
     });
   });
 
-  describe("Interactive mode with Gemini", () => { // TODO: This needs completed
+  describe("Interactive mode with Gemini", () => {
     it("should return CLI config from inquirer prompts", async () => {
       // Setup mocks for interactive mode
       const mockProgram = {
@@ -220,6 +227,7 @@ describe("parseConfig", () => {
         schemaDirectory: "test-directory",
       };
 
+      // Although we set up mockSchemas, in Gemini mode readSchemas is not called.
       const mockSchemas = {
         schema1: { fields: { field1: { type: "string" } } },
         schema2: { fields: { field2: { type: "number" } } },
@@ -233,16 +241,20 @@ describe("parseConfig", () => {
 
       expect(parseProgram).toHaveBeenCalled();
       expect(promptInquirer).toHaveBeenCalled();
-      expect(readSchemas).toHaveBeenCalledWith([
-        "schema1.json",
-        "schema2.json",
-      ]);
+      // In Gemini mode, schemaFiles may not be provided so readSchemas should not be called
+      expect(readSchemas).not.toHaveBeenCalled();
+      // Expect schemas to be an empty object in Gemini mode
       expect(result).toEqual({
+        agentSampleSize: 100,
         projectId: "interactive-project",
         bigQueryProjectId: "interactive-bq-project",
         datasetId: "interactive-dataset",
         tableNamePrefix: "interactive-prefix",
-        schemas: mockSchemas,
+        schemas: {},
+        geminiAnalyzeCollectionPath: "test-collection",
+        googleAiKey: "test-key",
+        schemaDirectory: "test-directory",
+        useGemini: true,
       });
     });
   });

@@ -73,7 +73,8 @@ export const questions = [
     },
   },
   {
-    message: "What is the Firestore collection path you want Gemini to analyze?",
+    message:
+      "What is the Firestore collection path you want Gemini to analyze?",
     name: "geminiAnalyzeCollectionPath",
     type: "input",
     when: (answers) => answers.useGemini,
