@@ -160,6 +160,19 @@ const biqquerySchemaPrompt = ({
     }
   
     Begin by analyzing the sample data and then create a well-documented schema.
+
+    Remember that there is no need to destructure timestamp or geopoint fields, they can be left for example as:
+    \`\`\`
+    {
+      "name": "last_login",
+      "type": "timestamp"
+    },
+    {
+      "name": "last_location",
+      "type": "geopoint"
+    },
+    \`\`\`
+    The script reading the generated schemas will deal with them appropriately.
     
     Please respond ONLY with the schema in json format
     `;
@@ -250,17 +263,19 @@ export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
       );
       process.exit(0);
     }
-
-    await fs.promises.writeFile(filePath, text);
   }
+  await fs.promises.writeFile(filePath, text);
+
+  const absoluteFilePath = path.resolve(filePath);
+
+  console.log(`Schema file saved to: file://${absoluteFilePath}`);
 
   // confirm with user that schema file is correct
   const confirmation = await inquirer.prompt([
     {
       type: "confirm",
       name: "proceed",
-      message:
-        "Have you reviewed the schema and want to proceed with creating the views?",
+      message: `Have you reviewed the schema, and want to proceed with creating the views?`,
       default: false,
     },
   ]);

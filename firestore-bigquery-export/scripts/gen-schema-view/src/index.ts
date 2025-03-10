@@ -47,7 +47,7 @@ export async function run(): Promise<number> {
       await generateSchemaFilesWithGemini(config);
       schemas = readSchemas([`./schemas/${config.tableNamePrefix}.json`]);
 
-      console.log("Schema views created successfully.");
+      console.log("Schema file generated successfully.");
     } catch (error) {
       console.error("Error during schema generation:", error);
       throw error;

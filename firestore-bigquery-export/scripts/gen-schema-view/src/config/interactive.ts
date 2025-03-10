@@ -51,7 +51,7 @@ export const questions = [
       "Would you like to use a Gemini to automatically analyze your data and generate a draft schema?",
     name: "useGemini",
     type: "confirm",
-    default: true,
+    default: false,
   },
   {
     message:
