@@ -222,7 +222,7 @@ describe("e2e (with real BigQuery)", () => {
       cartItems: [{ productName: "test" }],
     };
 
-    const { dataset } = await setupBQ(datasetId, tableId, testData);
+    await setupBQ(datasetId, tableId, testData);
 
     await new Promise((resolve) => setTimeout(resolve, 3000));
 

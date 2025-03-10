@@ -67,7 +67,7 @@ describe("parseConfig", () => {
         geminiAnalyzeCollectionPath: undefined,
         googleAiKey: undefined,
         schemaDirectory: undefined,
-        useGemini: undefined,
+        useGemini: false,
       });
     });
 
@@ -103,7 +103,7 @@ describe("parseConfig", () => {
         dataset: "test-dataset",
         tableNamePrefix: "test-prefix",
         schemaFiles: ["schema.json"],
-        useGemini: true,
+        useGemini: "test-collection",
         googleAiKey: "test-key",
         geminiAnalyzeCollectionPath: "test-collection",
         schemaDirectory: "test-directory",

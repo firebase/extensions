@@ -31,7 +31,7 @@ export async function sampleFirestoreDocuments(
   }
 }
 
-function serializeDocument(data: any): any {
+export function serializeDocument(data: any): any {
   if (!data) return null;
 
   if (data instanceof Date) {

@@ -45,13 +45,8 @@ export const configureProgram = () => {
       []
     )
     .option(
-      "-g, --use-gemini",
-      "Use Gemini to automatically analyze your data and generate a draft schema. You will have a chance to manually view and approve this schema before it is used.",
-      false
-    )
-    .option(
-      "-c, --gemini-analyze-collection-path <path>",
-      "Firestore collection path for Gemini to analyze"
+      "-g, --use-gemini <collection-path>",
+      "Use Gemini to automatically analyze your data and generate a draft schema. You will have a chance to manually view and approve this schema before it is used."
     )
     .option(
       "--schema-dir <directory>",
@@ -81,6 +76,7 @@ export const validateNonInteractiveParams = (program: any): boolean => {
     program.project === undefined ||
     program.dataset === undefined ||
     program.tableNamePrefix === undefined ||
-    program.schemaFiles.length === 0
+    program.schemaFiles.length === 0 ||
+    program.useGemini === ""
   );
 };
