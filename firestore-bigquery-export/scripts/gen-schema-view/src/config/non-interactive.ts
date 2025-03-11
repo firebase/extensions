@@ -65,7 +65,7 @@ export const configureProgram = () => {
       "Use Gemini to automatically analyze your data and generate a draft schema. You will have a chance to manually view and approve this schema before it is used."
     )
     .option(
-      "--schema-dir <directory>",
+      "--schema-directory <directory>",
       "Directory to store generated schemas",
       "./schemas"
     )
@@ -97,7 +97,7 @@ export const validateNonInteractiveParams = (program: any): boolean => {
     program.project === undefined ||
     program.dataset === undefined ||
     program.tableNamePrefix === undefined ||
-    program.schemaFiles.length === 0 ||
+    (!program.useGemini && program.schemaFiles.length === 0) ||
     program.useGemini === ""
   );
 };

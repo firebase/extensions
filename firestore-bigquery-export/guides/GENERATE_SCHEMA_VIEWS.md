@@ -314,42 +314,88 @@ Since all document data is stored in the schemaless changelog, mistakes in
 schema configuration don't affect the underlying data and can be resolved by
 re-running the schema-views script against an updated schema file.
 
-### Using Gemini to generate draft schema files
+### Using Gemini to Automatically Generate Schema Files
 
-Instead of manually creating schema files, you can use Gemini to automatically analyze your Firestore collection and generate an appropriate schema. Gemini will:
+Instead of manually creating schema files, you can leverage Gemini to automatically analyze your Firestore data and create draft schemas. Gemini simplifies schema generation by:
 
-1. Sample documents from your collection
-2. Analyze the data structure
-3. Generate a well-documented schema file
-4. Create the corresponding BigQuery views
+1. Sampling documents directly from your Firestore collections.
+2. Analyzing the sampled data structure and fields.
+3. Generating a well-documented BigQuery schema file.
+4. Saving the schema for your review and subsequent BigQuery view creation.
 
-You can use Gemini in either interactive or non-interactive mode:
+You can run the Gemini-powered schema-views script in either interactive or non-interactive mode.
 
 ```bash
 # Interactive mode
 npx @firebaseextensions/fs-bq-schema-views
+```
 
+Gemini will ask you to provide:
+
+- Firebase Project ID
+- BigQuery Project ID
+- BigQuery dataset ID
+- Table prefix
+- Firestore collection path to sample data from
+- Google AI API key
+- Directory and file name for storing the generated schema
+
+```bash
 # Non-interactive mode
 npx @firebaseextensions/fs-bq-schema-views \
   --non-interactive \
-  --project=your_project_id \
-  --big-query-project=your_bigquery_project_id \
-  --dataset=your_dataset_id \
-  --table-name-prefix=your_table_prefix \
-  --use-gemini=your_collection_path \
-  --google-ai-key=your_api_key \
-  --schema-dir=./schemas
+  --project=${param:PROJECT_ID} \
+  --big-query-project=${param:BIGQUERY_PROJECT_ID} \
+  --dataset=${param:DATASET_ID} \
+  --table-name-prefix=${param:TABLE_ID} \
+  --use-gemini=${param:COLLECTION_PATH} \
+  --google-ai-key=${param:GOOGLE_AI_API_KEY} \
+  --schema-directory=your_schema_directory \
+  --gemini-schema-file-name=your_schema_filename
+
+```
+
+Replace placeholders with your own values:
+
+- ${param:PROJECT_ID}: Your Firebase Project ID
+- ${param:BIGQUERY_PROJECT_ID}: Your BigQuery Project ID (can match Firebase Project ID)
+- ${param:DATASET_ID}: The BigQuery dataset containing your changelog data
+- ${param:TABLE_ID}: A common prefix for your generated BigQuery views
+- ${param:COLLECTION_PATH}: The Firestore collection path Gemini will analyze
+- ${param:GOOGLE_AI_API_KEY}: Your Google AI API key for Gemini access
+- your_schema_filename: Desired filename (without .json) for the schema file
+
+For example:
+
+```bash
+npx @firebaseextensions/fs-bq-schema-views \
+  --non-interactive \
+  --project=my-firebase-project \
+  --big-query-project=my-bq-project \
+  --dataset=firestore_changelog \
+  --table-name-prefix=user_profiles \
+  --use-gemini=users_collection \
+  --google-ai-key=$GOOGLE_API_KEY \
+  --schema-directory=./schemas \
+  --gemini-schema-file-name=user_schema
+```
+
+Before running this, make sure the GOOGLE_API_KEY is properly set:
+
+```bash
+export GOOGLE_API_KEY=<YOUR_ACTUAL_KEY>
 ```
 
 #### Gemini Schema Generation Parameters
 
-- `--use-gemini <collection-path>`
-- `--google-ai-key <key>`: Your Google AI API key for the Gemini model
-- `--schema-dir <directory>`: Directory where generated schema files will be stored (default: "./schemas")
+- `--use-gemini`: Firestore collection path to analyze with Gemini.
+- `--google-ai-key`: Your Google AI API key for the Gemini model
+- `--schema-directory`: Directory where generated schema files will be stored (default: "./schemas")
+- `--gemini-schema-file-name` Filename for generated schema file (default: schema)
 
 #### Generated Schema
 
-Gemini will create a schema file named `${param:TABLE_ID}.json` in your specified schema directory. This schema should include:
+Gemini will create a schema file in your specified location. This schema should include:
 
 - Appropriate field types based on your data
 - Detailed descriptions for each field
@@ -358,7 +404,9 @@ Gemini will create a schema file named `${param:TABLE_ID}.json` in your specifie
 
 The generated schema follows the same format as manually created schemas and supports all standard Firestore data types. Gemini will aim to produce schemas that are both accurate and performant for BigQuery views.
 
-Note that although Gemini is good at producing these schema files and the prompts have been tested, the generative AI models are inherently probabilistic, and you should double check the generated schema before continuing.
+**Important**: Always review the generated schemas thoroughly. While Gemini strives for accuracy, generative AI outputs should be treated as a draft requiring validation.
+
+Once reviewed, the script will prompt you (in interactive mode) or proceed (in non-interactive mode) to create the actual BigQuery views.
 
 ### Next Steps
 
