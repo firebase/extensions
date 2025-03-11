@@ -24,7 +24,7 @@ describe("Interactive Prompts", () => {
 
   describe("questions array", () => {
     it("should have the correct number of questions", () => {
-      expect(questions).toHaveLength(5);
+      expect(questions).toHaveLength(9);
     });
 
     it("should have properly formatted questions with required properties", () => {
@@ -116,6 +116,76 @@ describe("Interactive Prompts", () => {
 
       // Valid value should return true
       expect(validate("valid_prefix_123")).toBe(true);
+    });
+
+    it("should conditionally show schema files question when not using Gemini", () => {
+      const schemaFilesQuestion = questions.find(
+        (q) => q.name === "schemaFiles"
+      );
+      expect(schemaFilesQuestion).toBeDefined();
+
+      // Test when function
+      const when = schemaFilesQuestion.when;
+
+      // Should show when useGemini is false
+      expect(when({ useGemini: false })).toBe(true);
+
+      // Should not show when useGemini is true
+      expect(when({ useGemini: true })).toBe(false);
+    });
+
+    it("should conditionally show Google AI API Key question when using Gemini", () => {
+      const apiKeyQuestion = questions.find((q) => q.name === "googleAiKey");
+      expect(apiKeyQuestion).toBeDefined();
+
+      // Test when function
+      const when = apiKeyQuestion.when;
+
+      // Should show when useGemini is true
+      expect(when({ useGemini: true })).toBe(true);
+
+      // Should not show when useGemini is false
+      expect(when({ useGemini: false })).toBe(false);
+
+      // Test validation
+      const validate = apiKeyQuestion.validate;
+      expect(validate("")).toBe("Google AI API Key is required");
+      expect(validate("valid-api-key")).toBe(true);
+    });
+
+    it("should conditionally show collection path question when using Gemini", () => {
+      const collectionPathQuestion = questions.find(
+        (q) => q.name === "geminiAnalyzeCollectionPath"
+      );
+      expect(collectionPathQuestion).toBeDefined();
+
+      // Test when function
+      const when = collectionPathQuestion.when;
+
+      // Should show when useGemini is true
+      expect(when({ useGemini: true })).toBe(true);
+
+      // Should not show when useGemini is false
+      expect(when({ useGemini: false })).toBe(false);
+    });
+
+    it("should conditionally show schema directory question with default value when using Gemini", () => {
+      const schemaDirQuestion = questions.find(
+        (q) => q.name === "schemaDirectory"
+      );
+      expect(schemaDirQuestion).toBeDefined();
+
+      // Test when function
+      const when = schemaDirQuestion.when;
+
+      // Should show when useGemini is true
+      expect(when({ useGemini: true })).toBe(true);
+
+      // Should not show when useGemini is false
+      expect(when({ useGemini: false })).toBe(false);
+
+      // Should have default value
+      expect(schemaDirQuestion.default).toBe("./schemas");
     });
   });
 

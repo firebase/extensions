@@ -43,7 +43,17 @@ export const configureProgram = () => {
       "A collection of files from which to read schemas.",
       collect,
       []
-    );
+    )
+    .option(
+      "-g, --use-gemini <collection-path>",
+      "Use Gemini to automatically analyze your data and generate a draft schema. You will have a chance to manually view and approve this schema before it is used."
+    )
+    .option(
+      "--schema-dir <directory>",
+      "Directory to store generated schemas",
+      "./schemas"
+    )
+    .option("--google-ai-key <key>", "Google AI API Key for Gemini");
 
   return program;
 };
@@ -66,6 +76,7 @@ export const validateNonInteractiveParams = (program: any): boolean => {
     program.project === undefined ||
     program.dataset === undefined ||
     program.tableNamePrefix === undefined ||
-    program.schemaFiles.length === 0
+    program.schemaFiles.length === 0 ||
+    program.useGemini === ""
   );
 };

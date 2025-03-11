@@ -20,6 +20,7 @@ import firebase = require("firebase-admin");
 import { FirestoreBigQuerySchemaViewFactory, FirestoreSchema } from "./schema";
 import { readSchemas } from "./schema-loader-utils";
 import { parseConfig } from "./config";
+import { generateSchemaFilesWithGemini } from "./schema/genkit";
 
 export async function run(): Promise<number> {
   const config = await parseConfig();
@@ -38,10 +39,23 @@ export async function run(): Promise<number> {
     config.bigQueryProjectId
   );
 
+  // Generate schema files using Gemini if enabled
+  // Otherwise, read schema files from the filesystem
   let schemas = config.schemas;
+  if (config.useGemini) {
+    try {
+      await generateSchemaFilesWithGemini(config);
+      schemas = readSchemas([`./schemas/${config.tableNamePrefix}.json`]);
 
-  if (Object.keys(config.schemas).length === 0) {
-    console.log(`No schema files found!`);
+      console.log("Schema file generated successfully.");
+    } catch (error) {
+      console.error("Error during schema generation:", error);
+      throw error;
+    }
+  } else {
+    if (Object.keys(config.schemas).length === 0) {
+      console.log(`No schema files found!`);
+    }
   }
 
   // Initialize schema views

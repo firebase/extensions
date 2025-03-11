@@ -80,6 +80,7 @@ describe("e2e (with real BigQuery)", () => {
       datasetId,
       tableNamePrefix: tableId,
       schemas: { [schemaName]: basicSchema },
+      useGemini: false,
     });
 
     const result = await run();
@@ -135,6 +136,7 @@ describe("e2e (with real BigQuery)", () => {
       datasetId,
       tableNamePrefix: tableId,
       schemas: { [schemaName]: nestedMapSchema },
+      useGemini: false,
     });
 
     const result = await run();
@@ -183,6 +185,7 @@ describe("e2e (with real BigQuery)", () => {
       datasetId,
       tableNamePrefix: tableId,
       schemas: { [schemaName]: arraysNestedInMapsSchema },
+      useGemini: false,
     });
 
     const result = await run();
@@ -233,6 +236,7 @@ describe("e2e (with real BigQuery)", () => {
       datasetId,
       tableNamePrefix: tableId,
       schemas: { [schemaName]: mappedArraySchema },
+      useGemini: false,
     });
 
     const result = await run();
@@ -289,6 +293,7 @@ describe("e2e (with real BigQuery)", () => {
       datasetId,
       tableNamePrefix: tableId,
       schemas: { [schemaName]: mappedArraySchema },
+      useGemini: false,
     });
 
     const result = await run();
