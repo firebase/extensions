@@ -24,7 +24,7 @@ describe("Interactive Prompts", () => {
 
   describe("questions array", () => {
     it("should have the correct number of questions", () => {
-      expect(questions).toHaveLength(9);
+      expect(questions).toHaveLength(10);
     });
 
     it("should have properly formatted questions with required properties", () => {
@@ -36,7 +36,7 @@ describe("Interactive Prompts", () => {
     });
 
     it("should have proper validation for project ID question", () => {
-      const projectQuestion = questions.find((q) => q.name === "project");
+      const projectQuestion = questions.find((q) => q.name === "projectId");
       expect(projectQuestion).toBeDefined();
 
       // Test validation function
@@ -56,7 +56,7 @@ describe("Interactive Prompts", () => {
 
     it("should have proper validation for BigQuery project ID question", () => {
       const bigQueryQuestion = questions.find(
-        (q) => q.name === "bigQueryProject"
+        (q) => q.name === "bigQueryProjectId"
       );
       expect(bigQueryQuestion).toBeDefined();
 
@@ -79,7 +79,7 @@ describe("Interactive Prompts", () => {
     });
 
     it("should have proper validation for dataset ID question", () => {
-      const datasetQuestion = questions.find((q) => q.name === "dataset");
+      const datasetQuestion = questions.find((q) => q.name === "datasetId");
       expect(datasetQuestion).toBeDefined();
 
       // Test validation function
@@ -223,7 +223,7 @@ describe("Interactive Prompts", () => {
     it("should handle various input cases for text validation", () => {
       // Get validation functions from questions to test the validateInput indirectly
       const projectValidate = questions.find(
-        (q) => q.name === "project"
+        (q) => q.name === "projectId"
       ).validate;
 
       // Test empty values

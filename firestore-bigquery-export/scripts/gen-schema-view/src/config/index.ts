@@ -32,6 +32,7 @@ export interface CliConfig {
   agentSampleSize?: number;
   googleAiKey?: string;
   schemaDirectory?: string;
+  geminiSchemaFileName?: string;
 }
 
 export async function parseConfig(): Promise<CliConfig> {
@@ -53,24 +54,26 @@ export async function parseConfig(): Promise<CliConfig> {
       agentSampleSize: DEFAULT_SAMPLE_SIZE,
       googleAiKey: program.googleAiKey,
       schemaDirectory: program.schemaDirectory,
+      geminiSchemaFileName: program.geminiSchemaFileName,
     };
   }
   const {
-    project,
-    bigQueryProject,
-    dataset,
+    projectId,
+    bigQueryProjectId,
+    datasetId,
     tableNamePrefix,
     schemaFiles,
     useGemini,
     geminiAnalyzeCollectionPath,
     googleAiKey,
     schemaDirectory,
+    geminiSchemaFileName,
   } = await promptInquirer();
 
   return {
-    projectId: project,
-    bigQueryProjectId: bigQueryProject,
-    datasetId: dataset,
+    projectId,
+    bigQueryProjectId,
+    datasetId,
     tableNamePrefix,
     schemas: !useGemini ? readSchemas([schemaFiles]) : {},
     useGemini,
@@ -78,5 +81,6 @@ export async function parseConfig(): Promise<CliConfig> {
     agentSampleSize: DEFAULT_SAMPLE_SIZE,
     googleAiKey,
     schemaDirectory,
+    geminiSchemaFileName,
   };
 }

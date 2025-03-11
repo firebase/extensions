@@ -45,7 +45,7 @@ export async function run(): Promise<number> {
   if (config.useGemini) {
     try {
       await generateSchemaFilesWithGemini(config);
-      schemas = readSchemas([`./schemas/${config.tableNamePrefix}.json`]);
+      schemas = readSchemas([`./schemas/${config.geminiSchemaFileName}.json`]);
 
       console.log("Schema file generated successfully.");
     } catch (error) {

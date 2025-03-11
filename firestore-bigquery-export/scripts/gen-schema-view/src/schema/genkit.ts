@@ -259,7 +259,7 @@ export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
 
   const filePath = path.join(
     config.schemaDirectory,
-    `${config.tableNamePrefix}.json`
+    `${config.geminiSchemaFileName}.json`
   );
 
   // Check if a file exists

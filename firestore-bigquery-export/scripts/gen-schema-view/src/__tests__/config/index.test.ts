@@ -145,9 +145,9 @@ describe("parseConfig", () => {
       };
 
       const mockPromptResponse = {
-        project: "interactive-project",
-        bigQueryProject: "interactive-bq-project",
-        dataset: "interactive-dataset",
+        projectId: "interactive-project",
+        bigQueryProjectId: "interactive-bq-project",
+        datasetId: "interactive-dataset",
         tableNamePrefix: "interactive-prefix",
         useGemini: false,
         schemaFiles: "schema1.json, schema2.json",
@@ -217,9 +217,9 @@ describe("parseConfig", () => {
       };
 
       const mockPromptResponse = {
-        project: "interactive-project",
-        bigQueryProject: "interactive-bq-project",
-        dataset: "interactive-dataset",
+        projectId: "interactive-project",
+        bigQueryProjectId: "interactive-bq-project",
+        datasetId: "interactive-dataset",
         tableNamePrefix: "interactive-prefix",
         useGemini: true,
         googleAiKey: "test-key",
