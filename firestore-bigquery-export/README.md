@@ -45,15 +45,11 @@ Before installing this extension, you'll need to:
 
 #### Import existing documents
 
-There are two ways to import existing Firestore documents into BigQuery - the backfill feature and the import script.
-
-To import documents that already exist at installation time into BigQuery, answer **Yes** when the installer asks "Import existing Firestore documents into BigQuery?" The extension will export existing documents as part of the installation and update processes.
-
-Alternatively, you can run the external [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md) to backfill existing documents. If you plan to use this script, answer **No** when prompted to import existing documents.
+To import existing documents you can run the external [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
 
 **Important:** Run the external import script over the entire collection _after_ installing this extension, otherwise all writes to your database during the import might be lost.
 
-If you don't either enable automatic import or run the import script, the extension only exports the content of documents that are created or changed after installation.
+Without use of this import script, the extension only exports the content of documents that are created or changed after installation.
 
 #### Transform function
 
@@ -281,7 +277,7 @@ essential for the script to insert data into an already partitioned table.)
 Note: Cluster columns must be top-level, non-repeated columns of one of the  following types: BIGNUMERIC, BOOL, DATE, DATETIME, GEOGRAPHY, INT64, NUMERIC,  RANGE, STRING, TIMESTAMP. Clustering will not be added if a field with an invalid type is present in this parameter.
 Available schema extensions table fields for clustering include: `document_id, document_name, timestamp, event_id,  operation, data`.
 
-* Maximum number of synced documents per second: This parameter will set the maximum number of syncronised documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota. Ensure that you have a set a low enough number to compensate. Defaults to 10.
+* Maximum number of synced documents per second: This parameter will set the maximum number of syncronised documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota. Ensure that you have a set a low enough number to compensate. Defaults to 100.
 
 * View Type: Select the type of view to create in BigQuery. A regular view is a virtual table defined by a SQL query.  A materialized view persists the results of a query for faster access, with either incremental or  non-incremental updates. Please note that materialized views in this extension come with several  important caveats and limitations - carefully review the pre-install documentation before selecting  these options to ensure they are appropriate for your use case.
 
