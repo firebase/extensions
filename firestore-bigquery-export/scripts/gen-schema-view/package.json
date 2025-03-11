@@ -46,6 +46,7 @@
     "@types/chai": "^4.1.6",
     "@types/express": "^4.17.14",
     "@types/express-serve-static-core": "4.17.30",
+    "@types/inquirer": "^9.0.7",
     "@types/jest": "29.5.0",
     "chai": "^4.2.0",
     "exec": "^0.2.1",
