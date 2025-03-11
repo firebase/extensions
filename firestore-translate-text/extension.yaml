@@ -65,17 +65,18 @@ resources:
         eventType: providers/cloud.firestore/eventTypes/document.write
         resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{messageId}
 
-  - name: fstranslatebackfill
-    type: firebaseextensions.v1beta.function
-    description:
-      Searches your specified Cloud Firestore collection for existing documents,
-      translates the strings into any missing languages, then writes the
-      translated strings back to the same document.
-    properties:
-      runtime: nodejs20
-      availableMemoryMb: 1024
-      timeout: 540s
-      taskQueueTrigger: {}
+  # ! DO NOT UNCOMMENT THIS PARAMETER, IT IS CURRENTLY PROBLEMATIC
+  # - name: fstranslatebackfill
+  #   type: firebaseextensions.v1beta.function
+  #   description:
+  #     Searches your specified Cloud Firestore collection for existing documents,
+  #     translates the strings into any missing languages, then writes the
+  #     translated strings back to the same document.
+  #   properties:
+  #     runtime: nodejs20
+  #     availableMemoryMb: 1024
+  #     timeout: 540s
+  #     taskQueueTrigger: {}
 
 params:
   - param: LANGUAGES
