@@ -23,22 +23,33 @@ export enum LogLevel {
   SILENT = "silent", // Won't log anything
 }
 
-export class Logger {
-  private logLevel: LogLevel;
+const levels = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+  silent: 4,
+}
 
-  constructor(logLevel: LogLevel | string = LogLevel.INFO) {
+export class Logger {
+  private logLevel: number;
+
+  constructor(logLevel: LogLevel | string | number = LogLevel.INFO) {
     this.setLogLevel(logLevel);
   }
 
-  setLogLevel(logLevel: LogLevel | string): void {
+  setLogLevel(logLevel: LogLevel | string | number): void {
     if (typeof logLevel === "string") {
-      this.logLevel = logLevel.toLowerCase() as LogLevel;
+      this.logLevel = levels[logLevel];
+    } else if (typeof logLevel === "number") {
+      this.logLevel = logLevel;
+    } else {
+      this.logLevel = levels[logLevel];
     }
-    else this.logLevel = logLevel;
   }
 
   debug(...args: any[]): void {
-    if (this.logLevel === LogLevel.DEBUG) {
+    if (this.logLevel <= levels.debug) {
       funcsLogger.debug(...args);
     }
   }
@@ -49,8 +60,7 @@ export class Logger {
 
   info(...args: any[]): void {
     if (
-      this.logLevel === LogLevel.DEBUG ||
-      this.logLevel === LogLevel.INFO
+      this.logLevel <= levels.info
     ) {
       funcsLogger.info(...args);
     }
@@ -58,9 +68,7 @@ export class Logger {
 
   warn(...args: any[]): void {
     if (
-      this.logLevel === LogLevel.DEBUG ||
-      this.logLevel === LogLevel.INFO ||
-      this.logLevel === LogLevel.WARN
+      this.logLevel <= levels.warn
     ) {
       funcsLogger.warn(...args);
     }
@@ -68,10 +76,7 @@ export class Logger {
 
   error(...args: any[]): void {
     if (
-      this.logLevel === LogLevel.DEBUG ||
-      this.logLevel === LogLevel.INFO ||
-      this.logLevel === LogLevel.WARN ||
-      this.logLevel === LogLevel.ERROR
+      this.logLevel <= levels.error
     ) {
       funcsLogger.error(...args);
     }
