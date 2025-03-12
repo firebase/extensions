@@ -477,6 +477,8 @@ params:
         value: warn
       - label: Error
         value: error
+      - label: Silent
+        value: silent
     default: info
     required: true
 

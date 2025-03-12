@@ -16,10 +16,11 @@
 import { logger as funcsLogger } from "firebase-functions";
 
 export enum LogLevel {
-  DEBUG = "debug",
-  INFO = "info",
-  WARN = "warn",
-  ERROR = "error",
+  DEBUG = "debug", // Will log everything
+  INFO = "info", // Will log info, warnings, and errors
+  WARN = "warn", // Will log warnings and errors
+  ERROR = "error", // Will log errors only
+  SILENT = "silent", // Won't log anything
 }
 
 export class Logger {
@@ -66,7 +67,14 @@ export class Logger {
   }
 
   error(...args: any[]): void {
-    funcsLogger.error(...args);
+    if (
+      this.logLevel === LogLevel.DEBUG ||
+      this.logLevel === LogLevel.INFO ||
+      this.logLevel === LogLevel.WARN ||
+      this.logLevel === LogLevel.ERROR
+    ) {
+      funcsLogger.error(...args);
+    }
   }
 }
 
