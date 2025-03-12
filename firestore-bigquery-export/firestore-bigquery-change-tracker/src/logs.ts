@@ -16,7 +16,7 @@
 
 import { Table } from "@google-cloud/bigquery";
 import { firestore } from "firebase-admin";
-import { logger } from "firebase-functions";
+import { logger } from "./logger";
 
 export const arrayFieldInvalid = (fieldName: string) => {
   logger.warn(`Array field '${fieldName}' does not contain an array, skipping`);

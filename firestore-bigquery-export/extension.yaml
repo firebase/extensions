@@ -461,6 +461,25 @@ params:
     validationErrorMessage: Please select an integer between 1 and 10
     default: 3
 
+  - param: LOG_LEVEL
+    label: Log level
+    description: >-
+      The log level for the extension. The log level controls the verbosity of
+      the extension's logs. The available log levels are: debug, info, warn, and
+      error. To reduce the volume of logs, use a log level of warn or error.
+    type: select
+    options:
+      - label: Debug
+        value: debug
+      - label: Info
+        value: info
+      - label: Warn
+        value: warn
+      - label: Error
+        value: error
+    default: info
+    required: true
+
 events:
   # OLD event types for backward compatibility
   - type: firebase.extensions.firestore-counter.v1.onStart

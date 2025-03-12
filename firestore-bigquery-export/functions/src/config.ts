@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { LogLevel } from "./logger";
 
 function timePartitioning(type) {
   if (
@@ -73,4 +74,5 @@ export default {
   backupBucketName:
     process.env.BACKUP_GCS_BUCKET || `${process.env.PROJECT_ID}.appspot.com`,
   backupDir: `_${process.env.INSTANCE_ID || "firestore-bigquery-export"}`,
+  logLevel: process.env.LOG_LEVEL || LogLevel.INFO,
 };
