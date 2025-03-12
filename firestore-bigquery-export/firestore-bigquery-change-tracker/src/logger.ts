@@ -49,36 +49,28 @@ export class Logger {
   }
 
   debug(...args: any[]): void {
-    if (this.logLevel <= levels.debug) {
-      funcsLogger.debug(...args);
-    }
+    this.runIfLogLevel(levels.debug, funcsLogger.debug, ...args);
+  }
+
+  info(...args: any[]): void {
+    this.runIfLogLevel(levels.info, funcsLogger.info, ...args);
+  }
+
+  warn(...args: any[]): void {
+    this.runIfLogLevel(levels.warn, funcsLogger.warn, ...args);
+  }
+
+  error(...args: any[]): void {
+    this.runIfLogLevel(levels.error, funcsLogger.error, ...args);
   }
 
   log(...args: any[]): void {
     this.info(...args);
   }
 
-  info(...args: any[]): void {
-    if (
-      this.logLevel <= levels.info
-    ) {
-      funcsLogger.info(...args);
-    }
-  }
-
-  warn(...args: any[]): void {
-    if (
-      this.logLevel <= levels.warn
-    ) {
-      funcsLogger.warn(...args);
-    }
-  }
-
-  error(...args: any[]): void {
-    if (
-      this.logLevel <= levels.error
-    ) {
-      funcsLogger.error(...args);
+  private runIfLogLevel(level: number, func: Function, ...args: any[]): void {
+    if (this.logLevel <= level) {
+      func(...args);
     }
   }
 }
