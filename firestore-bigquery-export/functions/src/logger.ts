@@ -29,7 +29,7 @@ const levels = {
   warn: 2,
   error: 3,
   silent: 4,
-}
+};
 
 export class Logger {
   private logLevel: number;
