@@ -69,7 +69,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   useIncrementalMaterializedView?: boolean;
   maxStaleness?: string;
   refreshIntervalMinutes?: number;
-  logLevel: LogLevel;
+  logLevel?: LogLevel | string | undefined;
 }
 
 /**
@@ -97,7 +97,7 @@ export class FirestoreBigQueryEventHistoryTracker
       this.config.datasetLocation = "us";
     }
 
-    logger.setLogLevel(this.config.logLevel);
+    logger.setLogLevel(this.config.logLevel || LogLevel.INFO);
   }
 
   async record(events: FirestoreDocumentChangeEvent[]) {
