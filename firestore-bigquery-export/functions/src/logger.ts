@@ -34,15 +34,13 @@ const levels = {
 export class Logger {
   private logLevel: number;
 
-  constructor(logLevel: LogLevel | string | number = LogLevel.INFO) {
+  constructor(logLevel: LogLevel | string = LogLevel.INFO) {
     this.setLogLevel(logLevel);
   }
 
-  setLogLevel(logLevel: LogLevel | string | number): void {
+  setLogLevel(logLevel: LogLevel | string): void {
     if (typeof logLevel === "string") {
-      this.logLevel = levels[logLevel];
-    } else if (typeof logLevel === "number") {
-      this.logLevel = logLevel;
+      this.logLevel = levels[logLevel as keyof typeof levels] ?? levels.info;
     } else {
       this.logLevel = levels[logLevel];
     }

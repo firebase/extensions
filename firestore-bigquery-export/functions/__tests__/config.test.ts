@@ -6,7 +6,6 @@ import * as yaml from "js-yaml";
 import mockedEnv from "mocked-env";
 
 import { clustering } from "../src/config";
-import { log } from "console";
 
 let restoreEnv;
 let extensionYaml;
