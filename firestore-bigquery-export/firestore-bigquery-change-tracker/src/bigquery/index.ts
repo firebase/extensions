@@ -44,6 +44,7 @@ import { Clustering } from "./clustering";
 import { tableRequiresUpdate } from "./checkUpdates";
 import { parseErrorMessage, waitForInitialization } from "./utils";
 import { initializeLatestView } from "./initializeLatestView";
+import { logger, LogLevel } from "../logger";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 
@@ -68,6 +69,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   useIncrementalMaterializedView?: boolean;
   maxStaleness?: string;
   refreshIntervalMinutes?: number;
+  logLevel?: LogLevel | string | undefined;
 }
 
 /**
@@ -94,6 +96,8 @@ export class FirestoreBigQueryEventHistoryTracker
     if (!this.config.datasetLocation) {
       this.config.datasetLocation = "us";
     }
+
+    logger.setLogLevel(this.config.logLevel || LogLevel.INFO);
   }
 
   async record(events: FirestoreDocumentChangeEvent[]) {
