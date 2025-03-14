@@ -7,6 +7,7 @@ const environment = {
   IMG_SIZES: `200x200`,
   RESIZED_IMAGES_PATH: undefined,
   DELETE_ORIGINAL_FILE: "true",
+  CONTENT_FILTER_LEVEL: "NONE",
 };
 
 let restoreEnv;

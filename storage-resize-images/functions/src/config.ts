@@ -43,6 +43,21 @@ function allowAnimated(sharpOptions = "{}", overrideIsAnimated) {
 
   return overrideIsAnimated === "true" || undefined ? true : false;
 }
+import { HarmCategory, HarmBlockThreshold } from "@google-cloud/vertexai";
+
+const harmBlockThresholdMap: Record<string, HarmBlockThreshold | "OFF"> = {
+  BLOCK_LOW_AND_ABOVE: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+  BLOCK_MEDIUM_AND_ABOVE: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  BLOCK_ONLY_HIGH: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+  OFF: "OFF",
+};
+
+export const convertHarmBlockThreshold = (level: string) => {
+  if (level in harmBlockThresholdMap) {
+    return harmBlockThresholdMap[level];
+  }
+  throw new Error(`Invalid HarmBlockThreshold: ${level}`);
+};
 
 export const config = {
   bucket: process.env.IMG_BUCKET,
@@ -62,4 +77,9 @@ export const config = {
   animated: allowAnimated(process.env.SHARP_OPTIONS, process.env.IS_ANIMATED),
   location: process.env.LOCATION,
   projectId: process.env.PROJECT_ID,
+  contentFilterLevel: convertHarmBlockThreshold(
+    process.env.CONTENT_FILTER_LEVEL
+  ),
+  customeFilterPrompt: process.env.CUSTOM_FILTER_PROMPT || null,
+  placeholderImagePath: process.env.PLACEHOLDER_IMAGE_PATH || null,
 };

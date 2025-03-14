@@ -34,6 +34,7 @@ import { convertToObjectMetadata, countNegativeTraversals } from "./util";
 import { File } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
 import { upscale } from "./upscale";
+import { checkImageContent } from "./content-filter";
 
 sharp.cache(false);
 
@@ -87,6 +88,57 @@ const generateResizedImageHandler = async (
     const imageSizes = new Set(config.imageSizes);
 
     const tasks: Promise<ResizedImageResult>[] = [];
+
+    const filterResult = await checkImageContent(
+      localOriginalFile,
+      config.contentFilterLevel,
+      config.customeFilterPrompt
+    );
+    if (!filterResult) {
+      functions.logger.warn(
+        `Image ${filePath} was rejected by the content filter.`
+      );
+
+      // Check if a placeholder image is configured
+      if (config.placeholderImagePath) {
+        try {
+          // Path to the placeholder image in the bucket
+          const placeholderPath = config.placeholderImagePath;
+
+          functions.logger.info(
+            `Replacing filtered image with placeholder from ${placeholderPath}`
+          );
+
+          const placeholderFile = bucket.file(placeholderPath);
+          const localPlaceholderFile = path.join(os.tmpdir(), uuidv4());
+
+          await placeholderFile.download({
+            destination: localPlaceholderFile,
+          });
+
+          // Replace the original local file with the placeholder
+          fs.unlinkSync(localOriginalFile);
+          fs.copyFileSync(localPlaceholderFile, localOriginalFile);
+
+          // Clean up the temporary placeholder file
+          fs.unlinkSync(localPlaceholderFile);
+
+          functions.logger.info(`Successfully replaced with placeholder image`);
+
+          // Continue with resizing using the placeholder instead
+        } catch (err) {
+          functions.logger.error(
+            `Error replacing with placeholder image:`,
+            err
+          );
+          // If we can't replace with placeholder, just return and stop processing
+          return;
+        }
+      } else {
+        // No placeholder configured, so stop processing this image
+        return;
+      }
+    }
 
     for (let upscaleFactor of ["x2", "x4"]) {
       // returns true if upscaleFactor exists in imageSizes and was deleted.

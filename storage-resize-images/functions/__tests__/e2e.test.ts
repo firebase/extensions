@@ -44,7 +44,7 @@ describe("extension", () => {
     const successFilePath = `${process.env.RESIZED_IMAGES_PATH}/test-image_${process.env.IMG_SIZES}.${process.env.IMAGE_TYPE}`;
     // wait for file to be uploaded to storage:
     expect(await waitForFile(storage, successFilePath)).toBe(true);
-  }, 12000);
+  }, 20000);
 
   test("should copy failed image (not-an-image.jpeg) to failed directory", async () => {
     const failureFilePath = `${process.env.FAILED_IMAGES_PATH}/not-an-image.jpeg`;

@@ -14,6 +14,7 @@ module.exports = {
     printBasicPrototype: true,
   },
   preset: "ts-jest",
+  testRunner: "jest-circus/runner",
   testMatch: ["**/__tests__/**/*.test.ts"],
   testPathIgnorePatterns:
     process.env.CI_TEST === "true" ? ["vulnerability"] : [],
