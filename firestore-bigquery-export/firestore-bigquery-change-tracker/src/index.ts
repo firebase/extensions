@@ -24,3 +24,4 @@ export {
   FirestoreDocumentChangeEvent,
   FirestoreEventHistoryTracker,
 } from "./tracker";
+export { LogLevel, Logger } from "./logger";
