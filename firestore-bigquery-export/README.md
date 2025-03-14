@@ -297,6 +297,8 @@ Available schema extensions table fields for clustering include: `document_id, d
 
 * Maximum number of enqueue attempts: This parameter will set the maximum number of attempts to enqueue a document to cloud tasks for export to BigQuery.
 
+* Log level: The log level for the extension. The log level controls the verbosity of the extension's logs. The available log levels are: debug, info, warn, and error. To reduce the volume of logs, use a log level of warn or error.
+
 
 
 **Cloud Functions:**

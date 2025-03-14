@@ -28,6 +28,7 @@ import {
 import * as logs from "./logs";
 import * as events from "./events";
 import { getChangeType, getDocumentId } from "./util";
+import { logger } from "./logger";
 
 // Configuration for the Firestore Event History Tracker.
 const eventTrackerConfig = {
@@ -57,6 +58,7 @@ const eventTrackerConfig = {
     config.viewType === "materialized_incremental",
   maxStaleness: config.maxStaleness,
   refreshIntervalMinutes: config.refreshIntervalMinutes,
+  logLevel: config.logLevel,
 };
 
 // Initialize the Firestore Event History Tracker with the given configuration.
@@ -64,6 +66,7 @@ const eventTracker: FirestoreBigQueryEventHistoryTracker =
   new FirestoreBigQueryEventHistoryTracker(eventTrackerConfig);
 
 // Initialize logging.
+logger.setLogLevel(config.logLevel);
 logs.init();
 
 /** Initialize Firebase Admin SDK if not already initialized */
