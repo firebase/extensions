@@ -82,7 +82,9 @@ export const bigQueryTableValidating = (tableName: string) => {
 export const bigQueryUserDefinedFunctionCreating = (
   functionDefinition: string
 ) => {
-  logger.debug(`Creating BigQuery User-defined Function:\n${functionDefinition}`);
+  logger.debug(
+    `Creating BigQuery User-defined Function:\n${functionDefinition}`
+  );
 };
 
 export const bigQueryUserDefinedFunctionCreated = (
