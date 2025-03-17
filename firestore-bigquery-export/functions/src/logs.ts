@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { logger } from "./logger";
 import config from "./config";
-import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import {
+  ChangeType,
+  Logger,
+} from "@firebaseextensions/firestore-bigquery-change-tracker";
+
+export const logger = new Logger();
 
 export const arrayFieldInvalid = (fieldName: string) => {
   logger.warn(`Array field '${fieldName}' does not contain an array, skipping`);
