@@ -92,7 +92,7 @@ const generateResizedImageHandler = async (
     const filterResult = await checkImageContent(
       localOriginalFile,
       config.contentFilterLevel,
-      config.customeFilterPrompt
+      config.customFilterPrompt
     );
     if (!filterResult) {
       functions.logger.warn(

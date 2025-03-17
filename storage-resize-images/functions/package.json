@@ -10,7 +10,7 @@
     "build:watch": "npm run clean && tsc --watch",
     "clean": "rimraf lib",
     "compile": "tsc",
-    "test": "jest",
+    "test": " node --experimental-vm-modules 'node_modules/.bin/jest'",
     "test:vulnerability": "RUN_VUNERABILITY_TEST=true jest",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },

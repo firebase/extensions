@@ -1,6 +1,6 @@
 {
   "extensions": {
-    "upscale-test": "../storage-resize-images"
+    "storage-resize-images": "../storage-resize-images"
   },
   "storage": {
     "rules": "storage.rules"

@@ -52,7 +52,11 @@ const harmBlockThresholdMap: Record<string, HarmBlockThreshold | "OFF"> = {
   OFF: "OFF",
 };
 
-export const convertHarmBlockThreshold = (level: string) => {
+export const convertHarmBlockThreshold = (level?: string) => {
+  if (!level) {
+    return "OFF";
+  }
+
   if (level in harmBlockThresholdMap) {
     return harmBlockThresholdMap[level];
   }
@@ -80,6 +84,6 @@ export const config = {
   contentFilterLevel: convertHarmBlockThreshold(
     process.env.CONTENT_FILTER_LEVEL
   ),
-  customeFilterPrompt: process.env.CUSTOM_FILTER_PROMPT || null,
+  customFilterPrompt: process.env.CUSTOM_FILTER_PROMPT || null,
   placeholderImagePath: process.env.PLACEHOLDER_IMAGE_PATH || null,
 };
