@@ -69,7 +69,7 @@ export interface FirestoreBigQueryEventHistoryTrackerConfig {
   useIncrementalMaterializedView?: boolean;
   maxStaleness?: string;
   refreshIntervalMinutes?: number;
-  logLevel?: LogLevel | string | undefined;
+  logLevel?: LogLevel | string;
 }
 
 /**
