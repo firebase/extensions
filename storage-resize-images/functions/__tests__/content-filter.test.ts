@@ -2,10 +2,9 @@ import { checkImageContent } from "../src/content-filter"; // Update this import
 import * as path from "path";
 import { HarmBlockThreshold } from "@google-cloud/vertexai";
 // Setting longer timeout since API calls can take time
-jest.setTimeout(60000); // Increased timeout for multiple API calls
-
+jest.setTimeout(60000);
 // To run these integration tests, you need to be authenticated with gcloud, or set GOOGLE_APPLICATION_CREDENTIALS.
-describe("checkImageContent", () => {
+describe.skip("checkImageContent", () => {
   // Test path for the image
   // const imagePath = path.join(__dirname, "game-violence.png");
   const imagePath = path.join(__dirname, "gun-image.png");

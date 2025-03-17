@@ -94,6 +94,7 @@ const generateResizedImageHandler = async (
       config.contentFilterLevel,
       config.customFilterPrompt
     );
+
     if (!filterResult) {
       functions.logger.warn(
         `Image ${filePath} was rejected by the content filter.`
@@ -179,6 +180,8 @@ const generateResizedImageHandler = async (
 
     const results = await Promise.allSettled(tasks);
 
+    console.log(results);
+
     await events.recordSuccessEvent({
       subject: filePath,
       data: { input: object, outputs: results },
@@ -186,7 +189,10 @@ const generateResizedImageHandler = async (
 
     console.log(results);
 
-    const failed = results.some((result) => result.status === "rejected");
+    const failed = results.some(
+      (result) => result.status == "rejected" || !result.value.success
+    );
+
     if (failed) {
       logs.failed();
 
