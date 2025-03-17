@@ -151,3 +151,5 @@ Leave this field empty if you do not want to store failed images in a separate d
 This extension will operate with the following project IAM roles:
 
 * storage.admin (Reason: Allows the extension to store resized images in Cloud Storage)
+
+* aiplatform.user (Reason: Allows use of Imagen models to upscale images to higher resolution, if selected.)
