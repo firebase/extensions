@@ -47,6 +47,16 @@ export function convertToObjectMetadata(
 ): ObjectMetadata {
   const { acl, ...rest } = fileMetadata;
 
+  // Convert metadata values to strings
+  const convertedMetadata = rest.metadata
+    ? Object.fromEntries(
+        Object.entries(rest.metadata).map(([key, value]) => [
+          key,
+          value?.toString() ?? "", // Convert to string, use empty string for null
+        ])
+      )
+    : undefined;
+
   const convertedAcl =
     acl?.map((aclEntry) => ({
       kind: aclEntry.kind,
@@ -89,7 +99,7 @@ export function convertToObjectMetadata(
     contentDisposition: rest.contentDisposition,
     contentLanguage: rest.contentLanguage,
     cacheControl: rest.cacheControl,
-    metadata: rest.metadata,
+    metadata: convertedMetadata,
     owner: rest.owner,
     crc32c: rest.crc32c,
     componentCount: rest.componentCount?.toString(),

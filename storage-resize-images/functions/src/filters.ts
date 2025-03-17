@@ -3,16 +3,13 @@ import * as path from "path";
 import * as logs from "./logs";
 import { config } from "./config";
 import { supportedContentTypes } from "./resize-image";
-import { convertPathToPosix, startsWithArray } from "./util";
+import { startsWithArray } from "./util";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
 
 export function shouldResize(object: ObjectMetadata): boolean {
   const { contentType } = object; // This is the image MIME type
 
-  let tmpFilePath = convertPathToPosix(
-    path.resolve("/", path.dirname(object.name)),
-    true
-  ); // Absolute path to dirname
+  const tmpFilePath = path.resolve("/", path.dirname(object.name)); // Absolute path to dirname
 
   if (!contentType) {
     logs.noContentType();

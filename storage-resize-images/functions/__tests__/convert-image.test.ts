@@ -1,5 +1,5 @@
 import mockedEnv from "mocked-env";
-import imageType from "image-type";
+const imageType = require("image-type");
 import * as util from "util";
 import * as fs from "fs";
 import * as path from "path";
