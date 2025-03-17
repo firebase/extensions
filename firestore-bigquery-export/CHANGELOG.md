@@ -1,3 +1,7 @@
+## Version 0.1.60
+
+feat - configure a log level to control the verbosity of logs.
+
 ## Version 0.1.59
 
 docs - remove references to lifecycle backfill feature.

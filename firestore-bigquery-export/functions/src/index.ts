@@ -57,6 +57,7 @@ const eventTrackerConfig = {
     config.viewType === "materialized_incremental",
   maxStaleness: config.maxStaleness,
   refreshIntervalMinutes: config.refreshIntervalMinutes,
+  logLevel: config.logLevel,
 };
 
 // Initialize the Firestore Event History Tracker with the given configuration.
@@ -64,6 +65,7 @@ const eventTracker: FirestoreBigQueryEventHistoryTracker =
   new FirestoreBigQueryEventHistoryTracker(eventTrackerConfig);
 
 // Initialize logging.
+logs.logger.setLogLevel(config.logLevel);
 logs.init();
 
 /** Initialize Firebase Admin SDK if not already initialized */
@@ -212,10 +214,7 @@ export const fsexportbigquery = functions.firestore
         context
       );
     } catch (err) {
-      functions.logger.warn(
-        "Failed to write event to BigQuery Immediately. Will attempt to Enqueue to Cloud Tasks.",
-        err
-      );
+      logs.failedToWriteToBigQueryImmediately(err as Error);
       // Handle enqueue errors with retries and backup to GCS.
       await attemptToEnqueue(
         err,
