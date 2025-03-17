@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-shorten-urls-bitly
-version: 0.1.18
+version: 0.2.0
 specVersion: v1beta
 
 displayName: Shorten URLs in Firestore
@@ -48,16 +48,26 @@ roles:
 
 resources:
   - name: fsurlshortener
-    type: firebaseextensions.v1beta.function
+    type: firebaseextensions.v1beta.v2function
     description:
       Listens for writes of new URLs to your specified Cloud Firestore
       collection, shortens the URLs, then writes the shortened form back to the
       same document.
     properties:
-      runtime: nodejs20
+      sourceDirectory: functions
+      buildConfig:
+        runtime: nodejs22
+      serviceConfig:
+        timeoutSeconds: 120
       eventTrigger:
-        eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
+        eventType: google.cloud.firestore.document.v1.written
+        triggerRegion: ${LOCATION}
+        eventFilters:
+          - attribute: database
+            value: ${DATABASE}
+          - attribute: document
+            value: ${COLLECTION_PATH}/{documentId}
+            operator: match-path-pattern
 
 externalServices:
   - name: Bitly
@@ -101,6 +111,14 @@ params:
     default: shortUrl
     required: true
 
+  - param: DATABASE
+    label: Firestore Database
+    description: >
+      The Firestore database to use. Use "(default)" for the default database.
+    example: (default)
+    default: (default)
+    required: false
+
 events:
   - type: firebase.extensions.firestore-shorten-urls-bitly.v1.onStart
     description:
@@ -108,9 +126,7 @@ events:
       include data such as the context of the trigger request.
 
   - type: firebase.extensions.firestore-shorten-urls-bitly.v1.onSuccess
-    description:
-      Occurs when image resizing completes successfully. The event will contain
-      further details about specific formats and sizes.
+    description: Occurs when URL shortening completes successfully.
 
   - type: firebase.extensions.firestore-shorten-urls-bitly.v1.onError
     description:
