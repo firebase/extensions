@@ -50,9 +50,7 @@ roles:
   - role: storage.admin
     reason: Allows the extension to store resized images in Cloud Storage
   - role: aiplatform.user
-    reason:
-      Allows use of Imagen models to upscale images to higher resolution, if
-      selected.
+    reason: Allows use of Gemini models for AI content filtering, if enabled.
 
 resources:
   - name: generateResizedImage
