@@ -1,3 +1,9 @@
+## Version 0.2.9
+
+fixed - run an npm audit and bump vulnerable dependencies
+
+fixed - use Promise.allSettled to await various resizes
+
 ## Version 0.2.8
 
 fixed - support '+' character in paths
