@@ -214,10 +214,7 @@ export const fsexportbigquery = functions.firestore
         context
       );
     } catch (err) {
-      functions.logger.warn(
-        "Failed to write event to BigQuery Immediately. Will attempt to Enqueue to Cloud Tasks.",
-        err
-      );
+      logs.failedToWriteToBigQueryImmediately(err as Error);
       // Handle enqueue errors with retries and backup to GCS.
       await attemptToEnqueue(
         err,

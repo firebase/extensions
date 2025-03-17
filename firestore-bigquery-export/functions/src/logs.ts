@@ -224,3 +224,10 @@ export const logFailedEventAction = (
     error,
   });
 };
+
+export const failedToWriteToBigQueryImmediately = (error: Error) => {
+  logger.warn(
+    "Failed to write event to BigQuery Immediately. Will attempt to Enqueue to Cloud Tasks.",
+    error
+  );
+};
