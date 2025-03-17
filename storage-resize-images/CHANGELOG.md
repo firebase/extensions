@@ -1,5 +1,7 @@
 ## Version 0.2.9
 
+feature - support upscaling images with Imagen3
+
 fixed - run an npm audit and bump vulnerable dependencies
 
 fixed - use Promise.allSettled to await various resizes
