@@ -128,6 +128,15 @@ Leave this field empty if you do not want to store failed images in a separate d
 * Assign new access token: Should resized images have a new access token assigned to them,  different from the original image?
 
 
+* Content filter level: Set the level of content filtering to apply to uploaded images. Choose 'OFF' to disable  content filtering entirely, 'BLOCK_ONLY_HIGH' to block only high-severity inappropriate content,  'BLOCK_MEDIUM_AND_ABOVE' for medium and high severity content, or 'BLOCK_LOW_AND_ABOVE' for the strictest filtering (blocks low, medium, and high severity content).
+
+
+* Custom content filter prompt: Optionally provide a custom prompt for content filtering. This allows you to define specific  criteria for filtering beyond the standard categories. For example, "Does this image contain  a cat?" The system will use this prompt to evaluate images and filter based on the response.  Leave empty to use default content filtering. This is additinal filtering on top of whichever content filtering level you choose.
+
+
+* Path to placeholder image: Optionally specify a path to a placeholder image to use when an uploaded image is blocked  by content filtering. This should be a relative path within your storage bucket. If not  provided, blocked images will not be replaced.
+
+
 
 
 **Cloud Functions:**
@@ -151,3 +160,5 @@ Leave this field empty if you do not want to store failed images in a separate d
 This extension will operate with the following project IAM roles:
 
 * storage.admin (Reason: Allows the extension to store resized images in Cloud Storage)
+
+* aiplatform.user (Reason: Allows use of Imagen models to upscale images to higher resolution, if selected.)
