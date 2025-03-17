@@ -16,6 +16,21 @@ jest.mock("@firebaseextensions/firestore-bigquery-change-tracker", () => ({
     UPDATE: 1,
     CREATE: 0,
   },
+  LogLevel: {
+    DEBUG: "debug",
+    INFO: "info",
+    WARN: "warn",
+    ERROR: "error",
+    SILENT: "silent",
+  },
+  Logger: jest.fn().mockImplementation(() => ({
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    log: jest.fn(),
+    setLogLevel: jest.fn(),
+  })),
 }));
 
 jest.mock("firebase-admin/functions", () => ({
