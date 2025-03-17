@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { HarmCategory, HarmBlockThreshold } from "@google-cloud/vertexai";
 
 export enum deleteImage {
   always = 0,
@@ -44,6 +45,24 @@ function allowAnimated(sharpOptions = "{}", overrideIsAnimated) {
   return overrideIsAnimated === "true" || undefined ? true : false;
 }
 
+const harmBlockThresholdMap: Record<string, HarmBlockThreshold | null> = {
+  BLOCK_LOW_AND_ABOVE: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+  BLOCK_MEDIUM_AND_ABOVE: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  BLOCK_ONLY_HIGH: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+  OFF: null,
+};
+
+export const convertHarmBlockThreshold = (level?: string) => {
+  if (!level) {
+    return null;
+  }
+
+  if (level in harmBlockThresholdMap) {
+    return harmBlockThresholdMap[level];
+  }
+  throw new Error(`Invalid HarmBlockThreshold: ${level}`);
+};
+
 export const config = {
   bucket: process.env.IMG_BUCKET,
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
@@ -61,4 +80,10 @@ export const config = {
   outputOptions: process.env.OUTPUT_OPTIONS,
   animated: allowAnimated(process.env.SHARP_OPTIONS, process.env.IS_ANIMATED),
   location: process.env.LOCATION,
+  projectId: process.env.PROJECT_ID,
+  contentFilterLevel: convertHarmBlockThreshold(
+    process.env.CONTENT_FILTER_LEVEL
+  ),
+  customFilterPrompt: process.env.CUSTOM_FILTER_PROMPT || null,
+  placeholderImagePath: process.env.PLACEHOLDER_IMAGE_PATH || null,
 };
