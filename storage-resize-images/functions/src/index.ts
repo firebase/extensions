@@ -19,7 +19,7 @@ import { getFunctions } from "firebase-admin/functions";
 import { getExtensions } from "firebase-admin/extensions";
 import * as fs from "fs";
 import * as functions from "firebase-functions/v1";
-import * as mkdirp from "mkdirp";
+import { mkdirp } from "mkdirp";
 import * as os from "os";
 import * as path from "path";
 import * as sharp from "sharp";
@@ -103,14 +103,17 @@ const generateResizedImageHandler = async (
       });
     });
 
-    const results = await Promise.all(tasks);
+    const results = await Promise.allSettled(tasks);
 
     await events.recordSuccessEvent({
       subject: filePath,
       data: { input: object, outputs: results },
     });
 
-    const failed = results.some((result) => result.success === false);
+    const failed = results.some(
+      (result) => result.status === "rejected" || result.value.success === false
+    );
+
     if (failed) {
       logs.failed();
 

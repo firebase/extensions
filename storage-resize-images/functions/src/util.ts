@@ -45,7 +45,18 @@ export function convertPathToPosix(
 export function convertToObjectMetadata(
   fileMetadata: FileMetadata
 ): ObjectMetadata {
-  const { acl, ...rest } = fileMetadata;
+  const { acl, metadata, ...rest } = fileMetadata;
+
+  // Convert metadata values to strings, defaulting to an empty string for null/undefined values
+  // This is necessary because of a mismatch between the expected type of metadata and the actual type
+  const convertedMetadata = metadata
+    ? Object.fromEntries(
+        Object.entries(metadata).map(([key, value]) => [
+          key,
+          value?.toString() ?? "",
+        ])
+      )
+    : undefined;
 
   const convertedAcl =
     acl?.map((aclEntry) => ({
@@ -89,7 +100,7 @@ export function convertToObjectMetadata(
     contentDisposition: rest.contentDisposition,
     contentLanguage: rest.contentLanguage,
     cacheControl: rest.cacheControl,
-    metadata: rest.metadata,
+    metadata: convertedMetadata,
     owner: rest.owner,
     crc32c: rest.crc32c,
     componentCount: rest.componentCount?.toString(),
