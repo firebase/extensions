@@ -21,6 +21,7 @@ Object {
   "instanceId": undefined,
   "kmsKeyName": "test",
   "location": "us-central1",
+  "logLevel": "info",
   "maxDispatchesPerSecond": 10,
   "maxEnqueueAttempts": 3,
   "maxStaleness": undefined,
