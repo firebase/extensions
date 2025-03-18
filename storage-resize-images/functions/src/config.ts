@@ -61,4 +61,5 @@ export const config = {
   outputOptions: process.env.OUTPUT_OPTIONS,
   animated: allowAnimated(process.env.SHARP_OPTIONS, process.env.IS_ANIMATED),
   location: process.env.LOCATION,
+  projectId: process.env.PROJECT_ID,
 };

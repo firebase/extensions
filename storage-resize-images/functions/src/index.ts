@@ -33,6 +33,7 @@ import { v4 as uuidv4 } from "uuid";
 import { convertToObjectMetadata, countNegativeTraversals } from "./util";
 import { File } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
+import { upscale } from "./upscale";
 
 sharp.cache(false);
 
@@ -86,6 +87,25 @@ const generateResizedImageHandler = async (
     const imageSizes = new Set(config.imageSizes);
 
     const tasks: Promise<ResizedImageResult>[] = [];
+
+    for (let upscaleFactor of ["x2", "x4"]) {
+      // returns true if upscaleFactor exists in imageSizes and was deleted.
+      const shouldUpscale = imageSizes.delete(upscaleFactor);
+
+      if (shouldUpscale) {
+        console.log(`Upscaling image by ${upscaleFactor}`);
+        // upscale the image and save to local file, the same way modify image does
+        tasks.push(
+          upscale(
+            bucket,
+            localOriginalFile,
+            parsedPath,
+            objectMetadata,
+            upscaleFactor
+          )
+        );
+      }
+    }
 
     imageTypes.forEach((format) => {
       imageSizes.forEach((size) => {
