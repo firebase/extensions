@@ -20,4 +20,5 @@ export default {
   location: process.env.LOCATION,
   shortUrlFieldName: process.env.SHORT_URL_FIELD_NAME,
   urlFieldName: process.env.URL_FIELD_NAME,
+  database: process.env.DATABASE,
 };
