@@ -49,11 +49,14 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Short URL field name: What is the name of the field where you want to store your shortened URLs?
 
 
+* Firestore Database: The Firestore database to use. Use "(default)" for the default database.
 
 
-**Cloud Functions:**
 
-* **fsurlshortener:** Listens for writes of new URLs to your specified Cloud Firestore collection, shortens the URLs, then writes the shortened form back to the same document.
+
+**Other Resources**:
+
+* fsurlshortener (firebaseextensions.v1beta.v2function)
 
 
 
