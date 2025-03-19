@@ -142,7 +142,7 @@ To retry the failed imports, you can use the output file to manually inspect or 
 
 ### Using the "Generate Schema Views" After Import
 
-After using fs-bq-import-collection to import your Firestore data to BigQuery, your data will be available in the "raw changelog" table and a "raw latest" view. However, the raw data doesn't have proper typing; all fields are stored as strings inside a JSON structure. To make this data more useful for querying, you should generate schema views.
+After using fs-bq-import-collection to import your Firestore data to BigQuery, your data will be available in two forms: a 'raw changelog' table that streams all Firestore events chronologically, and a 'raw latest' view showing the current state of each document. However, the raw data doesn't have proper typing; all fields are stored as strings inside a JSON structure. To make this data more useful for querying, you should generate schema views.
 
 #### Why Use Schema Views
 
@@ -152,7 +152,7 @@ After using fs-bq-import-collection to import your Firestore data to BigQuery, y
 
 #### Guide For Generate Schema Views
 
-To do so, you may use the official fs-bq-schema-views CLI tool. You can find a guide for using this tool [here](./GENERATE_SCHEMA_VIEWS.md).
+To generate a schema view, you may use the official fs-bq-schema-views CLI tool. You can find a guide for using this tool [here](./GENERATE_SCHEMA_VIEWS.md).
 
 This Generate Schema Views tool has an optional AI schema generation tool, powered by Gemini, where it can sample from your original Cloud Firestore collection and generate an appropriate schema for your BigQuery Views as a first step. You can review and customize this schema before applying it to BigQuery.
 
