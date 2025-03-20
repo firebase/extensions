@@ -62,9 +62,10 @@ const generateResizedImageHandler = async (
   const filePath = object.name; // File path in the bucket.
   const parsedPath = path.parse(filePath);
   const objectMetadata = object;
-
+  let failed = null;
   let localOriginalFile: string;
   let remoteOriginalFile: File;
+
   try {
     localOriginalFile = path.join(os.tmpdir(), uuidv4());
     const tempLocalDir = path.dirname(localOriginalFile);
@@ -88,85 +89,125 @@ const generateResizedImageHandler = async (
 
     const tasks: Promise<ResizedImageResult>[] = [];
 
-    const filterResult = await checkImageContent(
-      localOriginalFile,
-      config.contentFilterLevel,
-      config.customFilterPrompt
-    );
+    // Check image content filter
+    let filterResult = true; // Default to true (pass)
+    try {
+      filterResult = await checkImageContent(
+        localOriginalFile,
+        config.contentFilterLevel,
+        config.customFilterPrompt,
+        object.contentType
+      );
+    } catch (err) {
+      functions.logger.error(`Error during content filtering: ${err}`);
+      failed = true; // Set failed flag if content filter throws an error
+    }
 
-    if (!filterResult) {
+    // Handle failed content filter
+    if (filterResult === false) {
       functions.logger.warn(
         `Image ${filePath} was rejected by the content filter.`
       );
 
-      // Check if a placeholder image is configured
+      // Default placeholder file
+      const localPlaceholderFile = path.join(__dirname, "placeholder.png");
+
+      // Try using configured placeholder if available
       if (config.placeholderImagePath) {
         try {
-          // Path to the placeholder image in the bucket
           const placeholderPath = config.placeholderImagePath;
-
           functions.logger.info(
             `Replacing filtered image with placeholder from ${placeholderPath}`
           );
 
           const placeholderFile = bucket.file(placeholderPath);
-          const localPlaceholderFile = path.join(os.tmpdir(), uuidv4());
+          const tempPlaceholder = path.join(os.tmpdir(), uuidv4());
 
-          await placeholderFile.download({
-            destination: localPlaceholderFile,
-          });
+          await placeholderFile.download({ destination: tempPlaceholder });
 
-          // Replace the original local file with the placeholder
+          // Swap original with placeholder
           fs.unlinkSync(localOriginalFile);
-          fs.copyFileSync(localPlaceholderFile, localOriginalFile);
-
-          // Clean up the temporary placeholder file
-          fs.unlinkSync(localPlaceholderFile);
+          fs.copyFileSync(tempPlaceholder, localOriginalFile);
+          fs.unlinkSync(tempPlaceholder);
 
           functions.logger.info(`Successfully replaced with placeholder image`);
-
-          // Continue with resizing using the placeholder instead
         } catch (err) {
-          functions.logger.error(
-            `Error replacing with placeholder image:`,
-            err
-          );
-          // If we can't replace with placeholder, just return and stop processing
-          return;
+          functions.logger.error(`Error replacing with placeholder:`, err);
+          functions.logger.info(`Falling back to default local placeholder.`);
+
+          try {
+            // Make a copy of the default placeholder instead of using it directly
+            const tempPlaceholder = path.join(os.tmpdir(), uuidv4());
+            fs.copyFileSync(localPlaceholderFile, tempPlaceholder);
+
+            // Delete the original file
+            fs.unlinkSync(localOriginalFile);
+
+            // Set localOriginalFile to the copied placeholder
+            localOriginalFile = tempPlaceholder;
+          } catch (fallbackErr) {
+            functions.logger.error(
+              `Error using default placeholder:`,
+              fallbackErr
+            );
+            failed = true; // Set failed flag if fallback placeholder fails too
+          }
         }
       } else {
-        throw new Error(
-          `Image ${filePath} was rejected by the content filter and no placeholder image was configured.`
-        );
+        try {
+          // Make a copy of the default placeholder instead of using it directly
+          const tempPlaceholder = path.join(os.tmpdir(), uuidv4());
+          fs.copyFileSync(localPlaceholderFile, tempPlaceholder);
+
+          // Delete the original file
+          fs.unlinkSync(localOriginalFile);
+
+          // Set localOriginalFile to the copied placeholder
+          localOriginalFile = tempPlaceholder;
+        } catch (err) {
+          functions.logger.error(`Error using default placeholder:`, err);
+          failed = true; // Set failed flag if default placeholder fails
+        }
       }
     }
 
-    imageTypes.forEach((format) => {
-      imageSizes.forEach((size) => {
-        tasks.push(
-          modifyImage({
-            bucket,
-            originalFile: localOriginalFile,
-            parsedPath,
-            contentType: object.contentType,
-            size,
-            objectMetadata: objectMetadata,
-            format,
-          })
-        );
+    // Only process resizing if not already failed
+    if (failed !== true) {
+      imageTypes.forEach((format) => {
+        imageSizes.forEach((size) => {
+          tasks.push(
+            modifyImage({
+              bucket,
+              originalFile: localOriginalFile,
+              parsedPath,
+              contentType: object.contentType,
+              size,
+              objectMetadata: objectMetadata,
+              format,
+            })
+          );
+        });
       });
-    });
 
-    const results = await Promise.allSettled(tasks);
+      const results = await Promise.allSettled(tasks);
 
-    await events.recordSuccessEvent({
-      subject: filePath,
-      data: { input: object, outputs: results },
-    });
+      await events.recordSuccessEvent({
+        subject: filePath,
+        data: {
+          input: object,
+          outputs: results,
+          contentFilterPassed: filterResult,
+        },
+      });
 
-    const failed = results.some(
-      (result) => result.status === "rejected" || result.value.success === false
-    );
+      // Only update failed status if it's still null (not already failed)
+      if (failed === null) {
+        failed = results.some(
+          (result) =>
+            result.status === "rejected" || result.value.success === false
+        );
+      }
+    }
 
     if (failed) {
       logs.failed();
@@ -177,7 +218,7 @@ const generateResizedImageHandler = async (
         const fileExtension = parsedPath.ext;
         const fileNameWithoutExtension = path.basename(filePath, fileExtension);
 
-        /** Check for negetaive traversal in the configuration */
+        /** Check for negative traversal in the configuration */
         if (countNegativeTraversals(config.failedImagesPath)) {
           logs.invalidFailedResizePath(config.failedImagesPath);
           return;
@@ -204,9 +245,19 @@ const generateResizedImageHandler = async (
 
         /** Checks passed, upload the failed image to the failed image directory */
         logs.failedImageUploading(failedFilePath);
+
+        // Add additional metadata for content filter failures
+        const metadataObj = {
+          resizeFailed: "true",
+        };
+
+        if (filterResult === false) {
+          metadataObj["contentFilterFailed"] = "true";
+        }
+
         await bucket.upload(localOriginalFile, {
           destination: failedFilePath,
-          metadata: { metadata: { resizeFailed: "true" } },
+          metadata: { metadata: metadataObj },
         });
         logs.failedImageUploaded(failedFilePath);
       }

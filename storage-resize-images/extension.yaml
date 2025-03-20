@@ -368,11 +368,12 @@ params:
     label: Custom content filter prompt
     description: >
       Optionally provide a custom prompt for content filtering. This allows you
-      to define specific  criteria for filtering beyond the standard categories.
-      For example, "Does this image contain  a cat?" The system will use this
-      prompt to evaluate images and filter based on the response.  Leave empty
-      to use default content filtering. This is additinal filtering on top of
-      whichever content filtering level you choose.
+      to define specific criteria for filtering beyond the standard categories.
+      Note that this prompt should be a yes/no question. For example, "Does this
+      image contain a cat?" will allow only images that Gemini thinks contain a
+      cat. This is additional filtering on top of whichever content filtering
+      level you choose. Leave empty to use your selected built-in content
+      filtering configuration.
     type: string
     example: "Does this image contain violent or threatening content?"
     required: false
@@ -382,8 +383,8 @@ params:
     description: >
       Optionally specify a path to a placeholder image to use when an uploaded
       image is blocked  by content filtering. This should be a relative path
-      within your storage bucket. If not  provided, blocked images will not be
-      replaced.
+      within your storage bucket. If not provided, a default placeholder image
+      is used.
     type: string
     example: "placeholders/blocked-content.jpg"
     required: false

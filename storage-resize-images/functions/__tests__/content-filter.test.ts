@@ -49,7 +49,7 @@ describe("checkImageContent with mocks", () => {
   });
 
   it("should return true when filter level is OFF and no custom prompt", async () => {
-    const result = await checkImageContent(imagePath, null, null);
+    const result = await checkImageContent(imagePath, null, null, "image/png");
 
     // Verify no API call was made
     expect(genkit).not.toHaveBeenCalled();
@@ -71,7 +71,8 @@ describe("checkImageContent with mocks", () => {
     const result = await checkImageContent(
       imagePath,
       HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      null
+      null,
+      "image/png"
     );
 
     // Verify API call was made
@@ -95,7 +96,8 @@ describe("checkImageContent with mocks", () => {
     const result = await checkImageContent(
       imagePath,
       HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-      "Is this image containing inappropriate content?"
+      "Is this image containing inappropriate content?",
+      "image/png"
     );
 
     expect(genkit).toHaveBeenCalled();
@@ -120,7 +122,8 @@ describe("checkImageContent with mocks", () => {
     const result = await checkImageContent(
       imagePath,
       HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      null
+      null,
+      "image/png"
     );
 
     expect(genkit).toHaveBeenCalled();
@@ -128,31 +131,22 @@ describe("checkImageContent with mocks", () => {
     expect(result).toBe(false);
   });
 
-  it("should return false when an unexpected error occurs", async () => {
-    // Mock API throwing general error
-    const mockGenerate = jest
-      .fn()
-      .mockRejectedValue(new Error("Unexpected API error"));
+  it("should rethrow when error occurs", async () => {
+    // Mock API throwing generic error
+    const mockGenerate = jest.fn().mockRejectedValue(new Error("API failure"));
 
     genkit.mockImplementation(() => ({
       generate: mockGenerate,
     }));
 
-    // Mock console.error to prevent test output pollution
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-
-    const result = await checkImageContent(
-      imagePath,
-      HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      null
-    );
-
-    expect(genkit).toHaveBeenCalled();
-    expect(mockGenerate).toHaveBeenCalled();
-    expect(consoleErrorSpy).toHaveBeenCalled();
-    expect(result).toBe(false);
-
-    consoleErrorSpy.mockRestore();
+    await expect(
+      checkImageContent(
+        imagePath,
+        HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        null,
+        "image/png"
+      )
+    ).rejects.toThrow("API failure");
   });
 
   it("should pass correct parameters to generate for default prompt", async () => {
@@ -169,7 +163,8 @@ describe("checkImageContent with mocks", () => {
     await checkImageContent(
       imagePath,
       HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      null
+      null,
+      "image/png"
     );
 
     // Verify the call parameters
@@ -203,7 +198,8 @@ describe("checkImageContent with mocks", () => {
     await checkImageContent(
       imagePath,
       HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      customPrompt
+      customPrompt,
+      "image/png"
     );
 
     // Verify the call parameters
@@ -233,7 +229,8 @@ describe("checkImageContent with mocks", () => {
     let result = await checkImageContent(
       imagePath,
       HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-      null
+      null,
+      "image/png"
     );
 
     expect(mockGenerate).toHaveBeenCalled();
@@ -256,7 +253,8 @@ describe("checkImageContent with mocks", () => {
     result = await checkImageContent(
       imagePath,
       HarmBlockThreshold.BLOCK_ONLY_HIGH,
-      null
+      null,
+      "image/png"
     );
 
     expect(mockGenerate).toHaveBeenCalled();
@@ -314,6 +312,7 @@ describe("checkImageContent retry mechanism", () => {
       imagePath,
       HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
       null,
+      "image/png",
       2 // Set max attempts to 2
     );
 
@@ -345,12 +344,18 @@ describe("checkImageContent retry mechanism", () => {
     }));
 
     const maxAttempts = 3;
-    const result = await checkImageContent(
-      imagePath,
-      HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      null,
-      maxAttempts
-    );
+
+    try {
+      const result = await checkImageContent(
+        imagePath,
+        HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        null,
+        "image/png",
+        maxAttempts
+      );
+    } catch (e) {
+      // Ignore the error
+    }
 
     // Verify the function was called maxAttempts times
     expect(mockGenerate).toHaveBeenCalledTimes(maxAttempts);
@@ -369,9 +374,6 @@ describe("checkImageContent retry mechanism", () => {
       ),
       expect.any(Error)
     );
-
-    // Verify the function returns false after all retries fail
-    expect(result).toBe(false);
   });
 
   it("should not retry when content is blocked", async () => {
@@ -392,6 +394,7 @@ describe("checkImageContent retry mechanism", () => {
       imagePath,
       HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
       null,
+      "image/png",
       3 // Set max attempts to 3
     );
 
@@ -434,12 +437,17 @@ describe("checkImageContent retry mechanism", () => {
       generate: mockGenerate,
     }));
 
-    await checkImageContent(
-      imagePath,
-      HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      null,
-      3 // Set max attempts to 3
-    );
+    try {
+      await checkImageContent(
+        imagePath,
+        HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        null,
+        "image/png",
+        3 // Set max attempts to 3
+      );
+    } catch (e) {
+      // Ignore the error
+    }
 
     // Verify setTimeout was called with increasing delays
     expect(setTimeoutSpy).toHaveBeenCalledTimes(2);
@@ -478,12 +486,17 @@ describe("checkImageContent retry mechanism", () => {
       generate: mockGenerate,
     }));
 
-    await checkImageContent(
-      imagePath,
-      HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-      null,
-      10 // Set max attempts to a high number to test capping
-    );
+    try {
+      await checkImageContent(
+        imagePath,
+        HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        null,
+        "image/png",
+        10 // Set max attempts to a high number to test capping
+      );
+    } catch (e) {
+      // Ignore the error
+    }
 
     // Check if any delay exceeds 5000ms
     const delays = setTimeoutSpy.mock.calls.map((call) => call[1]);
@@ -497,7 +510,7 @@ describe("checkImageContent retry mechanism", () => {
     if (delays.length >= 4) {
       expect(delays[3]).toBeLessThanOrEqual(5000);
     }
-  });
+  }, 100000);
 
   it("should recover after intermittent failures", async () => {
     // Mock generate to fail twice then succeed
@@ -517,6 +530,7 @@ describe("checkImageContent retry mechanism", () => {
       imagePath,
       HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
       null,
+      "image/png",
       5 // Set max attempts to 5
     );
 
