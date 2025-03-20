@@ -117,7 +117,7 @@ params:
       The Firestore database to use. Use "(default)" for the default database.
     example: (default)
     default: (default)
-    required: false
+    required: true
 
 events:
   - type: firebase.extensions.firestore-shorten-urls-bitly.v1.onStart
