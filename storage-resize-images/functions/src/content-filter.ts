@@ -2,8 +2,7 @@ import vertexAI, { gemini20Flash001 } from "@genkit-ai/vertexai";
 import { HarmCategory, HarmBlockThreshold } from "@google-cloud/vertexai";
 import { genkit, z } from "genkit";
 import * as fs from "fs";
-import * as mime from "mime";
-
+import * as path from "path";
 /**
  * Creates a data URL from an image file
  * @param filePath Path to the image file
@@ -22,7 +21,7 @@ function createImageDataUrl(filePath: string): string {
  * @returns MIME type string
  */
 function getMimeType(filePath: string): string {
-  return mime.lookup(filePath, "image/jpeg");
+  return path.extname(filePath).toLowerCase();
 }
 
 /**
@@ -73,6 +72,7 @@ export async function checkImageContent(
   localOriginalFile: string,
   filterLevel: HarmBlockThreshold | null,
   prompt: string | null,
+  contentType: string,
   maxAttempts = 3
 ): Promise<boolean> {
   let attempts = 1;
@@ -126,7 +126,7 @@ export async function checkImageContent(
                 {
                   media: {
                     url: dataUrl,
-                    contentType: mimeType,
+                    contentType,
                   },
                 },
               ],
@@ -172,7 +172,7 @@ export async function checkImageContent(
           "Failed to evaluate image content after multiple attempts:",
           error
         );
-        return false;
+        throw error;
       }
     }
   }
