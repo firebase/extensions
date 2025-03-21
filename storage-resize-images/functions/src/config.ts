@@ -87,3 +87,5 @@ export const config = {
   customFilterPrompt: process.env.CUSTOM_FILTER_PROMPT || null,
   placeholderImagePath: process.env.PLACEHOLDER_IMAGE_PATH || null,
 };
+
+export type Config = typeof config;

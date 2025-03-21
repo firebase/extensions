@@ -3,6 +3,12 @@ import { HarmCategory, HarmBlockThreshold } from "@google-cloud/vertexai";
 import { genkit, z } from "genkit";
 import * as fs from "fs";
 import * as path from "path";
+import * as functions from "firebase-functions/v1";
+import { v4 as uuidv4 } from "uuid";
+import * as os from "os";
+import { Bucket } from "@google-cloud/storage";
+import { ObjectMetadata } from "firebase-functions/v1/storage";
+import type { Config } from "./config";
 /**
  * Creates a data URL from an image file
  * @param filePath Path to the image file
@@ -84,7 +90,6 @@ export async function checkImageContent(
 
     try {
       const dataUrl = createImageDataUrl(localOriginalFile);
-      const mimeType = getMimeType(localOriginalFile);
 
       // Initialize Vertex AI client
       const ai = genkit({
@@ -140,7 +145,7 @@ export async function checkImageContent(
           },
         });
 
-        if (result.output?.response === "no" && prompt !== null) {
+        if (result.output?.response === "yes" && prompt !== null) {
           console.warn("Image content blocked by Custom AI Content filter.");
           return false;
         }
@@ -179,4 +184,106 @@ export async function checkImageContent(
 
   // This should never be reached, but as a fallback:
   return false;
+}
+
+/**
+ * Replaces the original file with configured placeholder
+ */
+export async function replaceWithConfiguredPlaceholder(
+  localFile: string,
+  bucket: Bucket,
+  placeholderPath: string
+): Promise<void> {
+  try {
+    functions.logger.info(
+      `Replacing filtered image with placeholder from ${placeholderPath}`
+    );
+
+    const placeholderFile = bucket.file(placeholderPath);
+    const tempPlaceholder = path.join(os.tmpdir(), uuidv4());
+
+    await placeholderFile.download({ destination: tempPlaceholder });
+
+    // Swap original with placeholder
+    fs.unlinkSync(localFile);
+    fs.copyFileSync(tempPlaceholder, localFile);
+    fs.unlinkSync(tempPlaceholder);
+
+    functions.logger.info(`Successfully replaced with placeholder image`);
+  } catch (err) {
+    functions.logger.error(`Error replacing with placeholder:`, err);
+    functions.logger.info(`Falling back to default local placeholder.`);
+
+    // Fall back to default placeholder
+    await replaceWithDefaultPlaceholder(localFile);
+  }
+}
+
+/**
+ * Replaces the original file with default placeholder
+ */
+export async function replaceWithDefaultPlaceholder(
+  localFile: string
+): Promise<void> {
+  const localPlaceholderFile = path.join(__dirname, "placeholder.png");
+
+  // Make a copy of the default placeholder instead of using it directly
+  const tempPlaceholder = path.join(os.tmpdir(), uuidv4());
+  fs.copyFileSync(localPlaceholderFile, tempPlaceholder);
+
+  // Delete the original file
+  fs.unlinkSync(localFile);
+
+  // Replace with the placeholder
+  fs.renameSync(tempPlaceholder, localFile);
+}
+
+/**
+ * Processes content filtering and handles placeholder replacement if needed
+ */
+export async function processContentFilter(
+  localFile: string,
+  object: ObjectMetadata,
+  bucket: Bucket,
+  verbose: boolean,
+  config: Config
+): Promise<{ passed: boolean; failed: boolean | null }> {
+  let filterResult = true; // Default to true (pass)
+  let failed = null; // No failures yet
+
+  try {
+    filterResult = await checkImageContent(
+      localFile,
+      config.contentFilterLevel,
+      config.customFilterPrompt,
+      object.contentType
+    );
+  } catch (err) {
+    functions.logger.error(`Error during content filtering: ${err}`);
+    failed = true; // Set failed flag if content filter throws an error
+  }
+
+  // Handle failed content filter
+  if (filterResult === false) {
+    functions.logger.warn(
+      `Image ${object.name} was rejected by the content filter.`
+    );
+
+    try {
+      if (config.placeholderImagePath) {
+        await replaceWithConfiguredPlaceholder(
+          localFile,
+          bucket,
+          config.placeholderImagePath
+        );
+      } else {
+        await replaceWithDefaultPlaceholder(localFile);
+      }
+    } catch (err) {
+      functions.logger.error(`Error replacing with placeholder:`, err);
+      failed = true;
+    }
+  }
+
+  return { passed: filterResult, failed };
 }
