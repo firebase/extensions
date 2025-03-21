@@ -347,7 +347,7 @@ params:
     label: Content filter level
     description: >
       Set the level of content filtering to apply to uploaded images. Choose
-      'OFF' to disable  content filtering entirely, 'BLOCK_ONLY_HIGH' to block
+      'OFF' to disable content filtering entirely, 'BLOCK_ONLY_HIGH' to block
       only high-severity inappropriate content, 'BLOCK_MEDIUM_AND_ABOVE' for
       medium and high severity content, or 'BLOCK_LOW_AND_ABOVE' for the
       strictest filtering (blocks low, medium, and high severity content).
