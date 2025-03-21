@@ -101,7 +101,7 @@ params:
       works](https://firebase.google.com/products/extensions/storage-resize-images).
     type: string
     example: "200x200"
-    validationRegex: ^(\d+x(\d+,\d+x)*\d+|x[24])$
+    validationRegex: ^\d+x(\d+,\d+x)*\d+$
     validationErrorMessage:
       Invalid sizes, must be a comma-separated list of WIDTHxHEIGHT values.
     default: "200x200"
