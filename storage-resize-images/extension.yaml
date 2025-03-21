@@ -372,7 +372,7 @@ params:
       Note that this prompt should be a yes/no question. For example, "Does this
       image contain a cat?" will filter out images that Gemini thinks contain a
       cat. This is additional filtering on top of whichever content filtering
-      level you choose. Leave empty to use your selected built-in content
+      level you choose. Leave empty to use just your selected built-in content
       filtering configuration.
     type: string
     example: "Does this image contain violent or threatening content?"
