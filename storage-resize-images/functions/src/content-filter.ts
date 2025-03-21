@@ -59,17 +59,10 @@ function createSafetySettings(filterLevel: HarmBlockThreshold) {
   }));
 }
 
-// OFF - no filter applied
-// BLOCK_NONE - no blocking
-// BLOCK_ONLY_HIGH - only block high severity content
-// BLOCK_MEDIUM_AND_ABOVE - block medium and high severity content
-// BLOCK_LOW_AND_ABOVE - block low, medium, and high severity content
-// CUSTOM - user provides a prompt (we still enforce the response via structured output) e.g "Does this image contain a cat?"
-
 /**
  * Checks if an image content is appropriate based on the provided filter level and optional custom prompt
  * @param localOriginalFile Path to the local image file
- * @param filterLevel The content filter level to apply ('LOW', 'MEDIUM', 'HIGH', or 'OFF')
+ * @param filterLevel The content filter level to apply ('LOW', 'MEDIUM', 'HIGH', or null to disable)
  * @param prompt Optional custom prompt to use for content checking
  * @param maxAttempts Maximum number of retry attempts in case of errors
  * @returns Promise<boolean> - true if the image passes the filter, false otherwise
@@ -83,7 +76,7 @@ export async function checkImageContent(
 ): Promise<boolean> {
   let attempts = 1;
   while (attempts <= maxAttempts) {
-    // If filter level is OFF and no custom prompt, skip content checking entirely
+    // If filter level is null and no custom prompt, skip content checking entirely
     if (filterLevel === null && prompt === null) {
       return true;
     }
