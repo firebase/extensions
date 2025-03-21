@@ -2,7 +2,13 @@ import * as path from "path";
 
 import { FileMetadata } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
-
+import { Bucket, File } from "@google-cloud/storage";
+import * as logs from "./logs";
+import { v4 as uuidv4 } from "uuid";
+import { mkdirp } from "mkdirp";
+import * as os from "os";
+import * as fs from "fs";
+import { Config } from "./config";
 export const startsWithArray = (
   userInputPaths: string[],
   imagePath: string
