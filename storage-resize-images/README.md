@@ -181,7 +181,7 @@ Leave this field empty if you do not want to store failed images in a separate d
 * Assign new access token: Should resized images have a new access token assigned to them,  different from the original image?
 
 
-* Content filter level: Set the level of content filtering to apply to uploaded images. Choose 'OFF' to disable  content filtering entirely, 'BLOCK_ONLY_HIGH' to block only high-severity inappropriate content, 'BLOCK_MEDIUM_AND_ABOVE' for medium and high severity content, or 'BLOCK_LOW_AND_ABOVE' for the strictest filtering (blocks low, medium, and high severity content).
+* Content filter level: Set the level of content filtering to apply to uploaded images. Choose 'OFF' to disable content filtering entirely, 'BLOCK_ONLY_HIGH' to block only high-severity inappropriate content, 'BLOCK_MEDIUM_AND_ABOVE' for medium and high severity content, or 'BLOCK_LOW_AND_ABOVE' for the strictest filtering (blocks low, medium, and high severity content).
 
 
 * Custom content filter prompt: Optionally, provide a custom prompt for content filtering. This allows you to define specific criteria for filtering beyond the standard categories. Note that this prompt should be a yes/no question. For example, "Does this image contain a cat?" will filter out images that Gemini thinks contain a cat. This is additional filtering on top of whichever content filtering level you choose. Leave empty to use your selected built-in content filtering configuration.

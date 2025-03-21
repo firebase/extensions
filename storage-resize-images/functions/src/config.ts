@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { HarmCategory, HarmBlockThreshold } from "@google-cloud/vertexai";
+import { HarmBlockThreshold } from "@google-cloud/vertexai";
 
 export enum deleteImage {
   always = 0,
