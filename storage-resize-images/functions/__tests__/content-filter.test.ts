@@ -81,11 +81,11 @@ describe("checkImageContent with mocks", () => {
     expect(result).toBe(true);
   });
 
-  it("should return false when the API response is negative with custom prompt", async () => {
+  it("should return false when the API response is to filter with custom prompt", async () => {
     // Mock negative response
     const mockGenerate = jest.fn().mockResolvedValue({
       output: {
-        response: "no",
+        response: "yes",
       },
     });
 
@@ -519,7 +519,7 @@ describe("checkImageContent retry mechanism", () => {
       .mockRejectedValueOnce(new Error("First API failure"))
       .mockRejectedValueOnce(new Error("Second API failure"))
       .mockResolvedValueOnce({
-        output: { response: "yes" },
+        output: { response: "no" },
       });
 
     genkit.mockImplementation(() => ({
