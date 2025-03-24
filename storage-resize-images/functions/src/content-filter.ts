@@ -4,12 +4,14 @@ import { genkit, z } from "genkit";
 import * as fs from "fs";
 import * as path from "path";
 import * as functions from "firebase-functions/v1";
-import { v4 as uuidv4 } from "uuid";
-import * as os from "os";
 import { Bucket } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
 import type { Config } from "./config";
 import { globalRetryQueue } from "./retry-queue";
+import {
+  replaceWithConfiguredPlaceholder,
+  replaceWithDefaultPlaceholder,
+} from "./util";
 
 /**
  * Creates a data URL from an image file
@@ -212,65 +214,13 @@ export async function checkImageContent(
 }
 
 /**
- * Replaces the original file with configured placeholder
- */
-export async function replaceWithConfiguredPlaceholder(
-  localFile: string,
-  bucket: Bucket,
-  placeholderPath: string
-): Promise<void> {
-  try {
-    functions.logger.info(
-      `Replacing filtered image with placeholder from ${placeholderPath}`
-    );
-
-    const placeholderFile = bucket.file(placeholderPath);
-    const tempPlaceholder = path.join(os.tmpdir(), uuidv4());
-
-    await placeholderFile.download({ destination: tempPlaceholder });
-
-    // Swap original with placeholder
-    fs.unlinkSync(localFile);
-    fs.copyFileSync(tempPlaceholder, localFile);
-    fs.unlinkSync(tempPlaceholder);
-
-    functions.logger.info(`Successfully replaced with placeholder image`);
-  } catch (err) {
-    functions.logger.error(`Error replacing with placeholder:`, err);
-    functions.logger.info(`Falling back to default local placeholder.`);
-
-    // Fall back to default placeholder
-    await replaceWithDefaultPlaceholder(localFile);
-  }
-}
-
-/**
- * Replaces the original file with default placeholder
- */
-export async function replaceWithDefaultPlaceholder(
-  localFile: string
-): Promise<void> {
-  const localPlaceholderFile = path.join(__dirname, "placeholder.png");
-
-  // Make a copy of the default placeholder instead of using it directly
-  const tempPlaceholder = path.join(os.tmpdir(), uuidv4());
-  fs.copyFileSync(localPlaceholderFile, tempPlaceholder);
-
-  // Delete the original file
-  fs.unlinkSync(localFile);
-
-  // Replace with the placeholder
-  fs.renameSync(tempPlaceholder, localFile);
-}
-
-/**
  * Processes content filtering and handles placeholder replacement if needed
  */
 export async function processContentFilter(
   localFile: string,
   object: ObjectMetadata,
   bucket: Bucket,
-  verbose: boolean,
+  _verbose: boolean,
   config: Config
 ): Promise<{ passed: boolean; failed: boolean | null }> {
   let filterResult = true; // Default to true (pass)
