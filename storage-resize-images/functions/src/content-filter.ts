@@ -9,6 +9,8 @@ import * as os from "os";
 import { Bucket } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
 import type { Config } from "./config";
+import { globalRetryQueue } from "./retry-queue";
+
 /**
  * Creates a data URL from an image file
  * @param filePath Path to the image file
@@ -60,10 +62,96 @@ function createSafetySettings(filterLevel: HarmBlockThreshold) {
 }
 
 /**
+ * Performs the actual content check with the AI model
+ * @param localOriginalFile Path to the local image file
+ * @param filterLevel The content filter level to apply
+ * @param prompt Optional custom prompt to use for content checking
+ * @param contentType The content type of the image
+ * @returns Promise<boolean> - true if the image passes the filter, false otherwise
+ */
+async function performContentCheck(
+  localOriginalFile: string,
+  filterLevel: HarmBlockThreshold | null,
+  prompt: string | null,
+  contentType: string
+): Promise<boolean> {
+  const dataUrl = createImageDataUrl(localOriginalFile);
+
+  // Initialize Vertex AI client
+  const ai = genkit({
+    plugins: [vertexAI()],
+  });
+
+  // Determine the effective safety settings and prompt to use
+  const effectiveFilterLevel =
+    filterLevel === null ? HarmBlockThreshold.BLOCK_NONE : filterLevel;
+  const effectivePrompt =
+    prompt !== null
+      ? prompt +
+        '\n\n Please respond in json with either { "response": "yes" } or  { "response": "no" }'
+      : "Is this image appropriate?";
+
+  const effectiveOutput =
+    prompt !== null
+      ? {
+          format: "json",
+          schema: z.object({
+            response: z.string(),
+          }),
+        }
+      : undefined;
+
+  // Determine max tokens based on whether we're using custom prompt
+  const maxOutputTokens = prompt !== null ? 100 : 1;
+
+  try {
+    const result = await ai.generate({
+      model: gemini20Flash001,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              text: effectivePrompt,
+            },
+            {
+              media: {
+                url: dataUrl,
+                contentType,
+              },
+            },
+          ],
+        },
+      ],
+      output: effectiveOutput,
+      config: {
+        temperature: 0.1,
+        maxOutputTokens,
+        safetySettings: createSafetySettings(effectiveFilterLevel),
+      },
+    });
+
+    if (result.output?.response === "yes" && prompt !== null) {
+      console.warn("Image content blocked by Custom AI Content filter.");
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    if (error.detail?.response?.finishReason === "blocked") {
+      console.warn("Image content blocked by Vertex AI content filters.");
+      return false;
+    }
+    throw error;
+  }
+}
+
+/**
  * Checks if an image content is appropriate based on the provided filter level and optional custom prompt
  * @param localOriginalFile Path to the local image file
  * @param filterLevel The content filter level to apply ('LOW', 'MEDIUM', 'HIGH', or null to disable)
  * @param prompt Optional custom prompt to use for content checking
+ * @param contentType The content type of the image
  * @param maxAttempts Maximum number of retry attempts in case of errors
  * @returns Promise<boolean> - true if the image passes the filter, false otherwise
  */
@@ -74,109 +162,53 @@ export async function checkImageContent(
   contentType: string,
   maxAttempts = 3
 ): Promise<boolean> {
-  let attempts = 1;
-  while (attempts <= maxAttempts) {
-    // If filter level is null and no custom prompt, skip content checking entirely
-    if (filterLevel === null && prompt === null) {
-      return true;
-    }
-
-    try {
-      const dataUrl = createImageDataUrl(localOriginalFile);
-
-      // Initialize Vertex AI client
-      const ai = genkit({
-        plugins: [vertexAI()],
-      });
-
-      try {
-        // Determine the effective safety settings and prompt to use
-        const effectiveFilterLevel =
-          filterLevel === null ? HarmBlockThreshold.BLOCK_NONE : filterLevel;
-        const effectivePrompt =
-          prompt !== null
-            ? prompt +
-              '\n\n Please respond in json with either { "response": "yes" } or  { "response": "no" }'
-            : "Is this image appropriate?";
-
-        const effectiveOutput =
-          prompt !== null
-            ? {
-                format: "json",
-                schema: z.object({
-                  response: z.string(),
-                }),
-              }
-            : undefined;
-
-        // Determine max tokens based on whether we're using custom prompt
-        const maxOutputTokens = prompt !== null ? 100 : 1;
-
-        const result = await ai.generate({
-          model: gemini20Flash001,
-          messages: [
-            {
-              role: "user",
-              content: [
-                {
-                  text: effectivePrompt,
-                },
-                {
-                  media: {
-                    url: dataUrl,
-                    contentType,
-                  },
-                },
-              ],
-            },
-          ],
-          output: effectiveOutput,
-          config: {
-            temperature: 0.1,
-            maxOutputTokens,
-            safetySettings: createSafetySettings(effectiveFilterLevel),
-          },
-        });
-
-        if (result.output?.response === "yes" && prompt !== null) {
-          console.warn("Image content blocked by Custom AI Content filter.");
-          return false;
-        }
-
-        return true;
-      } catch (error) {
-        if (error.detail?.response?.finishReason === "blocked") {
-          console.warn("Image content blocked by Vertex AI content filters.");
-          return false;
-        }
-        throw error;
-      }
-    } catch (error) {
-      if (attempts < maxAttempts) {
-        const backoffTime = Math.min(
-          2 ** attempts * 500 + Math.random() * 200,
-          5000 // Cap at 5 seconds
-        );
-        console.warn(
-          `Unexpected Error whilst evaluating content of image with Gemini (Attempt ${attempts}/${maxAttempts}). Retrying in ${Math.round(
-            backoffTime / 1000
-          )}s:`,
-          error
-        );
-        await sleep(backoffTime);
-        attempts++;
-      } else {
-        console.error(
-          "Failed to evaluate image content after multiple attempts:",
-          error
-        );
-        throw error;
-      }
-    }
+  // If filter level is null and no custom prompt, skip content checking entirely
+  if (filterLevel === null && prompt === null) {
+    return true;
   }
 
-  // This should never be reached, but as a fallback:
-  return false;
+  // Helper function that handles retries using the queue
+  const attemptWithRetry = async (attemptNumber: number): Promise<boolean> => {
+    try {
+      return await performContentCheck(
+        localOriginalFile,
+        filterLevel,
+        prompt,
+        contentType
+      );
+    } catch (error) {
+      // If we have attempts left, schedule a retry via the queue
+      if (attemptNumber < maxAttempts) {
+        const backoffTime = Math.min(
+          2 ** attemptNumber * 500 + Math.random() * 200,
+          5000 // Cap at 5 seconds
+        );
+
+        console.warn(
+          `Unexpected Error whilst evaluating content of image with Gemini (Attempt ${attemptNumber}/${maxAttempts}). ` +
+            `Scheduling retry in ${Math.round(backoffTime / 1000)}s:`,
+          error
+        );
+
+        // Schedule the retry with backoff via the queue
+        // Lower priority number = higher priority in queue
+        return await globalRetryQueue.enqueue(async () => {
+          await sleep(backoffTime);
+          return attemptWithRetry(attemptNumber + 1);
+        }, attemptNumber); // Use attempt number as priority
+      }
+
+      // No more attempts, log and rethrow
+      console.error(
+        "Failed to evaluate image content after multiple attempts:",
+        error
+      );
+      throw error;
+    }
+  };
+
+  // Start the first attempt (not via queue)
+  return await attemptWithRetry(1);
 }
 
 /**
