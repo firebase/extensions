@@ -387,6 +387,9 @@ params:
       is used.
     type: string
     example: "placeholders/blocked-content.jpg"
+    validationRegex: ^([a-zA-Z0-9_\-\./]+)\.(png|jpg|jpeg|gif|webp)$
+    validationErrorMessage:
+      Please provide a valid image path within your bucket.
     required: false
 
 events:
