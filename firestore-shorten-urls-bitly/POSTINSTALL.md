@@ -2,7 +2,7 @@
 
 You can test out this extension right away!
 
-1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/firestore/data) in the Firebase console. Note that, if you have configured a non-default firestore database, you may have to view it via the [Google Cloud Console](https://console.cloud.google.com/firestore/databases/bq-export-test).
+1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/firestore/data) in the Firebase console. Note that, if you have configured a non-default firestore database, you may have to view it via the [Google Cloud Console](https://console.cloud.google.com/firestore/databases/${param:DATABASE}).
 
 1.  If it doesn't exist already, create a collection called `${param:COLLECTION_PATH}`.
 
