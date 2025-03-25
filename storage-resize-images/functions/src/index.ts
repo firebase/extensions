@@ -17,22 +17,25 @@
 import * as admin from "firebase-admin";
 import { getFunctions } from "firebase-admin/functions";
 import { getExtensions } from "firebase-admin/extensions";
-import * as fs from "fs";
 import * as functions from "firebase-functions/v1";
-import { mkdirp } from "mkdirp";
-import * as os from "os";
 import * as path from "path";
 import * as sharp from "sharp";
+import { File } from "@google-cloud/storage";
+import { ObjectMetadata } from "firebase-functions/v1/storage";
 
-import { ResizedImageResult, modifyImage } from "./resize-image";
+import { resizeImages } from "./resize-image";
 import { config, deleteImage } from "./config";
 import * as logs from "./logs";
 import { shouldResize } from "./filters";
 import * as events from "./events";
-import { v4 as uuidv4 } from "uuid";
-import { convertToObjectMetadata, countNegativeTraversals } from "./util";
-import { File } from "@google-cloud/storage";
-import { ObjectMetadata } from "firebase-functions/v1/storage";
+import { convertToObjectMetadata } from "./util";
+import { processContentFilter } from "./content-filter";
+import {
+  deleteRemoteFile,
+  deleteTempFile,
+  downloadOriginalFile,
+  handleFailedImage,
+} from "./file-operations";
 
 sharp.cache(false);
 
@@ -41,18 +44,17 @@ admin.initializeApp();
 
 events.setupEventChannel();
 
-logs.init();
+logs.init(config);
 
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
  */
-
 const generateResizedImageHandler = async (
   object: ObjectMetadata,
   verbose = true
 ): Promise<void> => {
-  !verbose || logs.start();
+  !verbose || logs.start(config);
   if (!shouldResize(object)) {
     return;
   }
@@ -61,114 +63,68 @@ const generateResizedImageHandler = async (
   const filePath = object.name; // File path in the bucket.
   const parsedPath = path.parse(filePath);
   const objectMetadata = object;
-
+  let failed = null;
   let localOriginalFile: string;
   let remoteOriginalFile: File;
+
   try {
-    localOriginalFile = path.join(os.tmpdir(), uuidv4());
-    const tempLocalDir = path.dirname(localOriginalFile);
-
-    // Create the temp directory where the storage file will be downloaded.
-    !verbose || logs.tempDirectoryCreating(tempLocalDir);
-    await mkdirp(tempLocalDir);
-    !verbose || logs.tempDirectoryCreated(tempLocalDir);
-
-    // Download file from bucket.
-    remoteOriginalFile = bucket.file(filePath);
-    !verbose || logs.imageDownloading(filePath);
-    await remoteOriginalFile.download({ destination: localOriginalFile });
-    !verbose || logs.imageDownloaded(filePath, localOriginalFile);
-
-    // Get a unique list of image types
-    const imageTypes = new Set(config.imageTypes);
-
-    // Convert to a set to remove any duplicate sizes
-    const imageSizes = new Set(config.imageSizes);
-
-    const tasks: Promise<ResizedImageResult>[] = [];
-
-    imageTypes.forEach((format) => {
-      imageSizes.forEach((size) => {
-        tasks.push(
-          modifyImage({
-            bucket,
-            originalFile: localOriginalFile,
-            parsedPath,
-            contentType: object.contentType,
-            size,
-            objectMetadata: objectMetadata,
-            format,
-          })
-        );
-      });
-    });
-
-    const results = await Promise.allSettled(tasks);
-
-    await events.recordSuccessEvent({
-      subject: filePath,
-      data: { input: object, outputs: results },
-    });
-
-    const failed = results.some(
-      (result) => result.status === "rejected" || result.value.success === false
+    [localOriginalFile, remoteOriginalFile] = await downloadOriginalFile(
+      bucket,
+      filePath,
+      verbose
     );
+
+    // Check content filter and replace with placeholder if needed
+    const filterResult = await processContentFilter(
+      localOriginalFile,
+      object,
+      bucket,
+      verbose,
+      config
+    );
+
+    // Process image resizing if content filter didn't fail
+    if (filterResult.failed !== true) {
+      const resizeResults = await resizeImages(
+        bucket,
+        localOriginalFile,
+        parsedPath,
+        objectMetadata
+      );
+
+      await events.recordSuccessEvent({
+        subject: filePath,
+        data: {
+          input: object,
+          outputs: resizeResults,
+          contentFilterPassed: filterResult.passed,
+        },
+      });
+
+      // Only update failed status if it's still null (not already failed from content filter)
+      failed =
+        filterResult.failed === null
+          ? resizeResults.some(
+              (result) =>
+                result.status === "rejected" || result.value.success === false
+            )
+          : filterResult.failed;
+    } else {
+      failed = true;
+    }
 
     if (failed) {
       logs.failed();
-
-      if (config.failedImagesPath) {
-        const filePath = object.name; // File path in the bucket.
-        const fileDir = parsedPath.dir;
-        const fileExtension = parsedPath.ext;
-        const fileNameWithoutExtension = path.basename(filePath, fileExtension);
-
-        /** Check for negetaive traversal in the configuration */
-        if (countNegativeTraversals(config.failedImagesPath)) {
-          logs.invalidFailedResizePath(config.failedImagesPath);
-          return;
-        }
-
-        /** Find the base directory */
-        const baseDir = filePath.substring(0, filePath.lastIndexOf("/") + 1);
-
-        /** Set the failed path */
-        const failedFilePath = path.join(
-          fileDir,
-          config.failedImagesPath,
-          `${fileNameWithoutExtension}${fileExtension}`
-        );
-
-        /** Normalize for gcp storage */
-        const normalizedPath = path.normalize(failedFilePath);
-
-        /** Check if safe path */
-        if (!normalizedPath.startsWith(baseDir)) {
-          logs.invalidFailedResizePath(failedFilePath);
-          return;
-        }
-
-        /** Checks passed, upload the failed image to the failed image directory */
-        logs.failedImageUploading(failedFilePath);
-        await bucket.upload(localOriginalFile, {
-          destination: failedFilePath,
-          metadata: { metadata: { resizeFailed: "true" } },
-        });
-        logs.failedImageUploaded(failedFilePath);
-      }
-
-      return;
+      await handleFailedImage(
+        bucket,
+        localOriginalFile,
+        object,
+        parsedPath,
+        filterResult.passed === false
+      );
     } else {
       if (config.deleteOriginalFile === deleteImage.onSuccess) {
-        if (remoteOriginalFile) {
-          try {
-            logs.remoteFileDeleting(filePath);
-            await remoteOriginalFile.delete();
-            logs.remoteFileDeleted(filePath);
-          } catch (err) {
-            logs.errorDeleting(err);
-          }
-        }
+        await deleteRemoteFile(remoteOriginalFile, filePath);
       }
       !verbose || logs.complete();
     }
@@ -176,27 +132,16 @@ const generateResizedImageHandler = async (
     logs.error(err);
     events.recordErrorEvent(err as Error);
   } finally {
+    // Clean up temporary files
     if (localOriginalFile) {
-      !verbose || logs.tempOriginalFileDeleting(filePath);
-      try {
-        fs.unlinkSync(localOriginalFile);
-      } catch (err) {
-        logs.errorDeleting(err);
-      }
-      !verbose || logs.tempOriginalFileDeleted(filePath);
+      await deleteTempFile(localOriginalFile, filePath, verbose);
     }
-    if (config.deleteOriginalFile === deleteImage.always) {
-      // Delete the original file
-      if (remoteOriginalFile) {
-        try {
-          logs.remoteFileDeleting(filePath);
-          await remoteOriginalFile.delete();
-          logs.remoteFileDeleted(filePath);
-        } catch (err) {
-          logs.errorDeleting(err);
-          events.recordErrorEvent(err as Error);
-        }
-      }
+
+    if (
+      config.deleteOriginalFile === deleteImage.always &&
+      remoteOriginalFile
+    ) {
+      await deleteRemoteFile(remoteOriginalFile, filePath);
     }
   }
 };
