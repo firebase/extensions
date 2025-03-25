@@ -298,3 +298,39 @@ export const getModifiedFilePath = (
     )
   );
 };
+
+/**
+ * Resizes images to all configured sizes and formats
+ */
+export async function resizeImages(
+  bucket: Bucket,
+  localFile: string,
+  parsedPath: path.ParsedPath,
+  objectMetadata: ObjectMetadata
+): Promise<PromiseSettledResult<ResizedImageResult>[]> {
+  // Get a unique list of image types and sizes
+  const imageTypes = new Set(config.imageTypes);
+  const imageSizes = new Set(config.imageSizes);
+
+  const tasks: Promise<ResizedImageResult>[] = [];
+
+  // Create resize tasks for all format/size combinations
+  imageTypes.forEach((format) => {
+    imageSizes.forEach((size) => {
+      tasks.push(
+        modifyImage({
+          bucket,
+          originalFile: localFile,
+          parsedPath,
+          contentType: objectMetadata.contentType,
+          size,
+          objectMetadata,
+          format,
+        })
+      );
+    });
+  });
+
+  // Execute all resize tasks
+  return await Promise.allSettled(tasks);
+}

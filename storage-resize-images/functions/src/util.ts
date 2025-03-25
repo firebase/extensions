@@ -2,6 +2,11 @@ import * as path from "path";
 
 import { FileMetadata } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
+import { v4 as uuidv4 } from "uuid";
+import * as os from "os";
+import * as fs from "fs";
+import * as functions from "firebase-functions/v1";
+import { Bucket } from "@google-cloud/storage";
 
 export const startsWithArray = (
   userInputPaths: string[],
@@ -45,7 +50,18 @@ export function convertPathToPosix(
 export function convertToObjectMetadata(
   fileMetadata: FileMetadata
 ): ObjectMetadata {
-  const { acl, ...rest } = fileMetadata;
+  const { acl, metadata, ...rest } = fileMetadata;
+
+  // Convert metadata values to strings, defaulting to an empty string for null/undefined values
+  // This is necessary because of a mismatch between the expected type of metadata and the actual type
+  const convertedMetadata = metadata
+    ? Object.fromEntries(
+        Object.entries(metadata).map(([key, value]) => [
+          key,
+          value?.toString() ?? "",
+        ])
+      )
+    : undefined;
 
   const convertedAcl =
     acl?.map((aclEntry) => ({
@@ -89,7 +105,7 @@ export function convertToObjectMetadata(
     contentDisposition: rest.contentDisposition,
     contentLanguage: rest.contentLanguage,
     cacheControl: rest.cacheControl,
-    metadata: rest.metadata,
+    metadata: convertedMetadata,
     owner: rest.owner,
     crc32c: rest.crc32c,
     componentCount: rest.componentCount?.toString(),
@@ -97,4 +113,56 @@ export function convertToObjectMetadata(
     customerEncryption: rest.customerEncryption,
     acl: convertedAcl ? [convertedAcl] : undefined,
   };
+}
+
+/**
+ * Replaces the original file with configured placeholder
+ */
+export async function replaceWithConfiguredPlaceholder(
+  localFile: string,
+  bucket: Bucket,
+  placeholderPath: string
+): Promise<void> {
+  try {
+    functions.logger.info(
+      `Replacing filtered image with placeholder from ${placeholderPath}`
+    );
+
+    const placeholderFile = bucket.file(placeholderPath);
+    const tempPlaceholder = path.join(os.tmpdir(), uuidv4());
+
+    await placeholderFile.download({ destination: tempPlaceholder });
+
+    // Swap original with placeholder
+    fs.unlinkSync(localFile);
+    fs.copyFileSync(tempPlaceholder, localFile);
+    fs.unlinkSync(tempPlaceholder);
+
+    functions.logger.info(`Successfully replaced with placeholder image`);
+  } catch (err) {
+    functions.logger.error(`Error replacing with placeholder:`, err);
+    functions.logger.info(`Falling back to default local placeholder.`);
+
+    // Fall back to default placeholder
+    await replaceWithDefaultPlaceholder(localFile);
+  }
+}
+
+/**
+ * Replaces the original file with default placeholder
+ */
+export async function replaceWithDefaultPlaceholder(
+  localFile: string
+): Promise<void> {
+  const localPlaceholderFile = path.join(__dirname, "placeholder.png");
+
+  // Make a copy of the default placeholder instead of using it directly
+  const tempPlaceholder = path.join(os.tmpdir(), uuidv4());
+  fs.copyFileSync(localPlaceholderFile, tempPlaceholder);
+
+  // Delete the original file
+  fs.unlinkSync(localFile);
+
+  // Replace with the placeholder
+  fs.renameSync(tempPlaceholder, localFile);
 }

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.2.8
+version: 0.2.9
 specVersion: v1beta
 
 displayName: Resize Images
@@ -49,6 +49,8 @@ apis:
 roles:
   - role: storage.admin
     reason: Allows the extension to store resized images in Cloud Storage
+  - role: aiplatform.user
+    reason: Allows use of Gemini models for AI content filtering, if enabled.
 
 resources:
   - name: generateResizedImage
@@ -340,6 +342,55 @@ params:
         value: true
       - label: No
         value: false
+
+  - param: CONTENT_FILTER_LEVEL
+    label: Content filter level
+    description: >
+      Set the level of content filtering to apply to uploaded images. Choose
+      'OFF' to disable content filtering entirely, 'BLOCK_ONLY_HIGH' to block
+      only high-severity inappropriate content, 'BLOCK_MEDIUM_AND_ABOVE' for
+      medium and high severity content, or 'BLOCK_LOW_AND_ABOVE' for the
+      strictest filtering (blocks low, medium, and high severity content).
+    type: select
+    options:
+      - label: Off (No filtering)
+        value: OFF
+      - label: Low strictness (Block only high severity content)
+        value: BLOCK_ONLY_HIGH
+      - label: Medium strictness (Block medium and high severity content)
+        value: BLOCK_MEDIUM_AND_ABOVE
+      - label: High strictness (Block low, medium, and high severity content)
+        value: BLOCK_LOW_AND_ABOVE
+    default: OFF
+    required: true
+
+  - param: CUSTOM_FILTER_PROMPT
+    label: Custom content filter prompt
+    description: >
+      Optionally, provide a custom prompt for content filtering. This allows you
+      to define specific criteria for filtering beyond the standard categories.
+      Note that this prompt should be a yes/no question. For example, "Does this
+      image contain a cat?" will filter out images that Gemini thinks contain a
+      cat. This is additional filtering on top of whichever content filtering
+      level you choose. Leave empty to use just your selected built-in content
+      filtering configuration.
+    type: string
+    example: "Does this image contain violent or threatening content?"
+    required: false
+
+  - param: PLACEHOLDER_IMAGE_PATH
+    label: Path to placeholder image
+    description: >
+      Optionally, specify a path to a placeholder image to use when an uploaded
+      image is blocked by content filtering. This should be a relative path
+      within your storage bucket. If not provided, a default placeholder image
+      is used.
+    type: string
+    example: "placeholders/blocked-content.jpg"
+    validationRegex: ^([a-zA-Z0-9_\-\./]+)\.(png|jpg|jpeg|gif|webp)$
+    validationErrorMessage:
+      Please provide a valid image path within your bucket.
+    required: false
 
 events:
   - type: firebase.extensions.storage-resize-images.v1.onStart

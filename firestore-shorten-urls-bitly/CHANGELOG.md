@@ -1,3 +1,9 @@
+## Version 0.2.0
+
+feat: use v2 firestore trigger
+
+feat: allow non-(default) firestore instances
+
 ## Version 0.1.18
 
 feat - move to Node.js 20 runtimes
