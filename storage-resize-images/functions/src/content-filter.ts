@@ -134,14 +134,18 @@ async function performContentCheck(
     });
 
     if (result.output?.response === "yes" && prompt !== null) {
-      console.warn("Image content blocked by Custom AI Content filter.");
+      functions.logger.warn(
+        "Image content blocked by Custom AI Content filter."
+      );
       return false;
     }
 
     return true;
   } catch (error) {
     if (error.detail?.response?.finishReason === "blocked") {
-      console.warn("Image content blocked by Vertex AI content filters.");
+      functions.logger.warn(
+        "Image content blocked by Vertex AI content filters."
+      );
       return false;
     }
     throw error;
@@ -186,12 +190,11 @@ export async function checkImageContent(
           5000 // Cap at 5 seconds
         );
 
-        console.warn(
+        functions.logger.warn(
           `Unexpected Error whilst evaluating content of image with Gemini (Attempt ${attemptNumber}/${maxAttempts}). ` +
             `Scheduling retry in ${Math.round(backoffTime / 1000)}s:`,
           error
         );
-
         // Schedule the retry with backoff via the queue
         // Lower priority number = higher priority in queue
         return await globalRetryQueue.enqueue(async () => {
@@ -200,10 +203,8 @@ export async function checkImageContent(
         }, attemptNumber); // Use attempt number as priority
       }
 
-      // No more attempts, log and rethrow
-      console.error(
-        "Failed to evaluate image content after multiple attempts:",
-        error
+      functions.logger.error(
+        `Failed to evaluate image content after multiple attempts: ${error}`
       );
       throw error;
     }
