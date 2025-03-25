@@ -12,6 +12,8 @@ import {
   replaceWithConfiguredPlaceholder,
   replaceWithDefaultPlaceholder,
 } from "./util";
+// Import the logging functions from your log.ts module
+import * as log from "./logs";
 
 /**
  * Creates a data URL from an image file
@@ -56,7 +58,6 @@ function createSafetySettings(filterLevel: HarmBlockThreshold) {
     HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
     HarmCategory.HARM_CATEGORY_HARASSMENT,
   ];
-
   return categories.map((category) => ({
     category,
     threshold: filterLevel,
@@ -134,18 +135,14 @@ async function performContentCheck(
     });
 
     if (result.output?.response === "yes" && prompt !== null) {
-      functions.logger.warn(
-        "Image content blocked by Custom AI Content filter."
-      );
+      log.customFilterBlocked();
       return false;
     }
 
     return true;
   } catch (error) {
     if (error.detail?.response?.finishReason === "blocked") {
-      functions.logger.warn(
-        "Image content blocked by Vertex AI content filters."
-      );
+      log.contentFilterBlocked();
       return false;
     }
     throw error;
@@ -190,11 +187,9 @@ export async function checkImageContent(
           5000 // Cap at 5 seconds
         );
 
-        functions.logger.warn(
-          `Unexpected Error whilst evaluating content of image with Gemini (Attempt ${attemptNumber}/${maxAttempts}). ` +
-            `Scheduling retry in ${Math.round(backoffTime / 1000)}s:`,
-          error
-        );
+        log.contentFilterError(error, attemptNumber, maxAttempts);
+        log.retryScheduled(attemptNumber, maxAttempts, backoffTime);
+
         // Schedule the retry with backoff via the queue
         // Lower priority number = higher priority in queue
         return await globalRetryQueue.enqueue(async () => {
@@ -203,9 +198,7 @@ export async function checkImageContent(
         }, attemptNumber); // Use attempt number as priority
       }
 
-      functions.logger.error(
-        `Failed to evaluate image content after multiple attempts: ${error}`
-      );
+      log.contentFilterFailed(error);
       throw error;
     }
   };
@@ -235,28 +228,29 @@ export async function processContentFilter(
       object.contentType
     );
   } catch (err) {
-    functions.logger.error(`Error during content filtering: ${err}`);
+    log.contentFilterErrored(err);
     failed = true; // Set failed flag if content filter throws an error
   }
 
   // Handle failed content filter
   if (filterResult === false) {
-    functions.logger.warn(
-      `Image ${object.name} was rejected by the content filter.`
-    );
+    log.contentFilterRejected(object.name);
 
     try {
       if (config.placeholderImagePath) {
+        log.replacingWithConfiguredPlaceholder(config.placeholderImagePath);
         await replaceWithConfiguredPlaceholder(
           localFile,
           bucket,
           config.placeholderImagePath
         );
       } else {
+        log.replacingWithDefaultPlaceholder();
         await replaceWithDefaultPlaceholder(localFile);
       }
+      log.placeholderReplaceComplete(localFile);
     } catch (err) {
-      functions.logger.error(`Error replacing with placeholder:`, err);
+      log.placeholderReplaceError(err);
       failed = true;
     }
   }
