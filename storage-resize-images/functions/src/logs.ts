@@ -15,7 +15,7 @@
  */
 
 import { logger } from "firebase-functions";
-import { config } from "./config";
+import { Config } from "./config";
 
 export const complete = () => {
   logger.log("Completed execution of extension");
@@ -127,11 +127,11 @@ export const imageUploading = (path: string) => {
   logger.log(`Uploading resized image to '${path}'`);
 };
 
-export const init = () => {
+export const init = (config: Config) => {
   logger.log("Initializing extension with configuration", config);
 };
 
-export const start = () => {
+export const start = (config: Config) => {
   logger.log("Started execution of extension with configuration", config);
 };
 
@@ -204,7 +204,10 @@ export function errorConstuctorOptionsParse(err: any) {
   );
 }
 
-export function invalidFailedResizePath(failedFilePath: string) {
+export function invalidFailedResizePath(
+  failedFilePath: string,
+  config: Config
+) {
   logger.warn(
     `Cannot upload failed resize image '${failedFilePath}' in the failed images directory (${config.failedImagesPath})`
   );

@@ -44,7 +44,7 @@ admin.initializeApp();
 
 events.setupEventChannel();
 
-logs.init();
+logs.init(config);
 
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
@@ -54,7 +54,7 @@ const generateResizedImageHandler = async (
   object: ObjectMetadata,
   verbose = true
 ): Promise<void> => {
-  !verbose || logs.start();
+  !verbose || logs.start(config);
   if (!shouldResize(object)) {
     return;
   }
@@ -68,7 +68,6 @@ const generateResizedImageHandler = async (
   let remoteOriginalFile: File;
 
   try {
-    // Download the original file
     [localOriginalFile, remoteOriginalFile] = await downloadOriginalFile(
       bucket,
       filePath,
@@ -114,7 +113,6 @@ const generateResizedImageHandler = async (
       failed = true;
     }
 
-    // Handle failure or success
     if (failed) {
       logs.failed();
       await handleFailedImage(
@@ -139,7 +137,6 @@ const generateResizedImageHandler = async (
       await deleteTempFile(localOriginalFile, filePath, verbose);
     }
 
-    // Handle 'always delete' config option
     if (
       config.deleteOriginalFile === deleteImage.always &&
       remoteOriginalFile

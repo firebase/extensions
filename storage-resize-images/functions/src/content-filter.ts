@@ -3,10 +3,8 @@ import { HarmCategory, HarmBlockThreshold } from "@google-cloud/vertexai";
 import { genkit, z } from "genkit";
 import * as fs from "fs";
 import * as path from "path";
-import * as functions from "firebase-functions/v1";
 import { Bucket } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
-import type { Config } from "./config";
 import { globalRetryQueue } from "./retry-queue";
 import {
   replaceWithConfiguredPlaceholder,
@@ -165,7 +163,6 @@ export async function checkImageContent(
   contentType: string,
   maxAttempts = 3
 ): Promise<boolean> {
-  // If filter level is null and no custom prompt, skip content checking entirely
   if (filterLevel === null && prompt === null) {
     return true;
   }
@@ -215,7 +212,7 @@ export async function processContentFilter(
   object: ObjectMetadata,
   bucket: Bucket,
   _verbose: boolean,
-  config: Config
+  config: any
 ): Promise<{ passed: boolean; failed: boolean | null }> {
   let filterResult = true; // Default to true (pass)
   let failed = null; // No failures yet
@@ -229,10 +226,9 @@ export async function processContentFilter(
     );
   } catch (err) {
     log.contentFilterErrored(err);
-    failed = true; // Set failed flag if content filter throws an error
+    failed = true;
   }
 
-  // Handle failed content filter
   if (filterResult === false) {
     log.contentFilterRejected(object.name);
 

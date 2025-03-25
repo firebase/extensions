@@ -55,7 +55,7 @@ export async function handleFailedImage(
 
   // Check for negative traversal in the configuration
   if (countNegativeTraversals(config.failedImagesPath)) {
-    logs.invalidFailedResizePath(config.failedImagesPath);
+    logs.invalidFailedResizePath(config.failedImagesPath, config);
     return;
   }
 
@@ -74,7 +74,7 @@ export async function handleFailedImage(
 
   // Check if safe path
   if (!normalizedPath.startsWith(baseDir)) {
-    logs.invalidFailedResizePath(failedFilePath);
+    logs.invalidFailedResizePath(failedFilePath, config);
     return;
   }
 
