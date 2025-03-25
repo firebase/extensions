@@ -15,7 +15,7 @@
  */
 
 import { logger } from "firebase-functions";
-import { config } from "./config";
+import { Config } from "./config";
 
 export const complete = () => {
   logger.log("Completed execution of extension");
@@ -127,11 +127,11 @@ export const imageUploading = (path: string) => {
   logger.log(`Uploading resized image to '${path}'`);
 };
 
-export const init = () => {
+export const init = (config: Config) => {
   logger.log("Initializing extension with configuration", config);
 };
 
-export const start = () => {
+export const start = (config: Config) => {
   logger.log("Started execution of extension with configuration", config);
 };
 
@@ -204,8 +204,121 @@ export function errorConstuctorOptionsParse(err: any) {
   );
 }
 
-export function invalidFailedResizePath(failedFilePath: string) {
+export function invalidFailedResizePath(
+  failedFilePath: string,
+  config: Config
+) {
   logger.warn(
     `Cannot upload failed resize image '${failedFilePath}' in the failed images directory (${config.failedImagesPath})`
   );
 }
+
+// Content filter specific logging functions
+export const contentFilterBlocked = () => {
+  logger.warn("Image content blocked by Vertex AI content filters.");
+};
+
+export const customFilterBlocked = () => {
+  logger.warn("Image content blocked by Custom AI Content filter.");
+};
+
+export const contentFilterError = (
+  err: Error,
+  attempt: number,
+  maxAttempts: number
+) => {
+  logger.warn(
+    `Unexpected Error whilst evaluating content of image with Gemini (Attempt ${attempt}/${maxAttempts}). `,
+    err
+  );
+};
+
+export const contentFilterFailed = (err: Error) => {
+  logger.error(
+    `Failed to evaluate image content after multiple attempts: ${err}`
+  );
+};
+
+export const contentFilterStart = (
+  filterLevel: string | null,
+  hasCustomPrompt: boolean
+) => {
+  if (filterLevel === null && !hasCustomPrompt) {
+    logger.log("Content filtering disabled, skipping check");
+  } else {
+    logger.log(
+      `Starting content filtering with level: ${
+        filterLevel || "NONE"
+      }, custom prompt: ${hasCustomPrompt ? "YES" : "NO"}`
+    );
+  }
+};
+
+export const contentFilterRejected = (imageName: string) => {
+  logger.warn(`Image ${imageName} was rejected by the content filter.`);
+};
+
+export const placeholderReplaceError = (err: Error) => {
+  logger.error(`Error replacing with placeholder:`, err);
+};
+
+export const retryScheduled = (
+  attemptNumber: number,
+  maxAttempts: number,
+  backoffTime: number
+) => {
+  logger.warn(
+    `Scheduling content filter retry in ${Math.round(
+      backoffTime / 1000
+    )}s (Attempt ${attemptNumber}/${maxAttempts})`
+  );
+};
+
+// Image data URL operations
+export const imageDataUrlCreated = (filePath: string) => {
+  logger.log(`Created data URL from image: ${filePath}`);
+};
+
+// Vertex AI operations
+export const vertexAiInitialized = () => {
+  logger.log("Initialized Vertex AI client for content checking");
+};
+
+// Safety settings
+export const safetySettingsCreated = (filterLevel: string) => {
+  logger.log(`Created safety settings with filter level: ${filterLevel}`);
+};
+
+// General utility logging
+export const operationStart = (operation: string) => {
+  logger.log(`Starting operation: ${operation}`);
+};
+
+export const operationComplete = (operation: string) => {
+  logger.log(`Completed operation: ${operation}`);
+};
+
+export const configValueUsed = (configName: string, value: any) => {
+  logger.log(`Using configuration value for ${configName}: ${value}`);
+};
+
+// Placeholder image handling
+export const replacingWithConfiguredPlaceholder = (placeholderPath: string) => {
+  logger.log(
+    `Replacing filtered image with configured placeholder: ${placeholderPath}`
+  );
+};
+
+export const replacingWithDefaultPlaceholder = () => {
+  logger.log("Replacing filtered image with default placeholder");
+};
+
+export const placeholderReplaceComplete = (imagePath: string) => {
+  logger.log(
+    `Successfully replaced filtered image with placeholder at: ${imagePath}`
+  );
+};
+
+export const contentFilterErrored = (err: Error) => {
+  logger.error(`Error during content filtering: ${err}`);
+};
