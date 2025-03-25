@@ -52,7 +52,9 @@ const harmBlockThresholdMap: Record<string, HarmBlockThreshold | null> = {
   OFF: null,
 };
 
-export const convertHarmBlockThreshold = (level?: string) => {
+export const convertHarmBlockThreshold: (
+  level?: string
+) => HarmBlockThreshold = (level?: string) => {
   if (!level) {
     return null;
   }
