@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import * as admin from "firebase-admin";
-import * as functions from "firebase-functions";
+import { DocumentSnapshot } from "firebase-admin/firestore";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
 import { FirestoreUrlShortener } from "./abstract-shortener";
 import config from "./config";
@@ -39,9 +38,7 @@ class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
     logs.init();
   }
 
-  protected async shortenUrl(
-    snapshot: admin.firestore.DocumentSnapshot
-  ): Promise<void> {
+  protected async shortenUrl(snapshot: DocumentSnapshot): Promise<void> {
     const url = this.extractUrl(snapshot);
     logs.shortenUrl(url);
 
@@ -81,10 +78,13 @@ const urlShortener = new FirestoreBitlyUrlShortener(
 
 events.setupEventChannel();
 
-export const fsurlshortener = functions.firestore
-  .document(config.collectionPath)
-  .onWrite(async (change, context) => {
-    await events.recordStartEvent({ context, change });
-    await urlShortener.onDocumentWrite(change);
+export const fsurlshortener = onDocumentWritten(
+  `${config.collectionPath}/{documentId}`,
+  async (event) => {
+    const { data, ...context } = event;
+
+    await events.recordStartEvent({ context, change: data });
+    await urlShortener.onDocumentWrite(data);
     await events.recordCompletionEvent({ context });
-  });
+  }
+);
