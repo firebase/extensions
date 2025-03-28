@@ -1,6 +1,8 @@
-## Version 0.1.38
+## Version 0.2.0
 
-fix: empty message property causing error when using SendGrid
+feat: use v2 firestore trigger
+
+feat: allow non-(default) firestore instances
 
 ## Version 0.1.37
 
