@@ -15,21 +15,21 @@
  */
 
 import * as admin from "firebase-admin";
-import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { FieldValue, Timestamp, Firestore, DocumentSnapshot, DocumentReference } from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
 import * as nodemailer from "nodemailer";
 
 import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
-import { Attachment, QueuePayload, SendGridAttachment } from "./types";
+import { QueuePayload, SendGridAttachment } from "./types";
 import { isSendGrid, setSmtpCredentials } from "./helpers";
 import * as events from "./events";
 import * as sgMail from "@sendgrid/mail";
 
 logs.init();
 
-let db: admin.firestore.Firestore;
+let db: Firestore;
 let transport: nodemailer.Transporter;
 let templates: Templates;
 let initialized = false;
@@ -78,7 +78,7 @@ function validateFieldArray(field: string, array?: string[]) {
   }
 }
 
-function getExpireAt(startTime: admin.firestore.Timestamp) {
+function getExpireAt(startTime: Timestamp) {
   const now = startTime.toDate();
   const value = config.TTLExpireValue;
   switch (config.TTLExpireType) {
@@ -309,7 +309,7 @@ async function sendWithSendGrid(payload: QueuePayload) {
 }
 
 async function deliver(
-  ref: admin.firestore.DocumentReference<QueuePayload>
+  ref: DocumentReference<QueuePayload>
 ): Promise<void> {
   // Fetch the Firestore document
   const snapshot = await ref.get();
@@ -402,7 +402,7 @@ async function deliver(
 }
 
 async function processWrite(
-  change: functions.Change<admin.firestore.DocumentSnapshot<QueuePayload>>
+  change: functions.Change<DocumentSnapshot<QueuePayload>>
 ): Promise<void> {
   const ref = change.after.ref;
 
@@ -553,7 +553,7 @@ export const processQueue = functions.firestore
   .document(config.mailCollection)
   .onWrite(
     async (
-      change: functions.Change<admin.firestore.DocumentSnapshot<QueuePayload>>
+      change: functions.Change<DocumentSnapshot<QueuePayload>>
     ) => {
       await initialize();
       logs.start();
