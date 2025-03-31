@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-import * as admin from "firebase-admin";
+import {
+  initializeApp
+} from "firebase-admin/app";
 import {
   FieldValue,
   Timestamp,
   Firestore,
   DocumentSnapshot,
   DocumentReference,
+  getFirestore,
+  DocumentData
 } from "firebase-admin/firestore";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as functions from "firebase-functions";
 import * as nodemailer from "nodemailer";
 
@@ -46,12 +51,12 @@ let initialized = false;
 async function initialize() {
   if (initialized === true) return;
   initialized = true;
-  admin.initializeApp();
-  db = admin.firestore();
+  initializeApp();
+  db = getFirestore(config.database);
   transport = await transportLayer();
   if (config.templatesCollection) {
     templates = new Templates(
-      admin.firestore().collection(config.templatesCollection)
+      db.collection(config.templatesCollection)
     );
   }
 
@@ -107,7 +112,7 @@ function getExpireAt(startTime: Timestamp) {
   return Timestamp.fromDate(now);
 }
 
-async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
+async function preparePayload(payload: DocumentData): Promise<DocumentData> {
   const { template } = payload;
 
   if (templates && template) {
@@ -257,7 +262,7 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
  * @param payload the payload from Firestore.
  */
 
-async function sendWithSendGrid(payload: QueuePayload) {
+async function sendWithSendGrid(payload: DocumentData) {
   sgMail.setApiKey(config.smtpPassword);
 
   const formatEmails = (emails: string[]) => emails.map((email) => ({ email }));
@@ -314,7 +319,7 @@ async function sendWithSendGrid(payload: QueuePayload) {
   return sgMail.send(msg);
 }
 
-async function deliver(ref: DocumentReference<QueuePayload>): Promise<void> {
+async function deliver(ref: DocumentReference): Promise<void> {
   // Fetch the Firestore document
   const snapshot = await ref.get();
   if (!snapshot.exists) {
@@ -395,7 +400,7 @@ async function deliver(ref: DocumentReference<QueuePayload>): Promise<void> {
   }
 
   // Update the Firestore document transactionally to allow retries (#48)
-  return admin.firestore().runTransaction((transaction) => {
+  return db.runTransaction((transaction) => {
     // We could check state here is still PROCESSING, but we don't
     // since the email sending will have been attempted regardless of what the
     // delivery state was at that point, so we just update the state to reflect
@@ -406,7 +411,7 @@ async function deliver(ref: DocumentReference<QueuePayload>): Promise<void> {
 }
 
 async function processWrite(
-  change: functions.Change<DocumentSnapshot<QueuePayload>>
+  change: functions.Change<DocumentSnapshot>
 ): Promise<void> {
   const ref = change.after.ref;
 
@@ -436,9 +441,7 @@ async function processWrite(
     }
   }
 
-  const shouldAttemptDelivery = await admin
-    .firestore()
-    .runTransaction<boolean>(async (transaction) => {
+  const shouldAttemptDelivery = await db.runTransaction<boolean>(async (transaction) => {
       const snapshot = await transaction.get(ref);
       // Record no longer exists, so no need to attempt delivery.
       if (!snapshot.exists) {
@@ -553,11 +556,13 @@ async function processWrite(
   }
 }
 
-export const processQueue = functions.firestore
-  .document(config.mailCollection)
-  .onWrite(async (change: functions.Change<DocumentSnapshot<QueuePayload>>) => {
+export const processQueue = onDocumentWritten(
+  `${config.mailCollection}/{documentId}`,
+  async (event) => {
     await initialize();
     logs.start();
+
+    const change = event.data;
 
     if (!change.before.exists) {
       await events.recordStartEvent(change);
