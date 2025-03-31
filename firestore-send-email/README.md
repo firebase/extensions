@@ -159,8 +159,6 @@ You can use a standalone helper script (`oauth2-refresh-token-helper.js`) that g
 
 When installing the extension, select "OAuth2" as the **Authentication Type** and provide the following parameters:
 
-- **Firestore Database ID**: The Firestore database to use. Use "(default)" for the default database. You can view your available Firestore databases at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).
-- **Firestore Instance Location**: Where is the Firestore database located? You can check your current database location at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).
 - **OAuth2 SMTP Host**: `smtp.gmail.com` (for Gmail)
 - **OAuth2 SMTP Port**: `465` (for SMTPS) or `587` (for STARTTLS)
 - **Use Secure OAuth2 Connection**: `true` (for port 465) or `false` (for port 587)
@@ -221,6 +219,12 @@ You can find more information about this extension in the following articles:
 
 **Configuration Parameters:**
 
+* Firestore Instance ID: The Firestore database to use. Use "(default)" for the default database. You can view your available Firestore databases at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).
+
+
+* Firestore Instance Location: Where is the Firestore database located? You can check your current database location at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).
+
+
 * Authentication Type: The authentication type to be used for the SMTP server (e.g., OAuth2, Username & Password.
 
 * SMTP connection URI: A URI representing an SMTP server this extension can use to deliver email. Note that port 25 is blocked by Google Cloud Platform, so we recommend using port 587 for SMTP connections. If you're using the SMTPS protocol, we recommend using port 465. In order to keep passwords secure, it is recommended to omit the password from the connection string while using the `SMTP Password` field for entering secrets and passwords. Passwords and secrets should now be included in `SMTP password` field.
@@ -265,9 +269,9 @@ password)
 
 
 
-**Cloud Functions:**
+**Other Resources**:
 
-* **processQueue (firebaseextensions.v1beta.v2function):** Processes document changes in the specified Cloud Firestore collection, delivers emails, and updates the document with delivery status information.
+* processQueue (firebaseextensions.v1beta.v2function)
 
 
 
