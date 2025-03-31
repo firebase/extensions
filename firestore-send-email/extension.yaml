@@ -53,6 +53,7 @@ resources:
       delivers emails, and updates the document with delivery status
       information.
     properties:
+      sourceDirectory: functions
       buildConfig:
         runtime: nodejs22
       serviceConfig:
