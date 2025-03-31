@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  initializeApp
-} from "firebase-admin/app";
+import { initializeApp } from "firebase-admin/app";
 import {
   FieldValue,
   Timestamp,
@@ -24,7 +22,7 @@ import {
   DocumentSnapshot,
   DocumentReference,
   getFirestore,
-  DocumentData
+  DocumentData,
 } from "firebase-admin/firestore";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as functions from "firebase-functions";
@@ -55,9 +53,7 @@ async function initialize() {
   db = getFirestore(config.database);
   transport = await transportLayer();
   if (config.templatesCollection) {
-    templates = new Templates(
-      db.collection(config.templatesCollection)
-    );
+    templates = new Templates(db.collection(config.templatesCollection));
   }
 
   /** setup events */
@@ -441,7 +437,8 @@ async function processWrite(
     }
   }
 
-  const shouldAttemptDelivery = await db.runTransaction<boolean>(async (transaction) => {
+  const shouldAttemptDelivery = await db.runTransaction<boolean>(
+    async (transaction) => {
       const snapshot = await transaction.get(ref);
       // Record no longer exists, so no need to attempt delivery.
       if (!snapshot.exists) {
@@ -549,7 +546,8 @@ async function processWrite(
 
       // We don't know what the state is, so we can't do anything. This should never happen.
       return false;
-    });
+    }
+  );
 
   if (shouldAttemptDelivery) {
     await deliver(ref);
@@ -584,4 +582,5 @@ export const processQueue = onDocumentWritten(
     await events.recordCompleteEvent(change);
 
     logs.complete();
-  });
+  }
+);
