@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.60
+version: 0.2.0
 specVersion: v1beta
 
 displayName: Stream Firestore to BigQuery
@@ -54,15 +54,23 @@ roles:
 
 resources:
   - name: fsexportbigquery
-    type: firebaseextensions.v1beta.function
+    type: firebaseextensions.v1beta.v2function
     description:
       Listens for document changes in your specified Cloud Firestore collection,
       then exports the changes into BigQuery.
     properties:
-      runtime: nodejs20
+      sourceDirectory: functions
+      buildConfig:
+        runtime: nodejs22
       eventTrigger:
-        eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{documentId}
+        eventType: google.cloud.firestore.document.v1.written
+        triggerRegion: ${DATABASE_REGION}
+        eventFilters:
+          - attribute: database
+            value: ${DATABASE}
+          - attribute: document
+            value: ${COLLECTION_PATH}/{documentId}
+            operator: match-path-pattern
 
   - name: syncBigQuery
     type: firebaseextensions.v1beta.function
@@ -180,14 +188,142 @@ params:
     default: ${PROJECT_ID}
     required: true
 
+  - param: DATABASE
+    label: Firestore Instance ID
+    description: >
+      The Firestore database to use. Use "(default)" for the default database.
+      You can view your available Firestore databases at
+      https://console.cloud.google.com/firestore/databases.
+    example: (default)
+    default: (default)
+    required: true
+
+  - param: DATABASE_REGION
+    label: Firestore Instance Location
+    description: >
+      Where is the Firestore database located? You can check your current
+      database location at https://console.cloud.google.com/firestore/databases.
+    type: select
+    options:
+      # Multi-region locations
+      - label: Europe (multi-regional, eur3)
+        value: eur3
+      - label: United States (multi-regional, nam5)
+        value: nam5
+      - label: Europe (multi-regional)
+        value: eu
+      - label: United States (multi-regional)
+        value: us
+
+      # North America
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: Oregon (us-west1)
+        value: us-west1
+      - label: Los Angeles (us-west2)
+        value: us-west2
+      - label: Salt Lake City (us-west3)
+        value: us-west3
+      - label: Las Vegas (us-west4)
+        value: us-west4
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Columbus (us-east5)
+        value: us-east5
+      - label: Dallas (us-south1)
+        value: us-south1
+      - label: Montreal (northamerica-northeast1)
+        value: northamerica-northeast1
+      - label: Toronto (northamerica-northeast2)
+        value: northamerica-northeast2
+      - label: Queretaro (northamerica-south1)
+        value: northamerica-south1
+
+      # South America
+      - label: Sao Paulo (southamerica-east1)
+        value: southamerica-east1
+      - label: Santiago (southamerica-west1)
+        value: southamerica-west1
+
+      # Europe
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
+      - label: Netherlands (europe-west4)
+        value: europe-west4
+      - label: Zurich (europe-west6)
+        value: europe-west6
+      - label: Milan (europe-west8)
+        value: europe-west8
+      - label: Paris (europe-west9)
+        value: europe-west9
+      - label: Berlin (europe-west10)
+        value: europe-west10
+      - label: Turin (europe-west12)
+        value: europe-west12
+      - label: Madrid (europe-southwest1)
+        value: europe-southwest1
+      - label: Finland (europe-north1)
+        value: europe-north1
+      - label: Stockholm (europe-north2)
+        value: europe-north2
+      - label: Warsaw (europe-central2)
+        value: europe-central2
+
+      # Middle East
+      - label: Doha (me-central1)
+        value: me-central1
+      - label: Dammam (me-central2)
+        value: me-central2
+      - label: Tel Aviv (me-west1)
+        value: me-west1
+
+      # Asia
+      - label: Mumbai (asia-south1)
+        value: asia-south1
+      - label: Delhi (asia-south2)
+        value: asia-south2
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
+      - label: Jakarta (asia-southeast2)
+        value: asia-southeast2
+      - label: Taiwan (asia-east1)
+        value: asia-east1
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+      - label: Osaka (asia-northeast2)
+        value: asia-northeast2
+      - label: Seoul (asia-northeast3)
+        value: asia-northeast3
+
+      # Australia
+      - label: Sydney (australia-southeast1)
+        value: australia-southeast1
+      - label: Melbourne (australia-southeast2)
+        value: australia-southeast2
+
+      # Africa
+      - label: Johannesburg (africa-south1)
+        value: africa-south1
+    default: us
+    required: true
+    immutable: true
+
   - param: COLLECTION_PATH
     label: Collection path
     description: >-
       What is the path of the collection that you would like to export? You may
       use `{wildcard}` notation to match a subcollection of all documents in a
       collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore
-      Document IDs from `{wildcards}`  can be returned in `path_params` as a
-      JSON formatted string.
+      Document IDs from `{wildcards}` can be returned in `path_params` as a JSON
+      formatted string.
     type: string
     example: posts
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
@@ -244,10 +380,10 @@ params:
     label: BigQuery SQL table Time Partitioning option type
     description: >-
       This parameter will allow you to partition the BigQuery table and BigQuery
-      view  created by the extension based on data ingestion time. You may
-      select the granularity of partitioning based upon one of: HOUR, DAY,
-      MONTH, YEAR. This will generate one partition per day, hour, month or
-      year, respectively.
+      view created by the extension based on data ingestion time. You may select
+      the granularity of partitioning based upon one of: HOUR, DAY, MONTH, YEAR.
+      This will generate one partition per day, hour, month or year,
+      respectively.
     type: select
     options:
       - label: hour
@@ -279,7 +415,7 @@ params:
       Firestore Document field name for BigQuery SQL Time Partitioning field
       option
     description: >-
-      This parameter will allow you to partition the BigQuery table  created by
+      This parameter will allow you to partition the BigQuery table created by
       the extension based on selected. The Firestore Document field value must
       be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or
       Firestore timestamp(will be converted to BigQuery TIMESTAMP). Cannot be
@@ -488,17 +624,14 @@ events:
     description:
       Occurs when a trigger has been called within the Extension, and will
       include data such as the context of the trigger request.
-
   - type: firebase.extensions.firestore-counter.v1.onSuccess
     description:
       Occurs when a task completes successfully. The event will contain further
       details about specific results.
-
   - type: firebase.extensions.firestore-counter.v1.onError
     description:
       Occurs when an issue has been experienced in the Extension. This will
       include any error data that has been included within the Error Exception.
-
   - type: firebase.extensions.firestore-counter.v1.onCompletion
     description:
       Occurs when the function is settled. Provides no customized data other
@@ -509,22 +642,18 @@ events:
     description:
       Occurs when a trigger has been called within the Extension, and will
       include data such as the context of the trigger request.
-
   - type: firebase.extensions.firestore-bigquery-export.v1.onSuccess
     description:
       Occurs when a task completes successfully. The event will contain further
       details about specific results.
-
   - type: firebase.extensions.firestore-bigquery-export.v1.onError
     description:
       Occurs when an issue has been experienced in the Extension. This will
       include any error data that has been included within the Error Exception.
-
   - type: firebase.extensions.firestore-bigquery-export.v1.onCompletion
     description:
       Occurs when the function is settled. Provides no customized data other
       than the context.
-
   - type: firebase.extensions.big-query-export.v1.sync.start
     description: Occurs on a firestore document write event.
 
