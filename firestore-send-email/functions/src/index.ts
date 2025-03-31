@@ -15,7 +15,13 @@
  */
 
 import * as admin from "firebase-admin";
-import { FieldValue, Timestamp, Firestore, DocumentSnapshot, DocumentReference } from "firebase-admin/firestore";
+import {
+  FieldValue,
+  Timestamp,
+  Firestore,
+  DocumentSnapshot,
+  DocumentReference,
+} from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
 import * as nodemailer from "nodemailer";
 
@@ -308,9 +314,7 @@ async function sendWithSendGrid(payload: QueuePayload) {
   return sgMail.send(msg);
 }
 
-async function deliver(
-  ref: DocumentReference<QueuePayload>
-): Promise<void> {
+async function deliver(ref: DocumentReference<QueuePayload>): Promise<void> {
   // Fetch the Firestore document
   const snapshot = await ref.get();
   if (!snapshot.exists) {
@@ -551,32 +555,28 @@ async function processWrite(
 
 export const processQueue = functions.firestore
   .document(config.mailCollection)
-  .onWrite(
-    async (
-      change: functions.Change<DocumentSnapshot<QueuePayload>>
-    ) => {
-      await initialize();
-      logs.start();
+  .onWrite(async (change: functions.Change<DocumentSnapshot<QueuePayload>>) => {
+    await initialize();
+    logs.start();
 
-      if (!change.before.exists) {
-        await events.recordStartEvent(change);
-      }
-
-      try {
-        await processWrite(change);
-      } catch (err) {
-        await events.recordErrorEvent(
-          change,
-          change.after.data(),
-          `Unhandled error occurred during processing: ${err.message}"`
-        );
-        logs.error(err);
-        return null;
-      }
-
-      /** record complete event */
-      await events.recordCompleteEvent(change);
-
-      logs.complete();
+    if (!change.before.exists) {
+      await events.recordStartEvent(change);
     }
-  );
+
+    try {
+      await processWrite(change);
+    } catch (err) {
+      await events.recordErrorEvent(
+        change,
+        change.after.data(),
+        `Unhandled error occurred during processing: ${err.message}"`
+      );
+      logs.error(err);
+      return null;
+    }
+
+    /** record complete event */
+    await events.recordCompleteEvent(change);
+
+    logs.complete();
+  });
