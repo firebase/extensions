@@ -15,7 +15,12 @@
  */
 
 import config from "./config";
-import * as functions from "firebase-functions";
+import * as functions from "firebase-functions/v1";
+import {
+  onDocumentWritten,
+  FirestoreEvent,
+} from "firebase-functions/firestore";
+
 import * as admin from "firebase-admin";
 import { getExtensions } from "firebase-admin/extensions";
 import { getFunctions } from "firebase-admin/functions";
@@ -28,9 +33,12 @@ import {
 import * as logs from "./logs";
 import * as events from "./events";
 import { getChangeType, getDocumentId } from "./util";
+import { DocumentSnapshot } from "firebase-admin/firestore";
 
 // Configuration for the Firestore Event History Tracker.
 const eventTrackerConfig = {
+  firestoreInstanceId: config.databaseId,
+  firestoreInstanceRegion: config.databaseRegion,
   tableId: config.tableId,
   datasetId: config.datasetId,
   datasetLocation: config.datasetLocation,
@@ -136,35 +144,34 @@ export const syncBigQuery = functions.tasks
     }
   );
 
-/**
- * Cloud Function triggered on Firestore document changes to export data to BigQuery.
- */
-export const fsexportbigquery = functions.firestore
-  .database(config.databaseId)
-  .document(config.collectionPath)
-  .onWrite(async (change, context) => {
+export const fsexportbigquery = onDocumentWritten(
+  `${config.collectionPath}/{documentId}`,
+  async (event) => {
+    const { data, ...context } = event;
+
     // Start logging the function execution.
     logs.start();
 
-    // Determine the type of change (CREATE, UPDATE, DELETE).
-    const changeType = getChangeType(change);
-    const documentId = getDocumentId(change);
+    // Determine the type of change (CREATE, UPDATE, DELETE) from the new event data.
+    const changeType = getChangeType(data);
+    const documentId = getDocumentId(data);
 
     // Check if the document is newly created or deleted.
     const isCreated = changeType === ChangeType.CREATE;
     const isDeleted = changeType === ChangeType.DELETE;
 
-    // Get the new data (after change) and old data (before change).
-    const data = isDeleted ? undefined : change.after?.data();
+    // Get the new and old data from the snapshot.
+    const newData = isDeleted ? undefined : data.after.data();
     const oldData =
-      isCreated || config.excludeOldData ? undefined : change.before?.data();
+      isCreated || config.excludeOldData ? undefined : data.before.data();
 
-    const documentName = context.resource.name;
-    const eventId = context.eventId;
+    // check this is the full doc name
+    const documentName = context.document;
+    const eventId = context.id;
     const operation = changeType;
 
     logs.logEventAction(
-      "Firestore event received by onWrite trigger",
+      "Firestore event received by onDocumentWritten trigger",
       documentName,
       eventId,
       operation
@@ -175,10 +182,9 @@ export const fsexportbigquery = functions.firestore
 
     try {
       // Serialize the data before processing.
-      serializedData = eventTracker.serializeData(data);
+      serializedData = eventTracker.serializeData(newData);
       serializedOldData = eventTracker.serializeData(oldData);
     } catch (err) {
-      // Log serialization error and throw it.
       logs.logFailedEventAction(
         "Failed to serialize data",
         documentName,
@@ -190,16 +196,15 @@ export const fsexportbigquery = functions.firestore
     }
 
     try {
-      // Record the start event for the change in EventArc, if configured.
+      // Record the start event in EventArc, if configured.
       await events.recordStartEvent({
         documentId,
         changeType,
-        before: { data: change.before.data() },
-        after: { data: change.after.data() },
-        context: context.resource,
+        before: { data: data.before.data() },
+        after: { data: data.after.data() },
+        context,
       });
     } catch (err) {
-      // Log the error if recording start event fails and throw it.
       logs.error(false, "Failed to record start event", err);
       throw err;
     }
@@ -211,14 +216,14 @@ export const fsexportbigquery = functions.firestore
         documentId,
         serializedData,
         serializedOldData,
-        context
+        event
       );
     } catch (err) {
       logs.failedToWriteToBigQueryImmediately(err as Error);
       // Handle enqueue errors with retries and backup to GCS.
       await attemptToEnqueue(
         err,
-        context,
+        event,
         changeType,
         documentId,
         serializedData,
@@ -228,7 +233,8 @@ export const fsexportbigquery = functions.firestore
 
     // Log the successful completion of the function.
     logs.complete();
-  });
+  }
+);
 
 /**
  * Record the event to the Firestore Event History Tracker and BigQuery.
@@ -244,17 +250,23 @@ async function recordEventToBigQuery(
   documentId: string,
   serializedData: any,
   serializedOldData: any,
-  context: functions.EventContext
+  // TODO: fix types, do we want the whole event here? probably not
+  context: FirestoreEvent<
+    functions.Change<DocumentSnapshot>,
+    {
+      documentId: string;
+    }
+  >
 ) {
   const event: FirestoreDocumentChangeEvent = {
-    timestamp: context.timestamp, // Cloud Firestore commit timestamp
+    timestamp: context.time, // Cloud Firestore commit timestamp
     operation: changeType, // The type of operation performed
-    documentName: context.resource.name, // The document name
+    documentName: context.document, // The document name
     documentId, // The document ID
     pathParams: (config.wildcardIds ? context.params : null) as
       | FirestoreDocumentChangeEvent["pathParams"]
       | null, // Path parameters, if any
-    eventId: context.eventId, // The event ID from Firestore
+    eventId: context.id, // The event ID from Firestore
     data: serializedData, // Serialized new data
     oldData: serializedOldData, // Serialized old data
   };
@@ -274,8 +286,14 @@ async function recordEventToBigQuery(
  * @param serializedOldData - The serialized old data of the document.
  */
 async function attemptToEnqueue(
-  err: Error,
-  context: functions.EventContext,
+  _err: Error,
+  // TODO: fix types, do we want the whole event here? probably not
+  context: FirestoreEvent<
+    functions.Change<DocumentSnapshot>,
+    {
+      documentId: string;
+    }
+  >,
   changeType: ChangeType,
   documentId: string,
   serializedData: any,
@@ -324,8 +342,8 @@ async function attemptToEnqueue(
     // Record the error event.
     await events.recordErrorEvent(enqueueErr as Error);
 
-    const documentName = context.resource.name;
-    const eventId = context.eventId;
+    const documentName = context.document;
+    const eventId = context.id;
     const operation = changeType;
 
     logs.logFailedEventAction(
