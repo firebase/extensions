@@ -69,7 +69,6 @@ resources:
 
 params:
   - param: DATABASE
-    label: Firestore Database
     label: Firestore Instance ID
     description: >
       The Firestore database to use. Use "(default)" for the default database.
