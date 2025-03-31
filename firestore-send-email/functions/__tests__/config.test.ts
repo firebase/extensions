@@ -11,6 +11,8 @@ functionsTestInit();
 
 const environment = {
   LOCATION: "us-central1",
+  DATABASE: "fake-database",
+  DATABASE_REGION: "us-central1",
   TEMPLATES_COLLECTION: "templates",
   MAIL_COLLECTION: "mail",
   SMTP_CONNECTION_URI:
@@ -41,6 +43,8 @@ describe("extensions config", () => {
   test("config loaded from environment variables", () => {
     const testConfig: Config = {
       location: process.env.LOCATION,
+      database: process.env.DATABASE,
+      databaseRegion: process.env.DATABASE_REGION,
       mailCollection: process.env.MAIL_COLLECTION,
       smtpConnectionUri: process.env.SMTP_CONNECTION_URI,
       smtpPassword: process.env.SMTP_PASSWORD,
