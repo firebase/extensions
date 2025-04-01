@@ -1,3 +1,5 @@
+import PQueue from "p-queue";
+
 /**
  * Supported file types
  */
@@ -26,3 +28,10 @@ export const supportedImageContentTypeMap = {
 export const supportedExtensions = Object.keys(
   supportedImageContentTypeMap
 ).map((type) => `.${type}`);
+
+export type RetryQueueItem = {
+  priority: number;
+  task: () => Promise<any>;
+};
+
+export const globalRetryQueue = new PQueue({ concurrency: 3, autoStart: true });
