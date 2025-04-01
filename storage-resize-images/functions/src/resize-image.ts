@@ -1,5 +1,5 @@
 import * as os from "os";
-import * as sharp from "sharp";
+import sharp from "sharp";
 import * as path from "path";
 import * as fs from "fs";
 
@@ -9,7 +9,15 @@ import { uuid } from "uuidv4";
 import { config } from "./config";
 import * as logs from "./logs";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
-import { convertPathToPosix } from "./util";
+import {
+  convertPathToPosix,
+  convertType
+} from "./util";
+import {
+  supportedExtensions,
+  supportedImageContentTypeMap
+} from "./global";
+
 
 export interface ResizedImageResult {
   size: string;
@@ -54,89 +62,6 @@ export function resize(file, size) {
     })
     .toBuffer();
 }
-
-export function convertType(buffer, format) {
-  let outputOptions = {
-    jpeg: {},
-    jpg: {},
-    png: {},
-    webp: {},
-    tiff: {},
-    tif: {},
-    avif: {},
-  };
-  if (config.outputOptions) {
-    try {
-      outputOptions = JSON.parse(config.outputOptions);
-    } catch (e) {
-      logs.errorOutputOptionsParse(e);
-    }
-  }
-  const { jpeg, jpg, png, webp, tiff, tif, avif } = outputOptions;
-
-  if (format === "jpeg") {
-    return sharp(buffer).jpeg(jpeg).toBuffer();
-  }
-
-  if (format === "jpg") {
-    return sharp(buffer).jpeg(jpg).toBuffer();
-  }
-
-  if (format === "png") {
-    return sharp(buffer).png(png).toBuffer();
-  }
-
-  if (format === "webp") {
-    return sharp(buffer, { animated: config.animated }).webp(webp).toBuffer();
-  }
-
-  if (format === "tif") {
-    return sharp(buffer).tiff(tif).toBuffer();
-  }
-
-  if (format === "tiff") {
-    return sharp(buffer).tiff(tiff).toBuffer();
-  }
-
-  if (format === "gif") {
-    return sharp(buffer, { animated: config.animated }).gif().toBuffer();
-  }
-
-  if (format === "avif") {
-    return sharp(buffer).avif(avif).toBuffer();
-  }
-
-  return buffer;
-}
-
-/**
- * Supported file types
- */
-export const supportedContentTypes = [
-  "image/jpg",
-  "image/jpeg",
-  "image/png",
-  "image/tiff",
-  "image/webp",
-  "image/gif",
-  "image/avif",
-];
-
-export const supportedImageContentTypeMap = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  tif: "image/tif",
-  tiff: "image/tiff",
-  webp: "image/webp",
-  gif: "image/gif",
-  avif: "image/avif",
-  jfif: "image/jpeg",
-};
-
-const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
-  (type) => `.${type}`
-);
 
 export const modifyImage = async ({
   bucket,
@@ -204,7 +129,7 @@ export const modifyImage = async ({
 
     if (shouldFormatImage) {
       logs.imageConverting(fileExtension, format);
-      modifiedImageBuffer = await convertType(modifiedImageBuffer, format);
+      modifiedImageBuffer = await convertType(modifiedImageBuffer, format, config.outputOptions, config.animated);
       logs.imageConverted(format);
     }
 
