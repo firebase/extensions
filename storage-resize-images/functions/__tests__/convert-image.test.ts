@@ -32,43 +32,78 @@ beforeAll(async () => {
 
 describe("convertType", () => {
   it("converts to png image type", async () => {
-    const buffer = await convertType(bufferJPG, "png", config.outputOptions, config.animated);
+    const buffer = await convertType(
+      bufferJPG,
+      "png",
+      config.outputOptions,
+      config.animated
+    );
 
     expect(imageType(buffer).mime).toBe("image/png");
   });
 
   it("converts to jpeg image type", async () => {
-    const buffer = await convertType(bufferPNG, "jpeg", config.outputOptions, config.animated);
+    const buffer = await convertType(
+      bufferPNG,
+      "jpeg",
+      config.outputOptions,
+      config.animated
+    );
 
     expect(imageType(buffer).mime).toBe("image/jpeg");
   });
 
   it("converts to webp image type", async () => {
-    const buffer = await convertType(bufferPNG, "webp", config.outputOptions, config.animated);
+    const buffer = await convertType(
+      bufferPNG,
+      "webp",
+      config.outputOptions,
+      config.animated
+    );
 
     expect(imageType(buffer).mime).toBe("image/webp");
   });
 
   it("converts to tiff image type", async () => {
-    const buffer = await convertType(bufferPNG, "tiff", config.outputOptions, config.animated);
+    const buffer = await convertType(
+      bufferPNG,
+      "tiff",
+      config.outputOptions,
+      config.animated
+    );
 
     expect(imageType(buffer).mime).toBe("image/tiff");
   });
 
   it("converts to gif image type", async () => {
-    const buffer = await convertType(bufferGIF, "gif", config.outputOptions, config.animated);
+    const buffer = await convertType(
+      bufferGIF,
+      "gif",
+      config.outputOptions,
+      config.animated
+    );
 
     expect(imageType(buffer).mime).toBe("image/gif");
   });
 
   it("remains jpeg image type when different image type is not supported", async () => {
-    const buffer = await convertType(bufferJPG, "raw", config.outputOptions, config.animated);
+    const buffer = await convertType(
+      bufferJPG,
+      "raw",
+      config.outputOptions,
+      config.animated
+    );
 
     expect(imageType(buffer).mime).toBe("image/jpeg");
   });
 
   it("remains gif image type when different image type is not supported", async () => {
-    const buffer = await convertType(bufferGIF, "raw", config.outputOptions, config.animated);
+    const buffer = await convertType(
+      bufferGIF,
+      "raw",
+      config.outputOptions,
+      config.animated
+    );
 
     expect(imageType(buffer).mime).toBe("image/gif");
   });

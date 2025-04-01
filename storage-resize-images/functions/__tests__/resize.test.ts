@@ -16,9 +16,7 @@ const environment = {
 let restoreEnv;
 restoreEnv = mockedEnv(environment);
 
-import {
-  resize,
-} from "../src/resize-image";
+import { resize } from "../src/resize-image";
 
 import {
   supportedContentTypes,
