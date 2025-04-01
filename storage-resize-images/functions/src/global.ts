@@ -23,6 +23,6 @@ export const supportedImageContentTypeMap = {
   jfif: "image/jpeg",
 };
 
-export const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
-  (type) => `.${type}`
-);
+export const supportedExtensions = Object.keys(
+  supportedImageContentTypeMap
+).map((type) => `.${type}`);

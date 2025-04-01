@@ -9,15 +9,8 @@ import { uuid } from "uuidv4";
 import { config } from "./config";
 import * as logs from "./logs";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
-import {
-  convertPathToPosix,
-  convertType
-} from "./util";
-import {
-  supportedExtensions,
-  supportedImageContentTypeMap
-} from "./global";
-
+import { convertPathToPosix, convertType } from "./util";
+import { supportedExtensions, supportedImageContentTypeMap } from "./global";
 
 export interface ResizedImageResult {
   size: string;
@@ -129,7 +122,12 @@ export const modifyImage = async ({
 
     if (shouldFormatImage) {
       logs.imageConverting(fileExtension, format);
-      modifiedImageBuffer = await convertType(modifiedImageBuffer, format, config.outputOptions, config.animated);
+      modifiedImageBuffer = await convertType(
+        modifiedImageBuffer,
+        format,
+        config.outputOptions,
+        config.animated
+      );
       logs.imageConverted(format);
     }
 
