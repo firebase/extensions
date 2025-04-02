@@ -7,6 +7,9 @@ import * as os from "os";
 import * as fs from "fs";
 import * as functions from "firebase-functions/v1";
 import { Bucket } from "@google-cloud/storage";
+import sharp from "sharp";
+import * as logs from "./logs";
+import { supportedContentTypes, supportedExtensions } from "./global";
 
 export const startsWithArray = (
   userInputPaths: string[],
@@ -32,13 +35,13 @@ export function countNegativeTraversals(path: string): number {
 
 export function convertPathToPosix(
   filePath: string,
-  removeDrive?: boolean
+  removeWindowsDrive?: boolean
 ): string {
   const winSep = path.win32.sep;
   const posixSep = path.posix.sep;
 
   // likely Windows (as contains windows path separator)
-  if (filePath.includes(winSep) && removeDrive) {
+  if (filePath.includes(winSep) && removeWindowsDrive) {
     // handle drive (e.g. C:)
     filePath = filePath.substring(2);
   }
@@ -165,4 +168,65 @@ export async function replaceWithDefaultPlaceholder(
 
   // Replace with the placeholder
   fs.renameSync(tempPlaceholder, localFile);
+}
+
+export function validateFile(file: FileMetadata): boolean {
+  return (
+    supportedContentTypes.includes(file.contentType) ||
+    supportedExtensions.includes(path.extname(file.name).toLowerCase())
+  );
+}
+
+export function convertType(buffer, format, allowedOutputOptions, animated) {
+  let outputOptions = {
+    jpeg: {},
+    jpg: {},
+    png: {},
+    webp: {},
+    tiff: {},
+    tif: {},
+    avif: {},
+  };
+  if (allowedOutputOptions) {
+    try {
+      outputOptions = JSON.parse(allowedOutputOptions);
+    } catch (e) {
+      logs.errorOutputOptionsParse(e);
+    }
+  }
+  const { jpeg, jpg, png, webp, tiff, tif, avif } = outputOptions;
+
+  if (format === "jpeg") {
+    return sharp(buffer).jpeg(jpeg).toBuffer();
+  }
+
+  if (format === "jpg") {
+    return sharp(buffer).jpeg(jpg).toBuffer();
+  }
+
+  if (format === "png") {
+    return sharp(buffer).png(png).toBuffer();
+  }
+
+  if (format === "webp") {
+    return sharp(buffer, { animated }).webp(webp).toBuffer();
+  }
+
+  if (format === "tif") {
+    return sharp(buffer).tiff(tif).toBuffer();
+  }
+
+  if (format === "tiff") {
+    return sharp(buffer).tiff(tiff).toBuffer();
+  }
+
+  if (format === "gif") {
+    return sharp(buffer, { animated }).gif().toBuffer();
+  }
+
+  if (format === "avif") {
+    return sharp(buffer).avif(avif).toBuffer();
+  }
+
+  return buffer;
 }

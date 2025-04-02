@@ -1,6 +1,5 @@
 import * as path from "path";
 import * as logs from "../src/logs";
-import { supportedContentTypes } from "../src/resize-image";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
 
 jest.mock("../src/config", () => {

@@ -5,13 +5,13 @@ import * as fs from "fs";
 import * as path from "path";
 import { Bucket } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
-import { globalRetryQueue } from "./retry-queue";
 import {
   replaceWithConfiguredPlaceholder,
   replaceWithDefaultPlaceholder,
 } from "./util";
 // Import the logging functions from your log.ts module
 import * as log from "./logs";
+import { globalRetryQueue } from "./global";
 
 /**
  * Creates a data URL from an image file
@@ -188,11 +188,14 @@ export async function checkImageContent(
         log.retryScheduled(attemptNumber, maxAttempts, backoffTime);
 
         // Schedule the retry with backoff via the queue
-        // Lower priority number = higher priority in queue
-        return await globalRetryQueue.enqueue(async () => {
-          await sleep(backoffTime);
-          return attemptWithRetry(attemptNumber + 1);
-        }, attemptNumber); // Use attempt number as priority
+        // Higher priority number = higher priority in queue
+        return (await globalRetryQueue.add(
+          async () => {
+            await sleep(backoffTime);
+            return attemptWithRetry(attemptNumber + 1);
+          },
+          { priority: -attemptNumber }
+        )) as boolean; // Use attempt number as priority
       }
 
       log.contentFilterFailed(error);
