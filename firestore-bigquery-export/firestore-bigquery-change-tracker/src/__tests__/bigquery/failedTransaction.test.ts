@@ -17,7 +17,6 @@ describe("handleFailedTransactions", () => {
 
     const config: FirestoreBigQueryEventHistoryTrackerConfig = {
       firestoreInstanceId: "(default)",
-      firestoreInstanceRegion: "us-central1",
       backupTableId: collectionName,
       datasetId: "",
       tableId: "",

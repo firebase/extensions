@@ -46,7 +46,6 @@ describe("Checking updates", () => {
             table: raw_changelog_table,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -73,7 +72,6 @@ describe("Checking updates", () => {
             table: raw_changelog_table,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: ["test1", "test2"],
               datasetId,
               tableId,
@@ -107,7 +105,6 @@ describe("Checking updates", () => {
             table: raw_changelog_table,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: ["test2"],
               datasetId,
               tableId,
@@ -140,7 +137,6 @@ describe("Checking updates", () => {
             table: raw_changelog_table,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: ["test2", "test1"],
               datasetId,
               tableId,
@@ -177,7 +173,6 @@ describe("Checking updates", () => {
             table: raw_changelog_table,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -213,7 +208,6 @@ describe("Checking updates", () => {
             table: raw_changelog_table,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -246,7 +240,6 @@ describe("Checking updates", () => {
             table: raw_changelog_table,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -277,7 +270,6 @@ describe("Checking updates", () => {
             table: raw_changelog_table,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -302,7 +294,6 @@ describe("Checking updates", () => {
             table: raw_changelog_table,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -329,7 +320,6 @@ describe("Checking updates", () => {
             table: raw_changelog_table,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -372,7 +362,6 @@ describe("Checking updates", () => {
           viewRequiresUpdate({
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -398,7 +387,6 @@ describe("Checking updates", () => {
           viewRequiresUpdate({
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: ["test1", "test2"],
               datasetId,
               tableId,
@@ -431,7 +419,6 @@ describe("Checking updates", () => {
           viewRequiresUpdate({
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: ["test2"],
               datasetId,
               tableId,
@@ -463,7 +450,6 @@ describe("Checking updates", () => {
           viewRequiresUpdate({
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: ["test2", "test1"],
               datasetId,
               tableId,
@@ -497,7 +483,6 @@ describe("Checking updates", () => {
           viewRequiresUpdate({
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -532,7 +517,6 @@ describe("Checking updates", () => {
           viewRequiresUpdate({
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -564,7 +548,6 @@ describe("Checking updates", () => {
           viewRequiresUpdate({
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -592,7 +575,6 @@ describe("Checking updates", () => {
           viewRequiresUpdate({
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -614,7 +596,6 @@ describe("Checking updates", () => {
           viewRequiresUpdate({
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -638,7 +619,6 @@ describe("Checking updates", () => {
           viewRequiresUpdate({
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -667,7 +647,6 @@ describe("Checking updates", () => {
             metadata,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               useNewSnapshotQuerySyntax: true,
               datasetId,
@@ -695,7 +674,6 @@ describe("Checking updates", () => {
             metadata,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               useNewSnapshotQuerySyntax: true,
               datasetId,
@@ -723,7 +701,6 @@ describe("Checking updates", () => {
             metadata,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -749,7 +726,6 @@ describe("Checking updates", () => {
             metadata,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -765,7 +741,6 @@ describe("Checking updates", () => {
           viewRequiresUpdate({
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               datasetId,
               tableId,
@@ -794,7 +769,6 @@ describe("Checking updates", () => {
             metadata,
             config: {
               firestoreInstanceId: "(default)",
-              firestoreInstanceRegion: "us-central1",
               clustering: [],
               useNewSnapshotQuerySyntax: true,
               datasetId,

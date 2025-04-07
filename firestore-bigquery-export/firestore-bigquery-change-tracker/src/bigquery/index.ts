@@ -48,8 +48,7 @@ export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
   tableId: string;
-  firestoreInstanceId: string;
-  firestoreInstanceRegion: string;
+  firestoreInstanceId?: string;
   datasetLocation?: string | undefined;
   transformFunction?: string | undefined;
   timePartitioning?: string | undefined;
@@ -95,6 +94,9 @@ export class FirestoreBigQueryEventHistoryTracker
     if (!this.config.datasetLocation) {
       this.config.datasetLocation = "us";
     }
+
+    this.config.firestoreInstanceId =
+      this.config.firestoreInstanceId || "(default)";
 
     logger.setLogLevel(this.config.logLevel || LogLevel.INFO);
   }

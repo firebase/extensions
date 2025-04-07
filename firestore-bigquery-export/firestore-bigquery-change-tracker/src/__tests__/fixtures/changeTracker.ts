@@ -27,7 +27,6 @@ export const changeTracker = ({
 }): FirestoreBigQueryEventHistoryTracker => {
   return new FirestoreBigQueryEventHistoryTracker({
     firestoreInstanceId: "(default)",
-    firestoreInstanceRegion: "us-central1",
     datasetId,
     tableId,
     datasetLocation,

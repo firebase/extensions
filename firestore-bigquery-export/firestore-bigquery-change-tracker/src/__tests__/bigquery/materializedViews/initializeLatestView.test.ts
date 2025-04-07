@@ -14,7 +14,6 @@ describe("initializeLatestView", () => {
 
   const mockConfig: FirestoreBigQueryEventHistoryTrackerConfig = {
     firestoreInstanceId: "(default)",
-    firestoreInstanceRegion: "us-central1",
     wildcardIds: true,
     datasetId: "test_dataset",
     useNewSnapshotQuerySyntax: true,
