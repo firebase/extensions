@@ -23,9 +23,11 @@ export const changeTracker = ({
   useIncrementalMaterializedView = false,
   maxStaleness = undefined,
   refreshIntervalMinutes = undefined,
-  logLevel = LogLevel.INFO,
+  logLevel = LogLevel.DEBUG,
 }): FirestoreBigQueryEventHistoryTracker => {
   return new FirestoreBigQueryEventHistoryTracker({
+    firestoreInstanceId: "(default)",
+    firestoreInstanceRegion: "us-central1",
     datasetId,
     tableId,
     datasetLocation,

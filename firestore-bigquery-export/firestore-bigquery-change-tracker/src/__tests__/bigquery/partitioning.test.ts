@@ -6,6 +6,8 @@ import { ChangeType, FirestoreDocumentChangeEvent } from "../..";
 import { FirestoreBigQueryEventHistoryTrackerConfig } from "../../bigquery";
 import { Partitioning } from "../../bigquery/partitioning";
 import { deleteTable } from "../fixtures/clearTables";
+import { logger } from "../../logger";
+import * as functions from "firebase-functions";
 
 let bq: BigQuery;
 let dataset: Dataset;
@@ -15,6 +17,17 @@ let datasetId: string;
 
 describe("processing partitions on a new table", () => {
   beforeAll(async () => {
+    jest.spyOn(logger, "debug").mockImplementation(() => {});
+    jest.spyOn(logger, "info").mockImplementation(() => {});
+    jest.spyOn(logger, "warn").mockImplementation(() => {});
+    jest.spyOn(logger, "error").mockImplementation(() => {});
+
+    jest.spyOn(functions.logger, "debug").mockImplementation(() => {});
+    jest.spyOn(functions.logger, "info").mockImplementation(() => {});
+    jest.spyOn(functions.logger, "warn").mockImplementation(() => {});
+    jest.spyOn(functions.logger, "error").mockImplementation(() => {});
+    jest.spyOn(functions.logger, "log").mockImplementation(() => {});
+
     bq = new BigQuery({ projectId: process.env.PROJECT_ID });
     randomID = (Math.random() + 1).toString(36).substring(7);
     datasetId = `bq_${randomID}`;
@@ -23,9 +36,24 @@ describe("processing partitions on a new table", () => {
     });
     [table] = await dataset.createTable(`bq_${randomID}`, {});
   });
+
+  afterAll(async () => {
+    (logger.debug as jest.Mock).mockRestore();
+    (logger.info as jest.Mock).mockRestore();
+    (logger.warn as jest.Mock).mockRestore();
+    (logger.error as jest.Mock).mockRestore();
+
+    (functions.logger.debug as jest.Mock).mockRestore();
+    (functions.logger.info as jest.Mock).mockRestore();
+    (functions.logger.warn as jest.Mock).mockRestore();
+    (functions.logger.error as jest.Mock).mockRestore();
+    (functions.logger.log as jest.Mock).mockRestore();
+  });
   describe("addPartitioningToSchema", () => {
     test("adds a custom TIMESTAMP to a schema", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        firestoreInstanceId: "(default)",
+        firestoreInstanceRegion: "us-central1",
         datasetId: "dataset",
         tableId: "table",
         datasetLocation: "US",
@@ -57,6 +85,8 @@ describe("processing partitions on a new table", () => {
 
     test("adds a custom DATETIME to a schema", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        firestoreInstanceId: "(default)",
+        firestoreInstanceRegion: "us-central1",
         datasetId: "dataset",
         tableId: "table",
         datasetLocation: "US",
@@ -88,6 +118,8 @@ describe("processing partitions on a new table", () => {
 
     test("does not add an invalid time partition type to a schema", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        firestoreInstanceId: "(default)",
+        firestoreInstanceRegion: "us-central1",
         datasetId: "dataset",
         tableId: "table",
         datasetLocation: "US",
@@ -114,6 +146,8 @@ describe("processing partitions on a new table", () => {
 
     test("does not add partitioning without a valid timePartitioning value ", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        firestoreInstanceId: "(default)",
+        firestoreInstanceRegion: "us-central1",
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -140,6 +174,8 @@ describe("processing partitions on a new table", () => {
 
     test("does not add partitioning without a timePartitioningFirestoreField", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        firestoreInstanceId: "(default)",
+        firestoreInstanceRegion: "us-central1",
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -168,6 +204,8 @@ describe("processing partitions on a new table", () => {
   describe("getPartitionValue", () => {
     test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        firestoreInstanceId: "(default)",
+        firestoreInstanceRegion: "us-central1",
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -199,6 +237,8 @@ describe("processing partitions on a new table", () => {
 
     test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined, with a timestamp-like value", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        firestoreInstanceId: "(default)",
+        firestoreInstanceRegion: "us-central1",
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -234,6 +274,8 @@ describe("processing partitions on a new table", () => {
 
     test("returns an empty object when _seconds or _nanoseconds is not a number", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        firestoreInstanceId: "(default)",
+        firestoreInstanceRegion: "us-central1",
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -269,6 +311,8 @@ describe("processing partitions on a new table", () => {
 
     test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined, and is timestamp-like", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        firestoreInstanceId: "(default)",
+        firestoreInstanceRegion: "us-central1",
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -303,6 +347,8 @@ describe("processing partitions on a new table", () => {
 
     test("returns an empty object if timePartitioningFirestoreField has not been provided", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        firestoreInstanceId: "(default)",
+        firestoreInstanceRegion: "us-central1",
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -331,6 +377,8 @@ describe("processing partitions on a new table", () => {
     });
     test("returns an empty object if timePartitioningFirestoreField has not been provided", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        firestoreInstanceId: "(default)",
+        firestoreInstanceRegion: "us-central1",
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -360,6 +408,8 @@ describe("processing partitions on a new table", () => {
 
     test("returns an empty object if timePartitioningFirestoreField timePartitioningField", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        firestoreInstanceId: "(default)",
+        firestoreInstanceRegion: "us-central1",
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -389,6 +439,8 @@ describe("processing partitions on a new table", () => {
 
     test("returns an empty object if no event data has been provided", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        firestoreInstanceId: "(default)",
+        firestoreInstanceRegion: "us-central1",
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -418,6 +470,8 @@ describe("processing partitions on a new table", () => {
 
     test("returns an empty object if a non string or Timestamp value is synced from Firestore", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+        firestoreInstanceId: "(default)",
+        firestoreInstanceRegion: "us-central1",
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -448,6 +502,8 @@ describe("processing partitions on a new table", () => {
 
   test("partition return false if table is not provided", async () => {
     const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+      firestoreInstanceId: "(default)",
+      firestoreInstanceRegion: "us-central1",
       datasetId: "",
       tableId: "",
       datasetLocation: "",
@@ -482,6 +538,8 @@ describe("processing partitions on a new table", () => {
 describe("updateTableMetadata", () => {
   test("updates the table metadata with the timestamp field", async () => {
     const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+      firestoreInstanceId: "(default)",
+      firestoreInstanceRegion: "us-central1",
       datasetId: "",
       tableId: "",
       datasetLocation: "",
@@ -508,6 +566,8 @@ describe("updateTableMetadata", () => {
   });
   test("Should not update if there is a custom option with the timestamp option", async () => {
     const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+      firestoreInstanceId: "(default)",
+      firestoreInstanceRegion: "us-central1",
       datasetId: "",
       tableId: "",
       datasetLocation: "",

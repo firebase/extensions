@@ -53,6 +53,8 @@ describe("initializeLatestMaterializedView", () => {
   test("creates a new materialized view when view does not exist", async () => {
     const view = dataset.table(testConfig.viewIdRaw);
     const config = {
+      firestoreInstanceId: "(default)",
+      firestoreInstanceRegion: "us-central1",
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
@@ -95,6 +97,8 @@ describe("initializeLatestMaterializedView", () => {
 
     const view = dataset.table(testConfig.viewIdRaw);
     const config = {
+      firestoreInstanceId: "(default)",
+      firestoreInstanceRegion: "us-central1",
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
@@ -137,6 +141,8 @@ describe("initializeLatestMaterializedView", () => {
 
     const view = dataset.table(testConfig.viewIdRaw);
     const newConfig = {
+      firestoreInstanceId: "(default)",
+      firestoreInstanceRegion: "us-central1",
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
@@ -173,6 +179,8 @@ describe("initializeLatestMaterializedView", () => {
   test("handles view creation errors", async () => {
     const view = dataset.table(testConfig.viewIdRaw);
     const invalidConfig = {
+      firestoreInstanceId: "(default)",
+      firestoreInstanceRegion: "us-central1",
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,

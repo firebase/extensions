@@ -68,6 +68,8 @@ describe("Materialized View Recreation", () => {
     // Check if view needs recreation
     const view = dataset.table(testConfig.viewIdRaw);
     const config = {
+      firestoreInstanceId: "(default)",
+      firestoreInstanceRegion: "us-central1",
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
@@ -122,6 +124,8 @@ describe("Materialized View Recreation", () => {
     // Check if view needs recreation
     const view = dataset.table(testConfig.viewIdRaw);
     const config = {
+      firestoreInstanceId: "(default)",
+      firestoreInstanceRegion: "us-central1",
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
@@ -175,6 +179,8 @@ describe("Materialized View Recreation", () => {
     // Check if view needs recreation
     const view = dataset.table(testConfig.viewIdRaw);
     const config = {
+      firestoreInstanceId: "(default)",
+      firestoreInstanceRegion: "us-central1",
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
@@ -230,6 +236,8 @@ describe("Materialized View Recreation", () => {
     // Check if view needs recreation
     const view = dataset.table(testConfig.viewIdRaw);
     const config = {
+      firestoreInstanceId: "(default)",
+      firestoreInstanceRegion: "us-central1",
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
       useMaterializedView: true,
