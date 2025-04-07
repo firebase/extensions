@@ -48,10 +48,10 @@ jobs:
         with:
           path: ${{ steps.global-deps-setup.outputs.dir }}
           key:
-            ${{ runner.os }}-npm-global-deps-${{
+            ${{ runner.os }}-npm-global-deps-v1-${{
             hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-npm-global-deps-
+            ${{ runner.os }}-npm-global-deps-v1-
 
       - name: Install Firebase and Lerna
         run: |
