@@ -45,7 +45,6 @@ const readFile = util.promisify(fs.readFile);
 process.env.PROJECT_ID = testProjectId;
 
 const trackerInstance = new FirestoreBigQueryEventHistoryTracker({
-  firestoreInstanceId: "(default)",
   datasetId: "id",
   datasetLocation: undefined,
   tableId: "id",

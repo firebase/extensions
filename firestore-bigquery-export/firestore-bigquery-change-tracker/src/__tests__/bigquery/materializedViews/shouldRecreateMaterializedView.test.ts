@@ -11,6 +11,10 @@ import {
   changeTrackerEvent,
 } from "../../fixtures/changeTracker";
 import { deleteTable } from "../../fixtures/clearTables";
+import { logger } from "../../../logger";
+import * as functions from "firebase-functions";
+
+const functionsLogger = functions.logger;
 
 describe("Materialized View Recreation", () => {
   const projectId = "dev-extensions-testing";
@@ -25,6 +29,16 @@ describe("Materialized View Recreation", () => {
   };
 
   beforeEach(() => {
+    jest.spyOn(logger, "debug").mockImplementation(() => {});
+    jest.spyOn(logger, "info").mockImplementation(() => {});
+    jest.spyOn(logger, "warn").mockImplementation(() => {});
+    jest.spyOn(logger, "error").mockImplementation(() => {});
+
+    jest.spyOn(functionsLogger, "debug").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "info").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "warn").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "error").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "log").mockImplementation(() => {});
     const randomId = (Math.random() + 1).toString(36).substring(7);
     testConfig = {
       datasetId: `dataset_${randomId}`,
@@ -36,6 +50,36 @@ describe("Materialized View Recreation", () => {
   });
 
   afterEach(async () => {
+    // For logger (these should work fine if they're real methods)
+    if (logger.debug && jest.isMockFunction(logger.debug)) {
+      (logger.debug as jest.Mock).mockRestore();
+    }
+    if (logger.info && jest.isMockFunction(logger.info)) {
+      (logger.info as jest.Mock).mockRestore();
+    }
+    if (logger.warn && jest.isMockFunction(logger.warn)) {
+      (logger.warn as jest.Mock).mockRestore();
+    }
+    if (logger.error && jest.isMockFunction(logger.error)) {
+      (logger.error as jest.Mock).mockRestore();
+    }
+
+    // For functionsLogger, check if it's a mock function first
+    if (functionsLogger.debug && jest.isMockFunction(functionsLogger.debug)) {
+      (functionsLogger.debug as jest.Mock).mockReset();
+    }
+    if (functionsLogger.info && jest.isMockFunction(functionsLogger.info)) {
+      (functionsLogger.info as jest.Mock).mockReset();
+    }
+    if (functionsLogger.warn && jest.isMockFunction(functionsLogger.warn)) {
+      (functionsLogger.warn as jest.Mock).mockReset();
+    }
+    if (functionsLogger.error && jest.isMockFunction(functionsLogger.error)) {
+      (functionsLogger.error as jest.Mock).mockReset();
+    }
+    if (functionsLogger.log && jest.isMockFunction(functionsLogger.log)) {
+      (functionsLogger.log as jest.Mock).mockReset();
+    }
     await deleteTable({ datasetId: testConfig.datasetId });
   });
 
@@ -68,7 +112,6 @@ describe("Materialized View Recreation", () => {
     // Check if view needs recreation
     const view = dataset.table(testConfig.viewIdRaw);
     const config = {
-      firestoreInstanceId: "(default)",
       firestoreInstanceRegion: "us-central1",
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
@@ -124,7 +167,6 @@ describe("Materialized View Recreation", () => {
     // Check if view needs recreation
     const view = dataset.table(testConfig.viewIdRaw);
     const config = {
-      firestoreInstanceId: "(default)",
       firestoreInstanceRegion: "us-central1",
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
@@ -179,7 +221,6 @@ describe("Materialized View Recreation", () => {
     // Check if view needs recreation
     const view = dataset.table(testConfig.viewIdRaw);
     const config = {
-      firestoreInstanceId: "(default)",
       firestoreInstanceRegion: "us-central1",
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
@@ -236,7 +277,6 @@ describe("Materialized View Recreation", () => {
     // Check if view needs recreation
     const view = dataset.table(testConfig.viewIdRaw);
     const config = {
-      firestoreInstanceId: "(default)",
       firestoreInstanceRegion: "us-central1",
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,

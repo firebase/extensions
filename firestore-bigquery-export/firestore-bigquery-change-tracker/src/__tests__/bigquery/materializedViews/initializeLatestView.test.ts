@@ -13,7 +13,6 @@ describe("initializeLatestView", () => {
   };
 
   const mockConfig: FirestoreBigQueryEventHistoryTrackerConfig = {
-    firestoreInstanceId: "(default)",
     wildcardIds: true,
     datasetId: "test_dataset",
     useNewSnapshotQuerySyntax: true,

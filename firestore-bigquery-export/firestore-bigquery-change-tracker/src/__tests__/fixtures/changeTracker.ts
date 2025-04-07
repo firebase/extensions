@@ -26,7 +26,6 @@ export const changeTracker = ({
   logLevel = LogLevel.DEBUG,
 }): FirestoreBigQueryEventHistoryTracker => {
   return new FirestoreBigQueryEventHistoryTracker({
-    firestoreInstanceId: "(default)",
     datasetId,
     tableId,
     datasetLocation,
