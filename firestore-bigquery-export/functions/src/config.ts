@@ -34,7 +34,8 @@ export function clustering(clusters: string | undefined) {
 
 export default {
   bqProjectId: process.env.BIGQUERY_PROJECT_ID,
-  databaseId: "(default)",
+  databaseId: process.env.DATABASE,
+  databaseRegion: process.env.DATABASE_REGION,
   collectionPath: process.env.COLLECTION_PATH,
   datasetId: process.env.DATASET_ID,
   tableId: process.env.TABLE_ID,

@@ -253,7 +253,13 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery Project ID: Override the default project for BigQuery instance. This can allow updates to be directed to to a BigQuery instance on another GCP project.
 
-* Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}`  can be returned in `path_params` as a JSON formatted string.
+* Firestore Instance ID: The Firestore database to use. Use "(default)" for the default database. You can view your available Firestore databases at https://console.cloud.google.com/firestore/databases.
+
+
+* Firestore Instance Location: Where is the Firestore database located? You can check your current database location at https://console.cloud.google.com/firestore/databases.
+
+
+* Collection path: What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}` can be returned in `path_params` as a JSON formatted string.
 
 * Enable Wildcard Column field with Parent Firestore Document IDs: If enabled, creates a column containing a JSON object of all wildcard ids from a documents path.
 
@@ -261,11 +267,11 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * Table ID: What identifying prefix would you like to use for your table and view inside your BigQuery dataset? This extension will create the table and view, if they don't already exist.
 
-* BigQuery SQL table Time Partitioning option type: This parameter will allow you to partition the BigQuery table and BigQuery view  created by the extension based on data ingestion time. You may select the granularity of partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will generate one partition per day, hour, month or year, respectively.
+* BigQuery SQL table Time Partitioning option type: This parameter will allow you to partition the BigQuery table and BigQuery view created by the extension based on data ingestion time. You may select the granularity of partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will generate one partition per day, hour, month or year, respectively.
 
 * BigQuery Time Partitioning column name: BigQuery table column/schema field name for TimePartitioning. You can choose schema available as `timestamp` OR a new custom defined column that will be assigned to the selected Firestore Document field below. Defaults to pseudo column _PARTITIONTIME if unspecified. Cannot be changed if Table is already partitioned.
 
-* Firestore Document field name for BigQuery SQL Time Partitioning field option: This parameter will allow you to partition the BigQuery table  created by the extension based on selected. The Firestore Document field value must be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or Firestore timestamp(will be converted to BigQuery TIMESTAMP). Cannot be changed if Table is already partitioned.
+* Firestore Document field name for BigQuery SQL Time Partitioning field option: This parameter will allow you to partition the BigQuery table created by the extension based on selected. The Firestore Document field value must be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or Firestore timestamp(will be converted to BigQuery TIMESTAMP). Cannot be changed if Table is already partitioned.
  example: `postDate`(Ensure that the Firestore-BigQuery export extension
 creates the dataset and table before initiating any backfill scripts.
  This step is crucial for the partitioning to function correctly. It is
@@ -303,13 +309,17 @@ Available schema extensions table fields for clustering include: `document_id, d
 
 **Cloud Functions:**
 
-* **fsexportbigquery:** Listens for document changes in your specified Cloud Firestore collection, then exports the changes into BigQuery.
-
 * **syncBigQuery:** A task-triggered function that gets called on BigQuery sync
 
 * **initBigQuerySync:** Runs configuration for sycning with BigQuery
 
 * **setupBigQuerySync:** Runs configuration for sycning with BigQuery
+
+
+
+**Other Resources**:
+
+* fsexportbigquery (firebaseextensions.v1beta.v2function)
 
 
 

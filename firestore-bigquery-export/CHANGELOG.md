@@ -1,3 +1,7 @@
+## Version 0.2.0
+
+feat - migrate to v2 functions and support non-default firestore instances
+
 ## Version 0.1.60
 
 feat - configure a log level to control the verbosity of logs.
