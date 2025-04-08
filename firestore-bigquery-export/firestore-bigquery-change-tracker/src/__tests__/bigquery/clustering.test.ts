@@ -15,10 +15,15 @@ let tableId_raw: string;
 let myTable: Table;
 let myDataset: Dataset;
 
-const { logger } = require("firebase-functions");
+import { logger } from "../../logger";
 
-const consoleLogSpy = jest.spyOn(logger, "log").mockImplementation();
-const consoleWarnSpy = jest.spyOn(logger, "warn").mockImplementation();
+import * as functions from "firebase-functions";
+
+const functionsLogger = functions.logger;
+
+let consoleLogSpy;
+let consoleWarnSpy;
+let loggerDebugSpy;
 
 describe("Clustering ", () => {
   beforeEach(() => {
@@ -26,9 +31,28 @@ describe("Clustering ", () => {
     datasetId = `dataset_${randomID}`;
     tableId = `table_${randomID}`;
     tableId_raw = `${tableId}_raw_changelog`;
+
+    loggerDebugSpy = jest.spyOn(logger, "debug").mockImplementation(() => {});
+    jest.spyOn(logger, "info").mockImplementation(() => {});
+    consoleWarnSpy = jest.spyOn(logger, "warn").mockImplementation(() => {});
+    jest.spyOn(logger, "error").mockImplementation(() => {});
+
+    jest.spyOn(functionsLogger, "debug").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "info").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "warn").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "error").mockImplementation(() => {});
   });
 
   afterEach(async () => {
+    (logger.debug as jest.Mock).mockRestore();
+    (logger.info as jest.Mock).mockRestore();
+    (logger.warn as jest.Mock).mockRestore();
+    (logger.error as jest.Mock).mockRestore();
+
+    (functionsLogger.debug as jest.Mock).mockRestore();
+    (functionsLogger.info as jest.Mock).mockRestore();
+    (functionsLogger.warn as jest.Mock).mockRestore();
+    (functionsLogger.error as jest.Mock).mockRestore();
     await deleteTable({
       datasetId,
     });
@@ -48,7 +72,7 @@ describe("Clustering ", () => {
 
       expect(changeLogMetaData.clustering).toBeUndefined();
 
-      expect(consoleLogSpy).toBeCalledWith(
+      expect(loggerDebugSpy).toHaveBeenCalledWith(
         `Creating BigQuery table: ${raw_changelog_table.id}`
       );
     });
