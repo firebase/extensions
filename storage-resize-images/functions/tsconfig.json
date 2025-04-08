@@ -5,7 +5,8 @@
     "module": "commonjs",
     "noImplicitReturns": true,
     "skipLibCheck": true,
-    "sourceMap": false
+    "sourceMap": false,
+    "esModuleInterop": true
   },
   "compileOnSave": true,
   "include": ["src"]

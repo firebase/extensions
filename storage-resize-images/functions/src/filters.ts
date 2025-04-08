@@ -2,7 +2,7 @@ import * as path from "path";
 
 import * as logs from "./logs";
 import { config } from "./config";
-import { supportedContentTypes } from "./resize-image";
+import { supportedContentTypes } from "./global";
 import { convertPathToPosix, startsWithArray } from "./util";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
 
