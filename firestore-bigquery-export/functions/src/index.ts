@@ -38,7 +38,6 @@ import { DocumentSnapshot } from "firebase-admin/firestore";
 // Configuration for the Firestore Event History Tracker.
 const eventTrackerConfig = {
   firestoreInstanceId: config.databaseId,
-  firestoreInstanceRegion: config.databaseRegion,
   tableId: config.tableId,
   datasetId: config.datasetId,
   datasetLocation: config.datasetLocation,
