@@ -3,6 +3,8 @@ import { FirestoreDocumentChangeEvent } from "../..";
 import { RawChangelogSchema } from "../../bigquery";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { deleteTable } from "../fixtures/clearTables";
+import { logger } from "../../logger";
+import * as functions from "firebase-functions";
 
 process.env.PROJECT_ID = "dev-extensions-testing";
 
@@ -19,6 +21,16 @@ let view: Table;
 
 describe("Configuring a document wildcard column ", () => {
   beforeEach(() => {
+    jest.spyOn(logger, "debug").mockImplementation(() => {});
+    jest.spyOn(logger, "info").mockImplementation(() => {});
+    jest.spyOn(logger, "warn").mockImplementation(() => {});
+    jest.spyOn(logger, "error").mockImplementation(() => {});
+
+    jest.spyOn(functions.logger, "debug").mockImplementation(() => {});
+    jest.spyOn(functions.logger, "info").mockImplementation(() => {});
+    jest.spyOn(functions.logger, "warn").mockImplementation(() => {});
+    jest.spyOn(functions.logger, "error").mockImplementation(() => {});
+    jest.spyOn(functions.logger, "log").mockImplementation(() => {});
     randomID = (Math.random() + 1).toString(36).substring(7);
     datasetId = `dataset_${randomID}`;
     tableId = `table_${randomID}`;
@@ -28,6 +40,16 @@ describe("Configuring a document wildcard column ", () => {
   });
 
   afterEach(async () => {
+    (logger.debug as jest.Mock).mockRestore();
+    (logger.info as jest.Mock).mockRestore();
+    (logger.warn as jest.Mock).mockRestore();
+    (logger.error as jest.Mock).mockRestore();
+
+    (functions.logger.debug as jest.Mock).mockRestore();
+    (functions.logger.info as jest.Mock).mockRestore();
+    (functions.logger.warn as jest.Mock).mockRestore();
+    (functions.logger.error as jest.Mock).mockRestore();
+    (functions.logger.log as jest.Mock).mockRestore();
     // await deleteTable({
     //   datasetId,
     // });

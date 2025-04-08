@@ -2,6 +2,9 @@ import { BigQuery } from "@google-cloud/bigquery";
 import { FirestoreDocumentChangeEvent } from "../..";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { deleteTable } from "../fixtures/clearTables";
+import * as functions from "firebase-functions";
+import { logger } from "../../logger";
+const functionsLogger = functions.logger;
 
 import {
   tableRequiresUpdate,
@@ -17,6 +20,51 @@ let datasetId: string;
 let tableId: string;
 let tableId_raw: string;
 describe("Checking updates", () => {
+  beforeEach(async () => {
+    jest.spyOn(logger, "debug").mockImplementation(() => {});
+    jest.spyOn(logger, "info").mockImplementation(() => {});
+    jest.spyOn(logger, "warn").mockImplementation(() => {});
+    jest.spyOn(logger, "error").mockImplementation(() => {});
+
+    jest.spyOn(functionsLogger, "debug").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "info").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "warn").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "error").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "log").mockImplementation(() => {});
+  });
+
+  afterEach(async () => {
+    // For logger (these should work fine if they're real methods)
+    if (logger.debug && jest.isMockFunction(logger.debug)) {
+      (logger.debug as jest.Mock).mockRestore();
+    }
+    if (logger.info && jest.isMockFunction(logger.info)) {
+      (logger.info as jest.Mock).mockRestore();
+    }
+    if (logger.warn && jest.isMockFunction(logger.warn)) {
+      (logger.warn as jest.Mock).mockRestore();
+    }
+    if (logger.error && jest.isMockFunction(logger.error)) {
+      (logger.error as jest.Mock).mockRestore();
+    }
+
+    // For functionsLogger, check if it's a mock function first
+    if (functionsLogger.debug && jest.isMockFunction(functionsLogger.debug)) {
+      (functionsLogger.debug as jest.Mock).mockReset();
+    }
+    if (functionsLogger.info && jest.isMockFunction(functionsLogger.info)) {
+      (functionsLogger.info as jest.Mock).mockReset();
+    }
+    if (functionsLogger.warn && jest.isMockFunction(functionsLogger.warn)) {
+      (functionsLogger.warn as jest.Mock).mockReset();
+    }
+    if (functionsLogger.error && jest.isMockFunction(functionsLogger.error)) {
+      (functionsLogger.error as jest.Mock).mockReset();
+    }
+    if (functionsLogger.log && jest.isMockFunction(functionsLogger.log)) {
+      (functionsLogger.log as jest.Mock).mockReset();
+    }
+  });
   describe("for a table", () => {
     beforeEach(() => {
       randomID = (Math.random() + 1).toString(36).substring(7);

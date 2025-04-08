@@ -20,9 +20,7 @@ export const deleteTable = async ({
         if (datasetExists) {
           await dataset.delete({ force: true });
         }
-      } catch (ex) {
-        console.warn(`Attempted to clear ${datasetId}`, ex.message);
-      }
+      } catch (ex) {}
     }, 500);
   });
 };
