@@ -4,15 +4,13 @@ import {
   Table,
   TableMetadata,
 } from "@google-cloud/bigquery";
-const { logger } = require("firebase-functions");
+import { logger } from "../../../logger";
 
-import {
-  RawChangelogSchema,
-  RawChangelogViewSchema,
-} from "../../../bigquery/schema";
+import * as functions from "firebase-functions";
+
+const functionsLogger = functions.logger;
 
 import { ChangeType, FirestoreDocumentChangeEvent } from "../../..";
-import { latestConsistentSnapshotView } from "../../../bigquery/snapshot";
 import { deleteTable } from "../../fixtures/clearTables";
 import {
   changeTracker,
@@ -63,6 +61,50 @@ let table: Table;
 let view: Table;
 
 describe("integration", () => {
+  beforeEach(async () => {
+    jest.spyOn(logger, "debug").mockImplementation(() => {});
+    jest.spyOn(logger, "info").mockImplementation(() => {});
+    jest.spyOn(logger, "warn").mockImplementation(() => {});
+    jest.spyOn(logger, "error").mockImplementation(() => {});
+
+    jest.spyOn(functionsLogger, "debug").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "info").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "warn").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "error").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "log").mockImplementation(() => {});
+  });
+  afterEach(async () => {
+    // For logger (these should work fine if they're real methods)
+    if (logger.debug && jest.isMockFunction(logger.debug)) {
+      (logger.debug as jest.Mock).mockRestore();
+    }
+    if (logger.info && jest.isMockFunction(logger.info)) {
+      (logger.info as jest.Mock).mockRestore();
+    }
+    if (logger.warn && jest.isMockFunction(logger.warn)) {
+      (logger.warn as jest.Mock).mockRestore();
+    }
+    if (logger.error && jest.isMockFunction(logger.error)) {
+      (logger.error as jest.Mock).mockRestore();
+    }
+
+    // For functionsLogger, check if it's a mock function first
+    if (functionsLogger.debug && jest.isMockFunction(functionsLogger.debug)) {
+      (functionsLogger.debug as jest.Mock).mockReset();
+    }
+    if (functionsLogger.info && jest.isMockFunction(functionsLogger.info)) {
+      (functionsLogger.info as jest.Mock).mockReset();
+    }
+    if (functionsLogger.warn && jest.isMockFunction(functionsLogger.warn)) {
+      (functionsLogger.warn as jest.Mock).mockReset();
+    }
+    if (functionsLogger.error && jest.isMockFunction(functionsLogger.error)) {
+      (functionsLogger.error as jest.Mock).mockReset();
+    }
+    if (functionsLogger.log && jest.isMockFunction(functionsLogger.log)) {
+      (functionsLogger.log as jest.Mock).mockReset();
+    }
+  });
   describe("materialized views", () => {
     beforeEach(async () => {
       randomID = (Math.random() + 1).toString(36).substring(7);

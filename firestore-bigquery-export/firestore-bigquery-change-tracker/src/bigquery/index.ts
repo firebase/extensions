@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as admin from "firebase-admin";
 import * as bigquery from "@google-cloud/bigquery";
 import { DocumentReference } from "firebase-admin/firestore";
 import * as traverse from "traverse";
 import fetch from "node-fetch";
 import {
   RawChangelogSchema,
-  RawChangelogViewSchema,
   documentIdField,
   oldDataField,
   documentPathParams,
 } from "./schema";
-import { latestConsistentSnapshotView } from "./snapshot";
 import handleFailedTransactions from "./handleFailedTransactions";
 
 import {
@@ -51,6 +48,7 @@ export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 export interface FirestoreBigQueryEventHistoryTrackerConfig {
   datasetId: string;
   tableId: string;
+  firestoreInstanceId?: string;
   datasetLocation?: string | undefined;
   transformFunction?: string | undefined;
   timePartitioning?: string | undefined;
@@ -96,6 +94,9 @@ export class FirestoreBigQueryEventHistoryTracker
     if (!this.config.datasetLocation) {
       this.config.datasetLocation = "us";
     }
+
+    this.config.firestoreInstanceId =
+      this.config.firestoreInstanceId || "(default)";
 
     logger.setLogLevel(this.config.logLevel || LogLevel.INFO);
   }

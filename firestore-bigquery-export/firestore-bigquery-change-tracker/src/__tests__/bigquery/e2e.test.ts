@@ -16,7 +16,9 @@ import { firestore } from "firebase-admin";
 process.env.PROJECT_ID = "dev-extensions-testing";
 
 const consoleLogSpy = jest.spyOn(logger, "log").mockImplementation();
+const consoleInfoSpy = jest.spyOn(logger, "info").mockImplementation();
 const consoleLogSpyWarn = jest.spyOn(logger, "warn").mockImplementation();
+const consoleDebugSpy = jest.spyOn(logger, "debug").mockImplementation();
 
 const bq: BigQuery = new BigQuery({ projectId: process.env.PROJECT_ID });
 const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
@@ -444,16 +446,16 @@ describe("e2e", () => {
 
         expect(metadata.timePartitioning).toBeUndefined();
 
-        expect(consoleLogSpyWarn).toBeCalledWith(
+        expect(consoleLogSpyWarn).toHaveBeenCalledWith(
           `Did not add partitioning to schema: Partition field not provided`
         );
-        expect(consoleLogSpy).toBeCalledWith(
+        expect(consoleInfoSpy).toHaveBeenCalledWith(
           `BigQuery dataset already exists: ${datasetId}`
         );
-        expect(consoleLogSpy).toBeCalledWith(
+        expect(consoleDebugSpy).toHaveBeenCalledWith(
           `BigQuery table with name ${tableId_raw} already exists in dataset ${datasetId}!`
         );
-        expect(consoleLogSpy).toBeCalledWith(
+        expect(consoleInfoSpy).toHaveBeenCalledWith(
           `View with id ${tableId}_raw_latest already exists in dataset ${datasetId}.`
         );
       });
