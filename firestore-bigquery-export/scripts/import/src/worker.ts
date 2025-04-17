@@ -26,6 +26,7 @@ async function processDocuments(
     tableId,
     datasetId,
     datasetLocation,
+    bigQueryProjectId,
     batchSize,
     failedBatchOutput,
   } = config;
@@ -71,6 +72,7 @@ async function processDocuments(
     datasetId,
     datasetLocation,
     wildcardIds: true,
+    bqProjectId: bigQueryProjectId,
     skipInit: true,
     useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
     transformFunction: config.transformFunctionUrl,
