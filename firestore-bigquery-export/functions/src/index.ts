@@ -317,7 +317,6 @@ async function attemptToEnqueue(_err: Error, taskData: SyncBigQueryTaskData) {
 
       attempts++;
       try {
-        // Attempt to enqueue the task to the queue with the simplified and flattened data structure
         await queue.enqueue(taskData);
         break; // Break the loop if enqueuing is successful.
       } catch (enqueueErr) {
