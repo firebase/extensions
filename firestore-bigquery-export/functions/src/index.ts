@@ -83,65 +83,75 @@ if (admin.apps.length === 0) {
 // Setup the event channel for EventArc.
 events.setupEventChannel();
 
+// Define a type for task data to ensure consistency
+interface SyncBigQueryTaskData {
+  timestamp: string;
+  eventId: string;
+  documentPath: string;
+  changeType: ChangeType;
+  documentId: string;
+  params: Record<string, any> | null;
+  data: any;
+  oldData: any;
+}
+
 /**
  * Cloud Function to handle enqueued tasks to synchronize Firestore changes to BigQuery.
  */
 export const syncBigQuery = functions.tasks
   .taskQueue()
-  .onDispatch(
-    async ({ context, changeType, documentId, data, oldData }, ctx) => {
-      const documentName = context.resource.name;
-      const eventId = context.eventId;
-      const operation = changeType;
+  .onDispatch(async (taskData: SyncBigQueryTaskData, ctx) => {
+    const documentName = taskData.documentPath;
+    const eventId = taskData.eventId;
+    const operation = taskData.changeType;
 
-      logs.logEventAction(
-        "Firestore event received by onDispatch trigger",
-        documentName,
-        eventId,
-        operation
+    logs.logEventAction(
+      "Firestore event received by onDispatch trigger",
+      documentName,
+      eventId,
+      operation
+    );
+
+    try {
+      // Use the shared function to write the event to BigQuery
+      await recordEventToBigQuery(
+        taskData.changeType,
+        taskData.documentId,
+        taskData.data,
+        taskData.oldData,
+        taskData
       );
 
-      try {
-        // Use the shared function to write the event to BigQuery
-        await recordEventToBigQuery(
-          changeType,
-          documentId,
-          data,
-          oldData,
-          context
-        );
+      // Record a success event in EventArc, if configured
+      await events.recordSuccessEvent({
+        subject: taskData.documentId,
+        data: {
+          timestamp: taskData.timestamp,
+          operation: taskData.changeType,
+          documentName: taskData.documentPath,
+          documentId: taskData.documentId,
+          pathParams: taskData.params,
+          eventId: taskData.eventId,
+          data: taskData.data,
+          oldData: taskData.oldData,
+        },
+      });
 
-        // Record a success event in EventArc, if configured
-        await events.recordSuccessEvent({
-          subject: documentId,
-          data: {
-            timestamp: context.timestamp,
-            operation: changeType,
-            documentName: context.resource.name,
-            documentId,
-            pathParams: config.wildcardIds ? context.params : null,
-            eventId: context.eventId,
-            data,
-            oldData,
-          },
-        });
+      // Log completion of the task.
+      logs.complete();
+    } catch (err) {
+      // Log error and throw it to handle in the calling function.
+      logs.logFailedEventAction(
+        "Failed to write event to BigQuery from onDispatch handler",
+        documentName,
+        eventId,
+        operation,
+        err as Error
+      );
 
-        // Log completion of the task.
-        logs.complete();
-      } catch (err) {
-        // Log error and throw it to handle in the calling function.
-        logs.logFailedEventAction(
-          "Failed to write event to BigQuery from onDispatch handler",
-          documentName,
-          eventId,
-          operation,
-          err as Error
-        );
-
-        throw err;
-      }
+      throw err;
     }
-  );
+  });
 
 export const fsexportbigquery = onDocumentWritten(
   `${config.collectionPath}/{documentId}`,
@@ -215,19 +225,30 @@ export const fsexportbigquery = onDocumentWritten(
         documentId,
         serializedData,
         serializedOldData,
-        event
+        {
+          timestamp: context.time,
+          eventId: context.id,
+          documentPath: context.document,
+          changeType,
+          documentId,
+          params: config.wildcardIds ? context.params : null,
+          data: serializedData,
+          oldData: serializedOldData,
+        }
       );
     } catch (err) {
       logs.failedToWriteToBigQueryImmediately(err as Error);
       // Handle enqueue errors with retries and backup to GCS.
-      await attemptToEnqueue(
-        err,
-        event,
+      await attemptToEnqueue(err, {
+        timestamp: context.time,
+        eventId: context.id,
+        documentPath: context.document,
         changeType,
         documentId,
-        serializedData,
-        serializedOldData
-      );
+        params: config.wildcardIds ? context.params : null,
+        data: serializedData,
+        oldData: serializedOldData,
+      });
     }
 
     // Log the successful completion of the function.
@@ -242,30 +263,24 @@ export const fsexportbigquery = onDocumentWritten(
  * @param documentId - The ID of the Firestore document.
  * @param serializedData - The serialized new data of the document.
  * @param serializedOldData - The serialized old data of the document.
- * @param context - The event context from Firestore.
+ * @param taskData - The task data containing event information.
  */
 async function recordEventToBigQuery(
   changeType: ChangeType,
   documentId: string,
   serializedData: any,
   serializedOldData: any,
-  // TODO: fix types, do we want the whole event here? probably not
-  context: FirestoreEvent<
-    functions.Change<DocumentSnapshot>,
-    {
-      documentId: string;
-    }
-  >
+  taskData: SyncBigQueryTaskData
 ) {
   const event: FirestoreDocumentChangeEvent = {
-    timestamp: context.time, // Cloud Firestore commit timestamp
+    timestamp: taskData.timestamp, // Cloud Firestore commit timestamp
     operation: changeType, // The type of operation performed
-    documentName: context.document, // The document name
+    documentName: taskData.documentPath, // The document name
     documentId, // The document ID
-    pathParams: (config.wildcardIds ? context.params : null) as
+    pathParams: taskData.params as
       | FirestoreDocumentChangeEvent["pathParams"]
       | null, // Path parameters, if any
-    eventId: context.id, // The event ID from Firestore
+    eventId: taskData.eventId, // The event ID from Firestore
     data: serializedData, // Serialized new data
     oldData: serializedOldData, // Serialized old data
   };
@@ -278,26 +293,9 @@ async function recordEventToBigQuery(
  * Handle errors when enqueueing tasks to sync BigQuery.
  *
  * @param err - The error object.
- * @param context - The event context from Firestore.
- * @param changeType - The type of change (CREATE, UPDATE, DELETE).
- * @param documentId - The ID of the Firestore document.
- * @param serializedData - The serialized new data of the document.
- * @param serializedOldData - The serialized old data of the document.
+ * @param taskData - The task data to be enqueued.
  */
-async function attemptToEnqueue(
-  _err: Error,
-  // TODO: fix types, do we want the whole event here? probably not
-  context: FirestoreEvent<
-    functions.Change<DocumentSnapshot>,
-    {
-      documentId: string;
-    }
-  >,
-  changeType: ChangeType,
-  documentId: string,
-  serializedData: any,
-  serializedOldData: any
-) {
+async function attemptToEnqueue(_err: Error, taskData: SyncBigQueryTaskData) {
   try {
     const queue = getFunctions().taskQueue(
       `locations/${config.location}/functions/syncBigQuery`,
@@ -319,14 +317,7 @@ async function attemptToEnqueue(
 
       attempts++;
       try {
-        // Attempt to enqueue the task to the queue.
-        await queue.enqueue({
-          context,
-          changeType,
-          documentId,
-          data: serializedData,
-          oldData: serializedOldData,
-        });
+        await queue.enqueue(taskData);
         break; // Break the loop if enqueuing is successful.
       } catch (enqueueErr) {
         // Throw the error if max attempts are reached.
@@ -336,20 +327,14 @@ async function attemptToEnqueue(
       }
     }
   } catch (enqueueErr) {
-    // Prepare the event object for error logging.
-
     // Record the error event.
     await events.recordErrorEvent(enqueueErr as Error);
 
-    const documentName = context.document;
-    const eventId = context.id;
-    const operation = changeType;
-
     logs.logFailedEventAction(
       "Failed to enqueue event to Cloud Tasks from onWrite handler",
-      documentName,
-      eventId,
-      operation,
+      taskData.documentPath,
+      taskData.eventId,
+      taskData.changeType,
       enqueueErr as Error
     );
   }
