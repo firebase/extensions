@@ -1,4 +1,3 @@
-// import { getModifiedFilePath } from "../../src/resize-image";
 import * as path from "path";
 import { config } from "dotenv";
 
@@ -10,12 +9,6 @@ const envLocalPath = path.resolve(
 config({ path: envLocalPath, debug: true, override: true });
 
 import { getModifiedFilePath } from "../../src/resize-image";
-import { platform } from "os";
-
-const convertToPosixPath = (filePath: string, locale?: "win32" | "posix") => {
-  const sep = locale ? path[locale].sep : path.sep;
-  return filePath.split(sep).join(path.posix.sep);
-};
 
 const oldGetModifiedFilePath = (
   fileDir,
