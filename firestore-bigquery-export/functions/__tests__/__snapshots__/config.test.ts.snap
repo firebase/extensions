@@ -13,6 +13,7 @@ Object {
   ],
   "collectionPath": undefined,
   "databaseId": "(default)",
+  "databaseRegion": undefined,
   "datasetId": "my_dataset",
   "datasetLocation": undefined,
   "excludeOldData": false,
