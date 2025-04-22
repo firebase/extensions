@@ -1,3 +1,9 @@
+## Version 0.2.0
+
+feat: use v2 firestore trigger
+
+feat: allow non-(default) firestore instances
+
 ## Version 0.1.37
 
 feat: add support for OAuth2 authentication

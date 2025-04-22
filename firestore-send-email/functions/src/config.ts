@@ -18,6 +18,8 @@ import { AuthenticatonType, Config } from "./types";
 
 const config: Config = {
   location: process.env.LOCATION,
+  database: process.env.DATABASE || "(default)",
+  databaseRegion: process.env.DATABASE_REGION || "us-central1",
   mailCollection: process.env.MAIL_COLLECTION,
   smtpConnectionUri: process.env.SMTP_CONNECTION_URI,
   smtpPassword: process.env.SMTP_PASSWORD,
