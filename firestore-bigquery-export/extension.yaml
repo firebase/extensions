@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.2.0
+version: 0.2.1
 specVersion: v1beta
 
 displayName: Stream Firestore to BigQuery
@@ -208,7 +208,7 @@ params:
       # Multi-region locations
       - label: Multi-region (Europe - Belgium and Netherlands)
         value: eur3
-      - label: United States (United States)
+      - label: Multi-region (United States)
         value: nam5
       - label: Multi-region (Iowa, North Virginia, and Oklahoma)
         value: nam7
