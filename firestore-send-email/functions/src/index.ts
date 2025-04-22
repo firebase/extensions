@@ -14,22 +14,31 @@
  * limitations under the License.
  */
 
-import * as admin from "firebase-admin";
-import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { initializeApp } from "firebase-admin/app";
+import {
+  FieldValue,
+  Timestamp,
+  Firestore,
+  DocumentSnapshot,
+  DocumentReference,
+  getFirestore,
+  DocumentData,
+} from "firebase-admin/firestore";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as functions from "firebase-functions";
 import * as nodemailer from "nodemailer";
 
 import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
-import { Attachment, QueuePayload, SendGridAttachment } from "./types";
+import { QueuePayload, SendGridAttachment } from "./types";
 import { isSendGrid, setSmtpCredentials } from "./helpers";
 import * as events from "./events";
 import * as sgMail from "@sendgrid/mail";
 
 logs.init();
 
-let db: admin.firestore.Firestore;
+let db: Firestore;
 let transport: nodemailer.Transporter;
 let templates: Templates;
 let initialized = false;
@@ -40,13 +49,11 @@ let initialized = false;
 async function initialize() {
   if (initialized === true) return;
   initialized = true;
-  admin.initializeApp();
-  db = admin.firestore();
+  initializeApp();
+  db = getFirestore(config.database);
   transport = await transportLayer();
   if (config.templatesCollection) {
-    templates = new Templates(
-      admin.firestore().collection(config.templatesCollection)
-    );
+    templates = new Templates(db.collection(config.templatesCollection));
   }
 
   /** setup events */
@@ -78,7 +85,7 @@ function validateFieldArray(field: string, array?: string[]) {
   }
 }
 
-function getExpireAt(startTime: admin.firestore.Timestamp) {
+function getExpireAt(startTime: Timestamp) {
   const now = startTime.toDate();
   const value = config.TTLExpireValue;
   switch (config.TTLExpireType) {
@@ -101,7 +108,7 @@ function getExpireAt(startTime: admin.firestore.Timestamp) {
   return Timestamp.fromDate(now);
 }
 
-async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
+async function preparePayload(payload: DocumentData): Promise<DocumentData> {
   const { template } = payload;
 
   if (templates && template) {
@@ -251,7 +258,7 @@ async function preparePayload(payload: QueuePayload): Promise<QueuePayload> {
  * @param payload the payload from Firestore.
  */
 
-async function sendWithSendGrid(payload: QueuePayload) {
+async function sendWithSendGrid(payload: DocumentData) {
   sgMail.setApiKey(config.smtpPassword);
 
   const formatEmails = (emails: string[]) => emails.map((email) => ({ email }));
@@ -271,7 +278,7 @@ async function sendWithSendGrid(payload: QueuePayload) {
 
   const replyTo = { email: payload.replyTo || config.defaultReplyTo };
 
-  const attachments = payload.message.attachments;
+  const attachments = payload.message?.attachments;
 
   // Build the message object for SendGrid
   const msg: sgMail.MailDataRequired = {
@@ -308,9 +315,7 @@ async function sendWithSendGrid(payload: QueuePayload) {
   return sgMail.send(msg);
 }
 
-async function deliver(
-  ref: admin.firestore.DocumentReference<QueuePayload>
-): Promise<void> {
+async function deliver(ref: DocumentReference): Promise<void> {
   // Fetch the Firestore document
   const snapshot = await ref.get();
   if (!snapshot.exists) {
@@ -391,7 +396,7 @@ async function deliver(
   }
 
   // Update the Firestore document transactionally to allow retries (#48)
-  return admin.firestore().runTransaction((transaction) => {
+  return db.runTransaction((transaction) => {
     // We could check state here is still PROCESSING, but we don't
     // since the email sending will have been attempted regardless of what the
     // delivery state was at that point, so we just update the state to reflect
@@ -402,7 +407,7 @@ async function deliver(
 }
 
 async function processWrite(
-  change: functions.Change<admin.firestore.DocumentSnapshot<QueuePayload>>
+  change: functions.Change<DocumentSnapshot>
 ): Promise<void> {
   const ref = change.after.ref;
 
@@ -432,9 +437,8 @@ async function processWrite(
     }
   }
 
-  const shouldAttemptDelivery = await admin
-    .firestore()
-    .runTransaction<boolean>(async (transaction) => {
+  const shouldAttemptDelivery = await db.runTransaction<boolean>(
+    async (transaction) => {
       const snapshot = await transaction.get(ref);
       // Record no longer exists, so no need to attempt delivery.
       if (!snapshot.exists) {
@@ -542,41 +546,41 @@ async function processWrite(
 
       // We don't know what the state is, so we can't do anything. This should never happen.
       return false;
-    });
+    }
+  );
 
   if (shouldAttemptDelivery) {
     await deliver(ref);
   }
 }
 
-export const processQueue = functions.firestore
-  .document(config.mailCollection)
-  .onWrite(
-    async (
-      change: functions.Change<admin.firestore.DocumentSnapshot<QueuePayload>>
-    ) => {
-      await initialize();
-      logs.start();
+export const processQueue = onDocumentWritten(
+  `${config.mailCollection}/{documentId}`,
+  async (event) => {
+    await initialize();
+    logs.start();
 
-      if (!change.before.exists) {
-        await events.recordStartEvent(change);
-      }
+    const change = event.data;
 
-      try {
-        await processWrite(change);
-      } catch (err) {
-        await events.recordErrorEvent(
-          change,
-          change.after.data(),
-          `Unhandled error occurred during processing: ${err.message}"`
-        );
-        logs.error(err);
-        return null;
-      }
-
-      /** record complete event */
-      await events.recordCompleteEvent(change);
-
-      logs.complete();
+    if (!change.before.exists) {
+      await events.recordStartEvent(change);
     }
-  );
+
+    try {
+      await processWrite(change);
+    } catch (err) {
+      await events.recordErrorEvent(
+        change,
+        change.after.data(),
+        `Unhandled error occurred during processing: ${err.message}"`
+      );
+      logs.error(err);
+      return null;
+    }
+
+    /** record complete event */
+    await events.recordCompleteEvent(change);
+
+    logs.complete();
+  }
+);
