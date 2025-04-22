@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.2.1
+version: 0.2.2
 specVersion: v1beta
 
 displayName: Stream Firestore to BigQuery
@@ -310,7 +310,6 @@ params:
       # Africa
       - label: Johannesburg (africa-south1)
         value: africa-south1
-    default: us
     required: true
     immutable: false
 
