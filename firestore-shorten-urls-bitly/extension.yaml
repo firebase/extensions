@@ -236,7 +236,7 @@ params:
         value: africa-south1
     default: us
     required: true
-    immutable: true
+    immutable: false
 
 events:
   - type: firebase.extensions.firestore-shorten-urls-bitly.v1.onStart
