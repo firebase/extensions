@@ -14,6 +14,8 @@ const regex = new RegExp(
 describe("setSmtpCredentials function", () => {
   test("return smtpServerDomain credentials with new password", () => {
     const config: Config = {
+      database: "fake-database",
+      databaseRegion: "us-central1",
       smtpConnectionUri:
         "smtps://fakeemail@gmail.com:secret-password@smtp.gmail.com:465",
       smtpPassword: "fakepassword",
@@ -35,6 +37,8 @@ describe("setSmtpCredentials function", () => {
 
   test("return smtpServerDomain credentials with old password", () => {
     const config: Config = {
+      database: "fake-database",
+      databaseRegion: "us-central1",
       smtpConnectionUri:
         "smtps://fakeemail@gmail.com:secret-password@smtp.gmail.com:465",
       location: "",
@@ -56,6 +60,8 @@ describe("setSmtpCredentials function", () => {
 
   test("return smtpConnectionUri credentials without any password", () => {
     const config: Config = {
+      database: "fake-database",
+      databaseRegion: "us-central1",
       smtpConnectionUri: "smtps://fakeemail@gmail.com@smtp.gmail.com:465",
       location: "",
       mailCollection: "",
@@ -76,6 +82,8 @@ describe("setSmtpCredentials function", () => {
 
   test("return smtpConnectionUri credentials without any password and username", () => {
     const config: Config = {
+      database: "fake-database",
+      databaseRegion: "us-central1",
       smtpConnectionUri: "smtp://smtp.gmail.com:465",
       location: "",
       mailCollection: "",
@@ -95,6 +103,8 @@ describe("setSmtpCredentials function", () => {
 
   test("return smtpConnectionUri credentials with query params", () => {
     const config: Config = {
+      database: "fake-database",
+      databaseRegion: "us-central1",
       smtpConnectionUri:
         "smtp://fakeemail@gmail.com:secret-password@smtp.gmail.com:465?pool=true&service=gmail",
       location: "",
@@ -118,6 +128,8 @@ describe("setSmtpCredentials function", () => {
 
   test("return valid smtpConnectionUri credentials with valid special chars in password", () => {
     const config: Config = {
+      database: "fake-database",
+      databaseRegion: "us-central1",
       smtpConnectionUri:
         "smtp://fakeemail@gmail.com@smtp.gmail.com:465?pool=true&service=gmail",
       smtpPassword: "4,h?dhuNTbv9zMrP4&7&7%*3",
@@ -142,6 +154,8 @@ describe("setSmtpCredentials function", () => {
 
   test("return valid smtpConnectionUri credentials with valid special chars in connectionUri password", () => {
     const config: Config = {
+      database: "fake-database",
+      databaseRegion: "us-central1",
       smtpConnectionUri:
         "smtp://fakeemail@gmail.com:4,hdhuNTbv9zMrP4&7&7%*3@smtp.gmail.com:465?pool=true&service=gmail",
       location: "",
@@ -166,6 +180,8 @@ describe("setSmtpCredentials function", () => {
 
   test("throw error for invalid smtpConnectionUri", () => {
     const config: Config = {
+      database: "fake-database",
+      databaseRegion: "us-central1",
       smtpConnectionUri:
         "smtp://fakeemail@gmail.com:4,h?dhuNTbv9zMrP4&7&7%*3@smtp.gmail.com:465?pool=true&service=gmail",
       location: "",
@@ -184,6 +200,8 @@ describe("setSmtpCredentials function", () => {
 describe("isSendGrid function", () => {
   test("return true for SendGrid SMTP URI", () => {
     const config: Config = {
+      database: "fake-database",
+      databaseRegion: "us-central1",
       smtpConnectionUri: "smtps://apikey@smtp.sendgrid.net:465",
       location: "",
       mailCollection: "",
@@ -196,6 +214,8 @@ describe("isSendGrid function", () => {
 
   test("return false for non-SendGrid SMTP URI", () => {
     const config: Config = {
+      database: "fake-database",
+      databaseRegion: "us-central1",
       smtpConnectionUri:
         "smtps://fakeemail@gmail.com:secret-password@smtp.gmail.com:465",
       location: "",
@@ -210,6 +230,8 @@ describe("isSendGrid function", () => {
 
 test("return invalid smtpConnectionUri credentials with invalid separator", () => {
   const config: Config = {
+    database: "fake-database",
+    databaseRegion: "us-central1",
     smtpConnectionUri:
       "smtp://fakeemail@gmail.com:4,h?dhuNTbv9zMrP4&7&7%*3:smtp.gmail.com:465?pool=true&service=gmail",
     location: "",
@@ -224,6 +246,8 @@ test("return invalid smtpConnectionUri credentials with invalid separator", () =
 
 test("correctly detects SendGrid SMTP URI", () => {
   const config: Config = {
+    database: "fake-database",
+    databaseRegion: "us-central1",
     smtpConnectionUri: "smtps://apikey@smtp.sendgrid.net:465",
     location: "",
     mailCollection: "",
@@ -234,6 +258,8 @@ test("correctly detects SendGrid SMTP URI", () => {
   expect(isSendGrid(config)).toBe(true);
 
   const invalidConfig: Config = {
+    database: "fake-database",
+    databaseRegion: "us-central1",
     smtpConnectionUri: "smtps://apikey@fake-sendgrid.net:465",
     location: "",
     mailCollection: "",
@@ -246,6 +272,8 @@ test("correctly detects SendGrid SMTP URI", () => {
 
 test("correctly uses oAuth credentials when provided", () => {
   const config: Config = {
+    database: "fake-database",
+    databaseRegion: "us-central1",
     smtpConnectionUri:
       "smtps://fakeemail@gmail.com:secret-password@smtp.gmail.com:465",
     location: "",

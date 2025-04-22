@@ -5,6 +5,8 @@ import * as Handlebars from "handlebars";
 type HandlebarsTemplateDelegate = Handlebars.TemplateDelegate;
 export interface Config {
   location: string;
+  database: string;
+  databaseRegion: string;
   mailCollection: string;
   smtpConnectionUri?: string;
   smtpPassword?: string;
