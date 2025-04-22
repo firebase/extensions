@@ -1,3 +1,7 @@
+## Version 0.2.2
+
+fix: remove default value on DATABASE_REGION
+
 ## Versions 0.2.1
 
 fix: correct database region params and make mutable
