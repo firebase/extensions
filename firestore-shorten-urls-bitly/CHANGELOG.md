@@ -1,3 +1,7 @@
+## Versions 0.2.1
+
+fix: correct database region params and make mutable
+
 ## Version 0.2.0
 
 feat: use v2 firestore trigger
