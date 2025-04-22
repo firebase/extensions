@@ -206,14 +206,12 @@ params:
     type: select
     options:
       # Multi-region locations
-      - label: Europe (multi-regional, eur3)
+      - label: Multi-region (Europe - Belgium and Netherlands)
         value: eur3
-      - label: United States (multi-regional, nam5)
+      - label: United States (United States)
         value: nam5
-      - label: Europe (multi-regional)
-        value: eu
-      - label: United States (multi-regional)
-        value: us
+      - label: Multi-region (Iowa, North Virginia, and Oklahoma)
+        value: nam7
 
       # North America
       - label: Iowa (us-central1)
@@ -314,7 +312,7 @@ params:
         value: africa-south1
     default: us
     required: true
-    immutable: true
+    immutable: false
 
   - param: COLLECTION_PATH
     label: Collection path
