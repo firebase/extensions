@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-shorten-urls-bitly
-version: 0.2.0
+version: 0.2.1
 specVersion: v1beta
 
 displayName: Shorten URLs in Firestore
@@ -130,14 +130,12 @@ params:
     type: select
     options:
       # Multi-region locations
-      - label: Europe (multi-regional, eur3)
+      - label: Multi-region (Europe - Belgium and Netherlands)
         value: eur3
-      - label: United States (multi-regional, nam5)
+      - label: Multi-region (United States)
         value: nam5
-      - label: Europe (multi-regional)
-        value: eu
-      - label: United States (multi-regional)
-        value: us
+      - label: Multi-region (Iowa, North Virginia, and Oklahoma)
+        value: nam7
 
       # North America
       - label: Iowa (us-central1)
@@ -238,7 +236,7 @@ params:
         value: africa-south1
     default: us
     required: true
-    immutable: true
+    immutable: false
 
 events:
   - type: firebase.extensions.firestore-shorten-urls-bitly.v1.onStart
