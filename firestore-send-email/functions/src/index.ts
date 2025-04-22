@@ -271,7 +271,7 @@ async function sendWithSendGrid(payload: QueuePayload) {
 
   const replyTo = { email: payload.replyTo || config.defaultReplyTo };
 
-  const attachments = payload.message.attachments;
+  const attachments = payload.message?.attachments;
 
   // Build the message object for SendGrid
   const msg: sgMail.MailDataRequired = {

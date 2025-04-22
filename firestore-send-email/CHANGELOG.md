@@ -1,3 +1,7 @@
+## Version 0.1.38
+
+fix: empty message property causing error when using SendGrid
+
 ## Version 0.1.37
 
 feat: add support for OAuth2 authentication
