@@ -33,7 +33,6 @@ import {
 import * as logs from "./logs";
 import * as events from "./events";
 import { getChangeType, getDocumentId } from "./util";
-import { DocumentSnapshot } from "firebase-admin/firestore";
 
 // Configuration for the Firestore Event History Tracker.
 const eventTrackerConfig = {
@@ -87,7 +86,10 @@ events.setupEventChannel();
 interface SyncBigQueryTaskData {
   timestamp: string;
   eventId: string;
-  documentPath: string;
+  /** Relative path under the DB, as emitted by onDocumentWritten */
+  relativePath: string;
+  /** Fully-qualified resource name, for BQ keying */
+  fullResourceName: string;
   changeType: ChangeType;
   documentId: string;
   params: Record<string, any> | null;
@@ -101,13 +103,13 @@ interface SyncBigQueryTaskData {
 export const syncBigQuery = functions.tasks
   .taskQueue()
   .onDispatch(async (taskData: SyncBigQueryTaskData, ctx) => {
-    const documentName = taskData.documentPath;
+    const fullResourceName = taskData.fullResourceName;
     const eventId = taskData.eventId;
     const operation = taskData.changeType;
 
     logs.logEventAction(
       "Firestore event received by onDispatch trigger",
-      documentName,
+      fullResourceName,
       eventId,
       operation
     );
@@ -117,6 +119,7 @@ export const syncBigQuery = functions.tasks
       await recordEventToBigQuery(
         taskData.changeType,
         taskData.documentId,
+        taskData.fullResourceName,
         taskData.data,
         taskData.oldData,
         taskData
@@ -128,7 +131,7 @@ export const syncBigQuery = functions.tasks
         data: {
           timestamp: taskData.timestamp,
           operation: taskData.changeType,
-          documentName: taskData.documentPath,
+          documentName: taskData.fullResourceName,
           documentId: taskData.documentId,
           pathParams: taskData.params,
           eventId: taskData.eventId,
@@ -143,7 +146,7 @@ export const syncBigQuery = functions.tasks
       // Log error and throw it to handle in the calling function.
       logs.logFailedEventAction(
         "Failed to write event to BigQuery from onDispatch handler",
-        documentName,
+        fullResourceName,
         eventId,
         operation,
         err as Error
@@ -175,13 +178,16 @@ export const fsexportbigquery = onDocumentWritten(
       isCreated || config.excludeOldData ? undefined : data.before.data();
 
     // check this is the full doc name
-    const documentName = context.document;
+    const relativeName = context.document;
+    const projectId = config.projectId;
+
+    const fullResourceName = `projects/${projectId}/databases/${config.databaseId}/documents/${relativeName}`;
     const eventId = context.id;
     const operation = changeType;
 
     logs.logEventAction(
       "Firestore event received by onDocumentWritten trigger",
-      documentName,
+      fullResourceName,
       eventId,
       operation
     );
@@ -196,7 +202,7 @@ export const fsexportbigquery = onDocumentWritten(
     } catch (err) {
       logs.logFailedEventAction(
         "Failed to serialize data",
-        documentName,
+        fullResourceName,
         eventId,
         operation,
         err as Error
@@ -223,12 +229,14 @@ export const fsexportbigquery = onDocumentWritten(
       await recordEventToBigQuery(
         changeType,
         documentId,
+        fullResourceName,
         serializedData,
         serializedOldData,
         {
           timestamp: context.time,
           eventId: context.id,
-          documentPath: context.document,
+          relativePath: context.document,
+          fullResourceName,
           changeType,
           documentId,
           params: config.wildcardIds ? context.params : null,
@@ -242,7 +250,8 @@ export const fsexportbigquery = onDocumentWritten(
       await attemptToEnqueue(err, {
         timestamp: context.time,
         eventId: context.id,
-        documentPath: context.document,
+        relativePath: context.document,
+        fullResourceName: fullResourceName,
         changeType,
         documentId,
         params: config.wildcardIds ? context.params : null,
@@ -268,6 +277,7 @@ export const fsexportbigquery = onDocumentWritten(
 async function recordEventToBigQuery(
   changeType: ChangeType,
   documentId: string,
+  fullResourceName: string,
   serializedData: any,
   serializedOldData: any,
   taskData: SyncBigQueryTaskData
@@ -275,7 +285,7 @@ async function recordEventToBigQuery(
   const event: FirestoreDocumentChangeEvent = {
     timestamp: taskData.timestamp, // Cloud Firestore commit timestamp
     operation: changeType, // The type of operation performed
-    documentName: taskData.documentPath, // The document name
+    documentName: fullResourceName,
     documentId, // The document ID
     pathParams: taskData.params as
       | FirestoreDocumentChangeEvent["pathParams"]
@@ -332,7 +342,7 @@ async function attemptToEnqueue(_err: Error, taskData: SyncBigQueryTaskData) {
 
     logs.logFailedEventAction(
       "Failed to enqueue event to Cloud Tasks from onWrite handler",
-      taskData.documentPath,
+      taskData.fullResourceName,
       taskData.eventId,
       taskData.changeType,
       enqueueErr as Error
