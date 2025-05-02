@@ -324,6 +324,7 @@ async function sendWithSendGrid(
   const messageId =
     ((response.headers["x-message-id"] ||
       response.headers["X-Message-Id"]) as string) || null;
+
   const acceptedList = payload.to.map((r) =>
     typeof r === "string" ? r : (r as any).email
   );
