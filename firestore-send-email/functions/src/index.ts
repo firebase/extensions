@@ -43,6 +43,14 @@ let transport: nodemailer.Transporter;
 let templates: Templates;
 let initialized = false;
 
+interface SendMailInfoLike {
+  messageId: string | null;
+  accepted: string[];
+  rejected: string[];
+  pending: string[];
+  response: string | null;
+}
+
 /**
  * Initializes Admin SDK & SMTP connection if not already initialized.
  */
@@ -183,7 +191,7 @@ async function preparePayload(payload: DocumentData): Promise<DocumentData> {
     uids = uids.concat(payload.bccUids);
   }
 
-  const toFetch = {};
+  const toFetch: Record<string, string | null> = {};
   uids.forEach((uid) => (toFetch[uid] = null));
 
   const documents = await db.getAll(
@@ -195,7 +203,7 @@ async function preparePayload(payload: DocumentData): Promise<DocumentData> {
     }
   );
 
-  const missingUids = [];
+  const missingUids: string[] = [];
 
   documents.forEach((documentSnapshot) => {
     if (documentSnapshot.exists) {
@@ -257,8 +265,9 @@ async function preparePayload(payload: DocumentData): Promise<DocumentData> {
  *
  * @param payload the payload from Firestore.
  */
-
-async function sendWithSendGrid(payload: DocumentData) {
+async function sendWithSendGrid(
+  payload: DocumentData
+): Promise<SendMailInfoLike> {
   sgMail.setApiKey(config.smtpPassword);
 
   const formatEmails = (emails: string[]) => emails.map((email) => ({ email }));
@@ -298,11 +307,10 @@ async function sendWithSendGrid(payload: DocumentData) {
         : undefined,
     categories: payload.categories, // SendGrid-specific field
     headers: payload.headers,
-    attachments: formatAttachments(attachments), // Transform attachments to SendGrid format
-    mailSettings: payload.sendGrid?.mailSettings || {}, // SendGrid-specific mail settings
+    attachments: formatAttachments(attachments),
+    mailSettings: payload.sendGrid?.mailSettings || {},
   };
 
-  // If a SendGrid template is provided, include templateId and dynamicTemplateData
   if (payload.sendGrid?.templateId) {
     msg.templateId = payload.sendGrid.templateId;
     msg.dynamicTemplateData = payload.sendGrid.dynamicTemplateData || {};
@@ -312,7 +320,21 @@ async function sendWithSendGrid(payload: DocumentData) {
   logs.info("SendGrid message payload constructed", { msg });
 
   // Send the message using SendGrid's API
-  return sgMail.send(msg);
+  const [response] = await sgMail.send(msg);
+  const messageId =
+    ((response.headers["x-message-id"] ||
+      response.headers["X-Message-Id"]) as string) || null;
+  const acceptedList = payload.to.map((r) =>
+    typeof r === "string" ? r : (r as any).email
+  );
+
+  return {
+    messageId,
+    accepted: acceptedList,
+    rejected: [],
+    pending: [],
+    response: `status=${response.statusCode}`,
+  };
 }
 
 async function deliver(ref: DocumentReference): Promise<void> {
@@ -350,7 +372,7 @@ async function deliver(ref: DocumentReference): Promise<void> {
       );
     }
 
-    let result;
+    let result: SendMailInfoLike;
 
     // Automatically detect SendGrid
     if (isSendGrid(config)) {
@@ -363,7 +385,7 @@ async function deliver(ref: DocumentReference): Promise<void> {
         msg: payload,
       });
       // Use the default transport for other SMTP providers
-      result = await transport.sendMail({
+      result = (await transport.sendMail({
         ...Object.assign(payload.message ?? {}, {
           from: payload.from || config.defaultFrom,
           replyTo: payload.replyTo || config.defaultReplyTo,
@@ -372,7 +394,7 @@ async function deliver(ref: DocumentReference): Promise<void> {
           bcc: payload.bcc,
           headers: payload.headers || {},
         }),
-      });
+      })) as unknown as SendMailInfoLike;
     }
 
     const info = {
