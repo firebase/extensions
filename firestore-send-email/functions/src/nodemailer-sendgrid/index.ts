@@ -27,37 +27,46 @@ export interface NormalizedHeaders {
 }
 
 export interface MailSource {
-  subject?: string;
-  text?: string;
-  html?: string;
+  normalize(cb: (err: Error | null, source: MailSource) => void): void;
+
   from?: Address | Address[];
   replyTo?: Address | Address[];
   to?: Address | Address[];
   cc?: Address | Address[];
   bcc?: Address | Address[];
+  subject?: string;
+  text?: string;
+  html?: string;
   attachments?: AttachmentEntry[];
   alternatives?: { content: string; contentType: string }[];
   icalEvent?: IcalEvent;
   watchHtml?: string;
   normalizedHeaders?: NormalizedHeaders;
   messageId?: string;
-  [key: string]: any;
-  normalize(cb: (err: Error | null, source: MailSource) => void): void;
+
   categories?: string[];
   templateId?: string;
   dynamicTemplateData?: Record<string, unknown>;
   mailSettings?: Record<string, unknown>;
+
+  [key: string]: any;
+}
+
+export interface SendGridInfo {
+  messageId: string | null;
+  accepted: string[];
+  rejected: string[];
+  pending: string[];
+  response: string;
 }
 
 export class SendGridTransport {
-  public readonly name: string;
-  public readonly version: string;
+  public readonly name = "firebase-extensions-nodemailer-sendgrid";
+  public readonly version = "0.0.1";
   private readonly options: SendGridTransportOptions;
 
   constructor(options: SendGridTransportOptions = {}) {
     this.options = options;
-    this.name = "firebase-extensions-nodemailer-sendgrid";
-    this.version = "0.0.1";
     if (options.apiKey) {
       sgMail.setApiKey(options.apiKey);
     }
@@ -65,7 +74,7 @@ export class SendGridTransport {
 
   public send(
     mail: MailSource,
-    callback: (err: Error | null, result?: unknown) => void
+    callback: (err: Error | null, info?: SendGridInfo) => void
   ): void {
     mail.normalize((err, source) => {
       if (err) {
@@ -74,7 +83,7 @@ export class SendGridTransport {
 
       const msg: any = {};
 
-      for (const key of Object.keys(source || {})) {
+      for (const key of Object.keys(source)) {
         switch (key) {
           case "subject":
           case "text":
@@ -83,87 +92,81 @@ export class SendGridTransport {
             break;
 
           case "from":
-          case "replyTo":
-            msg[key] = []
-              .concat(source[key] ?? [])
-              .map((entry: Address) => ({
-                name: entry.name,
-                email: entry.address,
-              }))
-              .shift();
+          case "replyTo": {
+            const list = ([] as Address[]).concat(source[key] || []);
+            const e = list[0];
+            msg[key] = e ? { name: e.name, email: e.address } : undefined;
             break;
+          }
 
           case "to":
           case "cc":
-          case "bcc":
-            msg[key] = [].concat(source[key] ?? []).map((entry: Address) => ({
-              name: entry.name,
-              email: entry.address,
-            }));
+          case "bcc": {
+            const list = ([] as Address[]).concat(source[key] || []);
+            msg[key] = list.map((e) => ({ name: e.name, email: e.address }));
             break;
+          }
 
           case "attachments": {
-            const attachments = (source.attachments ?? []).map((entry) => {
-              const attachment: any = {
+            const atchs = source.attachments || [];
+            msg.attachments = atchs.map((entry) => {
+              const a: any = {
                 content: entry.content,
                 filename: entry.filename,
                 type: entry.contentType,
                 disposition: "attachment",
               };
               if (entry.cid) {
-                attachment.content_id = entry.cid;
-                attachment.disposition = "inline";
+                a.content_id = entry.cid;
+                a.disposition = "inline";
               }
-              return attachment;
+              return a;
             });
-            msg.attachments = []
-              .concat(msg.attachments ?? [])
-              .concat(attachments);
             break;
           }
 
           case "alternatives": {
-            const alternatives = (source.alternatives ?? []).map((entry) => ({
-              content: entry.content,
-              type: entry.contentType,
+            const alts = source.alternatives || [];
+            const fmt = alts.map((alt) => ({
+              type: alt.contentType,
+              value: alt.content,
             }));
-            msg.content = [].concat(msg.content ?? []).concat(alternatives);
+            msg.content = ([] as any[]).concat(msg.content || []).concat(fmt);
             break;
           }
 
           case "icalEvent": {
             const ev = source.icalEvent!;
-            const attachment = {
+            const cal: any = {
               content: ev.content,
-              filename: ev.filename ?? "invite.ics",
+              filename: ev.filename || "invite.ics",
               type: "application/ics",
               disposition: "attachment",
             };
-            msg.attachments = []
-              .concat(msg.attachments ?? [])
-              .concat(attachment);
+            msg.attachments = ([] as any[])
+              .concat(msg.attachments || [])
+              .concat(cal);
             break;
           }
 
           case "watchHtml": {
-            const alternative = {
-              content: source.watchHtml!,
+            msg.content = ([] as any[]).concat(msg.content || []).concat({
               type: "text/watch-html",
-            };
-            msg.content = [].concat(msg.content ?? []).concat(alternative);
+              value: source.watchHtml!,
+            });
             break;
           }
 
           case "normalizedHeaders":
             msg.headers = {
-              ...(msg.headers ?? {}),
+              ...(msg.headers || {}),
               ...source.normalizedHeaders,
             };
             break;
 
           case "messageId":
             msg.headers = {
-              ...(msg.headers ?? {}),
+              ...(msg.headers || {}),
               "message-id": source.messageId,
             };
             break;
@@ -180,26 +183,33 @@ export class SendGridTransport {
         }
       }
 
-      // If we've built a `content` array, merge in text/html
       if (Array.isArray(msg.content) && msg.content.length) {
         if (msg.text) {
-          msg.content.unshift({ type: "text/plain", content: msg.text });
+          msg.content.unshift({ type: "text/plain", value: msg.text });
           delete msg.text;
         }
         if (msg.html) {
-          msg.content.unshift({ type: "text/html", content: msg.html });
+          msg.content.unshift({ type: "text/html", value: msg.html });
           delete msg.html;
         }
       }
 
       sgMail
         .send(msg)
-        .then((response) => {
-          callback(null, response);
+        .then(([response]) => {
+          // Extract SendGrid's HTTP‐response header "x-message-id"
+          const rawId = (response.headers["x-message-id"] ||
+            response.headers["X-Message-Id"]) as string | undefined;
+          const info: SendGridInfo = {
+            messageId: rawId || null,
+            accepted: (msg.to || []).map((r: any) => r.email),
+            rejected: [],
+            pending: [],
+            response: `status=${response.statusCode}`,
+          };
+          callback(null, info);
         })
-        .catch((err: Error) => {
-          callback(err);
-        });
+        .catch((sendErr: Error) => callback(sendErr));
     });
   }
 }

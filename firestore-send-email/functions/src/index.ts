@@ -34,7 +34,7 @@ import Templates from "./templates";
 import { QueuePayload, SendGridAttachment } from "./types";
 import { isSendGrid, setSmtpCredentials } from "./helpers";
 import * as events from "./events";
-import * as sgMail from "@sendgrid/mail";
+import { SendGridTransport } from "./nodemailer-sendgrid";
 
 logs.init();
 
@@ -79,7 +79,13 @@ async function transportLayer() {
       },
     });
   }
-
+  if (isSendGrid(config)) {
+    // use our custom transport
+    return nodemailer.createTransport(
+      new SendGridTransport({ apiKey: config.smtpPassword })
+    );
+  }
+  // fallback to any other SMTP provider
   return setSmtpCredentials(config);
 }
 
@@ -257,87 +263,6 @@ async function preparePayload(payload: DocumentData): Promise<DocumentData> {
   return payload;
 }
 
-/**
- * If the SMTP provider is SendGrid, we need to check if the payload contains
- * either a text or html content, or if the payload contains a SendGrid Dynamic Template.
- *
- * Throws an error if all of the above are not provided.
- *
- * @param payload the payload from Firestore.
- */
-async function sendWithSendGrid(
-  payload: DocumentData
-): Promise<SendMailInfoLike> {
-  sgMail.setApiKey(config.smtpPassword);
-
-  const formatEmails = (emails: string[]) => emails.map((email) => ({ email }));
-
-  // Transform attachments to match SendGrid's expected format
-  const formatAttachments = (
-    attachments: QueuePayload["message"]["attachments"] = []
-  ): SendGridAttachment[] => {
-    return attachments.map((attachment) => ({
-      content: (attachment.content as string | undefined) || "", // Base64-encoded string
-      filename: attachment.filename || "attachment",
-      type: attachment.contentType,
-      disposition: attachment.contentDisposition,
-      contentId: attachment.cid,
-    }));
-  };
-
-  const replyTo = { email: payload.replyTo || config.defaultReplyTo };
-
-  const attachments = payload.message?.attachments;
-
-  // Build the message object for SendGrid
-  const msg: sgMail.MailDataRequired = {
-    to: formatEmails(payload.to),
-    cc: formatEmails(payload.cc),
-    bcc: formatEmails(payload.bcc),
-    from: { email: payload.from || config.defaultFrom },
-    replyTo: replyTo.email ? replyTo : undefined,
-    subject: payload.message?.subject,
-    text:
-      typeof payload.message?.text === "string"
-        ? payload.message?.text
-        : undefined,
-    html:
-      typeof payload.message?.html === "string"
-        ? payload.message?.html
-        : undefined,
-    categories: payload.categories, // SendGrid-specific field
-    headers: payload.headers,
-    attachments: formatAttachments(attachments),
-    mailSettings: payload.sendGrid?.mailSettings || {},
-  };
-
-  if (payload.sendGrid?.templateId) {
-    msg.templateId = payload.sendGrid.templateId;
-    msg.dynamicTemplateData = payload.sendGrid.dynamicTemplateData || {};
-  }
-
-  // Log the final message payload for debugging
-  logs.info("SendGrid message payload constructed", { msg });
-
-  // Send the message using SendGrid's API
-  const [response] = await sgMail.send(msg);
-  const messageId =
-    ((response.headers["x-message-id"] ||
-      response.headers["X-Message-Id"]) as string) || null;
-
-  const acceptedList = payload.to.map((r) =>
-    typeof r === "string" ? r : (r as any).email
-  );
-
-  return {
-    messageId,
-    accepted: acceptedList,
-    rejected: [],
-    pending: [],
-    response: `status=${response.statusCode}`,
-  };
-}
-
 async function deliver(ref: DocumentReference): Promise<void> {
   // Fetch the Firestore document
   const snapshot = await ref.get();
@@ -373,30 +298,25 @@ async function deliver(ref: DocumentReference): Promise<void> {
       );
     }
 
-    let result: SendMailInfoLike;
+    let mailOptions: nodemailer.SendMailOptions = {
+      from: payload.from || config.defaultFrom,
+      replyTo: payload.replyTo || config.defaultReplyTo,
+      to: payload.to,
+      cc: payload.cc,
+      bcc: payload.bcc,
+      subject: payload.message?.subject,
+      text: payload.message?.text,
+      html: payload.message?.html,
+      attachments: payload.message?.attachments,
+      // @ts-ignore - TODO: fix types here
+      categories: payload.categories,
+      templateId: payload.sendGrid?.templateId,
+      dynamicTemplateData: payload.sendGrid?.dynamicTemplateData,
+      mailSettings: payload.sendGrid?.mailSettings,
+    };
 
-    // Automatically detect SendGrid
-    if (isSendGrid(config)) {
-      logs.info("Using SendGrid for email delivery", {
-        msg: payload,
-      });
-      result = await sendWithSendGrid(payload); // Use the SendGrid-specific function
-    } else {
-      logs.info("Using standard transport for email delivery.", {
-        msg: payload,
-      });
-      // Use the default transport for other SMTP providers
-      result = (await transport.sendMail({
-        ...Object.assign(payload.message ?? {}, {
-          from: payload.from || config.defaultFrom,
-          replyTo: payload.replyTo || config.defaultReplyTo,
-          to: payload.to,
-          cc: payload.cc,
-          bcc: payload.bcc,
-          headers: payload.headers || {},
-        }),
-      })) as unknown as SendMailInfoLike;
-    }
+    logs.info("Sending via transport.sendMail()", { mailOptions });
+    const result = (await transport.sendMail(mailOptions)) as any;
 
     const info = {
       messageId: result.messageId || null,
