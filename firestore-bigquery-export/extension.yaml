@@ -67,9 +67,9 @@ resources:
         triggerRegion: ${DATABASE_REGION}
         eventFilters:
           - attribute: database
-            value: ${DATABASE}
+            value: "${DATABASE}"
           - attribute: document
-            value: ${COLLECTION_PATH}/{documentId}
+            value: "${COLLECTION_PATH}/{documentId}"
             operator: match-path-pattern
 
   - name: syncBigQuery
