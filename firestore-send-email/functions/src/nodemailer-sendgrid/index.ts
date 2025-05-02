@@ -43,6 +43,10 @@ export interface MailSource {
   messageId?: string;
   [key: string]: any;
   normalize(cb: (err: Error | null, source: MailSource) => void): void;
+  categories?: string[];
+  templateId?: string;
+  dynamicTemplateData?: Record<string, unknown>;
+  mailSettings?: Record<string, unknown>;
 }
 
 export class SendGridTransport {
@@ -162,6 +166,13 @@ export class SendGridTransport {
               ...(msg.headers ?? {}),
               "message-id": source.messageId,
             };
+            break;
+
+          case "categories":
+          case "templateId":
+          case "dynamicTemplateData":
+          case "mailSettings":
+            msg[key] = source[key];
             break;
 
           default:

@@ -244,4 +244,78 @@ describe("SendGridTransport", () => {
 
     expect(cb).toHaveBeenCalledWith(sendErr);
   });
+
+  test("send: forwards categories array", async () => {
+    const transport = new SendGridTransport({ apiKey: "KEY" });
+    const fakeMail: any = {
+      normalize: (cb: any) =>
+        cb(null, {
+          from: { address: "a@x.com" },
+          to: [{ address: "b@x.com" }],
+          subject: "Category test",
+          categories: ["alpha", "beta", "gamma"],
+        }),
+    };
+    (sgMail.send as jest.Mock).mockResolvedValueOnce([{}, {}]);
+    const cb = jest.fn();
+
+    transport.send(fakeMail, cb);
+    await new Promise((r) => setImmediate(r));
+
+    const sent = (sgMail.send as jest.Mock).mock.calls[0][0];
+    expect(sent.categories).toEqual(["alpha", "beta", "gamma"]);
+  });
+
+  test("send: forwards templateId & dynamicTemplateData", async () => {
+    const transport = new SendGridTransport({ apiKey: "KEY" });
+    const fakeMail: any = {
+      normalize: (cb: any) =>
+        cb(null, {
+          from: { address: "from@ex.com" },
+          to: [{ address: "to@ex.com" }],
+          subject: "Template test",
+          templateId: "d-1234567890abcdef",
+          dynamicTemplateData: { name: "Jacob", count: 42 },
+        }),
+    };
+    (sgMail.send as jest.Mock).mockResolvedValueOnce([{}, {}]);
+    const cb = jest.fn();
+
+    transport.send(fakeMail, cb);
+    await new Promise((r) => setImmediate(r));
+
+    const sent = (sgMail.send as jest.Mock).mock.calls[0][0];
+    expect(sent.templateId).toBe("d-1234567890abcdef");
+    expect(sent.dynamicTemplateData).toMatchObject({
+      name: "Jacob",
+      count: 42,
+    });
+  });
+
+  test("send: forwards mailSettings object", async () => {
+    const transport = new SendGridTransport({ apiKey: "KEY" });
+    const fakeMail: any = {
+      normalize: (cb: any) =>
+        cb(null, {
+          from: { address: "a@x.com" },
+          to: [{ address: "b@x.com" }],
+          subject: "MailSettings test",
+          mailSettings: {
+            sandboxMode: { enable: true },
+            personalization: { enable: false },
+          },
+        }),
+    };
+    (sgMail.send as jest.Mock).mockResolvedValueOnce([{}, {}]);
+    const cb = jest.fn();
+
+    transport.send(fakeMail, cb);
+    await new Promise((r) => setImmediate(r));
+
+    const sent = (sgMail.send as jest.Mock).mock.calls[0][0];
+    expect(sent.mailSettings).toMatchObject({
+      sandboxMode: { enable: true },
+      personalization: { enable: false },
+    });
+  });
 });
