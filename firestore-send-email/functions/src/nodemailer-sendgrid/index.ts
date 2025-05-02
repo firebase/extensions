@@ -53,10 +53,14 @@ export interface MailSource {
 }
 
 export interface SendGridInfo {
+  /** The RFC-2822 Message-ID header (what you set or SendGrid generated) */
   messageId: string | null;
+  /** SendGrid’s internal queue token (the X-Message-Id HTTP header) */
+  queueId: string | null;
   accepted: string[];
   rejected: string[];
   pending: string[];
+  /** HTTP status line, e.g. "status=202" */
   response: string;
 }
 
@@ -83,6 +87,7 @@ export class SendGridTransport {
 
       const msg: any = {};
 
+      // Map all MailSource properties into the @sendgrid/mail message shape
       for (const key of Object.keys(source)) {
         switch (key) {
           case "subject":
@@ -95,7 +100,9 @@ export class SendGridTransport {
           case "replyTo": {
             const list = ([] as Address[]).concat(source[key] || []);
             const e = list[0];
-            msg[key] = e ? { name: e.name, email: e.address } : undefined;
+            if (e) {
+              msg[key] = { name: e.name, email: e.address };
+            }
             break;
           }
 
@@ -114,11 +121,10 @@ export class SendGridTransport {
                 content: entry.content,
                 filename: entry.filename,
                 type: entry.contentType,
-                disposition: "attachment",
+                disposition: entry.cid ? "inline" : "attachment",
               };
               if (entry.cid) {
                 a.content_id = entry.cid;
-                a.disposition = "inline";
               }
               return a;
             });
@@ -165,9 +171,10 @@ export class SendGridTransport {
             break;
 
           case "messageId":
+            // Propagate the header-based Message-ID so we can echo it back later
             msg.headers = {
               ...(msg.headers || {}),
-              "message-id": source.messageId,
+              "message-id": source.messageId!,
             };
             break;
 
@@ -183,6 +190,7 @@ export class SendGridTransport {
         }
       }
 
+      // If we built a msg.content array, ensure text/html are injected
       if (Array.isArray(msg.content) && msg.content.length) {
         if (msg.text) {
           msg.content.unshift({ type: "text/plain", value: msg.text });
@@ -194,19 +202,36 @@ export class SendGridTransport {
         }
       }
 
+      // Send via SendGrid's HTTP API
       sgMail
         .send(msg)
         .then(([response]) => {
-          // Extract SendGrid's HTTP‐response header "x-message-id"
-          const rawId = (response.headers["x-message-id"] ||
+          // 1) Internal SendGrid queue-ID from HTTP header
+          const rawQueue = (response.headers["x-message-id"] ||
             response.headers["X-Message-Id"]) as string | undefined;
+          const queueId = rawQueue ? String(rawQueue) : null;
+
+          // 2) Your RFC-2822 Message-ID header
+          const headerMsgId = (msg.headers && msg.headers["message-id"]) as
+            | string
+            | undefined;
+          const messageId = headerMsgId || null;
+
+          // 3) Build accepted list from msg.to
+          const toList = ([] as any[]).concat(msg.to || []);
+          const accepted = toList.map((r) =>
+            typeof r === "string" ? r : r.email
+          );
+
           const info: SendGridInfo = {
-            messageId: rawId || null,
-            accepted: (msg.to || []).map((r: any) => r.email),
+            messageId,
+            queueId,
+            accepted,
             rejected: [],
             pending: [],
             response: `status=${response.statusCode}`,
           };
+
           callback(null, info);
         })
         .catch((sendErr: Error) => callback(sendErr));

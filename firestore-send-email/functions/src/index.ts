@@ -45,6 +45,7 @@ let initialized = false;
 
 interface SendMailInfoLike {
   messageId: string | null;
+  sendgridQueueId?: string | null;
   accepted: string[];
   rejected: string[];
   pending: string[];
@@ -280,7 +281,7 @@ async function deliver(ref: DocumentReference): Promise<void> {
   logs.attemptingDelivery(ref);
 
   // Prepare the Firestore document for delivery updates
-  const update = {
+  const update: Record<string, any> = {
     "delivery.attempts": FieldValue.increment(1),
     "delivery.endTime": FieldValue.serverTimestamp(),
     "delivery.error": null,
@@ -298,7 +299,7 @@ async function deliver(ref: DocumentReference): Promise<void> {
       );
     }
 
-    let mailOptions: nodemailer.SendMailOptions = {
+    const mailOptions: nodemailer.SendMailOptions = {
       from: payload.from || config.defaultFrom,
       replyTo: payload.replyTo || config.defaultReplyTo,
       to: payload.to,
@@ -318,8 +319,9 @@ async function deliver(ref: DocumentReference): Promise<void> {
     logs.info("Sending via transport.sendMail()", { mailOptions });
     const result = (await transport.sendMail(mailOptions)) as any;
 
-    const info = {
+    const info: SendMailInfoLike = {
       messageId: result.messageId || null,
+      sendgridQueueId: result.queueId || null,
       accepted: result.accepted || [],
       rejected: result.rejected || [],
       pending: result.pending || [],
@@ -340,10 +342,6 @@ async function deliver(ref: DocumentReference): Promise<void> {
 
   // Update the Firestore document transactionally to allow retries (#48)
   return db.runTransaction((transaction) => {
-    // We could check state here is still PROCESSING, but we don't
-    // since the email sending will have been attempted regardless of what the
-    // delivery state was at that point, so we just update the state to reflect
-    // the result of the last attempt so as to not potentially cause duplicate sends.
     transaction.update(ref, update);
     return Promise.resolve();
   });
@@ -355,26 +353,13 @@ async function processWrite(
   const ref = change.after.ref;
 
   // A quick check to avoid doing unnecessary transaction work.
-  // If the record state is SUCCESS or ERROR we don't need to do anything
-  // transactionally here since these are the 'final' delivery states.
-  // Note: we still check these again inside the transaction in case the state has
-  // changed while the transaction was inflight.
   if (change.after.exists) {
-    const payloadAfter = change.after.data();
-    // The email has already been delivered, so we don't need to do anything.
+    const payloadAfter = change.after.data() as QueuePayload;
     if (
       payloadAfter &&
       payloadAfter.delivery &&
-      payloadAfter.delivery.state === "SUCCESS"
-    ) {
-      return;
-    }
-
-    // The email has previously failed to be delivered, so we can't do anything.
-    if (
-      payloadAfter &&
-      payloadAfter.delivery &&
-      payloadAfter.delivery.state === "ERROR"
+      (payloadAfter.delivery.state === "SUCCESS" ||
+        payloadAfter.delivery.state === "ERROR")
     ) {
       return;
     }
@@ -383,16 +368,12 @@ async function processWrite(
   const shouldAttemptDelivery = await db.runTransaction<boolean>(
     async (transaction) => {
       const snapshot = await transaction.get(ref);
-      // Record no longer exists, so no need to attempt delivery.
       if (!snapshot.exists) {
         return false;
       }
 
-      const payload = snapshot.data();
+      const payload = snapshot.data() as QueuePayload;
 
-      // We expect the payload to contain a message object describing the email
-      // to be sent, or a template, or a SendGrid template.
-      // If it doesn't and is not a template, we can't do anything.
       if (
         typeof payload.message !== "object" &&
         !payload.template &&
@@ -402,72 +383,48 @@ async function processWrite(
         return false;
       }
 
-      // The record has most likely just been created by a client, so we need to
-      // initialize the delivery state.
       if (!payload.delivery) {
         const startTime = Timestamp.fromDate(new Date());
-
-        const delivery = {
-          startTime: Timestamp.fromDate(new Date()),
+        const delivery: any = {
+          startTime: startTime,
           state: "PENDING",
           attempts: 0,
           error: null,
         };
-
         if (config.TTLExpireType && config.TTLExpireType !== "never") {
-          delivery["expireAt"] = getExpireAt(startTime);
+          delivery.expireAt = getExpireAt(startTime);
         }
-
-        transaction.update(ref, {
-          //@ts-ignore
-          delivery,
-        });
-        // We've updated the payload, so we need to attempt delivery, but we
-        // don't want to do it in this transaction. Since the transaction will
-        // update the record again the cloud function will be triggered again
-        // and delivery will be attempted at that point.
+        transaction.update(ref, { delivery });
         return false;
       }
 
-      // The email has already been delivered, so we don't need to do anything.
-      if (payload.delivery.state === "SUCCESS") {
+      const state = payload.delivery.state;
+      if (state === "SUCCESS") {
         await events.recordSuccessEvent(change);
         return false;
       }
-
-      // The email has previously failed to be delivered, so we can't do anything.
-      if (payload.delivery.state === "ERROR") {
+      if (state === "ERROR") {
         await events.recordErrorEvent(change, payload, payload.delivery.error);
         return false;
       }
-
-      if (payload.delivery.state === "PROCESSING") {
+      if (state === "PROCESSING") {
         await events.recordProcessingEvent(change);
-
         if (payload.delivery.leaseExpireTime.toMillis() < Date.now()) {
           const error = "Message processing lease expired.";
-
-          /** Send error event */
           await events.recordErrorEvent(change, payload, error);
-
-          // The lease has expired, so we should not attempt to deliver the email again,
-          // but we set the state to ERROR so clients can see that the email failed.
           transaction.update(ref, {
             "delivery.state": "ERROR",
-            // Keeping error to avoid any breaking changes in the next minor update.
-            // Error to be removed for the next major release.
             "delivery.error": "Message processing lease expired.",
           });
         }
-        // Already being processed, so we don't need to do anything.
         return false;
       }
-
-      if (payload.delivery.state === "PENDING") {
-        await events.recordPendingEvent(change, payload);
-
-        // We can attempt to deliver the email in these states, so we set the state to PROCESSING
-        // and set a lease time to prevent delivery from being attempted forever.
+      if (state === "PENDING" || state === "RETRY") {
+        const eventFn =
+          state === "PENDING"
+            ? events.recordPendingEvent
+            : events.recordRetryEvent;
+        await eventFn(change, payload);
         transaction.update(ref, {
           "delivery.state": "PROCESSING",
           "delivery.leaseExpireTime": Timestamp.fromMillis(Date.now() + 60000),
@@ -475,19 +432,6 @@ async function processWrite(
         return true;
       }
 
-      if (payload.delivery.state === "RETRY") {
-        await events.recordRetryEvent(change, payload);
-
-        // We can attempt to deliver the email in these states, so we set the state to PROCESSING
-        // and set a lease time to prevent delivery from being attempted forever.
-        transaction.update(ref, {
-          "delivery.state": "PROCESSING",
-          "delivery.leaseExpireTime": Timestamp.fromMillis(Date.now() + 60000),
-        });
-        return true;
-      }
-
-      // We don't know what the state is, so we can't do anything. This should never happen.
       return false;
     }
   );
@@ -511,19 +455,17 @@ export const processQueue = onDocumentWritten(
 
     try {
       await processWrite(change);
-    } catch (err) {
+    } catch (err: any) {
       await events.recordErrorEvent(
         change,
         change.after.data(),
-        `Unhandled error occurred during processing: ${err.message}"`
+        `Unhandled error occurred during processing: ${err.message}`
       );
       logs.error(err);
       return null;
     }
 
-    /** record complete event */
     await events.recordCompleteEvent(change);
-
     logs.complete();
   }
 );
