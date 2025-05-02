@@ -87,7 +87,6 @@ export class SendGridTransport {
 
       const msg: any = {};
 
-      // Map all MailSource properties into the @sendgrid/mail message shape
       for (const key of Object.keys(source)) {
         switch (key) {
           case "subject":
@@ -202,22 +201,20 @@ export class SendGridTransport {
         }
       }
 
-      // Send via SendGrid's HTTP API
       sgMail
         .send(msg)
         .then(([response]) => {
-          // 1) Internal SendGrid queue-ID from HTTP header
+          // Internal SendGrid queue-ID from HTTP header
           const rawQueue = (response.headers["x-message-id"] ||
             response.headers["X-Message-Id"]) as string | undefined;
           const queueId = rawQueue ? String(rawQueue) : null;
 
-          // 2) Your RFC-2822 Message-ID header
+          // RFC-2822 Message-ID header
           const headerMsgId = (msg.headers && msg.headers["message-id"]) as
             | string
             | undefined;
           const messageId = headerMsgId || null;
 
-          // 3) Build accepted list from msg.to
           const toList = ([] as any[]).concat(msg.to || []);
           const accepted = toList.map((r) =>
             typeof r === "string" ? r : r.email
