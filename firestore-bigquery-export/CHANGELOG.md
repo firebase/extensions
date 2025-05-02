@@ -1,3 +1,7 @@
+## Version 0.2.3
+
+fix: pass full document resource name to bigquery
+
 ## Version 0.2.2
 
 fix: remove default value on DATABASE_REGION
