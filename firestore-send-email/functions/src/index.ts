@@ -35,6 +35,7 @@ import { Delivery, QueuePayload, ExtendedSendMailOptions } from "./types";
 import { isSendGrid, setSmtpCredentials } from "./helpers";
 import * as events from "./events";
 import { SendGridTransport } from "./nodemailer-sendgrid";
+import { validatePayload } from "./validation";
 
 logs.init();
 
@@ -124,6 +125,9 @@ function getExpireAt(startTime: Timestamp) {
 }
 
 async function preparePayload(payload: DocumentData): Promise<DocumentData> {
+  // Validate the payload before processing
+  validatePayload(payload);
+
   const { template } = payload;
 
   if (templates && template) {
