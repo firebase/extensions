@@ -2,7 +2,7 @@
 
 fix: return info on sendgrid messages
 
-feat: include sendgrid queueId
+feat: include sendgridQueueId if using that provider
 
 ## Version 0.2.0
 
