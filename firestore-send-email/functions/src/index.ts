@@ -31,7 +31,7 @@ import * as nodemailer from "nodemailer";
 import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
-import { QueuePayload } from "./types";
+import { Delivery, QueuePayload } from "./types";
 import { isSendGrid, setSmtpCredentials } from "./helpers";
 import * as events from "./events";
 import { SendGridTransport } from "./nodemailer-sendgrid";
@@ -408,7 +408,7 @@ async function processWrite(
       // initialize the delivery state.
       if (!payload.delivery) {
         const startTime = Timestamp.fromDate(new Date());
-        const delivery: any = {
+        const delivery: Partial<Delivery> = {
           startTime: startTime,
           state: "PENDING",
           attempts: 0,

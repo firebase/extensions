@@ -59,21 +59,24 @@ export interface TemplateData {
   attachments?: Attachment[];
 }
 
-export interface QueuePayload {
-  delivery?: {
-    startTime: admin.firestore.Timestamp;
-    endTime: admin.firestore.Timestamp;
-    leaseExpireTime: admin.firestore.Timestamp;
-    state: "PENDING" | "PROCESSING" | "RETRY" | "SUCCESS" | "ERROR";
-    attempts: number;
-    error?: string;
-    info?: {
-      messageId: string;
-      accepted: string[];
-      rejected: string[];
-      pending: string[];
-    };
+export interface Delivery {
+  startTime: admin.firestore.Timestamp;
+  endTime: admin.firestore.Timestamp;
+  leaseExpireTime: admin.firestore.Timestamp;
+  state: "PENDING" | "PROCESSING" | "RETRY" | "SUCCESS" | "ERROR";
+  attempts: number;
+  error?: string;
+  expireAt?: admin.firestore.Timestamp;
+  info?: {
+    messageId: string;
+    accepted: string[];
+    rejected: string[];
+    pending: string[];
   };
+}
+
+export interface QueuePayload {
+  delivery?: Delivery;
   message?: nodemailer.SendMailOptions;
   template?: {
     name: string;
@@ -98,13 +101,13 @@ export interface QueuePayload {
 }
 
 // Define the expected format for SendGrid attachments
-export type SendGridAttachment = {
+export interface SendGridAttachment {
   content: string; // Base64-encoded string
   filename: string;
   type?: string;
   disposition?: string;
   contentId?: string;
-};
+}
 
 export enum AuthenticatonType {
   OAuth2 = "OAuth2",
