@@ -1,68 +1,13 @@
 import * as sgMail from "@sendgrid/mail";
-
-export interface SendGridTransportOptions {
-  apiKey?: string;
-  [key: string]: unknown;
-}
-
-export interface Address {
-  name?: string;
-  address: string;
-}
-
-export interface AttachmentEntry {
-  content: string | Buffer;
-  filename: string;
-  contentType: string;
-  cid?: string;
-}
-
-export interface IcalEvent {
-  content: string;
-  filename?: string;
-}
-
-export interface NormalizedHeaders {
-  [header: string]: string;
-}
-
-export interface MailSource {
-  normalize(cb: (err: Error | null, source: MailSource) => void): void;
-
-  from?: Address | Address[];
-  replyTo?: Address | Address[];
-  to?: Address | Address[];
-  cc?: Address | Address[];
-  bcc?: Address | Address[];
-  subject?: string;
-  text?: string;
-  html?: string;
-  attachments?: AttachmentEntry[];
-  alternatives?: { content: string; contentType: string }[];
-  icalEvent?: IcalEvent;
-  watchHtml?: string;
-  normalizedHeaders?: NormalizedHeaders;
-  messageId?: string;
-
-  categories?: string[];
-  templateId?: string;
-  dynamicTemplateData?: Record<string, unknown>;
-  mailSettings?: Record<string, unknown>;
-
-  [key: string]: any;
-}
-
-export interface SendGridInfo {
-  /** The RFC-2822 Message-ID header (what you set or SendGrid generated) */
-  messageId: string | null;
-  /** SendGrid’s internal queue token (the X-Message-Id HTTP header) */
-  queueId: string | null;
-  accepted: string[];
-  rejected: string[];
-  pending: string[];
-  /** HTTP status line, e.g. "status=202" */
-  response: string;
-}
+import {
+  SendGridTransportOptions,
+  Address,
+  MailSource,
+  SendGridInfo,
+  SendGridAttachment,
+  SendGridContent,
+  SendGridMessage,
+} from "./types";
 
 export class SendGridTransport {
   public readonly name = "firebase-extensions-nodemailer-sendgrid";
@@ -85,7 +30,7 @@ export class SendGridTransport {
         return callback(err);
       }
 
-      const msg: any = {};
+      const msg: SendGridMessage = {};
 
       for (const key of Object.keys(source)) {
         switch (key) {
@@ -115,18 +60,13 @@ export class SendGridTransport {
 
           case "attachments": {
             const atchs = source.attachments || [];
-            msg.attachments = atchs.map((entry) => {
-              const a: any = {
-                content: entry.content,
-                filename: entry.filename,
-                type: entry.contentType,
-                disposition: entry.cid ? "inline" : "attachment",
-              };
-              if (entry.cid) {
-                a.content_id = entry.cid;
-              }
-              return a;
-            });
+            msg.attachments = atchs.map((entry) => ({
+              content: entry.content.toString(),
+              filename: entry.filename,
+              type: entry.contentType,
+              disposition: entry.cid ? "inline" : "attachment",
+              ...(entry.cid ? { content_id: entry.cid } : {}),
+            }));
             break;
           }
 
@@ -136,29 +76,33 @@ export class SendGridTransport {
               type: alt.contentType,
               value: alt.content,
             }));
-            msg.content = ([] as any[]).concat(msg.content || []).concat(fmt);
+            msg.content = ([] as SendGridContent[])
+              .concat(msg.content || [])
+              .concat(fmt);
             break;
           }
 
           case "icalEvent": {
             const ev = source.icalEvent!;
-            const cal: any = {
+            const cal: SendGridAttachment = {
               content: ev.content,
               filename: ev.filename || "invite.ics",
               type: "application/ics",
               disposition: "attachment",
             };
-            msg.attachments = ([] as any[])
+            msg.attachments = ([] as SendGridAttachment[])
               .concat(msg.attachments || [])
               .concat(cal);
             break;
           }
 
           case "watchHtml": {
-            msg.content = ([] as any[]).concat(msg.content || []).concat({
-              type: "text/watch-html",
-              value: source.watchHtml!,
-            });
+            msg.content = ([] as SendGridContent[])
+              .concat(msg.content || [])
+              .concat({
+                type: "text/watch-html",
+                value: source.watchHtml!,
+              });
             break;
           }
 
@@ -170,7 +114,6 @@ export class SendGridTransport {
             break;
 
           case "messageId":
-            // Propagate the header-based Message-ID so we can echo it back later
             msg.headers = {
               ...(msg.headers || {}),
               "message-id": source.messageId!,
@@ -178,10 +121,16 @@ export class SendGridTransport {
             break;
 
           case "categories":
+            msg.categories = source.categories;
+            break;
           case "templateId":
+            msg.templateId = source.templateId;
+            break;
           case "dynamicTemplateData":
+            msg.dynamicTemplateData = source.dynamicTemplateData;
+            break;
           case "mailSettings":
-            msg[key] = source[key];
+            msg.mailSettings = source.mailSettings;
             break;
 
           default:
@@ -202,12 +151,12 @@ export class SendGridTransport {
       }
 
       sgMail
-        .send(msg)
+        .send(msg as sgMail.MailDataRequired)
         .then(([response]) => {
           // Internal SendGrid queue-ID from HTTP header
-          const rawQueue = (response.headers["x-message-id"] ||
+          const rawQueueId = (response.headers["x-message-id"] ||
             response.headers["X-Message-Id"]) as string | undefined;
-          const queueId = rawQueue ? String(rawQueue) : null;
+          const queueId = rawQueueId ? String(rawQueueId) : null;
 
           // RFC-2822 Message-ID header
           const headerMsgId = (msg.headers && msg.headers["message-id"]) as
@@ -215,9 +164,18 @@ export class SendGridTransport {
             | undefined;
           const messageId = headerMsgId || null;
 
-          const toList = ([] as any[]).concat(msg.to || []);
-          const accepted = toList.map((r) =>
-            typeof r === "string" ? r : r.email
+          // Include all recipients (to, cc, bcc) in accepted array
+          const toList = ([] as Array<{ email: string }>).concat(msg.to || []);
+          const ccList = ([] as Array<{ email: string }>).concat(msg.cc || []);
+          const bccList = ([] as Array<{ email: string }>).concat(
+            msg.bcc || []
+          );
+          const accepted = Array.from(
+            new Set(
+              [...toList, ...ccList, ...bccList].map((r) =>
+                (typeof r === "string" ? r : r.email).toLowerCase()
+              )
+            )
           );
 
           const info: SendGridInfo = {

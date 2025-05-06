@@ -1,16 +1,24 @@
 import * as sgMail from "@sendgrid/mail";
+import { SendGridTransport } from "../../src/nodemailer-sendgrid";
 import {
-  SendGridTransport,
   SendGridTransportOptions,
   MailSource,
   Address,
   AttachmentEntry,
   IcalEvent,
-} from "../../src/nodemailer-sendgrid";
+} from "../../src/nodemailer-sendgrid/types";
 
 jest.mock("@sendgrid/mail", () => ({
   setApiKey: jest.fn(),
-  send: jest.fn(),
+  send: jest.fn().mockResolvedValue([
+    {
+      headers: {
+        "x-message-id": "test-message-id",
+      },
+      statusCode: 202,
+    },
+    {},
+  ]),
 }));
 
 describe("SendGridTransport", () => {
@@ -50,9 +58,7 @@ describe("SendGridTransport", () => {
     const source = { subject: "S", text: "T", html: "<p>H</p>" };
     const fakeMail: any = { normalize: (cb: any) => cb(null, source) };
 
-    (sgMail.send as jest.Mock).mockResolvedValueOnce(["OK", {}]);
     const cb = jest.fn();
-
     transport.send(fakeMail, cb);
     await new Promise((r) => setImmediate(r));
 
@@ -61,7 +67,14 @@ describe("SendGridTransport", () => {
       text: "T",
       html: "<p>H</p>",
     });
-    expect(cb).toHaveBeenCalledWith(null, ["OK", {}]);
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: [],
+      rejected: [],
+      pending: [],
+      response: "status=202",
+    });
   });
 
   test("send: maps from and replyTo", async () => {
@@ -69,7 +82,6 @@ describe("SendGridTransport", () => {
     const addr: Address = { name: "Alice", address: "a@x.com" };
     const source = { from: addr, replyTo: [addr] };
     const fakeMail: any = { normalize: (cb) => cb(null, source) };
-    (sgMail.send as jest.Mock).mockResolvedValueOnce([{}, {}]);
 
     const cb = jest.fn();
     transport.send(fakeMail, cb);
@@ -78,7 +90,14 @@ describe("SendGridTransport", () => {
     const sentMsg = (sgMail.send as jest.Mock).mock.calls[0][0];
     expect(sentMsg.from).toEqual({ name: "Alice", email: "a@x.com" });
     expect(sentMsg.replyTo).toEqual({ name: "Alice", email: "a@x.com" });
-    expect(cb).toHaveBeenCalledWith(null, [{}, {}]);
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: [],
+      rejected: [],
+      pending: [],
+      response: "status=202",
+    });
   });
 
   test("send: maps to, cc, bcc arrays", async () => {
@@ -87,7 +106,6 @@ describe("SendGridTransport", () => {
     const a2: Address = { name: "C", address: "c@x" };
     const source = { to: [a1], cc: a2, bcc: [a1, a2] };
     const fakeMail: any = { normalize: (cb) => cb(null, source) };
-    (sgMail.send as jest.Mock).mockResolvedValueOnce([{}, {}]);
 
     const cb = jest.fn();
     transport.send(fakeMail, cb);
@@ -100,6 +118,14 @@ describe("SendGridTransport", () => {
       { name: "B", email: "b@x" },
       { name: "C", email: "c@x" },
     ]);
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: ["b@x", "c@x"],
+      rejected: [],
+      pending: [],
+      response: "status=202",
+    });
   });
 
   test("send: attachments with inline and normal dispositions", async () => {
@@ -115,7 +141,6 @@ describe("SendGridTransport", () => {
     ];
     const source = { attachments: atchs };
     const fakeMail: any = { normalize: (cb) => cb(null, source) };
-    (sgMail.send as jest.Mock).mockResolvedValueOnce([{}, {}]);
 
     const cb = jest.fn();
     transport.send(fakeMail, cb);
@@ -138,6 +163,14 @@ describe("SendGridTransport", () => {
       disposition: "inline",
       content_id: "cid123",
     });
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: [],
+      rejected: [],
+      pending: [],
+      response: "status=202",
+    });
   });
 
   test("send: alternatives → content", async () => {
@@ -145,14 +178,21 @@ describe("SendGridTransport", () => {
     const alts = [{ content: "alt", contentType: "text/alt" }];
     const source = { alternatives: alts };
     const fakeMail: any = { normalize: (cb) => cb(null, source) };
-    (sgMail.send as jest.Mock).mockResolvedValueOnce([{}, {}]);
 
     const cb = jest.fn();
     transport.send(fakeMail, cb);
     await new Promise((r) => setImmediate(r));
 
     const sentContent = (sgMail.send as jest.Mock).mock.calls[0][0].content;
-    expect(sentContent).toEqual([{ content: "alt", type: "text/alt" }]);
+    expect(sentContent).toEqual([{ type: "text/alt", value: "alt" }]);
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: [],
+      rejected: [],
+      pending: [],
+      response: "status=202",
+    });
   });
 
   test("send: icalEvent as attachment", async () => {
@@ -160,7 +200,6 @@ describe("SendGridTransport", () => {
     const ev: IcalEvent = { content: "ics", filename: "evt.ics" };
     const source = { icalEvent: ev };
     const fakeMail: any = { normalize: (cb) => cb(null, source) };
-    (sgMail.send as jest.Mock).mockResolvedValueOnce([{}, {}]);
 
     const cb = jest.fn();
     transport.send(fakeMail, cb);
@@ -173,20 +212,35 @@ describe("SendGridTransport", () => {
       type: "application/ics",
       disposition: "attachment",
     });
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: [],
+      rejected: [],
+      pending: [],
+      response: "status=202",
+    });
   });
 
   test("send: watchHtml → content", async () => {
     const transport = new SendGridTransport();
     const source = { watchHtml: "<watch>" };
     const fakeMail: any = { normalize: (cb) => cb(null, source) };
-    (sgMail.send as jest.Mock).mockResolvedValueOnce([{}, {}]);
 
     const cb = jest.fn();
     transport.send(fakeMail, cb);
     await new Promise((r) => setImmediate(r));
 
     const content = (sgMail.send as jest.Mock).mock.calls[0][0].content;
-    expect(content).toEqual([{ content: "<watch>", type: "text/watch-html" }]);
+    expect(content).toEqual([{ type: "text/watch-html", value: "<watch>" }]);
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: [],
+      rejected: [],
+      pending: [],
+      response: "status=202",
+    });
   });
 
   test("send: normalizedHeaders & messageId → headers", async () => {
@@ -196,7 +250,6 @@ describe("SendGridTransport", () => {
       messageId: "msg-123",
     };
     const fakeMail: any = { normalize: (cb) => cb(null, source) };
-    (sgMail.send as jest.Mock).mockResolvedValueOnce([{}, {}]);
 
     const cb = jest.fn();
     transport.send(fakeMail, cb);
@@ -206,6 +259,14 @@ describe("SendGridTransport", () => {
     expect(headers).toMatchObject({
       "X-Custom": "val",
       "message-id": "msg-123",
+    });
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: "msg-123",
+      queueId: "test-message-id",
+      accepted: [],
+      rejected: [],
+      pending: [],
+      response: "status=202",
     });
   });
 
@@ -217,7 +278,6 @@ describe("SendGridTransport", () => {
       alternatives: [{ content: "alt1", contentType: "type1" }],
     };
     const fakeMail: any = { normalize: (cb) => cb(null, source) };
-    (sgMail.send as jest.Mock).mockResolvedValueOnce([{}, {}]);
 
     const cb = jest.fn();
     transport.send(fakeMail, cb);
@@ -229,6 +289,14 @@ describe("SendGridTransport", () => {
       { type: "text/plain", value: "TXT" },
       { type: "type1", value: "alt1" },
     ]);
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: [],
+      rejected: [],
+      pending: [],
+      response: "status=202",
+    });
   });
 
   test("send: callback with error if sgMail.send rejects", async () => {
@@ -256,7 +324,6 @@ describe("SendGridTransport", () => {
           categories: ["alpha", "beta", "gamma"],
         }),
     };
-    (sgMail.send as jest.Mock).mockResolvedValueOnce([{}, {}]);
     const cb = jest.fn();
 
     transport.send(fakeMail, cb);
@@ -264,6 +331,14 @@ describe("SendGridTransport", () => {
 
     const sent = (sgMail.send as jest.Mock).mock.calls[0][0];
     expect(sent.categories).toEqual(["alpha", "beta", "gamma"]);
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: ["b@x.com"],
+      rejected: [],
+      pending: [],
+      response: "status=202",
+    });
   });
 
   test("send: forwards templateId & dynamicTemplateData", async () => {
@@ -278,7 +353,6 @@ describe("SendGridTransport", () => {
           dynamicTemplateData: { name: "Jacob", count: 42 },
         }),
     };
-    (sgMail.send as jest.Mock).mockResolvedValueOnce([{}, {}]);
     const cb = jest.fn();
 
     transport.send(fakeMail, cb);
@@ -289,6 +363,14 @@ describe("SendGridTransport", () => {
     expect(sent.dynamicTemplateData).toMatchObject({
       name: "Jacob",
       count: 42,
+    });
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: ["to@ex.com"],
+      rejected: [],
+      pending: [],
+      response: "status=202",
     });
   });
 
@@ -306,7 +388,6 @@ describe("SendGridTransport", () => {
           },
         }),
     };
-    (sgMail.send as jest.Mock).mockResolvedValueOnce([{}, {}]);
     const cb = jest.fn();
 
     transport.send(fakeMail, cb);
@@ -316,6 +397,57 @@ describe("SendGridTransport", () => {
     expect(sent.mailSettings).toMatchObject({
       sandboxMode: { enable: true },
       personalization: { enable: false },
+    });
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: ["b@x.com"],
+      rejected: [],
+      pending: [],
+      response: "status=202",
+    });
+  });
+
+  test("send: deduplicates and normalizes email addresses", async () => {
+    const transport = new SendGridTransport();
+    const source = {
+      to: [
+        { address: "User@example.com" },
+        { address: "user@example.com" }, // Duplicate with different case
+      ],
+      cc: [
+        { address: "user@example.com" }, // Duplicate
+        { address: "other@example.com" },
+      ],
+      bcc: [
+        { address: "user@example.com" }, // Duplicate
+        { address: "ANOTHER@example.com" },
+      ],
+    };
+    const fakeMail: any = { normalize: (cb) => cb(null, source) };
+
+    const cb = jest.fn();
+    transport.send(fakeMail, cb);
+    await new Promise((r) => setImmediate(r));
+
+    // Verify the message was sent with all recipients
+    const sent = (sgMail.send as jest.Mock).mock.calls[0][0];
+    expect(sent.to).toHaveLength(2);
+    expect(sent.cc).toHaveLength(2);
+    expect(sent.bcc).toHaveLength(2);
+
+    // Verify accepted array has deduplicated, lowercase emails
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: [
+        "user@example.com",
+        "other@example.com",
+        "another@example.com",
+      ],
+      rejected: [],
+      pending: [],
+      response: "status=202",
     });
   });
 });
