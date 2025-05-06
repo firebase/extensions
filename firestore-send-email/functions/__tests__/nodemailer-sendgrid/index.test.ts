@@ -225,9 +225,9 @@ describe("SendGridTransport", () => {
 
     const content = (sgMail.send as jest.Mock).mock.calls[0][0].content;
     expect(content).toEqual([
-      { type: "text/html", content: "<H>" },
-      { type: "text/plain", content: "TXT" },
-      { type: "type1", content: "alt1" },
+      { type: "text/html", value: "<H>" },
+      { type: "text/plain", value: "TXT" },
+      { type: "type1", value: "alt1" },
     ]);
   });
 
