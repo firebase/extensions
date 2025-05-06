@@ -9,11 +9,24 @@ import {
   SendGridMessage,
 } from "./types";
 
+/**
+ * A Nodemailer transport implementation for SendGrid.
+ * This class handles the conversion of Nodemailer mail objects to SendGrid's format
+ * and sends emails using the SendGrid API.
+ */
 export class SendGridTransport {
+  /** The name of the transport */
   public readonly name = "firebase-extensions-nodemailer-sendgrid";
+  /** The version of the transport */
   public readonly version = "0.0.1";
+  /** The SendGrid transport options */
   private readonly options: SendGridTransportOptions;
 
+  /**
+   * Creates a new SendGridTransport instance.
+   * @param options - Configuration options for the SendGrid transport
+   * @param options.apiKey - SendGrid API key for authentication
+   */
   constructor(options: SendGridTransportOptions = {}) {
     this.options = options;
     if (options.apiKey) {
@@ -21,6 +34,13 @@ export class SendGridTransport {
     }
   }
 
+  /**
+   * Sends an email using SendGrid.
+   * @param mail - The mail object containing email details (from, to, subject, etc.)
+   * @param callback - Callback function to handle the result of the send operation
+   * @param callback.err - Error object if the send operation failed
+   * @param callback.info - Information about the sent email if successful
+   */
   public send(
     mail: MailSource,
     callback: (err: Error | null, info?: SendGridInfo) => void
