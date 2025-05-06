@@ -121,3 +121,10 @@ export enum Hosts {
   Outlook = "smtp-mail.outlook.com",
   Hotmail = "smtp.live.com",
 }
+
+export interface ExtendedSendMailOptions extends nodemailer.SendMailOptions {
+  categories?: string[];
+  templateId?: string;
+  dynamicTemplateData?: Record<string, any>;
+  mailSettings?: Record<string, any>;
+}

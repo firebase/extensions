@@ -31,7 +31,7 @@ import * as nodemailer from "nodemailer";
 import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
-import { Delivery, QueuePayload } from "./types";
+import { Delivery, QueuePayload, ExtendedSendMailOptions } from "./types";
 import { isSendGrid, setSmtpCredentials } from "./helpers";
 import * as events from "./events";
 import { SendGridTransport } from "./nodemailer-sendgrid";
@@ -299,7 +299,7 @@ async function deliver(ref: DocumentReference): Promise<void> {
       );
     }
 
-    const mailOptions: nodemailer.SendMailOptions = {
+    const mailOptions: ExtendedSendMailOptions = {
       from: payload.from || config.defaultFrom,
       replyTo: payload.replyTo || config.defaultReplyTo,
       to: payload.to,
@@ -309,7 +309,6 @@ async function deliver(ref: DocumentReference): Promise<void> {
       text: payload.message?.text,
       html: payload.message?.html,
       attachments: payload.message?.attachments,
-      // @ts-ignore - TODO: fix types here
       categories: payload.categories,
       templateId: payload.sendGrid?.templateId,
       dynamicTemplateData: payload.sendGrid?.dynamicTemplateData,
