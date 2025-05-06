@@ -281,7 +281,7 @@ async function deliver(ref: DocumentReference): Promise<void> {
   logs.attemptingDelivery(ref);
 
   // Prepare the Firestore document for delivery updates
-  const update: Record<string, any> = {
+  const update = {
     "delivery.attempts": FieldValue.increment(1),
     "delivery.endTime": FieldValue.serverTimestamp(),
     "delivery.error": null,
@@ -342,6 +342,10 @@ async function deliver(ref: DocumentReference): Promise<void> {
 
   // Update the Firestore document transactionally to allow retries (#48)
   return db.runTransaction((transaction) => {
+    // We could check state here is still PROCESSING, but we don't
+    // since the email sending will have been attempted regardless of what the
+    // delivery state was at that point, so we just update the state to reflect
+    // the result of the last attempt so as to not potentially cause duplicate sends.
     transaction.update(ref, update);
     return Promise.resolve();
   });
@@ -353,13 +357,26 @@ async function processWrite(
   const ref = change.after.ref;
 
   // A quick check to avoid doing unnecessary transaction work.
+  // If the record state is SUCCESS or ERROR we don't need to do anything
+  // transactionally here since these are the 'final' delivery states.
+  // Note: we still check these again inside the transaction in case the state has
+  // changed while the transaction was inflight.
   if (change.after.exists) {
     const payloadAfter = change.after.data() as QueuePayload;
+    // The email has already been delivered, so we don't need to do anything.
     if (
       payloadAfter &&
       payloadAfter.delivery &&
-      (payloadAfter.delivery.state === "SUCCESS" ||
-        payloadAfter.delivery.state === "ERROR")
+      payloadAfter.delivery.state === "SUCCESS"
+    ) {
+      return;
+    }
+
+    // The email has previously failed to be delivered, so we can't do anything.
+    if (
+      payloadAfter &&
+      payloadAfter.delivery &&
+      payloadAfter.delivery.state === "ERROR"
     ) {
       return;
     }
@@ -368,12 +385,16 @@ async function processWrite(
   const shouldAttemptDelivery = await db.runTransaction<boolean>(
     async (transaction) => {
       const snapshot = await transaction.get(ref);
+      // Record no longer exists, so no need to attempt delivery.
       if (!snapshot.exists) {
         return false;
       }
 
       const payload = snapshot.data() as QueuePayload;
 
+      // We expect the payload to contain a message object describing the email
+      // to be sent, or a template, or a SendGrid template.
+      // If it doesn't and is not a template, we can't do anything.
       if (
         typeof payload.message !== "object" &&
         !payload.template &&
@@ -383,6 +404,8 @@ async function processWrite(
         return false;
       }
 
+      // The record has most likely just been created by a client, so we need to
+      // initialize the delivery state.
       if (!payload.delivery) {
         const startTime = Timestamp.fromDate(new Date());
         const delivery: any = {
@@ -395,36 +418,56 @@ async function processWrite(
           delivery.expireAt = getExpireAt(startTime);
         }
         transaction.update(ref, { delivery });
+        // We've updated the payload, so we need to attempt delivery, but we
+        // don't want to do it in this transaction. Since the transaction will
+        // update the record again the cloud function will be triggered again
+        // and delivery will be attempted at that point.
         return false;
       }
 
       const state = payload.delivery.state;
+      // The email has already been delivered, so we don't need to do anything.
       if (state === "SUCCESS") {
         await events.recordSuccessEvent(change);
         return false;
       }
+
+      // The email has previously failed to be delivered, so we can't do anything.
       if (state === "ERROR") {
         await events.recordErrorEvent(change, payload, payload.delivery.error);
         return false;
       }
+
       if (state === "PROCESSING") {
         await events.recordProcessingEvent(change);
         if (payload.delivery.leaseExpireTime.toMillis() < Date.now()) {
           const error = "Message processing lease expired.";
+
+          /** Send error event */
           await events.recordErrorEvent(change, payload, error);
+
+          // The lease has expired, so we should not attempt to deliver the email again,
+          // but we set the state to ERROR so clients can see that the email failed.
           transaction.update(ref, {
             "delivery.state": "ERROR",
+            // Keeping error to avoid any breaking changes in the next minor update.
+            // Error to be removed for the next major release.
             "delivery.error": "Message processing lease expired.",
           });
         }
+        // Already being processed, so we don't need to do anything.
         return false;
       }
+
       if (state === "PENDING" || state === "RETRY") {
         const eventFn =
           state === "PENDING"
             ? events.recordPendingEvent
             : events.recordRetryEvent;
         await eventFn(change, payload);
+
+        // We can attempt to deliver the email in these states, so we set the state to PROCESSING
+        // and set a lease time to prevent delivery from being attempted forever.
         transaction.update(ref, {
           "delivery.state": "PROCESSING",
           "delivery.leaseExpireTime": Timestamp.fromMillis(Date.now() + 60000),
@@ -432,6 +475,7 @@ async function processWrite(
         return true;
       }
 
+      // We don't know what the state is, so we can't do anything. This should never happen.
       return false;
     }
   );
