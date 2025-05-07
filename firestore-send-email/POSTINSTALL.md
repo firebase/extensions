@@ -44,7 +44,7 @@ See the [official documentation](https://firebase.google.com/docs/extensions/off
 
 When using SendGrid (`SMTP_CONNECTION_URI` includes `sendgrid.net`), you can assign categories to your emails.
 
-## Example JSON with Categories:
+##### Example JSON with Categories:
 ```json
 {
   "to": ["example@example.com"],
@@ -60,6 +60,30 @@ When using SendGrid (`SMTP_CONNECTION_URI` includes `sendgrid.net`), you can ass
 Add this document to the Firestore mail collection to send categorized emails.
 
 For more details, see the [SendGrid Categories documentation](https://docs.sendgrid.com/ui/sending-email/categories).
+
+#### Understanding SendGrid Email IDs
+
+When an email is sent successfully, the extension tracks two different IDs in the delivery information:
+
+- **Queue ID**: This is SendGrid's internal queue identifier (from the `x-message-id` header). It's useful for tracking the email within SendGrid's system.
+- **Message ID**: This is the RFC-2822 Message-ID header, which is a standard email identifier used across email systems.
+
+You can find both IDs in the `delivery.info` field of your email document after successful delivery:
+
+```json
+{
+  "delivery": {
+    "info": {
+      "messageId": "<unique-message-id@your-domain.com>",
+      "sendgridQueueId": "sendgrid-queue-id",
+      "accepted": ["recipient@example.com"],
+      "rejected": [],
+      "pending": [],
+      "response": "status=202"
+    }
+  }
+}
+```
 
 ### Automatic Deletion of Email Documents
 
