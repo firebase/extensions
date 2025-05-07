@@ -1,3 +1,9 @@
+## Version 0.2.1
+
+fix: return info on sendgrid messages
+
+feat: include sendgridQueueId if using that provider
+
 ## Version 0.2.0
 
 feat: use v2 firestore trigger

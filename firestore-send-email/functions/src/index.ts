@@ -31,10 +31,10 @@ import * as nodemailer from "nodemailer";
 import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
-import { QueuePayload, SendGridAttachment } from "./types";
+import { Delivery, QueuePayload, ExtendedSendMailOptions } from "./types";
 import { isSendGrid, setSmtpCredentials } from "./helpers";
 import * as events from "./events";
-import * as sgMail from "@sendgrid/mail";
+import { SendGridTransport } from "./nodemailer-sendgrid";
 
 logs.init();
 
@@ -42,6 +42,15 @@ let db: Firestore;
 let transport: nodemailer.Transporter;
 let templates: Templates;
 let initialized = false;
+
+interface SendMailInfoLike {
+  messageId: string | null;
+  sendgridQueueId?: string | null;
+  accepted: string[];
+  rejected: string[];
+  pending: string[];
+  response: string | null;
+}
 
 /**
  * Initializes Admin SDK & SMTP connection if not already initialized.
@@ -71,7 +80,13 @@ async function transportLayer() {
       },
     });
   }
-
+  if (isSendGrid(config)) {
+    // use our custom transport
+    return nodemailer.createTransport(
+      new SendGridTransport({ apiKey: config.smtpPassword })
+    );
+  }
+  // fallback to any other SMTP provider
   return setSmtpCredentials(config);
 }
 
@@ -183,7 +198,7 @@ async function preparePayload(payload: DocumentData): Promise<DocumentData> {
     uids = uids.concat(payload.bccUids);
   }
 
-  const toFetch = {};
+  const toFetch: Record<string, string | null> = {};
   uids.forEach((uid) => (toFetch[uid] = null));
 
   const documents = await db.getAll(
@@ -195,7 +210,7 @@ async function preparePayload(payload: DocumentData): Promise<DocumentData> {
     }
   );
 
-  const missingUids = [];
+  const missingUids: string[] = [];
 
   documents.forEach((documentSnapshot) => {
     if (documentSnapshot.exists) {
@@ -249,72 +264,6 @@ async function preparePayload(payload: DocumentData): Promise<DocumentData> {
   return payload;
 }
 
-/**
- * If the SMTP provider is SendGrid, we need to check if the payload contains
- * either a text or html content, or if the payload contains a SendGrid Dynamic Template.
- *
- * Throws an error if all of the above are not provided.
- *
- * @param payload the payload from Firestore.
- */
-
-async function sendWithSendGrid(payload: DocumentData) {
-  sgMail.setApiKey(config.smtpPassword);
-
-  const formatEmails = (emails: string[]) => emails.map((email) => ({ email }));
-
-  // Transform attachments to match SendGrid's expected format
-  const formatAttachments = (
-    attachments: QueuePayload["message"]["attachments"] = []
-  ): SendGridAttachment[] => {
-    return attachments.map((attachment) => ({
-      content: (attachment.content as string | undefined) || "", // Base64-encoded string
-      filename: attachment.filename || "attachment",
-      type: attachment.contentType,
-      disposition: attachment.contentDisposition,
-      contentId: attachment.cid,
-    }));
-  };
-
-  const replyTo = { email: payload.replyTo || config.defaultReplyTo };
-
-  const attachments = payload.message?.attachments;
-
-  // Build the message object for SendGrid
-  const msg: sgMail.MailDataRequired = {
-    to: formatEmails(payload.to),
-    cc: formatEmails(payload.cc),
-    bcc: formatEmails(payload.bcc),
-    from: { email: payload.from || config.defaultFrom },
-    replyTo: replyTo.email ? replyTo : undefined,
-    subject: payload.message?.subject,
-    text:
-      typeof payload.message?.text === "string"
-        ? payload.message?.text
-        : undefined,
-    html:
-      typeof payload.message?.html === "string"
-        ? payload.message?.html
-        : undefined,
-    categories: payload.categories, // SendGrid-specific field
-    headers: payload.headers,
-    attachments: formatAttachments(attachments), // Transform attachments to SendGrid format
-    mailSettings: payload.sendGrid?.mailSettings || {}, // SendGrid-specific mail settings
-  };
-
-  // If a SendGrid template is provided, include templateId and dynamicTemplateData
-  if (payload.sendGrid?.templateId) {
-    msg.templateId = payload.sendGrid.templateId;
-    msg.dynamicTemplateData = payload.sendGrid.dynamicTemplateData || {};
-  }
-
-  // Log the final message payload for debugging
-  logs.info("SendGrid message payload constructed", { msg });
-
-  // Send the message using SendGrid's API
-  return sgMail.send(msg);
-}
-
 async function deliver(ref: DocumentReference): Promise<void> {
   // Fetch the Firestore document
   const snapshot = await ref.get();
@@ -350,33 +299,28 @@ async function deliver(ref: DocumentReference): Promise<void> {
       );
     }
 
-    let result;
+    const mailOptions: ExtendedSendMailOptions = {
+      from: payload.from || config.defaultFrom,
+      replyTo: payload.replyTo || config.defaultReplyTo,
+      to: payload.to,
+      cc: payload.cc,
+      bcc: payload.bcc,
+      subject: payload.message?.subject,
+      text: payload.message?.text,
+      html: payload.message?.html,
+      attachments: payload.message?.attachments,
+      categories: payload.categories,
+      templateId: payload.sendGrid?.templateId,
+      dynamicTemplateData: payload.sendGrid?.dynamicTemplateData,
+      mailSettings: payload.sendGrid?.mailSettings,
+    };
 
-    // Automatically detect SendGrid
-    if (isSendGrid(config)) {
-      logs.info("Using SendGrid for email delivery", {
-        msg: payload,
-      });
-      result = await sendWithSendGrid(payload); // Use the SendGrid-specific function
-    } else {
-      logs.info("Using standard transport for email delivery.", {
-        msg: payload,
-      });
-      // Use the default transport for other SMTP providers
-      result = await transport.sendMail({
-        ...Object.assign(payload.message ?? {}, {
-          from: payload.from || config.defaultFrom,
-          replyTo: payload.replyTo || config.defaultReplyTo,
-          to: payload.to,
-          cc: payload.cc,
-          bcc: payload.bcc,
-          headers: payload.headers || {},
-        }),
-      });
-    }
+    logs.info("Sending via transport.sendMail()", { mailOptions });
+    const result = (await transport.sendMail(mailOptions)) as any;
 
-    const info = {
+    const info: SendMailInfoLike = {
       messageId: result.messageId || null,
+      sendgridQueueId: result.queueId || null,
       accepted: result.accepted || [],
       rejected: result.rejected || [],
       pending: result.pending || [],
@@ -417,7 +361,7 @@ async function processWrite(
   // Note: we still check these again inside the transaction in case the state has
   // changed while the transaction was inflight.
   if (change.after.exists) {
-    const payloadAfter = change.after.data();
+    const payloadAfter = change.after.data() as QueuePayload;
     // The email has already been delivered, so we don't need to do anything.
     if (
       payloadAfter &&
@@ -445,7 +389,7 @@ async function processWrite(
         return false;
       }
 
-      const payload = snapshot.data();
+      const payload = snapshot.data() as QueuePayload;
 
       // We expect the payload to contain a message object describing the email
       // to be sent, or a template, or a SendGrid template.
@@ -463,22 +407,16 @@ async function processWrite(
       // initialize the delivery state.
       if (!payload.delivery) {
         const startTime = Timestamp.fromDate(new Date());
-
-        const delivery = {
-          startTime: Timestamp.fromDate(new Date()),
+        const delivery: Partial<Delivery> = {
+          startTime: startTime,
           state: "PENDING",
           attempts: 0,
           error: null,
         };
-
         if (config.TTLExpireType && config.TTLExpireType !== "never") {
-          delivery["expireAt"] = getExpireAt(startTime);
+          delivery.expireAt = getExpireAt(startTime);
         }
-
-        transaction.update(ref, {
-          //@ts-ignore
-          delivery,
-        });
+        transaction.update(ref, { delivery });
         // We've updated the payload, so we need to attempt delivery, but we
         // don't want to do it in this transaction. Since the transaction will
         // update the record again the cloud function will be triggered again
@@ -486,21 +424,21 @@ async function processWrite(
         return false;
       }
 
+      const state = payload.delivery.state;
       // The email has already been delivered, so we don't need to do anything.
-      if (payload.delivery.state === "SUCCESS") {
+      if (state === "SUCCESS") {
         await events.recordSuccessEvent(change);
         return false;
       }
 
       // The email has previously failed to be delivered, so we can't do anything.
-      if (payload.delivery.state === "ERROR") {
+      if (state === "ERROR") {
         await events.recordErrorEvent(change, payload, payload.delivery.error);
         return false;
       }
 
-      if (payload.delivery.state === "PROCESSING") {
+      if (state === "PROCESSING") {
         await events.recordProcessingEvent(change);
-
         if (payload.delivery.leaseExpireTime.toMillis() < Date.now()) {
           const error = "Message processing lease expired.";
 
@@ -520,20 +458,12 @@ async function processWrite(
         return false;
       }
 
-      if (payload.delivery.state === "PENDING") {
-        await events.recordPendingEvent(change, payload);
-
-        // We can attempt to deliver the email in these states, so we set the state to PROCESSING
-        // and set a lease time to prevent delivery from being attempted forever.
-        transaction.update(ref, {
-          "delivery.state": "PROCESSING",
-          "delivery.leaseExpireTime": Timestamp.fromMillis(Date.now() + 60000),
-        });
-        return true;
-      }
-
-      if (payload.delivery.state === "RETRY") {
-        await events.recordRetryEvent(change, payload);
+      if (state === "PENDING" || state === "RETRY") {
+        const eventFn =
+          state === "PENDING"
+            ? events.recordPendingEvent
+            : events.recordRetryEvent;
+        await eventFn(change, payload);
 
         // We can attempt to deliver the email in these states, so we set the state to PROCESSING
         // and set a lease time to prevent delivery from being attempted forever.
@@ -568,19 +498,17 @@ export const processQueue = onDocumentWritten(
 
     try {
       await processWrite(change);
-    } catch (err) {
+    } catch (err: any) {
       await events.recordErrorEvent(
         change,
         change.after.data(),
-        `Unhandled error occurred during processing: ${err.message}"`
+        `Unhandled error occurred during processing: ${err.message}`
       );
       logs.error(err);
       return null;
     }
 
-    /** record complete event */
     await events.recordCompleteEvent(change);
-
     logs.complete();
   }
 );
