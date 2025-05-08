@@ -47,6 +47,45 @@ export function getQuery(
   return query;
 }
 
+async function verifyCollectionExists(config: CliConfig): Promise<void> {
+  const { sourceCollectionPath, queryCollectionGroup } = config;
+
+  try {
+    if (queryCollectionGroup) {
+      const collectionName =
+        sourceCollectionPath.split("/")[
+          sourceCollectionPath.split("/").length - 1
+        ];
+      const snapshot = await firebase
+        .firestore()
+        .collectionGroup(collectionName)
+        .limit(1)
+        .get();
+      if (snapshot.empty) {
+        throw new Error(
+          `No documents found in collection group: ${collectionName}`
+        );
+      }
+    } else {
+      const snapshot = await firebase
+        .firestore()
+        .collection(sourceCollectionPath)
+        .limit(1)
+        .get();
+      if (snapshot.empty) {
+        throw new Error(
+          `Collection does not exist or is empty: ${sourceCollectionPath}`
+        );
+      }
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Failed to access collection: ${error.message}`);
+    }
+    throw error;
+  }
+}
+
 export async function runSingleThread(
   dataSink: FirestoreBigQueryEventHistoryTracker,
   config: CliConfig,
@@ -55,6 +94,9 @@ export async function runSingleThread(
     | undefined
 ) {
   let totalRowsImported = 0;
+
+  // Verify collection exists before proceeding
+  await verifyCollectionExists(config);
 
   await initializeFailedBatchOutput(config.failedBatchOutput);
 
