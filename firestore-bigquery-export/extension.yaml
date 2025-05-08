@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.2.3
+version: 0.2.4
 specVersion: v1beta
 
 displayName: Stream Firestore to BigQuery
@@ -163,18 +163,50 @@ params:
         value: asia-northeast2
       - label: Seoul (asia-northeast3)
         value: asia-northeast3
-      - label: Singapore (asia-southeast1)
-        value: asia-southeast1
       - label: Sydney (australia-southeast1)
         value: australia-southeast1
-      - label: Taiwan (asia-east1)
-        value: asia-east1
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
       - label: United States (multi-regional)
         value: us
       - label: Europe (multi-regional)
         value: eu
+      - label: Johannesburg (africa-south1)
+        value: africa-south1
+      - label: Tel Aviv (me-west1)
+        value: me-west1
+      - label: Doha (me-central1)
+        value: me-central1
+      - label: Dammam (me-central2)
+        value: me-central2
+      - label: Zürich (europe-west6)
+        value: europe-west6
+      - label: Turin (europe-west12)
+        value: europe-west12
+      - label: Stockholm (europe-north2)
+        value: europe-north2
+      - label: Paris (europe-west9)
+        value: europe-west9
+      - label: Milan (europe-west8)
+        value: europe-west8
+      - label: Madrid (europe-southwest1)
+        value: europe-southwest1
+      - label: Berlin (europe-west10)
+        value: europe-west10
+      - label: Melbourne (australia-southeast2)
+        value: australia-southeast2
+      - label: Delhi (asia-south2)
+        value: asia-south2
+      - label: Toronto (northamerica-northeast2)
+        value: northamerica-northeast2
+      - label: Santiago (southamerica-west1)
+        value: southamerica-west1
+      - label: Mexico (northamerica-south1)
+        value: northamerica-south1
+      - label: Dallas (us-south1)
+        value: us-south1
+      - label: Columbus, Ohio (us-east5)
+        value: us-east5
     default: us
     required: true
     immutable: true
