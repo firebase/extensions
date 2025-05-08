@@ -1,4 +1,5 @@
 ## Version 0.2.4
+
 feat: Add bigquery dataset locations and remove duplicates
 
 ## Version 0.2.3
