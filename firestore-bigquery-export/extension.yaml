@@ -163,12 +163,8 @@ params:
         value: asia-northeast2
       - label: Seoul (asia-northeast3)
         value: asia-northeast3
-      - label: Singapore (asia-southeast1)
-        value: asia-southeast1
       - label: Sydney (australia-southeast1)
         value: australia-southeast1
-      - label: Taiwan (asia-east1)
-        value: asia-east1
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
       - label: United States (multi-regional)
