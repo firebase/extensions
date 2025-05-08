@@ -95,7 +95,6 @@ export async function runSingleThread(
 ) {
   let totalRowsImported = 0;
 
-  // Verify collection exists before proceeding
   await verifyCollectionExists(config);
 
   await initializeFailedBatchOutput(config.failedBatchOutput);

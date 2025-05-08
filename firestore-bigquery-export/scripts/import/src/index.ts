@@ -105,7 +105,7 @@ const run = async (): Promise<number> => {
     cursor = await firebase.firestore().doc(cursorDocumentId).get();
     logs.resumingImport(config, cursorDocumentId);
   }
-  const totalRowsImported = runSingleThread(dataSink, config, cursor);
+  const totalRowsImported = await runSingleThread(dataSink, config, cursor);
   try {
     await unlink(cursorPositionFile);
   } catch (e) {
