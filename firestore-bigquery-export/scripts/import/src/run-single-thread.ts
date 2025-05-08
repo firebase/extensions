@@ -52,10 +52,9 @@ async function verifyCollectionExists(config: CliConfig): Promise<void> {
 
   try {
     if (queryCollectionGroup) {
+      const sourceCollectionPathParts = sourceCollectionPath.split("/");
       const collectionName =
-        sourceCollectionPath.split("/")[
-          sourceCollectionPath.split("/").length - 1
-        ];
+        sourceCollectionPathParts[sourceCollectionPathParts.length - 1];
       const snapshot = await firebase
         .firestore()
         .collectionGroup(collectionName)
@@ -80,7 +79,8 @@ async function verifyCollectionExists(config: CliConfig): Promise<void> {
     }
   } catch (error) {
     if (error instanceof Error) {
-      throw new Error(`Failed to access collection: ${error.message}`);
+      error.message = `Failed to access collection: ${error.message}`;
+      throw error;
     }
     throw error;
   }
