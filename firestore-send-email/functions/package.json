@@ -30,7 +30,8 @@
     "rimraf": "^2.6.3",
     "smtp-server": "^3.13.4",
     "typescript": "^5.7.3",
-    "wait-on": "^7.2.0"
+    "wait-on": "^7.2.0",
+    "zod": "^3.24.4"
   },
   "devDependencies": {
     "@types/jest": "29.5.0",
