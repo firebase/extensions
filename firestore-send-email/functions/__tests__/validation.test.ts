@@ -187,6 +187,17 @@ describe("validatePayload", () => {
       };
       expect(() => validatePayload(validPayload)).not.toThrow();
     });
+
+    it("should validate template without message object", () => {
+      const validPayload = {
+        to: "test@example.com",
+        template: {
+          name: "EGFMB64MzmVz0Or75ctL",
+          data: { userName: "cabljac", name: "jacob" },
+        },
+      };
+      expect(() => validatePayload(validPayload)).not.toThrow();
+    });
   });
 
   it("should validate a SendGrid payload with only mailSettings", () => {
