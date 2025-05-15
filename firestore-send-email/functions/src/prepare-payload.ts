@@ -24,49 +24,35 @@ function validateFieldArray(field: string, array?: string[]) {
 export async function preparePayload(
   payload: DocumentData
 ): Promise<DocumentData> {
-  console.log("Step 1: Starting preparePayload with payload:", payload);
-
-  // Validate the payload before processing
-  console.log("Step 2: Validating payload");
   validatePayload(payload);
 
   const { template } = payload;
-  console.log("Step 3: Template from payload:", template);
-  console.log("Step 4: Templates instance exists:", !!templates);
 
   if (templates && template) {
-    console.log("Step 5: Processing template");
-
     if (!template.name) {
       throw new Error(`Template object is missing a 'name' parameter.`);
     }
 
-    console.log("Step 6: Rendering template:", template.name);
     const templateRender = await templates.render(template.name, template.data);
-    console.log("Step 7: Template render result:", templateRender);
-
     const mergeMessage = payload.message || {};
-    console.log("Step 8: Message to merge with:", mergeMessage);
 
     const attachments = templateRender.attachments
       ? templateRender.attachments
       : mergeMessage.attachments;
 
-    // Helper function to handle null/empty string logic
     const handleTemplateValue = (value: any) => {
       if (value === null) {
-        return undefined; // null means don't include the property
+        return undefined;
       }
       if (value === "") {
-        return ""; // Empty string is preserved
+        return "";
       }
       if (value === undefined) {
-        return undefined; // undefined means don't overwrite
+        return undefined;
       }
-      return value || undefined; // For other falsy values, convert to undefined
+      return value || undefined;
     };
 
-    // Only include values that should be applied from templateRender
     const templateContent = {
       subject: handleTemplateValue(templateRender.subject),
       html: handleTemplateValue(templateRender.html),
@@ -75,7 +61,6 @@ export async function preparePayload(
       attachments: attachments || [],
     };
 
-    // Remove undefined values to prevent Object.assign from overwriting
     Object.keys(templateContent).forEach((key) => {
       if (templateContent[key] === undefined) {
         delete templateContent[key];
@@ -83,14 +68,12 @@ export async function preparePayload(
     });
 
     payload.message = Object.assign(mergeMessage, templateContent);
-    console.log("Step 9: Merged message result:", payload.message);
   }
 
   let to: string[] = [];
   let cc: string[] = [];
   let bcc: string[] = [];
 
-  console.log("Step 10: Processing recipient addresses");
   if (typeof payload.to === "string") {
     to = [payload.to];
   } else if (payload.to) {
@@ -112,10 +95,7 @@ export async function preparePayload(
     bcc = bcc.concat(payload.bcc);
   }
 
-  console.log("Step 11: Processed recipients:", { to, cc, bcc });
-
   if (!payload.toUids && !payload.ccUids && !payload.bccUids) {
-    console.log("Step 12: No UIDs to process, returning with direct addresses");
     payload.to = to;
     payload.cc = cc;
     payload.bcc = bcc;
@@ -143,12 +123,9 @@ export async function preparePayload(
     uids = uids.concat(payload.bccUids);
   }
 
-  console.log("Step 13: Processing UIDs:", uids);
-
   const toFetch: Record<string, string | null> = {};
   uids.forEach((uid) => (toFetch[uid] = null));
 
-  console.log("Step 14: Fetching user documents");
   const documents = await db.getAll(
     ...Object.keys(toFetch).map((uid) =>
       db.collection(config.usersCollection).doc(uid)
@@ -174,10 +151,6 @@ export async function preparePayload(
     }
   });
 
-  console.log("Step 15: User document fetch results:", {
-    toFetch,
-    missingUids,
-  });
   logs.missingUids(missingUids);
 
   if (payload.toUids) {
@@ -212,8 +185,6 @@ export async function preparePayload(
   }
 
   payload.bcc = bcc;
-
-  console.log("Step 16: Final payload:", payload);
 
   return payload;
 }
