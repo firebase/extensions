@@ -1,5 +1,5 @@
 import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
-import { FirestoreDocumentChangeEvent } from "..";
+import { ChangeType, FirestoreDocumentChangeEvent } from "..";
 import * as firebase from "firebase-admin";
 
 import * as logs from "../logs";
@@ -199,7 +199,10 @@ export class Partitioning {
 
     const firestoreFieldName = this.config.timePartitioningFirestoreField;
     const fieldName = this.config.timePartitioningField;
-    const fieldValue = event.data[firestoreFieldName];
+    const fieldValue =
+      event.operation === ChangeType.DELETE
+        ? event.oldData[firestoreFieldName]
+        : event.data[firestoreFieldName];
 
     if (!fieldName || !fieldValue) {
       return {};
