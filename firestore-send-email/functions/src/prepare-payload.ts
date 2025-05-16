@@ -1,7 +1,12 @@
 import { DocumentData } from "firebase-admin/firestore";
-import { validatePayload } from "./validation";
+import {
+  validatePayload,
+  attachmentSchema,
+  attachmentsSchema,
+} from "./validation";
 import * as logs from "./logs";
 import config from "./config";
+import { z } from "zod";
 
 let db: any;
 let templates: any;
@@ -36,9 +41,11 @@ export async function preparePayload(
     const templateRender = await templates.render(template.name, template.data);
     const mergeMessage = payload.message || {};
 
-    const attachments = templateRender.attachments
-      ? templateRender.attachments
-      : mergeMessage.attachments;
+    let attachments = attachmentsSchema.parse(
+      templateRender.attachments
+        ? templateRender.attachments
+        : mergeMessage.attachments
+    );
 
     const handleTemplateValue = (value: any) => {
       if (value === null) {

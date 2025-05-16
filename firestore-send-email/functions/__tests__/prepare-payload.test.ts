@@ -350,4 +350,93 @@ describe("preparePayload Template Merging", () => {
     expect(result.message.text).toBe("Original text");
     expect(result.message.subject).toBe("Template Subject");
   });
+
+  it("should handle incorrectly formatted attachments object", async () => {
+    const payload = {
+      to: "tester@gmx.at",
+      template: {
+        name: "med_order_reply_greimel",
+        data: {
+          address: "Halbenrain 140 Graz",
+          doctorName: "Dr. Andreas",
+          openingHours: "Mo., Mi., Fr. 8:00-12:00Di., Do. 10:30-15:30",
+          orderText: "Some stuff i need",
+          userName: "Pfeiler ",
+          name: "med_order_reply_greimel",
+        },
+      },
+      message: {
+        attachments: [
+          {
+            html: null,
+            text: null,
+          },
+        ],
+        subject: "Bestellbestätigung",
+      },
+    };
+
+    const result = await preparePayload(payload);
+
+    // Should convert attachments to an empty array since the format is incorrect
+    expect(result.message.attachments).toEqual([]);
+    expect(result.message.subject).toBe("Bestellbestätigung");
+    expect(result.to).toEqual(["tester@gmx.at"]);
+  });
+
+  describe("attachment validation", () => {
+    it("should handle non-array attachments", async () => {
+      const payload = {
+        to: "test@example.com",
+        message: {
+          subject: "Test Subject",
+          text: "Test text",
+          attachments: "not-an-array",
+        },
+      };
+
+      await expect(preparePayload(payload)).rejects.toThrow();
+    });
+
+    it("should handle null attachments", async () => {
+      const payload = {
+        to: "test@example.com",
+        message: {
+          subject: "Test Subject",
+          text: "Test text",
+          attachments: null,
+        },
+      };
+
+      await expect(preparePayload(payload)).rejects.toThrow();
+    });
+
+    it("should handle undefined attachments", async () => {
+      const payload = {
+        to: "test@example.com",
+        message: {
+          subject: "Test Subject",
+          text: "Test text",
+          attachments: undefined,
+        },
+      };
+
+      const result = await preparePayload(payload);
+      expect(result.message.attachments).toBeUndefined();
+    });
+
+    it("should handle empty attachments array", async () => {
+      const payload = {
+        to: "test@example.com",
+        message: {
+          subject: "Test Subject",
+          text: "Test text",
+          attachments: [],
+        },
+      };
+
+      const result = await preparePayload(payload);
+      expect(result.message.attachments).toEqual([]);
+    });
+  });
 });
