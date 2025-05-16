@@ -12,13 +12,63 @@ export class ValidationError extends Error {
 }
 
 /**
+ * Schema for email attachments
+ */
+export const attachmentSchema = z
+  .object({
+    filename: z.string().nullable().optional(),
+    content: z
+      .union([z.string(), z.instanceof(Buffer), z.any()])
+      .nullable()
+      .optional(), // Stream type is handled as any
+    path: z.string().nullable().optional(),
+    href: z.string().nullable().optional(),
+    httpHeaders: z.record(z.string()).nullable().optional(),
+    contentType: z.string().nullable().optional(),
+    contentDisposition: z.string().nullable().optional(),
+    cid: z.string().nullable().optional(),
+    encoding: z.string().nullable().optional(),
+    headers: z.record(z.string()).nullable().optional(),
+    raw: z.string().nullable().optional(),
+  })
+  .passthrough()
+  .transform((data) => {
+    // Only keep properties that are defined in the schema
+    const validKeys = [
+      "filename",
+      "content",
+      "path",
+      "href",
+      "httpHeaders",
+      "contentType",
+      "contentDisposition",
+      "cid",
+      "encoding",
+      "headers",
+      "raw",
+    ];
+    return Object.fromEntries(
+      Object.entries(data).filter(([key]) => validKeys.includes(key))
+    );
+  });
+
+export const attachmentsSchema = z
+  .array(attachmentSchema)
+  .optional()
+  .transform((attachments) =>
+    attachments
+      ? attachments.filter((attachment) => Object.keys(attachment).length > 0)
+      : undefined
+  );
+
+/**
  * Base schema for email message content.
  */
 const baseMessageSchema = z.object({
   subject: z.string().optional(),
-  text: z.string().optional(),
-  html: z.string().optional(),
-  attachments: z.array(z.any()).optional(),
+  text: z.string().nullable().optional(),
+  html: z.string().nullable().optional(),
+  attachments: attachmentsSchema,
 });
 
 /**
