@@ -187,6 +187,17 @@ describe("validatePayload", () => {
       };
       expect(() => validatePayload(validPayload)).not.toThrow();
     });
+
+    it("should validate template without message object", () => {
+      const validPayload = {
+        to: "test@example.com",
+        template: {
+          name: "EGFMB64MzmVz0Or75ctL",
+          data: { userName: "cabljac", name: "jacob" },
+        },
+      };
+      expect(() => validatePayload(validPayload)).not.toThrow();
+    });
   });
 
   it("should validate a SendGrid payload with only mailSettings", () => {
@@ -333,6 +344,268 @@ describe("validatePayload", () => {
       expect(() => validatePayload(invalidPayload)).toThrow(
         "Invalid template configuration: Field 'template.data' must be a map"
       );
+    });
+  });
+
+  describe("attachment validation", () => {
+    describe("valid attachments", () => {
+      it("should validate plain text attachment", () => {
+        const validPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: [
+              {
+                filename: "hello.txt",
+                content: "Hello world!",
+              },
+            ],
+          },
+        };
+        expect(() => validatePayload(validPayload)).not.toThrow();
+      });
+
+      it("should validate binary buffer attachment", () => {
+        const validPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: [
+              {
+                filename: "buffer.txt",
+                content: Buffer.from("Hello world!", "utf8"),
+              },
+            ],
+          },
+        };
+        expect(() => validatePayload(validPayload)).not.toThrow();
+      });
+
+      it("should validate local file attachment", () => {
+        const validPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: [
+              {
+                filename: "report.pdf",
+                path: "/absolute/path/to/report.pdf",
+              },
+            ],
+          },
+        };
+        expect(() => validatePayload(validPayload)).not.toThrow();
+      });
+
+      it("should validate attachment with implicit filename", () => {
+        const validPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: [
+              {
+                path: "/absolute/path/to/image.png",
+              },
+            ],
+          },
+        };
+        expect(() => validatePayload(validPayload)).not.toThrow();
+      });
+
+      it("should validate attachment with custom content type", () => {
+        const validPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: [
+              {
+                filename: "data.bin",
+                content: Buffer.from("deadbeef", "hex"),
+                contentType: "application/octet-stream",
+              },
+            ],
+          },
+        };
+        expect(() => validatePayload(validPayload)).not.toThrow();
+      });
+
+      it("should validate remote file attachment", () => {
+        const validPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: [
+              {
+                filename: "license.txt",
+                href: "https://raw.githubusercontent.com/nodemailer/nodemailer/master/LICENSE",
+              },
+            ],
+          },
+        };
+        expect(() => validatePayload(validPayload)).not.toThrow();
+      });
+
+      it("should validate base64 encoded attachment", () => {
+        const validPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: [
+              {
+                filename: "photo.jpg",
+                content: "/9j/4AAQSkZJRgABAQAAAQABAAD…",
+                encoding: "base64",
+              },
+            ],
+          },
+        };
+        expect(() => validatePayload(validPayload)).not.toThrow();
+      });
+
+      it("should validate data URI attachment", () => {
+        const validPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: [
+              {
+                path: "data:text/plain;base64,SGVsbG8gd29ybGQ=",
+              },
+            ],
+          },
+        };
+        expect(() => validatePayload(validPayload)).not.toThrow();
+      });
+
+      it("should validate pre-built MIME node attachment", () => {
+        const validPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: [
+              {
+                raw: [
+                  "Content-Type: text/plain; charset=utf-8",
+                  'Content-Disposition: attachment; filename="greeting.txt"',
+                  "",
+                  "Hello world!",
+                ].join("\r\n"),
+              },
+            ],
+          },
+        };
+        expect(() => validatePayload(validPayload)).not.toThrow();
+      });
+
+      it("should validate embedded image attachment", () => {
+        const validPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            html: '<p><img src="cid:logo@nodemailer" alt="Nodemailer logo"></p>',
+            attachments: [
+              {
+                filename: "logo.png",
+                path: "./assets/logo.png",
+                cid: "logo@nodemailer",
+              },
+            ],
+          },
+        };
+        expect(() => validatePayload(validPayload)).not.toThrow();
+      });
+
+      it("should validate multiple attachments", () => {
+        const validPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: [
+              {
+                filename: "file1.txt",
+                content: "Content 1",
+              },
+              {
+                filename: "file2.txt",
+                content: "Content 2",
+              },
+            ],
+          },
+        };
+        expect(() => validatePayload(validPayload)).not.toThrow();
+      });
+    });
+
+    describe("invalid attachments", () => {
+      it("should throw error for invalid httpHeaders type", () => {
+        const invalidPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: [
+              {
+                filename: "test.txt",
+                href: "https://example.com",
+                httpHeaders: "not-an-object",
+              },
+            ],
+          },
+        };
+        expect(() => validatePayload(invalidPayload)).toThrow(ValidationError);
+        expect(() => validatePayload(invalidPayload)).toThrow(
+          "Invalid message configuration: Field 'message.attachments.0.httpHeaders' must be a map"
+        );
+      });
+
+      it("should throw error for invalid headers type", () => {
+        const invalidPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: [
+              {
+                filename: "test.txt",
+                content: "test",
+                headers: "not-an-object",
+              },
+            ],
+          },
+        };
+        expect(() => validatePayload(invalidPayload)).toThrow(ValidationError);
+        expect(() => validatePayload(invalidPayload)).toThrow(
+          "Invalid message configuration: Field 'message.attachments.0.headers' must be a map"
+        );
+      });
+
+      it("should throw error for non-array attachments", () => {
+        const invalidPayload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: {
+              filename: "test.txt",
+              content: "test",
+            },
+          },
+        };
+        expect(() => validatePayload(invalidPayload)).toThrow(ValidationError);
+        expect(() => validatePayload(invalidPayload)).toThrow(
+          "Invalid message configuration: Field 'message.attachments' must be an array"
+        );
+      });
     });
   });
 });
