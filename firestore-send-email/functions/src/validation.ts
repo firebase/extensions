@@ -66,8 +66,8 @@ export const attachmentsSchema = z
  */
 const baseMessageSchema = z.object({
   subject: z.string().optional(),
-  text: z.string().optional(),
-  html: z.string().optional(),
+  text: z.string().nullable().optional(),
+  html: z.string().nullable().optional(),
   attachments: attachmentsSchema,
 });
 
