@@ -1,3 +1,9 @@
+## Version 0.2.2
+
+fix: fix validation of payloads
+
+docs: add documentation on how to use dynamic templates with SendGrid
+
 ## Version 0.2.1
 
 fix: return info on sendgrid messages

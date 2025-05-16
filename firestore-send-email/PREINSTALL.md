@@ -39,6 +39,29 @@ Add this document to the Firestore mail collection to send categorized emails.
 
 For more details, see the [SendGrid Categories documentation](https://docs.sendgrid.com/ui/sending-email/categories).
 
+#### Firestore-Send-Email: SendGrid Dynamic Templates
+
+When using SendGrid, you can use SendGrid Dynamic Templates to create and send templated emails.
+
+## Example JSON representation of Firestore document for a Dynamic Template:
+```json
+{
+  "to": ["example@example.com"],
+  "sendGrid": {
+    "templateId": "d-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  // SendGrid Dynamic Template ID always starts with 'd-'
+    "dynamicTemplateData": {
+      "name": "John Doe",
+      "company": "Example Corp",
+      "position": "Developer"
+    }
+  }
+}
+```
+
+Add this document to the Firestore mail collection to send an email using a SendGrid Dynamic Template. The `templateId` is required and should be your SendGrid Dynamic Template ID (always starts with 'd-'). The `dynamicTemplateData` object contains the variables that will be used in your template.
+
+For more details, see the [SendGrid Dynamic Templates documentation](https://docs.sendgrid.com/ui/sending-email/how-to-send-an-email-with-dynamic-templates).
+
 #### Setting Up OAuth2 Authentication
 
 This section will help you set up OAuth2 authentication for the extension, using GCP (Gmail) as an example.
@@ -195,7 +218,7 @@ Detailed instructions for creating a TTL field can be found in the [Firestore TT
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 
-- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service's no-cost tier:
   - Cloud Firestore
   - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
 

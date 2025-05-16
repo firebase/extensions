@@ -61,6 +61,29 @@ Add this document to the Firestore mail collection to send categorized emails.
 
 For more details, see the [SendGrid Categories documentation](https://docs.sendgrid.com/ui/sending-email/categories).
 
+#### Firestore-Send-Email: SendGrid Dynamic Templates
+
+When using SendGrid, you can use SendGrid Dynamic Templates to create and send templated emails.
+
+## Example JSON representation of Firestore document for a Dynamic Template:
+```json
+{
+  "to": ["example@example.com"],
+  "sendGrid": {
+    "templateId": "d-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "dynamicTemplateData": {
+      "name": "John Doe",
+      "company": "Example Corp",
+      "position": "Developer"
+    }
+  }
+}
+```
+
+Add this document to the Firestore mail collection to send an email using a SendGrid Dynamic Template. The `templateId` is required and should be your SendGrid Dynamic Template ID (always starts with 'd-'). The `dynamicTemplateData` object contains the variables that will be used in your template.
+
+For more details, see the [SendGrid Dynamic Templates documentation](https://docs.sendgrid.com/ui/sending-email/how-to-send-an-email-with-dynamic-templates).
+
 #### Understanding SendGrid Email IDs
 
 When an email is sent successfully, the extension tracks two different IDs in the delivery information:
