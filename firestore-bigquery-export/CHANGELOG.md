@@ -2,6 +2,10 @@
 
 feat: Add bigquery dataset locations and remove duplicates
 
+fix: keep partition value on delete using old data
+
+docs: improve "Remove stale data" query in guide
+
 ## Version 0.2.3
 
 fix: pass full document resource name to bigquery
