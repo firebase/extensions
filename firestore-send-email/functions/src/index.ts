@@ -22,7 +22,6 @@ import {
   DocumentSnapshot,
   DocumentReference,
   getFirestore,
-  DocumentData,
 } from "firebase-admin/firestore";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as functions from "firebase-functions";
@@ -35,7 +34,7 @@ import { Delivery, QueuePayload, ExtendedSendMailOptions } from "./types";
 import { isSendGrid, setSmtpCredentials } from "./helpers";
 import * as events from "./events";
 import { SendGridTransport } from "./nodemailer-sendgrid";
-import { validatePayload } from "./validation";
+import { preparePayload, setDependencies } from "./prepare-payload";
 
 logs.init();
 
@@ -65,6 +64,9 @@ async function initialize() {
   if (config.templatesCollection) {
     templates = new Templates(db.collection(config.templatesCollection));
   }
+
+  // Set dependencies for preparePayload
+  setDependencies(db, templates);
 
   /** setup events */
   events.setupEventChannel();
@@ -122,150 +124,6 @@ function getExpireAt(startTime: Timestamp) {
       break;
   }
   return Timestamp.fromDate(now);
-}
-
-async function preparePayload(payload: DocumentData): Promise<DocumentData> {
-  // Validate the payload before processing
-  validatePayload(payload);
-
-  const { template } = payload;
-
-  if (templates && template) {
-    if (!template.name) {
-      throw new Error(`Template object is missing a 'name' parameter.`);
-    }
-
-    const templateRender = await templates.render(template.name, template.data);
-
-    const mergeMessage = payload.message || {};
-
-    const attachments = templateRender.attachments
-      ? templateRender.attachments
-      : mergeMessage.attachments;
-
-    payload.message = Object.assign(mergeMessage, templateRender, {
-      attachments: attachments || [],
-    });
-  }
-
-  let to: string[] = [];
-  let cc: string[] = [];
-  let bcc: string[] = [];
-
-  if (typeof payload.to === "string") {
-    to = [payload.to];
-  } else if (payload.to) {
-    validateFieldArray("to", payload.to);
-    to = to.concat(payload.to);
-  }
-
-  if (typeof payload.cc === "string") {
-    cc = [payload.cc];
-  } else if (payload.cc) {
-    validateFieldArray("cc", payload.cc);
-    cc = cc.concat(payload.cc);
-  }
-
-  if (typeof payload.bcc === "string") {
-    bcc = [payload.bcc];
-  } else if (payload.bcc) {
-    validateFieldArray("bcc", payload.bcc);
-    bcc = bcc.concat(payload.bcc);
-  }
-
-  if (!payload.toUids && !payload.ccUids && !payload.bccUids) {
-    payload.to = to;
-    payload.cc = cc;
-    payload.bcc = bcc;
-
-    return payload;
-  }
-
-  if (!config.usersCollection) {
-    throw new Error("Must specify a users collection to send using uids.");
-  }
-
-  let uids: string[] = [];
-
-  if (payload.toUids) {
-    validateFieldArray("toUids", payload.toUids);
-    uids = uids.concat(payload.toUids);
-  }
-
-  if (payload.ccUids) {
-    validateFieldArray("ccUids", payload.ccUids);
-    uids = uids.concat(payload.ccUids);
-  }
-
-  if (payload.bccUids) {
-    validateFieldArray("bccUids", payload.bccUids);
-    uids = uids.concat(payload.bccUids);
-  }
-
-  const toFetch: Record<string, string | null> = {};
-  uids.forEach((uid) => (toFetch[uid] = null));
-
-  const documents = await db.getAll(
-    ...Object.keys(toFetch).map((uid) =>
-      db.collection(config.usersCollection).doc(uid)
-    ),
-    {
-      fieldMask: ["email"],
-    }
-  );
-
-  const missingUids: string[] = [];
-
-  documents.forEach((documentSnapshot) => {
-    if (documentSnapshot.exists) {
-      const email = documentSnapshot.get("email");
-
-      if (email) {
-        toFetch[documentSnapshot.id] = email;
-      } else {
-        missingUids.push(documentSnapshot.id);
-      }
-    } else {
-      missingUids.push(documentSnapshot.id);
-    }
-  });
-
-  logs.missingUids(missingUids);
-
-  if (payload.toUids) {
-    payload.toUids.forEach((uid) => {
-      const email = toFetch[uid];
-      if (email) {
-        to.push(email);
-      }
-    });
-  }
-
-  payload.to = to;
-
-  if (payload.ccUids) {
-    payload.ccUids.forEach((uid) => {
-      const email = toFetch[uid];
-      if (email) {
-        cc.push(email);
-      }
-    });
-  }
-
-  payload.cc = cc;
-
-  if (payload.bccUids) {
-    payload.bccUids.forEach((uid) => {
-      const email = toFetch[uid];
-      if (email) {
-        bcc.push(email);
-      }
-    });
-  }
-
-  payload.bcc = bcc;
-
-  return payload;
 }
 
 async function deliver(ref: DocumentReference): Promise<void> {
