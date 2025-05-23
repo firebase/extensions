@@ -14,7 +14,7 @@
     "test:local": "concurrently --kill-others \"npm run local:emulator\" \"npm run testIfEmulatorRunning\"",
     "test:watch": "concurrently \"npm run local:emulator\" \"jest --watch\"",
     "test:coverage": "concurrently --kill-others \"npm run local:emulator\" \"wait-on tcp:4001 && jest --coverage\"",
-    "test:e2e:sendgrid": "E2E_SENDGRID=true jest __tests__/e2e/sendgrid.test.ts",
+    "test:e2e:sendgrid": "cd ../../_emulator && firebase emulators:exec --project=dev-extensions-testing \" cd ../firestore-send-email/functions && E2E_SENDGRID=true jest __tests__/e2e/sendgrid.test.ts\"",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "keywords": [],

@@ -91,6 +91,18 @@ describe("validatePayload", () => {
       expect(() => validatePayload(validPayload)).not.toThrow();
     });
 
+    it("should validate payload with friendly name in from field", () => {
+      const validPayload = {
+        to: "test@example.com",
+        from: "Friendly Firebaser test@example.com",
+        message: {
+          subject: "Test Subject",
+          text: "Test message",
+        },
+      };
+      expect(() => validatePayload(validPayload)).not.toThrow();
+    });
+
     it("should validate a template payload without html/text fields", () => {
       const validPayload = {
         to: "test@example.com",
