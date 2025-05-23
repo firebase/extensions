@@ -49,12 +49,16 @@ async function processDocuments(
   // Apply partition boundaries from the serialized query
   // These define the range of documents this worker should process
   if (serializableQuery.startAt?.values?.[0]?.referenceValue) {
-    const startPath = serializableQuery.startAt.values[0].referenceValue;
-    query = query.startAt(firebase.firestore().doc(startPath));
+    // strip off the full resource name, keep only the part after "/documents/"
+    const resourceName = serializableQuery.startAt.values[0].referenceValue;
+    const relativePath = resourceName.split("/documents/")[1];
+    query = query.startAt(firebase.firestore().doc(relativePath));
   }
   if (serializableQuery.endAt?.values?.[0]?.referenceValue) {
-    const endPath = serializableQuery.endAt.values[0].referenceValue;
-    query = query.endBefore(firebase.firestore().doc(endPath));
+    // similarly strip to relative path
+    const resourceName = serializableQuery.endAt.values[0].referenceValue;
+    const relativePath = resourceName.split("/documents/")[1];
+    query = query.endBefore(firebase.firestore().doc(relativePath));
   }
   if (serializableQuery.offset) {
     query = query.offset(serializableQuery.offset);
