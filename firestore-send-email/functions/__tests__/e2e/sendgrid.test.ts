@@ -68,8 +68,7 @@ const TEST_COLLECTIONS = ["emailCollection", "emailTemplates"] as const;
     beforeAll(() => {
       // Initialize with emulator settings
       admin.initializeApp({
-        projectId: "dev-extensions-testing",
-        databaseURL: "http://localhost:8080?ns=dev-extensions-testing",
+        projectId: "demo-test",
       });
 
       // Point Firestore to the emulator
