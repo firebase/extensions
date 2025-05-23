@@ -68,8 +68,7 @@ const TEST_COLLECTIONS = ["emailCollection", "emailTemplates"] as const;
     beforeAll(() => {
       // Initialize with emulator settings
       admin.initializeApp({
-        projectId: "dev-extensions-testing",
-        databaseURL: "http://localhost:8080?ns=dev-extensions-testing",
+        projectId: "demo-test",
       });
 
       // Point Firestore to the emulator
@@ -129,6 +128,46 @@ const TEST_COLLECTIONS = ["emailCollection", "emailTemplates"] as const;
 
       // Assert the delivery state was updated to SUCCESS
       console.log("updatedData", updatedData);
+      expect(updatedData?.delivery.state).toBe("SUCCESS");
+      expect(updatedData?.delivery.attempts).toBe(1);
+      expect(updatedData?.delivery.endTime).toBeDefined();
+      expect(updatedData?.delivery.error).toBeNull();
+
+      // Verify SendGrid specific info
+      expect(updatedData?.delivery.info).toBeDefined();
+      expect(updatedData?.delivery.info?.messageId).toBeDefined();
+      expect(updatedData?.delivery.info?.accepted).toContain(TEST_EMAIL);
+      expect(updatedData?.delivery.info?.rejected).toEqual([]);
+      expect(updatedData?.delivery.info?.pending).toEqual([]);
+    });
+
+    test("should process an email with friendly name in from field", async () => {
+      const db = admin.firestore();
+
+      const testData = {
+        message: {
+          attachments: [],
+          html: "<p>Test email with friendly name</p>",
+          text: "Test email with friendly name",
+          subject: "Test Friendly Name",
+          from: "Friendly Firebaser test@example.com",
+        },
+        to: TEST_EMAIL,
+      };
+
+      // Write the document to the emulator
+      const docRef = db.collection("emailCollection").doc("test-friendly-name");
+      await docRef.set(testData);
+
+      // Wait a bit for the function to process
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Verify the document was updated
+      const doc = await docRef.get();
+      const updatedData = doc.data();
+
+      // Assert the delivery state was updated to SUCCESS
+      console.log("updatedData with friendly name", updatedData);
       expect(updatedData?.delivery.state).toBe("SUCCESS");
       expect(updatedData?.delivery.attempts).toBe(1);
       expect(updatedData?.delivery.endTime).toBeDefined();

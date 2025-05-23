@@ -1,3 +1,7 @@
+## Version 0.2.3
+
+fix: remove strict validation of email "from" field
+
 ## Version 0.2.2
 
 fix: fix validation of payloads
