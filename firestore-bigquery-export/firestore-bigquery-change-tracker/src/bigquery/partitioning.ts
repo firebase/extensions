@@ -79,30 +79,7 @@ export class Partitioning {
     /* Return false if partition type option has not been set*/
     if (!this.isPartitioningEnabled()) return false;
 
-    const {
-      timePartitioningField,
-      timePartitioningFieldType,
-      timePartitioningFirestoreField,
-    } = this.config;
-
-    const hasNoCustomOptions =
-      !timePartitioningField &&
-      !timePartitioningFieldType &&
-      !timePartitioningFirestoreField;
-    /* No custom config has been set, use partition value option only */
-    if (hasNoCustomOptions) return true;
-
-    /* check if all valid combinations have been provided*/
-    const hasOnlyTimestamp =
-      timePartitioningField === "timestamp" &&
-      !timePartitioningFieldType &&
-      !timePartitioningFirestoreField;
-    return (
-      hasOnlyTimestamp ||
-      (!!timePartitioningField &&
-        !!timePartitioningFieldType &&
-        !!timePartitioningFirestoreField)
-    );
+    return true;
   }
 
   private hasValidTimePartitionOption() {
@@ -284,9 +261,7 @@ export class Partitioning {
     if (await this.isTablePartitioned()) {
       return { proceed: false, message: "Table is already partitioned" };
     }
-    if (!this.config.timePartitioningField) {
-      return { proceed: false, message: "Partition field not provided" };
-    }
+
     return { proceed: true, message: "" };
   }
 
