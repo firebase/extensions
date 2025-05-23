@@ -431,11 +431,10 @@ params:
   - param: TIME_PARTITIONING_FIELD
     label: BigQuery Time Partitioning column name
     description: >-
-      BigQuery table column/schema field name for TimePartitioning. You can
-      choose schema available as `timestamp` OR a new custom defined column that
-      will be assigned to the selected Firestore Document field below. Defaults
-      to pseudo column _PARTITIONTIME if unspecified. Cannot be changed if Table
-      is already partitioned.
+      The name of the column in the BigQuery table that will be used for time
+      partitioning. This field should correspond to the timestamp or date field
+      in your data that will be used for partitioning the table. By default, the
+      extension will use the _PARTITIONTIME pseudo column.
     type: string
     required: false
 
@@ -444,25 +443,24 @@ params:
       Firestore Document field name for BigQuery SQL Time Partitioning field
       option
     description: >-
-      This parameter will allow you to partition the BigQuery table created by
-      the extension based on selected. The Firestore Document field value must
-      be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or
-      Firestore timestamp(will be converted to BigQuery TIMESTAMP). Cannot be
-      changed if Table is already partitioned.
-       example: `postDate`(Ensure that the Firestore-BigQuery export extension
-      creates the dataset and table before initiating any backfill scripts.
-       This step is crucial for the partitioning to function correctly. It is
-      essential for the script to insert data into an already partitioned
-      table.)
+      This parameter enables partitioning of the BigQuery table created by the
+      extension based on the selected field in the Firestore Document. The field
+      value must be a top-level TIMESTAMP, DATETIME, or DATE field in BigQuery
+      string format. This setting cannot be modified if the table is already
+      partitioned. Example: Use `postDate` as the field for partitioning. Ensure
+      that the Firestore-BigQuery export extension has created the dataset and
+      table before running any backfill scripts. This step is crucial for
+      correct partitioning functionality and for inserting data into an already
+      partitioned table.
     type: string
     required: false
 
   - param: TIME_PARTITIONING_FIELD_TYPE
     label: BigQuery SQL Time Partitioning table schema field(column) type
     description: >-
-      Parameter for BigQuery SQL schema field type for the selected Time
-      Partitioning Firestore Document field option. Cannot be changed if Table
-      is already partitioned.
+      This parameter defines the schema field type in BigQuery for the selected
+      Time Partitioning Firestore Document field option. It cannot be modified
+      if the table is already partitioned.
     type: select
     options:
       - label: TIMESTAMP
