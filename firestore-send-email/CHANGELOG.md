@@ -1,3 +1,9 @@
+## Version 0.2.5
+
+fix: add missing 'headers' field to the mailOptions interface
+
+docs: update documentation to include 'headers' field
+
 ## Version 0.2.4
 
 fix: TTL expire type "week" fixed (#2455)
