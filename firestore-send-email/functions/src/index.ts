@@ -170,6 +170,7 @@ async function deliver(ref: DocumentReference): Promise<void> {
       subject: payload.message?.subject,
       text: payload.message?.text,
       html: payload.message?.html,
+      headers: payload?.headers,
       attachments: payload.message?.attachments,
       categories: payload.categories,
       templateId: payload.sendGrid?.templateId,

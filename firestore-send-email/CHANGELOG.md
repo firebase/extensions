@@ -1,3 +1,9 @@
+## Version 0.2.4
+
+fix: add missing 'headers' field to the mailOptions interface
+
+docs: update documentation to include 'headers' field
+
 ## Version 0.2.3
 
 fix: remove strict validation of email "from" field
