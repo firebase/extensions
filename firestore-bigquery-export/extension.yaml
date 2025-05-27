@@ -438,6 +438,25 @@ params:
     type: string
     required: false
 
+  - param: TIME_PARTITIONING_FIELD_TYPE
+    label: BigQuery SQL Time Partitioning table schema field(column) type
+    description: >-
+      This parameter defines the schema field type in BigQuery for the selected
+      Time Partitioning field option. It cannot be modified if the table is already
+      partitioned.
+    type: select
+    options:
+      - label: TIMESTAMP
+        value: TIMESTAMP
+      - label: DATETIME
+        value: DATETIME
+      - label: DATE
+        value: DATE
+      - label: omit
+        value: omit
+    default: omit
+    required: false
+
   - param: TIME_PARTITIONING_FIRESTORE_FIELD
     label:
       Firestore Document field name for BigQuery SQL Time Partitioning field
@@ -453,25 +472,6 @@ params:
       correct partitioning functionality and for inserting data into an already
       partitioned table.
     type: string
-    required: false
-
-  - param: TIME_PARTITIONING_FIELD_TYPE
-    label: BigQuery SQL Time Partitioning table schema field(column) type
-    description: >-
-      This parameter defines the schema field type in BigQuery for the selected
-      Time Partitioning Firestore Document field option. It cannot be modified
-      if the table is already partitioned.
-    type: select
-    options:
-      - label: TIMESTAMP
-        value: TIMESTAMP
-      - label: DATETIME
-        value: DATETIME
-      - label: DATE
-        value: DATE
-      - label: omit
-        value: omit
-    default: omit
     required: false
 
   - param: CLUSTERING

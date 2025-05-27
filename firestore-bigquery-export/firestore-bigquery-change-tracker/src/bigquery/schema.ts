@@ -192,7 +192,7 @@ export const getNewPartitionField = (
   return {
     name: timePartitioningField,
     mode: "NULLABLE",
-    type: timePartitioningFieldType,
+    type: timePartitioningFieldType != null ? timePartitioningFieldType : "TIMESTAMP",
     description: "The document TimePartition partition field selected by user",
   };
 };
