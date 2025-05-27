@@ -1,3 +1,9 @@
+## Version 0.2.5
+
+fix: keep partition value on delete using old data
+
+docs: improve "Remove stale data" query in guide
+
 ## Version 0.2.4
 
 feat: Add bigquery dataset locations and remove duplicates
@@ -10,7 +16,7 @@ fix: pass full document resource name to bigquery
 
 fix: remove default value on DATABASE_REGION
 
-## Versions 0.2.1
+## Version 0.2.1
 
 fix: correct database region params and make mutable
 

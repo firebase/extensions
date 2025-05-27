@@ -1,5 +1,5 @@
 import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
-import { FirestoreDocumentChangeEvent } from "..";
+import { ChangeType, FirestoreDocumentChangeEvent } from "..";
 import * as firebase from "firebase-admin";
 
 import * as logs from "../logs";
@@ -7,7 +7,6 @@ import * as bigquery from "@google-cloud/bigquery";
 import * as functions from "firebase-functions";
 import { getNewPartitionField } from "./schema";
 import { BigQuery, TableMetadata } from "@google-cloud/bigquery";
-
 import { PartitionFieldType } from "../types";
 
 export class Partitioning {
@@ -172,11 +171,16 @@ export class Partitioning {
     Delete changes events have no data, return early as cannot partition on empty data.
   **/
   getPartitionValue(event: FirestoreDocumentChangeEvent) {
-    if (!event.data) return {};
+    // When old data is disabled and the operation is delete
+    // the data and old data will be null
+    if (event.data == null && event.oldData == null) return {};
 
     const firestoreFieldName = this.config.timePartitioningFirestoreField;
     const fieldName = this.config.timePartitioningField;
-    const fieldValue = event.data[firestoreFieldName];
+    const fieldValue =
+      event.operation === ChangeType.DELETE
+        ? event.oldData[firestoreFieldName]
+        : event.data[firestoreFieldName];
 
     if (!fieldName || !fieldValue) {
       return {};
