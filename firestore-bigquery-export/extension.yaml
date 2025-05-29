@@ -431,10 +431,11 @@ params:
   - param: TIME_PARTITIONING_FIELD
     label: BigQuery Time Partitioning column name
     description: >-
-      The name of the column in the BigQuery table that will be used for time
-      partitioning. This field should correspond to the timestamp or date field
-      in your data that will be used for partitioning the table. By default, the
-      extension will use the _PARTITIONTIME pseudo column.
+      BigQuery Time Partitioning column name: The name of the column in the
+      BigQuery table that will be used for time partitioning. This field should
+      correspond to the timestamp or date field in your data that will be used
+      for partitioning the table. By default, the extension will use the
+      _PARTITIONTIME pseudo column.
     type: string
     required: false
 
@@ -442,8 +443,8 @@ params:
     label: BigQuery SQL Time Partitioning table schema field(column) type
     description: >-
       This parameter defines the schema field type in BigQuery for the selected
-      Time Partitioning field option. It cannot be modified if the table is already
-      partitioned.
+      Time Partitioning field option. It cannot be modified if the table is
+      already partitioned.
     type: select
     options:
       - label: TIMESTAMP

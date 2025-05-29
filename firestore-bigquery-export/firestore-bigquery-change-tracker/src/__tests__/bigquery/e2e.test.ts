@@ -93,7 +93,7 @@ describe("e2e", () => {
         expect(metadata.timePartitioning).toBeUndefined();
       });
 
-      test("successfully partitions a changelog table with a timePartitioning option only", async () => {
+      test("successfully partitions a changelog table with a timePartitioning option only with HOUR", async () => {
         await changeTracker({
           datasetId,
           tableId,
@@ -105,11 +105,87 @@ describe("e2e", () => {
         expect(metadata.timePartitioning).toBeDefined();
       });
 
-      test("successfully partitions latest view table with a timePartitioning option only", async () => {
+      test("successfully partitions a changelog table with a timePartitioning option only with DAY", async () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "HOUR",
+          timePartitioning: "DAY",
+        }).record([event]);
+
+        const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
+
+        expect(metadata.timePartitioning).toBeDefined();
+      });
+
+      test("successfully partitions a changelog table with a timePartitioning option only with MONTH", async () => {
+        await changeTracker({
+          datasetId,
+          tableId,
+          timePartitioning: "MONTH",
+        }).record([event]);
+
+        const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
+
+        expect(metadata.timePartitioning).toBeDefined();
+      });
+
+      test("successfully partitions a changelog table with a timePartitioning option only with YEAR", async () => {
+        await changeTracker({
+          datasetId,
+          tableId,
+          timePartitioning: "YEAR",
+        }).record([event]);
+
+        const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
+
+        expect(metadata.timePartitioning).toBeDefined();
+      });
+
+      test("does not partition with a timePartitioning option of NONE", async () => {
+        await changeTracker({
+          datasetId,
+          tableId,
+          timePartitioning: "NONE",
+        }).record([event]);
+
+        const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
+
+        expect(metadata.timePartitioning).toBeUndefined();
+      });
+
+      test("does partition with a timePartitioning option of DAY and a timePartitioningField of timestamp", async () => {
+        await changeTracker({
+          datasetId,
+          tableId,
+          timePartitioning: "DAY",
+          timePartitioningField: "timestamp",
+        }).record([event]);
+
+        const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
+
+        expect(metadata.timePartitioning).toBeDefined();
+      });
+
+      test("does partition with a timePartitioning option of DAY and a timePartitioningField of created", async () => {
+        await changeTracker({
+          datasetId,
+          tableId,
+          timePartitioning: "DAY",
+          timePartitioningField: "created",
+        }).record([event]);
+
+        const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
+
+        expect(metadata.timePartitioning).toBeDefined();
+      });
+
+      test("does partition with a valid timePartitioningFieldType of TIMESTAMP", async () => {
+        await changeTracker({
+          datasetId,
+          tableId,
+          timePartitioning: "DAY",
+          timePartitioningField: "created",
+          timePartitioningFieldType: "TIMESTAMP",
         }).record([event]);
 
         const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
