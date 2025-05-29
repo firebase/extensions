@@ -25,134 +25,251 @@ const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
 let randomID: string;
 let datasetId: string;
 let tableId: string;
-let tableId_raw: string;
+let tableIdRaw: string;
 let dataset: Dataset;
 let table: Table;
 let view: Table;
 
+/**
+ * BigQuery Change Tracker End-to-End Tests
+ * 
+ * These tests verify the functionality of the BigQuery Change Tracker,
+ * including dataset/table creation, time partitioning, data handling,
+ * and query optimization.
+ */
 describe("BigQuery Change Tracker E2E", () => {
+  // Common setup for all tests
+  beforeEach(async () => {
+    randomID = (Math.random() + 1).toString(36).substring(7);
+    datasetId = `dataset_${randomID}`;
+    tableId = `table_${randomID}`;
+    tableIdRaw = `${tableId}_raw_changelog`;
+    dataset = bq.dataset(datasetId);
+  });
+
+  afterEach(async () => {
+    await deleteTable({
+      datasetId,
+    });
+  });
+
   describe("Basic Setup and Initialization", () => {
-    beforeEach(async () => {
-      randomID = (Math.random() + 1).toString(36).substring(7);
-      datasetId = `dataset_${randomID}`;
-      tableId = `table_${randomID}`;
-      tableId_raw = `${tableId}_raw_changelog`;
-      dataset = bq.dataset(datasetId);
-    });
-
-    afterEach(async () => {
-      await deleteTable({
-        datasetId,
-      });
-    });
-
     test("should create dataset and table successfully", async () => {
+      // Arrange
       await changeTracker({
         datasetId,
         tableId,
       }).record([event]);
 
-      const [metadata] = await dataset.table(tableId_raw).getMetadata();
+      // Act
+      const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+      // Assert
       expect(metadata).toBeDefined();
+      expect(metadata.schema).toBeDefined();
+      expect(metadata.schema.fields).toBeDefined();
+    });
+
+    test("should handle invalid dataset ID", async () => {
+      // Arrange
+      const invalidDatasetId = "";
+
+      // Act & Assert
+      await expect(
+        changeTracker({
+          datasetId: invalidDatasetId,
+          tableId,
+        }).record([event])
+      ).rejects.toThrow();
     });
   });
 
   describe("Time Partitioning Configuration", () => {
-    beforeEach(async () => {
-      randomID = (Math.random() + 1).toString(36).substring(7);
-      datasetId = `dataset_${randomID}`;
-      tableId = `table_${randomID}`;
-      tableId_raw = `${tableId}_raw_changelog`;
-      dataset = bq.dataset(datasetId);
-    });
-
-    afterEach(async () => {
-      await deleteTable({
-        datasetId,
-      });
-    });
-
     describe("New Dataset and Table Creation", () => {
-      describe("Basic Partitioning Options", () => {
+      describe("Various Partitioning Options", () => {
         test("should not partition when timePartitioning is not defined", async () => {
+          // Arrange
           await changeTracker({
             datasetId,
             tableId,
           }).record([event]);
 
-          const [metadata] = await dataset.table(tableId_raw).getMetadata();
+          // Act
+          const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+          // Assert
           expect(metadata.timePartitioning).toBeUndefined();
         });
 
+        test("should partition with missing timePartitioningFieldType", async () => {
+          // Arrange
+          await changeTracker({
+            datasetId,
+            tableId,
+            timePartitioning: "HOUR",
+            timePartitioningField: "endDate",
+            timePartitioningFirestoreField: "end_date",
+          }).record([event]);
+
+          // Act
+          const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+          // Assert
+          expect(metadata.timePartitioning).toBeDefined();
+        });
+
+        test("should partition with missing timePartitioningFirestoreField", async () => {
+          // Arrange
+          await changeTracker({
+            datasetId,
+            tableId,
+            timePartitioning: "HOUR",
+            timePartitioningField: "endDate",
+            timePartitioningFieldType: "TIMESTAMP",
+          }).record([event]);
+
+          // Act
+          const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+          // Assert
+          expect(metadata.timePartitioning).toBeDefined();
+        });
+
+        test("should not partition when all partitioning options are given but timePartitioning is NONE", async () => {
+          // Arrange
+          await changeTracker({
+            datasetId,
+            tableId,
+            timePartitioning: "NONE",
+            timePartitioningField: "endDate",
+            timePartitioningFieldType: "TIMESTAMP",
+            timePartitioningFirestoreField: "end_date",
+          }).record([event]);
+
+          // Act
+          const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+          // Assert
+          expect(metadata.timePartitioning).toBeUndefined();
+        });
+
+        test("should partition when timePartitioningField is only not defined", async () => {
+          // Arrange
+          await changeTracker({
+            datasetId,
+            tableId,
+            timePartitioning: "HOUR",
+            timePartitioningFieldType: "TIMESTAMP",
+            timePartitioningFirestoreField: "end_date",
+          }).record([event]);
+
+          // Act
+          const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+          // Assert
+          expect(metadata.timePartitioning).toBeDefined();
+        });
+      });
+
+      describe("Table Partitioning Param Configuration", () => {
         test("should not partition with unrecognized timePartitioning option", async () => {
+          // Arrange
           await changeTracker({
             datasetId,
             tableId,
             timePartitioning: "UNKNOWN",
           }).record([event]);
 
-          const [metadata] = await dataset.table(tableId_raw).getMetadata();
+          // Act
+          const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+          // Assert
           expect(metadata.timePartitioning).toBeUndefined();
         });
 
         test("should partition with HOUR timePartitioning", async () => {
+          // Arrange
           await changeTracker({
             datasetId,
             tableId,
             timePartitioning: "HOUR",
           }).record([event]);
 
-          const [metadata] = await dataset.table(tableId_raw).getMetadata();
+          // Act
+          const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+          // Assert
           expect(metadata.timePartitioning).toBeDefined();
+          expect(metadata.timePartitioning.type).toBe("HOUR");
         });
 
         test("should partition with DAY timePartitioning", async () => {
+          // Arrange
           await changeTracker({
             datasetId,
             tableId,
             timePartitioning: "DAY",
           }).record([event]);
 
-          const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
+          // Act
+          const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+          // Assert
           expect(metadata.timePartitioning).toBeDefined();
+          expect(metadata.timePartitioning.type).toBe("DAY");
         });
 
         test("should partition with MONTH timePartitioning", async () => {
+          // Arrange
           await changeTracker({
             datasetId,
             tableId,
             timePartitioning: "MONTH",
           }).record([event]);
 
-          const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
+          // Act
+          const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+          // Assert
           expect(metadata.timePartitioning).toBeDefined();
+          expect(metadata.timePartitioning.type).toBe("MONTH");
         });
 
         test("should partition with YEAR timePartitioning", async () => {
+          // Arrange
           await changeTracker({
             datasetId,
             tableId,
             timePartitioning: "YEAR",
           }).record([event]);
 
-          const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
+          // Act
+          const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+          // Assert
           expect(metadata.timePartitioning).toBeDefined();
+          expect(metadata.timePartitioning.type).toBe("YEAR");
         });
 
         test("should not partition with NONE timePartitioning", async () => {
+          // Arrange
           await changeTracker({
             datasetId,
             tableId,
             timePartitioning: "NONE",
           }).record([event]);
 
-          const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
+          // Act
+          const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+          // Assert
           expect(metadata.timePartitioning).toBeUndefined();
         });
       });
 
       describe("Partitioning Field Configuration", () => {
         test("should partition with timestamp field and DAY partitioning", async () => {
+          // Arrange
           await changeTracker({
             datasetId,
             tableId,
@@ -160,11 +277,16 @@ describe("BigQuery Change Tracker E2E", () => {
             timePartitioningField: "timestamp",
           }).record([event]);
 
-          const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
+          // Act
+          const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+          // Assert
           expect(metadata.timePartitioning).toBeDefined();
+          expect(metadata.timePartitioning.field).toBe("timestamp");
         });
 
         test("should partition with created field and DAY partitioning", async () => {
+          // Arrange
           await changeTracker({
             datasetId,
             tableId,
@@ -172,11 +294,16 @@ describe("BigQuery Change Tracker E2E", () => {
             timePartitioningField: "created",
           }).record([event]);
 
-          const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
+          // Act
+          const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+          // Assert
           expect(metadata.timePartitioning).toBeDefined();
+          expect(metadata.timePartitioning.field).toBe("created");
         });
 
         test("should partition with TIMESTAMP field type", async () => {
+          // Arrange
           await changeTracker({
             datasetId,
             tableId,
@@ -185,245 +312,271 @@ describe("BigQuery Change Tracker E2E", () => {
             timePartitioningFieldType: "TIMESTAMP",
           }).record([event]);
 
-          const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
+          // Act
+          const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+          // Assert
           expect(metadata.timePartitioning).toBeDefined();
-        });
-
-        test("should partition with DATE field type", async () => {
-          await changeTracker({
-            datasetId,
-            tableId,
-            timePartitioning: "DAY",
-            timePartitioningField: "created",
-            timePartitioningFieldType: "DATE",
-          }).record([event]);
-
-          const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
-          expect(metadata.timePartitioning).toBeDefined();
-        });
-
-        test("should partition with DATETIME field type", async () => {
-          await changeTracker({
-            datasetId,
-            tableId,
-            timePartitioning: "DAY",
-            timePartitioningField: "created",
-            timePartitioningFieldType: "DATETIME",
-          }).record([event]);
-
-          const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
-          expect(metadata.timePartitioning).toBeDefined();
+          expect(metadata.timePartitioning.field).toBe("created");
         });
       });
 
       describe("Timestamp Handling", () => {
-        test("should handle DateTime Timestamp correctly", async () => {
-          const created = firestore.Timestamp.now();
-          const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
-            data: { created },
+        describe("Firebase Timestamp Handling", () => {
+          test("should handle Firebase Timestamp with TIMESTAMP type", async () => {
+            // Arrange
+            const created = firestore.Timestamp.now();
+            const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
+              data: { created },
+            });
+
+            // Act
+            await changeTracker({
+              datasetId,
+              tableId,
+              timePartitioning: "DAY",
+              timePartitioningField: "created",
+              timePartitioningFieldType: "TIMESTAMP",
+              timePartitioningFirestoreField: "created",
+            }).record([event]);
+
+            const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+            const [changeLogRows] = await getBigQueryTableData(
+              process.env.PROJECT_ID,
+              datasetId,
+              tableId
+            );
+
+            // Assert
+            expect(metadata.timePartitioning).toBeDefined();
+            expect(changeLogRows[0].created.value).toBe(
+              BigQuery.timestamp(created.toDate()).value
+            );
           });
 
-          await changeTracker({
-            datasetId,
-            tableId,
-            timePartitioning: "DAY",
-            timePartitioningField: "timestamp",
-            timePartitioningFieldType: "TIMESTAMP",
-            timePartitioningFirestoreField: "created",
-          }).record([event]);
+          test("should handle Firebase Timestamp with DATE type", async () => {
+            // Arrange
+            const created = firestore.Timestamp.now();
+            const expectedDate = created.toDate().toISOString().substring(0, 10);
+            const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
+              data: { created },
+            });
 
-          const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
-          expect(metadata.timePartitioning).toBeDefined();
+            // Act
+            await changeTracker({
+              datasetId,
+              tableId,
+              timePartitioning: "DAY",
+              timePartitioningField: "created",
+              timePartitioningFieldType: "DATE",
+              timePartitioningFirestoreField: "created",
+            }).record([event]);
 
-          const [changeLogRows] = await getBigQueryTableData(
-            process.env.PROJECT_ID,
-            datasetId,
-            tableId
-          );
+            const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+            const [changeLogRows] = await getBigQueryTableData(
+              process.env.PROJECT_ID,
+              datasetId,
+              tableId
+            );
 
-          expect(changeLogRows[0].timestamp.value).toBe(
-            BigQuery.timestamp(created.toDate()).value
-          );
+            // Assert
+            expect(metadata.timePartitioning).toBeDefined();
+            expect(changeLogRows[0].created.value).toBe(expectedDate);
+          });
+
+          test("should handle Firebase Timestamp with DATETIME type", async () => {
+            // Arrange
+            const created = firestore.Timestamp.now();
+            const expectedDate = created.toDate().toISOString().substring(0, 22);
+            const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
+              data: { created },
+            });
+
+            // Act
+            await changeTracker({
+              datasetId,
+              tableId,
+              timePartitioning: "DAY",
+              timePartitioningField: "created",
+              timePartitioningFieldType: "DATETIME",
+              timePartitioningFirestoreField: "created",
+            }).record([event]);
+
+            const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+            const [changeLogRows] = await getBigQueryTableData(
+              process.env.PROJECT_ID,
+              datasetId,
+              tableId
+            );
+
+            // Assert
+            expect(metadata.timePartitioning).toBeDefined();
+            expect(changeLogRows[0].created.value.substring(0, 22)).toBe(expectedDate);
+          });
+
+          test("should handle invalid Firebase Timestamp", async () => {
+            // Arrange
+            const invalidTimestamp = new firestore.Timestamp(NaN, 0);
+            const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
+              data: { created: invalidTimestamp },
+            });
+
+            // Act & Assert
+            await expect(
+              changeTracker({
+                datasetId,
+                tableId,
+                timePartitioning: "DAY",
+                timePartitioningField: "created",
+                timePartitioningFieldType: "TIMESTAMP",
+                timePartitioningFirestoreField: "created",
+              }).record([event])
+            ).rejects.toThrow();
+          });
         });
 
-        test("should handle DateTime Timestamp Date correctly", async () => {
-          const created = firestore.Timestamp.now().toDate();
-          const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
-            data: { created },
+        describe("DateTime Handling", () => {
+          test("should handle DateTime Timestamp correctly", async () => {
+            // Arrange
+            const created = firestore.Timestamp.now();
+            const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
+              data: { created },
+            });
+
+            // Act
+            await changeTracker({
+              datasetId,
+              tableId,
+              timePartitioning: "DAY",
+              timePartitioningField: "timestamp",
+              timePartitioningFieldType: "TIMESTAMP",
+              timePartitioningFirestoreField: "created",
+            }).record([event]);
+
+            const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+            const [changeLogRows] = await getBigQueryTableData(
+              process.env.PROJECT_ID,
+              datasetId,
+              tableId
+            );
+
+            // Assert
+            expect(metadata.timePartitioning).toBeDefined();
+            expect(changeLogRows[0].timestamp.value).toBe(
+              BigQuery.timestamp(created.toDate()).value
+            );
           });
 
-          await changeTracker({
-            datasetId,
-            tableId,
-            timePartitioning: "DAY",
-            timePartitioningField: "created",
-            timePartitioningFieldType: "TIMESTAMP",
-            timePartitioningFirestoreField: "created",
-          }).record([event]);
+          test("should handle DateTime Timestamp Date correctly", async () => {
+            // Arrange
+            const created = firestore.Timestamp.now().toDate();
+            const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
+              data: { created },
+            });
 
-          const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
-          const [changeLogRows] = await getBigQueryTableData(
-            process.env.PROJECT_ID,
-            datasetId,
-            tableId
-          );
+            // Act
+            await changeTracker({
+              datasetId,
+              tableId,
+              timePartitioning: "DAY",
+              timePartitioningField: "created",
+              timePartitioningFieldType: "TIMESTAMP",
+              timePartitioningFirestoreField: "created",
+            }).record([event]);
 
-          expect(metadata.timePartitioning).toBeDefined();
-          expect(changeLogRows[0].created.value).toBe(
-            BigQuery.timestamp(created).value
-          );
-        });
+            const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+            const [changeLogRows] = await getBigQueryTableData(
+              process.env.PROJECT_ID,
+              datasetId,
+              tableId
+            );
 
-        test("should handle Firebase Timestamp with TIMESTAMP type", async () => {
-          const created = firestore.Timestamp.now();
-          const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
-            data: { created },
+            // Assert
+            expect(metadata.timePartitioning).toBeDefined();
+            expect(changeLogRows[0].created.value).toBe(
+              BigQuery.timestamp(created).value
+            );
           });
 
-          await changeTracker({
-            datasetId,
-            tableId,
-            timePartitioning: "DAY",
-            timePartitioningField: "created",
-            timePartitioningFieldType: "TIMESTAMP",
-            timePartitioningFirestoreField: "created",
-          }).record([event]);
+          test("should handle invalid Date object", async () => {
+            // Arrange
+            const invalidDate = new Date("invalid-date");
+            const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
+              data: { created: invalidDate },
+            });
 
-          const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
-          const [changeLogRows] = await getBigQueryTableData(
-            process.env.PROJECT_ID,
-            datasetId,
-            tableId
-          );
-
-          expect(metadata.timePartitioning).toBeDefined();
-          expect(changeLogRows[0].created.value).toBe(
-            BigQuery.timestamp(created.toDate()).value
-          );
-        });
-
-        test("should handle Firebase Timestamp with DATE type", async () => {
-          const created = firestore.Timestamp.now();
-          const expectedDate = created.toDate().toISOString().substring(0, 10);
-          const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
-            data: { created },
+            // Act & Assert
+            await expect(
+              changeTracker({
+                datasetId,
+                tableId,
+                timePartitioning: "DAY",
+                timePartitioningField: "created",
+                timePartitioningFieldType: "TIMESTAMP",
+                timePartitioningFirestoreField: "created",
+              }).record([event])
+            ).rejects.toThrow();
           });
-
-          await changeTracker({
-            datasetId,
-            tableId,
-            timePartitioning: "DAY",
-            timePartitioningField: "created",
-            timePartitioningFieldType: "DATE",
-            timePartitioningFirestoreField: "created",
-          }).record([event]);
-
-          const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
-          const [changeLogRows] = await getBigQueryTableData(
-            process.env.PROJECT_ID,
-            datasetId,
-            tableId
-          );
-
-          expect(metadata.timePartitioning).toBeDefined();
-          expect(changeLogRows[0].created.value).toBe(expectedDate);
-        });
-
-        test("should handle Firebase Timestamp with DATETIME type", async () => {
-          const created = firestore.Timestamp.now();
-          const expectedDate = created.toDate().toISOString().substring(0, 22);
-          const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
-            data: { created },
-          });
-
-          await changeTracker({
-            datasetId,
-            tableId,
-            timePartitioning: "DAY",
-            timePartitioningField: "created",
-            timePartitioningFieldType: "DATETIME",
-            timePartitioningFirestoreField: "created",
-          }).record([event]);
-
-          const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
-          const [changeLogRows] = await getBigQueryTableData(
-            process.env.PROJECT_ID,
-            datasetId,
-            tableId
-          );
-
-          expect(metadata.timePartitioning).toBeDefined();
-          expect(changeLogRows[0].created.value.substring(0, 22)).toBe(expectedDate);
         });
       });
 
       describe("Invalid Partitioning Configurations", () => {
-        test("should not partition with missing timePartitioningField", async () => {
-          await changeTracker({
-            datasetId,
-            tableId,
-            timePartitioning: "HOUR",
-            timePartitioningField: null,
-            timePartitioningFieldType: "TIMESTAMP",
-            timePartitioningFirestoreField: "end_date",
-          }).record([event]);
+        describe("Missing Required Fields", () => {
+          test("should not partition with missing timePartitioningField", async () => {
+            // Arrange
+            await changeTracker({
+              datasetId,
+              tableId,
+              timePartitioning: "HOUR",
+              timePartitioningField: null,
+              timePartitioningFieldType: "TIMESTAMP",
+              timePartitioningFirestoreField: "end_date",
+            }).record([event]);
 
-          const [metadata] = await dataset.table(tableId_raw).getMetadata();
-          expect(metadata.timePartitioning).toBeUndefined();
+            // Act
+            const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+
+            // Assert
+            expect(metadata.timePartitioning).toBeUndefined();
+          });
         });
 
-        test("should not partition with missing timePartitioningFieldType", async () => {
-          await changeTracker({
-            datasetId,
-            tableId,
-            timePartitioning: "HOUR",
-            timePartitioningField: "endDate",
-            timePartitioningFirestoreField: "end_date",
-          }).record([event]);
+        describe("Invalid Field Types", () => {
+          test("should not partition with unknown timePartitioningFieldType", async () => {
+            // Arrange
+            await changeTracker({
+              datasetId,
+              tableId,
+              timePartitioning: "HOUR",
+              timePartitioningField: "endDate",
+              timePartitioningFieldType: "unknown",
+              timePartitioningFirestoreField: "end_date",
+            }).record([event]);
 
-          const [metadata] = await dataset.table(tableId_raw).getMetadata();
-          expect(metadata.timePartitioning).toBeUndefined();
-        });
+            // Act
+            const [metadata] = await dataset.table(tableIdRaw).getMetadata();
 
-        test("should not partition with unknown timePartitioningFieldType", async () => {
-          await changeTracker({
-            datasetId,
-            tableId,
-            timePartitioning: "HOUR",
-            timePartitioningField: "endDate",
-            timePartitioningFieldType: "unknown",
-            timePartitioningFirestoreField: "end_date",
-          }).record([event]);
+            // Assert
+            expect(metadata.timePartitioning).toBeUndefined();
+          });
 
-          const [metadata] = await dataset.table(tableId_raw).getMetadata();
-          expect(metadata.timePartitioning).toBeUndefined();
-        });
+          test("should not partition with DATE type and HOUR partitioning", async () => {
+            // Arrange
+            await changeTracker({
+              datasetId,
+              tableId,
+              timePartitioning: "HOUR",
+              timePartitioningField: "endDate",
+              timePartitioningFieldType: "DATE",
+              timePartitioningFirestoreField: "end_date",
+            }).record([event]);
 
-        test("should not partition with missing timePartitioningFirestoreField", async () => {
-          await changeTracker({
-            datasetId,
-            tableId,
-            timePartitioning: "HOUR",
-            timePartitioningField: "endDate",
-            timePartitioningFieldType: "TIMESTAMP",
-          }).record([event]);
+            // Act
+            const [metadata] = await dataset.table(tableIdRaw).getMetadata();
 
-          const [metadata] = await dataset.table(tableId_raw).getMetadata();
-          expect(metadata.timePartitioning).toBeUndefined();
-        });
-
-        test("should not partition with DATE type and HOUR partitioning", async () => {
-          await changeTracker({
-            datasetId,
-            tableId,
-            timePartitioning: "HOUR",
-            timePartitioningField: "endDate",
-            timePartitioningFieldType: "DATE",
-            timePartitioningFirestoreField: "end_date",
-          }).record([event]);
-
-          const [metadata] = await dataset.table(tableId_raw).getMetadata();
-          expect(metadata.timePartitioning).toBeUndefined();
+            // Assert
+            expect(metadata.timePartitioning).toBeUndefined();
+          });
         });
       });
     });
@@ -431,13 +584,13 @@ describe("BigQuery Change Tracker E2E", () => {
     describe("Existing Dataset and Table Handling", () => {
       beforeEach(async () => {
         [dataset] = await bq.dataset(datasetId).create();
-        [table] = await dataset.createTable(tableId_raw, {
+        [table] = await dataset.createTable(tableIdRaw, {
           schema: RawChangelogSchema,
         });
 
         const latestSnapshot = latestConsistentSnapshotView({
           datasetId,
-          tableName: tableId_raw,
+          tableName: tableIdRaw,
           schema: RawChangelogViewSchema,
           useLegacyQuery: false,
         });
@@ -448,18 +601,21 @@ describe("BigQuery Change Tracker E2E", () => {
       });
 
       test("should not update existing non-partitioned table with timePartitioning only", async () => {
-        const tableExists = await dataset.table(tableId_raw).exists();
+        // Arrange
+        const tableExists = await dataset.table(tableIdRaw).exists();
         expect(tableExists[0]).toBe(true);
 
+        // Act
         await changeTracker({
           datasetId,
           tableId,
           timePartitioning: "HOUR",
         }).record([event]);
 
-        const [metadata] = await dataset.table(tableId_raw).getMetadata();
-        expect(metadata.timePartitioning).toBeUndefined();
+        const [metadata] = await dataset.table(tableIdRaw).getMetadata();
 
+        // Assert
+        expect(metadata.timePartitioning).toBeUndefined();
         expect(consoleLogSpyWarn).toHaveBeenCalledWith(
           `Did not add partitioning to schema: Partition field not provided`
         );
@@ -467,7 +623,7 @@ describe("BigQuery Change Tracker E2E", () => {
           `BigQuery dataset already exists: ${datasetId}`
         );
         expect(consoleDebugSpy).toHaveBeenCalledWith(
-          `BigQuery table with name ${tableId_raw} already exists in dataset ${datasetId}!`
+          `BigQuery table with name ${tableIdRaw} already exists in dataset ${datasetId}!`
         );
         expect(consoleInfoSpy).toHaveBeenCalledWith(
           `View with id ${tableId}_raw_latest already exists in dataset ${datasetId}.`
@@ -475,6 +631,7 @@ describe("BigQuery Change Tracker E2E", () => {
       });
 
       test("should not update existing table with custom partitioning config", async () => {
+        // Arrange & Act
         await changeTracker({
           datasetId,
           tableId,
@@ -484,11 +641,13 @@ describe("BigQuery Change Tracker E2E", () => {
           timePartitioningFirestoreField: "end_date",
         }).record([event]);
 
-        const [metadata] = await dataset.table(tableId_raw).getMetadata();
+        // Assert
+        const [metadata] = await dataset.table(tableIdRaw).getMetadata();
         expect(metadata.timePartitioning).toBeUndefined();
       });
 
       test("should not add custom partitioning column when partitioning exists", async () => {
+        // Arrange & Act
         await changeTracker({
           datasetId,
           tableId,
@@ -498,7 +657,8 @@ describe("BigQuery Change Tracker E2E", () => {
           timePartitioningFirestoreField: "end_date",
         }).record([event]);
 
-        const [metadata] = await dataset.table(tableId_raw).getMetadata();
+        // Assert
+        const [metadata] = await dataset.table(tableIdRaw).getMetadata();
         expect(
           metadata.schema.fields.filter(($) => $.name === "endDate").length
         ).toBe(0);
@@ -506,6 +666,7 @@ describe("BigQuery Change Tracker E2E", () => {
       });
 
       test("should not add duplicate custom field when it already exists", async () => {
+        // Arrange
         const [metaData] = await table.getMetadata();
         metaData.schema.fields.push({
           name: "custom_field",
@@ -516,6 +677,7 @@ describe("BigQuery Change Tracker E2E", () => {
 
         await table.setMetadata(metaData);
 
+        // Act
         await changeTracker({
           datasetId,
           tableId,
@@ -525,31 +687,55 @@ describe("BigQuery Change Tracker E2E", () => {
           timePartitioningFirestoreField: "custom_field",
         }).record([event]);
 
-        const [metadata] = await dataset.table(tableId_raw).getMetadata();
+        // Assert
+        const [metadata] = await dataset.table(tableIdRaw).getMetadata();
         expect(
           metadata.schema.fields.filter(($) => $.name === "custom_field").length
         ).toBe(1);
+      });
+
+      test("should use table's current field type to override extension configuration", async () => {
+        // Arrange
+        const [metaData] = await table.getMetadata();
+        metaData.schema.fields.push({
+          name: "timestamp_field",
+          mode: "NULLABLE",
+          type: "TIMESTAMP",
+          description: "example timestamp field",
+        });
+
+        await table.setMetadata(metaData);
+
+        // Act
+        await changeTracker({
+          datasetId,
+          tableId,
+          timePartitioning: "DAY",
+          timePartitioningField: "timestamp_field",
+          timePartitioningFieldType: "DATE", // Different from table's type
+          timePartitioningFirestoreField: "timestamp_field",
+        }).record([event]);
+
+        // Assert
+        const [metadata] = await dataset.table(tableIdRaw).getMetadata();
+        expect(metadata.timePartitioning).toBeDefined();
+        expect(metadata.timePartitioning.field).toBe("timestamp_field");
       });
     });
   });
 
   describe("SQL Query Optimization", () => {
-    let view_raw_latest;
+    let viewRawLatest: string;
     beforeEach(async () => {
       randomID = (Math.random() + 1).toString(36).substring(7);
       datasetId = `dataset_${randomID}`;
       tableId = `table_${randomID}`;
-      view_raw_latest = `${tableId}_raw_latest`;
+      viewRawLatest = `${tableId}_raw_latest`;
       dataset = bq.dataset(datasetId);
     });
 
-    afterEach(async () => {
-      await deleteTable({
-        datasetId,
-      });
-    });
-
     test("should update view when switching from legacy to optimized query", async () => {
+      // Arrange
       let legacyView: Table;
       let optimisedView: Table;
 
@@ -564,7 +750,7 @@ describe("BigQuery Change Tracker E2E", () => {
         useNewSnapshotQuerySyntax: false,
       }).record([legacyEvent]);
 
-      legacyView = await dataset.table(view_raw_latest);
+      legacyView = await dataset.table(viewRawLatest);
       const [legacyViewMetadata] = await legacyView.getMetadata();
 
       const optimizedEvent: FirestoreDocumentChangeEvent = changeTrackerEvent({
@@ -572,13 +758,14 @@ describe("BigQuery Change Tracker E2E", () => {
         eventId: "two",
       });
 
+      // Act
       await changeTracker({
         datasetId,
         tableId,
         useNewSnapshotQuerySyntax: true,
       }).record([optimizedEvent]);
 
-      optimisedView = dataset.table(view_raw_latest);
+      optimisedView = dataset.table(viewRawLatest);
       const [optimisedViewMetadata] = await optimisedView.getMetadata();
 
       const [legacyDataJob] = await legacyView.createQueryJob({
@@ -592,6 +779,7 @@ describe("BigQuery Change Tracker E2E", () => {
       const legacyData = await legacyDataJob.getQueryResults();
       const optimisedData = await optimisedDataJob.getQueryResults();
 
+      // Assert
       expect(legacyData.length).toEqual(optimisedData.length);
       const firstPageLegacy = legacyData[0];
       const firstPageOptimised = optimisedData[0];
@@ -605,26 +793,21 @@ describe("BigQuery Change Tracker E2E", () => {
   });
 
   describe("Data Field Handling", () => {
-    let table_raw_changelog;
+    let tableRawChangelog: string;
     beforeEach(async () => {
       randomID = (Math.random() + 1).toString(36).substring(7);
       datasetId = `dataset_${randomID}`;
       tableId = `${randomID}`;
-      table_raw_changelog = `${tableId}_raw_changelog`;
+      tableRawChangelog = `${tableId}_raw_changelog`;
       [dataset] = await bq.createDataset(datasetId, {});
     });
 
-    afterEach(async () => {
-      await deleteTable({
-        datasetId,
-      });
-    });
-
     test("should add old_data field if it doesn't exist", async () => {
+      // Arrange
       const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
       let schema = [{ name: "Name", type: "STRING" }];
 
-      let [originalRawTable] = await dataset.createTable(table_raw_changelog, {
+      let [originalRawTable] = await dataset.createTable(tableRawChangelog, {
         schema,
       });
 
@@ -634,21 +817,26 @@ describe("BigQuery Change Tracker E2E", () => {
         ).length
       ).toBe(0);
 
+      // Act
       await changeTracker({ datasetId, tableId }).record([event]);
 
-      const [metadata] = await dataset.table(table_raw_changelog).getMetadata();
+      // Assert
+      const [metadata] = await dataset.table(tableRawChangelog).getMetadata();
       expect(
         metadata.schema.fields.filter(($) => $.name === "old_data").length
       ).toBe(1);
     });
 
     test("should set old_data to null when not provided", async () => {
+      // Arrange
       const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
         data: { foo: "foo" },
       });
 
+      // Act
       await changeTracker({ datasetId, tableId }).record([event]);
 
+      // Assert
       const [changeLogRows] = await getBigQueryTableData(
         process.env.PROJECT_ID,
         datasetId,
@@ -659,13 +847,16 @@ describe("BigQuery Change Tracker E2E", () => {
     });
 
     test("should include old_data value when provided", async () => {
+      // Arrange
       const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
         old_data: { foo: "foo" },
         data: { foo: "bar" },
       });
 
+      // Act
       await changeTracker({ datasetId, tableId }).record([event]);
 
+      // Assert
       const [changeLogRows] = await getBigQueryTableData(
         process.env.PROJECT_ID,
         datasetId,
@@ -673,6 +864,31 @@ describe("BigQuery Change Tracker E2E", () => {
       );
 
       expect(changeLogRows[0].old_data).toBeDefined();
+      expect(changeLogRows[0].old_data.foo).toBe("foo");
+    });
+
+    test("should handle null data field", async () => {
+      // Arrange
+      const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
+        data: null,
+      });
+
+      // Act & Assert
+      await expect(
+        changeTracker({ datasetId, tableId }).record([event])
+      ).rejects.toThrow();
+    });
+
+    test("should handle undefined data field", async () => {
+      // Arrange
+      const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
+        data: undefined,
+      });
+
+      // Act & Assert
+      await expect(
+        changeTracker({ datasetId, tableId }).record([event])
+      ).rejects.toThrow();
     });
   });
 });
