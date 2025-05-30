@@ -49,7 +49,6 @@ You can add custom headers to your emails by including a `headers` field in the 
 Add this document to the Firestore mail collection to send an email with custom headers.
 You can even include headers like 'List-Unsubscribe' to allow recipients to unsubscribe from your emails.
 
-
 #### Firestore-Send-Email: SendGrid Categories
 
 When using SendGrid (`SMTP_CONNECTION_URI` includes `sendgrid.net`), you can assign categories to your emails.
