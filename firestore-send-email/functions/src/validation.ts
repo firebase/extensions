@@ -116,10 +116,7 @@ const templateSchema = z.object({
 /**
  * Schema for email recipients (single email or array of emails).
  */
-const recipientSchema = z.union([
-  z.string().email(),
-  z.array(z.string().email()),
-]);
+const recipientSchema = z.union([z.string(), z.array(z.string())]);
 
 /**
  * Schema for arrays of UIDs.
@@ -137,8 +134,8 @@ const payloadSchema = z
     toUids: uidArraySchema.optional(),
     ccUids: uidArraySchema.optional(),
     bccUids: uidArraySchema.optional(),
-    from: z.string().email().optional(),
-    replyTo: z.string().email().optional(),
+    from: z.string().optional(),
+    replyTo: z.string().optional(),
     message: baseMessageSchema.optional(),
     template: templateSchema.optional(),
     sendGrid: sendGridSchema.optional(),
