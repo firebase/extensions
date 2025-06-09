@@ -269,7 +269,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 * BigQuery SQL table Time Partitioning option type: This parameter will allow you to partition the BigQuery table and BigQuery view created by the extension based on data ingestion time. You may select the granularity of partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will generate one partition per day, hour, month or year, respectively.
 
-* BigQuery Time Partitioning column name: The name of the column in the BigQuery table that will be used for time partitioning. This field should correspond to the timestamp or date field in your data that will be used for partitioning the table. By default, the extension will use the _PARTITIONTIME pseudo column.
+* BigQuery Time Partitioning column name: BigQuery Time Partitioning column name: The name of the column in the BigQuery table that will be used for time partitioning. This field should correspond to the timestamp or date field in your data that will be used for partitioning the table. By default, the extension will use the _PARTITIONTIME pseudo column.
 
 * BigQuery SQL Time Partitioning table schema field(column) type: This parameter defines the schema field type in BigQuery for the selected Time Partitioning field option. It cannot be modified if the table is already partitioned.
 
