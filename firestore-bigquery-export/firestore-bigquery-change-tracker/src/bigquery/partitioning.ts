@@ -52,14 +52,31 @@ export class Partitioning {
 
   private isValidPartitionTypeDate(value) {
     /* Check if valid timestamp value from sdk */
-    // if (value instanceof firebase.firestore.Timestamp) return true;
-    if (isTimestampLike(value)) return true;
+    if (value instanceof firebase.firestore.Timestamp) return true;
 
-    /* Check if valid date/timstemap, expedted result from production  */
-    if (value && value.toDate && value.toDate()) return true;
+    /* Check if it looks like a timestamp object */
+    if (isTimestampLike(value)) {
+      // But also check if it can be converted successfully
+      const converted = convertToTimestamp(value);
+      return converted !== null;
+    }
 
-    /* Check if valid date/time value from the console, expected result from testing locally */
-    return Object.prototype.toString.call(value) === "[object Date]";
+    /* Check if valid date/timestamp with toDate method */
+    if (value && value.toDate && typeof value.toDate === "function") {
+      try {
+        const date = value.toDate();
+        return date instanceof Date && !isNaN(date.getTime());
+      } catch {
+        return false;
+      }
+    }
+
+    /* Check if valid date object */
+    if (Object.prototype.toString.call(value) === "[object Date]") {
+      return !isNaN(value.getTime());
+    }
+
+    return false;
   }
 
   private hasHourAndDatePartitionConfig() {
@@ -194,18 +211,89 @@ export class Partitioning {
       /* Return converted console value */
       if (isTimestampLike(fieldValue)) {
         const convertedTimestampFieldValue = convertToTimestamp(fieldValue);
-        return {
-          [fieldName]: this.convertDateValue(
-            convertedTimestampFieldValue.toDate()
-          ),
-        };
+
+        // If conversion failed, log error and return empty object
+        if (!convertedTimestampFieldValue) {
+          logs.firestoreTimePartitionFieldError(
+            event.documentName,
+            fieldName,
+            firestoreFieldName,
+            fieldValue
+          );
+          return {};
+        }
+
+        try {
+          const dateValue = convertedTimestampFieldValue.toDate();
+
+          // Check if the resulting date is valid
+          if (!isFinite(dateValue.getTime())) {
+            logs.firestoreTimePartitionFieldError(
+              event.documentName,
+              fieldName,
+              firestoreFieldName,
+              fieldValue
+            );
+            return {};
+          }
+
+          return {
+            [fieldName]: this.convertDateValue(dateValue),
+          };
+        } catch (error) {
+          logs.firestoreTimePartitionFieldError(
+            event.documentName,
+            fieldName,
+            firestoreFieldName,
+            fieldValue
+          );
+          return {};
+        }
       }
 
       if (fieldValue.toDate) {
-        return { [fieldName]: this.convertDateValue(fieldValue.toDate()) };
+        try {
+          const dateValue = fieldValue.toDate();
+
+          // Check if the date is valid
+          if (!isFinite(dateValue.getTime())) {
+            logs.firestoreTimePartitionFieldError(
+              event.documentName,
+              fieldName,
+              firestoreFieldName,
+              fieldValue
+            );
+            return {};
+          }
+
+          return { [fieldName]: this.convertDateValue(dateValue) };
+        } catch (error) {
+          // Handle cases where toDate() throws
+          logs.firestoreTimePartitionFieldError(
+            event.documentName,
+            fieldName,
+            firestoreFieldName,
+            fieldValue
+          );
+          return {};
+        }
       }
 
       /* Return standard date value */
+      if (fieldValue instanceof Date) {
+        // Check if it's a valid date
+        if (!isFinite(fieldValue.getTime())) {
+          logs.firestoreTimePartitionFieldError(
+            event.documentName,
+            fieldName,
+            firestoreFieldName,
+            fieldValue
+          );
+          return {};
+        }
+        return { [fieldName]: this.convertDateValue(fieldValue) };
+      }
+
       return { [fieldName]: fieldValue };
     }
 
@@ -258,7 +346,21 @@ export class Partitioning {
       };
     }
 
-    if (this.customFieldExists(fields)) {
+    // Only check for field name if other field-based config is provided
+    const hasFieldBasedConfig =
+      this.config.timePartitioningFieldType ||
+      this.config.timePartitioningFirestoreField;
+
+    if (hasFieldBasedConfig && !this.config.timePartitioningField) {
+      return {
+        proceed: false,
+        message:
+          "Partition field name required when using field-based partitioning",
+      };
+    }
+
+    // Only check if field exists when we have a field name
+    if (this.config.timePartitioningField && this.customFieldExists(fields)) {
       return { proceed: false, message: "Field already exists on schema" };
     }
 
@@ -270,6 +372,12 @@ export class Partitioning {
   }
 
   async addPartitioningToSchema(fields = []): Promise<void> {
+    // Only proceed if we should add a custom partition field
+    if (!this.config.timePartitioningField) {
+      // This is ingestion-time partitioning, no field to add
+      return;
+    }
+
     const { proceed, message } = await this.shouldAddPartitioningToSchema(
       fields
     );
@@ -278,11 +386,15 @@ export class Partitioning {
       functions.logger.warn(`Did not add partitioning to schema: ${message}`);
       return;
     }
+
     // Add new partitioning field
-    fields.push(getNewPartitionField(this.config));
-    functions.logger.log(
-      `Added new partition field: ${this.config.timePartitioningField} to table ID: ${this.table.id}`
-    );
+    const newField = getNewPartitionField(this.config);
+    if (newField) {
+      fields.push(newField);
+      functions.logger.log(
+        `Added new partition field: ${this.config.timePartitioningField} to table ID: ${this.table.id}`
+      );
+    }
   }
 
   async updateTableMetadata(options: bigquery.TableMetadata): Promise<void> {
@@ -307,12 +419,63 @@ export class Partitioning {
     /** Return if invalid partitioning and field type combination */
     if (this.hasHourAndDatePartitionConfig()) return;
 
+    // Check for invalid field-based configuration
+    const hasFieldBasedConfig =
+      this.config.timePartitioningFieldType ||
+      this.config.timePartitioningFirestoreField;
+
+    if (hasFieldBasedConfig && !this.config.timePartitioningField) {
+      // Invalid configuration - don't set any partitioning
+      functions.logger.warn(
+        "Cannot create partitioning: field name required when using field-based partitioning"
+      );
+      return;
+    }
+
+    // Special handling for built-in fields that don't require Firestore field mapping
+    const BUILT_IN_FIELDS = [
+      "timestamp",
+      "document_name",
+      "event_id",
+      "operation",
+    ];
+    const isBuiltInField =
+      this.config.timePartitioningField &&
+      BUILT_IN_FIELDS.includes(this.config.timePartitioningField);
+
+    // If timePartitioningFieldType is explicitly set, it indicates the user wants
+    // field-based partitioning with a specific type, which requires a Firestore field
+    // This applies even to built-in fields when field type is specified
+    if (
+      this.config.timePartitioningFieldType &&
+      !this.config.timePartitioningFirestoreField
+    ) {
+      functions.logger.warn(
+        "Cannot create partitioning: Firestore field name required when field type is specified"
+      );
+      return;
+    }
+
+    // For custom fields (non-built-in), we always need the Firestore field name
+    if (
+      this.config.timePartitioningField &&
+      !isBuiltInField &&
+      !this.config.timePartitioningFirestoreField
+    ) {
+      // This is field-based partitioning with a custom field but missing the Firestore field
+      functions.logger.warn(
+        "Cannot create partitioning: Firestore field name required for custom field-based partitioning"
+      );
+      return;
+    }
+
+    // All checks passed, now we can set up partitioning
     if (this.config.timePartitioning) {
       options.timePartitioning = { type: this.config.timePartitioning };
     }
-
     //TODO: Add check for skipping adding views partition field, this is not a feature that can be added .
 
+    // Only set field if we have one (field-based partitioning)
     if (this.config.timePartitioningField) {
       options.timePartitioning = {
         ...options.timePartitioning,
@@ -341,7 +504,31 @@ const isTimestampLike = (value: any): value is TimestampLike => {
 
 const convertToTimestamp = (
   value: TimestampLike
-): firebase.firestore.Timestamp => {
+): firebase.firestore.Timestamp | null => {
   if (value instanceof firebase.firestore.Timestamp) return value;
-  return new firebase.firestore.Timestamp(value._seconds, value._nanoseconds);
+
+  try {
+    // Check if seconds is a valid number (not NaN, not infinity)
+    if (!Number.isFinite(value._seconds)) {
+      console.warn(
+        "Invalid seconds value in timestamp conversion:",
+        value._seconds
+      );
+      return null;
+    }
+
+    // Check if nanoseconds is a valid number
+    if (!Number.isFinite(value._nanoseconds)) {
+      console.warn(
+        "Invalid nanoseconds value in timestamp conversion:",
+        value._nanoseconds
+      );
+      return null;
+    }
+
+    return new firebase.firestore.Timestamp(value._seconds, value._nanoseconds);
+  } catch (error) {
+    console.warn("Failed to convert to Firebase Timestamp:", error);
+    return null;
+  }
 };

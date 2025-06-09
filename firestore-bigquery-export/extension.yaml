@@ -408,11 +408,11 @@ params:
   - param: TABLE_PARTITIONING
     label: BigQuery SQL table Time Partitioning option type
     description: >-
-      This parameter will allow you to partition the BigQuery table and BigQuery
-      view created by the extension based on data ingestion time. You may select
-      the granularity of partitioning based upon one of: HOUR, DAY, MONTH, YEAR.
-      This will generate one partition per day, hour, month or year,
-      respectively.
+      This parameter will allow you to partition the BigQuery table created by
+      the extension. You may select the granularity of partitioning based upon
+      one of: HOUR, DAY, MONTH, YEAR. This will generate one partition per  day,
+      hour, month or year, respectively. If no partitioning column is specified,
+      the table will be partitioned by ingestion time (_PARTITIONTIME).
     type: select
     options:
       - label: hour
@@ -431,20 +431,25 @@ params:
   - param: TIME_PARTITIONING_FIELD
     label: BigQuery Time Partitioning column name
     description: >-
-      BigQuery Time Partitioning column name: The name of the column in the
-      BigQuery table that will be used for time partitioning. This field should
-      correspond to the timestamp or date field in your data that will be used
-      for partitioning the table. By default, the extension will use the
-      _PARTITIONTIME pseudo column.
+      The name of the column to use for time partitioning. You can use one  of
+      the existing columns (such as `timestamp`), or create a new column  that
+      will be populated from a Firestore field. For built-in columns  like
+      `timestamp`, `document_name`, `event_id`, or `operation`, you  do not need
+      to specify a Firestore field mapping. If unspecified and  partitioning is
+      enabled, the table will use ingestion-time partitioning  (_PARTITIONTIME).
+      Cannot be changed if table is already partitioned.
     type: string
     required: false
 
   - param: TIME_PARTITIONING_FIELD_TYPE
     label: BigQuery SQL Time Partitioning table schema field(column) type
     description: >-
-      This parameter defines the schema field type in BigQuery for the selected
-      Time Partitioning field option. It cannot be modified if the table is
-      already partitioned.
+      The BigQuery data type for the partitioning column. This parameter is
+      required when you want to specify a custom data type for your partitioning
+       field. If using a built-in field like `timestamp` without specifying this
+       parameter, the field's default type will be used. If you specify this
+      parameter, you must also provide the Firestore field mapping, even for
+      built-in fields. Cannot be changed if table is already partitioned.
     type: select
     options:
       - label: TIMESTAMP
@@ -463,15 +468,13 @@ params:
       Firestore Document field name for BigQuery SQL Time Partitioning field
       option
     description: >-
-      This parameter enables partitioning of the BigQuery table created by the
-      extension based on the selected field in the Firestore Document. The field
-      value must be a top-level TIMESTAMP, DATETIME, or DATE field in BigQuery
-      string format. This setting cannot be modified if the table is already
-      partitioned. Example: Use `postDate` as the field for partitioning. Ensure
-      that the Firestore-BigQuery export extension has created the dataset and
-      table before running any backfill scripts. This step is crucial for
-      correct partitioning functionality and for inserting data into an already
-      partitioned table.
+      The Firestore document field to use for populating the partitioning
+      column. This parameter is required for custom partitioning fields or  when
+      you specify a custom field type. For built-in fields like  `timestamp`,
+      this is not required unless you also specify the field  type. The
+      Firestore field value must be a TIMESTAMP, DATETIME, or DATE  compatible
+      value. Cannot be changed if table is already partitioned. Example: Use
+      `postDate` as the Firestore field for partitioning.
     type: string
     required: false
 

@@ -189,6 +189,11 @@ export const getNewPartitionField = (
 ) => {
   const { timePartitioningField, timePartitioningFieldType } = config;
 
+  // Don't create a field without a name
+  if (!timePartitioningField) {
+    return null;
+  }
+
   return {
     name: timePartitioningField,
     mode: "NULLABLE",

@@ -506,6 +506,22 @@ describe("processing partitions on a new table", () => {
 });
 
 describe("updateTableMetadata", () => {
+  // Create a mock table for these tests
+  let mockTable;
+
+  beforeEach(() => {
+    mockTable = {
+      exists: jest.fn().mockResolvedValue([true]),
+      getMetadata: jest.fn().mockResolvedValue([
+        {
+          schema: { fields: [] },
+          // No timePartitioning to simulate a non-partitioned table
+        },
+      ]),
+      id: "mock_table",
+    };
+  });
+
   test("updates the table metadata with the timestamp field", async () => {
     const config: FirestoreBigQueryEventHistoryTrackerConfig = {
       datasetId: "",
@@ -521,7 +537,7 @@ describe("updateTableMetadata", () => {
     };
     const options = {};
 
-    const partitioning = new Partitioning(config, table);
+    const partitioning = new Partitioning(config, mockTable);
 
     await partitioning.updateTableMetadata(options);
 
@@ -532,7 +548,8 @@ describe("updateTableMetadata", () => {
       },
     });
   });
-  test("Should not update if there is a custom option with the timestamp option", async () => {
+
+  test("Should not update options when Firestore field name is missing", async () => {
     const config: FirestoreBigQueryEventHistoryTrackerConfig = {
       datasetId: "",
       tableId: "",
@@ -547,7 +564,7 @@ describe("updateTableMetadata", () => {
     };
     const options = {};
 
-    const partitioning = new Partitioning(config, table);
+    const partitioning = new Partitioning(config, mockTable);
 
     await partitioning.updateTableMetadata(options);
 
