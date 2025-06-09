@@ -32,7 +32,7 @@ let view: Table;
 
 /**
  * BigQuery Change Tracker End-to-End Tests
- * 
+ *
  * These tests verify the functionality of the BigQuery Change Tracker,
  * including dataset/table creation, time partitioning, data handling,
  * and query optimization.
@@ -357,7 +357,10 @@ describe("BigQuery Change Tracker E2E", () => {
           test("should handle Firebase Timestamp with DATE type", async () => {
             // Arrange
             const created = firestore.Timestamp.now();
-            const expectedDate = created.toDate().toISOString().substring(0, 10);
+            const expectedDate = created
+              .toDate()
+              .toISOString()
+              .substring(0, 10);
             const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
               data: { created },
             });
@@ -387,7 +390,10 @@ describe("BigQuery Change Tracker E2E", () => {
           test("should handle Firebase Timestamp with DATETIME type", async () => {
             // Arrange
             const created = firestore.Timestamp.now();
-            const expectedDate = created.toDate().toISOString().substring(0, 22);
+            const expectedDate = created
+              .toDate()
+              .toISOString()
+              .substring(0, 22);
             const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
               data: { created },
             });
@@ -411,7 +417,9 @@ describe("BigQuery Change Tracker E2E", () => {
 
             // Assert
             expect(metadata.timePartitioning).toBeDefined();
-            expect(changeLogRows[0].created.value.substring(0, 22)).toBe(expectedDate);
+            expect(changeLogRows[0].created.value.substring(0, 22)).toBe(
+              expectedDate
+            );
           });
 
           test("should handle invalid Firebase Timestamp", async () => {
@@ -788,7 +796,9 @@ describe("BigQuery Change Tracker E2E", () => {
       expect(firstPageLegacy).toEqual(firstPageOptimised);
 
       expect(legacyViewMetadata.view.query.includes("FIRST_VALUE")).toBe(true);
-      expect(optimisedViewMetadata.view.query.includes("FIRST_VALUE")).toBe(false);
+      expect(optimisedViewMetadata.view.query.includes("FIRST_VALUE")).toBe(
+        false
+      );
     });
   });
 
