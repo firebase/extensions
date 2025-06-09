@@ -44,31 +44,9 @@ import { initializeLatestView } from "./initializeLatestView";
 import { logger, LogLevel } from "../logger";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
-
-export interface FirestoreBigQueryEventHistoryTrackerConfig {
-  datasetId: string;
-  tableId: string;
-  firestoreInstanceId?: string;
-  datasetLocation?: string | undefined;
-  transformFunction?: string | undefined;
-  timePartitioning?: string | undefined;
-  timePartitioningField?: string | undefined;
-  timePartitioningFieldType?: string | undefined;
-  timePartitioningFirestoreField?: string | undefined;
-  clustering: string[] | null;
-  databaseId?: string | undefined;
-  wildcardIds?: boolean;
-  bqProjectId?: string | undefined;
-  backupTableId?: string | undefined;
-  useNewSnapshotQuerySyntax?: boolean;
-  skipInit?: boolean;
-  kmsKeyName?: string | undefined;
-  useMaterializedView?: boolean;
-  useIncrementalMaterializedView?: boolean;
-  maxStaleness?: string;
-  refreshIntervalMinutes?: number;
-  logLevel?: LogLevel | string;
-}
+import type { Config } from "./types";
+import { PartitioningConfig } from "./partitioning/config";
+export type { Config } from "./types";
 
 /**
  * An FirestoreEventHistoryTracker that exports data to BigQuery.
@@ -85,11 +63,14 @@ export class FirestoreBigQueryEventHistoryTracker
 {
   bq: bigquery.BigQuery;
   _initialized: boolean = false;
+  partitioningConfig: PartitioningConfig;
 
-  constructor(public config: FirestoreBigQueryEventHistoryTrackerConfig) {
+  constructor(public config: Config) {
     this.bq = new bigquery.BigQuery();
 
     this.bq.projectId = config.bqProjectId || process.env.PROJECT_ID;
+
+    this.partitioningConfig = new PartitioningConfig(this.config.partitioning);
 
     if (!this.config.datasetLocation) {
       this.config.datasetLocation = "us";
@@ -106,7 +87,7 @@ export class FirestoreBigQueryEventHistoryTracker
       await this.initialize();
     }
 
-    const partitionHandler = new Partitioning(this.config);
+    const partitionHandler = new Partitioning(this.partitioningConfig);
 
     const rows = events.map((event) => {
       const partitionValue = partitionHandler.getPartitionValue(event);
@@ -348,7 +329,7 @@ export class FirestoreBigQueryEventHistoryTracker
     const dataset = this.bigqueryDataset();
     const table = dataset.table(changelogName);
     const [tableExists] = await table.exists();
-    const partitioning = new Partitioning(this.config, table);
+    const partitioning = new Partitioning(this.partitioningConfig, table);
     const clustering = new Clustering(this.config, table);
 
     if (tableExists) {
