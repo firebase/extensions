@@ -1,18 +1,151 @@
+// partitioning.ts - Type-Safe Version
+
 import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
 import { ChangeType, FirestoreDocumentChangeEvent } from "..";
 import * as firebase from "firebase-admin";
-
 import * as logs from "../logs";
 import * as bigquery from "@google-cloud/bigquery";
 import * as functions from "firebase-functions";
 import { getNewPartitionField } from "./schema";
-import { BigQuery, TableMetadata } from "@google-cloud/bigquery";
-import { PartitionFieldType } from "../types";
+import { BigQuery, TableMetadata, TableField } from "@google-cloud/bigquery";
+
+// Constants
+const PARTITION_TYPES = ["HOUR", "DAY", "MONTH", "YEAR"] as const;
+const FIELD_TYPES = ["TIMESTAMP", "DATE", "DATETIME"] as const;
+const BUILT_IN_FIELDS = [
+  "timestamp",
+  "document_name",
+  "event_id",
+  "operation",
+] as const;
+
+type PartitionType = typeof PARTITION_TYPES[number];
+type FieldType = typeof FIELD_TYPES[number];
+type BuiltInField = typeof BUILT_IN_FIELDS[number];
+
+interface TimestampLike {
+  _seconds: number;
+  _nanoseconds: number;
+}
+
+interface HasToDate {
+  toDate(): unknown;
+}
+
+interface ValidationResult {
+  proceed: boolean;
+  message: string;
+}
+
+class PartitionValueConverter {
+  constructor(private fieldType?: string) {}
+
+  convert(value: unknown): string | null {
+    if (typeof value === "string") {
+      return value;
+    }
+
+    const date = this.extractDate(value);
+    if (!date) {
+      return null;
+    }
+
+    return this.formatForBigQuery(date);
+  }
+
+  private extractDate(value: unknown): Date | null {
+    // Firebase Timestamp
+    if (value instanceof firebase.firestore.Timestamp) {
+      return value.toDate();
+    }
+
+    if (this.isTimestampLike(value)) {
+      const timestamp = this.convertTimestampLike(value);
+      return timestamp?.toDate() || null;
+    }
+
+    if (this.hasToDateMethod(value)) {
+      try {
+        const date = value.toDate();
+        return this.isValidDate(date) ? date : null;
+      } catch {
+        return null;
+      }
+    }
+
+    if (Object.prototype.toString.call(value) === "[object Date]") {
+      return this.isValidDate(value) ? value : null;
+    }
+
+    return null;
+  }
+
+  private isTimestampLike(value: unknown): value is TimestampLike {
+    if (value instanceof firebase.firestore.Timestamp) return true;
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      "_seconds" in value &&
+      typeof (value as TimestampLike)._seconds === "number" &&
+      "_nanoseconds" in value &&
+      typeof (value as TimestampLike)._nanoseconds === "number"
+    );
+  }
+
+  private convertTimestampLike(
+    value: TimestampLike
+  ): firebase.firestore.Timestamp | null {
+    if (value instanceof firebase.firestore.Timestamp) return value;
+
+    try {
+      if (
+        !Number.isFinite(value._seconds) ||
+        !Number.isFinite(value._nanoseconds)
+      ) {
+        console.warn("Invalid timestamp values:", value);
+        return null;
+      }
+
+      return new firebase.firestore.Timestamp(
+        value._seconds,
+        value._nanoseconds
+      );
+    } catch (error) {
+      console.warn("Failed to convert to Firebase Timestamp:", error);
+      return null;
+    }
+  }
+
+  private hasToDateMethod(value: unknown): value is HasToDate {
+    return (
+      value !== null &&
+      typeof value === "object" &&
+      "toDate" in value &&
+      typeof (value as HasToDate).toDate === "function"
+    );
+  }
+
+  private isValidDate(date: unknown): date is Date {
+    return date instanceof Date && !isNaN(date.getTime());
+  }
+
+  private formatForBigQuery(date: Date): string {
+    switch (this.fieldType) {
+      case "DATETIME":
+        return BigQuery.datetime(date.toISOString()).value;
+      case "DATE":
+        return BigQuery.date(date.toISOString().substring(0, 10)).value;
+      case "TIMESTAMP":
+      default:
+        return BigQuery.timestamp(date).value;
+    }
+  }
+}
 
 export class Partitioning {
   public config: FirestoreBigQueryEventHistoryTrackerConfig;
-  public table: bigquery.Table;
-  public schema: object;
+  public table: bigquery.Table | undefined;
+  public schema: object | undefined;
 
   constructor(
     config: FirestoreBigQueryEventHistoryTrackerConfig,
@@ -24,17 +157,226 @@ export class Partitioning {
     this.schema = schema;
   }
 
+  async isValidPartitionForExistingTable(): Promise<boolean> {
+    if (!this.isPartitioningEnabled()) return false;
+
+    const isPartitioned = await this.isTablePartitioned();
+    if (isPartitioned) return false;
+
+    return this.hasValidCustomPartitionConfig();
+  }
+
+  async addPartitioningToSchema(fields: TableField[]): Promise<void> {
+    if (!this.config.timePartitioningField) {
+      return;
+    }
+
+    const validation = await this.shouldAddPartitioningToSchema(fields);
+
+    if (!validation.proceed) {
+      functions.logger.warn(
+        `Did not add partitioning to schema: ${validation.message}`
+      );
+      return;
+    }
+
+    // Add new partitioning field
+    const newField = getNewPartitionField(this.config);
+    if (newField) {
+      fields.push(newField);
+      functions.logger.log(
+        `Added new partition field: ${this.config.timePartitioningField} to table ID: ${this.table?.id}`
+      );
+    }
+  }
+
+  async shouldUpdateTableMetadata(): Promise<boolean> {
+    if (!this.isPartitioningEnabled()) return false;
+    if (!this.hasValidTableReference()) return false;
+    if (await this.isTablePartitioned()) return false;
+    if (!this.hasValidCustomPartitionConfig()) return false;
+    if (!this.hasValidTimePartitionType()) return false;
+    if (!this.hasValidTimePartitionOption()) return false;
+    if (this.hasHourAndDatePartitionConfig()) return false;
+
+    const fieldValidation = this.validateFieldBasedConfig();
+    if (!fieldValidation.proceed) {
+      if (fieldValidation.message) {
+        functions.logger.warn(fieldValidation.message);
+      }
+      return false;
+    }
+
+    return true;
+  }
+
+  async updateTableMetadata(options: bigquery.TableMetadata): Promise<void> {
+    const shouldUpdate = await this.shouldUpdateTableMetadata();
+    if (!shouldUpdate) return;
+
+    // All checks passed, set up partitioning
+    if (this.config.timePartitioning) {
+      options.timePartitioning = { type: this.config.timePartitioning };
+    }
+
+    if (this.config.timePartitioningField) {
+      options.timePartitioning = {
+        ...options.timePartitioning,
+        field: this.config.timePartitioningField,
+      };
+    }
+  }
+
+  getPartitionValue(
+    event: FirestoreDocumentChangeEvent
+  ): Record<string, string> {
+    // Handle null data
+    if (event.data == null && event.oldData == null) return {};
+
+    const firestoreFieldName = this.config.timePartitioningFirestoreField;
+    const fieldName = this.config.timePartitioningField;
+
+    if (!fieldName || !firestoreFieldName) {
+      return {};
+    }
+
+    const fieldValue =
+      event.operation === ChangeType.DELETE
+        ? event.oldData?.[firestoreFieldName]
+        : event.data?.[firestoreFieldName];
+
+    if (!fieldValue) {
+      return {};
+    }
+
+    const converter = new PartitionValueConverter(
+      this.config.timePartitioningFieldType
+    );
+    const convertedValue = converter.convert(fieldValue);
+
+    if (convertedValue === null) {
+      logs.firestoreTimePartitionFieldError(
+        event.documentName,
+        fieldName,
+        firestoreFieldName,
+        fieldValue
+      );
+      return {};
+    }
+
+    return { [fieldName]: convertedValue };
+  }
+
+  hasValidTableReference(): boolean {
+    if (!this.table) {
+      logs.invalidTableReference();
+    }
+    return !!this.table;
+  }
+
+  async hasExistingSchema(): Promise<boolean> {
+    if (!this.table) return false;
+    const [metadata] = await this.table.getMetadata();
+    return !!metadata.schema;
+  }
+
+  customFieldExists(fields: TableField[] = []): boolean {
+    const { timePartitioningField } = this.config;
+    if (!timePartitioningField) return false;
+    return fields.some((field) => field.name === timePartitioningField);
+  }
+
+  // ========== Private Validation Methods ==========
+
   private isPartitioningEnabled(): boolean {
     const { timePartitioning } = this.config;
-
     return !!timePartitioning;
   }
 
-  private isValidPartitionTypeString(value) {
-    return typeof value === "string";
+  private hasValidCustomPartitionConfig(): boolean {
+    if (!this.isPartitioningEnabled()) return false;
+    return true;
   }
 
-  private async metaDataSchemaFields() {
+  private hasValidTimePartitionOption(): boolean {
+    const { timePartitioning } = this.config;
+    return PARTITION_TYPES.includes(timePartitioning as PartitionType);
+  }
+
+  private hasValidTimePartitionType(): boolean {
+    const { timePartitioningFieldType } = this.config;
+
+    if (!timePartitioningFieldType || timePartitioningFieldType === undefined) {
+      return true;
+    }
+
+    return FIELD_TYPES.includes(timePartitioningFieldType as FieldType);
+  }
+
+  private hasHourAndDatePartitionConfig(): boolean {
+    if (
+      this.config.timePartitioning === "HOUR" &&
+      this.config.timePartitioningFieldType === "DATE"
+    ) {
+      logs.hourAndDatePartitioningWarning();
+      return true;
+    }
+    return false;
+  }
+
+  private validateFieldBasedConfig(): ValidationResult {
+    // Check for invalid field-based configuration
+    const hasFieldBasedConfig =
+      this.config.timePartitioningFieldType ||
+      this.config.timePartitioningFirestoreField;
+
+    if (hasFieldBasedConfig && !this.config.timePartitioningField) {
+      return {
+        proceed: false,
+        message:
+          "Cannot create partitioning: field name required when using field-based partitioning",
+      };
+    }
+
+    // Special handling for built-in fields
+    const isBuiltInField =
+      this.config.timePartitioningField &&
+      BUILT_IN_FIELDS.includes(
+        this.config.timePartitioningField as BuiltInField
+      );
+
+    // Check various configuration combinations
+    if (
+      this.config.timePartitioningFieldType &&
+      !this.config.timePartitioningFirestoreField
+    ) {
+      return {
+        proceed: false,
+        message:
+          "Cannot create partitioning: Firestore field name required when field type is specified",
+      };
+    }
+
+    if (
+      this.config.timePartitioningField &&
+      !isBuiltInField &&
+      !this.config.timePartitioningFirestoreField
+    ) {
+      return {
+        proceed: false,
+        message:
+          "Cannot create partitioning: Firestore field name required for custom field-based partitioning",
+      };
+    }
+
+    return { proceed: true, message: "" };
+  }
+
+  // ========== Private Helper Methods ==========
+
+  private async metaDataSchemaFields(): Promise<TableField[] | null> {
+    if (!this.table) return null;
+
     let metadata: TableMetadata;
 
     try {
@@ -44,281 +386,33 @@ export class Partitioning {
       return null;
     }
 
-    /** Return null if no valid schema on table **/
     if (!metadata.schema) return null;
-
     return metadata.schema.fields;
   }
 
-  private isValidPartitionTypeDate(value) {
-    /* Check if valid timestamp value from sdk */
-    if (value instanceof firebase.firestore.Timestamp) return true;
+  private async isTablePartitioned(): Promise<boolean> {
+    if (!this.table) return false;
 
-    /* Check if it looks like a timestamp object */
-    if (isTimestampLike(value)) {
-      // But also check if it can be converted successfully
-      const converted = convertToTimestamp(value);
-      return converted !== null;
-    }
-
-    /* Check if valid date/timestamp with toDate method */
-    if (value && value.toDate && typeof value.toDate === "function") {
-      try {
-        const date = value.toDate();
-        return date instanceof Date && !isNaN(date.getTime());
-      } catch {
-        return false;
-      }
-    }
-
-    /* Check if valid date object */
-    if (Object.prototype.toString.call(value) === "[object Date]") {
-      return !isNaN(value.getTime());
-    }
-
-    return false;
-  }
-
-  private hasHourAndDatePartitionConfig() {
-    if (
-      this.config.timePartitioning === "HOUR" &&
-      this.config.timePartitioningFieldType === "DATE"
-    ) {
-      logs.hourAndDatePartitioningWarning();
-      return true;
-    }
-
-    return false;
-  }
-
-  private hasValidCustomPartitionConfig() {
-    /* Return false if partition type option has not been set*/
-    if (!this.isPartitioningEnabled()) return false;
-
-    return true;
-  }
-
-  private hasValidTimePartitionOption() {
-    const { timePartitioning } = this.config;
-
-    return ["HOUR", "DAY", "MONTH", "YEAR"].includes(timePartitioning);
-  }
-
-  private hasValidTimePartitionType() {
-    const { timePartitioningFieldType } = this.config;
-
-    if (!timePartitioningFieldType || timePartitioningFieldType === undefined)
-      return true;
-
-    return ["TIMESTAMP", "DATE", "DATETIME"].includes(
-      timePartitioningFieldType
-    );
-  }
-
-  async hasExistingSchema() {
-    const [metadata] = await this.table.getMetadata();
-    return !!metadata.schema;
-  }
-
-  hasValidTableReference() {
-    if (!this.table) {
-      logs.invalidTableReference();
-    }
-    return !!this.table;
-  }
-
-  private async isTablePartitioned() {
     const [tableExists] = await this.table.exists();
+    if (!tableExists) return false;
 
-    if (!this.table || !tableExists) return false;
-
-    /* Return true if partition metadata already exists */
     const [metadata] = await this.table.getMetadata();
     if (metadata.timePartitioning) {
       logs.cannotPartitionExistingTable(this.table);
       return true;
     }
 
-    /** Find schema fields **/
     const schemaFields = await this.metaDataSchemaFields();
-
-    /** Return false if no schema exists */
     if (!schemaFields) return false;
 
-    /* Return false if time partition field not found */
     return schemaFields.some(
       (column) => column.name === this.config.timePartitioningField
     );
   }
 
-  async isValidPartitionForExistingTable(): Promise<boolean> {
-    /** Return false if partition type option has not been set */
-    if (!this.isPartitioningEnabled()) return false;
-
-    /* Return false if table is already partitioned */
-    const isPartitioned = await this.isTablePartitioned();
-    if (isPartitioned) return false;
-
-    return this.hasValidCustomPartitionConfig();
-  }
-
-  convertDateValue(fieldValue: Date): string {
-    const { timePartitioningFieldType } = this.config;
-
-    /* Return as Datetime value */
-    if (timePartitioningFieldType === PartitionFieldType.DATETIME) {
-      return BigQuery.datetime(fieldValue.toISOString()).value;
-    }
-
-    /* Return as Date value */
-    if (timePartitioningFieldType === PartitionFieldType.DATE) {
-      return BigQuery.date(fieldValue.toISOString().substring(0, 10)).value;
-    }
-
-    /* Return as Timestamp  */
-    return BigQuery.timestamp(fieldValue).value;
-  }
-
-  /*
-    Extracts a valid Partition field from the Document Change Event.
-    Matches result based on a pre-defined Firestore field matching the event data object.
-    Return an empty object if no field name or value provided. 
-    Returns empty object if not a string or timestamp (or result of serializing a timestamp)
-    Logs warning if not a valid datatype
-    Delete changes events have no data, return early as cannot partition on empty data.
-  **/
-  getPartitionValue(event: FirestoreDocumentChangeEvent) {
-    // When old data is disabled and the operation is delete
-    // the data and old data will be null
-    if (event.data == null && event.oldData == null) return {};
-
-    const firestoreFieldName = this.config.timePartitioningFirestoreField;
-    const fieldName = this.config.timePartitioningField;
-    const fieldValue =
-      event.operation === ChangeType.DELETE
-        ? event.oldData[firestoreFieldName]
-        : event.data[firestoreFieldName];
-
-    if (!fieldName || !fieldValue) {
-      return {};
-    }
-
-    if (this.isValidPartitionTypeString(fieldValue)) {
-      return { [fieldName]: fieldValue };
-    }
-
-    if (this.isValidPartitionTypeDate(fieldValue)) {
-      /* Return converted console value */
-      if (isTimestampLike(fieldValue)) {
-        const convertedTimestampFieldValue = convertToTimestamp(fieldValue);
-
-        // If conversion failed, log error and return empty object
-        if (!convertedTimestampFieldValue) {
-          logs.firestoreTimePartitionFieldError(
-            event.documentName,
-            fieldName,
-            firestoreFieldName,
-            fieldValue
-          );
-          return {};
-        }
-
-        try {
-          const dateValue = convertedTimestampFieldValue.toDate();
-
-          // Check if the resulting date is valid
-          if (!isFinite(dateValue.getTime())) {
-            logs.firestoreTimePartitionFieldError(
-              event.documentName,
-              fieldName,
-              firestoreFieldName,
-              fieldValue
-            );
-            return {};
-          }
-
-          return {
-            [fieldName]: this.convertDateValue(dateValue),
-          };
-        } catch (error) {
-          logs.firestoreTimePartitionFieldError(
-            event.documentName,
-            fieldName,
-            firestoreFieldName,
-            fieldValue
-          );
-          return {};
-        }
-      }
-
-      if (fieldValue.toDate) {
-        try {
-          const dateValue = fieldValue.toDate();
-
-          // Check if the date is valid
-          if (!isFinite(dateValue.getTime())) {
-            logs.firestoreTimePartitionFieldError(
-              event.documentName,
-              fieldName,
-              firestoreFieldName,
-              fieldValue
-            );
-            return {};
-          }
-
-          return { [fieldName]: this.convertDateValue(dateValue) };
-        } catch (error) {
-          // Handle cases where toDate() throws
-          logs.firestoreTimePartitionFieldError(
-            event.documentName,
-            fieldName,
-            firestoreFieldName,
-            fieldValue
-          );
-          return {};
-        }
-      }
-
-      /* Return standard date value */
-      if (fieldValue instanceof Date) {
-        // Check if it's a valid date
-        if (!isFinite(fieldValue.getTime())) {
-          logs.firestoreTimePartitionFieldError(
-            event.documentName,
-            fieldName,
-            firestoreFieldName,
-            fieldValue
-          );
-          return {};
-        }
-        return { [fieldName]: this.convertDateValue(fieldValue) };
-      }
-
-      return { [fieldName]: fieldValue };
-    }
-
-    logs.firestoreTimePartitionFieldError(
-      event.documentName,
-      fieldName,
-      firestoreFieldName,
-      fieldValue
-    );
-
-    return {};
-  }
-
-  customFieldExists(fields = []) {
-    /** Extract the time partioning field name */
-    const { timePartitioningField } = this.config;
-
-    /** Return based the field already exist */
-    return fields.map(($) => $.name).includes(timePartitioningField);
-  }
-
-  private async shouldAddPartitioningToSchema(fields: string[]): Promise<{
-    proceed: boolean;
-    message: string;
-  }> {
+  private async shouldAddPartitioningToSchema(
+    fields: TableField[]
+  ): Promise<ValidationResult> {
     if (!this.isPartitioningEnabled()) {
       return { proceed: false, message: "Partitioning not enabled" };
     }
@@ -346,7 +440,7 @@ export class Partitioning {
       };
     }
 
-    // Only check for field name if other field-based config is provided
+    // Check field-based config
     const hasFieldBasedConfig =
       this.config.timePartitioningFieldType ||
       this.config.timePartitioningFirestoreField;
@@ -359,7 +453,6 @@ export class Partitioning {
       };
     }
 
-    // Only check if field exists when we have a field name
     if (this.config.timePartitioningField && this.customFieldExists(fields)) {
       return { proceed: false, message: "Field already exists on schema" };
     }
@@ -370,165 +463,4 @@ export class Partitioning {
 
     return { proceed: true, message: "" };
   }
-
-  async addPartitioningToSchema(fields = []): Promise<void> {
-    // Only proceed if we should add a custom partition field
-    if (!this.config.timePartitioningField) {
-      // This is ingestion-time partitioning, no field to add
-      return;
-    }
-
-    const { proceed, message } = await this.shouldAddPartitioningToSchema(
-      fields
-    );
-
-    if (!proceed) {
-      functions.logger.warn(`Did not add partitioning to schema: ${message}`);
-      return;
-    }
-
-    // Add new partitioning field
-    const newField = getNewPartitionField(this.config);
-    if (newField) {
-      fields.push(newField);
-      functions.logger.log(
-        `Added new partition field: ${this.config.timePartitioningField} to table ID: ${this.table.id}`
-      );
-    }
-  }
-
-  async updateTableMetadata(options: bigquery.TableMetadata): Promise<void> {
-    /** Return if partition type option has not been set */
-    if (!this.isPartitioningEnabled()) return;
-
-    /** Return if class has invalid table reference */
-    if (!this.hasValidTableReference()) return;
-
-    /** Return if table is already partitioned **/
-    if (await this.isTablePartitioned()) return;
-
-    /** Return if an invalid partition type has been requested**/
-    if (!this.hasValidCustomPartitionConfig()) return;
-
-    /** Return if an invalid partition type has been requested**/
-    if (!this.hasValidTimePartitionType()) return;
-
-    /** Update fields with new schema option ** */
-    if (!this.hasValidTimePartitionOption()) return;
-
-    /** Return if invalid partitioning and field type combination */
-    if (this.hasHourAndDatePartitionConfig()) return;
-
-    // Check for invalid field-based configuration
-    const hasFieldBasedConfig =
-      this.config.timePartitioningFieldType ||
-      this.config.timePartitioningFirestoreField;
-
-    if (hasFieldBasedConfig && !this.config.timePartitioningField) {
-      // Invalid configuration - don't set any partitioning
-      functions.logger.warn(
-        "Cannot create partitioning: field name required when using field-based partitioning"
-      );
-      return;
-    }
-
-    // Special handling for built-in fields that don't require Firestore field mapping
-    const BUILT_IN_FIELDS = [
-      "timestamp",
-      "document_name",
-      "event_id",
-      "operation",
-    ];
-    const isBuiltInField =
-      this.config.timePartitioningField &&
-      BUILT_IN_FIELDS.includes(this.config.timePartitioningField);
-
-    // If timePartitioningFieldType is explicitly set, it indicates the user wants
-    // field-based partitioning with a specific type, which requires a Firestore field
-    // This applies even to built-in fields when field type is specified
-    if (
-      this.config.timePartitioningFieldType &&
-      !this.config.timePartitioningFirestoreField
-    ) {
-      functions.logger.warn(
-        "Cannot create partitioning: Firestore field name required when field type is specified"
-      );
-      return;
-    }
-
-    // For custom fields (non-built-in), we always need the Firestore field name
-    if (
-      this.config.timePartitioningField &&
-      !isBuiltInField &&
-      !this.config.timePartitioningFirestoreField
-    ) {
-      // This is field-based partitioning with a custom field but missing the Firestore field
-      functions.logger.warn(
-        "Cannot create partitioning: Firestore field name required for custom field-based partitioning"
-      );
-      return;
-    }
-
-    // All checks passed, now we can set up partitioning
-    if (this.config.timePartitioning) {
-      options.timePartitioning = { type: this.config.timePartitioning };
-    }
-    //TODO: Add check for skipping adding views partition field, this is not a feature that can be added .
-
-    // Only set field if we have one (field-based partitioning)
-    if (this.config.timePartitioningField) {
-      options.timePartitioning = {
-        ...options.timePartitioning,
-        field: this.config.timePartitioningField,
-      };
-    }
-  }
 }
-
-type TimestampLike = {
-  _seconds: number;
-  _nanoseconds: number;
-};
-
-const isTimestampLike = (value: any): value is TimestampLike => {
-  if (value instanceof firebase.firestore.Timestamp) return true;
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "_seconds" in value &&
-    typeof value["_seconds"] === "number" &&
-    "_nanoseconds" in value &&
-    typeof value["_nanoseconds"] === "number"
-  );
-};
-
-const convertToTimestamp = (
-  value: TimestampLike
-): firebase.firestore.Timestamp | null => {
-  if (value instanceof firebase.firestore.Timestamp) return value;
-
-  try {
-    // Check if seconds is a valid number (not NaN, not infinity)
-    if (!Number.isFinite(value._seconds)) {
-      console.warn(
-        "Invalid seconds value in timestamp conversion:",
-        value._seconds
-      );
-      return null;
-    }
-
-    // Check if nanoseconds is a valid number
-    if (!Number.isFinite(value._nanoseconds)) {
-      console.warn(
-        "Invalid nanoseconds value in timestamp conversion:",
-        value._nanoseconds
-      );
-      return null;
-    }
-
-    return new firebase.firestore.Timestamp(value._seconds, value._nanoseconds);
-  } catch (error) {
-    console.warn("Failed to convert to Firebase Timestamp:", error);
-    return null;
-  }
-};
