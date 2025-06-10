@@ -21,19 +21,39 @@ Note that this extension only listens for _document_ changes in the collection, 
 
 Enabling wildcard references will provide an additional STRING based column. The resulting JSON field value references any wildcards that are included in ${param:COLLECTION_PATH}. You can extract them using [JSON_EXTRACT_SCALAR](https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions#json_extract_scalar).
 
+#### BigQuery Partitioning
 
-`Partition` settings cannot be updated on a pre-existing table, if these options are required then a new table must be created.
+`Partition` settings cannot be updated on a pre-existing table. If these options are required then a new table must be created.
 
-Note: To enable partitioning for a Big Query database, the following fields are required:
+The extension supports three types of partitioning:
 
- - Time Partitioning option type
- - Time partitioning column name
- - Time partiitioning table schema
- - Firestore document field name
+**1. Default Ingestion-Time Partitioning**
+- Only requires: Time Partitioning option type (HOUR, DAY, MONTH, or YEAR)
+- Partitions data based on when it's loaded into BigQuery
+- No additional fields needed
+
+**2. Built-in Field Partitioning**
+- Requires:
+  - Time Partitioning option type
+  - Time partitioning column name (must be one of: `timestamp`, `document_name`, `event_id`, or `operation`)
+- Uses existing metadata fields from the changelog table
+- Does not require Firestore field mapping
+
+**3. Custom Field-Based Partitioning**
+- Requires:
+  - Time Partitioning option type
+  - Time partitioning column name (your custom field name)
+  - Firestore document field name (the field in your Firestore documents)
+  - Time partitioning table schema type (optional - defaults to TIMESTAMP if not specified)
+- Creates a new column in the BigQuery table based on a field from your Firestore documents
+- The Firestore field value must be a top-level TIMESTAMP, DATETIME, or DATE field
+
+**Important Notes:**
+- HOUR partitioning is not compatible with DATE field types
+- Partitioning configuration cannot be changed after the table is created
+- For custom partitioning, ensure that the extension creates the dataset and table before running any backfill scripts
 
 `Clustering` will not need to create or modify a table when adding clustering options, this will be updated automatically.
-
-
 
 #### Additional setup
 
@@ -71,7 +91,7 @@ Prior to sending the document change to BigQuery, you have an opportunity to tra
 }
 ```
 
-The response should be indentical in structure.
+The response should be identical in structure.
 
 #### Materialized Views
 
@@ -240,7 +260,7 @@ After reconfiguring the extension, run the import script on your collection to e
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 
-- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service's no-cost tier:
   - BigQuery (this extension writes to BigQuery with [streaming inserts](https://cloud.google.com/bigquery/pricing#streaming_pricing))
   - Cloud Firestore
   - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))

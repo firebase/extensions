@@ -312,7 +312,6 @@ describe("BigQuery Change Tracker E2E", () => {
           const metadata = await createTableWithPartitioning({
             timePartitioning: "DAY",
             timePartitioningField: "timestamp",
-            timePartitioningFirestoreField: "createdAt",
           });
 
           expectPartitioning(metadata, "DAY", "timestamp");
