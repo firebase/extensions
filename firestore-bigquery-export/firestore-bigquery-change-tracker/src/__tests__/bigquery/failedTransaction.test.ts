@@ -22,7 +22,7 @@ describe("handleFailedTransactions", () => {
       datasetLocation: "",
       transformFunction: undefined,
       timePartitioning: undefined,
-      timePartitioningField: undefined,
+      timePartitioningColumn: undefined,
       timePartitioningFieldType: undefined,
       timePartitioningFirestoreField: undefined,
       clustering: undefined,

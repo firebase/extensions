@@ -114,7 +114,7 @@ describe("Clustering ", () => {
         datasetId,
         tableId,
         timePartitioning: "DAY",
-        timePartitioningField: "end_date",
+        timePartitioningColumn: "end_date",
         timePartitioningFieldType: "TIMESTAMP",
         timePartitioningFirestoreField: "endDate",
         clustering: ["end_date"],

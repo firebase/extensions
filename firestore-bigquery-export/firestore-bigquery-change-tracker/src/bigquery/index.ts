@@ -44,31 +44,8 @@ import { initializeLatestView } from "./initializeLatestView";
 import { logger, LogLevel } from "../logger";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
-
-export interface FirestoreBigQueryEventHistoryTrackerConfig {
-  datasetId: string;
-  tableId: string;
-  firestoreInstanceId?: string;
-  datasetLocation?: string | undefined;
-  transformFunction?: string | undefined;
-  timePartitioning?: string | undefined;
-  timePartitioningField?: string | undefined;
-  timePartitioningFieldType?: string | undefined;
-  timePartitioningFirestoreField?: string | undefined;
-  clustering: string[] | null;
-  databaseId?: string | undefined;
-  wildcardIds?: boolean;
-  bqProjectId?: string | undefined;
-  backupTableId?: string | undefined;
-  useNewSnapshotQuerySyntax?: boolean;
-  skipInit?: boolean;
-  kmsKeyName?: string | undefined;
-  useMaterializedView?: boolean;
-  useIncrementalMaterializedView?: boolean;
-  maxStaleness?: string;
-  refreshIntervalMinutes?: number;
-  logLevel?: LogLevel | string;
-}
+import type { FirestoreBigQueryEventHistoryTrackerConfig } from "./types";
+export type { FirestoreBigQueryEventHistoryTrackerConfig } from "./types";
 
 /**
  * An FirestoreEventHistoryTracker that exports data to BigQuery.

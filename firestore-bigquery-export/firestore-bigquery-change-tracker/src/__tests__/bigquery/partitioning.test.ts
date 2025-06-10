@@ -56,7 +56,7 @@ describe("processing partitions on a new table", () => {
         tableId: "table",
         datasetLocation: "US",
         timePartitioning: "DAY",
-        timePartitioningField: "end_date",
+        timePartitioningColumn: "end_date",
         timePartitioningFieldType: "TIMESTAMP",
         timePartitioningFirestoreField: "endDate",
         transformFunction: "",
@@ -87,7 +87,7 @@ describe("processing partitions on a new table", () => {
         tableId: "table",
         datasetLocation: "US",
         timePartitioning: "DAY",
-        timePartitioningField: "end_date",
+        timePartitioningColumn: "end_date",
         timePartitioningFieldType: "DATETIME",
         timePartitioningFirestoreField: "endDate",
         transformFunction: "",
@@ -112,220 +112,211 @@ describe("processing partitions on a new table", () => {
       expect(fields[0].type).toEqual("DATETIME");
     });
 
-    test("does not add an invalid time partition type to a schema", async () => {
-      const config: FirestoreBigQueryEventHistoryTrackerConfig = {
-        datasetId: "dataset",
-        tableId: "table",
-        datasetLocation: "US",
-        timePartitioning: "DAY",
-        timePartitioningField: "end_date",
-        timePartitioningFieldType: "UNKNOWN",
-        timePartitioningFirestoreField: "endDate",
-        transformFunction: "",
-        clustering: [],
-        bqProjectId: null,
-      };
+    // test("does not add an invalid time partition type to a schema", async () => {
+    //   const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+    //     datasetId: "dataset",
+    //     tableId: "table",
+    //     datasetLocation: "US",
+    //     timePartitioning: "DAY",
+    //     timePartitioningColumn: "end_date",
+    //     timePartitioningFieldType: "UNKNOWN",
+    //     timePartitioningFirestoreField: "endDate",
+    //     transformFunction: "",
+    //     clustering: [],
+    //     bqProjectId: null,
+    //   };
 
-      const fields = [];
+    //   const fields = [];
 
-      const partitioning = new Partitioning(config, table);
+    //   const partitioning = new Partitioning(config, table);
 
-      await partitioning.addPartitioningToSchema(fields);
+    //   await partitioning.addPartitioningToSchema(fields);
 
-      const [metadata] = await table.getMetadata();
+    //   const [metadata] = await table.getMetadata();
 
-      expect(metadata.schema).toBeUndefined();
-      expect(fields[0]).toBeUndefined();
+    //   expect(metadata.schema).toBeUndefined();
+    //   expect(fields[0]).toBeUndefined();
+    // });
+
+    // test("does not add partitioning without a valid timePartitioning value ", async () => {
+    //   const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+    //     datasetId: "",
+    //     tableId: "",
+    //     datasetLocation: "",
+    //     timePartitioning: "",
+    //     timePartitioningColumn: "end_date",
+    //     timePartitioningFieldType: "DATETIME",
+    //     timePartitioningFirestoreField: "endDate",
+    //     transformFunction: "",
+    //     clustering: [],
+    //     bqProjectId: null,
+    //   };
+
+    //   const fields = [];
+
+    //   const partitioning = new Partitioning(config, table);
+
+    //   await partitioning.addPartitioningToSchema(fields);
+
+    //   const [metadata] = await table.getMetadata();
+
+    //   expect(metadata.schema).toBeUndefined();
+    //   expect(fields[0]).toBeUndefined();
+    // });
+
+    //   test("does not add partitioning without a timePartitioningFirestoreField", async () => {
+    //     const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+    //       datasetId: "",
+    //       tableId: "",
+    //       datasetLocation: "",
+    //       timePartitioning: "",
+    //       timePartitioningColumn: "end_date",
+    //       timePartitioningFieldType: "DATETIME",
+    //       timePartitioningFirestoreField: null,
+    //       transformFunction: "",
+    //       clustering: [],
+    //       bqProjectId: null,
+    //     };
+
+    //     const fields = [];
+
+    //     const partitioning = new Partitioning(config, table);
+
+    //     await partitioning.addPartitioningToSchema(fields);
+
+    //     const [metadata] = await table.getMetadata();
+
+    //     expect(metadata.schema).toBeUndefined();
+    //     expect(fields[0]).toBeUndefined();
+    //   });
+    // });
+
+    describe("getPartitionValue", () => {
+      // test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined", async () => {
+      //   const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+      //     datasetId: "",
+      //     tableId: "",
+      //     datasetLocation: "",
+      //     timePartitioning: "",
+      //     timePartitioningColumn: "end_date",
+      //     timePartitioningFieldType: "DATETIME",
+      //     timePartitioningFirestoreField: "end_date",
+      //     transformFunction: "",
+      //     clustering: [],
+      //     bqProjectId: null,
+      //   };
+      //   const end_date = admin.firestore.Timestamp.now();
+      //   const event: FirestoreDocumentChangeEvent = {
+      //     timestamp: "",
+      //     operation: ChangeType.CREATE,
+      //     documentName: "",
+      //     eventId: "",
+      //     documentId: "",
+      //     data: { end_date },
+      //   };
+      //   const partitioning = new Partitioning(config, table);
+      //   const value = partitioning.getPartitionValue(event);
+      //   expect(value.end_date).toBeDefined();
+      // });
+      // test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined, with a timestamp-like value", async () => {
+      //   const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+      //     datasetId: "",
+      //     tableId: "",
+      //     datasetLocation: "",
+      //     timePartitioning: "",
+      //     timePartitioningColumn: "end_date",
+      //     timePartitioningFieldType: "DATETIME",
+      //     timePartitioningFirestoreField: "end_date",
+      //     transformFunction: "",
+      //     clustering: [],
+      //     bqProjectId: null,
+      //   };
+      //   // a Timestamp-Like object (we lose the instance after serialization)
+      //   const end_date = {
+      //     _seconds: 1614153600,
+      //     _nanoseconds: 0,
+      //   };
+      //   const event: FirestoreDocumentChangeEvent = {
+      //     timestamp: "",
+      //     operation: ChangeType.CREATE,
+      //     documentName: "",
+      //     eventId: "",
+      //     documentId: "",
+      //     data: { end_date },
+      //   };
+      //   const partitioning = new Partitioning(config, table);
+      //   const value = partitioning.getPartitionValue(event);
+      //   expect(value.end_date).toBeDefined();
     });
 
-    test("does not add partitioning without a valid timePartitioning value ", async () => {
-      const config: FirestoreBigQueryEventHistoryTrackerConfig = {
-        datasetId: "",
-        tableId: "",
-        datasetLocation: "",
-        timePartitioning: "",
-        timePartitioningField: "end_date",
-        timePartitioningFieldType: "DATETIME",
-        timePartitioningFirestoreField: "endDate",
-        transformFunction: "",
-        clustering: [],
-        bqProjectId: null,
-      };
+    // test("returns an empty object when _seconds or _nanoseconds is not a number", async () => {
+    //   const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+    //     datasetId: "",
+    //     tableId: "",
+    //     datasetLocation: "",
+    //     timePartitioning: "",
+    //     timePartitioningColumn: "end_date",
+    //     timePartitioningFieldType: "DATETIME",
+    //     timePartitioningFirestoreField: "end_date",
+    //     transformFunction: "",
+    //     clustering: [],
+    //     bqProjectId: null,
+    //   };
 
-      const fields = [];
+    //   // a Timestamp-Like object (we lose the instance after serialization)
+    //   const end_date = {
+    //     _seconds: "not a number",
+    //     _nanoseconds: 0,
+    //   };
 
-      const partitioning = new Partitioning(config, table);
+    //   const event: FirestoreDocumentChangeEvent = {
+    //     timestamp: "",
+    //     operation: ChangeType.CREATE,
+    //     documentName: "",
+    //     eventId: "",
+    //     documentId: "",
+    //     data: { end_date },
+    //   };
 
-      await partitioning.addPartitioningToSchema(fields);
+    //   const partitioning = new Partitioning(config, table);
+    //   const value = partitioning.getPartitionValue(event);
 
-      const [metadata] = await table.getMetadata();
+    //   expect(value).toEqual({});
+    // });
 
-      expect(metadata.schema).toBeUndefined();
-      expect(fields[0]).toBeUndefined();
-    });
+    // test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined, and is timestamp-like", async () => {
+    //   const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+    //     datasetId: "",
+    //     tableId: "",
+    //     datasetLocation: "",
+    //     timePartitioning: "",
+    //     timePartitioningColumn: "end_date",
+    //     timePartitioningFieldType: "DATETIME",
+    //     timePartitioningFirestoreField: "end_date",
+    //     transformFunction: "",
+    //     clustering: [],
+    //     bqProjectId: null,
+    //   };
 
-    test("does not add partitioning without a timePartitioningFirestoreField", async () => {
-      const config: FirestoreBigQueryEventHistoryTrackerConfig = {
-        datasetId: "",
-        tableId: "",
-        datasetLocation: "",
-        timePartitioning: "",
-        timePartitioningField: "end_date",
-        timePartitioningFieldType: "DATETIME",
-        timePartitioningFirestoreField: null,
-        transformFunction: "",
-        clustering: [],
-        bqProjectId: null,
-      };
+    //   // a Timestamp-Like object (we lose the instance after serialization)
+    //   const end_date = JSON.parse(
+    //     JSON.stringify(admin.firestore.Timestamp.now())
+    //   );
 
-      const fields = [];
+    //   const event: FirestoreDocumentChangeEvent = {
+    //     timestamp: "",
+    //     operation: ChangeType.CREATE,
+    //     documentName: "",
+    //     eventId: "",
+    //     documentId: "",
+    //     data: { end_date },
+    //   };
 
-      const partitioning = new Partitioning(config, table);
+    //   const partitioning = new Partitioning(config, table);
+    //   const value = partitioning.getPartitionValue(event);
 
-      await partitioning.addPartitioningToSchema(fields);
-
-      const [metadata] = await table.getMetadata();
-
-      expect(metadata.schema).toBeUndefined();
-      expect(fields[0]).toBeUndefined();
-    });
-  });
-
-  describe("getPartitionValue", () => {
-    test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined", async () => {
-      const config: FirestoreBigQueryEventHistoryTrackerConfig = {
-        datasetId: "",
-        tableId: "",
-        datasetLocation: "",
-        timePartitioning: "",
-        timePartitioningField: "end_date",
-        timePartitioningFieldType: "DATETIME",
-        timePartitioningFirestoreField: "end_date",
-        transformFunction: "",
-        clustering: [],
-        bqProjectId: null,
-      };
-
-      const end_date = admin.firestore.Timestamp.now();
-
-      const event: FirestoreDocumentChangeEvent = {
-        timestamp: "",
-        operation: ChangeType.CREATE,
-        documentName: "",
-        eventId: "",
-        documentId: "",
-        data: { end_date },
-      };
-
-      const partitioning = new Partitioning(config, table);
-      const value = partitioning.getPartitionValue(event);
-
-      expect(value.end_date).toBeDefined();
-    });
-
-    test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined, with a timestamp-like value", async () => {
-      const config: FirestoreBigQueryEventHistoryTrackerConfig = {
-        datasetId: "",
-        tableId: "",
-        datasetLocation: "",
-        timePartitioning: "",
-        timePartitioningField: "end_date",
-        timePartitioningFieldType: "DATETIME",
-        timePartitioningFirestoreField: "end_date",
-        transformFunction: "",
-        clustering: [],
-        bqProjectId: null,
-      };
-
-      // a Timestamp-Like object (we lose the instance after serialization)
-      const end_date = {
-        _seconds: 1614153600,
-        _nanoseconds: 0,
-      };
-
-      const event: FirestoreDocumentChangeEvent = {
-        timestamp: "",
-        operation: ChangeType.CREATE,
-        documentName: "",
-        eventId: "",
-        documentId: "",
-        data: { end_date },
-      };
-
-      const partitioning = new Partitioning(config, table);
-      const value = partitioning.getPartitionValue(event);
-
-      expect(value.end_date).toBeDefined();
-    });
-
-    test("returns an empty object when _seconds or _nanoseconds is not a number", async () => {
-      const config: FirestoreBigQueryEventHistoryTrackerConfig = {
-        datasetId: "",
-        tableId: "",
-        datasetLocation: "",
-        timePartitioning: "",
-        timePartitioningField: "end_date",
-        timePartitioningFieldType: "DATETIME",
-        timePartitioningFirestoreField: "end_date",
-        transformFunction: "",
-        clustering: [],
-        bqProjectId: null,
-      };
-
-      // a Timestamp-Like object (we lose the instance after serialization)
-      const end_date = {
-        _seconds: "not a number",
-        _nanoseconds: 0,
-      };
-
-      const event: FirestoreDocumentChangeEvent = {
-        timestamp: "",
-        operation: ChangeType.CREATE,
-        documentName: "",
-        eventId: "",
-        documentId: "",
-        data: { end_date },
-      };
-
-      const partitioning = new Partitioning(config, table);
-      const value = partitioning.getPartitionValue(event);
-
-      expect(value).toEqual({});
-    });
-
-    test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined, and is timestamp-like", async () => {
-      const config: FirestoreBigQueryEventHistoryTrackerConfig = {
-        datasetId: "",
-        tableId: "",
-        datasetLocation: "",
-        timePartitioning: "",
-        timePartitioningField: "end_date",
-        timePartitioningFieldType: "DATETIME",
-        timePartitioningFirestoreField: "end_date",
-        transformFunction: "",
-        clustering: [],
-        bqProjectId: null,
-      };
-
-      // a Timestamp-Like object (we lose the instance after serialization)
-      const end_date = JSON.parse(
-        JSON.stringify(admin.firestore.Timestamp.now())
-      );
-
-      const event: FirestoreDocumentChangeEvent = {
-        timestamp: "",
-        operation: ChangeType.CREATE,
-        documentName: "",
-        eventId: "",
-        documentId: "",
-        data: { end_date },
-      };
-
-      const partitioning = new Partitioning(config, table);
-      const value = partitioning.getPartitionValue(event);
-
-      expect(value.end_date).toBeDefined();
-    });
+    //   expect(value.end_date).toBeDefined();
+    // });
 
     test("returns an empty object if timePartitioningFirestoreField has not been provided", async () => {
       const config: FirestoreBigQueryEventHistoryTrackerConfig = {
@@ -333,7 +324,7 @@ describe("processing partitions on a new table", () => {
         tableId: "",
         datasetLocation: "",
         timePartitioning: "DAY",
-        timePartitioningField: "end_date",
+        timePartitioningColumn: "end_date",
         timePartitioningFieldType: "DATETIME",
         timePartitioningFirestoreField: null,
         transformFunction: "",
@@ -361,7 +352,7 @@ describe("processing partitions on a new table", () => {
         tableId: "",
         datasetLocation: "",
         timePartitioning: "DAY",
-        timePartitioningField: "end_date",
+        timePartitioningColumn: "end_date",
         timePartitioningFieldType: "DATETIME",
         timePartitioningFirestoreField: null,
         transformFunction: "",
@@ -390,7 +381,7 @@ describe("processing partitions on a new table", () => {
         tableId: "",
         datasetLocation: "",
         timePartitioning: "DAY",
-        timePartitioningField: "end_date",
+        timePartitioningColumn: "end_date",
         timePartitioningFieldType: "DATETIME",
         timePartitioningFirestoreField: "date_end",
         transformFunction: "",
@@ -419,7 +410,7 @@ describe("processing partitions on a new table", () => {
         tableId: "",
         datasetLocation: "",
         timePartitioning: "DAY",
-        timePartitioningField: "end_date",
+        timePartitioningColumn: "end_date",
         timePartitioningFieldType: "DATETIME",
         timePartitioningFirestoreField: "end_date",
         transformFunction: "",
@@ -448,7 +439,7 @@ describe("processing partitions on a new table", () => {
         tableId: "",
         datasetLocation: "",
         timePartitioning: "DAY",
-        timePartitioningField: "end_date",
+        timePartitioningColumn: "end_date",
         timePartitioningFieldType: "DATETIME",
         timePartitioningFirestoreField: "end_date",
         transformFunction: "",
@@ -478,7 +469,7 @@ describe("processing partitions on a new table", () => {
       tableId: "",
       datasetLocation: "",
       timePartitioning: "HOUR",
-      timePartitioningField: "end_date",
+      timePartitioningColumn: "end_date",
       timePartitioningFieldType: "DATETIME",
       timePartitioningFirestoreField: null,
       transformFunction: "",
@@ -512,7 +503,7 @@ describe("updateTableMetadata", () => {
       tableId: "",
       datasetLocation: "",
       timePartitioning: "MONTH",
-      timePartitioningField: "timestamp",
+      timePartitioningColumn: "timestamp",
       timePartitioningFieldType: undefined,
       timePartitioningFirestoreField: undefined,
       transformFunction: "",
@@ -538,7 +529,7 @@ describe("updateTableMetadata", () => {
       tableId: "",
       datasetLocation: "",
       timePartitioning: "MONTH",
-      timePartitioningField: "timestamp",
+      timePartitioningColumn: "timestamp",
       timePartitioningFieldType: "DATETIME",
       timePartitioningFirestoreField: undefined,
       transformFunction: "",

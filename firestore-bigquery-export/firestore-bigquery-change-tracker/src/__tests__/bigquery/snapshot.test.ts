@@ -50,7 +50,7 @@ const trackerInstance = new FirestoreBigQueryEventHistoryTracker({
   tableId: "id",
   transformFunction: "",
   timePartitioning: null,
-  timePartitioningField: undefined,
+  timePartitioningColumn: undefined,
   timePartitioningFieldType: undefined,
   timePartitioningFirestoreField: undefined,
   clustering: null,

@@ -128,7 +128,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "DAY",
-          timePartitioningField: "timestamp",
+          timePartitioningColumn: "timestamp",
           timePartitioningFieldType: "TIMESTAMP",
           timePartitioningFirestoreField: "created",
         }).record([event]);
@@ -159,7 +159,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "DAY",
-          timePartitioningField: "created",
+          timePartitioningColumn: "created",
           timePartitioningFieldType: "TIMESTAMP",
           timePartitioningFirestoreField: "created",
         }).record([event]);
@@ -189,7 +189,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "DAY",
-          timePartitioningField: "created",
+          timePartitioningColumn: "created",
           timePartitioningFieldType: "TIMESTAMP",
           timePartitioningFirestoreField: "created",
         }).record([event]);
@@ -220,7 +220,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "DAY",
-          timePartitioningField: "created",
+          timePartitioningColumn: "created",
           timePartitioningFieldType: "DATE",
           timePartitioningFirestoreField: "created",
         }).record([event]);
@@ -249,7 +249,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "DAY",
-          timePartitioningField: "created",
+          timePartitioningColumn: "created",
           timePartitioningFieldType: "DATETIME",
           timePartitioningFirestoreField: "created",
         }).record([event]);
@@ -281,7 +281,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "DAY",
-          timePartitioningField: "timestamp",
+          timePartitioningColumn: "timestamp",
           timePartitioningFieldType: "TIMESTAMP",
           timePartitioningFirestoreField: "created",
         }).record([event]);
@@ -342,7 +342,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "HOUR",
-          timePartitioningField: null,
+          timePartitioningColumn: null,
           timePartitioningFieldType: "TIMESTAMP",
           timePartitioningFirestoreField: "end_date",
         }).record([event]);
@@ -357,7 +357,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "HOUR",
-          timePartitioningField: "endDate",
+          timePartitioningColumn: "endDate",
           timePartitioningFirestoreField: "end_date",
         }).record([event]);
 
@@ -371,7 +371,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "HOUR",
-          timePartitioningField: "endDate",
+          timePartitioningColumn: "endDate",
           timePartitioningFieldType: "unknown",
           timePartitioningFirestoreField: "end_date",
         }).record([event]);
@@ -386,7 +386,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "HOUR",
-          timePartitioningField: "endDate",
+          timePartitioningColumn: "endDate",
           timePartitioningFieldType: "TIMESTAMP",
           // timePartitioningFirestoreField: "unknown",
         }).record([event]);
@@ -401,7 +401,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "HOUR",
-          timePartitioningField: "endDate",
+          timePartitioningColumn: "endDate",
           timePartitioningFieldType: "DATE",
           timePartitioningFirestoreField: "end_date",
         }).record([event]);
@@ -465,7 +465,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "HOUR",
-          timePartitioningField: "endDate",
+          timePartitioningColumn: "endDate",
           timePartitioningFieldType: "DATE",
           timePartitioningFirestoreField: "end_date",
         }).record([event]);
@@ -480,7 +480,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "HOUR",
-          timePartitioningField: "endDate",
+          timePartitioningColumn: "endDate",
           timePartitioningFieldType: "DATE",
           timePartitioningFirestoreField: "end_date",
         }).record([event]);
@@ -511,7 +511,7 @@ describe("e2e", () => {
           datasetId,
           tableId,
           timePartitioning: "DAY",
-          timePartitioningField: "custom_field",
+          timePartitioningColumn: "custom_field",
           timePartitioningFieldType: "DATE",
           timePartitioningFirestoreField: "custom_field",
         }).record([event]);
