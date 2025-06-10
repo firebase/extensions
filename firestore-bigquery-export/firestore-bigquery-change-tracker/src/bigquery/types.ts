@@ -4,13 +4,13 @@ import { z } from "zod";
  * This is the shared base for all configuration variants. It includes all
  * parameters that are not dependent on the partitioning strategy.
  */
-const BaseConfigSchema = z.object({
+export const BaseConfigSchema = z.object({
   datasetId: z.string(),
   tableId: z.string(),
   firestoreInstanceId: z.string().optional(),
   datasetLocation: z.string().optional(),
   transformFunction: z.string().optional(),
-  clustering: z.array(z.string()).nullable(),
+  clustering: z.array(z.string()).nullable().optional(),
   databaseId: z.string().optional(),
   wildcardIds: z.boolean().optional(),
   bqProjectId: z.string().optional(),

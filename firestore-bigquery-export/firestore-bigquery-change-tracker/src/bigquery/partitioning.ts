@@ -8,31 +8,30 @@ import * as logs from "../logs";
 import * as bigquery from "@google-cloud/bigquery";
 import * as functions from "firebase-functions";
 import { BigQuery, TableField } from "@google-cloud/bigquery";
+import { BaseConfigSchema } from "./types";
 
-const BaseSchema = z.object({
-  timePartitioning: z.any(),
-  timePartitioningColumn: z.any(),
-});
-
-const NoPartitioningInternalSchema = BaseSchema.extend({
+const NoPartitioningInternalSchema = BaseConfigSchema.extend({
   partitioningType: z.literal("NONE"),
-});
-const IngestionTimeInternalSchema = BaseSchema.extend({
+}).strict();
+
+const IngestionTimeInternalSchema = BaseConfigSchema.extend({
   partitioningType: z.literal("INGESTION"),
   timePartitioning: z.enum(["HOUR", "DAY", "MONTH", "YEAR"]),
-});
-const TimestampInternalSchema = BaseSchema.extend({
+}).strict();
+
+const TimestampInternalSchema = BaseConfigSchema.extend({
   partitioningType: z.literal("TIMESTAMP"),
   timePartitioning: z.enum(["HOUR", "DAY", "MONTH", "YEAR"]),
   timePartitioningColumn: z.literal("timestamp"),
-});
-const FieldInternalSchema = BaseSchema.extend({
+}).strict();
+
+const FieldInternalSchema = BaseConfigSchema.extend({
   partitioningType: z.literal("FIELD"),
   timePartitioning: z.enum(["HOUR", "DAY", "MONTH", "YEAR"]),
   timePartitioningColumn: z.string().min(1),
   timePartitioningFieldType: z.enum(["TIMESTAMP", "DATE", "DATETIME"]),
   timePartitioningFirestoreField: z.string().min(1),
-});
+}).strict();
 
 const DiscriminatedSchema = z.discriminatedUnion("partitioningType", [
   NoPartitioningInternalSchema,
@@ -250,13 +249,11 @@ export class Partitioning {
       return;
     }
 
-    const newField = getNewPartitionField({
-      timePartitioningColumn: this.config.timePartitioningColumn,
-      timePartitioningFieldType:
-        this.config.partitioningType === "FIELD"
-          ? this.config.timePartitioningFieldType
-          : "TIMESTAMP",
-    });
+    const newField = getNewPartitionField(this.config);
+
+    if (!newField) {
+      return;
+    }
 
     // Check if field already exists
     if (fields.some((field) => field.name === newField.name)) {
