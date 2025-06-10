@@ -389,14 +389,15 @@ export class Partitioning {
   }
 
   /**
-   * Validates the complete partitioning configuration
+   * Validates the complete partitioning configuration.
    *
    * This method checks:
-   * - No custom config (default partitioning)
-   * - Built-in field configuration
-   * - Custom field configuration (requires all three fields)
+   * - If partitioning is enabled.
+   * - For default partitioning (no custom fields).
+   * - For valid built-in field configurations.
+   * - For custom field configurations, which now require all three related parameters to be specified.
    *
-   * @returns Validation result with proceed flag and error message
+   * @returns {ValidationResult} An object containing a `proceed` flag and a descriptive message.
    */
   private validatePartitioningConfig(): ValidationResult {
     if (!this.isPartitioningEnabled()) {
@@ -409,7 +410,7 @@ export class Partitioning {
       timePartitioningFirestoreField,
     } = this.config;
 
-    // No custom config - valid (default partitioning)
+    // Case 1: No custom config. This is valid for default daily partitioning.
     if (
       !timePartitioningField &&
       !timePartitioningFieldType &&
@@ -418,82 +419,51 @@ export class Partitioning {
       return { proceed: true, message: "" };
     }
 
-    // Check for invalid field-based configuration
-    const hasFieldBasedConfig =
-      timePartitioningFieldType || timePartitioningFirestoreField;
-
-    if (hasFieldBasedConfig && !timePartitioningField) {
-      return {
-        proceed: false,
-        message:
-          "Cannot create partitioning: field name required when using field-based partitioning",
-      };
-    }
-
-    // Built-in field validation
+    // Case 2: Built-in field validation.
     if (
       timePartitioningField &&
       BUILT_IN_FIELDS.includes(timePartitioningField as BuiltInField)
     ) {
-      // Special case: built-in timestamp field without other configs
-      if (
-        timePartitioningField === "timestamp" &&
-        !timePartitioningFieldType &&
-        !timePartitioningFirestoreField
-      ) {
-        return { proceed: true, message: "" };
-      }
-      // Built-in fields shouldn't have custom type or firestore field
+      // A built-in field should not have custom type or Firestore field mappings.
       if (timePartitioningFieldType || timePartitioningFirestoreField) {
         return {
           proceed: false,
-          message:
-            "Built-in fields cannot have custom type or Firestore field mapping",
+          message: `Configuration error: Built-in field '${timePartitioningField}' cannot have a custom 'timePartitioningFieldType' or 'timePartitioningFirestoreField'.`,
         };
       }
-      // Other built-in fields without additional config are valid
+      // Using a built-in field like 'timestamp' on its own is valid.
       return { proceed: true, message: "" };
     }
 
-    // Custom field validation
-    // If field type is missing, it's still valid (will use default)
-    if (timePartitioningField && timePartitioningFirestoreField) {
+    // Case 3: Custom field validation.
+    if (timePartitioningField) {
+      // For a custom field, both the type and the Firestore source field are mandatory.
+      if (!timePartitioningFieldType || !timePartitioningFirestoreField) {
+        return {
+          proceed: false,
+          message: `Configuration error: When using the custom partitioning field '${timePartitioningField}', you must also specify both 'timePartitioningFieldType' and 'timePartitioningFirestoreField'.`,
+        };
+      }
+      // If all three are present for a custom field, the configuration is valid.
       return { proceed: true, message: "" };
     }
 
-    // All three fields provided - valid
-    if (
-      timePartitioningField &&
-      timePartitioningFieldType &&
-      timePartitioningFirestoreField
-    ) {
-      return { proceed: true, message: "" };
-    }
-
-    // Check for missing firestore field when field type is specified
-    if (timePartitioningFieldType && !timePartitioningFirestoreField) {
+    // Case 4: Catch-all for other invalid states.
+    // This handles providing a type or Firestore field without a main partitioning field.
+    if (timePartitioningFieldType || timePartitioningFirestoreField) {
       return {
         proceed: false,
         message:
-          "Cannot create partitioning: Firestore field name required when field type is specified",
+          "Configuration error: 'timePartitioningFieldType' or 'timePartitioningFirestoreField' were provided without a 'timePartitioningField'.",
       };
     }
 
-    // Check for missing firestore field for custom fields
-    if (
-      timePartitioningField &&
-      !BUILT_IN_FIELDS.includes(timePartitioningField as BuiltInField) &&
-      !timePartitioningFirestoreField
-    ) {
-      return {
-        proceed: false,
-        message:
-          "Cannot create partitioning: Firestore field name required for custom field-based partitioning",
-      };
-    }
-
-    // Default case - should not reach here
-    return { proceed: true, message: "" };
+    // This line should not be reachable due to the exhaustive checks above,
+    // but it's included as a safeguard.
+    return {
+      proceed: false,
+      message: "Unknown partitioning configuration error.",
+    };
   }
 
   /**
