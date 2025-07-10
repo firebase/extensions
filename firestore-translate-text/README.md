@@ -51,6 +51,9 @@ A large language model like Gemini 1.5 Pro may have more contextual understandin
 
 It is important to note that Gemini should only be used with sanitized input, as prompt injection is a possibility.
 
+#### AI-powered language translation
+This extension makes use of the [Genkit SDK](http://genkit.dev/) to perform AI-powered language translation using large language models such as Gemini from Vertex AI or Google AI. For further information, check out the genkit documentation at [genkit.dev](http://genkit.dev/).
+
 ##### Notes:
 - Using the Gemini API may have a different pricing model than the Cloud Translation API.
 
@@ -63,8 +66,6 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
   - Cloud Firestore
   - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
 
-#### AI-powered language translation
-This extension makes use of the Genkit SDK to perform AI-powered language translation using large language models such as Gemini 1.5 Pro from Vertex AI or Google AI. For further information check out the genkit documentation at [genkit.dev](http://genkit.dev/).
 
 
 
