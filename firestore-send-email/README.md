@@ -328,5 +328,3 @@ password)
 This extension will operate with the following project IAM roles:
 
 * datastore.user (Reason: Allows this extension to access Cloud Firestore to read and process added email documents.)
-
-[1m[31mError:[39m[22m An unexpected error has occurred.
