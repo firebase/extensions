@@ -26,6 +26,29 @@ You can also optionally configure this extension to render emails using [Handleb
 
 When you configure this extension, you'll need to supply your **SMTP credentials for mail delivery**. Note that this extension is for use with bulk email service providers, like SendGrid, Mailgun, etc.
 
+#### Using custom headers
+
+You can add custom headers to your emails by including a `headers` field in the document you add to the Firestore collection. The `headers` field should be an object where each key is the header name and the value is the header value.
+
+## Example JSON with Custom Headers:
+```json
+{
+  "to": ["example@example.com"],
+  "message": {
+    "subject": "Test Email with Custom Headers",
+    "text": "This is a test email to see if custom headers work.",
+    "html": "<strong>This is a test email to see if custom headers work.</strong>"
+  },
+  "headers": {
+    "X-Custom-Header": "CustomValue",
+    "X-Another-Header": "AnotherValue",
+  }
+}
+```
+
+Add this document to the Firestore mail collection to send an email with custom headers.
+You can even include headers like 'List-Unsubscribe' to allow recipients to unsubscribe from your emails.
+
 #### Firestore-Send-Email: SendGrid Categories
 
 When using SendGrid (`SMTP_CONNECTION_URI` includes `sendgrid.net`), you can assign categories to your emails.
@@ -305,3 +328,5 @@ password)
 This extension will operate with the following project IAM roles:
 
 * datastore.user (Reason: Allows this extension to access Cloud Firestore to read and process added email documents.)
+
+[1m[31mError:[39m[22m An unexpected error has occurred.
