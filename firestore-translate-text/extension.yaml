@@ -132,26 +132,47 @@ params:
     required: false
 
   - param: TRANSLATION_MODEL
-    label: Translation Model
+    label: Translation Engine
     description: >
-      This extension provides the option to use Gemini 1.5 Pro for translations,
-      which may provide more accurate and context-aware translations. The
-      extension accesses the Gemini API using a Google AI API key that you can
-      provide as a secret during installation.
+      Choose the translation engine to use for this extension. "AI Translations Using Gemini" leverages Google's Gemini models for more accurate and context-aware translations, while "Cloud Translation API" uses the standard Google Cloud Translation service. If you select Gemini, you will need to provide a Google AI API key or use Vertex AI as the provider.
     type: select
     required: true
     options:
-      - label: AI Translations Using Gemini
+      - label: AI Translations Using Gemini (more context-aware, requires Gemini API access)
         value: gemini
-      - label: Cloud Translation API
+      - label: Cloud Translation API (standard, fast, cost-effective)
         value: translate
 
-  - param: GOOGLE_AI_API_KEY
-    label: Google AI API key
+  - param: GEMINI_PROVIDER
+    label: Gemini Provider
     description: >
-      If you selected AI Translations Using Gemini to perform translations,
-      please provide a Google AI API key, which you can create here:
-      https://ai.google.dev/gemini-api/docs/api-key
+      Select the service to access the Gemini API for translations. Choose "Google AI" for the Gemini API via Google AI Studio, or "Vertex AI" to use Gemini models through Vertex AI in your Google Cloud project. This is only required if you select "AI Translations Using Gemini" as your translation model.
+    type: select
+    required: false
+    options:
+      - label: Google AI
+        value: googleai
+      - label: Vertex AI
+        value: vertexai
+    default: googleai
+
+  - param: GEMINI_MODEL
+    label: Gemini Model
+    description: >
+      Choose the Gemini model to use for translations. Consider model pricing, performance, and availability in your selected provider. This is only required if you select "AI Translations Using Gemini" as your translation model. By default, the extension uses Gemini 2.5 Flash for a balance of speed and cost.
+    type: select
+    required: false
+    options:
+      - label: Gemini 2.5 Pro (higher quality, higher cost)
+        value: gemini-2.5-pro
+      - label: Gemini 2.5 Flash (fast, cost-effective, default)
+        value: gemini-2.5-flash
+    default: gemini-2.5-flash
+
+  - param: GOOGLE_AI_API_KEY
+    label: Google AI API Key
+    description: >
+      If you selected "AI Translations Using Gemini" and "Google AI" as the provider, provide your Google AI API key here. You can create an API key at: https://ai.google.dev/gemini-api/docs/api-key. This is not required if you use Vertex AI as the provider.
     type: secret
     required: false
 
