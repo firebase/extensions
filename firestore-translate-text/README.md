@@ -17,10 +17,6 @@ You specify the desired target languages using ISO-639-1 codes. You can find a l
 
 If the original non-translated field of the document is updated, then the translations will be automatically updated, as well.
 
-### AI-powered language translation
-This extension makes use of the Genkit SDK to perform AI-powered language translation using large language models such as Gemini 1.5 Pro from Vertex AI or Google AI. For further information check out the genkit documentation at [genkit.dev](http://genkit.dev/).
-
-
 #### Multiple collections for translations
 
 To translate multiple collections, install this extension multiple times, specifying a different
@@ -67,6 +63,8 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
   - Cloud Firestore
   - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
 
+#### AI-powered language translation
+This extension makes use of the Genkit SDK to perform AI-powered language translation using large language models such as Gemini 1.5 Pro from Vertex AI or Google AI. For further information check out the genkit documentation at [genkit.dev](http://genkit.dev/).
 
 
 
