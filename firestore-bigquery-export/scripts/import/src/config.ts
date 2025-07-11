@@ -197,6 +197,12 @@ const questions = [
     name: "failedBatchOutput",
     type: "input",
   },
+  {
+    message: "Would you like to skip BigQuery init steps?",
+    name: "skipInit",
+    type: "confirm",
+    default: false,
+  },
 ];
 
 export async function parseConfig(): Promise<CliConfig | CliConfigError> {
@@ -270,6 +276,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       rawChangeLogName,
       cursorPositionFile,
       failedBatchOutput: program.failedBatchOutput,
+      skipInit: program.skipInit,
     };
   }
   const {
@@ -285,6 +292,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     useNewSnapshotQuerySyntax,
     useEmulator,
     failedBatchOutput,
+    skipInit,
   } = await inquirer.prompt(questions);
 
   const rawChangeLogName = `${table}_raw_changelog`;
@@ -311,6 +319,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     rawChangeLogName,
     cursorPositionFile,
     failedBatchOutput,
+    skipInit,
   };
 }
 
