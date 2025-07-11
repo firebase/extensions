@@ -35,11 +35,11 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 
 #### AI Translations using Gemini
 
-This extension optionally supports using Gemini 1.5 Pro as an alternative to the Google Cloud Translation API for performing translations.
+This extension optionally supports using Gemini as an alternative to the Google Cloud Translation API for performing translations.
 
-The extension accesses the Gemini API via Google AI, and will require an API key to be provided upon installation. You may create an API key [here](https://ai.google.dev/gemini-api/docs/api-key).
+The extension can access the Gemini API via either Google AI (using an API key) or Vertex AI (using your Google Cloud project). If you choose Google AI, you will need to provide an API key upon installation, which you can create [here](https://ai.google.dev/gemini-api/docs/api-key). If you choose Vertex AI, the extension will use the Gemini models available in your Google Cloud project and does not require an API key.
 
-A large language model like Gemini 1.5 Pro may have more contextual understanding. For example in the sentence `I left my keys in the bank` the model may understand whether `bank` refers to a financial institution or a riverbank, and may provide a more accurate translation.
+Gemini models are large language models (LLMs), which can provide more contextual understanding than traditional translation APIs. For example, in the sentence `I left my keys in the bank`, an LLM may be able to determine whether `bank` refers to a financial institution or a riverbank, and provide a more accurate translation.
 
 It is important to note that Gemini should only be used with sanitized input, as prompt injection is a possibility.
 
