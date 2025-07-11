@@ -82,9 +82,12 @@ const run = async (): Promise<number> => {
     useNewSnapshotQuerySyntax,
     bqProjectId: bigQueryProjectId,
     transformFunction: config.transformFunctionUrl,
+    skipInit: config.skipInit,
   });
 
-  await initializeDataSink(dataSink, config);
+  if (!config.skipInit) {
+    await initializeDataSink(dataSink, config);
+  }
 
   logs.importingData(config);
   if (multiThreaded && queryCollectionGroup) {

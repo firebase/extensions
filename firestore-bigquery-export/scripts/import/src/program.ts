@@ -65,5 +65,9 @@ export const getCLIOptions = () => {
     .option(
       "-f, --failed-batch-output <file>",
       "Path to the JSON file where failed batches will be recorded."
+    )
+    .option(
+      "--skip-init [true|false]",
+      "Whether to skip BigQuery init steps."
     );
 };
