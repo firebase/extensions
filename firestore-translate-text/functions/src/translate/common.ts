@@ -79,7 +79,13 @@ export class GenkitTranslator implements ITranslator {
    * @param options.plugin - The AI service provider to use ("vertexai" or "googleai")
    * @throws Will throw an error if required API keys are missing
    */
-  constructor({ plugin, model }: { plugin: "vertexai" | "googleai", model: string }) {
+  constructor({
+    plugin,
+    model,
+  }: {
+    plugin: "vertexai" | "googleai";
+    model: string;
+  }) {
     this.plugin = plugin;
     if (plugin === "googleai" && !config.googleAIAPIKey) {
       throw new Error(
@@ -248,7 +254,12 @@ export class TranslationService {
 
 // Initialize the translation service based on configuration
 const translationService = config.useGenkit
-  ? new TranslationService(new GenkitTranslator({ plugin: config.geminiProvider, model: config.geminiModel }))
+  ? new TranslationService(
+      new GenkitTranslator({
+        plugin: config.geminiProvider,
+        model: config.geminiModel,
+      })
+    )
   : new TranslationService(new GoogleTranslator(process.env.PROJECT_ID));
 
 // Export bound methods for convenience
