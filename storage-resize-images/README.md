@@ -113,6 +113,13 @@ export const onImageResized = onCustomEventPublished(
     }
 );
 ```
+
+#### AI-powered image moderation with Genkit
+
+This extension uses the [Genkit SDK](https://genkit.dev/) to power AI-based content filtering for uploaded images. 
+
+For more information about Genkit, visit the Genkit documentation at [genkit.dev](http://genkit.dev/).
+
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 
