@@ -17,7 +17,7 @@ const VALID_CLUSTERING_TYPES = [
   "TIMESTAMP",
 ] as const;
 
-type ValidClusteringType = typeof VALID_CLUSTERING_TYPES[number];
+type ValidClusteringType = (typeof VALID_CLUSTERING_TYPES)[number];
 
 interface InvalidFieldType {
   fieldName: string;
@@ -29,11 +29,7 @@ export class Clustering {
   public table: bigquery.Table;
   public schema: object;
 
-  constructor(
-    config: Config,
-    table?: bigquery.Table,
-    schema?: object
-  ) {
+  constructor(config: Config, table?: bigquery.Table, schema?: object) {
     this.config = config;
     this.table = table;
     this.schema = schema;

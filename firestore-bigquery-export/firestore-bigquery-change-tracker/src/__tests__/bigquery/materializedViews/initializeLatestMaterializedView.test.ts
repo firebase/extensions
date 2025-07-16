@@ -148,7 +148,7 @@ describe("initializeLatestMaterializedView", () => {
     };
 
     const [initialMetadata] = (await view.getMetadata()) as unknown as [
-      TableMetadata
+      TableMetadata,
     ];
 
     await initializeLatestMaterializedView({
@@ -162,7 +162,7 @@ describe("initializeLatestMaterializedView", () => {
     });
 
     const [finalMetadata] = (await view.getMetadata()) as unknown as [
-      TableMetadata
+      TableMetadata,
     ];
     expect(finalMetadata).toEqual(initialMetadata);
   });
@@ -191,7 +191,7 @@ describe("initializeLatestMaterializedView", () => {
     };
 
     const [initialMetadata] = (await view.getMetadata()) as unknown as [
-      TableMetadata
+      TableMetadata,
     ];
     expect(
       initialMetadata.materializedView?.allowNonIncrementalDefinition
@@ -208,7 +208,7 @@ describe("initializeLatestMaterializedView", () => {
     });
 
     const [finalMetadata] = (await view.getMetadata()) as unknown as [
-      TableMetadata
+      TableMetadata,
     ];
     expect(
       finalMetadata.materializedView?.allowNonIncrementalDefinition

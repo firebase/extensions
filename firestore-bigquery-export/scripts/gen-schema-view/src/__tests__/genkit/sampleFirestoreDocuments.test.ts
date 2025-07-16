@@ -21,7 +21,10 @@ interface FirestoreModule {
     limit: jest.Mock;
     get: jest.Mock;
   };
-  GeoPoint: new (latitude: number, longitude: number) => {
+  GeoPoint: new (
+    latitude: number,
+    longitude: number
+  ) => {
     latitude: number;
     longitude: number;
   };
