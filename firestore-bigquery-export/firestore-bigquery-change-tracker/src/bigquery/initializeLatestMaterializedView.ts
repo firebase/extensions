@@ -1,5 +1,5 @@
 import { BigQuery, Table, TableMetadata } from "@google-cloud/bigquery";
-import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+import { Config } from ".";
 import * as logs from "../logs";
 import {
   buildMaterializedViewQuery,
@@ -10,7 +10,7 @@ import * as sqlFormatter from "sql-formatter";
 
 interface InitializeLatestMaterializedViewOptions {
   bq: BigQuery;
-  changeTrackerConfig: FirestoreBigQueryEventHistoryTrackerConfig;
+  changeTrackerConfig: Config;
   view: Table;
   viewExists: boolean;
   rawChangeLogTableName: string;
@@ -20,7 +20,7 @@ interface InitializeLatestMaterializedViewOptions {
 
 export async function shouldRecreateMaterializedView(
   view: Table,
-  config: FirestoreBigQueryEventHistoryTrackerConfig,
+  config: Config,
   source: string
 ): Promise<boolean> {
   const [viewMetadata] = await view.getMetadata();
