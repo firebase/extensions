@@ -11,6 +11,7 @@ jest.mock("../src/config", () => {
       imgSizes: ["200x200"],
       resizedImagesPath: undefined,
       deleteOriginalFile: "true",
+      backfillBatchSize: 3,
     },
   };
 });
