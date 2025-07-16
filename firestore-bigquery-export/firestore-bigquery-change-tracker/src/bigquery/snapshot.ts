@@ -191,8 +191,8 @@ function buildStandardQuery(
     GROUP BY document_name, document_id${
       groupByColumns.length > 0 ? ", " : ""
     }${groupByColumns
-      .filter((field) => !nonGroupFields.includes(field))
-      .join(",")}`);
+    .filter((field) => !nonGroupFields.includes(field))
+    .join(",")}`);
 }
 interface MaterializedViewOptions {
   projectId: string;
