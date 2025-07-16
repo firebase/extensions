@@ -1,11 +1,11 @@
 import { Table, TableMetadata } from "@google-cloud/bigquery/build/src/table";
 import { Partitioning } from "./partitioning";
 
-import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+import { Config } from ".";
 
 interface TableRequiresUpdateOptions {
   table: Table;
-  config: FirestoreBigQueryEventHistoryTrackerConfig;
+  config: Config;
   documentIdColExists: boolean;
   pathParamsColExists: boolean;
   oldDataColExists: boolean;
@@ -47,7 +47,7 @@ export async function tableRequiresUpdate({
 
 interface ViewRequiresUpdateOptions {
   metadata?: TableMetadata;
-  config: FirestoreBigQueryEventHistoryTrackerConfig;
+  config: Config;
   documentIdColExists: boolean;
   pathParamsColExists: boolean;
   oldDataColExists: boolean;
