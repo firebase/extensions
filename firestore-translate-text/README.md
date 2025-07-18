@@ -83,10 +83,7 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 * Languages field name: What is the name of the field that contains the languages that you want to translate into? This field is optional. If you don't specify it, the extension will use the languages specified in the LANGUAGES parameter.
 
 
-* Translation Engine: Choose the translation engine to use for this extension. "AI Translations Using Gemini" leverages Google's Gemini models for more accurate and context-aware translations, while "Cloud Translation API" uses the standard Google Cloud Translation service. If you select Gemini, you will need to provide a Google AI API key or use Vertex AI as the provider.
-
-
-* Gemini Provider: Select the service to access the Gemini API for translations. Choose "Google AI" for the Gemini API via Google AI Studio, or "Vertex AI" to use Gemini models through Vertex AI in your Google Cloud project. This is only required if you select "AI Translations Using Gemini" as your translation model.
+* Translation Provider: Choose the translation provider to use for this extension. "Cloud Translation API" uses the standard Google Cloud Translation service (fast, cost-effective). "Gemini (Google AI)" leverages Google's Gemini models via Google AI Studio for more accurate and context-aware translations (requires Gemini API access and API key). "Gemini (Vertex AI)" uses Gemini models through Vertex AI in your Google Cloud project (requires Vertex AI access).
 
 
 * Gemini Model: Choose the Gemini model to use for translations. Consider model pricing, performance, and availability in your selected provider. This is only required if you select "AI Translations Using Gemini" as your translation model. By default, the extension uses Gemini 2.5 Flash for a balance of speed and cost.
