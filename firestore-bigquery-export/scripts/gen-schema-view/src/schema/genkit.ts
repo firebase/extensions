@@ -17,7 +17,7 @@
 import type { CliConfig } from "../config";
 import firebase = require("firebase-admin");
 import { genkit, z } from "genkit";
-import { googleAI, gemini20Flash } from "@genkit-ai/googleai";
+import { googleAI } from "@genkit-ai/googleai";
 import * as fs from "fs";
 import * as path from "path";
 import inquirer from "inquirer";
@@ -226,7 +226,7 @@ export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
 
   // prompt gemini with sample data to generate a schema file
   const { text } = await ai.generate({
-    model: gemini20Flash,
+    model: googleAI.model("gemini-2.5-flash"),
     prompt,
     output: {
       format: "json",
