@@ -256,7 +256,7 @@ export class TranslationService {
 const translationService = config.useGenkit
   ? new TranslationService(
       new GenkitTranslator({
-        plugin: config.geminiProvider,
+        plugin: config.geminiProvider as "vertexai" | "googleai",
         model: config.geminiModel,
       })
     )
