@@ -131,7 +131,7 @@ params:
     default: languages
     required: false
 
-  - param: TRANSLATION_MODEL
+  - param: TRANSLATION_ENGINE
     label: Translation Engine
     description: >
       Choose the translation engine to use for this extension. "AI Translations
@@ -177,10 +177,14 @@ params:
     type: select
     required: false
     options:
-      - label: Gemini 2.5 Pro (higher quality, higher cost)
+      - label: Gemini 2.5 Pro (highest quality, expensive)
         value: gemini-2.5-pro
-      - label: Gemini 2.5 Flash (fast, cost-effective, default)
+      - label: Gemini 2.5 Flash (cost-effective, high quality)
         value: gemini-2.5-flash
+      - label: Gemini 2.0 Flash (cost-effective, good quality)
+        value: gemini-2.0-flash
+      - label: Gemini 2.0 Flash Lite (cheapest, lowest quality)
+        value: gemini-2.0-flash-lite
     default: gemini-2.5-flash
 
   - param: GOOGLE_AI_API_KEY

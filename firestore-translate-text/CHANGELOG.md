@@ -2,7 +2,7 @@
 
 feat - update to allow using Gemini models from Google AI or Vertex AI
 
-feat - choose between latest 2.5 gemini models from Google AI or Vertex AI
+feat - choose between latest 2.5 Gemini models from Google AI or Vertex AI
 
 ## Version 0.1.23
 
