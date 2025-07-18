@@ -131,40 +131,26 @@ params:
     default: languages
     required: false
 
-  - param: TRANSLATION_ENGINE
-    label: Translation Engine
+  - param: TRANSLATION_PROVIDER
+    label: Translation Provider
     description: >
-      Choose the translation engine to use for this extension. "AI Translations
-      Using Gemini" leverages Google's Gemini models for more accurate and
-      context-aware translations, while "Cloud Translation API" uses the
-      standard Google Cloud Translation service. If you select Gemini, you will
-      need to provide a Google AI API key or use Vertex AI as the provider.
+      Choose the translation provider to use for this extension. "Cloud
+      Translation API" uses the standard Google Cloud Translation service (fast,
+      cost-effective). "Gemini (Google AI)" leverages Google's Gemini models via
+      Google AI Studio for more accurate and context-aware translations
+      (requires Gemini API access and API key). "Gemini (Vertex AI)" uses Gemini
+      models through Vertex AI in your Google Cloud project (requires Vertex AI
+      access).
     type: select
     required: true
     options:
-      - label:
-          AI Translations Using Gemini (more context-aware, requires Gemini API
-          access)
-        value: gemini
       - label: Cloud Translation API (standard, fast, cost-effective)
         value: translate
-
-  - param: GEMINI_PROVIDER
-    label: Gemini Provider
-    description: >
-      Select the service to access the Gemini API for translations. Choose
-      "Google AI" for the Gemini API via Google AI Studio, or "Vertex AI" to use
-      Gemini models through Vertex AI in your Google Cloud project. This is only
-      required if you select "AI Translations Using Gemini" as your translation
-      model.
-    type: select
-    required: false
-    options:
-      - label: Google AI
-        value: googleai
-      - label: Vertex AI
-        value: vertexai
-    default: googleai
+      - label: Gemini (Google AI) (more context-aware, requires Gemini API key)
+        value: gemini-googleai
+      - label:
+          Gemini (Vertex AI) (more context-aware, requires Vertex AI access)
+        value: gemini-vertexai
 
   - param: GEMINI_MODEL
     label: Gemini Model
