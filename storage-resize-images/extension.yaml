@@ -339,6 +339,8 @@ params:
       WARNING: Ensure your function has enough memory to handle the batch size.
     type: number
     default: 3
+    validationRegex: ^[1-9][0-9]*$
+    validationErrorMessage: Please provide a valid number.
     required: false
 
   - param: REGENERATE_TOKEN
