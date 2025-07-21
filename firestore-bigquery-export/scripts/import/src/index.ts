@@ -49,6 +49,7 @@ const run = async (): Promise<number> => {
     useNewSnapshotQuerySyntax,
     useEmulator,
     cursorPositionFile,
+    transformFunctionUrl,
   } = config;
   if (useEmulator) {
     console.log("Using emulator");
@@ -81,7 +82,7 @@ const run = async (): Promise<number> => {
     wildcardIds: queryCollectionGroup,
     useNewSnapshotQuerySyntax,
     bqProjectId: bigQueryProjectId,
-    transformFunction: config.transformFunctionUrl,
+    transformFunction: transformFunctionUrl,
   });
 
   await initializeDataSink(dataSink, config);
