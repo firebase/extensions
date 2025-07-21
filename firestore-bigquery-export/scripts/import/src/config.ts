@@ -313,7 +313,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     rawChangeLogName,
     cursorPositionFile,
     failedBatchOutput,
-    transformFunctionUrl
+    transformFunctionUrl,
   };
 }
 
