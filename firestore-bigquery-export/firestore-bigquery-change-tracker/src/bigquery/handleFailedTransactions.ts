@@ -1,17 +1,13 @@
 import * as admin from "firebase-admin";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+import { Config } from ".";
 
 if (!admin.apps.length) {
   initializeApp();
 }
 
-export default async (
-  rows: any[],
-  config: FirestoreBigQueryEventHistoryTrackerConfig,
-  e: Error
-): Promise<void> => {
+export default async (rows: any[], config: Config, e: Error): Promise<void> => {
   const db = getFirestore(config.firestoreInstanceId!);
   db.settings({
     ignoreUndefinedProperties: true,
