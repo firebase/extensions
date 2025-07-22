@@ -93,12 +93,9 @@ export class GenkitTranslator implements ITranslator {
       );
     }
 
+    // creates a model reference in genkit via a string, no guarantee it exists
     this.model =
       plugin === "vertexai" ? vertexAI.model(model) : googleAI.model(model);
-
-    if (!this.model) {
-      throw new Error(`Invalid Gemini model: ${model}`);
-    }
 
     const plugins =
       plugin === "vertexai"
