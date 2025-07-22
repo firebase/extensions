@@ -1,3 +1,7 @@
+## Version 0.2.10
+
+feat - added param for adjusting backfill max batch size
+
 ## Version 0.2.9
 
 fixed - run an npm audit and bump vulnerable dependencies
