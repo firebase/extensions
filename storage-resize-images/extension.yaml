@@ -337,7 +337,7 @@ params:
       conservative default to work with smallest memory option (512 MB).
 
       WARNING: Ensure your function has enough memory to handle the batch size.
-    type: number
+    type: string
     default: 3
     validationRegex: ^[1-9][0-9]*$
     validationErrorMessage: Please provide a valid number.
