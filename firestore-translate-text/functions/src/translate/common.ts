@@ -4,13 +4,8 @@ import * as events from "../events";
 import * as admin from "firebase-admin";
 import config from "../config";
 import { genkit, Genkit, z, ModelReference } from "genkit";
-import vertexAI, {
-  gemini15Pro as gemini15ProVertex,
-} from "@genkit-ai/vertexai";
-import {
-  gemini15Pro as gemini15ProGoogleAI,
-  googleAI,
-} from "@genkit-ai/googleai";
+import vertexAI from "@genkit-ai/vertexai";
+import googleAI from "@genkit-ai/googleai";
 
 /**
  * Represents a translation result with target language and translated text
@@ -84,7 +79,13 @@ export class GenkitTranslator implements ITranslator {
    * @param options.plugin - The AI service provider to use ("vertexai" or "googleai")
    * @throws Will throw an error if required API keys are missing
    */
-  constructor({ plugin }: { plugin: "vertexai" | "googleai" }) {
+  constructor({
+    plugin,
+    model,
+  }: {
+    plugin: "vertexai" | "googleai";
+    model: string;
+  }) {
     this.plugin = plugin;
     if (plugin === "googleai" && !config.googleAIAPIKey) {
       throw new Error(
@@ -92,8 +93,9 @@ export class GenkitTranslator implements ITranslator {
       );
     }
 
+    // creates a model reference in genkit via a string, no guarantee it exists
     this.model =
-      plugin === "vertexai" ? gemini15ProVertex : gemini15ProGoogleAI;
+      plugin === "vertexai" ? vertexAI.model(model) : googleAI.model(model);
 
     const plugins =
       plugin === "vertexai"
@@ -144,7 +146,7 @@ export class GenkitTranslator implements ITranslator {
       });
 
       if (!response.output) {
-        throw new Error("No translation returned from Gemini 1.5 Pro");
+        throw new Error("No translation returned from Gemini");
       }
 
       logs.translateStringComplete(text, targetLanguage, response.text);
@@ -249,7 +251,12 @@ export class TranslationService {
 
 // Initialize the translation service based on configuration
 const translationService = config.useGenkit
-  ? new TranslationService(new GenkitTranslator({ plugin: "googleai" }))
+  ? new TranslationService(
+      new GenkitTranslator({
+        plugin: config.geminiProvider as "vertexai" | "googleai",
+        model: config.geminiModel,
+      })
+    )
   : new TranslationService(new GoogleTranslator(process.env.PROJECT_ID));
 
 // Export bound methods for convenience
