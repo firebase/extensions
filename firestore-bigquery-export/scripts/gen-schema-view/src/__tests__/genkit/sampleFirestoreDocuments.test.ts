@@ -99,7 +99,7 @@ jest.mock("../../schema/genkit", () => {
   };
 });
 
-describe.skip("sampleFirestoreDocuments", () => {
+describe("sampleFirestoreDocuments", () => {
   it("should sample documents from Firestore collection", async () => {
     const collectionPath = "test-collection";
     const sampleSize = 2;
