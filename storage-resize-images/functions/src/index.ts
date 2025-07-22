@@ -175,7 +175,7 @@ export const backfillResizedImages = functions.tasks
     const bucket = admin.storage().bucket(process.env.IMG_BUCKET);
     const query = data.nextPageQuery || {
       autoPaginate: false,
-      maxResults: 3, // We only grab 3 images at a time to minimize the chance of OOM errors.
+      maxResults: config.backfillBatchSize,
     };
     const [files, nextPageQuery] = await bucket.getFiles(query);
     const filesToResize = files.filter((f: File) => {

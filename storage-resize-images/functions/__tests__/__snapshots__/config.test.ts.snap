@@ -3,6 +3,7 @@
 exports[`extension configuration detected from environment variables 1`] = `
 Object {
   "animated": false,
+  "backfillBatchSize": 3,
   "bucket": "extensions-testing.appspot.com",
   "cacheControlHeader": undefined,
   "contentFilterLevel": null,
