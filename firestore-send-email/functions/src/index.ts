@@ -114,7 +114,7 @@ function getExpireAt(startTime: Timestamp) {
       now.setDate(now.getDate() + value);
       break;
     case "week":
-      now.setDate(now.getDate() + value);
+      now.setDate(now.getDate() + value * 7);
       break;
     case "month":
       now.setMonth(now.getMonth() + value);
@@ -122,6 +122,9 @@ function getExpireAt(startTime: Timestamp) {
     case "year":
       now.setFullYear(now.getFullYear() + value);
       break;
+    default:
+      // Optionally handle unknown types
+      throw new Error(`Unknown TTLExpireType: ${config.TTLExpireType}`);
   }
   return Timestamp.fromDate(now);
 }
@@ -170,6 +173,7 @@ async function deliver(ref: DocumentReference): Promise<void> {
       subject: payload.message?.subject,
       text: payload.message?.text,
       html: payload.message?.html,
+      headers: payload?.headers,
       attachments: payload.message?.attachments,
       categories: payload.categories,
       templateId: payload.sendGrid?.templateId,

@@ -13,6 +13,12 @@ The `fs-bq-schema-views` script creates richly-typed BigQuery views from your ra
 - Preserves all raw data (no data loss due to schema mismatches)
 - Supports complex Firestore data types like arrays, maps, and geopoints
 
+### AI-powered schema generation with Genkit
+
+This extension uses the [Genkit SDK](https://genkit.dev/) to power AI-based schema generation for Firestore data.
+
+For more information about Genkit, visit the Genkit documentation at [genkit.dev](http://genkit.dev/).
+
 ## Prerequisites
 
 1. Node.js installed (to run npm and npx commands)

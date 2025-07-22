@@ -1,3 +1,9 @@
+## Version 0.1.24
+
+feat - update to allow using Gemini models from Google AI or Vertex AI
+
+feat - choose between latest 2.5 Gemini models from Google AI or Vertex AI
+
 ## Version 0.1.23
 
 fixed - backfill feature is disabled for now

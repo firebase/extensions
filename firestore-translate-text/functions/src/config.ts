@@ -21,7 +21,8 @@ export default {
   inputFieldName: process.env.INPUT_FIELD_NAME,
   outputFieldName: process.env.OUTPUT_FIELD_NAME,
   languagesFieldName: process.env.LANGUAGES_FIELD_NAME,
-  useGenkit: process.env.TRANSLATION_MODEL === "gemini",
-  geminiProvider: "googleai",
+  useGenkit: process.env.TRANSLATION_PROVIDER.includes("gemini"),
+  geminiProvider: process.env.TRANSLATION_PROVIDER.split("-")[1],
+  geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash",
   googleAIAPIKey: process.env.GOOGLE_AI_API_KEY,
 };

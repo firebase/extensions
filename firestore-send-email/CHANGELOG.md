@@ -1,3 +1,15 @@
+## Version 0.2.4
+
+fix: add missing 'headers' field to the mailOptions interface (contributed by @Nushio)
+
+docs: update documentation to include 'headers' field (contributed by @Nushio)
+
+fix: TTL expire type "week" fixed (#2455)
+
+## Version 0.2.3
+
+fix: remove strict validation of email "from" field
+
 ## Version 0.2.2
 
 fix: fix validation of payloads
