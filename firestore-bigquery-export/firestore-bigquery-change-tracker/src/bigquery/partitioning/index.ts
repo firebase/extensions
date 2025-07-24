@@ -36,6 +36,12 @@ export class Partitioning {
 
     const columnType = this.config.getBigQueryColumnType() || "TIMESTAMP";
 
+    // Validate column type
+    const validTypes = ["TIMESTAMP", "DATE", "DATETIME"];
+    if (!validTypes.includes(columnType)) {
+      return null;
+    }
+
     return {
       name: columnName,
       mode: "NULLABLE",
@@ -100,10 +106,14 @@ export class Partitioning {
     if (this.config.isNoPartitioning()) return;
     if (!this.table) return;
 
-    const [metadata] = await this.table.getMetadata();
-    if (metadata.timePartitioning) {
-      logs.cannotPartitionExistingTable(this.table);
-      return;
+    // Check if this is for a new table (options is being built) or existing table
+    if (this.table && !options.schema) {
+      // Existing table - check if it's already partitioned
+      const [metadata] = await this.table.getMetadata();
+      if (metadata.timePartitioning) {
+        logs.cannotPartitionExistingTable(this.table);
+        return;
+      }
     }
 
     if (this.hasHourAndDatePartitionConfig()) return;
@@ -119,6 +129,13 @@ export class Partitioning {
       this.config.isFirestoreFieldPartitioning()
     ) {
       const columnName = this.config.getBigQueryColumnName();
+      const columnType = this.config.getBigQueryColumnType();
+
+      // Don't partition on "timestamp" field with DATETIME type
+      if (columnName === "timestamp" && columnType === "DATETIME") {
+        return;
+      }
+
       if (granularity && granularity !== "NONE" && columnName) {
         options.timePartitioning = {
           type: granularity,

@@ -316,6 +316,7 @@ export class FirestoreBigQueryEventHistoryTracker
         logs.bigQueryDatasetCreated(this.config.datasetId);
       } catch (ex) {
         logs.tableCreationError(this.config.datasetId, ex.message);
+        throw ex;
       }
     }
     return dataset;
@@ -417,6 +418,7 @@ export class FirestoreBigQueryEventHistoryTracker
         logs.bigQueryTableCreated(changelogName);
       } catch (ex) {
         logs.tableCreationError(changelogName, ex.message);
+        throw ex;
       }
     }
 
