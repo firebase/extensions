@@ -113,6 +113,13 @@ export const onImageResized = onCustomEventPublished(
     }
 );
 ```
+
+#### AI-powered image moderation with Genkit
+
+This extension uses the [Genkit SDK](https://genkit.dev/) to power AI-based content filtering for uploaded images. 
+
+For more information about Genkit, visit the Genkit documentation at [genkit.dev](http://genkit.dev/).
+
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 
@@ -176,6 +183,10 @@ Leave this field empty if you do not want to store failed images in a separate d
 * Cloud Function memory: Memory of the function responsible of resizing images.  Choose how much memory to give to the function that resize images. (For animated GIF => GIF we recommend using a minimum of 2GB).
 
 * Backfill existing images: Should existing, unresized images in the Storage bucket be resized as well?
+
+
+* Backfill batch size: The maximum number of images to resize in a single batch. By default, the function is configured to resize 3 images at a time. This is a conservative default to work with smallest memory option (512 MB).
+WARNING: Ensure your function has enough memory to handle the batch size.
 
 
 * Assign new access token: Should resized images have a new access token assigned to them,  different from the original image?

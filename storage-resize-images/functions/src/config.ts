@@ -88,6 +88,7 @@ export const config = {
   ),
   customFilterPrompt: process.env.CUSTOM_FILTER_PROMPT || null,
   placeholderImagePath: process.env.PLACEHOLDER_IMAGE_PATH || null,
+  backfillBatchSize: Number(process.env.BACKFILL_BATCH_SIZE) || 3,
 };
 
 export type Config = typeof config;
