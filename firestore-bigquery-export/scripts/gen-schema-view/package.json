@@ -1,6 +1,6 @@
 {
   "name": "@firebaseextensions/fs-bq-schema-views",
-  "version": "0.4.11",
+  "version": "0.4.12",
   "description": "Generate strongly-typed BigQuery Views based on raw JSON",
   "main": "./lib/index.js",
   "repository": {
