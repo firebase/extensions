@@ -270,6 +270,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       rawChangeLogName,
       cursorPositionFile,
       failedBatchOutput: program.failedBatchOutput,
+      transformFunctionUrl: program.transformFunctionUrl,
     };
   }
   const {
@@ -285,6 +286,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     useNewSnapshotQuerySyntax,
     useEmulator,
     failedBatchOutput,
+    transformFunctionUrl,
   } = await inquirer.prompt(questions);
 
   const rawChangeLogName = `${table}_raw_changelog`;
@@ -311,6 +313,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     rawChangeLogName,
     cursorPositionFile,
     failedBatchOutput,
+    transformFunctionUrl,
   };
 }
 
