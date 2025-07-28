@@ -5,7 +5,7 @@ All notable changes to the `@firebaseextensions/fs-bq-import-collection` package
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.25] - 2024-12-19
+## [0.1.25] - 2025-07-28
 
 ### Added
 
