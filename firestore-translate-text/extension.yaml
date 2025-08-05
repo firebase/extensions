@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-translate-text
-version: 0.1.24
+version: 0.1.25
 specVersion: v1beta
 
 tags: [ai]
@@ -163,11 +163,16 @@ params:
     type: select
     required: false
     options:
-      - label: Gemini 2.5 Pro (highest quality, expensive)
+      - label:
+          Gemini 2.5 Pro (highest quality, expensive, large max output size)
         value: gemini-2.5-pro
-      - label: Gemini 2.5 Flash (cost-effective, high quality)
+      - label:
+          Gemini 2.5 Flash (cost-effective, high quality, large max output size)
         value: gemini-2.5-flash
-      - label: Gemini 2.0 Flash (cost-effective, good quality)
+      - label:
+          Gemini 2.5 Flash Lite (cheap, good quality, large max output size)
+        value: gemini-2.5-flash-lite
+      - label: Gemini 2.0 Flash (cheap, good quality)
         value: gemini-2.0-flash
       - label: Gemini 2.0 Flash Lite (cheapest, lowest quality)
         value: gemini-2.0-flash-lite

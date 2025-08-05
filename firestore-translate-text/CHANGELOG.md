@@ -1,3 +1,7 @@
+## Version 0.1.25
+
+feat - add Gemini 2.5 Flash Lite
+
 ## Version 0.1.24
 
 feat - update to allow using Gemini models from Google AI or Vertex AI
