@@ -1,18 +1,20 @@
-apply plugin: 'com.android.library'
-apply plugin: 'com.github.sherter.google-java-format'
+plugins {
+    id 'com.android.library'
+    id 'com.github.sherter.google-java-format' version '0.8'
+}
 
 buildscript {
     repositories {
         google()
-        jcenter()
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
+        mavenCentral()
+        gradlePluginPortal()
     }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.2'
-        classpath 'gradle.plugin.com.github.sherter.google-java-format:google-java-format-gradle-plugin:0.8'
-    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+    gradlePluginPortal()
 }
 
 allprojects {
@@ -23,11 +25,15 @@ allprojects {
 }
 
 android {
-    compileSdkVersion 26
+    compileSdk = 33
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 26
+        minSdk = 16
+        targetSdk = 33
+        compileOptions {
+            sourceCompatibility JavaVersion.VERSION_17
+            targetCompatibility JavaVersion.VERSION_17
+        }
         versionCode 1
         versionName "1.0"
     }
@@ -44,8 +50,8 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation 'com.android.support:appcompat-v7:26.1.0'
-    implementation 'com.google.firebase:firebase-core:17.1.0'
-    implementation 'com.google.firebase:firebase-firestore:21.0.0'
+    implementation 'com.google.firebase:firebase-core:21.1.0'
+    implementation 'com.google.firebase:firebase-firestore:24.7.1'
 }
 
 task sourcesJar(type: Jar) {

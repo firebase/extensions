@@ -86,6 +86,7 @@ params:
       database location at
       [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).
     type: select
+    default: eur3
     options:
       # Multi-region locations
       - label: Multi-region (Europe - Belgium and Netherlands)
