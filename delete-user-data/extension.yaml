@@ -193,7 +193,9 @@ params:
 
   - param: DATABASE
     label: Database
-    description: The Firestore database to use. "(default)" is used for the default database.
+    description:
+      The Firestore database to use. "(default)" is used for the default
+      database.
     type: string
     default: (default)
     required: true
