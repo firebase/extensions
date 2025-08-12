@@ -37,6 +37,10 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 **Configuration Parameters:**
 
+* Location: The location of the Cloud Firestore database.
+
+* Database: The Firestore database to use. "(default)" is used for the default database.
+
 * Cloud Firestore paths: Which paths in your Cloud Firestore instance contain data keyed on a user ID? Leave empty if you don't use Cloud Firestore.
 Enter the full paths, separated by commas. Use `{UID}` as a placeholder for the user's UID.
 For example, if you have the collections `users` and `admins`, and each collection has documents with User ID as document IDs, then enter `users/{UID},admins/{UID}`.
@@ -70,13 +74,13 @@ Here's a series of examples. To delete all the files in your default bucket with
 
 
 
-**Cloud Functions:**
+**Other Resources**:
 
-* **clearData:** Listens for user accounts to be deleted from your project's authenticated users, then removes any associated user data (based on Firebase Authentication's User ID) from Realtime Database, Cloud Firestore, and/or Cloud Storage.
+* clearData (firebaseextensions.v1beta.v2function)
 
-* **handleSearch:** undefined
+* handleSearch (firebaseextensions.v1beta.v2function)
 
-* **handleDeletion:** undefined
+* handleDeletion (firebaseextensions.v1beta.v2function)
 
 
 
