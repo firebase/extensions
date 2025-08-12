@@ -16,6 +16,7 @@
 
 export default {
   location: process.env.LOCATION,
+  database: process.env.DATABASE,
   firestorePaths: process.env.FIRESTORE_PATHS,
   firestoreDeleteMode: process.env.FIRESTORE_DELETE_MODE,
   rtdbPaths: process.env.RTDB_PATHS,

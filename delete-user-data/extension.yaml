@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: delete-user-data
-version: 0.1.24
+version: 0.1.25
 specVersion: v1beta
 
 displayName: Delete User Data
@@ -57,35 +57,147 @@ roles:
 
 resources:
   - name: clearData
-    type: firebaseextensions.v1beta.function
+    type: firebaseextensions.v1beta.v2function
     description:
       Listens for user accounts to be deleted from your project's authenticated
       users, then removes any associated user data (based on Firebase
       Authentication's User ID) from Realtime Database, Cloud Firestore, and/or
       Cloud Storage.
     properties:
-      runtime: nodejs20
+      sourceDirectory: functions
+      buildConfig:
+        runtime: nodejs22
       eventTrigger:
         eventType: providers/firebase.auth/eventTypes/user.delete
-        resource: projects/${param:PROJECT_ID}
+        triggerRegion: ${param:LOCATION}
 
   - name: handleSearch
-    type: firebaseextensions.v1beta.function
+    type: firebaseextensions.v1beta.v2function
     properties:
-      runtime: nodejs20
+      sourceDirectory: functions
+      buildConfig:
+        runtime: nodejs22
       eventTrigger:
         eventType: google.pubsub.topic.publish
-        resource: projects/${PROJECT_ID}/topics/ext-${EXT_INSTANCE_ID}-discovery
+        triggerRegion: ${param:LOCATION}
 
   - name: handleDeletion
-    type: firebaseextensions.v1beta.function
+    type: firebaseextensions.v1beta.v2function
     properties:
-      runtime: nodejs20
+      sourceDirectory: functions
+      buildConfig:
+        runtime: nodejs22
       eventTrigger:
         eventType: google.pubsub.topic.publish
-        resource: projects/${PROJECT_ID}/topics/ext-${EXT_INSTANCE_ID}-deletion
+        triggerRegion: ${param:LOCATION}
 
 params:
+  - param: LOCATION
+    label: Location
+    description: The location of the Cloud Firestore database.
+    type: select
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: Las Vegas (us-west4)
+        value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
+      - label: Los Angeles (us-west2)
+        value: us-west2
+      - label: Montreal (northamerica-northeast1)
+        value: northamerica-northeast1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Oregon (us-west1)
+        value: us-west1
+      - label: Salt Lake City (us-west3)
+        value: us-west3
+      - label: Sao Paulo (southamerica-east1)
+        value: southamerica-east1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: Finland (europe-north1)
+        value: europe-north1
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Netherlands (europe-west4)
+        value: europe-west4
+      - label: Zurich (europe-west6)
+        value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Jakarta (asia-southeast2)
+        value: asia-southeast2
+      - label: Mumbai (asia-south1)
+        value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
+      - label: Osaka (asia-northeast2)
+        value: asia-northeast2
+      - label: Seoul (asia-northeast3)
+        value: asia-northeast3
+      - label: Sydney (australia-southeast1)
+        value: australia-southeast1
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+      - label: United States (multi-regional)
+        value: us
+      - label: Europe (multi-regional)
+        value: eu
+      - label: Johannesburg (africa-south1)
+        value: africa-south1
+      - label: Tel Aviv (me-west1)
+        value: me-west1
+      - label: Doha (me-central1)
+        value: me-central1
+      - label: Dammam (me-central2)
+        value: me-central2
+      - label: Zürich (europe-west6)
+        value: europe-west6
+      - label: Turin (europe-west12)
+        value: europe-west12
+      - label: Stockholm (europe-north2)
+        value: europe-north2
+      - label: Paris (europe-west9)
+        value: europe-west9
+      - label: Milan (europe-west8)
+        value: europe-west8
+      - label: Madrid (europe-southwest1)
+        value: europe-southwest1
+      - label: Berlin (europe-west10)
+        value: europe-west10
+      - label: Melbourne (australia-southeast2)
+        value: australia-southeast2
+      - label: Delhi (asia-south2)
+        value: asia-south2
+      - label: Toronto (northamerica-northeast2)
+        value: northamerica-northeast2
+      - label: Santiago (southamerica-west1)
+        value: southamerica-west1
+      - label: Mexico (northamerica-south1)
+        value: northamerica-south1
+      - label: Dallas (us-south1)
+        value: us-south1
+      - label: Columbus, Ohio (us-east5)
+        value: us-east5
+    default: us
+    required: true
+    immutable: true
+
+  - param: DATABASE
+    label: Database
+    description: The Firestore database to use. "(default)" is used for the default database.
+    type: string
+    default: (default)
+    required: true
+
   - param: FIRESTORE_PATHS
     label: Cloud Firestore paths
     description: >-

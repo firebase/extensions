@@ -39,5 +39,9 @@
   },
   "lint-staged": {
     "*.{js,md,yml,ts,json,yaml}": "prettier --write"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.4.0",
+    "firebase-functions": "^6.4.0"
   }
 }

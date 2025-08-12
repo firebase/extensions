@@ -1,3 +1,11 @@
+## Version 0.1.25
+
+feat - update to v2 functions
+
+feat - add database param
+
+feat - update to Node.js 22 runtimes
+
 ## Version 0.1.24
 
 feat - move to Node.js 20 runtimes
