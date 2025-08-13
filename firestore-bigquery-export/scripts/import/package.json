@@ -15,7 +15,9 @@
     "compile": "tsc",
     "import": "node ./lib/index.js",
     "prepare": "npm run build",
-    "test:local": "jest"
+    "test:local": "jest --testPathIgnorePatterns=e2e.test.ts --forceExit",
+    "test:all": "jest",
+    "test:e2e": "jest e2e.test.ts"
   },
   "files": [
     "lib"

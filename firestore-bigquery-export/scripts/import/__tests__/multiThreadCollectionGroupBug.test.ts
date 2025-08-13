@@ -4,10 +4,8 @@ import { CliConfig } from "../src/types";
 import * as workerpool from "workerpool";
 
 // Mock Firebase Admin to avoid credential issues
-jest.mock("firebase-admin", () => ({
-  apps: [],
-  initializeApp: jest.fn(),
-  firestore: jest.fn().mockReturnValue({
+jest.mock("firebase-admin", () => {
+  const mockFirestore = {
     collection: jest.fn().mockReturnValue({
       add: jest.fn().mockResolvedValue({ id: "test-doc", path: "test/test-doc" }),
       doc: jest.fn().mockReturnValue({
@@ -35,11 +33,27 @@ jest.mock("firebase-admin", () => ({
     FieldPath: {
       documentId: jest.fn().mockReturnValue("__name__")
     }
-  }),
-  credential: {
-    applicationDefault: jest.fn()
-  }
-}));
+  };
+  
+  return {
+    apps: [],
+    initializeApp: jest.fn(),
+    firestore: Object.assign(
+      jest.fn().mockReturnValue(mockFirestore),
+      {
+        FieldPath: {
+          documentId: jest.fn().mockReturnValue("__name__")
+        },
+        FieldValue: {
+          serverTimestamp: jest.fn().mockReturnValue({ _type: "serverTimestamp" })
+        }
+      }
+    ),
+    credential: {
+      applicationDefault: jest.fn()
+    }
+  };
+});
 
 const firestore = admin.firestore();
 
