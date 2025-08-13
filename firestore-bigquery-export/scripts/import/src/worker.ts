@@ -50,22 +50,26 @@ async function processDocuments(
   const extractDocumentPath = (resourceName: string): string => {
     // Remove the Firestore resource prefix: projects/{projectId}/databases/{databaseId}/documents/
     const prefix = /^projects\/[^\/]+\/databases\/[^\/]+\/documents\//;
-    
+
     // Check if the path matches the expected format
     if (!prefix.test(resourceName)) {
       // If it doesn't match, it might already be a document path
       // Log a warning and return as-is
-      console.warn(`Path doesn't match expected format, using as-is: ${resourceName}`);
+      console.warn(
+        `Path doesn't match expected format, using as-is: ${resourceName}`
+      );
       return resourceName;
     }
-    
-    const documentPath = resourceName.replace(prefix, '');
-    
+
+    const documentPath = resourceName.replace(prefix, "");
+
     // Check if we got an empty string (path was just the prefix)
     if (!documentPath) {
-      throw new Error(`Invalid resource name: ${resourceName} - no document path after prefix`);
+      throw new Error(
+        `Invalid resource name: ${resourceName} - no document path after prefix`
+      );
     }
-    
+
     return documentPath;
   };
 
@@ -75,30 +79,38 @@ async function processDocuments(
     const fullPath = serializableQuery.startAt.values[0].referenceValue;
     // Extract the document path from the full resource name
     const documentPath = extractDocumentPath(fullPath);
-    
+
     // Validate the path has even number of components (collection/document pairs)
-    const pathComponents = documentPath.split('/');
+    const pathComponents = documentPath.split("/");
     if (pathComponents.length % 2 !== 0) {
-      console.error(`Invalid document path after extraction (odd number of components): ${documentPath}`);
+      console.error(
+        `Invalid document path after extraction (odd number of components): ${documentPath}`
+      );
       console.error(`Original path was: ${fullPath}`);
-      throw new Error(`Invalid document path: ${documentPath}. Path must have even number of components.`);
+      throw new Error(
+        `Invalid document path: ${documentPath}. Path must have even number of components.`
+      );
     }
-    
+
     query = query.startAt(firebase.firestore().doc(documentPath));
   }
   if (serializableQuery.endAt?.values?.[0]?.referenceValue) {
     const fullPath = serializableQuery.endAt.values[0].referenceValue;
     // Extract the document path from the full resource name
     const documentPath = extractDocumentPath(fullPath);
-    
+
     // Validate the path has even number of components (collection/document pairs)
-    const pathComponents = documentPath.split('/');
+    const pathComponents = documentPath.split("/");
     if (pathComponents.length % 2 !== 0) {
-      console.error(`Invalid document path after extraction (odd number of components): ${documentPath}`);
+      console.error(
+        `Invalid document path after extraction (odd number of components): ${documentPath}`
+      );
       console.error(`Original path was: ${fullPath}`);
-      throw new Error(`Invalid document path: ${documentPath}. Path must have even number of components.`);
+      throw new Error(
+        `Invalid document path: ${documentPath}. Path must have even number of components.`
+      );
     }
-    
+
     query = query.endBefore(firebase.firestore().doc(documentPath));
   }
   if (serializableQuery.offset) {

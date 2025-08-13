@@ -33,26 +33,34 @@ describe("runMultiThread Partitioning with Firestore", () => {
 
     // Create test documents in a unique collection to avoid conflicts
     for (let i = 0; i < 10; i++) {
-      await firestore.collection(`${uniqueTestCollection}_${i % 2}/subcoll/${uniqueTestCollection}`).add({
-        index: i,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      await firestore
+        .collection(
+          `${uniqueTestCollection}_${i % 2}/subcoll/${uniqueTestCollection}`
+        )
+        .add({
+          index: i,
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        });
     }
 
     // Count actual documents in the collection group
-    const collectionGroupDocs = await firestore.collectionGroup(uniqueTestCollection).get();
+    const collectionGroupDocs = await firestore
+      .collectionGroup(uniqueTestCollection)
+      .get();
     actualDocumentCount = collectionGroupDocs.size;
-    console.log(`Created ${actualDocumentCount} test documents in collection group '${uniqueTestCollection}'`);
+    console.log(
+      `Created ${actualDocumentCount} test documents in collection group '${uniqueTestCollection}'`
+    );
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockPool = workerpool.pool();
     mockExec = mockPool.exec;
-    
+
     // Track calls to ensure we only return documents once per test
     let hasBeenCalled = false;
-    
+
     // Mock exec to return all documents on first call, 0 on subsequent calls
     // This simulates processing all documents in the partitions that are created
     mockExec.mockImplementation(() => {
@@ -104,9 +112,9 @@ describe("runMultiThread Partitioning with Firestore", () => {
     // Clean up test collections
     const collectionRefs = [
       `${uniqueTestCollection}_0/subcoll/${uniqueTestCollection}`,
-      `${uniqueTestCollection}_1/subcoll/${uniqueTestCollection}`
+      `${uniqueTestCollection}_1/subcoll/${uniqueTestCollection}`,
     ];
-    
+
     for (const collectionPath of collectionRefs) {
       const collectionRef = firestore.collection(collectionPath);
       const docs = await collectionRef.listDocuments();
