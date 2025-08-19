@@ -5,6 +5,10 @@ All notable changes to the `@firebaseextensions/fs-bq-import-collection` package
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.26] - 2025-08-19
+
+- fix: collectionGroup handling for multi-threaded where multi-threaded collection group imports fail due to improper handling of Firestore document reference paths
+
 ## [0.1.25] - 2025-07-28
 
 ### Added
