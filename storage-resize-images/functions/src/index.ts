@@ -18,6 +18,7 @@ import * as admin from "firebase-admin";
 import { getFunctions } from "firebase-admin/functions";
 import { getExtensions } from "firebase-admin/extensions";
 import * as functions from "firebase-functions/v1";
+import { logger } from "firebase-functions";
 import * as path from "path";
 import * as sharp from "sharp";
 import { File } from "@google-cloud/storage";
@@ -153,6 +154,64 @@ export const generateResizedImage = functions.storage
     await events.recordCompletionEvent({ context });
   });
 
+function buildOptimizedQuery(baseQuery: any, excludePathList?: string[]): any {
+  if (!excludePathList || excludePathList.length === 0) {
+    return baseQuery;
+  }
+
+  const optimizedQuery = { ...baseQuery };
+  optimizedQuery.delimiter = "/";
+
+  return optimizedQuery;
+}
+
+function filterExcludedPaths(
+  files: File[],
+  excludePathList?: string[]
+): File[] {
+  if (!excludePathList || excludePathList.length === 0) {
+    return files;
+  }
+
+  return files.filter((file) => {
+    const filePath = path.dirname(file.metadata.name);
+
+    for (const excludePath of excludePathList) {
+      const trimmedExcludePath = excludePath
+        .trim()
+        .replace(/\*/g, "([a-zA-Z0-9_\\-\\+.\\s\\/]*)?");
+
+      const regex = new RegExp("^" + trimmedExcludePath + "(?:/.*|$)");
+
+      if (regex.test(filePath)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+}
+
+async function getFilesWithPathExclusions(
+  bucket: any,
+  baseQuery: any,
+  excludePathList?: string[]
+): Promise<[File[], any]> {
+  if (!excludePathList || excludePathList.length === 0) {
+    return bucket.getFiles(baseQuery);
+  }
+
+  const optimizedQuery = {
+    ...baseQuery,
+    delimiter: "/",
+  };
+
+  const [files, nextPageQuery] = await bucket.getFiles(optimizedQuery);
+  const filteredFiles = filterExcludedPaths(files, excludePathList);
+
+  return [filteredFiles, nextPageQuery];
+}
+
 /**
  *
  */
@@ -173,11 +232,17 @@ export const backfillResizedImages = functions.tasks
     }
 
     const bucket = admin.storage().bucket(process.env.IMG_BUCKET);
-    const query = data.nextPageQuery || {
+    const baseQuery = data.nextPageQuery || {
       autoPaginate: false,
       maxResults: config.backfillBatchSize,
     };
-    const [files, nextPageQuery] = await bucket.getFiles(query);
+
+    const [files, nextPageQuery] = await getFilesWithPathExclusions(
+      bucket,
+      baseQuery,
+      config.excludePathList
+    );
+
     const filesToResize = files.filter((f: File) => {
       logs.continueBackfill(f.metadata.name);
       return shouldResize(convertToObjectMetadata(f.metadata));
