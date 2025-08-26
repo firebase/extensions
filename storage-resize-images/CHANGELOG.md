@@ -1,3 +1,7 @@
+## Version 0.2.11
+
+fixed - prevent exponential cost growth in backfill function by applying EXCLUDE_PATH_LIST during bucket listing instead of after
+
 ## Version 0.2.10
 
 feat - added param for adjusting backfill max batch size
