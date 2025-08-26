@@ -82,6 +82,16 @@ Before installing this extension, make sure that you've [set up a Cloud Storage 
 
 > **NOTE**: As mentioned above, this extension listens for all changes made to the specified Cloud Storage bucket. This may cause unnecessary function calls. It is recommended to create a separate Cloud Storage bucket, especially for images you want to resize, and set up this extension to listen to that bucket.
 
+#### Backfill functionality
+
+This extension includes a backfill feature that allows you to process existing images in your Cloud Storage bucket. When enabled, the backfill function will scan your bucket and create resized versions of images that haven't been processed yet.
+
+**Important considerations for backfill:**
+
+- **Path exclusions**: The `EXCLUDE_PATH_LIST` parameter is applied during bucket listing to prevent scanning thumbnail directories, ensuring efficient processing and preventing exponential cost growth.
+- **Batch processing**: The backfill processes images in configurable batches to manage memory usage and processing time.
+- **Cost optimization**: The backfill function is optimized to only scan original images, not previously generated thumbnails, reducing storage API costs significantly.
+
 #### Multiple instances of this extension
 
 You can install multiple instances of this extension for the same project to configure different resizing options for different paths. However, as mentioned before this extension listens for all changes made to the specified Cloud Storage bucket. That means all instances will be triggered every time a file is uploaded to the bucket. Therefore, it is recommended to use different buckets instead of different paths to prevent unnecessary function calls.
