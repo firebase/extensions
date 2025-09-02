@@ -76,7 +76,7 @@ export const configureProgram = () => {
       "schema"
     )
     .option(
-      "--is-collection-group-query",
+      "--query-collection-group",
       "Use collection group query instead of regular collection query",
       false
     );
