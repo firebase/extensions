@@ -39,5 +39,8 @@
   },
   "lint-staged": {
     "*.{js,md,yml,ts,json,yaml}": "prettier --write"
+  },
+  "dependencies": {
+    "@firebaseextensions/firestore-bigquery-change-tracker": "file:./firestore-bigquery-change-tracker"
   }
 }

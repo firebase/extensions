@@ -68,6 +68,7 @@ describe("parseConfig", () => {
         googleAiKey: undefined,
         schemaDirectory: undefined,
         useGemini: false,
+        isCollectionGroupQuery: undefined,
       });
     });
 
@@ -107,6 +108,7 @@ describe("parseConfig", () => {
         googleAiKey: "test-key",
         geminiAnalyzeCollectionPath: "test-collection",
         schemaDirectory: "test-directory",
+        isCollectionGroupQuery: true,
         outputHelp: jest.fn(),
       };
 
@@ -120,6 +122,7 @@ describe("parseConfig", () => {
       expect(result.geminiAnalyzeCollectionPath).toBe("test-collection");
       expect(result.schemaDirectory).toBe("test-directory");
       expect(result.agentSampleSize).toBe(100);
+      expect(result.isCollectionGroupQuery).toBe(true);
     });
 
     it("should exit if required parameters are missing", async () => {
