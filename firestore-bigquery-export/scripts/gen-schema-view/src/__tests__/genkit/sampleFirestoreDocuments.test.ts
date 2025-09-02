@@ -17,6 +17,7 @@
 interface FirestoreModule {
   (): {
     collection: jest.Mock;
+    collectionGroup: jest.Mock;
     where: jest.Mock;
     limit: jest.Mock;
     get: jest.Mock;
@@ -31,6 +32,7 @@ interface FirestoreModule {
 jest.mock("firebase-admin", () => {
   const mockFirestore = {
     collection: jest.fn().mockReturnThis(),
+    collectionGroup: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
     get: jest.fn().mockResolvedValue({
@@ -135,5 +137,97 @@ describe("sampleFirestoreDocuments", () => {
     await expect(
       sampleFirestoreDocuments(collectionPath, sampleSize)
     ).rejects.toThrow("Firestore error");
+  });
+
+  describe("collection group queries", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("should sample documents from Firestore collection group", async () => {
+      const collectionPath = "orders";
+      const sampleSize = 2;
+      const isCollectionGroupQuery = true;
+
+      // Mock collection group data (subcollections from different parents)
+      const firebase = require("firebase-admin");
+      const mockFirestore = firebase.firestore();
+
+      mockFirestore.get.mockResolvedValueOnce({
+        docs: [
+          {
+            data: () => ({ orderId: "order1", amount: 50, userId: "user1" }),
+            id: "order1",
+          },
+          {
+            data: () => ({ orderId: "order2", amount: 75, userId: "user2" }),
+            id: "order2",
+          },
+        ],
+      });
+
+      const result = await sampleFirestoreDocuments(
+        collectionPath,
+        sampleSize,
+        isCollectionGroupQuery
+      );
+
+      expect(mockFirestore.collectionGroup).toHaveBeenCalledWith(
+        collectionPath
+      );
+      expect(mockFirestore.collection).not.toHaveBeenCalled();
+      expect(mockFirestore.where).toHaveBeenCalledWith(
+        "__name__",
+        ">=",
+        expect.any(String)
+      );
+      expect(mockFirestore.limit).toHaveBeenCalledWith(sampleSize);
+      expect(mockFirestore.get).toHaveBeenCalled();
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toHaveProperty("orderId", "order1");
+      expect(result[0]).toHaveProperty("amount", 50);
+      expect(result[0]).toHaveProperty("userId", "user1");
+    });
+
+    it("should default to regular collection query when isCollectionGroupQuery is false", async () => {
+      const collectionPath = "test-collection";
+      const sampleSize = 2;
+      const isCollectionGroupQuery = false;
+
+      const result = await sampleFirestoreDocuments(
+        collectionPath,
+        sampleSize,
+        isCollectionGroupQuery
+      );
+
+      const firebase = require("firebase-admin");
+      const mockFirestore = firebase.firestore();
+
+      expect(mockFirestore.collection).toHaveBeenCalledWith(collectionPath);
+      expect(mockFirestore.collectionGroup).not.toHaveBeenCalled();
+      expect(result).toHaveLength(2);
+    });
+
+    it("should handle errors properly for collection group queries", async () => {
+      const firebase = require("firebase-admin");
+      const mockFirestore = firebase.firestore();
+
+      mockFirestore.get.mockRejectedValueOnce(
+        new Error("Collection group error")
+      );
+
+      const collectionPath = "orders";
+      const sampleSize = 2;
+      const isCollectionGroupQuery = true;
+
+      await expect(
+        sampleFirestoreDocuments(
+          collectionPath,
+          sampleSize,
+          isCollectionGroupQuery
+        )
+      ).rejects.toThrow("Collection group error");
+    });
   });
 });

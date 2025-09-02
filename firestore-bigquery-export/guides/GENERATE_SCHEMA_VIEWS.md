@@ -60,6 +60,7 @@ You'll be prompted for:
 - BigQuery dataset ID
 - Table Prefix
 - Firestore collection path to sample
+- Whether to use collection group query
 - Google AI API key
 - Directory and filename for the schema
 
@@ -77,6 +78,34 @@ npx @firebaseextensions/fs-bq-schema-views \
   --schema-directory=./schemas \
   --gemini-schema-file-name=user_schema
 ```
+
+For collection group queries (to query all collections with the same name across your database):
+
+```bash
+npx @firebaseextensions/fs-bq-schema-views \
+  --non-interactive \
+  --project=my-firebase-project \
+  --big-query-project=my-bq-project \
+  --dataset=firestore_changelog \
+  --table-name-prefix=user_profiles \
+  --use-gemini=secure \
+  --is-collection-group-query \
+  --google-ai-key=$GOOGLE_API_KEY \
+  --schema-directory=./schemas \
+  --gemini-schema-file-name=user_schema
+```
+
+#### Understanding Collection vs Collection Group Queries
+
+- **Collection Query** (default): Queries documents from a specific collection path
+
+  - Example: `users/123/orders` - queries orders for a specific user
+  - Use when you have a specific collection path
+
+- **Collection Group Query** (`--is-collection-group-query`): Queries all collections with the same name across your entire database
+  - Example: `orders` - queries all order collections regardless of their parent path
+  - Use when you have collections with the same name under different documents
+  - Useful for subcollections that appear in multiple places
 
 ⚠️ **Important**: Always review generated schemas before using them in production.
 
@@ -131,6 +160,19 @@ npx @firebaseextensions/fs-bq-schema-views \
   --dataset=YOUR_DATASET_ID \
   --table-name-prefix=YOUR_TABLE_PREFIX \
   --schema-files=./test_schema.json
+```
+
+For collection group queries with manual schemas:
+
+```bash
+npx @firebaseextensions/fs-bq-schema-views \
+  --non-interactive \
+  --project=YOUR_PROJECT_ID \
+  --big-query-project=YOUR_BIGQUERY_PROJECT_ID \
+  --dataset=YOUR_DATASET_ID \
+  --table-name-prefix=YOUR_TABLE_PREFIX \
+  --schema-files=./test_schema.json \
+  --is-collection-group-query
 ```
 
 For multiple schema files, use comma separation:
