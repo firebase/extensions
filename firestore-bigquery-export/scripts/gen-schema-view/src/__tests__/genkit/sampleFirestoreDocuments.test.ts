@@ -140,10 +140,6 @@ describe("sampleFirestoreDocuments", () => {
   });
 
   describe("collection group queries", () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
     it("should sample documents from Firestore collection group", async () => {
       const collectionPath = "orders";
       const sampleSize = 2;
@@ -153,6 +149,8 @@ describe("sampleFirestoreDocuments", () => {
       const firebase = require("firebase-admin");
       const mockFirestore = firebase.firestore();
 
+      // Clear mocks and set up specific mock for this test
+      jest.clearAllMocks();
       mockFirestore.get.mockResolvedValueOnce({
         docs: [
           {
@@ -195,14 +193,17 @@ describe("sampleFirestoreDocuments", () => {
       const sampleSize = 2;
       const isCollectionGroupQuery = false;
 
+      const firebase = require("firebase-admin");
+      const mockFirestore = firebase.firestore();
+
+      // Clear mocks for this test
+      jest.clearAllMocks();
+
       const result = await sampleFirestoreDocuments(
         collectionPath,
         sampleSize,
         isCollectionGroupQuery
       );
-
-      const firebase = require("firebase-admin");
-      const mockFirestore = firebase.firestore();
 
       expect(mockFirestore.collection).toHaveBeenCalledWith(collectionPath);
       expect(mockFirestore.collectionGroup).not.toHaveBeenCalled();
@@ -213,6 +214,8 @@ describe("sampleFirestoreDocuments", () => {
       const firebase = require("firebase-admin");
       const mockFirestore = firebase.firestore();
 
+      // Clear mocks and set up error for this test
+      jest.clearAllMocks();
       mockFirestore.get.mockRejectedValueOnce(
         new Error("Collection group error")
       );

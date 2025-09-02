@@ -89,7 +89,7 @@ npx @firebaseextensions/fs-bq-schema-views \
   --dataset=firestore_changelog \
   --table-name-prefix=user_profiles \
   --use-gemini=secure \
-  --is-collection-group-query \
+  --query-collection-group \
   --google-ai-key=$GOOGLE_API_KEY \
   --schema-directory=./schemas \
   --gemini-schema-file-name=user_schema
@@ -102,7 +102,7 @@ npx @firebaseextensions/fs-bq-schema-views \
   - Example: `users/123/orders` - queries orders for a specific user
   - Use when you have a specific collection path
 
-- **Collection Group Query** (`--is-collection-group-query`): Queries all collections with the same name across your entire database
+- **Collection Group Query** (`--query-collection-group`): Queries all collections with the same name across your entire database
   - Example: `orders` - queries all order collections regardless of their parent path
   - Use when you have collections with the same name under different documents
   - Useful for subcollections that appear in multiple places
@@ -172,7 +172,7 @@ npx @firebaseextensions/fs-bq-schema-views \
   --dataset=YOUR_DATASET_ID \
   --table-name-prefix=YOUR_TABLE_PREFIX \
   --schema-files=./test_schema.json \
-  --is-collection-group-query
+  --query-collection-group
 ```
 
 For multiple schema files, use comma separation:

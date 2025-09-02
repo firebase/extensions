@@ -56,7 +56,7 @@ export async function parseConfig(): Promise<CliConfig> {
       googleAiKey: program.googleAiKey,
       schemaDirectory: program.schemaDirectory,
       geminiSchemaFileName: program.geminiSchemaFileName,
-      isCollectionGroupQuery: program.isCollectionGroupQuery,
+      isCollectionGroupQuery: program.queryCollectionGroup,
     };
   }
   const {

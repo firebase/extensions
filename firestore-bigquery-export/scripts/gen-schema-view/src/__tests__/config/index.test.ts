@@ -108,7 +108,7 @@ describe("parseConfig", () => {
         googleAiKey: "test-key",
         geminiAnalyzeCollectionPath: "test-collection",
         schemaDirectory: "test-directory",
-        isCollectionGroupQuery: true,
+        queryCollectionGroup: true,
         outputHelp: jest.fn(),
       };
 

@@ -91,7 +91,7 @@ describe("Command Line Parser", () => {
       );
 
       expect(commander.option).toHaveBeenCalledWith(
-        "--is-collection-group-query",
+        "--query-collection-group",
         "Use collection group query instead of regular collection query",
         false
       );
