@@ -18,7 +18,6 @@ import * as admin from "firebase-admin";
 import { getFunctions } from "firebase-admin/functions";
 import { getExtensions } from "firebase-admin/extensions";
 import * as functions from "firebase-functions/v1";
-import { logger } from "firebase-functions";
 import * as path from "path";
 import * as sharp from "sharp";
 import { File } from "@google-cloud/storage";
