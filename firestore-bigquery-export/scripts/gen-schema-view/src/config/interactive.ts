@@ -112,6 +112,14 @@ export const questions = [
     when: (answers) => answers.useGemini,
     default: "schema",
   },
+  {
+    message:
+      "Do you want to use a collection group query instead of a regular collection query?",
+    name: "isCollectionGroupQuery",
+    type: "confirm",
+    when: (answers) => answers.useGemini,
+    default: false,
+  },
 ];
 
 export const promptInquirer = () => {
