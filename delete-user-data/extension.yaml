@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: delete-user-data
-version: 0.1.24
+version: 0.2.0
 specVersion: v1beta
 
 displayName: Delete User Data
@@ -86,6 +86,16 @@ resources:
         resource: projects/${PROJECT_ID}/topics/ext-${EXT_INSTANCE_ID}-deletion
 
 params:
+  - param: FIRESTORE_DATABASE_ID
+    label: Firestore Database ID
+    description: >-
+      The ID of the Firestore database to use. Use "(default)" for the default
+      database. You can view your available Firestore databases at
+      https://console.cloud.google.com/firestore/databases.
+    type: string
+    default: (default)
+    required: true
+
   - param: FIRESTORE_PATHS
     label: Cloud Firestore paths
     description: >-
