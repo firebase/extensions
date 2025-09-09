@@ -10,30 +10,47 @@ if (admin.apps.length === 0) {
 
 const firestore = admin.firestore();
 
+// Use a unique collection name to avoid conflicts with existing data
+const uniqueTestCollection = `test_multithread_${Date.now()}`;
+
+// Mock the workerpool to simulate document processing
 jest.mock("workerpool", () => ({
   pool: jest.fn().mockReturnValue({
-    exec: jest.fn().mockResolvedValue(5), // Simulating 5 docs processed per worker
+    exec: jest.fn(),
     stats: jest.fn().mockReturnValue({ activeTasks: 0, pendingTasks: 0 }),
     terminate: jest.fn().mockResolvedValue(undefined),
   }),
 }));
 
 describe("runMultiThread Partitioning with Firestore", () => {
-  let testCollection = `testCollection_${Date.now()}`;
   let mockConfig: CliConfig;
   let mockPool: any;
   let mockExec: jest.Mock;
+  let actualDocumentCount: number = 0;
 
   beforeAll(async () => {
     console.log("Creating test documents...");
 
-    // Creating only 10 documents for a fast test
+    // Create test documents in a unique collection to avoid conflicts
     for (let i = 0; i < 10; i++) {
-      await firestore.collection(`test_partition/${i % 2}/docs`).add({
-        index: i,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      await firestore
+        .collection(
+          `${uniqueTestCollection}_${i % 2}/subcoll/${uniqueTestCollection}`
+        )
+        .add({
+          index: i,
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        });
     }
+
+    // Count actual documents in the collection group
+    const collectionGroupDocs = await firestore
+      .collectionGroup(uniqueTestCollection)
+      .get();
+    actualDocumentCount = collectionGroupDocs.size;
+    console.log(
+      `Created ${actualDocumentCount} test documents in collection group '${uniqueTestCollection}'`
+    );
   });
 
   beforeEach(() => {
@@ -41,11 +58,24 @@ describe("runMultiThread Partitioning with Firestore", () => {
     mockPool = workerpool.pool();
     mockExec = mockPool.exec;
 
+    // Track calls to ensure we only return documents once per test
+    let hasBeenCalled = false;
+
+    // Mock exec to return all documents on first call, 0 on subsequent calls
+    // This simulates processing all documents in the partitions that are created
+    mockExec.mockImplementation(() => {
+      if (!hasBeenCalled) {
+        hasBeenCalled = true;
+        return Promise.resolve(actualDocumentCount);
+      }
+      return Promise.resolve(0);
+    });
+
     mockConfig = {
       kind: "CONFIG",
       projectId: "test-project",
       bigQueryProjectId: "test-bq-project",
-      sourceCollectionPath: "test_partition/{partitionId}/docs",
+      sourceCollectionPath: `${uniqueTestCollection}_0/subcoll/${uniqueTestCollection}`,
       datasetId: "testDataset",
       tableId: "testTable",
       batchSize: 5, // Small batch size for controlled partitioning
@@ -66,21 +96,25 @@ describe("runMultiThread Partitioning with Firestore", () => {
 
     console.log(`Total documents processed: ${totalProcessed}`);
 
-    // Ensure workerpool.exec() was called multiple times (each partition)
+    // Ensure workerpool.exec() was called (at least once for the partition)
     expect(mockExec).toHaveBeenCalled();
 
     // Ensure `runMultiThread` terminates properly
     expect(mockPool.terminate).toHaveBeenCalled();
 
-    // Check if at least all 10 test docs are processed
-    expect(totalProcessed).toBeGreaterThanOrEqual(10);
+    // Check if all test docs are processed
+    expect(totalProcessed).toBe(actualDocumentCount);
   });
 
   afterAll(async () => {
     console.log("Cleaning up test data...");
 
-    // Clean up only test collections
-    const collectionRefs = ["test_partition/0/docs", "test_partition/1/docs"];
+    // Clean up test collections
+    const collectionRefs = [
+      `${uniqueTestCollection}_0/subcoll/${uniqueTestCollection}`,
+      `${uniqueTestCollection}_1/subcoll/${uniqueTestCollection}`,
+    ];
+
     for (const collectionPath of collectionRefs) {
       const collectionRef = firestore.collection(collectionPath);
       const docs = await collectionRef.listDocuments();

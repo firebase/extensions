@@ -1,3 +1,7 @@
+## Version 0.2.6
+
+docs: update docs to reference the correct "latest" view names
+
 ## Version 0.2.5
 
 fix: keep partition value on delete using old data
