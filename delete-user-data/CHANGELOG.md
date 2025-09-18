@@ -1,6 +1,8 @@
-## Version 0.2.0
+## Version 0.1.25
 
 feat - add support for multiple Firestore databases via FIRESTORE_DATABASE_ID parameter
+
+fix - run npm audit fix
 
 ## Version 0.1.24
 
