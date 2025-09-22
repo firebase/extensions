@@ -5,10 +5,9 @@ const { PubSub } = require("@google-cloud/pubsub");
 export const search = async (
   uid: string,
   depth: number,
+  db: admin.firestore.Firestore,
   document?: admin.firestore.DocumentReference<admin.firestore.DocumentData>
 ) => {
-  const db = admin.firestore();
-
   const pubsub = new PubSub();
 
   const topic = pubsub.topic(

@@ -20,7 +20,7 @@ describe("recursiveDelete", () => {
       foo: "bar",
     });
 
-    await recursiveDelete(ref);
+    await recursiveDelete(ref, db);
 
     const doc = db.doc(ref);
     await doc.get().then((doc) => {
@@ -34,7 +34,7 @@ describe("recursiveDelete", () => {
       foo: "bar",
     });
 
-    await recursiveDelete(ref);
+    await recursiveDelete(ref, db);
 
     const collection = db.collection(ref);
     await collection.get().then((collection) => {
@@ -49,7 +49,7 @@ describe("recursiveDelete", () => {
       foo: "bar",
     });
 
-    await recursiveDelete(parentRef);
+    await recursiveDelete(parentRef, db);
 
     const collection = db.collection(ref);
     await collection.get().then((collection) => {
