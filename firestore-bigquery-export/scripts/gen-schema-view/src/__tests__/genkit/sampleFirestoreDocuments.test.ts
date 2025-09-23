@@ -174,11 +174,7 @@ describe("sampleFirestoreDocuments", () => {
         collectionPath
       );
       expect(mockFirestore.collection).not.toHaveBeenCalled();
-      expect(mockFirestore.where).toHaveBeenCalledWith(
-        "__name__",
-        ">=",
-        expect.any(String)
-      );
+      expect(mockFirestore.where).not.toHaveBeenCalled();
       expect(mockFirestore.limit).toHaveBeenCalledWith(sampleSize);
       expect(mockFirestore.get).toHaveBeenCalled();
 
