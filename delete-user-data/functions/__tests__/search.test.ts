@@ -44,7 +44,7 @@ describe("discovery", () => {
 
   describe("searches on top level collections", () => {
     test("can delete is single collection named {uid}", async () => {
-      await search(user.uid, 1);
+      await search(user.uid, 1, db);
 
       await waitForCollectionDeletion(rootCollection, 20_000);
     }, 60000);
@@ -53,7 +53,7 @@ describe("discovery", () => {
   describe("searches on top level collection documents", () => {
     test("can delete a document named {uid}", async () => {
       const document = await db.collection(generateRandomId()).doc(user.uid);
-      await search(user.uid, 1);
+      await search(user.uid, 1, db);
 
       await waitForDocumentDeletion(document);
     }, 60000);
@@ -62,14 +62,14 @@ describe("discovery", () => {
       const document = await db
         .collection(generateRandomId())
         .add({ field1: user.uid });
-      await search(user.uid, 1);
+      await search(user.uid, 1, db);
 
       await waitForDocumentDeletion(document, 60000);
     }, 60000);
 
     test("can check a document without any field values", async () => {
       await db.collection(generateRandomId()).add({});
-      await search(user.uid, 1);
+      await search(user.uid, 1, db);
 
       expect(true).toBeTruthy();
     }, 60000);
@@ -93,7 +93,7 @@ describe("discovery", () => {
 
       expect(checkExists).toBe(true);
 
-      await search(user.uid, 1);
+      await search(user.uid, 1, db);
 
       await waitForCollectionDeletion(subcollection);
     }, 60000);
@@ -118,7 +118,7 @@ describe("discovery", () => {
 
       expect(collectionPathCount).toBeGreaterThan(config.searchDepth);
 
-      await search(user.uid, 1);
+      await search(user.uid, 1, db);
 
       // /** Wait 10 seconds for the discovery to complete */
       await new Promise((resolve) => setTimeout(resolve, 20000));
@@ -149,7 +149,7 @@ describe("discovery", () => {
 
       expect(collectionPathCount).toBeGreaterThan(config.searchDepth);
 
-      await search(user.uid, 1);
+      await search(user.uid, 1, db);
 
       // /** Wait 10 seconds for the discovery to complete */
       await new Promise((resolve) => setTimeout(resolve, 20000));
@@ -169,7 +169,7 @@ describe("discovery", () => {
       const collection = await db.collection(generateRandomId());
       const document = await collection.add({ testing: "should-not-delete" });
 
-      await search(collection.id, -1, document);
+      await search(collection.id, -1, db, document);
 
       /** Check document still exists */
       const checkExists = await document.get().then((doc) => doc.exists);
@@ -180,7 +180,7 @@ describe("discovery", () => {
       const document = await db
         .collection(generateRandomId())
         .add({ field1: "unknown" });
-      await search(user.uid, 1);
+      await search(user.uid, 1, db);
 
       /** Wait 10 seconds */
       await new Promise((resolve) => setTimeout(resolve, 10000));
