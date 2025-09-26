@@ -68,7 +68,8 @@ export const convertHarmBlockThreshold: (
 export const config = {
   bucket: process.env.IMG_BUCKET,
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
-  doBackfill: process.env.DO_BACKFILL === "true",
+  // Backfill feature disabled - commented out to preserve code
+  // doBackfill: process.env.DO_BACKFILL === "true",
   imageSizes: process.env.IMG_SIZES.split(","),
   regenerateToken: process.env.REGENERATE_TOKEN == "true",
   makePublic: process.env.MAKE_PUBLIC === "true",
@@ -88,7 +89,7 @@ export const config = {
   ),
   customFilterPrompt: process.env.CUSTOM_FILTER_PROMPT || null,
   placeholderImagePath: process.env.PLACEHOLDER_IMAGE_PATH || null,
-  backfillBatchSize: Number(process.env.BACKFILL_BATCH_SIZE) || 3,
+  // backfillBatchSize: Number(process.env.BACKFILL_BATCH_SIZE) || 3,
 };
 
 export type Config = typeof config;

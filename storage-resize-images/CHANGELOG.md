@@ -1,3 +1,7 @@
+## Version 0.3.0
+
+fix! - remove backfill feature
+
 ## Version 0.2.10
 
 feat - added param for adjusting backfill max batch size
