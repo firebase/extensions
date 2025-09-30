@@ -17,6 +17,7 @@ export interface CliConfig {
   cursorPositionFile: string;
   failedBatchOutput?: string;
   transformFunctionUrl?: string;
+  firestoreInstanceId: string;
 }
 
 export interface CliConfigError {
