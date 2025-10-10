@@ -359,7 +359,7 @@ export function buildNonIncrementalMaterializedViewQuery({
 
   const source = `
     WITH latests AS (
-      SELECT 
+      SELECT
       ${aggregatedFields}
       FROM \`${projectId}.${datasetId}.${tableName}\`
       GROUP BY document_name
