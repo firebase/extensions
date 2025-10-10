@@ -17,9 +17,9 @@ CREATE MATERIALIZED VIEW `test.test_dataset.materialized_view_test`
         MAX_BY(old_data, timestamp) AS old_data,
         MAX_BY(extra_field, timestamp) AS extra_field
       FROM `test.test_dataset.test_table`
+      WHERE operation != "DELETE"
       GROUP BY document_name
     )
     SELECT *
     FROM latests
-    WHERE operation != "DELETE"
   )

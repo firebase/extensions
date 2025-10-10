@@ -362,11 +362,11 @@ export function buildNonIncrementalMaterializedViewQuery({
       SELECT 
       ${aggregatedFields}
       FROM \`${projectId}.${datasetId}.${tableName}\`
+      WHERE operation != "DELETE"
       GROUP BY document_name
     )
     SELECT *
     FROM latests
-    WHERE operation != "DELETE"
   `;
 
   // Combine all parts with options before AS

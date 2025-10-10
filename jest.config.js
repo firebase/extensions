@@ -1,7 +1,8 @@
 module.exports = {
   projects: [
     "<rootDir>/*/functions/jest.config.js",
-    "<rootDir>/firestore-bigquery-export/scripts/gen-schema-view/jest.config.js",
+    "<rootDir>/firestore-bigquery-export/firestore-bigquery-change-tracker/jest.config.js",
+    "<rootDir>/firestore-bigquery-export/scripts/*/jest.config.js",
   ],
   testPathIgnorePatterns: [
     ".*/bin/",
