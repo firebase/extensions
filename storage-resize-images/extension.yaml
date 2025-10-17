@@ -112,9 +112,7 @@ params:
     label: Deletion of original file
     description: >-
       Do you want to automatically delete the original file from the Cloud
-      Storage bucket? Warning: these deletions cannot be undone, and if you
-      reconfigure this instance to use different image dimensions, you won't be
-      able to backfill deleted images.
+      Storage bucket? Warning: these deletions cannot be undone.
     type: select
     options:
       - label: Don't delete
