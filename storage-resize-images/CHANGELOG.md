@@ -1,6 +1,6 @@
 ## Version 0.3.0
 
-fix! - remove backfill feature
+fix! - remove backfill, due to architectural flaws. 
 
 ## Version 0.2.10
 
