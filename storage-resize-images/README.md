@@ -144,7 +144,7 @@ You can find more information about this extension in the following articles:
 * Sizes of resized images: What sizes of images would you like (in pixels)? Enter the sizes as a comma-separated list of WIDTHxHEIGHT values. Learn more about [how this parameter works](https://firebase.google.com/products/extensions/storage-resize-images).
 
 
-* Deletion of original file: Do you want to automatically delete the original file from the Cloud Storage bucket? Warning: these deletions cannot be undone, and if you reconfigure this instance to use different image dimensions, you won't be able to backfill deleted images.
+* Deletion of original file: Do you want to automatically delete the original file from the Cloud Storage bucket? Warning: these deletions cannot be undone.
 
 * Make resized images public: Do you want to make the resized images public automatically? So you can access them by URL. For example: https://storage.googleapis.com/{bucket}/{path}
 
@@ -182,13 +182,6 @@ Leave this field empty if you do not want to store failed images in a separate d
 
 * Cloud Function memory: Memory of the function responsible of resizing images.  Choose how much memory to give to the function that resize images. (For animated GIF => GIF we recommend using a minimum of 2GB).
 
-* Backfill existing images: Should existing, unresized images in the Storage bucket be resized as well?
-
-
-* Backfill batch size: The maximum number of images to resize in a single batch. By default, the function is configured to resize 3 images at a time. This is a conservative default to work with smallest memory option (512 MB).
-WARNING: Ensure your function has enough memory to handle the batch size.
-
-
 * Assign new access token: Should resized images have a new access token assigned to them,  different from the original image?
 
 
@@ -206,8 +199,6 @@ WARNING: Ensure your function has enough memory to handle the batch size.
 **Cloud Functions:**
 
 * **generateResizedImage:** Listens for new images uploaded to your specified Cloud Storage bucket, resizes the images, then stores the resized images in the same bucket. Optionally keeps or deletes the original images.
-
-* **backfillResizedImages:** Handles tasks from startBackfill to resize existing images.
 
 
 
