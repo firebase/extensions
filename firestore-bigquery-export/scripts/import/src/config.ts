@@ -276,7 +276,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       rawChangeLogName,
       cursorPositionFile,
       failedBatchOutput: program.failedBatchOutput,
-      skipInit: program.skipInit,
+      skipInit: program.skipInit === true || program.skipInit === 'true',
     };
   }
   const {
