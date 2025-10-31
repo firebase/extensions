@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.2.10
+version: 0.3.0
 specVersion: v1beta
 
 displayName: Resize Images
@@ -65,14 +65,15 @@ resources:
       eventTrigger:
         eventType: google.storage.object.finalize
         resource: projects/_/buckets/${param:IMG_BUCKET}
-  - name: backfillResizedImages
-    type: firebaseextensions.v1beta.function
-    description: >-
-      Handles tasks from startBackfill to resize existing images.
-    properties:
-      runtime: nodejs20
-      availableMemoryMb: ${param:FUNCTION_MEMORY}
-      taskQueueTrigger: {}
+  # Backfill feature disabled - commented out to preserve code
+  # - name: backfillResizedImages
+  #   type: firebaseextensions.v1beta.function
+  #   description: >-
+  #     Handles tasks from startBackfill to resize existing images.
+  #   properties:
+  #     runtime: nodejs20
+  #     availableMemoryMb: ${param:FUNCTION_MEMORY}
+  #     taskQueueTrigger: {}
 
 params:
   - param: IMG_BUCKET
@@ -111,9 +112,7 @@ params:
     label: Deletion of original file
     description: >-
       Do you want to automatically delete the original file from the Cloud
-      Storage bucket? Warning: these deletions cannot be undone, and if you
-      reconfigure this instance to use different image dimensions, you won't be
-      able to backfill deleted images.
+      Storage bucket? Warning: these deletions cannot be undone.
     type: select
     options:
       - label: Don't delete
@@ -316,32 +315,33 @@ params:
     required: true
     immutable: false
 
-  - param: DO_BACKFILL
-    label: Backfill existing images
-    description: >
-      Should existing, unresized images in the Storage bucket be resized as
-      well?
-    type: select
-    required: true
-    options:
-      - label: Yes
-        value: true
-      - label: No
-        value: false
+  # Backfill parameters disabled - commented out to preserve code
+  # - param: DO_BACKFILL
+  #   label: Backfill existing images
+  #   description: >
+  #     Should existing, unresized images in the Storage bucket be resized as
+  #     well?
+  #   type: select
+  #   required: true
+  #   options:
+  #     - label: Yes
+  #       value: true
+  #     - label: No
+  #       value: false
 
-  - param: BACKFILL_BATCH_SIZE
-    label: Backfill batch size
-    description: >
-      The maximum number of images to resize in a single batch. By default, the
-      function is configured to resize 3 images at a time. This is a
-      conservative default to work with smallest memory option (512 MB).
-
-      WARNING: Ensure your function has enough memory to handle the batch size.
-    type: string
-    default: 3
-    validationRegex: ^[1-9][0-9]*$
-    validationErrorMessage: Please provide a valid number.
-    required: false
+  # - param: BACKFILL_BATCH_SIZE
+  #   label: Backfill batch size
+  #   description: >
+  #     The maximum number of images to resize in a single batch. By default, the
+  #     function is configured to resize 3 images at a time. This is a
+  #     conservative default to work with smallest memory option (512 MB).
+  #
+  #     WARNING: Ensure your function has enough memory to handle the batch size.
+  #   type: string
+  #   default: 3
+  #   validationRegex: ^[1-9][0-9]*$
+  #   validationErrorMessage: Please provide a valid number.
+  #   required: false
 
   - param: REGENERATE_TOKEN
     label: Assign new access token
@@ -426,14 +426,14 @@ events:
     description:
       Occurs when the function is settled. Provides no customized data other
       than the context.
-
-lifecycleEvents:
-  onInstall:
-    function: backfillResizedImages
-    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
-  onUpdate:
-    function: backfillResizedImages
-    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
-  onConfigure:
-    function: backfillResizedImages
-    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
+# Lifecycle events disabled - backfill feature commented out
+# lifecycleEvents:
+#   onInstall:
+#     function: backfillResizedImages
+#     processingMessage: Resizing existing images in ${param:IMG_BUCKET}
+#   onUpdate:
+#     function: backfillResizedImages
+#     processingMessage: Resizing existing images in ${param:IMG_BUCKET}
+#   onConfigure:
+#     function: backfillResizedImages
+#     processingMessage: Resizing existing images in ${param:IMG_BUCKET}

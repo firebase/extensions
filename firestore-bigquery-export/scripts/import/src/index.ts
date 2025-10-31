@@ -17,6 +17,7 @@
  */
 import { FirestoreBigQueryEventHistoryTracker } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as firebase from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import * as fs from "fs";
 import * as util from "util";
 
@@ -50,6 +51,7 @@ const run = async (): Promise<number> => {
     useEmulator,
     cursorPositionFile,
     transformFunctionUrl,
+    firestoreInstanceId,
   } = config;
   if (useEmulator) {
     console.log("Using emulator");
@@ -63,13 +65,22 @@ const run = async (): Promise<number> => {
   // Initialize Firebase
   // This uses applicationDefault to authenticate
   // Please see https://cloud.google.com/docs/authentication/production
+  let app: firebase.app.App;
   if (!firebase.apps.length) {
-    firebase.initializeApp({
+    app = firebase.initializeApp({
       projectId: projectId,
       credential: firebase.credential.applicationDefault(),
       databaseURL: `https://${projectId}.firebaseio.com`,
     });
+  } else {
+    app = firebase.app();
   }
+
+  // Get the Firestore instance for the specified database
+  const db =
+    firestoreInstanceId && firestoreInstanceId !== "(default)"
+      ? getFirestore(app, firestoreInstanceId)
+      : getFirestore(app);
 
   // We pass in the application-level "tableId" here. The tracker determines
   // the name of the raw changelog from this field.
@@ -83,6 +94,7 @@ const run = async (): Promise<number> => {
     useNewSnapshotQuerySyntax,
     bqProjectId: bigQueryProjectId,
     transformFunction: transformFunctionUrl,
+    firestoreInstanceId: firestoreInstanceId,
   });
 
   await initializeDataSink(dataSink, config);
@@ -103,10 +115,10 @@ const run = async (): Promise<number> => {
 
   if (await exists(cursorPositionFile)) {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
-    cursor = await firebase.firestore().doc(cursorDocumentId).get();
+    cursor = await db.doc(cursorDocumentId).get();
     logs.resumingImport(config, cursorDocumentId);
   }
-  const totalRowsImported = await runSingleThread(dataSink, config, cursor);
+  const totalRowsImported = await runSingleThread(dataSink, config, cursor, db);
   try {
     await unlink(cursorPositionFile);
   } catch (e) {

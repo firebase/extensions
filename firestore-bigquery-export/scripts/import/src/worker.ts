@@ -3,6 +3,7 @@ import {
   FirestoreDocumentChangeEvent,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as firebase from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import { worker } from "workerpool";
 import { getRowsFromDocs, recordFailedBatch } from "./helper";
 import { CliConfig, SerializableQuery } from "./types";
@@ -28,21 +29,30 @@ async function processDocuments(
     datasetLocation,
     batchSize,
     failedBatchOutput,
+    firestoreInstanceId,
   } = config;
 
   // Initialize Firebase Admin SDK if not already initialized in this worker
+  let app: firebase.app.App;
   if (!firebase.apps.length) {
-    firebase.initializeApp({
+    app = firebase.initializeApp({
       projectId: projectId,
       credential: firebase.credential.applicationDefault(),
       databaseURL: `https://${projectId}.firebaseio.com`,
     });
+  } else {
+    app = firebase.app();
   }
+
+  // Get the appropriate Firestore instance
+  const db =
+    firestoreInstanceId && firestoreInstanceId !== "(default)"
+      ? getFirestore(app, firestoreInstanceId)
+      : getFirestore(app);
 
   // Construct base query for the collection group
   // Using collectionGroup allows querying across all collections with the same ID
-  let query = firebase
-    .firestore()
+  let query = db
     .collectionGroup(sourceCollectionPath.split("/").pop()!)
     .orderBy(firebase.firestore.FieldPath.documentId(), "asc");
 
@@ -92,7 +102,7 @@ async function processDocuments(
       );
     }
 
-    query = query.startAt(firebase.firestore().doc(documentPath));
+    query = query.startAt(db.doc(documentPath));
   }
   if (serializableQuery.endAt?.values?.[0]?.referenceValue) {
     const fullPath = serializableQuery.endAt.values[0].referenceValue;
@@ -111,7 +121,7 @@ async function processDocuments(
       );
     }
 
-    query = query.endBefore(firebase.firestore().doc(documentPath));
+    query = query.endBefore(db.doc(documentPath));
   }
   if (serializableQuery.offset) {
     query = query.offset(serializableQuery.offset);
@@ -131,6 +141,7 @@ async function processDocuments(
     skipInit: true,
     useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
     transformFunction: config.transformFunctionUrl,
+    firestoreInstanceId: firestoreInstanceId,
   });
 
   // Process documents in batches until we've covered the entire partition
