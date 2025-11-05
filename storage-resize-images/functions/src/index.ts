@@ -149,6 +149,7 @@ const generateResizedImageHandler = async (
 export const generateResizedImage = functions.storage
   .object()
   .onFinalize(async (object, context) => {
+    await events.recordStartEvent(object);
     await generateResizedImageHandler(object);
     await events.recordCompletionEvent({ context });
   });

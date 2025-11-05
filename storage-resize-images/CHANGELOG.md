@@ -1,3 +1,7 @@
+## Version 0.3.1
+
+fix - add missing recordStartEvent call (#2546)
+
 ## Version 0.3.0
 
 fix! - remove backfill, due to architectural flaws.
