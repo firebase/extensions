@@ -426,6 +426,12 @@ events:
     description:
       Occurs when the function is settled. Provides no customized data other
       than the context.
+
+  - type: firebase.extensions.storage-resize-images.v1.onStorageResize
+    description:
+      Occurs when an image resize operation completes successfully. This event
+      is only triggered when shouldResize returns true and the resize operation
+      succeeds. The event will contain details about the resized images.
 # Lifecycle events disabled - backfill feature commented out
 # lifecycleEvents:
 #   onInstall:
