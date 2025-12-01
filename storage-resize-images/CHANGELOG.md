@@ -1,7 +1,7 @@
 ## Version 0.3.1
 
 fix - add missing recordStartEvent call (#2546)
-feat - add new onStorageResize event
+feat - add new onStartResize event
 
 ## Version 0.3.0
 

@@ -61,7 +61,7 @@ export const recordCompletionEvent = async (data: string | object) => {
   });
 };
 
-export const recordStorageResizeEvent = async ({
+export const recordStartResizeEvent = async ({
   subject,
   data,
 }: {
@@ -71,7 +71,7 @@ export const recordStorageResizeEvent = async ({
   if (!eventChannel) return;
 
   return eventChannel.publish({
-    type: getEventType("onStorageResize"),
+    type: getEventType("onStartResize"),
     subject,
     data,
   });
