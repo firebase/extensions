@@ -59,7 +59,7 @@ const generateResizedImageHandler = async (
     return;
   }
 
-  await events.recordStorageResizeEvent({
+  await events.recordStartResizeEvent({
     subject: object.name,
     data: { input: object },
   });
