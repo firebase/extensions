@@ -1,3 +1,8 @@
+## Version 0.3.1
+
+fix - add missing recordStartEvent call (#2546)
+feat - add new onStartResize event
+
 ## Version 0.3.0
 
 fix! - remove backfill, due to architectural flaws.

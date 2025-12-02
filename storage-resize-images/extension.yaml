@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.3.0
+version: 0.3.1
 specVersion: v1beta
 
 displayName: Resize Images
@@ -426,6 +426,12 @@ events:
     description:
       Occurs when the function is settled. Provides no customized data other
       than the context.
+
+  - type: firebase.extensions.storage-resize-images.v1.onStartResize
+    description:
+      Occurs when an image resize operation completes successfully. This event
+      is only triggered when shouldResize returns true and the resize operation
+      succeeds.
 # Lifecycle events disabled - backfill feature commented out
 # lifecycleEvents:
 #   onInstall:
