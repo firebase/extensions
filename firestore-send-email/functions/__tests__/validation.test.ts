@@ -612,6 +612,95 @@ describe("validatePayload", () => {
         };
         expect(() => validatePayload(payload)).not.toThrow();
       });
+
+      it("should throw error for string attachments", () => {
+        const payload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: "invalid-string",
+          },
+        };
+        expect(() => validatePayload(payload)).toThrow(ValidationError);
+        expect(() => validatePayload(payload)).toThrow(
+          "Invalid message configuration: Field 'message.attachments' must be an array"
+        );
+      });
+
+      it("should throw error for number attachments", () => {
+        const payload = {
+          to: "test@example.com",
+          message: {
+            subject: "Test Subject",
+            text: "Test message",
+            attachments: 123,
+          },
+        };
+        expect(() => validatePayload(payload)).toThrow(ValidationError);
+        expect(() => validatePayload(payload)).toThrow(
+          "Invalid message configuration: Field 'message.attachments' must be an array"
+        );
+      });
+    });
+  });
+
+  describe("error messages", () => {
+    it("should provide clear error for empty template name", () => {
+      const payload = {
+        to: "test@example.com",
+        template: {
+          name: "",
+        },
+      };
+      expect(() => validatePayload(payload)).toThrow(ValidationError);
+      expect(() => validatePayload(payload)).toThrow(
+        "Invalid template configuration: Field 'template.name' cannot be empty"
+      );
+    });
+
+    it("should provide clear error for empty UID in array", () => {
+      const payload = {
+        toUids: ["valid-uid", ""],
+        message: {
+          subject: "Test",
+          text: "Test",
+        },
+      };
+      expect(() => validatePayload(payload)).toThrow(ValidationError);
+      expect(() => validatePayload(payload)).toThrow(
+        "Invalid email configuration: Field 'toUids.1' cannot be empty"
+      );
+    });
+
+    it("should provide clear error for cc as number", () => {
+      const payload = {
+        to: "test@example.com",
+        cc: 123,
+        message: {
+          subject: "Test",
+          text: "Test",
+        },
+      };
+      expect(() => validatePayload(payload)).toThrow(ValidationError);
+      expect(() => validatePayload(payload)).toThrow(
+        "Invalid email configuration: Field 'cc' must be either a string or an array of strings"
+      );
+    });
+
+    it("should provide clear error for bcc as boolean", () => {
+      const payload = {
+        to: "test@example.com",
+        bcc: true,
+        message: {
+          subject: "Test",
+          text: "Test",
+        },
+      };
+      expect(() => validatePayload(payload)).toThrow(ValidationError);
+      expect(() => validatePayload(payload)).toThrow(
+        "Invalid email configuration: Field 'bcc' must be either a string or an array of strings"
+      );
     });
   });
 });

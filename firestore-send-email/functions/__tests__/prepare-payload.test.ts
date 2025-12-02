@@ -48,6 +48,19 @@ class MockTemplates {
           text: undefined,
           subject: "Template Subject",
         };
+      case "template-with-object-attachment":
+        // Simulates a template that returns attachments as an object instead of array
+        return {
+          html: "<h1>Template HTML</h1>",
+          subject: "Template Subject",
+          attachments: { filename: "report.pdf" },
+        };
+      case "template-with-null-attachments":
+        return {
+          html: "<h1>Template HTML</h1>",
+          subject: "Template Subject",
+          attachments: null,
+        };
       default:
         return {};
     }
@@ -351,18 +364,13 @@ describe("preparePayload Template Merging", () => {
     expect(result.message.subject).toBe("Template Subject");
   });
 
-  it("should handle incorrectly formatted attachments object", async () => {
+  it("should filter out empty attachment objects with only null values", async () => {
     const payload = {
-      to: "tester@gmx.at",
+      to: "test@example.com",
       template: {
-        name: "med_order_reply_greimel",
+        name: "html-only-template",
         data: {
-          address: "Halbenrain 140 Graz",
-          doctorName: "Dr. Andreas",
-          openingHours: "Mo., Mi., Fr. 8:00-12:00Di., Do. 10:30-15:30",
-          orderText: "Some stuff i need",
-          userName: "Pfeiler ",
-          name: "med_order_reply_greimel",
+          name: "Test User",
         },
       },
       message: {
@@ -372,20 +380,20 @@ describe("preparePayload Template Merging", () => {
             text: null,
           },
         ],
-        subject: "Bestellbestätigung",
+        subject: "Test Subject",
       },
     };
 
     const result = await preparePayload(payload);
 
-    // Should convert attachments to an empty array since the format is incorrect
+    // Empty attachment objects should be filtered out
     expect(result.message.attachments).toEqual([]);
-    expect(result.message.subject).toBe("Bestellbestätigung");
-    expect(result.to).toEqual(["tester@gmx.at"]);
+    expect(result.message.subject).toBe("Template Subject");
+    expect(result.to).toEqual(["test@example.com"]);
   });
 
   describe("attachment validation", () => {
-    it("should handle non-array attachments", async () => {
+    it("should throw clear error for string attachments", async () => {
       const payload = {
         to: "test@example.com",
         message: {
@@ -395,7 +403,30 @@ describe("preparePayload Template Merging", () => {
         },
       };
 
-      await expect(preparePayload(payload)).rejects.toThrow();
+      await expect(preparePayload(payload)).rejects.toThrow(
+        "Invalid message configuration: Field 'message.attachments' must be an array"
+      );
+    });
+
+    it("should throw clear error for invalid attachment httpHeaders", async () => {
+      const payload = {
+        to: "test@example.com",
+        message: {
+          subject: "Test Subject",
+          text: "Test text",
+          attachments: [
+            {
+              filename: "test.txt",
+              href: "https://example.com",
+              httpHeaders: "invalid",
+            },
+          ],
+        },
+      };
+
+      await expect(preparePayload(payload)).rejects.toThrow(
+        "Invalid message configuration: Field 'message.attachments.0.httpHeaders' must be a map"
+      );
     });
 
     it("should handle null attachments as no attachments", async () => {
@@ -454,6 +485,53 @@ describe("preparePayload Template Merging", () => {
 
       const result = await preparePayload(payload);
       expect(result.message.attachments).toEqual([]);
+    });
+  });
+
+  describe("template-rendered attachments", () => {
+    it("should normalize template-returned attachment object to array", async () => {
+      // This tests the exact scenario from issue #2550 where a template
+      // returns attachments as an object instead of an array
+      const payload = {
+        to: "test@example.com",
+        template: {
+          name: "template-with-object-attachment",
+          data: {},
+        },
+      };
+
+      const result = await preparePayload(payload);
+      expect(result.message.attachments).toEqual([{ filename: "report.pdf" }]);
+    });
+
+    it("should handle template-returned null attachments", async () => {
+      const payload = {
+        to: "test@example.com",
+        template: {
+          name: "template-with-null-attachments",
+          data: {},
+        },
+      };
+
+      const result = await preparePayload(payload);
+      expect(result.message.attachments).toEqual([]);
+    });
+
+    it("should process template-only payload without message field", async () => {
+      // Matches the user's payload structure - template only, no message field
+      const payload = {
+        to: "test@example.com",
+        template: {
+          name: "html-only-template",
+          data: {
+            someField: "value",
+          },
+        },
+      };
+
+      const result = await preparePayload(payload);
+      expect(result.message.html).toBe("<h1>Template HTML</h1>");
+      expect(result.message.subject).toBe("Template Subject");
     });
   });
 });
