@@ -601,22 +601,16 @@ describe("validatePayload", () => {
         );
       });
 
-      it("should throw error for non-array attachments", () => {
-        const invalidPayload = {
+      it("should accept single attachment object and normalize to array", () => {
+        const payload = {
           to: "test@example.com",
           message: {
             subject: "Test Subject",
             text: "Test message",
-            attachments: {
-              filename: "test.txt",
-              content: "test",
-            },
+            attachments: { filename: "test.txt", content: "test" },
           },
         };
-        expect(() => validatePayload(invalidPayload)).toThrow(ValidationError);
-        expect(() => validatePayload(invalidPayload)).toThrow(
-          "Invalid message configuration: Field 'message.attachments' must be an array"
-        );
+        expect(() => validatePayload(payload)).not.toThrow();
       });
     });
   });

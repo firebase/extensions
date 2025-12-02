@@ -398,7 +398,7 @@ describe("preparePayload Template Merging", () => {
       await expect(preparePayload(payload)).rejects.toThrow();
     });
 
-    it("should handle null attachments", async () => {
+    it("should handle null attachments as no attachments", async () => {
       const payload = {
         to: "test@example.com",
         message: {
@@ -408,7 +408,24 @@ describe("preparePayload Template Merging", () => {
         },
       };
 
-      await expect(preparePayload(payload)).rejects.toThrow();
+      const result = await preparePayload(payload);
+      expect(result.message.attachments).toBeUndefined();
+    });
+
+    it("should normalize single attachment object to array", async () => {
+      const payload = {
+        to: "test@example.com",
+        message: {
+          subject: "Test Subject",
+          text: "Test text",
+          attachments: { filename: "test.txt", content: "test content" },
+        },
+      };
+
+      const result = await preparePayload(payload);
+      expect(result.message.attachments).toEqual([
+        { filename: "test.txt", content: "test content" },
+      ]);
     });
 
     it("should handle undefined attachments", async () => {
