@@ -117,11 +117,6 @@ export class GenkitTranslator implements ITranslator {
   async translate(text: string, targetLanguage: string): Promise<string> {
     try {
       // Sanitize input text by escaping special characters
-      const sanitizedText = text
-        .replace(/\\/g, "\\\\")
-        .replace(/"/g, '\\"')
-        .replace(/\n/g, " ");
-
       // Construct the prompt with strict boundaries and clear instructions
       const prompt = `<translation_task>
     <instructions>
@@ -131,7 +126,7 @@ export class GenkitTranslator implements ITranslator {
       - Do not provide explanations or alternate translations
       - Maintain the original formatting
     </instructions>
-    <text_to_translate>${sanitizedText}</text_to_translate>
+    <text_to_translate>${text}</text_to_translate>
     </translation_task>`;
 
       const response = await this.client.generate({
