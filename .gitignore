@@ -1,6 +1,7 @@
 .vscode
 node_modules/
 *.env
+*.secret.local
 !emulator-params.env
 !install-params.env
 firebase-debug.log
