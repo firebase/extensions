@@ -2,6 +2,7 @@ import { runMultiThread } from "../src/run-multi-thread";
 import * as admin from "firebase-admin";
 import { CliConfig } from "../src/types";
 import * as workerpool from "workerpool";
+import { FIRESTORE_DEFAULT_DATABASE } from "../src/config";
 
 // Initialize Firebase Admin (Ensure credentials are set)
 if (admin.apps.length === 0) {
@@ -86,6 +87,7 @@ describe("runMultiThread Partitioning with Firestore", () => {
       useEmulator: false,
       rawChangeLogName: "testTable_raw_changelog",
       cursorPositionFile: "/tmp/test_cursor_position",
+      firestoreInstanceId: FIRESTORE_DEFAULT_DATABASE,
     };
   });
 
