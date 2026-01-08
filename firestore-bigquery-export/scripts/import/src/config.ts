@@ -4,6 +4,8 @@ import * as inquirer from "inquirer";
 
 import { CliConfig, CliConfigError } from "./types";
 
+export const FIRESTORE_DEFAULT_DATABASE = "(default)";
+
 const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
 // regex of ^[^/]+(/[^/]+/[^/]+)*$
 export const FIRESTORE_VALID_CHARACTERS = new RegExp("^[^/]+(/[^/]+/[^/]+)*$");
