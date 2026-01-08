@@ -2,6 +2,7 @@ import { runMultiThread } from "../src/run-multi-thread";
 import * as admin from "firebase-admin";
 import { CliConfig } from "../src/types";
 import * as workerpool from "workerpool";
+import { FIRESTORE_DEFAULT_DATABASE } from "../src/config";
 
 // Mock Firebase Admin to avoid credential issues
 jest.mock("firebase-admin", () => {
@@ -124,6 +125,7 @@ describe("Multi-threaded Collection Group Bug Reproduction", () => {
       useEmulator: false,
       rawChangeLogName: "old_data_raw_changelog",
       cursorPositionFile: "/tmp/test_cursor_position",
+      firestoreInstanceId: FIRESTORE_DEFAULT_DATABASE,
     };
   });
 
