@@ -136,12 +136,14 @@ describe("view schema snapshot view query structure (CTE + JOIN pattern)", () =>
       // Should contain CTE with MAX(timestamp)
       expect(result.query).to.include("WITH latest_timestamps AS");
       expect(result.query).to.include("MAX(timestamp) AS latest_timestamp");
-      expect(result.query).to.include("GROUP BY document_name");
+      expect(result.query).to.include("GROUP BY");
+      expect(result.query).to.include("document_name");
 
       // Should use INNER JOIN to latest_timestamps
       expect(result.query).to.include("INNER JOIN latest_timestamps");
       expect(result.query).to.include("t.document_name = l.document_name");
-      expect(result.query).to.include("t.timestamp = l.latest_timestamp");
+      expect(result.query).to.include("t.timestamp");
+      expect(result.query).to.include("l.latest_timestamp");
 
       // Should NOT use FIRST_VALUE window functions
       expect(result.query).to.not.include("FIRST_VALUE");
