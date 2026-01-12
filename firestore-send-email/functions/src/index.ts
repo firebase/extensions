@@ -31,11 +31,12 @@ import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
 import { Delivery, QueuePayload } from "./types";
-import { isSendGrid, setSmtpCredentials } from "./helpers";
+import { isSendGrid, setSmtpCredentials } from "./transport";
 import * as events from "./events";
 import { SendGridTransport } from "./nodemailer-sendgrid";
 import { setDependencies } from "./prepare-payload";
 import { deliverEmail } from "./delivery";
+import { getExpireAt } from "./ttl";
 
 logs.init();
 
@@ -83,46 +84,6 @@ async function transportLayer() {
   }
   // fallback to any other SMTP provider
   return setSmtpCredentials(config);
-}
-
-/**
- * Calculates expiration timestamp based on TTL configuration.
- * Exported for testing.
- */
-export function calculateExpireAt(
-  startTime: Timestamp,
-  ttlType: string,
-  ttlValue: number
-): Timestamp {
-  const date = startTime.toDate();
-  switch (ttlType) {
-    case "hour":
-      date.setHours(date.getHours() + ttlValue);
-      break;
-    case "day":
-      date.setDate(date.getDate() + ttlValue);
-      break;
-    case "week":
-      date.setDate(date.getDate() + ttlValue * 7);
-      break;
-    case "month":
-      date.setMonth(date.getMonth() + ttlValue);
-      break;
-    case "year":
-      date.setFullYear(date.getFullYear() + ttlValue);
-      break;
-    default:
-      throw new Error(`Unknown TTLExpireType: ${ttlType}`);
-  }
-  return Timestamp.fromDate(date);
-}
-
-function getExpireAt(startTime: Timestamp): Timestamp {
-  return calculateExpireAt(
-    startTime,
-    config.TTLExpireType,
-    config.TTLExpireValue
-  );
 }
 
 async function deliver(ref: DocumentReference): Promise<void> {

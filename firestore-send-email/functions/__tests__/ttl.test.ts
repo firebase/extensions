@@ -18,61 +18,9 @@ class MockTimestamp {
 // Mock firebase-admin/firestore module
 jest.mock("firebase-admin/firestore", () => ({
   Timestamp: MockTimestamp,
-  getFirestore: jest.fn(),
-  FieldValue: {
-    increment: jest.fn(),
-    serverTimestamp: jest.fn(),
-  },
 }));
 
-// Mock other dependencies that index.ts imports
-jest.mock("firebase-admin/app", () => ({
-  initializeApp: jest.fn(),
-}));
-
-jest.mock("firebase-functions/v2/firestore", () => ({
-  onDocumentWritten: jest.fn(),
-}));
-
-jest.mock("../src/logs", () => ({
-  init: jest.fn(),
-  start: jest.fn(),
-  complete: jest.fn(),
-  error: jest.fn(),
-  attemptingDelivery: jest.fn(),
-  delivered: jest.fn(),
-  deliveryError: jest.fn(),
-  info: jest.fn(),
-  invalidMessage: jest.fn(),
-  missingUids: jest.fn(),
-}));
-
-jest.mock("../src/events", () => ({
-  setupEventChannel: jest.fn(),
-  recordStartEvent: jest.fn(),
-  recordSuccessEvent: jest.fn(),
-  recordErrorEvent: jest.fn(),
-  recordProcessingEvent: jest.fn(),
-  recordPendingEvent: jest.fn(),
-  recordRetryEvent: jest.fn(),
-  recordCompleteEvent: jest.fn(),
-}));
-
-jest.mock("../src/helpers", () => ({
-  isSendGrid: jest.fn(),
-  setSmtpCredentials: jest.fn(),
-}));
-
-jest.mock("../src/delivery", () => ({
-  deliverEmail: jest.fn(),
-}));
-
-jest.mock("../src/prepare-payload", () => ({
-  setDependencies: jest.fn(),
-  preparePayload: jest.fn(),
-}));
-
-import { calculateExpireAt } from "../src/index";
+import { calculateExpireAt } from "../src/ttl";
 import { Timestamp } from "firebase-admin/firestore";
 
 describe("calculateExpireAt", () => {
