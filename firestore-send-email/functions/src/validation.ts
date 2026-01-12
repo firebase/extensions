@@ -185,6 +185,10 @@ function formatZodError(
     const path = issue.path.length > 0 ? issue.path.join(".") : context;
     switch (issue.code) {
       case "invalid_type":
+        if (issue.message && !issue.message.startsWith("Expected")) {
+          return issue.message;
+        }
+
         if (issue.expected === "string") {
           return `Field '${path}' must be a string`;
         }
