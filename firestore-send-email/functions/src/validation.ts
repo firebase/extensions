@@ -53,7 +53,10 @@ export const attachmentSchema = z
   });
 
 export const attachmentsSchema = z
-  .array(attachmentSchema)
+  .array(attachmentSchema, {
+    invalid_type_error:
+      "Field 'attachments' must be an array. If you have a single attachment object, wrap it in an array (e.g., [{ filename: '...', path: '...' }])",
+  })
   .optional()
   .transform((attachments) =>
     attachments
@@ -182,10 +185,21 @@ function formatZodError(
     const path = issue.path.length > 0 ? issue.path.join(".") : context;
     switch (issue.code) {
       case "invalid_type":
+        if (issue.received === "undefined") {
+          return `Field '${path}' must be a ${issue.expected}`;
+        }
+
         if (issue.expected === "string") {
           return `Field '${path}' must be a string`;
         }
         if (issue.expected === "array") {
+          if (issue.message && !issue.message.startsWith("Expected")) {
+            const customMessage = issue.message.replace(
+              /Field 'attachments'/g,
+              `Field '${path}'`
+            );
+            return customMessage;
+          }
           return `Field '${path}' must be an array`;
         }
         if (issue.expected === "object") {
