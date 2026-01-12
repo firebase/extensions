@@ -283,6 +283,24 @@ describe("validatePayload", () => {
       );
     });
 
+    it("should throw ValidationError for single attachments not in an array", () => {
+      const invalidPayload = {
+        to: "test@example.com",
+        message: {
+          subject: "Test Subject",
+          text: "Test message",
+          attachments: {
+            filename: "test.txt",
+            content: "test",
+          },
+        },
+      };
+      expect(() => validatePayload(invalidPayload)).toThrow(ValidationError);
+      expect(() => validatePayload(invalidPayload)).toThrow(
+        "Invalid message configuration: Field 'message.attachments' must be an array"
+      );
+    });
+
     it("should throw ValidationError for invalid field types", () => {
       const invalidPayload = {
         to: 123,

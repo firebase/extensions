@@ -1,12 +1,11 @@
 import { DocumentData } from "firebase-admin/firestore";
 import {
   validatePayload,
-  attachmentSchema,
   attachmentsSchema,
+  ValidationError,
 } from "./validation";
 import * as logs from "./logs";
 import config from "./config";
-import { z } from "zod";
 
 let db: any;
 let templates: any;
@@ -41,11 +40,17 @@ export async function preparePayload(
     const templateRender = await templates.render(template.name, template.data);
     const mergeMessage = payload.message || {};
 
-    let attachments = attachmentsSchema.parse(
-      templateRender.attachments
-        ? templateRender.attachments
-        : mergeMessage.attachments
-    );
+    const attachmentsValue = templateRender.attachments
+      ? templateRender.attachments
+      : mergeMessage.attachments;
+
+    const attachmentsResult = attachmentsSchema.safeParse(attachmentsValue);
+    if (!attachmentsResult.success) {
+      throw new ValidationError(
+        "Invalid message configuration: Field 'message.attachments' must be an array"
+      );
+    }
+    let attachments = attachmentsResult.data;
 
     const handleTemplateValue = (value: any) => {
       if (value === null) {

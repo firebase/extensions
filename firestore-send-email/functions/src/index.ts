@@ -93,16 +93,6 @@ async function transportLayer() {
   return setSmtpCredentials(config);
 }
 
-function validateFieldArray(field: string, array?: string[]) {
-  if (!Array.isArray(array)) {
-    throw new Error(`Invalid field "${field}". Expected an array of strings.`);
-  }
-
-  if (array.find((item) => typeof item !== "string")) {
-    throw new Error(`Invalid field "${field}". Expected an array of strings.`);
-  }
-}
-
 function getExpireAt(startTime: Timestamp) {
   const now = startTime.toDate();
   const value = config.TTLExpireValue;

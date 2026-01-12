@@ -294,6 +294,7 @@ export function validatePayload(payload: any) {
     }
 
     const result = payloadSchema.safeParse(payload);
+
     if (!result.success) {
       throw new ValidationError(formatZodError(result.error));
     }

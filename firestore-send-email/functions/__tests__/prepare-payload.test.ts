@@ -48,6 +48,12 @@ class MockTemplates {
           text: undefined,
           subject: "Template Subject",
         };
+      case "template-with-object-attachments":
+        return {
+          html: "<h1>Template HTML</h1>",
+          subject: "Template Subject",
+          attachments: { filename: "bad.pdf", content: "test" },
+        };
       default:
         return {};
     }
@@ -142,6 +148,20 @@ describe("preparePayload Template Merging", () => {
     const result = await preparePayload(payload);
 
     expect(result.message.attachments).toEqual([{ filename: "template.pdf" }]);
+  });
+
+  it("should throw formatted error when template returns object attachments (not array)", async () => {
+    const payload = {
+      to: "test@example.com",
+      template: {
+        name: "template-with-object-attachments",
+        data: {},
+      },
+    };
+
+    await expect(preparePayload(payload)).rejects.toThrow(
+      "Invalid message configuration: Field 'message.attachments' must be an array"
+    );
   });
 
   it("should gracefully handle template with no content", async () => {
@@ -438,5 +458,25 @@ describe("preparePayload Template Merging", () => {
       const result = await preparePayload(payload);
       expect(result.message.attachments).toEqual([]);
     });
+  });
+});
+
+describe("preparePayload", () => {
+  it("should throw error attachments object not in an array", async () => {
+    const payload = {
+      to: "test@example.com",
+      message: {
+        subject: "Test Subject",
+        text: "Test text",
+        attachments: {
+          filename: "test.txt",
+          content: "test",
+        },
+      },
+    };
+
+    await expect(preparePayload(payload)).rejects.toThrow(
+      "Invalid message configuration: Field 'message.attachments' must be an array"
+    );
   });
 });
