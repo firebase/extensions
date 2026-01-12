@@ -186,7 +186,11 @@ function formatZodError(
     switch (issue.code) {
       case "invalid_type":
         if (issue.message && !issue.message.startsWith("Expected")) {
-          return issue.message;
+          const customMessage = issue.message.replace(
+            /Field 'attachments'/g,
+            `Field '${path}'`
+          );
+          return customMessage;
         }
 
         if (issue.expected === "string") {
