@@ -615,7 +615,7 @@ describe("validatePayload", () => {
         };
         expect(() => validatePayload(invalidPayload)).toThrow(ValidationError);
         expect(() => validatePayload(invalidPayload)).toThrow(
-          "Invalid message configuration: Field 'message.attachments' must be an array"
+          "Invalid message configuration: Field 'message.attachments' must be an array. If you have a single attachment object, wrap it in an array (e.g., [{ filename: '...', path: '...' }])"
         );
       });
     });

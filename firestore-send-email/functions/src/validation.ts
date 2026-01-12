@@ -193,6 +193,13 @@ function formatZodError(
           return `Field '${path}' must be a string`;
         }
         if (issue.expected === "array") {
+          if (issue.message && !issue.message.startsWith("Expected")) {
+            const customMessage = issue.message.replace(
+              /Field 'attachments'/g,
+              `Field '${path}'`
+            );
+            return customMessage;
+          }
           return `Field '${path}' must be an array`;
         }
         if (issue.expected === "object") {
