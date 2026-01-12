@@ -1,4 +1,8 @@
-import { validatePayload, ValidationError } from "../src/validation";
+import {
+  validatePayload,
+  validatePreparedPayload,
+  ValidationError,
+} from "../src/validation";
 
 describe("validatePayload", () => {
   describe("valid payloads", () => {
@@ -637,5 +641,185 @@ describe("validatePayload", () => {
         );
       });
     });
+  });
+});
+
+describe("validatePreparedPayload", () => {
+  describe("valid prepared payloads", () => {
+    test("should accept valid prepared payload with arrays", () => {
+      const payload = {
+        to: ["test@example.com"],
+        cc: [],
+        bcc: [],
+        message: { subject: "Test", text: "Hello" },
+      };
+      expect(() => validatePreparedPayload(payload)).not.toThrow();
+    });
+
+    test("should accept prepared payload with empty recipient arrays", () => {
+      const payload = {
+        to: [],
+        cc: [],
+        bcc: [],
+        message: { subject: "Test", text: "Hello" },
+      };
+      expect(() => validatePreparedPayload(payload)).not.toThrow();
+    });
+
+    test("should accept prepared payload with attachments array", () => {
+      const payload = {
+        to: ["test@example.com"],
+        cc: [],
+        bcc: [],
+        message: {
+          subject: "Test",
+          text: "Hello",
+          attachments: [{ filename: "test.txt", content: "test" }],
+        },
+      };
+      expect(() => validatePreparedPayload(payload)).not.toThrow();
+    });
+
+    test("should accept prepared payload with sendGrid config", () => {
+      const payload = {
+        to: ["test@example.com"],
+        cc: [],
+        bcc: [],
+        sendGrid: {
+          templateId: "d-template-id",
+          dynamicTemplateData: { name: "Test" },
+        },
+      };
+      expect(() => validatePreparedPayload(payload)).not.toThrow();
+    });
+  });
+
+  describe("invalid prepared payloads", () => {
+    test("should reject non-array to field", () => {
+      const payload = {
+        to: "test@example.com",
+        cc: [],
+        bcc: [],
+      };
+      expect(() => validatePreparedPayload(payload)).toThrow(ValidationError);
+      expect(() => validatePreparedPayload(payload)).toThrow(
+        "Field 'to' must be an array"
+      );
+    });
+
+    test("should reject non-array cc field", () => {
+      const payload = {
+        to: [],
+        cc: "test@example.com",
+        bcc: [],
+      };
+      expect(() => validatePreparedPayload(payload)).toThrow(ValidationError);
+      expect(() => validatePreparedPayload(payload)).toThrow(
+        "Field 'cc' must be an array"
+      );
+    });
+
+    test("should reject non-array attachments", () => {
+      const payload = {
+        to: ["test@example.com"],
+        cc: [],
+        bcc: [],
+        message: {
+          subject: "Test",
+          text: "Hello",
+          attachments: { filename: "test.txt" },
+        },
+      };
+      expect(() => validatePreparedPayload(payload)).toThrow(ValidationError);
+      expect(() => validatePreparedPayload(payload)).toThrow(
+        "Field 'message.attachments' must be an array"
+      );
+    });
+  });
+});
+
+describe("validatePayload recipient edge cases", () => {
+  test("should accept valid email address", () => {
+    const payload = {
+      to: "valid@example.com",
+      message: {
+        subject: "Test",
+        text: "Hello",
+      },
+    };
+    expect(() => validatePayload(payload)).not.toThrow();
+  });
+
+  test("should accept email array with valid addresses", () => {
+    const payload = {
+      to: ["valid1@example.com", "valid2@example.com"],
+      message: {
+        subject: "Test",
+        text: "Hello",
+      },
+    };
+    expect(() => validatePayload(payload)).not.toThrow();
+  });
+
+  test("should reject payload with no recipients at all", () => {
+    const payload = {
+      message: {
+        subject: "Test",
+        text: "Hello",
+      },
+    };
+    expect(() => validatePayload(payload)).toThrow(ValidationError);
+    expect(() => validatePayload(payload)).toThrow(
+      "Email must have at least one recipient"
+    );
+  });
+
+  test("should reject payload with empty recipient arrays", () => {
+    const payload = {
+      to: [],
+      cc: [],
+      bcc: [],
+      message: {
+        subject: "Test",
+        text: "Hello",
+      },
+    };
+    expect(() => validatePayload(payload)).toThrow(ValidationError);
+    expect(() => validatePayload(payload)).toThrow(
+      "Email must have at least one recipient"
+    );
+  });
+
+  test("should accept payload with only cc recipient", () => {
+    const payload = {
+      cc: "cc@example.com",
+      message: {
+        subject: "Test",
+        text: "Hello",
+      },
+    };
+    expect(() => validatePayload(payload)).not.toThrow();
+  });
+
+  test("should accept payload with only bcc recipient", () => {
+    const payload = {
+      bcc: "bcc@example.com",
+      message: {
+        subject: "Test",
+        text: "Hello",
+      },
+    };
+    expect(() => validatePayload(payload)).not.toThrow();
+  });
+
+  test("should accept payload with toUids instead of direct email", () => {
+    const payload = {
+      toUids: ["uid1", "uid2"],
+      message: {
+        subject: "Test",
+        text: "Hello",
+      },
+    };
+    expect(() => validatePayload(payload)).not.toThrow();
   });
 });

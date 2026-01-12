@@ -1,3 +1,11 @@
+// Mock the config module before importing prepare-payload
+jest.mock("../src/config", () => ({
+  default: {
+    usersCollection: "users",
+  },
+  __esModule: true,
+}));
+
 import { preparePayload, setDependencies } from "../src/prepare-payload";
 
 class MockTemplates {
@@ -160,7 +168,7 @@ describe("preparePayload Template Merging", () => {
     };
 
     await expect(preparePayload(payload)).rejects.toThrow(
-      "Invalid message configuration: Field 'message.attachments' must be an array"
+      "Field 'message.attachments' must be an array"
     );
   });
 
@@ -271,15 +279,16 @@ describe("preparePayload Template Merging", () => {
     expect(result.message.subject).toBe("Direct Subject");
   });
 
-  it("should handle empty message object", async () => {
+  it("should reject empty message object without template or sendGrid", async () => {
     const payload = {
       to: "test@example.com",
       message: {},
     };
 
-    const result = await preparePayload(payload);
-
-    expect(result.message).toEqual({});
+    // Empty message fails on subject requirement first
+    await expect(preparePayload(payload)).rejects.toThrow(
+      "Invalid message configuration"
+    );
   });
 
   it("should handle template with null values", async () => {
@@ -478,5 +487,179 @@ describe("preparePayload", () => {
     await expect(preparePayload(payload)).rejects.toThrow(
       "Invalid message configuration: Field 'message.attachments' must be an array"
     );
+  });
+});
+
+describe("preparePayload UID resolution", () => {
+  const createMockDocSnapshot = (
+    id: string,
+    email: string | null,
+    exists: boolean = true
+  ) => ({
+    id,
+    exists,
+    get: (field: string) => (field === "email" ? email : undefined),
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("should resolve UIDs to emails successfully", async () => {
+    const mockGetAll = jest
+      .fn()
+      .mockResolvedValue([
+        createMockDocSnapshot("uid1", "user1@example.com"),
+        createMockDocSnapshot("uid2", "user2@example.com"),
+      ]);
+
+    const mockDb = {
+      getAll: mockGetAll,
+      collection: jest.fn().mockReturnValue({
+        doc: jest.fn().mockImplementation((uid) => ({ id: uid })),
+      }),
+    };
+
+    setDependencies(mockDb, null);
+
+    const payload = {
+      toUids: ["uid1", "uid2"],
+      message: {
+        subject: "Test Subject",
+        text: "Test text",
+      },
+    };
+
+    const result = await preparePayload(payload);
+
+    expect(result.to).toContain("user1@example.com");
+    expect(result.to).toContain("user2@example.com");
+  });
+
+  it("should handle mixed valid and invalid UIDs", async () => {
+    const mockGetAll = jest.fn().mockResolvedValue([
+      createMockDocSnapshot("uid1", "user1@example.com"),
+      createMockDocSnapshot("uid2", null), // User exists but no email
+      createMockDocSnapshot("uid3", "user3@example.com"),
+      createMockDocSnapshot("uid4", null, false), // User doesn't exist
+    ]);
+
+    const mockDb = {
+      getAll: mockGetAll,
+      collection: jest.fn().mockReturnValue({
+        doc: jest.fn().mockImplementation((uid) => ({ id: uid })),
+      }),
+    };
+
+    setDependencies(mockDb, null);
+
+    const payload = {
+      toUids: ["uid1", "uid2", "uid3", "uid4"],
+      message: {
+        subject: "Test Subject",
+        text: "Test text",
+      },
+    };
+
+    const result = await preparePayload(payload);
+
+    // Only valid emails should be included
+    expect(result.to).toEqual(["user1@example.com", "user3@example.com"]);
+  });
+
+  it("should handle all UIDs failing to resolve", async () => {
+    const mockGetAll = jest
+      .fn()
+      .mockResolvedValue([
+        createMockDocSnapshot("uid1", null, false),
+        createMockDocSnapshot("uid2", null, false),
+      ]);
+
+    const mockDb = {
+      getAll: mockGetAll,
+      collection: jest.fn().mockReturnValue({
+        doc: jest.fn().mockImplementation((uid) => ({ id: uid })),
+      }),
+    };
+
+    setDependencies(mockDb, null);
+
+    const payload = {
+      toUids: ["uid1", "uid2"],
+      message: {
+        subject: "Test Subject",
+        text: "Test text",
+      },
+    };
+
+    const result = await preparePayload(payload);
+
+    // No emails resolved, so to should be empty
+    expect(result.to).toEqual([]);
+  });
+
+  it("should resolve UIDs across to, cc, and bcc", async () => {
+    const mockGetAll = jest
+      .fn()
+      .mockResolvedValue([
+        createMockDocSnapshot("uid1", "to@example.com"),
+        createMockDocSnapshot("uid2", "cc@example.com"),
+        createMockDocSnapshot("uid3", "bcc@example.com"),
+      ]);
+
+    const mockDb = {
+      getAll: mockGetAll,
+      collection: jest.fn().mockReturnValue({
+        doc: jest.fn().mockImplementation((uid) => ({ id: uid })),
+      }),
+    };
+
+    setDependencies(mockDb, null);
+
+    const payload = {
+      toUids: ["uid1"],
+      ccUids: ["uid2"],
+      bccUids: ["uid3"],
+      message: {
+        subject: "Test Subject",
+        text: "Test text",
+      },
+    };
+
+    const result = await preparePayload(payload);
+
+    expect(result.to).toEqual(["to@example.com"]);
+    expect(result.cc).toEqual(["cc@example.com"]);
+    expect(result.bcc).toEqual(["bcc@example.com"]);
+  });
+
+  it("should combine direct emails with resolved UIDs", async () => {
+    const mockGetAll = jest
+      .fn()
+      .mockResolvedValue([
+        createMockDocSnapshot("uid1", "resolved@example.com"),
+      ]);
+
+    const mockDb = {
+      getAll: mockGetAll,
+      collection: jest.fn().mockReturnValue({
+        doc: jest.fn().mockImplementation((uid) => ({ id: uid })),
+      }),
+    };
+
+    setDependencies(mockDb, null);
+
+    const payload = {
+      to: "direct@example.com",
+      toUids: ["uid1"],
+      message: {
+        subject: "Test Subject",
+        text: "Test text",
+      },
+    };
+
+    const result = await preparePayload(payload);
+
+    expect(result.to).toEqual(["direct@example.com", "resolved@example.com"]);
   });
 });
