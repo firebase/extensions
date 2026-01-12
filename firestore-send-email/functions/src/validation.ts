@@ -53,7 +53,10 @@ export const attachmentSchema = z
   });
 
 export const attachmentsSchema = z
-  .array(attachmentSchema)
+  .array(attachmentSchema, {
+    invalid_type_error:
+      "Field 'attachments' must be an array. If you have a single attachment object, wrap it in an array (e.g., [{ filename: '...', path: '...' }])",
+  })
   .optional()
   .transform((attachments) =>
     attachments
