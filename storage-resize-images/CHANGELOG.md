@@ -1,3 +1,7 @@
+## Version 0.3.2
+
+chore: bump dependencies
+
 ## Version 0.3.1
 
 fix - add missing recordStartEvent call (#2546)
