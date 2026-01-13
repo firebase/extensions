@@ -1,3 +1,7 @@
+## Version 0.2.3
+
+chore: bump dependencies
+
 ## Version 0.2.2
 
 fix: remove default value on DATABASE_REGION
