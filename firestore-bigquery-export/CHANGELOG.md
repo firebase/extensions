@@ -1,3 +1,7 @@
+## Version 0.2.7
+
+chore: bump dependencies
+
 ## Version 0.2.6
 
 docs: update docs to reference the correct "latest" view names
