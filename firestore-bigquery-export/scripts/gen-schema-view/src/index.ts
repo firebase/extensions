@@ -19,7 +19,7 @@
 import firebase = require("firebase-admin");
 import { FirestoreBigQuerySchemaViewFactory, FirestoreSchema } from "./schema";
 import { readSchemas } from "./schema-loader-utils";
-import { parseConfig } from "./config";
+import { parseConfig, CliConfig } from "./config";
 import { generateSchemaFilesWithGemini } from "./schema/genkit";
 
 export async function run(): Promise<number> {
@@ -72,12 +72,32 @@ export async function run(): Promise<number> {
 }
 
 if (process.env.NODE_ENV !== "test") {
-  run()
+  let config: CliConfig | null = null;
+
+  parseConfig()
+    .then((parsedConfig) => {
+      config = parsedConfig;
+      return run();
+    })
     .then((result) => {
       console.log("done.");
       process.exit();
     })
     .catch((error) => {
+      if (config) {
+        const errorMessage = error.message || error.errors?.[0]?.message;
+        if (
+          errorMessage?.includes("ProjectId must be non-empty") ||
+          errorMessage?.includes("Cannot parse  as CloudRegion")
+        ) {
+          const improvedMessage = `The BigQuery Project ID '${config.bigQueryProjectId}' is not valid. Please verify that the project ID is correct and that you have access to it.`;
+          error.message = improvedMessage;
+          if (error.errors?.[0]) {
+            error.errors[0].message = improvedMessage;
+          }
+        }
+      }
+
       console.log(JSON.stringify(error));
       console.error(error.message);
       process.exit();
