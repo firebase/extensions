@@ -1,9 +1,6 @@
-## Version 0.3.2
-
-chore: bump dependencies
-
 ## Version 0.3.1
 
+chore: bump dependencies
 fix - add missing recordStartEvent call (#2546)
 feat - add new onStartResize event
 
