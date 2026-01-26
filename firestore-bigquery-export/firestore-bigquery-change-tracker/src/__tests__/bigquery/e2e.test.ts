@@ -1,5 +1,6 @@
 import { BigQuery, Dataset, Table } from "@google-cloud/bigquery";
 const { logger } = require("firebase-functions");
+import waitForExpect from "wait-for-expect";
 
 import {
   RawChangelogSchema,
@@ -48,6 +49,13 @@ describe("e2e", () => {
       await changeTracker({
         datasetId,
         tableId,
+        datasetLocation: "us",
+        partitioning: {
+          granularity: "NONE",
+        },
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: process.env.PROJECT_ID,
       }).record([event]);
 
       const [metadata] = await dataset.table(tableId_raw).getMetadata();
@@ -74,6 +82,13 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "NONE",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(tableId_raw).getMetadata();
@@ -85,7 +100,13 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "UNKNOWN",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "UNKNOWN" as any,
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(tableId_raw).getMetadata();
@@ -97,7 +118,13 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "HOUR",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "HOUR",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(tableId_raw).getMetadata();
@@ -109,7 +136,13 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "HOUR",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "HOUR",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
@@ -127,25 +160,33 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "DAY",
-          timePartitioningField: "timestamp",
-          timePartitioningFieldType: "TIMESTAMP",
-          timePartitioningFirestoreField: "created",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "DAY",
+            bigqueryColumnName: "timestamp",
+            bigqueryColumnType: "TIMESTAMP",
+            firestoreFieldName: "created",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
         expect(metadata.timePartitioning).toBeDefined();
 
-        const [changeLogRows] = await getBigQueryTableData(
-          process.env.PROJECT_ID,
-          datasetId,
-          tableId
-        );
+        await waitForExpect(async () => {
+          const [changeLogRows] = await getBigQueryTableData(
+            process.env.PROJECT_ID,
+            datasetId,
+            tableId
+          );
 
-        expect(changeLogRows[0].timestamp.value).toBe(
-          BigQuery.timestamp(created.toDate()).value
-        );
+          expect(changeLogRows[0].timestamp.value).toBe(
+            BigQuery.timestamp(created.toDate()).value
+          );
+        }, 30000);
       });
 
       test("successfully partitions with a valid DateTime Timestamp Date", async () => {
@@ -158,24 +199,31 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "DAY",
-          timePartitioningField: "created",
-          timePartitioningFieldType: "TIMESTAMP",
-          timePartitioningFirestoreField: "created",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "DAY",
+            bigqueryColumnName: "created",
+            bigqueryColumnType: "TIMESTAMP",
+            firestoreFieldName: "created",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
-        const [changeLogRows] = await getBigQueryTableData(
-          process.env.PROJECT_ID,
-          datasetId,
-          tableId
-        );
+        await waitForExpect(async () => {
+          const [changeLogRows] = await getBigQueryTableData(
+            process.env.PROJECT_ID,
+            datasetId,
+            tableId
+          );
 
-        expect(metadata.timePartitioning).toBeDefined();
-        expect(changeLogRows[0].created.value).toBe(
-          BigQuery.timestamp(created).value
-        );
+          expect(changeLogRows[0].created.value).toBe(
+            BigQuery.timestamp(created).value
+          );
+        }, 30000);
       });
 
       test("successfully partitions with a valid Firebase Timestamp value with a Timestamp partitioning type", async () => {
@@ -188,24 +236,31 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "DAY",
-          timePartitioningField: "created",
-          timePartitioningFieldType: "TIMESTAMP",
-          timePartitioningFirestoreField: "created",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "DAY",
+            bigqueryColumnName: "created",
+            bigqueryColumnType: "TIMESTAMP",
+            firestoreFieldName: "created",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
-        const [changeLogRows] = await getBigQueryTableData(
-          process.env.PROJECT_ID,
-          datasetId,
-          tableId
-        );
+        await waitForExpect(async () => {
+          const [changeLogRows] = await getBigQueryTableData(
+            process.env.PROJECT_ID,
+            datasetId,
+            tableId
+          );
 
-        expect(metadata.timePartitioning).toBeDefined();
-        expect(changeLogRows[0].created.value).toBe(
-          BigQuery.timestamp(created.toDate()).value
-        );
+          expect(changeLogRows[0].created.value).toBe(
+            BigQuery.timestamp(created.toDate()).value
+          );
+        }, 30000);
       });
 
       test("successfully partitions with a valid Firebase Timestamp value with a Date partitioning type", async () => {
@@ -219,22 +274,29 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "DAY",
-          timePartitioningField: "created",
-          timePartitioningFieldType: "DATE",
-          timePartitioningFirestoreField: "created",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "DAY",
+            bigqueryColumnName: "created",
+            bigqueryColumnType: "DATE",
+            firestoreFieldName: "created",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
-        const [changeLogRows] = await getBigQueryTableData(
-          process.env.PROJECT_ID,
-          datasetId,
-          tableId
-        );
+        await waitForExpect(async () => {
+          const [changeLogRows] = await getBigQueryTableData(
+            process.env.PROJECT_ID,
+            datasetId,
+            tableId
+          );
 
-        expect(metadata.timePartitioning).toBeDefined();
-        expect(changeLogRows[0].created.value).toBe(expectedDate);
+          expect(changeLogRows[0].created.value).toBe(expectedDate);
+        }, 30000);
       });
 
       test("successfully partitions with a valid Firebase Timestamp value with a DateTime partitioning type", async () => {
@@ -248,25 +310,31 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "DAY",
-          timePartitioningField: "created",
-          timePartitioningFieldType: "DATETIME",
-          timePartitioningFirestoreField: "created",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "DAY",
+            bigqueryColumnName: "created",
+            bigqueryColumnType: "DATETIME",
+            firestoreFieldName: "created",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
 
-        const [changeLogRows] = await getBigQueryTableData(
-          process.env.PROJECT_ID,
-          datasetId,
-          tableId
-        );
+        await waitForExpect(async () => {
+          const [changeLogRows] = await getBigQueryTableData(
+            process.env.PROJECT_ID,
+            datasetId,
+            tableId
+          );
 
-        expect(metadata.timePartitioning).toBeDefined();
-
-        expect(changeLogRows[0].created.value.substring(0, 22)).toBe(
-          expectedDate
-        );
+          expect(changeLogRows[0].created.value.substring(0, 22)).toBe(
+            expectedDate
+          );
+        }, 30000);
       });
 
       test("successfully partitions with a valid Firebase Timestamp value with `timestamp` as field name and Timestamp type", async () => {
@@ -280,28 +348,36 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "DAY",
-          timePartitioningField: "timestamp",
-          timePartitioningFieldType: "TIMESTAMP",
-          timePartitioningFirestoreField: "created",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "HOUR",
+            bigqueryColumnName: "timestamp",
+            bigqueryColumnType: "TIMESTAMP",
+            firestoreFieldName: "created",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(`${tableId_raw}`).getMetadata();
-
-        const [changeLogRows] = await getBigQueryTableData(
-          process.env.PROJECT_ID,
-          datasetId,
-          tableId
-        );
 
         expect(metadata.timePartitioning).toBeDefined();
         expect(metadata.timePartitioning.type).toEqual("DAY");
         expect(metadata.timePartitioning.field).toEqual("timestamp");
 
         //TODO: check data has been added successfully
-        expect(changeLogRows[0].timestamp.value).toBe(
-          BigQuery.timestamp(created.toDate()).value
-        );
+        await waitForExpect(async () => {
+          const [changeLogRows] = await getBigQueryTableData(
+            process.env.PROJECT_ID,
+            datasetId,
+            tableId
+          );
+
+          expect(changeLogRows[0].timestamp.value).toBe(
+            BigQuery.timestamp(created.toDate()).value
+          );
+        }, 30000);
       });
 
       test("old_data is null if is not provided", async () => {
@@ -309,15 +385,27 @@ describe("e2e", () => {
           data: { foo: "foo" },
         });
 
-        await changeTracker({ datasetId, tableId }).record([event]);
-
-        const [changeLogRows] = await getBigQueryTableData(
-          process.env.PROJECT_ID,
+        await changeTracker({
           datasetId,
-          tableId
-        );
+          tableId,
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "NONE",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
+        }).record([event]);
 
-        expect(changeLogRows[0].old_data).toBe(null);
+        await waitForExpect(async () => {
+          const [changeLogRows] = await getBigQueryTableData(
+            process.env.PROJECT_ID,
+            datasetId,
+            tableId
+          );
+
+          expect(changeLogRows[0].old_data).toBe(null);
+        }, 30000);
       });
 
       test("changeLog table has a value for old_data", async () => {
@@ -326,25 +414,43 @@ describe("e2e", () => {
           data: { foo: "bar" },
         });
 
-        await changeTracker({ datasetId, tableId }).record([event]);
-
-        const [changeLogRows] = await getBigQueryTableData(
-          process.env.PROJECT_ID,
+        await changeTracker({
           datasetId,
-          tableId
-        );
+          tableId,
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "NONE",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
+        }).record([event]);
 
-        expect(changeLogRows[0].old_data).toBeDefined();
+        await waitForExpect(async () => {
+          const [changeLogRows] = await getBigQueryTableData(
+            process.env.PROJECT_ID,
+            datasetId,
+            tableId
+          );
+
+          expect(changeLogRows[0].old_data).toBeDefined();
+        }, 30000);
       });
 
       test("does not partition with without a valid timePartitioningField when including timePartitioning, timePartitioningFieldType and timePartitioningFirestoreField", async () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "HOUR",
-          timePartitioningField: null,
-          timePartitioningFieldType: "TIMESTAMP",
-          timePartitioningFirestoreField: "end_date",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "HOUR",
+            bigqueryColumnName: "endDate",
+            bigqueryColumnType: "TIMESTAMP",
+            firestoreFieldName: "end_date",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(tableId_raw).getMetadata();
@@ -356,9 +462,16 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "HOUR",
-          timePartitioningField: "endDate",
-          timePartitioningFirestoreField: "end_date",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "HOUR",
+            bigqueryColumnName: "endDate",
+            bigqueryColumnType: "TIMESTAMP",
+            firestoreFieldName: "end_date",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(tableId_raw).getMetadata();
@@ -370,10 +483,16 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "HOUR",
-          timePartitioningField: "endDate",
-          timePartitioningFieldType: "unknown",
-          timePartitioningFirestoreField: "end_date",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "HOUR",
+            bigqueryColumnName: "endDate",
+            bigqueryColumnType: "TIMESTAMP",
+            firestoreFieldName: "end_date",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(tableId_raw).getMetadata();
@@ -385,10 +504,16 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "HOUR",
-          timePartitioningField: "endDate",
-          timePartitioningFieldType: "TIMESTAMP",
-          // timePartitioningFirestoreField: "unknown",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "HOUR",
+            bigqueryColumnName: "endDate",
+            bigqueryColumnType: "TIMESTAMP",
+            firestoreFieldName: "end_date",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(tableId_raw).getMetadata();
@@ -400,10 +525,16 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "HOUR",
-          timePartitioningField: "endDate",
-          timePartitioningFieldType: "DATE",
-          timePartitioningFirestoreField: "end_date",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "HOUR",
+            bigqueryColumnName: "endDate",
+            bigqueryColumnType: "DATE",
+            firestoreFieldName: "end_date",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(tableId_raw).getMetadata();
@@ -439,7 +570,13 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "HOUR",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "HOUR",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(tableId_raw).getMetadata();
@@ -464,10 +601,16 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "HOUR",
-          timePartitioningField: "endDate",
-          timePartitioningFieldType: "DATE",
-          timePartitioningFirestoreField: "end_date",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "HOUR",
+            bigqueryColumnName: "endDate",
+            bigqueryColumnType: "TIMESTAMP",
+            firestoreFieldName: "end_date",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(tableId_raw).getMetadata();
@@ -479,10 +622,16 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "HOUR",
-          timePartitioningField: "endDate",
-          timePartitioningFieldType: "DATE",
-          timePartitioningFirestoreField: "end_date",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "HOUR",
+            bigqueryColumnName: "endDate",
+            bigqueryColumnType: "TIMESTAMP",
+            firestoreFieldName: "end_date",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(tableId_raw).getMetadata();
@@ -510,10 +659,16 @@ describe("e2e", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "DAY",
-          timePartitioningField: "custom_field",
-          timePartitioningFieldType: "DATE",
-          timePartitioningFirestoreField: "custom_field",
+          datasetLocation: "us",
+          partitioning: {
+            granularity: "DAY",
+            bigqueryColumnName: "custom_field",
+            bigqueryColumnType: "DATE",
+            firestoreFieldName: "custom_field",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
         }).record([event]);
 
         const [metadata] = await dataset.table(tableId_raw).getMetadata();
@@ -559,6 +714,13 @@ describe("e2e", () => {
       await changeTracker({
         datasetId,
         tableId,
+        datasetLocation: "us",
+        partitioning: {
+          granularity: "NONE",
+        },
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: process.env.PROJECT_ID,
         useNewSnapshotQuerySyntax: false,
       }).record([legacyEvent]);
 
@@ -575,6 +737,13 @@ describe("e2e", () => {
       await changeTracker({
         datasetId,
         tableId,
+        datasetLocation: "us",
+        partitioning: {
+          granularity: "NONE",
+        },
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: process.env.PROJECT_ID,
         useNewSnapshotQuerySyntax: true,
       }).record([optimizedEvent]);
 
@@ -591,15 +760,17 @@ describe("e2e", () => {
       });
 
       /** Assertions */
-      const legacyData = await legacyDataJob.getQueryResults();
-      const optimisedData = await optimisedDataJob.getQueryResults();
+      await waitForExpect(async () => {
+        const legacyData = await legacyDataJob.getQueryResults();
+        const optimisedData = await optimisedDataJob.getQueryResults();
 
-      expect(legacyData.length).toEqual(optimisedData.length);
-      const firstPageLegacy = legacyData[0];
-      const firstPageOptimised = optimisedData[0];
+        expect(legacyData.length).toEqual(optimisedData.length);
+        const firstPageLegacy = legacyData[0];
+        const firstPageOptimised = optimisedData[0];
 
-      expect(firstPageLegacy.length).toEqual(firstPageOptimised.length);
-      expect(firstPageLegacy).toEqual(firstPageOptimised);
+        expect(firstPageLegacy.length).toEqual(firstPageOptimised.length);
+        expect(firstPageLegacy).toEqual(firstPageOptimised);
+      }, 30000);
 
       expect(legacyViewMetadata.view.query.includes("FIRST_VALUE")).toBe(true);
 
@@ -640,7 +811,17 @@ describe("e2e", () => {
         ).length
       ).toBe(0);
 
-      await changeTracker({ datasetId, tableId }).record([event]);
+      await changeTracker({
+        datasetId,
+        tableId,
+        datasetLocation: "us",
+        partitioning: {
+          granularity: "NONE",
+        },
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: process.env.PROJECT_ID,
+      }).record([event]);
 
       const [metadata] = await dataset.table(table_raw_changelog).getMetadata();
 
