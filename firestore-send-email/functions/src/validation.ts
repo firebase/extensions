@@ -281,19 +281,31 @@ export function validatePayload(payload: any) {
       );
     }
 
-    if (payload.message && Object.keys(payload.message).length > 0) {
-      const messageSchema = payload.template
-        ? templateMessageSchema
-        : standardMessageSchema;
-      validateField(
-        payload.message,
-        messageSchema,
-        "message",
-        "message configuration"
-      );
+    if (payload.message !== undefined) {
+      // If there's a template or sendGrid, message content is optional (they provide it)
+      if (payload.template || payload.sendGrid) {
+        // Only validate message structure if it has content
+        if (Object.keys(payload.message).length > 0) {
+          validateField(
+            payload.message,
+            templateMessageSchema,
+            "message",
+            "message configuration"
+          );
+        }
+      } else {
+        // No template/sendGrid - message must have subject + content
+        validateField(
+          payload.message,
+          standardMessageSchema,
+          "message",
+          "message configuration"
+        );
+      }
     }
 
     const result = payloadSchema.safeParse(payload);
+
     if (!result.success) {
       throw new ValidationError(formatZodError(result.error));
     }
@@ -307,4 +319,53 @@ export function validatePayload(payload: any) {
       "An unexpected error occurred while validating the email configuration"
     );
   }
+}
+
+/**
+ * Schema for the prepared message after transformations.
+ */
+const preparedMessageSchema = z
+  .object({
+    subject: z.string().optional(),
+    text: z.string().nullable().optional(),
+    html: z.string().nullable().optional(),
+    amp: z.string().optional(),
+    attachments: attachmentsSchema,
+  })
+  .passthrough();
+
+/**
+ * Schema for the prepared payload after all transformations.
+ * Recipients are normalized to arrays, attachments validated.
+ */
+export const preparedPayloadSchema = z
+  .object({
+    to: z.array(z.string()).default([]),
+    cc: z.array(z.string()).default([]),
+    bcc: z.array(z.string()).default([]),
+    from: z.string().optional(),
+    replyTo: z.string().optional(),
+    headers: z.record(z.any()).optional(),
+    message: preparedMessageSchema.optional(),
+    template: templateSchema.optional(),
+    sendGrid: sendGridSchema.optional(),
+    categories: z.array(z.string()).optional(),
+  })
+  .passthrough();
+
+export type PreparedPayload = z.infer<typeof preparedPayloadSchema>;
+
+/**
+ * Validates the prepared payload after all transformations.
+ * Called at the end of preparePayload() before returning.
+ * @param payload - The prepared payload to validate
+ * @returns The validated payload
+ * @throws {ValidationError} When validation fails
+ */
+export function validatePreparedPayload(payload: unknown): PreparedPayload {
+  const result = preparedPayloadSchema.safeParse(payload);
+  if (!result.success) {
+    throw new ValidationError(formatZodError(result.error, "prepared payload"));
+  }
+  return result.data;
 }

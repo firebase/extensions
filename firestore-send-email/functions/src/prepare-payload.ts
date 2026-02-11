@@ -1,12 +1,7 @@
 import { DocumentData } from "firebase-admin/firestore";
-import {
-  validatePayload,
-  attachmentSchema,
-  attachmentsSchema,
-} from "./validation";
+import { validatePayload, validatePreparedPayload } from "./validation";
 import * as logs from "./logs";
 import config from "./config";
-import { z } from "zod";
 
 let db: any;
 let templates: any;
@@ -16,15 +11,22 @@ export function setDependencies(database: any, templatesInstance: any) {
   templates = templatesInstance;
 }
 
-function validateFieldArray(field: string, array?: string[]) {
-  if (!Array.isArray(array)) {
-    throw new Error(`Invalid field "${field}". Expected an array of strings.`);
-  }
+/**
+ * Normalizes recipient field to an array of strings.
+ */
+const normalizeRecipients = (value: string | string[] | undefined): string[] =>
+  typeof value === "string" ? [value] : value || [];
 
-  if (array.find((item) => typeof item !== "string")) {
-    throw new Error(`Invalid field "${field}". Expected an array of strings.`);
-  }
-}
+/**
+ * Resolves UIDs to email addresses using a pre-fetched email map.
+ */
+const resolveUidsToEmails = (
+  uids: string[] | undefined,
+  emailMap: Record<string, string | null>
+): string[] =>
+  (uids || [])
+    .map((uid) => emailMap[uid])
+    .filter((email): email is string => !!email);
 
 export async function preparePayload(
   payload: DocumentData
@@ -41,72 +43,36 @@ export async function preparePayload(
     const templateRender = await templates.render(template.name, template.data);
     const mergeMessage = payload.message || {};
 
-    let attachments = attachmentsSchema.parse(
-      templateRender.attachments
-        ? templateRender.attachments
-        : mergeMessage.attachments
+    const attachments = templateRender.attachments
+      ? templateRender.attachments
+      : mergeMessage.attachments;
+
+    // Convert null to undefined so it doesn't overwrite existing values
+    const handleTemplateValue = (value: any) =>
+      value === null ? undefined : value;
+
+    const templateContent = Object.fromEntries(
+      Object.entries({
+        subject: handleTemplateValue(templateRender.subject),
+        html: handleTemplateValue(templateRender.html),
+        text: handleTemplateValue(templateRender.text),
+        amp: handleTemplateValue(templateRender.amp),
+        attachments: attachments || [],
+      }).filter(([_, v]) => v !== undefined)
     );
-
-    const handleTemplateValue = (value: any) => {
-      if (value === null) {
-        return undefined;
-      }
-      if (value === "") {
-        return "";
-      }
-      if (value === undefined) {
-        return undefined;
-      }
-      return value || undefined;
-    };
-
-    const templateContent = {
-      subject: handleTemplateValue(templateRender.subject),
-      html: handleTemplateValue(templateRender.html),
-      text: handleTemplateValue(templateRender.text),
-      amp: handleTemplateValue(templateRender.amp),
-      attachments: attachments || [],
-    };
-
-    Object.keys(templateContent).forEach((key) => {
-      if (templateContent[key] === undefined) {
-        delete templateContent[key];
-      }
-    });
 
     payload.message = Object.assign(mergeMessage, templateContent);
   }
 
-  let to: string[] = [];
-  let cc: string[] = [];
-  let bcc: string[] = [];
-
-  if (typeof payload.to === "string") {
-    to = [payload.to];
-  } else if (payload.to) {
-    validateFieldArray("to", payload.to);
-    to = to.concat(payload.to);
-  }
-
-  if (typeof payload.cc === "string") {
-    cc = [payload.cc];
-  } else if (payload.cc) {
-    validateFieldArray("cc", payload.cc);
-    cc = cc.concat(payload.cc);
-  }
-
-  if (typeof payload.bcc === "string") {
-    bcc = [payload.bcc];
-  } else if (payload.bcc) {
-    validateFieldArray("bcc", payload.bcc);
-    bcc = bcc.concat(payload.bcc);
-  }
+  let to = normalizeRecipients(payload.to);
+  let cc = normalizeRecipients(payload.cc);
+  let bcc = normalizeRecipients(payload.bcc);
 
   if (!payload.toUids && !payload.ccUids && !payload.bccUids) {
     payload.to = to;
     payload.cc = cc;
     payload.bcc = bcc;
-    return payload;
+    return validatePreparedPayload(payload);
   }
 
   if (!config.usersCollection) {
@@ -116,17 +82,14 @@ export async function preparePayload(
   let uids: string[] = [];
 
   if (payload.toUids) {
-    validateFieldArray("toUids", payload.toUids);
     uids = uids.concat(payload.toUids);
   }
 
   if (payload.ccUids) {
-    validateFieldArray("ccUids", payload.ccUids);
     uids = uids.concat(payload.ccUids);
   }
 
   if (payload.bccUids) {
-    validateFieldArray("bccUids", payload.bccUids);
     uids = uids.concat(payload.bccUids);
   }
 
@@ -160,38 +123,9 @@ export async function preparePayload(
 
   logs.missingUids(missingUids);
 
-  if (payload.toUids) {
-    payload.toUids.forEach((uid) => {
-      const email = toFetch[uid];
-      if (email) {
-        to.push(email);
-      }
-    });
-  }
+  payload.to = to.concat(resolveUidsToEmails(payload.toUids, toFetch));
+  payload.cc = cc.concat(resolveUidsToEmails(payload.ccUids, toFetch));
+  payload.bcc = bcc.concat(resolveUidsToEmails(payload.bccUids, toFetch));
 
-  payload.to = to;
-
-  if (payload.ccUids) {
-    payload.ccUids.forEach((uid) => {
-      const email = toFetch[uid];
-      if (email) {
-        cc.push(email);
-      }
-    });
-  }
-
-  payload.cc = cc;
-
-  if (payload.bccUids) {
-    payload.bccUids.forEach((uid) => {
-      const email = toFetch[uid];
-      if (email) {
-        bcc.push(email);
-      }
-    });
-  }
-
-  payload.bcc = bcc;
-
-  return payload;
+  return validatePreparedPayload(payload);
 }

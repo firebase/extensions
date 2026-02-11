@@ -30,11 +30,13 @@ import * as nodemailer from "nodemailer";
 import * as logs from "./logs";
 import config from "./config";
 import Templates from "./templates";
-import { Delivery, QueuePayload, ExtendedSendMailOptions } from "./types";
-import { isSendGrid, setSmtpCredentials } from "./helpers";
+import { Delivery, QueuePayload } from "./types";
+import { isSendGrid, setSmtpCredentials } from "./transport";
 import * as events from "./events";
 import { SendGridTransport } from "./nodemailer-sendgrid";
-import { preparePayload, setDependencies } from "./prepare-payload";
+import { setDependencies } from "./prepare-payload";
+import { deliverEmail } from "./delivery";
+import { getExpireAt } from "./ttl";
 
 logs.init();
 
@@ -42,15 +44,6 @@ let db: Firestore;
 let transport: nodemailer.Transporter;
 let templates: Templates;
 let initialized = false;
-
-interface SendMailInfoLike {
-  messageId: string | null;
-  sendgridQueueId?: string | null;
-  accepted: string[];
-  rejected: string[];
-  pending: string[];
-  response: string | null;
-}
 
 /**
  * Initializes Admin SDK & SMTP connection if not already initialized.
@@ -93,124 +86,35 @@ async function transportLayer() {
   return setSmtpCredentials(config);
 }
 
-function validateFieldArray(field: string, array?: string[]) {
-  if (!Array.isArray(array)) {
-    throw new Error(`Invalid field "${field}". Expected an array of strings.`);
-  }
-
-  if (array.find((item) => typeof item !== "string")) {
-    throw new Error(`Invalid field "${field}". Expected an array of strings.`);
-  }
-}
-
-function getExpireAt(startTime: Timestamp) {
-  const now = startTime.toDate();
-  const value = config.TTLExpireValue;
-  switch (config.TTLExpireType) {
-    case "hour":
-      now.setHours(now.getHours() + value);
-      break;
-    case "day":
-      now.setDate(now.getDate() + value);
-      break;
-    case "week":
-      now.setDate(now.getDate() + value * 7);
-      break;
-    case "month":
-      now.setMonth(now.getMonth() + value);
-      break;
-    case "year":
-      now.setFullYear(now.getFullYear() + value);
-      break;
-    default:
-      // Optionally handle unknown types
-      throw new Error(`Unknown TTLExpireType: ${config.TTLExpireType}`);
-  }
-  return Timestamp.fromDate(now);
-}
-
 async function deliver(ref: DocumentReference): Promise<void> {
-  // Fetch the Firestore document
-  const snapshot = await ref.get();
-  if (!snapshot.exists) {
+  const result = await deliverEmail(ref, { transport });
+
+  // Skip Firestore update if document was skipped (doesn't exist or not in PROCESSING state)
+  if (result.skipped) {
     return;
   }
-
-  let payload = snapshot.data();
-
-  // Only attempt delivery if the payload is still in the "PROCESSING" state
-  if (!payload.delivery || payload.delivery.state !== "PROCESSING") {
-    return;
-  }
-
-  logs.attemptingDelivery(ref);
 
   // Prepare the Firestore document for delivery updates
-  const update = {
+  const update: Record<string, any> = {
     "delivery.attempts": FieldValue.increment(1),
     "delivery.endTime": FieldValue.serverTimestamp(),
     "delivery.error": null,
     "delivery.leaseExpireTime": null,
+    "delivery.state": result.success ? "SUCCESS" : "ERROR",
   };
 
-  try {
-    // Prepare the payload for delivery (e.g., formatting recipients, templates)
-    payload = await preparePayload(payload);
-
-    // Validate that there is at least one recipient (to, cc, or bcc)
-    if (!payload.to.length && !payload.cc.length && !payload.bcc.length) {
-      throw new Error(
-        "Failed to deliver email. Expected at least 1 recipient."
-      );
-    }
-
-    const mailOptions: ExtendedSendMailOptions = {
-      from: payload.from || config.defaultFrom,
-      replyTo: payload.replyTo || config.defaultReplyTo,
-      to: payload.to,
-      cc: payload.cc,
-      bcc: payload.bcc,
-      subject: payload.message?.subject,
-      text: payload.message?.text,
-      html: payload.message?.html,
-      headers: payload?.headers,
-      attachments: payload.message?.attachments,
-      categories: payload.categories,
-      templateId: payload.sendGrid?.templateId,
-      dynamicTemplateData: payload.sendGrid?.dynamicTemplateData,
-      mailSettings: payload.sendGrid?.mailSettings,
-    };
-
-    logs.info("Sending via transport.sendMail()", { mailOptions });
-    const result = (await transport.sendMail(mailOptions)) as any;
-
-    const info: SendMailInfoLike = {
-      messageId: result.messageId || null,
-      sendgridQueueId: result.queueId || null,
-      accepted: result.accepted || [],
-      rejected: result.rejected || [],
-      pending: result.pending || [],
-      response: result.response || null,
-    };
-
-    // Update Firestore document to indicate success
-    update["delivery.state"] = "SUCCESS";
-    update["delivery.info"] = info;
-
-    logs.delivered(ref, info);
-  } catch (e) {
-    // Update Firestore document to indicate failure
-    update["delivery.state"] = "ERROR";
-    update["delivery.error"] = e.toString();
-    logs.deliveryError(ref, e);
+  if (result.success && result.info) {
+    update["delivery.info"] = result.info;
+  } else if (!result.success && result.error) {
+    update["delivery.error"] = result.error;
   }
 
   // Update the Firestore document transactionally to allow retries (#48)
+  // We could check state here is still PROCESSING, but we don't
+  // since the email sending will have been attempted regardless of what the
+  // delivery state was at that point, so we just update the state to reflect
+  // the result of the last attempt so as to not potentially cause duplicate sends.
   return db.runTransaction((transaction) => {
-    // We could check state here is still PROCESSING, but we don't
-    // since the email sending will have been attempted regardless of what the
-    // delivery state was at that point, so we just update the state to reflect
-    // the result of the last attempt so as to not potentially cause duplicate sends.
     transaction.update(ref, update);
     return Promise.resolve();
   });
@@ -227,22 +131,8 @@ async function processWrite(
   // Note: we still check these again inside the transaction in case the state has
   // changed while the transaction was inflight.
   if (change.after.exists) {
-    const payloadAfter = change.after.data() as QueuePayload;
-    // The email has already been delivered, so we don't need to do anything.
-    if (
-      payloadAfter &&
-      payloadAfter.delivery &&
-      payloadAfter.delivery.state === "SUCCESS"
-    ) {
-      return;
-    }
-
-    // The email has previously failed to be delivered, so we can't do anything.
-    if (
-      payloadAfter &&
-      payloadAfter.delivery &&
-      payloadAfter.delivery.state === "ERROR"
-    ) {
+    const state = (change.after.data() as QueuePayload)?.delivery?.state;
+    if (state === "SUCCESS" || state === "ERROR") {
       return;
     }
   }
