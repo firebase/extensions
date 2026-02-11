@@ -1,3 +1,7 @@
+## Version 0.3.2
+
+chore(storage-resize-images) - Update model to gemini-2.5-flash
+
 ## Version 0.3.1
 
 chore - bump dependencies
