@@ -647,6 +647,21 @@ params:
     default: info
     required: true
 
+  - param: IGNORE_DOCUMENT_DELETION
+    label: Ignore Document Deletion
+    description: >-
+      If enabled, Firestore deleted document will not be exported (the Firestore
+      onDocumentDeleted event will be ignored). The reduction in data should be 
+      more performant, and avoid potential resource limitations.
+    type: select
+    required: false
+    default: no
+    options:
+      - label: Yes
+        value: yes
+      - label: No
+        value: no
+
 events:
   # OLD event types for backward compatibility
   - type: firebase.extensions.firestore-counter.v1.onStart
