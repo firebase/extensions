@@ -1,7 +1,16 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "/"
+    directories:
+      - "/"
+      - "/delete-user-data"
+      - "/firestore-bigquery-export"
+      - "/firestore-counter"
+      - "/firestore-send-email"
+      - "/firestore-shorten-urls-bitly"
+      - "/firestore-translate-text"
+      - "/rtdb-limit-child-nodes"
+      - "/storage-resize-images"
     schedule:
       interval: "weekly"
     labels:
