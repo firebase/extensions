@@ -113,10 +113,12 @@ describe("Clustering ", () => {
       await changeTracker({
         datasetId,
         tableId,
-        timePartitioning: "DAY",
-        timePartitioningField: "end_date",
-        timePartitioningFieldType: "TIMESTAMP",
-        timePartitioningFirestoreField: "endDate",
+        partitioning: {
+          granularity: "DAY",
+          bigqueryColumnName: "end_date",
+          bigqueryColumnType: "TIMESTAMP",
+          firestoreFieldName: "endDate",
+        },
         clustering: ["end_date"],
       }).record([event]);
 

@@ -62,16 +62,5 @@ if npm_package_version_exists "$NPM_PACKAGE_NAME" "$NPM_PACKAGE_VERSION"; then
   exit 0
 fi
 
-# Ensure that the NPM_TOKEN env variable is defined before we can publish the package.
-if [[ -z "$NPM_TOKEN" ]]; then
-  echo "Missing required NPM_TOKEN env variable. Set this on the workflow action or on your local environment."
-  echo "Skipping publishing of this NPM package."
-  exit 1
-fi
-
-echo "NPM package $NPM_PACKAGE_NAME and version $NPM_PACKAGE_VERSION does NOT EXIST on the NPM registry."
-npm config set //wombat-dressing-room.appspot.com/:_authToken=${NPM_TOKEN}
-
 echo "Attempting to publish $NPM_PACKAGE_NAME version $NPM_PACKAGE_VERSION..."
-# This registry allows Googlers to publish with a temporary token from http://go/npm-publish
-npm publish --registry https://wombat-dressing-room.appspot.com
+npm publish 

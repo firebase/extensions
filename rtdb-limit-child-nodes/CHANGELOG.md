@@ -1,3 +1,7 @@
+## Version 0.1.16
+
+chore: bump dependencies
+
 ## Version 0.1.15
 
 feat - move to Node.js 20 runtimes
