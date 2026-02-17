@@ -1,11 +1,12 @@
 import { Table, TableMetadata } from "@google-cloud/bigquery/build/src/table";
 import { Partitioning } from "./partitioning";
+import { PartitioningConfig } from "./partitioning/config";
 
-import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+import { Config } from ".";
 
 interface TableRequiresUpdateOptions {
   table: Table;
-  config: FirestoreBigQueryEventHistoryTrackerConfig;
+  config: Config;
   documentIdColExists: boolean;
   pathParamsColExists: boolean;
   oldDataColExists: boolean;
@@ -36,7 +37,8 @@ export async function tableRequiresUpdate({
   if (!oldDataColExists) return true;
 
   /** Check partitioning */
-  const partitioning = new Partitioning(config, table);
+  const partitioningConfig = new PartitioningConfig(config.partitioning);
+  const partitioning = new Partitioning(partitioningConfig, table);
   const isValidPartition =
     await partitioning.isValidPartitionForExistingTable();
   if (isValidPartition) return true;
@@ -47,7 +49,7 @@ export async function tableRequiresUpdate({
 
 interface ViewRequiresUpdateOptions {
   metadata?: TableMetadata;
-  config: FirestoreBigQueryEventHistoryTrackerConfig;
+  config: Config;
   documentIdColExists: boolean;
   pathParamsColExists: boolean;
   oldDataColExists: boolean;

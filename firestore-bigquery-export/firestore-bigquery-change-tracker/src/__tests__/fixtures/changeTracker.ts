@@ -5,18 +5,18 @@ import {
   FirestoreDocumentChangeEvent,
 } from "../..";
 import { LogLevel } from "../../logger";
+import { Config } from "../../bigquery/types";
 
 export const changeTracker = ({
   datasetId = "",
   tableId = "",
-  datasetLocation = null,
+  datasetLocation = "us",
   wildcardIds = null,
-  timePartitioning = null,
-  timePartitioningField = null,
-  timePartitioningFieldType = null,
-  timePartitioningFirestoreField = null,
-  transformFunction = null,
-  clustering = null,
+  partitioning = {
+    granularity: "NONE",
+  },
+  transformFunction = "",
+  clustering = [],
   bqProjectId = "dev-extensions-testing",
   useNewSnapshotQuerySyntax = false,
   useMaterializedView = false,
@@ -24,16 +24,13 @@ export const changeTracker = ({
   maxStaleness = undefined,
   refreshIntervalMinutes = undefined,
   logLevel = LogLevel.DEBUG,
-}): FirestoreBigQueryEventHistoryTracker => {
+}: Partial<Config>): FirestoreBigQueryEventHistoryTracker => {
   return new FirestoreBigQueryEventHistoryTracker({
     datasetId,
     tableId,
     datasetLocation,
     wildcardIds,
-    timePartitioning,
-    timePartitioningField,
-    timePartitioningFieldType,
-    timePartitioningFirestoreField,
+    partitioning,
     transformFunction,
     clustering,
     bqProjectId,

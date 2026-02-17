@@ -1,6 +1,6 @@
 import { initializeLatestView } from "../../../bigquery/initializeLatestView";
 import { initializeLatestMaterializedView } from "../../../bigquery/initializeLatestMaterializedView";
-import { FirestoreBigQueryEventHistoryTrackerConfig } from "../../../bigquery";
+import { Config } from "../../../bigquery/types";
 
 jest.mock("../../../bigquery/initializeLatestMaterializedView");
 
@@ -12,13 +12,16 @@ describe("initializeLatestView", () => {
     create: jest.fn(),
   };
 
-  const mockConfig: FirestoreBigQueryEventHistoryTrackerConfig = {
-    wildcardIds: true,
+  const mockConfig: Config = {
     datasetId: "test_dataset",
-    useNewSnapshotQuerySyntax: true,
-    clustering: [],
     tableId: "test_raw_table",
-    useMaterializedView: false,
+    datasetLocation: "US",
+    partitioning: {
+      granularity: "NONE",
+    },
+    transformFunction: "",
+    clustering: [],
+    bqProjectId: undefined,
   };
 
   beforeEach(() => {

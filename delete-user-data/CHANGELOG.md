@@ -1,3 +1,7 @@
+## Version 0.1.26
+
+chore: bump dependencies
+
 ## Version 0.1.25
 
 feat - add support for multiple Firestore databases via FIRESTORE_DATABASE_ID parameter

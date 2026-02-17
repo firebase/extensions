@@ -59,6 +59,11 @@ const generateResizedImageHandler = async (
     return;
   }
 
+  await events.recordStartResizeEvent({
+    subject: object.name,
+    data: { input: object },
+  });
+
   const bucket = admin.storage().bucket(object.bucket);
   const filePath = object.name; // File path in the bucket.
   const parsedPath = path.parse(filePath);
@@ -149,6 +154,7 @@ const generateResizedImageHandler = async (
 export const generateResizedImage = functions.storage
   .object()
   .onFinalize(async (object, context) => {
+    await events.recordStartEvent(object);
     await generateResizedImageHandler(object);
     await events.recordCompletionEvent({ context });
   });
