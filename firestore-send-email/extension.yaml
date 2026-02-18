@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-send-email
-version: 0.2.4
+version: 0.2.5
 specVersion: v1beta
 
 displayName: Trigger Email from Firestore
@@ -73,7 +73,7 @@ params:
     label: Firestore Instance ID
     description: >
       The Firestore database to use. Use "(default)" for the default database.
-      You can view your available Firestore databases at
+      You can find your available Firestore databases at
       [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).
     example: (default)
     default: (default)

@@ -5,7 +5,7 @@
     "url": "github.com/firebase/extensions.git",
     "directory": "firestore-bigquery-export/firestore-bigquery-change-tracker"
   },
-  "version": "1.1.42",
+  "version": "2.0.0",
   "description": "Core change-tracker library for Cloud Firestore Collection BigQuery Exports",
   "main": "./lib/index.js",
   "scripts": {
@@ -50,6 +50,7 @@
     "nyc": "^17.1.0",
     "rimraf": "^2.6.3",
     "ts-jest": "29.1.2",
-    "typescript": "^4.9.4"
+    "typescript": "^4.9.4",
+    "wait-for-expect": "^3.0.2"
   }
 }

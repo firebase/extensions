@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import { FirestoreBigQueryEventHistoryTrackerConfig } from "../../bigquery";
+import { Config } from "../../bigquery/types";
 
 import handleFailedTransactions from "../../bigquery/handleFailedTransactions";
 
@@ -15,16 +15,15 @@ describe("handleFailedTransactions", () => {
     const collectionName = "testing";
     const doc = db.collection("testing").doc("600");
 
-    const config: FirestoreBigQueryEventHistoryTrackerConfig = {
+    const config: Config = {
       backupTableId: collectionName,
       datasetId: "",
       tableId: "",
       datasetLocation: "",
       transformFunction: undefined,
-      timePartitioning: undefined,
-      timePartitioningField: undefined,
-      timePartitioningFieldType: undefined,
-      timePartitioningFirestoreField: undefined,
+      partitioning: {
+        granularity: "NONE",
+      },
       clustering: undefined,
       bqProjectId: undefined,
     };
