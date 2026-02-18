@@ -7,14 +7,16 @@ on:
         description: "The package name to publish"
         required: true
         default: "@firebaseextensions/fs-bq-schema-views"
+permissions:
+  id-token: write
 jobs:
   publish_if_newer_version:
     runs-on: ubuntu-latest
     name: publish_if_newer_version
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
       - name: NPM install
@@ -23,8 +25,6 @@ jobs:
         if:
           ${{ github.event.inputs.package_name ==
           '@firebaseextensions/fs-bq-schema-views'}}
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN_BQ_SCHEMA_VIEWS }}
         run: |
           cd firestore-bigquery-export/scripts/gen-schema-view
           ${{ github.workspace }}/.github/workflows/scripts/npm_publish.sh
@@ -32,8 +32,6 @@ jobs:
         if:
           ${{ github.event.inputs.package_name ==
           '@firebaseextensions/fs-bq-import-collection'}}
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN_BQ_IMPORT_COLLECTION }}
         run: |
           cd firestore-bigquery-export/scripts/import
           ${{ github.workspace }}/.github/workflows/scripts/npm_publish.sh
@@ -41,8 +39,6 @@ jobs:
         if:
           ${{ github.event.inputs.package_name ==
           '@firebaseextensions/firestore-bigquery-change-tracker'}}
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN_BQ_CHANGE_TRACKER }}
         run: |
           cd firestore-bigquery-export/firestore-bigquery-change-tracker
           ${{ github.workspace }}/.github/workflows/scripts/npm_publish.sh

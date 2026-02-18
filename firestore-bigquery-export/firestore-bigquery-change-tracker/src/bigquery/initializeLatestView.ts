@@ -9,7 +9,7 @@ import {
   documentPathParams,
   RawChangelogViewSchema,
 } from "./schema";
-import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+import { Config } from ".";
 import * as logs from "../logs";
 import { latestConsistentSnapshotView } from "./snapshot";
 import { viewRequiresUpdate } from "./checkUpdates";
@@ -17,7 +17,7 @@ import { initializeLatestMaterializedView } from "./initializeLatestMaterialized
 
 interface InitializeLatestViewOptions {
   bq: BigQuery;
-  changeTrackerConfig: FirestoreBigQueryEventHistoryTrackerConfig;
+  changeTrackerConfig: Config;
   dataset: Dataset;
   view: Table;
   viewExists: boolean;

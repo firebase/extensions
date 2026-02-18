@@ -1,3 +1,7 @@
+## Version 0.2.5
+
+fix: bump dependencies to fix vulnerabilities
+
 ## Version 0.2.4
 
 fix: add missing 'headers' field to the mailOptions interface (contributed by @Nushio)
