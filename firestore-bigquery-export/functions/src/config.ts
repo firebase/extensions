@@ -77,4 +77,5 @@ export default {
     process.env.BACKUP_GCS_BUCKET || `${process.env.PROJECT_ID}.appspot.com`,
   backupDir: `_${process.env.INSTANCE_ID || "firestore-bigquery-export"}`,
   logLevel: process.env.LOG_LEVEL || LogLevel.INFO,
+  ignoreDocumentDeletion: process.env.IGNORE_DOCUMENT_DELETION === "yes" ? true : false,
 };
