@@ -99,7 +99,8 @@ describe("shouldResize function", () => {
 
   describe("Metadata Checks", () => {
     test.each([
-      ["already resized", { resizedImage: "true" }, logs.imageAlreadyResized],
+      ["already resized (string)", { resizedImage: "true" }, logs.imageAlreadyResized],
+      ["already resized (boolean)", { resizedImage: true }, logs.imageAlreadyResized],
       [
         "resizing failed previously",
         { resizeFailed: true },

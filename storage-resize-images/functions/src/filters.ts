@@ -50,7 +50,14 @@ export function shouldResize(object: ObjectMetadata): boolean {
     return false;
   }
 
-  if (object.metadata && object.metadata.resizedImage === "true") {
+  // Skip if this is a resized image we created previously. Some uploads may
+  // store custom metadata as a boolean (true) rather than string "true",
+  // so handle both to ensure idempotence.
+  if (
+    object.metadata &&
+    (object.metadata.resizedImage === "true" ||
+      (object.metadata as any).resizedImage === true)
+  ) {
     logs.imageAlreadyResized();
     return false;
   }

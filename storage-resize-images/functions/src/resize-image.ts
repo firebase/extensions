@@ -190,7 +190,9 @@ export const constructMetadata = (
     contentType: imageContentType,
     metadata: objectMetadata.metadata ? { ...objectMetadata.metadata } : {},
   };
-  metadata.metadata.resizedImage = true;
+  // Mark resized images so the function can skip re-processing on finalize.
+  // Use string "true" for consistency with existing checks and metadata conventions.
+  metadata.metadata.resizedImage = "true";
   if (config.cacheControlHeader) {
     metadata.cacheControl = config.cacheControlHeader;
   } else {
