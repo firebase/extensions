@@ -24,7 +24,7 @@ describe("Interactive Prompts", () => {
 
   describe("questions array", () => {
     it("should have the correct number of questions", () => {
-      expect(questions).toHaveLength(10);
+      expect(questions).toHaveLength(11);
     });
 
     it("should have properly formatted questions with required properties", () => {
