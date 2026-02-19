@@ -5,6 +5,7 @@ module.exports = {
   displayName: packageJson.name,
   rootDir: "./",
   preset: "ts-jest",
+  testPathIgnorePatterns: ["/node_modules/", "/__tests__/e2e/"],
   globals: {
     "ts-jest": {
       tsConfig: "<rootDir>/__tests__/tsconfig.json",
