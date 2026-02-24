@@ -1,5 +1,4 @@
 {
-  "files": ["./__tests__/test.types.d.ts"],
   "compilerOptions": {
     "lib": ["esnext.asynciterable"],
     "outDir": "lib",
@@ -11,6 +10,6 @@
     "sourceMap": false
   },
   "compileOnSave": true,
-  "include": ["src"],
-  "exclude": ["src/**/*.test.ts"]
+  "include": ["src", "__tests__"],
+  "exclude": ["node_modules"]
 }
