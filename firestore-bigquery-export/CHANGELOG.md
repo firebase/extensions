@@ -1,3 +1,13 @@
+## Version 0.2.8
+
+chore: move test/build dependencies to devDependencies
+
+chore: upgrade jest from 25 to 29.5.0 and ts-jest from 27 to 29.1.2
+
+chore: remove unused jest-config dependency
+
+chore: add minimatch override to resolve npm audit vulnerabilities
+
 ## Version 0.2.7
 
 chore: bump dependencies
