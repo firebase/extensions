@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: rtdb-limit-child-nodes
-version: 0.1.16
+version: 0.1.17
 specVersion: v1beta
 
 displayName: Limit Child Nodes
