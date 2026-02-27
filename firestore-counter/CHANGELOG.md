@@ -1,7 +1,7 @@
 ## Version 0.2.14
 
 chore: update Cloud Functions runtime to Node.js 22
-chore: ran npm run adit fix
+chore: ran npm run audit fix
 chore: add esModuleInterop and skipLibCheck to tsconfig.json
 
 ## Version 0.2.13
