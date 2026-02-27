@@ -1,3 +1,7 @@
+## Version 0.3.2
+
+chore: update Cloud Functions runtime to Node.js 22
+
 ## Version 0.3.1
 
 chore - bump dependencies
