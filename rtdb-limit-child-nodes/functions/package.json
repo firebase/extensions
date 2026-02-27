@@ -3,8 +3,7 @@
   "description": "Limit number of child nodes Firebase Functions sample",
   "main": "lib/index.js",
   "scripts": {
-    "build": "npm run clean && npm run compile",
-    "clean": "rimraf lib",
+    "build": "npm install --include=dev && npm run clean && npm run compile && if [ \"$NODE_ENV\" = \"production\" ]; then npm prune --omit=dev; fi",    "clean": "rimraf lib",
     "compile": "tsc -p tsconfig.build.json",
     "test": "echo \"Error: no test specified\" && exit 1",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
