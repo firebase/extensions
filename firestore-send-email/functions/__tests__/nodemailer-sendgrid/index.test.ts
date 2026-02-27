@@ -408,6 +408,34 @@ describe("SendGridTransport", () => {
     });
   });
 
+  test("send: forwards customArgs object", async () => {
+    const transport = new SendGridTransport({ apiKey: "KEY" });
+    const fakeMail: any = {
+      normalize: (cb: any) =>
+        cb(null, {
+          from: { address: "a@x.com" },
+          to: [{ address: "b@x.com" }],
+          subject: "Custom args test",
+          customArgs: { campaign: "welcome", source: "signup" },
+        }),
+    };
+    const cb = jest.fn();
+
+    transport.send(fakeMail, cb);
+    await new Promise((r) => setImmediate(r));
+
+    const sent = (sgMail.send as jest.Mock).mock.calls[0][0];
+    expect(sent.customArgs).toEqual({ campaign: "welcome", source: "signup" });
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: ["b@x.com"],
+      rejected: [],
+      pending: [],
+      response: "status=202",
+    });
+  });
+
   test("send: deduplicates and normalizes email addresses", async () => {
     const transport = new SendGridTransport();
     const source = {

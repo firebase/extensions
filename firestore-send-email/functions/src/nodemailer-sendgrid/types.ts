@@ -46,6 +46,7 @@ export interface MailSource {
   templateId?: string;
   dynamicTemplateData?: Record<string, unknown>;
   mailSettings?: Record<string, unknown>;
+  customArgs?: Record<string, string>;
 
   [key: string]: unknown;
 }
@@ -91,5 +92,6 @@ export interface SendGridMessage {
   templateId?: string;
   dynamicTemplateData?: Record<string, unknown>;
   mailSettings?: Record<string, unknown>;
+  customArgs?: Record<string, string>;
   [key: string]: unknown;
 }

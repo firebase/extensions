@@ -86,6 +86,7 @@ export interface QueuePayload {
     templateId?: string;
     dynamicTemplateData?: { [key: string]: any };
     mailSettings?: { [key: string]: any };
+    customArgs?: Record<string, string>;
   };
   to: string[];
   toUids?: string[];
@@ -127,4 +128,5 @@ export interface ExtendedSendMailOptions extends nodemailer.SendMailOptions {
   templateId?: string;
   dynamicTemplateData?: Record<string, any>;
   mailSettings?: Record<string, any>;
+  customArgs?: Record<string, string>;
 }

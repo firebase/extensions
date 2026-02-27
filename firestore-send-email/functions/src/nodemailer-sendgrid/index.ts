@@ -152,6 +152,9 @@ export class SendGridTransport {
           case "mailSettings":
             msg.mailSettings = source.mailSettings;
             break;
+          case "customArgs":
+            msg.customArgs = source.customArgs;
+            break;
 
           default:
             msg[key] = source[key];
