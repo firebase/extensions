@@ -1,5 +1,5 @@
 name: rtdb-uppercase-messages
-version: 0.0.1
+version: 0.0.2
 specVersion: v1beta # Firebase Extensions specification version; don’t change
 
 # Friendly display name for your extension (~3-5 words)
@@ -27,14 +27,14 @@ resources:
         # DATABASE_INSTANCE (project's default instance) is an auto-populated
         # parameter value. You can also specify an instance.
         resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${param:MESSAGE_PATH}
-      runtime: "nodejs18"
+      runtime: "nodejs22"
   - name: backfilldata
     type: firebaseextensions.v1beta.function
     description: >-
       Backfill existing messages with uppercase versions
     properties:
       taskQueueTrigger: {}
-      runtime: "nodejs18"
+      runtime: "nodejs22"
 
 roles:
   - role: firebasedatabase.admin
