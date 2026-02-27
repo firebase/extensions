@@ -2,8 +2,6 @@
 
 chore: update Cloud Functions runtime to Node.js 22
 
-chore: add minimatch override to resolve npm audit vulnerabilities
-
 ## Version 0.2.8
 
 chore: move test/build dependencies to devDependencies
