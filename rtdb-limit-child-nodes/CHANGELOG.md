@@ -1,3 +1,7 @@
+## Version 0.1.17
+
+chore: cleanup dev dependencies
+
 ## Version 0.1.16
 
 chore: bump dependencies

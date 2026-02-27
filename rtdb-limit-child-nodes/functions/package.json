@@ -3,21 +3,21 @@
   "description": "Limit number of child nodes Firebase Functions sample",
   "main": "lib/index.js",
   "scripts": {
-    "prepare": "npm run build",
-    "build": "npm run clean && npm run compile",
-    "clean": "rimraf lib",
-    "compile": "tsc",
+    "build": "npm install --include=dev && npm run clean && npm run compile && if [ \"$NODE_ENV\" = \"production\" ]; then npm prune --omit=dev; fi",    "clean": "rimraf lib",
+    "compile": "tsc -p tsconfig.build.json",
     "test": "echo \"Error: no test specified\" && exit 1",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "firebase-admin": "^12.1.0",
+    "firebase-functions": "^4.9.0"
+  },
+  "devDependencies": {
     "rimraf": "^2.6.3",
     "typescript": "^4.9.4",
     "@types/express-serve-static-core": "4.17.30",
-    "@types/node": "^20.10.3",
-    "firebase-admin": "^12.1.0",
-    "firebase-functions": "^4.9.0"
+    "@types/node": "^20.10.3"
   },
   "private": true
 }
