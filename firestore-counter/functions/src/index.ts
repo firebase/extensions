@@ -16,26 +16,27 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { PubSub } from "@google-cloud/pubsub";
 import { ShardedCounterWorker } from "./worker";
 import { ShardedCounterController, ControllerStatus } from "./controller";
+import * as events from "./events";
 
 admin.initializeApp();
+
+events.setupEventChannel();
+
 const firestore = admin.firestore();
 firestore.settings({ timestampsInSnapshots: true });
 
-let pubsub;
-
 const SHARDS_COLLECTION_ID = "_counter_shards_";
-const WORKERS_COLLECTION_ID = "_counter_workers_";
 
 /**
- * The controllerCore is scheduled every minute. It tries to aggregate shards if
+ * The controllerCore is scheduled to run automatically. It tries to aggregate shards if
  * there's less than 200 of them. Otherwise it is scheduling and monitoring
  * workers to do the aggregation.
  */
-export const controllerCore = functions.handler.pubsub.topic.onPublish(
-  async () => {
+export const controllerCore = functions.pubsub
+  .schedule(process.env.SCHEDULE_FREQUENCY)
+  .onRun(async () => {
     const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new ShardedCounterController(
       metadocRef,
@@ -50,23 +51,7 @@ export const controllerCore = functions.handler.pubsub.topic.onPublish(
       await controller.rescheduleWorkers();
     }
     return null;
-  }
-);
-
-/**
- * Backwards compatible HTTPS function
- */
-export const controller = functions.handler.https.onRequest(
-  async (req, res) => {
-    if (!pubsub) {
-      pubsub = new PubSub();
-    }
-    await pubsub
-      .topic(process.env.EXT_INSTANCE_ID)
-      .publish(Buffer.from(JSON.stringify({})));
-    res.status(200).send("Ok");
-  }
-);
+  });
 
 /**
  * Worker is responsible for aggregation of a defined range of shards. It is controlled
@@ -76,28 +61,30 @@ export const controller = functions.handler.https.onRequest(
  * ControllerCore is monitoring these metadata documents to detect overload that requires
  * resharding and to detect failed workers that need poking.
  */
-export const worker = functions.handler.firestore.document.onWrite(
-  async (change, context) => {
+export const worker = functions.firestore
+  .document(SHARDS_COLLECTION_ID)
+  .onWrite(async (change, context) => {
     // stop worker if document got deleted
     if (!change.after.exists) return;
 
     const worker = new ShardedCounterWorker(change.after, SHARDS_COLLECTION_ID);
     await worker.run();
-  }
-);
+  });
 
 /**
  * This is an additional function that is triggered for every shard write. It is
  * limited to one concurrent run at the time. This helps reduce latency for workloads
  * that are below the threshold for workers.
  */
-export const onWrite = functions.handler.firestore.document.onWrite(
-  async (change, context) => {
+export const onWrite = functions.firestore
+  .document(process.env.INTERNAL_STATE_PATH)
+  .onWrite(async (change, context) => {
+    await events.recordStartEvent({ change, context });
     const metadocRef = firestore.doc(process.env.INTERNAL_STATE_PATH);
     const controller = new ShardedCounterController(
       metadocRef,
       SHARDS_COLLECTION_ID
     );
     await controller.aggregateContinuously({ start: "", end: "" }, 200, 60000);
-  }
-);
+    await events.recordCompletionEvent({ context });
+  });

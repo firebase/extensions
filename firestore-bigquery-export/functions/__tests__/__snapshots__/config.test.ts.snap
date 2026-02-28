@@ -1,0 +1,86 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`extension config config loaded from environment variables 1`] = `
+Object {
+  "backupBucketName": "undefined.appspot.com",
+  "backupCollectionId": undefined,
+  "backupDir": "_firestore-bigquery-export",
+  "backupToGCS": false,
+  "bqProjectId": undefined,
+  "clustering": Array [
+    "data",
+    "timestamp",
+  ],
+  "collectionPath": undefined,
+  "databaseId": "(default)",
+  "databaseRegion": undefined,
+  "datasetId": "my_dataset",
+  "datasetLocation": undefined,
+  "excludeOldData": false,
+  "importCollectionPath": undefined,
+  "initialized": false,
+  "instanceId": undefined,
+  "kmsKeyName": "test",
+  "location": "us-central1",
+  "logLevel": "info",
+  "maxDispatchesPerSecond": 10,
+  "maxEnqueueAttempts": 3,
+  "maxStaleness": undefined,
+  "projectId": undefined,
+  "refreshIntervalMinutes": undefined,
+  "tableId": "my_table",
+  "timePartitioning": null,
+  "timePartitioningField": undefined,
+  "timePartitioningFieldType": undefined,
+  "timePartitioningFirestoreField": undefined,
+  "transformFunction": "",
+  "useNewSnapshotQuerySyntax": false,
+  "viewType": "view",
+  "wildcardIds": false,
+}
+`;
+
+exports[`extension config config.clustering param exists 1`] = `
+Object {
+  "description": "This parameter allows you to set up clustering for the BigQuery table created by the extension. Specify up to 4 comma-separated fields (for example:  \`data,document_id,timestamp\` - no whitespaces). The order of the specified  columns determines the sort order of the data. 
+Note: Cluster columns must be top-level, non-repeated columns of one of the  following types: BIGNUMERIC, BOOL, DATE, DATETIME, GEOGRAPHY, INT64, NUMERIC,  RANGE, STRING, TIMESTAMP. Clustering will not be added if a field with an invalid type is present in this parameter.
+Available schema extensions table fields for clustering include: \`document_id, document_name, timestamp, event_id,  operation, data\`.",
+  "example": "data,document_id,timestamp",
+  "label": "BigQuery SQL table clustering",
+  "param": "CLUSTERING",
+  "required": false,
+  "type": "string",
+  "validationErrorMessage": "No whitespaces. Max 4 fields. e.g. \`data,timestamp,event_id,operation\`",
+  "validationRegex": "^[^,\\\\s]+(?:,[^,\\\\s]+){0,3}$",
+}
+`;
+
+exports[`extension config config.datasetId param exists 1`] = `
+Object {
+  "default": "firestore_export",
+  "description": "What ID would you like to use for your BigQuery dataset? This extension will create the dataset, if it doesn't already exist.",
+  "example": "firestore_export",
+  "label": "Dataset ID",
+  "param": "DATASET_ID",
+  "required": true,
+  "type": "string",
+  "validationErrorMessage": "BigQuery dataset IDs must be alphanumeric (plus underscores) and must be no more than 1024 characters.
+",
+  "validationRegex": "^[a-zA-Z0-9_]+$",
+}
+`;
+
+exports[`extension config config.tableId param exists 1`] = `
+Object {
+  "default": "posts",
+  "description": "What identifying prefix would you like to use for your table and view inside your BigQuery dataset? This extension will create the table and view, if they don't already exist.",
+  "example": "posts",
+  "label": "Table ID",
+  "param": "TABLE_ID",
+  "required": true,
+  "type": "string",
+  "validationErrorMessage": "BigQuery table IDs must be alphanumeric (plus underscores) and must be no more than 1024 characters.
+",
+  "validationRegex": "^[a-zA-Z0-9_]+$",
+}
+`;

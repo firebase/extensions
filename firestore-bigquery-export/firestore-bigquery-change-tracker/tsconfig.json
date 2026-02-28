@@ -1,13 +1,12 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "lib": ["es6"],
-    "module": "commonjs",
-    "noImplicitReturns": true,
     "outDir": "lib",
-    "sourceMap": false,
-    "target": "es6",
-    "types": ["node", "jest", "chai"]
+    "types": ["node", "jest"],
+    "target": "ES2020",
+    "skipLibCheck": true,
+    "declaration": true
   },
-  "compileOnSave": true,
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"]
 }

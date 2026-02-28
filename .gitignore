@@ -1,7 +1,11 @@
 .vscode
 node_modules/
 *.env
+!emulator-params.env
+!install-params.env
 firebase-debug.log
+database-debug.log
+ui-debug.log
 .DS_Store
 mods-test-data/key.json
 .gradle
@@ -10,5 +14,9 @@ build
 *.iml
 local.properties
 coverage
-package-lock.json
 yarn.lock
+_emulator/pubsub-debug.log
+firestore-debug.log
+pubsub-debug.log
+tmp/
+fixtures/

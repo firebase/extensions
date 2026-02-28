@@ -13,10 +13,10 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.1.3
+version: 0.2.9
 specVersion: v1beta
 
-displayName: Export Collections to BigQuery
+displayName: Stream Firestore to BigQuery
 description:
   Sends realtime, incremental updates from a specified Cloud Firestore
   collection to BigQuery.
@@ -38,91 +38,661 @@ contributors:
 billingRequired: true
 
 apis:
-  - apiName: bigquery-json.googleapis.com
+  - apiName: bigquery.googleapis.com
     reason: Mirrors data from your Cloud Firestore collection in BigQuery.
 
 roles:
   - role: bigquery.dataEditor
     reason: Allows the extension to configure and export data into BigQuery.
 
+  - role: datastore.user
+    reason: Allows the extension to write updates to the database.
+
+  - role: bigquery.user
+    reason:
+      Allows the extension to create and manage BigQuery materialized views.
+
 resources:
   - name: fsexportbigquery
-    type: firebaseextensions.v1beta.function
+    type: firebaseextensions.v1beta.v2function
     description:
       Listens for document changes in your specified Cloud Firestore collection,
       then exports the changes into BigQuery.
     properties:
-      sourceDirectory: .
-      location: ${LOCATION}
+      sourceDirectory: functions
+      buildConfig:
+        runtime: nodejs22
       eventTrigger:
-        eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{documentId}
+        eventType: google.cloud.firestore.document.v1.written
+        triggerRegion: ${DATABASE_REGION}
+        eventFilters:
+          - attribute: database
+            value: ${DATABASE}
+          - attribute: document
+            value: ${COLLECTION_PATH}/{documentId}
+            operator: match-path-pattern
+
+  - name: syncBigQuery
+    type: firebaseextensions.v1beta.function
+    description: >-
+      A task-triggered function that gets called on BigQuery sync
+    properties:
+      runtime: nodejs22
+      taskQueueTrigger:
+        rateLimits:
+          maxConcurrentDispatches: 500
+          maxDispatchesPerSecond: ${param:MAX_DISPATCHES_PER_SECOND}
+        retryConfig:
+          maxAttempts: 5
+          minBackoffSeconds: 60
+
+  - name: initBigQuerySync
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Runs configuration for sycning with BigQuery
+    properties:
+      runtime: nodejs22
+      taskQueueTrigger:
+        retryConfig:
+          maxAttempts: 15
+          minBackoffSeconds: 60
+
+  - name: setupBigQuerySync
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Runs configuration for sycning with BigQuery
+    properties:
+      runtime: nodejs22
+      taskQueueTrigger:
+        retryConfig:
+          maxAttempts: 15
+          minBackoffSeconds: 60
 
 params:
-  - param: LOCATION
-    type: select
-    label: Cloud Functions location
+  - param: DATASET_LOCATION
+    label: BigQuery Dataset location
     description: >-
-      Where do you want to deploy the functions created for this extension?  You
-      usually want a location close to your database. For help selecting a
-      location, refer to the [location selection
-      guide](https://firebase.google.com/docs/functions/locations).  Note that
-      this extension locates your BigQuery dataset in `us-central1`.
+      Where do you want to deploy the BigQuery dataset created for this
+      extension? For help selecting a location, refer to the [location selection
+      guide](https://cloud.google.com/bigquery/docs/locations).
+    type: select
     options:
       - label: Iowa (us-central1)
         value: us-central1
+      - label: Las Vegas (us-west4)
+        value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
+      - label: Los Angeles (us-west2)
+        value: us-west2
+      - label: Montreal (northamerica-northeast1)
+        value: northamerica-northeast1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Oregon (us-west1)
+        value: us-west1
+      - label: Salt Lake City (us-west3)
+        value: us-west3
+      - label: Sao Paulo (southamerica-east1)
+        value: southamerica-east1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: Finland (europe-north1)
+        value: europe-north1
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Netherlands (europe-west4)
+        value: europe-west4
+      - label: Zurich (europe-west6)
+        value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Jakarta (asia-southeast2)
+        value: asia-southeast2
+      - label: Mumbai (asia-south1)
+        value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
+      - label: Osaka (asia-northeast2)
+        value: asia-northeast2
+      - label: Seoul (asia-northeast3)
+        value: asia-northeast3
+      - label: Sydney (australia-southeast1)
+        value: australia-southeast1
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+      - label: United States (multi-regional)
+        value: us
+      - label: Europe (multi-regional)
+        value: eu
+      - label: Johannesburg (africa-south1)
+        value: africa-south1
+      - label: Tel Aviv (me-west1)
+        value: me-west1
+      - label: Doha (me-central1)
+        value: me-central1
+      - label: Dammam (me-central2)
+        value: me-central2
+      - label: Zürich (europe-west6)
+        value: europe-west6
+      - label: Turin (europe-west12)
+        value: europe-west12
+      - label: Stockholm (europe-north2)
+        value: europe-north2
+      - label: Paris (europe-west9)
+        value: europe-west9
+      - label: Milan (europe-west8)
+        value: europe-west8
+      - label: Madrid (europe-southwest1)
+        value: europe-southwest1
+      - label: Berlin (europe-west10)
+        value: europe-west10
+      - label: Melbourne (australia-southeast2)
+        value: australia-southeast2
+      - label: Delhi (asia-south2)
+        value: asia-south2
+      - label: Toronto (northamerica-northeast2)
+        value: northamerica-northeast2
+      - label: Santiago (southamerica-west1)
+        value: southamerica-west1
+      - label: Mexico (northamerica-south1)
+        value: northamerica-south1
+      - label: Dallas (us-south1)
+        value: us-south1
+      - label: Columbus, Ohio (us-east5)
+        value: us-east5
+    default: us
+    required: true
+    immutable: true
+
+  - param: BIGQUERY_PROJECT_ID
+    label: BigQuery Project ID
+    description: >-
+      Override the default project for BigQuery instance. This can allow updates
+      to be directed to to a BigQuery instance on another GCP project.
+    type: string
+    default: ${PROJECT_ID}
+    required: true
+
+  - param: DATABASE
+    label: Firestore Instance ID
+    description: >
+      The Firestore database to use. Use "(default)" for the default database.
+      You can view your available Firestore databases at
+      https://console.cloud.google.com/firestore/databases.
+    example: (default)
+    default: (default)
+    required: true
+
+  - param: DATABASE_REGION
+    label: Firestore Instance Location
+    description: >
+      Where is the Firestore database located? You can check your current
+      database location at https://console.cloud.google.com/firestore/databases.
+    type: select
+    options:
+      # Multi-region locations
+      - label: Multi-region (Europe - Belgium and Netherlands)
+        value: eur3
+      - label: Multi-region (United States)
+        value: nam5
+      - label: Multi-region (Iowa, North Virginia, and Oklahoma)
+        value: nam7
+
+      # North America
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: Oregon (us-west1)
+        value: us-west1
+      - label: Los Angeles (us-west2)
+        value: us-west2
+      - label: Salt Lake City (us-west3)
+        value: us-west3
+      - label: Las Vegas (us-west4)
+        value: us-west4
       - label: South Carolina (us-east1)
         value: us-east1
       - label: Northern Virginia (us-east4)
         value: us-east4
+      - label: Columbus (us-east5)
+        value: us-east5
+      - label: Dallas (us-south1)
+        value: us-south1
+      - label: Montreal (northamerica-northeast1)
+        value: northamerica-northeast1
+      - label: Toronto (northamerica-northeast2)
+        value: northamerica-northeast2
+      - label: Queretaro (northamerica-south1)
+        value: northamerica-south1
+
+      # South America
+      - label: Sao Paulo (southamerica-east1)
+        value: southamerica-east1
+      - label: Santiago (southamerica-west1)
+        value: southamerica-west1
+
+      # Europe
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
         value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
+      - label: Netherlands (europe-west4)
+        value: europe-west4
+      - label: Zurich (europe-west6)
+        value: europe-west6
+      - label: Milan (europe-west8)
+        value: europe-west8
+      - label: Paris (europe-west9)
+        value: europe-west9
+      - label: Berlin (europe-west10)
+        value: europe-west10
+      - label: Turin (europe-west12)
+        value: europe-west12
+      - label: Madrid (europe-southwest1)
+        value: europe-southwest1
+      - label: Finland (europe-north1)
+        value: europe-north1
+      - label: Stockholm (europe-north2)
+        value: europe-north2
+      - label: Warsaw (europe-central2)
+        value: europe-central2
+
+      # Middle East
+      - label: Doha (me-central1)
+        value: me-central1
+      - label: Dammam (me-central2)
+        value: me-central2
+      - label: Tel Aviv (me-west1)
+        value: me-west1
+
+      # Asia
+      - label: Mumbai (asia-south1)
+        value: asia-south1
+      - label: Delhi (asia-south2)
+        value: asia-south2
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
+      - label: Jakarta (asia-southeast2)
+        value: asia-southeast2
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
-    default: us-central1
+      - label: Osaka (asia-northeast2)
+        value: asia-northeast2
+      - label: Seoul (asia-northeast3)
+        value: asia-northeast3
+
+      # Australia
+      - label: Sydney (australia-southeast1)
+        value: australia-southeast1
+      - label: Melbourne (australia-southeast2)
+        value: australia-southeast2
+
+      # Africa
+      - label: Johannesburg (africa-south1)
+        value: africa-south1
     required: true
-    immutable: true
+    immutable: false
 
   - param: COLLECTION_PATH
-    type: string
     label: Collection path
     description: >-
       What is the path of the collection that you would like to export? You may
       use `{wildcard}` notation to match a subcollection of all documents in a
-      collection (for example: `chatrooms/{chatid}/posts`).
-    default: posts
+      collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore
+      Document IDs from `{wildcards}` can be returned in `path_params` as a JSON
+      formatted string.
+    type: string
     example: posts
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage:
+      Firestore collection paths must be an odd number of segments separated by
+      slashes, e.g. "path/to/collection".
+    default: posts
     required: true
 
+  - param: WILDCARD_IDS
+    label: Enable Wildcard Column field with Parent Firestore Document IDs
+    description: >-
+      If enabled, creates a column containing a JSON object of all wildcard ids
+      from a documents path.
+    type: select
+    options:
+      - label: No
+        value: false
+      - label: Yes
+        value: true
+    default: false
+    required: false
+
   - param: DATASET_ID
-    type: string
     label: Dataset ID
     description: >-
       What ID would you like to use for your BigQuery dataset? This extension
       will create the dataset, if it doesn't already exist.
+    type: string
+    example: firestore_export
     validationRegex: "^[a-zA-Z0-9_]+$"
     validationErrorMessage: >
       BigQuery dataset IDs must be alphanumeric (plus underscores) and must be
       no more than 1024 characters.
     default: firestore_export
-    example: firestore_export
     required: true
 
   - param: TABLE_ID
-    type: string
     label: Table ID
     description: >-
       What identifying prefix would you like to use for your table and view
       inside your BigQuery dataset? This extension will create the table and
       view, if they don't already exist.
+    type: string
+    example: posts
     validationRegex: "^[a-zA-Z0-9_]+$"
     validationErrorMessage: >
       BigQuery table IDs must be alphanumeric (plus underscores) and must be no
       more than 1024 characters.
     default: posts
-    example: posts
     required: true
+
+  - param: TABLE_PARTITIONING
+    label: BigQuery SQL table Time Partitioning option type
+    description: >-
+      This parameter will allow you to partition the BigQuery table and BigQuery
+      view created by the extension based on data ingestion time. You may select
+      the granularity of partitioning based upon one of: HOUR, DAY, MONTH, YEAR.
+      This will generate one partition per day, hour, month or year,
+      respectively.
+    type: select
+    options:
+      - label: hour
+        value: HOUR
+      - label: day
+        value: DAY
+      - label: month
+        value: MONTH
+      - label: year
+        value: YEAR
+      - label: none
+        value: NONE
+    default: NONE
+    required: false
+
+  - param: TIME_PARTITIONING_FIELD
+    label: BigQuery Time Partitioning column name
+    description: >-
+      BigQuery table column/schema field name for TimePartitioning. You can
+      choose schema available as `timestamp` OR a new custom defined column that
+      will be assigned to the selected Firestore Document field below. Defaults
+      to pseudo column _PARTITIONTIME if unspecified. Cannot be changed if Table
+      is already partitioned.
+    type: string
+    required: false
+
+  - param: TIME_PARTITIONING_FIRESTORE_FIELD
+    label:
+      Firestore Document field name for BigQuery SQL Time Partitioning field
+      option
+    description: >-
+      This parameter will allow you to partition the BigQuery table created by
+      the extension based on selected. The Firestore Document field value must
+      be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or
+      Firestore timestamp(will be converted to BigQuery TIMESTAMP). Cannot be
+      changed if Table is already partitioned.
+       example: `postDate`(Ensure that the Firestore-BigQuery export extension
+      creates the dataset and table before initiating any backfill scripts.
+       This step is crucial for the partitioning to function correctly. It is
+      essential for the script to insert data into an already partitioned
+      table.)
+    type: string
+    required: false
+
+  - param: TIME_PARTITIONING_FIELD_TYPE
+    label: BigQuery SQL Time Partitioning table schema field(column) type
+    description: >-
+      Parameter for BigQuery SQL schema field type for the selected Time
+      Partitioning Firestore Document field option. Cannot be changed if Table
+      is already partitioned.
+    type: select
+    options:
+      - label: TIMESTAMP
+        value: TIMESTAMP
+      - label: DATETIME
+        value: DATETIME
+      - label: DATE
+        value: DATE
+      - label: omit
+        value: omit
+    default: omit
+    required: false
+
+  - param: CLUSTERING
+    label: BigQuery SQL table clustering
+    description: >-
+      This parameter allows you to set up clustering for the BigQuery table
+      created by the extension. Specify up to 4 comma-separated fields (for
+      example:  `data,document_id,timestamp` - no whitespaces). The order of the
+      specified  columns determines the sort order of the data. 
+
+      Note: Cluster columns must be top-level, non-repeated columns of one of
+      the  following types: BIGNUMERIC, BOOL, DATE, DATETIME, GEOGRAPHY, INT64,
+      NUMERIC,  RANGE, STRING, TIMESTAMP. Clustering will not be added if a
+      field with an invalid type is present in this parameter.
+
+      Available schema extensions table fields for clustering include:
+      `document_id, document_name, timestamp, event_id,  operation, data`.
+    type: string
+    validationRegex: ^[^,\s]+(?:,[^,\s]+){0,3}$
+    validationErrorMessage:
+      No whitespaces. Max 4 fields. e.g. `data,timestamp,event_id,operation`
+    example: data,document_id,timestamp
+    required: false
+
+  - param: MAX_DISPATCHES_PER_SECOND
+    label: Maximum number of synced documents per second
+    description: >-
+      This parameter will set the maximum number of syncronised documents per
+      second with BQ. Please note, any other external updates to a Big Query
+      table will be included within this quota. Ensure that you have a set a low
+      enough number to compensate. Defaults to 100.
+    type: string
+    validationRegex: ^([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)$
+    validationErrorMessage: Please select a number between 1 and 500
+    default: 100
+    required: false
+
+  - param: VIEW_TYPE
+    label: View Type
+    description: >-
+      Select the type of view to create in BigQuery. A regular view is a virtual
+      table defined by a SQL query.  A materialized view persists the results of
+      a query for faster access, with either incremental or  non-incremental
+      updates. Please note that materialized views in this extension come with
+      several  important caveats and limitations - carefully review the
+      pre-install documentation before selecting  these options to ensure they
+      are appropriate for your use case.
+    type: select
+    options:
+      - label: View
+        value: view
+      - label: Materialized View (Incremental)
+        value: materialized_incremental
+      - label: Materialized View (Non-incremental)
+        value: materialized_non_incremental
+    default: view
+    required: true
+
+  - param: MAX_STALENESS
+    label: Maximum Staleness Duration
+    description: >-
+      For materialized views only: Specifies the maximum staleness acceptable
+      for the materialized view.  Should be specified as an INTERVAL value
+      following BigQuery SQL syntax.  This parameter will only take effect if
+      View Type is set to a materialized view option.
+    type: string
+    example: INTERVAL "8:0:0" HOUR TO SECOND
+    required: false
+
+  - param: REFRESH_INTERVAL_MINUTES
+    label: Refresh Interval (Minutes)
+    description: >-
+      For materialized views only: Specifies how often the materialized view
+      should be refreshed, in minutes.  This parameter will only take effect if
+      View Type is set to a materialized view option.
+    type: string
+    example: 60
+    validationRegex: ^[1-9][0-9]*$
+    validationErrorMessage: Must be a positive integer
+    required: false
+
+  - param: BACKUP_COLLECTION
+    label: Backup Collection Name
+    description: >-
+      This (optional) parameter will allow you to specify a collection for which
+      failed BigQuery updates will be written to.
+    type: string
+
+  - param: TRANSFORM_FUNCTION
+    label: Transform function URL
+    description: >-
+      Specify a function URL to call that will transform the payload that will
+      be written to BigQuery. See the pre-install documentation for more
+      details.
+    example: https://us-west1-my-project-id.cloudfunctions.net/myTransformFunction
+    type: string
+    required: false
+
+  - param: USE_NEW_SNAPSHOT_QUERY_SYNTAX
+    label: Use new query syntax for snapshots
+    description: >-
+      If enabled, snapshots will be generated with the new query syntax, which
+      should be more performant, and avoid potential resource limitations.
+    type: select
+    options:
+      - label: Yes
+        value: yes
+      - label: No
+        value: no
+    default: no
+    required: true
+
+  - param: EXCLUDE_OLD_DATA
+    label: Exclude old data payloads
+    description: >-
+      If enabled, table rows will never contain old data (document snapshot
+      before the Firestore onDocumentUpdate event: `change.before.data()`). The
+      reduction in data should be more performant, and avoid potential resource
+      limitations.
+    type: select
+    required: false
+    default: no
+    options:
+      - label: Yes
+        value: yes
+      - label: No
+        value: no
+
+  - param: KMS_KEY_NAME
+    label: Cloud KMS key name
+    description: >-
+      Instead of Google managing the key encryption keys that protect your data,
+      you control and manage key encryption keys in Cloud KMS. If this parameter
+      is set, the extension will specify the KMS key name when creating the BQ
+      table. See the PREINSTALL.md for more details.
+    type: string
+    validationRegex: "projects/([^/]+)/locations/([^/]+)/keyRings/([^/]+)/cryptoKeys/([^/]+)"
+    validationErrorMessage:
+      The key name must be of the format
+      'projects/PROJECT_NAME/locations/KEY_RING_LOCATION/keyRings/KEY_RING_ID/cryptoKeys/KEY_ID'.
+    required: false
+
+  - param: MAX_ENQUEUE_ATTEMPTS
+    label: Maximum number of enqueue attempts
+    description: >-
+      This parameter will set the maximum number of attempts to enqueue a
+      document to cloud tasks for export to BigQuery.
+    type: string
+    validationRegex: ^(10|[1-9])$
+    validationErrorMessage: Please select an integer between 1 and 10
+    default: 3
+
+  - param: LOG_LEVEL
+    label: Log level
+    description: >-
+      The log level for the extension. The log level controls the verbosity of
+      the extension's logs. The available log levels are: debug, info, warn, and
+      error. To reduce the volume of logs, use a log level of warn or error.
+    type: select
+    options:
+      - label: Debug
+        value: debug
+      - label: Info
+        value: info
+      - label: Warn
+        value: warn
+      - label: Error
+        value: error
+      - label: Silent
+        value: silent
+    default: info
+    required: true
+
+events:
+  # OLD event types for backward compatibility
+  - type: firebase.extensions.firestore-counter.v1.onStart
+    description:
+      Occurs when a trigger has been called within the Extension, and will
+      include data such as the context of the trigger request.
+  - type: firebase.extensions.firestore-counter.v1.onSuccess
+    description:
+      Occurs when a task completes successfully. The event will contain further
+      details about specific results.
+  - type: firebase.extensions.firestore-counter.v1.onError
+    description:
+      Occurs when an issue has been experienced in the Extension. This will
+      include any error data that has been included within the Error Exception.
+  - type: firebase.extensions.firestore-counter.v1.onCompletion
+    description:
+      Occurs when the function is settled. Provides no customized data other
+      than the context.
+
+  # NEW event types following the updated naming convention
+  - type: firebase.extensions.firestore-bigquery-export.v1.onStart
+    description:
+      Occurs when a trigger has been called within the Extension, and will
+      include data such as the context of the trigger request.
+  - type: firebase.extensions.firestore-bigquery-export.v1.onSuccess
+    description:
+      Occurs when a task completes successfully. The event will contain further
+      details about specific results.
+  - type: firebase.extensions.firestore-bigquery-export.v1.onError
+    description:
+      Occurs when an issue has been experienced in the Extension. This will
+      include any error data that has been included within the Error Exception.
+  - type: firebase.extensions.firestore-bigquery-export.v1.onCompletion
+    description:
+      Occurs when the function is settled. Provides no customized data other
+      than the context.
+  - type: firebase.extensions.big-query-export.v1.sync.start
+    description: Occurs on a firestore document write event.
+
+lifecycleEvents:
+  onInstall:
+    function: initBigQuerySync
+    processingMessage: Configuring BigQuery Sync.
+  onUpdate:
+    function: setupBigQuerySync
+    processingMessage: Configuring BigQuery Sync
+  onConfigure:
+    function: setupBigQuerySync
+    processingMessage: Configuring BigQuery Sync

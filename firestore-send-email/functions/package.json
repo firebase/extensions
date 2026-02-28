@@ -1,0 +1,48 @@
+{
+  "name": "firestore-send-email-functions",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "prepare": "npm run build",
+    "build": "npm run clean && npm run compile",
+    "build:watch": "npm run clean && tsc --watch",
+    "clean": "rimraf lib",
+    "compile": "tsc",
+    "local:emulator": "cd ../../_emulator && firebase emulators:start -P demo-test",
+    "test": "cd ../../_emulator && firebase emulators:exec --only extensions jest -P demo-test",
+    "testIfEmulatorRunning": "wait-on tcp:4001 && jest",
+    "test:local": "concurrently --kill-others \"npm run local:emulator\" \"npm run testIfEmulatorRunning\"",
+    "test:watch": "concurrently \"npm run local:emulator\" \"jest --watch\"",
+    "test:coverage": "concurrently --kill-others \"npm run local:emulator\" \"wait-on tcp:4001 && jest --coverage\"",
+    "test:e2e:sendgrid": "cd ../../_emulator && firebase emulators:exec --project=demo-test \" cd ../firestore-send-email/functions && E2E_SENDGRID=true jest __tests__/e2e/sendgrid.test.ts\"",
+    "generate-readme": "firebase ext:info .. --markdown > ../README.md"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.4",
+    "@types/express-serve-static-core": "4.17.30",
+    "@types/node": "^20.10.3",
+    "@types/nodemailer": "^6.2.1",
+    "firebase-admin": "^13.2.0",
+    "firebase-functions": "^6.3.2",
+    "handlebars": "^4.5.3",
+    "nodemailer": "^8.0.1",
+    "rimraf": "^2.6.3",
+    "smtp-server": "^3.13.4",
+    "typescript": "^5.7.3",
+    "wait-on": "^7.2.0",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/jest": "29.5.0",
+    "@types/nodemailer-sendgrid": "^1.0.3",
+    "concurrently": "^7.2.1",
+    "firebase-functions-test": "^0.2.3",
+    "jest": "29.5.0",
+    "mocked-env": "^1.3.2",
+    "ts-jest": "29.1.2"
+  },
+  "private": true
+}

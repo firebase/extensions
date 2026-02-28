@@ -14,26 +14,27 @@
  * limitations under the License.
  */
 
+import { logger } from "firebase-functions";
 import config from "./config";
 
 export const complete = (uid: string) => {
-  console.log(`Successfully removed data for user: ${uid}`);
+  logger.log(`Successfully removed data for user: ${uid}`);
 };
 
 export const firestoreDeleted = () => {
-  console.log("Finished deleting user data from Cloud Firestore");
+  logger.log("Finished deleting user data from Cloud Firestore");
 };
 
 export const firestoreDeleting = () => {
-  console.log("Deleting user data from Cloud Firestore");
+  logger.log("Deleting user data from Cloud Firestore");
 };
 
 export const firestoreNotConfigured = () => {
-  console.log("Cloud Firestore paths are not configured, skipping");
+  logger.log("Cloud Firestore paths are not configured, skipping");
 };
 
 export const firestorePathDeleted = (path: string, recursive: boolean) => {
-  console.log(
+  logger.log(
     `Deleted: '${path}' from Cloud Firestore ${
       recursive ? "with recursive delete" : ""
     }`
@@ -41,7 +42,7 @@ export const firestorePathDeleted = (path: string, recursive: boolean) => {
 };
 
 export const firestorePathDeleting = (path: string, recursive: boolean) => {
-  console.log(
+  logger.log(
     `Deleting: '${path}' from Cloud Firestore ${
       recursive ? "with recursive delete" : ""
     }`
@@ -49,68 +50,78 @@ export const firestorePathDeleting = (path: string, recursive: boolean) => {
 };
 
 export const firestorePathError = (path: string, err: Error) => {
-  console.error(`Error when deleting: '${path}' from Cloud Firestore`, err);
+  logger.error(`Error when deleting: '${path}' from Cloud Firestore`, err);
 };
 
 export const init = () => {
-  console.log("Initializing extension with configuration", config);
+  logger.log("Initializing extension with configuration", config);
 };
 
 export const rtdbDeleted = () => {
-  console.log("Finished deleting user data from the Realtime Database");
+  logger.log("Finished deleting user data from the Realtime Database");
 };
 
 export const rtdbDeleting = () => {
-  console.log("Deleting user data from the Realtime Database");
+  logger.log("Deleting user data from the Realtime Database");
 };
 
 export const rtdbPathDeleted = (path: string) => {
-  console.log(`Deleted: '${path}' from the Realtime Database`);
+  logger.log(`Deleted: '${path}' from the Realtime Database`);
 };
 
 export const rtdbNotConfigured = () => {
-  console.log("Realtime Database paths are not configured, skipping");
+  logger.log("Realtime Database paths are not configured, skipping");
 };
 
 export const rtdbPathDeleting = (path: string) => {
-  console.log(`Deleting: '${path}' from the Realtime Database`);
+  logger.log(`Deleting: '${path}' from the Realtime Database`);
 };
 
 export const rtdbPathError = (path: string, err: Error) => {
-  console.error(
+  logger.error(
     `Error when deleting: '${path}' from the Realtime Database`,
     err
   );
 };
 
 export const start = () => {
-  console.log("Started extension execution with configuration", config);
+  logger.log("Started extension execution with configuration", config);
 };
 
 export const storageDeleted = () => {
-  console.log("Finished deleting user data from Cloud Storage");
+  logger.log("Finished deleting user data from Cloud Storage");
 };
 
 export const storageDeleting = () => {
-  console.log("Deleting user data from Cloud Storage");
+  logger.log("Deleting user data from Cloud Storage");
 };
 
 export const storageNotConfigured = () => {
-  console.log("Cloud Storage paths are not configured, skipping");
+  logger.log("Cloud Storage paths are not configured, skipping");
 };
 
 export const storagePathDeleted = (path: string) => {
-  console.log(`Deleted: '${path}' from Cloud Storage`);
+  logger.log(`Deleted: '${path}' from Cloud Storage`);
 };
 
 export const storagePathDeleting = (path: string) => {
-  console.log(`Deleting: '${path}' from Cloud Storage`);
+  logger.log(`Deleting: '${path}' from Cloud Storage`);
 };
 
 export const storagePath404 = (path: string) => {
-  console.log(`File: '${path}' does not exist in Cloud Storage, skipping`);
+  logger.log(`File: '${path}' does not exist in Cloud Storage, skipping`);
 };
 
 export const storagePathError = (path: string, err: Error) => {
-  console.error(`Error deleting: '${path}' from Cloud Storage`, err);
+  logger.error(`Error deleting: '${path}' from Cloud Storage`, err);
 };
+
+export const customFunctionError = (err: Error) => {
+  logger.error(`Call to custom hook function threw an error`, err);
+};
+
+export function warnInvalidPaths(invalidPathCount: number, uid: string) {
+  logger.warn(
+    `Attempted to delete ${invalidPathCount} invalid paths for deleted user ${uid}`
+  );
+}

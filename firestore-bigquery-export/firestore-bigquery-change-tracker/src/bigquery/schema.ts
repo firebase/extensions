@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-import * as bigquery from "@google-cloud/bigquery";
-import * as errors from "../errors";
-import * as logs from "../logs";
-import * as sqlFormatter from "sql-formatter";
-
 export type BigQueryFieldMode = "NULLABLE" | "REPEATED" | "REQUIRED";
 export type BigQueryFieldType =
   | "BOOLEAN"
@@ -64,11 +59,35 @@ export const timestampField = bigQueryField(
 export const latitudeField = bigQueryField("latitude", "NUMERIC");
 export const longitudeField = bigQueryField("longitude", "NUMERIC");
 
+export const documentIdField = {
+  name: "document_id",
+  mode: "NULLABLE",
+  type: "STRING",
+  description: "The document id as defined in the firestore database.",
+};
+
+export const documentPathParams = {
+  name: "path_params",
+  mode: "NULLABLE",
+  type: "STRING",
+  description:
+    "JSON string representing wildcard params with Firestore Document ids",
+};
+
+export const oldDataField = {
+  name: "old_data",
+  mode: "NULLABLE",
+  type: "STRING",
+  description:
+    "The full JSON representation of the document state before the indicated operation is applied. This field will be null for CREATE operations.",
+};
+
 /*
  * We cannot specify a schema for view creation, and all view columns default
  * to the NULLABLE mode.
  */
-export const RawChangelogViewSchema: any = {
+
+export const RawChangelogViewSchema = {
   fields: [
     {
       name: "timestamp",
@@ -104,10 +123,18 @@ export const RawChangelogViewSchema: any = {
       description:
         "The full JSON representation of the current document state.",
     },
+    {
+      name: "old_data",
+      mode: "NULLABLE",
+      type: "STRING",
+      description:
+        "The full JSON representation of the document state before the indicated operation is applied.",
+    },
+    documentIdField,
   ],
 };
 
-export const RawChangelogSchema: any = {
+export const RawChangelogSchema = {
   fields: [
     {
       name: "timestamp",
@@ -143,5 +170,13 @@ export const RawChangelogSchema: any = {
       description:
         "The full JSON representation of the document state after the indicated operation is applied. This field will be null for DELETE operations.",
     },
+    {
+      name: "old_data",
+      mode: "NULLABLE",
+      type: "STRING",
+      description:
+        "The full JSON representation of the document state before the indicated operation is applied. This field will be null for CREATE operations.",
+    },
+    documentIdField,
   ],
 };

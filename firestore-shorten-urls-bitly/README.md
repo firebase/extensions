@@ -1,4 +1,6 @@
-# Shorten URLs
+# Shorten URLs in Firestore
+
+**Author**: Firebase (**[https://firebase.google.com](https://firebase.google.com)**)
 
 **Description**: Shortens URLs written to a specified Cloud Firestore collection (uses Bitly).
 
@@ -22,22 +24,18 @@ Before installing this extension, make sure that you've [set up a Cloud Firestor
 You must also have a Bitly account and access token before installing this extension.
 
 #### Billing
+To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 
-This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
-- Cloud Firestore
-- Cloud Functions
-
-When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
-
-Usage of this extension also requires you to have a Bitly account. You are responsible for any associated costs with your usage of Bitly.
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
+  - Cloud Firestore
+  - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))
+- This extension also uses these services:
+  - [Bitly](https://bitly.com/). You must have a Bitly account and you're responsible for any associated charges.
 
 
 
 
 **Configuration Parameters:**
-
-* Cloud Functions location: Where do you want to deploy the functions created for this extension? You usually want a location close to your database. For help selecting a location, refer to the [location selection guide](https://firebase.google.com/docs/functions/locations).
 
 * Bitly access token: What is your Bitly access token? Generate this access token using [Bitly](https://bitly.com/a/oauth_apps).
 
@@ -51,11 +49,17 @@ Usage of this extension also requires you to have a Bitly account. You are respo
 * Short URL field name: What is the name of the field where you want to store your shortened URLs?
 
 
+* Firestore Instance ID: The Firestore database to use. Use "(default)" for the default database. You can view your available Firestore databases at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).
 
 
-**Cloud Functions:**
+* Firestore Instance Location: Where is the Firestore database located? You can check your current database location at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).
 
-* **fsurlshortener:** Listens for writes of new URLs to your specified Cloud Firestore collection, shortens the URLs, then writes the shortened form back to the same document.
+
+
+
+**Other Resources**:
+
+* fsurlshortener (firebaseextensions.v1beta.v2function)
 
 
 

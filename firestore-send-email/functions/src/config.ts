@@ -14,12 +14,31 @@
  * limitations under the License.
  */
 
-export default {
+import { AuthenticatonType, Config } from "./types";
+
+const config: Config = {
   location: process.env.LOCATION,
+  database: process.env.DATABASE || "(default)",
+  databaseRegion: process.env.DATABASE_REGION || "us-central1",
   mailCollection: process.env.MAIL_COLLECTION,
   smtpConnectionUri: process.env.SMTP_CONNECTION_URI,
+  smtpPassword: process.env.SMTP_PASSWORD,
   defaultFrom: process.env.DEFAULT_FROM,
   defaultReplyTo: process.env.DEFAULT_REPLY_TO,
   usersCollection: process.env.USERS_COLLECTION,
   templatesCollection: process.env.TEMPLATES_COLLECTION,
+  testing: process.env.TESTING === "true",
+  TTLExpireType: process.env.TTL_EXPIRE_TYPE,
+  TTLExpireValue: parseInt(process.env.TTL_EXPIRE_VALUE),
+  tls: process.env.TLS_OPTIONS || "{}",
+  host: process.env.HOST,
+  port: parseInt(process.env.OAUTH_PORT, null),
+  secure: process.env.OAUTH_SECURE === "true",
+  user: process.env.USER,
+  clientId: process.env.CLIENT_ID,
+  clientSecret: process.env.CLIENT_SECRET,
+  refreshToken: process.env.REFRESH_TOKEN,
+  authenticationType: process.env.AUTH_TYPE as AuthenticatonType,
 };
+
+export default config;

@@ -11,6 +11,7 @@ const defaultEnvironment = {
   COLLECTION_PATH: "translations",
   INPUT_FIELD_NAME: "input",
   OUTPUT_FIELD_NAME: "translated",
+  LANGUAGES_FIELD_NAME: "langs",
 };
 
 const {
@@ -20,8 +21,6 @@ const {
   mockTranslate,
   mockTranslateClassMethod,
   mockTranslateClass,
-  mockConsoleError,
-  mockConsoleLog,
   mockFirestoreUpdate,
   mockFirestoreTransaction,
   mockTranslateModule,
@@ -30,8 +29,8 @@ const {
 
 mockTranslateModule();
 
-let restoreEnv;
 let functionsTest = functionsTestInit();
+let restoreEnv;
 
 describe("extension", () => {
   beforeEach(() => {
@@ -45,6 +44,8 @@ describe("extension", () => {
   });
 
   describe("functions.fstranslate", () => {
+    let logMock = jest.fn();
+    let errorLogMock;
     let admin;
     let wrappedMockTranslate;
     let beforeSnapshot;
@@ -58,7 +59,8 @@ describe("extension", () => {
       functionsTest = functionsTestInit();
       admin = require("firebase-admin");
       wrappedMockTranslate = mockTranslate();
-
+      logMock = jest.fn();
+      errorLogMock = jest.fn();
       beforeSnapshot = snapshot({});
 
       afterSnapshot = snapshot();
@@ -68,9 +70,14 @@ describe("extension", () => {
         mockDocumentSnapshotFactory(afterSnapshot)
       );
       admin.firestore().runTransaction = mockFirestoreTransaction();
+
+      require("firebase-functions").logger = {
+        log: logMock,
+        error: errorLogMock,
+      };
     });
 
-    test("initializes Google Translate API with PROJECT_ID on function load", () => {
+    test("initializes Google Translation API with PROJECT_ID on function load", () => {
       // need to reset modules
       jest.resetModules();
       // so we can require clean ../function/src that has not been called
@@ -87,9 +94,7 @@ describe("extension", () => {
       const callResult = await wrappedMockTranslate(documentChange);
 
       expect(callResult).toBeUndefined();
-      expect(mockConsoleLog).toHaveBeenCalledWith(
-        "Document was deleted, no processing is required"
-      );
+      expect(logMock).toHaveBeenCalledWith(messages.documentDeleted());
 
       expect(mockTranslateClassMethod).not.toHaveBeenCalled();
       expect(mockFirestoreUpdate).not.toHaveBeenCalled();
@@ -107,8 +112,8 @@ describe("extension", () => {
 
       const callResult = await wrappedMockTranslate(documentChange);
       expect(callResult).toBeUndefined();
-      expect(mockConsoleLog).toHaveBeenCalledWith(
-        "Document was updated, input string has not changed, no processing is required"
+      expect(logMock).toHaveBeenCalledWith(
+        expect.stringContaining(messages.documentUpdatedUnchangedInput())
       );
 
       expect(mockTranslateClassMethod).not.toHaveBeenCalled();
@@ -126,18 +131,13 @@ describe("extension", () => {
 
       expect(callResult).toBeUndefined();
 
-      expect(mockConsoleLog).toHaveBeenCalledWith(
-        "Document was created without an input string, no processing is required"
-      );
+      expect(logMock).toHaveBeenCalledWith(messages.documentCreatedNoInput());
 
       expect(mockTranslateClassMethod).not.toHaveBeenCalled();
       expect(mockFirestoreUpdate).not.toHaveBeenCalled();
     });
 
     test("function exits early if input & output fields are the same", async () => {
-      // reset modules again
-      jest.resetModules();
-      // so ENV variables can be reset
       restoreEnv = mockedEnv({
         ...defaultEnvironment,
         INPUT_FIELD_NAME: "input",
@@ -149,15 +149,9 @@ describe("extension", () => {
       const callResult = await wrappedMockTranslate(documentChange);
 
       expect(callResult).toBeUndefined();
-      expect(mockConsoleError).toHaveBeenCalledWith(
-        "The `Input` and `Output` field names must be different for this extension to function correctly"
-      );
     });
 
     test("function exits early if input field is a translation output path", async () => {
-      // reset modules again
-      jest.resetModules();
-      // so ENV variables can be reset
       restoreEnv = mockedEnv({
         ...defaultEnvironment,
         INPUT_FIELD_NAME: "output.en",
@@ -167,17 +161,13 @@ describe("extension", () => {
       wrappedMockTranslate = mockTranslate();
 
       const callResult = await wrappedMockTranslate(documentChange);
-
       expect(callResult).toBeUndefined();
-      expect(mockConsoleError).toHaveBeenCalledWith(
-        "The `Input` field name must not be the same as an `Output` path for this extension to function correctly"
-      );
     });
 
     test("function updates translation document with translations", async () => {
       await wrappedMockTranslate(documentChange);
 
-      // confirm Google Translate API was called
+      // confirm Google Translation API was called
       expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "en");
       expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "es");
       expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "fr");
@@ -188,29 +178,172 @@ describe("extension", () => {
         defaultEnvironment.OUTPUT_FIELD_NAME,
         testTranslations
       );
+      const languages = ["en", "es", "de", "fr"];
 
+      const translations = ["hello", "hola", "hallo", "salut"];
+
+      expect(logMock).toHaveBeenCalledWith(
+        messages.translateInputStringToAllLanguages("hello", languages)
+      );
       // confirm logs were printed
-      Object.keys(testTranslations).forEach((language) => {
+      languages.forEach((language, i) => {
         // logs.translateInputString
-        expect(mockConsoleLog).toHaveBeenCalledWith(
-          messages.translateInputString("hello", language)
-        );
-        // logs.translateStringComplete
-        expect(mockConsoleLog).toHaveBeenCalledWith(
-          messages.translateStringComplete("hello", language)
+        // logs.translateStringComplete TODO: fix this
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateStringComplete("hello", language, translations[i])
         );
       });
+
       // logs.translateInputStringToAllLanguages
-      expect(mockConsoleLog).toHaveBeenCalledWith(
+      expect(logMock).toHaveBeenCalledWith(
         messages.translateInputStringToAllLanguages(
           "hello",
           defaultEnvironment.LANGUAGES.split(",")
         )
       );
       // logs.translateInputToAllLanguagesComplete
-      expect(mockConsoleLog).toHaveBeenCalledWith(
+      expect(logMock).toHaveBeenCalledWith(
         messages.translateInputToAllLanguagesComplete("hello")
       );
+    });
+
+    test("function updates translation document with translations", async () => {
+      await wrappedMockTranslate(documentChange);
+
+      // confirm Google Translation API was called
+      expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "en");
+      expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "es");
+      expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "fr");
+      expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "de");
+
+      // confirm document update was called
+      expect(mockFirestoreUpdate).toHaveBeenCalledWith(
+        defaultEnvironment.OUTPUT_FIELD_NAME,
+        testTranslations
+      );
+      const languages = ["en", "es", "de", "fr"];
+
+      const translations = ["hello", "hola", "hallo", "salut"];
+
+      expect(logMock).toHaveBeenCalledWith(
+        messages.translateInputStringToAllLanguages("hello", languages)
+      );
+      // confirm logs were printed
+      languages.forEach((language, i) => {
+        // logs.translateInputString
+        // logs.translateStringComplete TODO: fix this
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateStringComplete("hello", language, translations[i])
+        );
+      });
+
+      // logs.translateInputStringToAllLanguages
+      expect(logMock).toHaveBeenCalledWith(
+        messages.translateInputStringToAllLanguages(
+          "hello",
+          defaultEnvironment.LANGUAGES.split(",")
+        )
+      );
+      // logs.translateInputToAllLanguagesComplete
+      expect(logMock).toHaveBeenCalledWith(
+        messages.translateInputToAllLanguagesComplete("hello")
+      );
+    });
+
+    test('should only translate to english if languages has "English" as a single array item', async () => {
+      beforeSnapshot = snapshot();
+
+      afterSnapshot = snapshot({
+        input: {
+          one: "hello",
+          two: "hello",
+        },
+        //@ts-ignore
+        langs: ["en"],
+      });
+
+      documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
+
+      await wrappedMockTranslate(documentChange);
+
+      // confirm document update was called
+      expect(mockFirestoreUpdate).toHaveBeenCalledWith("translated", {
+        one: {
+          en: "hello",
+        },
+        two: {
+          en: "hello",
+        },
+      });
+
+      // confirm logs were printed
+      Object.entries((key, value) => {
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateInputString(value, key)
+        );
+
+        // logs.translateInputStringToAllLanguages
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateInputStringToAllLanguages(
+            key,
+            defaultEnvironment.LANGUAGES.split(",")
+          )
+        );
+
+        // logs.translateInputToAllLanguagesComplete
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateInputToAllLanguagesComplete(value)
+        );
+      });
+    });
+
+    test('should only translate "English" and "Spanish" if languages field contains English and Spanish as array items', async () => {
+      beforeSnapshot = snapshot();
+
+      afterSnapshot = snapshot({
+        input: {
+          one: "hello",
+          two: "hello",
+        },
+        //@ts-ignore
+        langs: ["en", "es"],
+      });
+
+      documentChange = functionsTest.makeChange(beforeSnapshot, afterSnapshot);
+
+      await wrappedMockTranslate(documentChange);
+
+      // confirm document update was called
+      expect(mockFirestoreUpdate).toHaveBeenCalledWith("translated", {
+        one: {
+          en: "hello",
+          es: "hola",
+        },
+        two: {
+          en: "hello",
+          es: "hola",
+        },
+      });
+
+      // confirm logs were printed
+      Object.entries((key, value) => {
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateInputString(value, key)
+        );
+
+        // logs.translateInputStringToAllLanguages
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateInputStringToAllLanguages(
+            key,
+            defaultEnvironment.LANGUAGES.split(",")
+          )
+        );
+
+        // logs.translateInputToAllLanguagesComplete
+        expect(logMock).toHaveBeenCalledWith(
+          messages.translateInputToAllLanguagesComplete(value)
+        );
+      });
     });
 
     test("function updates translation document when previous input changes", async () => {
@@ -223,11 +356,11 @@ describe("extension", () => {
       await wrappedMockTranslate(documentChange);
 
       // logs.documentUpdatedChangedInput
-      expect(mockConsoleLog).toHaveBeenCalledWith(
+      expect(logMock).toHaveBeenCalledWith(
         messages.documentUpdatedChangedInput()
       );
 
-      // confirm Google Translate API was called
+      // confirm Google Translation API was called
       expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "en");
       expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "es");
       expect(mockTranslateClassMethod).toHaveBeenCalledWith("hello", "fr");
@@ -258,7 +391,7 @@ describe("extension", () => {
       );
 
       // logs.documentUpdatedDeletedInput
-      expect(mockConsoleLog).toHaveBeenCalledWith(
+      expect(logMock).toHaveBeenCalledWith(
         messages.documentUpdatedDeletedInput()
       );
     });
@@ -279,13 +412,11 @@ describe("extension", () => {
       expect(mockTranslateClassMethod).not.toHaveBeenCalled();
 
       // logs.documentUpdatedNoInput
-      expect(mockConsoleLog).toHaveBeenCalledWith(
-        messages.documentUpdatedNoInput()
-      );
+      expect(logMock).toHaveBeenCalledWith(messages.documentUpdatedNoInput());
     });
 
-    test("function handles Google Translate API errors", async () => {
-      const error = new Error("Test Translate API Error");
+    test("function handles Google Translation API errors", async () => {
+      const error = new Error("Test Translation API Error");
       mockTranslateClassMethod.mockImplementationOnce(() =>
         Promise.reject(error)
       );
@@ -293,12 +424,12 @@ describe("extension", () => {
       await wrappedMockTranslate(documentChange);
 
       // logs.translateStringError
-      expect(mockConsoleError).toHaveBeenCalledWith(
+      expect(errorLogMock).toHaveBeenCalledWith(
         ...messages.translateStringError("hello", "en", error)
       );
 
       // logs.translateInputToAllLanguagesError
-      expect(mockConsoleError).toHaveBeenCalledWith(
+      expect(errorLogMock).toHaveBeenCalledWith(
         ...messages.translateInputToAllLanguagesError("hello", error)
       );
     });

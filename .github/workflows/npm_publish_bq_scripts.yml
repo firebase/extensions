@@ -1,0 +1,44 @@
+name: Publish npm package
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_name:
+        description: "The package name to publish"
+        required: true
+        default: "@firebaseextensions/fs-bq-schema-views"
+permissions:
+  id-token: write
+jobs:
+  publish_if_newer_version:
+    runs-on: ubuntu-latest
+    name: publish_if_newer_version
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: NPM install
+        run: npm install
+      - name: Publish BigQuery Schema Views
+        if:
+          ${{ github.event.inputs.package_name ==
+          '@firebaseextensions/fs-bq-schema-views'}}
+        run: |
+          cd firestore-bigquery-export/scripts/gen-schema-view
+          ${{ github.workspace }}/.github/workflows/scripts/npm_publish.sh
+      - name: Publish BigQuery Import Collection
+        if:
+          ${{ github.event.inputs.package_name ==
+          '@firebaseextensions/fs-bq-import-collection'}}
+        run: |
+          cd firestore-bigquery-export/scripts/import
+          ${{ github.workspace }}/.github/workflows/scripts/npm_publish.sh
+      - name: Publish BigQuery Change Tracker
+        if:
+          ${{ github.event.inputs.package_name ==
+          '@firebaseextensions/firestore-bigquery-change-tracker'}}
+        run: |
+          cd firestore-bigquery-export/firestore-bigquery-change-tracker
+          ${{ github.workspace }}/.github/workflows/scripts/npm_publish.sh

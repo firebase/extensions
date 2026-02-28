@@ -22,6 +22,7 @@ import * as util from "util";
 import {
   buildLatestSchemaSnapshotViewQuery,
   buildLatestSchemaSnapshotViewQueryFromLatestView,
+  testBuildLatestSchemaSnapshotViewQuery,
 } from "../../snapshot";
 
 const fixturesDir = __dirname + "/../fixtures";
@@ -34,7 +35,6 @@ const testTable = "test_table";
 
 const expect = chai.expect;
 const readFile = util.promisify(fs.readFile);
-const writeFile = util.promisify(fs.writeFile);
 
 process.env.PROJECT_ID = testProjectId;
 
@@ -47,21 +47,21 @@ async function readBigQuerySchema(file: string): Promise<any> {
   return require(file);
 }
 
-describe("schema snapshot view sql generation", () => {
-  it("should generate the expected sql", async () => {
+describe("view schema snapshot view sql generation", () => {
+  it("should generate the expected sql for fullSchemaLatest.sql", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/fullSchemaLatest.txt`
+      `${sqlDir}/fullSchemaLatest.sql`
     );
-    const result = buildLatestSchemaSnapshotViewQuery(
+    const result = testBuildLatestSchemaSnapshotViewQuery(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/fullSchema.json`)
     );
     expect(result.query).to.equal(expectedQuery);
   });
-  it("should generate the expected sql", async () => {
+  it("should generate the expected sql for ", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/fullSchemaLatestFromView.txt`
+      `${sqlDir}/fullSchemaLatestFromView.sql`
     );
     const result = buildLatestSchemaSnapshotViewQueryFromLatestView(
       testDataset,
@@ -72,7 +72,7 @@ describe("schema snapshot view sql generation", () => {
   });
   it("should generate the expected sql for an empty schema", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/emptySchemaLatest.txt`
+      `${sqlDir}/emptySchemaLatest.sql`
     );
     const result = buildLatestSchemaSnapshotViewQuery(
       testDataset,
@@ -83,13 +83,41 @@ describe("schema snapshot view sql generation", () => {
   });
   it("should generate the expected sql", async () => {
     const expectedQuery = await readFormattedSQL(
-      `${sqlDir}/emptySchemaLatestFromView.txt`
+      `${sqlDir}/emptySchemaLatestFromView.sql`
     );
     const result = buildLatestSchemaSnapshotViewQueryFromLatestView(
       testDataset,
       testTable,
       await readBigQuerySchema(`${schemaDir}/fullSchema.json`)
     );
+    expect(result.query).to.equal(expectedQuery);
+  });
+
+  xit("should handle renaming properties extracted from JSON data", async () => {
+    const expectedQuery = await readFormattedSQL(
+      `${sqlDir}/viewColumnRenameSchema.sql`
+    );
+    const result = testBuildLatestSchemaSnapshotViewQuery(
+      testDataset,
+      testTable,
+      await readBigQuerySchema(`${schemaDir}/columnRename.json`)
+    );
+    expect(result.query).to.equal(expectedQuery);
+  });
+
+  xit("should handle multiple nested arrays and maps extracted from JSON data", async () => {
+    const expectedQuery = await readFormattedSQL(
+      `${sqlDir}/complexSchemaLatest.sql`
+    );
+
+    console.log("expectedQuery: ", expectedQuery);
+
+    const result = testBuildLatestSchemaSnapshotViewQuery(
+      testDataset,
+      testTable,
+      await readBigQuerySchema(`${schemaDir}/complexSchema.json`)
+    );
+
     expect(result.query).to.equal(expectedQuery);
   });
 });

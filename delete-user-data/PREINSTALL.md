@@ -1,10 +1,12 @@
-Use this extension to automatically delete a user's data if the user is deleted from your authenticated users.
+Use this extension to automatically delete certain data keyed on a user ID when the user is deleted from Firebase Authentication.
 
-You can configure this extension to delete user data from any or all of the following: Cloud Firestore, Realtime Database, or Cloud Storage. Each trigger of the extension to delete data is keyed to the user's UserId.
+You can configure this extension to delete certain data keyed on a user ID from any or all of the following: Cloud Firestore, Realtime Database, or Cloud Storage. Each trigger of the extension to delete data is keyed to the user's UID.
 
-**Note:** To use this extension, you need to manage your users with Firebase Authentication.
+This extension has a few different mechanisms for discovering data keyed on a user ID for deletion that you can configure during installation. These are outlined in the [official docs](https://firebase.google.com/docs/extensions/official/delete-user-data) for this extension. The extension will only delete data that it is explicitly configured to delete based on the mechanisms provided.
 
-This extension is useful in respecting user privacy and fulfilling compliance requirements. However, using this extension does not guarantee compliance with government and industry regulations.
+To use this extension, you need to manage your users with Firebase Authentication.
+
+**NOTE: This extension may be useful in helping you respect user privacy and fulfill compliance requirements you may be subject to. However, you are responsible for assessing and determining your compliance needs and obligations, and using this extension does not guarantee compliance with government and industry regulations.**
 
 #### Additional setup
 
@@ -12,13 +14,14 @@ Depending on where you'd like to delete user data from, make sure that you've se
 
 Also, make sure that you've set up [Firebase Authentication](https://firebase.google.com/docs/auth) to manage your users.
 
+**Note about multiple Firestore databases:** This extension supports using non-default Firestore databases. During installation, you can specify which database to use via the `FIRESTORE_DATABASE_ID` parameter. Use "(default)" for the default database, or specify your named database ID.
+
 #### Billing
-
-This extension uses other Firebase or Google Cloud Platform services which may have associated charges:
-
-- Cloud Firestore
-- Firebase Realtime Database
-- Cloud Storage
-- Cloud Functions
-
-When you use Firebase Extensions, you're only charged for the underlying resources that you use. A paid-tier billing plan is only required if the extension uses a service that requires a paid-tier plan, for example calling to a Google Cloud Platform API or making outbound network requests to non-Google services. All Firebase services offer a free tier of usage. [Learn more about Firebase billing.](https://firebase.google.com/pricing)
+To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
+ 
+- This extension uses other Firebase and Google Cloud Platform services, which have associated charges if you exceed the service’s no-cost tier:
+  - Cloud Firestore
+  - Firebase Realtime Database
+  - Cloud Storage
+  - Pubsub
+  - Cloud Functions (Node.js 10+ runtime. [See FAQs](https://firebase.google.com/support/faq#extensions-pricing))

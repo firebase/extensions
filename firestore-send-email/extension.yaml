@@ -13,12 +13,13 @@
 # limitations under the License.
 
 name: firestore-send-email
-version: 0.1.4
+version: 0.2.6
 specVersion: v1beta
 
-displayName: Trigger Email
+displayName: Trigger Email from Firestore
 description:
-  Composes and sends an email based on the contents of a document written to a specified Cloud Firestore collection.
+  Composes and sends an email based on the contents of a document written to a
+  specified Cloud Firestore collection.
 
 license: Apache-2.0
 
@@ -32,106 +33,389 @@ author:
 contributors:
   - authorName: Michael Bleigh
     url: https://github.com/mbleigh
-  - authorName: Elliot Hesp
-    email: elliot@invertase.io
-    url: https://github.com/ehesp
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
 
 billingRequired: true
 
 roles:
   - role: datastore.user
-    reason: Allows this extension to access Cloud Firestore to read and process added email documents.
+    reason:
+      Allows this extension to access Cloud Firestore to read and process added
+      email documents.
 
 resources:
   - name: processQueue
-    type: firebaseextensions.v1beta.function
+    type: firebaseextensions.v1beta.v2function
     description:
       Processes document changes in the specified Cloud Firestore collection,
-      delivers emails, and updates the document with delivery status information.
+      delivers emails, and updates the document with delivery status
+      information.
     properties:
-      sourceDirectory: .
-      location: ${LOCATION}
+      sourceDirectory: functions
+      buildConfig:
+        runtime: nodejs22
+      serviceConfig:
+        timeoutSeconds: 120
       eventTrigger:
-        eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/${MAIL_COLLECTION}/{id}
+        eventType: google.cloud.firestore.document.v1.written
+        triggerRegion: ${DATABASE_REGION}
+        eventFilters:
+          - attribute: database
+            value: ${DATABASE}
+          - attribute: document
+            value: ${MAIL_COLLECTION}/{documentId}
+            operator: match-path-pattern
 
 params:
-  - param: LOCATION
+  - param: DATABASE
+    label: Firestore Instance ID
+    description: >
+      The Firestore database to use. Use "(default)" for the default database.
+      You can find your available Firestore databases at
+      [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).
+    example: (default)
+    default: (default)
+    required: true
+
+  - param: DATABASE_REGION
+    label: Firestore Instance Location
+    description: >
+      Where is the Firestore database located? You can check your current
+      database location at
+      [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).
     type: select
-    label: Cloud Functions location
-    description: >-
-      Where do you want to deploy the functions created for this extension?
-      You usually want a location close to your database. For help selecting a
-      location, refer to the [location selection
-      guide](https://firebase.google.com/docs/functions/locations).
     options:
+      # Multi-region locations
+      - label: Multi-region (Europe - Belgium and Netherlands)
+        value: eur3
+      - label: Multi-region (United States)
+        value: nam5
+      - label: Multi-region (Iowa, North Virginia, and Oklahoma)
+        value: nam7
+
+      # North America
       - label: Iowa (us-central1)
         value: us-central1
+      - label: Oregon (us-west1)
+        value: us-west1
+      - label: Los Angeles (us-west2)
+        value: us-west2
+      - label: Salt Lake City (us-west3)
+        value: us-west3
+      - label: Las Vegas (us-west4)
+        value: us-west4
       - label: South Carolina (us-east1)
         value: us-east1
       - label: Northern Virginia (us-east4)
         value: us-east4
+      - label: Columbus (us-east5)
+        value: us-east5
+      - label: Dallas (us-south1)
+        value: us-south1
+      - label: Montreal (northamerica-northeast1)
+        value: northamerica-northeast1
+      - label: Toronto (northamerica-northeast2)
+        value: northamerica-northeast2
+      - label: Queretaro (northamerica-south1)
+        value: northamerica-south1
+
+      # South America
+      - label: Sao Paulo (southamerica-east1)
+        value: southamerica-east1
+      - label: Santiago (southamerica-west1)
+        value: southamerica-west1
+
+      # Europe
       - label: Belgium (europe-west1)
         value: europe-west1
       - label: London (europe-west2)
         value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
+      - label: Netherlands (europe-west4)
+        value: europe-west4
+      - label: Zurich (europe-west6)
+        value: europe-west6
+      - label: Milan (europe-west8)
+        value: europe-west8
+      - label: Paris (europe-west9)
+        value: europe-west9
+      - label: Berlin (europe-west10)
+        value: europe-west10
+      - label: Turin (europe-west12)
+        value: europe-west12
+      - label: Madrid (europe-southwest1)
+        value: europe-southwest1
+      - label: Finland (europe-north1)
+        value: europe-north1
+      - label: Stockholm (europe-north2)
+        value: europe-north2
+      - label: Warsaw (europe-central2)
+        value: europe-central2
+
+      # Middle East
+      - label: Doha (me-central1)
+        value: me-central1
+      - label: Dammam (me-central2)
+        value: me-central2
+      - label: Tel Aviv (me-west1)
+        value: me-west1
+
+      # Asia
+      - label: Mumbai (asia-south1)
+        value: asia-south1
+      - label: Delhi (asia-south2)
+        value: asia-south2
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
+      - label: Jakarta (asia-southeast2)
+        value: asia-southeast2
+      - label: Taiwan (asia-east1)
+        value: asia-east1
       - label: Hong Kong (asia-east2)
         value: asia-east2
       - label: Tokyo (asia-northeast1)
         value: asia-northeast1
-    default: us-central1
+      - label: Osaka (asia-northeast2)
+        value: asia-northeast2
+      - label: Seoul (asia-northeast3)
+        value: asia-northeast3
+
+      # Australia
+      - label: Sydney (australia-southeast1)
+        value: australia-southeast1
+      - label: Melbourne (australia-southeast2)
+        value: australia-southeast2
+
+      # Africa
+      - label: Johannesburg (africa-south1)
+        value: africa-south1
     required: true
-    immutable: true
+    immutable: false
+
+  - param: AUTH_TYPE
+    label: Authentication Type
+    description: >-
+      The authentication type to be used for the SMTP server (e.g., OAuth2,
+      Username & Password.
+    type: select
+    options:
+      - label: Username & Password
+        value: UsernamePassword
+      - label: OAuth2
+        value: OAuth2
+    default: UsernamePassword
+    required: true
 
   - param: SMTP_CONNECTION_URI
-    type: string
     label: SMTP connection URI
     description: >-
-      A URI representing an SMTP server that this extension can use to deliver email.
-    example: smtps://username:password@smtp.hostname.com:465
-    required: true
-    validationRegex: ^smtps?://[^:]+:[^:]+@.*$
-    validationErrorMessage: Invalid SMTP connection URI. Must be in the form `smtp(s)://username:password@hostname:port`.
+      A URI representing an SMTP server this extension can use to deliver email.
+      Note that port 25 is blocked by Google Cloud Platform, so we recommend
+      using port 587 for SMTP connections. If you're using the SMTPS protocol,
+      we recommend using port 465. In order to keep passwords secure, it is
+      recommended to omit the password from the connection string while using
+      the `SMTP Password` field for entering secrets and passwords. Passwords
+      and secrets should now be included in `SMTP password` field.
+
+      Secure format:
+       `smtps://username@gmail.com@smtp.gmail.com:465` (username only)
+       `smtps://smtp.gmail.com:465` (No username and password)
+      Backwards Compatible (less secure):
+       `smtps://username@gmail.com:password@smtp.gmail.com:465`. (username and
+      password)
+    type: string
+    example: smtps://username@smtp.hostname.com:465
+    validationRegex:
+      "^(smtp[s]*://(.*?(:[^:@]*)?@)?[^:@]+:[0-9]+(\\?[^ ]*)?)|^$"
+    validationErrorMessage:
+      Invalid SMTP connection URI. Must be in the form
+      `smtp(s)://username:password@hostname:port` or
+      `smtp(s)://username@hostname:port` or to be left blank.
+    required: false
+
+  - param: SMTP_PASSWORD
+    label: SMTP password
+    description: >-
+      User password for the SMTP server
+    type: secret
+    required: false
+
+  - param: HOST
+    label: OAuth2 SMTP Host
+    description: >-
+      The OAuth2 hostname of the SMTP server (e.g., smtp.gmail.com).
+    type: string
+    required: false
+
+  - param: OAUTH_PORT
+    label: OAuth2 SMTP Port
+    description: >-
+      The OAuth2 port number for the SMTP server (e.g., 465 for SMTPS, 587 for
+      STARTTLS).
+    type: string
+    required: false
+    default: 465
+
+  - param: OAUTH_SECURE
+    label: Use secure OAuth2 connection?
+    description: >-
+      Set to true to enable a secure connection (TLS/SSL) when using OAuth2
+      authentication for the SMTP server.
+    type: select
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+    required: false
+    default: true
+
+  - param: CLIENT_ID
+    label: OAuth2 Client ID
+    description: >-
+      The OAuth2 Client ID for authentication with the SMTP server.
+    type: secret
+    required: false
+
+  - param: CLIENT_SECRET
+    label: OAuth2 Client Secret
+    description: >-
+      The OAuth2 Client Secret for authentication with the SMTP server.
+    type: secret
+    required: false
+
+  - param: REFRESH_TOKEN
+    label: OAuth2 Refresh Token
+    description: >-
+      The OAuth2 Refresh Token for authentication with the SMTP server.
+    type: secret
+    required: false
+
+  - param: USER
+    label: OAuth2 SMTP User
+    description: >-
+      The OAuth2 user email or username for SMTP authentication.
+    type: string
+    required: false
 
   - param: MAIL_COLLECTION
-    type: string
     label: Email documents collection
+    description: >-
+      What is the path to the collection that contains the documents used to
+      build and send the emails?
+    type: string
     default: mail
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore collection
     required: true
-    description: >-
-      What is the path to the collection that contains the documents used to build and send the emails?
 
   - param: DEFAULT_FROM
-    type: string
     label: Default FROM address
-    validationRegex: ^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$|^.*<(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})>$
-    validationErrorMessage: Must be a valid email address or valid name plus email address
-    required: true
     description: >-
-      The email address to use as the sender's address (if it's not specified in the added email document). 
-      You can optionally include a name with the email address (`Friendly Firebaser <foobar@example.com>`).
+      The email address to use as the sender's address (if it's not specified in
+      the added email document). You can optionally include a name with the
+      email address (`Friendly Firebaser <foobar@example.com>`). This parameter
+      does not work with [Gmail
+      SMTP](https://nodemailer.com/usage/using-gmail/).
+    type: string
     example: foobar@example.com
+    validationRegex: ^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$|^.*<(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})>$
+    validationErrorMessage:
+      Must be a valid email address or valid name plus email address
+    required: true
 
   - param: DEFAULT_REPLY_TO
-    type: string
     label: Default REPLY-TO address
     description: >-
-      The email address to use as the reply-to address (if it's not specified in the added email document).
+      The email address to use as the reply-to address (if it's not specified in
+      the added email document).
+    type: string
 
   - param: USERS_COLLECTION
-    type: string
     label: Users collection
     description: >-
-      A collection of documents keyed by user UID.
-      If the `toUids`, `ccUids`, and/or `bccUids` recipient options are used in the added email document,
-      this extension delivers email to the `email` field based on lookups in this collection.
+      A collection of documents keyed by user UID. If the `toUids`, `ccUids`,
+      and/or `bccUids` recipient options are used in the added email document,
+      this extension delivers email to the `email` field based on lookups in
+      this collection.
+    type: string
 
   - param: TEMPLATES_COLLECTION
-    type: string
     label: Templates collection
     description: >-
-      A collection of email templates keyed by name.
-      This extension can render an email using a [Handlebar](https://handlebarsjs.com/) template,
-      if the template is specified in the added email document.
+      A collection of email templates keyed by name. This extension can render
+      an email using a [Handlebar](https://handlebarsjs.com/) template, it's
+      recommended to use triple curly braces `{{{  }}}` in your Handlebars
+      templates when the substitution value is a URL or otherwise sensitive to
+      HTML escaping.
+    type: string
+
+  - param: TTL_EXPIRE_TYPE
+    label: Firestore TTL type
+    description: >-
+      Do you want the firestore records to be marked with an expireAt field for
+      a TTL policy? If "Never" is selected then no expireAt field will be added.
+      Otherwise you may specify the unit of time specified by the
+      TTL_EXPIRE_VALUE parameter. Defaults to "Never".
+    type: select
+    options:
+      - label: Never
+        value: never
+      - label: Hour
+        value: hour
+      - label: Day
+        value: day
+      - label: Week
+        value: week
+      - label: Month
+        value: month
+      - label: Year
+        value: year
+    default: never
+    required: true
+
+  - param: TTL_EXPIRE_VALUE
+    label: Firestore TTL value
+    description: >-
+      In the units specified by TTL_EXPIRE_TYPE, how long do you want records to
+      be ineligible for deletion by a TTL policy? This parameter requires the
+      Firestore TTL type parameter to be set to a value other than `Never`. For
+      example, if `Firestore TTL type` is set to `Day` then setting this
+      parameter to `1` will specify a TTL of 1 day.
+    validationRegex: "^[1-9][0-9]*$"
+    validationErrorMessage:
+      The value must be an integer value greater than zero.
+    default: "1"
+    required: true
+
+  - param: TLS_OPTIONS
+    label: TLS Options
+    description: >-
+      A JSON value representing TLS options. For more information, see
+      https://nodejs.org/api/tls.html#tls_class_tls_tlssocket
+    required: false
+
+events:
+  - type: firebase.extensions.firestore-send-email.v1.onStart
+    description: Occurs when the extension starts execution.
+
+  - type: firebase.extensions.firestore-send-email.v1.onProcessing
+    description: Occurs when the extension attempts to process an email.
+
+  - type: firebase.extensions.firestore-send-email.v1.onRetry
+    description: Occurs when the extension attempts to resend an email.
+
+  - type: firebase.extensions.firestore-send-email.v1.onPending
+    description: Occurs when an email has a pending status.
+
+  - type: firebase.extensions.firestore-send-email.v1.onSuccess
+    description: Occurs when the extension successfully sends an email.
+
+  - type: firebase.extensions.firestore-send-email.v1.onComplete
+    description: Occurs when the extension completes execution.
+
+  - type: firebase.extensions.firestore-send-email.v1.onError
+    description: Occurs when the extension fails to complete execution.

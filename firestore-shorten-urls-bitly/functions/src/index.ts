@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import * as admin from "firebase-admin";
-import * as functions from "firebase-functions";
-import axios, { AxiosInstance } from "axios";
+import { DocumentSnapshot } from "firebase-admin/firestore";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
 import { FirestoreUrlShortener } from "./abstract-shortener";
 import config from "./config";
 import * as logs from "./logs";
+import * as events from "./events";
+
+interface BitlyResponse {
+  link?: string;
+}
 
 class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
-  private instance: AxiosInstance;
+  private bitlyAccessToken: string;
 
   constructor(
     urlFieldName: string,
@@ -31,33 +34,36 @@ class FirestoreBitlyUrlShortener extends FirestoreUrlShortener {
     bitlyAccessToken: string
   ) {
     super(urlFieldName, shortUrlFieldName);
-    this.instance = axios.create({
-      headers: {
-        Authorization: `Bearer ${bitlyAccessToken}`,
-        "Content-Type": "application/json",
-      },
-      baseURL: "https://api-ssl.bitly.com/v4/",
-    });
-
+    this.bitlyAccessToken = bitlyAccessToken;
     logs.init();
   }
 
-  protected async shortenUrl(
-    snapshot: admin.firestore.DocumentSnapshot
-  ): Promise<void> {
+  protected async shortenUrl(snapshot: DocumentSnapshot): Promise<void> {
     const url = this.extractUrl(snapshot);
     logs.shortenUrl(url);
 
     try {
-      const response: any = await this.instance.post("bitlinks", {
-        long_url: url,
+      const response = await fetch("https://api-ssl.bitly.com/v4/bitlinks", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.bitlyAccessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ long_url: url }),
       });
 
-      const { link } = response.data;
+      if (!response.ok) {
+        throw new Error(`Error shortening URL: ${response.statusText}`);
+      }
 
-      logs.shortenUrlComplete(link);
+      const data: BitlyResponse = await response.json();
 
-      await this.updateShortUrl(snapshot, link);
+      if (data.link) {
+        logs.shortenUrlComplete(data.link);
+        await this.updateShortUrl(snapshot, data.link);
+      } else {
+        throw new Error("Bitly response did not contain a link.");
+      }
     } catch (err) {
       logs.error(err);
     }
@@ -70,8 +76,15 @@ const urlShortener = new FirestoreBitlyUrlShortener(
   config.bitlyAccessToken
 );
 
-export const fsurlshortener = functions.handler.firestore.document.onWrite(
-  async (change) => {
-    return urlShortener.onDocumentWrite(change);
+events.setupEventChannel();
+
+export const fsurlshortener = onDocumentWritten(
+  `${config.collectionPath}/{documentId}`,
+  async (event) => {
+    const { data, ...context } = event;
+
+    await events.recordStartEvent({ context, change: data });
+    await urlShortener.onDocumentWrite(data);
+    await events.recordCompletionEvent({ context });
   }
 );

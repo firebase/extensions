@@ -1,23 +1,23 @@
 module.exports = {
   projects: [
-    "<rootDir>/*/jest.config.js",
     "<rootDir>/*/functions/jest.config.js",
+    "<rootDir>/firestore-bigquery-export/scripts/gen-schema-view/jest.config.js",
   ],
   testPathIgnorePatterns: [
     ".*/bin/",
     ".*/lib/",
-    // ignore until existing tests migrated
-    ".*/firestore-bigquery-export/",
     ".*/firestore-counter/",
+    "/node_modules/",
     // Ignoring otherwise tests duplicate due to Jest `projects`
     ".*/__tests__/.*.ts",
+    "<rootDir>/firestore-send-email/functions/__tests__/e2e.test.ts",
   ],
   preset: "ts-jest",
   testEnvironment: "node",
   collectCoverageFrom: [
     "**/*.{ts,tsx}",
     "!**/node_modules/**",
-    "!**/exts-test-data/**",
+    "!**/test-data/**",
   ],
   maxConcurrency: 10,
 };

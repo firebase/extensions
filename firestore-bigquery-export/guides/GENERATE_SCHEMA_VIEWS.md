@@ -1,38 +1,92 @@
-The `fs-bq-schema-views` script is for use with the official Firebase Extension
-[_Export Collections to BigQuery_](https://github.com/firebase/extensions/tree/master/firestore-bigquery-export).
+# Firebase Extension: Stream Firestore to BigQuery
 
-## Overview
+This guide explains how to use the `fs-bq-schema-views` script with the official Firebase Extension _Stream Firestore to BigQuery_, or the [import script](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/IMPORT_EXISTING_DOCUMENTS.md).
 
-The `fs-bq-schema-views` script (referred to as the "schema-views script")
-generates richly-typed BigQuery views of your raw changelog.
+## What This Script Does
 
-The _Export Collections to BigQuery_ extension only mirrors raw data, but it
-doesn't apply schemas or types. This decoupling makes schema validation less
-risky because no data can be lost due to schema mismatch or unknown fields.
+The `fs-bq-schema-views` script creates richly-typed BigQuery views from your raw Firestore changelog data. While the extension mirrors your raw data to BigQuery, this script helps you apply proper schemas and types to make your data more queryable.
 
-The schema-views script creates a BigQuery view, based on a JSON schema
-configuration file, using
-[BigQuery's built-in JSON functions](https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions).
-The _Export Collections to BigQuery_ extension also provides some BigQuery
-[user-defined functions](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/scripts/gen-schema-view/src/udf.ts)
-that are helpful in converting Firestore document properties to richly-typed
-BigQuery cells.
+### Key Benefits
 
-## Use the script
+- Applies data types to your raw Firestore data in BigQuery
+- Uses BigQuery's JSON functions to create structured views
+- Preserves all raw data (no data loss due to schema mismatches)
+- Supports complex Firestore data types like arrays, maps, and geopoints
 
-The following steps are an example of how to use the schema-views script. In the
-sections at the end of this file, you can review detailed information about
-configuring a schema file and reviewing the resulting schema views.
+### AI-powered schema generation with Genkit
 
-### Step 1: Create a schema file
+This extension uses the [Genkit SDK](https://genkit.dev/) to power AI-based schema generation for Firestore data.
 
-The schema-views script runs against "schema files" which specify your schema
-configurations in a JSON format.
+For more information about Genkit, visit the Genkit documentation at [genkit.dev](http://genkit.dev/).
 
-In any directory, create a schema file called `test_schema.json`
-that contains the following:
+## Prerequisites
 
+1. Node.js installed (to run npm and npx commands)
+
+2. **Firebase Extension Installation**:
+
+   - The ["Stream Firestore to BigQuery" Firebase Extension](https://extensions.dev/extensions/firebase/firestore-bigquery-export) must be installed and configured
+   - Or you must have run the import script so the changelog table and latest view exist in BigQuery
+
+3. BigQuery dataset set up (the one specified when configuring the Firebase Extension)
+
+4. Firebase project with Firestore data (only required if using the AI schema generation feature)
+
+5. Authentication configured:
+   - Use gcloud CLI: `gcloud auth application-default login`
+   - Or use a service account with `bigquery.jobs.create` permissions
+   - Your service account needs the ["BigQuery Job User" role](https://cloud.google.com/iam/docs/understanding-roles#bigquery-roles) or equivalent
+
+## Getting Started
+
+### Option 1: Generate a Schema with Gemini AI (Recommended)
+
+The easiest way to create a schema file is to let Gemini generate one for you based on your actual Firestore data.
+
+#### Prerequisites
+
+- [Google AI API key](https://aistudio.google.com)
+
+#### Interactive Mode
+
+```bash
+npx @firebaseextensions/fs-bq-schema-views
 ```
+
+You'll be prompted for:
+
+- Firebase Project ID
+- BigQuery Project ID
+- BigQuery dataset ID
+- Table Prefix
+- Firestore collection path to sample
+- Google AI API key
+- Directory and filename for the schema
+
+#### Non-Interactive Mode
+
+```bash
+npx @firebaseextensions/fs-bq-schema-views \
+  --non-interactive \
+  --project=my-firebase-project \
+  --big-query-project=my-bq-project \
+  --dataset=firestore_changelog \
+  --table-name-prefix=user_profiles \
+  --use-gemini=users_collection \
+  --google-ai-key=$GOOGLE_API_KEY \
+  --schema-directory=./schemas \
+  --gemini-schema-file-name=user_schema
+```
+
+⚠️ **Important**: Always review generated schemas before using them in production.
+
+### Option 2: Create a Schema File Manually
+
+#### Create a Basic Schema
+
+Create a file (e.g., `test_schema.json`) containing:
+
+```json
 {
   "fields": [
     {
@@ -47,139 +101,89 @@ that contains the following:
 }
 ```
 
-Learn [How to configure schema files](#how-to-configure-schema-files)
-later in this guide.
+#### Handle Reserved Keywords
 
-### Step 2: Set up credentials
+SQL has reserved keywords that can cause conflicts. Use `column_name` to create a safe alias:
 
-The schema-views script uses Application Default Credentials to communicate with
-BigQuery.
+```json
+{
+  "fields": [
+    {
+      "name": "timestamp", // SQL reserved keyword
+      "type": "timestamp",
+      "column_name": "event_timestamp" // Safe alternative name
+    }
+  ]
+}
+```
 
-One way to set up these credentials is to run the following command using the
-[gcloud](https://cloud.google.com/sdk/gcloud/) CLI:
+### Verify Your Authentication
+
+Make sure your authentication from the prerequisites is working correctly before proceeding. The script needs BigQuery access to create views.
+
+### Run the Script
+
+```bash
+npx @firebaseextensions/fs-bq-schema-views \
+  --non-interactive \
+  --project=YOUR_PROJECT_ID \
+  --big-query-project=YOUR_BIGQUERY_PROJECT_ID \
+  --dataset=YOUR_DATASET_ID \
+  --table-name-prefix=YOUR_TABLE_PREFIX \
+  --schema-files=./test_schema.json
+```
+
+For multiple schema files, use comma separation:
 
 ```
-$ gcloud auth application-default login
+--schema-files=./schema1.json,./schema2.json
 ```
 
-Alternatively, you can
-[create and use a service account](https://cloud.google.com/docs/authentication/production#obtaining_and_providing_service_account_credentials_manually).
-This service account must be assigned a role that grants the permission of
-`bigquery.jobs.create`, like the ["BigQuery Job User" role](https://cloud.google.com/iam/docs/understanding-roles#bigquery-roles).
+## Testing Your Schema Views
 
-### Step 3: Run the script
+1. In the [BigQuery web UI](https://console.cloud.google.com/bigquery), navigate to your dataset and find the new view: `YOUR_TABLE_PREFIX_schema_test_schema_changelog`
 
-The schema-views script uses the following parameter values from your
-installation of the extension:
+   You can access this view directly using the URL:
+   `https://console.cloud.google.com/bigquery?project=YOUR_PROJECT_ID&p=YOUR_PROJECT_ID&d=YOUR_DATASET_ID&t=YOUR_TABLE_PREFIX_schema_test_schema_changelog&page=table`
 
-- `${param:PROJECT_ID}`: the project ID for the Firebase project in
-  which you installed the extension
-- `${param:DATASET_ID}`: the ID that you specified for your dataset during
-  extension installation
-- `${param:TABLE_ID}`: the common prefix of BigQuery views to generate
+2. Create a test document in Firestore with fields matching your schema:
 
-Run the schema-views script using
-[`npx` (the Node Package Runner)](https://github.com/npm/npx#npx1----execute-npm-package-binaries)
-via `npm` (the Node Package Manager).
+   - Add a document named `test-schema-document`
+   - Include fields like "name" (string) and "age" (number)
 
-1.  Make sure that you've installed the required tools to run the
-    schema-views script:
+3. Run a query against your changelog view:
 
-    - To access the `npm` command tools, you need to install
-      [Node.js](https://www.nodejs.org/).
-    - If you use npm v5.1 or earlier, you need to explicitly install `npx`.
-      Run `npm install --global npx`.
+   ```sql
+   SELECT document_name, name, age
+   FROM YOUR_PROJECT_ID.YOUR_DATASET_ID.YOUR_TABLE_PREFIX_schema_test_schema_changelog
+   WHERE document_name = "test-schema-document"
+   ```
 
-1.  Run the schema-views script via `npx` by running the following command:
+4. Test schema validation by changing a field type in Firestore (e.g., change "age" from number to string)
 
-    ```
-    $ npx @firebaseextensions/fs-bq-schema-views \
-      --non-interactive \
-      --project=${param:PROJECT_ID} \
-      --dataset=${param:DATASET_ID} \
-      --table-name-prefix=${param:TABLE_ID} \
-      --schema-files=./test_schema.json
-    ```
+5. Run the query again to see how type mismatches appear (as NULL values)
 
-    **Note:** You can run the schema-views script from any directory, but
-    you need to specify the path to your schema file using the `--schema-files`
-    flag. To run the schema-views script against multiple schema files, specify
-    each file in a comma-separated list
-    (for example: `--schema-files=./test_schema.json,./test_schema2.json`).
+6. _(Optional)_ You can also query events on the view of the documents currently in the collection by using the latest schema view at:
+   `https://console.cloud.google.com/bigquery?project=YOUR_PROJECT_ID&p=YOUR_PROJECT_ID&d=YOUR_DATASET_ID&t=YOUR_TABLE_PREFIX_schema_test_schema_latest&page=table`
 
-### Step 4: View results
+## Schema Configuration Details
 
-1.  In the [BigQuery web UI](https://console.cloud.google.com/bigquery),
-    navigate to the generated schema changelog view:
-    `https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:TABLE_ID}_schema_test_schema_changelog&page=table`.
+### Available Field Types
 
-        This view allows you to query document change events by fields specified in
-        the schema.
+- `string`
+- `number`
+- `boolean`
+- `timestamp`
+- `geopoint`
+- `array`
+- `map`
+- `reference`
+- `null`
+- `stringified_map` (special type for converting maps to JSON strings)
 
-1.  In the [Firebase console](https://console.firebase.google.com/),
-    go to the Cloud Firestore section,
-    then create a document called `test-schema-document` with two fields:
+### Example Schema with Various Types
 
-    - A field of type `string` called "name"
-    - A field of type `number` called "age"
-
-1.  Back in BigQuery, run the following query in the schema changelog
-    view (that is, `https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:TABLE_ID}_schema_test_schema_changelog&page=table`):
-
-    ```
-    SELECT document_name, name, age
-    FROM ${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_test_schema_changelog
-    WHERE document_name = "test-schema-document"
-    ```
-
-1.  Go back to the Cloud Firestore section of the console, then change
-    the type of the "age" field to be a string.
-
-1.  Back in BigQuery, re-run the following query:
-
-    ```
-    SELECT document_name, name, age
-    FROM ${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_test_schema_changelog
-    WHERE document_name = "test-schema-document"
-    ```
-
-    You'll see a new change with a `null` age column. If you query documents
-    that don't match the schema, then the view contains null values for the
-    corresponding schema fields.
-
-1.  Back in the Cloud Firestore section in the console, delete
-    `test-schema-document`.
-
-1.  _(Optional)_ As with the raw views, you can also query events on the
-    view of the documents currently in the collection by using the latest
-    schema view
-    (that is, `https://console.cloud.google.com/bigquery?project=${param:PROJECT_ID}&p=${param:PROJECT_ID}&d=${param:DATASET_ID}&t=${param:COLLECTION_PATH}_schema_test_schema_latest&page=table`.
-
-    Back in BigQuery, if you run the following query, you'll receive no
-    results because the document no longer exists in the Cloud Firestore
-    collection.
-
-    ```
-    SELECT document_name, name, age
-    FROM ${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_test_schema_latest
-    WHERE document_name = "test-schema-document"
-    ```
-
-### Next Steps
-
-- [Create your own schema files](#how-to-configure-schema-files)
-- [Troubleshoot common issues](#common-schema-file-configuration-mistakes)
-- [Learn about the columns in a schema view](#columns-in-a-schema-view)
-- [Take a look at more SQL examples](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/EXAMPLE_QUERIES.md)
-
-## How to configure schema files
-
-To generate schema views of your raw changelog, you must create at least one
-schema JSON file.
-
-Here's an example of a configuration that a schema file might contain:
-
-```
+```json
 {
   "fields": [
     {
@@ -187,7 +191,7 @@ Here's an example of a configuration that a schema file might contain:
       "type": "string"
     },
     {
-      "name":"favorite_numbers",
+      "name": "favorite_numbers",
       "type": "array"
     },
     {
@@ -199,181 +203,70 @@ Here's an example of a configuration that a schema file might contain:
       "type": "geopoint"
     },
     {
+      "name": "geo_point",
+      "type": "stringified_map"
+    },
+    {
+      "name": "friends",
+      "type": "map",
       "fields": [
         {
           "name": "name",
           "type": "string"
         }
-      ],
-      "name": "friends",
-      "type": "map"
+      ]
     }
   ]
 }
 ```
 
-The root of the configuration must have a `fields` array that contains objects
-which describe the elements in the schema. If one of the objects is of type
-`map`, it must specify its own `fields` array describing the members of that
-map.
+### Generated Views
 
-Each `fields` array must contain _at least one_ of the following types:
+For each schema file, the script creates two views:
 
-- `string`
-- `array`
-- `map`
-- `boolean`
-- `number`
-- `timestamp`
-- `geopoint`
-- `reference`
-- `null`
+1. **Changelog View**: `YOUR_TABLE_PREFIX_schema_SCHEMA_FILE_NAME_changelog`
 
-These types correspond with Cloud Firestore's
-[supported data types](https://firebase.google.com/docs/firestore/manage-data/data-types).
-Make sure that the types that you specify match the types of the fields in your
-Cloud Firestore collection.
+   - Contains all document changes with typed columns
+   - Includes all historical data
 
-You may create any number of schema files to use with the schema-views script.
-The schema-views script generates the following views for _each_ schema file:
+2. **Latest View**: `YOUR_TABLE_PREFIX_schema_SCHEMA_FILE_NAME_latest`
+   - Contains only the current state of documents
+   - Better for querying the present state of your data
 
-- `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_${SCHEMA_FILE_NAME}_changelog`
-- `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_${SCHEMA_FILE_NAME}_latest`
+### Column Data Types
 
-Here, `${SCHEMA_FILE_NAME}` is the name of each schema file that you provided as
-an argument to run the schema-views script.
+| Firestore Type | BigQuery Type    | Notes                                                  |
+| -------------- | ---------------- | ------------------------------------------------------ |
+| string         | STRING           |                                                        |
+| boolean        | BOOLEAN          |                                                        |
+| number         | NUMERIC          |                                                        |
+| timestamp      | TIMESTAMP        |                                                        |
+| geopoint       | GEOGRAPHY        | In latest views, split into latitude/longitude columns |
+| reference      | STRING           | Contains path to referenced document                   |
+| null           | NULL             |                                                        |
+| map            | Nested columns   | Columns created for each field in the map              |
+| array          | Unnested columns | Creates \_member and \_index columns                   |
 
-### Common schema file configuration mistakes
+## Common Issues and Troubleshooting
 
-Be aware of the following common mistakes when configuring a schema file:
+### Schema Configuration Mistakes
 
-<table>
-  <thead>
-    <tr>
-      <th><strong>Mistake in schema file config</strong></th>
-      <th><strong>Outcome of mistake</strong></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Omitting a relevant field</td>
-      <td>The generated view will not contain a column for that field.</td>
-    </tr>
-    <tr>
-      <td>Specifying the wrong type for a relevant field</td>
-      <td>Type conversion (see previous section) will fail and the resulting column
-        will contain a BigQuery <code>null</code> value in lieu of the desired
-        value.</td>
-    </tr>
-    <tr>
-      <td>Specifying a schema field that doesn't exist in the underlying raw
-        changelog</td>
-      <td>Querying the column for that field will return a BigQuery <code>null</code>
-        value instead of the desired value.</td>
-    </tr>
-    <tr>
-      <td>Writing invalid JSON</td>
-      <td>The schema-views script cannot generate a view</td>
-    </tr>
-  </tbody>
-</table>
+| Issue                            | Result                | Solution                               |
+| -------------------------------- | --------------------- | -------------------------------------- |
+| Missing field in schema          | No column in the view | Add the field to your schema           |
+| Wrong field type                 | NULL values           | Update schema with correct type        |
+| Field doesn't exist in Firestore | NULL values           | Remove from schema or add to Firestore |
+| Invalid JSON in schema file      | View generation fails | Validate your JSON syntax              |
 
-Since all document data is stored in the schemaless changelog, mistakes in
-schema configuration don't affect the underlying data and can be resolved by
-re-running the schema-views script against an updated schema file.
+### Working with Arrays
 
-## About Schema Views
+- Arrays are unnested in BigQuery views
+- Each array element becomes a separate row
+- Use `${ARRAY_NAME}_member` to access values
+- Use `${ARRAY_NAME}_index` for position in array
+- If the array is empty, it will be ignored by the `fs-bq-schema-views` script
+- Review [these examples](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/EXAMPLE_QUERIES.md#example-queries-for-an-array) specifically for querying an array
 
-### Views created by the script
+## Next Steps
 
-- `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_${SCHEMA_FILE_NAME}_changelog`
-
-  This view is a table which contains all rows present in the raw changelog.
-  This view is analogous to the raw change-log, only it has typed columns
-  corresponding to fields of the schema.
-
-- `${param:PROJECT_ID}.${param:DATASET_ID}.${param:TABLE_ID}_schema_${SCHEMA_FILE_NAME}_latest`
-
-  This view stores typed rows for the documents currently in the collection.
-  This view is analogous to the "latest" view on the raw changelog, only it
-  includes the typed columns corresponding to fields in the corresponding
-  schema file.
-
-  Since `GEOGRAPHY` fields are not groupable entities in BigQuery (and the
-  query which builds the latest view of a collection of documents requires
-  grouping on the schema columns), the latest schema omits any `GEOGRAPHY`
-  columns and, instead, splits them out into two `NUMERIC` columns called
-  `${FIRESTORE_GEOPOINT}_latitude` and `${FIRESTORE_GEOPOINT}_longitude`.
-
-### Columns in a schema view
-
-Each schema view carries with it the following fields from the raw changelog:
-
-- `document_name STRING REQUIRED`
-- `timestamp TIMESTAMP REQUIRED`
-- `operation STRING REQUIRED`
-
-The remaining columns correspond to fields of the schema and are assigned types
-based on the corresponding Cloud Firestore types those fields have. With the
-exception of `map` and `array`, the type conversion scheme is as follows:
-
-<table>
-  <thead>
-    <tr>
-      <th><strong>Cloud Firestore type</strong></th>
-      <th><strong>BigQuery type</strong></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>string</td>
-      <td>STRING</td>
-    </tr>
-    <tr>
-      <td>boolean</td>
-      <td>BOOLEAN</td>
-    </tr>
-    <tr>
-      <td>number</td>
-      <td>NUMERIC</td>
-    </tr>
-    <tr>
-      <td>timestamp</td>
-      <td>TIMESTAMP</td>
-    </tr>
-    <tr>
-      <td>geopoint</td>
-      <td>GEOGRAPHY</td>
-    </tr>
-    <tr>
-      <td>reference</td>
-      <td>STRING<br>(containing the path to the referenced document)</td>
-    </tr>
-    <tr>
-      <td>null</td>
-      <td>NULL</td>
-    </tr>
-  </tbody>
-</table>
-
-#### Cloud Firestore maps
-
-Cloud Firestore maps are interpreted recursively. If you include a map in your
-schema configuration, the resulting view will contain columns for whatever
-fields that map contains. If the map doesn't contain any fields, the map is
-ignored by the schema-views script.
-
-#### Cloud Firestore arrays
-
-Review [these examples](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/EXAMPLE_QUERIES.md#example-queries-for-an-array) for querying an array.
-
-Cloud Firestore arrays are
-[unnested](https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax#unnest),
-so all array fields of the document are
-[cross joined](https://cloud.google.com/bigquery/docs/reference/standard-sql/query-syntax#cross-join)
-in the output table. The view retains the member and offset columns, which are
-called `${FIRESTORE_ARRAY_NAME}_member` and `${FIRESTORE_ARRAY_NAME}_index`,
-respectively. To make querying easier, the view includes these two columns
-instead of the original `ARRAY` value field.
-
-If the array is empty, it will be ignored by the schema-views script.
+- [View example queries](https://github.com/firebase/extensions/blob/master/firestore-bigquery-export/guides/EXAMPLE_QUERIES.md)

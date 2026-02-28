@@ -14,223 +14,228 @@
  * limitations under the License.
  */
 
-import { Bucket } from "@google-cloud/storage";
 import * as admin from "firebase-admin";
-import * as fs from "fs";
-import * as functions from "firebase-functions";
-import * as mkdirp from "mkdirp-promise";
-import * as os from "os";
+import { getFunctions } from "firebase-admin/functions";
+import { getExtensions } from "firebase-admin/extensions";
+import * as functions from "firebase-functions/v1";
 import * as path from "path";
 import * as sharp from "sharp";
+import { File } from "@google-cloud/storage";
+import { ObjectMetadata } from "firebase-functions/v1/storage";
 
-import config from "./config";
+import { resizeImages } from "./resize-image";
+import { config, deleteImage } from "./config";
 import * as logs from "./logs";
-import * as validators from "./validators";
-import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
-import { extractFileNameWithoutExtension } from "./util";
+import { shouldResize } from "./filters";
+import * as events from "./events";
+import { convertToObjectMetadata } from "./util";
+import { processContentFilter } from "./content-filter";
+import {
+  deleteRemoteFile,
+  deleteTempFile,
+  downloadOriginalFile,
+  handleFailedImage,
+} from "./file-operations";
 
-interface ResizedImageResult {
-  size: string;
-  success: boolean;
-}
+sharp.cache(false);
 
 // Initialize the Firebase Admin SDK
 admin.initializeApp();
 
-logs.init();
+events.setupEventChannel();
+
+logs.init(config);
+
 /**
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
  */
-export const generateResizedImage = functions.storage.object().onFinalize(
-  async (object): Promise<void> => {
-    logs.start();
-    const { contentType } = object; // This is the image MIME type
-
-    if (!contentType) {
-      logs.noContentType();
-      return;
-    }
-
-    const isImage = validators.isImage(contentType);
-    if (!isImage) {
-      logs.contentTypeInvalid(contentType);
-      return;
-    }
-
-    if (object.metadata && object.metadata.resizedImage === "true") {
-      logs.imageAlreadyResized();
-      return;
-    }
-
-    const bucket = admin.storage().bucket(object.bucket);
-    const filePath = object.name; // File path in the bucket.
-    const fileDir = path.dirname(filePath);
-    const fileExtension = path.extname(filePath);
-    const fileNameWithoutExtension = extractFileNameWithoutExtension(
-      filePath,
-      fileExtension
-    );
-    const objectMetadata = object;
-
-    let originalFile;
-    let remoteFile;
-    try {
-      originalFile = path.join(os.tmpdir(), filePath);
-      const tempLocalDir = path.dirname(originalFile);
-
-      // Create the temp directory where the storage file will be downloaded.
-      logs.tempDirectoryCreating(tempLocalDir);
-      await mkdirp(tempLocalDir);
-      logs.tempDirectoryCreated(tempLocalDir);
-
-      // Download file from bucket.
-      remoteFile = bucket.file(filePath);
-      logs.imageDownloading(filePath);
-      await remoteFile.download({ destination: originalFile });
-      logs.imageDownloaded(filePath, originalFile);
-
-      // Convert to a set to remove any duplicate sizes
-      const imageSizes = new Set(config.imageSizes);
-      const tasks: Promise<ResizedImageResult>[] = [];
-      imageSizes.forEach((size) => {
-        tasks.push(
-          resizeImage({
-            bucket,
-            originalFile,
-            fileDir,
-            fileNameWithoutExtension,
-            fileExtension,
-            contentType,
-            size,
-            objectMetadata: objectMetadata,
-          })
-        );
-      });
-
-      const results = await Promise.all(tasks);
-
-      const failed = results.some((result) => result.success === false);
-      if (failed) {
-        logs.failed();
-        return;
-      }
-      logs.complete();
-    } catch (err) {
-      logs.error(err);
-    } finally {
-      if (originalFile) {
-        logs.tempOriginalFileDeleting(filePath);
-        fs.unlinkSync(originalFile);
-        logs.tempOriginalFileDeleted(filePath);
-      }
-      if (config.deleteOriginalFile) {
-        // Delete the original file
-        if (remoteFile) {
-          try {
-            logs.remoteFileDeleting(filePath);
-            await remoteFile.delete();
-            logs.remoteFileDeleted(filePath);
-          } catch (err) {
-            logs.errorDeleting(err);
-          }
-        }
-      }
-    }
-  }
-);
-
-function resize(originalFile, resizedFile, size) {
-  let height, width;
-  if (size.indexOf(",") !== -1) {
-    [width, height] = size.split(",");
-  } else if (size.indexOf("x") !== -1) {
-    [width, height] = size.split("x");
-  } else {
-    throw new Error("height and width are not delimited by a ',' or a 'x'");
+const generateResizedImageHandler = async (
+  object: ObjectMetadata,
+  verbose = true
+): Promise<void> => {
+  !verbose || logs.start(config);
+  if (!shouldResize(object)) {
+    return;
   }
 
-  return sharp(originalFile)
-    .resize(parseInt(width, 10), parseInt(height, 10), { fit: "inside" })
-    .toFile(resizedFile);
-}
+  await events.recordStartResizeEvent({
+    subject: object.name,
+    data: { input: object },
+  });
 
-const resizeImage = async ({
-  bucket,
-  originalFile,
-  fileDir,
-  fileNameWithoutExtension,
-  fileExtension,
-  contentType,
-  size,
-  objectMetadata,
-}: {
-  bucket: Bucket;
-  originalFile: string;
-  fileDir: string;
-  fileNameWithoutExtension: string;
-  fileExtension: string;
-  contentType: string;
-  size: string;
-  objectMetadata: ObjectMetadata;
-}): Promise<ResizedImageResult> => {
-  const resizedFileName = `${fileNameWithoutExtension}_${size}${fileExtension}`;
-  // Path where resized image will be uploaded to in Storage.
-  const resizedFilePath = path.normalize(
-    config.resizedImagesPath
-      ? path.join(fileDir, config.resizedImagesPath, resizedFileName)
-      : path.join(fileDir, resizedFileName)
-  );
-  let resizedFile;
+  const bucket = admin.storage().bucket(object.bucket);
+  const filePath = object.name; // File path in the bucket.
+  const parsedPath = path.parse(filePath);
+  const objectMetadata = object;
+  let failed = null;
+  let localOriginalFile: string;
+  let remoteOriginalFile: File;
 
   try {
-    resizedFile = path.join(os.tmpdir(), resizedFileName);
+    [localOriginalFile, remoteOriginalFile] = await downloadOriginalFile(
+      bucket,
+      filePath,
+      verbose
+    );
 
-    // Cloud Storage files.
-    const metadata: any = {
-      contentDisposition: objectMetadata.contentDisposition,
-      contentEncoding: objectMetadata.contentEncoding,
-      contentLanguage: objectMetadata.contentLanguage,
-      contentType: contentType,
-      metadata: objectMetadata.metadata || {},
-    };
-    metadata.metadata.resizedImage = true;
-    if (config.cacheControlHeader) {
-      metadata.cacheControl = config.cacheControlHeader;
+    // Check content filter and replace with placeholder if needed
+    const filterResult = await processContentFilter(
+      localOriginalFile,
+      object,
+      bucket,
+      verbose,
+      config
+    );
+
+    // Process image resizing if content filter didn't fail
+    if (filterResult.failed !== true) {
+      const resizeResults = await resizeImages(
+        bucket,
+        localOriginalFile,
+        parsedPath,
+        objectMetadata
+      );
+
+      await events.recordSuccessEvent({
+        subject: filePath,
+        data: {
+          input: object,
+          outputs: resizeResults,
+          contentFilterPassed: filterResult.passed,
+        },
+      });
+
+      // Only update failed status if it's still null (not already failed from content filter)
+      failed =
+        filterResult.failed === null
+          ? resizeResults.some(
+              (result) =>
+                result.status === "rejected" || result.value.success === false
+            )
+          : filterResult.failed;
     } else {
-      metadata.cacheControl = objectMetadata.cacheControl;
+      failed = true;
     }
-    delete metadata.metadata.firebaseStorageDownloadTokens;
 
-    // Generate a resized image using Sharp.
-    logs.imageResizing(resizedFile, size);
-
-    await resize(originalFile, resizedFile, size);
-
-    logs.imageResized(resizedFile);
-
-    // Uploading the resized image.
-    logs.imageUploading(resizedFilePath);
-    await bucket.upload(resizedFile, {
-      destination: resizedFilePath,
-      metadata,
-    });
-    logs.imageUploaded(resizedFilePath);
-
-    return { size, success: true };
+    if (failed) {
+      logs.failed();
+      await handleFailedImage(
+        bucket,
+        localOriginalFile,
+        object,
+        parsedPath,
+        filterResult.passed === false
+      );
+    } else {
+      if (config.deleteOriginalFile === deleteImage.onSuccess) {
+        await deleteRemoteFile(remoteOriginalFile, filePath);
+      }
+      !verbose || logs.complete();
+    }
   } catch (err) {
     logs.error(err);
-    return { size, success: false };
+    events.recordErrorEvent(err as Error);
   } finally {
-    try {
-      // Make sure the local resized file is cleaned up to free up disk space.
-      if (resizedFile) {
-        logs.tempResizedFileDeleting(resizedFilePath);
-        fs.unlinkSync(resizedFile);
-        logs.tempResizedFileDeleted(resizedFilePath);
-      }
-    } catch (err) {
-      logs.errorDeleting(err);
+    // Clean up temporary files
+    if (localOriginalFile) {
+      await deleteTempFile(localOriginalFile, filePath, verbose);
+    }
+
+    if (
+      config.deleteOriginalFile === deleteImage.always &&
+      remoteOriginalFile
+    ) {
+      await deleteRemoteFile(remoteOriginalFile, filePath);
     }
   }
 };
+
+export const generateResizedImage = functions.storage
+  .object()
+  .onFinalize(async (object, context) => {
+    await events.recordStartEvent(object);
+    await generateResizedImageHandler(object);
+    await events.recordCompletionEvent({ context });
+  });
+
+/**
+ *
+ */
+// export const backfillResizedImages = functions.tasks
+//   .taskQueue()
+//   .onDispatch(async (data) => {
+//     const runtime = getExtensions().runtime();
+//     if (!config.doBackfill) {
+//       await runtime.setProcessingState(
+//         "PROCESSING_COMPLETE",
+//         "Existing images were not resized because 'Backfill existing images' was configured to false." +
+//           " If you want to resize existing images, reconfigure this instance."
+//       );
+//       return;
+//     }
+//     if (data?.nextPageQuery == undefined) {
+//       logs.startBackfill();
+//     }
+
+//     const bucket = admin.storage().bucket(process.env.IMG_BUCKET);
+//     const query = data.nextPageQuery || {
+//       autoPaginate: false,
+//       maxResults: config.backfillBatchSize,
+//     };
+//     const [files, nextPageQuery] = await bucket.getFiles(query);
+//     const filesToResize = files.filter((f: File) => {
+//       logs.continueBackfill(f.metadata.name);
+//       return shouldResize(convertToObjectMetadata(f.metadata));
+//     });
+
+//     const filePromises = filesToResize.map((f) => {
+//       return generateResizedImageHandler(
+//         convertToObjectMetadata(f.metadata),
+//         /*verbose=*/ false
+//       );
+//     });
+//     const results = await Promise.allSettled(filePromises);
+
+//     const pageErrorsCount = results.filter(
+//       (r) => r.status === "rejected"
+//     ).length;
+//     const pageSuccessCount = results.filter(
+//       (r) => r.status === "fulfilled"
+//     ).length;
+//     const oldErrorsCount = Number(data.errorsCount) || 0;
+//     const oldSuccessCount = Number(data.successCount) || 0;
+//     const errorsCount = pageErrorsCount + oldErrorsCount;
+//     const successCount = pageSuccessCount + oldSuccessCount;
+
+//     if (nextPageQuery) {
+//       const queue = getFunctions().taskQueue(
+//         `locations/${config.location}/functions/backfillResizedImages`,
+//         process.env.EXT_INSTANCE_ID
+//       );
+//       await queue.enqueue({
+//         nextPageQuery,
+//         errorsCount,
+//         successCount,
+//       });
+//     } else {
+//       logs.backfillComplete(successCount, errorsCount);
+//       if (errorsCount == 0) {
+//         await runtime.setProcessingState(
+//           "PROCESSING_COMPLETE",
+//           `Successfully resized ${successCount} images.`
+//         );
+//       } else if (errorsCount > 0 && successCount > 0) {
+//         await runtime.setProcessingState(
+//           "PROCESSING_WARNING",
+//           `Successfully resized ${successCount} images, failed to resize ${errorsCount} images. See function logs for error details.`
+//         );
+//       }
+//       if (errorsCount > 0 && successCount == 0) {
+//         await runtime.setProcessingState(
+//           "PROCESSING_FAILED",
+//           `Successfully resized ${successCount} images, failed to resize ${errorsCount} images. See function logs for error details.`
+//         );
+//       }
+//     }
+//   });

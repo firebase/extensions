@@ -15,6 +15,11 @@
  */
 import * as uuid from "uuid";
 
+import firebase from "firebase/compat/app";
+import "firebase/compat/auth";
+import "firebase/compat/firestore";
+import { doc, setDoc, onSnapshot } from "firebase/firestore";
+
 const SHARD_COLLECTION_ID = "_counter_shards_";
 const COOKIE_NAME = "FIRESTORE_COUNTER_SHARD_ID";
 
@@ -43,13 +48,18 @@ export class Counter {
     this.db = doc.firestore;
     this.shardId = getShardId(COOKIE_NAME);
 
-    const shardsRef = doc.collection(SHARD_COLLECTION_ID);
+    firebase.initializeApp(this.db.app.options);
+
+    const shardsRef = firebase
+      .firestore()
+      .collection(doc.path + "/" + SHARD_COLLECTION_ID);
     this.shards[doc.path] = 0;
-    this.shards[shardsRef.doc(this.shardId).path] = 0;
-    this.shards[shardsRef.doc("\t" + this.shardId.substr(0, 4)).path] = 0;
-    this.shards[shardsRef.doc("\t\t" + this.shardId.substr(0, 3)).path] = 0;
-    this.shards[shardsRef.doc("\t\t\t" + this.shardId.substr(0, 2)).path] = 0;
-    this.shards[shardsRef.doc("\t\t\t\t" + this.shardId.substr(0, 1)).path] = 0;
+
+    this.shards[shardsRef.path + "/" + this.shardId] = 0;
+    this.shards[shardsRef.path + "/" + "\t" + this.shardId.slice(0, 4)] = 0;
+    this.shards[shardsRef.path + "/" + "\t\t" + this.shardId.slice(0, 3)] = 0;
+    this.shards[shardsRef.path + "/" + "\t\t\t" + this.shardId.slice(0, 2)] = 0;
+    this.shards[shardsRef.path + "/" + "\t\t\t" + this.shardId.slice(0, 1)] = 0;
   }
 
   /**
@@ -73,22 +83,19 @@ export class Counter {
    * All local increments to this counter will be immediately visible in the
    * snapshot.
    */
-  public onSnapshot(observable: ((next: CounterSnapshot) => void)) {
+  public onSnapshot(observable: (next: CounterSnapshot) => void) {
     Object.keys(this.shards).forEach((path) => {
-      this.db
-        .doc(path)
-        .onSnapshot((snap: firebase.firestore.DocumentSnapshot) => {
-          this.shards[snap.ref.path] = snap.get(this.field) || 0;
-          if (this.notifyPromise !== null) return;
-          this.notifyPromise = schedule(() => {
-            const sum = Object.values(this.shards).reduce((a, b) => a + b, 0);
-            observable({
-              exists: true,
-              data: () => sum,
-            });
-            this.notifyPromise = null;
-          });
+      const document = firebase.firestore().doc(path);
+
+      onSnapshot(document, (snap: firebase.firestore.DocumentData) => {
+        this.shards[snap.ref.path] = snap.get(this.field) || 0;
+        if (this.notifyPromise !== null) return;
+        this.notifyPromise = schedule(() => {
+          const sum = Object.values(this.shards).reduce((a, b) => a + b, 0);
+          observable({ exists: true, data: () => sum });
+          this.notifyPromise = null;
         });
+      });
     });
   }
 
@@ -106,10 +113,12 @@ export class Counter {
       .split(".")
       .reverse()
       .reduce((value, name) => ({ [name]: value }), increment);
-    return this.doc
-      .collection(SHARD_COLLECTION_ID)
-      .doc(this.shardId)
-      .set(update, { merge: true });
+
+    const shardRef = firebase
+      .firestore()
+      .collection(this.doc.path + "/" + SHARD_COLLECTION_ID);
+
+    return setDoc(doc(shardRef, this.shardId), update, { merge: true });
   }
 
   /**

@@ -13,12 +13,13 @@
 # limitations under the License.
 
 name: firestore-counter
-version: 0.1.3
+version: 0.2.13
 specVersion: v1beta
 
 displayName: Distributed Counter
 description:
-  Records event counters at scale to accommodate high-velocity writes to Cloud Firestore.
+  Records event counters at scale to accommodate high-velocity writes to Cloud
+  Firestore.
 
 license: Apache-2.0
 
@@ -33,104 +34,92 @@ contributors:
   - authorName: Patryk Lesiewicz
     url: https://github.com/lepatryk
 
-billingRequired: false
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
+
+billingRequired: true
 
 roles:
   - role: datastore.user
-    reason:
-      Allows the extension to aggregate Cloud Firestore counter shards.
-  - role: pubsub.publisher
-    reason:
-      Allows the HTTPS controller function to publish a message to the extension's Pub/Sub topic,
-      which triggers the controllerCore function.
+    reason: Allows the extension to aggregate Cloud Firestore counter shards.
+  - role: cloudscheduler.admin
+    reason: Allows the extension to create a new Cloud Scheduler function.
 
 resources:
   - name: controllerCore
     type: firebaseextensions.v1beta.function
     description:
-      Scheduled to run every minute.
-      This function either aggregates shards itself, or it schedules and monitors workers to aggregate shards.
+      This scheduled function either aggregates shards itself, or it schedules
+      and monitors workers to aggregate shards.
     properties:
-      sourceDirectory: .
-      location: ${LOCATION}
+      runtime: nodejs20
       maxInstances: 1
-      eventTrigger:
-        eventType: google.pubsub.topic.publish
-        resource: projects/${PROJECT_ID}/topics/${EXT_INSTANCE_ID}
-
-  - name: controller
-    type: firebaseextensions.v1beta.function
-    description:
-      Maintained for backwards compatibility.
-      This function relays a message to the extension's Pub/Sub topic to trigger the controllerCore function.
-    properties:
-      sourceDirectory: .
-      location: ${LOCATION}
-      maxInstances: 1
-      httpsTrigger: {}
+      scheduleTrigger:
+        schedule: "every ${param:SCHEDULE_FREQUENCY} minutes"
 
   - name: onWrite
     type: firebaseextensions.v1beta.function
     description:
-      Listens for changes on counter shards that may need aggregating. This function is limited to max 1 instance.
+      Listens for changes on counter shards that may need aggregating. This
+      function is limited to max 1 instance.
     properties:
-      sourceDirectory: .
-      location: ${LOCATION}
+      runtime: nodejs20
       maxInstances: 1
       timeout: 120s
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/{collection}/{counter=**}/_counter_shards_/{shardId}
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/{collection}/{counter=**}/_counter_shards_/{shardId}
 
   - name: worker
     type: firebaseextensions.v1beta.function
     description:
-      Monitors a range of shards and aggregates them, as needed.
-      There may be 0 or more worker functions running at any point in time.
-      The controllerCore function is responsible for scheduling and monitoring these workers.
+      Monitors a range of shards and aggregates them, as needed. There may be 0
+      or more worker functions running at any point in time. The controllerCore
+      function is responsible for scheduling and monitoring these workers.
     properties:
-      sourceDirectory: .
-      location: ${LOCATION}
+      runtime: nodejs20
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/${INTERNAL_STATE_PATH}/workers/{workerId}
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:INTERNAL_STATE_PATH}/workers/{workerId}
 
 params:
-  - param: LOCATION
-    type: select
-    label: Cloud Functions location
-    description: >-
-      Where do you want to deploy the functions created for this extension?
-      You usually want a location close to your database. For help selecting a
-      location, refer to the [location selection
-      guide](https://firebase.google.com/docs/functions/locations).
-    options:
-      - label: Iowa (us-central1)
-        value: us-central1
-      - label: South Carolina (us-east1)
-        value: us-east1
-      - label: Northern Virginia (us-east4)
-        value: us-east4
-      - label: Belgium (europe-west1)
-        value: europe-west1
-      - label: London (europe-west2)
-        value: europe-west2
-      - label: Hong Kong (asia-east2)
-        value: asia-east2
-      - label: Tokyo (asia-northeast1)
-        value: asia-northeast1
-    default: us-central1
-    required: true
-    immutable: true
-
   - param: INTERNAL_STATE_PATH
     label: Document path for internal state
     description: >-
-      What is the path to the document where the extension can keep its internal state?
-    default: _firebase_ext_/sharded_counter
+      What is the path to the document where the extension can keep its internal
+      state?
     example: _firebase_ext_/sharded_counter
     validationRegex: "^[^/]+/[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage:
-      Enter a document path, not a collection path. The path must have an even number of segments,
-      for example, `my_collection/doc` or `my_collection/doc/subcollection/doc`, but not `my_collection`.
+      Enter a document path, not a collection path. The path must have an even
+      number of segments, for example, `my_collection/doc` or
+      `my_collection/doc/subcollection/doc`, but not `my_collection`.
+    default: _firebase_ext_/sharded_counter
     required: true
+
+  - param: SCHEDULE_FREQUENCY
+    label: Frequency for controllerCore function to be run
+    description: >-
+      In minutes, how often should the function to aggregate shards be run?
+    validationRegex: "^[1-9][0-9]*$"
+    validationErrorMessage:
+      The number of minutes must be an integer value greater than zero.
+    default: "1"
+    required: true
+
+events:
+  - type: firebase.extensions.firestore-counter.v1.onStart
+    description:
+      Occurs when a trigger has been called within the Extension, and will
+      include data such as the context of the trigger request.
+
+  - type: firebase.extensions.firestore-counter.v1.onError
+    description:
+      Occurs when an issue has been experienced in the Extension. This will
+      include any error data that has been included within the Error Exception.
+
+  - type: firebase.extensions.firestore-counter.v1.onCompletion
+    description:
+      Occurs when the function is settled. Provides no customized data other
+      than the context.

@@ -17,7 +17,9 @@
 import * as sqlFormatter from "sql-formatter";
 
 // Persistent UDFs to be created on schema view initialization.
-export const udfs: { [name: string]: (dataset: string) => any } = {
+export const udfs: {
+  [name: string]: (dataset: string) => any;
+} = {
   firestoreArray: firestoreArrayFunction,
   firestoreBoolean: firestoreBooleanFunction,
   firestoreNumber: firestoreNumberFunction,
@@ -26,36 +28,26 @@ export const udfs: { [name: string]: (dataset: string) => any } = {
 };
 
 export function firestoreArray(datasetId: string, selector: string): string {
-  return `\`${
-    process.env.PROJECT_ID
-  }.${datasetId}.firestoreArray\`(${selector})`;
+  return `\`${process.env.PROJECT_ID}.${datasetId}.firestoreArray\`(${selector})`;
 }
 
 export function firestoreBoolean(datasetId: string, selector: string): string {
-  return `\`${
-    process.env.PROJECT_ID
-  }.${datasetId}.firestoreBoolean\`(${selector})`;
+  return `\`${process.env.PROJECT_ID}.${datasetId}.firestoreBoolean\`(${selector})`;
 }
 
 export function firestoreNumber(datasetId: string, selector: string): string {
-  return `\`${
-    process.env.PROJECT_ID
-  }.${datasetId}.firestoreNumber\`(${selector})`;
+  return `\`${process.env.PROJECT_ID}.${datasetId}.firestoreNumber\`(${selector})`;
 }
 
 export function firestoreTimestamp(
   datasetId: string,
   selector: string
 ): string {
-  return `\`${
-    process.env.PROJECT_ID
-  }.${datasetId}.firestoreTimestamp\`(${selector})`;
+  return `\`${process.env.PROJECT_ID}.${datasetId}.firestoreTimestamp\`(${selector})`;
 }
 
 export function firestoreGeopoint(datasetId: string, selector: string): string {
-  return `\`${
-    process.env.PROJECT_ID
-  }.${datasetId}.firestoreGeopoint\`(${selector})`;
+  return `\`${process.env.PROJECT_ID}.${datasetId}.firestoreGeopoint\`(${selector})`;
 }
 
 function firestoreArrayFunction(datasetId: string): any {
@@ -68,12 +60,30 @@ function firestoreArrayFunction(datasetId: string): any {
 
 function firestoreArrayDefinition(datasetId: string): string {
   return sqlFormatter.format(`
-    CREATE FUNCTION IF NOT EXISTS \`${
-      process.env.PROJECT_ID
-    }.${datasetId}.firestoreArray\`(json STRING)
+    CREATE OR REPLACE FUNCTION \`${process.env.PROJECT_ID}.${datasetId}.firestoreArray\`(json STRING)
     RETURNS ARRAY<STRING>
     LANGUAGE js AS """
-      return json ? JSON.parse(json).map(x => JSON.stringify(x)) : [];
+    function getArray(json) {
+      if(json) {
+        const parsed = JSON.parse(json);
+        
+        if (Array.isArray(parsed)) {
+          return parsed.map((x) => {
+            if (typeof x === 'string') {
+              return x;
+            } else {
+              return JSON.stringify(x);
+            }
+          });
+        }
+        
+        return [];
+      }
+
+      return [];
+    }
+    
+    return getArray(json);
     """;`);
 }
 
@@ -87,9 +97,7 @@ function firestoreBooleanFunction(datasetId: string): any {
 
 function firestoreBooleanDefinition(datasetId: string): string {
   return sqlFormatter.format(`
-    CREATE FUNCTION IF NOT EXISTS \`${
-      process.env.PROJECT_ID
-    }.${datasetId}.firestoreBoolean\`(json STRING)
+    CREATE FUNCTION IF NOT EXISTS \`${process.env.PROJECT_ID}.${datasetId}.firestoreBoolean\`(json STRING)
     RETURNS BOOLEAN AS (SAFE_CAST(json AS BOOLEAN));`);
 }
 
@@ -103,9 +111,7 @@ function firestoreNumberFunction(datasetId: string): any {
 
 function firestoreNumberDefinition(datasetId: string): string {
   return sqlFormatter.format(`
-    CREATE FUNCTION IF NOT EXISTS \`${
-      process.env.PROJECT_ID
-    }.${datasetId}.firestoreNumber\`(json STRING)
+    CREATE FUNCTION IF NOT EXISTS \`${process.env.PROJECT_ID}.${datasetId}.firestoreNumber\`(json STRING)
     RETURNS NUMERIC AS (SAFE_CAST(json AS NUMERIC));`);
 }
 
@@ -119,9 +125,7 @@ function firestoreTimestampFunction(datasetId: string): any {
 
 function firestoreTimestampDefinition(datasetId: string): string {
   return sqlFormatter.format(`
-    CREATE FUNCTION IF NOT EXISTS \`${
-      process.env.PROJECT_ID
-    }.${datasetId}.firestoreTimestamp\`(json STRING)
+    CREATE FUNCTION IF NOT EXISTS \`${process.env.PROJECT_ID}.${datasetId}.firestoreTimestamp\`(json STRING)
     RETURNS TIMESTAMP AS
     (TIMESTAMP_MILLIS(SAFE_CAST(JSON_EXTRACT(json, '$._seconds') AS INT64) * 1000 + SAFE_CAST(SAFE_CAST(JSON_EXTRACT(json, '$._nanoseconds') AS INT64) / 1E6 AS INT64)));`);
 }
@@ -136,9 +140,7 @@ function firestoreGeopointFunction(datasetId: string): any {
 
 function firestoreGeopointDefinition(datasetId: string): string {
   return sqlFormatter.format(`
-    CREATE FUNCTION IF NOT EXISTS \`${
-      process.env.PROJECT_ID
-    }.${datasetId}.firestoreGeopoint\`(json STRING)
+    CREATE FUNCTION IF NOT EXISTS \`${process.env.PROJECT_ID}.${datasetId}.firestoreGeopoint\`(json STRING)
     RETURNS GEOGRAPHY AS
-    (ST_GEOGPOINT(SAFE_CAST(JSON_EXTRACT(json, '$._latitude') AS NUMERIC), SAFE_CAST(JSON_EXTRACT(json, '$._longitude') AS NUMERIC)));`);
+    (ST_GEOGPOINT(SAFE_CAST(JSON_EXTRACT(json, '$._longitude') AS NUMERIC), SAFE_CAST(JSON_EXTRACT(json, '$._latitude') AS NUMERIC)));`);
 }

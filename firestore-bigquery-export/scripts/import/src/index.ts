@@ -15,223 +15,124 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import { FirestoreBigQueryEventHistoryTracker } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as firebase from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import * as fs from "fs";
-import * as inquirer from "inquirer";
 import * as util from "util";
 
-import {
-  ChangeType,
-  FirestoreBigQueryEventHistoryTracker,
-  FirestoreDocumentChangeEvent,
-} from "@firebaseextensions/firestore-bigquery-change-tracker";
+import { parseConfig } from "./config";
+import { initializeDataSink } from "./helper";
+import * as logs from "./logs";
+import { getCLIOptions } from "./program";
+import { runMultiThread } from "./run-multi-thread";
+import { runSingleThread } from "./run-single-thread";
 
 // For reading cursor position.
 const exists = util.promisify(fs.exists);
-const write = util.promisify(fs.writeFile);
 const read = util.promisify(fs.readFile);
 const unlink = util.promisify(fs.unlink);
-
-const BIGQUERY_VALID_CHARACTERS = /^[a-zA-Z0-9_]+$/;
-const FIRESTORE_VALID_CHARACTERS = /^[^\/]+$/;
-
-const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
-const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
-
-const FIRESTORE_DEFAULT_DATABASE = "(default)";
-
-const validateInput = (
-  value: string,
-  name: string,
-  regex: RegExp,
-  sizeLimit: number
-) => {
-  if (!value || value === "" || value.trim() === "") {
-    return `Please supply a ${name}`;
-  }
-  if (value.length >= sizeLimit) {
-    return `${name} must be at most ${sizeLimit} characters long`;
-  }
-  if (!value.match(regex)) {
-    return `The ${name} must only contain letters or spaces`;
-  }
-  return true;
-};
-
-const questions = [
-  {
-    message: "What is your Firebase project ID?",
-    name: "projectId",
-    type: "input",
-    validate: (value) =>
-      validateInput(
-        value,
-        "project ID",
-        FIRESTORE_VALID_CHARACTERS,
-        FIRESTORE_COLLECTION_NAME_MAX_CHARS
-      ),
-  },
-  {
-    message:
-      "What is the path of the the Cloud Firestore Collection you would like to import from? " +
-      "(This may, or may not, be the same Collection for which you plan to mirror changes.)",
-    name: "sourceCollectionPath",
-    type: "input",
-    validate: (value) =>
-      validateInput(
-        value,
-        "collection path",
-        FIRESTORE_VALID_CHARACTERS,
-        FIRESTORE_COLLECTION_NAME_MAX_CHARS
-      ),
-  },
-  {
-    message:
-      "What is the ID of the BigQuery dataset that you would like to use? (A dataset will be created if it doesn't already exist)",
-    name: "datasetId",
-    type: "input",
-    validate: (value) =>
-      validateInput(
-        value,
-        "dataset",
-        BIGQUERY_VALID_CHARACTERS,
-        BIGQUERY_RESOURCE_NAME_MAX_CHARS
-      ),
-  },
-  {
-    message:
-      "What is the identifying prefix of the BigQuery table that you would like to import to? (A table will be created if one doesn't already exist)",
-    name: "tableId",
-    type: "input",
-    validate: (value) =>
-      validateInput(
-        value,
-        "table",
-        BIGQUERY_VALID_CHARACTERS,
-        BIGQUERY_RESOURCE_NAME_MAX_CHARS
-      ),
-  },
-  {
-    message:
-      "How many documents should the import stream into BigQuery at once?",
-    name: "batchSize",
-    type: "input",
-    default: 300,
-    validate: (value) => {
-      return parseInt(value, 10) > 0;
-    },
-  },
-];
-
+getCLIOptions();
 const run = async (): Promise<number> => {
+  const config = await parseConfig();
+  if (config.kind === "ERROR") {
+    config.errors?.forEach((e) => console.error(`[ERROR] ${e}`));
+    process.exit(1);
+  }
   const {
     projectId,
-    sourceCollectionPath,
+    bigQueryProjectId,
     datasetId,
     tableId,
-    batchSize,
-  } = await inquirer.prompt(questions);
-
-  const batch = parseInt(batchSize);
-  const rawChangeLogName = `${tableId}_raw_changelog`;
-
-  // Initialize Firebase
-  firebase.initializeApp({
-    credential: firebase.credential.applicationDefault(),
-    databaseURL: `https://${projectId}.firebaseio.com`,
-  });
-  // Set project ID so it can be used in BigQuery intialization
+    queryCollectionGroup,
+    datasetLocation,
+    multiThreaded,
+    useNewSnapshotQuerySyntax,
+    useEmulator,
+    cursorPositionFile,
+    transformFunctionUrl,
+    firestoreInstanceId,
+  } = config;
+  if (useEmulator) {
+    console.log("Using emulator");
+    process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
+  }
+  // Set project ID, so it can be used in BigQuery initialization
   process.env.PROJECT_ID = projectId;
   process.env.GOOGLE_CLOUD_PROJECT = projectId;
+  process.env.GCLOUD_PROJECT = projectId;
+
+  // Initialize Firebase
+  // This uses applicationDefault to authenticate
+  // Please see https://cloud.google.com/docs/authentication/production
+  let app: firebase.app.App;
+  if (!firebase.apps.length) {
+    app = firebase.initializeApp({
+      projectId: projectId,
+      credential: firebase.credential.applicationDefault(),
+      databaseURL: `https://${projectId}.firebaseio.com`,
+    });
+  } else {
+    app = firebase.app();
+  }
+
+  // Get the Firestore instance for the specified database
+  const db =
+    firestoreInstanceId && firestoreInstanceId !== "(default)"
+      ? getFirestore(app, firestoreInstanceId)
+      : getFirestore(app);
 
   // We pass in the application-level "tableId" here. The tracker determines
   // the name of the raw changelog from this field.
+  // TODO: fix this type, it should include clustering apparently
+  // @ts-expect-error
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
     tableId: tableId,
     datasetId: datasetId,
+    datasetLocation,
+    wildcardIds: queryCollectionGroup,
+    useNewSnapshotQuerySyntax,
+    bqProjectId: bigQueryProjectId,
+    transformFunction: transformFunctionUrl,
+    firestoreInstanceId: firestoreInstanceId,
   });
 
-  console.log(
-    `Importing data from Cloud Firestore Collection: ${sourceCollectionPath}, to BigQuery Dataset: ${datasetId}, Table: ${rawChangeLogName}`
-  );
+  await initializeDataSink(dataSink, config);
+
+  logs.importingData(config);
+  if (multiThreaded && queryCollectionGroup) {
+    if (queryCollectionGroup) {
+      return runMultiThread(config);
+    }
+    logs.warningMultiThreadedCollectionGroupOnly();
+  }
 
   // Build the data row with a 0 timestamp. This ensures that all other
   // operations supersede imports when listing the live documents.
-  let cursor;
+  let cursor:
+    | firebase.firestore.DocumentSnapshot<firebase.firestore.DocumentData>
+    | undefined = undefined;
 
-  let cursorPositionFile =
-    __dirname +
-    `/from-${sourceCollectionPath}-to-${projectId}_${datasetId}_${rawChangeLogName}`;
   if (await exists(cursorPositionFile)) {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
-    cursor = await firebase
-      .firestore()
-      .collection(sourceCollectionPath)
-      .doc(cursorDocumentId)
-      .get();
-    console.log(
-      `Resuming import of Cloud Firestore Collection ${sourceCollectionPath} from document ${cursorDocumentId}.`
-    );
+    cursor = await db.doc(cursorDocumentId).get();
+    logs.resumingImport(config, cursorDocumentId);
   }
-
-  let totalDocsRead = 0;
-  let totalRowsImported = 0;
-
-  do {
-    if (cursor) {
-      await write(cursorPositionFile, cursor.id);
-    }
-    let query = firebase
-      .firestore()
-      .collection(sourceCollectionPath)
-      .limit(batch);
-    if (cursor) {
-      query = query.startAfter(cursor);
-    }
-    const snapshot = await query.get();
-    const docs = snapshot.docs;
-    if (docs.length === 0) {
-      break;
-    }
-    totalDocsRead += docs.length;
-    cursor = docs[docs.length - 1];
-    const rows: FirestoreDocumentChangeEvent[] = docs.map((snapshot) => {
-      return {
-        timestamp: new Date(0).toISOString(), // epoch
-        operation: ChangeType.IMPORT,
-        documentName: `projects/${projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${
-          snapshot.ref.path
-        }`,
-        eventId: "",
-        data: snapshot.data(),
-      };
-    });
-    await dataSink.record(rows);
-    totalRowsImported += rows.length;
-  } while (true);
-
+  const totalRowsImported = await runSingleThread(dataSink, config, cursor, db);
   try {
     await unlink(cursorPositionFile);
   } catch (e) {
-    console.log(
-      `Error unlinking journal file ${cursorPositionFile} after successful import: ${e.toString()}`
-    );
+    logs.warningUnlinkingJournalFile(cursorPositionFile, e);
   }
-
   return totalRowsImported;
 };
 
 run()
   .then((rowCount) => {
-    console.log("---------------------------------------------------------");
-    console.log(`Finished importing ${rowCount} Firestore rows to BigQuery`);
-    console.log("---------------------------------------------------------");
+    logs.finishedImporting(rowCount);
     process.exit();
   })
   .catch((error) => {
-    console.error(
-      `Error importing Collection to BigQuery: ${error.toString()}`
-    );
+    logs.errorImporting(error);
     process.exit(1);
   });

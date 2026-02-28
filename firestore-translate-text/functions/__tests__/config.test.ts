@@ -19,11 +19,13 @@ const environment = {
   OUTPUT_FIELD_NAME: "translated",
 };
 
-const { mockConsoleLog, config } = global;
+const { config } = global;
 
 functionsTestInit();
 
 describe("extension config", () => {
+  let logMock;
+
   beforeAll(() => {
     extensionYaml = yaml.safeLoad(
       readFileSync(pathResolve(__dirname, "../../extension.yaml"), "utf8")
@@ -37,7 +39,11 @@ describe("extension config", () => {
 
   beforeEach(() => {
     restoreEnv = mockedEnv(environment);
-    mockConsoleLog.mockClear();
+    logMock = jest.fn();
+
+    require("firebase-functions").logger = {
+      log: logMock,
+    };
   });
 
   afterEach(() => restoreEnv());
@@ -45,7 +51,13 @@ describe("extension config", () => {
   test("config loaded from environment variables", () => {
     const functionsConfig = config();
 
-    expect(functionsConfig).toMatchSnapshot({});
+    expect(functionsConfig).toMatchSnapshot({
+      languages: ["en", "es", "de", "fr"],
+      languagesFieldName: undefined,
+      location: "us-central1",
+      inputFieldName: "input",
+      outputFieldName: "translated",
+    });
   });
 
   test("config is logged on initialize", () => {
@@ -53,7 +65,7 @@ describe("extension config", () => {
 
     const functionsConfig = config();
 
-    expect(mockConsoleLog).toBeCalledWith(...messages.init(functionsConfig));
+    expect(logMock).toBeCalledWith(...messages.init(functionsConfig));
   });
 
   // LANGUAGES

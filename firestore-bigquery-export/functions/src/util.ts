@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-import { DocumentSnapshot } from "firebase-functions/lib/providers/firestore";
+import { DocumentSnapshot } from "firebase-functions/lib/v1/providers/firestore";
 import { Change } from "firebase-functions";
 
 import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
 
+/**
+ * Get the change type (CREATE, UPDATE, DELETE) from the Firestore change.
+ * @param change Firestore document change object.
+ * @returns {ChangeType} The type of change.
+ */
 export function getChangeType(change: Change<DocumentSnapshot>): ChangeType {
   if (!change.after.exists) {
     return ChangeType.DELETE;
@@ -28,3 +33,34 @@ export function getChangeType(change: Change<DocumentSnapshot>): ChangeType {
   }
   return ChangeType.UPDATE;
 }
+
+/**
+ * Get the document ID from the Firestore change.
+ * @param change Firestore document change object.
+ * @returns {string} The document ID.
+ */
+export function getDocumentId(change: Change<DocumentSnapshot>): string {
+  if (change.after.exists) {
+    return change.after.id;
+  }
+  return change.before.id;
+}
+
+/**
+ *
+ * @param template - eg, regions/{regionId}/countries
+ * @param text - eg, regions/asia/countries
+ *
+ * @return - eg, { regionId: "asia" }
+ */
+export const resolveWildcardIds = (template: string, text: string) => {
+  const textSegments = text.split("/");
+  return template
+    .split("/")
+    .reduce((previousValue, currentValue, currentIndex) => {
+      if (currentValue.startsWith("{") && currentValue.endsWith("}")) {
+        previousValue[currentValue.slice(1, -1)] = textSegments[currentIndex];
+      }
+      return previousValue;
+    }, {});
+};

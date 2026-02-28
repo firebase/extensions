@@ -1,0 +1,81 @@
+{
+  "fields": [
+    {
+      "name": "order",
+      "column_name": "newArray",
+      "type": "array"
+    },
+    {
+      "name": "limit",
+      "column_name": "newString",
+      "type": "string"
+    },
+    {
+      "name": "from",
+      "column_name": "newNumber",
+      "type": "number"
+    },
+    {
+      "name": "select",
+      "column_name": "newBoolean",
+      "type": "boolean"
+    },
+    {
+      "name": "where",
+      "column_name": "newGeopoint",
+      "type": "geopoint"
+    },
+    {
+      "name": "between",
+      "column_name": "newTimestamp",
+      "type": "timestamp"
+    },
+    {
+      "name": "like",
+      "column_name": "newReference",
+      "type": "reference"
+    },
+    {
+      "name": "and",
+      "column_name": "newMapColumnName",
+      "type": "map",
+      "fields": [
+        {
+          "name": "like",
+          "column_name": "referenceMap",
+          "type": "reference"
+        },
+        {
+          "name": "order",
+          "column_name": "arrayMap",
+          "type": "array"
+        },
+        {
+          "name": "limit",
+          "column_name": "stringMap",
+          "type": "string"
+        },
+        {
+          "name": "from",
+          "column_name": "numberMap",
+          "type": "number"
+        },
+        {
+          "name": "select",
+          "column_name": "booleanMap",
+          "type": "boolean"
+        },
+        {
+          "name": "where",
+          "column_name": "geopointMap",
+          "type": "geopoint"
+        },
+        {
+          "name": "between",
+          "column_name": "timestampMap",
+          "type": "timestamp"
+        }
+      ]
+    }
+  ]
+}

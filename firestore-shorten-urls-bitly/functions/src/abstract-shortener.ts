@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-import * as admin from "firebase-admin";
-import * as functions from "firebase-functions";
+import { initializeApp } from "firebase-admin/app";
+import {
+  getFirestore,
+  DocumentSnapshot,
+  FieldValue,
+} from "firebase-admin/firestore";
+import { Change } from "firebase-functions/v2/firestore";
+import { logger } from "firebase-functions/v2";
 
-import config from "./config";
 import * as logs from "./logs";
+import * as events from "./events";
+import config from "./config";
 
 enum ChangeType {
   CREATE,
@@ -35,14 +42,10 @@ export abstract class FirestoreUrlShortener {
   ) {
     this.urlFieldName = urlFieldName;
     this.shortUrlFieldName = shortUrlFieldName;
-
-    // Initialize the Firebase Admin SDK
-    admin.initializeApp();
+    initializeApp();
   }
 
-  public async onDocumentWrite(
-    change: functions.Change<admin.firestore.DocumentSnapshot>
-  ) {
+  public async onDocumentWrite(change: Change<DocumentSnapshot>) {
     this.logs.start();
 
     if (this.urlFieldName === this.shortUrlFieldName) {
@@ -52,31 +55,40 @@ export abstract class FirestoreUrlShortener {
 
     const changeType = this.getChangeType(change);
 
-    switch (changeType) {
-      case ChangeType.CREATE:
-        await this.handleCreateDocument(change.after);
-        break;
-      case ChangeType.DELETE:
-        this.handleDeleteDocument();
-        break;
-      case ChangeType.UPDATE:
-        await this.handleUpdateDocument(change.before, change.after);
-        break;
-      default: {
-        throw new Error(`Invalid change type: ${changeType}`);
+    try {
+      switch (changeType) {
+        case ChangeType.CREATE:
+          await this.handleCreateDocument(change.after);
+          break;
+        case ChangeType.DELETE:
+          this.handleDeleteDocument();
+          break;
+        case ChangeType.UPDATE:
+          await this.handleUpdateDocument(change.before, change.after);
+          break;
+        default: {
+          const err = new Error(`Invalid change type: ${changeType}`);
+          await events.recordErrorEvent(err);
+          throw err;
+        }
       }
+
+      this.logs.complete();
+    } catch (err) {
+      logger.error("Error in extension execution", err);
+      await events.recordErrorEvent(
+        err instanceof Error ? err : new Error(String(err))
+      );
+      throw err;
     }
-
-    this.logs.complete();
   }
 
-  protected extractUrl(snapshot: admin.firestore.DocumentSnapshot) {
-    return snapshot.get(this.urlFieldName);
+  protected extractUrl(snapshot: DocumentSnapshot) {
+    const data = snapshot.data();
+    return data ? data[this.urlFieldName] : undefined;
   }
 
-  private getChangeType(
-    change: functions.Change<admin.firestore.DocumentSnapshot>
-  ) {
+  private getChangeType(change: Change<DocumentSnapshot>) {
     if (!change.after.exists) {
       return ChangeType.DELETE;
     }
@@ -86,9 +98,7 @@ export abstract class FirestoreUrlShortener {
     return ChangeType.UPDATE;
   }
 
-  private async handleCreateDocument(
-    snapshot: admin.firestore.DocumentSnapshot
-  ) {
+  private async handleCreateDocument(snapshot: DocumentSnapshot) {
     const url = this.extractUrl(snapshot);
     if (url) {
       this.logs.documentCreatedWithUrl();
@@ -103,8 +113,8 @@ export abstract class FirestoreUrlShortener {
   }
 
   private async handleUpdateDocument(
-    before: admin.firestore.DocumentSnapshot,
-    after: admin.firestore.DocumentSnapshot
+    before: DocumentSnapshot,
+    after: DocumentSnapshot
   ) {
     const urlAfter = this.extractUrl(after);
     const urlBefore = this.extractUrl(before);
@@ -116,27 +126,31 @@ export abstract class FirestoreUrlShortener {
       await this.shortenUrl(after);
     } else if (urlBefore) {
       this.logs.documentUpdatedDeletedUrl();
-      await this.updateShortUrl(after, admin.firestore.FieldValue.delete());
+      await this.updateShortUrl(after, FieldValue.delete());
     } else {
       this.logs.documentUpdatedNoUrl();
     }
   }
 
-  protected abstract async shortenUrl(
-    snapshot: admin.firestore.DocumentSnapshot
-  ): Promise<void>;
+  protected abstract shortenUrl(snapshot: DocumentSnapshot): Promise<void>;
 
   protected async updateShortUrl(
-    snapshot: admin.firestore.DocumentSnapshot,
+    snapshot: DocumentSnapshot,
     url: any
   ): Promise<void> {
     this.logs.updateDocument(snapshot.ref.path);
 
-    // Wrapping in transaction to allow for automatic retries (#48)
-    await admin.firestore().runTransaction((transaction) => {
+    // Wrapping in transaction to allow for automatic retries
+    const firestore = getFirestore(config.database);
+    await firestore.runTransaction((transaction) => {
       transaction.update(snapshot.ref, this.shortUrlFieldName, url);
       return Promise.resolve();
     });
+
     this.logs.updateDocumentComplete(snapshot.ref.path);
+    await events.recordSuccessEvent({
+      subject: snapshot.ref.path,
+      data: { url },
+    });
   }
 }

@@ -13,12 +13,13 @@
 # limitations under the License.
 
 name: rtdb-limit-child-nodes
-version: 0.1.0
+version: 0.1.17
 specVersion: v1beta
 
 displayName: Limit Child Nodes
 description:
-  Limits the number of nodes to a specified maximum count in a specified Realtime Database path.
+  Limits the number of nodes to a specified maximum count in a specified
+  Realtime Database path.
 
 license: Apache-2.0
 
@@ -33,73 +34,60 @@ contributors:
   - authorName: Chris Bianca
     email: chris@csfrequency.com
     url: https://github.com/chrisbianca
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
 
-billingRequired: false
+billingRequired: true
 
 roles:
   - role: firebasedatabase.admin
-    reason: Allows the extension to delete nodes from your Realtime Database instance.
+    reason:
+      Allows the extension to delete nodes from your Realtime Database instance.
 
 resources:
   - name: rtdblimit
     type: firebaseextensions.v1beta.function
     description:
       Listens for new child nodes in your specified Realtime Database path,
-      checks if the max count has been exceeded,
-      then deletes the oldest nodes first, as needed to maintain the max count.
+      checks if the max count has been exceeded, then deletes the oldest nodes
+      first, as needed to maintain the max count.
     properties:
-      sourceDirectory: .
-      location: ${LOCATION}
+      runtime: nodejs22
       eventTrigger:
         eventType: providers/google.firebase.database/eventTypes/ref.create
-        resource: projects/_/instances/${DATABASE_INSTANCE}/refs/${NODE_PATH}/{messageid}
+        resource: projects/_/instances/${param:SELECTED_DATABASE_INSTANCE}/refs/${param:NODE_PATH}/{messageid}
 
 params:
-  - param: LOCATION
-    type: select
-    label: Cloud Functions location
-    description: >-
-      Where do you want to deploy the functions created for this extension? 
-      You usually want a location close to your database. Realtime Database 
-      instances are located in `us-central1`. For help selecting a 
-      location, refer to the [location selection 
-      guide](https://firebase.google.com/docs/functions/locations).
-    options:
-      - label: Iowa (us-central1)
-        value: us-central1
-      - label: South Carolina (us-east1)
-        value: us-east1
-      - label: Northern Virginia (us-east4)
-        value: us-east4
-      - label: Belgium (europe-west1)
-        value: europe-west1
-      - label: London (europe-west2)
-        value: europe-west2
-      - label: Hong Kong (asia-east2)
-        value: asia-east2
-      - label: Tokyo (asia-northeast1)
-        value: asia-northeast1
-    default: us-central1
-    required: true
-    immutable: true
-
   - param: NODE_PATH
-    type: string
     label: Realtime Database path
     description: >-
-      What is the Realtime Database path for which you want to limit the number of child nodes?
+      What is the Realtime Database path for which you want to limit the number
+      of child nodes?
+    type: string
+    example: path/to/limit
     validationRegex: ^\S+$
     validationErrorMessage: Path cannot have spaces.
-    example: path/to/limit
+    required: true
+
+  - param: SELECTED_DATABASE_INSTANCE
+    label: Realtime Database
+    description: >
+      From which Realtime Database instance do you want to limit child nodes?
+    type: string
+    example: my-instance
+    validationRegex: ^([0-9a-z_.-]*)$
+    validationErrorMessage: Invalid database instance
+    default: ${DATABASE_INSTANCE}
     required: true
 
   - param: MAX_COUNT
-    type: string
     label: Maximum count of nodes to keep
     description: >-
-      What is the maximum count of nodes to keep in your specified database path?
-      The oldest nodes will be deleted first to maintain this max count.
+      What is the maximum count of nodes to keep in your specified database
+      path? The oldest nodes will be deleted first to maintain this max count.
+    type: string
+    example: 10
     validationRegex: ^\d+$
     validationErrorMessage: Invalid MAX_COUNT, must be a positive integer.
-    example: 10
     required: true

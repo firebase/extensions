@@ -13,12 +13,15 @@
 # limitations under the License.
 
 name: firestore-translate-text
-version: 0.1.2
+version: 0.1.27
 specVersion: v1beta
 
-displayName: Translate Text
+tags: [ai]
+
+displayName: Translate Text in Firestore
 description:
-  Translates strings written to a Cloud Firestore collection into multiple languages (uses Cloud Translation API).
+  Translates strings written to a Cloud Firestore collection into multiple
+  languages (uses Cloud Translation API).
 
 license: Apache-2.0
 
@@ -41,7 +44,9 @@ billingRequired: true
 
 apis:
   - apiName: translate.googleapis.com
-    reason: To use Google Translate to translate strings into your specified target languages.
+    reason:
+      To use Google Translate to translate strings into your specified target
+      languages.
 
 roles:
   - role: datastore.user
@@ -51,77 +56,181 @@ resources:
   - name: fstranslate
     type: firebaseextensions.v1beta.function
     description:
-      Listens for writes of new strings to your specified Cloud Firestore collection, translates the strings,
-      then writes the translated strings back to the same document.
+      Listens for writes of new strings to your specified Cloud Firestore
+      collection, translates the strings, then writes the translated strings
+      back to the same document.
     properties:
-      location: ${LOCATION}
+      runtime: nodejs22
       eventTrigger:
         eventType: providers/cloud.firestore/eventTypes/document.write
-        resource: projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION_PATH}/{messageId}
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_PATH}/{messageId}
+
+  # ! DO NOT UNCOMMENT THIS PARAMETER, IT IS CURRENTLY PROBLEMATIC
+  # - name: fstranslatebackfill
+  #   type: firebaseextensions.v1beta.function
+  #   description:
+  #     Searches your specified Cloud Firestore collection for existing documents,
+  #     translates the strings into any missing languages, then writes the
+  #     translated strings back to the same document.
+  #   properties:
+  #     runtime: nodejs20
+  #     availableMemoryMb: 1024
+  #     timeout: 540s
+  #     taskQueueTrigger: {}
 
 params:
-  - param: LOCATION
-    type: select
-    label: Cloud Functions location
-    description: >-
-      Where do you want to deploy the functions created for this extension?
-      You usually want a location close to your database. For help selecting a
-      location, refer to the [location selection
-      guide](https://firebase.google.com/docs/functions/locations).
-    options:
-      - label: Iowa (us-central1)
-        value: us-central1
-      - label: South Carolina (us-east1)
-        value: us-east1
-      - label: Northern Virginia (us-east4)
-        value: us-east4
-      - label: Belgium (europe-west1)
-        value: europe-west1
-      - label: London (europe-west2)
-        value: europe-west2
-      - label: Hong Kong (asia-east2)
-        value: asia-east2
-      - label: Tokyo (asia-northeast1)
-        value: asia-northeast1
-    default: us-central1
-    required: true
-    immutable: true
-
   - param: LANGUAGES
     label: Target languages for translations, as a comma-separated list
     description: >
-      Into which target languages do you want to translate new strings?
-      The languages are identified using ISO-639-1 codes in a comma-separated list, for example: en,es,de,fr.
-      For these codes, visit the [supported languages list](https://cloud.google.com/translate/docs/languages).
-    default: en,es,de,fr
+      Into which target languages do you want to translate new strings? The
+      languages are identified using ISO-639-1 codes in a comma-separated list,
+      for example: en,es,de,fr. For these codes, visit the [supported languages
+      list](https://cloud.google.com/translate/docs/languages).
     example: en,es,de,fr
     validationRegex: "^[a-zA-Z,-]*[a-zA-Z-]{2,}$"
     validationErrorMessage:
       Languages must be a comma-separated list of ISO-639-1 language codes.
+    default: en,es,de,fr
     required: true
 
   - param: COLLECTION_PATH
     label: Collection path
     description: >
-      What is the path to the collection that contains the strings that you want to translate?
-    default: translations
+      What is the path to the collection that contains the strings that you want
+      to translate?
     example: translations
     validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
     validationErrorMessage: Must be a valid Cloud Firestore Collection
+    default: translations
     required: true
 
   - param: INPUT_FIELD_NAME
     label: Input field name
     description: >
-      What is the name of the field that contains the string that you want to translate?
-    default: input
+      What is the name of the field that contains the string that you want to
+      translate?
     example: input
+    default: input
     required: true
 
   - param: OUTPUT_FIELD_NAME
     label: Translations output field name
     description: >
       What is the name of the field where you want to store your translations?
-    default: translated
     example: translated
+    default: translated
     required: true
+
+  - param: LANGUAGES_FIELD_NAME
+    label: Languages field name
+    description: >
+      What is the name of the field that contains the languages that you want to
+      translate into? This field is optional. If you don't specify it, the
+      extension will use the languages specified in the LANGUAGES parameter.
+    example: languages
+    default: languages
+    required: false
+
+  - param: TRANSLATION_PROVIDER
+    label: Translation Provider
+    description: >
+      Choose the translation provider to use for this extension. "Cloud
+      Translation API" uses the standard Google Cloud Translation service (fast,
+      cost-effective). "Gemini (Google AI)" leverages Google's Gemini models via
+      Google AI Studio for more accurate and context-aware translations
+      (requires Gemini API access and API key). "Gemini (Vertex AI)" uses Gemini
+      models through Vertex AI in your Google Cloud project (requires Vertex AI
+      access).
+    type: select
+    required: true
+    options:
+      - label: Cloud Translation API (standard, fast, cost-effective)
+        value: translate
+      - label: Gemini (Google AI) (more context-aware, requires Gemini API key)
+        value: gemini-googleai
+      - label:
+          Gemini (Vertex AI) (more context-aware, requires Vertex AI access)
+        value: gemini-vertexai
+
+  - param: GEMINI_MODEL
+    label: Gemini Model
+    description: >
+      Choose the Gemini model to use for translations. Consider model pricing,
+      performance, and availability in your selected provider. This is only
+      required if you select "AI Translations Using Gemini" as your translation
+      model. By default, the extension uses Gemini 2.5 Flash for a balance of
+      speed and cost.
+    type: select
+    required: false
+    options:
+      - label:
+          Gemini 2.5 Pro (highest quality, expensive, large max output size)
+        value: gemini-2.5-pro
+      - label:
+          Gemini 2.5 Flash (cost-effective, high quality, large max output size)
+        value: gemini-2.5-flash
+      - label:
+          Gemini 2.5 Flash Lite (cheap, good quality, large max output size)
+        value: gemini-2.5-flash-lite
+      - label: Gemini 2.0 Flash (cheap, good quality)
+        value: gemini-2.0-flash
+      - label: Gemini 2.0 Flash Lite (cheapest, lowest quality)
+        value: gemini-2.0-flash-lite
+    default: gemini-2.5-flash
+
+  - param: GOOGLE_AI_API_KEY
+    label: Google AI API Key
+    description: >
+      If you selected "AI Translations Using Gemini" and "Google AI" as the
+      provider, provide your Google AI API key here. You can create an API key
+      at: https://ai.google.dev/gemini-api/docs/api-key. This is not required if
+      you use Vertex AI as the provider.
+    type: secret
+    required: false
+
+  # ! DO NOT UNCOMMENT THIS PARAMETER, IT IS CURRENTLY PROBLEMATIC
+  # - param: DO_BACKFILL
+  #   label: Translate existing documents?
+  #   description: >
+  #     Should existing documents in the Firestore collection be translated as
+  #     well?  If you've added new languages since a document was translated, this
+  #     will fill those in as well.
+  #   type: select
+  #   required: true
+  #   options:
+  #     - label: Yes
+  #       value: true
+  #     - label: No
+  #       value: false
+
+events:
+  - type: firebase.extensions.firestore-translate-text.v1.onStart
+    description:
+      Occurs when a trigger has been called within the Extension, and will
+      include data such as the context of the trigger request.
+
+  - type: firebase.extensions.firestore-translate-text.v1.onSuccess
+    description:
+      Occurs when image resizing completes successfully. The event will contain
+      further details about specific formats and sizes.
+
+  - type: firebase.extensions.firestore-translate-text.v1.onError
+    description:
+      Occurs when an issue has been experienced in the Extension. This will
+      include any error data that has been included within the Error Exception.
+
+  - type: firebase.extensions.firestore-translate-text.v1.onCompletion
+    description:
+      Occurs when the function is settled. Provides no customized data other
+      than the context.
+# ! DO NOT UNCOMMENT THE BELOW, IT IS CURRENTLY PROBLEMATIC
+# lifecycleEvents:
+#   onInstall:
+#     function: fstranslatebackfill
+#     processingMessage: "Translating existing documents in ${COLLECTION_PATH}"
+#   onUpdate:
+#     function: fstranslatebackfill
+#     processingMessage: "Translating existing documents in ${COLLECTION_PATH}"
+#   onConfigure:
+#     function: fstranslatebackfill
+#     processingMessage: "Translating existing documents in ${COLLECTION_PATH}"

@@ -17,5 +17,6 @@
 export default {
   location: process.env.LOCATION,
   maxCount: Number(process.env.MAX_COUNT),
+  databaseInstance: process.env.SELECTED_DATABASE_INSTANCE,
   nodePath: process.env.NODE_PATH,
 };

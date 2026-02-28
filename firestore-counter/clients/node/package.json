@@ -1,0 +1,14 @@
+{
+  "name": "firestore-counter-node",
+  "version": "1.0.0",
+  "description": "Node.js admin SDK to access sharded counters",
+  "main": "index.js",
+  "author": "Mansehej Singh <mansehej@gmail.com>",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "firebase-admin": "^11.4.1"
+  },
+  "dependencies": {
+    "uuid": "^8.3.2"
+  }
+}

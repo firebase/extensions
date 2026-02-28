@@ -13,77 +13,80 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import config from "./config";
+import {
+  ChangeType,
+  Logger,
+} from "@firebaseextensions/firestore-bigquery-change-tracker";
+
+export const logger = new Logger();
 
 export const arrayFieldInvalid = (fieldName: string) => {
-  console.warn(
-    `Array field '${fieldName}' does not contain an array, skipping`
-  );
+  logger.warn(`Array field '${fieldName}' does not contain an array, skipping`);
 };
 
 export const bigQueryDatasetCreated = (datasetId: string) => {
-  console.log(`Created BigQuery dataset: ${datasetId}`);
+  logger.info(`Created BigQuery dataset: ${datasetId}`);
 };
 
 export const bigQueryDatasetCreating = (datasetId: string) => {
-  console.log(`Creating BigQuery dataset: ${datasetId}`);
+  logger.debug(`Creating BigQuery dataset: ${datasetId}`);
 };
 
 export const bigQueryDatasetExists = (datasetId: string) => {
-  console.log(`BigQuery dataset already exists: ${datasetId}`);
+  logger.info(`BigQuery dataset already exists: ${datasetId}`);
 };
 
 export const bigQueryErrorRecordingDocumentChange = (e: Error) => {
-  console.error(`Error recording document changes.`, e);
+  logger.error(`Error recording document changes.`, e);
 };
 
 export const bigQueryLatestSnapshotViewQueryCreated = (query: string) => {
-  console.log(`BigQuery latest snapshot view query:\n${query}`);
+  logger.info(`BigQuery latest snapshot view query:\n${query}`);
 };
 
 export const bigQueryTableAlreadyExists = (
   tableName: string,
   datasetName: string
 ) => {
-  console.log(
+  logger.info(
     `BigQuery table with name ${tableName} already ` +
       `exists in dataset ${datasetName}!`
   );
 };
 
 export const bigQueryTableCreated = (tableName: string) => {
-  console.log(`Created BigQuery table: ${tableName}`);
+  logger.info(`Created BigQuery table: ${tableName}`);
 };
 
 export const bigQueryTableCreating = (tableName: string) => {
-  console.log(`Creating BigQuery table: ${tableName}`);
+  logger.debug(`Creating BigQuery table: ${tableName}`);
 };
 
 export const bigQueryTableUpdated = (tableName: string) => {
-  console.log(`Updated existing BigQuery table: ${tableName}`);
+  logger.info(`Updated existing BigQuery table: ${tableName}`);
 };
 
 export const bigQueryTableUpdating = (tableName: string) => {
-  console.log(`Updating existing BigQuery table: ${tableName}`);
+  logger.debug(`Updating existing BigQuery table: ${tableName}`);
 };
 
 export const bigQueryTableUpToDate = (tableName: string) => {
-  console.log(`BigQuery table: ${tableName} is up to date`);
+  logger.info(`BigQuery table: ${tableName} is up to date`);
 };
 
 export const bigQueryTableValidated = (tableName: string) => {
-  console.log(`Validated existing BigQuery table: ${tableName}`);
+  logger.info(`Validated existing BigQuery table: ${tableName}`);
 };
 
 export const bigQueryTableValidating = (tableName: string) => {
-  console.log(`Validating existing BigQuery table: ${tableName}`);
+  logger.debug(`Validating existing BigQuery table: ${tableName}`);
 };
 
 export const bigQueryUserDefinedFunctionCreating = (
   functionDefinition: string
 ) => {
-  console.log(
+  logger.debug(
     `Creating BigQuery User-defined Function:\n${functionDefinition}`
   );
 };
@@ -91,56 +94,56 @@ export const bigQueryUserDefinedFunctionCreating = (
 export const bigQueryUserDefinedFunctionCreated = (
   functionDefinition: string
 ) => {
-  console.log(`Created BigQuery User-defined Function:\n${functionDefinition}`);
+  logger.info(`Created BigQuery User-defined Function:\n${functionDefinition}`);
 };
 
 export const bigQueryViewCreated = (viewName: string) => {
-  console.log(`Created BigQuery view: ${viewName}`);
+  logger.info(`Created BigQuery view: ${viewName}`);
 };
 
 export const bigQueryViewCreating = (viewName: string) => {
-  console.log(`Creating BigQuery view: ${viewName}`);
+  logger.debug(`Creating BigQuery view: ${viewName}`);
 };
 
 export const bigQueryViewAlreadyExists = (
   viewName: string,
   datasetName: string
 ) => {
-  console.log(
+  logger.info(
     `View with id ${viewName} already exists in dataset ${datasetName}.`
   );
 };
 
 export const bigQueryViewUpdated = (viewName: string) => {
-  console.log(`Updated existing BigQuery view: ${viewName}`);
+  logger.info(`Updated existing BigQuery view: ${viewName}`);
 };
 
 export const bigQueryViewUpdating = (viewName: string) => {
-  console.log(`Updating existing BigQuery view: ${viewName}`);
+  logger.debug(`Updating existing BigQuery view: ${viewName}`);
 };
 
 export const bigQueryViewUpToDate = (viewName: string) => {
-  console.log(`BigQuery view: ${viewName} is up to date`);
+  logger.info(`BigQuery view: ${viewName} is up to date`);
 };
 
 export const bigQueryViewValidated = (viewName: string) => {
-  console.log(`Validated existing BigQuery view: ${viewName}`);
+  logger.info(`Validated existing BigQuery view: ${viewName}`);
 };
 
 export const bigQueryViewValidating = (viewName: string) => {
-  console.log(`Validating existing BigQuery view: ${viewName}`);
+  logger.debug(`Validating existing BigQuery view: ${viewName}`);
 };
 
 export const complete = () => {
-  console.log("Completed execution of extension");
+  logger.info("Completed execution of extension");
 };
 
 export const dataInserted = (rowCount: number) => {
-  console.log(`Inserted ${rowCount} row(s) of data into BigQuery`);
+  logger.debug(`Inserted ${rowCount} row(s) of data into BigQuery`);
 };
 
 export const dataInserting = (rowCount: number) => {
-  console.log(`Inserting ${rowCount} row(s) of data into BigQuery`);
+  logger.debug(`Inserting ${rowCount} row(s) of data into BigQuery`);
 };
 
 export const dataTypeInvalid = (
@@ -148,25 +151,83 @@ export const dataTypeInvalid = (
   fieldType: string,
   dataType: string
 ) => {
-  console.warn(
+  logger.warn(
     `Field '${fieldName}' has invalid data. Expected: ${fieldType}, received: ${dataType}`
   );
 };
 
-export const error = (err: Error) => {
-  console.error("Error when mirroring data to BigQuery", err);
+export const error = (
+  includeEvent: boolean,
+  message: string,
+  err: Error,
+  event?: any, // Made optional, as it is not always required
+  eventTrackerConfig?: any // Made optional, as it is not always required
+) => {
+  const logDetails: Record<string, any> = { error: err };
+
+  if (includeEvent && event) {
+    logDetails.event = event;
+  }
+
+  if (includeEvent && eventTrackerConfig) {
+    logDetails.eventTrackerConfig = eventTrackerConfig;
+  }
+
+  logger.error(`Error when mirroring data to BigQuery: ${message}`, logDetails);
 };
 
 export const init = () => {
-  console.log("Initializing extension with configuration", config);
+  logger.info("Initializing extension with configuration", config);
 };
 
 export const start = () => {
-  console.log("Started execution of extension with configuration", config);
+  logger.info("Started execution of extension with configuration", config);
 };
 
 export const timestampMissingValue = (fieldName: string) => {
-  console.warn(
+  logger.warn(
     `Missing value for timestamp field: ${fieldName}, using default timestamp instead.`
+  );
+};
+
+export const logEventAction = (
+  action: string,
+  document_name: string,
+  event_id: string,
+  operation: ChangeType
+) => {
+  logger.info(action, {
+    document_name,
+    event_id,
+    operation,
+  });
+};
+
+export const logFailedEventAction = (
+  action: string,
+  document_name: string,
+  event_id: string,
+  operation: ChangeType,
+  error: Error
+) => {
+  const changeTypeMap = {
+    0: "CREATE",
+    1: "DELETE",
+    2: "UPDATE",
+    3: "IMPORT",
+  };
+
+  logger.error(action, {
+    document_name,
+    event_id,
+    operation: changeTypeMap[operation],
+    error,
+  });
+};
+
+export const failedToWriteToBigQueryImmediately = (error: Error) => {
+  logger.warn(
+    "Failed to write event to BigQuery Immediately. Will attempt to Enqueue to Cloud Tasks.",
+    error
   );
 };
