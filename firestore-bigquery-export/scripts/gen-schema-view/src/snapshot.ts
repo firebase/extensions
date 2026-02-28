@@ -66,15 +66,21 @@ export const buildLatestSchemaSnapshotViewQuery = (
   schema: FirestoreSchema,
   useNewSqlSyntax = false
 ): any => {
-  const firstValue = (selector: string, isArrayType?: boolean) => {
-    if (isArrayType) return selector;
-    return `FIRST_VALUE(${selector}) OVER(PARTITION BY document_name ORDER BY timestamp DESC)`;
+  // For CTE + JOIN pattern, we don't need window functions - just return the selector as-is
+  const identityTransformer = (selector: string, isArrayType?: boolean) => {
+    return selector;
   };
 
   // We need to pass the dataset id into the parser so that we can call the
   // fully qualified json2array persistent user-defined function in the proper
   // scope.
-  const result = processFirestoreSchema(datasetId, "data", schema, firstValue);
+  // Use "t.data" as the dataFieldName since we'll alias the table as "t"
+  const result = processFirestoreSchema(
+    datasetId,
+    "t.data",
+    schema,
+    identityTransformer
+  );
 
   const [
     schemaFieldExtractors,
@@ -121,110 +127,148 @@ export const buildLatestSchemaSnapshotViewQuery = (
     ", "
   );
 
-  const fieldValueSelectorClauses = Object.values(schemaFieldExtractors).join(
-    ", "
+  // Replace "data" with "t.data" in extractors to reference the aliased table
+  // This is needed because processFirestoreSchemaHelper hardcodes "data" in some places
+  const updatedExtractors = Object.entries(schemaFieldExtractors).reduce(
+    (acc, [fieldName, extractor]) => {
+      // Replace JSON_EXTRACT_SCALAR(data, with JSON_EXTRACT_SCALAR(t.data,
+      // Replace JSON_EXTRACT(data, with JSON_EXTRACT(t.data,
+      // But be careful not to replace if already "t.data"
+      let updatedExtractor = String(extractor);
+      if (!updatedExtractor.includes("t.data")) {
+        updatedExtractor = updatedExtractor
+          .replace(/JSON_EXTRACT_SCALAR\(data,/g, "JSON_EXTRACT_SCALAR(t.data,")
+          .replace(/JSON_EXTRACT\(data,/g, "JSON_EXTRACT(t.data,");
+      }
+      acc[fieldName] = updatedExtractor;
+      return acc;
+    },
+    {} as { [key: string]: string }
   );
+
+  // Extractors already include "AS fieldName", so use them as-is
+  const fieldValueSelectorClauses = Object.values(updatedExtractors).join(", ");
+
   const schemaHasArrays = schemaFieldArrays.length > 0;
   const schemaHasGeopoints = schemaFieldGeopoints.length > 0;
 
-  const offsetJoins = schemaArrays
-    .map(({ key, value }) => {
-      return `LEFT JOIN
-  unnest(json_extract_array(\`${process.env.PROJECT_ID}.${datasetId}.${rawViewName}\`.${key}, '$.${value}')
-  ) ${value} WITH OFFSET _${value}`;
-    })
-    .join(" ");
-
-  let query = `
-      SELECT
-        document_name,
-        document_id,
-        timestamp,
-        operation${fieldNameSelectorClauses.length > 0 ? `,` : ``}
-        ${fieldNameSelectorClauses}
-      FROM (
-        SELECT
-          document_name,
-          document_id,
-          ${firstValue(`timestamp`)} AS timestamp,
-          ${firstValue(`operation`)} AS operation,
-          ${firstValue(`operation`)} = "DELETE" AS is_deleted${
-    fieldValueSelectorClauses.length > 0 ? `,` : ``
-  }
-          ${fieldValueSelectorClauses}
-        FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawViewName}\`
-        ${offsetJoins}
-      )
-      WHERE NOT is_deleted
-  `;
   const groupableExtractors = Object.keys(schemaFieldExtractors).filter(
     (name) =>
       schemaFieldArrays.indexOf(name) === -1 &&
       schemaFieldGeopoints.indexOf(name) === -1
   );
-  const hasNonGroupableFields = schemaHasArrays || schemaHasGeopoints;
-  // BigQuery doesn't support grouping by array fields or geopoints.
-  const groupBy = `
+
+  // Build the CTE for latest timestamps
+  const cte = `
+    WITH latest_timestamps AS (
+      SELECT 
+        document_name,
+        MAX(timestamp) AS latest_timestamp
+      FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawViewName}\`
+      GROUP BY document_name
+    )`;
+
+  // Build the main SELECT clause
+  const selectClause = `
+    SELECT
+      t.document_name,
+      t.document_id,
+      t.timestamp,
+      t.operation${fieldValueSelectorClauses.length > 0 ? `,` : ``}
+      ${fieldValueSelectorClauses}`;
+
+  // Build the FROM and JOIN clauses
+  const fromJoinClause = `
+    FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawViewName}\` AS t
+    INNER JOIN latest_timestamps AS l ON (
+      t.document_name = l.document_name AND
+      IFNULL(t.timestamp, TIMESTAMP("1970-01-01 00:00:00+00")) =
+      IFNULL(l.latest_timestamp, TIMESTAMP("1970-01-01 00:00:00+00"))
+    )`;
+
+  // Build the WHERE clause
+  const whereClause = `
+    WHERE t.operation != "DELETE"`;
+
+  // Build the GROUP BY clause
+  const groupByClause = `
     GROUP BY
-      document_name,
-      document_id,
-      timestamp,
-      operation${groupableExtractors.length > 0 ? `,` : ``}
+      t.document_name,
+      t.document_id,
+      t.timestamp,
+      t.operation${groupableExtractors.length > 0 ? `,` : ``}
       ${
         groupableExtractors.length > 0
           ? `${groupableExtractors.join(`, `)}`
           : ``
-      }
-  `;
+      }`;
+
+  let query = `${cte}
+${selectClause}
+${fromJoinClause}
+${whereClause}
+${groupByClause}`;
+
+  // Handle non-groupable fields (arrays and geopoints) if present
+  const hasNonGroupableFields = schemaHasArrays || schemaHasGeopoints;
   if (hasNonGroupableFields) {
+    // For arrays and geopoints, we need to wrap the query in a subquery
+    // and then join the unnested arrays
     query = `
-        ${subSelectQuery(
-          query,
-          /*except=*/ schemaFieldArrays.concat(schemaFieldGeopoints)
-        )}
-        ${rawViewName}
+      ${cte}
+      SELECT
+        ${rawViewName}.*${schemaFieldArrays.length > 0 ? `,` : ``}
         ${schemaFieldArrays
           .map(
-            (
-              arrayFieldName
-            ) => `LEFT JOIN UNNEST(${rawViewName}.${arrayFieldName})
+            (arrayFieldName) =>
+              `${arrayFieldName}_member, ${arrayFieldName}_index`
+          )
+          .join(", ")}
+      FROM (
+        ${selectClause}
+        ${fromJoinClause}
+        ${whereClause}
+        ${groupByClause}
+      ) AS ${rawViewName}
+      ${schemaFieldArrays
+        .map(
+          (arrayFieldName) =>
+            `LEFT JOIN UNNEST(${rawViewName}.${arrayFieldName})
             AS ${arrayFieldName}_member
             WITH OFFSET ${arrayFieldName}_index`
-          )
-          .join(" ")}
-      `;
-    query = `
-        ${query}
-        ${groupBy}
+        )
+        .join(" ")}
+      GROUP BY
+        ${rawViewName}.document_name,
+        ${rawViewName}.document_id,
+        ${rawViewName}.timestamp,
+        ${rawViewName}.operation${groupableExtractors.length > 0 ? `,` : ``}
         ${
-          schemaHasArrays
-            ? `, ${schemaFieldArrays
-                .map((name) => `${name}_index, ${name}_member`)
-                .join(", ")}`
+          groupableExtractors.length > 0
+            ? `${groupableExtractors
+                .map((name) => `${rawViewName}.${name}`)
+                .join(`, `)}`
             : ``
-        }
+        }${schemaFieldArrays.length > 0 ? `,` : ``}
+        ${schemaFieldArrays
+          .map((name) => `${name}_index, ${name}_member`)
+          .join(", ")}${schemaHasGeopoints ? `,` : ``}
         ${
           schemaHasGeopoints
-            ? `, ${schemaFieldGeopoints
-                .map((name) => `${name}_latitude, ${name}_longitude`)
+            ? `${schemaFieldGeopoints
+                .map(
+                  (name) =>
+                    `${rawViewName}.${name}_latitude, ${rawViewName}.${name}_longitude`
+                )
                 .join(", ")}`
             : ``
-        }
-      `;
-  } else {
-    query = `
-      ${query}
-      ${groupBy}
-    `;
+        }`;
   }
+
   query = sqlFormatter.format(`
     -- Given a user-defined schema over a raw JSON changelog, returns the
     -- schema elements of the latest set of live documents in the collection.
-    --   timestamp: The Firestore timestamp at which the event took place.
-    --   operation: One of INSERT, UPDATE, DELETE, IMPORT.
-    --   event_id: The event that wrote this row.
-    --   <schema-fields>: This can be one, many, or no typed-columns
-    --                    corresponding to fields defined in the schema.
+    -- Uses CTE + JOIN pattern for better memory efficiency with large schemas.
     ${query}
   `);
   return { query: query, fields: bigQueryFields };
