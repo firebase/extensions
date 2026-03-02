@@ -1,8 +1,8 @@
-## Version 0.1.17
+## Version 0.1.16
 
 chore: update Cloud Functions runtime to Node.js 22
 
-## Version 0.1.16
+chore: rerelease to trigger release pipeline
 
 chore: bump dependencies
 
