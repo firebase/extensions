@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: firestore-bigquery-export
-version: 0.2.8
+version: 0.2.9
 specVersion: v1beta
 
 displayName: Stream Firestore to BigQuery
@@ -77,7 +77,7 @@ resources:
     description: >-
       A task-triggered function that gets called on BigQuery sync
     properties:
-      runtime: nodejs20
+      runtime: nodejs22
       taskQueueTrigger:
         rateLimits:
           maxConcurrentDispatches: 500
@@ -91,7 +91,7 @@ resources:
     description: >-
       Runs configuration for sycning with BigQuery
     properties:
-      runtime: nodejs20
+      runtime: nodejs22
       taskQueueTrigger:
         retryConfig:
           maxAttempts: 15
@@ -102,7 +102,7 @@ resources:
     description: >-
       Runs configuration for sycning with BigQuery
     properties:
-      runtime: nodejs20
+      runtime: nodejs22
       taskQueueTrigger:
         retryConfig:
           maxAttempts: 15

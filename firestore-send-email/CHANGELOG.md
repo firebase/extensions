@@ -1,3 +1,7 @@
+## Version 0.2.6
+
+chore: audit and audit fix packages
+
 ## Version 0.2.5
 
 fix: bump dependencies to fix vulnerabilities

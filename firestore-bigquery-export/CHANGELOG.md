@@ -1,3 +1,7 @@
+## Version 0.2.9
+
+chore: update Cloud Functions runtime to Node.js 22
+
 ## Version 0.2.8
 
 chore: move test/build dependencies to devDependencies
