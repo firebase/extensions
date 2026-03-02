@@ -90,7 +90,15 @@ export const questions = [
   },
   {
     message:
-      "What is the Firestore collection path you want Gemini to analyze?",
+      "Do you want to use a collection group query instead of a regular collection query?",
+    name: "isCollectionGroupQuery",
+    type: "confirm",
+    when: (answers) => answers.useGemini,
+    default: false,
+  },
+  {
+    message:
+      "What is the Firestore collection or collection group path you want Gemini to analyze?",
     name: "geminiAnalyzeCollectionPath",
     type: "input",
     when: (answers) => answers.useGemini,
