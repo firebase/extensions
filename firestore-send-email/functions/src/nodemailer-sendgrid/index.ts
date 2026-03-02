@@ -155,6 +155,9 @@ export class SendGridTransport {
           case "customArgs":
             msg.customArgs = source.customArgs;
             break;
+          case "ipPoolName":
+            msg.ipPoolName = source.ipPoolName;
+            break;
 
           default:
             msg[key] = source[key];

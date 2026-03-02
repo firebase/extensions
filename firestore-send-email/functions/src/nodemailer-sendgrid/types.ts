@@ -47,6 +47,7 @@ export interface MailSource {
   dynamicTemplateData?: Record<string, unknown>;
   mailSettings?: Record<string, unknown>;
   customArgs?: Record<string, string>;
+  ipPoolName?: string;
 
   [key: string]: unknown;
 }
@@ -93,5 +94,6 @@ export interface SendGridMessage {
   dynamicTemplateData?: Record<string, unknown>;
   mailSettings?: Record<string, unknown>;
   customArgs?: Record<string, string>;
+  ipPoolName?: string;
   [key: string]: unknown;
 }

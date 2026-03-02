@@ -436,6 +436,34 @@ describe("SendGridTransport", () => {
     });
   });
 
+  test("send: forwards ipPoolName string", async () => {
+    const transport = new SendGridTransport({ apiKey: "KEY" });
+    const fakeMail: any = {
+      normalize: (cb: any) =>
+        cb(null, {
+          from: { address: "a@x.com" },
+          to: [{ address: "b@x.com" }],
+          subject: "IP pool test",
+          ipPoolName: "transactional",
+        }),
+    };
+    const cb = jest.fn();
+
+    transport.send(fakeMail, cb);
+    await new Promise((r) => setImmediate(r));
+
+    const sent = (sgMail.send as jest.Mock).mock.calls[0][0];
+    expect(sent.ipPoolName).toEqual("transactional");
+    expect(cb).toHaveBeenCalledWith(null, {
+      messageId: null,
+      queueId: "test-message-id",
+      accepted: ["b@x.com"],
+      rejected: [],
+      pending: [],
+      response: "status=202",
+    });
+  });
+
   test("send: deduplicates and normalizes email addresses", async () => {
     const transport = new SendGridTransport();
     const source = {

@@ -180,6 +180,7 @@ async function deliver(ref: DocumentReference): Promise<void> {
       dynamicTemplateData: payload.sendGrid?.dynamicTemplateData,
       mailSettings: payload.sendGrid?.mailSettings,
       customArgs: payload.sendGrid?.customArgs,
+      ipPoolName: payload.sendGrid?.ipPoolName,
     };
 
     logs.info("Sending via transport.sendMail()", { mailOptions });
