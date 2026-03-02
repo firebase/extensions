@@ -3,6 +3,7 @@ import {
   validatePayload,
   attachmentSchema,
   attachmentsSchema,
+  ValidationError,
 } from "./validation";
 import * as logs from "./logs";
 import config from "./config";
@@ -41,11 +42,19 @@ export async function preparePayload(
     const templateRender = await templates.render(template.name, template.data);
     const mergeMessage = payload.message || {};
 
-    let attachments = attachmentsSchema.parse(
-      templateRender.attachments
-        ? templateRender.attachments
-        : mergeMessage.attachments
-    );
+    const attachmentsInput = templateRender.attachments
+      ? templateRender.attachments
+      : mergeMessage.attachments;
+
+    const attachmentsResult = attachmentsSchema.safeParse(attachmentsInput);
+    if (!attachmentsResult.success) {
+      throw new ValidationError(
+        `Invalid attachments: ${attachmentsResult.error.issues
+          .map((i) => i.message)
+          .join(", ")}`
+      );
+    }
+    let attachments = attachmentsResult.data;
 
     const handleTemplateValue = (value: any) => {
       if (value === null) {
@@ -75,6 +84,19 @@ export async function preparePayload(
     });
 
     payload.message = Object.assign(mergeMessage, templateContent);
+  } else if (payload.message?.attachments !== undefined) {
+    // Normalize attachments for non-template messages
+    const attachmentsResult = attachmentsSchema.safeParse(
+      payload.message.attachments
+    );
+    if (!attachmentsResult.success) {
+      throw new ValidationError(
+        `Invalid attachments: ${attachmentsResult.error.issues
+          .map((i) => i.message)
+          .join(", ")}`
+      );
+    }
+    payload.message.attachments = attachmentsResult.data;
   }
 
   let to: string[] = [];
