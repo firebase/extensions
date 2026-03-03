@@ -8,6 +8,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
     "types": ["node", "jest", "@types/node"]
   },
   "compileOnSave": true,
