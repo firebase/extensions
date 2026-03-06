@@ -1,3 +1,9 @@
+## Version 0.2.10
+
+chore: add overrides for http-proxy-agent and inquirer to resolve npm audit vulnerabilities
+
+chore: remove unused inquirer dependency from functions
+
 ## Version 0.2.9
 
 chore: update Cloud Functions runtime to Node.js 22
