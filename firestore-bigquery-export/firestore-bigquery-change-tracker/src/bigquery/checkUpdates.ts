@@ -2,11 +2,11 @@ import { Table, TableMetadata } from "@google-cloud/bigquery/build/src/table";
 import { Partitioning } from "./partitioning";
 import { PartitioningConfig } from "./partitioning/config";
 
-import { Config } from ".";
+import { ChangeTrackerConfig } from ".";
 
 interface TableRequiresUpdateOptions {
   table: Table;
-  config: Config;
+  config: ChangeTrackerConfig;
   documentIdColExists: boolean;
   pathParamsColExists: boolean;
   oldDataColExists: boolean;
@@ -49,7 +49,7 @@ export async function tableRequiresUpdate({
 
 interface ViewRequiresUpdateOptions {
   metadata?: TableMetadata;
-  config: Config;
+  config: ChangeTrackerConfig;
   documentIdColExists: boolean;
   pathParamsColExists: boolean;
   oldDataColExists: boolean;
