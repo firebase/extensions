@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import { Config } from "../../bigquery/types";
+import { ChangeTrackerConfig } from "../../bigquery/types";
 
 import handleFailedTransactions from "../../bigquery/handleFailedTransactions";
 
@@ -15,7 +15,7 @@ describe("handleFailedTransactions", () => {
     const collectionName = "testing";
     const doc = db.collection("testing").doc("600");
 
-    const config: Config = {
+    const config: ChangeTrackerConfig = {
       backupTableId: collectionName,
       datasetId: "",
       tableId: "",

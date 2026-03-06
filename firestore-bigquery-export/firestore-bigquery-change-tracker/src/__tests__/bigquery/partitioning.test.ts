@@ -3,7 +3,7 @@ import * as admin from "firebase-admin";
 import { BigQuery, Dataset, Table } from "@google-cloud/bigquery";
 import { ChangeType, FirestoreDocumentChangeEvent } from "../..";
 
-import { Config } from "../../bigquery/types";
+import { ChangeTrackerConfig } from "../../bigquery/types";
 import { Partitioning } from "../../bigquery/partitioning";
 import { PartitioningConfig } from "../../bigquery/partitioning/config";
 import { deleteTable } from "../fixtures/clearTables";
@@ -50,7 +50,7 @@ describe("processing partitions on a new table", () => {
   });
   describe("addPartitioningToSchema", () => {
     test("adds a custom TIMESTAMP to a schema", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "dataset",
         tableId: "table",
         datasetLocation: "US",
@@ -84,7 +84,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("adds a custom DATETIME to a schema", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "dataset",
         tableId: "table",
         datasetLocation: "US",
@@ -118,7 +118,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("does not add an invalid time partition type to a schema", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "dataset",
         tableId: "table",
         datasetLocation: "US",
@@ -147,7 +147,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("does not add partitioning without a valid timePartitioning value ", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -173,7 +173,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("does not add partitioning without a timePartitioningFirestoreField", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -201,7 +201,7 @@ describe("processing partitions on a new table", () => {
 
   describe("getPartitionValue", () => {
     test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -235,7 +235,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined, with a timestamp-like value", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -273,7 +273,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("returns an empty object when _seconds or _nanoseconds is not a number", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -310,7 +310,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined, and is timestamp-like", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -347,7 +347,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("returns an empty object if timePartitioningFirestoreField has not been provided", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -380,7 +380,7 @@ describe("processing partitions on a new table", () => {
       expect(value).toEqual({});
     });
     test("returns an empty object if timePartitioningFirestoreField has not been provided", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -414,7 +414,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("returns an empty object if timePartitioningFirestoreField timePartitioningField", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -448,7 +448,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("returns an empty object if no event data has been provided", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -480,7 +480,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("returns an empty object if a non string or Timestamp value is synced from Firestore", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -516,7 +516,7 @@ describe("processing partitions on a new table", () => {
 
   describe("isTablePartitioned", () => {
     test("partition return false if table is not provided", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -541,7 +541,7 @@ describe("processing partitions on a new table", () => {
   });
 
   test("partition return false if table is not provided", async () => {
-    const config: Config = {
+    const config: ChangeTrackerConfig = {
       datasetId: "",
       tableId: "",
       datasetLocation: "",
@@ -596,7 +596,7 @@ describe("updateTableMetadata", () => {
   });
 
   test("updates the table metadata with the timestamp field", async () => {
-    const config: Config = {
+    const config: ChangeTrackerConfig = {
       datasetId: "",
       tableId: "",
       datasetLocation: "",
@@ -623,7 +623,7 @@ describe("updateTableMetadata", () => {
     });
   });
   test("Should not update if there is a custom option with the timestamp option", async () => {
-    const config: Config = {
+    const config: ChangeTrackerConfig = {
       datasetId: "",
       tableId: "",
       datasetLocation: "",
