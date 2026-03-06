@@ -5,7 +5,7 @@ import {
   FirestoreDocumentChangeEvent,
 } from "../..";
 import { LogLevel } from "../../logger";
-import { Config } from "../../bigquery/types";
+import { ChangeTrackerConfig } from "../../bigquery/types";
 
 export const changeTracker = ({
   datasetId = "",
@@ -24,7 +24,7 @@ export const changeTracker = ({
   maxStaleness = undefined,
   refreshIntervalMinutes = undefined,
   logLevel = LogLevel.DEBUG,
-}: Partial<Config>): FirestoreBigQueryEventHistoryTracker => {
+}: Partial<ChangeTrackerConfig>): FirestoreBigQueryEventHistoryTracker => {
   return new FirestoreBigQueryEventHistoryTracker({
     datasetId,
     tableId,

@@ -1,42 +1,49 @@
+/** Granularity for BigQuery time-based partitioning. */
 export type TimePartitioningGranularity = "HOUR" | "DAY" | "MONTH" | "YEAR";
 
+/** BigQuery column type for a custom partitioning field. */
 export type PartitioningFieldType = "TIMESTAMP" | "DATE" | "DATETIME";
 
-export interface BasePartitioningConfig {
-  granularity?: TimePartitioningGranularity | "NONE" | null;
-  bigqueryColumnName?: string;
-  bigqueryColumnType?: PartitioningFieldType;
-  firestoreFieldName?: string;
-}
-
-export interface NoPartitioning extends BasePartitioningConfig {
+/** Disables partitioning. */
+export interface NoPartitioning {
   granularity?: "NONE" | null | undefined;
   bigqueryColumnName?: undefined;
   bigqueryColumnType?: undefined;
   firestoreFieldName?: undefined;
 }
 
-export interface IngestionTimePartitioning extends BasePartitioningConfig {
+/** Partitions by BigQuery ingestion time. */
+export interface IngestionTimePartitioning {
   granularity: TimePartitioningGranularity;
   bigqueryColumnName?: undefined;
   bigqueryColumnType?: undefined;
   firestoreFieldName?: undefined;
 }
 
-export interface FirestoreTimestampPartitioning extends BasePartitioningConfig {
+/** Partitions by the built-in changelog `timestamp` column. */
+export interface FirestoreTimestampPartitioning {
   granularity: TimePartitioningGranularity;
   bigqueryColumnName: "timestamp";
   bigqueryColumnType?: PartitioningFieldType;
   firestoreFieldName?: undefined;
 }
 
-export interface FirestoreFieldPartitioning extends BasePartitioningConfig {
+/** Partitions by an arbitrary Firestore document field. */
+export interface FirestoreFieldPartitioning {
   granularity: TimePartitioningGranularity;
   bigqueryColumnName: string;
   bigqueryColumnType: PartitioningFieldType;
   firestoreFieldName: string;
 }
 
+/**
+ * Discriminated union describing how a BigQuery table should be partitioned.
+ *
+ * - {@link NoPartitioning} — no partitioning.
+ * - {@link IngestionTimePartitioning} — partition by ingestion time.
+ * - {@link FirestoreTimestampPartitioning} — partition by the changelog `timestamp` column.
+ * - {@link FirestoreFieldPartitioning} — partition by a custom Firestore field.
+ */
 export type PartitioningStrategy =
   | NoPartitioning
   | IngestionTimePartitioning
@@ -50,35 +57,39 @@ export enum PartitioningType {
   FIRESTORE_FIELD = "FIRESTORE_FIELD",
 }
 
+/**
+ * Wraps a {@link PartitioningStrategy} and determines the effective
+ * {@link PartitioningType}.
+ */
 export class PartitioningConfig {
   private strategy: PartitioningStrategy;
   private type: PartitioningType;
 
-  constructor(config: PartitioningStrategy) {
-    this.strategy = config;
-    this.type = this.determineType(config);
+  constructor(strategy?: PartitioningStrategy) {
+    this.strategy = strategy ?? {};
+    this.type = this.determineType(this.strategy);
   }
 
-  private determineType(config: PartitioningStrategy): PartitioningType {
-    if (!config.granularity || config.granularity === "NONE") {
+  private determineType(strategy: PartitioningStrategy): PartitioningType {
+    if (!strategy.granularity || strategy.granularity === "NONE") {
       return PartitioningType.NONE;
     }
 
-    if (!config.bigqueryColumnName && !config.firestoreFieldName) {
+    if (!strategy.bigqueryColumnName && !strategy.firestoreFieldName) {
       return PartitioningType.INGESTION_TIME;
     }
 
     if (
-      config.bigqueryColumnName === "timestamp" &&
-      !config.firestoreFieldName
+      strategy.bigqueryColumnName === "timestamp" &&
+      !strategy.firestoreFieldName
     ) {
       return PartitioningType.FIRESTORE_TIMESTAMP;
     }
 
     if (
-      config.bigqueryColumnName &&
-      config.bigqueryColumnType &&
-      config.firestoreFieldName
+      strategy.bigqueryColumnName &&
+      strategy.bigqueryColumnType &&
+      strategy.firestoreFieldName
     ) {
       return PartitioningType.FIRESTORE_FIELD;
     }
@@ -124,40 +135,5 @@ export class PartitioningConfig {
 
   getFirestoreFieldName(): string | undefined {
     return this.strategy.firestoreFieldName;
-  }
-
-  static none(): PartitioningConfig {
-    return new PartitioningConfig({ granularity: "NONE" });
-  }
-
-  static ingestionTime(
-    granularity: TimePartitioningGranularity
-  ): PartitioningConfig {
-    return new PartitioningConfig({ granularity });
-  }
-
-  static firestoreTimestamp(
-    granularity: TimePartitioningGranularity,
-    columnType?: PartitioningFieldType
-  ): PartitioningConfig {
-    return new PartitioningConfig({
-      granularity,
-      bigqueryColumnName: "timestamp",
-      bigqueryColumnType: columnType,
-    });
-  }
-
-  static firestoreField(
-    granularity: TimePartitioningGranularity,
-    bigqueryColumnName: string,
-    bigqueryColumnType: PartitioningFieldType,
-    firestoreFieldName: string
-  ): PartitioningConfig {
-    return new PartitioningConfig({
-      granularity,
-      bigqueryColumnName,
-      bigqueryColumnType,
-      firestoreFieldName,
-    });
   }
 }

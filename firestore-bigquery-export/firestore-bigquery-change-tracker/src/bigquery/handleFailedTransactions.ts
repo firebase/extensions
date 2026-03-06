@@ -1,13 +1,17 @@
 import * as admin from "firebase-admin";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import { Config } from ".";
+import { ChangeTrackerConfig } from ".";
 
 if (!admin.apps.length) {
   initializeApp();
 }
 
-export default async (rows: any[], config: Config, e: Error): Promise<void> => {
+export default async (
+  rows: any[],
+  config: ChangeTrackerConfig,
+  e: Error
+): Promise<void> => {
   const db = getFirestore(config.firestoreInstanceId!);
   db.settings({
     ignoreUndefinedProperties: true,
