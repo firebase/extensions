@@ -14,18 +14,61 @@
  * limitations under the License.
  */
 import { LogLevel } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import type {
+  ChangeTrackerConfig,
+  PartitioningStrategy,
+  PartitioningFieldType,
+  TimePartitioningGranularity,
+} from "@firebaseextensions/firestore-bigquery-change-tracker";
 
-function timePartitioning(type) {
-  if (
-    type === "HOUR" ||
-    type === "DAY" ||
-    type === "MONTH" ||
-    type === "YEAR"
-  ) {
-    return type;
+function isGranularity(
+  type: string | undefined
+): type is TimePartitioningGranularity {
+  return (
+    type === "HOUR" || type === "DAY" || type === "MONTH" || type === "YEAR"
+  );
+}
+
+function isPartitioningFieldType(
+  type: string | undefined
+): type is PartitioningFieldType {
+  return type === "TIMESTAMP" || type === "DATE" || type === "DATETIME";
+}
+
+/** Builds a {@link PartitioningStrategy} from extension environment variables. */
+function buildPartitioning(): PartitioningStrategy | undefined {
+  const granularity = process.env.TABLE_PARTITIONING;
+
+  if (!isGranularity(granularity)) {
+    return undefined;
   }
 
-  return null;
+  const field = process.env.TIME_PARTITIONING_FIELD;
+  const fieldType = isPartitioningFieldType(
+    process.env.TIME_PARTITIONING_FIELD_TYPE
+  )
+    ? process.env.TIME_PARTITIONING_FIELD_TYPE
+    : undefined;
+  const firestoreField = process.env.TIME_PARTITIONING_FIRESTORE_FIELD;
+
+  if (field && firestoreField && fieldType) {
+    return {
+      granularity,
+      bigqueryColumnName: field,
+      bigqueryColumnType: fieldType,
+      firestoreFieldName: firestoreField,
+    };
+  }
+
+  if (field === "timestamp") {
+    return {
+      granularity,
+      bigqueryColumnName: "timestamp" as const,
+      bigqueryColumnType: fieldType,
+    };
+  }
+
+  return { granularity };
 }
 
 export function clustering(clusters: string | undefined) {
@@ -46,13 +89,7 @@ export default {
   datasetLocation: process.env.DATASET_LOCATION,
   backupCollectionId: process.env.BACKUP_COLLECTION,
   transformFunction: process.env.TRANSFORM_FUNCTION,
-  timePartitioning: timePartitioning(process.env.TABLE_PARTITIONING),
-  timePartitioningField: process.env.TIME_PARTITIONING_FIELD,
-  timePartitioningFieldType:
-    process.env.TIME_PARTITIONING_FIELD_TYPE !== "omit"
-      ? process.env.TIME_PARTITIONING_FIELD_TYPE
-      : undefined,
-  timePartitioningFirestoreField: process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
+  partitioning: buildPartitioning(),
   clustering: clustering(process.env.CLUSTERING),
   wildcardIds: process.env.WILDCARD_IDS === "true",
   useNewSnapshotQuerySyntax:
@@ -76,5 +113,6 @@ export default {
   backupBucketName:
     process.env.BACKUP_GCS_BUCKET || `${process.env.PROJECT_ID}.appspot.com`,
   backupDir: `_${process.env.INSTANCE_ID || "firestore-bigquery-export"}`,
-  logLevel: process.env.LOG_LEVEL || LogLevel.INFO,
+  logLevel: (process.env.LOG_LEVEL ||
+    LogLevel.INFO) as ChangeTrackerConfig["logLevel"],
 };
