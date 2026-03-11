@@ -212,6 +212,28 @@ describe("validatePayload", () => {
     });
   });
 
+  it("should validate a SendGrid payload with customArgs", () => {
+    const validPayload = {
+      to: "test@example.com",
+      sendGrid: {
+        templateId: "d-template-id",
+        customArgs: { campaign: "welcome", source: "signup" },
+      },
+    };
+    expect(() => validatePayload(validPayload)).not.toThrow();
+  });
+
+  it("should validate a SendGrid payload with ipPoolName", () => {
+    const validPayload = {
+      to: "test@example.com",
+      sendGrid: {
+        templateId: "d-template-id",
+        ipPoolName: "transactional",
+      },
+    };
+    expect(() => validatePayload(validPayload)).not.toThrow();
+  });
+
   it("should validate a SendGrid payload with only mailSettings", () => {
     const validPayload = {
       to: "test@example.com",
@@ -253,6 +275,26 @@ describe("validatePayload", () => {
       expect(() => validatePayload(invalidPayload)).toThrow(
         "Invalid sendGrid configuration: Field 'templateId' is required when 'dynamicTemplateData' is provided"
       );
+    });
+
+    it("should throw ValidationError for SendGrid customArgs with non-string values", () => {
+      const invalidPayload = {
+        to: "test@example.com",
+        sendGrid: {
+          customArgs: { campaign: 123 },
+        },
+      };
+      expect(() => validatePayload(invalidPayload)).toThrow(ValidationError);
+    });
+
+    it("should throw ValidationError for SendGrid ipPoolName with non-string value", () => {
+      const invalidPayload = {
+        to: "test@example.com",
+        sendGrid: {
+          ipPoolName: 123,
+        },
+      };
+      expect(() => validatePayload(invalidPayload)).toThrow(ValidationError);
     });
 
     it("should throw ValidationError for custom template without name", () => {
