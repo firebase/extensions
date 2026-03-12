@@ -15,7 +15,7 @@
  */
 
 import type { CliConfig } from "../config";
-import firebase = require("firebase-admin");
+import { getFirestore, GeoPoint, DocumentReference } from "firebase-admin/firestore";
 import { genkit, z } from "genkit";
 import { googleAI } from "@genkit-ai/googleai";
 import * as fs from "fs";
@@ -24,9 +24,12 @@ import inquirer from "inquirer";
 
 export async function sampleFirestoreDocuments(
   collectionPath: string,
-  sampleSize: number
+  sampleSize: number,
+  databaseId?: string
 ): Promise<any[]> {
-  const db = firebase.firestore();
+  const db = (databaseId && databaseId !== "(default)")
+    ? getFirestore(databaseId)
+    : getFirestore();
 
   try {
     const snapshot = await db
@@ -54,7 +57,7 @@ export function serializeDocument(data: any): any {
     return { _type: "timestamp", value: data.toISOString() };
   }
 
-  if (data instanceof firebase.firestore.GeoPoint) {
+  if (data instanceof GeoPoint) {
     return {
       _type: "geopoint",
       latitude: data.latitude,
@@ -62,7 +65,7 @@ export function serializeDocument(data: any): any {
     };
   }
 
-  if (data instanceof firebase.firestore.DocumentReference) {
+  if (data instanceof DocumentReference) {
     return { _type: "reference", path: data.path };
   }
 
@@ -197,7 +200,8 @@ export const generateSchemaFilesWithGemini = async (config: CliConfig) => {
   //  get sample data from Firestore
   const sampleData = await sampleFirestoreDocuments(
     config.geminiAnalyzeCollectionPath!,
-    config.agentSampleSize!
+    config.agentSampleSize!,
+    config.databaseId
   );
 
   if (sampleData.length === 0) {
