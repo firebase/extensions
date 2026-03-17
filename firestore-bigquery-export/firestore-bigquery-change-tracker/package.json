@@ -2,7 +2,7 @@
   "name": "@firebaseextensions/firestore-bigquery-change-tracker",
   "repository": {
     "type": "git",
-    "url": "github.com/firebase/extensions.git",
+    "url": "git+https://github.com/firebase/extensions.git",
     "directory": "firestore-bigquery-export/firestore-bigquery-change-tracker"
   },
   "version": "2.0.0",
