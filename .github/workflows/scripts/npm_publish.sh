@@ -63,4 +63,4 @@ if npm_package_version_exists "$NPM_PACKAGE_NAME" "$NPM_PACKAGE_VERSION"; then
 fi
 
 echo "Attempting to publish $NPM_PACKAGE_NAME version $NPM_PACKAGE_VERSION..."
-npm publish 
+npm publish --provenance
