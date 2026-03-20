@@ -5,7 +5,7 @@
     "url": "git+https://github.com/firebase/extensions.git",
     "directory": "firestore-bigquery-export/firestore-bigquery-change-tracker"
   },
-  "version": "2.0.0",
+  "version": "2.0.1-rc.0",
   "description": "Core change-tracker library for Cloud Firestore Collection BigQuery Exports",
   "main": "./lib/index.js",
   "scripts": {
@@ -17,10 +17,8 @@
     "generate-stresstest-table": "bq query --project_id=extensions-testing  --use_legacy_sql=false < ./src/__tests__/fixtures/sql/generateSnapshotStresstestTable.sql"
   },
   "files": [
-    "lib/*.js",
-    "lib/bigquery/*.js",
-    "lib/*.d.ts",
-    "lib/bigquery/*.d.ts"
+    "lib/**/*.js",
+    "lib/**/*.d.ts"
   ],
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
