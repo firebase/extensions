@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { LogLevel } from "@firebaseextensions/firestore-bigquery-change-tracker";
+type TrackerLogLevel = "debug" | "info" | "warn" | "error" | "silent";
 
 function timePartitioning(type) {
   if (
@@ -30,6 +31,23 @@ function timePartitioning(type) {
 
 export function clustering(clusters: string | undefined) {
   return clusters ? clusters.split(",").slice(0, 4) : null;
+}
+
+function normalizeLogLevel(level: string | undefined): TrackerLogLevel {
+  switch ((level || "").toLowerCase()) {
+    case "debug":
+      return "debug";
+    case "info":
+      return "info";
+    case "warn":
+      return "warn";
+    case "error":
+      return "error";
+    case "silent":
+      return "silent";
+    default:
+      return LogLevel.INFO;
+  }
 }
 
 export default {
@@ -76,5 +94,5 @@ export default {
   backupBucketName:
     process.env.BACKUP_GCS_BUCKET || `${process.env.PROJECT_ID}.appspot.com`,
   backupDir: `_${process.env.INSTANCE_ID || "firestore-bigquery-export"}`,
-  logLevel: process.env.LOG_LEVEL || LogLevel.INFO,
+  logLevel: normalizeLogLevel(process.env.LOG_LEVEL),
 };

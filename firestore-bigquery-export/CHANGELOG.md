@@ -1,3 +1,7 @@
+## Version 0.2.11
+
+chore: bump firestore-bigquery-change-tracker dependency to v2 in functions package
+
 ## Version 0.2.10
 
 chore: add overrides for http-proxy-agent and inquirer to resolve npm audit vulnerabilities
