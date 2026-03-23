@@ -54,9 +54,9 @@ export class PartitioningConfig {
   private strategy: PartitioningStrategy;
   private type: PartitioningType;
 
-  constructor(config: PartitioningStrategy) {
-    this.strategy = config;
-    this.type = this.determineType(config);
+  constructor(config?: PartitioningStrategy) {
+    this.strategy = config || { granularity: "NONE" };
+    this.type = this.determineType(this.strategy);
   }
 
   private determineType(config: PartitioningStrategy): PartitioningType {

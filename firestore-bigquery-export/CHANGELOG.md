@@ -2,6 +2,8 @@
 
 chore: bump firestore-bigquery-change-tracker dependency to v2 in functions package
 
+fix: prevent startup crash when partitioning config is omitted by passing tracker v2 partitioning config shape and defaulting to NONE
+
 ## Version 0.2.10
 
 chore: add overrides for http-proxy-agent and inquirer to resolve npm audit vulnerabilities
