@@ -34,18 +34,65 @@ import * as logs from "./logs";
 import * as events from "./events";
 import { getChangeType, getDocumentId } from "./util";
 
+type EventTrackerConfig = ConstructorParameters<
+  typeof FirestoreBigQueryEventHistoryTracker
+>[0];
+type PartitioningConfig = NonNullable<EventTrackerConfig["partitioning"]>;
+
+function getPartitioningConfig(): PartitioningConfig {
+  if (!config.timePartitioning) {
+    return { granularity: "NONE" };
+  }
+
+  const granularity = config.timePartitioning as "HOUR" | "DAY" | "MONTH" | "YEAR";
+
+  if (!config.timePartitioningField && !config.timePartitioningFirestoreField) {
+    return { granularity };
+  }
+
+  if (
+    config.timePartitioningField === "timestamp" &&
+    !config.timePartitioningFirestoreField
+  ) {
+    return {
+      granularity,
+      bigqueryColumnName: "timestamp",
+      bigqueryColumnType: config.timePartitioningFieldType as
+        | "TIMESTAMP"
+        | "DATE"
+        | "DATETIME"
+        | undefined,
+    };
+  }
+
+  if (
+    config.timePartitioningField &&
+    config.timePartitioningFieldType &&
+    config.timePartitioningFirestoreField
+  ) {
+    return {
+      granularity,
+      bigqueryColumnName: config.timePartitioningField,
+      bigqueryColumnType: config.timePartitioningFieldType as
+        | "TIMESTAMP"
+        | "DATE"
+        | "DATETIME",
+      firestoreFieldName: config.timePartitioningFirestoreField,
+    };
+  }
+
+  return { granularity: "NONE" };
+}
+
 // Configuration for the Firestore Event History Tracker
-const eventTrackerConfig = {
+const eventTrackerConfig: EventTrackerConfig = {
   firestoreInstanceId: config.databaseId,
   tableId: config.tableId,
   datasetId: config.datasetId,
   datasetLocation: config.datasetLocation,
   backupTableId: config.backupCollectionId,
   transformFunction: config.transformFunction,
-  timePartitioning: config.timePartitioning,
-  timePartitioningField: config.timePartitioningField,
-  timePartitioningFieldType: config.timePartitioningFieldType,
-  timePartitioningFirestoreField: config.timePartitioningFirestoreField,
+  partitioning: getPartitioningConfig(),
   // Database related configurations
   databaseId: config.databaseId,
   clustering: config.clustering,
