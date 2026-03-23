@@ -25,7 +25,11 @@ export {
   FirestoreEventHistoryTracker,
 } from "./tracker";
 export { LogLevel, Logger } from "./logger";
-export type { ChangeTrackerConfig } from "./bigquery/types";
+export type {
+  ChangeTrackerConfig,
+  /** @deprecated Use {@link ChangeTrackerConfig} instead. */
+  ChangeTrackerConfig as Config,
+} from "./bigquery/types";
 export type {
   PartitioningStrategy,
   PartitioningFieldType,

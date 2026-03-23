@@ -66,7 +66,7 @@ export class PartitioningConfig {
   private type: PartitioningType;
 
   constructor(strategy?: PartitioningStrategy) {
-    this.strategy = strategy ?? {};
+    this.strategy = strategy ?? { granularity: "NONE" };
     this.type = this.determineType(this.strategy);
   }
 
