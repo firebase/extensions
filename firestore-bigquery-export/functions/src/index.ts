@@ -44,7 +44,11 @@ function getPartitioningConfig(): PartitioningConfig {
     return { granularity: "NONE" };
   }
 
-  const granularity = config.timePartitioning as "HOUR" | "DAY" | "MONTH" | "YEAR";
+  const granularity = config.timePartitioning as
+    | "HOUR"
+    | "DAY"
+    | "MONTH"
+    | "YEAR";
 
   if (!config.timePartitioningField && !config.timePartitioningFirestoreField) {
     return { granularity };
