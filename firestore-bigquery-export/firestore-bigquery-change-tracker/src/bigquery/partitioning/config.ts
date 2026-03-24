@@ -94,7 +94,9 @@ export class PartitioningConfig {
       return PartitioningType.FIRESTORE_FIELD;
     }
 
-    return PartitioningType.NONE;
+    throw new Error(
+      `Invalid partitioning strategy: ${JSON.stringify(strategy)}`
+    );
   }
 
   getType(): PartitioningType {

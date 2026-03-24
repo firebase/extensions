@@ -68,22 +68,26 @@ describe("PartitioningConfig", () => {
       expect(config.isFirestoreFieldPartitioning()).toBe(true);
     });
 
-    test("returns NONE when bigqueryColumnName is provided without bigqueryColumnType", () => {
-      const config = new PartitioningConfig({
-        granularity: "DAY",
-        bigqueryColumnName: "custom_field",
-        firestoreFieldName: "customField",
-      } as any);
-      expect(config.getType()).toBe(PartitioningType.NONE);
+    test("throws when bigqueryColumnName is provided without bigqueryColumnType", () => {
+      expect(
+        () =>
+          new PartitioningConfig({
+            granularity: "DAY",
+            bigqueryColumnName: "custom_field",
+            firestoreFieldName: "customField",
+          } as any)
+      ).toThrow("Invalid partitioning strategy");
     });
 
-    test("returns NONE when bigqueryColumnType is provided without firestoreFieldName", () => {
-      const config = new PartitioningConfig({
-        granularity: "DAY",
-        bigqueryColumnName: "custom_field",
-        bigqueryColumnType: "TIMESTAMP",
-      } as any);
-      expect(config.getType()).toBe(PartitioningType.NONE);
+    test("throws when bigqueryColumnType is provided without firestoreFieldName", () => {
+      expect(
+        () =>
+          new PartitioningConfig({
+            granularity: "DAY",
+            bigqueryColumnName: "custom_field",
+            bigqueryColumnType: "TIMESTAMP",
+          } as any)
+      ).toThrow("Invalid partitioning strategy");
     });
   });
 
