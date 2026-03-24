@@ -1,3 +1,9 @@
+## Version 0.3.0
+
+breaking change: reject invalid partitioning configuration combinations at startup with explicit error messages
+
+fix: normalize `NONE` / `omit` partitioning sentinels before mapping to change-tracker 2.x partitioning strategy
+
 ## Version 0.2.11
 
 chore: bump firestore-bigquery-change-tracker dependency to v2 in functions package

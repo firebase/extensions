@@ -178,13 +178,13 @@ describe("extension config", () => {
       });
     });
 
-    test("returns NONE strategy when table partitioning is disabled", () => {
+    test("returns NONE strategy when table partitioning is disabled and optional fields are empty", () => {
       expect(
         buildPartitioningConfig({
           timePartitioning: null,
-          timePartitioningField: "created_at",
-          timePartitioningFieldType: "TIMESTAMP",
-          timePartitioningFirestoreField: "createdAt",
+          timePartitioningField: undefined,
+          timePartitioningFieldType: undefined,
+          timePartitioningFirestoreField: undefined,
         })
       ).toEqual({
         granularity: "NONE",
@@ -207,28 +207,48 @@ describe("extension config", () => {
       });
     });
 
-    test("returns NONE strategy for partial custom field configs", () => {
+    test("supports partitioning by the built-in timestamp field", () => {
       expect(
         buildPartitioningConfig({
-          timePartitioning: "HOUR",
-          timePartitioningField: "partition_column",
-          timePartitioningFieldType: undefined,
+          timePartitioning: "MONTH",
+          timePartitioningField: "timestamp",
+          timePartitioningFieldType: "DATETIME",
           timePartitioningFirestoreField: undefined,
         })
       ).toEqual({
-        granularity: "NONE",
+        granularity: "MONTH",
+        bigqueryColumnName: "timestamp",
+        bigqueryColumnType: "DATETIME",
       });
+    });
 
-      expect(
+    test("throws a useful error for invalid partial custom field configs", () => {
+      expect(() =>
+        buildPartitioningConfig({
+          timePartitioning: "HOUR",
+          timePartitioningField: "partition_column",
+          timePartitioningFieldType: "omit",
+          timePartitioningFirestoreField: undefined,
+        })
+      ).toThrow(/Invalid partitioning configuration/);
+
+      expect(() =>
         buildPartitioningConfig({
           timePartitioning: "HOUR",
           timePartitioningField: undefined,
           timePartitioningFieldType: "TIMESTAMP",
           timePartitioningFirestoreField: "time",
         })
-      ).toEqual({
-        granularity: "NONE",
-      });
+      ).toThrow(/Valid combinations are/);
+
+      expect(() =>
+        buildPartitioningConfig({
+          timePartitioning: null,
+          timePartitioningField: "created_at",
+          timePartitioningFieldType: "TIMESTAMP",
+          timePartitioningFirestoreField: "createdAt",
+        })
+      ).toThrow(/TABLE_PARTITIONING is NONE/);
     });
   });
 });

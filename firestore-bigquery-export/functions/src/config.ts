@@ -73,8 +73,38 @@ export function buildPartitioningConfig(params: {
   timePartitioningFirestoreField: string | undefined;
 }): ChangeTrackerConfig["partitioning"] {
   const { timePartitioning } = params;
+  const rawFieldName = params.timePartitioningField?.trim();
+  const rawFieldType = params.timePartitioningFieldType?.trim();
+  const rawFirestoreField = params.timePartitioningFirestoreField?.trim();
+
+  const formatValue = (value: string | undefined): string =>
+    value && value.length > 0 ? `"${value}"` : "(empty)";
+
+  const throwInvalidPartitioningConfig = (detail: string): never => {
+    throw new Error(
+      [
+        "Invalid partitioning configuration for firestore-bigquery-export.",
+        detail,
+        `Received TABLE_PARTITIONING=${formatValue(
+          timePartitioning ?? undefined
+        )},`,
+        `TIME_PARTITIONING_FIELD=${formatValue(rawFieldName)},`,
+        `TIME_PARTITIONING_FIRESTORE_FIELD=${formatValue(rawFirestoreField)},`,
+        `TIME_PARTITIONING_FIELD_TYPE=${formatValue(rawFieldType)}.`,
+        "Valid combinations are:",
+        "1) Ingestion-time: TABLE_PARTITIONING set and all TIME_PARTITIONING_* values empty/NONE/omit.",
+        "2) Timestamp field: TABLE_PARTITIONING set, TIME_PARTITIONING_FIELD=timestamp, TIME_PARTITIONING_FIRESTORE_FIELD empty.",
+        "3) Custom field: TABLE_PARTITIONING set, and TIME_PARTITIONING_FIELD + TIME_PARTITIONING_FIRESTORE_FIELD + TIME_PARTITIONING_FIELD_TYPE all provided.",
+      ].join(" ")
+    );
+  };
 
   if (!timePartitioning) {
+    if (rawFieldName || rawFieldType || rawFirestoreField) {
+      return throwInvalidPartitioningConfig(
+        "Partition-specific fields cannot be provided when TABLE_PARTITIONING is NONE."
+      );
+    }
     return { granularity: "NONE" };
   }
 
@@ -109,7 +139,9 @@ export function buildPartitioningConfig(params: {
     };
   }
 
-  return { granularity: "NONE" };
+  return throwInvalidPartitioningConfig(
+    "When TABLE_PARTITIONING is set, partitioning fields are either incomplete or invalid."
+  );
 }
 
 function normalizeLogLevel(level: string | undefined): TrackerLogLevel {
