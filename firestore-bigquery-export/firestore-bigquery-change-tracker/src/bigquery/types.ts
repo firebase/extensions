@@ -1,10 +1,9 @@
 import { PartitioningStrategy } from "./partitioning/config";
 
 /**
- * Base configuration for all variants. Includes all parameters
- * that are not dependent on the partitioning strategy.
+ * Configuration for {@link FirestoreBigQueryEventHistoryTracker}.
  */
-export interface Config {
+export interface ChangeTrackerConfig {
   datasetId: string;
   tableId: string;
   firestoreInstanceId?: string;

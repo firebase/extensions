@@ -1,5 +1,5 @@
 import { BigQuery, Table, TableMetadata } from "@google-cloud/bigquery";
-import { Config } from ".";
+import { ChangeTrackerConfig } from ".";
 import * as logs from "../logs";
 import {
   buildMaterializedViewQuery,
@@ -10,7 +10,7 @@ import * as sqlFormatter from "sql-formatter";
 
 interface InitializeLatestMaterializedViewOptions {
   bq: BigQuery;
-  changeTrackerConfig: Config;
+  changeTrackerConfig: ChangeTrackerConfig;
   view: Table;
   viewExists: boolean;
   rawChangeLogTableName: string;
@@ -20,7 +20,7 @@ interface InitializeLatestMaterializedViewOptions {
 
 export async function shouldRecreateMaterializedView(
   view: Table,
-  config: Config,
+  config: ChangeTrackerConfig,
   source: string
 ): Promise<boolean> {
   const [viewMetadata] = await view.getMetadata();

@@ -1,4 +1,4 @@
-import { Config } from ".";
+import { ChangeTrackerConfig } from ".";
 
 import * as logs from "../logs";
 import * as bigquery from "@google-cloud/bigquery";
@@ -25,11 +25,15 @@ interface InvalidFieldType {
 }
 
 export class Clustering {
-  public config: Config;
+  public config: ChangeTrackerConfig;
   public table: bigquery.Table;
   public schema: object;
 
-  constructor(config: Config, table?: bigquery.Table, schema?: object) {
+  constructor(
+    config: ChangeTrackerConfig,
+    table?: bigquery.Table,
+    schema?: object
+  ) {
     this.config = config;
     this.table = table;
     this.schema = schema;

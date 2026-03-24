@@ -1,6 +1,6 @@
 import { initializeLatestView } from "../../../bigquery/initializeLatestView";
 import { initializeLatestMaterializedView } from "../../../bigquery/initializeLatestMaterializedView";
-import { Config } from "../../../bigquery/types";
+import { ChangeTrackerConfig } from "../../../bigquery/types";
 
 jest.mock("../../../bigquery/initializeLatestMaterializedView");
 
@@ -12,7 +12,7 @@ describe("initializeLatestView", () => {
     create: jest.fn(),
   };
 
-  const mockConfig: Config = {
+  const mockConfig: ChangeTrackerConfig = {
     datasetId: "test_dataset",
     tableId: "test_raw_table",
     datasetLocation: "US",
