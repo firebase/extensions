@@ -78,8 +78,12 @@ export function buildPartitioningConfig(params: {
     return { granularity: "NONE" };
   }
 
-  const fieldName = normalizeOptionalPartitionValue(params.timePartitioningField);
-  const fieldType = normalizePartitionFieldType(params.timePartitioningFieldType);
+  const fieldName = normalizeOptionalPartitionValue(
+    params.timePartitioningField
+  );
+  const fieldType = normalizePartitionFieldType(
+    params.timePartitioningFieldType
+  );
   const firestoreField = normalizeOptionalPartitionValue(
     params.timePartitioningFirestoreField
   );
@@ -150,7 +154,8 @@ export default {
     timePartitioning: timePartitioning(process.env.TABLE_PARTITIONING),
     timePartitioningField: process.env.TIME_PARTITIONING_FIELD,
     timePartitioningFieldType: process.env.TIME_PARTITIONING_FIELD_TYPE,
-    timePartitioningFirestoreField: process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
+    timePartitioningFirestoreField:
+      process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
   }),
   clustering: clustering(process.env.CLUSTERING),
   wildcardIds: process.env.WILDCARD_IDS === "true",

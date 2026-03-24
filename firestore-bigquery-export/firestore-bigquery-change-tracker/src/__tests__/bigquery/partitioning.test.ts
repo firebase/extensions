@@ -16,7 +16,9 @@ let table: Table;
 let randomID: string;
 let datasetId: string;
 const describeIfBigQueryIntegration =
-  process.env.RUN_BIGQUERY_INTEGRATION_TESTS === "true" ? describe : describe.skip;
+  process.env.RUN_BIGQUERY_INTEGRATION_TESTS === "true"
+    ? describe
+    : describe.skip;
 
 describeIfBigQueryIntegration("processing partitions on a new table", () => {
   beforeAll(async () => {
@@ -730,101 +732,104 @@ describeIfBigQueryIntegration("updateTableMetadata", () => {
   });
 });
 
-describeIfBigQueryIntegration("getPartitionValue with DELETE operations", () => {
-  let testTable: Table;
-  let testDataset: Dataset;
+describeIfBigQueryIntegration(
+  "getPartitionValue with DELETE operations",
+  () => {
+    let testTable: Table;
+    let testDataset: Dataset;
 
-  beforeAll(async () => {
-    const randomID = (Math.random() + 1).toString(36).substring(7);
-    const testDatasetId = `bq_delete_${randomID}`;
-    [testDataset] = await bq.createDataset(testDatasetId, {
-      location: "europe-west2",
-    });
-    [testTable] = await testDataset.createTable(`bq_delete_${randomID}`, {});
-  });
-
-  afterAll(async () => {
-    await deleteTable({
-      datasetId: testDataset.id,
-    });
-  });
-
-  test("uses oldData for DELETE operations", () => {
-    const partitioningConfig = new PartitioningConfig({
-      granularity: "DAY",
-      bigqueryColumnName: "end_date",
-      bigqueryColumnType: "TIMESTAMP",
-      firestoreFieldName: "endDate",
+    beforeAll(async () => {
+      const randomID = (Math.random() + 1).toString(36).substring(7);
+      const testDatasetId = `bq_delete_${randomID}`;
+      [testDataset] = await bq.createDataset(testDatasetId, {
+        location: "europe-west2",
+      });
+      [testTable] = await testDataset.createTable(`bq_delete_${randomID}`, {});
     });
 
-    const oldDate = admin.firestore.Timestamp.fromDate(
-      new Date("2024-01-15T10:00:00Z")
-    );
-
-    const event: FirestoreDocumentChangeEvent = {
-      timestamp: "",
-      operation: ChangeType.DELETE,
-      documentName: "test/doc",
-      eventId: "event1",
-      documentId: "doc",
-      data: null,
-      oldData: { endDate: oldDate },
-    };
-
-    const partitioning = new Partitioning(partitioningConfig, testTable);
-    const value = partitioning.getPartitionValue(event);
-
-    expect(value.end_date).toBeDefined();
-  });
-
-  test("returns empty object for DELETE when oldData is null", () => {
-    const partitioningConfig = new PartitioningConfig({
-      granularity: "DAY",
-      bigqueryColumnName: "end_date",
-      bigqueryColumnType: "TIMESTAMP",
-      firestoreFieldName: "endDate",
+    afterAll(async () => {
+      await deleteTable({
+        datasetId: testDataset.id,
+      });
     });
 
-    const event: FirestoreDocumentChangeEvent = {
-      timestamp: "",
-      operation: ChangeType.DELETE,
-      documentName: "test/doc",
-      eventId: "event1",
-      documentId: "doc",
-      data: null,
-      oldData: null,
-    };
+    test("uses oldData for DELETE operations", () => {
+      const partitioningConfig = new PartitioningConfig({
+        granularity: "DAY",
+        bigqueryColumnName: "end_date",
+        bigqueryColumnType: "TIMESTAMP",
+        firestoreFieldName: "endDate",
+      });
 
-    const partitioning = new Partitioning(partitioningConfig, testTable);
-    const value = partitioning.getPartitionValue(event);
+      const oldDate = admin.firestore.Timestamp.fromDate(
+        new Date("2024-01-15T10:00:00Z")
+      );
 
-    expect(value).toEqual({});
-  });
+      const event: FirestoreDocumentChangeEvent = {
+        timestamp: "",
+        operation: ChangeType.DELETE,
+        documentName: "test/doc",
+        eventId: "event1",
+        documentId: "doc",
+        data: null,
+        oldData: { endDate: oldDate },
+      };
 
-  test("returns empty object for DELETE when oldData lacks the field", () => {
-    const partitioningConfig = new PartitioningConfig({
-      granularity: "DAY",
-      bigqueryColumnName: "end_date",
-      bigqueryColumnType: "TIMESTAMP",
-      firestoreFieldName: "endDate",
+      const partitioning = new Partitioning(partitioningConfig, testTable);
+      const value = partitioning.getPartitionValue(event);
+
+      expect(value.end_date).toBeDefined();
     });
 
-    const event: FirestoreDocumentChangeEvent = {
-      timestamp: "",
-      operation: ChangeType.DELETE,
-      documentName: "test/doc",
-      eventId: "event1",
-      documentId: "doc",
-      data: null,
-      oldData: { otherField: "value" },
-    };
+    test("returns empty object for DELETE when oldData is null", () => {
+      const partitioningConfig = new PartitioningConfig({
+        granularity: "DAY",
+        bigqueryColumnName: "end_date",
+        bigqueryColumnType: "TIMESTAMP",
+        firestoreFieldName: "endDate",
+      });
 
-    const partitioning = new Partitioning(partitioningConfig, testTable);
-    const value = partitioning.getPartitionValue(event);
+      const event: FirestoreDocumentChangeEvent = {
+        timestamp: "",
+        operation: ChangeType.DELETE,
+        documentName: "test/doc",
+        eventId: "event1",
+        documentId: "doc",
+        data: null,
+        oldData: null,
+      };
 
-    expect(value).toEqual({});
-  });
-});
+      const partitioning = new Partitioning(partitioningConfig, testTable);
+      const value = partitioning.getPartitionValue(event);
+
+      expect(value).toEqual({});
+    });
+
+    test("returns empty object for DELETE when oldData lacks the field", () => {
+      const partitioningConfig = new PartitioningConfig({
+        granularity: "DAY",
+        bigqueryColumnName: "end_date",
+        bigqueryColumnType: "TIMESTAMP",
+        firestoreFieldName: "endDate",
+      });
+
+      const event: FirestoreDocumentChangeEvent = {
+        timestamp: "",
+        operation: ChangeType.DELETE,
+        documentName: "test/doc",
+        eventId: "event1",
+        documentId: "doc",
+        data: null,
+        oldData: { otherField: "value" },
+      };
+
+      const partitioning = new Partitioning(partitioningConfig, testTable);
+      const value = partitioning.getPartitionValue(event);
+
+      expect(value).toEqual({});
+    });
+  }
+);
 
 describeIfBigQueryIntegration("isValidPartitionForExistingTable", () => {
   let testTable: Table;
