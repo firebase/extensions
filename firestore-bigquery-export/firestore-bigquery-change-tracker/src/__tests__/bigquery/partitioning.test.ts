@@ -15,8 +15,10 @@ let dataset: Dataset;
 let table: Table;
 let randomID: string;
 let datasetId: string;
+const describeIfBigQueryIntegration =
+  process.env.RUN_BIGQUERY_INTEGRATION_TESTS === "true" ? describe : describe.skip;
 
-describe("processing partitions on a new table", () => {
+describeIfBigQueryIntegration("processing partitions on a new table", () => {
   beforeAll(async () => {
     jest.spyOn(logger, "debug").mockImplementation(() => {});
     jest.spyOn(logger, "info").mockImplementation(() => {});
@@ -576,7 +578,7 @@ describe("processing partitions on a new table", () => {
   });
 });
 
-describe("updateTableMetadata", () => {
+describeIfBigQueryIntegration("updateTableMetadata", () => {
   let testTable: Table;
   let testDataset: Dataset;
 
@@ -728,7 +730,7 @@ describe("updateTableMetadata", () => {
   });
 });
 
-describe("getPartitionValue with DELETE operations", () => {
+describeIfBigQueryIntegration("getPartitionValue with DELETE operations", () => {
   let testTable: Table;
   let testDataset: Dataset;
 
@@ -824,7 +826,7 @@ describe("getPartitionValue with DELETE operations", () => {
   });
 });
 
-describe("isValidPartitionForExistingTable", () => {
+describeIfBigQueryIntegration("isValidPartitionForExistingTable", () => {
   let testTable: Table;
   let testDataset: Dataset;
   let partitionedTable: Table;
@@ -886,7 +888,7 @@ describe("isValidPartitionForExistingTable", () => {
   });
 });
 
-describe("addPartitioningToSchema with DATE type", () => {
+describeIfBigQueryIntegration("addPartitioningToSchema with DATE type", () => {
   let testTable: Table;
   let testDataset: Dataset;
 

@@ -14,9 +14,16 @@
  * limitations under the License.
  */
 import { LogLevel } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import type {
+  ChangeTrackerConfig,
+  PartitioningFieldType,
+  TimePartitioningGranularity,
+} from "@firebaseextensions/firestore-bigquery-change-tracker";
 type TrackerLogLevel = "debug" | "info" | "warn" | "error" | "silent";
 
-function timePartitioning(type) {
+function timePartitioning(
+  type: string | undefined
+): TimePartitioningGranularity | null {
   if (
     type === "HOUR" ||
     type === "DAY" ||
@@ -31,6 +38,74 @@ function timePartitioning(type) {
 
 export function clustering(clusters: string | undefined) {
   return clusters ? clusters.split(",").slice(0, 4) : null;
+}
+
+function normalizeOptionalPartitionValue(
+  value: string | undefined
+): string | undefined {
+  const normalized = value?.trim();
+
+  if (!normalized || normalized === "NONE" || normalized === "omit") {
+    return undefined;
+  }
+
+  return normalized;
+}
+
+function normalizePartitionFieldType(
+  value: string | undefined
+): PartitioningFieldType | undefined {
+  const normalized = normalizeOptionalPartitionValue(value);
+  if (
+    normalized === "TIMESTAMP" ||
+    normalized === "DATE" ||
+    normalized === "DATETIME"
+  ) {
+    return normalized;
+  }
+  return undefined;
+}
+
+export function buildPartitioningConfig(params: {
+  timePartitioning: TimePartitioningGranularity | null;
+  timePartitioningField: string | undefined;
+  timePartitioningFieldType: string | undefined;
+  timePartitioningFirestoreField: string | undefined;
+}): ChangeTrackerConfig["partitioning"] {
+  const { timePartitioning } = params;
+
+  if (!timePartitioning) {
+    return { granularity: "NONE" };
+  }
+
+  const fieldName = normalizeOptionalPartitionValue(params.timePartitioningField);
+  const fieldType = normalizePartitionFieldType(params.timePartitioningFieldType);
+  const firestoreField = normalizeOptionalPartitionValue(
+    params.timePartitioningFirestoreField
+  );
+
+  if (!fieldName && !firestoreField) {
+    return { granularity: timePartitioning };
+  }
+
+  if (fieldName === "timestamp" && !firestoreField) {
+    return {
+      granularity: timePartitioning,
+      bigqueryColumnName: "timestamp",
+      ...(fieldType ? { bigqueryColumnType: fieldType } : {}),
+    };
+  }
+
+  if (fieldName && firestoreField && fieldType) {
+    return {
+      granularity: timePartitioning,
+      bigqueryColumnName: fieldName,
+      bigqueryColumnType: fieldType,
+      firestoreFieldName: firestoreField,
+    };
+  }
+
+  return { granularity: "NONE" };
 }
 
 function normalizeLogLevel(level: string | undefined): TrackerLogLevel {
@@ -71,6 +146,12 @@ export default {
       ? process.env.TIME_PARTITIONING_FIELD_TYPE
       : undefined,
   timePartitioningFirestoreField: process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
+  partitioning: buildPartitioningConfig({
+    timePartitioning: timePartitioning(process.env.TABLE_PARTITIONING),
+    timePartitioningField: process.env.TIME_PARTITIONING_FIELD,
+    timePartitioningFieldType: process.env.TIME_PARTITIONING_FIELD_TYPE,
+    timePartitioningFirestoreField: process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
+  }),
   clustering: clustering(process.env.CLUSTERING),
   wildcardIds: process.env.WILDCARD_IDS === "true",
   useNewSnapshotQuerySyntax:
