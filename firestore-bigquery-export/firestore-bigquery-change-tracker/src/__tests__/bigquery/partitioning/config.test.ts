@@ -67,6 +67,24 @@ describe("PartitioningConfig", () => {
       expect(config.getType()).toBe(PartitioningType.FIRESTORE_FIELD);
       expect(config.isFirestoreFieldPartitioning()).toBe(true);
     });
+
+    test("returns NONE when bigqueryColumnName is provided without bigqueryColumnType", () => {
+      const config = new PartitioningConfig({
+        granularity: "DAY",
+        bigqueryColumnName: "custom_field",
+        firestoreFieldName: "customField",
+      } as any);
+      expect(config.getType()).toBe(PartitioningType.NONE);
+    });
+
+    test("returns NONE when bigqueryColumnType is provided without firestoreFieldName", () => {
+      const config = new PartitioningConfig({
+        granularity: "DAY",
+        bigqueryColumnName: "custom_field",
+        bigqueryColumnType: "TIMESTAMP",
+      } as any);
+      expect(config.getType()).toBe(PartitioningType.NONE);
+    });
   });
 
   describe("getter methods", () => {
@@ -92,7 +110,7 @@ describe("PartitioningConfig", () => {
     test("constructor defaults to no partitioning when undefined", () => {
       const config = new PartitioningConfig();
       expect(config.getType()).toBe(PartitioningType.NONE);
-      expect(config.getStrategy()).toEqual({});
+      expect(config.getStrategy()).toEqual({ granularity: "NONE" });
     });
   });
 });
