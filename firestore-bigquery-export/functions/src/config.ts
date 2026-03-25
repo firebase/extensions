@@ -99,15 +99,6 @@ export function buildPartitioningConfig(params: {
     );
   };
 
-  if (!timePartitioning) {
-    if (rawFieldName || rawFieldType || rawFirestoreField) {
-      return throwInvalidPartitioningConfig(
-        "Partition-specific fields cannot be provided when TABLE_PARTITIONING is NONE."
-      );
-    }
-    return { granularity: "NONE" };
-  }
-
   const fieldName = normalizeOptionalPartitionValue(
     params.timePartitioningField
   );
@@ -117,6 +108,15 @@ export function buildPartitioningConfig(params: {
   const firestoreField = normalizeOptionalPartitionValue(
     params.timePartitioningFirestoreField
   );
+
+  if (!timePartitioning) {
+    if (fieldName || fieldType || firestoreField) {
+      return throwInvalidPartitioningConfig(
+        "Partition-specific fields cannot be provided when TABLE_PARTITIONING is NONE."
+      );
+    }
+    return { granularity: "NONE" };
+  }
 
   if (!fieldName && !firestoreField) {
     return { granularity: timePartitioning };
