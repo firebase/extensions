@@ -5,7 +5,7 @@ import { resolve as pathResolve } from "path";
 import * as yaml from "js-yaml";
 import mockedEnv from "mocked-env";
 
-import { clustering } from "../src/config";
+import { buildPartitioningConfig, clustering } from "../src/config";
 
 let restoreEnv;
 let extensionYaml;
@@ -148,6 +148,107 @@ describe("extension config", () => {
           )
         ).toBeFalsy();
       });
+    });
+  });
+
+  describe("buildPartitioningConfig", () => {
+    test("uses ingestion-time partitioning when optional partition fields are empty", () => {
+      expect(
+        buildPartitioningConfig({
+          timePartitioning: "HOUR",
+          timePartitioningField: undefined,
+          timePartitioningFieldType: undefined,
+          timePartitioningFirestoreField: undefined,
+        })
+      ).toEqual({
+        granularity: "HOUR",
+      });
+    });
+
+    test("normalizes NONE/omit sentinels to ingestion-time partitioning", () => {
+      expect(
+        buildPartitioningConfig({
+          timePartitioning: "DAY",
+          timePartitioningField: "NONE",
+          timePartitioningFieldType: "omit",
+          timePartitioningFirestoreField: "NONE",
+        })
+      ).toEqual({
+        granularity: "DAY",
+      });
+    });
+
+    test("returns NONE strategy when table partitioning is disabled and optional fields are empty", () => {
+      expect(
+        buildPartitioningConfig({
+          timePartitioning: null,
+          timePartitioningField: undefined,
+          timePartitioningFieldType: undefined,
+          timePartitioningFirestoreField: undefined,
+        })
+      ).toEqual({
+        granularity: "NONE",
+      });
+    });
+
+    test("returns custom Firestore field strategy only when all required fields exist", () => {
+      expect(
+        buildPartitioningConfig({
+          timePartitioning: "HOUR",
+          timePartitioningField: "partition_column",
+          timePartitioningFieldType: "TIMESTAMP",
+          timePartitioningFirestoreField: "time",
+        })
+      ).toEqual({
+        granularity: "HOUR",
+        bigqueryColumnName: "partition_column",
+        bigqueryColumnType: "TIMESTAMP",
+        firestoreFieldName: "time",
+      });
+    });
+
+    test("supports partitioning by the built-in timestamp field", () => {
+      expect(
+        buildPartitioningConfig({
+          timePartitioning: "MONTH",
+          timePartitioningField: "timestamp",
+          timePartitioningFieldType: "DATETIME",
+          timePartitioningFirestoreField: undefined,
+        })
+      ).toEqual({
+        granularity: "MONTH",
+        bigqueryColumnName: "timestamp",
+        bigqueryColumnType: "DATETIME",
+      });
+    });
+
+    test("throws a useful error for invalid partial custom field configs", () => {
+      expect(() =>
+        buildPartitioningConfig({
+          timePartitioning: "HOUR",
+          timePartitioningField: "partition_column",
+          timePartitioningFieldType: "omit",
+          timePartitioningFirestoreField: undefined,
+        })
+      ).toThrow(/Invalid partitioning configuration/);
+
+      expect(() =>
+        buildPartitioningConfig({
+          timePartitioning: "HOUR",
+          timePartitioningField: undefined,
+          timePartitioningFieldType: "TIMESTAMP",
+          timePartitioningFirestoreField: "time",
+        })
+      ).toThrow(/Valid combinations are/);
+
+      expect(() =>
+        buildPartitioningConfig({
+          timePartitioning: null,
+          timePartitioningField: "created_at",
+          timePartitioningFieldType: "TIMESTAMP",
+          timePartitioningFirestoreField: "createdAt",
+        })
+      ).toThrow(/TABLE_PARTITIONING is NONE/);
     });
   });
 });

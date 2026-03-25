@@ -14,9 +14,16 @@
  * limitations under the License.
  */
 import { LogLevel } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import type {
+  ChangeTrackerConfig,
+  PartitioningFieldType,
+  TimePartitioningGranularity,
+} from "@firebaseextensions/firestore-bigquery-change-tracker";
 type TrackerLogLevel = "debug" | "info" | "warn" | "error" | "silent";
 
-function timePartitioning(type) {
+function timePartitioning(
+  type: string | undefined
+): TimePartitioningGranularity | null {
   if (
     type === "HOUR" ||
     type === "DAY" ||
@@ -31,6 +38,110 @@ function timePartitioning(type) {
 
 export function clustering(clusters: string | undefined) {
   return clusters ? clusters.split(",").slice(0, 4) : null;
+}
+
+function normalizeOptionalPartitionValue(
+  value: string | undefined
+): string | undefined {
+  const normalized = value?.trim();
+
+  if (!normalized || normalized === "NONE" || normalized === "omit") {
+    return undefined;
+  }
+
+  return normalized;
+}
+
+function normalizePartitionFieldType(
+  value: string | undefined
+): PartitioningFieldType | undefined {
+  const normalized = normalizeOptionalPartitionValue(value);
+  if (
+    normalized === "TIMESTAMP" ||
+    normalized === "DATE" ||
+    normalized === "DATETIME"
+  ) {
+    return normalized;
+  }
+  return undefined;
+}
+
+export function buildPartitioningConfig(params: {
+  timePartitioning: TimePartitioningGranularity | null;
+  timePartitioningField: string | undefined;
+  timePartitioningFieldType: string | undefined;
+  timePartitioningFirestoreField: string | undefined;
+}): ChangeTrackerConfig["partitioning"] {
+  const { timePartitioning } = params;
+  const rawFieldName = params.timePartitioningField?.trim();
+  const rawFieldType = params.timePartitioningFieldType?.trim();
+  const rawFirestoreField = params.timePartitioningFirestoreField?.trim();
+
+  const formatValue = (value: string | undefined): string =>
+    value && value.length > 0 ? `"${value}"` : "(empty)";
+
+  const throwInvalidPartitioningConfig = (detail: string): never => {
+    throw new Error(
+      [
+        "Invalid partitioning configuration for firestore-bigquery-export.",
+        detail,
+        `Received TABLE_PARTITIONING=${formatValue(
+          timePartitioning ?? undefined
+        )},`,
+        `TIME_PARTITIONING_FIELD=${formatValue(rawFieldName)},`,
+        `TIME_PARTITIONING_FIRESTORE_FIELD=${formatValue(rawFirestoreField)},`,
+        `TIME_PARTITIONING_FIELD_TYPE=${formatValue(rawFieldType)}.`,
+        "Valid combinations are:",
+        "1) Ingestion-time: TABLE_PARTITIONING set and all TIME_PARTITIONING_* values empty/NONE/omit.",
+        "2) Timestamp field: TABLE_PARTITIONING set, TIME_PARTITIONING_FIELD=timestamp, TIME_PARTITIONING_FIRESTORE_FIELD empty.",
+        "3) Custom field: TABLE_PARTITIONING set, and TIME_PARTITIONING_FIELD + TIME_PARTITIONING_FIRESTORE_FIELD + TIME_PARTITIONING_FIELD_TYPE all provided.",
+      ].join(" ")
+    );
+  };
+
+  if (!timePartitioning) {
+    if (rawFieldName || rawFieldType || rawFirestoreField) {
+      return throwInvalidPartitioningConfig(
+        "Partition-specific fields cannot be provided when TABLE_PARTITIONING is NONE."
+      );
+    }
+    return { granularity: "NONE" };
+  }
+
+  const fieldName = normalizeOptionalPartitionValue(
+    params.timePartitioningField
+  );
+  const fieldType = normalizePartitionFieldType(
+    params.timePartitioningFieldType
+  );
+  const firestoreField = normalizeOptionalPartitionValue(
+    params.timePartitioningFirestoreField
+  );
+
+  if (!fieldName && !firestoreField) {
+    return { granularity: timePartitioning };
+  }
+
+  if (fieldName === "timestamp" && !firestoreField) {
+    return {
+      granularity: timePartitioning,
+      bigqueryColumnName: "timestamp",
+      ...(fieldType ? { bigqueryColumnType: fieldType } : {}),
+    };
+  }
+
+  if (fieldName && firestoreField && fieldType) {
+    return {
+      granularity: timePartitioning,
+      bigqueryColumnName: fieldName,
+      bigqueryColumnType: fieldType,
+      firestoreFieldName: firestoreField,
+    };
+  }
+
+  return throwInvalidPartitioningConfig(
+    "When TABLE_PARTITIONING is set, partitioning fields are either incomplete or invalid."
+  );
 }
 
 function normalizeLogLevel(level: string | undefined): TrackerLogLevel {
@@ -71,6 +182,13 @@ export default {
       ? process.env.TIME_PARTITIONING_FIELD_TYPE
       : undefined,
   timePartitioningFirestoreField: process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
+  partitioning: buildPartitioningConfig({
+    timePartitioning: timePartitioning(process.env.TABLE_PARTITIONING),
+    timePartitioningField: process.env.TIME_PARTITIONING_FIELD,
+    timePartitioningFieldType: process.env.TIME_PARTITIONING_FIELD_TYPE,
+    timePartitioningFirestoreField:
+      process.env.TIME_PARTITIONING_FIRESTORE_FIELD,
+  }),
   clustering: clustering(process.env.CLUSTERING),
   wildcardIds: process.env.WILDCARD_IDS === "true",
   useNewSnapshotQuerySyntax:
