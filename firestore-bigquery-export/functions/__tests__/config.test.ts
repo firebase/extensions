@@ -153,60 +153,50 @@ describe("extension config", () => {
 
   describe("buildPartitioningConfig", () => {
     describe("no partitioning (TABLE_PARTITIONING is null)", () => {
-      test("returns NONE when all fields are undefined", () => {
-        expect(
-          buildPartitioningConfig({
-            timePartitioning: null,
-            timePartitioningField: undefined,
-            timePartitioningFieldType: undefined,
-            timePartitioningFirestoreField: undefined,
-          })
-        ).toEqual({ granularity: "NONE" });
-      });
-
-      test("returns NONE when all fields are empty strings", () => {
-        expect(
-          buildPartitioningConfig({
-            timePartitioning: null,
-            timePartitioningField: "",
-            timePartitioningFieldType: "",
-            timePartitioningFirestoreField: "",
-          })
-        ).toEqual({ granularity: "NONE" });
-      });
-
-      test("returns NONE when all fields are whitespace-only strings", () => {
-        expect(
-          buildPartitioningConfig({
-            timePartitioning: null,
-            timePartitioningField: "  ",
-            timePartitioningFieldType: "  ",
-            timePartitioningFirestoreField: "  ",
-          })
-        ).toEqual({ granularity: "NONE" });
-      });
-
-      test("returns NONE when all fields are NONE sentinel", () => {
-        expect(
-          buildPartitioningConfig({
-            timePartitioning: null,
-            timePartitioningField: "NONE",
-            timePartitioningFieldType: "NONE",
-            timePartitioningFirestoreField: "NONE",
-          })
-        ).toEqual({ granularity: "NONE" });
-      });
-
-      test("returns NONE when all fields are omit sentinel", () => {
-        expect(
-          buildPartitioningConfig({
-            timePartitioning: null,
-            timePartitioningField: "omit",
-            timePartitioningFieldType: "omit",
-            timePartitioningFirestoreField: "omit",
-          })
-        ).toEqual({ granularity: "NONE" });
-      });
+      test.each([
+        {
+          description: "all undefined",
+          field: undefined,
+          fieldType: undefined,
+          firestoreField: undefined,
+        },
+        {
+          description: "all empty strings",
+          field: "",
+          fieldType: "",
+          firestoreField: "",
+        },
+        {
+          description: "all whitespace-only",
+          field: "  ",
+          fieldType: "  ",
+          firestoreField: "  ",
+        },
+        {
+          description: "field and firestoreField are NONE, fieldType is omit",
+          field: "NONE",
+          fieldType: "omit",
+          firestoreField: "NONE",
+        },
+        {
+          description: "all omit",
+          field: "omit",
+          fieldType: "omit",
+          firestoreField: "omit",
+        },
+      ])(
+        "returns NONE when $description",
+        ({ field, fieldType, firestoreField }) => {
+          expect(
+            buildPartitioningConfig({
+              timePartitioning: null,
+              timePartitioningField: field,
+              timePartitioningFieldType: fieldType,
+              timePartitioningFirestoreField: firestoreField,
+            })
+          ).toEqual({ granularity: "NONE" });
+        }
+      );
 
       test("returns NONE with mixed sentinels across fields", () => {
         expect(
@@ -254,81 +244,29 @@ describe("extension config", () => {
     });
 
     describe("ingestion-time partitioning", () => {
-      test("uses ingestion-time with HOUR granularity", () => {
-        expect(
-          buildPartitioningConfig({
-            timePartitioning: "HOUR",
-            timePartitioningField: undefined,
-            timePartitioningFieldType: undefined,
-            timePartitioningFirestoreField: undefined,
-          })
-        ).toEqual({ granularity: "HOUR" });
-      });
+      test.each(["HOUR", "DAY", "MONTH", "YEAR"] as const)(
+        "uses ingestion-time with %s granularity",
+        (granularity) => {
+          expect(
+            buildPartitioningConfig({
+              timePartitioning: granularity,
+              timePartitioningField: undefined,
+              timePartitioningFieldType: undefined,
+              timePartitioningFirestoreField: undefined,
+            })
+          ).toEqual({ granularity });
+        }
+      );
 
-      test("uses ingestion-time with DAY granularity", () => {
-        expect(
-          buildPartitioningConfig({
-            timePartitioning: "DAY",
-            timePartitioningField: undefined,
-            timePartitioningFieldType: undefined,
-            timePartitioningFirestoreField: undefined,
-          })
-        ).toEqual({ granularity: "DAY" });
-      });
-
-      test("uses ingestion-time with MONTH granularity", () => {
-        expect(
-          buildPartitioningConfig({
-            timePartitioning: "MONTH",
-            timePartitioningField: undefined,
-            timePartitioningFieldType: undefined,
-            timePartitioningFirestoreField: undefined,
-          })
-        ).toEqual({ granularity: "MONTH" });
-      });
-
-      test("uses ingestion-time with YEAR granularity", () => {
-        expect(
-          buildPartitioningConfig({
-            timePartitioning: "YEAR",
-            timePartitioningField: undefined,
-            timePartitioningFieldType: undefined,
-            timePartitioningFirestoreField: undefined,
-          })
-        ).toEqual({ granularity: "YEAR" });
-      });
-
-      test("normalizes NONE sentinels in optional fields to ingestion-time", () => {
+      test("normalizes NONE/omit sentinels in optional fields to ingestion-time", () => {
         expect(
           buildPartitioningConfig({
             timePartitioning: "DAY",
             timePartitioningField: "NONE",
-            timePartitioningFieldType: "NONE",
+            timePartitioningFieldType: "omit",
             timePartitioningFirestoreField: "NONE",
           })
         ).toEqual({ granularity: "DAY" });
-      });
-
-      test("normalizes omit sentinels in optional fields to ingestion-time", () => {
-        expect(
-          buildPartitioningConfig({
-            timePartitioning: "DAY",
-            timePartitioningField: "omit",
-            timePartitioningFieldType: "omit",
-            timePartitioningFirestoreField: "omit",
-          })
-        ).toEqual({ granularity: "DAY" });
-      });
-
-      test("normalizes mixed sentinels to ingestion-time", () => {
-        expect(
-          buildPartitioningConfig({
-            timePartitioning: "HOUR",
-            timePartitioningField: "NONE",
-            timePartitioningFieldType: "omit",
-            timePartitioningFirestoreField: "",
-          })
-        ).toEqual({ granularity: "HOUR" });
       });
 
       test("normalizes empty strings in optional fields to ingestion-time", () => {
