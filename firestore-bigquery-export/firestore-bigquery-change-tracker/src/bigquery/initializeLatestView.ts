@@ -9,7 +9,7 @@ import {
   documentPathParams,
   RawChangelogViewSchema,
 } from "./schema";
-import { Config } from ".";
+import { ChangeTrackerConfig } from ".";
 import * as logs from "../logs";
 import { latestConsistentSnapshotView } from "./snapshot";
 import { viewRequiresUpdate } from "./checkUpdates";
@@ -17,7 +17,7 @@ import { initializeLatestMaterializedView } from "./initializeLatestMaterialized
 
 interface InitializeLatestViewOptions {
   bq: BigQuery;
-  changeTrackerConfig: Config;
+  changeTrackerConfig: ChangeTrackerConfig;
   dataset: Dataset;
   view: Table;
   viewExists: boolean;

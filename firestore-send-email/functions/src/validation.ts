@@ -93,6 +93,8 @@ const sendGridSchema = z
     templateId: z.string().optional(),
     dynamicTemplateData: z.record(z.any()).optional(),
     mailSettings: z.record(z.any()).optional(),
+    customArgs: z.record(z.string()).optional(),
+    ipPoolName: z.string().optional(),
   })
   .refine(
     (data) => {

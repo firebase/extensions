@@ -1,3 +1,7 @@
+## Version 0.2.7
+
+feat: add `customArgs` and `ipPoolName` fields to SendGrid options (contributed by @michalpechnet)
+
 ## Version 0.2.6
 
 chore: audit and audit fix packages
