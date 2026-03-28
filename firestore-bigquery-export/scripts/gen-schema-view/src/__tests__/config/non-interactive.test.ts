@@ -69,7 +69,7 @@ describe("Command Line Parser", () => {
       expect(commander.version).toHaveBeenCalledWith("1.0.0");
 
       // Check that all options are configured
-      expect(commander.option).toHaveBeenCalledTimes(10);
+      expect(commander.option).toHaveBeenCalledTimes(11);
 
       // Check specific options - just a sample to ensure we're setting up correctly
       expect(commander.option).toHaveBeenCalledWith(
@@ -88,6 +88,12 @@ describe("Command Line Parser", () => {
         "A collection of files from which to read schemas.",
         collect,
         []
+      );
+
+      expect(commander.option).toHaveBeenCalledWith(
+        "--query-collection-group",
+        "Use collection group query instead of regular collection query",
+        false
       );
     });
 
