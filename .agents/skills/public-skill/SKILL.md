@@ -1,1 +1,0 @@
-public guidance for contributing
