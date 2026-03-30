@@ -1,3 +1,7 @@
+## Version 0.1.28
+
+fix - remove deprecated gemini-2.0-flash and gemini-2.0-flash-lite model options
+
 ## Version 0.1.27
 
 chore: update Cloud Functions runtime to Node.js 22
