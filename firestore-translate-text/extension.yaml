@@ -172,10 +172,6 @@ params:
       - label:
           Gemini 2.5 Flash Lite (cheap, good quality, large max output size)
         value: gemini-2.5-flash-lite
-      - label: Gemini 2.0 Flash (cheap, good quality)
-        value: gemini-2.0-flash
-      - label: Gemini 2.0 Flash Lite (cheapest, lowest quality)
-        value: gemini-2.0-flash-lite
     default: gemini-2.5-flash
 
   - param: GOOGLE_AI_API_KEY
