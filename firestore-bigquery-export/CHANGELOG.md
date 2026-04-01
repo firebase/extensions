@@ -1,3 +1,7 @@
+## Version 0.1.61
+
+chore: bump Cloud Functions runtime to Node.js 22
+
 ## Version 0.1.60
 
 feat - configure a log level to control the verbosity of logs.
