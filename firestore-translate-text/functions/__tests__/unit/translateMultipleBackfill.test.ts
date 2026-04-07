@@ -59,9 +59,9 @@ describe("translateMultipleBackfill", () => {
   // Setup common variables if needed
   let input;
   let snapshot;
-  let bulkWriter = {
+  let bulkWriter = ({
     update: mockBulkWriterUpdate,
-  } as unknown as admin.firestore.BulkWriter;
+  } as unknown) as admin.firestore.BulkWriter;
 
   beforeEach(() => {
     // Reset mocks and setup common test variables
@@ -111,9 +111,9 @@ describe("translateMultiple", () => {
   // Setup common variables if needed
   let input;
   let snapshot;
-  let bulkWriter = {
+  let bulkWriter = ({
     update: mockBulkWriterUpdate,
-  } as unknown as admin.firestore.BulkWriter;
+  } as unknown) as admin.firestore.BulkWriter;
 
   beforeEach(() => {
     // Reset mocks and setup common test variables

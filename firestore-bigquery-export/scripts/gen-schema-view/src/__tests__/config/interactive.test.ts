@@ -193,9 +193,9 @@ describe("Interactive Prompts", () => {
     it("should call inquirer.prompt with questions array", async () => {
       // Setup mock return value
       const mockAnswers = { project: "test-project" };
-      (
-        inquirer.prompt as jest.MockedFunction<typeof inquirer.prompt>
-      ).mockResolvedValueOnce(mockAnswers);
+      (inquirer.prompt as jest.MockedFunction<
+        typeof inquirer.prompt
+      >).mockResolvedValueOnce(mockAnswers);
 
       // Call the function
       const result = await promptInquirer();
@@ -210,9 +210,9 @@ describe("Interactive Prompts", () => {
     it("should propagate errors from inquirer.prompt", async () => {
       // Setup mock to throw error
       const mockError = new Error("Prompt failed");
-      (
-        inquirer.prompt as jest.MockedFunction<typeof inquirer.prompt>
-      ).mockRejectedValueOnce(mockError);
+      (inquirer.prompt as jest.MockedFunction<
+        typeof inquirer.prompt
+      >).mockRejectedValueOnce(mockError);
 
       // Call the function and expect it to throw
       await expect(promptInquirer()).rejects.toThrow("Prompt failed");
@@ -222,9 +222,8 @@ describe("Interactive Prompts", () => {
   describe("validateInput function (indirectly tested through questions)", () => {
     it("should handle various input cases for text validation", () => {
       // Get validation functions from questions to test the validateInput indirectly
-      const projectValidate = questions.find(
-        (q) => q.name === "projectId"
-      ).validate;
+      const projectValidate = questions.find((q) => q.name === "projectId")
+        .validate;
 
       // Test empty values
       expect(projectValidate("")).toBe("Please supply a project ID");

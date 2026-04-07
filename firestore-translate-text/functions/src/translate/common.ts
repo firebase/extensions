@@ -260,15 +260,21 @@ const translationService = config.useGenkit
   : new TranslationService(new GoogleTranslator(process.env.PROJECT_ID));
 
 // Export bound methods for convenience
-export const translateString =
-  translationService.translateString.bind(translationService);
-export const extractInput =
-  translationService.extractInput.bind(translationService);
-export const extractOutput =
-  translationService.extractOutput.bind(translationService);
-export const extractLanguages =
-  translationService.extractLanguages.bind(translationService);
-export const filterLanguagesFn =
-  translationService.filterLanguagesFn.bind(translationService);
-export const updateTranslations =
-  translationService.updateTranslations.bind(translationService);
+export const translateString = translationService.translateString.bind(
+  translationService
+);
+export const extractInput = translationService.extractInput.bind(
+  translationService
+);
+export const extractOutput = translationService.extractOutput.bind(
+  translationService
+);
+export const extractLanguages = translationService.extractLanguages.bind(
+  translationService
+);
+export const filterLanguagesFn = translationService.filterLanguagesFn.bind(
+  translationService
+);
+export const updateTranslations = translationService.updateTranslations.bind(
+  translationService
+);

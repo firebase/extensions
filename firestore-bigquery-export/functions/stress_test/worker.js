@@ -21,9 +21,13 @@ const generateRandomDocument = () => {
 
   return {
     id: uuidv4(),
-    name: `Name_${Math.random().toString(36).substring(7)}`,
+    name: `Name_${Math.random()
+      .toString(36)
+      .substring(7)}`,
     age: Math.floor(Math.random() * 60) + 18, // Random age between 18 and 78
-    email: `user_${Math.random().toString(36).substring(7)}@example.com`,
+    email: `user_${Math.random()
+      .toString(36)
+      .substring(7)}@example.com`,
     isActive: Math.random() > 0.5, // Random boolean value
     createdAt: admin.firestore.Timestamp.now(),
     // largeString, // Large string field

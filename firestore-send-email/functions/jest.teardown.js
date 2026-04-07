@@ -1,4 +1,4 @@
-module.exports = async function () {
+module.exports = async function() {
   delete process.env.LOCATION;
   delete process.env.MAIL_COLLECTION;
   delete process.env.SMTP_CONNECTION_URI;

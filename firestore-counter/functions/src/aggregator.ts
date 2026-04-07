@@ -43,7 +43,9 @@ export class NumericUpdate {
    * Exports an object with modified fields in the counter.
    * @param counter The counter data to be updated.
    */
-  public toCounterUpdate(counter: { [key: string]: any }): {
+  public toCounterUpdate(counter: {
+    [key: string]: any;
+  }): {
     [key: string]: any;
   } {
     NumericUpdate.addCommonFieldsRecursive(counter, this.data);
@@ -168,7 +170,9 @@ export class Aggregator {
    * Returns an update object that will subtract the sum of all the fields in a partial.
    * @param partial Snapshot with partial aggregations to be subtracted.
    */
-  public subtractPartial(partial: firestore.DocumentSnapshot): {
+  public subtractPartial(
+    partial: firestore.DocumentSnapshot
+  ): {
     [key: string]: any;
   } {
     const update = new NumericUpdate();

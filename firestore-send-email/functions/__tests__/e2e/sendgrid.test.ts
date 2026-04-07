@@ -91,11 +91,14 @@ const TEST_COLLECTIONS = ["emailCollection", "emailTemplates"] as const;
       }
 
       // Create the email template
-      await db.collection("emailTemplates").doc(TEST_TEMPLATE.name).set({
-        subject: TEST_TEMPLATE.subject,
-        text: TEST_TEMPLATE.text,
-        html: TEST_TEMPLATE.html,
-      });
+      await db
+        .collection("emailTemplates")
+        .doc(TEST_TEMPLATE.name)
+        .set({
+          subject: TEST_TEMPLATE.subject,
+          text: TEST_TEMPLATE.text,
+          html: TEST_TEMPLATE.html,
+        });
     });
 
     test("should process a template-based email document", async () => {

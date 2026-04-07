@@ -75,11 +75,12 @@ export const translateSingleBackfill = async (
     .filter((p) => p.status === "rejected")
     .map((p: PromiseRejectedResult) => p.reason);
 
-  const translationsMap: { [language: string]: string } =
-    successfulTranslations.reduce((output, translation) => {
-      output[translation.language] = translation.output;
-      return output;
-    }, existingTranslations);
+  const translationsMap: {
+    [language: string]: string;
+  } = successfulTranslations.reduce((output, translation) => {
+    output[translation.language] = translation.output;
+    return output;
+  }, existingTranslations);
 
   // Use firestore.BulkWriter for better performance when writing many docs to Firestore.
   bulkWriter.update(snapshot.ref, config.outputFieldName, translationsMap);

@@ -63,9 +63,9 @@ jest.mock("firebase-admin", () => {
     }
   }
 
-  const firestoreModule = jest.fn(
+  const firestoreModule = (jest.fn(
     () => mockFirestore
-  ) as unknown as FirestoreModule;
+  ) as unknown) as FirestoreModule;
   firestoreModule.GeoPoint = GeoPoint;
   firestoreModule.DocumentReference = DocumentReference;
 

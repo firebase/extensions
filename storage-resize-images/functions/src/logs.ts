@@ -247,9 +247,8 @@ export const contentFilterStart = (
     logger.log("Content filtering disabled, skipping check");
   } else {
     logger.log(
-      `Starting content filtering with level: ${
-        filterLevel || "NONE"
-      }, custom prompt: ${hasCustomPrompt ? "YES" : "NO"}`
+      `Starting content filtering with level: ${filterLevel ||
+        "NONE"}, custom prompt: ${hasCustomPrompt ? "YES" : "NO"}`
     );
   }
 };

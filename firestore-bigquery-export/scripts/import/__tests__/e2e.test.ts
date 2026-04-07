@@ -60,7 +60,10 @@ async function setupFirestore(collectionName: string) {
   }
 
   const firestore = admin.firestore();
-  await firestore.collection(collectionName).doc("test").set({ test: "test" });
+  await firestore
+    .collection(collectionName)
+    .doc("test")
+    .set({ test: "test" });
 
   return firestore;
 }
@@ -102,7 +105,9 @@ describe("e2e test CLI", () => {
   let tableName = "testTable";
 
   beforeEach(async () => {
-    const randomID = Math.random().toString(36).substring(7);
+    const randomID = Math.random()
+      .toString(36)
+      .substring(7);
     collectionName = `testCollection_${randomID}`;
     datasetName = `testDataset_${randomID}`;
     tableName = `testTable_${randomID}`;
@@ -419,7 +424,9 @@ describe("e2e multi thread", () => {
   let tableName = "testTable";
 
   beforeEach(async () => {
-    const randomID = Math.random().toString(36).substring(7);
+    const randomID = Math.random()
+      .toString(36)
+      .substring(7);
     collectionName = `testCollection_${randomID}`;
     datasetName = `testDataset_${randomID}`;
     tableName = `testTable_${randomID}`;

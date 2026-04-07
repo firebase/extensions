@@ -106,9 +106,9 @@ describe("Materialized View Recreation", () => {
     }).record([event]);
 
     // Verify view metadata
-    const [metadata] = (await dataset
+    const [metadata] = ((await dataset
       .table(testConfig.viewIdRaw)
-      .getMetadata()) as unknown as [TableMetadata];
+      .getMetadata()) as unknown) as [TableMetadata];
 
     expect(metadata.materializedView).toBeDefined();
     expect(metadata.materializedView?.enableRefresh).toBe(true);
@@ -167,9 +167,9 @@ describe("Materialized View Recreation", () => {
     }).record([event]);
 
     // // Verify view metadata
-    const [metadata] = (await dataset
+    const [metadata] = ((await dataset
       .table(testConfig.viewIdRaw)
-      .getMetadata()) as unknown as [TableMetadata];
+      .getMetadata()) as unknown) as [TableMetadata];
 
     expect(metadata.materializedView).toBeDefined();
     expect(metadata.materializedView?.enableRefresh).toBe(true);
@@ -228,9 +228,9 @@ describe("Materialized View Recreation", () => {
     }).record([event]);
 
     // Verify view metadata
-    const [metadata] = (await dataset
+    const [metadata] = ((await dataset
       .table(testConfig.viewIdRaw)
-      .getMetadata()) as unknown as [TableMetadata];
+      .getMetadata()) as unknown) as [TableMetadata];
 
     expect(metadata.materializedView).toBeDefined();
     expect(metadata.materializedView?.enableRefresh).toBe(true);
@@ -290,9 +290,9 @@ describe("Materialized View Recreation", () => {
     }).record([event]);
 
     // Verify view metadata
-    const [metadata] = (await dataset
+    const [metadata] = ((await dataset
       .table(testConfig.viewIdRaw)
-      .getMetadata()) as unknown as [TableMetadata];
+      .getMetadata()) as unknown) as [TableMetadata];
 
     expect(metadata.materializedView).toBeDefined();
     expect(metadata.materializedView?.enableRefresh).toBe(true);

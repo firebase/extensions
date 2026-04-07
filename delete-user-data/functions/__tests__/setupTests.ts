@@ -1,6 +1,6 @@
 import path from "path";
 
-(async function () {
+(async function() {
   const $ = path.resolve(
     __dirname,
     `../../../_emulator/extensions/delete-user-data.env.local`

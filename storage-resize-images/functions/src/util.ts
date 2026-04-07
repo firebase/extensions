@@ -197,35 +197,51 @@ export function convertType(buffer, format, allowedOutputOptions, animated) {
   const { jpeg, jpg, png, webp, tiff, tif, avif } = outputOptions;
 
   if (format === "jpeg") {
-    return sharp(buffer).jpeg(jpeg).toBuffer();
+    return sharp(buffer)
+      .jpeg(jpeg)
+      .toBuffer();
   }
 
   if (format === "jpg") {
-    return sharp(buffer).jpeg(jpg).toBuffer();
+    return sharp(buffer)
+      .jpeg(jpg)
+      .toBuffer();
   }
 
   if (format === "png") {
-    return sharp(buffer).png(png).toBuffer();
+    return sharp(buffer)
+      .png(png)
+      .toBuffer();
   }
 
   if (format === "webp") {
-    return sharp(buffer, { animated }).webp(webp).toBuffer();
+    return sharp(buffer, { animated })
+      .webp(webp)
+      .toBuffer();
   }
 
   if (format === "tif") {
-    return sharp(buffer).tiff(tif).toBuffer();
+    return sharp(buffer)
+      .tiff(tif)
+      .toBuffer();
   }
 
   if (format === "tiff") {
-    return sharp(buffer).tiff(tiff).toBuffer();
+    return sharp(buffer)
+      .tiff(tiff)
+      .toBuffer();
   }
 
   if (format === "gif") {
-    return sharp(buffer, { animated }).gif().toBuffer();
+    return sharp(buffer, { animated })
+      .gif()
+      .toBuffer();
   }
 
   if (format === "avif") {
-    return sharp(buffer).avif(avif).toBuffer();
+    return sharp(buffer)
+      .avif(avif)
+      .toBuffer();
   }
 
   return buffer;

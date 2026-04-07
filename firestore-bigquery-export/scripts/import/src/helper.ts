@@ -38,7 +38,9 @@ export const initializeDataSink = async (
 };
 
 export function getRowsFromDocs(
-  docs: firebase.firestore.QueryDocumentSnapshot<firebase.firestore.DocumentData>[],
+  docs: firebase.firestore.QueryDocumentSnapshot<
+    firebase.firestore.DocumentData
+  >[],
   config: CliConfig
 ): FirestoreDocumentChangeEvent[] {
   let rows: FirestoreDocumentChangeEvent[] = [];
@@ -154,7 +156,9 @@ export async function initializeFailedBatchOutput(
  */
 export async function recordFailedBatch(
   failedBatchOutputPath: string | undefined,
-  docs: firebase.firestore.QueryDocumentSnapshot<firebase.firestore.DocumentData>[]
+  docs: firebase.firestore.QueryDocumentSnapshot<
+    firebase.firestore.DocumentData
+  >[]
 ) {
   if (!failedBatchOutputPath) return;
 

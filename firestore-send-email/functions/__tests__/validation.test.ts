@@ -497,7 +497,8 @@ describe("validatePayload", () => {
             attachments: [
               {
                 filename: "license.txt",
-                href: "https://raw.githubusercontent.com/nodemailer/nodemailer/master/LICENSE",
+                href:
+                  "https://raw.githubusercontent.com/nodemailer/nodemailer/master/LICENSE",
               },
             ],
           },
@@ -565,7 +566,8 @@ describe("validatePayload", () => {
           to: "test@example.com",
           message: {
             subject: "Test Subject",
-            html: '<p><img src="cid:logo@nodemailer" alt="Nodemailer logo"></p>',
+            html:
+              '<p><img src="cid:logo@nodemailer" alt="Nodemailer logo"></p>',
             attachments: [
               {
                 filename: "logo.png",

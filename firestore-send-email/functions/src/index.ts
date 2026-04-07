@@ -366,7 +366,7 @@ export const processQueue = onDocumentWritten(
 
     try {
       await processWrite(change);
-    } catch (err: any) {
+    } catch (err) {
       await events.recordErrorEvent(
         change,
         change.after.data(),

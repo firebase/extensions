@@ -31,7 +31,8 @@ describe("getModifiedFilePath", () => {
   test("windows path handling", async () => {
     const parsedPath = {
       ext: ".jpg",
-      dir: "C:\\Users\\user\\Desktop\\storage-resize-images\\functions\\__tests__\\unit",
+      dir:
+        "C:\\Users\\user\\Desktop\\storage-resize-images\\functions\\__tests__\\unit",
       name: "test",
     };
     const {
@@ -55,7 +56,8 @@ describe("getModifiedFilePath", () => {
   test("expect old logic to fail", async () => {
     const parsedPath = {
       ext: ".jpg",
-      dir: "C:\\Users\\user\\Desktop\\storage-resize-images\\functions\\__tests__\\unit",
+      dir:
+        "C:\\Users\\user\\Desktop\\storage-resize-images\\functions\\__tests__\\unit",
       name: "test",
     };
     const {

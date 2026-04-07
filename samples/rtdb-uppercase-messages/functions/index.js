@@ -65,7 +65,10 @@ export const backfilldata = tasks.taskQueue().onDispatch(async () => {
   for (const key in batch.val()) {
     const msg = batch.child(key);
     if (msg.hasChild("original") && !msg.hasChild("upper")) {
-      const upper = msg.child("original").val().toUpperCase();
+      const upper = msg
+        .child("original")
+        .val()
+        .toUpperCase();
       promises.push(msg.child("upper").ref.set(upper));
     }
   }

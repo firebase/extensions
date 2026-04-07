@@ -24,7 +24,7 @@ describe("waitForInitialization", () => {
     table.exists.mockResolvedValue([true]);
 
     const result = await waitForInitialization({
-      dataset: dataset as unknown as Dataset,
+      dataset: (dataset as unknown) as Dataset,
       changelogName,
     });
     expect(result).toBe(table);
@@ -38,7 +38,7 @@ describe("waitForInitialization", () => {
 
     await expect(
       waitForInitialization(
-        { dataset: dataset as unknown as Dataset, changelogName },
+        { dataset: (dataset as unknown) as Dataset, changelogName },
         3
       )
     ).rejects.toThrow(
@@ -54,7 +54,7 @@ describe("waitForInitialization", () => {
 
     await expect(
       waitForInitialization({
-        dataset: dataset as unknown as Dataset,
+        dataset: (dataset as unknown) as Dataset,
         changelogName,
       })
     ).rejects.toThrow("Access denied");
@@ -68,7 +68,7 @@ describe("waitForInitialization", () => {
 
     await expect(
       waitForInitialization({
-        dataset: dataset as unknown as Dataset,
+        dataset: (dataset as unknown) as Dataset,
         changelogName,
       })
     ).rejects.toThrow("Table error");
@@ -80,7 +80,7 @@ describe("waitForInitialization", () => {
 
     await expect(
       waitForInitialization({
-        dataset: dataset as unknown as Dataset,
+        dataset: (dataset as unknown) as Dataset,
         changelogName,
       })
     ).rejects.toThrow("An unexpected error occurred");

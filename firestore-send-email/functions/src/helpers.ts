@@ -96,8 +96,15 @@ export function isSendGrid(config: Config): boolean {
 }
 
 export function setupOAuth2(config: Config) {
-  const { clientId, clientSecret, refreshToken, user, host, port, secure } =
-    config;
+  const {
+    clientId,
+    clientSecret,
+    refreshToken,
+    user,
+    host,
+    port,
+    secure,
+  } = config;
   try {
     return createTransport({
       host,

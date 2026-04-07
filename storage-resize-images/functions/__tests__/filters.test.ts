@@ -108,10 +108,10 @@ describe("shouldResize function", () => {
     ])(
       "returns false if image metadata indicates %s",
       (desc, metadata, logFn) => {
-        const result = shouldResize({
+        const result = shouldResize(({
           ...defaultMetadata,
           metadata,
-        } as unknown as ObjectMetadata);
+        } as unknown) as ObjectMetadata);
         expect(logFn).toHaveBeenCalled();
         expect(result).toBe(false);
       }
