@@ -42,10 +42,7 @@ const eventTrackerConfig = {
   datasetLocation: config.datasetLocation,
   backupTableId: config.backupCollectionId,
   transformFunction: config.transformFunction,
-  timePartitioning: config.timePartitioning,
-  timePartitioningField: config.timePartitioningField,
-  timePartitioningFieldType: config.timePartitioningFieldType,
-  timePartitioningFirestoreField: config.timePartitioningFirestoreField,
+  partitioning: config.partitioning,
   // Database related configurations
   databaseId: config.databaseId,
   clustering: config.clustering,

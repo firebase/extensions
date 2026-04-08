@@ -265,7 +265,7 @@ You can find more information about this extension in the following articles:
 
 **Configuration Parameters:**
 
-* Firestore Instance ID: The Firestore database to use. Use "(default)" for the default database. You can view your available Firestore databases at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).
+* Firestore Instance ID: The Firestore database to use. Use "(default)" for the default database. You can find your available Firestore databases at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).
 
 
 * Firestore Instance Location: Where is the Firestore database located? You can check your current database location at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).

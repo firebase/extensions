@@ -1,7 +1,13 @@
+## Version 0.3.2
+
+chore: update Cloud Functions runtime to Node.js 22
+
 ## Version 0.3.1
 
+chore - bump dependencies
 fix - add missing recordStartEvent call (#2546)
 feat - add new onStartResize event
+chore(storage-resize-images) - Update model to gemini-2.5-flash
 
 ## Version 0.3.0
 

@@ -1,3 +1,7 @@
+## Version 0.2.3
+
+chore: update Cloud Functions runtime to Node.js 22
+
 ## Version 0.2.2
 
 fix: remove default value on DATABASE_REGION
