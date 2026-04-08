@@ -39,7 +39,8 @@ export async function tableRequiresUpdate({
   /** Check partitioning */
   const partitioningConfig = new PartitioningConfig(config.partitioning);
   const partitioning = new Partitioning(partitioningConfig, table);
-  const isValidPartition = await partitioning.isValidPartitionForExistingTable();
+  const isValidPartition =
+    await partitioning.isValidPartitionForExistingTable();
   if (isValidPartition) return true;
 
   // No updates have occured.

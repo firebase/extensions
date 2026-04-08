@@ -140,8 +140,9 @@ const executeRampUps = async () => {
 
     if (i < rampUps - 1) {
       console.log(
-        `Ramping up to ${activeThreads} worker(s) in ${rampUpDelay /
-          1000} seconds...`
+        `Ramping up to ${activeThreads} worker(s) in ${
+          rampUpDelay / 1000
+        } seconds...`
       );
       await new Promise((resolve) => setTimeout(resolve, rampUpDelay));
     }

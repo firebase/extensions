@@ -51,9 +51,7 @@ describe.skip("e2e testing", () => {
     });
   });
 
-  test("the expireAt field should be added, with value 5 days later than startTime", async (): Promise<
-    void
-  > => {
+  test("the expireAt field should be added, with value 5 days later than startTime", async (): Promise<void> => {
     const record = {
       to: "test-assertion2@email.com",
       message: {
@@ -81,9 +79,7 @@ describe.skip("e2e testing", () => {
     });
   });
 
-  test("empty template attachments should default to message attachments", async (): Promise<
-    void
-  > => {
+  test("empty template attachments should default to message attachments", async (): Promise<void> => {
     //create template
     const template = await templatesCollection.doc("default").set({
       subject: "@{{username}} is now following you!",
@@ -117,9 +113,7 @@ describe.skip("e2e testing", () => {
     });
   });
 
-  test("should successfully send an email with a basic template", async (): Promise<
-    void
-  > => {
+  test("should successfully send an email with a basic template", async (): Promise<void> => {
     /** create basic template */
     const template = await templatesCollection.add({
       subject: "@{{username}} is now following you!",
@@ -156,9 +150,7 @@ describe.skip("e2e testing", () => {
     });
   });
 
-  test("should successfully send an email with a SendGrid template", async (): Promise<
-    void
-  > => {
+  test("should successfully send an email with a SendGrid template", async (): Promise<void> => {
     /** Add a record with the template and no message object */
     const record = {
       to: "test-assertion@email.com",
@@ -191,9 +183,7 @@ describe.skip("e2e testing", () => {
     });
   }, 12000);
 
-  test("should error when sending an email with an empty SendGrid template", async (): Promise<
-    void
-  > => {
+  test("should error when sending an email with an empty SendGrid template", async (): Promise<void> => {
     const record = {
       to: "test-assertion@email.com",
       sendGrid: {

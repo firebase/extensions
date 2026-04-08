@@ -117,9 +117,7 @@ describe("initializeLatestMaterializedView", () => {
       schema: RawChangelogViewSchema,
     });
 
-    const [metadata] = ((await view.getMetadata()) as unknown) as [
-      TableMetadata
-    ];
+    const [metadata] = (await view.getMetadata()) as unknown as [TableMetadata];
     expect(metadata.materializedView).toBeDefined();
     expect(metadata.materializedView?.enableRefresh).toBe(true);
     expect(
@@ -149,7 +147,7 @@ describe("initializeLatestMaterializedView", () => {
       clustering: null,
     };
 
-    const [initialMetadata] = ((await view.getMetadata()) as unknown) as [
+    const [initialMetadata] = (await view.getMetadata()) as unknown as [
       TableMetadata
     ];
 
@@ -163,7 +161,7 @@ describe("initializeLatestMaterializedView", () => {
       schema: RawChangelogViewSchema,
     });
 
-    const [finalMetadata] = ((await view.getMetadata()) as unknown) as [
+    const [finalMetadata] = (await view.getMetadata()) as unknown as [
       TableMetadata
     ];
     expect(finalMetadata).toEqual(initialMetadata);
@@ -192,7 +190,7 @@ describe("initializeLatestMaterializedView", () => {
       clustering: null,
     };
 
-    const [initialMetadata] = ((await view.getMetadata()) as unknown) as [
+    const [initialMetadata] = (await view.getMetadata()) as unknown as [
       TableMetadata
     ];
     expect(
@@ -209,7 +207,7 @@ describe("initializeLatestMaterializedView", () => {
       schema: RawChangelogViewSchema,
     });
 
-    const [finalMetadata] = ((await view.getMetadata()) as unknown) as [
+    const [finalMetadata] = (await view.getMetadata()) as unknown as [
       TableMetadata
     ];
     expect(

@@ -21,9 +21,7 @@ import { FirestoreSchema } from "./schema";
 
 import { existsSync, readdirSync, lstatSync } from "fs";
 
-export function readSchemas(
-  globs: string[]
-): {
+export function readSchemas(globs: string[]): {
   [schemaName: string]: FirestoreSchema;
 } {
   let schemas = {};
@@ -74,9 +72,7 @@ function expandGlobs(globs: string[]): string[] {
   return results;
 }
 
-function readSchemasFromDirectory(
-  directory: string
-): {
+function readSchemasFromDirectory(directory: string): {
   [schemaName: string]: FirestoreSchema;
 } {
   let results = {};

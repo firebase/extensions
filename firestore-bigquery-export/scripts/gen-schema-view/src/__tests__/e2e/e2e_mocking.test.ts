@@ -29,9 +29,8 @@ jest.mock("../../config", () => ({
 }));
 
 jest.mock("../../schema-loader-utils", () => ({
-  readSchemas: jest.fn<
-    (paths: string[]) => { [schemaName: string]: FirestoreSchema }
-  >(),
+  readSchemas:
+    jest.fn<(paths: string[]) => { [schemaName: string]: FirestoreSchema }>(),
 }));
 
 // Enhanced firebase-admin mock with firestore function
@@ -117,9 +116,11 @@ describe("e2e (mocking bq)", () => {
     });
 
     // Mock readSchemas in case it gets called
-    (readSchemas as jest.Mock<
-      (paths: string[]) => { [schemaName: string]: FirestoreSchema }
-    >).mockReturnValue(schemas);
+    (
+      readSchemas as jest.Mock<
+        (paths: string[]) => { [schemaName: string]: FirestoreSchema }
+      >
+    ).mockReturnValue(schemas);
 
     // Run the function
     const result = await run();
@@ -192,9 +193,11 @@ describe("e2e (mocking bq)", () => {
     });
 
     // Mock readSchemas
-    (readSchemas as jest.Mock<
-      (paths: string[]) => { [schemaName: string]: FirestoreSchema }
-    >).mockReturnValue(schemas);
+    (
+      readSchemas as jest.Mock<
+        (paths: string[]) => { [schemaName: string]: FirestoreSchema }
+      >
+    ).mockReturnValue(schemas);
 
     // Run the function
     const result = await run();
@@ -262,9 +265,11 @@ describe("e2e (mocking bq)", () => {
     });
 
     // Mock readSchemas
-    (readSchemas as jest.Mock<
-      (paths: string[]) => { [schemaName: string]: FirestoreSchema }
-    >).mockReturnValue(schemas);
+    (
+      readSchemas as jest.Mock<
+        (paths: string[]) => { [schemaName: string]: FirestoreSchema }
+      >
+    ).mockReturnValue(schemas);
 
     // Run the function
     const result = await run();
@@ -324,9 +329,11 @@ describe("e2e (mocking bq)", () => {
     });
 
     // Mock readSchemas
-    (readSchemas as jest.Mock<
-      (paths: string[]) => { [schemaName: string]: FirestoreSchema }
-    >).mockReturnValue(schemas);
+    (
+      readSchemas as jest.Mock<
+        (paths: string[]) => { [schemaName: string]: FirestoreSchema }
+      >
+    ).mockReturnValue(schemas);
 
     // Run the function
     const result = await run();

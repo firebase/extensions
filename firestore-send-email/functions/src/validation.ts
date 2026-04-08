@@ -16,50 +16,20 @@ export class ValidationError extends Error {
  */
 export const attachmentSchema = z
   .object({
-    filename: z
-      .string()
-      .nullable()
-      .optional(),
+    filename: z.string().nullable().optional(),
     content: z
       .union([z.string(), z.instanceof(Buffer), z.any()])
       .nullable()
       .optional(), // Stream type is handled as any
-    path: z
-      .string()
-      .nullable()
-      .optional(),
-    href: z
-      .string()
-      .nullable()
-      .optional(),
-    httpHeaders: z
-      .record(z.string())
-      .nullable()
-      .optional(),
-    contentType: z
-      .string()
-      .nullable()
-      .optional(),
-    contentDisposition: z
-      .string()
-      .nullable()
-      .optional(),
-    cid: z
-      .string()
-      .nullable()
-      .optional(),
-    encoding: z
-      .string()
-      .nullable()
-      .optional(),
-    headers: z
-      .record(z.string())
-      .nullable()
-      .optional(),
-    raw: z
-      .string()
-      .nullable()
-      .optional(),
+    path: z.string().nullable().optional(),
+    href: z.string().nullable().optional(),
+    httpHeaders: z.record(z.string()).nullable().optional(),
+    contentType: z.string().nullable().optional(),
+    contentDisposition: z.string().nullable().optional(),
+    cid: z.string().nullable().optional(),
+    encoding: z.string().nullable().optional(),
+    headers: z.record(z.string()).nullable().optional(),
+    raw: z.string().nullable().optional(),
   })
   .passthrough()
   .transform((data) => {
@@ -96,14 +66,8 @@ export const attachmentsSchema = z
  */
 const baseMessageSchema = z.object({
   subject: z.string().optional(),
-  text: z
-    .string()
-    .nullable()
-    .optional(),
-  html: z
-    .string()
-    .nullable()
-    .optional(),
+  text: z.string().nullable().optional(),
+  html: z.string().nullable().optional(),
   attachments: attachmentsSchema,
 });
 

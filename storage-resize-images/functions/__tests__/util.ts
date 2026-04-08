@@ -13,10 +13,7 @@ export const waitForFile = async (
     const interval = setInterval(async () => {
       timesRun += 1;
       try {
-        exists = await storage
-          .bucket()
-          .file(filePath)
-          .exists();
+        exists = await storage.bucket().file(filePath).exists();
       } catch (e) {}
       if (exists && exists[0]) {
         clearInterval(interval);

@@ -45,52 +45,50 @@ logs.init(config);
 
 export const fstranslate = functions.firestore
   .document(process.env.COLLECTION_PATH)
-  .onWrite(
-    async (change, context): Promise<void> => {
-      logs.start(config);
-      await events.recordStartEvent({ change, context });
-      const { languages, inputFieldName, outputFieldName } = config;
+  .onWrite(async (change, context): Promise<void> => {
+    logs.start(config);
+    await events.recordStartEvent({ change, context });
+    const { languages, inputFieldName, outputFieldName } = config;
 
-      if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
-        logs.fieldNamesNotDifferent();
-        await events.recordCompletionEvent({ context });
-        return;
-      }
-      if (
-        validators.fieldNameIsTranslationPath(
-          inputFieldName,
-          outputFieldName,
-          languages
-        )
-      ) {
-        logs.inputFieldNameIsOutputPath();
-        await events.recordCompletionEvent({ context });
-        return;
-      }
-
-      const changeType = getChangeType(change);
-
-      try {
-        switch (changeType) {
-          case ChangeType.CREATE:
-            await handleCreateDocument(change.after);
-            break;
-          case ChangeType.DELETE:
-            handleDeleteDocument();
-            break;
-          case ChangeType.UPDATE:
-            await handleUpdateDocument(change.before, change.after);
-            break;
-        }
-
-        logs.complete();
-      } catch (err) {
-        logs.error(err);
-        events.recordErrorEvent(err as Error);
-      }
+    if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
+      logs.fieldNamesNotDifferent();
       await events.recordCompletionEvent({ context });
+      return;
     }
-  );
+    if (
+      validators.fieldNameIsTranslationPath(
+        inputFieldName,
+        outputFieldName,
+        languages
+      )
+    ) {
+      logs.inputFieldNameIsOutputPath();
+      await events.recordCompletionEvent({ context });
+      return;
+    }
+
+    const changeType = getChangeType(change);
+
+    try {
+      switch (changeType) {
+        case ChangeType.CREATE:
+          await handleCreateDocument(change.after);
+          break;
+        case ChangeType.DELETE:
+          handleDeleteDocument();
+          break;
+        case ChangeType.UPDATE:
+          await handleUpdateDocument(change.before, change.after);
+          break;
+      }
+
+      logs.complete();
+    } catch (err) {
+      logs.error(err);
+      events.recordErrorEvent(err as Error);
+    }
+    await events.recordCompletionEvent({ context });
+  });
 
 export const fstranslatebackfill = functions.tasks
   .taskQueue()
@@ -151,20 +149,23 @@ export const fstranslatebackfill = functions.tasks
       if (newErrorCount == 0) {
         return await runtime.setProcessingState(
           "PROCESSING_COMPLETE",
-          `Successfully translated ${newSucessCount} documents in ${Date.now() -
-            startTime}ms.`
+          `Successfully translated ${newSucessCount} documents in ${
+            Date.now() - startTime
+          }ms.`
         );
       } else if (newErrorCount > 0 && newSucessCount > 0) {
         return await runtime.setProcessingState(
           "PROCESSING_WARNING",
-          `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors in ${Date.now() -
-            startTime}ms. See function logs for specific error messages.`
+          `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors in ${
+            Date.now() - startTime
+          }ms. See function logs for specific error messages.`
         );
       }
       return await runtime.setProcessingState(
         "PROCESSING_FAILED",
-        `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors in ${Date.now() -
-          startTime}ms. See function logs for specific error messages.`
+        `Successfully translated ${newSucessCount} documents, ${newErrorCount} errors in ${
+          Date.now() - startTime
+        }ms. See function logs for specific error messages.`
       );
     }
   });

@@ -63,11 +63,8 @@ async function verifyCollectionExists(
   config: CliConfig,
   db?: firebase.firestore.Firestore
 ): Promise<void> {
-  const {
-    sourceCollectionPath,
-    queryCollectionGroup,
-    firestoreInstanceId,
-  } = config;
+  const { sourceCollectionPath, queryCollectionGroup, firestoreInstanceId } =
+    config;
 
   // Use provided db or get the appropriate instance
   if (!db) {
@@ -83,20 +80,14 @@ async function verifyCollectionExists(
       const sourceCollectionPathParts = sourceCollectionPath.split("/");
       const collectionName =
         sourceCollectionPathParts[sourceCollectionPathParts.length - 1];
-      const snapshot = await db
-        .collectionGroup(collectionName)
-        .limit(1)
-        .get();
+      const snapshot = await db.collectionGroup(collectionName).limit(1).get();
       if (snapshot.empty) {
         throw new Error(
           `No documents found in collection group: ${collectionName}`
         );
       }
     } else {
-      const snapshot = await db
-        .collection(sourceCollectionPath)
-        .limit(1)
-        .get();
+      const snapshot = await db.collection(sourceCollectionPath).limit(1).get();
       if (snapshot.empty) {
         throw new Error(
           `Collection does not exist or is empty: ${sourceCollectionPath}`

@@ -41,10 +41,7 @@ describe("e2e testing of firestore-counter", () => {
 
     const observer = jest.fn();
 
-    const unsub = admin
-      .firestore()
-      .doc("test/test")
-      .onSnapshot(observer);
+    const unsub = admin.firestore().doc("test/test").onSnapshot(observer);
 
     counter = new Counter(doc, "counter");
 

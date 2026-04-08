@@ -48,9 +48,10 @@ export const setupBQ = async (
   ];
 
   /** create a changelog table with a random name */
-  const [
-    rawChangeLogTable,
-  ] = await dataset.createTable(`${tableId}_raw_changelog`, { schema });
+  const [rawChangeLogTable] = await dataset.createTable(
+    `${tableId}_raw_changelog`,
+    { schema }
+  );
 
   const [rawLatestTable] = await dataset.createTable(`${tableId}_raw_latest`, {
     schema,
@@ -72,9 +73,7 @@ export const setupBQ = async (
 };
 
 export const randomId = () => {
-  return Math.random()
-    .toString(36)
-    .substring(7);
+  return Math.random().toString(36).substring(7);
 };
 
 export const getQueryResult = async (

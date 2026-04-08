@@ -23,43 +23,38 @@ logs.init();
 
 export const rtdblimit = functions.database
   .ref(config.databaseInstance)
-  .onCreate(
-    async (snapshot): Promise<void> => {
-      logs.start();
+  .onCreate(async (snapshot): Promise<void> => {
+    logs.start();
 
-      try {
-        const parentRef = snapshot.ref.parent;
-        const parentSnapshot = await parentRef.once("value");
+    try {
+      const parentRef = snapshot.ref.parent;
+      const parentSnapshot = await parentRef.once("value");
 
-        /** set reference for logging */
-        const reference = snapshot.ref
-          .toString()
-          .substring(snapshot.ref.root.toString().length - 1);
+      /** set reference for logging */
+      const reference = snapshot.ref
+        .toString()
+        .substring(snapshot.ref.root.toString().length - 1);
 
-        logs.childCount(reference, parentSnapshot.numChildren());
+      logs.childCount(reference, parentSnapshot.numChildren());
 
-        if (parentSnapshot.numChildren() > config.maxCount) {
-          let childCount = 0;
-          const updates = {};
-          parentSnapshot.forEach((child) => {
-            if (
-              ++childCount <=
-              parentSnapshot.numChildren() - config.maxCount
-            ) {
-              updates[child.key] = null;
-            }
-          });
+      if (parentSnapshot.numChildren() > config.maxCount) {
+        let childCount = 0;
+        const updates = {};
+        parentSnapshot.forEach((child) => {
+          if (++childCount <= parentSnapshot.numChildren() - config.maxCount) {
+            updates[child.key] = null;
+          }
+        });
 
-          logs.pathTruncating(reference, config.maxCount);
-          await parentRef.update(updates);
-          logs.pathTruncated(reference, config.maxCount);
-        } else {
-          logs.pathSkipped(reference);
-        }
-
-        logs.complete();
-      } catch (err) {
-        logs.error(err);
+        logs.pathTruncating(reference, config.maxCount);
+        await parentRef.update(updates);
+        logs.pathTruncated(reference, config.maxCount);
+      } else {
+        logs.pathSkipped(reference);
       }
+
+      logs.complete();
+    } catch (err) {
+      logs.error(err);
     }
-  );
+  });
