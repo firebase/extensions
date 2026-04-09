@@ -1,6 +1,6 @@
 ## Version 0.1.28
 
-chore - switch from `googleai` and `vertexai` Genkit plugins to `google-genai`
+chore: switch from `googleai` and `vertexai` Genkit plugins to `google-genai`
 
 fix - remove deprecated gemini-2.0-flash and gemini-2.0-flash-lite model options
 
