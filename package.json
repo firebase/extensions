@@ -37,6 +37,12 @@
     "ts-jest": "29.4.9",
     "typescript": "^4.8.4"
   },
+  "overrides": {
+    "form-data": ">=2.5.4",
+    "socks": ">=2.7.2",
+    "qs": ">=6.10.3",
+    "tar": "^6.2.1"
+  },
   "lint-staged": {
     "*.{js,md,yml,ts,json,yaml}": "prettier --write"
   }

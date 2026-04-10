@@ -31,17 +31,17 @@
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@firebaseextensions/firestore-bigquery-change-tracker": "^1.1.40",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "^2.0.2",
     "@genkit-ai/googleai": "^1.14.1",
-    "@google-cloud/bigquery": "^6.0.3",
+    "@google-cloud/bigquery": "^8.1.1",
     "commander": "5.1.0",
-    "firebase-admin": "^12.1.0",
-    "firebase-functions": "^4.2.0",
+    "firebase-admin": "^13.0.0",
+    "firebase-functions": "^6.0.0",
     "fs-find": "^0.4.0",
     "generate-schema": "^2.6.0",
     "genkit": "^1.14.1",
     "glob": "7.1.5",
-    "inquirer": "^6.4.0",
+    "inquirer": "^13.4.1",
     "sql-formatter": "^2.3.3"
   },
   "devDependencies": {
