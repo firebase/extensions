@@ -162,7 +162,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
           ${fieldValueSelectorClauses}
         FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawViewName}\`
         ${offsetJoins}
-        QUALIFY ROW_NUMBER() OVER(PARTITION BY document_name ORDER BY timestamp DESC) = 1
+        QUALIFY RANK() OVER(PARTITION BY document_name ORDER BY timestamp DESC) = 1
       )
       WHERE NOT is_deleted
   `;
