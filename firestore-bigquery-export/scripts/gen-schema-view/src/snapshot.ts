@@ -67,9 +67,8 @@ export const buildLatestSchemaSnapshotViewQuery = (
   useNewSqlSyntax = false
 ): any => {
   // Use identity transformer - no FIRST_VALUE wrapping needed
-  // We'll use QUALIFY ROW_NUMBER() = 1 instead to filter to latest row
-  const identitySelector = (selector: string, _isArrayType?: boolean) =>
-    selector;
+  // We'll use QUALIFY RANK() = 1 instead to filter to latest row
+  const identitySelector = (selector: string) => selector;
 
   // We need to pass the dataset id into the parser so that we can call the
   // fully qualified json2array persistent user-defined function in the proper
@@ -140,7 +139,7 @@ export const buildLatestSchemaSnapshotViewQuery = (
     })
     .join(" ");
 
-  // Use QUALIFY with single ROW_NUMBER() instead of multiple FIRST_VALUE() calls
+  // Use QUALIFY with single RANK() instead of multiple FIRST_VALUE() calls
   // This dramatically improves performance for wide schemas (200+ columns)
   // by using only ONE window function regardless of field count
   let query = `
