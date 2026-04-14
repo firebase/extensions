@@ -3,6 +3,7 @@ import {
   FirestoreDocumentChangeEvent,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as firebase from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import * as fs from "fs";
 import * as util from "util";
 
@@ -18,25 +19,36 @@ const write = util.promisify(fs.writeFile);
 
 export function getQuery(
   config: CliConfig,
-  cursor?: firebase.firestore.DocumentSnapshot<firebase.firestore.DocumentData>
+  cursor?: firebase.firestore.DocumentSnapshot<firebase.firestore.DocumentData>,
+  db?: firebase.firestore.Firestore
 ): firebase.firestore.Query {
-  const { sourceCollectionPath, batchSize, queryCollectionGroup } = config;
+  const {
+    sourceCollectionPath,
+    batchSize,
+    queryCollectionGroup,
+    firestoreInstanceId,
+  } = config;
+
+  // Use provided db or get the appropriate instance
+  if (!db) {
+    const app = firebase.app();
+    db =
+      firestoreInstanceId && firestoreInstanceId !== "(default)"
+        ? getFirestore(app, firestoreInstanceId)
+        : getFirestore(app);
+  }
 
   let collectionOrCollectionGroup:
     | firebase.firestore.CollectionGroup
     | firebase.firestore.CollectionReference;
   if (queryCollectionGroup) {
-    collectionOrCollectionGroup = firebase
-      .firestore()
-      .collectionGroup(
-        sourceCollectionPath.split("/")[
-          sourceCollectionPath.split("/").length - 1
-        ]
-      );
+    collectionOrCollectionGroup = db.collectionGroup(
+      sourceCollectionPath.split("/")[
+        sourceCollectionPath.split("/").length - 1
+      ]
+    );
   } else {
-    collectionOrCollectionGroup = firebase
-      .firestore()
-      .collection(sourceCollectionPath);
+    collectionOrCollectionGroup = db.collection(sourceCollectionPath);
   }
 
   let query = collectionOrCollectionGroup.limit(batchSize);
@@ -47,30 +59,35 @@ export function getQuery(
   return query;
 }
 
-async function verifyCollectionExists(config: CliConfig): Promise<void> {
-  const { sourceCollectionPath, queryCollectionGroup } = config;
+async function verifyCollectionExists(
+  config: CliConfig,
+  db?: firebase.firestore.Firestore
+): Promise<void> {
+  const { sourceCollectionPath, queryCollectionGroup, firestoreInstanceId } =
+    config;
+
+  // Use provided db or get the appropriate instance
+  if (!db) {
+    const app = firebase.app();
+    db =
+      firestoreInstanceId && firestoreInstanceId !== "(default)"
+        ? getFirestore(app, firestoreInstanceId)
+        : getFirestore(app);
+  }
 
   try {
     if (queryCollectionGroup) {
       const sourceCollectionPathParts = sourceCollectionPath.split("/");
       const collectionName =
         sourceCollectionPathParts[sourceCollectionPathParts.length - 1];
-      const snapshot = await firebase
-        .firestore()
-        .collectionGroup(collectionName)
-        .limit(1)
-        .get();
+      const snapshot = await db.collectionGroup(collectionName).limit(1).get();
       if (snapshot.empty) {
         throw new Error(
           `No documents found in collection group: ${collectionName}`
         );
       }
     } else {
-      const snapshot = await firebase
-        .firestore()
-        .collection(sourceCollectionPath)
-        .limit(1)
-        .get();
+      const snapshot = await db.collection(sourceCollectionPath).limit(1).get();
       if (snapshot.empty) {
         throw new Error(
           `Collection does not exist or is empty: ${sourceCollectionPath}`
@@ -91,11 +108,12 @@ export async function runSingleThread(
   config: CliConfig,
   cursor:
     | firebase.firestore.DocumentSnapshot<firebase.firestore.DocumentData>
-    | undefined
+    | undefined,
+  db?: firebase.firestore.Firestore
 ) {
   let totalRowsImported = 0;
 
-  await verifyCollectionExists(config);
+  await verifyCollectionExists(config, db);
 
   await initializeFailedBatchOutput(config.failedBatchOutput);
 
@@ -104,7 +122,7 @@ export async function runSingleThread(
       await write(config.cursorPositionFile, cursor.ref.path);
     }
 
-    let query = getQuery(config, cursor);
+    let query = getQuery(config, cursor, db);
     const snapshot = await query.get();
     const docs = snapshot.docs;
 

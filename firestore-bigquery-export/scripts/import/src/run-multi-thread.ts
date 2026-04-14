@@ -1,4 +1,5 @@
 import * as firebase from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import { cpus } from "os";
 import { pool } from "workerpool";
 import * as logs from "./logs";
@@ -20,19 +21,24 @@ export async function runMultiThread(config: CliConfig): Promise<number> {
         PROJECT_ID: config.projectId,
         GOOGLE_CLOUD_PROJECT: config.projectId,
         GCLOUD_PROJECT: config.projectId,
+        FIRESTORE_INSTANCE_ID: config.firestoreInstanceId,
         FAILED_BATCH_OUTPUT: config.failedBatchOutput || "",
         ...process.env,
       },
     },
   });
 
-  const query = firebase
-    .firestore()
-    .collectionGroup(
-      config.sourceCollectionPath.split("/")[
-        config.sourceCollectionPath.split("/").length - 1
-      ]
-    );
+  const app = firebase.app();
+  const db =
+    config.firestoreInstanceId && config.firestoreInstanceId !== "(default)"
+      ? getFirestore(app, config.firestoreInstanceId)
+      : getFirestore(app);
+
+  const query = db.collectionGroup(
+    config.sourceCollectionPath.split("/")[
+      config.sourceCollectionPath.split("/").length - 1
+    ]
+  );
 
   const partitionsList = query.getPartitions(config.batchSize);
 

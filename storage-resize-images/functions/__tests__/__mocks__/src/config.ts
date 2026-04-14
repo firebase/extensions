@@ -51,7 +51,7 @@
 export const config = {
   bucket: "extensions-testing.appspot.com",
   cacheControlHeader: undefined,
-  doBackfill: false,
+  // doBackfill: false,
   imageSizes: ["200x200"],
   regenerateToken: false,
   makePublic: false,

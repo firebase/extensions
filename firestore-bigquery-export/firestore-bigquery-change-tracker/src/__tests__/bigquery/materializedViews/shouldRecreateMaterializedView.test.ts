@@ -94,6 +94,13 @@ describe("Materialized View Recreation", () => {
     await changeTracker({
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
+      datasetLocation: "US",
+      partitioning: {
+        granularity: "NONE",
+      },
+      transformFunction: "",
+      clustering: [],
+      bqProjectId: process.env.PROJECT_ID,
       useMaterializedView: true,
       useIncrementalMaterializedView: true,
     }).record([event]);
@@ -147,10 +154,16 @@ describe("Materialized View Recreation", () => {
     await changeTracker({
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
+      datasetLocation: "US",
+      partitioning: {
+        granularity: "NONE",
+      },
+      transformFunction: "",
+      clustering: [],
+      bqProjectId: process.env.PROJECT_ID,
       useMaterializedView: true,
       maxStaleness: `INTERVAL "4:0:0" HOUR TO SECOND`,
       refreshIntervalMinutes: 5,
-      clustering: null,
     }).record([event]);
 
     // // Verify view metadata
@@ -203,6 +216,13 @@ describe("Materialized View Recreation", () => {
     await changeTracker({
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
+      datasetLocation: "US",
+      partitioning: {
+        granularity: "NONE",
+      },
+      transformFunction: "",
+      clustering: [],
+      bqProjectId: process.env.PROJECT_ID,
       useMaterializedView: true,
       useIncrementalMaterializedView: true,
     }).record([event]);
@@ -257,10 +277,16 @@ describe("Materialized View Recreation", () => {
     await changeTracker({
       datasetId: testConfig.datasetId,
       tableId: testConfig.tableId,
+      datasetLocation: "US",
+      partitioning: {
+        granularity: "NONE",
+      },
+      transformFunction: "",
+      clustering: [],
+      bqProjectId: process.env.PROJECT_ID,
       useMaterializedView: true,
       maxStaleness: `INTERVAL "4:0:0" HOUR TO SECOND`,
       refreshIntervalMinutes: 5,
-      clustering: null,
     }).record([event]);
 
     // Verify view metadata

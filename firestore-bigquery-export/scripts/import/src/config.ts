@@ -85,6 +85,13 @@ const questions = [
       ),
   },
   {
+    message:
+      "What is your Firestore database instance ID? (Use '(default)' for the default database)",
+    name: "firestoreInstanceId",
+    type: "input",
+    default: "(default)",
+  },
+  {
     message: "What is your BigQuery project ID?",
     name: "bigQueryProject",
     type: "input",
@@ -270,10 +277,13 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       rawChangeLogName,
       cursorPositionFile,
       failedBatchOutput: program.failedBatchOutput,
+      transformFunctionUrl: program.transformFunctionUrl,
+      firestoreInstanceId: program.firestoreInstanceId || "(default)",
     };
   }
   const {
     project,
+    firestoreInstanceId,
     sourceCollectionPath,
     bigQueryProject,
     dataset,
@@ -285,6 +295,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     useNewSnapshotQuerySyntax,
     useEmulator,
     failedBatchOutput,
+    transformFunctionUrl,
   } = await inquirer.prompt(questions);
 
   const rawChangeLogName = `${table}_raw_changelog`;
@@ -311,6 +322,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     rawChangeLogName,
     cursorPositionFile,
     failedBatchOutput,
+    transformFunctionUrl,
+    firestoreInstanceId: firestoreInstanceId || "(default)",
   };
 }
 

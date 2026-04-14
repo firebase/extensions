@@ -1,4 +1,4 @@
-import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+import { ChangeTrackerConfig } from ".";
 
 import * as logs from "../logs";
 import * as bigquery from "@google-cloud/bigquery";
@@ -25,12 +25,12 @@ interface InvalidFieldType {
 }
 
 export class Clustering {
-  public config: FirestoreBigQueryEventHistoryTrackerConfig;
+  public config: ChangeTrackerConfig;
   public table: bigquery.Table;
   public schema: object;
 
   constructor(
-    config: FirestoreBigQueryEventHistoryTrackerConfig,
+    config: ChangeTrackerConfig,
     table?: bigquery.Table,
     schema?: object
   ) {

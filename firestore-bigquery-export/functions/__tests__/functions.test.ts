@@ -75,10 +75,16 @@ let restoreEnv;
 let functionsTest;
 
 /** Helper to Mock Export */
-const mockExport = (document, data) => {
+const mockExport = (change, context = {}) => {
   const ref = require("../src/index").fsexportbigquery;
-  const wrapped = functionsTest.wrap(ref);
-  return wrapped(document, data);
+  return ref.run({
+    data: change,
+    document: "example/doc1",
+    id: "test-event-id",
+    time: new Date().toISOString(),
+    params: { documentId: "doc1" },
+    ...context,
+  });
 };
 
 describe("extension", () => {
@@ -120,9 +126,7 @@ describe("extension", () => {
         afterSnapshot
       );
 
-      const callResult = await mockExport(documentChange, {
-        resource: { name: "example/doc1" },
-      });
+      const callResult = await mockExport(documentChange);
 
       expect(callResult).toBeUndefined();
 
@@ -154,9 +158,7 @@ describe("extension", () => {
         afterSnapshot
       );
 
-      const callResult = await mockExport(documentChange, {
-        resource: { name: "example/doc1" },
-      });
+      const callResult = await mockExport(documentChange);
 
       expect(callResult).toBeUndefined();
 

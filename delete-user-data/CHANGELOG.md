@@ -1,3 +1,19 @@
+## Version 0.1.27
+
+chore: update Cloud Functions runtime to Node.js 22
+chore: ran npm run adit fix
+chore: add esModuleInterop and skipLibCheck to tsconfig.json
+
+## Version 0.1.26
+
+chore: bump dependencies
+
+## Version 0.1.25
+
+feat - add support for multiple Firestore databases via FIRESTORE_DATABASE_ID parameter
+
+fix - run npm audit fix
+
 ## Version 0.1.24
 
 feat - move to Node.js 20 runtimes

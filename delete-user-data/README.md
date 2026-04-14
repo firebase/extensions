@@ -22,6 +22,8 @@ Depending on where you'd like to delete user data from, make sure that you've se
 
 Also, make sure that you've set up [Firebase Authentication](https://firebase.google.com/docs/auth) to manage your users.
 
+**Note about multiple Firestore databases:** This extension supports using non-default Firestore databases. During installation, you can specify which database to use via the `FIRESTORE_DATABASE_ID` parameter. Use "(default)" for the default database, or specify your named database ID.
+
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
  
@@ -36,6 +38,8 @@ To install an extension, your project must be on the [Blaze (pay as you go) plan
 
 
 **Configuration Parameters:**
+
+* Firestore Database ID: The ID of the Firestore database to use. Use "(default)" for the default database. You can view your available Firestore databases at https://console.cloud.google.com/firestore/databases.
 
 * Cloud Firestore paths: Which paths in your Cloud Firestore instance contain data keyed on a user ID? Leave empty if you don't use Cloud Firestore.
 Enter the full paths, separated by commas. Use `{UID}` as a placeholder for the user's UID.

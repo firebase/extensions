@@ -1,3 +1,15 @@
+## Version 0.2.7
+
+feat: add `customArgs` and `ipPoolName` fields to SendGrid options (contributed by @michalpechnet)
+
+## Version 0.2.6
+
+chore: audit and audit fix packages
+
+## Version 0.2.5
+
+fix: bump dependencies to fix vulnerabilities
+
 ## Version 0.2.4
 
 fix: add missing 'headers' field to the mailOptions interface (contributed by @Nushio)

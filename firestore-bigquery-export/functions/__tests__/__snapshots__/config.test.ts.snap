@@ -26,6 +26,9 @@ Object {
   "maxDispatchesPerSecond": 10,
   "maxEnqueueAttempts": 3,
   "maxStaleness": undefined,
+  "partitioning": Object {
+    "granularity": "NONE",
+  },
   "projectId": undefined,
   "refreshIntervalMinutes": undefined,
   "tableId": "my_table",

@@ -1,3 +1,41 @@
+## Version 0.3.0
+
+breaking change: reject invalid partitioning configuration combinations at startup with explicit error messages
+
+fix: normalize `NONE` / `omit` partitioning sentinels before mapping to change-tracker 2.x partitioning strategy
+
+## Version 0.2.11
+
+chore: bump firestore-bigquery-change-tracker dependency to v2 in functions package
+
+## Version 0.2.10
+
+chore: add overrides for http-proxy-agent and inquirer to resolve npm audit vulnerabilities
+
+chore: remove unused inquirer dependency from functions
+
+## Version 0.2.9
+
+chore: update Cloud Functions runtime to Node.js 22
+
+## Version 0.2.8
+
+chore: move test/build dependencies to devDependencies
+
+chore: upgrade jest from 25 to 29.5.0 and ts-jest from 27 to 29.1.2
+
+chore: remove unused jest-config dependency
+
+chore: add minimatch override to resolve npm audit vulnerabilities
+
+## Version 0.2.7
+
+chore: bump dependencies
+
+## Version 0.2.6
+
+docs: update docs to reference the correct "latest" view names
+
 ## Version 0.2.5
 
 fix: keep partition value on delete using old data

@@ -1,4 +1,4 @@
-import vertexAI, { gemini20Flash001 } from "@genkit-ai/vertexai";
+import vertexAI, { gemini } from "@genkit-ai/vertexai";
 import { HarmCategory, HarmBlockThreshold } from "@google-cloud/vertexai";
 import { genkit, z } from "genkit";
 import * as fs from "fs";
@@ -80,7 +80,12 @@ async function performContentCheck(
 
   // Initialize Vertex AI client
   const ai = genkit({
-    plugins: [vertexAI()],
+    plugins: [
+      vertexAI({
+        location: process.env.LOCATION ?? "us-central1",
+        models: ["gemini-2.5-flash"],
+      }),
+    ],
   });
 
   // Determine the effective safety settings and prompt to use
@@ -107,7 +112,7 @@ async function performContentCheck(
 
   try {
     const result = await ai.generate({
-      model: gemini20Flash001,
+      model: gemini("gemini-2.5-flash"),
       messages: [
         {
           role: "user",

@@ -3,13 +3,11 @@
 exports[`extension configuration detected from environment variables 1`] = `
 Object {
   "animated": false,
-  "backfillBatchSize": 3,
   "bucket": "extensions-testing.appspot.com",
   "cacheControlHeader": undefined,
   "contentFilterLevel": null,
   "customFilterPrompt": null,
   "deleteOriginalFile": 0,
-  "doBackfill": false,
   "excludePathList": undefined,
   "failedImagesPath": undefined,
   "imageSizes": Array [

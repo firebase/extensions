@@ -5,6 +5,7 @@ import {
   TableMetadata,
 } from "@google-cloud/bigquery";
 import { logger } from "../../../logger";
+import waitForExpect from "wait-for-expect";
 
 import * as functions from "firebase-functions";
 
@@ -124,6 +125,13 @@ describe("integration", () => {
       await changeTracker({
         datasetId,
         tableId,
+        datasetLocation: "US",
+        partitioning: {
+          granularity: "NONE",
+        },
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: process.env.PROJECT_ID,
         useMaterializedView: true,
         useIncrementalMaterializedView: true,
       }).record([event]);
@@ -145,6 +153,13 @@ describe("integration", () => {
       await changeTracker({
         datasetId,
         tableId,
+        datasetLocation: "US",
+        partitioning: {
+          granularity: "NONE",
+        },
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: process.env.PROJECT_ID,
         useMaterializedView: true,
         maxStaleness: `INTERVAL "4:0:0" HOUR TO SECOND`,
         refreshIntervalMinutes: 5,
@@ -166,6 +181,13 @@ describe("integration", () => {
       await changeTracker({
         datasetId,
         tableId,
+        datasetLocation: "US",
+        partitioning: {
+          granularity: "NONE",
+        },
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: process.env.PROJECT_ID,
         useMaterializedView: true,
         useIncrementalMaterializedView: true,
       }).record([event]);
@@ -187,6 +209,13 @@ describe("integration", () => {
       await changeTracker({
         datasetId,
         tableId,
+        datasetLocation: "US",
+        partitioning: {
+          granularity: "NONE",
+        },
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: process.env.PROJECT_ID,
         useMaterializedView: true,
         useIncrementalMaterializedView: true,
       }).record([event2]);
@@ -206,6 +235,13 @@ describe("integration", () => {
       await changeTracker({
         datasetId,
         tableId,
+        datasetLocation: "US",
+        partitioning: {
+          granularity: "NONE",
+        },
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: process.env.PROJECT_ID,
         useMaterializedView: true,
         maxStaleness: `INTERVAL "4:0:0" HOUR TO SECOND`,
         refreshIntervalMinutes: 5,
@@ -228,6 +264,13 @@ describe("integration", () => {
       await changeTracker({
         datasetId,
         tableId,
+        datasetLocation: "US",
+        partitioning: {
+          granularity: "NONE",
+        },
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: process.env.PROJECT_ID,
         useMaterializedView: true,
         useIncrementalMaterializedView: true,
       }).record([event2]);
@@ -248,6 +291,13 @@ describe("integration", () => {
       await changeTracker({
         datasetId,
         tableId,
+        datasetLocation: "US",
+        partitioning: {
+          granularity: "NONE",
+        },
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: process.env.PROJECT_ID,
         useMaterializedView: true,
         useIncrementalMaterializedView: true,
       }).record([event]);
@@ -282,32 +332,38 @@ describe("integration", () => {
       await changeTracker({
         datasetId,
         tableId,
+        datasetLocation: "US",
+        partitioning: {
+          granularity: "NONE",
+        },
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: process.env.PROJECT_ID,
         useMaterializedView: true,
         useIncrementalMaterializedView: true,
       }).record([event3, event4]);
 
-      // Wait for BigQuery to process
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await waitForExpect(async () => {
+        // Get the materialized view data
+        const [changeLogRows, latestRows] = await getBigQueryTableData(
+          "dev-extensions-testing",
+          datasetId,
+          tableId
+        );
 
-      // // Get the materialized view data
-      const [changeLogRows, latestRows] = await getBigQueryTableData(
-        "dev-extensions-testing",
-        datasetId,
-        tableId
-      );
+        const query = `SELECT * FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableId}_raw_latest\` LIMIT 10`;
 
-      const query = `SELECT * FROM \`${process.env.PROJECT_ID}.${datasetId}.${tableId}_raw_latest\` LIMIT 10`;
+        const [viewData] = await bq.query(query);
 
-      const [viewData] = await bq.query(query);
+        expect(viewData.length).toBe(3); // Should contain all three events
 
-      expect(viewData.length).toBe(3); // Should contain all three events
+        expect(viewData[0].document_id).toBe("testing"); // First event
+        expect(viewData[1].document_id).toBe("doc3"); // Third event
+        expect(viewData[2].document_id).toBe("doc4"); // Fourth event
 
-      expect(viewData[0].document_id).toBe("testing"); // First event
-      expect(viewData[1].document_id).toBe("doc3"); // Third event
-      expect(viewData[2].document_id).toBe("doc4"); // Fourth event
-
-      expect(JSON.parse(viewData[1].data).status).toBe("completed");
-      expect(JSON.parse(viewData[2].data).status).toBe("pending");
+        expect(JSON.parse(viewData[1].data).status).toBe("completed");
+        expect(JSON.parse(viewData[2].data).status).toBe("pending");
+      }, 30000);
     });
   });
 });
@@ -516,6 +572,13 @@ describe("materialized views operations", () => {
       await changeTracker({
         datasetId,
         tableId,
+        datasetLocation: "US",
+        partitioning: {
+          granularity: "NONE",
+        },
+        transformFunction: "",
+        clustering: [],
+        bqProjectId: process.env.PROJECT_ID,
         useMaterializedView: true,
         useIncrementalMaterializedView: true,
       }).record([events[0]]);
@@ -528,6 +591,13 @@ describe("materialized views operations", () => {
         await changeTracker({
           datasetId,
           tableId,
+          datasetLocation: "US",
+          partitioning: {
+            granularity: "NONE",
+          },
+          transformFunction: "",
+          clustering: [],
+          bqProjectId: process.env.PROJECT_ID,
           useMaterializedView: true,
           useIncrementalMaterializedView: true,
         }).record([events[i]]);

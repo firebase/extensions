@@ -15,7 +15,7 @@ jest.mock("genkit", () => ({
 jest.mock("@genkit-ai/vertexai", () => ({
   __esModule: true,
   default: jest.fn(),
-  gemini20Flash001: "gemini-2.0-flash-001",
+  gemini: jest.fn((version: string) => ({ name: `vertexai/${version}` })),
 }));
 
 // Mock the sleep function to avoid actual waiting in tests
@@ -174,7 +174,9 @@ describe("checkImageContent with mocks", () => {
     const callArgs = mockGenerate.mock.calls[0][0];
 
     // Check basic structure without checking exact values of complex objects
-    expect(callArgs.model).toBe("gemini-2.0-flash-001");
+    expect(callArgs.model?.name ?? callArgs.model).toBe(
+      "vertexai/gemini-2.5-flash"
+    );
     expect(callArgs.messages[0].role).toBe("user");
     expect(callArgs.messages[0].content[0].text).toBe(
       "Is this image appropriate?"

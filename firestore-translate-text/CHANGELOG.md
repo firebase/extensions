@@ -1,3 +1,21 @@
+## Version 0.1.28
+
+chore: switch from `googleai` and `vertexai` Genkit plugins to `google-genai`
+
+fix - remove deprecated gemini-2.0-flash and gemini-2.0-flash-lite model options
+
+## Version 0.1.27
+
+chore: update Cloud Functions runtime to Node.js 22
+
+## Version 0.1.26
+
+chore: bump dependencies
+
+## Version 0.1.25
+
+feat - add Gemini 2.5 Flash Lite
+
 ## Version 0.1.24
 
 feat - update to allow using Gemini models from Google AI or Vertex AI

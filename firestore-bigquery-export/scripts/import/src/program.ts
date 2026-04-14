@@ -65,5 +65,10 @@ export const getCLIOptions = () => {
     .option(
       "-f, --failed-batch-output <file>",
       "Path to the JSON file where failed batches will be recorded."
+    )
+    .option(
+      "--firestore-instance-id <database-id>",
+      "The Firestore database instance ID. Use '(default)' for the default database.",
+      "(default)"
     );
 };
