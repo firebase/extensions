@@ -28,7 +28,7 @@
   "devDependencies": {
     "@types/chai": "^4.1.6",
     "@types/jest": "29.5.0",
-    "@types/node": "^14.18.63",
+    "@types/node": "^22.0.0",
     "chai": "^4.2.0",
     "faker": "^5.1.0",
     "firebase-functions-test": "^0.3.3",

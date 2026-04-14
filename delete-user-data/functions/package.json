@@ -20,7 +20,7 @@
   "dependencies": {
     "@google-cloud/pubsub": "^4.3.3",
     "@types/express-serve-static-core": "4.19.8",
-    "@types/node": "^14.18.63",
+    "@types/node": "^22.0.0",
     "concurrently": "^7.2.1",
     "firebase-admin": "^12.1.0",
     "firebase-functions": "^4.9.0",
