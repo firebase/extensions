@@ -34,8 +34,14 @@
     "lerna": "^3.4.3",
     "lint-staged": "^12.4.0",
     "prettier": "2.7.1",
-    "ts-jest": "29.1.2",
-    "typescript": "^4.8.4"
+    "ts-jest": "29.4.9",
+    "typescript": "^5.0.0"
+  },
+  "overrides": {
+    "form-data": ">=2.5.4",
+    "socks": ">=2.7.2",
+    "qs": ">=6.10.3",
+    "tar": "^6.2.1"
   },
   "lint-staged": {
     "*.{js,md,yml,ts,json,yaml}": "prettier --write"

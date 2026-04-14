@@ -1,6 +1,6 @@
 import vertexAI, { gemini } from "@genkit-ai/vertexai";
-import { HarmCategory, HarmBlockThreshold } from "@google-cloud/vertexai";
 import { genkit, z } from "genkit";
+import type { SafetyThreshold } from "./config";
 import * as fs from "fs";
 import * as path from "path";
 import { Bucket } from "@google-cloud/storage";
@@ -43,20 +43,28 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+type SafetyCategory =
+  | "HARM_CATEGORY_UNSPECIFIED"
+  | "HARM_CATEGORY_HATE_SPEECH"
+  | "HARM_CATEGORY_DANGEROUS_CONTENT"
+  | "HARM_CATEGORY_HARASSMENT"
+  | "HARM_CATEGORY_SEXUALLY_EXPLICIT";
+
+const HARM_CATEGORIES: ReadonlyArray<SafetyCategory> = [
+  "HARM_CATEGORY_HATE_SPEECH",
+  "HARM_CATEGORY_DANGEROUS_CONTENT",
+  "HARM_CATEGORY_UNSPECIFIED",
+  "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+  "HARM_CATEGORY_HARASSMENT",
+];
+
 /**
  * Creates safety settings based on filter level
  * @param filterLevel The content filter level to apply
  * @returns Array of safety settings
  */
-function createSafetySettings(filterLevel: HarmBlockThreshold) {
-  const categories: HarmCategory[] = [
-    HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-    HarmCategory.HARM_CATEGORY_UNSPECIFIED,
-    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-    HarmCategory.HARM_CATEGORY_HARASSMENT,
-  ];
-  return categories.map((category) => ({
+function createSafetySettings(filterLevel: SafetyThreshold) {
+  return HARM_CATEGORIES.map((category) => ({
     category,
     threshold: filterLevel,
   }));
@@ -72,7 +80,7 @@ function createSafetySettings(filterLevel: HarmBlockThreshold) {
  */
 async function performContentCheck(
   localOriginalFile: string,
-  filterLevel: HarmBlockThreshold | null,
+  filterLevel: SafetyThreshold | null,
   prompt: string | null,
   contentType: string
 ): Promise<boolean> {
@@ -89,8 +97,8 @@ async function performContentCheck(
   });
 
   // Determine the effective safety settings and prompt to use
-  const effectiveFilterLevel =
-    filterLevel === null ? HarmBlockThreshold.BLOCK_NONE : filterLevel;
+  const effectiveFilterLevel: SafetyThreshold =
+    filterLevel === null ? "BLOCK_NONE" : filterLevel;
   const effectivePrompt =
     prompt !== null
       ? prompt +
@@ -163,7 +171,7 @@ async function performContentCheck(
  */
 export async function checkImageContent(
   localOriginalFile: string,
-  filterLevel: HarmBlockThreshold | null,
+  filterLevel: SafetyThreshold | null,
   prompt: string | null,
   contentType: string,
   maxAttempts = 3

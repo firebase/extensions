@@ -34,8 +34,10 @@ module.exports = {
   },
   output: {
     filename: "sharded-counter.js",
-    library: "sharded",
-    libraryTarget: "var",
+    library: {
+      name: "sharded",
+      type: "var",
+    },
     path: path.resolve(__dirname, "dist"),
   },
 };

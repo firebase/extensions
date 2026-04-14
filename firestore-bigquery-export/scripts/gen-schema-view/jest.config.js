@@ -17,6 +17,7 @@ module.exports = {
   ],
   testPathIgnorePatterns: process.env.CI_TEST === "true" ? ["e2e"] : [],
   moduleNameMapper: {
+    "^inquirer$": "<rootDir>/__mocks__/inquirer.js",
     "firebase-admin/eventarc":
       "<rootDir>/node_modules/firebase-admin/lib/eventarc",
     "firebase-functions/v2": "<rootDir>/node_modules/firebase-functions/lib/v2",
