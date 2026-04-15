@@ -4,6 +4,8 @@ chore: switch from `googleai` and `vertexai` Genkit plugins to `google-genai`
 
 fix - remove deprecated gemini-2.0-flash and gemini-2.0-flash-lite model options
 
+fix - removed unnecessary sanitization
+
 ## Version 0.1.27
 
 chore: update Cloud Functions runtime to Node.js 22
