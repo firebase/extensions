@@ -50,7 +50,7 @@ logs.init(config);
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
  */
-const generateResizedImageHandler = async (
+export const generateResizedImageHandler = async (
   object: ObjectMetadata,
   verbose = true
 ): Promise<void> => {
@@ -89,7 +89,7 @@ const generateResizedImageHandler = async (
     );
 
     // Process image resizing if content filter didn't fail
-    if (filterResult.failed !== true) {
+    if (filterResult.passed === true) {
       const resizeResults = await resizeImages(
         bucket,
         localOriginalFile,
