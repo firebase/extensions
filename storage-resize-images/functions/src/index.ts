@@ -67,8 +67,6 @@ export const generateResizedImageHandler = async (
   const bucket = admin.storage().bucket(object.bucket);
   const filePath = object.name; // File path in the bucket.
   const parsedPath = path.parse(filePath);
-  const objectMetadata = object;
-  let failed = null;
   let localOriginalFile: string;
   let remoteOriginalFile: File;
 
@@ -79,23 +77,27 @@ export const generateResizedImageHandler = async (
       verbose
     );
 
-    // Check content filter and replace with placeholder if needed
-    const filterResult = await processContentFilter(
-      localOriginalFile,
-      object,
-      bucket,
-      verbose,
-      config
-    );
+    let blockedByFilter = false;
+    let filterErrored = false;
+    try {
+      blockedByFilter = !(await processContentFilter(
+        localOriginalFile,
+        object,
+        bucket,
+        config
+      ));
+    } catch (err) {
+      logs.contentFilterErrored(err);
+      filterErrored = true;
+    }
 
-    // Process image resizing if content filter didn't fail
-    if (filterResult.passed === true) {
-      // if (filterResult.failed !== true) {
+    let resizeFailed = false;
+    if (!blockedByFilter && !filterErrored) {
       const resizeResults = await resizeImages(
         bucket,
         localOriginalFile,
         parsedPath,
-        objectMetadata
+        object
       );
 
       await events.recordSuccessEvent({
@@ -103,21 +105,17 @@ export const generateResizedImageHandler = async (
         data: {
           input: object,
           outputs: resizeResults,
-          contentFilterPassed: filterResult.passed,
+          contentFilterPassed: true,
         },
       });
 
-      // Only update failed status if it's still null (not already failed from content filter)
-      failed =
-        filterResult.failed === null
-          ? resizeResults.some(
-              (result) =>
-                result.status === "rejected" || result.value.success === false
-            )
-          : filterResult.failed;
-    } else {
-      failed = true;
+      resizeFailed = resizeResults.some(
+        (result) =>
+          result.status === "rejected" || result.value.success === false
+      );
     }
+
+    const failed = blockedByFilter || filterErrored || resizeFailed;
 
     if (failed) {
       logs.failed();
@@ -126,7 +124,7 @@ export const generateResizedImageHandler = async (
         localOriginalFile,
         object,
         parsedPath,
-        filterResult.passed === false
+        blockedByFilter
       );
     } else {
       if (config.deleteOriginalFile === deleteImage.onSuccess) {
