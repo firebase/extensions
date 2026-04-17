@@ -64,97 +64,9 @@ function createSafetySettings(filterLevel: SafetyThreshold) {
 }
 
 /**
- * Performs the actual content check with the AI model
- * @param localOriginalFile Path to the local image file
- * @param filterLevel The content filter level to apply
- * @param prompt Optional custom prompt to use for content checking
- * @param contentType The content type of the image
- * @returns Promise<boolean> - true if the image passes the filter, false otherwise
- */
-async function performContentCheck(
-  localOriginalFile: string,
-  filterLevel: SafetyThreshold | null,
-  prompt: string | null,
-  contentType: string
-): Promise<boolean> {
-  const dataUrl = createImageDataUrl(localOriginalFile);
-
-  // Initialize Vertex AI client
-  const ai = genkit({
-    plugins: [
-      vertexAI({
-        location: process.env.LOCATION ?? "us-central1",
-        models: ["gemini-2.5-flash"],
-      }),
-    ],
-  });
-
-  // Determine the effective safety settings and prompt to use
-  const effectiveFilterLevel: SafetyThreshold =
-    filterLevel === null ? "BLOCK_NONE" : filterLevel;
-  const effectivePrompt =
-    prompt !== null
-      ? prompt +
-        '\n\n Please respond in json with either { "response": "yes" } or  { "response": "no" }'
-      : "Is this image appropriate?";
-
-  const effectiveOutput =
-    prompt !== null
-      ? {
-          format: "json",
-          schema: z.object({
-            response: z.string(),
-          }),
-        }
-      : undefined;
-
-  // Determine max tokens based on whether we're using custom prompt
-  const maxOutputTokens = prompt !== null ? 100 : 1;
-
-  try {
-    const result = await ai.generate({
-      model: gemini("gemini-2.5-flash"),
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              text: effectivePrompt,
-            },
-            {
-              media: {
-                url: dataUrl,
-                contentType,
-              },
-            },
-          ],
-        },
-      ],
-      output: effectiveOutput,
-      config: {
-        temperature: 0.1,
-        maxOutputTokens,
-        safetySettings: createSafetySettings(effectiveFilterLevel),
-      },
-    });
-
-    if (result.output?.response === "yes" && prompt !== null) {
-      log.customFilterBlocked();
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    if (error.detail?.response?.finishReason === "blocked") {
-      log.contentFilterBlocked();
-      return false;
-    }
-    throw error;
-  }
-}
-
-/**
- * Checks if an image content is appropriate based on the provided filter level and optional custom prompt
+ * Entry point for image moderation: short-circuits when disabled, otherwise runs a single
+ * Vertex/Gemini call per attempt with retries and queue-backed backoff on transient errors.
+ *
  * @param localOriginalFile Path to the local image file
  * @param filterLevel The content filter level to apply ('LOW', 'MEDIUM', 'HIGH', or null to disable)
  * @param prompt Optional custom prompt to use for content checking
@@ -173,15 +85,85 @@ export async function checkImageContent(
     return true;
   }
 
-  // Helper function that handles retries using the queue
+  /** One Gemini moderation call (no retries). */
+  async function moderateImageOnce(): Promise<boolean> {
+    const dataUrl = createImageDataUrl(localOriginalFile);
+
+    const ai = genkit({
+      plugins: [
+        vertexAI({
+          location: process.env.LOCATION ?? "us-central1",
+          models: ["gemini-2.5-flash"],
+        }),
+      ],
+    });
+
+    const effectiveFilterLevel: SafetyThreshold =
+      filterLevel === null ? "BLOCK_NONE" : filterLevel;
+
+    const hasCustomPrompt = prompt !== null;
+
+    const effectivePrompt = hasCustomPrompt
+      ? prompt +
+        '\n\n Please respond in json with either { "response": "yes" } or  { "response": "no" }'
+      : "Is this image appropriate?";
+
+    const effectiveOutput = hasCustomPrompt
+      ? {
+          format: "json",
+          schema: z.object({
+            response: z.string(),
+          }),
+        }
+      : undefined;
+
+    const maxOutputTokens = hasCustomPrompt ? 100 : 1;
+
+    try {
+      const result = await ai.generate({
+        model: gemini("gemini-2.5-flash"),
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                text: effectivePrompt,
+              },
+              {
+                media: {
+                  url: dataUrl,
+                  contentType,
+                },
+              },
+            ],
+          },
+        ],
+        output: effectiveOutput,
+        config: {
+          temperature: 0.1,
+          maxOutputTokens,
+          safetySettings: createSafetySettings(effectiveFilterLevel),
+        },
+      });
+
+      if (result.output?.response === "yes" && hasCustomPrompt) {
+        log.customFilterBlocked();
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      if (error.detail?.response?.finishReason === "blocked") {
+        log.contentFilterBlocked();
+        return false;
+      }
+      throw error;
+    }
+  }
+
   const attemptWithRetry = async (attemptNumber: number): Promise<boolean> => {
     try {
-      return await performContentCheck(
-        localOriginalFile,
-        filterLevel,
-        prompt,
-        contentType
-      );
+      return await moderateImageOnce();
     } catch (error) {
       // If we have attempts left, schedule a retry via the queue
       if (attemptNumber < maxAttempts) {
