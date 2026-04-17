@@ -221,51 +221,45 @@ export async function checkImageContent(
 }
 
 /**
- * Processes content filtering and handles placeholder replacement if needed
+ * Runs content filtering and, if the image is blocked, swaps the local file
+ * with a placeholder image.
+ *
+ * @returns `true` if the image passed the filter, `false` if it was blocked
+ * (the local file has been replaced with a placeholder).
+ * @throws If the filter call errors or the placeholder swap errors. Callers
+ * are responsible for treating these as failures.
  */
 export async function processContentFilter(
   localFile: string,
   object: ObjectMetadata,
   bucket: Bucket,
-  _verbose: boolean,
   config: any
-): Promise<{ passed: boolean; failed: boolean | null }> {
-  let filterResult = true; // Default to true (pass)
-  let failed = null; // No failures yet
+): Promise<boolean> {
+  const passed = await checkImageContent(
+    localFile,
+    config.contentFilterLevel,
+    config.customFilterPrompt,
+    object.contentType
+  );
 
-  try {
-    filterResult = await checkImageContent(
+  if (passed) {
+    return true;
+  }
+
+  log.contentFilterRejected(object.name);
+
+  if (config.placeholderImagePath) {
+    log.replacingWithConfiguredPlaceholder(config.placeholderImagePath);
+    await replaceWithConfiguredPlaceholder(
       localFile,
-      config.contentFilterLevel,
-      config.customFilterPrompt,
-      object.contentType
+      bucket,
+      config.placeholderImagePath
     );
-  } catch (err) {
-    log.contentFilterErrored(err);
-    failed = true;
+  } else {
+    log.replacingWithDefaultPlaceholder();
+    await replaceWithDefaultPlaceholder(localFile);
   }
+  log.placeholderReplaceComplete(localFile);
 
-  if (filterResult === false) {
-    log.contentFilterRejected(object.name);
-
-    try {
-      if (config.placeholderImagePath) {
-        log.replacingWithConfiguredPlaceholder(config.placeholderImagePath);
-        await replaceWithConfiguredPlaceholder(
-          localFile,
-          bucket,
-          config.placeholderImagePath
-        );
-      } else {
-        log.replacingWithDefaultPlaceholder();
-        await replaceWithDefaultPlaceholder(localFile);
-      }
-      log.placeholderReplaceComplete(localFile);
-    } catch (err) {
-      log.placeholderReplaceError(err);
-      failed = true;
-    }
-  }
-
-  return { passed: filterResult, failed };
+  return false;
 }

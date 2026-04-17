@@ -42,6 +42,7 @@ jest.mock("../../src/logs", () => ({
   failed: jest.fn(),
   complete: jest.fn(),
   error: jest.fn(),
+  contentFilterErrored: jest.fn(),
 }));
 
 jest.mock("firebase-admin", () => ({
@@ -65,22 +66,26 @@ describe("generateResizedImageHandler", () => {
     jest.clearAllMocks();
   });
 
-  test("goes down the failed-image path when content filter returns passed:false and failed:null", async () => {
+  const mockObject = {
+    bucket: "demo-bucket",
+    name: "images/test.jpg",
+    contentType: "image/jpeg",
+  } as any;
+
+  const parsedPathMatcher = expect.objectContaining({
+    dir: "images",
+    base: "test.jpg",
+    name: "test",
+    ext: ".jpg",
+  });
+
+  test("routes blocked-by-filter images to the failed-image path with blockedByFilter=true", async () => {
     (shouldResize as jest.Mock).mockReturnValue(true);
     (downloadOriginalFile as jest.Mock).mockResolvedValue([
       "/tmp/test.jpg",
       {},
     ]);
-    (processContentFilter as jest.Mock).mockResolvedValue({
-      passed: false,
-      failed: null,
-    });
-
-    const mockObject = {
-      bucket: "demo-bucket",
-      name: "images/test.jpg",
-      contentType: "image/jpeg",
-    } as any;
+    (processContentFilter as jest.Mock).mockResolvedValue(false);
 
     await generateResizedImageHandler(mockObject, false);
 
@@ -89,26 +94,18 @@ describe("generateResizedImageHandler", () => {
       expect.anything(),
       "/tmp/test.jpg",
       mockObject,
-      expect.objectContaining({
-        dir: "images",
-        base: "test.jpg",
-        name: "test",
-        ext: ".jpg",
-      }),
+      parsedPathMatcher,
       true
     );
   });
 
-  test("resizes image when content filter returns passed:true and failed:false", async () => {
+  test("resizes when the content filter passes", async () => {
     (shouldResize as jest.Mock).mockReturnValue(true);
     (downloadOriginalFile as jest.Mock).mockResolvedValue([
       "/tmp/test.jpg",
       {},
     ]);
-    (processContentFilter as jest.Mock).mockResolvedValue({
-      passed: true,
-      failed: false,
-    });
+    (processContentFilter as jest.Mock).mockResolvedValue(true);
     (resizeImages as jest.Mock).mockResolvedValue([
       {
         status: "fulfilled",
@@ -116,83 +113,26 @@ describe("generateResizedImageHandler", () => {
       },
     ]);
 
-    const mockObject = {
-      bucket: "demo-bucket",
-      name: "images/test.jpg",
-      contentType: "image/jpeg",
-    } as any;
-
     await generateResizedImageHandler(mockObject, false);
 
     expect(resizeImages).toHaveBeenCalledWith(
       expect.anything(),
       "/tmp/test.jpg",
-      expect.objectContaining({
-        dir: "images",
-        base: "test.jpg",
-        name: "test",
-        ext: ".jpg",
-      }),
+      parsedPathMatcher,
       mockObject
     );
     expect(handleFailedImage).not.toHaveBeenCalled();
   });
 
-  test("resizes when passed:true even if failed is null", async () => {
+  test("treats filter errors as failures and skips resizing", async () => {
     (shouldResize as jest.Mock).mockReturnValue(true);
     (downloadOriginalFile as jest.Mock).mockResolvedValue([
       "/tmp/test.jpg",
       {},
     ]);
-    (processContentFilter as jest.Mock).mockResolvedValue({
-      passed: true,
-      failed: null,
-    });
-    (resizeImages as jest.Mock).mockResolvedValue([
-      {
-        status: "fulfilled",
-        value: { success: true },
-      },
-    ]);
-
-    const mockObject = {
-      bucket: "demo-bucket",
-      name: "images/test.jpg",
-      contentType: "image/jpeg",
-    } as any;
-
-    await generateResizedImageHandler(mockObject, false);
-
-    expect(resizeImages).toHaveBeenCalledWith(
-      expect.anything(),
-      "/tmp/test.jpg",
-      expect.objectContaining({
-        dir: "images",
-        base: "test.jpg",
-        name: "test",
-        ext: ".jpg",
-      }),
-      mockObject
+    (processContentFilter as jest.Mock).mockRejectedValue(
+      new Error("filter boom")
     );
-    expect(handleFailedImage).not.toHaveBeenCalled();
-  });
-
-  test("does not resize when passed:false even if failed:false", async () => {
-    (shouldResize as jest.Mock).mockReturnValue(true);
-    (downloadOriginalFile as jest.Mock).mockResolvedValue([
-      "/tmp/test.jpg",
-      {},
-    ]);
-    (processContentFilter as jest.Mock).mockResolvedValue({
-      passed: false,
-      failed: false,
-    });
-
-    const mockObject = {
-      bucket: "demo-bucket",
-      name: "images/test.jpg",
-      contentType: "image/jpeg",
-    } as any;
 
     await generateResizedImageHandler(mockObject, false);
 
@@ -201,13 +141,8 @@ describe("generateResizedImageHandler", () => {
       expect.anything(),
       "/tmp/test.jpg",
       mockObject,
-      expect.objectContaining({
-        dir: "images",
-        base: "test.jpg",
-        name: "test",
-        ext: ".jpg",
-      }),
-      true
+      parsedPathMatcher,
+      false
     );
   });
 });
