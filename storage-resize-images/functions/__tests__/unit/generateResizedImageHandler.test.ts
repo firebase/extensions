@@ -20,7 +20,11 @@ jest.mock("../../src/file-operations", () => ({
 }));
 
 jest.mock("../../src/content-filter", () => ({
-  processContentFilter: jest.fn(),
+  checkImageContent: jest.fn(),
+}));
+
+jest.mock("../../src/placeholder", () => ({
+  replacePlaceholder: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock("../../src/resize-image", () => ({
@@ -43,6 +47,8 @@ jest.mock("../../src/logs", () => ({
   complete: jest.fn(),
   error: jest.fn(),
   contentFilterErrored: jest.fn(),
+  contentFilterRejected: jest.fn(),
+  placeholderReplaceError: jest.fn(),
 }));
 
 jest.mock("firebase-admin", () => ({
@@ -58,8 +64,10 @@ import {
   downloadOriginalFile,
   handleFailedImage,
 } from "../../src/file-operations";
-import { processContentFilter } from "../../src/content-filter";
+import { checkImageContent } from "../../src/content-filter";
+import { replacePlaceholder } from "../../src/placeholder";
 import { resizeImages } from "../../src/resize-image";
+import * as logs from "../../src/logs";
 
 describe("generateResizedImageHandler", () => {
   beforeEach(() => {
@@ -85,10 +93,11 @@ describe("generateResizedImageHandler", () => {
       "/tmp/test.jpg",
       {},
     ]);
-    (processContentFilter as jest.Mock).mockResolvedValue(false);
+    (checkImageContent as jest.Mock).mockResolvedValue(false);
 
     await generateResizedImageHandler(mockObject, false);
 
+    expect(replacePlaceholder).toHaveBeenCalled();
     expect(resizeImages).not.toHaveBeenCalled();
     expect(handleFailedImage).toHaveBeenCalledWith(
       expect.anything(),
@@ -105,7 +114,7 @@ describe("generateResizedImageHandler", () => {
       "/tmp/test.jpg",
       {},
     ]);
-    (processContentFilter as jest.Mock).mockResolvedValue(true);
+    (checkImageContent as jest.Mock).mockResolvedValue(true);
     (resizeImages as jest.Mock).mockResolvedValue([
       {
         status: "fulfilled",
@@ -115,6 +124,7 @@ describe("generateResizedImageHandler", () => {
 
     await generateResizedImageHandler(mockObject, false);
 
+    expect(replacePlaceholder).not.toHaveBeenCalled();
     expect(resizeImages).toHaveBeenCalledWith(
       expect.anything(),
       "/tmp/test.jpg",
@@ -130,12 +140,13 @@ describe("generateResizedImageHandler", () => {
       "/tmp/test.jpg",
       {},
     ]);
-    (processContentFilter as jest.Mock).mockRejectedValue(
+    (checkImageContent as jest.Mock).mockRejectedValue(
       new Error("filter boom")
     );
 
     await generateResizedImageHandler(mockObject, false);
 
+    expect(replacePlaceholder).not.toHaveBeenCalled();
     expect(resizeImages).not.toHaveBeenCalled();
     expect(handleFailedImage).toHaveBeenCalledWith(
       expect.anything(),
@@ -143,6 +154,30 @@ describe("generateResizedImageHandler", () => {
       mockObject,
       parsedPathMatcher,
       false
+    );
+  });
+
+  test("still routes blocked images to the failed path when placeholder swap errors", async () => {
+    (shouldResize as jest.Mock).mockReturnValue(true);
+    (downloadOriginalFile as jest.Mock).mockResolvedValue([
+      "/tmp/test.jpg",
+      {},
+    ]);
+    (checkImageContent as jest.Mock).mockResolvedValue(false);
+    const swapErr = new Error("swap boom");
+    (replacePlaceholder as jest.Mock).mockRejectedValue(swapErr);
+
+    await generateResizedImageHandler(mockObject, false);
+
+    expect(logs.placeholderReplaceError).toHaveBeenCalledWith(swapErr);
+    expect(logs.contentFilterErrored).not.toHaveBeenCalled();
+    expect(resizeImages).not.toHaveBeenCalled();
+    expect(handleFailedImage).toHaveBeenCalledWith(
+      expect.anything(),
+      "/tmp/test.jpg",
+      mockObject,
+      parsedPathMatcher,
+      true
     );
   });
 });

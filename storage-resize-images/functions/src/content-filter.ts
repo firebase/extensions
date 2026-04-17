@@ -3,13 +3,6 @@ import { genkit, z } from "genkit";
 import type { SafetyThreshold } from "./config";
 import * as fs from "fs";
 import * as path from "path";
-import { Bucket } from "@google-cloud/storage";
-import { ObjectMetadata } from "firebase-functions/v1/storage";
-import {
-  replaceWithConfiguredPlaceholder,
-  replaceWithDefaultPlaceholder,
-} from "./util";
-// Import the logging functions from your log.ts module
 import * as log from "./logs";
 import { globalRetryQueue } from "./global";
 
@@ -218,48 +211,4 @@ export async function checkImageContent(
 
   // Start the first attempt (not via queue)
   return await attemptWithRetry(1);
-}
-
-/**
- * Runs content filtering and, if the image is blocked, swaps the local file
- * with a placeholder image.
- *
- * @returns `true` if the image passed the filter, `false` if it was blocked
- * (the local file has been replaced with a placeholder).
- * @throws If the filter call errors or the placeholder swap errors. Callers
- * are responsible for treating these as failures.
- */
-export async function processContentFilter(
-  localFile: string,
-  object: ObjectMetadata,
-  bucket: Bucket,
-  config: any
-): Promise<boolean> {
-  const passed = await checkImageContent(
-    localFile,
-    config.contentFilterLevel,
-    config.customFilterPrompt,
-    object.contentType
-  );
-
-  if (passed) {
-    return true;
-  }
-
-  log.contentFilterRejected(object.name);
-
-  if (config.placeholderImagePath) {
-    log.replacingWithConfiguredPlaceholder(config.placeholderImagePath);
-    await replaceWithConfiguredPlaceholder(
-      localFile,
-      bucket,
-      config.placeholderImagePath
-    );
-  } else {
-    log.replacingWithDefaultPlaceholder();
-    await replaceWithDefaultPlaceholder(localFile);
-  }
-  log.placeholderReplaceComplete(localFile);
-
-  return false;
 }

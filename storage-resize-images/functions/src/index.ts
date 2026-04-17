@@ -29,7 +29,8 @@ import * as logs from "./logs";
 import { shouldResize } from "./filters";
 import * as events from "./events";
 import { convertToObjectMetadata } from "./util";
-import { processContentFilter } from "./content-filter";
+import { checkImageContent } from "./content-filter";
+import { replacePlaceholder } from "./placeholder";
 import {
   deleteRemoteFile,
   deleteTempFile,
@@ -80,12 +81,25 @@ export const generateResizedImageHandler = async (
     let blockedByFilter = false;
     let filterErrored = false;
     try {
-      blockedByFilter = !(await processContentFilter(
+      const passed = await checkImageContent(
         localOriginalFile,
-        object,
-        bucket,
-        config
-      ));
+        config.contentFilterLevel,
+        config.customFilterPrompt,
+        object.contentType
+      );
+      if (!passed) {
+        blockedByFilter = true;
+        logs.contentFilterRejected(object.name);
+        try {
+          await replacePlaceholder(
+            localOriginalFile,
+            bucket,
+            config.placeholderImagePath
+          );
+        } catch (err) {
+          logs.placeholderReplaceError(err);
+        }
+      }
     } catch (err) {
       logs.contentFilterErrored(err);
       filterErrored = true;
