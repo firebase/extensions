@@ -16,6 +16,7 @@
 
 import * as sqlFormatter from "sql-formatter";
 import { timestampField } from "./schema";
+import { resolveGcpProjectIdForBigQuery } from "./gcpProject";
 
 const excludeFields: string[] = ["document_name", "document_id"];
 const nonGroupFields = ["event_id", "data", "old_data"];
@@ -65,7 +66,7 @@ export function buildLatestSnapshotViewQuery({
 }: BuildLatestSnapshotViewQueryOptions): string {
   validateInputs({ datasetId, tableName, timestampColumnName, groupByColumns });
 
-  const projectId = bqProjectId || process.env.PROJECT_ID;
+  const projectId = resolveGcpProjectIdForBigQuery(bqProjectId);
 
   return useLegacyQuery
     ? buildLegacyQuery(

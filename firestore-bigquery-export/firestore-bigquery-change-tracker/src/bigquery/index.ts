@@ -42,6 +42,7 @@ import { tableRequiresUpdate } from "./checkUpdates";
 import { parseErrorMessage, waitForInitialization } from "./utils";
 import { initializeLatestView } from "./initializeLatestView";
 import { logger, LogLevel } from "../logger";
+import { resolveGcpProjectIdForBigQuery } from "./gcpProject";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
 import type { ChangeTrackerConfig } from "./types";
@@ -68,7 +69,7 @@ export class FirestoreBigQueryEventHistoryTracker
   constructor(public config: ChangeTrackerConfig) {
     this.bq = new bigquery.BigQuery();
 
-    this.bq.projectId = config.bqProjectId || process.env.PROJECT_ID;
+    this.bq.projectId = resolveGcpProjectIdForBigQuery(config.bqProjectId);
 
     this.partitioningConfig = new PartitioningConfig(this.config.partitioning);
 
