@@ -13,8 +13,6 @@ import * as util from "util";
 
 import { resolveWildcardIds } from "./config";
 
-const FIRESTORE_DEFAULT_DATABASE = "(default)";
-
 // TODO: do we need this logic?
 export const initializeDataSink = async (
   dataSink: FirestoreBigQueryEventHistoryTracker,
@@ -78,7 +76,7 @@ export function getRowsFromDocs(
           rows.push({
             timestamp: new Date().toISOString(), // epoch
             operation: ChangeType.IMPORT,
-            documentName: `projects/${config.projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${path}`,
+            documentName: `projects/${config.projectId}/databases/${config.firestoreInstanceId}/documents/${path}`,
             documentId: doc.id,
             // TODO: fix this type
             // @ts-expect-error
@@ -96,7 +94,7 @@ export function getRowsFromDocs(
       return {
         timestamp: new Date().toISOString(), // epoch
         operation: ChangeType.IMPORT,
-        documentName: `projects/${config.projectId}/databases/${FIRESTORE_DEFAULT_DATABASE}/documents/${snapshot.ref.path}`,
+        documentName: `projects/${config.projectId}/databases/${config.firestoreInstanceId}/documents/${snapshot.ref.path}`,
         documentId: snapshot.id,
         pathParams: resolveWildcardIds(
           config.sourceCollectionPath,
