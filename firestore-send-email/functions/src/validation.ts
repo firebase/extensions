@@ -53,8 +53,19 @@ export const attachmentSchema = z
   });
 
 export const attachmentsSchema = z
-  .array(attachmentSchema)
-  .optional()
+  .preprocess(
+    // Normalize inputs before validation:
+    // - null/undefined → undefined (no attachments)
+    // - single object → wrap in array
+    // - array → pass through
+    (val) => {
+      if (val === undefined || val === null) return undefined;
+      if (Array.isArray(val)) return val;
+      if (typeof val === "object") return [val];
+      return val; // Let validation handle invalid types
+    },
+    z.array(attachmentSchema).optional()
+  )
   .transform((attachments) =>
     attachments
       ? attachments.filter((attachment) => Object.keys(attachment).length > 0)
