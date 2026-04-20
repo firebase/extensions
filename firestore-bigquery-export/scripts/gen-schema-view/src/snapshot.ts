@@ -66,15 +66,19 @@ export const buildLatestSchemaSnapshotViewQuery = (
   schema: FirestoreSchema,
   useNewSqlSyntax = false
 ): any => {
-  const firstValue = (selector: string, isArrayType?: boolean) => {
-    if (isArrayType) return selector;
-    return `FIRST_VALUE(${selector}) OVER(PARTITION BY document_name ORDER BY timestamp DESC)`;
-  };
+  // Use identity transformer - no FIRST_VALUE wrapping needed
+  // We'll use QUALIFY RANK() = 1 instead to filter to latest row
+  const identitySelector = (selector: string) => selector;
 
   // We need to pass the dataset id into the parser so that we can call the
   // fully qualified json2array persistent user-defined function in the proper
   // scope.
-  const result = processFirestoreSchema(datasetId, "data", schema, firstValue);
+  const result = processFirestoreSchema(
+    datasetId,
+    "data",
+    schema,
+    identitySelector
+  );
 
   const [
     schemaFieldExtractors,
@@ -135,6 +139,9 @@ export const buildLatestSchemaSnapshotViewQuery = (
     })
     .join(" ");
 
+  // Use QUALIFY with single RANK() instead of multiple FIRST_VALUE() calls
+  // This dramatically improves performance for wide schemas (200+ columns)
+  // by using only ONE window function regardless of field count
   let query = `
       SELECT
         document_name,
@@ -146,14 +153,15 @@ export const buildLatestSchemaSnapshotViewQuery = (
         SELECT
           document_name,
           document_id,
-          ${firstValue(`timestamp`)} AS timestamp,
-          ${firstValue(`operation`)} AS operation,
-          ${firstValue(`operation`)} = "DELETE" AS is_deleted${
-    fieldValueSelectorClauses.length > 0 ? `,` : ``
-  }
+          timestamp,
+          operation,
+          operation = "DELETE" AS is_deleted${
+            fieldValueSelectorClauses.length > 0 ? `,` : ``
+          }
           ${fieldValueSelectorClauses}
         FROM \`${process.env.PROJECT_ID}.${datasetId}.${rawViewName}\`
         ${offsetJoins}
+        QUALIFY RANK() OVER(PARTITION BY document_name ORDER BY timestamp DESC) = 1
       )
       WHERE NOT is_deleted
   `;

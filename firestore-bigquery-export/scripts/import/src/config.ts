@@ -1,6 +1,6 @@
 import * as program from "commander";
-import * as filenamify from "filenamify";
-import * as inquirer from "inquirer";
+import filenamify from "filenamify";
+import inquirer from "inquirer";
 
 import { CliConfig, CliConfigError } from "./types";
 

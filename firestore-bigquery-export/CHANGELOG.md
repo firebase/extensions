@@ -1,3 +1,7 @@
+## Version 0.3.1
+
+chore: bump dependencies
+
 ## Version 0.3.0
 
 breaking change: reject invalid partitioning configuration combinations at startup with explicit error messages

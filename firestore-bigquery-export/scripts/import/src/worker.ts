@@ -132,7 +132,6 @@ async function processDocuments(
 
   // Initialize BigQuery data sink
   // skipInit: true because the main thread handles initialization
-  // @ts-expect-error
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
     tableId,
     datasetId,

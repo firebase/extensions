@@ -4,8 +4,7 @@ import * as events from "../events";
 import * as admin from "firebase-admin";
 import config from "../config";
 import { genkit, Genkit, z, ModelReference } from "genkit";
-import vertexAI from "@genkit-ai/vertexai";
-import googleAI from "@genkit-ai/googleai";
+import { vertexAI, googleAI } from "@genkit-ai/google-genai";
 
 /**
  * Represents a translation result with target language and translated text

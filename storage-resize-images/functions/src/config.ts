@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { HarmBlockThreshold } from "@google-cloud/vertexai";
+export type SafetyThreshold =
+  | "BLOCK_LOW_AND_ABOVE"
+  | "BLOCK_MEDIUM_AND_ABOVE"
+  | "BLOCK_ONLY_HIGH"
+  | "BLOCK_NONE";
 
 export enum deleteImage {
   always = 0,
@@ -45,16 +49,16 @@ function allowAnimated(sharpOptions = "{}", overrideIsAnimated) {
   return overrideIsAnimated === "true" || undefined ? true : false;
 }
 
-const harmBlockThresholdMap: Record<string, HarmBlockThreshold | null> = {
-  BLOCK_LOW_AND_ABOVE: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-  BLOCK_MEDIUM_AND_ABOVE: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  BLOCK_ONLY_HIGH: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+const harmBlockThresholdMap: Record<string, SafetyThreshold | null> = {
+  BLOCK_LOW_AND_ABOVE: "BLOCK_LOW_AND_ABOVE",
+  BLOCK_MEDIUM_AND_ABOVE: "BLOCK_MEDIUM_AND_ABOVE",
+  BLOCK_ONLY_HIGH: "BLOCK_ONLY_HIGH",
   OFF: null,
 };
 
-export const convertHarmBlockThreshold: (
+export const convertHarmBlockThreshold = (
   level?: string
-) => HarmBlockThreshold = (level?: string) => {
+): SafetyThreshold | null => {
   if (!level) {
     return null;
   }

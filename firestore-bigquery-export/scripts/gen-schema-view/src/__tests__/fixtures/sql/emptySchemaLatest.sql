@@ -15,23 +15,15 @@ FROM
     SELECT
       document_name,
       document_id,
-      FIRST_VALUE(timestamp) OVER(
-        PARTITION BY document_name
-        ORDER BY
-          timestamp DESC
-      ) AS timestamp,
-      FIRST_VALUE(operation) OVER(
-        PARTITION BY document_name
-        ORDER BY
-          timestamp DESC
-      ) AS operation,
-      FIRST_VALUE(operation) OVER(
-        PARTITION BY document_name
-        ORDER BY
-          timestamp DESC
-      ) = "DELETE" AS is_deleted
+      timestamp,
+      operation,
+      operation = "DELETE" AS is_deleted
     FROM
-      `test.test_dataset.test_table`
+      `test.test_dataset.test_table` QUALIFY RANK() OVER(
+        PARTITION BY document_name
+        ORDER BY
+          timestamp DESC
+      ) = 1
   )
 WHERE
   NOT is_deleted
