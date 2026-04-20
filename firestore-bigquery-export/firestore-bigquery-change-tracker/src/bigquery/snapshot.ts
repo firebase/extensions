@@ -67,6 +67,11 @@ export function buildLatestSnapshotViewQuery({
   validateInputs({ datasetId, tableName, timestampColumnName, groupByColumns });
 
   const projectId = resolveGcpProjectIdForBigQuery(bqProjectId);
+  if (!projectId) {
+    throw new Error(
+      "Could not determine BigQuery project ID. Provide it via the bqProjectId config option or set the GOOGLE_CLOUD_PROJECT / PROJECT_ID environment variable."
+    );
+  }
 
   return useLegacyQuery
     ? buildLegacyQuery(

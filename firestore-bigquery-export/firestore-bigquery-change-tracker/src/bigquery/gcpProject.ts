@@ -20,7 +20,6 @@ export function resolveGcpProjectIdForBigQuery(
   return (
     preferred ||
     process.env.GOOGLE_CLOUD_PROJECT ||
-    process.env.PROJECT_ID ||
-    undefined
+    process.env.PROJECT_ID
   );
 }
