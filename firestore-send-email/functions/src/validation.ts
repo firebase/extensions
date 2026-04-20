@@ -187,23 +187,25 @@ function formatZodError(
     const path = issue.path.length > 0 ? issue.path.join(".") : context;
     switch (issue.code) {
       case "invalid_type":
+        if (issue.message && issue.message.startsWith("Expected")) {
+          return issue.message.replace(/Field '.*?/g, `Field '${path}'`);
+        }
+
         if (issue.received === "undefined") {
-          return `Field '${path}' must be a ${issue.expected}`;
+          const expected = issue.expected === "object" ? "map" : issue.expected;
+          const article = ["a", "e", "i", "o", "u"].includes(expected[0])
+            ? "an"
+            : "a";
+          return `Field '${path}' must be ${article} ${expected}`;
         }
 
         if (issue.expected === "string") {
           return `Field '${path}' must be a string`;
         }
         if (issue.expected === "array") {
-          if (issue.message && !issue.message.startsWith("Expected")) {
-            const customMessage = issue.message.replace(
-              /Field 'attachments'/g,
-              `Field '${path}'`
-            );
-            return customMessage;
-          }
-          return `Field '${path}' must be an array`;
+          return `Field '${path} must be an array`;
         }
+
         if (issue.expected === "object") {
           return `Field '${path}' must be a map`;
         }
