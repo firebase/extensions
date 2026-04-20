@@ -187,10 +187,6 @@ function formatZodError(
     const path = issue.path.length > 0 ? issue.path.join(".") : context;
     switch (issue.code) {
       case "invalid_type":
-        if (issue.message && issue.message.startsWith("Expected")) {
-          return issue.message.replace(/Field '.*?/g, `Field '${path}'`);
-        }
-
         if (issue.received === "undefined") {
           const expected = issue.expected === "object" ? "map" : issue.expected;
           const article = ["a", "e", "i", "o", "u"].includes(expected[0])
