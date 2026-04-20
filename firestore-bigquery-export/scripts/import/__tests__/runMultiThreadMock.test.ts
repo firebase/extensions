@@ -2,6 +2,7 @@ import { runMultiThread } from "../src/run-multi-thread";
 import * as workerpool from "workerpool";
 import { CliConfig } from "../src/types";
 import { cpus } from "os";
+import { FIRESTORE_DEFAULT_DATABASE } from "../src/config";
 
 // Mock helper functions
 jest.mock("../src/helper", () => ({
@@ -97,6 +98,7 @@ describe("runMultiThread", () => {
       useEmulator: false,
       rawChangeLogName: "testTable_raw_changelog",
       cursorPositionFile: "/tmp/cursor",
+      firestoreInstanceId: FIRESTORE_DEFAULT_DATABASE,
     };
   });
 
