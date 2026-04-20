@@ -203,7 +203,7 @@ function formatZodError(
           return `Field '${path}' must be a string`;
         }
         if (issue.expected === "array") {
-          return `Field '${path} must be an array`;
+          return `Field '${path}' must be an array`;
         }
 
         if (issue.expected === "object") {
