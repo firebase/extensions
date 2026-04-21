@@ -22,6 +22,7 @@ import * as path from "path";
 import * as sharp from "sharp";
 import { File } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
+import * as fs from "fs-extra";
 
 import { resizeImages } from "./resize-image";
 import { config, deleteImage } from "./config";
@@ -68,7 +69,9 @@ export const generateResizedImageHandler = async (
   const bucket = admin.storage().bucket(object.bucket);
   const filePath = object.name; // File path in the bucket.
   const parsedPath = path.parse(filePath);
+
   let localOriginalFile: string;
+  let localProcessingFile: string | undefined;
   let remoteOriginalFile: File;
 
   try {
@@ -80,6 +83,8 @@ export const generateResizedImageHandler = async (
 
     let blockedByFilter = false;
     let filterErrored = false;
+    let blockedImageStored = false;
+
     try {
       const passed = await checkImageContent(
         localOriginalFile,
@@ -90,14 +95,27 @@ export const generateResizedImageHandler = async (
       if (!passed) {
         blockedByFilter = true;
         logs.contentFilterRejected(object.name);
+
+        await handleFailedImage(
+          bucket,
+          localOriginalFile,
+          object,
+          parsedPath,
+          true
+        );
+        blockedImageStored = true;
+
+        localProcessingFile = `${localOriginalFile}-placeholder`;
+        fs.copyFileSync(localOriginalFile, localProcessingFile);
         try {
           await replacePlaceholder(
-            localOriginalFile,
+            localProcessingFile,
             bucket,
             config.placeholderImagePath
           );
         } catch (err) {
           logs.placeholderReplaceError(err);
+          filterErrored = true;
         }
       }
     } catch (err) {
@@ -105,11 +123,13 @@ export const generateResizedImageHandler = async (
       filterErrored = true;
     }
 
+    const fileToResize = localProcessingFile ?? localOriginalFile;
+
     let resizeFailed = false;
-    if (!blockedByFilter && !filterErrored) {
+    if (!filterErrored) {
       const resizeResults = await resizeImages(
         bucket,
-        localOriginalFile,
+        fileToResize,
         parsedPath,
         object
       );
@@ -119,7 +139,7 @@ export const generateResizedImageHandler = async (
         data: {
           input: object,
           outputs: resizeResults,
-          contentFilterPassed: true,
+          contentFilterPassed: !blockedByFilter,
         },
       });
 
@@ -129,17 +149,19 @@ export const generateResizedImageHandler = async (
       );
     }
 
-    const failed = blockedByFilter || filterErrored || resizeFailed;
+    const failed = filterErrored || resizeFailed;
 
     if (failed) {
       logs.failed();
-      await handleFailedImage(
-        bucket,
-        localOriginalFile,
-        object,
-        parsedPath,
-        blockedByFilter
-      );
+      if (!blockedImageStored) {
+        await handleFailedImage(
+          bucket,
+          localOriginalFile,
+          object,
+          parsedPath,
+          blockedByFilter
+        );
+      }
     } else {
       if (config.deleteOriginalFile === deleteImage.onSuccess) {
         await deleteRemoteFile(remoteOriginalFile, filePath);
@@ -153,6 +175,10 @@ export const generateResizedImageHandler = async (
     // Clean up temporary files
     if (localOriginalFile) {
       await deleteTempFile(localOriginalFile, filePath, verbose);
+    }
+
+    if (localProcessingFile) {
+      await deleteTempFile(localProcessingFile, filePath, verbose);
     }
 
     if (
