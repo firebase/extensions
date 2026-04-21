@@ -22,6 +22,7 @@ import * as path from "path";
 import * as sharp from "sharp";
 import { File } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
+import * as fs from "fs";
 
 import { resizeImages } from "./resize-image";
 import { config, deleteImage } from "./config";
@@ -29,7 +30,8 @@ import * as logs from "./logs";
 import { shouldResize } from "./filters";
 import * as events from "./events";
 import { convertToObjectMetadata } from "./util";
-import { processContentFilter } from "./content-filter";
+import { checkImageContent } from "./content-filter";
+import { replacePlaceholder } from "./placeholder";
 import {
   deleteRemoteFile,
   deleteTempFile,
@@ -50,7 +52,7 @@ logs.init(config);
  * When an image is uploaded in the Storage bucket, we generate a resized image automatically using
  * the Sharp image converting library.
  */
-const generateResizedImageHandler = async (
+export const generateResizedImageHandler = async (
   object: ObjectMetadata,
   verbose = true
 ): Promise<void> => {
@@ -67,9 +69,9 @@ const generateResizedImageHandler = async (
   const bucket = admin.storage().bucket(object.bucket);
   const filePath = object.name; // File path in the bucket.
   const parsedPath = path.parse(filePath);
-  const objectMetadata = object;
-  let failed = null;
+
   let localOriginalFile: string;
+  let localProcessingFile: string | undefined;
   let remoteOriginalFile: File;
 
   try {
@@ -79,22 +81,57 @@ const generateResizedImageHandler = async (
       verbose
     );
 
-    // Check content filter and replace with placeholder if needed
-    const filterResult = await processContentFilter(
-      localOriginalFile,
-      object,
-      bucket,
-      verbose,
-      config
-    );
+    let blockedByFilter = false;
+    let filterErrored = false;
+    let blockedImageStored = false;
 
-    // Process image resizing if content filter didn't fail
-    if (filterResult.failed !== true) {
+    try {
+      const passed = await checkImageContent(
+        localOriginalFile,
+        config.contentFilterLevel,
+        config.customFilterPrompt,
+        object.contentType
+      );
+      if (!passed) {
+        blockedByFilter = true;
+        logs.contentFilterRejected(object.name);
+
+        await handleFailedImage(
+          bucket,
+          localOriginalFile,
+          object,
+          parsedPath,
+          true
+        );
+        blockedImageStored = true;
+
+        localProcessingFile = `${localOriginalFile}-placeholder`;
+        fs.copyFileSync(localOriginalFile, localProcessingFile);
+        try {
+          await replacePlaceholder(
+            localProcessingFile,
+            bucket,
+            config.placeholderImagePath
+          );
+        } catch (err) {
+          logs.placeholderReplaceError(err);
+          filterErrored = true;
+        }
+      }
+    } catch (err) {
+      logs.contentFilterErrored(err);
+      filterErrored = true;
+    }
+
+    const fileToResize = localProcessingFile ?? localOriginalFile;
+
+    let resizeFailed = false;
+    if (!filterErrored) {
       const resizeResults = await resizeImages(
         bucket,
-        localOriginalFile,
+        fileToResize,
         parsedPath,
-        objectMetadata
+        object
       );
 
       await events.recordSuccessEvent({
@@ -102,31 +139,29 @@ const generateResizedImageHandler = async (
         data: {
           input: object,
           outputs: resizeResults,
-          contentFilterPassed: filterResult.passed,
+          contentFilterPassed: !blockedByFilter,
         },
       });
 
-      // Only update failed status if it's still null (not already failed from content filter)
-      failed =
-        filterResult.failed === null
-          ? resizeResults.some(
-              (result) =>
-                result.status === "rejected" || result.value.success === false
-            )
-          : filterResult.failed;
-    } else {
-      failed = true;
+      resizeFailed = resizeResults.some(
+        (result) =>
+          result.status === "rejected" || result.value.success === false
+      );
     }
+
+    const failed = filterErrored || resizeFailed;
 
     if (failed) {
       logs.failed();
-      await handleFailedImage(
-        bucket,
-        localOriginalFile,
-        object,
-        parsedPath,
-        filterResult.passed === false
-      );
+      if (!blockedImageStored) {
+        await handleFailedImage(
+          bucket,
+          localOriginalFile,
+          object,
+          parsedPath,
+          blockedByFilter
+        );
+      }
     } else {
       if (config.deleteOriginalFile === deleteImage.onSuccess) {
         await deleteRemoteFile(remoteOriginalFile, filePath);
@@ -140,6 +175,10 @@ const generateResizedImageHandler = async (
     // Clean up temporary files
     if (localOriginalFile) {
       await deleteTempFile(localOriginalFile, filePath, verbose);
+    }
+
+    if (localProcessingFile) {
+      await deleteTempFile(localProcessingFile, filePath, verbose);
     }
 
     if (
