@@ -2,29 +2,18 @@ import vertexAI, { gemini } from "@genkit-ai/vertexai";
 import { genkit, z } from "genkit";
 import type { SafetyThreshold } from "./config";
 import * as fs from "fs";
-import * as path from "path";
 import * as log from "./logs";
 import { globalRetryQueue } from "./global";
 
 /**
  * Creates a data URL from an image file
- * @param filePath Path to the image file
+ * @param imageBuffer Raw image file contents
+ * @param contentType MIME type for the image, for example "image/jpeg"
  * @returns Data URL string
  */
-function createImageDataUrl(filePath: string): string {
-  const imageBuffer = fs.readFileSync(filePath);
+function createImageDataUrl(imageBuffer: Buffer, contentType: string): string {
   const base64Image = imageBuffer.toString("base64");
-  const mimeType = getMimeType(filePath);
-  return `data:${mimeType};base64,${base64Image}`;
-}
-
-/**
- * Determines MIME type based on file extension
- * @param filePath Path to the file
- * @returns MIME type string
- */
-function getMimeType(filePath: string): string {
-  return path.extname(filePath).toLowerCase();
+  return `data:${contentType};base64,${base64Image}`;
 }
 
 /**
@@ -36,20 +25,12 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-type SafetyCategory =
-  | "HARM_CATEGORY_UNSPECIFIED"
-  | "HARM_CATEGORY_HATE_SPEECH"
-  | "HARM_CATEGORY_DANGEROUS_CONTENT"
-  | "HARM_CATEGORY_HARASSMENT"
-  | "HARM_CATEGORY_SEXUALLY_EXPLICIT";
-
-const HARM_CATEGORIES: ReadonlyArray<SafetyCategory> = [
+const HARM_CATEGORIES = [
   "HARM_CATEGORY_HATE_SPEECH",
   "HARM_CATEGORY_DANGEROUS_CONTENT",
-  "HARM_CATEGORY_UNSPECIFIED",
   "HARM_CATEGORY_SEXUALLY_EXPLICIT",
   "HARM_CATEGORY_HARASSMENT",
-];
+] as const;
 
 /**
  * Creates safety settings based on filter level
@@ -60,7 +41,7 @@ function createSafetySettings(filterLevel: SafetyThreshold) {
   return HARM_CATEGORIES.map((category) => ({
     category,
     threshold: filterLevel,
-  }));
+  })) as any;
 }
 
 /**
@@ -85,19 +66,20 @@ export async function checkImageContent(
     return true;
   }
 
+  const imageBuffer = fs.readFileSync(localOriginalFile);
+  const dataUrl = createImageDataUrl(imageBuffer, contentType);
+
+  const ai = genkit({
+    plugins: [
+      vertexAI({
+        location: process.env.LOCATION ?? "us-central1",
+        models: ["gemini-2.5-flash"],
+      }),
+    ],
+  });
+
   /** One Gemini moderation call (no retries). */
   async function moderateImageOnce(): Promise<boolean> {
-    const dataUrl = createImageDataUrl(localOriginalFile);
-
-    const ai = genkit({
-      plugins: [
-        vertexAI({
-          location: process.env.LOCATION ?? "us-central1",
-          models: ["gemini-2.5-flash"],
-        }),
-      ],
-    });
-
     const effectiveFilterLevel: SafetyThreshold =
       filterLevel === null ? "BLOCK_NONE" : filterLevel;
 
