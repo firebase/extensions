@@ -22,7 +22,7 @@ import * as path from "path";
 import * as sharp from "sharp";
 import { File } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
-import * as fs from "fs-extra";
+import * as fs from "fs";
 
 import { resizeImages } from "./resize-image";
 import { config, deleteImage } from "./config";
