@@ -59,8 +59,8 @@ const validateLocation = (value: string) => {
   return index !== -1;
 };
 
-function parseClustering(value?: string): string[] | null {
-  if (value === undefined) return undefined as any;
+function parseClustering(value?: string): string[] | undefined {
+  if (value === undefined) return undefined;
   if (value.trim() === "") return [];
   return value
     .split(",")
@@ -219,6 +219,21 @@ const questions = [
     name: "failedBatchOutput",
     type: "input",
   },
+  {
+    message:
+      "What type of latest view is used by the deployed extension? (view, materialized_incremental, materialized_non_incremental)",
+    name: "viewType",
+    type: "list",
+    choices: VALID_VIEW_TYPES,
+    default: "view",
+  },
+  {
+    message:
+      "What clustering fields should be preserved on the raw changelog table? (Comma-separated, leave blank for none)",
+    name: "clustering",
+    type: "input",
+    default: "",
+  },
 ];
 
 export async function parseConfig(): Promise<CliConfig | CliConfigError> {
@@ -322,6 +337,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     useEmulator,
     failedBatchOutput,
     transformFunctionUrl,
+    viewType,
+    clustering,
   } = await inquirer.prompt(questions);
 
   const rawChangeLogName = `${table}_raw_changelog`;
@@ -350,6 +367,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     failedBatchOutput,
     transformFunctionUrl,
     firestoreInstanceId: firestoreInstanceId || "(default)",
+    clustering: parseClustering(clustering),
+    viewType: viewType || "view",
   };
 }
 
