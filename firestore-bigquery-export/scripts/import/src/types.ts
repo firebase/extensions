@@ -18,6 +18,12 @@ export interface CliConfig {
   failedBatchOutput?: string;
   transformFunctionUrl?: string;
   firestoreInstanceId: string;
+
+  clustering?: string[] | null;
+  viewType?:
+    | "view"
+    | "materialized_incremental"
+    | "materialized_non_incremental";
 }
 
 export interface CliConfigError {
