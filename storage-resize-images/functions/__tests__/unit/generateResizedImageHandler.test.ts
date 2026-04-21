@@ -1,4 +1,5 @@
 import * as path from "path";
+import * as fs from "fs";
 import { config as loadEnv } from "dotenv";
 
 const envLocalPath = path.resolve(
@@ -7,6 +8,11 @@ const envLocalPath = path.resolve(
 );
 
 loadEnv({ path: envLocalPath, debug: true, override: true });
+
+jest.mock("fs", () => ({
+  ...jest.requireActual("fs"),
+  copyFileSync: jest.fn(),
+}));
 
 jest.mock("../../src/filters", () => ({
   shouldResize: jest.fn(),
@@ -68,6 +74,7 @@ import { checkImageContent } from "../../src/content-filter";
 import { replacePlaceholder } from "../../src/placeholder";
 import { resizeImages } from "../../src/resize-image";
 import * as logs from "../../src/logs";
+import exp from "constants";
 
 describe("generateResizedImageHandler", () => {
   beforeEach(() => {
@@ -94,17 +101,37 @@ describe("generateResizedImageHandler", () => {
       {},
     ]);
     (checkImageContent as jest.Mock).mockResolvedValue(false);
+    (resizeImages as jest.Mock).mockResolvedValue([
+      {
+        status: "fulfilled",
+        value: { success: true },
+      },
+    ]);
 
     await generateResizedImageHandler(mockObject, false);
 
-    expect(replacePlaceholder).toHaveBeenCalled();
-    expect(resizeImages).not.toHaveBeenCalled();
     expect(handleFailedImage).toHaveBeenCalledWith(
       expect.anything(),
       "/tmp/test.jpg",
       mockObject,
       parsedPathMatcher,
       true
+    );
+    expect(handleFailedImage).toHaveBeenCalledTimes(1);
+    expect(fs.copyFileSync).toHaveBeenCalledWith(
+      "/tmp/test.jpg",
+      "/tmp/test.jpg-placeholder"
+    );
+    expect(replacePlaceholder).toHaveBeenCalledWith(
+      "/tmp/test.jpg-placeholder",
+      {},
+      null
+    );
+    expect(resizeImages).toHaveBeenCalledWith(
+      expect.anything(),
+      "/tmp/test.jpg-placeholder",
+      parsedPathMatcher,
+      mockObject
     );
   });
 
@@ -164,14 +191,12 @@ describe("generateResizedImageHandler", () => {
       {},
     ]);
     (checkImageContent as jest.Mock).mockResolvedValue(false);
+
     const swapErr = new Error("swap boom");
     (replacePlaceholder as jest.Mock).mockRejectedValue(swapErr);
 
     await generateResizedImageHandler(mockObject, false);
 
-    expect(logs.placeholderReplaceError).toHaveBeenCalledWith(swapErr);
-    expect(logs.contentFilterErrored).not.toHaveBeenCalled();
-    expect(resizeImages).not.toHaveBeenCalled();
     expect(handleFailedImage).toHaveBeenCalledWith(
       expect.anything(),
       "/tmp/test.jpg",
@@ -179,5 +204,18 @@ describe("generateResizedImageHandler", () => {
       parsedPathMatcher,
       true
     );
+    expect(handleFailedImage).toHaveBeenCalledTimes(1);
+    expect(fs.copyFileSync).toHaveBeenCalledWith(
+      "/tmp/test.jpg",
+      "/tmp/test.jpg-placeholder"
+    );
+    expect(replacePlaceholder).toHaveBeenCalledWith(
+      "/tmp/test.jpg-placeholder",
+      {},
+      null
+    );
+    expect(logs.placeholderReplaceError).toHaveBeenCalledWith(swapErr);
+    expect(logs.contentFilterErrored).not.toHaveBeenCalled();
+    expect(resizeImages).not.toHaveBeenCalled();
   });
 });

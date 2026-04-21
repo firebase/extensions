@@ -18,15 +18,6 @@ jest.mock("@genkit-ai/vertexai", () => ({
   gemini: jest.fn((version: string) => ({ name: `vertexai/${version}` })),
 }));
 
-// Mock the sleep function to avoid actual waiting in tests
-jest.mock("fs", () => ({
-  readFileSync: jest.fn().mockReturnValue(Buffer.from("mockImageData")),
-}));
-
-jest.mock("mime", () => ({
-  lookup: jest.fn().mockReturnValue("image/png"),
-}));
-
 describe("checkImageContent with mocks", () => {
   // Test image path - using the same path as in your original test suite
   const imagePath = path.join(__dirname, "gun-image.png");
