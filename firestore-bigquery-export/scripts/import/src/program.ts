@@ -79,6 +79,6 @@ export const getCLIOptions = () => {
     )
     .option(
       "--clustering <clustering>",
-      "Comma-separated clustering fiels for the raw changelog table, e.g. timestamp or timestamp,document_id"
+      "Comma-separated clustering fields for the raw changelog table, e.g. timestamp or timestamp,document_id"
     );
 };
