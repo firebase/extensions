@@ -1,4 +1,3 @@
-// import * as program from "commander";
 import { program } from "commander";
 
 const packageJson = require("../package.json");
