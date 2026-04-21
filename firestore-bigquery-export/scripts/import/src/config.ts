@@ -1,4 +1,3 @@
-//import * as program from "commander";
 import { program } from "commander";
 import filenamify from "filenamify";
 import inquirer from "inquirer";
