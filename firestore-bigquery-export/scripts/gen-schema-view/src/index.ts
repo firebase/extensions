@@ -22,30 +22,32 @@ import { readSchemas } from "./schema-loader-utils";
 import { parseConfig, CliConfig } from "./config";
 import { generateSchemaFilesWithGemini } from "./schema/genkit";
 
-export async function run(): Promise<number> {
-  const config = await parseConfig();
+export async function run(config?: CliConfig): Promise<number> {
+  const cliConfig = config ?? (await parseConfig());
 
-  process.env.PROJECT_ID = config.projectId;
-  process.env.GOOGLE_CLOUD_PROJECT = config.bigQueryProjectId;
+  process.env.PROJECT_ID = cliConfig.projectId;
+  process.env.GOOGLE_CLOUD_PROJECT = cliConfig.bigQueryProjectId;
 
   if (!firebase.apps.length) {
     firebase.initializeApp({
       credential: firebase.credential.applicationDefault(),
-      databaseURL: `https://${config.projectId}.firebaseio.com`,
+      databaseURL: `https://${cliConfig.projectId}.firebaseio.com`,
     });
   }
 
   const viewFactory = new FirestoreBigQuerySchemaViewFactory(
-    config.bigQueryProjectId
+    cliConfig.bigQueryProjectId
   );
 
   // Generate schema files using Gemini if enabled
   // Otherwise, read schema files from the filesystem
-  let schemas = config.schemas;
-  if (config.useGemini) {
+  let schemas = cliConfig.schemas;
+  if (cliConfig.useGemini) {
     try {
-      await generateSchemaFilesWithGemini(config);
-      schemas = readSchemas([`./schemas/${config.geminiSchemaFileName}.json`]);
+      await generateSchemaFilesWithGemini(cliConfig);
+      schemas = readSchemas([
+        `./schemas/${cliConfig.geminiSchemaFileName}.json`,
+      ]);
 
       console.log("Schema file generated successfully.");
     } catch (error) {
@@ -53,7 +55,7 @@ export async function run(): Promise<number> {
       throw error;
     }
   } else {
-    if (Object.keys(config.schemas).length === 0) {
+    if (Object.keys(cliConfig.schemas).length === 0) {
       console.log(`No schema files found!`);
     }
   }
@@ -61,8 +63,8 @@ export async function run(): Promise<number> {
   // Initialize schema views
   for (const name in schemas) {
     await viewFactory.initializeSchemaViewResources(
-      config.datasetId,
-      config.tableNamePrefix,
+      cliConfig.datasetId,
+      cliConfig.tableNamePrefix,
       name,
       schemas[name]
     );
@@ -77,11 +79,11 @@ if (process.env.NODE_ENV !== "test") {
   parseConfig()
     .then((parsedConfig) => {
       config = parsedConfig;
-      return run();
+      return run(parsedConfig);
     })
-    .then((result) => {
+    .then(() => {
       console.log("done.");
-      process.exit();
+      process.exit(0);
     })
     .catch((error) => {
       if (config) {
@@ -100,6 +102,6 @@ if (process.env.NODE_ENV !== "test") {
 
       console.log(JSON.stringify(error));
       console.error(error.message);
-      process.exit();
+      process.exit(1);
     });
 }
