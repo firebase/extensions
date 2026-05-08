@@ -5,7 +5,7 @@
   "dependencies": {
     "@types/uuid": "^10.0.0",
     "firebase-admin": "^13.0.0",
-    "uuid": "^11.0.0"
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "prettier": "1.15.3",
