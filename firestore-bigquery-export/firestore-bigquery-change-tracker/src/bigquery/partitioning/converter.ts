@@ -45,6 +45,8 @@ export class PartitionValueConverter {
           return BigQuery.date(date.toISOString().substring(0, 10)).value;
         case "TIMESTAMP":
           return BigQuery.timestamp(date).value;
+        default:
+          return null;
       }
     } catch {
       return null;
