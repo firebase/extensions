@@ -4,7 +4,7 @@ import * as path from "path";
 import * as fs from "fs";
 
 import { Bucket } from "@google-cloud/storage";
-import { uuid } from "uuidv4";
+import { v4 as uuidv4 } from "uuid";
 
 import { config } from "./config";
 import * as logs from "./logs";
@@ -103,7 +103,7 @@ export const modifyImage = async ({
   let modifiedFile: string;
 
   try {
-    modifiedFile = path.join(os.tmpdir(), uuid());
+    modifiedFile = path.join(os.tmpdir(), uuidv4());
 
     // filename\*=utf-8''  selects any string match the filename notation.
     // [^;\s]+ searches any following string until either a space or semi-colon.
@@ -203,7 +203,7 @@ export const constructMetadata = (
     config.regenerateToken &&
     metadata.metadata.firebaseStorageDownloadTokens
   ) {
-    metadata.metadata.firebaseStorageDownloadTokens = uuid();
+    metadata.metadata.firebaseStorageDownloadTokens = uuidv4();
   }
   return metadata;
 };
