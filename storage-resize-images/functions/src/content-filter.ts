@@ -49,15 +49,30 @@ function createSafetySettings(filterLevel: SafetyThreshold) {
  * when its input-side safety refuses on borderline image inputs: the
  * candidate comes back with empty content (no SAFETY finishReason), so
  * genkit's assertValidSchema runs parseSchema(null, ...) and throws
- * ValidationError with status "INVALID_ARGUMENT" and a formatted message
- * containing "Provided data:\n\nnull". Treat as an implicit block — the
- * failure is deterministic, so retrying just burns API calls.
+ * ValidationError. Treat as an implicit block — the failure is
+ * deterministic, so retrying just burns API calls.
+ *
+ * Three signals must all hold to avoid false-positives on unrelated
+ * INVALID_ARGUMENT errors:
+ *  - status === "INVALID_ARGUMENT"
+ *  - detail.errors is a populated array (proves it's a ValidationError,
+ *    structurally — see @genkit-ai/core/lib/schema.js, ValidationError
+ *    constructor populates `detail: { errors, schema }`)
+ *  - originalMessage matches the null-data signature (proves the
+ *    validation failed specifically because the model returned null,
+ *    not because of e.g. a property type mismatch)
  */
 function isNullContentSafetyRefusal(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
-  const e = error as { status?: string; originalMessage?: string };
+  const e = error as {
+    status?: string;
+    originalMessage?: string;
+    detail?: { errors?: unknown };
+  };
+  if (e.status !== "INVALID_ARGUMENT") return false;
+  const errors = e.detail?.errors;
+  if (!Array.isArray(errors) || errors.length === 0) return false;
   return (
-    e.status === "INVALID_ARGUMENT" &&
     typeof e.originalMessage === "string" &&
     /Provided data:\s*\n+\s*null/.test(e.originalMessage)
   );

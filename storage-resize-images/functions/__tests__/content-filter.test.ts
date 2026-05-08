@@ -1,6 +1,7 @@
-import { checkImageContent } from "../src/content-filter"; // Update this import path
+import { checkImageContent } from "../src/content-filter";
 import * as path from "path";
 import { HarmBlockThreshold } from "@google-cloud/vertexai";
+import { ValidationError } from "@genkit-ai/core/schema";
 
 // Mock genkit module
 jest.mock("genkit", () => ({
@@ -260,19 +261,28 @@ describe("checkImageContent with mocks", () => {
     expect(result).toBe(true);
   });
 
-  it("should return false when genkit throws ValidationError with null-content message (Bug 1)", async () => {
+  // Schema used by checkImageContent's custom-prompt path — the moderation
+  // call sets output: { schema: z.object({ response: z.string() }) }. The
+  // genkit-emitted JSON schema is replicated here so the real
+  // ValidationError ctor receives a faithful `schema` field.
+  const moderationSchema = {
+    type: "object",
+    properties: { response: { type: "string" } },
+    required: ["response"],
+    additionalProperties: true,
+    $schema: "http://json-schema.org/draft-07/schema#",
+  };
+
+  it("should return false when genkit throws ValidationError with null-content data (Bug 1)", async () => {
     // Reproduces the failure shape Gemini 2.5 Flash + genkit produces when
     // input-side safety refuses on a borderline image: empty content →
     // assertValidSchema runs parseSchema(null, ...) → ValidationError.
-    const validationError = Object.assign(new Error("validation failed"), {
-      name: "GenkitError",
-      status: "INVALID_ARGUMENT",
-      code: 400,
-      originalMessage:
-        "Schema validation failed. Parse Errors:\n\n" +
-        "- (root): must be object\n\n" +
-        "Provided data:\n\nnull\n\n" +
-        "Required JSON schema:\n\n{...}",
+    // Instantiated via the real class so the test fails loudly if genkit
+    // ever changes the ValidationError contract.
+    const validationError = new ValidationError({
+      data: null,
+      errors: [{ path: "(root)", message: "must be object" }],
+      schema: moderationSchema,
     });
 
     const mockGenerate = jest.fn().mockRejectedValue(validationError);
@@ -292,15 +302,10 @@ describe("checkImageContent with mocks", () => {
   });
 
   it("should rethrow ValidationError when provided data is NOT null (real schema mismatch)", async () => {
-    const realSchemaMismatch = Object.assign(new Error("schema fail"), {
-      name: "GenkitError",
-      status: "INVALID_ARGUMENT",
-      code: 400,
-      originalMessage:
-        "Schema validation failed. Parse Errors:\n\n" +
-        "- response: must be string\n\n" +
-        'Provided data:\n\n{ "response": 42 }\n\n' +
-        "Required JSON schema:\n\n{...}",
+    const realSchemaMismatch = new ValidationError({
+      data: { response: 42 },
+      errors: [{ path: "response", message: "must be string" }],
+      schema: moderationSchema,
     });
 
     const mockGenerate = jest.fn().mockRejectedValue(realSchemaMismatch);
@@ -312,11 +317,11 @@ describe("checkImageContent with mocks", () => {
         HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
         "prompt",
         "image/png",
-        2 // keep retries low so the test stays fast; 2 still proves retry path engaged
+        3 // run the full default retry path to prove it engages
       )
     ).rejects.toMatchObject({ status: "INVALID_ARGUMENT" });
 
-    expect(mockGenerate).toHaveBeenCalledTimes(2);
+    expect(mockGenerate).toHaveBeenCalledTimes(3);
     expect(log.contentFilterBlocked).not.toHaveBeenCalled();
   }, 30000);
 });
