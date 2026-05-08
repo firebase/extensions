@@ -45,6 +45,25 @@ function createSafetySettings(filterLevel: SafetyThreshold) {
 }
 
 /**
+ * Detects the genkit ValidationError shape that Gemini 2.5 Flash produces
+ * when its input-side safety refuses on borderline image inputs: the
+ * candidate comes back with empty content (no SAFETY finishReason), so
+ * genkit's assertValidSchema runs parseSchema(null, ...) and throws
+ * ValidationError with status "INVALID_ARGUMENT" and a formatted message
+ * containing "Provided data:\n\nnull". Treat as an implicit block — the
+ * failure is deterministic, so retrying just burns API calls.
+ */
+function isNullContentSafetyRefusal(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const e = error as { status?: string; originalMessage?: string };
+  return (
+    e.status === "INVALID_ARGUMENT" &&
+    typeof e.originalMessage === "string" &&
+    /Provided data:\s*\n+\s*null/.test(e.originalMessage)
+  );
+}
+
+/**
  * Entry point for image moderation: short-circuits when disabled, otherwise runs a single
  * Vertex/Gemini call per attempt with retries and queue-backed backoff on transient errors.
  *
@@ -136,7 +155,10 @@ export async function checkImageContent(
 
       return true;
     } catch (error) {
-      if (error.detail?.response?.finishReason === "blocked") {
+      if (
+        error.detail?.response?.finishReason === "blocked" ||
+        isNullContentSafetyRefusal(error)
+      ) {
         log.contentFilterBlocked();
         return false;
       }

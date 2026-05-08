@@ -18,12 +18,16 @@ jest.mock("@genkit-ai/vertexai", () => ({
   gemini: jest.fn((version: string) => ({ name: `vertexai/${version}` })),
 }));
 
+// Mock logs so we can assert on which filter-blocked log fired.
+jest.mock("../src/logs");
+
 describe("checkImageContent with mocks", () => {
   // Test image path - using the same path as in your original test suite
   const imagePath = path.join(__dirname, "gun-image.png");
 
   // Import mocked modules after they've been mocked
   const { genkit } = require("genkit");
+  const log = require("../src/logs");
 
   beforeEach(() => {
     // Reset all mocks before each test
@@ -255,4 +259,64 @@ describe("checkImageContent with mocks", () => {
     expect(mockGenerate).toHaveBeenCalled();
     expect(result).toBe(true);
   });
+
+  it("should return false when genkit throws ValidationError with null-content message (Bug 1)", async () => {
+    // Reproduces the failure shape Gemini 2.5 Flash + genkit produces when
+    // input-side safety refuses on a borderline image: empty content →
+    // assertValidSchema runs parseSchema(null, ...) → ValidationError.
+    const validationError = Object.assign(new Error("validation failed"), {
+      name: "GenkitError",
+      status: "INVALID_ARGUMENT",
+      code: 400,
+      originalMessage:
+        "Schema validation failed. Parse Errors:\n\n" +
+        "- (root): must be object\n\n" +
+        "Provided data:\n\nnull\n\n" +
+        "Required JSON schema:\n\n{...}",
+    });
+
+    const mockGenerate = jest.fn().mockRejectedValue(validationError);
+    genkit.mockImplementation(() => ({ generate: mockGenerate }));
+
+    const result = await checkImageContent(
+      imagePath,
+      HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+      "Is this image inappropriate?",
+      "image/png"
+    );
+
+    expect(result).toBe(false);
+    expect(log.contentFilterBlocked).toHaveBeenCalled();
+    // Deterministic refusal — must not burn retries.
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  it("should rethrow ValidationError when provided data is NOT null (real schema mismatch)", async () => {
+    const realSchemaMismatch = Object.assign(new Error("schema fail"), {
+      name: "GenkitError",
+      status: "INVALID_ARGUMENT",
+      code: 400,
+      originalMessage:
+        "Schema validation failed. Parse Errors:\n\n" +
+        "- response: must be string\n\n" +
+        'Provided data:\n\n{ "response": 42 }\n\n' +
+        "Required JSON schema:\n\n{...}",
+    });
+
+    const mockGenerate = jest.fn().mockRejectedValue(realSchemaMismatch);
+    genkit.mockImplementation(() => ({ generate: mockGenerate }));
+
+    await expect(
+      checkImageContent(
+        imagePath,
+        HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+        "prompt",
+        "image/png",
+        2 // keep retries low so the test stays fast; 2 still proves retry path engaged
+      )
+    ).rejects.toMatchObject({ status: "INVALID_ARGUMENT" });
+
+    expect(mockGenerate).toHaveBeenCalledTimes(2);
+    expect(log.contentFilterBlocked).not.toHaveBeenCalled();
+  }, 30000);
 });
