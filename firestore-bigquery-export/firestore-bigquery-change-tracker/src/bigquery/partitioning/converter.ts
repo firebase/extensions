@@ -27,17 +27,27 @@ export class PartitionValueConverter {
       ).toDate();
     } else if (value instanceof Date && !isNaN(value.getTime())) {
       date = value;
+    } else if (typeof value === "string") {
+      const parsed = new Date(value);
+      if (isNaN(parsed.getTime())) {
+        return null;
+      }
+      date = parsed;
     } else {
       return null;
     }
 
-    switch (this.fieldType) {
-      case "DATETIME":
-        return BigQuery.datetime(date.toISOString()).value;
-      case "DATE":
-        return BigQuery.date(date.toISOString().substring(0, 10)).value;
-      case "TIMESTAMP":
-        return BigQuery.timestamp(date).value;
+    try {
+      switch (this.fieldType) {
+        case "DATETIME":
+          return BigQuery.datetime(date.toISOString()).value;
+        case "DATE":
+          return BigQuery.date(date.toISOString().substring(0, 10)).value;
+        case "TIMESTAMP":
+          return BigQuery.timestamp(date).value;
+      }
+    } catch {
+      return null;
     }
   }
 }

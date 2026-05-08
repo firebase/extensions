@@ -42,9 +42,22 @@ describe("PartitionValueConverter", () => {
       expect(result).toBeNull();
     });
 
-    test("returns null for string", () => {
+    test("converts ISO 8601 datetime string to BigQuery timestamp string", () => {
+      const result = converter.convert("2024-01-15T10:30:00Z");
+      expect(result).toContain("2024-01-15");
+    });
+
+    test("converts ISO 8601 date-only string to BigQuery timestamp string", () => {
       const result = converter.convert("2024-01-15");
-      expect(result).toBeNull();
+      expect(result).toContain("2024-01-15");
+    });
+
+    test("returns null for unparseable string", () => {
+      expect(converter.convert("not-a-date")).toBeNull();
+    });
+
+    test("returns null for empty string", () => {
+      expect(converter.convert("")).toBeNull();
     });
 
     test("returns null for null", () => {
@@ -104,6 +117,32 @@ describe("PartitionValueConverter", () => {
       const result = converter.convert(date);
       expect(result).toBe("2024-01-15");
     });
+
+    test("converts ISO 8601 date-only string to BigQuery date string", () => {
+      const result = converter.convert("2024-01-15");
+      expect(result).toBe("2024-01-15");
+    });
+
+    test("converts ISO 8601 datetime string to BigQuery date string", () => {
+      const result = converter.convert("2024-01-15T10:30:00Z");
+      expect(result).toBe("2024-01-15");
+    });
+
+    test("uses UTC date component for timezone-suffixed datetime string", () => {
+      // 2024-01-15T22:00:00-08:00 == 2024-01-16T06:00:00Z. The DATE column
+      // takes the UTC date component, matching how Firestore Timestamps are
+      // handled. Pinned so future changes to this contract are explicit.
+      const result = converter.convert("2024-01-15T22:00:00-08:00");
+      expect(result).toBe("2024-01-16");
+    });
+
+    test("returns null for unparseable string", () => {
+      expect(converter.convert("not-a-date")).toBeNull();
+    });
+
+    test("returns null for empty string", () => {
+      expect(converter.convert("")).toBeNull();
+    });
   });
 
   describe("convert with DATETIME type", () => {
@@ -133,6 +172,26 @@ describe("PartitionValueConverter", () => {
       const result = converter.convert(date);
       expect(result).toBeDefined();
       expect(result).toContain("2024-01-15");
+    });
+
+    test("converts ISO 8601 datetime string to BigQuery datetime string", () => {
+      const result = converter.convert("2024-01-15T10:30:00Z");
+      expect(result).toBeDefined();
+      expect(result).toContain("2024-01-15");
+    });
+
+    test("converts ISO 8601 date-only string to BigQuery datetime string", () => {
+      const result = converter.convert("2024-01-15");
+      expect(result).toBeDefined();
+      expect(result).toContain("2024-01-15");
+    });
+
+    test("returns null for unparseable string", () => {
+      expect(converter.convert("not-a-date")).toBeNull();
+    });
+
+    test("returns null for empty string", () => {
+      expect(converter.convert("")).toBeNull();
     });
   });
 });
