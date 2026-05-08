@@ -93,6 +93,20 @@ describe("PartitionValueConverter", () => {
       expect(converter.convert("2024-01-32")).toBeNull();
     });
 
+    test("returns null for year 0 (outside BigQuery DATE range)", () => {
+      expect(converter.convert("0000-01-01")).toBeNull();
+    });
+
+    test("accepts year 0001 (BigQuery DATE minimum)", () => {
+      const result = converter.convert("0001-01-01");
+      expect(result).toContain("0001-01-01");
+    });
+
+    test("accepts year 9999 (BigQuery DATE maximum)", () => {
+      const result = converter.convert("9999-12-31");
+      expect(result).toContain("9999-12-31");
+    });
+
     test("returns null for datetime without timezone", () => {
       expect(converter.convert("2024-01-15T10:30:00")).toBeNull();
     });

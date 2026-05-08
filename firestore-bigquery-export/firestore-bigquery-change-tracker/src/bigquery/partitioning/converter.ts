@@ -43,6 +43,12 @@ export class PartitionValueConverter {
       const yearN = Number(m[1]);
       const monthN = Number(m[2]);
       const dayN = Number(m[3]);
+      // BigQuery DATE / DATETIME / TIMESTAMP all reject year 0 — the supported
+      // range is 0001-01-01 to 9999-12-31. Reject client-side so the row gets
+      // a clear warning instead of a server-side insert error.
+      if (yearN < 1) {
+        return null;
+      }
       // Reject calendar-invalid components (Feb 30, non-leap Feb 29, etc.).
       // setUTCFullYear avoids the legacy 2-digit-year quirk of Date.UTC().
       const validator = new Date(0);
