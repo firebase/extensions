@@ -41,7 +41,7 @@ function createSafetySettings(filterLevel: SafetyThreshold) {
   return HARM_CATEGORIES.map((category) => ({
     category,
     threshold: filterLevel,
-  })) as any;
+  }));
 }
 
 /**
@@ -99,6 +99,7 @@ export async function checkImageContent(
         }
       : undefined;
 
+    // 1 token is enough for the default yes/no answer; custom prompts emit a JSON object.
     const maxOutputTokens = hasCustomPrompt ? 100 : 1;
 
     try {
