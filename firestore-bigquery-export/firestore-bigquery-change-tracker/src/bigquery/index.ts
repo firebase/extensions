@@ -486,14 +486,14 @@ export class FirestoreBigQueryEventHistoryTracker
 
       await clustering.updateClustering(metadata);
 
-      const documentIdColExists = fields.find(
+      const documentIdColExists = !!fields.find(
         (column) => column.name === "document_id"
       );
-      const pathParamsColExists = fields.find(
+      const pathParamsColExists = !!fields.find(
         (column) => column.name === "path_params"
       );
 
-      const oldDataColExists = fields.find(
+      const oldDataColExists = !!fields.find(
         (column) => column.name === "old_data"
       );
 

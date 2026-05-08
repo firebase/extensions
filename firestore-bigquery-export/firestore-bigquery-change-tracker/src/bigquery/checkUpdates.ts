@@ -39,7 +39,7 @@ export async function tableRequiresUpdate({
   const { metadata } = table;
 
   /** Check clustering */
-  const configCluster = JSON.stringify(config.clustering);
+  const configCluster = JSON.stringify(config.clustering || []);
   const tableCluster = JSON.stringify(metadata.clustering?.fields || []);
   if (configCluster !== tableCluster) return true;
 
