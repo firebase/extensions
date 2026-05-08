@@ -60,6 +60,43 @@ describe("PartitionValueConverter", () => {
       expect(converter.convert("")).toBeNull();
     });
 
+    test("returns null for partial date (year-month only)", () => {
+      expect(converter.convert("2024-01")).toBeNull();
+    });
+
+    test("returns null for partial date (year only)", () => {
+      expect(converter.convert("2024")).toBeNull();
+    });
+
+    test("returns null for bare numeric string", () => {
+      expect(converter.convert("1")).toBeNull();
+    });
+
+    test("returns null for calendar-invalid date (Feb 30)", () => {
+      expect(converter.convert("2024-02-30")).toBeNull();
+    });
+
+    test("returns null for non-leap-year Feb 29", () => {
+      expect(converter.convert("2023-02-29")).toBeNull();
+    });
+
+    test("accepts leap-year Feb 29", () => {
+      const result = converter.convert("2024-02-29");
+      expect(result).toContain("2024-02-29");
+    });
+
+    test("returns null for out-of-range month", () => {
+      expect(converter.convert("2024-13-01")).toBeNull();
+    });
+
+    test("returns null for out-of-range day", () => {
+      expect(converter.convert("2024-01-32")).toBeNull();
+    });
+
+    test("returns null for datetime without timezone", () => {
+      expect(converter.convert("2024-01-15T10:30:00")).toBeNull();
+    });
+
     test("returns null for null", () => {
       const result = converter.convert(null);
       expect(result).toBeNull();

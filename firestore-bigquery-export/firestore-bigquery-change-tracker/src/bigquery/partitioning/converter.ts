@@ -28,6 +28,32 @@ export class PartitionValueConverter {
     } else if (value instanceof Date && !isNaN(value.getTime())) {
       date = value;
     } else if (typeof value === "string") {
+      // Strict ISO 8601 / RFC 3339: YYYY-MM-DD, optionally followed by T or
+      // space-separated HH:MM[:SS[.ffffff]] and a required timezone designator
+      // when the time component is present. JS Date parsing alone is too
+      // permissive — it silently normalizes invalid inputs (e.g. "2024-02-30"
+      // → "2024-03-01"), accepts partial dates ("2024-01"), and reads bare
+      // numerics as years ("1" → "2001-01-01"). Reject all of those.
+      const m = value.match(
+        /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(Z|[+-]\d{2}:?\d{2}))?$/
+      );
+      if (!m) {
+        return null;
+      }
+      const yearN = Number(m[1]);
+      const monthN = Number(m[2]);
+      const dayN = Number(m[3]);
+      // Reject calendar-invalid components (Feb 30, non-leap Feb 29, etc.).
+      // setUTCFullYear avoids the legacy 2-digit-year quirk of Date.UTC().
+      const validator = new Date(0);
+      validator.setUTCFullYear(yearN, monthN - 1, dayN);
+      if (
+        validator.getUTCFullYear() !== yearN ||
+        validator.getUTCMonth() + 1 !== monthN ||
+        validator.getUTCDate() !== dayN
+      ) {
+        return null;
+      }
       const parsed = new Date(value);
       if (isNaN(parsed.getTime())) {
         return null;
