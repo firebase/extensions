@@ -274,9 +274,8 @@ describe("checkImageContent with mocks", () => {
   };
 
   it("should return false when genkit throws ValidationError with null-content data (Bug 1)", async () => {
-    // Reproduces the failure shape Gemini 2.5 Flash + genkit produces when
-    // input-side safety refuses on a borderline image: empty content →
-    // assertValidSchema runs parseSchema(null, ...) → ValidationError.
+    // Reproduces one failure shape Gemini 2.5 Flash + genkit produces
+    // when input-side safety refuses: empty content → parseSchema(null).
     // Instantiated via the real class so the test fails loudly if genkit
     // ever changes the ValidationError contract.
     const validationError = new ValidationError({
@@ -301,14 +300,68 @@ describe("checkImageContent with mocks", () => {
     expect(mockGenerate).toHaveBeenCalledTimes(1);
   });
 
-  it("should rethrow ValidationError when provided data is NOT null (real schema mismatch)", async () => {
-    const realSchemaMismatch = new ValidationError({
+  it("should return false when genkit throws ValidationError with empty-object data (Bug 1 variant)", async () => {
+    // The other observed safety-refusal manifestation, confirmed against
+    // a real borderline image: extractJson() returns {} when the model
+    // emits non-JSON or empty refusal text, and the schema rejects it for
+    // missing the required `response` field.
+    const validationError = new ValidationError({
+      data: {},
+      errors: [
+        { path: "(root)", message: "must have required property 'response'" },
+      ],
+      schema: moderationSchema,
+    });
+
+    const mockGenerate = jest.fn().mockRejectedValue(validationError);
+    genkit.mockImplementation(() => ({ generate: mockGenerate }));
+
+    const result = await checkImageContent(
+      imagePath,
+      HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+      "Is this image inappropriate?",
+      "image/png"
+    );
+
+    expect(result).toBe(false);
+    expect(log.contentFilterBlocked).toHaveBeenCalled();
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  it("should also block on type-mismatch ValidationError (any moderation schema failure → block)", async () => {
+    // We control the prompt and schema in this code path, so the only
+    // source of ValidationError is the model's response. The intentional
+    // policy is: any schema-validation failure means the model didn't
+    // produce a usable verdict, which on borderline imagery is almost
+    // always an input-side safety refusal. Failing open is worse than
+    // a false-positive block, so we treat the whole class as blocked.
+    const validationError = new ValidationError({
       data: { response: 42 },
       errors: [{ path: "response", message: "must be string" }],
       schema: moderationSchema,
     });
 
-    const mockGenerate = jest.fn().mockRejectedValue(realSchemaMismatch);
+    const mockGenerate = jest.fn().mockRejectedValue(validationError);
+    genkit.mockImplementation(() => ({ generate: mockGenerate }));
+
+    const result = await checkImageContent(
+      imagePath,
+      HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+      "prompt",
+      "image/png"
+    );
+
+    expect(result).toBe(false);
+    expect(log.contentFilterBlocked).toHaveBeenCalled();
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  it("should still rethrow non-ValidationError errors after exhausting retries", async () => {
+    // Sanity check: errors WITHOUT the ValidationError shape (status +
+    // detail.errors) still go through the retry path and propagate.
+    const networkError = new Error("ECONNRESET");
+
+    const mockGenerate = jest.fn().mockRejectedValue(networkError);
     genkit.mockImplementation(() => ({ generate: mockGenerate }));
 
     await expect(
@@ -317,9 +370,9 @@ describe("checkImageContent with mocks", () => {
         HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
         "prompt",
         "image/png",
-        3 // run the full default retry path to prove it engages
+        3
       )
-    ).rejects.toMatchObject({ status: "INVALID_ARGUMENT" });
+    ).rejects.toThrow("ECONNRESET");
 
     expect(mockGenerate).toHaveBeenCalledTimes(3);
     expect(log.contentFilterBlocked).not.toHaveBeenCalled();

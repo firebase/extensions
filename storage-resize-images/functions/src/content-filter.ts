@@ -45,37 +45,35 @@ function createSafetySettings(filterLevel: SafetyThreshold) {
 }
 
 /**
- * Detects the genkit ValidationError shape that Gemini 2.5 Flash produces
- * when its input-side safety refuses on borderline image inputs: the
- * candidate comes back with empty content (no SAFETY finishReason), so
- * genkit's assertValidSchema runs parseSchema(null, ...) and throws
- * ValidationError. Treat as an implicit block — the failure is
- * deterministic, so retrying just burns API calls.
+ * Detects genkit's ValidationError, thrown when Gemini's response can't
+ * be parsed against our moderation schema. Observed manifestations on
+ * Gemini 2.5 Flash safety refusals: data === null (empty content), data
+ * === {} (refusal text that extractJson() coerced to an empty object),
+ * and likely other variants future model versions may produce.
  *
- * Three signals must all hold to avoid false-positives on unrelated
- * INVALID_ARGUMENT errors:
- *  - status === "INVALID_ARGUMENT"
- *  - detail.errors is a populated array (proves it's a ValidationError,
- *    structurally — see @genkit-ai/core/lib/schema.js, ValidationError
- *    constructor populates `detail: { errors, schema }`)
- *  - originalMessage matches the null-data signature (proves the
- *    validation failed specifically because the model returned null,
- *    not because of e.g. a property type mismatch)
+ * In this code path we control both the prompt and the schema, so any
+ * ValidationError from `ai.generate` originates from the model's
+ * response — there is no other validation source. Retrying is useless
+ * (deterministic same-input → same-bad-response), and the alternative
+ * (propagate as filterErrored) silently fails open on borderline NSFW
+ * imagery, which is the original bug. So treat any schema-validation
+ * failure here as an implicit block.
+ *
+ * Two structural signals must hold:
+ *  - status === "INVALID_ARGUMENT" (genkit's category for ValidationError)
+ *  - detail.errors is a populated array (proves the error came from
+ *    parseSchema specifically — see @genkit-ai/core schema.js,
+ *    ValidationError ctor populates detail: { errors, schema })
  */
-function isNullContentSafetyRefusal(error: unknown): boolean {
+function isModerationSchemaRefusal(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const e = error as {
     status?: string;
-    originalMessage?: string;
     detail?: { errors?: unknown };
   };
   if (e.status !== "INVALID_ARGUMENT") return false;
   const errors = e.detail?.errors;
-  if (!Array.isArray(errors) || errors.length === 0) return false;
-  return (
-    typeof e.originalMessage === "string" &&
-    /Provided data:\s*\n+\s*null/.test(e.originalMessage)
-  );
+  return Array.isArray(errors) && errors.length > 0;
 }
 
 /**
@@ -172,7 +170,7 @@ export async function checkImageContent(
     } catch (error) {
       if (
         error.detail?.response?.finishReason === "blocked" ||
-        isNullContentSafetyRefusal(error)
+        isModerationSchemaRefusal(error)
       ) {
         log.contentFilterBlocked();
         return false;

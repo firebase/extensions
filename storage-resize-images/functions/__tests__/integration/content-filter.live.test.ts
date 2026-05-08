@@ -18,6 +18,23 @@
 import * as path from "path";
 import { checkImageContent } from "../../src/content-filter";
 
+function guessContentType(filePath: string): string {
+  const ext = path.extname(filePath).toLowerCase();
+  switch (ext) {
+    case ".png":
+      return "image/png";
+    case ".jpg":
+    case ".jpeg":
+      return "image/jpeg";
+    case ".webp":
+      return "image/webp";
+    case ".gif":
+      return "image/gif";
+    default:
+      return "application/octet-stream";
+  }
+}
+
 const runLive = process.env.RUN_LIVE_CONTENT_FILTER_TESTS === "true";
 const describeLive = runLive ? describe : describe.skip;
 
@@ -74,6 +91,9 @@ describeLive(
 
     const borderlinePath = process.env.LIVE_BORDERLINE_IMAGE_PATH;
     const borderlineDescribe = borderlinePath ? describe : describe.skip;
+    const borderlineContentType = borderlinePath
+      ? guessContentType(borderlinePath)
+      : "application/octet-stream";
 
     borderlineDescribe(
       "Bug 1 regression — borderline image (LIVE_BORDERLINE_IMAGE_PATH set)",
@@ -91,7 +111,7 @@ describeLive(
             borderlinePath as string,
             "BLOCK_LOW_AND_ABOVE",
             moderationPrompt,
-            "image/jpeg"
+            borderlineContentType
           );
           expect(result).toBe(false);
         });
@@ -101,7 +121,7 @@ describeLive(
             borderlinePath as string,
             "BLOCK_NONE",
             null,
-            "image/jpeg"
+            borderlineContentType
           );
           expect(result).toBe(true);
         });
