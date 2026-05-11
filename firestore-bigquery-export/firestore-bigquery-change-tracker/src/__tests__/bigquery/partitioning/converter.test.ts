@@ -129,6 +129,11 @@ describe("PartitionValueConverter", () => {
       expect(result).toContain("2024-01-15");
     });
 
+    test("accepts space separator between date and time (RFC 3339 alt form)", () => {
+      const result = converter.convert("2024-01-15 10:30:00Z");
+      expect(result).toContain("2024-01-15");
+    });
+
     test("returns null for null", () => {
       const result = converter.convert(null);
       expect(result).toBeNull();
