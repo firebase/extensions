@@ -255,6 +255,17 @@ describe("PartitionValueConverter", () => {
       expect(result).toContain("2024-01-15");
     });
 
+    test("DATETIME output uses BigQuery canonical form (no Z, space separator)", () => {
+      // BigQuery DATETIME columns reject the 'Z' timezone suffix and require
+      // a space (not 'T') between date and time. @google-cloud/bigquery's
+      // BigQuery.datetime() helper already normalises ISO 8601 input to this
+      // canonical form, so feeding it date.toISOString() (which always ends
+      // in 'Z') is safe. Pinned so the contract does not silently regress.
+      expect(converter.convert("2024-01-15T10:30:00Z")).toBe(
+        "2024-01-15 10:30:00.000"
+      );
+    });
+
     test("returns null for unparseable string", () => {
       expect(converter.convert("not-a-date")).toBeNull();
     });
