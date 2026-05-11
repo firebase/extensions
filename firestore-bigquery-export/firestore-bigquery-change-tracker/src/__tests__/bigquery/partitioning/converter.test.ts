@@ -115,6 +115,15 @@ describe("PartitionValueConverter", () => {
       expect(converter.convert("2024-01-15T25:00:00Z")).toBeNull();
     });
 
+    test("returns null for hour 24 (avoids silent next-day shift)", () => {
+      // ISO 8601 allows 24:00:00 as end-of-day, equivalent to next day 00:00.
+      // JS Date parses it as such and rolls forward, which would silently
+      // misfile the row into the next-day partition. 0.2.x passed the raw
+      // string to BigQuery, which rejected hour=24 outright. Reject here to
+      // match the loud-failure behavior rather than silent misfiling.
+      expect(converter.convert("2024-01-15T24:00:00Z")).toBeNull();
+    });
+
     test("returns null for out-of-range minute", () => {
       expect(converter.convert("2024-01-15T23:60:00Z")).toBeNull();
     });

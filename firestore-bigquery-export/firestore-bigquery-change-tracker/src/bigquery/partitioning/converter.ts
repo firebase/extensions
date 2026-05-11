@@ -60,6 +60,16 @@ export class PartitionValueConverter {
       ) {
         return null;
       }
+      // Reject hour 24 (ISO 8601 allows it as end-of-day, but JS Date and the
+      // pre-0.3.0 string passthrough both treat it differently: JS rolls to
+      // next day, BigQuery DATETIME rejects the row outright. Rather than
+      // silently misfile the row into the next-day partition, reject here so
+      // the caller logs firestoreTimePartitionFieldError and the row lands in
+      // __NULL__. Minute and second out-of-range values are caught by
+      // new Date() returning Invalid Date below.
+      if (m[4] !== undefined && Number(m[4]) > 23) {
+        return null;
+      }
       const parsed = new Date(value);
       if (isNaN(parsed.getTime())) {
         return null;
