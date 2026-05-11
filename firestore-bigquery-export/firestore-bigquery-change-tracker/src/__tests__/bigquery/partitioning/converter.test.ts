@@ -111,6 +111,24 @@ describe("PartitionValueConverter", () => {
       expect(converter.convert("2024-01-15T10:30:00")).toBeNull();
     });
 
+    test("returns null for out-of-range hour", () => {
+      expect(converter.convert("2024-01-15T25:00:00Z")).toBeNull();
+    });
+
+    test("returns null for out-of-range minute", () => {
+      expect(converter.convert("2024-01-15T23:60:00Z")).toBeNull();
+    });
+
+    test("accepts timezone offset without colon", () => {
+      const result = converter.convert("2024-01-15T10:30:00+0800");
+      expect(result).toContain("2024-01-15");
+    });
+
+    test("accepts fractional seconds beyond millisecond precision", () => {
+      const result = converter.convert("2024-01-15T10:30:00.123456Z");
+      expect(result).toContain("2024-01-15");
+    });
+
     test("returns null for null", () => {
       const result = converter.convert(null);
       expect(result).toBeNull();
