@@ -42,9 +42,105 @@ describe("PartitionValueConverter", () => {
       expect(result).toBeNull();
     });
 
-    test("returns null for string", () => {
+    test("converts ISO 8601 datetime string to BigQuery timestamp string", () => {
+      const result = converter.convert("2024-01-15T10:30:00Z");
+      expect(result).toContain("2024-01-15");
+    });
+
+    test("converts ISO 8601 date-only string to BigQuery timestamp string", () => {
       const result = converter.convert("2024-01-15");
-      expect(result).toBeNull();
+      expect(result).toContain("2024-01-15");
+    });
+
+    test("returns null for unparseable string", () => {
+      expect(converter.convert("not-a-date")).toBeNull();
+    });
+
+    test("returns null for empty string", () => {
+      expect(converter.convert("")).toBeNull();
+    });
+
+    test("returns null for partial date (year-month only)", () => {
+      expect(converter.convert("2024-01")).toBeNull();
+    });
+
+    test("returns null for partial date (year only)", () => {
+      expect(converter.convert("2024")).toBeNull();
+    });
+
+    test("returns null for bare numeric string", () => {
+      expect(converter.convert("1")).toBeNull();
+    });
+
+    test("returns null for calendar-invalid date (Feb 30)", () => {
+      expect(converter.convert("2024-02-30")).toBeNull();
+    });
+
+    test("returns null for non-leap-year Feb 29", () => {
+      expect(converter.convert("2023-02-29")).toBeNull();
+    });
+
+    test("accepts leap-year Feb 29", () => {
+      const result = converter.convert("2024-02-29");
+      expect(result).toContain("2024-02-29");
+    });
+
+    test("returns null for out-of-range month", () => {
+      expect(converter.convert("2024-13-01")).toBeNull();
+    });
+
+    test("returns null for out-of-range day", () => {
+      expect(converter.convert("2024-01-32")).toBeNull();
+    });
+
+    test("returns null for year 0 (outside BigQuery DATE range)", () => {
+      expect(converter.convert("0000-01-01")).toBeNull();
+    });
+
+    test("accepts year 0001 (BigQuery DATE minimum)", () => {
+      const result = converter.convert("0001-01-01");
+      expect(result).toContain("0001-01-01");
+    });
+
+    test("accepts year 9999 (BigQuery DATE maximum)", () => {
+      const result = converter.convert("9999-12-31");
+      expect(result).toContain("9999-12-31");
+    });
+
+    test("returns null for datetime without timezone", () => {
+      expect(converter.convert("2024-01-15T10:30:00")).toBeNull();
+    });
+
+    test("returns null for out-of-range hour", () => {
+      expect(converter.convert("2024-01-15T25:00:00Z")).toBeNull();
+    });
+
+    test("returns null for hour 24 (avoids silent next-day shift)", () => {
+      // ISO 8601 allows 24:00:00 as end-of-day, equivalent to next day 00:00.
+      // JS Date parses it as such and rolls forward, which would silently
+      // misfile the row into the next-day partition. 0.2.x passed the raw
+      // string to BigQuery, which rejected hour=24 outright. Reject here to
+      // match the loud-failure behavior rather than silent misfiling.
+      expect(converter.convert("2024-01-15T24:00:00Z")).toBeNull();
+    });
+
+    test("returns null for out-of-range minute", () => {
+      expect(converter.convert("2024-01-15T23:60:00Z")).toBeNull();
+    });
+
+    test("accepts timezone offset without colon", () => {
+      const result = converter.convert("2024-01-15T10:30:00+0800");
+      expect(result).toContain("2024-01-15");
+    });
+
+    test("accepts fractional seconds beyond millisecond precision", () => {
+      const result = converter.convert("2024-01-15T10:30:00.123456Z");
+      expect(result).toContain("2024-01-15");
+    });
+
+    test("accepts space separator between date and time (RFC 3339 alt form)", () => {
+      const result = converter.convert("2024-01-15 10:30:00Z");
+      expect(result).toContain("2024-01-15");
     });
 
     test("returns null for null", () => {
@@ -104,6 +200,32 @@ describe("PartitionValueConverter", () => {
       const result = converter.convert(date);
       expect(result).toBe("2024-01-15");
     });
+
+    test("converts ISO 8601 date-only string to BigQuery date string", () => {
+      const result = converter.convert("2024-01-15");
+      expect(result).toBe("2024-01-15");
+    });
+
+    test("converts ISO 8601 datetime string to BigQuery date string", () => {
+      const result = converter.convert("2024-01-15T10:30:00Z");
+      expect(result).toBe("2024-01-15");
+    });
+
+    test("uses UTC date component for timezone-suffixed datetime string", () => {
+      // 2024-01-15T22:00:00-08:00 == 2024-01-16T06:00:00Z. The DATE column
+      // takes the UTC date component, matching how Firestore Timestamps are
+      // handled. Pinned so future changes to this contract are explicit.
+      const result = converter.convert("2024-01-15T22:00:00-08:00");
+      expect(result).toBe("2024-01-16");
+    });
+
+    test("returns null for unparseable string", () => {
+      expect(converter.convert("not-a-date")).toBeNull();
+    });
+
+    test("returns null for empty string", () => {
+      expect(converter.convert("")).toBeNull();
+    });
   });
 
   describe("convert with DATETIME type", () => {
@@ -133,6 +255,37 @@ describe("PartitionValueConverter", () => {
       const result = converter.convert(date);
       expect(result).toBeDefined();
       expect(result).toContain("2024-01-15");
+    });
+
+    test("converts ISO 8601 datetime string to BigQuery datetime string", () => {
+      const result = converter.convert("2024-01-15T10:30:00Z");
+      expect(result).toBeDefined();
+      expect(result).toContain("2024-01-15");
+    });
+
+    test("converts ISO 8601 date-only string to BigQuery datetime string", () => {
+      const result = converter.convert("2024-01-15");
+      expect(result).toBeDefined();
+      expect(result).toContain("2024-01-15");
+    });
+
+    test("DATETIME output uses BigQuery canonical form (no Z, space separator)", () => {
+      // BigQuery DATETIME columns reject the 'Z' timezone suffix and require
+      // a space (not 'T') between date and time. @google-cloud/bigquery's
+      // BigQuery.datetime() helper already normalises ISO 8601 input to this
+      // canonical form, so feeding it date.toISOString() (which always ends
+      // in 'Z') is safe. Pinned so the contract does not silently regress.
+      expect(converter.convert("2024-01-15T10:30:00Z")).toBe(
+        "2024-01-15 10:30:00.000"
+      );
+    });
+
+    test("returns null for unparseable string", () => {
+      expect(converter.convert("not-a-date")).toBeNull();
+    });
+
+    test("returns null for empty string", () => {
+      expect(converter.convert("")).toBeNull();
     });
   });
 });

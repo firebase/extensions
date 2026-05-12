@@ -1,3 +1,7 @@
+## Version 0.1.29
+
+chore: bump dependencies
+
 ## Version 0.1.28
 
 chore: switch from `googleai` and `vertexai` Genkit plugins to `google-genai`
