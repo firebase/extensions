@@ -1,3 +1,15 @@
+## Version 0.3.5
+
+fix - when a custom filter prompt is configured, the content filter no longer silently fails open on Gemini 2.5 Flash safety refusals. If Gemini's input-side safety declines to respond on borderline imagery (returning empty content rather than `finishReason="SAFETY"`), the resulting genkit schema-validation error is now treated as an implicit block instead of being retried 3 times and propagating as a generic filter error. Installs that only set `CONTENT_FILTER_LEVEL` (no custom prompt) were not affected by this path.
+
+fix - any genkit schema-validation failure on the moderation response (not only empty-content safety refusals) is now treated as a content block instead of being retried and surfaced as a generic error.
+
+fix - blocked images are now routed to the failed-image path before placeholder substitution, so the original blocked content is preserved rather than overwritten by the placeholder.
+
+fix - placeholder swap operates on a copy of the original file, so resizing a blocked image produces placeholder-derived outputs without mutating the stored original.
+
+fix - moderation requests now use the uploaded object's content type when constructing the data URL instead of guessing from the file extension.
+
 ## Version 0.3.4
 
 chore: bump dependencies
