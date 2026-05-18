@@ -24,7 +24,7 @@ updates:
           - minor
           - patch
 
-      security-minor-and-patch:
+      security-updates:
         applies-to: security-updates
         patterns:
           - "*"
