@@ -8,6 +8,8 @@ fix - placeholder swap operates on a copy of the original file, so resizing a bl
 
 fix - moderation requests now use the uploaded object's content type when constructing the data URL instead of guessing from the file extension.
 
+chore: bump dependencies
+
 ## Version 0.3.3
 
 chore: bump dependencies
