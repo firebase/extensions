@@ -16,7 +16,7 @@ updates:
       include: "scope"
 
     groups:
-      version-minor-and-patch-by-dependency:
+      version-minor-and-patch:
         applies-to: version-updates
         patterns:
           - "*"
