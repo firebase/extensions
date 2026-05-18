@@ -12,6 +12,7 @@
     "compile": "tsc",
     "test": "jest",
     "test:vulnerability": "RUN_VULNERABILITY_TEST=true jest",
+    "test:live-content-filter": "NODE_OPTIONS=--experimental-vm-modules RUN_LIVE_CONTENT_FILTER_TESTS=true jest --testPathPattern=integration/content-filter.live",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "dependencies": {
