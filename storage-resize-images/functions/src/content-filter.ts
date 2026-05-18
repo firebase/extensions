@@ -77,6 +77,20 @@ function isModerationSchemaRefusal(error: unknown): boolean {
 }
 
 /**
+ * Detects Gemini's explicit safety block, surfaced by genkit as a thrown
+ * error whose response carries finishReason === "blocked". Narrowed from
+ * `unknown` for the same reason as {@link isModerationSchemaRefusal}: the
+ * catch variable has no static shape.
+ */
+function isSafetyBlockedResponse(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const e = error as {
+    detail?: { response?: { finishReason?: unknown } };
+  };
+  return e.detail?.response?.finishReason === "blocked";
+}
+
+/**
  * Entry point for image moderation: short-circuits when disabled, otherwise runs a single
  * Vertex/Gemini call per attempt with retries and queue-backed backoff on transient errors.
  *
@@ -168,10 +182,7 @@ export async function checkImageContent(
 
       return true;
     } catch (error) {
-      if (
-        error.detail?.response?.finishReason === "blocked" ||
-        isModerationSchemaRefusal(error)
-      ) {
+      if (isSafetyBlockedResponse(error) || isModerationSchemaRefusal(error)) {
         log.contentFilterBlocked();
         return false;
       }

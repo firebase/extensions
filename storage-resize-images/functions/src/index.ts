@@ -86,11 +86,15 @@ export const generateResizedImageHandler = async (
     let blockedImageStored = false;
 
     try {
+      // shouldResize() above already rejects objects without a valid
+      // image/* contentType, so it is guaranteed defined here. The handler
+      // is exported and unit-tested directly, so assert the invariant
+      // explicitly rather than passing a possibly-undefined value through.
       const passed = await checkImageContent(
         localOriginalFile,
         config.contentFilterLevel,
         config.customFilterPrompt,
-        object.contentType
+        object.contentType!
       );
       if (!passed) {
         blockedByFilter = true;
