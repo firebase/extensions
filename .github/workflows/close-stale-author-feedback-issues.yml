@@ -14,9 +14,6 @@ on:
     types:
       - created
 
-permissions:
-  issues: write
-
 env:
   AUTHOR_FEEDBACK_LABELS: |
     needs: author feedback
@@ -25,14 +22,15 @@ env:
 jobs:
   remove-author-feedback-label:
     if: >
-      github.event_name == 'issue_comment' &&
-      github.event.issue.pull_request == null &&
-      github.event.issue.state == 'open' &&
+      github.event_name == 'issue_comment' && github.event.issue.pull_request ==
+      null && github.event.issue.state == 'open' &&
       github.event.comment.user.login == github.event.issue.user.login
+    permissions:
+      issues: write
     runs-on: ubuntu-latest
     steps:
       - name: Remove author-feedback label
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           script: |
             const labels = process.env.AUTHOR_FEEDBACK_LABELS
@@ -72,10 +70,12 @@ jobs:
 
   close-stale-issues:
     if: github.event_name != 'issue_comment'
+    permissions:
+      issues: write
     runs-on: ubuntu-latest
     steps:
       - name: Close stale author-feedback issues
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           script: |
             const configuredLabels = process.env.AUTHOR_FEEDBACK_LABELS
