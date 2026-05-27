@@ -137,6 +137,11 @@ export class FirestoreBigQueryEventHistoryTracker
         body: JSON.stringify({ data: rows }),
         headers: { "Content-Type": "application/json", ...authHeaders },
       });
+      if (!response.ok) {
+        throw new Error(
+          `Transform function failed with status ${response.status}: ${response.statusText}`
+        );
+      }
       const responseJson = await response.json();
       // To support callable functions, first check result.data
       return responseJson?.result?.data ?? responseJson.data;

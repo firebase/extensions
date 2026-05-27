@@ -47,6 +47,9 @@ describe("transformRows", () => {
     mockFetch.mockReset();
     mockGetIdTokenClient.mockReset();
     mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: "OK",
       json: async () => ({ data: [] }),
     });
   });
@@ -85,5 +88,19 @@ describe("transformRows", () => {
 
     expect(mockGetIdTokenClient).not.toHaveBeenCalled();
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("throws when the transform function returns a non-2xx response", async () => {
+    mockGetIdTokenClient.mockResolvedValue({
+      getRequestHeaders: async () => ({}),
+    });
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 403,
+      statusText: "Forbidden",
+    });
+
+    const tracker = buildTracker(TRANSFORM_URL);
+    await expect(tracker.record([buildEvent()])).rejects.toThrow(/403.*Forbidden/);
   });
 });
