@@ -17,6 +17,7 @@ import * as bigquery from "@google-cloud/bigquery";
 import { DocumentReference } from "firebase-admin/firestore";
 import * as traverse from "traverse";
 import fetch from "node-fetch";
+import { GoogleAuth } from "google-auth-library";
 import {
   RawChangelogSchema,
   documentIdField,
@@ -120,10 +121,21 @@ export class FirestoreBigQueryEventHistoryTracker
 
   private async transformRows(rows: any[]) {
     if (this.config.transformFunction && this.config.transformFunction !== "") {
+      let authHeaders = {};
+      try {
+        const auth = new GoogleAuth();
+        const client = await auth.getIdTokenClient(
+          this.config.transformFunction
+        );
+        authHeaders = await client.getRequestHeaders();
+      } catch (err) {
+        logs.transformFunctionAuthFailed(err);
+      }
+
       const response = await fetch(this.config.transformFunction, {
         method: "post",
         body: JSON.stringify({ data: rows }),
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
       });
       const responseJson = await response.json();
       // To support callable functions, first check result.data
