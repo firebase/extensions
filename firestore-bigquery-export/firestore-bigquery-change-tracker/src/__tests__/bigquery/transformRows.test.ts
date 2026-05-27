@@ -101,6 +101,8 @@ describe("transformRows", () => {
     });
 
     const tracker = buildTracker(TRANSFORM_URL);
-    await expect(tracker.record([buildEvent()])).rejects.toThrow(/403.*Forbidden/);
+    await expect(tracker.record([buildEvent()])).rejects.toThrow(
+      /403.*Forbidden/
+    );
   });
 });
