@@ -1,3 +1,7 @@
+## Version 0.1.30
+
+chore: bump dependencies
+
 ## Version 0.1.29
 
 chore: bump dependencies
