@@ -34,7 +34,7 @@
     "lerna": "^3.4.3",
     "lint-staged": "^12.4.0",
     "prettier": "2.7.1",
-    "ts-jest": "29.4.9",
+    "ts-jest": "29.4.11",
     "typescript": "^5.0.0"
   },
   "overrides": {
