@@ -13,6 +13,7 @@ export interface DeleteUserDataConfig {
   searchDepth?: number;
   searchFields?: string;
   searchFunction?: string;
+  instanceId?: string;
   discoveryTopicName?: string;
   deletionTopicName?: string;
   region?: string;
@@ -32,6 +33,7 @@ export interface ResolvedDeleteUserDataConfig {
   searchDepth: number;
   searchFields: string;
   searchFunction?: string;
+  instanceId: string;
   discoveryTopicName: string;
   deletionTopicName: string;
   region: string;
@@ -44,13 +46,18 @@ const DEFAULT_SEARCH_DEPTH = 3;
 const DEFAULT_REGION = "us-central1";
 const DEFAULT_INSTANCE_ID = "delete-user-data";
 
-function topicName(name: string | undefined, suffix: string): string {
-  return name ?? `ext-${DEFAULT_INSTANCE_ID}-${suffix}`;
+function topicName(
+  name: string | undefined,
+  instanceId: string,
+  suffix: string
+): string {
+  return name ?? `ext-${instanceId}-${suffix}`;
 }
 
 export function resolveDeleteUserDataConfig(
   config: DeleteUserDataConfig
 ): ResolvedDeleteUserDataConfig {
+  const instanceId = config.instanceId ?? DEFAULT_INSTANCE_ID;
   return {
     firestorePaths: config.firestorePaths,
     firestoreDatabaseId:
@@ -66,8 +73,17 @@ export function resolveDeleteUserDataConfig(
     searchDepth: config.searchDepth ?? DEFAULT_SEARCH_DEPTH,
     searchFields: config.searchFields ?? "",
     searchFunction: config.searchFunction,
-    discoveryTopicName: topicName(config.discoveryTopicName, "discovery"),
-    deletionTopicName: topicName(config.deletionTopicName, "deletion"),
+    instanceId,
+    discoveryTopicName: topicName(
+      config.discoveryTopicName,
+      instanceId,
+      "discovery"
+    ),
+    deletionTopicName: topicName(
+      config.deletionTopicName,
+      instanceId,
+      "deletion"
+    ),
     region: config.region ?? DEFAULT_REGION,
     projectId: config.projectId,
   };
