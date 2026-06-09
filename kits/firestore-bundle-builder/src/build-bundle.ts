@@ -90,6 +90,11 @@ export function parameterize(
         throw new Error(`Required param '${p}' was missing.`);
       }
 
+      // TODO(migration): inherited verbatim from the legacy extension — an
+      // optional, unset param yields NaN (parseInt(undefined)), and the *-array
+      // cases call `.map` on a value that may be undefined or a single string,
+      // throwing a TypeError. Guard for undefined / non-array before parsing.
+      // Deferred from PR #429 review.
       switch (pOpts.type || "string") {
         case "integer":
           return parseInt(paramValues[p], 10);
@@ -256,6 +261,10 @@ function handleCondition(
         // Since array values cannot be an array, we need to detect whether the user has specifically chosen
         // an array of values which are strings or ints.
 
+        // TODO(migration): inherited verbatim from the legacy extension — if
+        // `value` is already an array (e.g. a `*-array` param), `.split(",")`
+        // throws `TypeError: value.split is not a function`. Only split when it
+        // is a string. Deferred from PR #429 review.
         value = (value as string).split(",").map((value) => {
           const maybeNumber = parseFloat(value);
           if (!isNaN(maybeNumber)) {
