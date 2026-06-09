@@ -218,17 +218,13 @@ describe("handleServe", () => {
     expect(res.body().toString()).toBe("FRESH");
   });
 
-  test("stale cache: rebuilds when getMetadata is older than the TTL", async () => {
+  test("no TTL: serves a cached object regardless of age, does not rebuild", async () => {
     const spec: BundleSpec = { fileCache: 300 };
-    const writeStream = new Writable({
-      write(_chunk, _enc, cb) {
-        cb();
-      },
-    });
+    const cachedStream = Readable.from(Buffer.from("OLD-CACHED"));
     const file = {
-      createReadStream: vi.fn(),
-      createWriteStream: vi.fn(() => writeStream),
-      // Updated well beyond the 300s TTL -> stale.
+      createReadStream: vi.fn(() => cachedStream),
+      createWriteStream: vi.fn(),
+      // Updated long ago — still served: fileCache is not an age-based TTL.
       getMetadata: vi.fn().mockResolvedValue([
         {
           updated: new Date(Date.now() - 1000 * 1000).toISOString(),
@@ -236,7 +232,6 @@ describe("handleServe", () => {
       ]),
     };
     const bucket: CacheBucket = { file: vi.fn(() => file) };
-    (build as any).mockResolvedValue(fakeBundle("FRESH"));
     const ctx = makeCtx({
       getSpec: vi.fn().mockResolvedValue(spec),
       bucket,
@@ -245,9 +240,9 @@ describe("handleServe", () => {
     await handleServe(fakeReq("/serve/b1"), res, ctx);
     await new Promise((r) => res.on("finish", r));
 
-    expect(file.createReadStream).not.toHaveBeenCalled();
-    expect(build).toHaveBeenCalledTimes(1);
-    expect(res.body().toString()).toBe("FRESH");
+    expect(file.createReadStream).toHaveBeenCalledTimes(1);
+    expect(build).not.toHaveBeenCalled();
+    expect(res.body().toString()).toBe("OLD-CACHED");
   });
 
   test("write-stream error is handled, not thrown", async () => {
