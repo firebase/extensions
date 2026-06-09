@@ -33,6 +33,10 @@ semantics. Pick one and record it in this spec before coding:
   consumer wires it to their auth lifecycle. Recommended if a behaviour shift is
   acceptable; cleanest for the npm model.
 
+**Decision:** B. Keep `clearData` on the v1 Auth `user.delete` trigger for this
+port. It preserves the shipped async post-delete behavior and avoids changing
+the public deletion contract while the Pub/Sub fan-out handlers move to v2.
+
 ## Trigger mapping (v1 → v2)
 | Legacy | v2 |
 |---|---|
