@@ -112,10 +112,14 @@ function storagePath(
 }
 
 /**
- * Returns a `ReadableStream` if a valid GCS file can be found for the given
- * bundle ID and query parameters.
+ * Returns a `ReadableStream` for the cached GCS bundle if one exists for the
+ * given bundle ID and query parameters, or `null` on a cache miss.
  *
- * Returns null if the file is out-of-date or if an error occurs.
+ * Matches the legacy behaviour: a cached object is served regardless of age —
+ * `fileCache` gates *whether* to cache, it is not an age-based TTL (the legacy
+ * `ttlSec` was never enforced). The `getMetadata` probe exists only because
+ * `createReadStream` does not throw synchronously when the object is missing
+ * (it emits an async `'error'`), so we confirm existence before reading.
  */
 async function fileCacheStream(
   bucket: CacheBucket,
@@ -123,27 +127,15 @@ async function fileCacheStream(
   bundleId: string,
   query: { [k: string]: any },
   options: {
-    ttlSec: number;
     gzip?: boolean;
   },
   logger: HandlerLogger
 ): Promise<NodeJS.ReadableStream | null> {
   const file = bucket.file(storagePath(storagePrefix, bundleId, query));
   try {
-    // `createReadStream` does not throw synchronously when the object is
-    // missing — it emits an async `'error'` event — so probe with
-    // `getMetadata` first to confirm the cached file exists and is fresh.
-    const [metadata] = await file.getMetadata();
-    const updatedTime = metadata.updated
-      ? new Date(metadata.updated).getTime()
-      : Number.NaN;
-    if (
-      Number.isNaN(updatedTime) ||
-      Date.now() - updatedTime > options.ttlSec * 1000
-    ) {
-      logger.debug(`Cache expired for bundle: ${bundleId}`);
-      return null;
-    }
+    // Confirm the cached object exists; a miss rejects and falls through to a
+    // rebuild. Age is intentionally not checked (no TTL).
+    await file.getMetadata();
     // keep gzip compression for over the wire
     return file.createReadStream({ decompress: !options.gzip });
   } catch (e: any) {
@@ -215,7 +207,6 @@ export async function handleServe(
       bundleId,
       paramValues,
       {
-        ttlSec: bundleSpec.fileCache,
         gzip: canGzip,
       },
       logger
