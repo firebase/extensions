@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import type { Expression } from "firebase-functions/params";
+
 /**
  * Public configuration for {@link defineFirestoreBundleBuilder}.
  *
@@ -45,6 +47,25 @@ export interface ResolvedBundleBuilderConfig {
   storagePrefix: string;
   region: string;
   serviceAccount?: string;
+}
+
+/**
+ * Deploy-time function options that must be present in the deploy manifest, so
+ * each may be a literal or a Firebase param {@link Expression}.
+ *
+ * The HTTPS `serve` function only binds one deploy-time option: its `region`.
+ * It is read by the Firebase CLI during the deploy discovery pass and must never
+ * be resolved with `.value()` at the module scope; passing the param object
+ * through lets the SDK emit a CEL expression the CLI resolves after loading
+ * `.env` / prompting.
+ *
+ * @see https://firebase.google.com/docs/functions/config-env
+ */
+export interface DeployTimeOptions {
+  /** Region for the HTTPS function. */
+  region: string | Expression<string>;
+  /** Runtime service account email. */
+  serviceAccount?: string | Expression<string>;
 }
 
 /**
