@@ -43,11 +43,15 @@ export {
 // Config types and helpers
 export {
   type BundleBuilderConfig,
+  type DeployTimeOptions,
   type ResolvedBundleBuilderConfig,
   resolveConfig,
 } from "./export-config";
 // Tier 3 — factory
-export { defineFirestoreBundleBuilder } from "./factory";
+export {
+  buildBundleFunctions,
+  defineFirestoreBundleBuilder,
+} from "./factory";
 // Handler
 export {
   type CacheBucket,

@@ -25,10 +25,16 @@
  * own typed config.
  */
 
-import { configFromEnv } from "./config";
-import { defineFirestoreBundleBuilder } from "./factory";
+import { configFromEnv, envDeployOptions } from "./config";
+import { resolveConfig } from "./export-config";
+import { buildBundleFunctions } from "./factory";
 
 // Re-export the full library surface for consumers of this package.
 export * from "./lib";
 
-export const { serve } = defineFirestoreBundleBuilder(configFromEnv());
+// Deploy-time options are param expressions (resolved by the CLI from `.env`);
+// the runtime config resolver runs only on the first invocation, so its
+// `.value()` reads are deferred past deploy discovery.
+export const { serve } = buildBundleFunctions(envDeployOptions(), () =>
+  resolveConfig(configFromEnv())
+);
