@@ -7,10 +7,11 @@ export const hasValidUserPath = async (
   searchFields: string
 ): Promise<boolean> => {
   if (path.includes(uid)) return true;
+  if (searchFields.length === 0) return false;
 
   const snapshot = await ref.get();
   if (snapshot.exists) {
-    for (const field of searchFields.split(",")) {
+    for (const field of searchFields.split(",").filter(Boolean)) {
       const fieldValue = snapshot.get(new FieldPath(field));
       if (typeof fieldValue === "string" && fieldValue.includes(uid)) {
         return true;
