@@ -29,12 +29,9 @@ const params = {
     default: "id,uid,userId",
   }),
   searchFunction: defineString("SEARCH_FUNCTION", { default: "" }),
-  discoveryTopicName: defineString("DISCOVERY_TOPIC_NAME", {
-    default: "ext-delete-user-data-discovery",
-  }),
-  deletionTopicName: defineString("DELETION_TOPIC_NAME", {
-    default: "ext-delete-user-data-deletion",
-  }),
+  instanceId: defineString("EXT_INSTANCE_ID", { default: "delete-user-data" }),
+  discoveryTopicName: defineString("DISCOVERY_TOPIC_NAME", { default: "" }),
+  deletionTopicName: defineString("DELETION_TOPIC_NAME", { default: "" }),
   region: defineString("LOCATION", { default: "us-central1" }),
 };
 
@@ -51,14 +48,16 @@ export function configFromEnv(): DeleteUserDataConfig {
     rtdbInstance: optional(params.rtdbInstance.value()),
     rtdbLocation: optional(params.rtdbLocation.value()),
     rtdbPaths: optional(params.rtdbPaths.value()),
-    storageBucket: optional(params.storageBucket.value()),
+    storageBucket:
+      optional(params.storageBucket.value()) ?? process.env.STORAGE_BUCKET,
     storagePaths: optional(params.storagePaths.value()),
     enableAutoDiscovery: params.enableAutoDiscovery.value(),
     searchDepth: params.searchDepth.value(),
     searchFields: params.searchFields.value(),
     searchFunction: optional(params.searchFunction.value()),
-    discoveryTopicName: params.discoveryTopicName.value(),
-    deletionTopicName: params.deletionTopicName.value(),
+    instanceId: params.instanceId.value(),
+    discoveryTopicName: optional(params.discoveryTopicName.value()),
+    deletionTopicName: optional(params.deletionTopicName.value()),
     region: params.region.value(),
     projectId: projectID.value(),
   };
