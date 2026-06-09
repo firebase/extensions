@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,20 @@
  */
 
 /**
- * firestore-bundle-builder — npm-shared Firebase Function migrated from the Firebase Extension of
- * the same name.
+ * Clone-and-deploy entry point. Reads deploy-time params from the environment,
+ * builds a {@link BundleBuilderConfig}, and registers the function via the
+ * factory.
  *
- * Skeleton package: not yet implemented. Target shape follows the
- * firestore-bigquery-export reference package — a `define...` factory (tier 3)
- * over injectable handlers (tier 2), with a side-effect-free `./lib` surface and
- * this env-driven entry registering functions for the clone-and-deploy example.
+ * This module reads the environment at load time, so it only runs cleanly inside
+ * the Firebase toolchain (deploy discovery, runtime, or the emulator). Library
+ * consumers should import from `./lib` instead and call the factory with their
+ * own typed config.
  */
 
-export {};
+import { configFromEnv } from "./config";
+import { defineFirestoreBundleBuilder } from "./factory";
+
+// Re-export the full library surface for consumers of this package.
+export * from "./lib";
+
+export const { serve } = defineFirestoreBundleBuilder(configFromEnv());
