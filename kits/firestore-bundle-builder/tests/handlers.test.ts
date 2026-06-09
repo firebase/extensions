@@ -135,6 +135,9 @@ describe("handleServe", () => {
     const file = {
       createReadStream: vi.fn(() => cachedStream),
       createWriteStream: vi.fn(),
+      getMetadata: vi
+        .fn()
+        .mockResolvedValue([{ updated: new Date().toISOString() }]),
     };
     const bucket: CacheBucket = { file: vi.fn(() => file) };
     const ctx = makeCtx({
@@ -158,6 +161,9 @@ describe("handleServe", () => {
     const file = {
       createReadStream: vi.fn(() => Readable.from(Buffer.from("X"))),
       createWriteStream: vi.fn(),
+      getMetadata: vi
+        .fn()
+        .mockResolvedValue([{ updated: new Date().toISOString() }]),
     };
     const bucket: CacheBucket = { file: vi.fn(() => file) };
     const ctx = makeCtx({
@@ -177,7 +183,8 @@ describe("handleServe", () => {
 
   test("cache miss: builds the bundle and writes it to Storage", async () => {
     const spec: BundleSpec = { fileCache: 300 };
-    // Simulate a miss: createReadStream throws synchronously.
+    // Simulate a miss: getMetadata rejects (object not found), so the handler
+    // falls through to building the bundle.
     const writes: Buffer[] = [];
     const writeStream = new Writable({
       write(chunk, _enc, cb) {
@@ -186,10 +193,13 @@ describe("handleServe", () => {
       },
     });
     const file = {
-      createReadStream: vi.fn(() => {
-        throw Object.assign(new Error("not found"), { code: 404 });
-      }),
+      createReadStream: vi.fn(),
       createWriteStream: vi.fn(() => writeStream),
+      getMetadata: vi
+        .fn()
+        .mockRejectedValue(
+          Object.assign(new Error("not found"), { code: 404 })
+        ),
     };
     const bucket: CacheBucket = { file: vi.fn(() => file) };
     (build as any).mockResolvedValue(fakeBundle("FRESH"));
@@ -205,6 +215,79 @@ describe("handleServe", () => {
     expect(file.createWriteStream).toHaveBeenCalledWith({
       metadata: { contentEncoding: "gzip" },
     });
+    expect(res.body().toString()).toBe("FRESH");
+  });
+
+  test("stale cache: rebuilds when getMetadata is older than the TTL", async () => {
+    const spec: BundleSpec = { fileCache: 300 };
+    const writeStream = new Writable({
+      write(_chunk, _enc, cb) {
+        cb();
+      },
+    });
+    const file = {
+      createReadStream: vi.fn(),
+      createWriteStream: vi.fn(() => writeStream),
+      // Updated well beyond the 300s TTL -> stale.
+      getMetadata: vi.fn().mockResolvedValue([
+        {
+          updated: new Date(Date.now() - 1000 * 1000).toISOString(),
+        },
+      ]),
+    };
+    const bucket: CacheBucket = { file: vi.fn(() => file) };
+    (build as any).mockResolvedValue(fakeBundle("FRESH"));
+    const ctx = makeCtx({
+      getSpec: vi.fn().mockResolvedValue(spec),
+      bucket,
+    });
+    const res = fakeRes();
+    await handleServe(fakeReq("/serve/b1"), res, ctx);
+    await new Promise((r) => res.on("finish", r));
+
+    expect(file.createReadStream).not.toHaveBeenCalled();
+    expect(build).toHaveBeenCalledTimes(1);
+    expect(res.body().toString()).toBe("FRESH");
+  });
+
+  test("write-stream error is handled, not thrown", async () => {
+    const spec: BundleSpec = { fileCache: 300 };
+    // Cache miss so we go down the build-and-write path.
+    const writeStream = new Writable({
+      write(_chunk, _enc, cb) {
+        cb();
+      },
+    });
+    const file = {
+      createReadStream: vi.fn(),
+      createWriteStream: vi.fn(() => writeStream),
+      getMetadata: vi
+        .fn()
+        .mockRejectedValue(
+          Object.assign(new Error("not found"), { code: 404 })
+        ),
+    };
+    const bucket: CacheBucket = { file: vi.fn(() => file) };
+    (build as any).mockResolvedValue(fakeBundle("FRESH"));
+    const logger = { debug: vi.fn(), error: vi.fn() };
+    const ctx = makeCtx({
+      getSpec: vi.fn().mockResolvedValue(spec),
+      bucket,
+      logger,
+    });
+    const res = fakeRes();
+    await handleServe(fakeReq("/serve/b1"), res, ctx);
+    await new Promise((r) => res.on("finish", r));
+
+    // Emitting an error on the GCS write stream must not throw — the listener
+    // logs it and the response is still served.
+    expect(() =>
+      writeStream.emit("error", new Error("gcs write failed"))
+    ).not.toThrow();
+    expect(logger.error).toHaveBeenCalledWith(
+      "GCS write stream error:",
+      expect.any(Error)
+    );
     expect(res.body().toString()).toBe("FRESH");
   });
 

@@ -47,6 +47,7 @@ export interface CacheFile {
   createWriteStream(options: {
     metadata: { contentEncoding: string };
   }): NodeJS.WritableStream;
+  getMetadata(): Promise<[{ updated?: string }, ...unknown[]]>;
 }
 
 /** A minimal logger surface matching `firebase-functions` logger methods used. */
@@ -94,7 +95,7 @@ function filterQuery(
 function sortQuery(qs: { [key: string]: any }): string {
   const arr: string[] = [];
   for (const k in qs) {
-    arr.push([k, qs[k].toString()].join("="));
+    arr.push([k, String(qs[k] ?? "")].join("="));
   }
   return arr.sort().join("&");
 }
@@ -114,7 +115,7 @@ function storagePath(
  *
  * Returns null if the file is out-of-date or if an error occurs.
  */
-function fileCacheStream(
+async function fileCacheStream(
   bucket: CacheBucket,
   storagePrefix: string,
   bundleId: string,
@@ -124,13 +125,27 @@ function fileCacheStream(
     gzip?: boolean;
   },
   logger: HandlerLogger
-): NodeJS.ReadableStream | null {
+): Promise<NodeJS.ReadableStream | null> {
   const file = bucket.file(storagePath(storagePrefix, bundleId, query));
   try {
+    // `createReadStream` does not throw synchronously when the object is
+    // missing — it emits an async `'error'` event — so probe with
+    // `getMetadata` first to confirm the cached file exists and is fresh.
+    const [metadata] = await file.getMetadata();
+    const updatedTime = metadata.updated
+      ? new Date(metadata.updated).getTime()
+      : Number.NaN;
+    if (
+      Number.isNaN(updatedTime) ||
+      Date.now() - updatedTime > options.ttlSec * 1000
+    ) {
+      logger.debug(`Cache expired for bundle: ${bundleId}`);
+      return null;
+    }
     // keep gzip compression for over the wire
     return file.createReadStream({ decompress: !options.gzip });
   } catch (e: any) {
-    logger.error("createReadStream error:", e.message, e.code);
+    logger.debug(`Cache miss or error for bundle ${bundleId}:`, e.message);
     return null;
   }
 }
@@ -192,7 +207,7 @@ export async function handleServe(
   if (bundleSpec.fileCache && ctx.bucket) {
     logger.debug("handling fileCache", bundleSpec.fileCache);
 
-    const outStream = fileCacheStream(
+    const outStream = await fileCacheStream(
       ctx.bucket,
       config.storagePrefix,
       bundleId,
@@ -227,11 +242,16 @@ export async function handleServe(
       if (!canGzip) {
         storageStream = stream.pipe(gzip);
       }
-      storageStream.pipe(
-        ctx.bucket
-          .file(storagePath(config.storagePrefix, bundleId, paramValues))
-          .createWriteStream({ metadata: { contentEncoding: "gzip" } })
-      );
+      const gcsStream = ctx.bucket
+        .file(storagePath(config.storagePrefix, bundleId, paramValues))
+        .createWriteStream({ metadata: { contentEncoding: "gzip" } });
+      // A write failure emits an async `'error'` event; without a listener it
+      // becomes an uncaught exception that crashes the function. Log and
+      // surface it gracefully — the response is still served from `stream`.
+      gcsStream.on("error", (err) => {
+        logger.error("GCS write stream error:", err);
+      });
+      storageStream.pipe(gcsStream);
     }
 
     return stream.pipe(res);
