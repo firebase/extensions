@@ -67,7 +67,9 @@ export interface HandlerContext {
   config: ResolvedBundleBuilderConfig;
   /**
    * Returns the {@link BundleSpec} for the given bundle ID/name, or `null` if no
-   * spec exists. Mirrors the legacy spec lookup against the spec collection.
+   * spec exists. Reimplements the legacy spec lookup: a per-request
+   * `.doc(bundleId).get()` against the spec collection, replacing the legacy
+   * module-load `onSnapshot` in-memory cache (outcome-identical).
    */
   getSpec: (bundleId: string) => Promise<BundleSpec | null>;
   /**
