@@ -180,7 +180,7 @@ export async function handleServe(
   logger.debug("spec:", bundleSpec);
 
   if (!bundleSpec) {
-    res.status(404).send("Could not find bundle with ID " + bundleId);
+    res.status(404).send(`Could not find bundle with ID ${bundleId}`);
     return;
   }
 
