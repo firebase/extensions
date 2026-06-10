@@ -1,5 +1,8 @@
 import type * as admin from "firebase-admin";
-import { type PublisherContext, publishSearch } from "./pubsub";
+import {
+  type PublisherContext,
+  publishSearch,
+} from "./runBatchPubSubDeletions";
 
 export const search = async (
   uid: string,

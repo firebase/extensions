@@ -1,4 +1,3 @@
-export { runCustomSearchFunction } from "./custom-search";
 export {
   type DeleteUserDataConfig,
   type FirestoreDeleteMode,
@@ -16,11 +15,12 @@ export {
   type SearchMessageData,
 } from "./handlers";
 export { extractUserPaths, hasValidUserPath } from "./helpers";
+export { recursiveDelete } from "./recursiveDelete";
 export {
   type DeletionPaths,
   type PublisherContext,
   publishSearch,
   runBatchPubSubDeletions,
-} from "./pubsub";
-export { recursiveDelete } from "./recursive-delete";
+} from "./runBatchPubSubDeletions";
+export { runCustomSearchFunction } from "./runCustomSearchFunction";
 export { search } from "./search";

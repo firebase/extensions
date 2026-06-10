@@ -2,12 +2,15 @@ import type * as admin from "firebase-admin";
 import type { DocumentReference } from "firebase-admin/firestore";
 import { FieldPath } from "firebase-admin/firestore";
 import chunk from "lodash.chunk";
-import { runCustomSearchFunction } from "./custom-search";
 import * as events from "./events";
 import { extractUserPaths, hasValidUserPath } from "./helpers";
 import * as logs from "./logs";
-import { type PublisherContext, runBatchPubSubDeletions } from "./pubsub";
-import { recursiveDelete } from "./recursive-delete";
+import { recursiveDelete } from "./recursiveDelete";
+import {
+  type PublisherContext,
+  runBatchPubSubDeletions,
+} from "./runBatchPubSubDeletions";
+import { runCustomSearchFunction } from "./runCustomSearchFunction";
 import { search } from "./search";
 
 export interface HandlerContext extends PublisherContext {
