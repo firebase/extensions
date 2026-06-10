@@ -1,0 +1,406 @@
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: firestore-vector-search
+version: 0.1.3
+specVersion: v1beta
+
+tags:
+  [
+    ai,
+    search,
+    semantic-search,
+    vector-search,
+    text-search,
+    generative-ai,
+    nlp,
+    llm,
+    large-language-models,
+    gemini,
+    embeddings,
+    google-ai,
+    firestore,
+  ]
+
+displayName: Vector Search with Firestore
+description: Perform vector similarity search with Firestore
+
+icon: icon.png
+
+license: Apache-2.0 # https://spdx.org/licenses/
+
+sourceUrl: https://github.com/GoogleCloudPlatform/firebase-extensions/tree/main/firestore-vector-search
+releaseNotesUrl: https://github.com/GoogleCloudPlatform/firebase-extensions/tree/main/firestore-vector-search/CHANGELOG.md
+
+author:
+  authorName: Google Cloud
+  url: https://cloud.google.com
+
+contributors:
+  - authorName: Jacob Cable
+    email: jacob@invertase.io
+    url: https://github.com/chrisbianca
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
+
+billingRequired: true
+
+apis:
+  - apiName: aiplatform.googleapis.com
+    reason:
+      This extension uses the Vertex AI multimodal model for embedding images,
+      if configured to do so.
+
+  - apiName: storage-component.googleapis.com
+    reason: Needed to use Cloud Storage
+
+roles:
+  - role: datastore.user
+    reason: Allows the extension to write embeddings to Cloud Firestore.
+
+  - role: aiplatform.user
+    reason: >-
+      This extension requires access to Vertex AI to create, update and query a
+      Vertex Matching Engine index.
+
+  - role: storage.objectAdmin
+    reason: >-
+      This extension requires access to Cloud Storage to read image data from
+      your Cloud Storage.
+
+  - role: datastore.indexAdmin
+    reason: >-
+      This extension requires access to Cloud Firestore to create, update and
+      query a Firestore index.
+
+resources:
+  - name: updateTrigger
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Queues the document update tasks
+    properties:
+      availableMemoryMb: 512
+      location: ${LOCATION}
+      runtime: nodejs22
+      timeout: 540s
+      taskQueueTrigger: {}
+
+  - name: updateTask
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Performs the embeddings for document updates
+    properties:
+      availableMemoryMb: 1024
+      location: ${LOCATION}
+      runtime: nodejs22
+      timeout: 540s
+      taskQueueTrigger:
+        retryConfig:
+          maxAttempts: 50
+
+  - name: backfillTrigger
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Queues the backfill tasks
+    properties:
+      availableMemoryMb: 512
+      location: ${LOCATION}
+      runtime: nodejs22
+      timeout: 540s
+      taskQueueTrigger: {}
+
+  - name: backfillTask
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Performs the embeddings for backfill
+    properties:
+      availableMemoryMb: 1024
+      location: ${LOCATION}
+      runtime: nodejs22
+      timeout: 540s
+      taskQueueTrigger:
+        retryConfig:
+          maxAttempts: 50
+
+  - name: embedOnWrite
+    type: firebaseextensions.v1beta.function
+    description: >-
+      An event-triggered function that gets called when a document is created or
+      updated. It generates embeddings for the document and writes those
+      embeddings back to firestore
+    properties:
+      location: ${LOCATION}
+      runtime: nodejs22
+      availableMemoryMb: 512
+      timeout: 540s
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:COLLECTION_NAME}/{documentId}
+
+  - name: queryOnWrite
+    type: firebaseextensions.v1beta.function
+    description: >-
+      An event-triggered function that gets called when a document is created or
+      updated. It uses the document fields `query`, `limit`, and `prefilters` to
+      perform a vector search query.
+    properties:
+      location: ${LOCATION}
+      runtime: nodejs22
+      availableMemoryMb: 512
+      timeout: 540s
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/_${param:EXT_INSTANCE_ID}/index/queries/{documentId}
+
+  - name: queryCallable
+    type: firebaseextensions.v1beta.function
+    description: >-
+      A callable function that queries a firestore collection with vector search
+    properties:
+      location: ${LOCATION}
+      httpsTrigger: {}
+      availableMemoryMb: 512
+      runtime: nodejs22
+params:
+  - param: EMBEDDING_PROVIDER
+    label: LLM
+    description: >
+      Which embedding API do you want to use? Note: **Vertex AI provider** is
+      supported only with the **us-central1** location.
+    type: select
+    options:
+      - label: Gemini
+        value: gemini
+      - label: Multimodal
+        value: multimodal
+      - label: OpenAI
+        value: openai
+      - label: Vertex AI
+        value: vertex
+      - label: Other (User-provided endpoint)
+        value: custom
+    default: gemini
+    required: true
+
+  - param: GEMINI_API_KEY
+    label: Gemini API key
+    description: >
+      If you selected Gemini to calculate embeddings, please provide your Gemini
+      API key
+    type: secret
+    required: false
+
+  - param: OPENAI_API_KEY
+    label: OpenAI API key
+    description: >
+      If you selected OpenAI to calculate embeddings, please provide your OpenAI
+      API key
+    type: secret
+    required: false
+
+  - param: CUSTOM_EMBEDDINGS_ENDPOINT
+    label: LLM Function
+    description: >
+      If you selected \"Other\" as your embedding provider, please provide the
+      URL of your function that will calculate the embeddings.
+    type: string
+    required: false
+
+  - param: CUSTOM_EMBEDDINGS_BATCH_SIZE
+    label: LLM Function batch size
+    description: >
+      If you selected \"Other\" as your embedding provider, please provide the
+      batch size of your function that will calculate the embeddings.
+    type: string
+    required: false
+
+  - param: CUSTOM_EMBEDDINGS_DIMENSION
+    label: LLM Function dimension
+    description: >
+      If you selected \"Other\" as your embedding provider, please provide the
+      dimension of the embedding you will be using.
+    type: string
+    required: false
+
+  - param: COLLECTION_NAME
+    label: Collection path
+    description: >
+      What is the path to the collection that contains the strings that you want
+      to embed?
+    example: products
+    validationRegex: '^[^/]+(/[^/]+/[^/]+)*$'
+    validationErrorMessage: Must be a valid Cloud Firestore Collection
+    default: products
+    required: true
+
+  - param: DEFAULT_QUERY_LIMIT
+    label: Default query limit
+    description: >
+      What is the default number of results to return when making a vector
+      search query?
+    validationRegex: '^[1-9][0-9]*'
+    validationErrorMessage: Must be a valid Cloud Firestore Collection
+    default: 3
+    required: false
+
+  - param: DISTANCE_MEASURE
+    label: Distance measure
+    description: >-
+      What distance measure do you want to be used to rank the results of your
+      vector search?
+    type: select
+    options:
+      - label: Cosine
+        value: COSINE
+      - label: Euclidean
+        value: EUCLIDEAN
+      - label: Dot Product
+        value: DOT_PRODUCT
+    default: COSINE
+    required: true
+
+  - param: INPUT_FIELD_NAME
+    label: Input field name
+    description: >
+      What is the name of the field that contains the string that you want to
+      embed?
+    example: input
+    default: input
+    required: true
+
+  - param: OUTPUT_FIELD_NAME
+    label: Output field name
+    description: >
+      What is the name of the field where you want to store your embeddings?
+    example: embedding
+    default: embedding
+    required: true
+
+  - param: STATUS_FIELD_NAME
+    label: Status field name
+    description: >
+      What is the name of the field where you want to track the state of a
+      document being embedded?
+    example: status
+    default: status
+    required: true
+
+  - param: DO_BACKFILL
+    label: Embed existing documents?
+    description: >
+      Should existing documents in the Firestore collection be embedded as well?
+
+    type: select
+    required: true
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+
+  - param: UPDATE_ON_CONFIGURE
+    label: Update existing embeddings?
+    description: >
+      Should existing documents in the Firestore collection be updated with new
+      embeddings on reconfiguring the extensions?
+    type: select
+    required: true
+    options:
+      - label: Yes
+        value: true
+      - label: No
+        value: false
+
+  - param: LOCATION
+    label: Cloud Functions location
+    description: >-
+      Where do you want to deploy the functions created for this extension? For
+      help selecting a location, refer to the [location selection
+      guide](https://firebase.google.com/docs/functions/locations). Make sure to
+      pick a location supported by the Gemini API, if you have chosen this as
+      your embedding provider.
+    type: select
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Los Angeles (us-west2)
+        value: us-west2
+      - label: Salt Lake City (us-west3)
+        value: us-west3
+      - label: Las Vegas (us-west4)
+        value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
+      - label: Zurich (europe-west6)
+        value: europe-west6
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+      - label: Osaka (asia-northeast2)
+        value: asia-northeast2
+      - label: Seoul (asia-northeast3)
+        value: asia-northeast3
+      - label: Mumbai (asia-south1)
+        value: asia-south1
+      - label: Jakarta (asia-southeast2)
+        value: asia-southeast2
+      - label: Montreal (northamerica-northeast1)
+        value: northamerica-northeast1
+      - label: Sao Paulo (southamerica-east1)
+        value: southamerica-east1
+      - label: Sydney (australia-southeast1)
+        value: australia-southeast1
+    required: true
+    immutable: true
+
+events:
+  - type: firebase.extensions.firestore-vector-search.v1.onStart
+    description:
+      Occurs when a trigger has been called within the Extension, and will
+      include data such as the context of the trigger request.
+
+  - type: firebase.extensions.firestore-vector-search.v1.onSuccess
+    description:
+      Occurs when image resizing completes successfully. The event will contain
+      further details about specific formats and sizes.
+
+  - type: firebase.extensions.firestore-vector-search.v1.onError
+    description:
+      Occurs when an issue has been experienced in the Extension. This will
+      include any error data that has been included within the Error Exception.
+
+  - type: firebase.extensions.firestore-vector-search.v1.onCompletion
+    description:
+      Occurs when the function is settled. Provides no customized data other
+      than the context.
+
+lifecycleEvents:
+  onInstall:
+    function: backfillTrigger
+    processingMessage: Embed existing documents
+  onConfigure:
+    function: updateTrigger
+    processingMessage: Update existing embeddings
