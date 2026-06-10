@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 import * as logs from "./logs";
-import type { PublisherContext } from "./pubsub";
-import { runBatchPubSubDeletions } from "./pubsub";
+import type { PublisherContext } from "./runBatchPubSubDeletions";
+import { runBatchPubSubDeletions } from "./runBatchPubSubDeletions";
 
 export const runCustomSearchFunction = async (
   uid: string,
