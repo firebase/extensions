@@ -84,7 +84,7 @@ export function parameterize(
   }
 
   for (const p in params) {
-    if (value === "$" + p) {
+    if (value === `$${p}`) {
       const pOpts = params[p];
       if (pOpts.required && typeof paramValues[p] === "undefined") {
         throw new Error(`Required param '${p}' was missing.`);
@@ -103,7 +103,7 @@ export function parameterize(
         case "boolean":
           return paramValues[p] === "true";
         case "integer-array":
-          return (paramValues[p] as Array<string>).map((s) => parseInt(s));
+          return (paramValues[p] as Array<string>).map((s) => parseInt(s, 10));
         case "float-array":
           return (paramValues[p] as Array<string>).map((s) => parseFloat(s));
         case "string":
@@ -267,7 +267,7 @@ function handleCondition(
         // is a string. Deferred from PR #429 review.
         value = (value as string).split(",").map((value) => {
           const maybeNumber = parseFloat(value);
-          if (!isNaN(maybeNumber)) {
+          if (!Number.isNaN(maybeNumber)) {
             return maybeNumber;
           }
 
