@@ -1,8 +1,8 @@
 {
   "name": "@firebase/firestore-bundle-builder",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Build and serve Firestore data bundles",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Build and serve Firestore data bundles as a deployable Firebase Function",
   "license": "Apache-2.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -21,6 +21,17 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "clean": "tsc -b --clean"
+    "clean": "tsc -b --clean",
+    "deploy": "pnpm build && firebase deploy --only functions",
+    "serve": "firebase emulators:start --only functions"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.11.0",
+    "@google-cloud/storage": "^7.19.0",
+    "firebase-admin": "^13.2.0",
+    "firebase-functions": "^7.2.0"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.2.0"
   }
 }
