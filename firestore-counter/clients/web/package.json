@@ -6,8 +6,7 @@
   "license": "Apache-2.0",
   "description": "Web SDK to access sharded counters.",
   "dependencies": {
-    "@types/uuid": "^3.4.4",
-    "uuid": "^3.3.2"
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "firebase": "^12.0.0",
