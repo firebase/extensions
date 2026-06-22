@@ -2,8 +2,7 @@ import * as path from "path";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
 import { Bucket, File } from "@google-cloud/storage";
 import * as logs from "./logs";
-import { v4 as uuidv4 } from "uuid";
-import { mkdirp } from "mkdirp";
+import * as crypto from "crypto";
 import * as os from "os";
 import * as fs from "fs";
 import { config } from "./config";
@@ -17,12 +16,12 @@ export async function downloadOriginalFile(
   filePath: string,
   verbose: boolean
 ): Promise<[string, File]> {
-  const localFile = path.join(os.tmpdir(), uuidv4());
+  const localFile = path.join(os.tmpdir(), crypto.randomUUID());
   const tempLocalDir = path.dirname(localFile);
 
   // Create the temp directory
   !verbose || logs.tempDirectoryCreating(tempLocalDir);
-  await mkdirp(tempLocalDir);
+  fs.mkdirSync(tempLocalDir, { recursive: true });
   !verbose || logs.tempDirectoryCreated(tempLocalDir);
 
   // Download file from bucket
