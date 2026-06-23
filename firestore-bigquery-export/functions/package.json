@@ -6,7 +6,7 @@
     "build": "npm run clean && npm run compile",
     "prepare": "npm run build",
     "clean": "node -e \"require('fs').rmSync('lib', { recursive: true, force: true })\"",
-    "compile": "npm run build --prefix ../firestore-bigquery-change-tracker && tsc -p tsconfig.build.json",
+    "compile": "tsc -p tsconfig.build.json",
     "test": "jest",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
