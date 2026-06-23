@@ -6,14 +6,14 @@
     "build": "npm run clean && npm run compile",
     "prepare": "npm run build",
     "clean": "node -e \"require('fs').rmSync('lib', { recursive: true, force: true })\"",
-    "compile": "tsc -p tsconfig.build.json",
+    "compile": "npm run build --prefix ../firestore-bigquery-change-tracker && tsc -p tsconfig.build.json",
     "test": "jest",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@firebaseextensions/firestore-bigquery-change-tracker": "file:../firestore-bigquery-change-tracker",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "^2.0.3",
     "@google-cloud/bigquery": "^7.6.0",
     "@types/express-serve-static-core": "4.19.8",
     "firebase-admin": "^13.2.0",
