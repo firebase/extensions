@@ -21,7 +21,7 @@
   "scripts": {
     "prepare": "npm run build",
     "build": "npm run clean && npm run compile",
-    "clean": "node -e \"fs.rmSync('lib', { recursive: true, force: true })\"",
+    "clean": "node -e \"require('fs').rmSync('lib', { recursive: true, force: true })\"",
     "compile": "tsc",
     "format": "prettier --write {,**/}*.{yaml,ts,md}",
     "test:local": "jest",
