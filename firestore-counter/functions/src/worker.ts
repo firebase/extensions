@@ -111,7 +111,10 @@ export class ShardedCounterWorker {
           await this.db.runTransaction(async (t) => {
             try {
               const snap = await t.get(this.metadoc.ref);
-              if (snap.exists && isDeepStrictEqual(snap.data(), this.metadata)) {
+              if (
+                snap.exists &&
+                isDeepStrictEqual(snap.data(), this.metadata)
+              ) {
                 t.update(snap.ref, {
                   timestamp: FieldValue.serverTimestamp(),
                   stats: stats,
@@ -239,7 +242,10 @@ export class ShardedCounterWorker {
           }
 
           // Check that we still own the slice.
-          if (!metadoc.exists || !isDeepStrictEqual(metadoc.data(), this.metadata)) {
+          if (
+            !metadoc.exists ||
+            !isDeepStrictEqual(metadoc.data(), this.metadata)
+          ) {
             logger.log("Metadata has changed, bailing out...");
             return [];
           }
