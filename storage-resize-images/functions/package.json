@@ -8,7 +8,7 @@
     "prepare": "npm run build",
     "build": "npm run clean && npm run compile && shx cp src/placeholder.png lib/",
     "build:watch": "npm run clean && tsc --watch",
-    "clean": "node -e \"fs.rmSync('lib', { recursive: true, force: true })\"",
+    "clean": "shx rm -rf lib",
     "compile": "tsc",
     "test": "jest",
     "test:vulnerability": "RUN_VULNERABILITY_TEST=true jest",

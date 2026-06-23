@@ -21,7 +21,7 @@ export async function downloadOriginalFile(
 
   // Create the temp directory
   !verbose || logs.tempDirectoryCreating(tempLocalDir);
-  fs.mkdirSync(tempLocalDir, { recursive: true });
+  await fs.promises.mkdir(tempLocalDir, { recursive: true });
   !verbose || logs.tempDirectoryCreated(tempLocalDir);
 
   // Download file from bucket
