@@ -7,7 +7,7 @@
     "format": "prettier --write \"**/*.{js,md,yml,ts,json,yaml}\"",
     "lint": "prettier --list-different \"**/*.{js,md,yml,ts,json,yaml}\"",
     "clean": "lerna run --parallel clean && lerna clean",
-    "build": "lerna run build",
+    "build": "lerna run --sort build",
     "local:emulator": "cd _emulator && firebase emulators:start -P demo-test",
     "test": "cd _emulator && firebase emulators:exec jest -P demo-test",
     "test:ci": "cd _emulator && firebase emulators:exec \"CI_TEST=true jest --detectOpenHandles --verbose --forceExit\" -P demo-test",

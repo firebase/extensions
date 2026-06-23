@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "npm run clean && npm run compile",
-    "clean": "rimraf ./lib",
+    "clean": "node -e \"require('fs').rmSync('lib', { recursive: true, force: true })\"",
     "compile": "tsc && copyfiles \"src/__tests__/fixtures/**/*\" lib/__tests__",
     "gen-schema-views": "node ./lib/index.js",
     "prepare": "npm run build",
@@ -31,7 +31,7 @@
   "author": "Jan Wyszynski <wyszynski@google.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "@firebaseextensions/firestore-bigquery-change-tracker": "^2.0.2",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "^2.0.3",
     "@genkit-ai/googleai": "^1.14.1",
     "@google-cloud/bigquery": "^8.1.1",
     "commander": "5.1.0",
