@@ -10,7 +10,7 @@
   "main": "./lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
-    "clean": "node -e \"fs.rmSync('lib', { recursive: true, force: true })\"",
+    "clean": "node -e \"require('fs').rmSync('lib', { recursive: true, force: true })\"",
     "compile": "tsc",
     "test:local": "jest",
     "prepare": "npm run build",

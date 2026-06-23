@@ -5,7 +5,7 @@
   "scripts": {
     "build": "npm run clean && npm run compile",
     "prepare": "npm run build",
-    "clean": "node -e \"fs.rmSync('lib', { recursive: true, force: true })\"",
+    "clean": "node -e \"require('fs').rmSync('lib', { recursive: true, force: true })\"",
     "compile": "tsc -p tsconfig.build.json",
     "test": "jest",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
