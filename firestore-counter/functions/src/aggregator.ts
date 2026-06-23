@@ -15,7 +15,7 @@
  */
 
 import { firestore } from "firebase-admin";
-import * as uuid from "uuid";
+import * as crypto from "crypto";
 
 export class NumericUpdate {
   protected data: { [key: string]: any } = {};
@@ -133,7 +133,7 @@ export class NumericUpdate {
 }
 
 export class Aggregator {
-  constructor(private uuidv4: () => string = uuid.v4) {}
+  constructor(private uuidv4: () => string = () => crypto.randomUUID()) {}
   /**
    * Aggregates increments from shards and partials and returns an update object suitable for
    * DocumentRef.update() call.

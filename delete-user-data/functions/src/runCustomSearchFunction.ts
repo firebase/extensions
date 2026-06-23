@@ -1,4 +1,3 @@
-import fetch from "node-fetch";
 import { runBatchPubSubDeletions } from "./runBatchPubSubDeletions";
 import * as logs from "./logs";
 import config from "./config";
