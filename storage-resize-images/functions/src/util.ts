@@ -2,7 +2,7 @@ import * as path from "path";
 
 import { FileMetadata } from "@google-cloud/storage";
 import { ObjectMetadata } from "firebase-functions/v1/storage";
-import { v4 as uuidv4 } from "uuid";
+import * as crypto from "crypto";
 import * as os from "os";
 import * as fs from "fs";
 import * as functions from "firebase-functions/v1";
@@ -132,7 +132,7 @@ export async function replaceWithConfiguredPlaceholder(
     );
 
     const placeholderFile = bucket.file(placeholderPath);
-    const tempPlaceholder = path.join(os.tmpdir(), uuidv4());
+    const tempPlaceholder = path.join(os.tmpdir(), crypto.randomUUID());
 
     await placeholderFile.download({ destination: tempPlaceholder });
 
@@ -160,7 +160,7 @@ export async function replaceWithDefaultPlaceholder(
   const localPlaceholderFile = path.join(__dirname, "placeholder.png");
 
   // Make a copy of the default placeholder instead of using it directly
-  const tempPlaceholder = path.join(os.tmpdir(), uuidv4());
+  const tempPlaceholder = path.join(os.tmpdir(), crypto.randomUUID());
   fs.copyFileSync(localPlaceholderFile, tempPlaceholder);
 
   // Delete the original file
