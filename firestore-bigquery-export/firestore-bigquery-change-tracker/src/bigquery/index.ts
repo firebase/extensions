@@ -16,7 +16,6 @@
 import * as bigquery from "@google-cloud/bigquery";
 import { DocumentReference } from "firebase-admin/firestore";
 import * as traverse from "traverse";
-import fetch from "node-fetch";
 import {
   RawChangelogSchema,
   documentIdField,
@@ -125,7 +124,7 @@ export class FirestoreBigQueryEventHistoryTracker
         body: JSON.stringify({ data: rows }),
         headers: { "Content-Type": "application/json" },
       });
-      const responseJson = await response.json();
+      const responseJson: any = await response.json();
       // To support callable functions, first check result.data
       return responseJson?.result?.data ?? responseJson.data;
     }
