@@ -1,39 +1,23 @@
 version: 2
-
 updates:
   - package-ecosystem: "npm"
     directories:
       - "/**"
     schedule:
       interval: "weekly"
-
     labels:
       - "dependencies"
       - "automated"
-
     commit-message:
       prefix: "chore"
       include: "scope"
-
     groups:
-      version-minor-and-patch:
-        applies-to: version-updates
+      minor-and-patch:
         patterns:
           - "*"
         update-types:
-          - minor
-          - patch
-
-      security-updates:
-        applies-to: security-updates
-        patterns:
-          - "*"
-        update-types:
-          - major
-          - minor
-          - patch
-
+          - "minor"
+          - "patch"
     ignore:
       - dependency-name: "*"
-        update-types:
-          - "version-update:semver-major"
+        update-types: ["version-update:semver-major"]
