@@ -22,7 +22,7 @@
     "firebase-functions": "^6.3.1",
     "genkit": "^1.2.0",
     "p-queue": "^6.6.2",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.2",
     "shx": "^0.4.0",
     "typescript": "^5.7.3"
   },
