@@ -1,6 +1,6 @@
 ## Version 0.1.30
 
-chore:  remove unused runtime dependencies
+chore: remove unused runtime dependencies
 
 ## Version 0.1.29
 
