@@ -1,8 +1,12 @@
 import * as nodemailer from "nodemailer";
 import * as admin from "firebase-admin";
+import * as Handlebars from "handlebars";
 
+type HandlebarsTemplateDelegate = Handlebars.TemplateDelegate;
 export interface Config {
   location: string;
+  database: string;
+  databaseRegion: string;
   mailCollection: string;
   smtpConnectionUri?: string;
   smtpPassword?: string;
@@ -14,6 +18,14 @@ export interface Config {
   TTLExpireType?: string;
   TTLExpireValue?: number;
   tls?: string;
+  host?: Hosts | string;
+  port?: number;
+  secure?: boolean;
+  user?: string;
+  clientId?: string;
+  clientSecret?: string;
+  refreshToken?: string;
+  authenticationType: AuthenticatonType;
 }
 export interface Attachment {
   filename?: string;
@@ -47,21 +59,24 @@ export interface TemplateData {
   attachments?: Attachment[];
 }
 
-export interface QueuePayload {
-  delivery?: {
-    startTime: admin.firestore.Timestamp;
-    endTime: admin.firestore.Timestamp;
-    leaseExpireTime: admin.firestore.Timestamp;
-    state: "PENDING" | "PROCESSING" | "RETRY" | "SUCCESS" | "ERROR";
-    attempts: number;
-    error?: string;
-    info?: {
-      messageId: string;
-      accepted: string[];
-      rejected: string[];
-      pending: string[];
-    };
+export interface Delivery {
+  startTime: admin.firestore.Timestamp;
+  endTime: admin.firestore.Timestamp;
+  leaseExpireTime: admin.firestore.Timestamp;
+  state: "PENDING" | "PROCESSING" | "RETRY" | "SUCCESS" | "ERROR";
+  attempts: number;
+  error?: string;
+  expireAt?: admin.firestore.Timestamp;
+  info?: {
+    messageId: string;
+    accepted: string[];
+    rejected: string[];
+    pending: string[];
   };
+}
+
+export interface QueuePayload {
+  delivery?: Delivery;
   message?: nodemailer.SendMailOptions;
   template?: {
     name: string;
@@ -71,6 +86,8 @@ export interface QueuePayload {
     templateId?: string;
     dynamicTemplateData?: { [key: string]: any };
     mailSettings?: { [key: string]: any };
+    customArgs?: Record<string, string>;
+    ipPoolName?: string;
   };
   to: string[];
   toUids?: string[];
@@ -82,4 +99,36 @@ export interface QueuePayload {
   replyTo?: string;
   headers?: any;
   attachments: Attachment[];
+  categories?: string[];
+}
+
+// Define the expected format for SendGrid attachments
+export interface SendGridAttachment {
+  content: string; // Base64-encoded string
+  filename: string;
+  type?: string;
+  disposition?: string;
+  contentId?: string;
+}
+
+export enum AuthenticatonType {
+  OAuth2 = "OAuth2",
+  UsernamePassword = "UsernamePassword",
+  ApiKey = "ApiKey",
+}
+
+export enum Hosts {
+  Gmail = "smtp.gmail.com",
+  SendGrid = "smtp.sendgrid.net",
+  Outlook = "smtp-mail.outlook.com",
+  Hotmail = "smtp.live.com",
+}
+
+export interface ExtendedSendMailOptions extends nodemailer.SendMailOptions {
+  categories?: string[];
+  templateId?: string;
+  dynamicTemplateData?: Record<string, any>;
+  mailSettings?: Record<string, any>;
+  customArgs?: Record<string, string>;
+  ipPoolName?: string;
 }

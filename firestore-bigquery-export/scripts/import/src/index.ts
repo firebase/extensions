@@ -17,6 +17,7 @@
  */
 import { FirestoreBigQueryEventHistoryTracker } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import * as firebase from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import * as fs from "fs";
 import * as util from "util";
 
@@ -49,35 +50,50 @@ const run = async (): Promise<number> => {
     useNewSnapshotQuerySyntax,
     useEmulator,
     cursorPositionFile,
+    transformFunctionUrl,
+    firestoreInstanceId,
   } = config;
   if (useEmulator) {
     console.log("Using emulator");
     process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
   }
   // Set project ID, so it can be used in BigQuery initialization
-  process.env.PROJECT_ID = bigQueryProjectId;
-  process.env.GOOGLE_CLOUD_PROJECT = bigQueryProjectId;
-  process.env.GCLOUD_PROJECT = bigQueryProjectId;
+  process.env.PROJECT_ID = projectId;
+  process.env.GOOGLE_CLOUD_PROJECT = projectId;
+  process.env.GCLOUD_PROJECT = projectId;
 
   // Initialize Firebase
   // This uses applicationDefault to authenticate
   // Please see https://cloud.google.com/docs/authentication/production
+  let app: firebase.app.App;
   if (!firebase.apps.length) {
-    firebase.initializeApp({
+    app = firebase.initializeApp({
       projectId: projectId,
       credential: firebase.credential.applicationDefault(),
       databaseURL: `https://${projectId}.firebaseio.com`,
     });
+  } else {
+    app = firebase.app();
   }
+
+  // Get the Firestore instance for the specified database
+  const db =
+    firestoreInstanceId && firestoreInstanceId !== "(default)"
+      ? getFirestore(app, firestoreInstanceId)
+      : getFirestore(app);
 
   // We pass in the application-level "tableId" here. The tracker determines
   // the name of the raw changelog from this field.
+  // TODO: fix this type, it should include clustering apparently
   const dataSink = new FirestoreBigQueryEventHistoryTracker({
     tableId: tableId,
     datasetId: datasetId,
     datasetLocation,
     wildcardIds: queryCollectionGroup,
     useNewSnapshotQuerySyntax,
+    bqProjectId: bigQueryProjectId,
+    transformFunction: transformFunctionUrl,
+    firestoreInstanceId: firestoreInstanceId,
   });
 
   await initializeDataSink(dataSink, config);
@@ -98,10 +114,10 @@ const run = async (): Promise<number> => {
 
   if (await exists(cursorPositionFile)) {
     let cursorDocumentId = (await read(cursorPositionFile)).toString();
-    cursor = await firebase.firestore().doc(cursorDocumentId).get();
+    cursor = await db.doc(cursorDocumentId).get();
     logs.resumingImport(config, cursorDocumentId);
   }
-  const totalRowsImported = runSingleThread(dataSink, config, cursor);
+  const totalRowsImported = await runSingleThread(dataSink, config, cursor, db);
   try {
     await unlink(cursorPositionFile);
   } catch (e) {

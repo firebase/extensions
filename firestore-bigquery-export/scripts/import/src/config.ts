@@ -1,6 +1,6 @@
 import * as program from "commander";
-import * as filenamify from "filenamify";
-import * as inquirer from "inquirer";
+import filenamify from "filenamify";
+import inquirer from "inquirer";
 
 import { CliConfig, CliConfigError } from "./types";
 
@@ -83,6 +83,13 @@ const questions = [
         GCP_PROJECT_VALID_CHARACTERS,
         PROJECT_ID_MAX_CHARS
       ),
+  },
+  {
+    message:
+      "What is your Firestore database instance ID? (Use '(default)' for the default database)",
+    name: "firestoreInstanceId",
+    type: "input",
+    default: "(default)",
   },
   {
     message: "What is your BigQuery project ID?",
@@ -171,10 +178,31 @@ const questions = [
     default: false,
   },
   {
+    message: "What's the URL of your transform function? (Optional)",
+    name: "transformFunctionUrl",
+    type: "input",
+    default: "",
+    validate: (value) => {
+      if (!value) return true;
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        return "Please enter a valid URL or leave empty";
+      }
+    },
+  },
+  {
     message: "Would you like to use a local firestore emulator?",
     name: "useEmulator",
     type: "confirm",
     default: false,
+  },
+  {
+    message:
+      "Where would you like to output the failed imports? (Leave blank to skip)",
+    name: "failedBatchOutput",
+    type: "input",
   },
 ];
 
@@ -187,7 +215,7 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       errors.push("Project is not specified.");
     }
     if (program.bigQueryProject === undefined) {
-      errors.push("BigQuery Project is not specified.");
+      program.bigQueryProject = program.project;
     }
     if (program.sourceCollectionPath === undefined) {
       errors.push("SourceCollectionPath is not specified.");
@@ -207,6 +235,15 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     if (program.datasetLocation === undefined) {
       errors.push("DatasetLocation is not specified.");
     }
+
+    if (program.transformFunctionUrl) {
+      try {
+        new URL(program.transformFunctionUrl);
+      } catch {
+        errors.push("Transform function URL is invalid");
+      }
+    }
+
     if (!validateBatchSize(program.batchSize)) {
       errors.push("Invalid batch size.");
     }
@@ -239,10 +276,14 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       useEmulator: program.useEmulator === "true",
       rawChangeLogName,
       cursorPositionFile,
+      failedBatchOutput: program.failedBatchOutput,
+      transformFunctionUrl: program.transformFunctionUrl,
+      firestoreInstanceId: program.firestoreInstanceId || "(default)",
     };
   }
   const {
     project,
+    firestoreInstanceId,
     sourceCollectionPath,
     bigQueryProject,
     dataset,
@@ -253,6 +294,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     multiThreaded,
     useNewSnapshotQuerySyntax,
     useEmulator,
+    failedBatchOutput,
+    transformFunctionUrl,
   } = await inquirer.prompt(questions);
 
   const rawChangeLogName = `${table}_raw_changelog`;
@@ -278,6 +321,9 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     useEmulator: useEmulator,
     rawChangeLogName,
     cursorPositionFile,
+    failedBatchOutput,
+    transformFunctionUrl,
+    firestoreInstanceId: firestoreInstanceId || "(default)",
   };
 }
 

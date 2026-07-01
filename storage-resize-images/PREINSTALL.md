@@ -16,25 +16,65 @@ The extension supports resizing images in `JPEG`, `PNG`, `WebP`, `GIF`, `AVIF` a
 The extension can publish a resize completion event, which you can optionally enable when you install the extension. If you enable events, you can write custom event handlers that respond to these events. You can always enable or disable events later. Events will be emitted via Eventarc.
 
 Furthermore, you can choose if you want to receive events upon the successful completion of the image resizing. Hence, you can do anything based on the event you will receive. For example, you can use [EventArc gen2 functions](https://firebase.google.com/docs/functions/custom-events#handle-events) to be triggered on events published by the extension.
-### Example Event Handler for Successful Resize Operation
-```typescript
-import * as functions from 'firebase-functions';
-import { onCustomEventPublished } from 'firebase-functions/v2/eventarc';
-
-export const onImageResized = onCustomEventPublished(
-    "firebase.extensions.storage-resize-images.v1.onSuccess",
-    (event) => {
-        functions.logger.info("Resize Image is successful", event);
-        // Additional operations based on the event data can be performed here
-        return Promise.resolve();
-    }
-);
 
 #### Detailed configuration information
 
 To configure this extension, you specify a maximum width and a maximum height (in pixels, px). This extension keeps the aspect ratio of uploaded images constant and shrinks the image until the resized image's dimensions are at or under your specified max width and height.
 
 For example, say that you specify a max width of 200px and a max height of 100px. You upload an image that is 480px wide by 640px high, which means a 0.75 aspect ratio. The final resized image will be 75px wide by 100px high to maintain the aspect ratio while also being at or under both of your maximum specified dimensions.
+
+#### Content Filtering
+
+This extension includes an optional content filtering system to automatically detect and block inappropriate images before resizing them. This feature leverages Google's AI models to analyze uploaded images and take action based on your specified filtering level.
+
+##### Content Filter Levels
+
+You can configure the strictness of content filtering according to your needs:
+
+- **Off**: No content filtering is applied; all images will be processed.
+- **Low strictness**: Blocks only high-severity inappropriate content.
+- **Medium strictness**: Blocks medium and high severity inappropriate content.
+- **High strictness**: Blocks all low, medium, and high severity inappropriate content.
+
+##### Custom Filter Prompts
+
+Beyond the standard content filtering categories, you can define custom filtering criteria by providing a yes/no question as a prompt. For example:
+
+- "Does this image contain a company logo?"
+- "Does this image show violent or threatening content?"
+- "Is this image inappropriate for children?"
+
+The AI model will evaluate each image against your custom prompt, and only images that meet the criteria will be processed. This provides an additional layer of filtering beyond the standard content categories.
+
+##### Placeholder Images
+
+When an image is blocked by content filtering, the extension will automatically replace it with a placeholder image before processing. You have two options:
+
+1. **Default placeholder**: If no custom placeholder is specified, the extension will use a built-in default placeholder image.
+
+2. **Custom placeholder**: You can provide a path to your own placeholder image within your storage bucket. This lets you use a branded or contextually appropriate image when content is blocked.
+
+##### Implementation Details
+
+When an image fails content filtering:
+
+1. The original image is not resized.
+2. The placeholder image (default or custom) is used for generating all configured resized versions.
+3. If you've configured a failed images path, the original image is moved to that location with metadata indicating it was blocked by content filtering.
+4. If events are enabled, an event is emitted with information about the content filtering result.
+
+##### Benefits of Content Filtering
+
+- **Brand protection**: Prevents inappropriate content from being associated with your application.
+- **User safety**: Creates a safer environment for your users by filtering harmful content.
+- **Compliance**: Helps meet regulatory requirements for content moderation.
+- **Resource optimization**: Saves processing resources by not resizing inappropriate content.
+
+##### Considerations
+
+- Content filtering adds processing overhead to the image resizing workflow.
+- AI-based filtering is not flawless, and may occasionally produce false positives or negatives.
+- For sensitive applications, consider implementing additional review processes for edge cases.
 
 #### Additional setup
 
@@ -49,6 +89,28 @@ You can install multiple instances of this extension for the same project to con
 #### Troubleshooting
 
 If events are enabled, and you want to create custom event handlers to respond to the events published by the extension, you must ensure that you have the appropriate [role/permissions](https://cloud.google.com/pubsub/docs/access-control#permissions_and_roles) to subscribe to Pub/Sub events.
+
+#### Example Event Handler for Successful Resize Operation
+Here is a an example of a custom event handler for events you can choose to emit from this extension:
+```typescript
+import * as functions from 'firebase-functions';
+import { onCustomEventPublished } from 'firebase-functions/v2/eventarc';
+
+export const onImageResized = onCustomEventPublished(
+    "firebase.extensions.storage-resize-images.v1.onSuccess",
+    (event) => {
+        functions.logger.info("Resize Image is successful", event);
+        // Additional operations based on the event data can be performed here
+        return Promise.resolve();
+    }
+);
+```
+
+#### AI-powered image moderation with Genkit
+
+This extension uses the [Genkit SDK](https://genkit.dev/) to power AI-based content filtering for uploaded images. 
+
+For more information about Genkit, visit the Genkit documentation at [genkit.dev](http://genkit.dev/).
 
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)

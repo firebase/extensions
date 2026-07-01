@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+export type SafetyThreshold =
+  | "BLOCK_LOW_AND_ABOVE"
+  | "BLOCK_MEDIUM_AND_ABOVE"
+  | "BLOCK_ONLY_HIGH"
+  | "BLOCK_NONE";
 
 export enum deleteImage {
   always = 0,
@@ -44,10 +49,31 @@ function allowAnimated(sharpOptions = "{}", overrideIsAnimated) {
   return overrideIsAnimated === "true" || undefined ? true : false;
 }
 
-export default {
+const harmBlockThresholdMap: Record<string, SafetyThreshold | null> = {
+  BLOCK_LOW_AND_ABOVE: "BLOCK_LOW_AND_ABOVE",
+  BLOCK_MEDIUM_AND_ABOVE: "BLOCK_MEDIUM_AND_ABOVE",
+  BLOCK_ONLY_HIGH: "BLOCK_ONLY_HIGH",
+  OFF: null,
+};
+
+export const convertHarmBlockThreshold = (
+  level?: string
+): SafetyThreshold | null => {
+  if (!level) {
+    return null;
+  }
+
+  if (level in harmBlockThresholdMap) {
+    return harmBlockThresholdMap[level];
+  }
+  throw new Error(`Invalid HarmBlockThreshold: ${level}`);
+};
+
+export const config = {
   bucket: process.env.IMG_BUCKET,
   cacheControlHeader: process.env.CACHE_CONTROL_HEADER,
-  doBackfill: process.env.DO_BACKFILL === "true",
+  // Backfill feature disabled - commented out to preserve code
+  // doBackfill: process.env.DO_BACKFILL === "true",
   imageSizes: process.env.IMG_SIZES.split(","),
   regenerateToken: process.env.REGENERATE_TOKEN == "true",
   makePublic: process.env.MAKE_PUBLIC === "true",
@@ -61,4 +87,13 @@ export default {
   outputOptions: process.env.OUTPUT_OPTIONS,
   animated: allowAnimated(process.env.SHARP_OPTIONS, process.env.IS_ANIMATED),
   location: process.env.LOCATION,
+  projectId: process.env.PROJECT_ID,
+  contentFilterLevel: convertHarmBlockThreshold(
+    process.env.CONTENT_FILTER_LEVEL
+  ),
+  customFilterPrompt: process.env.CUSTOM_FILTER_PROMPT || null,
+  placeholderImagePath: process.env.PLACEHOLDER_IMAGE_PATH || null,
+  // backfillBatchSize: Number(process.env.BACKFILL_BATCH_SIZE) || 3,
 };
+
+export type Config = typeof config;

@@ -1,14 +1,16 @@
 import * as os from "os";
-import * as sharp from "sharp";
+import sharp from "sharp";
 import * as path from "path";
 import * as fs from "fs";
 
 import { Bucket } from "@google-cloud/storage";
-import { ObjectMetadata } from "firebase-functions/lib/providers/storage";
-import { uuid } from "uuidv4";
+import * as crypto from "crypto";
 
-import config from "./config";
+import { config } from "./config";
 import * as logs from "./logs";
+import { ObjectMetadata } from "firebase-functions/v1/storage";
+import { convertPathToPosix, convertType } from "./util";
+import { supportedExtensions, supportedImageContentTypeMap } from "./global";
 
 export interface ResizedImageResult {
   size: string;
@@ -47,94 +49,12 @@ export function resize(file, size) {
   return sharp(file, ops)
     .rotate()
     .resize(parseInt(width, 10), parseInt(height, 10), {
+      fit: "inside",
       withoutEnlargement: true,
       ...sharpOptions,
     })
     .toBuffer();
 }
-
-export function convertType(buffer, format) {
-  let outputOptions = {
-    jpeg: {},
-    jpg: {},
-    png: {},
-    webp: {},
-    tiff: {},
-    tif: {},
-    avif: {},
-  };
-  if (config.outputOptions) {
-    try {
-      outputOptions = JSON.parse(config.outputOptions);
-    } catch (e) {
-      logs.errorOutputOptionsParse(e);
-    }
-  }
-  const { jpeg, jpg, png, webp, tiff, tif, avif } = outputOptions;
-
-  if (format === "jpeg") {
-    return sharp(buffer).jpeg(jpeg).toBuffer();
-  }
-
-  if (format === "jpg") {
-    return sharp(buffer).jpeg(jpg).toBuffer();
-  }
-
-  if (format === "png") {
-    return sharp(buffer).png(png).toBuffer();
-  }
-
-  if (format === "webp") {
-    return sharp(buffer, { animated: config.animated }).webp(webp).toBuffer();
-  }
-
-  if (format === "tif") {
-    return sharp(buffer).tiff(tif).toBuffer();
-  }
-
-  if (format === "tiff") {
-    return sharp(buffer).tiff(tiff).toBuffer();
-  }
-
-  if (format === "gif") {
-    return sharp(buffer, { animated: config.animated }).gif().toBuffer();
-  }
-
-  if (format === "avif") {
-    return sharp(buffer).avif(avif).toBuffer();
-  }
-
-  return buffer;
-}
-
-/**
- * Supported file types
- */
-export const supportedContentTypes = [
-  "image/jpg",
-  "image/jpeg",
-  "image/png",
-  "image/tiff",
-  "image/webp",
-  "image/gif",
-  "image/avif",
-];
-
-export const supportedImageContentTypeMap = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  tif: "image/tif",
-  tiff: "image/tiff",
-  webp: "image/webp",
-  gif: "image/gif",
-  avif: "image/avif",
-  jfif: "image/jpeg",
-};
-
-const supportedExtensions = Object.keys(supportedImageContentTypeMap).map(
-  (type) => `.${type}`
-);
 
 export const modifyImage = async ({
   bucket,
@@ -183,7 +103,7 @@ export const modifyImage = async ({
   let modifiedFile: string;
 
   try {
-    modifiedFile = path.join(os.tmpdir(), uuid());
+    modifiedFile = path.join(os.tmpdir(), crypto.randomUUID());
 
     // filename\*=utf-8''  selects any string match the filename notation.
     // [^;\s]+ searches any following string until either a space or semi-colon.
@@ -202,7 +122,12 @@ export const modifyImage = async ({
 
     if (shouldFormatImage) {
       logs.imageConverting(fileExtension, format);
-      modifiedImageBuffer = await convertType(modifiedImageBuffer, format);
+      modifiedImageBuffer = await convertType(
+        modifiedImageBuffer,
+        format,
+        config.outputOptions,
+        config.animated
+      );
       logs.imageConverted(format);
     }
 
@@ -278,21 +203,17 @@ export const constructMetadata = (
     config.regenerateToken &&
     metadata.metadata.firebaseStorageDownloadTokens
   ) {
-    metadata.metadata.firebaseStorageDownloadTokens = uuid();
+    metadata.metadata.firebaseStorageDownloadTokens = crypto.randomUUID();
   }
   return metadata;
 };
 
-const convertToPosixPath = (filePath: string, locale?: "win32" | "posix") => {
-  const sep = locale ? path[locale].sep : path.sep;
-  return filePath.split(sep).join(path.posix.sep);
-};
 export const getModifiedFilePath = (
   fileDir,
   resizedImagesPath,
   modifiedFileName
 ) => {
-  return convertToPosixPath(
+  return convertPathToPosix(
     path.posix.normalize(
       resizedImagesPath
         ? path.posix.join(fileDir, resizedImagesPath, modifiedFileName)
@@ -300,3 +221,39 @@ export const getModifiedFilePath = (
     )
   );
 };
+
+/**
+ * Resizes images to all configured sizes and formats
+ */
+export async function resizeImages(
+  bucket: Bucket,
+  localFile: string,
+  parsedPath: path.ParsedPath,
+  objectMetadata: ObjectMetadata
+): Promise<PromiseSettledResult<ResizedImageResult>[]> {
+  // Get a unique list of image types and sizes
+  const imageTypes = new Set(config.imageTypes);
+  const imageSizes = new Set(config.imageSizes);
+
+  const tasks: Promise<ResizedImageResult>[] = [];
+
+  // Create resize tasks for all format/size combinations
+  imageTypes.forEach((format) => {
+    imageSizes.forEach((size) => {
+      tasks.push(
+        modifyImage({
+          bucket,
+          originalFile: localFile,
+          parsedPath,
+          contentType: objectMetadata.contentType,
+          size,
+          objectMetadata,
+          format,
+        })
+      );
+    });
+  });
+
+  // Execute all resize tasks
+  return await Promise.allSettled(tasks);
+}

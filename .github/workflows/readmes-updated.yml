@@ -32,7 +32,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 22
           cache: "npm"
           cache-dependency-path: "**/functions/package-lock.json"
 
@@ -44,14 +44,14 @@ jobs:
           echo "::set-output name=dir::$(npm config get prefix)"
 
       - name: Cache global dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ${{ steps.global-deps-setup.outputs.dir }}
           key:
-            ${{ runner.os }}-npm-global-deps-${{
+            ${{ runner.os }}-npm-global-deps-v1-${{
             hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-npm-global-deps-
+            ${{ runner.os }}-npm-global-deps-v1-
 
       - name: Install Firebase and Lerna
         run: |

@@ -6,36 +6,37 @@
   "main": "lib/index.js",
   "scripts": {
     "prepare": "npm run build",
-    "build": "npm run clean && npm run compile",
+    "build": "npm run clean && npm run compile && shx cp src/placeholder.png lib/",
     "build:watch": "npm run clean && tsc --watch",
-    "clean": "rimraf lib",
+    "clean": "shx rm -rf lib",
     "compile": "tsc",
     "test": "jest",
+    "test:vulnerability": "RUN_VULNERABILITY_TEST=true jest",
+    "test:live-content-filter": "NODE_OPTIONS=--experimental-vm-modules RUN_LIVE_CONTENT_FILTER_TESTS=true jest --testPathPattern=integration/content-filter.live",
     "generate-readme": "firebase ext:info .. --markdown > ../README.md"
   },
   "dependencies": {
-    "@types/node": "14.18.34",
-    "firebase-admin": "^11.4.1",
-    "firebase-functions": "^3.22.0",
-    "mkdirp": "^1.0.4",
-    "rimraf": "^2.6.3",
-    "sharp": "0.32.6",
-    "typescript": "^4.9.4",
-    "uuid": "^9.0.0",
-    "uuidv4": "^6.1.0"
+    "@genkit-ai/vertexai": "^1.2.0",
+    "@types/node": "^20.10.3",
+    "firebase-admin": "^13.2.0",
+    "firebase-functions": "^6.3.1",
+    "genkit": "^1.2.0",
+    "p-queue": "^6.6.2",
+    "sharp": "^0.34.5",
+    "shx": "^0.4.0",
+    "typescript": "^5.7.3"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.18",
-    "@types/mkdirp": "^1.0.1",
+    "@types/jest": "^29.5.14",
     "child_process": "^1.0.2",
-    "dotenv": "^16.0.3",
-    "firebase": "^10.4.0",
-    "firebase-functions-test": "^0.2.3",
-    "image-size": "^0.9.3",
+    "dotenv": "^16.4.7",
+    "firebase": "^11.3.1",
+    "firebase-functions-test": "^3.2.0",
+    "image-size": "^1.2.0",
     "image-type": "^4.1.0",
-    "jest": "^24.9.0",
-    "mocked-env": "^1.3.2",
-    "ts-jest": "^24.1.0"
+    "jest": "^29.7.0",
+    "mocked-env": "^1.3.5",
+    "ts-jest": "^29.2.5"
   },
   "private": true
 }

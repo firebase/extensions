@@ -1,3 +1,76 @@
+## Version 0.3.5
+
+fix - when a custom filter prompt is configured, the content filter no longer silently fails open on Gemini 2.5 Flash safety refusals. If Gemini's input-side safety declines to respond on borderline imagery (returning empty content rather than `finishReason="SAFETY"`), the resulting genkit schema-validation error is now treated as an implicit block instead of being retried 3 times and propagating as a generic filter error. Installs that only set `CONTENT_FILTER_LEVEL` (no custom prompt) were not affected by this path.
+
+fix - any genkit schema-validation failure on the moderation response (not only empty-content safety refusals) is now treated as a content block instead of being retried and surfaced as a generic error.
+
+fix - blocked images are now routed to the failed-image path before placeholder substitution, so the original blocked content is preserved rather than overwritten by the placeholder.
+
+fix - placeholder swap operates on a copy of the original file, so resizing a blocked image produces placeholder-derived outputs without mutating the stored original.
+
+fix - moderation requests now use the uploaded object's content type when constructing the data URL instead of guessing from the file extension.
+
+## Version 0.3.4
+
+chore: bump dependencies
+
+## Version 0.3.3
+
+chore: bump dependencies
+
+## Version 0.3.2
+
+chore: update Cloud Functions runtime to Node.js 22
+
+## Version 0.3.1
+
+chore - bump dependencies
+fix - add missing recordStartEvent call (#2546)
+feat - add new onStartResize event
+chore(storage-resize-images) - Update model to gemini-2.5-flash
+
+## Version 0.3.0
+
+fix! - remove backfill, due to architectural flaws.
+
+## Version 0.2.10
+
+feat - added param for adjusting backfill max batch size
+
+## Version 0.2.9
+
+fixed - run an npm audit and bump vulnerable dependencies
+
+fixed - use Promise.allSettled to await various resizes
+
+feature - Optional AI content filtering with Gemini
+
+## Version 0.2.8
+
+fixed - support '+' character in paths
+
+docs - fix typo in PREINSTALL.md
+
+fixed - handle paths correctly on windows
+
+## Version 0.2.7
+
+fixed - maintain aspect ratio of resized images (#2115)
+
+feat - move to Node.js 20 runtimes
+
+## Version 0.2.6
+
+fixed - bump dependencies, fix vulnerabilities
+
+## Version 0.2.5
+
+fixed - bump dependencies, fix vulnerabilities (#2061)
+
+## Version 0.2.4
+
+fixed - bumped dependencies to latest versions, addressing dependency vulnerabilities
+
 ## Version 0.2.3
 
 docs - add a sample explaining how to use custom events

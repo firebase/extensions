@@ -2,7 +2,7 @@
 
 You can test out this extension right away!
 
-1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/firestore/data) in the Firebase console.
+1.  Go to your [Cloud Firestore dashboard](https://console.firebase.google.com/project/${param:PROJECT_ID}/firestore/data) in the Firebase console. Note that, if you have configured a non-default firestore database, you may have to view it via the [Google Cloud Console](https://console.cloud.google.com/firestore/databases/${param:DATABASE}).
 
 1.  If it doesn't already exist, create the collection you specified during installation: `${param:MAIL_COLLECTION}`.
 
@@ -39,6 +39,85 @@ admin
 ### Using this extension
 
 See the [official documentation](https://firebase.google.com/docs/extensions/official/firestore-send-email) for information on using this extension, including advanced use cases such as using Handlebars templates and managing email delivery status.
+
+#### Firestore-Send-Email: SendGrid Categories
+
+When using SendGrid (`SMTP_CONNECTION_URI` includes `sendgrid.net`), you can assign categories to your emails.
+
+##### Example JSON with Categories:
+```json
+{
+  "to": ["example@example.com"],
+  "categories": ["Example_Category"],
+  "message": {
+    "subject": "Test Email with Categories",
+    "text": "This is a test email to see if categories work.",
+    "html": "<strong>This is a test email to see if categories work.</strong>"
+  }
+}
+```
+
+Add this document to the Firestore mail collection to send categorized emails.
+
+For more details, see the [SendGrid Categories documentation](https://docs.sendgrid.com/ui/sending-email/categories).
+
+#### Firestore-Send-Email: SendGrid Dynamic Templates
+
+When using SendGrid, you can use SendGrid Dynamic Templates to create and send templated emails.
+
+## Example JSON representation of Firestore document for a Dynamic Template:
+```json
+{
+  "to": ["example@example.com"],
+  "sendGrid": {
+    "templateId": "d-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "dynamicTemplateData": {
+      "name": "John Doe",
+      "company": "Example Corp",
+      "position": "Developer"
+    }
+  }
+}
+```
+
+Add this document to the Firestore mail collection to send an email using a SendGrid Dynamic Template. The `templateId` is required and should be your SendGrid Dynamic Template ID (always starts with 'd-'). The `dynamicTemplateData` object contains the variables that will be used in your template.
+
+You can also include optional SendGrid fields in the same `sendGrid` object, such as `customArgs` (string key/value metadata) and `ipPoolName` (IP pool selection).
+
+For more details, see the [SendGrid Dynamic Templates documentation](https://docs.sendgrid.com/ui/sending-email/how-to-send-an-email-with-dynamic-templates).
+
+#### Understanding SendGrid Email IDs
+
+When an email is sent successfully, the extension tracks two different IDs in the delivery information:
+
+- **Queue ID**: This is SendGrid's internal queue identifier (from the `x-message-id` header). It's useful for tracking the email within SendGrid's system.
+- **Message ID**: This is the RFC-2822 Message-ID header, which is a standard email identifier used across email systems.
+
+You can find both IDs in the `delivery.info` field of your email document after successful delivery:
+
+```json
+{
+  "delivery": {
+    "info": {
+      "messageId": "<unique-message-id@your-domain.com>",
+      "sendgridQueueId": "sendgrid-queue-id",
+      "accepted": ["recipient@example.com"],
+      "rejected": [],
+      "pending": [],
+      "response": "status=202"
+    }
+  }
+}
+```
+
+### Automatic Deletion of Email Documents
+
+To use Firestore's TTL feature for automatic deletion of expired email documents, the extension provides several configuration parameters.
+
+The extension will set a TTL field in the email documents, but you will need to manually configure a TTL policy for the collection/collection group the extension targets, on the `delivery.expireAt` field.
+
+Detailed instructions for creating a TTL field can be found in the [Firestore TTL Policy documentation](https://firebase.google.com/docs/firestore/ttl).
+
 
 ### Monitoring
 

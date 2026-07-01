@@ -98,3 +98,132 @@ export const getQueryResult = async (
 
   return queryResult;
 };
+
+export const verifySetupBQ = async (
+  datasetId: string,
+  tableId: string,
+  expectedData: any
+) => {
+  const bq = new BigQuery({ projectId: "dev-extensions-testing" });
+  const dataset = bq.dataset(datasetId);
+  const results = {
+    success: true,
+    errors: [],
+    datasetExists: false,
+    changelogTableExists: false,
+    latestTableExists: false,
+    changelogData: null,
+    latestData: null,
+  };
+
+  try {
+    // Check if dataset exists
+    const [datasetExists] = await dataset.exists();
+    if (!datasetExists) {
+      results.success = false;
+      results.errors.push(`Dataset ${datasetId} does not exist`);
+      return results;
+    }
+    results.datasetExists = true;
+
+    // Check if tables exist
+    const changelogTableId = `${tableId}_raw_changelog`;
+    const latestTableId = `${tableId}_raw_latest`;
+
+    const [changelogTableExists] = await dataset
+      .table(changelogTableId)
+      .exists();
+    const [latestTableExists] = await dataset.table(latestTableId).exists();
+
+    if (!changelogTableExists) {
+      results.success = false;
+      results.errors.push(`Changelog table ${changelogTableId} does not exist`);
+    } else {
+      results.changelogTableExists = true;
+    }
+
+    if (!latestTableExists) {
+      results.success = false;
+      results.errors.push(`Latest table ${latestTableId} does not exist`);
+    } else {
+      results.latestTableExists = true;
+    }
+
+    // If tables don't exist, no need to check data
+    if (!changelogTableExists || !latestTableExists) {
+      return results;
+    }
+
+    // Query tables to verify data was inserted
+    const [changelogRows] = await bq.query(`
+      SELECT * FROM \`${datasetId}.${changelogTableId}\`
+      WHERE document_id = 'test'
+    `);
+
+    const [latestRows] = await bq.query(`
+      SELECT * FROM \`${datasetId}.${latestTableId}\`
+      WHERE document_id = 'test'
+    `);
+
+    // Verify data exists in both tables
+    if (changelogRows.length === 0) {
+      results.success = false;
+      results.errors.push(
+        `No data found in changelog table ${changelogTableId}`
+      );
+    } else {
+      results.changelogData = changelogRows[0];
+
+      // Check if data matches expected
+      try {
+        const parsedData = JSON.parse(changelogRows[0].data);
+        const dataMatches =
+          JSON.stringify(parsedData) === JSON.stringify(expectedData);
+
+        if (!dataMatches) {
+          results.success = false;
+          results.errors.push(
+            `Data in changelog table doesn't match expected data`
+          );
+        }
+      } catch (e) {
+        results.success = false;
+        results.errors.push(
+          `Failed to parse data in changelog table: ${e.message}`
+        );
+      }
+    }
+
+    if (latestRows.length === 0) {
+      results.success = false;
+      results.errors.push(`No data found in latest table ${latestTableId}`);
+    } else {
+      results.latestData = latestRows[0];
+
+      // Check if data matches expected
+      try {
+        const parsedData = JSON.parse(latestRows[0].data);
+        const dataMatches =
+          JSON.stringify(parsedData) === JSON.stringify(expectedData);
+
+        if (!dataMatches) {
+          results.success = false;
+          results.errors.push(
+            `Data in latest table doesn't match expected data`
+          );
+        }
+      } catch (e) {
+        results.success = false;
+        results.errors.push(
+          `Failed to parse data in latest table: ${e.message}`
+        );
+      }
+    }
+
+    return results;
+  } catch (error) {
+    results.success = false;
+    results.errors.push(`Verification failed with error: ${error.message}`);
+    return results;
+  }
+};

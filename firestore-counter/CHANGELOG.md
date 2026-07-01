@@ -1,3 +1,29 @@
+## Version 0.2.16
+
+chore: bump dependencies
+
+## Version 0.2.15
+
+chore: bump dependencies
+
+## Version 0.2.14
+
+chore: update Cloud Functions runtime to Node.js 22
+chore: ran npm run audit fix
+chore: add esModuleInterop and skipLibCheck to tsconfig.json
+
+## Version 0.2.13
+
+chore: bump dependencies
+
+## Version 0.2.12
+
+feat - move to Node.js 20 runtimes
+
+## Version 0.2.11
+
+fixed - updated vulnerable dependencies
+
 ## Version 0.2.10
 
 feature - add custom EventArc events

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,37 +14,45 @@
  * limitations under the License.
  */
 
-import * as fs_find from "fs-find";
-import { readdirSync } from "fs";
+import { readdirSync, statSync } from "fs";
 import { dirname } from "path";
-import { promisify } from "util";
-
-import * as chai from "chai";
 import * as schema_loader_utils from "../../schema-loader-utils";
-
-const expect = chai.expect;
 
 const fixturesDir = __dirname + "/../fixtures";
 const schemaDir = fixturesDir + "/schema-files";
 
-const find = promisify(fs_find);
+// Helper function to recursively get all files in a directory
+function getAllFiles(dirPath: string, arrayOfFiles: string[] = []): string[] {
+  const files = readdirSync(dirPath);
+
+  files.forEach((file) => {
+    const fullPath = dirPath + "/" + file;
+    if (statSync(fullPath).isDirectory()) {
+      arrayOfFiles = getAllFiles(fullPath, arrayOfFiles);
+    } else {
+      arrayOfFiles.push(fullPath);
+    }
+  });
+
+  return arrayOfFiles;
+}
 
 describe("filesystem schema loading", () => {
-  it("should load no schemas from an empty directory", () => {
+  test("should load no schemas from an empty directory", () => {
     const schemas = schema_loader_utils.readSchemas([
       `${schemaDir}/empty-directory`,
     ]);
-    expect(Object.keys(schemas).length).to.equal(0);
+    expect(Object.keys(schemas).length).toBe(0);
   });
-  it("should load one schema from a single file", () => {
+  test("should load one schema from a single file", () => {
     const schemaFile = `${schemaDir}/full-directory/schema-1.json`;
     const schemas = Object.keys(schema_loader_utils.readSchemas([schemaFile]));
-    expect(schemas.length).to.equal(1);
-    expect(schemas[0]).to.equal(
+    expect(schemas.length).toBe(1);
+    expect(schemas[0]).toBe(
       schema_loader_utils.filePathToSchemaName(schemaFile)
     );
   });
-  it("should load many schemas from a full directory, but dedup overlapping names", () => {
+  test("should load many schemas from a full directory, but dedup overlapping names", () => {
     const directoryPath = `${schemaDir}/full-directory`;
     const expectedSchemaNames = [
       ...new Set(
@@ -54,9 +62,9 @@ describe("filesystem schema loading", () => {
       ),
     ];
     const schemas = schema_loader_utils.readSchemas([directoryPath]);
-    expect(Object.keys(schemas)).to.have.members(expectedSchemaNames);
+    expect(new Set(Object.keys(schemas))).toEqual(new Set(expectedSchemaNames));
   });
-  it("should load only schemas with names matching glob pattern", () => {
+  test("should load only schemas with names matching glob pattern", () => {
     const globPattern = `${schemaDir}/full-directory/*.json`;
     const expectedSchemaNames = readdirSync(dirname(globPattern))
       .filter((schemaName) => schemaName.endsWith(".json"))
@@ -64,16 +72,29 @@ describe("filesystem schema loading", () => {
         schema_loader_utils.filePathToSchemaName(schemaFile)
       );
     const schemas = schema_loader_utils.readSchemas([globPattern]);
-    expect(Object.keys(schemas)).to.have.members(expectedSchemaNames);
+    expect(new Set(Object.keys(schemas))).toEqual(new Set(expectedSchemaNames));
   });
-  it("should load all schemas with multiple hierarchy levels", async () => {
-    const globPattern = `${schemaDir}/**/*.json`;
-    const results: string[] = (await find(schemaDir))
-      .filter((schemaFileInfo) => schemaFileInfo.file.endsWith(".json"))
-      .map((schemaFileInfo) =>
-        schema_loader_utils.filePathToSchemaName(schemaFileInfo.file)
-      );
-    const schemas = schema_loader_utils.readSchemas([globPattern]);
-    expect(Object.keys(schemas)).to.have.members(results);
+  test("should load all schemas with multiple hierarchy levels", () => {
+    const allFiles = getAllFiles(schemaDir)
+      .filter((file) => file.endsWith(".json"))
+      .map((file) => schema_loader_utils.filePathToSchemaName(file));
+
+    const schemas = schema_loader_utils.readSchemas([`${schemaDir}/**/*.json`]);
+    expect(new Set(Object.keys(schemas))).toEqual(new Set(allFiles));
+  });
+  test("should load schemas from a comma-separated list of file paths", () => {
+    const schemaFiles = `${schemaDir}/full-directory/schema-1.json,${schemaDir}/full-directory/schema-2.json`;
+    const schemas = Object.keys(schema_loader_utils.readSchemas([schemaFiles]));
+    expect(schemas.length).toBe(2);
+    expect(schemas).toContain(
+      schema_loader_utils.filePathToSchemaName(
+        `${schemaDir}/full-directory/schema-1.json`
+      )
+    );
+    expect(schemas).toContain(
+      schema_loader_utils.filePathToSchemaName(
+        `${schemaDir}/full-directory/schema-2.json`
+      )
+    );
   });
 });

@@ -10,9 +10,20 @@ module.exports = {
       tsConfig: "<rootDir>/__tests__/tsconfig.json",
     },
   },
+  snapshotFormat: {
+    escapeString: true,
+    printBasicPrototype: true,
+  },
   setupFiles: ["<rootDir>/__tests__/jest.setup.ts"],
-  testMatch: ["**/__tests__/*.test.ts"],
+  testMatch: ["**/__tests__/**/*.test.ts"],
   testEnvironment: "node",
+  collectCoverageFrom: [
+    "src/**/*.{js,ts}",
+    "!src/**/*.d.ts",
+    "!**/__tests__/**",
+  ],
+  coverageDirectory: "coverage",
+  coverageReporters: ["text", "lcov", "html"],
   moduleNameMapper: {
     "firebase-admin/app": "<rootDir>/node_modules/firebase-admin/lib/app",
     "firebase-admin/eventarc":

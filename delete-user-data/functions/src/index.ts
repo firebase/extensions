@@ -15,7 +15,11 @@
  */
 
 import * as admin from "firebase-admin";
-import { FieldPath, DocumentReference } from "firebase-admin/firestore";
+import {
+  FieldPath,
+  DocumentReference,
+  getFirestore,
+} from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
 import { getDatabaseUrl, hasValidUserPath } from "./helpers";
 import chunk from "lodash.chunk";
@@ -40,7 +44,8 @@ admin.initializeApp({
   databaseURL,
 });
 
-const db = admin.firestore();
+// Initialize Firestore with the configured database
+const db = getFirestore(config.databaseId);
 
 /** Setup EventArc Channels */
 const eventChannel =
@@ -81,8 +86,11 @@ export const handleDeletion = functions.pubsub
           invalidPaths.push(path);
           continue;
         }
-
-        batch.delete(docRef);
+        if (config.firestoreDeleteMode === "recursive") {
+          await recursiveDelete(path, db);
+        } else {
+          batch.delete(docRef);
+        }
       }
 
       batchArray.push(batch);
@@ -124,7 +132,7 @@ export const handleSearch = functions.pubsub
     if (depth <= config.searchDepth) {
       // If the collection ID is the same as the UID, delete the entire collection and sub-collections
       if (collection.id === uid) {
-        await recursiveDelete(path);
+        await recursiveDelete(path, db);
 
         if (eventChannel) {
           /** Publish event to EventArc */
@@ -148,14 +156,14 @@ export const handleSearch = functions.pubsub
         documentReferences.map(async (reference) => {
           // Start a sub-collection search on each document.
           if (nextDepth <= config.searchDepth) {
-            await search(uid, nextDepth, reference);
+            await search(uid, nextDepth, db, reference);
           }
 
           // If the ID of the document is the same as the UID, add it to delete list.
           if (reference.id === uid) {
             pathsToDelete.push(reference.path);
           }
-          // If the user has search fields, all the document to the list of documents to search.
+          // If the user has search fields, add the document to the list of documents to search.
           else if (config.searchFields) {
             documentReferencesToSearch.push(reference);
           }
@@ -220,7 +228,7 @@ export const clearData = functions.auth.user().onDelete(async (user) => {
 
   /** If search mode enable, run pubsub search fn */
   if (enableSearch) {
-    await search(uid, 1);
+    await search(uid, 1, db);
   }
 
   /** If search function provided, return a list of queries */
@@ -313,19 +321,18 @@ const clearFirestoreData = async (firestorePaths: string, uid: string) => {
       const isRecursive = config.firestoreDeleteMode === "recursive";
 
       if (!isRecursive) {
-        const firestore = admin.firestore();
         logs.firestorePathDeleting(path, false);
 
         // Wrapping in transaction to allow for automatic retries (#48)
-        await firestore.runTransaction((transaction) => {
-          transaction.delete(firestore.doc(path));
+        await db.runTransaction((transaction) => {
+          transaction.delete(db.doc(path));
           return Promise.resolve();
         });
         logs.firestorePathDeleted(path, false);
       } else {
         logs.firestorePathDeleting(path, true);
 
-        await recursiveDelete(path);
+        await recursiveDelete(path, db);
 
         logs.firestorePathDeleted(path, true);
       }

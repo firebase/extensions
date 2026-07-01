@@ -1,3 +1,151 @@
+## Version 0.3.2
+
+fix: restore acceptance of ISO 8601 date/datetime strings as partition field values, regression introduced in 0.3.0 (#2803)
+
+## Version 0.3.1
+
+chore: bump dependencies
+
+## Version 0.3.0
+
+breaking change: reject invalid partitioning configuration combinations at startup with explicit error messages
+
+fix: normalize `NONE` / `omit` partitioning sentinels before mapping to change-tracker 2.x partitioning strategy
+
+## Version 0.2.11
+
+chore: bump firestore-bigquery-change-tracker dependency to v2 in functions package
+
+## Version 0.2.10
+
+chore: add overrides for http-proxy-agent and inquirer to resolve npm audit vulnerabilities
+
+chore: remove unused inquirer dependency from functions
+
+## Version 0.2.9
+
+chore: update Cloud Functions runtime to Node.js 22
+
+## Version 0.2.8
+
+chore: move test/build dependencies to devDependencies
+
+chore: upgrade jest from 25 to 29.5.0 and ts-jest from 27 to 29.1.2
+
+chore: remove unused jest-config dependency
+
+chore: add minimatch override to resolve npm audit vulnerabilities
+
+## Version 0.2.7
+
+chore: bump dependencies
+
+## Version 0.2.6
+
+docs: update docs to reference the correct "latest" view names
+
+## Version 0.2.5
+
+fix: keep partition value on delete using old data
+
+docs: improve "Remove stale data" query in guide
+
+## Version 0.2.4
+
+feat: Add bigquery dataset locations and remove duplicates
+
+## Version 0.2.3
+
+fix: pass full document resource name to bigquery
+
+## Version 0.2.2
+
+fix: remove default value on DATABASE_REGION
+
+## Version 0.2.1
+
+fix: correct database region params and make mutable
+
+## Version 0.2.0
+
+feat - migrate to v2 functions and support non-default firestore instances
+
+fix - fix enqueue logic and types
+
+## Version 0.1.60
+
+feat - configure a log level to control the verbosity of logs.
+
+## Version 0.1.59
+
+docs - remove references to lifecycle backfill feature.
+
+docs - correct typo in maximum dispatches per second.
+
+## Version 0.1.58
+
+feat - move to Node.js 20 runtimes.
+
+## Version 0.1.57
+
+feat - add basic materialized views support, incremental and non-incremental.
+
+fix - do not add/update clustering if an invalid clustering field is present.
+
+docs - improve cross-project IAM documentation
+
+fix - emit correct events to extension, backwardly compatible.
+
+docs - add documentation on workarounds to mitigate data loss during extension updates
+
+## Version 0.1.56
+
+feat - improve sync strategy by immediately writing to BQ, and using cloud tasks only as a last resort
+
+refactor - improve observability/logging of events
+
+chore - remove legacy backfill code
+
+fix - improved usage of the types from change tracker package
+
+feat - remove log failed exports param
+
+## Version 0.1.55
+
+feat - log failed queued tasks
+
+## Version 0.1.54
+
+fixed - bump changetracker and fix more vulnerabilities
+
+## Version 0.1.53
+
+fixed - bump changetracker to fix npm vulnerabilities
+
+## Version 0.1.52
+
+fixed - bump changetracker to fix npm vulnerabilities
+
+## Version 0.1.51
+
+fixed - medium npm vulnerabilities
+
+fixed - rollback broken multiple database parameter option
+
+## Version 0.1.50
+
+fixed - fixed timestamp as a fieldname partitioning
+
+fixed - bump dependencies, fix vulnerabilities (#2061)
+
+fixed - separate tsconfigs (#2065)
+
+fixed - resolve npm vulnerabilities (#2050)
+
+## Version 0.1.49
+
+fix - fix the issue "not creating table on install"
+
 ## Version 0.1.48
 
 fix - fix the error "no resource found for `fsimportexistingdocs`"

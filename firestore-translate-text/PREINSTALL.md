@@ -33,6 +33,22 @@ of languages, such as `en,fr,de`. See the [supported languages list](https://clo
 
 Before installing this extension, make sure that you've [set up a Cloud Firestore database](https://firebase.google.com/docs/firestore/quickstart) in your Firebase project.
 
+#### AI Translations using Gemini
+
+This extension optionally supports using Gemini as an alternative to the Google Cloud Translation API for performing translations.
+
+The extension can access the Gemini API via either Google AI (using an API key) or Vertex AI (using your Google Cloud project). If you choose Google AI, you will need to provide an API key upon installation, which you can create [here](https://ai.google.dev/gemini-api/docs/api-key). If you choose Vertex AI, the extension will use the Gemini models available in your Google Cloud project and does not require an API key.
+
+Gemini models are large language models (LLMs), which can provide more contextual understanding than traditional translation APIs. For example, in the sentence `I left my keys in the bank`, an LLM may be able to determine whether `bank` refers to a financial institution or a riverbank, and provide a more accurate translation.
+
+It is important to note that Gemini should only be used with sanitized input, as prompt injection is a possibility.
+
+#### AI-powered language translation
+This extension makes use of the [Genkit SDK](http://genkit.dev/) to perform AI-powered language translation using large language models such as Gemini from Vertex AI or Google AI. For further information, check out the genkit documentation at [genkit.dev](http://genkit.dev/).
+
+##### Notes:
+- Using the Gemini API may have a different pricing model than the Cloud Translation API.
+
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
 

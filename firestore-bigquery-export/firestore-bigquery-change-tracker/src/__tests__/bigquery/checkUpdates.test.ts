@@ -2,21 +2,69 @@ import { BigQuery } from "@google-cloud/bigquery";
 import { FirestoreDocumentChangeEvent } from "../..";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { deleteTable } from "../fixtures/clearTables";
+import * as functions from "firebase-functions";
+import { logger } from "../../logger";
+const functionsLogger = functions.logger;
 
 import {
   tableRequiresUpdate,
   viewRequiresUpdate,
 } from "../../bigquery/checkUpdates";
 
-process.env.PROJECT_ID = "extensions-testing";
+process.env.PROJECT_ID = "dev-extensions-testing";
 
-const bq: BigQuery = new BigQuery();
+const bq: BigQuery = new BigQuery({ projectId: process.env.PROJECT_ID });
 const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
 let randomID: string;
 let datasetId: string;
 let tableId: string;
 let tableId_raw: string;
 describe("Checking updates", () => {
+  beforeEach(async () => {
+    jest.spyOn(logger, "debug").mockImplementation(() => {});
+    jest.spyOn(logger, "info").mockImplementation(() => {});
+    jest.spyOn(logger, "warn").mockImplementation(() => {});
+    jest.spyOn(logger, "error").mockImplementation(() => {});
+
+    jest.spyOn(functionsLogger, "debug").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "info").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "warn").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "error").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "log").mockImplementation(() => {});
+  });
+
+  afterEach(async () => {
+    // For logger (these should work fine if they're real methods)
+    if (logger.debug && jest.isMockFunction(logger.debug)) {
+      (logger.debug as jest.Mock).mockRestore();
+    }
+    if (logger.info && jest.isMockFunction(logger.info)) {
+      (logger.info as jest.Mock).mockRestore();
+    }
+    if (logger.warn && jest.isMockFunction(logger.warn)) {
+      (logger.warn as jest.Mock).mockRestore();
+    }
+    if (logger.error && jest.isMockFunction(logger.error)) {
+      (logger.error as jest.Mock).mockRestore();
+    }
+
+    // For functionsLogger, check if it's a mock function first
+    if (functionsLogger.debug && jest.isMockFunction(functionsLogger.debug)) {
+      (functionsLogger.debug as jest.Mock).mockReset();
+    }
+    if (functionsLogger.info && jest.isMockFunction(functionsLogger.info)) {
+      (functionsLogger.info as jest.Mock).mockReset();
+    }
+    if (functionsLogger.warn && jest.isMockFunction(functionsLogger.warn)) {
+      (functionsLogger.warn as jest.Mock).mockReset();
+    }
+    if (functionsLogger.error && jest.isMockFunction(functionsLogger.error)) {
+      (functionsLogger.error as jest.Mock).mockReset();
+    }
+    if (functionsLogger.log && jest.isMockFunction(functionsLogger.log)) {
+      (functionsLogger.log as jest.Mock).mockReset();
+    }
+  });
   describe("for a table", () => {
     beforeEach(() => {
       randomID = (Math.random() + 1).toString(36).substring(7);
@@ -75,10 +123,7 @@ describe("Checking updates", () => {
               tableId,
               datasetLocation: undefined,
               transformFunction: undefined,
-              timePartitioning: undefined,
-              timePartitioningField: undefined,
-              timePartitioningFieldType: undefined,
-              timePartitioningFirestoreField: undefined,
+              partitioning: undefined,
               bqProjectId: undefined,
             },
             documentIdColExists: true,
@@ -107,10 +152,7 @@ describe("Checking updates", () => {
               tableId,
               datasetLocation: undefined,
               transformFunction: undefined,
-              timePartitioning: undefined,
-              timePartitioningField: undefined,
-              timePartitioningFieldType: undefined,
-              timePartitioningFirestoreField: undefined,
+              partitioning: undefined,
               bqProjectId: undefined,
             },
             documentIdColExists: true,
@@ -138,10 +180,7 @@ describe("Checking updates", () => {
               tableId,
               datasetLocation: undefined,
               transformFunction: undefined,
-              timePartitioning: undefined,
-              timePartitioningField: undefined,
-              timePartitioningFieldType: undefined,
-              timePartitioningFirestoreField: undefined,
+              partitioning: undefined,
               bqProjectId: undefined,
             },
             documentIdColExists: true,
@@ -157,9 +196,12 @@ describe("Checking updates", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "DAY",
-          timePartitioningField: "test",
-          timePartitioningFieldType: "TIMESTAMP",
+          partitioning: {
+            granularity: "DAY",
+            bigqueryColumnName: "test",
+            bigqueryColumnType: "TIMESTAMP",
+            firestoreFieldName: "test",
+          },
         }).record([event]);
 
         const raw_changelog_table = bq.dataset(datasetId).table(tableId_raw);
@@ -173,10 +215,7 @@ describe("Checking updates", () => {
               tableId,
               datasetLocation: undefined,
               transformFunction: undefined,
-              timePartitioning: undefined,
-              timePartitioningField: undefined,
-              timePartitioningFieldType: undefined,
-              timePartitioningFirestoreField: undefined,
+              partitioning: undefined,
               bqProjectId: undefined,
             },
             documentIdColExists: true,
@@ -190,9 +229,12 @@ describe("Checking updates", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "DAY",
-          timePartitioningField: "test",
-          timePartitioningFieldType: "TIMESTAMP",
+          partitioning: {
+            granularity: "DAY",
+            bigqueryColumnName: "test",
+            bigqueryColumnType: "TIMESTAMP",
+            firestoreFieldName: "test",
+          },
         }).record([event]);
 
         const raw_changelog_table = bq.dataset(datasetId).table(tableId_raw);
@@ -207,10 +249,7 @@ describe("Checking updates", () => {
               tableId,
               datasetLocation: undefined,
               transformFunction: undefined,
-              timePartitioning: undefined,
-              timePartitioningField: undefined,
-              timePartitioningFieldType: undefined,
-              timePartitioningFirestoreField: undefined,
+              partitioning: undefined,
               bqProjectId: undefined,
             },
             documentIdColExists: true,
@@ -236,10 +275,12 @@ describe("Checking updates", () => {
               clustering: [],
               datasetId,
               tableId,
-              timePartitioning: "DAY",
-              timePartitioningField: "test",
-              timePartitioningFieldType: "TIMESTAMP",
-              timePartitioningFirestoreField: "test",
+              partitioning: {
+                granularity: "DAY",
+                bigqueryColumnName: "test",
+                bigqueryColumnType: "TIMESTAMP",
+                firestoreFieldName: "test",
+              },
             },
             documentIdColExists: true,
             pathParamsColExists: false,
@@ -380,10 +421,7 @@ describe("Checking updates", () => {
               tableId,
               datasetLocation: undefined,
               transformFunction: undefined,
-              timePartitioning: undefined,
-              timePartitioningField: undefined,
-              timePartitioningFieldType: undefined,
-              timePartitioningFirestoreField: undefined,
+              partitioning: undefined,
               bqProjectId: undefined,
             },
             documentIdColExists: true,
@@ -411,10 +449,7 @@ describe("Checking updates", () => {
               tableId,
               datasetLocation: undefined,
               transformFunction: undefined,
-              timePartitioning: undefined,
-              timePartitioningField: undefined,
-              timePartitioningFieldType: undefined,
-              timePartitioningFirestoreField: undefined,
+              partitioning: undefined,
               bqProjectId: undefined,
             },
             documentIdColExists: true,
@@ -441,10 +476,7 @@ describe("Checking updates", () => {
               tableId,
               datasetLocation: undefined,
               transformFunction: undefined,
-              timePartitioning: undefined,
-              timePartitioningField: undefined,
-              timePartitioningFieldType: undefined,
-              timePartitioningFirestoreField: undefined,
+              partitioning: undefined,
               bqProjectId: undefined,
             },
             documentIdColExists: true,
@@ -460,9 +492,12 @@ describe("Checking updates", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "DAY",
-          timePartitioningField: "test",
-          timePartitioningFieldType: "TIMESTAMP",
+          partitioning: {
+            granularity: "DAY",
+            bigqueryColumnName: "test",
+            bigqueryColumnType: "TIMESTAMP",
+            firestoreFieldName: "test",
+          },
         }).record([event]);
 
         expect(
@@ -473,10 +508,7 @@ describe("Checking updates", () => {
               tableId,
               datasetLocation: undefined,
               transformFunction: undefined,
-              timePartitioning: undefined,
-              timePartitioningField: undefined,
-              timePartitioningFieldType: undefined,
-              timePartitioningFirestoreField: undefined,
+              partitioning: undefined,
               bqProjectId: undefined,
             },
             documentIdColExists: true,
@@ -490,9 +522,12 @@ describe("Checking updates", () => {
         await changeTracker({
           datasetId,
           tableId,
-          timePartitioning: "DAY",
-          timePartitioningField: "test",
-          timePartitioningFieldType: "TIMESTAMP",
+          partitioning: {
+            granularity: "DAY",
+            bigqueryColumnName: "test",
+            bigqueryColumnType: "TIMESTAMP",
+            firestoreFieldName: "test",
+          },
         }).record([event]);
 
         const raw_changelog_table = bq.dataset(datasetId).table(tableId_raw);
@@ -506,10 +541,7 @@ describe("Checking updates", () => {
               tableId,
               datasetLocation: undefined,
               transformFunction: undefined,
-              timePartitioning: undefined,
-              timePartitioningField: undefined,
-              timePartitioningFieldType: undefined,
-              timePartitioningFirestoreField: undefined,
+              partitioning: undefined,
               bqProjectId: undefined,
             },
             documentIdColExists: true,
@@ -534,10 +566,12 @@ describe("Checking updates", () => {
               clustering: [],
               datasetId,
               tableId,
-              timePartitioning: "DAY",
-              timePartitioningField: "test",
-              timePartitioningFieldType: "TIMESTAMP",
-              timePartitioningFirestoreField: "test",
+              partitioning: {
+                granularity: "DAY",
+                bigqueryColumnName: "test",
+                bigqueryColumnType: "TIMESTAMP",
+                firestoreFieldName: "test",
+              },
             },
             documentIdColExists: true,
             pathParamsColExists: false,
@@ -603,6 +637,9 @@ describe("Checking updates", () => {
               datasetId,
               tableId,
               wildcardIds: false,
+              partitioning: {
+                granularity: "NONE",
+              },
             },
             documentIdColExists: true,
             pathParamsColExists: true,
@@ -736,6 +773,7 @@ describe("Checking updates", () => {
         }).record([event]);
 
         const raw_changelog_table = bq.dataset(datasetId).table(tableId_raw);
+
         const [metadata] = await raw_changelog_table.getMetadata();
 
         expect(

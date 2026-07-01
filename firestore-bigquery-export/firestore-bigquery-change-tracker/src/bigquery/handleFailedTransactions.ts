@@ -1,18 +1,21 @@
-import * as firebase from "firebase-admin";
+import * as admin from "firebase-admin";
+import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import { FirestoreBigQueryEventHistoryTrackerConfig } from ".";
+import { ChangeTrackerConfig } from ".";
 
-if (!firebase.apps.length) {
-  firebase.initializeApp();
-  firebase.firestore().settings({ ignoreUndefinedProperties: true });
+if (!admin.apps.length) {
+  initializeApp();
 }
 
 export default async (
   rows: any[],
-  config: FirestoreBigQueryEventHistoryTrackerConfig,
+  config: ChangeTrackerConfig,
   e: Error
 ): Promise<void> => {
-  const db = getFirestore();
+  const db = getFirestore(config.firestoreInstanceId!);
+  db.settings({
+    ignoreUndefinedProperties: true,
+  });
   const batchArray = [db.batch()];
 
   let operationCounter = 0;

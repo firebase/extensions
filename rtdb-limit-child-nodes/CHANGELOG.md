@@ -1,3 +1,35 @@
+## Version 0.1.19
+
+chore: bump dependencies
+
+## Version 0.1.18
+
+chore: bump dependencies
+
+## Version 0.1.17
+
+chore: update Cloud Functions runtime to Node.js 22
+
+## Version 0.1.16
+
+chore: bump dependencies
+
+## Version 0.1.15
+
+feat - move to Node.js 20 runtimes
+
+## Version 0.1.14
+
+fixed - bump dependencies to fix vulnerabilities
+
+## Version 0.1.13
+
+fixed - bump dependencies, fix vulnerabilities (#2061)
+
+## Version 0.1.12
+
+fixed - updated vulnerable dependencies
+
 ## Version 0.1.11
 
 build - updated depenencies

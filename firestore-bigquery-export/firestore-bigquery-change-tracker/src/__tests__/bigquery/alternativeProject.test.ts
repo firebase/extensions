@@ -6,7 +6,7 @@ import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { deleteTable } from "../fixtures/clearTables";
 import { getBigQueryTableData } from "../fixtures/queries";
 
-process.env.PROJECT_ID = "extensions-testing";
+process.env.PROJECT_ID = "dev-extensions-testing";
 
 let bq: BigQuery;
 let randomID: string;
@@ -21,7 +21,7 @@ describe("Using an alternative bigquery project", () => {
     randomID = (Math.random() + 1).toString(36).substring(7);
     datasetId = `dataset_${randomID}`;
     tableId = `table_${randomID}`;
-    bq = new BigQuery();
+    bq = new BigQuery({ projectId: process.env.PROJECT_ID });
   });
   describe("has a valid alternative project id", () => {
     beforeEach(async () => {

@@ -1,3 +1,61 @@
+## Version 0.1.29
+
+chore: bump dependencies
+
+## Version 0.1.28
+
+chore: switch from `googleai` and `vertexai` Genkit plugins to `google-genai`
+
+fix - remove deprecated gemini-2.0-flash and gemini-2.0-flash-lite model options
+
+## Version 0.1.27
+
+chore: update Cloud Functions runtime to Node.js 22
+
+## Version 0.1.26
+
+chore: bump dependencies
+
+## Version 0.1.25
+
+feat - add Gemini 2.5 Flash Lite
+
+## Version 0.1.24
+
+feat - update to allow using Gemini models from Google AI or Vertex AI
+
+feat - choose between latest 2.5 Gemini models from Google AI or Vertex AI
+
+## Version 0.1.23
+
+fixed - backfill feature is disabled for now
+
+## Version 0.1.22
+
+feat - move to Node.js 20 runtimes
+
+## Version 0.1.21
+
+feat - update docs and config setup for AI Translations with Gemini
+
+docs - add disclaimer about prompt injection
+
+## Version 0.1.20
+
+feat - add optional Gemini translations powered by Firebase Genkit
+
+## Version 0.1.19
+
+fixed - bump dependencies, fix vulnerabilities
+
+## Version 0.1.18
+
+fixed - bump dependencies, fix vulnerabilities (#2061)
+
+## Version 0.1.17
+
+fixed - updated vulnerable dependencies
+
 ## Version 0.1.16
 
 fix - temporarily disable backfill feature

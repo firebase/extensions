@@ -2,7 +2,7 @@ import * as fs from "fs";
 
 import mockedEnv from "mocked-env";
 import sizeOf from "image-size";
-import * as sharp from "sharp";
+import sharp from "sharp";
 
 const environment = {
   LOCATION: "us-central1",
@@ -16,14 +16,16 @@ const environment = {
 let restoreEnv;
 restoreEnv = mockedEnv(environment);
 
+import { resize } from "../src/resize-image";
+
 import {
-  resize,
   supportedContentTypes,
   supportedImageContentTypeMap,
-} from "../src/resize-image";
+} from "../src/global";
 
-// 100x100
-const TEST_IMAGE = `${__dirname}/test-image.png`;
+import * as path from "path";
+
+const TEST_IMAGE = path.join(__dirname, "test-image.png");
 
 describe("extension", () => {
   beforeEach(() => {

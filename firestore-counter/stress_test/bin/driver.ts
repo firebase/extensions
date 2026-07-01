@@ -15,7 +15,7 @@
  */
 
 import { initializeApp, credential } from "firebase-admin";
-import * as uuid from "uuid";
+import { v4 as uuidv4 } from "uuid";
 
 let serviceAccount = require("../../test-project-key.json");
 
@@ -39,11 +39,11 @@ async function main() {
     const timestamp = Date.now();
     const batch = db.batch();
     range(100).forEach(() => {
-      const taskRef = db.collection("stress_test_queue").doc(uuid.v4());
+      const taskRef = db.collection("stress_test_queue").doc(uuidv4());
       const taskInfo = {
         docs: range(10).map(() => {
           return {
-            path: "stress_test/counter/_counter_shards_/" + uuid.v4(),
+            path: "stress_test/counter/_counter_shards_/" + uuidv4(),
             object: { counter: 1 },
           };
         }),

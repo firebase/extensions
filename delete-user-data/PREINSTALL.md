@@ -14,6 +14,8 @@ Depending on where you'd like to delete user data from, make sure that you've se
 
 Also, make sure that you've set up [Firebase Authentication](https://firebase.google.com/docs/auth) to manage your users.
 
+**Note about multiple Firestore databases:** This extension supports using non-default Firestore databases. During installation, you can specify which database to use via the `FIRESTORE_DATABASE_ID` parameter. Use "(default)" for the default database, or specify your named database ID.
+
 #### Billing
 To install an extension, your project must be on the [Blaze (pay as you go) plan](https://firebase.google.com/pricing)
  

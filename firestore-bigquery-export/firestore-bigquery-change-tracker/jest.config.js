@@ -4,9 +4,10 @@ module.exports = {
   name: packageJson.name,
   displayName: packageJson.name,
   rootDir: "./",
+  types: ["jest", "node"],
   globals: {
     "ts-jest": {
-      tsConfig: "<rootDir>/tsconfig.json",
+      tsConfig: "<rootDir>/tsconfig.test.json",
     },
   },
   preset: "ts-jest",

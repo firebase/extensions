@@ -13,7 +13,7 @@
 # limitations under the License.
 
 name: storage-resize-images
-version: 0.2.3
+version: 0.3.5
 specVersion: v1beta
 
 displayName: Resize Images
@@ -49,6 +49,8 @@ apis:
 roles:
   - role: storage.admin
     reason: Allows the extension to store resized images in Cloud Storage
+  - role: aiplatform.user
+    reason: Allows use of Gemini models for AI content filtering, if enabled.
 
 resources:
   - name: generateResizedImage
@@ -58,19 +60,20 @@ resources:
       resizes the images, then stores the resized images in the same bucket.
       Optionally keeps or deletes the original images.
     properties:
-      runtime: nodejs18
+      runtime: nodejs22
       availableMemoryMb: ${param:FUNCTION_MEMORY}
       eventTrigger:
         eventType: google.storage.object.finalize
         resource: projects/_/buckets/${param:IMG_BUCKET}
-  - name: backfillResizedImages
-    type: firebaseextensions.v1beta.function
-    description: >-
-      Handles tasks from startBackfill to resize existing images.
-    properties:
-      runtime: nodejs18
-      availableMemoryMb: ${param:FUNCTION_MEMORY}
-      taskQueueTrigger: {}
+  # Backfill feature disabled - commented out to preserve code
+  # - name: backfillResizedImages
+  #   type: firebaseextensions.v1beta.function
+  #   description: >-
+  #     Handles tasks from startBackfill to resize existing images.
+  #   properties:
+  #     runtime: nodejs20
+  #     availableMemoryMb: ${param:FUNCTION_MEMORY}
+  #     taskQueueTrigger: {}
 
 params:
   - param: IMG_BUCKET
@@ -109,9 +112,7 @@ params:
     label: Deletion of original file
     description: >-
       Do you want to automatically delete the original file from the Cloud
-      Storage bucket? Warning: these deletions cannot be undone, and if you
-      reconfigure this instance to use different image dimensions, you won't be
-      able to backfill deleted images.
+      Storage bucket? Warning: these deletions cannot be undone.
     type: select
     options:
       - label: Don't delete
@@ -314,18 +315,33 @@ params:
     required: true
     immutable: false
 
-  - param: DO_BACKFILL
-    label: Backfill existing images
-    description: >
-      Should existing, unresized images in the Storage bucket be resized as
-      well?
-    type: select
-    required: true
-    options:
-      - label: Yes
-        value: true
-      - label: No
-        value: false
+  # Backfill parameters disabled - commented out to preserve code
+  # - param: DO_BACKFILL
+  #   label: Backfill existing images
+  #   description: >
+  #     Should existing, unresized images in the Storage bucket be resized as
+  #     well?
+  #   type: select
+  #   required: true
+  #   options:
+  #     - label: Yes
+  #       value: true
+  #     - label: No
+  #       value: false
+
+  # - param: BACKFILL_BATCH_SIZE
+  #   label: Backfill batch size
+  #   description: >
+  #     The maximum number of images to resize in a single batch. By default, the
+  #     function is configured to resize 3 images at a time. This is a
+  #     conservative default to work with smallest memory option (512 MB).
+  #
+  #     WARNING: Ensure your function has enough memory to handle the batch size.
+  #   type: string
+  #   default: 3
+  #   validationRegex: ^[1-9][0-9]*$
+  #   validationErrorMessage: Please provide a valid number.
+  #   required: false
 
   - param: REGENERATE_TOKEN
     label: Assign new access token
@@ -340,6 +356,55 @@ params:
         value: true
       - label: No
         value: false
+
+  - param: CONTENT_FILTER_LEVEL
+    label: Content filter level
+    description: >
+      Set the level of content filtering to apply to uploaded images. Choose
+      'OFF' to disable content filtering entirely, 'BLOCK_ONLY_HIGH' to block
+      only high-severity inappropriate content, 'BLOCK_MEDIUM_AND_ABOVE' for
+      medium and high severity content, or 'BLOCK_LOW_AND_ABOVE' for the
+      strictest filtering (blocks low, medium, and high severity content).
+    type: select
+    options:
+      - label: Off (No filtering)
+        value: OFF
+      - label: Low strictness (Block only high severity content)
+        value: BLOCK_ONLY_HIGH
+      - label: Medium strictness (Block medium and high severity content)
+        value: BLOCK_MEDIUM_AND_ABOVE
+      - label: High strictness (Block low, medium, and high severity content)
+        value: BLOCK_LOW_AND_ABOVE
+    default: OFF
+    required: true
+
+  - param: CUSTOM_FILTER_PROMPT
+    label: Custom content filter prompt
+    description: >
+      Optionally, provide a custom prompt for content filtering. This allows you
+      to define specific criteria for filtering beyond the standard categories.
+      Note that this prompt should be a yes/no question. For example, "Does this
+      image contain a cat?" will filter out images that Gemini thinks contain a
+      cat. This is additional filtering on top of whichever content filtering
+      level you choose. Leave empty to use just your selected built-in content
+      filtering configuration.
+    type: string
+    example: "Does this image contain violent or threatening content?"
+    required: false
+
+  - param: PLACEHOLDER_IMAGE_PATH
+    label: Path to placeholder image
+    description: >
+      Optionally, specify a path to a placeholder image to use when an uploaded
+      image is blocked by content filtering. This should be a relative path
+      within your storage bucket. If not provided, a default placeholder image
+      is used.
+    type: string
+    example: "placeholders/blocked-content.jpg"
+    validationRegex: ^([a-zA-Z0-9_\-\./]+)\.(png|jpg|jpeg|gif|webp)$
+    validationErrorMessage:
+      Please provide a valid image path within your bucket.
+    required: false
 
 events:
   - type: firebase.extensions.storage-resize-images.v1.onStart
@@ -362,13 +427,19 @@ events:
       Occurs when the function is settled. Provides no customized data other
       than the context.
 
-lifecycleEvents:
-  onInstall:
-    function: backfillResizedImages
-    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
-  onUpdate:
-    function: backfillResizedImages
-    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
-  onConfigure:
-    function: backfillResizedImages
-    processingMessage: Resizing existing images in ${param:IMG_BUCKET}
+  - type: firebase.extensions.storage-resize-images.v1.onStartResize
+    description:
+      Occurs when an image resize operation completes successfully. This event
+      is only triggered when shouldResize returns true and the resize operation
+      succeeds.
+# Lifecycle events disabled - backfill feature commented out
+# lifecycleEvents:
+#   onInstall:
+#     function: backfillResizedImages
+#     processingMessage: Resizing existing images in ${param:IMG_BUCKET}
+#   onUpdate:
+#     function: backfillResizedImages
+#     processingMessage: Resizing existing images in ${param:IMG_BUCKET}
+#   onConfigure:
+#     function: backfillResizedImages
+#     processingMessage: Resizing existing images in ${param:IMG_BUCKET}

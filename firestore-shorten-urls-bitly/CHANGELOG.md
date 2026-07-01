@@ -1,3 +1,45 @@
+## Version 0.2.5
+
+chore: bump dependencies
+
+## Version 0.2.4
+
+chore: bump dependencies
+
+## Version 0.2.3
+
+chore: update Cloud Functions runtime to Node.js 22
+
+## Version 0.2.2
+
+fix: remove default value on DATABASE_REGION
+
+## Version 0.2.1
+
+fix: correct database region params and make mutable
+
+## Version 0.2.0
+
+feat: use v2 firestore trigger
+
+feat: allow non-(default) firestore instances
+
+## Version 0.1.18
+
+feat - move to Node.js 20 runtimes
+
+## Version 0.1.17
+
+fixed - bump dependencies, fix vulnerabilities
+
+## Version 0.1.16
+
+fixed - bump dependencies, fix vulnerabilities (#2061)
+
+## Version 0.1.15
+
+fixed - updated vulnerable dependencies
+
 ## Version 0.1.14
 
 feature - add optional custom events

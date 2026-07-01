@@ -4,9 +4,9 @@ import { RawChangelogSchema } from "../../bigquery/schema";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { deleteTable } from "../fixtures/clearTables";
 
-process.env.PROJECT_ID = "extensions-testing";
+process.env.PROJECT_ID = "dev-extensions-testing";
 
-const bq: BigQuery = new BigQuery();
+const bq: BigQuery = new BigQuery({ projectId: process.env.PROJECT_ID });
 const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
 let randomID: string;
 let datasetId: string;
@@ -15,9 +15,15 @@ let tableId_raw: string;
 let myTable: Table;
 let myDataset: Dataset;
 
-const { logger } = require("firebase-functions");
+import { logger } from "../../logger";
 
-const consoleLogSpy = jest.spyOn(logger, "log").mockImplementation();
+import * as functions from "firebase-functions";
+
+const functionsLogger = functions.logger;
+
+let consoleLogSpy;
+let consoleWarnSpy;
+let loggerDebugSpy;
 
 describe("Clustering ", () => {
   beforeEach(() => {
@@ -25,9 +31,28 @@ describe("Clustering ", () => {
     datasetId = `dataset_${randomID}`;
     tableId = `table_${randomID}`;
     tableId_raw = `${tableId}_raw_changelog`;
+
+    loggerDebugSpy = jest.spyOn(logger, "debug").mockImplementation(() => {});
+    jest.spyOn(logger, "info").mockImplementation(() => {});
+    consoleWarnSpy = jest.spyOn(logger, "warn").mockImplementation(() => {});
+    jest.spyOn(logger, "error").mockImplementation(() => {});
+
+    jest.spyOn(functionsLogger, "debug").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "info").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "warn").mockImplementation(() => {});
+    jest.spyOn(functionsLogger, "error").mockImplementation(() => {});
   });
 
   afterEach(async () => {
+    (logger.debug as jest.Mock).mockRestore();
+    (logger.info as jest.Mock).mockRestore();
+    (logger.warn as jest.Mock).mockRestore();
+    (logger.error as jest.Mock).mockRestore();
+
+    (functionsLogger.debug as jest.Mock).mockRestore();
+    (functionsLogger.info as jest.Mock).mockRestore();
+    (functionsLogger.warn as jest.Mock).mockRestore();
+    (functionsLogger.error as jest.Mock).mockRestore();
     await deleteTable({
       datasetId,
     });
@@ -47,7 +72,7 @@ describe("Clustering ", () => {
 
       expect(changeLogMetaData.clustering).toBeUndefined();
 
-      expect(consoleLogSpy).toBeCalledWith(
+      expect(loggerDebugSpy).toHaveBeenCalledWith(
         `Creating BigQuery table: ${raw_changelog_table.id}`
       );
     });
@@ -88,10 +113,12 @@ describe("Clustering ", () => {
       await changeTracker({
         datasetId,
         tableId,
-        timePartitioning: "DAY",
-        timePartitioningField: "end_date",
-        timePartitioningFieldType: "TIMESTAMP",
-        timePartitioningFirestoreField: "endDate",
+        partitioning: {
+          granularity: "DAY",
+          bigqueryColumnName: "end_date",
+          bigqueryColumnType: "TIMESTAMP",
+          firestoreFieldName: "endDate",
+        },
         clustering: ["end_date"],
       }).record([event]);
 
@@ -280,6 +307,10 @@ describe("Clustering ", () => {
 
       const [metadata] = await myDataset.table(tableId_raw).getMetadata();
 
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        "Unable to add clustering, field(s) unknown do not exist on the expected table"
+      );
+
       expect(metadata.clustering.fields[0]).toBe("data");
       expect(metadata.clustering.fields[1]).toBe("timestamp");
     });
@@ -299,6 +330,40 @@ describe("Clustering ", () => {
 
       const [metadata] = await myDataset.table(tableId_raw).getMetadata();
 
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        "Unable to add clustering, field(s) data,unknown,timestamp do not exist on the expected table"
+      );
+      expect(metadata.clustering).toBeUndefined();
+    });
+
+    test("does not add clustering and warns the user when an invalid type has been provided", async () => {
+      const schema = {
+        fields: [
+          ...RawChangelogSchema.fields,
+          {
+            name: "custom",
+            mode: "NULLABLE",
+            type: "JSON",
+            description: "Custom field",
+          },
+        ],
+      };
+
+      [myTable] = await myDataset.createTable(tableId_raw, {
+        schema,
+      });
+
+      await changeTracker({
+        datasetId,
+        tableId,
+        clustering: ["custom"],
+      }).record([event]);
+
+      const [metadata] = await myDataset.table(tableId_raw).getMetadata();
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        "Unable to add clustering, field(s) custom (JSON) have invalid types."
+      );
       expect(metadata.clustering).toBeUndefined();
     });
   });

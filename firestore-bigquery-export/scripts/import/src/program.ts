@@ -55,7 +55,20 @@ export const getCLIOptions = () => {
       "Whether to use updated latest snapshot query"
     )
     .option(
+      "-f, --transform-function-url <transform-function-url>",
+      "URL of function to transform data before export (e.g., https://us-west1-project.cloudfunctions.net/transform)"
+    )
+    .option(
       "-e, --use-emulator [true|false]",
       "Whether to use the firestore emulator"
+    )
+    .option(
+      "-f, --failed-batch-output <file>",
+      "Path to the JSON file where failed batches will be recorded."
+    )
+    .option(
+      "--firestore-instance-id <database-id>",
+      "The Firestore database instance ID. Use '(default)' for the default database.",
+      "(default)"
     );
 };
