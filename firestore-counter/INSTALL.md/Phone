@@ -1,31 +1,4 @@
-### Post-installation configuration
-
-Before you can use this extension, you'll need to update your security rules and add some code to your JavaScript app.
-
-
-#### Update security rules
-
-Update your Cloud Firestore security rules to allow lookups and writes to the `_counter_shards_` subcollection where you want the extension to count. For example, to allow clients to increment the `visits` field on any document in the `pages` collection, you can write rules like this:
-
-```
-match /databases/{database}/documents/pages/{page} {
-  // Allow to increment only the 'visits' field and only by 1.
-  match /_counter_shards_/{shardId} {
-    allow get;
-    allow write: if request.resource.data.keys() == ["visits"]
-                   && (resource == null || request.resource.data.visits ==
-                   resource.data.visits + 1);
-  }
-}
-```
-
-#### Client/Admin samples for incrementing counter and retrieving its value
-
-##### Web Client (<v9 example)
-
-1.  Download and copy the [compiled client sample](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/dist/sharded-counter.js) into your application project.
-
-1.  Use the client sample in your code to increment counters. The code snippet below shows an example of how to use it. To see the full reference implementation, refer to the sample's TypeScript [source code](https://github.com/firebase/extensions/blob/master/firestore-counter/clients/web/src/index.ts).
+).
 
   ```html
   <html>
