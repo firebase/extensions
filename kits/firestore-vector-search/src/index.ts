@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-/**
- * firestore-vector-search — npm-shared Firebase Function migrated from the Firebase Extension of
- * the same name.
- *
- * Skeleton package: not yet implemented. Target shape follows the
- * firestore-bigquery-export reference package — a `define...` factory (tier 3)
- * over injectable handlers (tier 2), with a side-effect-free `./lib` surface and
- * this env-driven entry registering functions for the clone-and-deploy example.
- */
+import { configFromEnv } from "./config";
+import { defineFirestoreVectorSearch } from "./factory";
 
-export {};
+export * from "./lib";
+
+export const {
+  updateTrigger,
+  updateTask,
+  backfillTrigger,
+  backfillTask,
+  embedOnWrite,
+  queryOnWrite,
+  queryCallable,
+  initVectorSearch,
+} = defineFirestoreVectorSearch(configFromEnv());
