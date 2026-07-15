@@ -12,7 +12,6 @@
   },
   "devDependencies": {
     "prettier": "1.19.1",
-    "ts-node": "^7.0.1",
     "wait-for-expect": "^3.0.2",
     "@types/jest": "29.5.0",
     "jest": "29.7.0",
