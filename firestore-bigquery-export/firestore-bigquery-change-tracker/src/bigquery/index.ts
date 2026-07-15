@@ -142,7 +142,7 @@ export class FirestoreBigQueryEventHistoryTracker
           `Transform function failed with status ${response.status}: ${response.statusText}`
         );
       }
-      const responseJson = await response.json();
+      const responseJson: any = await response.json();
       // To support callable functions, first check result.data
       return responseJson?.result?.data ?? responseJson.data;
     }

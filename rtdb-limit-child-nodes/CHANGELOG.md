@@ -1,3 +1,7 @@
+## Version 0.1.20
+
+chore: bump Firebase Admin and Functions dependencies
+
 ## Version 0.1.19
 
 chore: bump dependencies

@@ -5,12 +5,12 @@
     "url": "git+https://github.com/firebase/extensions.git",
     "directory": "firestore-bigquery-export/firestore-bigquery-change-tracker"
   },
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Core change-tracker library for Cloud Firestore Collection BigQuery Exports",
   "main": "./lib/index.js",
   "scripts": {
     "build": "npm run clean && npm run compile",
-    "clean": "rimraf lib",
+    "clean": "node -e \"require('fs').rmSync('lib', { recursive: true, force: true })\"",
     "compile": "tsc",
     "test:local": "jest",
     "prepare": "npm run build",
@@ -44,7 +44,6 @@
     "jest-summarizing-reporter": "^1.1.4",
     "mocked-env": "^1.3.2",
     "nyc": "^17.1.0",
-    "rimraf": "^2.6.3",
     "ts-jest": "29.4.9",
     "typescript": "^4.9.4",
     "wait-for-expect": "^3.0.2"

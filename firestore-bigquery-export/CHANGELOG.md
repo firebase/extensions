@@ -1,3 +1,7 @@
+## Version 0.3.3
+
+chore: remove unused runtime dependencies and bump change-tracker consumers
+
 ## Version 0.3.2
 
 fix: restore acceptance of ISO 8601 date/datetime strings as partition field values, regression introduced in 0.3.0 (#2803)
