@@ -177,7 +177,7 @@ export const handleSearch = functions.pubsub
         for (const snapshot of snapshots) {
           if (snapshot.exists) {
             for (const field of config.searchFields.split(",")) {
-              if (snapshot.get(new FieldPath(field)) === uid) {
+              if (snapshot.get(new FieldPath(...field.split("."))) === uid) {
                 pathsToDelete.push(snapshot.ref.path);
                 continue;
               }

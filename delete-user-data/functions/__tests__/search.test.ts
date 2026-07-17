@@ -67,6 +67,27 @@ describe("discovery", () => {
       await waitForDocumentDeletion(document, 60000);
     }, 60000);
 
+    test("can delete a document with a nested field value matching {uid}", async () => {
+      const document = await db
+        .collection(generateRandomId())
+        .add({ scope: { owner: { id: user.uid } } });
+      await search(user.uid, 1, db);
+
+      await waitForDocumentDeletion(document, 60000);
+    }, 60000);
+
+    test("cannot delete a document with a nested field value that does not match {uid}", async () => {
+      const document = await db
+        .collection(generateRandomId())
+        .add({ scope: { owner: { id: "not-the-uid" } } });
+      await search(user.uid, 1, db);
+
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+
+      const checkExists = await document.get().then((doc) => doc.exists);
+      expect(checkExists).toBe(true);
+    }, 60000);
+
     test("can check a document without any field values", async () => {
       await db.collection(generateRandomId()).add({});
       await search(user.uid, 1, db);
