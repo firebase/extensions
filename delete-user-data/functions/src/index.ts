@@ -15,13 +15,13 @@
  */
 
 import * as admin from "firebase-admin";
-import {
-  FieldPath,
-  DocumentReference,
-  getFirestore,
-} from "firebase-admin/firestore";
+import { DocumentReference, getFirestore } from "firebase-admin/firestore";
 import * as functions from "firebase-functions";
-import { getDatabaseUrl, hasValidUserPath } from "./helpers";
+import {
+  getDatabaseUrl,
+  getNestedFieldValue,
+  hasValidUserPath,
+} from "./helpers";
 import chunk from "lodash.chunk";
 import { getEventarc } from "firebase-admin/eventarc";
 
@@ -177,10 +177,9 @@ export const handleSearch = functions.pubsub
         for (const snapshot of snapshots) {
           if (snapshot.exists) {
             for (const field of config.searchFields.split(",")) {
-              const trimmedField = field.trim();
               if (
-                trimmedField &&
-                snapshot.get(new FieldPath(...trimmedField.split("."))) === uid
+                field.trim() &&
+                getNestedFieldValue(snapshot, field) === uid
               ) {
                 pathsToDelete.push(snapshot.ref.path);
                 continue;

@@ -14,8 +14,17 @@
  * limitations under the License.
  */
 
-import { DocumentReference, FieldPath } from "firebase-admin/firestore";
+import {
+  DocumentReference,
+  DocumentSnapshot,
+  FieldPath,
+} from "firebase-admin/firestore";
 import config from "./config";
+
+export const getNestedFieldValue = (
+  snapshot: DocumentSnapshot,
+  field: string
+) => snapshot.get(new FieldPath(...field.trim().split(".")));
 
 export const getDatabaseUrl = (
   selectedDatabaseInstance: string | undefined,
@@ -42,7 +51,7 @@ export const hasValidUserPath = async (
 
   if (snapshot.exists) {
     for (const field of config.searchFields.split(",")) {
-      const fieldValue = snapshot.get(new FieldPath(field));
+      const fieldValue = getNestedFieldValue(snapshot, field);
 
       /** Return if a matching string includes the id */
       if (typeof fieldValue === "string" && fieldValue.includes(uid)) {
