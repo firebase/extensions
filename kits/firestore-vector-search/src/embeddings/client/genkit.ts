@@ -6,9 +6,11 @@ import { BaseEmbedClient } from "./base_class";
 export class GenkitEmbedClient extends BaseEmbedClient {
   private readonly client: Genkit;
   private readonly embedder: EmbedderReference;
+  private readonly dimension: number;
 
   constructor(config: ResolvedVectorSearchConfig) {
     super(1);
+    this.dimension = config.dimension;
     const isVertex = config.embeddingProvider === "vertex";
     this.embedder = isVertex
       ? vertexAI.embedder("gemini-embedding-001", {
@@ -31,6 +33,12 @@ export class GenkitEmbedClient extends BaseEmbedClient {
       embedder: this.embedder,
       content: [...inputs],
     });
-    return results.map((result) => result.embedding);
+    return results.map((result) => {
+      const embedding = result.embedding;
+      if (embedding.length <= this.dimension) {
+        return embedding;
+      }
+      return embedding.slice(0, this.dimension);
+    });
   }
 }
