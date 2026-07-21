@@ -1,12 +1,12 @@
 import type { Query, VectorQuery } from "@google-cloud/firestore";
-import type * as admin from "firebase-admin";
+import type { Firestore } from "firebase-admin/firestore";
 import { https } from "firebase-functions/v1";
 import type { ResolvedVectorSearchConfig } from "../export-config";
 import type { Prefilter } from "../queries";
 
 export class FirestoreVectorStoreClient {
   constructor(
-    private readonly firestore: admin.firestore.Firestore,
+    private readonly firestore: Firestore,
     private readonly distanceMeasure: ResolvedVectorSearchConfig["distanceMeasure"]
   ) {}
 

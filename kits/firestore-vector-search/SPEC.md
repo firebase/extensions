@@ -63,8 +63,8 @@
 | Firestore `document.write` (`embedOnWrite`) | `onDocumentWritten` |
 | Firestore `document.write` (`queryOnWrite`) | `onDocumentWritten` |
 | `httpsTrigger` (`queryCallable`) | `onRequest` or `onCall`; choose to preserve upstream request shape |
-| Lifecycle `onInstall → backfillTrigger` | HTTP init endpoint that provisions index and enqueues backfill |
-| Lifecycle `onConfigure → updateTrigger` | HTTP init/update endpoint that reconciles index and enqueues updates |
+| Lifecycle `onInstall → backfillTrigger` | `afterInstall` task hook that provisions index and enqueues backfill |
+| Lifecycle `onConfigure → updateTrigger` | `afterUpdate` task hook that reconciles index and enqueues updates |
 
 ## Config (`VectorSearchConfig` ← params)
 | Param | Field | Type | Default / notes |
@@ -84,21 +84,20 @@
 | `DO_BACKFILL` | `doBackfill` | boolean | lifecycle/backfill gate |
 | `UPDATE_ON_CONFIGURE` | `updateOnConfigure` | boolean | lifecycle/update gate |
 | `LOCATION` | `region` | string | function + provider location |
-| (new) | `instanceId` | string | namespaces queue names and internal query path |
 | (new) | queue names | object | exported function names for all five queues |
 
-## Factory
+## Entrypoint
 ```ts
-export function defineFirestoreVectorSearch(config: VectorSearchConfig): {
-  updateTrigger: TaskQueueFunction<UpdateTriggerTask>;
-  updateTask: TaskQueueFunction<UpdateTask>;
-  backfillTrigger: TaskQueueFunction<BackfillTriggerTask>;
-  backfillTask: TaskQueueFunction<BackfillTask>;
-  embedOnWrite: CloudFunction<FirestoreEvent<...>>;
-  queryOnWrite: CloudFunction<FirestoreEvent<...>>;
-  queryCallable: HttpsFunction;
-  initVectorSearch: HttpsFunction;
-};
+// index.ts registers required roles/APIs/lifecycle hooks and exports all
+// deployable functions directly.
+export const updateTrigger: TaskQueueFunction<unknown>;
+export const updateTask: TaskQueueFunction<VectorTaskData>;
+export const backfillTrigger: TaskQueueFunction<unknown>;
+export const backfillTask: TaskQueueFunction<VectorTaskData>;
+export const embedOnWrite: CloudFunction<FirestoreEvent<...>>;
+export const queryOnWrite: CloudFunction<FirestoreEvent<...>>;
+export const queryCallable: CallableFunction<unknown, { ids: string[] }>;
+export const initVectorSearch: TaskQueueFunction<unknown>;
 ```
 
 ## Target layout (`packages/firestore-vector-search/src`)
@@ -118,10 +117,11 @@ export function defineFirestoreVectorSearch(config: VectorSearchConfig): {
   - `handleBackfillTrigger(data, ctx)`
   - `handleBackfillTask(data, ctx)`
   - `handleInit(req, res, ctx)`
-- `factory.ts` — wires two Firestore triggers, five task queues, query endpoint,
-  init endpoint, region/memory/timeouts/secrets, and queue-name config.
+- `index.ts` — wires two Firestore triggers, five task queues, query endpoint,
+  init task, region/memory/timeouts/secrets, required roles/APIs, and lifecycle
+  hooks.
 - `events.ts` — Eventarc onStart/onSuccess/onError/onCompletion.
-- `config.ts` / `index.ts` / `lib.ts` — standard dual-entry pattern.
+- `config.ts` / `lib.ts` — config expressions and reusable library exports.
 
 ## Steps
 1. Vendor upstream `firestore-vector-search/` into
@@ -140,44 +140,18 @@ export function defineFirestoreVectorSearch(config: VectorSearchConfig): {
 8. Port Firestore write handlers for source documents and query documents.
 9. Port query endpoint using the upstream request/response contract. If using
    `onRequest`, type response structurally instead of adding `express`.
-10. Add init endpoint(s): idempotently create/update the Firestore vector index
-    and enqueue backfill/update tasks according to config.
-11. Add `metadata`: roles, APIs, lifecycle endpoint names, function names.
+10. Add init task: idempotently create/update the Firestore vector index and
+    enqueue backfill/update tasks according to config.
+11. Register required roles, APIs, and lifecycle hooks from `index.ts`.
 12. Add tests with mocked embeddings/vector-store/queues; run each as written.
 13. Verify build/lint/tests; set `private:false` only once implementation is
     complete.
 
-## Metadata
-```ts
-export const metadata = {
-  roles: [
-    "datastore.user",
-    "aiplatform.user",
-    "storage.objectAdmin",
-    "datastore.indexAdmin",
-  ],
-  apis: ["aiplatform.googleapis.com", "storage-component.googleapis.com"],
-  lifecycle: {
-    init: "initVectorSearch",
-  },
-  functionNames: [
-    "updateTrigger",
-    "updateTask",
-    "backfillTrigger",
-    "backfillTask",
-    "embedOnWrite",
-    "queryOnWrite",
-    "queryCallable",
-    "initVectorSearch",
-  ],
-} as const;
-```
-
 ## Provisioning
-- Firestore vector index lifecycle moves from extension lifecycle events to the
-  init endpoint. It must be safe to call repeatedly after deploy.
-- Backfill/update lifecycle work is no longer automatic unless the init endpoint
-  is invoked.
+- Firestore vector index lifecycle moves to the `initVectorSearch` task. It must
+  be safe to call repeatedly after deploy.
+- Backfill/update lifecycle work is registered through `afterInstall` and
+  `afterUpdate` lifecycle hooks.
 - Provider secrets must exist and be granted to the runtime service account
   before deploy/runtime use.
 - For migration, reuse existing resources and secrets where possible.
