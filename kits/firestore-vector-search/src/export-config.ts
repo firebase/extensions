@@ -66,6 +66,8 @@ const DEFAULT_REGION = "us-central1";
 const DEFAULT_COLLECTION_PATH = "products";
 const DEFAULT_QUERY_LIMIT = 3;
 
+export const QUERY_COLLECTION_PATH = `_${DEFAULT_INSTANCE_ID}/index/queries`;
+
 function dimensionFor(config: VectorSearchConfig): number {
   switch (config.embeddingProvider ?? "gemini") {
     case "gemini":

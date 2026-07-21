@@ -3,14 +3,26 @@ import {
   defineInt,
   defineSecret,
   defineString,
+  type Expression,
+  expr,
   projectID,
 } from "firebase-functions/params";
 import type { VectorSearchConfig } from "./export-config";
 
 export const geminiApiKey = defineSecret("GEMINI_API_KEY");
 export const openAiApiKey = defineSecret("OPENAI_API_KEY");
+type ConfigExpression<T extends string | number | boolean> = T | Expression<T>;
+
+export interface ConfigExpressions {
+  region: ConfigExpression<string>;
+  collectionDocument: ConfigExpression<string>;
+  queryCollectionName: ConfigExpression<string>;
+}
 
 const params = {
+  instanceId: defineString("INSTANCE_ID", {
+    default: "firestore-vector-search",
+  }),
   embeddingProvider: defineString("EMBEDDING_PROVIDER", { default: "gemini" }),
   customEmbeddingsEndpoint: defineString("CUSTOM_EMBEDDINGS_ENDPOINT", {
     default: "",
@@ -31,9 +43,6 @@ const params = {
   updateOnConfigure: defineBoolean("UPDATE_ON_CONFIGURE", { default: false }),
   region: defineString("LOCATION", { default: "us-central1" }),
   bucketName: defineString("BUCKET_NAME", { default: "" }),
-  instanceId: defineString("INSTANCE_ID", {
-    default: "firestore-vector-search",
-  }),
   updateTriggerQueueName: defineString("UPDATE_TRIGGER_QUEUE_NAME", {
     default: "updateTrigger",
   }),
@@ -47,6 +56,12 @@ const params = {
     default: "backfillTask",
   }),
 };
+
+export const CONFIG_EXPRESSIONS = {
+  region: params.region,
+  collectionDocument: expr`${params.collectionPath}/{docId}`,
+  queryCollectionName: expr`_${params.instanceId}/index/queries`,
+} as const satisfies ConfigExpressions;
 
 function optionalString(value: string): string | undefined {
   return value.length > 0 ? value : undefined;
@@ -80,8 +95,10 @@ export function configFromEnv(): VectorSearchConfig {
     updateOnConfigure: params.updateOnConfigure.value(),
     region: params.region.value(),
     projectId: projectID.value(),
-    bucketName: optionalString(params.bucketName.value()),
     instanceId: params.instanceId.value(),
+    geminiApiKey: process.env.GEMINI_API_KEY,
+    openAiApiKey: process.env.OPENAI_API_KEY,
+    bucketName: optionalString(params.bucketName.value()),
     queueNames: {
       updateTrigger: params.updateTriggerQueueName.value(),
       updateTask: params.updateTaskQueueName.value(),

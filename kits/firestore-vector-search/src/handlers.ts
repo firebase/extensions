@@ -1,5 +1,4 @@
-import { FieldValue } from "@google-cloud/firestore";
-import type { DocumentSnapshot } from "firebase-admin/firestore";
+import { type DocumentSnapshot, FieldValue } from "firebase-admin/firestore";
 import { getFunctions } from "firebase-admin/functions";
 import type { Change, FirestoreEvent } from "firebase-functions/v2/firestore";
 import type { CallableRequest } from "firebase-functions/v2/https";

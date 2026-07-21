@@ -9,11 +9,6 @@ export {
   type VectorSearchConfig,
 } from "./export-config";
 export {
-  buildVectorSearchFunctions,
-  defineFirestoreVectorSearch,
-  metadata,
-} from "./factory";
-export {
   type HandlerContext,
   handleBackfillTask,
   handleBackfillTrigger,
