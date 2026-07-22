@@ -1,0 +1,10 @@
+{
+  "functions": [
+    {
+      "source": ".",
+      "codebase": "firestore-bigquery-export",
+      "ignore": ["node_modules", ".git", "src", "*.local"],
+      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
+    }
+  ]
+}

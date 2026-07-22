@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "lib",
+    "rootDir": "src",
+    "types": ["node"]
+  },
+  "references": [{ "path": "../firestore-bigquery-change-tracker" }],
+  "include": ["src"],
+  "exclude": ["node_modules", "lib", "**/*.test.ts"]
+}
