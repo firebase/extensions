@@ -1,0 +1,32 @@
+{
+  "name": "@firebase/firestore-bigquery-change-tracker",
+  "version": "0.1.0",
+  "description": "Core change-tracker engine for exporting Cloud Firestore changes to BigQuery",
+  "license": "Apache-2.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib/**/*.js",
+    "lib/**/*.d.ts"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@google-cloud/bigquery": "^7.6.0",
+    "@google-cloud/resource-manager": "^5.1.0",
+    "firebase-admin": "^13.2.0",
+    "firebase-functions": "7.3.0-rc.0",
+    "node-fetch": "^2.6.1",
+    "sql-formatter": "^2.3.3",
+    "traverse": "^0.6.6"
+  },
+  "devDependencies": {
+    "@types/node-fetch": "^2.6.11",
+    "@types/traverse": "^0.6.32"
+  }
+}
