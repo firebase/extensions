@@ -1,0 +1,46 @@
+import { getApps, initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import type { ChangeTrackerConfig } from ".";
+
+if (getApps().length === 0) {
+  initializeApp();
+}
+
+export default async (
+  rows: any[],
+  config: ChangeTrackerConfig,
+  e: Error
+): Promise<void> => {
+  const db = getFirestore(config.firestoreInstanceId!);
+  db.settings({
+    ignoreUndefinedProperties: true,
+  });
+  const batchArray = [db.batch()];
+
+  let operationCounter = 0;
+  let batchIndex = 0;
+
+  rows?.forEach((row) => {
+    var ref = db.collection(config.backupTableId).doc(row.insertId);
+
+    batchArray[batchIndex].set(ref, {
+      ...row,
+      error_details: e.message,
+    });
+
+    operationCounter++;
+
+    // Check if max limit for batch has been met.
+    if (operationCounter === 499) {
+      batchArray.push(db.batch());
+      batchIndex++;
+      operationCounter = 0;
+    }
+  });
+
+  for (const batch of batchArray) {
+    await batch.commit();
+  }
+
+  return Promise.resolve();
+};
