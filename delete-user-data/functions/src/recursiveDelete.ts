@@ -23,4 +23,5 @@ export const recursiveDelete = async (
   const reference = isDocument ? db.doc(path) : db.collection(path);
 
   await db.recursiveDelete(reference, bulkWriter);
+  await bulkWriter.close();
 };
