@@ -20,7 +20,7 @@ import type {
 } from "@google-cloud/bigquery/build/src/table";
 import { DocumentReference } from "firebase-admin/firestore";
 import fetch from "node-fetch";
-import traverse from "traverse";
+import * as traverse from "traverse";
 import { LogLevel, logger } from "../logger";
 import * as logs from "../logs";
 import {
