@@ -6,6 +6,7 @@ import { ChangeTrackerConfig } from ".";
 
 interface TableRequiresUpdateOptions {
   table: Table;
+  metadata: TableMetadata;
   config: ChangeTrackerConfig;
   documentIdColExists: boolean;
   pathParamsColExists: boolean;
@@ -14,13 +15,13 @@ interface TableRequiresUpdateOptions {
 
 export async function tableRequiresUpdate({
   table,
+  metadata,
   config,
   documentIdColExists,
   pathParamsColExists,
   oldDataColExists,
 }: TableRequiresUpdateOptions): Promise<boolean> {
   /* Setup checks */
-  const { metadata } = table;
 
   /** Check clustering */
   const configCluster = JSON.stringify(config.clustering);

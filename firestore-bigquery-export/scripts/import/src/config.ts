@@ -1,4 +1,4 @@
-import * as program from "commander";
+import { program } from "commander";
 import filenamify from "filenamify";
 import inquirer from "inquirer";
 
@@ -13,6 +13,12 @@ const GCP_PROJECT_VALID_CHARACTERS = /^[a-z][a-z0-9-]{0,29}$/;
 const PROJECT_ID_MAX_CHARS = 6144;
 export const FIRESTORE_COLLECTION_NAME_MAX_CHARS = 6144;
 const BIGQUERY_RESOURCE_NAME_MAX_CHARS = 1024;
+
+const VALID_VIEW_TYPES = [
+  "view",
+  "materialized_incremental",
+  "materialized_non_incremental",
+];
 
 const validateBatchSize = (value: string) => {
   return parseInt(value, 10) > 0;
@@ -52,6 +58,15 @@ const validateLocation = (value: string) => {
 
   return index !== -1;
 };
+
+function parseClustering(value?: string): string[] | undefined {
+  if (value === undefined) return undefined;
+  if (value.trim() === "") return [];
+  return value
+    .split(",")
+    .map((field) => field.trim())
+    .filter(Boolean);
+}
 
 export const validateInput = (
   value: string,
@@ -204,6 +219,21 @@ const questions = [
     name: "failedBatchOutput",
     type: "input",
   },
+  {
+    message:
+      "What type of latest view is used by the deployed extension? (view, materialized_incremental, materialized_non_incremental)",
+    name: "viewType",
+    type: "list",
+    choices: VALID_VIEW_TYPES,
+    default: "view",
+  },
+  {
+    message:
+      "What clustering fields should be preserved on the raw changelog table? (Comma-separated, leave blank for none)",
+    name: "clustering",
+    type: "input",
+    default: "",
+  },
 ];
 
 export async function parseConfig(): Promise<CliConfig | CliConfigError> {
@@ -248,6 +278,15 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       errors.push("Invalid batch size.");
     }
 
+    if (
+      program.viewType !== undefined &&
+      !VALID_VIEW_TYPES.includes(program.viewType)
+    ) {
+      errors.push(
+        "ViewType must be one of: view, materialized_incremental, materialized_non_incremental."
+      );
+    }
+
     if (errors.length !== 0) {
       program.outputHelp();
       return { kind: "ERROR", errors };
@@ -279,6 +318,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
       failedBatchOutput: program.failedBatchOutput,
       transformFunctionUrl: program.transformFunctionUrl,
       firestoreInstanceId: program.firestoreInstanceId || "(default)",
+      clustering: parseClustering(program.clustering),
+      viewType: program.viewType || "view",
     };
   }
   const {
@@ -296,6 +337,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     useEmulator,
     failedBatchOutput,
     transformFunctionUrl,
+    viewType,
+    clustering,
   } = await inquirer.prompt(questions);
 
   const rawChangeLogName = `${table}_raw_changelog`;
@@ -324,6 +367,8 @@ export async function parseConfig(): Promise<CliConfig | CliConfigError> {
     failedBatchOutput,
     transformFunctionUrl,
     firestoreInstanceId: firestoreInstanceId || "(default)",
+    clustering: parseClustering(clustering),
+    viewType: viewType || "view",
   };
 }
 

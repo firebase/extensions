@@ -1,4 +1,4 @@
-import * as program from "commander";
+import { program } from "commander";
 
 const packageJson = require("../package.json");
 
@@ -70,5 +70,14 @@ export const getCLIOptions = () => {
       "--firestore-instance-id <database-id>",
       "The Firestore database instance ID. Use '(default)' for the default database.",
       "(default)"
+    )
+    .option(
+      "--view-type <view-type>",
+      "View type used by the deployed extension: view, materialized_incremental, materialized_non_incremental",
+      "view"
+    )
+    .option(
+      "--clustering <clustering>",
+      "Comma-separated clustering fields for the raw changelog table, e.g. timestamp or timestamp,document_id"
     );
 };

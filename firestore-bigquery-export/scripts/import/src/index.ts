@@ -52,6 +52,8 @@ const run = async (): Promise<number> => {
     cursorPositionFile,
     transformFunctionUrl,
     firestoreInstanceId,
+    clustering,
+    viewType,
   } = config;
   if (useEmulator) {
     console.log("Using emulator");
@@ -94,6 +96,11 @@ const run = async (): Promise<number> => {
     bqProjectId: bigQueryProjectId,
     transformFunction: transformFunctionUrl,
     firestoreInstanceId: firestoreInstanceId,
+    clustering,
+    useMaterializedView:
+      viewType === "materialized_incremental" ||
+      viewType === "materialized_non_incremental",
+    useIncrementalMaterializedView: viewType === "materialized_incremental",
   });
 
   await initializeDataSink(dataSink, config);
