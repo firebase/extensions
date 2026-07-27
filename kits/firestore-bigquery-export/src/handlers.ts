@@ -18,7 +18,7 @@ import {
   ChangeType,
   type FirestoreBigQueryEventHistoryTracker,
   type FirestoreDocumentChangeEvent,
-} from "@firebase/firestore-bigquery-change-tracker";
+} from "@firebaseextensions/firestore-bigquery-change-tracker";
 import type {
   Change,
   DocumentSnapshot,

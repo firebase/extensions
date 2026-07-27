@@ -16,7 +16,7 @@
 import type {
   ChangeTrackerConfig,
   LogLevel,
-} from "@firebase/firestore-bigquery-change-tracker";
+} from "@firebaseextensions/firestore-bigquery-change-tracker";
 import type { Expression } from "firebase-functions/params";
 
 type TrackerLogLevel = "debug" | "info" | "warn" | "error" | "silent";
@@ -197,7 +197,7 @@ export function toTrackerConfig(
     databaseId: config.databaseId,
     clustering: config.clustering,
     wildcardIds: config.wildcardIds,
-    bqProjectId: config.bqProjectId,
+    bqProjectId: config.bqProjectId ?? config.projectId,
     useNewSnapshotQuerySyntax: config.useNewSnapshotQuerySyntax,
     skipInit: true,
     kmsKeyName: config.kmsKeyName,

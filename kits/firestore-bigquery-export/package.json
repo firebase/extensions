@@ -19,13 +19,14 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -p tsconfig.json",
     "clean": "tsc -b --clean",
+    "test": "vitest run",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
   "dependencies": {
-    "@firebase/firestore-bigquery-change-tracker": "workspace:^",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "^2.0.4",
     "@google-cloud/bigquery": "^7.6.0",
     "firebase-admin": "^14.1.0",
     "firebase-functions": "7.3.0-rc.0",
@@ -33,7 +34,9 @@
     "lodash": "^4.17.14"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "@types/lodash": "^4.17.0",
-    "firebase-functions-test": "^3.2.0"
+    "typescript": "^6.0.0",
+    "vitest": "^3.2.4"
   }
 }

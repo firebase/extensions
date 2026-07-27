@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FirestoreBigQueryEventHistoryTracker } from "@firebase/firestore-bigquery-change-tracker";
+import type { FirestoreBigQueryEventHistoryTracker } from "@firebaseextensions/firestore-bigquery-change-tracker";
 
 /**
  * Builds the provisioning guard used by the `initBigQuerySync` endpoint and the

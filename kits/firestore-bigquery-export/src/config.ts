@@ -18,8 +18,8 @@ import type {
   ChangeTrackerConfig,
   PartitioningFieldType,
   TimePartitioningGranularity,
-} from "@firebase/firestore-bigquery-change-tracker";
-import { LogLevel } from "@firebase/firestore-bigquery-change-tracker";
+} from "@firebaseextensions/firestore-bigquery-change-tracker";
+import { LogLevel } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import type { Expression } from "firebase-functions/params";
 import {
   defineBoolean,

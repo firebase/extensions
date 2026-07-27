@@ -101,4 +101,16 @@ describe("toTrackerConfig", () => {
     expect(tracker.databaseId).toBe("secondary");
     expect(tracker.firestoreInstanceId).toBe("secondary");
   });
+
+  test("uses projectId as the default BigQuery project", () => {
+    const tracker = toTrackerConfig(resolveExportConfig(base));
+    expect(tracker.bqProjectId).toBe("test-project");
+  });
+
+  test("keeps an explicitly configured BigQuery project", () => {
+    const tracker = toTrackerConfig(
+      resolveExportConfig({ ...base, bqProjectId: "analytics-project" })
+    );
+    expect(tracker.bqProjectId).toBe("analytics-project");
+  });
 });

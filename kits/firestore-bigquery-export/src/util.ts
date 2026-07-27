@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ChangeType } from "@firebase/firestore-bigquery-change-tracker";
+import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import type { Change, DocumentSnapshot } from "firebase-functions/firestore";
 
 /**

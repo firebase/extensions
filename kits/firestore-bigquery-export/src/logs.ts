@@ -17,7 +17,7 @@
 import {
   type ChangeType,
   Logger,
-} from "@firebase/firestore-bigquery-change-tracker";
+} from "@firebaseextensions/firestore-bigquery-change-tracker";
 
 export const logger = new Logger();
 
