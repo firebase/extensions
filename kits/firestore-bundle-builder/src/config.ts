@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { defineString } from "firebase-functions/params";
+import { defineString, storageBucket } from "firebase-functions/params";
 import type { BundleBuilderConfig, DeployTimeOptions } from "./export-config";
 
 /**
@@ -29,7 +29,7 @@ const params = {
     default: "bundles",
   }),
   bundleStorageBucket: defineString("BUNDLE_STORAGE_BUCKET", {
-    default: "bundle-builder-files",
+    default: storageBucket,
   }),
   storagePrefix: defineString("STORAGE_PREFIX", { default: "bundles" }),
   location: defineString("LOCATION", { default: "us-central1" }),
@@ -43,7 +43,7 @@ const params = {
 export function configFromEnv(): BundleBuilderConfig {
   return {
     bundleSpecCollection: params.bundleSpecCollection.value(),
-    bundleStorageBucket: params.bundleStorageBucket.value(),
+    bundleStorageBucket: params.bundleStorageBucket.value() || undefined,
     storagePrefix: params.storagePrefix.value(),
     region: params.location.value(),
   };
