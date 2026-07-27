@@ -1,4 +1,4 @@
-import { ChangeType } from "@firebase/firestore-bigquery-change-tracker";
+import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import type { Change, DocumentSnapshot } from "firebase-functions/firestore";
 import { describe, expect, test } from "vitest";
 import { getChangeType, getDocumentId, resolveWildcardIds } from "../src/util";

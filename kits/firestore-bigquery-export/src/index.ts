@@ -27,7 +27,7 @@
  * `./lib` instead.
  */
 
-import { FirestoreBigQueryEventHistoryTracker } from "@firebase/firestore-bigquery-change-tracker";
+import { FirestoreBigQueryEventHistoryTracker } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import { getApps, initializeApp } from "firebase-admin/app";
 import { onDocumentWritten } from "firebase-functions/firestore";
 import { expr } from "firebase-functions/params";

@@ -1,4 +1,4 @@
-import { ChangeType } from "@firebase/firestore-bigquery-change-tracker";
+import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { resolveExportConfig } from "../src/export-config";
 import {

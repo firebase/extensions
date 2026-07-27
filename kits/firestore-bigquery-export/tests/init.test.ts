@@ -1,4 +1,4 @@
-import type { FirestoreBigQueryEventHistoryTracker } from "@firebase/firestore-bigquery-change-tracker";
+import type { FirestoreBigQueryEventHistoryTracker } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import { describe, expect, test, vi } from "vitest";
 import { createEnsureInitialized } from "../src/init";
 

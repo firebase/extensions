@@ -38,7 +38,7 @@ export {
   type ChangeTrackerConfig,
   ChangeType,
   type FirestoreBigQueryEventHistoryTracker,
-} from "@firebase/firestore-bigquery-change-tracker";
+} from "@firebaseextensions/firestore-bigquery-change-tracker";
 // Config types and helpers
 export {
   type ExportConfig,
