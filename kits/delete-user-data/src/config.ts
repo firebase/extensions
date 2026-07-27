@@ -3,6 +3,8 @@ import {
   defineInt,
   defineString,
   projectID,
+  select,
+  storageBucket,
 } from "firebase-functions/params";
 import type { DeleteUserDataConfig } from "./export-config";
 
@@ -13,13 +15,17 @@ const params = {
   }),
   firestoreDeleteMode: defineString("FIRESTORE_DELETE_MODE", {
     default: "shallow",
+    input: select(["recursive", "shallow"]),
   }),
   rtdbInstance: defineString("SELECTED_DATABASE_INSTANCE", { default: "" }),
   rtdbLocation: defineString("SELECTED_DATABASE_LOCATION", {
     default: "us-central1",
+    input: select(["us-central1", "europe-west1", "asia-southeast1"]),
   }),
   rtdbPaths: defineString("RTDB_PATHS", { default: "" }),
-  storageBucket: defineString("CLOUD_STORAGE_BUCKET", { default: "" }),
+  storageBucket: defineString("CLOUD_STORAGE_BUCKET", {
+    default: storageBucket,
+  }),
   storagePaths: defineString("STORAGE_PATHS", { default: "" }),
   enableAutoDiscovery: defineBoolean("ENABLE_AUTO_DISCOVERY", {
     default: false,
@@ -29,7 +35,7 @@ const params = {
     default: "id,uid,userId",
   }),
   searchFunction: defineString("SEARCH_FUNCTION", { default: "" }),
-  instanceId: defineString("EXT_INSTANCE_ID", { default: "delete-user-data" }),
+  instanceId: defineString("KIT_INSTANCE_ID", { default: "delete-user-data" }),
   discoveryTopicName: defineString("DISCOVERY_TOPIC_NAME", { default: "" }),
   deletionTopicName: defineString("DELETION_TOPIC_NAME", { default: "" }),
   region: defineString("LOCATION", { default: "us-central1" }),
