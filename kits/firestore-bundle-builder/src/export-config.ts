@@ -68,11 +68,15 @@ export interface DeployTimeOptions {
   serviceAccount?: string | Expression<string>;
 }
 
+const DEFAULT_BUNDLE_STORAGE_BUCKET = "bundle-builder-files";
+
 /**
  * Applies defaults to a {@link BundleBuilderConfig}.
  *
  * Defaults mirror the legacy extension: `bundles` for both the spec collection
- * and the storage prefix, and `bundle-builder-files` for the storage bucket.
+ * and the storage prefix. The storage bucket mirrors extension.yaml's
+ * `${STORAGE_BUCKET}` via `process.env.STORAGE_BUCKET`, then the legacy code
+ * fallback `bundle-builder-files`.
  *
  * @param config - The user-supplied configuration.
  * @returns The configuration with every field populated.
@@ -82,7 +86,10 @@ export function resolveConfig(
 ): ResolvedBundleBuilderConfig {
   return {
     bundleSpecCollection: config.bundleSpecCollection || "bundles",
-    bundleStorageBucket: config.bundleStorageBucket ?? "bundle-builder-files",
+    bundleStorageBucket:
+      config.bundleStorageBucket ??
+      process.env.STORAGE_BUCKET ??
+      DEFAULT_BUNDLE_STORAGE_BUCKET,
     storagePrefix: config.storagePrefix ?? "bundles",
     region: config.region ?? "us-central1",
     serviceAccount: config.serviceAccount,

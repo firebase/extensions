@@ -43,6 +43,7 @@ export interface ResolvedDeleteUserDataConfig {
 const DEFAULT_FIRESTORE_DATABASE_ID = "(default)";
 const DEFAULT_FIRESTORE_DELETE_MODE: FirestoreDeleteMode = "shallow";
 const DEFAULT_SEARCH_DEPTH = 3;
+const DEFAULT_SEARCH_FIELDS = "id,uid,userId";
 const DEFAULT_REGION = "us-central1";
 const DEFAULT_INSTANCE_ID = "delete-user-data";
 
@@ -71,7 +72,7 @@ export function resolveDeleteUserDataConfig(
     storagePaths: config.storagePaths,
     enableAutoDiscovery: config.enableAutoDiscovery ?? false,
     searchDepth: config.searchDepth ?? DEFAULT_SEARCH_DEPTH,
-    searchFields: config.searchFields ?? "",
+    searchFields: config.searchFields ?? DEFAULT_SEARCH_FIELDS,
     searchFunction: config.searchFunction,
     instanceId,
     discoveryTopicName: topicName(
