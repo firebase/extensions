@@ -1,0 +1,26 @@
+{
+  "name": "@firebase/firestore-incremental-capture",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Incremental point-in-time capture of Firestore changes",
+  "license": "Apache-2.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./lib": {
+      "types": "./lib/lib.d.ts",
+      "default": "./lib/lib.js"
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  }
+}
