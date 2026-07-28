@@ -1,0 +1,36 @@
+{
+  "name": "@firebase/firestore-send-email",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Send emails based on documents written to Firestore",
+  "license": "Apache-2.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./lib": {
+      "types": "./lib/lib.d.ts",
+      "default": "./lib/lib.js"
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean",
+    "deploy": "pnpm build && firebase deploy --only functions",
+    "serve": "firebase emulators:start --only functions"
+  },
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.4",
+    "firebase-admin": "^14.1.0",
+    "firebase-functions": "7.3.0-rc.0",
+    "handlebars": "^4.7.8",
+    "nodemailer": "^7.0.5",
+    "zod": "^3.25.76"
+  }
+}
