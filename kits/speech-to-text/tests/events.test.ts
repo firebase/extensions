@@ -1,0 +1,92 @@
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
+const publish = vi.fn().mockResolvedValue(undefined);
+const channel = vi.fn(() => ({ publish }));
+
+vi.mock("firebase-admin/eventarc", () => ({
+  getEventarc: () => ({ channel }),
+}));
+
+import { Status } from "../src/types";
+
+describe("events", () => {
+  const ORIGINAL_ENV = process.env.EVENTARC_CHANNEL;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    if (ORIGINAL_ENV === undefined) {
+      delete process.env.EVENTARC_CHANNEL;
+    } else {
+      process.env.EVENTARC_CHANNEL = ORIGINAL_ENV;
+    }
+  });
+
+  test("publishes the complete event with the legacy type", async () => {
+    process.env.EVENTARC_CHANNEL = "projects/p/locations/l/channels/c";
+    const events = await import("../src/events");
+    events.setupEventChannel();
+
+    await events.recordCompleteEvent(
+      { status: Status.SUCCESS, warnings: [], transcription: { 1: ["hi"] } },
+      "audio.wav"
+    );
+
+    expect(publish).toHaveBeenCalledWith({
+      type: "firebase.extensions.storage-transcribe-audio.v1.complete",
+      data: expect.objectContaining({ objectName: "audio.wav" }),
+    });
+  });
+
+  test("publishes the fail event with the legacy type", async () => {
+    process.env.EVENTARC_CHANNEL = "projects/p/locations/l/channels/c";
+    const events = await import("../src/events");
+    events.setupEventChannel();
+
+    await events.recordFailureEvent(
+      { status: Status.FAILURE, warnings: [], type: 5 },
+      "audio.wav"
+    );
+
+    expect(publish).toHaveBeenCalledWith({
+      type: "firebase.extensions.storage-transcribe-audio.v1.fail",
+      data: expect.objectContaining({ objectName: "audio.wav" }),
+    });
+  });
+
+  test("serializes the error message and stack into the fail payload", async () => {
+    process.env.EVENTARC_CHANNEL = "projects/p/locations/l/channels/c";
+    const events = await import("../src/events");
+    events.setupEventChannel();
+
+    const err = new Error("kaboom");
+    await events.recordErrorEvent(err);
+
+    expect(publish).toHaveBeenCalledWith({
+      type: "firebase.extensions.storage-transcribe-audio.v1.fail",
+      data: {
+        error: { message: "kaboom", stack: err.stack },
+      },
+    });
+    // Guard against the original bug: a raw Error serializes to `{}`.
+    const payload = publish.mock.calls[0][0] as {
+      data: { error: { message: string } };
+    };
+    expect(JSON.parse(JSON.stringify(payload)).data.error.message).toBe(
+      "kaboom"
+    );
+  });
+
+  test("is a no-op when no channel is configured", async () => {
+    delete process.env.EVENTARC_CHANNEL;
+    const events = await import("../src/events");
+    events.setupEventChannel();
+
+    await events.recordErrorEvent(new Error("boom"));
+
+    expect(publish).not.toHaveBeenCalled();
+  });
+});
