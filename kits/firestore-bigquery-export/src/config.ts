@@ -144,11 +144,6 @@ const VIEW_TYPE_OPTIONS = [
   "materialized_non_incremental",
 ] as const;
 const LOG_LEVEL_OPTIONS = ["debug", "info", "warn", "error", "silent"] as const;
-const BOOLEAN_OPTIONS = {
-  False: false,
-  True: true,
-} as const;
-
 export interface ConfigExpressions {
   collectionPath: ConfigExpression<string>;
   datasetId: ConfigExpression<string>;
@@ -165,18 +160,17 @@ export interface ConfigExpressions {
  * @see https://firebase.google.com/docs/functions/config-env
  */
 const params = {
-  bigqueryProjectId: defineString("BIGQUERY_PROJECT_ID", { default: "" }),
+  bigqueryProjectId: defineString("BIGQUERY_PROJECT_ID", {
+    default: projectID,
+  }),
   database: defineString("DATABASE", { default: "(default)" }),
   databaseRegion: defineString("DATABASE_REGION", {
-    default: "",
     input: select([...DATABASE_REGION_OPTIONS]),
   }),
-  collectionPath: defineString("COLLECTION_PATH"),
-  datasetId: defineString("DATASET_ID"),
-  tableId: defineString("TABLE_ID"),
-  location: defineString("LOCATION", { default: "us-central1" }),
+  collectionPath: defineString("COLLECTION_PATH", { default: "posts" }),
+  datasetId: defineString("DATASET_ID", { default: "firestore_export" }),
+  tableId: defineString("TABLE_ID", { default: "posts" }),
   serviceAccount: defineString("SERVICE_ACCOUNT", { default: "" }),
-  importCollectionPath: defineString("IMPORT_COLLECTION_PATH", { default: "" }),
   datasetLocation: defineString("DATASET_LOCATION", {
     default: "us",
     input: select([...DATASET_LOCATION_OPTIONS]),
@@ -201,15 +195,12 @@ const params = {
   clustering: defineString("CLUSTERING", { default: "" }),
   wildcardIds: defineBoolean("WILDCARD_IDS", {
     default: false,
-    input: select(BOOLEAN_OPTIONS),
   }),
   useNewSnapshotQuerySyntax: defineBoolean("USE_NEW_SNAPSHOT_QUERY_SYNTAX", {
     default: false,
-    input: select(BOOLEAN_OPTIONS),
   }),
   excludeOldData: defineBoolean("EXCLUDE_OLD_DATA", {
     default: false,
-    input: select(BOOLEAN_OPTIONS),
   }),
   viewType: defineString("VIEW_TYPE", {
     default: "view",
@@ -219,15 +210,7 @@ const params = {
   refreshIntervalMinutes: defineString("REFRESH_INTERVAL_MINUTES", {
     default: "",
   }),
-  maxDispatchesPerSecond: defineString("MAX_DISPATCHES_PER_SECOND", {
-    default: "100",
-  }),
-  maxEnqueueAttempts: defineString("MAX_ENQUEUE_ATTEMPTS", {
-    default: "3",
-  }),
   kmsKeyName: defineString("KMS_KEY_NAME", { default: "" }),
-  backupToGCS: defineBoolean("BACKUP_TO_GCS", { default: false }),
-  backupGcsBucket: defineString("BACKUP_GCS_BUCKET", { default: "" }),
   logLevel: defineString("LOG_LEVEL", {
     default: "info",
     input: select([...LOG_LEVEL_OPTIONS]),
@@ -238,7 +221,7 @@ export const CONFIG_EXPRESSIONS: ConfigExpressions = {
   collectionPath: params.collectionPath,
   datasetId: params.datasetId,
   tableId: params.tableId,
-  location: params.location,
+  location: params.databaseRegion,
   serviceAccount: params.serviceAccount,
   database: params.database,
 };
@@ -411,7 +394,7 @@ export function configFromEnv(): ExportConfig {
     collectionPath: params.collectionPath.value(),
     datasetId: params.datasetId.value(),
     tableId: params.tableId.value(),
-    location: params.location.value(),
+    location: optional(params.databaseRegion.value()),
     serviceAccount: optional(params.serviceAccount.value()),
     datasetLocation: optional(params.datasetLocation.value()),
     bqProjectId: optional(params.bigqueryProjectId.value()),

@@ -18,8 +18,14 @@ vi.mock("firebase-functions/params", () => ({
       return this.toString();
     }
   },
-  defineString: (_name: string, opts?: { default?: string }) => ({
-    value: () => opts?.default ?? "",
+  defineString: (
+    _name: string,
+    opts?: { default?: string | { value(): string } }
+  ) => ({
+    value: () =>
+      typeof opts?.default === "string"
+        ? opts.default
+        : opts?.default?.value() ?? "",
     toString: () => `params.${_name}`,
   }),
   defineInt: (_name: string, opts?: { default?: number }) => ({
@@ -143,13 +149,14 @@ describe("configFromEnv", () => {
   test("maps params to an ExportConfig with defaults", () => {
     const config = configFromEnv();
     expect(config.projectId).toBe("test-project");
+    expect(config.bqProjectId).toBe("test-project");
     // SERVICE_ACCOUNT is unset, so the default is left to resolveExportConfig.
     expect(config.serviceAccount).toBeUndefined();
     expect(resolveExportConfig(config).serviceAccount).toBe(
       "firestore-bigquery-export@test-project.iam.gserviceaccount.com"
     );
     expect(config.databaseId).toBe("(default)");
-    expect(config.location).toBe("us-central1");
+    expect(resolveExportConfig(config).location).toBe("us-central1");
     expect(config.viewType).toBe("view");
   });
 
@@ -157,6 +164,8 @@ describe("configFromEnv", () => {
     expect(CONFIG_EXPRESSIONS.collectionPath.toString()).toBe(
       "params.COLLECTION_PATH"
     );
-    expect(CONFIG_EXPRESSIONS.location.toString()).toBe("params.LOCATION");
+    expect(CONFIG_EXPRESSIONS.location.toString()).toBe(
+      "params.DATABASE_REGION"
+    );
   });
 });
