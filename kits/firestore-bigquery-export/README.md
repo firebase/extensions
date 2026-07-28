@@ -74,7 +74,7 @@ loads at deploy time, prompting for anything required that is unset:
 COLLECTION_PATH=users
 DATASET_ID=analytics
 TABLE_ID=users
-LOCATION=europe-west2
+DATABASE_REGION=europe-west2
 ```
 
 - `fsexportbigquery` is the Firestore trigger.
@@ -141,7 +141,7 @@ const { initializeApp } = require("firebase-admin/app");
 const { getFunctions } = require("firebase-admin/functions");
 initializeApp();
 getFunctions()
-  .taskQueue("locations/'"$LOCATION"'/functions/initBigQuerySync")
+  .taskQueue("locations/'"$DATABASE_REGION"'/functions/initBigQuerySync")
   .enqueue({})
   .then(() => console.log("init task enqueued"));
 '
@@ -157,7 +157,7 @@ failure is not retried:
 
 ```sh
 URL=$(gcloud functions describe initBigQuerySync \
-  --region "$LOCATION" --gen2 --format='value(url)')
+  --region "$DATABASE_REGION" --gen2 --format='value(url)')
 
 curl -fsS -X POST -H "Content-Type: application/json" -d '{"data":{}}' \
   -H "Authorization: Bearer $(gcloud auth print-identity-token --audiences="$URL")" "$URL"
