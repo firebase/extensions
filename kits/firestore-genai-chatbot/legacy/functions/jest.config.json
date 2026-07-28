@@ -1,0 +1,6 @@
+{
+  "preset": "ts-jest",
+  "testEnvironment": "node",
+  "verbose": true,
+  "testPathIgnorePatterns": ["__tests__/util.ts"]
+}
