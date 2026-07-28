@@ -1,9 +1,0 @@
-{
-  "extends": "../tsconfig.json",
-  "files": ["test.types.d.ts"],
-  "include": ["**/*"],
-  "compilerOptions": {
-    "types": ["jest"],
-    "esModuleInterop": true
-  }
-}
