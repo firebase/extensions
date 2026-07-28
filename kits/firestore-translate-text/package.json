@@ -1,0 +1,35 @@
+{
+  "name": "@firebase/firestore-translate-text",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Translate text written to a Firestore collection",
+  "license": "Apache-2.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./lib": {
+      "types": "./lib/lib.d.ts",
+      "default": "./lib/lib.js"
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean",
+    "deploy": "pnpm build && firebase deploy --only functions",
+    "serve": "firebase emulators:start --only functions"
+  },
+  "dependencies": {
+    "@genkit-ai/google-genai": "^1.31.0",
+    "@google-cloud/translate": "^8.2.0",
+    "firebase-admin": "^14.1.0",
+    "firebase-functions": "7.3.0-rc.0",
+    "genkit": "^1.31.0"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "lib",
+    "target": "es2018"
+  },
+  "files": ["test.types.d.ts"],
+  "include": ["**/*"]
+}

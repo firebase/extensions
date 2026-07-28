@@ -1,0 +1,152 @@
+import {
+  type DocumentSnapshot,
+  FieldValue,
+  type Firestore,
+} from "firebase-admin/firestore";
+import type { Change, FirestoreEvent } from "firebase-functions/v2/firestore";
+import * as events from "./events";
+import type { ResolvedTranslateConfig } from "./export-config";
+import * as logs from "./logs";
+import { createTranslationService, translateDocument } from "./translate";
+import * as validators from "./validators";
+
+const CHANGE_TYPE = {
+  create: "create",
+  delete: "delete",
+  update: "update",
+} as const;
+
+type ChangeType = typeof CHANGE_TYPE[keyof typeof CHANGE_TYPE];
+
+export interface HandlerContext {
+  firestore: Firestore;
+  config: ResolvedTranslateConfig;
+  googleAiApiKey?: string;
+}
+
+export type TranslateWriteEvent = FirestoreEvent<
+  Change<DocumentSnapshot> | undefined,
+  Record<string, string>
+>;
+
+function getChangeType(change: Change<DocumentSnapshot>): ChangeType {
+  if (!change.after.exists) {
+    return CHANGE_TYPE.delete;
+  }
+  if (!change.before.exists) {
+    return CHANGE_TYPE.create;
+  }
+  return CHANGE_TYPE.update;
+}
+
+export async function handleDocumentWrite(
+  event: TranslateWriteEvent,
+  ctx: HandlerContext
+): Promise<void> {
+  if (!event.data) {
+    return;
+  }
+
+  const config: ResolvedTranslateConfig = {
+    ...ctx.config,
+    googleAiApiKey: ctx.googleAiApiKey ?? ctx.config.googleAiApiKey,
+  };
+  const service = createTranslationService(config, ctx.firestore);
+
+  logs.start(config);
+  await events.recordStartEvent({ data: event.data, params: event.params });
+
+  const { languages, inputFieldName, outputFieldName } = config;
+
+  if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
+    logs.fieldNamesNotDifferent();
+    await events.recordCompletionEvent({ params: event.params });
+    return;
+  }
+
+  if (
+    validators.fieldNameIsTranslationPath(inputFieldName, outputFieldName, [
+      ...languages,
+    ])
+  ) {
+    logs.inputFieldNameIsOutputPath();
+    await events.recordCompletionEvent({ params: event.params });
+    return;
+  }
+
+  try {
+    switch (getChangeType(event.data)) {
+      case CHANGE_TYPE.create:
+        await handleCreateDocument(event.data.after, service, config);
+        break;
+      case CHANGE_TYPE.delete:
+        handleDeleteDocument();
+        break;
+      case CHANGE_TYPE.update:
+        await handleUpdateDocument(
+          event.data.before,
+          event.data.after,
+          service,
+          config
+        );
+        break;
+    }
+
+    logs.complete();
+  } catch (err) {
+    logs.error(err as Error);
+    await events.recordErrorEvent(err as Error);
+  }
+  await events.recordCompletionEvent({ params: event.params });
+}
+
+async function handleCreateDocument(
+  snapshot: DocumentSnapshot,
+  service: ReturnType<typeof createTranslationService>,
+  config: ResolvedTranslateConfig
+): Promise<void> {
+  const input = service.extractInput(snapshot);
+  if (input) {
+    logs.documentCreatedWithInput();
+    await translateDocument(snapshot, service, config);
+  } else {
+    logs.documentCreatedNoInput();
+  }
+}
+
+function handleDeleteDocument(): void {
+  logs.documentDeleted();
+}
+
+async function handleUpdateDocument(
+  before: DocumentSnapshot,
+  after: DocumentSnapshot,
+  service: ReturnType<typeof createTranslationService>,
+  config: ResolvedTranslateConfig
+): Promise<void> {
+  const inputBefore = service.extractInput(before);
+  const inputAfter = service.extractInput(after);
+  const languagesBefore = service.extractLanguages(before);
+  const languagesAfter = service.extractLanguages(after);
+
+  if (inputBefore === undefined && inputAfter === undefined) {
+    logs.documentUpdatedNoInput();
+    return;
+  }
+
+  if (typeof inputAfter !== "string" && typeof inputAfter !== "object") {
+    await service.updateTranslations(after, FieldValue.delete());
+    logs.documentUpdatedDeletedInput();
+    return;
+  }
+
+  if (
+    JSON.stringify(inputBefore) === JSON.stringify(inputAfter) &&
+    JSON.stringify(languagesBefore) === JSON.stringify(languagesAfter)
+  ) {
+    logs.documentUpdatedUnchangedInput();
+  } else {
+    logs.documentUpdatedChangedInput();
+    await translateDocument(after, service, config);
+  }
+}
