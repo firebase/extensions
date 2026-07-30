@@ -6,6 +6,8 @@
   "scripts": {
     "format": "prettier --write \"**/*.{js,md,yml,ts,json,yaml}\"",
     "lint": "prettier --list-different \"**/*.{js,md,yml,ts,json,yaml}\"",
+    "license:check": "./scripts/addlicense.sh check",
+    "license:fix": "./scripts/addlicense.sh fix",
     "clean": "lerna run --parallel clean && lerna clean",
     "build": "lerna run --sort build",
     "local:emulator": "cd _emulator && firebase emulators:start -P demo-test",
@@ -34,7 +36,7 @@
     "lerna": "^3.4.3",
     "lint-staged": "^12.4.0",
     "prettier": "2.7.1",
-    "ts-jest": "29.4.9",
+    "ts-jest": "29.4.11",
     "typescript": "^5.0.0"
   },
   "overrides": {
