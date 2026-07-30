@@ -29,7 +29,7 @@
     "@firebaseextensions/firestore-bigquery-change-tracker": "^2.0.4",
     "@google-cloud/bigquery": "^7.6.0",
     "firebase-admin": "^14.1.0",
-    "firebase-functions": "7.3.0-rc.0",
+    "firebase-functions": "7.3.0",
     "generate-schema": "^2.6.0",
     "lodash": "^4.17.14"
   },
