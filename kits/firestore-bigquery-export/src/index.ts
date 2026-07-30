@@ -101,7 +101,6 @@ function getHandlerContext(): HandlerContext {
 
 const functionOptions = {
   region: CONFIG_EXPRESSIONS.location,
-  serviceAccount: CONFIG_EXPRESSIONS.serviceAccount,
 };
 
 /**

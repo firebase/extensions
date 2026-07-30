@@ -22,38 +22,22 @@ ready-made example instead (it uses this package):
 npx degit FirebasePrivate/extensions/examples/firestore-bigquery-export#firestore-bigquery-export-npm my-export
 ```
 
-## Required IAM (set this up first)
+## Required IAM
 
-The functions run as a service account that must have the roles below **before
-the first deploy**. If they are missing, the deploy still succeeds but every write
-to BigQuery is denied, so do this first.
+The package declares the roles below with `requiresRole(...)`. Firebase CLI
+15.23.0 or later creates a managed runtime service account for the codebase,
+grants it these roles, and attaches it to every function in the codebase.
+Declarative security cannot be combined with a custom runtime service account.
 
 | Role | Why |
 |---|---|
 | `roles/bigquery.dataEditor` | create dataset/table/views; insert rows |
 | `roles/bigquery.user` | run BigQuery jobs and materialized views |
-| `roles/cloudtasks.enqueuer` | enqueue the post-deploy provisioning task |
 | `roles/datastore.user` | write failed-row records back to Firestore (only if you configure a backup collection) |
 
-Create a dedicated service account and deploy the
-functions with it as their runtime service account:
-
-```sh
-PROJECT_ID=your-project
-
-gcloud iam service-accounts create firestore-bigquery-export --project "$PROJECT_ID"
-SA="firestore-bigquery-export@$PROJECT_ID.iam.gserviceaccount.com"
-
-for ROLE in bigquery.dataEditor bigquery.user cloudtasks.enqueuer; do
-  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-    --member="serviceAccount:$SA" --role="roles/$ROLE"
-done
-```
-
 If the dataset lives in a different project (`bqProjectId`), grant the
-`bigquery.*` roles on that project. Add `roles/datastore.user` only if you set a
-backup collection. For a CMEK dataset, also grant the BigQuery service account
-access to your KMS key.
+managed runtime service account the `bigquery.*` roles on that project. For a
+CMEK dataset, also grant the BigQuery service account access to your KMS key.
 
 ## Usage
 
@@ -95,8 +79,7 @@ firebase deploy --only functions
 
 Configuration is via v2 function params: env vars named as the upper snake-case
 of the fields below (see `.env.example` for the full list). `projectId` is
-supplied by the CLI's built-in `PROJECT_ID` param; the runtime service account
-is derived from it unless overridden.
+supplied by the CLI's built-in `PROJECT_ID` param.
 
 | Field | Required | Default | Description |
 |---|---|---|---|
@@ -108,7 +91,6 @@ is derived from it unless overridden.
 | `datasetLocation` | no | `us` | BigQuery dataset location |
 | `databaseId` | no | `(default)` | Firestore database id |
 | `bqProjectId` | no | function project | Dataset project, if different |
-| `serviceAccount` | no | `firestore-bigquery-export@$PROJECT_ID.iam.gserviceaccount.com` | Runtime service account |
 | `wildcardIds` | no | `false` | Store path-param values as columns |
 | `excludeOldData` | no | `false` | Skip previous document state on updates |
 | `viewType` | no | `view` | `view`, `materialized_incremental`, `materialized_non_incremental` |

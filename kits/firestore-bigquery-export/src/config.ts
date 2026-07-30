@@ -149,7 +149,6 @@ export interface ConfigExpressions {
   datasetId: ConfigExpression<string>;
   tableId: ConfigExpression<string>;
   location: ConfigExpression<string>;
-  serviceAccount: ConfigExpression<string>;
   database: ConfigExpression<string>;
 }
 
@@ -170,7 +169,6 @@ const params = {
   collectionPath: defineString("COLLECTION_PATH", { default: "posts" }),
   datasetId: defineString("DATASET_ID", { default: "firestore_export" }),
   tableId: defineString("TABLE_ID", { default: "posts" }),
-  serviceAccount: defineString("SERVICE_ACCOUNT", { default: "" }),
   datasetLocation: defineString("DATASET_LOCATION", {
     default: "us",
     input: select([...DATASET_LOCATION_OPTIONS]),
@@ -222,7 +220,6 @@ export const CONFIG_EXPRESSIONS: ConfigExpressions = {
   datasetId: params.datasetId,
   tableId: params.tableId,
   location: params.databaseRegion,
-  serviceAccount: params.serviceAccount,
   database: params.database,
 };
 
@@ -395,7 +392,6 @@ export function configFromEnv(): ExportConfig {
     datasetId: params.datasetId.value(),
     tableId: params.tableId.value(),
     location: optional(params.databaseRegion.value()),
-    serviceAccount: optional(params.serviceAccount.value()),
     datasetLocation: optional(params.datasetLocation.value()),
     bqProjectId: optional(params.bigqueryProjectId.value()),
     projectId: projectID.value(),

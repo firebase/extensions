@@ -23,7 +23,6 @@ type TrackerLogLevel = "debug" | "info" | "warn" | "error" | "silent";
 type ConfigValue<T extends string | number | boolean | string[]> =
   | T
   | Expression<T>;
-const SERVICE_ACCOUNT_NAME = "firestore-bigquery-export";
 
 /** How the BigQuery changelog view is materialized. */
 export type ViewType =
@@ -56,8 +55,6 @@ export interface ExportConfig {
   bqProjectId?: ConfigValue<string>;
   /** GCP project id. */
   projectId: ConfigValue<string>;
-  /** Runtime service account email. Defaults to the package service account. */
-  serviceAccount?: ConfigValue<string>;
   /** Firestore database id. Defaults to `(default)`. */
   databaseId?: ConfigValue<string>;
 
@@ -99,7 +96,6 @@ export interface ResolvedExportConfig {
   datasetLocation: string;
   bqProjectId?: string;
   projectId: string;
-  serviceAccount: string;
   databaseId: string;
   wildcardIds: boolean;
   excludeOldData: boolean;
@@ -143,7 +139,6 @@ export function resolveExportConfig(
   config: ExportConfig
 ): ResolvedExportConfig {
   const projectId = resolveConfigValue(config.projectId);
-  const serviceAccount = resolveOptionalConfigValue(config.serviceAccount);
   const viewType = resolveOptionalConfigValue(config.viewType);
   const logLevel = resolveOptionalConfigValue(config.logLevel);
 
@@ -155,9 +150,6 @@ export function resolveExportConfig(
     datasetLocation: resolveOptionalConfigValue(config.datasetLocation) ?? "us",
     bqProjectId: resolveOptionalConfigValue(config.bqProjectId),
     projectId,
-    serviceAccount:
-      serviceAccount ??
-      `${SERVICE_ACCOUNT_NAME}@${projectId}.iam.gserviceaccount.com`,
     databaseId: resolveOptionalConfigValue(config.databaseId) ?? "(default)",
     wildcardIds: resolveOptionalConfigValue(config.wildcardIds) ?? false,
     excludeOldData: resolveOptionalConfigValue(config.excludeOldData) ?? false,

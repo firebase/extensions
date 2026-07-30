@@ -9,29 +9,10 @@ describe("resolveExportConfig", () => {
     projectId: "test-project",
   };
 
-  test("derives the default serviceAccount from projectId", () => {
-    const resolved = resolveExportConfig(minimal);
-
-    expect(resolved.projectId).toBe("test-project");
-    expect(resolved.serviceAccount).toBe(
-      "firestore-bigquery-export@test-project.iam.gserviceaccount.com"
-    );
-  });
-
-  test("keeps an explicit serviceAccount", () => {
-    const resolved = resolveExportConfig({
-      ...minimal,
-      serviceAccount: "custom@example.iam.gserviceaccount.com",
-    });
-
-    expect(resolved.serviceAccount).toBe(
-      "custom@example.iam.gserviceaccount.com"
-    );
-  });
-
   test("applies defaults for omitted fields", () => {
     const resolved = resolveExportConfig(minimal);
 
+    expect(resolved.projectId).toBe("test-project");
     expect(resolved.location).toBe("us-central1");
     expect(resolved.datasetLocation).toBe("us");
     expect(resolved.databaseId).toBe("(default)");
