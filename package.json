@@ -6,6 +6,8 @@
   "scripts": {
     "format": "prettier --write \"**/*.{js,md,yml,ts,json,yaml}\"",
     "lint": "prettier --list-different \"**/*.{js,md,yml,ts,json,yaml}\"",
+    "license:check": "./scripts/addlicense.sh check",
+    "license:fix": "./scripts/addlicense.sh fix",
     "clean": "lerna run --parallel clean && lerna clean",
     "build": "lerna run --sort build",
     "local:emulator": "cd _emulator && firebase emulators:start -P demo-test",

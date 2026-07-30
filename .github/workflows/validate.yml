@@ -18,3 +18,16 @@ jobs:
         run: SKIP_POSTINSTALL=yes npm i
       - name: Prettier Lint Check
         run: npm run lint
+
+  license:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: Install addlicense
+        run: go install github.com/google/addlicense@v1.2.0
+      - name: Check license headers
+        run: ./scripts/addlicense.sh check
