@@ -21,12 +21,11 @@ import { onCall } from "firebase-functions/https";
 import { expr } from "firebase-functions/params";
 import { onTaskDispatched } from "firebase-functions/tasks";
 import type { Role } from "firebase-functions/v2";
+import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import {
   afterFirstDeploy,
   afterRedeploy,
-  requiresAPI,
-  requiresRole,
-} from "firebase-functions/v2";
+} from "firebase-functions/v2/lifecycle";
 import {
   CONFIG_EXPRESSIONS,
   configFromEnv,
