@@ -33,11 +33,11 @@ import { onDocumentWritten } from "firebase-functions/firestore";
 import { expr } from "firebase-functions/params";
 import { onTaskDispatched } from "firebase-functions/tasks";
 import type { Role } from "firebase-functions/v2";
+import { requiresRole } from "firebase-functions/v2";
 import {
   afterFirstDeploy,
   afterRedeploy,
-  requiresRole,
-} from "firebase-functions/v2";
+} from "firebase-functions/v2/lifecycle";
 import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
 import * as events from "./events";
 import { resolveExportConfig, toTrackerConfig } from "./export-config";
