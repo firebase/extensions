@@ -5,16 +5,32 @@ on:
     branches:
       - "**"
 
+permissions:
+  contents: read
+
 jobs:
   formatting:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
         with:
           node-version: 22
       - name: NPM install
         run: SKIP_POSTINSTALL=yes npm i
       - name: Prettier Lint Check
         run: npm run lint
+
+  license:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      - name: Setup go
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version: stable
+      - name: Install addlicense
+        run: go install github.com/google/addlicense@v1.2.0
+      - name: Check license headers
+        run: ./scripts/addlicense.sh check
