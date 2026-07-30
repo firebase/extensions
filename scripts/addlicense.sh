@@ -11,8 +11,13 @@ fi
 
 mode="${1:-check}"
 flags=(-f license-header.tmpl)
-if [ "$mode" = "check" ]; then flags+=(-check); fi
+if [ "$mode" = "check" ]; then
+  flags+=(-check)
+elif [ "$mode" != "fix" ]; then
+  echo "Invalid mode: $mode. Usage: $0 [check|fix]" >&2
+  exit 1
+fi
 
-git ls-files -- '*.ts' '*.js' \
-  | grep -vE '(^|/)(node_modules|lib|dist|coverage)/' \
-  | xargs addlicense "${flags[@]}"
+git ls-files -z -- '*.ts' '*.js' \
+  | grep -zvE '(^|/)(node_modules|lib|dist|coverage)/' \
+  | xargs -0 addlicense "${flags[@]}"
