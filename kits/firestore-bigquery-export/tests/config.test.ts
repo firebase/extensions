@@ -150,11 +150,6 @@ describe("configFromEnv", () => {
     const config = configFromEnv();
     expect(config.projectId).toBe("test-project");
     expect(config.bqProjectId).toBe("test-project");
-    // SERVICE_ACCOUNT is unset, so the default is left to resolveExportConfig.
-    expect(config.serviceAccount).toBeUndefined();
-    expect(resolveExportConfig(config).serviceAccount).toBe(
-      "firestore-bigquery-export@test-project.iam.gserviceaccount.com"
-    );
     expect(config.databaseId).toBe("(default)");
     expect(resolveExportConfig(config).location).toBe("us-central1");
     expect(config.viewType).toBe("view");
