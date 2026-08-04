@@ -1,0 +1,40 @@
+{
+  "name": "@firebase/bigquery-firestore-export",
+  "version": "0.1.0",
+  "description": "Schedule BigQuery queries and export the results to Firestore as deployable Firebase Functions",
+  "license": "Apache-2.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./lib": {
+      "types": "./lib/lib.d.ts",
+      "default": "./lib/lib.js"
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "tsc -b --clean",
+    "test": "vitest run",
+    "deploy": "pnpm build && firebase deploy --only functions",
+    "serve": "firebase emulators:start --only functions"
+  },
+  "dependencies": {
+    "@google-cloud/bigquery": "^7.6.0",
+    "@google-cloud/bigquery-data-transfer": "^5.0.1",
+    "@google-cloud/pubsub": "^4.10.0",
+    "firebase-admin": "^14.1.0",
+    "firebase-functions": "7.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^6.0.0",
+    "vitest": "^3.2.4"
+  }
+}
