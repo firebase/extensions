@@ -14,75 +14,41 @@
  * limitations under the License.
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { Expression } from "firebase-functions/params";
+import { describe, expect, test } from "vitest";
 
-class Expression<_T = string> {
-  constructor(private readonly cel: string) {}
+import { envDeployOptions } from "../src/config";
 
-  toCEL(): string {
-    return this.cel;
-  }
-}
-
-class StringParam extends Expression<string> {
-  constructor(
-    private readonly name: string,
-    private readonly defaultValue?: string
-  ) {
-    super(`{{ params.${name} }}`);
-  }
-
-  value(): string {
-    return this.defaultValue ?? `${this.name.toLowerCase()}-value`;
-  }
-}
-
-const defineString = vi.fn(
-  (name: string, opts?: { default?: string }) =>
-    new StringParam(name, opts?.default)
-);
-
-const defineInt = vi.fn((_name: string, opts?: { default?: number }) => ({
-  value: () => opts?.default ?? 10,
-}));
-
-function cel(value: unknown): string {
-  return value instanceof Expression ? value.toCEL() : String(value);
-}
-
-vi.mock("firebase-functions/params", () => ({
-  Expression,
-  defineString,
-  defineInt,
-}));
+const cel = (value: unknown): string =>
+  value instanceof Expression ? value.toCEL() : String(value);
 
 describe("envDeployOptions", () => {
-  test("resolves RTDB trigger options to strings", async () => {
-    vi.resetModules();
-    const { envDeployOptions } = await import("../src/config");
+  const options = envDeployOptions();
 
-    const options = envDeployOptions();
-
-    expect(options.ref).toBe("node_path-value/{nodeId}");
-    expect(options.instance).toBe("selected_database_instance-value");
-    expect(options.region).toBe("us-central1");
+  test("ref is a concrete string (RTDB SDK requires normalizePath)", () => {
+    expect(typeof options.ref).toBe("string");
+    expect(options.ref).toMatch(/\/\{nodeId\}$/);
+    expect(options.ref).not.toBe("/{nodeId}");
+    expect(options.ref).not.toBe("{nodeId}");
   });
 
-  test("does not freeze undefined or empty literals into deploy options", async () => {
-    vi.resetModules();
-    const { envDeployOptions } = await import("../src/config");
+  test("instance is a param expression", () => {
+    expect(options.instance).toBeInstanceOf(Expression);
+    expect(cel(options.instance)).toBe(
+      "{{ params.SELECTED_DATABASE_INSTANCE }}"
+    );
+  });
 
-    const options = envDeployOptions();
-    const values = [
-      cel(options.ref),
-      cel(options.instance),
-      cel(options.region),
-    ];
+  test("region is a param expression", () => {
+    expect(options.region).toBeInstanceOf(Expression);
+    expect(cel(options.region)).toBe("{{ params.LOCATION }}");
+  });
 
-    for (const value of values) {
-      expect(value).not.toContain("undefined");
-      expect(value).not.toContain('""');
-      expect(value).not.toBe("");
-    }
+  test("no deploy-time option is a frozen undefined/empty literal", () => {
+    expect(options.ref).not.toBe("");
+    expect(cel(options.instance)).not.toBe("");
+    expect(cel(options.region)).not.toBe("");
+    expect(cel(options.instance)).not.toContain("undefined");
+    expect(cel(options.region)).not.toContain("undefined");
   });
 });

@@ -34,8 +34,9 @@ function defaultDatabaseInstance(): string | undefined {
 const databaseInstanceDefault = defaultDatabaseInstance();
 
 const params = {
-  nodePath: defineString("NODE_PATH"),
-  maxCount: defineInt("MAX_COUNT"),
+  // Default so deploy discovery does not freeze an empty ref into the trigger.
+  nodePath: defineString("NODE_PATH", { default: "messages" }),
+  maxCount: defineInt("MAX_COUNT", { default: 100 }),
   databaseInstance: databaseInstanceDefault
     ? defineString("SELECTED_DATABASE_INSTANCE", {
         default: databaseInstanceDefault,
@@ -53,10 +54,19 @@ export function configFromEnv(): RtdbLimitConfig {
   };
 }
 
+/**
+ * Builds deploy-time trigger options.
+ *
+ * `ref` must be a concrete string: `onValueCreated` calls `normalizePath(ref)`
+ * at module load and does not accept Expressions (unlike Firestore `document`).
+ * `instance` and `region` are passed as Expressions so the CLI resolves them
+ * from `.env` after discovery (avoids freezing an empty region into
+ * `locations//functions`).
+ */
 export function envDeployOptions(): DeployTimeOptions {
   return {
     ref: toTriggerRef(params.nodePath.value()),
-    instance: params.databaseInstance.value(),
-    region: params.region.value(),
+    instance: params.databaseInstance,
+    region: params.region,
   };
 }
