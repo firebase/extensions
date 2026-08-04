@@ -71,9 +71,34 @@ nothing.
 
 ## Deploy
 
+The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
+later, behind the `kits` experiment):
+
+```json
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "firestore-bigquery-export",
+      "instances": {
+        "default": "."
+      }
+    }
+  ]
+}
+```
+
+`instances` maps each instance id to the directory (relative to
+`firebase.json`) holding that instance's `.env`. The CLI prefixes every
+function and task queue name with `kit-<instance id>-`, so the functions above
+deploy as `kit-default-fsexportbigquery` and `kit-default-initBigQuerySync`.
+
 ```sh
+firebase experiments:enable kits
 firebase deploy --only functions
 ```
+
+Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 
 ## Configuration
 
@@ -100,14 +125,21 @@ supplied by the CLI's built-in `PROJECT_ID` param.
 
 ## Multiple instances
 
-To export several collections, deploy the same source once per instance using
-the Firebase CLI's codebase `prefix` and `configDir` options: each
-`functions` entry in `firebase.json` points at the same source directory but
-namespaces its function (and task queue) names with `prefix` and reads its
-`.env` from its own `configDir`. See the
+To export several collections, add one entry per instance to the `instances`
+map, each pointing at its own config directory with its own `.env`:
+
+```json
+"instances": {
+  "users": "instances/users",
+  "orders": "instances/orders"
+}
+```
+
+Instance ids must be unique across all kit stanzas in the project, and every
+instance's function names are namespaced by its `kit-<instance id>-` prefix, so
+the instances cannot collide. See the
 [multi-instance example](../../examples/firestore-bigquery-export-multi/) for a
-complete project and the associated caveats (the options are recent and not yet
-officially documented).
+complete project.
 
 ## Provisioning
 
@@ -123,7 +155,7 @@ const { initializeApp } = require("firebase-admin/app");
 const { getFunctions } = require("firebase-admin/functions");
 initializeApp();
 getFunctions()
-  .taskQueue("locations/'"$DATABASE_REGION"'/functions/initBigQuerySync")
+  .taskQueue("locations/'"$DATABASE_REGION"'/functions/kit-default-initBigQuerySync")
   .enqueue({})
   .then(() => console.log("init task enqueued"));
 '
@@ -138,7 +170,7 @@ manual run you can also POST to it directly — note this skips the queue, so a
 failure is not retried:
 
 ```sh
-URL=$(gcloud functions describe initBigQuerySync \
+URL=$(gcloud functions describe kit-default-initBigQuerySync \
   --region "$DATABASE_REGION" --gen2 --format='value(url)')
 
 curl -fsS -X POST -H "Content-Type: application/json" -d '{"data":{}}' \
