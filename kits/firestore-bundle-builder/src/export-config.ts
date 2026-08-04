@@ -36,8 +36,6 @@ export interface BundleBuilderConfig {
   storagePrefix?: string;
   /** Region for the HTTPS function. Defaults to `us-central1`. */
   region?: string;
-  /** Runtime service account email. */
-  serviceAccount?: string;
 }
 
 /** {@link BundleBuilderConfig} with all defaults applied. */
@@ -46,7 +44,6 @@ export interface ResolvedBundleBuilderConfig {
   bundleStorageBucket: string;
   storagePrefix: string;
   region: string;
-  serviceAccount?: string;
 }
 
 /**
@@ -64,8 +61,6 @@ export interface ResolvedBundleBuilderConfig {
 export interface DeployTimeOptions {
   /** Region for the HTTPS function. */
   region: string | Expression<string>;
-  /** Runtime service account email. */
-  serviceAccount?: string | Expression<string>;
 }
 
 const DEFAULT_BUNDLE_STORAGE_BUCKET = "bundle-builder-files";
@@ -92,6 +87,5 @@ export function resolveConfig(
       DEFAULT_BUNDLE_STORAGE_BUCKET,
     storagePrefix: config.storagePrefix ?? "bundles",
     region: config.region ?? "us-central1",
-    serviceAccount: config.serviceAccount,
   };
 }
