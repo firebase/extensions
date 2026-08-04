@@ -49,13 +49,7 @@ export function defineFirestoreBundleBuilder(config: BundleBuilderConfig): {
   serve: HttpsFunction;
 } {
   const resolved = resolveConfig(config);
-  return buildBundleFunctions(
-    {
-      region: resolved.region,
-      serviceAccount: resolved.serviceAccount,
-    },
-    () => resolved
-  );
+  return buildBundleFunctions({ region: resolved.region }, () => resolved);
 }
 
 /**
@@ -119,14 +113,8 @@ export function buildBundleFunctions(
     return ctx;
   };
 
-  const serve = onRequest(
-    {
-      region: deploy.region,
-      ...(deploy.serviceAccount
-        ? { serviceAccount: deploy.serviceAccount }
-        : {}),
-    },
-    (req, res) => handleServe(req, res, getContext())
+  const serve = onRequest({ region: deploy.region }, (req, res) =>
+    handleServe(req, res, getContext())
   );
 
   return { serve };
