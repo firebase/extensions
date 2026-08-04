@@ -9,7 +9,6 @@ describe("resolveConfig", () => {
       bundleStorageBucket: "bundle-builder-files",
       storagePrefix: "bundles",
       region: "us-central1",
-      serviceAccount: undefined,
     });
   });
 
@@ -19,14 +18,12 @@ describe("resolveConfig", () => {
       bundleStorageBucket: "my-bucket",
       storagePrefix: "cached",
       region: "europe-west2",
-      serviceAccount: "sa@example.iam.gserviceaccount.com",
     });
     expect(resolved).toEqual({
       bundleSpecCollection: "specs",
       bundleStorageBucket: "my-bucket",
       storagePrefix: "cached",
       region: "europe-west2",
-      serviceAccount: "sa@example.iam.gserviceaccount.com",
     });
   });
 
