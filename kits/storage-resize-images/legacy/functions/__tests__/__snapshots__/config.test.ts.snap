@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`extension configuration detected from environment variables 1`] = `
+Object {
+  "animated": false,
+  "bucket": "extensions-testing.appspot.com",
+  "cacheControlHeader": undefined,
+  "contentFilterLevel": null,
+  "customFilterPrompt": null,
+  "deleteOriginalFile": 0,
+  "excludePathList": undefined,
+  "failedImagesPath": undefined,
+  "imageSizes": Array [
+    "200x200",
+  ],
+  "imageTypes": undefined,
+  "includePathList": undefined,
+  "location": "us-central1",
+  "makePublic": false,
+  "outputOptions": undefined,
+  "placeholderImagePath": null,
+  "projectId": undefined,
+  "regenerateToken": false,
+  "resizedImagesPath": undefined,
+  "sharpOptions": "{}",
+}
+`;
