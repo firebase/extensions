@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build output
+lib/
+dist/
+*.tsbuildinfo
+
+# Env / secrets (keep examples)
+.env
+.env.*
+!.env.example
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Pack artifacts
+*.tgz
+
+# Logs / local Firebase
+*.log
+firebase-debug.log*
+firestore-debug.log*
+database-debug.log*
+pubsub-debug.log*
+ui-debug.log*
+
+# OS / editor
+.DS_Store
+*.local
