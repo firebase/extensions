@@ -19,9 +19,10 @@
  * the same name.
  *
  * Skeleton package: not yet implemented. Target shape follows the
- * firestore-bigquery-export reference package — a `define...` factory (tier 3)
- * over injectable handlers (tier 2), with a side-effect-free `./lib` surface and
- * this env-driven entry registering functions for the clone-and-deploy example.
+ * firestore-bigquery-export reference package — this entry wires triggers
+ * directly at module top level with deploy-time param expressions over
+ * injectable handlers, with a side-effect-free `./lib` surface for the
+ * handlers and config types.
  */
 
 export {};

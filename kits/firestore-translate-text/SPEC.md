@@ -66,9 +66,10 @@ export const fstranslate: CloudFunction<FirestoreEvent<...>>;
 1. Scaffold from reference; keep `events.ts`.
 2. Port `translate/` modules; abstract the provider behind a small interface so
    `google-translate` vs `gemini` is a typed switch.
-3. Wire the secret via `defineSecret("GOOGLE_AI_API_KEY")`; pass into factory
-   `secrets`; read with `.value()` in the handler context. Document granting it
-   and **reusing the existing secret** on migration (don't re-enter).
+3. Wire the secret via `defineSecret("GOOGLE_AI_API_KEY")`; pass it in the
+   trigger's `secrets` option; read with `.value()` in the handler context.
+   Document granting it and **reusing the existing secret** on migration
+   (don't re-enter).
 4. Map params in `config.ts`; preserve update-detection (only translate when the
    input field changed) and delete handling.
 5. Register roles/APIs from `extension.yaml` in `index.ts`.
