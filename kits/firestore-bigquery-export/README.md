@@ -129,9 +129,17 @@ To export several collections, add one entry per instance to the `instances`
 map, each pointing at its own config directory with its own `.env`:
 
 ```json
-"instances": {
-  "users": "instances/users",
-  "orders": "instances/orders"
+{
+  "functions": [
+    {
+      "source": ".",
+      "kit": "firestore-bigquery-export",
+      "instances": {
+        "users": "instances/users",
+        "orders": "instances/orders"
+      }
+    }
+  ]
 }
 ```
 
@@ -148,6 +156,9 @@ lifecycle task queue deployed alongside the other functions (as in the
 extension). Enqueue it once after deploy; Cloud Tasks retries a failed
 initialization on its own schedule, so a transient BigQuery error cannot leave
 the resources unprovisioned. It is idempotent.
+
+The snippets below use the `default` instance; substitute your instance id in
+the `kit-<instance id>-` prefix if you named yours differently.
 
 ```sh
 node -e '
