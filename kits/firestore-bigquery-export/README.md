@@ -1,6 +1,6 @@
 # @firebase/firestore-bigquery-export
 
-<!-- FIREBASE_EXTENSION_REPLACEMENT: extension=firebase/firestore-bigquery-export package=@firebase/firestore-bigquery-export -->
+<!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/firestore-bigquery-export" package="@firebase/firestore-bigquery-export" -->
 
 > **Deprecation Notice:** The Firebase Extension `firebase/firestore-bigquery-export` is deprecated. Please migrate to the [`@firebase/firestore-bigquery-export`](https://www.npmjs.com/package/@firebase/firestore-bigquery-export) package.
 

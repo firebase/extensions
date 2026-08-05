@@ -1,6 +1,6 @@
 # @firebase/rtdb-limit-child-nodes
 
-<!-- FIREBASE_EXTENSION_REPLACEMENT: extension=firebase/rtdb-limit-child-nodes package=@firebase/rtdb-limit-child-nodes -->
+<!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/rtdb-limit-child-nodes" package="@firebase/rtdb-limit-child-nodes" -->
 
 > **Deprecation Notice:** The Firebase Extension `firebase/rtdb-limit-child-nodes` is deprecated. Please migrate to the [`@firebase/rtdb-limit-child-nodes`](https://www.npmjs.com/package/@firebase/rtdb-limit-child-nodes) package.
 

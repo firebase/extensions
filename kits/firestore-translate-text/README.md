@@ -1,6 +1,6 @@
 # @firebase/firestore-translate-text
 
-<!-- FIREBASE_EXTENSION_REPLACEMENT: extension=firebase/firestore-translate-text package=@firebase/firestore-translate-text -->
+<!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/firestore-translate-text" package="@firebase/firestore-translate-text" -->
 
 > **Deprecation Notice:** The Firebase Extension `firebase/firestore-translate-text` is deprecated. Please migrate to the [`@firebase/firestore-translate-text`](https://www.npmjs.com/package/@firebase/firestore-translate-text) package.
 
