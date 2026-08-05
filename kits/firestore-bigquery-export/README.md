@@ -103,7 +103,7 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 ## Configuration
 
 Configuration is via v2 function params: env vars named as the upper snake-case
-of the fields below (see `.env.example` for the full list). `projectId` is
+of the fields below. `projectId` is
 supplied by the CLI's built-in `PROJECT_ID` param.
 
 | Field | Required | Default | Description |
