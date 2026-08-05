@@ -61,8 +61,9 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/aiplatform.user",
   "roles/storage.objectAdmin",
   "roles/datastore.indexAdmin",
-  // Gen2 Firestore triggers need Eventarc receive on the function SA.
+  // Gen2 Firestore triggers need Eventarc receive and run.invoker on the function SA.
   "roles/eventarc.eventReceiver",
+  "roles/run.invoker",
 ];
 const REQUIRED_APIS = [
   {
