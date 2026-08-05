@@ -36,6 +36,8 @@ export * from "./lib";
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/datastore.user",
   "roles/cloudscheduler.admin",
+  // Gen2 Firestore triggers need Eventarc receive on the function SA.
+  "roles/eventarc.eventReceiver",
 ];
 
 for (const role of REQUIRED_ROLES) {

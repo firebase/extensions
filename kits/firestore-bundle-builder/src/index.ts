@@ -25,12 +25,25 @@
  * own typed config.
  */
 
+import type { Role } from "firebase-functions/v2";
+import { requiresRole } from "firebase-functions/v2";
 import { configFromEnv, envDeployOptions } from "./config";
 import { resolveConfig } from "./export-config";
 import { buildBundleFunctions } from "./factory";
 
 // Re-export the full library surface for consumers of this package.
 export * from "./lib";
+
+const REQUIRED_ROLES: ReadonlyArray<Role> = [
+  "roles/datastore.user",
+  "roles/storage.objectAdmin",
+  // Gen2 event triggers need Eventarc receive on the function SA.
+  "roles/eventarc.eventReceiver",
+];
+
+for (const role of REQUIRED_ROLES) {
+  requiresRole(role);
+}
 
 // Deploy-time options are param expressions (resolved by the CLI from `.env`);
 // the runtime config resolver runs only on the first invocation, so its

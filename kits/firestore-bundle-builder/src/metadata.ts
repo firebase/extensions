@@ -19,6 +19,10 @@
  * this extension. Consumed by IAM/cutover tooling; no runtime behaviour.
  */
 export const metadata = {
-  roles: ["datastore.user", "storage.objectAdmin"],
+  roles: [
+    "roles/datastore.user",
+    "roles/storage.objectAdmin",
+    "roles/eventarc.eventReceiver",
+  ],
   functionNames: ["serve"],
 } as const;

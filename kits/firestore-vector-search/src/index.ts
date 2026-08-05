@@ -56,12 +56,14 @@ export * from "./lib";
 const INIT_VECTOR_SEARCH_FUNCTION = "initVectorSearch";
 const FUNCTION_TIMEOUT_SECONDS = 540;
 const TASK_MAX_ATTEMPTS = 50;
-const REQUIRED_ROLES = [
+const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/datastore.user",
   "roles/aiplatform.user",
   "roles/storage.objectAdmin",
   "roles/datastore.indexAdmin",
-] as const satisfies ReadonlyArray<Role>;
+  // Gen2 Firestore triggers need Eventarc receive on the function SA.
+  "roles/eventarc.eventReceiver",
+];
 const REQUIRED_APIS = [
   {
     api: "aiplatform.googleapis.com",

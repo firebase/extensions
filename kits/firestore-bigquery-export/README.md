@@ -34,6 +34,7 @@ Declarative security cannot be combined with a custom runtime service account.
 | `roles/bigquery.dataEditor` | create dataset/table/views; insert rows |
 | `roles/bigquery.user` | run BigQuery jobs and materialized views |
 | `roles/datastore.user` | write failed-row records back to Firestore (only if you configure a backup collection) |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
 
 If the dataset lives in a different project (`bqProjectId`), grant the
 managed runtime service account the `bigquery.*` roles on that project. For a

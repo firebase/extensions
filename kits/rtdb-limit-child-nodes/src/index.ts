@@ -29,7 +29,11 @@ import * as logs from "./logs";
 
 export * from "./lib";
 
-const REQUIRED_ROLES: ReadonlyArray<Role> = ["roles/firebasedatabase.admin"];
+const REQUIRED_ROLES: ReadonlyArray<Role> = [
+  "roles/firebasedatabase.admin",
+  // Gen2 RTDB triggers need Eventarc receive on the function SA.
+  "roles/eventarc.eventReceiver",
+];
 
 for (const role of REQUIRED_ROLES) {
   requiresRole(role);

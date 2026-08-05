@@ -34,6 +34,8 @@ export * from "./lib";
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/storage.objectAdmin",
   "roles/datastore.user",
+  // Gen2 Storage triggers need Eventarc receive on the function SA.
+  "roles/eventarc.eventReceiver",
 ];
 const REQUIRED_APIS = [
   {
