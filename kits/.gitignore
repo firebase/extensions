@@ -6,10 +6,9 @@ lib/
 dist/
 *.tsbuildinfo
 
-# Env / secrets (keep examples)
+# Env / secrets
 .env
 .env.*
-!.env.example
 
 # Test / coverage
 coverage/
