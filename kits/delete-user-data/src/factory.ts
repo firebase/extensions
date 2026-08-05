@@ -17,17 +17,6 @@ import {
 } from "./handlers";
 import * as logs from "./logs";
 
-export const metadata = {
-  roles: [
-    "roles/datastore.owner",
-    "roles/firebasedatabase.admin",
-    "roles/storage.admin",
-    "roles/pubsub.admin",
-    "roles/eventarc.eventReceiver",
-  ],
-  functionNames: ["clearData", "handleSearch", "handleDeletion"],
-} as const;
-
 export function defineDeleteUserData(config: DeleteUserDataConfig) {
   const resolved = resolveDeleteUserDataConfig(config);
   const databaseURL = getDatabaseUrl(

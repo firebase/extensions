@@ -61,5 +61,3 @@ export {
   handleServe,
   type ServeResponse,
 } from "./handlers";
-// Data-only metadata
-export { metadata } from "./metadata";

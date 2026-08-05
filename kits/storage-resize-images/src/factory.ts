@@ -9,16 +9,6 @@ import {
 import { type HandlerContext, handleObjectFinalized } from "./handlers";
 import * as logs from "./logs";
 
-export const metadata = {
-  roles: [
-    "roles/storage.admin",
-    "roles/aiplatform.user",
-    "roles/eventarc.eventReceiver",
-  ],
-  apis: ["storage-component.googleapis.com"],
-  functionNames: ["generateResizedImage"],
-} as const;
-
 export function defineStorageResizeImages(config: ResizeImagesConfig) {
   const resolved = resolveResizeImagesConfig(config);
 

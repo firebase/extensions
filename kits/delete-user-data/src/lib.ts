@@ -5,7 +5,7 @@ export {
   type ResolvedDeleteUserDataConfig,
   resolveDeleteUserDataConfig,
 } from "./export-config";
-export { defineDeleteUserData, metadata } from "./factory";
+export { defineDeleteUserData } from "./factory";
 export {
   type DeleteMessageData,
   type HandlerContext,
