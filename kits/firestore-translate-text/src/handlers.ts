@@ -32,7 +32,7 @@ const CHANGE_TYPE = {
   update: "update",
 } as const;
 
-type ChangeType = typeof CHANGE_TYPE[keyof typeof CHANGE_TYPE];
+type ChangeType = (typeof CHANGE_TYPE)[keyof typeof CHANGE_TYPE];
 
 export interface HandlerContext {
   firestore: Firestore;
