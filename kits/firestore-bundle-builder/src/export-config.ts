@@ -17,7 +17,7 @@
 import type { Expression } from "firebase-functions/params";
 
 /**
- * Public configuration for {@link defineFirestoreBundleBuilder}.
+ * Public configuration for the bundle builder.
  *
  * This is a plain object, so consumers can wire up several independent bundle
  * builders in one functions codebase. `bundleStorageBucket` and `storagePrefix`
