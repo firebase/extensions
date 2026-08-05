@@ -29,7 +29,11 @@ import { Templates } from "./templates";
 
 export * from "./lib";
 
-const REQUIRED_ROLES: ReadonlyArray<Role> = ["roles/datastore.user"];
+const REQUIRED_ROLES: ReadonlyArray<Role> = [
+  "roles/datastore.user",
+  // Gen2 Firestore triggers need Eventarc receive on the function SA.
+  "roles/eventarc.eventReceiver",
+];
 
 for (const role of REQUIRED_ROLES) {
   requiresRole(role);

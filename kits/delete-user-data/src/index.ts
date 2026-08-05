@@ -14,10 +14,25 @@
  * limitations under the License.
  */
 
+import type { Role } from "firebase-functions/v2";
+import { requiresRole } from "firebase-functions/v2";
 import { configFromEnv } from "./config";
 import { defineDeleteUserData } from "./factory";
 
 export * from "./lib";
+
+const REQUIRED_ROLES: ReadonlyArray<Role> = [
+  "roles/datastore.owner",
+  "roles/firebasedatabase.admin",
+  "roles/storage.admin",
+  "roles/pubsub.admin",
+  // Gen2 event triggers need Eventarc receive on the function SA.
+  "roles/eventarc.eventReceiver",
+];
+
+for (const role of REQUIRED_ROLES) {
+  requiresRole(role);
+}
 
 export const { clearData, handleSearch, handleDeletion } = defineDeleteUserData(
   configFromEnv()

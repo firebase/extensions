@@ -19,10 +19,11 @@ import * as logs from "./logs";
 
 export const metadata = {
   roles: [
-    "datastore.owner",
-    "firebasedatabase.admin",
-    "storage.admin",
-    "pubsub.admin",
+    "roles/datastore.owner",
+    "roles/firebasedatabase.admin",
+    "roles/storage.admin",
+    "roles/pubsub.admin",
+    "roles/eventarc.eventReceiver",
   ],
   functionNames: ["clearData", "handleSearch", "handleDeletion"],
 } as const;

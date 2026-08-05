@@ -14,10 +14,23 @@
  * limitations under the License.
  */
 
+import type { Role } from "firebase-functions/v2";
+import { requiresRole } from "firebase-functions/v2";
 import { configFromEnv } from "./config";
 import { defineStorageResizeImages } from "./factory";
 
 export * from "./lib";
+
+const REQUIRED_ROLES: ReadonlyArray<Role> = [
+  "roles/storage.admin",
+  "roles/aiplatform.user",
+  // Gen2 Storage triggers need Eventarc receive on the function SA.
+  "roles/eventarc.eventReceiver",
+];
+
+for (const role of REQUIRED_ROLES) {
+  requiresRole(role);
+}
 
 export const { generateResizedImage } = defineStorageResizeImages(
   configFromEnv()

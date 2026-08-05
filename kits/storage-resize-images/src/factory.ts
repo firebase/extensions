@@ -10,7 +10,11 @@ import { type HandlerContext, handleObjectFinalized } from "./handlers";
 import * as logs from "./logs";
 
 export const metadata = {
-  roles: ["storage.admin", "aiplatform.user"],
+  roles: [
+    "roles/storage.admin",
+    "roles/aiplatform.user",
+    "roles/eventarc.eventReceiver",
+  ],
   apis: ["storage-component.googleapis.com"],
   functionNames: ["generateResizedImage"],
 } as const;
