@@ -1,6 +1,6 @@
 # @firebase/firestore-genai-chatbot
 
-<!-- FIREBASE_EXTENSION_REPLACEMENT: extension=googlecloud/firestore-genai-chatbot package=@firebase/firestore-genai-chatbot -->
+<!-- FIREBASE_EXTENSION_REPLACEMENT: extension="googlecloud/firestore-genai-chatbot" package="@firebase/firestore-genai-chatbot" -->
 
 > **Deprecation Notice:** The Firebase Extension `googlecloud/firestore-genai-chatbot` is deprecated. Please migrate to the [`@firebase/firestore-genai-chatbot`](https://www.npmjs.com/package/@firebase/firestore-genai-chatbot) package.
 
