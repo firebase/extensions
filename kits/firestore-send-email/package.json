@@ -1,7 +1,6 @@
 {
   "name": "@firebase/firestore-send-email",
   "version": "0.1.0",
-  "private": false,
   "description": "Send emails based on documents written to Firestore",
   "license": "Apache-2.0",
   "main": "lib/index.js",

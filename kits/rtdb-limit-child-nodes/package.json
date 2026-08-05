@@ -1,7 +1,6 @@
 {
   "name": "@firebase/rtdb-limit-child-nodes",
   "version": "0.1.0",
-  "private": false,
   "description": "Limit the number of child nodes under a Realtime Database path",
   "license": "Apache-2.0",
   "main": "lib/index.js",
@@ -21,7 +20,10 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "clean": "tsc -b --clean"
+    "clean": "tsc -b --clean",
+    "test": "vitest run",
+    "deploy": "pnpm build && firebase deploy --only functions",
+    "serve": "firebase emulators:start --only functions"
   },
   "dependencies": {
     "firebase-admin": "^14.1.0",
