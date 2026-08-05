@@ -1,5 +1,9 @@
 # @firebase/firestore-send-email
 
+<!-- FIREBASE_EXTENSION_REPLACEMENT: extension=firebase/firestore-send-email package=@firebase/firestore-send-email -->
+
+> **Deprecation Notice:** The Firebase Extension `firebase/firestore-send-email` is deprecated. Please migrate to the [`@firebase/firestore-send-email`](https://www.npmjs.com/package/@firebase/firestore-send-email) package.
+
 Send emails based on documents written to Firestore. This is the Trigger Email
 from Firestore Firebase Extension as an npm package you add to your own Firebase
 Functions codebase and deploy.

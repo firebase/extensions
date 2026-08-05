@@ -1,5 +1,9 @@
 # @firebase/firestore-incremental-capture
 
+<!-- FIREBASE_EXTENSION_REPLACEMENT: extension=googlecloud/firestore-incremental-capture package=@firebase/firestore-incremental-capture -->
+
+> **Deprecation Notice:** The Firebase Extension `googlecloud/firestore-incremental-capture` is deprecated. Please migrate to the [`@firebase/firestore-incremental-capture`](https://www.npmjs.com/package/@firebase/firestore-incremental-capture) package.
+
 Incremental point-in-time capture of Firestore changes
 
 > **Status: skeleton — not yet implemented.**
