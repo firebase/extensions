@@ -1,6 +1,6 @@
 # @firebase/speech-to-text
 
-<!-- FIREBASE_EXTENSION_REPLACEMENT: extension=googlecloud/speech-to-text package=@firebase/speech-to-text -->
+<!-- FIREBASE_EXTENSION_REPLACEMENT: extension="googlecloud/speech-to-text" package="@firebase/speech-to-text" -->
 
 > **Deprecation Notice:** The Firebase Extension `googlecloud/speech-to-text` is deprecated. Please migrate to the [`@firebase/speech-to-text`](https://www.npmjs.com/package/@firebase/speech-to-text) package.
 
