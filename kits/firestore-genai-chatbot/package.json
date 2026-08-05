@@ -1,7 +1,6 @@
 {
   "name": "@firebase/firestore-genai-chatbot",
   "version": "0.1.0",
-  "private": false,
   "description": "Conversational GenAI chatbot backed by Firestore",
   "license": "Apache-2.0",
   "main": "lib/index.js",
@@ -35,8 +34,5 @@
     "genkit": "^1.24.0",
     "google-gax": "^4.3.2",
     "zod": "^3.23.0"
-  },
-  "devDependencies": {
-    "firebase-functions-test": "^3.2.0"
   }
 }

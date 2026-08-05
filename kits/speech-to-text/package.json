@@ -1,7 +1,6 @@
 {
   "name": "@firebase/speech-to-text",
   "version": "0.1.0",
-  "private": false,
   "description": "Transcribe audio files in Cloud Storage to text using Cloud Speech-to-Text, as a deployable Firebase Function",
   "license": "Apache-2.0",
   "main": "lib/index.js",
@@ -34,7 +33,6 @@
     "mkdirp": "^3.0.1"
   },
   "devDependencies": {
-    "@types/fluent-ffmpeg": "^2.1.27",
-    "firebase-functions-test": "^3.2.0"
+    "@types/fluent-ffmpeg": "^2.1.27"
   }
 }
