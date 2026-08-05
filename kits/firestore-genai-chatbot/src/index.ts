@@ -36,8 +36,9 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/monitoring.metricWriter",
   "roles/cloudtrace.agent",
   "roles/logging.logWriter",
-  // Gen2 Firestore triggers need Eventarc receive on the function SA.
+  // Gen2 Firestore triggers need Eventarc receive and run.invoker on the function SA.
   "roles/eventarc.eventReceiver",
+  "roles/run.invoker",
 ];
 const REQUIRED_APIS = [
   {
