@@ -15,23 +15,26 @@
  */
 
 /**
- * Clone-and-deploy entry point. Reads deploy-time params from the environment,
- * builds a {@link BundleBuilderConfig}, and registers the function via the
- * factory.
+ * Clone-and-deploy entry point. Reads deploy-time params from the environment
+ * and registers the HTTPS `serve` function.
  *
  * This module reads the environment at load time, so it only runs cleanly inside
  * the Firebase toolchain (deploy discovery, runtime, or the emulator). Library
- * consumers should import from `./lib` instead and call the factory with their
- * own typed config.
+ * consumers should import from `./lib` instead and own trigger registration with
+ * the side-effect-free handlers and config helpers.
  */
 
+import { Storage } from "@google-cloud/storage";
+import * as admin from "firebase-admin";
+import { logger } from "firebase-functions";
+import { onRequest } from "firebase-functions/https";
 import type { Role } from "firebase-functions/v2";
 import { requiresRole } from "firebase-functions/v2";
+import type { BundleSpec } from "./build-bundle";
 import { configFromEnv, envDeployOptions } from "./config";
 import { resolveConfig } from "./export-config";
-import { buildBundleFunctions } from "./factory";
+import { type HandlerContext, handleServe } from "./handlers";
 
-// Re-export the full library surface for consumers of this package.
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
@@ -45,9 +48,47 @@ for (const role of REQUIRED_ROLES) {
   requiresRole(role);
 }
 
-// Deploy-time options are param expressions (resolved by the CLI from `.env`);
-// the runtime config resolver runs only on the first invocation, so its
-// `.value()` reads are deferred past deploy discovery.
-export const { serve } = buildBundleFunctions(envDeployOptions(), () =>
-  resolveConfig(configFromEnv())
+const deploy = envDeployOptions();
+
+if (admin.apps.length === 0) {
+  admin.initializeApp();
+}
+
+// Resolve the runtime config once, on first use, never at module load. On the
+// params path this is where `.value()` is read — safe at runtime, fatal at
+// deploy discovery. Deploy-time options pass the region param Expression so the
+// CLI resolves it after loading `.env` / prompting.
+let ctx: HandlerContext | null = null;
+
+function getContext(): HandlerContext {
+  if (!ctx) {
+    const resolved = resolveConfig(configFromEnv());
+    const db = admin.firestore();
+
+    // An empty bucket name disables the Storage cache (legacy behaviour).
+    const bucket = resolved.bundleStorageBucket
+      ? new Storage().bucket(resolved.bundleStorageBucket)
+      : null;
+
+    const getSpec = async (bundleId: string): Promise<BundleSpec | null> => {
+      const snap = await db
+        .collection(resolved.bundleSpecCollection)
+        .doc(bundleId)
+        .get();
+      return snap.exists ? (snap.data() as BundleSpec) : null;
+    };
+
+    ctx = {
+      db,
+      config: resolved,
+      getSpec,
+      bucket: bucket as HandlerContext["bucket"],
+      logger,
+    };
+  }
+  return ctx;
+}
+
+export const serve = onRequest({ region: deploy.region }, (req, res) =>
+  handleServe(req, res, getContext())
 );

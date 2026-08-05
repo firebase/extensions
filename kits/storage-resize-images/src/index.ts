@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
+import * as admin from "firebase-admin";
 import type { Role } from "firebase-functions/v2";
 import { requiresRole } from "firebase-functions/v2";
+import { onObjectFinalized } from "firebase-functions/v2/storage";
+import sharp from "sharp";
 import { configFromEnv } from "./config";
-import { defineStorageResizeImages } from "./factory";
+import * as events from "./events";
+import { resolveResizeImagesConfig } from "./export-config";
+import { type HandlerContext, handleObjectFinalized } from "./handlers";
+import * as logs from "./logs";
 
 export * from "./lib";
 
@@ -32,6 +38,26 @@ for (const role of REQUIRED_ROLES) {
   requiresRole(role);
 }
 
-export const { generateResizedImage } = defineStorageResizeImages(
-  configFromEnv()
+const resolved = resolveResizeImagesConfig(configFromEnv());
+
+sharp.cache(false);
+if (admin.apps.length === 0) {
+  admin.initializeApp();
+}
+
+events.setupEventChannel();
+logs.init(resolved);
+
+const ctx: HandlerContext = {
+  config: resolved,
+  storage: admin.storage(),
+};
+
+export const generateResizedImage = onObjectFinalized(
+  {
+    bucket: resolved.bucket,
+    region: resolved.region,
+    memory: resolved.memory,
+  },
+  (event) => handleObjectFinalized(event, ctx)
 );

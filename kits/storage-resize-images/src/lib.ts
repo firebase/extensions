@@ -10,7 +10,6 @@ export {
   resolveResizeImagesConfig,
   type SafetyThreshold,
 } from "./export-config";
-export { defineStorageResizeImages } from "./factory";
 export { shouldResize } from "./filters";
 export {
   generateResizedImageHandler,

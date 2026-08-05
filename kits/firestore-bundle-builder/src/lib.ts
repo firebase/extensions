@@ -15,9 +15,8 @@
  */
 
 /**
- * Public library surface, in tiers:
+ * Public library surface:
  *
- * - {@link defineFirestoreBundleBuilder} — the factory most consumers use.
  * - {@link handleServe} — the raw handler, for consumers who want to own
  *   trigger registration.
  * - {@link build} / {@link buildQuery} — the framework-agnostic bundle assembly.
@@ -47,11 +46,6 @@ export {
   type ResolvedBundleBuilderConfig,
   resolveConfig,
 } from "./export-config";
-// Tier 3 — factory
-export {
-  buildBundleFunctions,
-  defineFirestoreBundleBuilder,
-} from "./factory";
 // Handler
 export {
   type CacheBucket,
