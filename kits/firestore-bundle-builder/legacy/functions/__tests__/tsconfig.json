@@ -1,0 +1,6 @@
+{
+  "preset": "ts-jest",
+  "testEnvironment": "node",
+  "extends": "../tsconfig.json",
+  "include": ["**/*"]
+}

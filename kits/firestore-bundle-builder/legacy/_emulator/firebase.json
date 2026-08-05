@@ -1,0 +1,46 @@
+{
+  "extensions": {
+    "firestore-bundle-builder": "../"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "emulators": {
+    "hub": {
+      "port": 4000
+    },
+    "hosting": {
+      "port": 8081
+    },
+    "storage": {
+      "port": 9199
+    },
+    "auth": {
+      "port": 9099
+    },
+    "pubsub": {
+      "port": 8085
+    },
+    "ui": {
+      "enabled": true
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": "dist",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      {
+        "source": "/bundles/*",
+        "function": "ext-firestore-bundle-server-serve"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
