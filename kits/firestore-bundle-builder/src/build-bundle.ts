@@ -21,6 +21,8 @@ import type {
   WhereFilterOp,
 } from "@google-cloud/firestore";
 import type { firestore } from "firebase-admin";
+import { HttpsError } from "firebase-functions/v1/https";
+import * as logger from "firebase-functions/logger";
 
 /**
  * Specification of a condition associated to a Firestore query.
@@ -124,7 +126,46 @@ export function parameterizePath(
 ): string {
   return path
     .split("/")
-    .map((part) => parameterize(part, params, paramValues))
+    .map((part) => {
+      const val = parameterize(part, params, paramValues);
+      if (typeof val === "string" && val.includes("/")) {
+        // Note, details for internal messages are discarded for security purposes
+        logger.error(
+          "Rejecting resolution of path " +
+            path +
+            " because " +
+            part +
+            " was assigned to " +
+            val +
+            ", which includes a /. " +
+            "This may be a sign that an attacker is trying to access a subcollection to which they are not permitted."
+        );
+        throw new HttpsError(
+          "invalid-argument",
+          "Only a single path parameter is allowed"
+        );
+      }
+
+      // Defensive programming: theoretically someone could omit a path component twice, which might look like a lookup
+      // of a different document. E.g. /col1/$doc1/col2/$doc2 with no value for $doc1 and $doc2 turns into a lookup
+      // of /col1//col2/. This currently throws due to the Admin SDK's validation, but this check ensures that if the
+      // parser becomes more forgiving it doesn't introduce a vulnerability.
+      if (val === undefined || val === null || val === "") {
+        logger.error(
+          "Rejecting resolution of path " +
+            path +
+            " because " +
+            part +
+            " was assigned an empty value. " +
+            "This may be a sign that an attacker is trying to access a document to which they are not permitted."
+        );
+        throw new HttpsError(
+          "invalid-argument",
+          "Invalid argument provided for " + part
+        );
+      }
+      return val;
+    })
     .join("/");
 }
 
@@ -258,29 +299,24 @@ function handleCondition(
       case "array-contains-any":
       case "in":
       case "not-in": {
-        // Since array values cannot be an array, we need to detect whether the user has specifically chosen
-        // an array of values which are strings or ints.
+        if (typeof value === "string") {
+          value = value.split(",").map((v) => {
+            const maybeNumber = parseFloat(v);
+            if (!isNaN(maybeNumber)) {
+              return maybeNumber;
+            }
 
-        // TODO(migration): inherited verbatim from the legacy extension — if
-        // `value` is already an array (e.g. a `*-array` param), `.split(",")`
-        // throws `TypeError: value.split is not a function`. Only split when it
-        // is a string. Deferred from PR #429 review.
-        value = (value as string).split(",").map((value) => {
-          const maybeNumber = parseFloat(value);
-          if (!Number.isNaN(maybeNumber)) {
-            return maybeNumber;
-          }
+            if (
+              (v.startsWith(`"`) && v.endsWith(`"`)) ||
+              (v.startsWith(`'`) && v.endsWith(`'`))
+            ) {
+              // Remove first and last character
+              return v.substring(1, v.length - 1);
+            }
 
-          if (
-            (value.startsWith(`"`) && value.endsWith(`"`)) ||
-            (value.startsWith(`'`) && value.endsWith(`'`))
-          ) {
-            // Remove first and last character
-            return value.substring(1, value.length - 1);
-          }
-
-          return value;
-        });
+            return v;
+          });
+        }
         break;
       }
     }
