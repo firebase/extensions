@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { HttpsError } from "firebase-functions/v1/https";
 import { describe, expect, test } from "vitest";
 import {
   type ParamsSpec,
@@ -60,11 +61,48 @@ describe("parameterize", () => {
 });
 
 describe("parameterizePath", () => {
-  const params: ParamsSpec = { id: { type: "string" } };
-
-  test("parameterizes each path segment", () => {
-    expect(parameterizePath("users/$id/posts", params, { id: "u1" })).toBe(
-      "users/u1/posts"
+  test("should successfully parameterize valid single-segment values", () => {
+    const res = parameterizePath(
+      "stores/$city/products",
+      { city: { type: "string", required: true } },
+      { city: "austin" }
     );
+    expect(res).toEqual("stores/austin/products");
+  });
+
+  test("should throw an error when parameter values contain forward slashes", () => {
+    expect(() =>
+      parameterizePath(
+        "stores/$city/products",
+        { city: { type: "string", required: true } },
+        { city: "austin/private/salaries" }
+      )
+    ).toThrow(HttpsError);
+  });
+
+  const spec: ParamsSpec = {
+    UID: { type: "string" },
+    FRIEND: { type: "string" },
+  };
+
+  test("should allow valid values", () => {
+    expect(
+      parameterizePath("users/$UID/friends/$FRIEND", spec, {
+        UID: "user1",
+        FRIEND: "friend1",
+      })
+    ).toEqual("users/user1/friends/friend1");
+  });
+
+  test("should prohibit path injection", () => {
+    expect(() =>
+      parameterizePath("users/$UID", spec, { UID: "user/private/data" })
+    ).toThrow(HttpsError);
+  });
+
+  test("should reject empty path paremeters (parent collection lookup)", () => {
+    expect(() =>
+      parameterizePath("users/$UID/friends/$FRIEND", spec, {})
+    ).toThrow(HttpsError);
   });
 });
