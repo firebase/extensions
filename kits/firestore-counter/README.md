@@ -1,9 +1,5 @@
 # @firebase/firestore-counter
 
-<!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/firestore-counter" package="@firebase/firestore-counter" -->
-
-> **Deprecation Notice:** The Firebase Extension `firebase/firestore-counter` is deprecated. Please migrate to the [`@firebase/firestore-counter`](https://www.npmjs.com/package/@firebase/firestore-counter) package.
-
 Distributed, sharded counters for Firestore
 
 > **Status: skeleton — not yet implemented.**

@@ -1,9 +1,5 @@
 # @firebase/firestore-bigquery-export
 
-<!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/firestore-bigquery-export" package="@firebase/firestore-bigquery-export" -->
-
-> **Deprecation Notice:** The Firebase Extension `firebase/firestore-bigquery-export` is deprecated. Please migrate to the [`@firebase/firestore-bigquery-export`](https://www.npmjs.com/package/@firebase/firestore-bigquery-export) package.
-
 Stream a Cloud Firestore collection to BigQuery. This is the Stream Firestore to
 BigQuery Firebase Extension as an npm package you add to your own Firebase
 Functions codebase and deploy.
