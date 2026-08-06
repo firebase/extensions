@@ -6,7 +6,11 @@
 
 
 
-**Details**: Use this extension to create resized versions of an image uploaded to a Cloud Storage bucket.
+**Details**: <!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/storage-resize-images" package="@firebase/storage-resize-images" -->
+
+> **Deprecation Notice:** The Firebase Extension `firebase/storage-resize-images` is deprecated. Please migrate to the [`@firebase/storage-resize-images`](https://www.npmjs.com/package/@firebase/storage-resize-images) package.
+
+Use this extension to create resized versions of an image uploaded to a Cloud Storage bucket.
 
 When you upload a file to your specified Cloud Storage bucket, this extension:
 

@@ -1,3 +1,7 @@
+<!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/firestore-send-email" package="@firebase/firestore-send-email" -->
+
+> **Deprecation Notice:** The Firebase Extension `firebase/firestore-send-email` is deprecated. Please migrate to the [`@firebase/firestore-send-email`](https://www.npmjs.com/package/@firebase/firestore-send-email) package.
+
 Use this extension to render and send emails that contain the information from documents added to a specified Cloud Firestore collection.
 
 Adding a document triggers this extension to send an email built from the document's fields. The document's top-level fields specify the email sender and recipients, including `to`, `cc`, and `bcc` options (each supporting UIDs). The document's `message` field specifies the other email elements, like subject line and email body (either plaintext or HTML)

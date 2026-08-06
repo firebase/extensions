@@ -6,7 +6,11 @@
 
 
 
-**Details**: Use this extension to export the documents in a Cloud Firestore collection to BigQuery. Exports are realtime and incremental, so the data in BigQuery is a mirror of your content in Cloud Firestore.
+**Details**: <!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/firestore-bigquery-export" package="@firebase/firestore-bigquery-export" -->
+
+> **Deprecation Notice:** The Firebase Extension `firebase/firestore-bigquery-export` is deprecated. Please migrate to the [`@firebase/firestore-bigquery-export`](https://www.npmjs.com/package/@firebase/firestore-bigquery-export) package.
+
+Use this extension to export the documents in a Cloud Firestore collection to BigQuery. Exports are realtime and incremental, so the data in BigQuery is a mirror of your content in Cloud Firestore.
 
 The extension creates and updates a [dataset](https://cloud.google.com/bigquery/docs/datasets-intro) containing the following two BigQuery resources:
 
