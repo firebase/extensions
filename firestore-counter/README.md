@@ -6,7 +6,11 @@
 
 
 
-**Details**: Use this extension to add a highly scalable counter service to your app. This is ideal for applications that count viral actions or any very high-velocity action such as views, likes, or shares.
+**Details**: <!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/firestore-counter" package="@firebase/firestore-counter" -->
+
+> **Deprecation Notice:** The Firebase Extension `firebase/firestore-counter` is deprecated. Please migrate to the [`@firebase/firestore-counter`](https://www.npmjs.com/package/@firebase/firestore-counter) package.
+
+Use this extension to add a highly scalable counter service to your app. This is ideal for applications that count viral actions or any very high-velocity action such as views, likes, or shares.
 
 Since Cloud Firestore has a limit of one sustained write per second, per document, this extension instead shards your writes across documents in a `_counter_shards_` subcollection. Each client only increments their own unique shard while the background workers (provided by this extension) monitor and aggregate these shards into a main document.
 

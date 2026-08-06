@@ -1,3 +1,7 @@
+<!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/rtdb-limit-child-nodes" package="@firebase/rtdb-limit-child-nodes" -->
+
+> **Deprecation Notice:** The Firebase Extension `firebase/rtdb-limit-child-nodes` is deprecated. Please migrate to the [`@firebase/rtdb-limit-child-nodes`](https://www.npmjs.com/package/@firebase/rtdb-limit-child-nodes) package.
+
 Use this extension to control the maximum number of nodes stored in a Firebase Realtime Database path.
 
 If the number of nodes in your specified Realtime Database path exceeds the specified max count, this extension deletes the oldest nodes first until there are the max count number of nodes remaining.
