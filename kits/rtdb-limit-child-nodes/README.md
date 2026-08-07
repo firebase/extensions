@@ -41,7 +41,7 @@ The re-export matters: the Firebase CLI discovers functions from the top-level
 exports of your codebase entry, so a bare `import` of the package deploys
 nothing.
 
-The root entry keeps trigger-bound fields deploy-time safe: `NODE_PATH`,
+The root entry keeps trigger-bound fields deploy-time safe: `RTDB_NODE_PATH`,
 `SELECTED_DATABASE_INSTANCE`, and `LOCATION` are passed to Firebase Functions as
 param expressions/objects for trigger discovery, while `configFromEnv()` is
 deferred until the first invocation.
@@ -86,7 +86,7 @@ binds to the intended Realtime Database instance.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
-| `nodePath` | `NODE_PATH` | no | `messages` | Parent path whose children are limited |
+| `nodePath` | `RTDB_NODE_PATH` | no | `messages` | Parent path whose children are limited |
 | `maxCount` | `MAX_COUNT` | no | `100` | Maximum child nodes to retain |
 | `databaseInstance` | `SELECTED_DATABASE_INSTANCE` | yes* | from `FIREBASE_CONFIG` when present | RTDB instance id |
 | `region` | `LOCATION` | no | `us-central1` | Function region |

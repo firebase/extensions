@@ -34,8 +34,9 @@ function defaultDatabaseInstance(): string | undefined {
 const databaseInstanceDefault = defaultDatabaseInstance();
 
 const params = {
-  // Default so deploy discovery does not freeze an empty ref into the trigger.
-  nodePath: defineString("NODE_PATH", { default: "messages" }),
+  // Do not use NODE_PATH: Node.js reserves it for module resolution and will
+  // overwrite the param at runtime (and can freeze a bad ref at deploy).
+  nodePath: defineString("RTDB_NODE_PATH", { default: "messages" }),
   maxCount: defineInt("MAX_COUNT", { default: 100 }),
   databaseInstance: databaseInstanceDefault
     ? defineString("SELECTED_DATABASE_INSTANCE", {
@@ -59,13 +60,16 @@ export function configFromEnv(): RtdbLimitConfig {
  *
  * `ref` must be a concrete string: `onValueCreated` calls `normalizePath(ref)`
  * at module load and does not accept Expressions (unlike Firestore `document`).
- * `instance` and `region` are passed as Expressions so the CLI resolves them
- * from `.env` after discovery (avoids freezing an empty region into
- * `locations//functions`).
+ * Do not use `params.nodePath.value()` here — during CLI discovery `.value()`
+ * resolves to "" (defaults are runtime-only), which freezes ref as `{nodeId}`.
+ * Read `process.env` (CLI injects `.env.<project>` before load) with fallback.
+ * `instance` and `region` stay Expressions so the CLI resolves them after
+ * discovery (avoids freezing an empty region into `locations//functions`).
  */
 export function envDeployOptions(): DeployTimeOptions {
+  const nodePath = (process.env.RTDB_NODE_PATH ?? "").trim() || "messages";
   return {
-    ref: toTriggerRef(params.nodePath.value()),
+    ref: toTriggerRef(nodePath),
     instance: params.databaseInstance,
     region: params.region,
   };
