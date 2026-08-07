@@ -14,13 +14,6 @@ Firebase project; there is no hosted version, so you deploy it yourself.
 npm install @firebase/speech-to-text
 ```
 
-If you do not have a Functions codebase yet, the fastest start is to scaffold the
-ready-made example instead (it uses this package):
-
-```sh
-npx degit FirebasePrivate/extensions/examples/speech-to-text#speech-to-text-npm my-transcriber
-```
-
 ## Required IAM
 
 The package declares these roles and APIs during deploy discovery. Firebase CLI

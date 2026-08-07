@@ -15,13 +15,6 @@ project; there is no hosted version, so you deploy them yourself.
 npm install @firebase/firestore-bigquery-export
 ```
 
-If you do not have a Functions codebase yet, the fastest start is to scaffold the
-ready-made example instead (it uses this package):
-
-```sh
-npx degit FirebasePrivate/extensions/examples/firestore-bigquery-export#firestore-bigquery-export-npm my-export
-```
-
 ## Required IAM
 
 The package declares the roles below with `requiresRole(...)`. Firebase CLI
@@ -146,9 +139,7 @@ map, each pointing at its own config directory with its own `.env`:
 
 Instance ids must be unique across all kit stanzas in the project, and every
 instance's function names are namespaced by its `kit-<instance id>-` prefix, so
-the instances cannot collide. See the
-[multi-instance example](../../examples/firestore-bigquery-export-multi/) for a
-complete project.
+the instances cannot collide.
 
 ## Events
 
