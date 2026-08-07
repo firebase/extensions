@@ -1,14 +1,52 @@
 # @firebase/delete-user-data
 
-Delete user data across Firestore, RTDB, and Storage on account deletion
+Delete user data across Firestore, RTDB, and Storage on account deletion. This
+is the Delete User Data Firebase Extension as an npm package you add to your own
+Firebase Functions codebase and deploy.
 
-> **Status: skeleton — not yet implemented.**
-> Migrated from the `delete-user-data` Firebase Extension to an npm-shared Firebase
-> Function (v2). Track the reference implementation in
-> [`packages/firestore-bigquery-export`](../firestore-bigquery-export) and the
-> design in [`docs/rfc.md`](../../docs/rfc.md).
+## Install
 
-Set `"private": false` in `package.json` when ready to publish.
+```sh
+npm install @firebase/delete-user-data
+```
+
+## Required IAM
+
+The package declares the roles below with `requiresRole(...)`. Firebase CLI
+15.23.0 or later creates a managed runtime service account for the codebase,
+grants it these roles, and attaches it to every function in the codebase.
+
+| Role | Why |
+|---|---|
+| `roles/datastore.owner` | discover and delete Firestore user data |
+| `roles/firebasedatabase.admin` | delete Realtime Database user data |
+| `roles/storage.admin` | delete Cloud Storage user objects |
+| `roles/pubsub.admin` | publish/subscribe discovery and deletion topics |
+| `roles/eventarc.eventReceiver` | receive Gen2 event triggers |
+| `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
+
+## Configuration
+
+Configuration is via v2 function params: env vars named as in the table below.
+
+| Field | Env var | Required | Default | Description |
+|---|---|---|---|---|
+| `firestorePaths` | `FIRESTORE_PATHS` | no | (empty) | Comma-separated Firestore paths with `{UID}` |
+| `firestoreDatabaseId` | `FIRESTORE_DATABASE_ID` | no | `(default)` | Firestore database id |
+| `firestoreDeleteMode` | `FIRESTORE_DELETE_MODE` | no | `shallow` | `shallow` or `recursive` |
+| `rtdbInstance` | `SELECTED_DATABASE_INSTANCE` | no | (empty) | RTDB instance id |
+| `rtdbLocation` | `SELECTED_DATABASE_LOCATION` | no | `us-central1` | RTDB location |
+| `rtdbPaths` | `RTDB_PATHS` | no | (empty) | Comma-separated RTDB paths with `{UID}` |
+| `storageBucket` | `CLOUD_STORAGE_BUCKET` | no | default Storage bucket | Bucket to clear |
+| `storagePaths` | `STORAGE_PATHS` | no | (empty) | Comma-separated Storage paths with `{UID}` |
+| `enableAutoDiscovery` | `ENABLE_AUTO_DISCOVERY` | no | `false` | Auto-discover user-linked docs |
+| `searchDepth` | `AUTO_DISCOVERY_SEARCH_DEPTH` | no | `3` | Discovery depth |
+| `searchFields` | `AUTO_DISCOVERY_SEARCH_FIELDS` | no | `id,uid,userId` | Fields treated as user ids |
+| `searchFunction` | `SEARCH_FUNCTION` | no | (empty) | Optional custom search function |
+| `instanceId` | `INSTANCE_ID` | no | `delete-user-data` | Logical instance id |
+| `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | no | `kit-delete-user-data-discovery` | Pub/Sub discovery topic |
+| `deletionTopicName` | `DELETION_TOPIC_NAME` | no | `kit-delete-user-data-deletion` | Pub/Sub deletion topic |
+| `region` | `LOCATION` | no | `us-central1` | Function region |
 
 ## Deploy
 

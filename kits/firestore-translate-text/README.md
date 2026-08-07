@@ -1,14 +1,44 @@
 # @firebase/firestore-translate-text
 
-Translate text written to a Firestore collection
+Translate text written to a Firestore collection. This is the Translate Text in
+Firestorestore Firebase Extension as an npm package you add to your own Firebase
+Functions codebase and deploy.
 
-> **Status: skeleton — not yet implemented.**
-> Migrated from the `firestore-translate-text` Firebase Extension to an npm-shared Firebase
-> Function (v2). Track the reference implementation in
-> [`packages/firestore-bigquery-export`](../firestore-bigquery-export) and the
-> design in [`docs/rfc.md`](../../docs/rfc.md).
+## Install
 
-Set `"private": false` in `package.json` when ready to publish.
+```sh
+npm install @firebase/firestore-translate-text
+```
+
+## Required IAM
+
+The package declares these roles and APIs during deploy discovery. Firebase CLI
+15.23.0 or later creates a managed runtime service account for the codebase,
+grants it these roles, and attaches it to every function in the codebase.
+
+| Role / API | Why |
+|---|---|
+| `roles/datastore.user` | read input docs and write translations |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
+| `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
+| `translate.googleapis.com` | Google Translate provider |
+
+## Configuration
+
+Configuration is via v2 function params: env vars named as in the table below.
+`GOOGLE_AI_API_KEY` is a secret used when the Gemini provider is selected.
+
+| Field | Env var | Required | Default | Description |
+|---|---|---|---|---|
+| `collectionPath` | `COLLECTION_PATH` | no | `translations` | Watched collection |
+| `inputFieldName` | `INPUT_FIELD_NAME` | no | `input` | Source text field |
+| `outputFieldName` | `OUTPUT_FIELD_NAME` | no | `translated` | Output map field |
+| `languages` | `LANGUAGES` | no | `en,es,de,fr` | Target language codes |
+| `languagesFieldName` | `LANGUAGES_FIELD_NAME` | no | `languages` | Per-doc languages field |
+| `provider` | `TRANSLATION_PROVIDER` | yes | — | Translation provider |
+| `geminiModel` | `GEMINI_MODEL` | no | `gemini-2.5-flash` | Gemini model when used |
+| `googleAiApiKey` | `GOOGLE_AI_API_KEY` | secret | — | Google AI API key (Gemini) |
+| `region` | `LOCATION` | no | `us-central1` | Function region |
 
 ## Deploy
 

@@ -25,6 +25,7 @@ grants it these roles, and attaches it to every function in the codebase.
 |---|---|
 | `roles/datastore.user` | read mail documents and write delivery status |
 | `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
+| `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
 
 ## Usage
 
@@ -82,22 +83,28 @@ pattern and are declared with `defineSecret`, passed to the trigger through
 existing Secret Manager secrets to be reused during migration instead of forcing
 operators to re-enter them.
 
-| Field | Required | Default | Description |
-|---|---|---|---|
-| `mailCollection` | no | `mail` | Firestore collection of outbound mail docs |
-| `defaultFrom` | yes | | Default From address |
-| `databaseRegion` | yes | | Region for the trigger |
-| `databaseId` | no | `(default)` | Firestore database id |
-| `authType` | no | `UsernamePassword` | `UsernamePassword` or `OAuth2` |
-| `smtpConnectionUri` | no | | SMTP connection URI (username/password auth) |
-| `smtpPassword` | secret | | SMTP password (`SMTP_PASSWORD`) |
-| `clientId` | secret | | OAuth2 client id (`CLIENT_ID`) |
-| `clientSecret` | secret | | OAuth2 client secret (`CLIENT_SECRET`) |
-| `refreshToken` | secret | | OAuth2 refresh token (`REFRESH_TOKEN`) |
-| `templatesCollection` | no | | Optional Handlebars templates collection |
-| `usersCollection` | no | | Optional users collection for recipient lookup |
-| `ttlExpireType` | no | `never` | TTL policy for processed docs |
-| `ttlExpireValue` | no | `1` | TTL amount when expire type is set |
+| Field | Env var | Required | Default | Description |
+|---|---|---|---|---|
+| `mailCollection` | `MAIL_COLLECTION` | no | `mail` | Firestore collection of outbound mail docs |
+| `defaultFrom` | `DEFAULT_FROM` | yes | — | Default From address |
+| `defaultReplyTo` | `DEFAULT_REPLY_TO` | no | (empty) | Default Reply-To address |
+| `databaseRegion` | `DATABASE_REGION` | yes | — | Region for the trigger |
+| `databaseId` | `DATABASE` | no | `(default)` | Firestore database id |
+| `authType` | `AUTH_TYPE` | no | `UsernamePassword` | `UsernamePassword` or `OAuth2` |
+| `smtpConnectionUri` | `SMTP_CONNECTION_URI` | no | (empty) | SMTP connection URI (username/password auth) |
+| `smtpPassword` | `SMTP_PASSWORD` | secret | — | SMTP password |
+| `host` | `HOST` | no | (empty) | SMTP host (OAuth2) |
+| `oauthPort` | `OAUTH_PORT` | no | `465` | SMTP port (OAuth2) |
+| `oauthSecure` | `OAUTH_SECURE` | no | `true` | Use TLS (OAuth2) |
+| `user` | `USER` | no | (empty) | SMTP username (OAuth2) |
+| `clientId` | `CLIENT_ID` | secret | — | OAuth2 client id |
+| `clientSecret` | `CLIENT_SECRET` | secret | — | OAuth2 client secret |
+| `refreshToken` | `REFRESH_TOKEN` | secret | — | OAuth2 refresh token |
+| `templatesCollection` | `TEMPLATES_COLLECTION` | no | (empty) | Optional Handlebars templates collection |
+| `usersCollection` | `USERS_COLLECTION` | no | (empty) | Optional users collection for recipient lookup |
+| `ttlExpireType` | `TTL_EXPIRE_TYPE` | no | `never` | TTL policy for processed docs |
+| `ttlExpireValue` | `TTL_EXPIRE_VALUE` | no | `1` | TTL amount when expire type is set |
+| `tlsOptions` | `TLS_OPTIONS` | no | `{}` | JSON TLS options for the SMTP transport |
 
 ## Multiple instances
 

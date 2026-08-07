@@ -1,14 +1,37 @@
 # @firebase/firestore-counter
 
-Distributed, sharded counters for Firestore
+Distributed, sharded counters for Firestore. This is the Distributed Counter
+Firebase Extension as an npm package you add to your own Firebase Functions
+codebase and deploy.
 
-> **Status: skeleton — not yet implemented.**
-> Migrated from the `firestore-counter` Firebase Extension to an npm-shared Firebase
-> Function (v2). Track the reference implementation in
-> [`packages/firestore-bigquery-export`](../firestore-bigquery-export) and the
-> design in [`docs/rfc.md`](../../docs/rfc.md).
+## Install
 
-Set `"private": false` in `package.json` when ready to publish.
+```sh
+npm install @firebase/firestore-counter
+```
+
+## Required IAM
+
+The package declares the roles below with `requiresRole(...)`. Firebase CLI
+15.23.0 or later creates a managed runtime service account for the codebase,
+grants it these roles, and attaches it to every function in the codebase.
+
+| Role | Why |
+|---|---|
+| `roles/datastore.user` | read/write counter shards and aggregate docs |
+| `roles/cloudscheduler.admin` | schedule the controller that flushes shards |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
+| `roles/run.invoker` | allow Eventarc/Scheduler to invoke the Gen2 Cloud Run service |
+
+## Configuration
+
+Configuration is via v2 function params: env vars named as in the table below.
+
+| Field | Env var | Required | Default | Description |
+|---|---|---|---|---|
+| `internalStatePath` | `INTERNAL_STATE_PATH` | no | `_firebase_ext_/sharded_counter` | Firestore path for controller state |
+| `scheduleFrequencyMinutes` | `SCHEDULE_FREQUENCY` | no | `1` | Controller schedule frequency (minutes) |
+| `region` | `LOCATION` | no | `us-central1` | Function region |
 
 ## Deploy
 

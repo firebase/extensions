@@ -1,14 +1,38 @@
 # @firebase/firestore-bundle-builder
 
-Build and serve Firestore data bundles
+Build and serve Firestore data bundles. This is the Firestore Bundle Builder
+Firebase Extension as an npm package you add to your own Firebase Functions
+codebase and deploy.
 
-> **Status: skeleton — not yet implemented.**
-> Migrated from the `firestore-bundle-builder` Firebase Extension to an npm-shared Firebase
-> Function (v2). Track the reference implementation in
-> [`packages/firestore-bigquery-export`](../firestore-bigquery-export) and the
-> design in [`docs/rfc.md`](../../docs/rfc.md).
+## Install
 
-Set `"private": false` in `package.json` when ready to publish.
+```sh
+npm install @firebase/firestore-bundle-builder
+```
+
+## Required IAM
+
+The package declares the roles below with `requiresRole(...)`. Firebase CLI
+15.23.0 or later creates a managed runtime service account for the codebase,
+grants it these roles, and attaches it to every function in the codebase.
+
+| Role | Why |
+|---|---|
+| `roles/datastore.user` | read bundle specs and query source data |
+| `roles/storage.objectAdmin` | write and serve bundle artifacts |
+| `roles/eventarc.eventReceiver` | receive Gen2 event triggers |
+| `roles/run.invoker` | allow callers/Eventarc to invoke the Gen2 Cloud Run service |
+
+## Configuration
+
+Configuration is via v2 function params: env vars named as in the table below.
+
+| Field | Env var | Required | Default | Description |
+|---|---|---|---|---|
+| `bundleSpecCollection` | `BUNDLESPEC_COLLECTION` | no | `bundles` | Collection of bundle specs |
+| `bundleStorageBucket` | `BUNDLE_STORAGE_BUCKET` | no | default Storage bucket | Bundle artifact bucket |
+| `storagePrefix` | `STORAGE_PREFIX` | no | `bundles` | Object prefix for artifacts |
+| `location` | `LOCATION` | no | `us-central1` | Function region |
 
 ## Deploy
 

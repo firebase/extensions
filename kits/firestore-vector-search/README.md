@@ -1,14 +1,59 @@
 # @firebase/firestore-vector-search
 
-Vector similarity search over a Firestore collection
+Vector similarity search over a Firestore collection. This is the Vector Search
+with Firestore Firebase Extension as an npm package you add to your own Firebase
+Functions codebase and deploy.
 
-> **Status: skeleton — not yet implemented.**
-> Migrated from the `firestore-vector-search` Firebase Extension to an npm-shared Firebase
-> Function (v2). Track the reference implementation in
-> [`packages/firestore-bigquery-export`](../firestore-bigquery-export) and the
-> design in [`docs/rfc.md`](../../docs/rfc.md).
+## Install
 
-Set `"private": false` in `package.json` when ready to publish.
+```sh
+npm install @firebase/firestore-vector-search
+```
+
+## Required IAM
+
+The package declares these roles and APIs during deploy discovery. Firebase CLI
+15.23.0 or later creates a managed runtime service account for the codebase,
+grants it these roles, and attaches it to every function in the codebase.
+
+| Role / API | Why |
+|---|---|
+| `roles/datastore.user` | read/write documents and embeddings |
+| `roles/aiplatform.user` | Vertex AI embeddings when configured |
+| `roles/storage.objectAdmin` | read image inputs from Cloud Storage |
+| `roles/datastore.indexAdmin` | manage vector indexes |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
+| `roles/run.invoker` | allow Eventarc/Tasks to invoke the Gen2 Cloud Run service |
+| `aiplatform.googleapis.com` | Vertex AI embedding/search |
+| `storage-component.googleapis.com` | read image data from Cloud Storage |
+
+## Configuration
+
+Configuration is via v2 function params: env vars named as in the table below.
+`GEMINI_API_KEY` and `OPENAI_API_KEY` are secrets.
+
+| Field | Env var | Required | Default | Description |
+|---|---|---|---|---|
+| `instanceId` | `KIT_INSTANCE_ID` | no | `firestore-vector-search` | Logical instance id |
+| `embeddingProvider` | `EMBEDDING_PROVIDER` | no | `gemini` | Embedding provider |
+| `customEmbeddingsEndpoint` | `CUSTOM_EMBEDDINGS_ENDPOINT` | no | (empty) | Custom embeddings endpoint |
+| `customEmbeddingsBatchSize` | `CUSTOM_EMBEDDINGS_BATCH_SIZE` | no | (empty) | Custom batch size |
+| `customEmbeddingsDimension` | `CUSTOM_EMBEDDINGS_DIMENSION` | no | (empty) | Custom embedding dimension |
+| `collectionPath` | `COLLECTION_NAME` | no | `products` | Indexed collection |
+| `defaultQueryLimit` | `DEFAULT_QUERY_LIMIT` | no | `3` | Default query limit |
+| `distanceMeasure` | `DISTANCE_MEASURE` | no | `COSINE` | Distance measure |
+| `inputFieldName` | `INPUT_FIELD_NAME` | no | `input` | Input field |
+| `outputFieldName` | `OUTPUT_FIELD_NAME` | no | `embedding` | Embedding field |
+| `statusFieldName` | `STATUS_FIELD_NAME` | no | `status` | Status field |
+| `doBackfill` | `DO_BACKFILL` | yes | — | Run backfill on setup |
+| `updateOnConfigure` | `UPDATE_ON_CONFIGURE` | yes | — | Update index on configure |
+| `region` | `LOCATION` | yes | — | Function region |
+| `updateTriggerQueueName` | `UPDATE_TRIGGER_QUEUE_NAME` | no | `updateTrigger` | Update trigger queue |
+| `updateTaskQueueName` | `UPDATE_TASK_QUEUE_NAME` | no | `updateTask` | Update task queue |
+| `backfillTriggerQueueName` | `BACKFILL_TRIGGER_QUEUE_NAME` | no | `backfillTrigger` | Backfill trigger queue |
+| `backfillTaskQueueName` | `BACKFILL_TASK_QUEUE_NAME` | no | `backfillTask` | Backfill task queue |
+| `geminiApiKey` | `GEMINI_API_KEY` | secret | — | Gemini API key |
+| `openAiApiKey` | `OPENAI_API_KEY` | secret | — | OpenAI API key |
 
 ## Deploy
 
