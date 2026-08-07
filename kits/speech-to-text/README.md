@@ -25,6 +25,7 @@ grants it these roles, and attaches it to every function in the codebase.
 | `roles/storage.objectAdmin` | read uploaded audio and write transcoded output |
 | `roles/datastore.user` | write transcript documents to Firestore |
 | `roles/eventarc.eventReceiver` | receive Gen2 Storage trigger events |
+| `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
 | `speech.googleapis.com` | transcribe audio |
 
 ## Usage
@@ -80,7 +81,7 @@ Configuration is via v2 function params: env vars named as in the table below.
 
 | Field | Env var | Required | Default | Notes |
 |---|---|---|---|---|
-| `bucket` | `EXTENSION_BUCKET` | yes | — | Storage bucket to watch |
+| `bucket` | `EXTENSION_BUCKET` | no | default Storage bucket | Storage bucket to watch |
 | `languageCode` | `LANGUAGE_CODE` | yes | — | BCP-47 language code |
 | `model` | `MODEL` | no | `default` | Speech model |
 | `outputStoragePath` | `OUTPUT_STORAGE_PATH` | no | bucket root | transcript output prefix |

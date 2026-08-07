@@ -28,8 +28,9 @@ Declarative security cannot be combined with a custom runtime service account.
 | `roles/bigquery.user` | run BigQuery jobs and materialized views |
 | `roles/datastore.user` | write failed-row records back to Firestore (only if you configure a backup collection) |
 | `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
+| `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
 
-If the dataset lives in a different project (`bqProjectId`), grant the
+If the dataset lives in a different project (`BIGQUERY_PROJECT_ID`), grant the
 managed runtime service account the `bigquery.*` roles on that project. For a
 CMEK dataset, also grant the BigQuery service account access to your KMS key.
 
@@ -96,26 +97,33 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 
 ## Configuration
 
-Configuration is via v2 function params: env vars named as the upper snake-case
-of the fields below. `projectId` is
-supplied by the CLI's built-in `PROJECT_ID` param.
+Configuration is via v2 function params: env vars named as in the table below.
+`PROJECT_ID` is supplied by the CLI's built-in param.
 
-| Field | Required | Default | Description |
-|---|---|---|---|
-| `collectionPath` | yes | | Collection or collection-group path |
-| `datasetId` | yes | | BigQuery dataset |
-| `tableId` | yes | | BigQuery changelog table |
-| `projectId` | yes | | Firebase/GCP project id |
-| `location` | no | `us-central1` | Region for the trigger and queue |
-| `datasetLocation` | no | `us` | BigQuery dataset location |
-| `databaseId` | no | `(default)` | Firestore database id |
-| `bqProjectId` | no | function project | Dataset project, if different |
-| `wildcardIds` | no | `false` | Store path-param values as columns |
-| `excludeOldData` | no | `false` | Skip previous document state on updates |
-| `viewType` | no | `view` | `view`, `materialized_incremental`, `materialized_non_incremental` |
-| `partitioning` | no | none | Table partitioning strategy |
-| `clustering` | no | none | Clustering columns (max 4) |
-| `logLevel` | no | `info` | `debug`, `info`, `warn`, `error`, `silent` |
+| Field | Env var | Required | Default | Description |
+|---|---|---|---|---|
+| `collectionPath` | `COLLECTION_PATH` | no | `posts` | Collection or collection-group path |
+| `datasetId` | `DATASET_ID` | no | `firestore_export` | BigQuery dataset |
+| `tableId` | `TABLE_ID` | no | `posts` | BigQuery changelog table |
+| `databaseRegion` | `DATABASE_REGION` | yes | — | Region for the trigger and queues |
+| `datasetLocation` | `DATASET_LOCATION` | no | `us` | BigQuery dataset location |
+| `database` | `DATABASE` | no | `(default)` | Firestore database id |
+| `bigqueryProjectId` | `BIGQUERY_PROJECT_ID` | no | project id | Dataset project, if different |
+| `backupCollection` | `BACKUP_COLLECTION` | no | (empty) | Firestore collection for failed rows |
+| `transformFunction` | `TRANSFORM_FUNCTION` | no | (empty) | Optional transform Cloud Function |
+| `tablePartitioning` | `TABLE_PARTITIONING` | no | `NONE` | Table partitioning strategy |
+| `timePartitioningField` | `TIME_PARTITIONING_FIELD` | no | (empty) | Time-partitioning column name |
+| `timePartitioningFieldType` | `TIME_PARTITIONING_FIELD_TYPE` | no | `omit` | Time-partitioning field type |
+| `timePartitioningFirestoreField` | `TIME_PARTITIONING_FIRESTORE_FIELD` | no | (empty) | Firestore field for partitioning |
+| `clustering` | `CLUSTERING` | no | (empty) | Clustering columns (max 4) |
+| `wildcardIds` | `WILDCARD_IDS` | no | `false` | Store path-param values as columns |
+| `useNewSnapshotQuerySyntax` | `USE_NEW_SNAPSHOT_QUERY_SYNTAX` | no | `false` | Use newer snapshot query syntax |
+| `excludeOldData` | `EXCLUDE_OLD_DATA` | no | `false` | Skip previous document state on updates |
+| `viewType` | `VIEW_TYPE` | no | `view` | `view`, `materialized_incremental`, `materialized_non_incremental` |
+| `maxStaleness` | `MAX_STALENESS` | no | (empty) | Materialized view max staleness |
+| `refreshIntervalMinutes` | `REFRESH_INTERVAL_MINUTES` | no | (empty) | Materialized view refresh interval |
+| `kmsKeyName` | `KMS_KEY_NAME` | no | (empty) | CMEK key for the dataset |
+| `logLevel` | `LOG_LEVEL` | no | `info` | `debug`, `info`, `warn`, `error`, `silent` |
 
 ## Multiple instances
 

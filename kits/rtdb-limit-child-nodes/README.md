@@ -24,6 +24,7 @@ grants it these roles, and attaches it to every function in the codebase.
 |---|---|
 | `roles/firebasedatabase.admin` | read and trim child nodes under the watched path |
 | `roles/eventarc.eventReceiver` | receive Gen2 Realtime Database trigger events |
+| `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
 
 ## Usage
 
