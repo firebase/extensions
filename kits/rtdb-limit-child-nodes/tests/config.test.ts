@@ -86,11 +86,15 @@ describe("configFromEnv", () => {
     const { configFromEnv } = await importConfig();
 
     expect(configFromEnv()).toMatchObject({
-      nodePath: "node_path-value",
-      maxCount: 10,
+      nodePath: "messages",
+      maxCount: 100,
       databaseInstance: "selected_database_instance-value",
       region: "us-central1",
     });
+    expect(defineString.mock.calls).toContainEqual([
+      "RTDB_NODE_PATH",
+      { default: "messages" },
+    ]);
     expect(defineString.mock.calls).toContainEqual([
       "SELECTED_DATABASE_INSTANCE",
     ]);
