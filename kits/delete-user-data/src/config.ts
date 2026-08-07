@@ -24,6 +24,8 @@ import {
 } from "firebase-functions/params";
 import type { DeleteUserDataConfig } from "./export-config";
 
+const DEFAULT_INSTANCE_ID = "delete-user-data";
+
 const params = {
   firestorePaths: defineString("FIRESTORE_PATHS", { default: "" }),
   firestoreDatabaseId: defineString("FIRESTORE_DATABASE_ID", {
@@ -51,9 +53,17 @@ const params = {
     default: "id,uid,userId",
   }),
   searchFunction: defineString("SEARCH_FUNCTION", { default: "" }),
-  instanceId: defineString("KIT_INSTANCE_ID", { default: "delete-user-data" }),
-  discoveryTopicName: defineString("DISCOVERY_TOPIC_NAME", { default: "" }),
-  deletionTopicName: defineString("DELETION_TOPIC_NAME", { default: "" }),
+  instanceId: defineString("INSTANCE_ID", {
+    default: DEFAULT_INSTANCE_ID,
+  }),
+  // Non-empty defaults so Pub/Sub trigger bindings resolve during deploy
+  // discovery without freezing an empty topic name into the manifest.
+  discoveryTopicName: defineString("DISCOVERY_TOPIC_NAME", {
+    default: `kit-${DEFAULT_INSTANCE_ID}-discovery`,
+  }),
+  deletionTopicName: defineString("DELETION_TOPIC_NAME", {
+    default: `kit-${DEFAULT_INSTANCE_ID}-deletion`,
+  }),
   region: defineString("LOCATION", { default: "us-central1" }),
 };
 
