@@ -16,7 +16,7 @@
 
 import * as admin from "firebase-admin";
 import type { Role } from "firebase-functions/v2";
-import { requiresRole } from "firebase-functions/v2";
+import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onObjectFinalized } from "firebase-functions/v2/storage";
 import sharp from "sharp";
 import { configFromEnv } from "./config";
@@ -34,9 +34,19 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/eventarc.eventReceiver",
   "roles/run.invoker",
 ];
+const REQUIRED_APIS = [
+  {
+    api: "storage-component.googleapis.com",
+    reason: "Needed to use Cloud Storage.",
+  },
+] as const;
 
 for (const role of REQUIRED_ROLES) {
   requiresRole(role);
+}
+
+for (const { api, reason } of REQUIRED_APIS) {
+  requiresAPI(api, reason);
 }
 
 const resolved = resolveResizeImagesConfig(configFromEnv());
