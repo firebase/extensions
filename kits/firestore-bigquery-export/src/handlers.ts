@@ -57,7 +57,7 @@ export interface HandlerContext {
   /**
    * Provisions the BigQuery dataset/table/views once per instance. Only called
    * after an inline write failure as a self-heal; the hot path relies on
-   * out-of-band provisioning (the init script).
+   * out-of-band provisioning (`initBigQuerySync` / `setupBigQuerySync`).
    */
   ensureInitialized: () => Promise<void>;
 }
@@ -133,8 +133,9 @@ export async function handleDocumentWrite(
   logs.start();
 
   // No provisioning on the hot path: BigQuery resources are provisioned
-  // out-of-band (see the init script). If they are missing, the inline write
-  // fails, self-heals once, then falls back to the trigger retry policy.
+  // out-of-band (afterFirstDeploy / afterRedeploy tasks). If they are missing,
+  // the inline write fails, self-heals once, then falls back to the trigger
+  // retry policy.
   const { config, tracker } = ctx;
   const changeType = getChangeType(data);
   const documentId = getDocumentId(data);

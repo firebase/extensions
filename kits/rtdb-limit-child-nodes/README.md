@@ -16,9 +16,10 @@ npm install @firebase/rtdb-limit-child-nodes
 
 ## Required IAM
 
-The package declares the roles below with `requiresRole(...)`. Firebase CLI
-15.23.0 or later creates a managed runtime service account for the codebase,
-grants it these roles, and attaches it to every function in the codebase.
+Deploy needs these Google Cloud roles on the function's service account.
+Firebase CLI 15.23.0 or later creates that account, grants the roles below,
+and attaches it to every function in this kit. Do not set a custom runtime
+service account for this codebase — it conflicts with that automatic setup.
 
 | Role | Why |
 |---|---|
@@ -28,24 +29,20 @@ grants it these roles, and attaches it to every function in the codebase.
 
 ## Usage
 
-Re-export the wired function from your functions codebase entry:
+Export the function from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
 export { rtdblimit } from "@firebase/rtdb-limit-child-nodes";
 ```
 
-and configure it with a `.env` (or `.env.<projectId>`), which the Firebase CLI
-loads at deploy time, prompting for anything required that is unset.
+and configure it with a `.env` (or `.env.<projectId>`).
 
-The re-export matters: the Firebase CLI discovers functions from the top-level
-exports of your codebase entry, so a bare `import` of the package deploys
-nothing.
+Importing the package without exporting its functions deploys nothing — the CLI
+only deploys what your entry file exports.
 
-The root entry keeps trigger-bound fields deploy-time safe: `RTDB_NODE_PATH`,
-`SELECTED_DATABASE_INSTANCE`, and `LOCATION` are passed to Firebase Functions as
-param expressions/objects for trigger discovery, while `configFromEnv()` is
-deferred until the first invocation.
+Put `RTDB_NODE_PATH`, `SELECTED_DATABASE_INSTANCE`, and `LOCATION` in `.env` so
+the trigger binds to the right database path and region.
 
 ## Deploy
 
@@ -80,10 +77,10 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 
 ## Configuration
 
-Configuration is via v2 function params: env vars named as in the table below.
-`SELECTED_DATABASE_INSTANCE` is explicit in the params workflow — set it in
-`.env`, `.env.<projectId>`, or via the Firebase CLI prompt so the trigger always
-binds to the intended Realtime Database instance.
+Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
+loads them at deploy time and prompts for any required values that are missing.
+`SELECTED_DATABASE_INSTANCE` should be set so the trigger binds to the intended
+Realtime Database instance.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
@@ -120,14 +117,13 @@ the instances cannot collide.
 
 ## API surface
 
-- **Main entry** (`@firebase/rtdb-limit-child-nodes`): the wired `rtdblimit`
-  function, configured from env params at load time. Because it reads the
-  environment at load time, it only runs cleanly inside the Firebase toolchain
-  (deploy discovery, runtime, or the emulator).
-- **Library entry** (`./lib`): side-effect-free typed library surface —
-  `handleChildCreated`, config types/helpers (`RtdbLimitConfig`,
-  `resolveRtdbLimitConfig`), and related types for owning trigger registration
-  yourself.
+- **Main entry** (`@firebase/rtdb-limit-child-nodes`): exports `rtdblimit`. The
+  main entry reads environment variables when the module loads, so use it from
+  Firebase deploy/emulator/runtime. For your own triggers, import from `./lib`
+  instead.
+- **Library entry** (`./lib`): `handleChildCreated`, config types/helpers
+  (`RtdbLimitConfig`, `resolveRtdbLimitConfig`), and related types for owning
+  trigger registration yourself.
 
 ## License
 

@@ -17,9 +17,10 @@ npm install @firebase/firestore-send-email
 
 ## Required IAM
 
-The package declares the roles below with `requiresRole(...)`. Firebase CLI
-15.23.0 or later creates a managed runtime service account for the codebase,
-grants it these roles, and attaches it to every function in the codebase.
+Deploy needs these Google Cloud roles on the function's service account.
+Firebase CLI 15.23.0 or later creates that account, grants the roles below,
+and attaches it to every function in this kit. Do not set a custom runtime
+service account for this codebase — it conflicts with that automatic setup.
 
 | Role | Why |
 |---|---|
@@ -29,19 +30,17 @@ grants it these roles, and attaches it to every function in the codebase.
 
 ## Usage
 
-Re-export the wired function from your functions codebase entry:
+Export the function from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
 export { processQueue } from "@firebase/firestore-send-email";
 ```
 
-and configure it with a `.env` (or `.env.<projectId>`), which the Firebase CLI
-loads at deploy time, prompting for anything required that is unset.
+and configure it with a `.env` (or `.env.<projectId>`).
 
-The re-export matters: the Firebase CLI discovers functions from the top-level
-exports of your codebase entry, so a bare `import` of the package deploys
-nothing.
+Importing the package without exporting its functions deploys nothing — the CLI
+only deploys what your entry file exports.
 
 ## Deploy
 
@@ -76,12 +75,10 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 
 ## Configuration
 
-Configuration is via v2 function params: env vars named as the upper snake-case
-of the fields below. Secret-backed params follow the extension migration
-pattern and are declared with `defineSecret`, passed to the trigger through
-`secrets: [...]`, and only resolved at runtime via `.value()`. That allows
-existing Secret Manager secrets to be reused during migration instead of forcing
-operators to re-enter them.
+Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
+loads them at deploy time and prompts for any required values that are missing.
+Rows marked `secret` live in Secret Manager. You can reuse existing secrets;
+the CLI connects them to the function at deploy time.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
@@ -139,13 +136,13 @@ such as `onStart`, `onProcessing`, `onSuccess`, `onError`, `onComplete`,
 
 ## API surface
 
-- **Main entry** (`@firebase/firestore-send-email`): the wired `processQueue`
-  function, configured from env params at load time. Because it reads the
-  environment at load time, it only runs cleanly inside the Firebase toolchain
-  (deploy discovery, runtime, or the emulator).
-- **Library entry** (`./lib`): side-effect-free config helpers, handlers, payload
-  preparation, template rendering, and transport setup for owning trigger
-  registration yourself.
+- **Main entry** (`@firebase/firestore-send-email`): exports `processQueue`. The
+  main entry reads environment variables when the module loads, so use it from
+  Firebase deploy/emulator/runtime. For your own triggers, import from `./lib`
+  instead.
+- **Library entry** (`./lib`): config helpers, handlers, payload preparation,
+  template rendering, and transport setup for owning trigger registration
+  yourself.
 
 ## License
 

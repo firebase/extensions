@@ -17,10 +17,10 @@ npm install @firebase/firestore-bigquery-export
 
 ## Required IAM
 
-The package declares the roles below with `requiresRole(...)`. Firebase CLI
-15.23.0 or later creates a managed runtime service account for the codebase,
-grants it these roles, and attaches it to every function in the codebase.
-Declarative security cannot be combined with a custom runtime service account.
+Deploy needs these Google Cloud roles on the function's service account.
+Firebase CLI 15.23.0 or later creates that account, grants the roles below,
+and attaches it to every function in this kit. Do not set a custom runtime
+service account for this codebase — it conflicts with that automatic setup.
 
 | Role | Why |
 |---|---|
@@ -36,18 +36,18 @@ CMEK dataset, also grant the BigQuery service account access to your KMS key.
 
 ## Usage
 
-Re-export the three wired functions from your functions codebase entry:
+Export the three functions from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
 export {
   fsexportbigquery,
   initBigQuerySync,
+  setupBigQuerySync,
 } from "@firebase/firestore-bigquery-export";
 ```
 
-and configure them with a `.env` (or `.env.<projectId>`), which the Firebase CLI
-loads at deploy time, prompting for anything required that is unset:
+and configure them with a `.env` (or `.env.<projectId>`):
 
 ```sh
 COLLECTION_PATH=users
@@ -57,12 +57,11 @@ DATABASE_REGION=europe-west2
 ```
 
 - `fsexportbigquery` is the Firestore trigger.
-- `initBigQuerySync` is the provisioning lifecycle task, enqueued once after
-  deploy (see Provisioning).
+- `initBigQuerySync` is the first-deploy provisioning lifecycle task.
+- `setupBigQuerySync` is the reconfigure provisioning lifecycle task.
 
-The re-export matters: the Firebase CLI discovers functions from the top-level
-exports of your codebase entry, so a bare `import` of the package deploys
-nothing.
+Importing the package without exporting its functions deploys nothing — the CLI
+only deploys what your entry file exports.
 
 ## Deploy
 
@@ -86,7 +85,8 @@ later, behind the `kits` experiment):
 `instances` maps each instance id to the directory (relative to
 `firebase.json`) holding that instance's `.env`. The CLI prefixes every
 function and task queue name with `kit-<instance id>-`, so the functions above
-deploy as `kit-default-fsexportbigquery` and `kit-default-initBigQuerySync`.
+deploy as `kit-default-fsexportbigquery`, `kit-default-initBigQuerySync`, and
+`kit-default-setupBigQuerySync`.
 
 ```sh
 firebase experiments:enable kits
@@ -97,8 +97,9 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 
 ## Configuration
 
-Configuration is via v2 function params: env vars named as in the table below.
-`PROJECT_ID` is supplied by the CLI's built-in param.
+Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
+loads them at deploy time and prompts for any required values that are missing.
+`PROJECT_ID` is supplied by the Firebase CLI.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
@@ -157,14 +158,26 @@ such as `onStart`, `onError`, `onSuccess`, and `onCompletion` under
 
 ## Provisioning
 
-The BigQuery dataset, table, and views are created by `initBigQuerySync`, a
-lifecycle task queue deployed alongside the other functions (as in the
-extension). Enqueue it once after deploy; Cloud Tasks retries a failed
-initialization on its own schedule, so a transient BigQuery error cannot leave
-the resources unprovisioned. It is idempotent.
+The BigQuery dataset, table, and views are created by `tracker.initialize()`
+through the shared provisioning path used by both task functions. Both tasks
+are idempotent and retry on transient BigQuery failures (up to 15 attempts,
+60s minimum backoff).
 
-The snippets below use the `default` instance; substitute your instance id in
-the `kit-<instance id>-` prefix if you named yours differently.
+Deploy wiring (declared in the package):
+
+- First deploy runs `initBigQuerySync` automatically (`afterFirstDeploy`).
+- Later deploys run `setupBigQuerySync` automatically (`afterRedeploy`).
+
+`initBigQuerySync` and `setupBigQuerySync` call the same handler; they exist as
+separate task functions so first-deploy and redeploy can target different
+queues, matching the extension's install vs update/configure split.
+
+If automatic post-deploy enqueue did not run, enqueue a task yourself. The
+snippets below use the `default` instance; substitute your instance id in the
+`kit-<instance id>-` prefix if you named yours differently. Prefer
+`initBigQuerySync` after a first deploy and `setupBigQuerySync` after a
+redeploy or schema-related config change (`TABLE_PARTITIONING`, `CLUSTERING`,
+`WILDCARD_IDS`, `VIEW_TYPE`, and related fields).
 
 ```sh
 node -e '
@@ -194,24 +207,23 @@ curl -fsS -X POST -H "Content-Type: application/json" -d '{"data":{}}' \
   -H "Authorization: Bearer $(gcloud auth print-identity-token --audiences="$URL")" "$URL"
 ```
 
-The write path never provisions, so there is no per-instance metadata check at
-scale. If the resources are missing when a write arrives, the inline write fails,
-the handler provisions once as a self-heal, and a remaining failure is replayed
-by the function runtime retry policy. Re-run `initBigQuerySync` after any config
-change that affects the table schema (`partitioning`, `clustering`,
-`wildcardIds`, `viewType`).
+The Firestore write path never provisions on the hot path. If resources are
+missing when a write arrives, the inline write fails, the handler calls
+`ensureInitialized()` once as a self-heal and retries the write, and a remaining
+failure is surfaced to the function runtime retry policy (`retry: true` on
+`fsexportbigquery`).
 
 ## API surface
 
-- **Main entry** (`@firebase/firestore-bigquery-export`): the two wired
-  functions, configured from env params at load time. This is the path above and
-  the one most consumers should use. Because it reads the environment at load
-  time, it only runs cleanly inside the Firebase toolchain (deploy discovery,
-  runtime, or the emulator).
+- **Main entry** (`@firebase/firestore-bigquery-export`): exports
+  `fsexportbigquery`, `initBigQuerySync`, and `setupBigQuerySync`, and
+  registers the first-deploy / redeploy provisioning hooks. Runtime config is
+  resolved lazily on first invocation. Use this entry from Firebase
+  deploy/emulator/runtime. For your own triggers, import from `./lib` instead.
 - **Library entry** (`./lib`): `handleDocumentWrite`, the raw handler for owning
   trigger registration yourself, plus the config types and helpers
   (`ExportConfig`, `resolveExportConfig`, `toTrackerConfig`) for building its
-  injected `HandlerContext`. No load-time side effects, safe to import anywhere.
+  injected `HandlerContext`. Safe to import anywhere.
 
 The change-tracker engine is an internal dependency and is not exported.
 
