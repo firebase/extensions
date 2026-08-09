@@ -4,6 +4,11 @@ Build and serve Firestore data bundles. This is the Firestore Bundle Builder
 Firebase Extension as an npm package you add to your own Firebase Functions
 codebase and deploy.
 
+It exposes an HTTPS function that reads bundle specs from Firestore, assembles
+query results into a Firestore data bundle, caches the artifact in Cloud
+Storage, and serves it to clients. The function runs in your own Firebase
+project; there is no hosted version, so you deploy it yourself.
+
 ## Install
 
 ```sh
@@ -12,9 +17,10 @@ npm install @firebase/firestore-bundle-builder
 
 ## Required IAM
 
-The package declares the roles below with `requiresRole(...)`. Firebase CLI
-15.23.0 or later creates a managed runtime service account for the codebase,
-grants it these roles, and attaches it to every function in the codebase.
+Deploy needs these Google Cloud roles on the function's service account.
+Firebase CLI 15.23.0 or later creates that account, grants the roles below,
+and attaches it to every function in this kit. Do not set a custom runtime
+service account for this codebase — it conflicts with that automatic setup.
 
 | Role | Why |
 |---|---|
@@ -23,16 +29,19 @@ grants it these roles, and attaches it to every function in the codebase.
 | `roles/eventarc.eventReceiver` | receive Gen2 event triggers |
 | `roles/run.invoker` | allow callers/Eventarc to invoke the Gen2 Cloud Run service |
 
-## Configuration
+## Usage
 
-Configuration is via v2 function params: env vars named as in the table below.
+Export the function from your functions codebase entry:
 
-| Field | Env var | Required | Default | Description |
-|---|---|---|---|---|
-| `bundleSpecCollection` | `BUNDLESPEC_COLLECTION` | no | `bundles` | Collection of bundle specs |
-| `bundleStorageBucket` | `BUNDLE_STORAGE_BUCKET` | no | default Storage bucket | Bundle artifact bucket |
-| `storagePrefix` | `STORAGE_PREFIX` | no | `bundles` | Object prefix for artifacts |
-| `location` | `LOCATION` | no | `us-central1` | Function region |
+```ts
+// functions/src/index.ts
+export { serve } from "@firebase/firestore-bundle-builder";
+```
+
+and configure with a `.env` (or `.env.<projectId>`).
+
+Importing the package without exporting its functions deploys nothing — the CLI
+only deploys what your entry file exports.
 
 ## Deploy
 
@@ -65,6 +74,18 @@ firebase deploy --only functions
 
 Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 
+## Configuration
+
+Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
+loads them at deploy time and prompts for any required values that are missing.
+
+| Field | Env var | Required | Default | Description |
+|---|---|---|---|---|
+| `bundleSpecCollection` | `BUNDLESPEC_COLLECTION` | no | `bundles` | Collection of bundle specs |
+| `bundleStorageBucket` | `BUNDLE_STORAGE_BUCKET` | no | default Storage bucket | Bundle artifact bucket |
+| `storagePrefix` | `STORAGE_PREFIX` | no | `bundles` | Object prefix for artifacts |
+| `location` | `LOCATION` | no | `us-central1` | Function region |
+
 ## Multiple instances
 
 To serve several bundle configurations, add one entry per instance to the
@@ -88,3 +109,17 @@ To serve several bundle configurations, add one entry per instance to the
 Instance ids must be unique across all kit stanzas in the project, and every
 instance's function names are namespaced by its `kit-<instance id>-` prefix, so
 the instances cannot collide.
+
+## API surface
+
+- **Main entry** (`@firebase/firestore-bundle-builder`): exports `serve`. The
+  main entry reads environment variables when the module loads, so use it from
+  Firebase deploy/emulator/runtime. For your own triggers, import from `./lib`
+  instead.
+- **Library entry** (`./lib`): `handleServe`, bundle assembly helpers (`build`,
+  `buildQuery`), and config types (`BundleBuilderConfig`, `resolveConfig`) for
+  owning trigger registration yourself.
+
+## License
+
+Apache-2.0

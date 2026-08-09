@@ -1,7 +1,8 @@
 # @firebase/speech-to-text
 
 Transcribe audio files in Cloud Storage to text. This is the Transcribe Speech to
-Text Firebase Extension as a deployable Firebase Functions package.
+Text Firebase Extension as an npm package you add to your own Firebase Functions
+codebase and deploy.
 
 It listens for audio files finalized in a Cloud Storage bucket, transcodes them
 to LINEAR16, runs a long-running Cloud Speech-to-Text recognition, and writes the
@@ -16,9 +17,11 @@ npm install @firebase/speech-to-text
 
 ## Required IAM
 
-The package declares these roles and APIs during deploy discovery. Firebase CLI
-15.23.0 or later creates a managed runtime service account for the codebase,
-grants it these roles, and attaches it to every function in the codebase.
+Deploy needs these Google Cloud roles and APIs for the function's service
+account. Firebase CLI 15.23.0 or later creates that account, grants the roles
+below, enables the listed APIs, and attaches the account to every function in
+this kit. Do not set a custom runtime service account for this codebase — it
+conflicts with that automatic setup.
 
 | Role / API | Why |
 |---|---|
@@ -30,19 +33,17 @@ grants it these roles, and attaches it to every function in the codebase.
 
 ## Usage
 
-Re-export the wired function from your functions codebase entry:
+Export the function from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
 export { transcribeAudio } from "@firebase/speech-to-text";
 ```
 
-and configure it with a `.env` (or `.env.<projectId>`), which the Firebase CLI
-loads at deploy time, prompting for anything required that is unset.
+and configure it with a `.env` (or `.env.<projectId>`).
 
-The re-export matters: the Firebase CLI discovers functions from the top-level
-exports of your codebase entry, so a bare `import` of the package deploys
-nothing.
+Importing the package without exporting its functions deploys nothing — the CLI
+only deploys what your entry file exports.
 
 ## Deploy
 
@@ -77,9 +78,10 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 
 ## Configuration
 
-Configuration is via v2 function params: env vars named as in the table below.
+Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
+loads them at deploy time and prompts for any required values that are missing.
 
-| Field | Env var | Required | Default | Notes |
+| Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
 | `bucket` | `EXTENSION_BUCKET` | no | default Storage bucket | Storage bucket to watch |
 | `languageCode` | `LANGUAGE_CODE` | yes | — | BCP-47 language code |
@@ -119,21 +121,21 @@ the instances cannot collide.
 
 ## Events
 
-When `EVENTARC_CHANNEL` is configured, the function publishes:
+When `EVENTARC_CHANNEL` is configured, the function publishes lifecycle events
+under the legacy extension id (kept for compatibility with existing consumers):
 
 - `firebase.extensions.storage-transcribe-audio.v1.complete` on success
 - `firebase.extensions.storage-transcribe-audio.v1.fail` on failure
 
 ## API surface
 
-- **Main entry** (`@firebase/speech-to-text`): the wired `transcribeAudio`
-  function, configured from env params at load time. Because it reads the
-  environment at load time, it only runs cleanly inside the Firebase toolchain
-  (deploy discovery, runtime, or the emulator).
+- **Main entry** (`@firebase/speech-to-text`): exports `transcribeAudio`. The
+  main entry reads environment variables when the module loads, so use it from
+  Firebase deploy/emulator/runtime. For your own triggers, import from `./lib`
+  instead.
 - **Library entry** (`./lib`): the raw `handleObjectFinalized` handler, config
   types/helpers, and the framework-agnostic transcription engine
-  (`transcodeToLinear16`, `transcribeAndUpload`, `uploadTranscodedFile`) with no
-  load-time side effects.
+  (`transcodeToLinear16`, `transcribeAndUpload`, `uploadTranscodedFile`).
 
 ## License
 

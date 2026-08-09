@@ -131,13 +131,13 @@ async function handleBigQuerySyncInitialization(): Promise<void> {
 }
 
 /**
- * Provisioning lifecycle task, as in the extension. Runs in the function's own
- * identity, so it has the runtime service account and bound secrets that
- * creating the dataset/table/views needs (e.g. CMEK). Enqueue it once after
- * deploy; Cloud Tasks retries a failed initialization on its own schedule, so a
- * transient BigQuery error does not leave the resources unprovisioned. It is
- * idempotent (initialize() no-ops when resources already exist) and can also be
- * invoked directly as an authenticated HTTP POST, without queue retries.
+ * First-deploy provisioning task (`afterFirstDeploy`). Runs in the function's
+ * own identity, so it has the runtime service account and bound secrets that
+ * creating the dataset/table/views needs (e.g. CMEK). Cloud Tasks retries a
+ * failed initialization on its own schedule, so a transient BigQuery error does
+ * not leave the resources unprovisioned. It is idempotent (`initialize()`
+ * no-ops when resources already exist) and can also be invoked directly as an
+ * authenticated HTTP POST, without queue retries.
  */
 export const initBigQuerySync = onTaskDispatched(
   {
