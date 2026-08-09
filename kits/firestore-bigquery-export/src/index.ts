@@ -33,7 +33,7 @@ import { onDocumentWritten } from "firebase-functions/firestore";
 import { expr } from "firebase-functions/params";
 import { onTaskDispatched } from "firebase-functions/tasks";
 import type { Role } from "firebase-functions/v2";
-import { requiresRole } from "firebase-functions/v2";
+import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import {
   afterFirstDeploy,
   afterRedeploy,
@@ -62,9 +62,19 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/eventarc.eventReceiver",
   "roles/run.invoker",
 ];
+const REQUIRED_APIS = [
+  {
+    api: "bigquery.googleapis.com",
+    reason: "Mirrors data from your Cloud Firestore collection in BigQuery.",
+  },
+] as const;
 
 for (const role of REQUIRED_ROLES) {
   requiresRole(role);
+}
+
+for (const { api, reason } of REQUIRED_APIS) {
+  requiresAPI(api, reason);
 }
 
 afterFirstDeploy({ task: { function: INIT_BIGQUERY_SYNC_FUNCTION } });
