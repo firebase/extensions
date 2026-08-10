@@ -94,7 +94,6 @@ function getContext(): HandlerContext {
 
 export const fstranslate = onDocumentWritten(
   {
-    region: CONFIG_EXPRESSIONS.region,
     document: CONFIG_EXPRESSIONS.document,
     secrets: [googleAiApiKey],
   },

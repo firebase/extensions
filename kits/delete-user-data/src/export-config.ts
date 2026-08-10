@@ -32,7 +32,6 @@ export interface DeleteUserDataConfig {
   instanceId?: string;
   discoveryTopicName?: string;
   deletionTopicName?: string;
-  region?: string;
   projectId?: string;
 }
 
@@ -52,7 +51,6 @@ export interface ResolvedDeleteUserDataConfig {
   instanceId: string;
   discoveryTopicName: string;
   deletionTopicName: string;
-  region: string;
   projectId?: string;
 }
 
@@ -60,7 +58,6 @@ const DEFAULT_FIRESTORE_DATABASE_ID = "(default)";
 const DEFAULT_FIRESTORE_DELETE_MODE: FirestoreDeleteMode = "shallow";
 const DEFAULT_SEARCH_DEPTH = 3;
 const DEFAULT_SEARCH_FIELDS = "id,uid,userId";
-const DEFAULT_REGION = "us-central1";
 const DEFAULT_INSTANCE_ID = "delete-user-data";
 
 function topicName(
@@ -101,7 +98,6 @@ export function resolveDeleteUserDataConfig(
       instanceId,
       "deletion"
     ),
-    region: config.region ?? DEFAULT_REGION,
     projectId: config.projectId,
   };
 }

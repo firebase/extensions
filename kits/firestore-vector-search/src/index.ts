@@ -77,28 +77,21 @@ const REQUIRED_APIS = [
   },
 ] as const;
 const FUNCTION_SECRETS = [geminiApiKey, openAiApiKey];
-const BASE_FUNCTION_OPTIONS = {
-  region: CONFIG_EXPRESSIONS.region,
-};
 const DEFAULT_TASK_OPTIONS = {
-  ...BASE_FUNCTION_OPTIONS,
   memory: "512MiB",
   timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
 } as const;
 const EMBEDDING_TASK_OPTIONS = {
-  ...BASE_FUNCTION_OPTIONS,
   memory: "1GiB",
   timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
   retryConfig: { maxAttempts: TASK_MAX_ATTEMPTS },
 } as const;
 const FIRESTORE_FUNCTION_OPTIONS = {
-  ...BASE_FUNCTION_OPTIONS,
   memory: "512MiB",
   timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
   secrets: FUNCTION_SECRETS,
 } as const;
 const CALLABLE_FUNCTION_OPTIONS = {
-  ...BASE_FUNCTION_OPTIONS,
   memory: "512MiB",
   secrets: FUNCTION_SECRETS,
 } as const;

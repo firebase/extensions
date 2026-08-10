@@ -93,6 +93,7 @@ describe("secretParamsForAuthType", () => {
 describe("resolveConfig", () => {
   test("normalizes optional strings and resolves secrets", () => {
     const resolved = resolveConfig({
+      databaseRegion: "us-central1",
       mailCollection: "mail",
       defaultFrom: "sender@example.com",
       smtpPassword: { value: () => "pw" },

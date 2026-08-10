@@ -36,9 +36,8 @@ describe("envDeployOptions", () => {
     expect(cel(options.bucket)).toBe("{{ params.EXTENSION_BUCKET }}");
   });
 
-  test("region is a param expression, not a frozen default", () => {
-    expect(options.region).toBeInstanceOf(Expression);
-    expect(cel(options.region)).toBe("{{ params.LOCATION }}");
+  test("does not set a function region", () => {
+    expect(options).not.toHaveProperty("region");
   });
 
   test("timeout and memory pass through as literal defaults", () => {
@@ -48,6 +47,5 @@ describe("envDeployOptions", () => {
 
   test("no trigger-binding deploy option freezes to undefined", () => {
     expect(cel(options.bucket)).not.toContain("undefined");
-    expect(cel(options.region)).not.toContain("undefined");
   });
 });

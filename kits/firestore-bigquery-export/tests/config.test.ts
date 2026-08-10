@@ -162,12 +162,12 @@ describe("buildPartitioningConfig", () => {
 });
 
 describe("configFromEnv", () => {
-  test("maps params to an ExportConfig with defaults", () => {
+  test("maps params without inventing a region default", () => {
     const config = configFromEnv();
     expect(config.projectId).toBe("test-project");
     expect(config.bqProjectId).toBe("test-project");
     expect(config.databaseId).toBe("(default)");
-    expect(resolveExportConfig(config).location).toBe("us-central1");
+    expect(resolveExportConfig(config).location).toBe("");
     expect(config.viewType).toBe("view");
   });
 

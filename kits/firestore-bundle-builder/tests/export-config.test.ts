@@ -24,7 +24,6 @@ describe("resolveConfig", () => {
       bundleSpecCollection: "bundles",
       bundleStorageBucket: "bundle-builder-files",
       storagePrefix: "bundles",
-      region: "us-central1",
     });
   });
 
@@ -33,13 +32,11 @@ describe("resolveConfig", () => {
       bundleSpecCollection: "specs",
       bundleStorageBucket: "my-bucket",
       storagePrefix: "cached",
-      region: "europe-west2",
     });
     expect(resolved).toEqual({
       bundleSpecCollection: "specs",
       bundleStorageBucket: "my-bucket",
       storagePrefix: "cached",
-      region: "europe-west2",
     });
   });
 

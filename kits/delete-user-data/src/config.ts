@@ -64,7 +64,6 @@ const params = {
   deletionTopicName: defineString("DELETION_TOPIC_NAME", {
     default: `kit-${DEFAULT_INSTANCE_ID}-deletion`,
   }),
-  region: defineString("LOCATION", { default: "us-central1" }),
 };
 
 function optional(value: string): string | undefined {
@@ -90,7 +89,6 @@ export function configFromEnv(): DeleteUserDataConfig {
     instanceId: params.instanceId.value(),
     discoveryTopicName: optional(params.discoveryTopicName.value()),
     deletionTopicName: optional(params.deletionTopicName.value()),
-    region: params.region.value(),
     projectId: projectID.value(),
   };
 }

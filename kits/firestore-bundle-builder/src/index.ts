@@ -31,7 +31,7 @@ import { onRequest } from "firebase-functions/https";
 import type { Role } from "firebase-functions/v2";
 import { requiresRole } from "firebase-functions/v2";
 import type { BundleSpec } from "./build-bundle";
-import { configFromEnv, envDeployOptions } from "./config";
+import { configFromEnv } from "./config";
 import { resolveConfig } from "./export-config";
 import { type HandlerContext, handleServe } from "./handlers";
 
@@ -49,16 +49,13 @@ for (const role of REQUIRED_ROLES) {
   requiresRole(role);
 }
 
-const deploy = envDeployOptions();
-
 if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 
 // Resolve the runtime config once, on first use, never at module load. On the
 // params path this is where `.value()` is read — safe at runtime, fatal at
-// deploy discovery. Deploy-time options pass the region param Expression so the
-// CLI resolves it after loading `.env` / prompting.
+// deploy discovery.
 let ctx: HandlerContext | null = null;
 
 function getContext(): HandlerContext {
@@ -90,6 +87,6 @@ function getContext(): HandlerContext {
   return ctx;
 }
 
-export const serve = onRequest({ region: deploy.region }, (req, res) =>
+export const serve = onRequest((req, res) =>
   handleServe(req, res, getContext())
 );

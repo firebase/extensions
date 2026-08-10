@@ -72,7 +72,7 @@ export class GenkitTranslator implements Translator {
 
     const plugins =
       config.geminiProvider === "vertexai"
-        ? [vertexAI({ location: config.region })]
+        ? [vertexAI(config.region ? { location: config.region } : {})]
         : [googleAI({ apiKey: config.googleAiApiKey })];
 
     this.client = genkit({ plugins });

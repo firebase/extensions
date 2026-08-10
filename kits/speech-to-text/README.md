@@ -89,7 +89,6 @@ loads them at deploy time and prompts for any required values that are missing.
 | `outputStoragePath` | `OUTPUT_STORAGE_PATH` | no | bucket root | transcript output prefix |
 | `collectionPath` | `COLLECTION_PATH` | no | (firestore disabled) | transcript collection |
 | `enableAutomaticPunctuation` | `ENABLE_AUTOMATIC_PUNCTUATION` | no | `true` | Speech option |
-| `location` | `LOCATION` | no | `us-central1` | function region |
 
 The function timeout defaults to `540` seconds and memory to `1GiB` so long audio
 does not time out mid-transcription; both are overridable via `timeoutSeconds`

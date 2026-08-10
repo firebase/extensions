@@ -101,7 +101,6 @@ loads them at deploy time and prompts for any required values that are missing.
 | `contentFilterLevel` | `CONTENT_FILTER_LEVEL` | no | `OFF` | Content filter level |
 | `customFilterPrompt` | `CUSTOM_FILTER_PROMPT` | no | (empty) | Custom filter prompt |
 | `placeholderImagePath` | `PLACEHOLDER_IMAGE_PATH` | no | (empty) | Placeholder for filtered images |
-| `region` | `LOCATION` | no | `us-central1` | Function region |
 
 ## Multiple instances
 

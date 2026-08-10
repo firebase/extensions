@@ -79,7 +79,6 @@ export const clearData = functionsV1.auth.user().onDelete((user) => {
 export const handleSearch = onMessagePublished(
   {
     topic: resolved.discoveryTopicName,
-    region: resolved.region,
   },
   (event) => runSearch(event.data.message.json, ctx)
 );
@@ -87,7 +86,6 @@ export const handleSearch = onMessagePublished(
 export const handleDeletion = onMessagePublished(
   {
     topic: resolved.deletionTopicName,
-    region: resolved.region,
   },
   (event) => runDeletion(event.data.message.json, ctx)
 );

@@ -103,7 +103,6 @@ loads them at deploy time and prompts for any required values that are missing.
 | `instanceId` | `INSTANCE_ID` | no | `delete-user-data` | Logical instance id |
 | `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | no | `kit-delete-user-data-discovery` | Pub/Sub discovery topic |
 | `deletionTopicName` | `DELETION_TOPIC_NAME` | no | `kit-delete-user-data-deletion` | Pub/Sub deletion topic |
-| `region` | `LOCATION` | no | `us-central1` | Function region |
 
 ## Multiple instances
 

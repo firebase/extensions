@@ -83,7 +83,6 @@ loads them at deploy time and prompts for any required values that are missing.
 |---|---|---|---|---|
 | `internalStatePath` | `INTERNAL_STATE_PATH` | no | `_firebase_ext_/sharded_counter` | Firestore path for controller state |
 | `scheduleFrequencyMinutes` | `SCHEDULE_FREQUENCY` | no | `1` | Controller schedule frequency (minutes) |
-| `region` | `LOCATION` | no | `us-central1` | Function region |
 
 ## Multiple instances
 

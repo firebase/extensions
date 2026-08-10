@@ -99,7 +99,6 @@ function getContext(): HandlerContext {
 export const transcribeAudio = onObjectFinalized(
   {
     bucket: deploy.bucket,
-    region: deploy.region,
     timeoutSeconds: deploy.timeoutSeconds,
     memory: deploy.memory,
   },

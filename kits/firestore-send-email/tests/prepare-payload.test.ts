@@ -19,7 +19,6 @@ import type { ResolvedSendEmailConfig } from "../src/export-config";
 import { preparePayload } from "../src/prepare-payload";
 
 const baseConfig: ResolvedSendEmailConfig = {
-  region: "us-central1",
   databaseId: "(default)",
   databaseRegion: "us-central1",
   mailCollection: "mail",

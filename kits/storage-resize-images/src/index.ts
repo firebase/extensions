@@ -67,7 +67,6 @@ const ctx: HandlerContext = {
 export const generateResizedImage = onObjectFinalized(
   {
     bucket: resolved.bucket,
-    region: resolved.region,
     memory: resolved.memory,
   },
   (event) => handleObjectFinalized(event, ctx)

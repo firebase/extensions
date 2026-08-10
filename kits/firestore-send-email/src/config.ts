@@ -152,7 +152,6 @@ export function configFromEnv(): SendEmailConfig {
   const authType = params.authType.value() as AuthenticatonType;
 
   return {
-    region: params.databaseRegion.value(),
     databaseId: params.databaseId.value(),
     databaseRegion: params.databaseRegion.value(),
     mailCollection: params.mailCollection.value(),

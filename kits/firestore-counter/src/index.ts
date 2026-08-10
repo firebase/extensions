@@ -76,13 +76,8 @@ function getHandlerContext(): HandlerContext {
   return ctx;
 }
 
-const functionOptions = {
-  region: CONFIG_EXPRESSIONS.region,
-};
-
 export const controllerCore = onSchedule(
   {
-    ...functionOptions,
     schedule: CONFIG_EXPRESSIONS.schedule as unknown as string,
     maxInstances: 1,
   },
@@ -91,7 +86,6 @@ export const controllerCore = onSchedule(
 
 export const onWrite = onDocumentWritten(
   {
-    ...functionOptions,
     document: "{collection}/{counter=**}/_counter_shards_/{shardId}",
     maxInstances: 1,
     timeoutSeconds: 120,
@@ -101,7 +95,6 @@ export const onWrite = onDocumentWritten(
 
 export const worker = onDocumentWritten(
   {
-    ...functionOptions,
     document: expr`${CONFIG_EXPRESSIONS.internalStatePath}/workers/{workerId}`,
   },
   handleWorker

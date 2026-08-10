@@ -111,7 +111,6 @@ the CLI connects them to the function at deploy time.
 | `statusFieldName` | `STATUS_FIELD_NAME` | no | `status` | Status field |
 | `doBackfill` | `DO_BACKFILL` | yes | — | Run backfill on setup |
 | `updateOnConfigure` | `UPDATE_ON_CONFIGURE` | yes | — | Update index on configure |
-| `region` | `LOCATION` | yes | — | Function region |
 | `updateTriggerQueueName` | `UPDATE_TRIGGER_QUEUE_NAME` | no | `updateTrigger` | Update trigger queue |
 | `updateTaskQueueName` | `UPDATE_TASK_QUEUE_NAME` | no | `updateTask` | Update task queue |
 | `backfillTriggerQueueName` | `BACKFILL_TRIGGER_QUEUE_NAME` | no | `backfillTrigger` | Backfill trigger queue |

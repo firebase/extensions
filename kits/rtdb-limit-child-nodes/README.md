@@ -41,8 +41,8 @@ and configure it with a `.env` (or `.env.<projectId>`).
 Importing the package without exporting its functions deploys nothing — the CLI
 only deploys what your entry file exports.
 
-Put `RTDB_NODE_PATH`, `SELECTED_DATABASE_INSTANCE`, and `LOCATION` in `.env` so
-the trigger binds to the right database path and region.
+Put `RTDB_NODE_PATH` and `SELECTED_DATABASE_INSTANCE` in `.env` so
+the trigger binds to the right database path and instance.
 
 ## Deploy
 
@@ -87,7 +87,6 @@ Realtime Database instance.
 | `nodePath` | `RTDB_NODE_PATH` | no | `messages` | Parent path whose children are limited |
 | `maxCount` | `MAX_COUNT` | no | `100` | Maximum child nodes to retain |
 | `databaseInstance` | `SELECTED_DATABASE_INSTANCE` | yes* | from `FIREBASE_CONFIG` when present | RTDB instance id |
-| `region` | `LOCATION` | no | `us-central1` | Function region |
 
 \* Required when `FIREBASE_CONFIG` does not already imply a database instance.
 

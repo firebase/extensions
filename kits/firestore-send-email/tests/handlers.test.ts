@@ -106,7 +106,6 @@ function makeCtx(
       })),
     } as any,
     config: {
-      region: "us-central1",
       databaseId: "(default)",
       databaseRegion: "us-central1",
       mailCollection: "mail",
