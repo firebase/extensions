@@ -90,6 +90,11 @@ const params = {
   placeholderImagePath: defineString("PLACEHOLDER_IMAGE_PATH", { default: "" }),
 };
 
+export const CONFIG_EXPRESSIONS = {
+  bucket: params.bucket,
+  memory: params.memory,
+} as const;
+
 function optional(value: string): string | undefined {
   return value.length > 0 ? value : undefined;
 }

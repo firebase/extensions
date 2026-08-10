@@ -21,7 +21,7 @@ import * as functionsV1 from "firebase-functions/v1";
 import type { Role } from "firebase-functions/v2";
 import { requiresRole } from "firebase-functions/v2";
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
-import { configFromEnv } from "./config";
+import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
 import * as events from "./events";
 import { getDatabaseUrl, resolveDeleteUserDataConfig } from "./export-config";
 import {
@@ -48,44 +48,53 @@ for (const role of REQUIRED_ROLES) {
   requiresRole(role);
 }
 
-const resolved = resolveDeleteUserDataConfig(configFromEnv());
-const databaseURL = getDatabaseUrl(
-  resolved.rtdbInstance,
-  resolved.rtdbLocation
-);
+let ctx: HandlerContext | undefined;
 
-if (admin.apps.length === 0) {
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-    ...(databaseURL ? { databaseURL } : {}),
-  });
+function getContext(): HandlerContext {
+  if (ctx) {
+    return ctx;
+  }
+
+  const resolved = resolveDeleteUserDataConfig(configFromEnv());
+  const databaseURL = getDatabaseUrl(
+    resolved.rtdbInstance,
+    resolved.rtdbLocation
+  );
+
+  if (admin.apps.length === 0) {
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+      ...(databaseURL ? { databaseURL } : {}),
+    });
+  }
+
+  events.setupEventChannel();
+  logs.init(resolved);
+
+  ctx = {
+    firestore: getFirestore(resolved.firestoreDatabaseId),
+    storage: admin.storage(),
+    database: admin.database(),
+    pubsub: new PubSub({ projectId: resolved.projectId }),
+    config: resolved,
+  };
+  return ctx;
 }
 
-events.setupEventChannel();
-logs.init(resolved);
-
-const ctx: HandlerContext = {
-  firestore: getFirestore(resolved.firestoreDatabaseId),
-  storage: admin.storage(),
-  database: admin.database(),
-  pubsub: new PubSub({ projectId: resolved.projectId }),
-  config: resolved,
-};
-
 export const clearData = functionsV1.auth.user().onDelete((user) => {
-  return handleClear(user.uid, ctx);
+  return handleClear(user.uid, getContext());
 });
 
 export const handleSearch = onMessagePublished(
   {
-    topic: resolved.discoveryTopicName,
+    topic: CONFIG_EXPRESSIONS.discoveryTopicName,
   },
-  (event) => runSearch(event.data.message.json, ctx)
+  (event) => runSearch(event.data.message.json, getContext())
 );
 
 export const handleDeletion = onMessagePublished(
   {
-    topic: resolved.deletionTopicName,
+    topic: CONFIG_EXPRESSIONS.deletionTopicName,
   },
-  (event) => runDeletion(event.data.message.json, ctx)
+  (event) => runDeletion(event.data.message.json, getContext())
 );

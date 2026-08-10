@@ -18,15 +18,17 @@ import {
   defineBoolean,
   defineInt,
   defineString,
+  expr,
   projectID,
   select,
   storageBucket,
 } from "firebase-functions/params";
 import type { DeleteUserDataConfig } from "./export-config";
 
-const DEFAULT_INSTANCE_ID = "delete-user-data";
+const instanceId = defineString("INSTANCE_ID");
 
 const params = {
+  instanceId,
   firestorePaths: defineString("FIRESTORE_PATHS", { default: "" }),
   firestoreDatabaseId: defineString("FIRESTORE_DATABASE_ID", {
     default: "(default)",
@@ -53,18 +55,20 @@ const params = {
     default: "id,uid,userId",
   }),
   searchFunction: defineString("SEARCH_FUNCTION", { default: "" }),
-  instanceId: defineString("INSTANCE_ID", {
-    default: DEFAULT_INSTANCE_ID,
-  }),
   // Non-empty defaults so Pub/Sub trigger bindings resolve during deploy
   // discovery without freezing an empty topic name into the manifest.
   discoveryTopicName: defineString("DISCOVERY_TOPIC_NAME", {
-    default: `kit-${DEFAULT_INSTANCE_ID}-discovery`,
+    default: expr`kit-${instanceId}-discovery`,
   }),
   deletionTopicName: defineString("DELETION_TOPIC_NAME", {
-    default: `kit-${DEFAULT_INSTANCE_ID}-deletion`,
+    default: expr`kit-${instanceId}-deletion`,
   }),
 };
+
+export const CONFIG_EXPRESSIONS = {
+  discoveryTopicName: params.discoveryTopicName,
+  deletionTopicName: params.deletionTopicName,
+} as const;
 
 function optional(value: string): string | undefined {
   return value.length > 0 ? value : undefined;

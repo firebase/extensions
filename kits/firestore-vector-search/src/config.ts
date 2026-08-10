@@ -33,8 +33,10 @@ type ConfigExpression<T extends string | number | boolean> = T | Expression<T>;
 
 export interface ConfigExpressions {
   collectionDocument: ConfigExpression<string>;
-  queryCollectionName: ConfigExpression<string>;
+  queryCollectionDocument: ConfigExpression<string>;
 }
+
+const instanceId = defineString("INSTANCE_ID");
 
 const EMBEDDING_PROVIDER_OPTIONS = [
   "gemini",
@@ -49,9 +51,7 @@ const DISTANCE_MEASURE_OPTIONS = [
   "DOT_PRODUCT",
 ] as const;
 const params = {
-  instanceId: defineString("KIT_INSTANCE_ID", {
-    default: "firestore-vector-search",
-  }),
+  instanceId,
   embeddingProvider: defineString("EMBEDDING_PROVIDER", {
     default: "gemini",
     input: select([...EMBEDDING_PROVIDER_OPTIONS]),
@@ -77,22 +77,22 @@ const params = {
   doBackfill: defineBoolean("DO_BACKFILL"),
   updateOnConfigure: defineBoolean("UPDATE_ON_CONFIGURE"),
   updateTriggerQueueName: defineString("UPDATE_TRIGGER_QUEUE_NAME", {
-    default: "updateTrigger",
+    default: expr`kit-${instanceId}-updateTrigger`,
   }),
   updateTaskQueueName: defineString("UPDATE_TASK_QUEUE_NAME", {
-    default: "updateTask",
+    default: expr`kit-${instanceId}-updateTask`,
   }),
   backfillTriggerQueueName: defineString("BACKFILL_TRIGGER_QUEUE_NAME", {
-    default: "backfillTrigger",
+    default: expr`kit-${instanceId}-backfillTrigger`,
   }),
   backfillTaskQueueName: defineString("BACKFILL_TASK_QUEUE_NAME", {
-    default: "backfillTask",
+    default: expr`kit-${instanceId}-backfillTask`,
   }),
 };
 
 export const CONFIG_EXPRESSIONS = {
   collectionDocument: expr`${params.collectionPath}/{docId}`,
-  queryCollectionName: expr`_${params.instanceId}/index/queries`,
+  queryCollectionDocument: expr`_${instanceId}/index/queries/{queryId}`,
 } as const satisfies ConfigExpressions;
 
 function optionalString(value: string): string | undefined {

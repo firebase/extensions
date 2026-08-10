@@ -88,6 +88,7 @@ loads them at deploy time and prompts for any required values that are missing.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
+| `instanceId` | `INSTANCE_ID` | yes | — | Must match this instance's key in the `instances` map |
 | `firestorePaths` | `FIRESTORE_PATHS` | no | (empty) | Comma-separated Firestore paths with `{UID}` |
 | `firestoreDatabaseId` | `FIRESTORE_DATABASE_ID` | no | `(default)` | Firestore database id |
 | `firestoreDeleteMode` | `FIRESTORE_DELETE_MODE` | no | `shallow` | `shallow` or `recursive` |
@@ -100,9 +101,8 @@ loads them at deploy time and prompts for any required values that are missing.
 | `searchDepth` | `AUTO_DISCOVERY_SEARCH_DEPTH` | no | `3` | Discovery depth |
 | `searchFields` | `AUTO_DISCOVERY_SEARCH_FIELDS` | no | `id,uid,userId` | Fields treated as user ids |
 | `searchFunction` | `SEARCH_FUNCTION` | no | (empty) | Optional custom search function |
-| `instanceId` | `INSTANCE_ID` | no | `delete-user-data` | Logical instance id |
-| `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | no | `kit-delete-user-data-discovery` | Pub/Sub discovery topic |
-| `deletionTopicName` | `DELETION_TOPIC_NAME` | no | `kit-delete-user-data-deletion` | Pub/Sub deletion topic |
+| `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | no | `kit-<INSTANCE_ID>-discovery` | Pub/Sub discovery topic |
+| `deletionTopicName` | `DELETION_TOPIC_NAME` | no | `kit-<INSTANCE_ID>-deletion` | Pub/Sub deletion topic |
 
 ## Multiple instances
 
@@ -126,7 +126,8 @@ map, each pointing at its own config directory with its own `.env`:
 
 Instance ids must be unique across all kit stanzas in the project, and every
 instance's function names are namespaced by its `kit-<instance id>-` prefix, so
-the instances cannot collide.
+the instances cannot collide. Set `INSTANCE_ID` in each config directory to the
+same value as that directory's key in the `instances` map.
 
 ## Events
 
