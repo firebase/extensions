@@ -59,9 +59,9 @@ export async function createIndex(options: CreateIndexOptions): Promise<void> {
     return;
   }
 
-  const result = await firestoreAdminClient.createIndex({
+  const [operation] = await firestoreAdminClient.createIndex({
     parent: getParent(options),
     index: getIndex(options),
   });
-  logger.info(`Index created: ${JSON.stringify(result)}`);
+  logger.info("Index creation started", { operationName: operation.name });
 }
