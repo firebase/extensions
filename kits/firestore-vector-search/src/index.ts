@@ -103,8 +103,12 @@ for (const { api, reason } of REQUIRED_APIS) {
   requiresAPI(api, reason);
 }
 
-afterFirstDeploy({ task: { function: INIT_VECTOR_SEARCH_FUNCTION } });
-afterRedeploy({ task: { function: INIT_VECTOR_SEARCH_FUNCTION } });
+afterFirstDeploy({
+  task: { function: INIT_VECTOR_SEARCH_FUNCTION, body: { data: {} } },
+});
+afterRedeploy({
+  task: { function: INIT_VECTOR_SEARCH_FUNCTION, body: { data: {} } },
+});
 
 let resolvedConfig: ResolvedVectorSearchConfig | undefined;
 let ctx: HandlerContext | undefined;
