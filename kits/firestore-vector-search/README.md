@@ -98,7 +98,7 @@ the CLI connects them to the function at deploy time.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
-| `instanceId` | `KIT_INSTANCE_ID` | no | `firestore-vector-search` | Logical instance id |
+| `instanceId` | `INSTANCE_ID` | yes | — | Must match this instance's key in the `instances` map |
 | `embeddingProvider` | `EMBEDDING_PROVIDER` | no | `gemini` | Embedding provider |
 | `customEmbeddingsEndpoint` | `CUSTOM_EMBEDDINGS_ENDPOINT` | no | (empty) | Custom embeddings endpoint |
 | `customEmbeddingsBatchSize` | `CUSTOM_EMBEDDINGS_BATCH_SIZE` | no | (empty) | Custom batch size |
@@ -111,10 +111,10 @@ the CLI connects them to the function at deploy time.
 | `statusFieldName` | `STATUS_FIELD_NAME` | no | `status` | Status field |
 | `doBackfill` | `DO_BACKFILL` | yes | — | Run backfill on setup |
 | `updateOnConfigure` | `UPDATE_ON_CONFIGURE` | yes | — | Update index on configure |
-| `updateTriggerQueueName` | `UPDATE_TRIGGER_QUEUE_NAME` | no | `updateTrigger` | Update trigger queue |
-| `updateTaskQueueName` | `UPDATE_TASK_QUEUE_NAME` | no | `updateTask` | Update task queue |
-| `backfillTriggerQueueName` | `BACKFILL_TRIGGER_QUEUE_NAME` | no | `backfillTrigger` | Backfill trigger queue |
-| `backfillTaskQueueName` | `BACKFILL_TASK_QUEUE_NAME` | no | `backfillTask` | Backfill task queue |
+| `updateTriggerQueueName` | `UPDATE_TRIGGER_QUEUE_NAME` | no | `kit-<INSTANCE_ID>-updateTrigger` | Update trigger queue |
+| `updateTaskQueueName` | `UPDATE_TASK_QUEUE_NAME` | no | `kit-<INSTANCE_ID>-updateTask` | Update task queue |
+| `backfillTriggerQueueName` | `BACKFILL_TRIGGER_QUEUE_NAME` | no | `kit-<INSTANCE_ID>-backfillTrigger` | Backfill trigger queue |
+| `backfillTaskQueueName` | `BACKFILL_TASK_QUEUE_NAME` | no | `kit-<INSTANCE_ID>-backfillTask` | Backfill task queue |
 | `geminiApiKey` | `GEMINI_API_KEY` | secret | — | Gemini API key |
 | `openAiApiKey` | `OPENAI_API_KEY` | secret | — | OpenAI API key |
 
@@ -140,7 +140,9 @@ To run several vector-search indexes, add one entry per instance to the
 
 Instance ids must be unique across all kit stanzas in the project, and every
 instance's function names are namespaced by its `kit-<instance id>-` prefix, so
-the instances cannot collide.
+the instances cannot collide. Set `INSTANCE_ID` in each config directory to the
+same value as that directory's key in the `instances` map; it also namespaces
+the internal Firestore metadata/query paths and task queue references.
 
 ## Events
 

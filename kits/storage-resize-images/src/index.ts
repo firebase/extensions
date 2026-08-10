@@ -19,7 +19,7 @@ import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onObjectFinalized } from "firebase-functions/v2/storage";
 import sharp from "sharp";
-import { configFromEnv } from "./config";
+import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
 import * as events from "./events";
 import { resolveResizeImagesConfig } from "./export-config";
 import { type HandlerContext, handleObjectFinalized } from "./handlers";
@@ -49,25 +49,34 @@ for (const { api, reason } of REQUIRED_APIS) {
   requiresAPI(api, reason);
 }
 
-const resolved = resolveResizeImagesConfig(configFromEnv());
-
 sharp.cache(false);
-if (admin.apps.length === 0) {
-  admin.initializeApp();
+
+let ctx: HandlerContext | undefined;
+
+function getContext(): HandlerContext {
+  if (ctx) {
+    return ctx;
+  }
+
+  const resolved = resolveResizeImagesConfig(configFromEnv());
+  if (admin.apps.length === 0) {
+    admin.initializeApp();
+  }
+
+  events.setupEventChannel();
+  logs.init(resolved);
+
+  ctx = {
+    config: resolved,
+    storage: admin.storage(),
+  };
+  return ctx;
 }
-
-events.setupEventChannel();
-logs.init(resolved);
-
-const ctx: HandlerContext = {
-  config: resolved,
-  storage: admin.storage(),
-};
 
 export const generateResizedImage = onObjectFinalized(
   {
-    bucket: resolved.bucket,
-    memory: resolved.memory,
+    bucket: CONFIG_EXPRESSIONS.bucket,
+    memory: CONFIG_EXPRESSIONS.memory,
   },
-  (event) => handleObjectFinalized(event, ctx)
+  (event) => handleObjectFinalized(event, getContext())
 );

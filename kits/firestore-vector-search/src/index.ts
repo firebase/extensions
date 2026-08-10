@@ -18,7 +18,6 @@ import { getApp, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { onDocumentWritten } from "firebase-functions/firestore";
 import { onCall } from "firebase-functions/https";
-import { expr } from "firebase-functions/params";
 import { onTaskDispatched } from "firebase-functions/tasks";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
@@ -175,7 +174,7 @@ export const embedOnWrite = onDocumentWritten(
 export const queryOnWrite = onDocumentWritten(
   {
     ...FIRESTORE_FUNCTION_OPTIONS,
-    document: expr`${CONFIG_EXPRESSIONS.queryCollectionName}/{queryId}`,
+    document: CONFIG_EXPRESSIONS.queryCollectionDocument,
   },
   (event) => handleQueryOnWrite(event, getContext())
 );

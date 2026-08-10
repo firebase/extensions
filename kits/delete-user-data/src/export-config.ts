@@ -29,7 +29,7 @@ export interface DeleteUserDataConfig {
   searchDepth?: number;
   searchFields?: string;
   searchFunction?: string;
-  instanceId?: string;
+  instanceId: string;
   discoveryTopicName?: string;
   deletionTopicName?: string;
   projectId?: string;
@@ -58,20 +58,18 @@ const DEFAULT_FIRESTORE_DATABASE_ID = "(default)";
 const DEFAULT_FIRESTORE_DELETE_MODE: FirestoreDeleteMode = "shallow";
 const DEFAULT_SEARCH_DEPTH = 3;
 const DEFAULT_SEARCH_FIELDS = "id,uid,userId";
-const DEFAULT_INSTANCE_ID = "delete-user-data";
-
 function topicName(
   name: string | undefined,
   instanceId: string,
   suffix: string
 ): string {
-  return name ?? `ext-${instanceId}-${suffix}`;
+  return name ?? `kit-${instanceId}-${suffix}`;
 }
 
 export function resolveDeleteUserDataConfig(
   config: DeleteUserDataConfig
 ): ResolvedDeleteUserDataConfig {
-  const instanceId = config.instanceId ?? DEFAULT_INSTANCE_ID;
+  const instanceId = config.instanceId;
   return {
     firestorePaths: config.firestorePaths,
     firestoreDatabaseId:

@@ -48,7 +48,7 @@ export interface VectorSearchConfig {
   region?: string;
   projectId: string;
   bucketName?: string;
-  instanceId?: string;
+  instanceId: string;
   queueNames?: Partial<QueueNames>;
 }
 
@@ -77,11 +77,8 @@ export interface ResolvedVectorSearchConfig {
   queryCollectionPath: string;
 }
 
-const DEFAULT_INSTANCE_ID = "firestore-vector-search";
 const DEFAULT_COLLECTION_PATH = "products";
 const DEFAULT_QUERY_LIMIT = 3;
-
-export const QUERY_COLLECTION_PATH = `_${DEFAULT_INSTANCE_ID}/index/queries`;
 
 function dimensionFor(config: VectorSearchConfig): number {
   switch (config.embeddingProvider ?? "gemini") {
@@ -102,19 +99,24 @@ function dimensionFor(config: VectorSearchConfig): number {
   }
 }
 
-function resolveQueueNames(queueNames: Partial<QueueNames> = {}): QueueNames {
+function resolveQueueNames(
+  instanceId: string,
+  queueNames: Partial<QueueNames> = {}
+): QueueNames {
   return {
-    updateTrigger: queueNames.updateTrigger ?? "updateTrigger",
-    updateTask: queueNames.updateTask ?? "updateTask",
-    backfillTrigger: queueNames.backfillTrigger ?? "backfillTrigger",
-    backfillTask: queueNames.backfillTask ?? "backfillTask",
+    updateTrigger:
+      queueNames.updateTrigger ?? `kit-${instanceId}-updateTrigger`,
+    updateTask: queueNames.updateTask ?? `kit-${instanceId}-updateTask`,
+    backfillTrigger:
+      queueNames.backfillTrigger ?? `kit-${instanceId}-backfillTrigger`,
+    backfillTask: queueNames.backfillTask ?? `kit-${instanceId}-backfillTask`,
   };
 }
 
 export function resolveVectorSearchConfig(
   config: VectorSearchConfig
 ): ResolvedVectorSearchConfig {
-  const instanceId = config.instanceId ?? DEFAULT_INSTANCE_ID;
+  const instanceId = config.instanceId;
   const projectId = config.projectId;
   return {
     embeddingProvider: config.embeddingProvider ?? "gemini",
@@ -135,7 +137,7 @@ export function resolveVectorSearchConfig(
     projectId,
     bucketName: config.bucketName ?? `${projectId}.appspot.com`,
     instanceId,
-    queueNames: resolveQueueNames(config.queueNames),
+    queueNames: resolveQueueNames(instanceId, config.queueNames),
     dimension: dimensionFor(config),
     indexMetadataDocumentPath: `_${instanceId}/index`,
     queryCollectionPath: `_${instanceId}/index/queries`,
