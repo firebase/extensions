@@ -28,7 +28,6 @@ export const googleAiApiKey = defineSecret("GOOGLE_AI_API_KEY");
 type ConfigExpression<T extends string | number | boolean> = Expression<T>;
 
 export interface ConfigExpressions {
-  region: ConfigExpression<string>;
   document: ConfigExpression<string>;
 }
 
@@ -58,11 +57,9 @@ const params = {
     default: "gemini-2.5-flash",
     input: select([...GEMINI_MODEL_OPTIONS]),
   }),
-  region: defineString("LOCATION", { default: "us-central1" }),
 };
 
 export const CONFIG_EXPRESSIONS: ConfigExpressions = {
-  region: params.region,
   document: expr`${params.collectionPath}/{messageId}`,
 };
 
@@ -79,7 +76,7 @@ export function configFromEnv(): TranslateConfig {
     languagesFieldName: optional(params.languagesFieldName.value()),
     provider: optional(params.provider.value()) as TranslateConfig["provider"],
     geminiModel: optional(params.geminiModel.value()),
-    region: params.region.value(),
+    region: process.env.FUNCTION_REGION,
     projectId: projectID.value(),
   };
 }

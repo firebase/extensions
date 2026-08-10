@@ -67,7 +67,7 @@ export interface ResolvedVectorSearchConfig {
   statusFieldName: string;
   doBackfill: boolean;
   updateOnConfigure: boolean;
-  region: string;
+  region?: string;
   projectId: string;
   bucketName: string;
   instanceId: string;
@@ -78,7 +78,6 @@ export interface ResolvedVectorSearchConfig {
 }
 
 const DEFAULT_INSTANCE_ID = "firestore-vector-search";
-const DEFAULT_REGION = "us-central1";
 const DEFAULT_COLLECTION_PATH = "products";
 const DEFAULT_QUERY_LIMIT = 3;
 
@@ -132,7 +131,7 @@ export function resolveVectorSearchConfig(
     statusFieldName: config.statusFieldName ?? "status",
     doBackfill: config.doBackfill ?? false,
     updateOnConfigure: config.updateOnConfigure ?? false,
-    region: config.region ?? DEFAULT_REGION,
+    region: config.region ?? process.env.FUNCTION_REGION,
     projectId,
     bucketName: config.bucketName ?? `${projectId}.appspot.com`,
     instanceId,

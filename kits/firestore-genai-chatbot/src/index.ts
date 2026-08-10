@@ -56,8 +56,8 @@ for (const { api, reason } of REQUIRED_APIS) {
   requiresAPI(api, reason);
 }
 
-// Deploy-time options (document path, region) are param expressions resolved by
-// the CLI from `.env`; the runtime config resolver runs only on the first
+// Deploy-time options are param expressions resolved by the CLI from `.env`;
+// the runtime config resolver runs only on the first
 // invocation, so its `.value()` reads are deferred past deploy discovery. The
 // API key secret is bound by name at deploy time.
 const deployOptions = envDeployOptions();
@@ -85,7 +85,6 @@ function getContext(): HandlerContext {
 export const generateMessage = onDocumentWritten(
   {
     document: deployOptions.document,
-    region: deployOptions.region,
     secrets: [apiKeySecret],
   },
   (event) => handleDocumentWrite(event, getContext())

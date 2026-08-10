@@ -22,7 +22,6 @@ type ConfigExpression<T extends string | number | boolean> = Expression<T>;
 
 export interface ConfigExpressions {
   internalStatePath: ConfigExpression<string>;
-  region: ConfigExpression<string>;
   schedule: ConfigExpression<string>;
 }
 
@@ -33,12 +32,10 @@ const params = {
   scheduleFrequencyMinutes: defineString("SCHEDULE_FREQUENCY", {
     default: "1",
   }),
-  region: defineString("LOCATION", { default: "us-central1" }),
 };
 
 export const CONFIG_EXPRESSIONS: ConfigExpressions = {
   internalStatePath: params.internalStatePath,
-  region: params.region,
   schedule: expr`every ${params.scheduleFrequencyMinutes} minutes`,
 };
 
@@ -46,6 +43,5 @@ export function configFromEnv(): CounterConfig {
   return {
     internalStatePath: params.internalStatePath.value(),
     scheduleFrequencyMinutes: Number(params.scheduleFrequencyMinutes.value()),
-    region: params.region.value(),
   };
 }

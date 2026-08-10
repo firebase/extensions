@@ -51,7 +51,11 @@ function queuePath(
   config: ResolvedVectorSearchConfig,
   queueName: string
 ): string {
-  return `locations/${config.region}/functions/${queueName}`;
+  const region = config.region ?? process.env.FUNCTION_REGION;
+  if (!region) {
+    throw new Error("FUNCTION_REGION is required to resolve task queues.");
+  }
+  return `locations/${region}/functions/${queueName}`;
 }
 
 function embedClient(ctx: HandlerContext) {

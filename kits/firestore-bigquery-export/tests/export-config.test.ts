@@ -22,6 +22,7 @@ describe("resolveExportConfig", () => {
     collectionPath: "users",
     datasetId: "analytics",
     tableId: "users",
+    location: "us-central1",
     projectId: "test-project",
   };
 
@@ -29,7 +30,6 @@ describe("resolveExportConfig", () => {
     const resolved = resolveExportConfig(minimal);
 
     expect(resolved.projectId).toBe("test-project");
-    expect(resolved.location).toBe("us-central1");
     expect(resolved.datasetLocation).toBe("us");
     expect(resolved.databaseId).toBe("(default)");
     expect(resolved.viewType).toBe("view");
@@ -65,6 +65,7 @@ describe("toTrackerConfig", () => {
     collectionPath: "users",
     datasetId: "analytics",
     tableId: "users",
+    location: "us-central1",
     projectId: "test-project",
   };
 

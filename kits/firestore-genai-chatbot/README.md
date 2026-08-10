@@ -91,7 +91,6 @@ the CLI connects them to the function at deploy time.
 | `provider` | `GENERATIVE_AI_PROVIDER` | no | `google-ai` | `google-ai` or `vertex-ai` |
 | `apiKey` | `API_KEY` | secret | — | Google AI API key |
 | `model` | `MODEL` | no | `gemini-2.5-flash` | Model id |
-| `location` | `LOCATION` | yes | — | Function region |
 | `vertexModelLocation` | `VERTEX_AI_MODEL_LOCATION` | no | `null` | Vertex model region |
 | `collectionName` | `COLLECTION_NAME` | no | `generate` | Discussion collection |
 | `promptField` | `PROMPT_FIELD` | no | `prompt` | Prompt field name |

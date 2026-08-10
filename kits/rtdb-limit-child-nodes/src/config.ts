@@ -43,7 +43,6 @@ const params = {
         default: databaseInstanceDefault,
       })
     : defineString("SELECTED_DATABASE_INSTANCE"),
-  region: defineString("LOCATION", { default: "us-central1" }),
 };
 
 export function configFromEnv(): RtdbLimitConfig {
@@ -51,7 +50,6 @@ export function configFromEnv(): RtdbLimitConfig {
     nodePath: params.nodePath.value(),
     maxCount: params.maxCount.value(),
     databaseInstance: params.databaseInstance.value(),
-    region: params.region.value(),
   };
 }
 
@@ -63,14 +61,12 @@ export function configFromEnv(): RtdbLimitConfig {
  * Do not use `params.nodePath.value()` here — during CLI discovery `.value()`
  * resolves to "" (defaults are runtime-only), which freezes ref as `{nodeId}`.
  * Read `process.env` (CLI injects `.env.<project>` before load) with fallback.
- * `instance` and `region` stay Expressions so the CLI resolves them after
- * discovery (avoids freezing an empty region into `locations//functions`).
+ * `instance` stays an Expression so the CLI resolves it after discovery.
  */
 export function envDeployOptions(): DeployTimeOptions {
   const nodePath = (process.env.RTDB_NODE_PATH ?? "").trim() || "messages";
   return {
     ref: toTriggerRef(nodePath),
     instance: params.databaseInstance,
-    region: params.region,
   };
 }

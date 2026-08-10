@@ -391,7 +391,7 @@ export function configFromEnv(): ExportConfig {
     collectionPath: params.collectionPath.value(),
     datasetId: params.datasetId.value(),
     tableId: params.tableId.value(),
-    location: optional(params.databaseRegion.value()),
+    location: params.databaseRegion.value(),
     datasetLocation: optional(params.datasetLocation.value()),
     bqProjectId: optional(params.bigqueryProjectId.value()),
     projectId: projectID.value(),

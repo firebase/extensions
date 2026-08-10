@@ -30,28 +30,6 @@ import {
 } from "./export-config";
 
 const GENERATIVE_AI_PROVIDER_OPTIONS = ["google-ai", "vertex-ai"] as const;
-const FUNCTION_REGION_OPTIONS = [
-  "us-central1",
-  "us-east1",
-  "us-east4",
-  "us-west2",
-  "us-west3",
-  "us-west4",
-  "europe-central2",
-  "europe-west1",
-  "europe-west2",
-  "europe-west3",
-  "europe-west6",
-  "asia-east2",
-  "asia-northeast1",
-  "asia-northeast2",
-  "asia-northeast3",
-  "asia-south1",
-  "asia-southeast2",
-  "northamerica-northeast1",
-  "southamerica-east1",
-  "australia-southeast1",
-] as const;
 const VERTEX_MODEL_LOCATION_OPTIONS = [
   "null",
   "global",
@@ -107,9 +85,6 @@ const params = {
   }),
   apiKey: defineSecret("API_KEY"),
   model: defineString("MODEL", { default: "gemini-2.5-flash" }),
-  location: defineString("LOCATION", {
-    input: select([...FUNCTION_REGION_OPTIONS]),
-  }),
   vertexModelLocation: defineString("VERTEX_AI_MODEL_LOCATION", {
     default: "null",
     input: select([...VERTEX_MODEL_LOCATION_OPTIONS]),
@@ -190,7 +165,6 @@ export function configFromEnv(): GenaiChatbotConfig {
       GenerativeAIProvider.GOOGLE_AI,
     apiKey: params.apiKey.value(),
     model: params.model.value(),
-    location: optional(params.location.value()),
     vertexModelLocation:
       vertexModelLocation === "null" ? undefined : vertexModelLocation,
     projectId: getProjectId(),
@@ -215,12 +189,8 @@ export function configFromEnv(): GenaiChatbotConfig {
 /**
  * Builds the {@link DeployTimeOptions} for the params-driven entry point.
  *
- * Unlike {@link configFromEnv}, this never calls `.value()`: it passes the param
- * objects through as CEL {@link Expression}s so the trigger's document path and
- * region appear in the deploy manifest as expressions the Firebase CLI resolves
- * after loading `.env` / prompting. Calling `.value()` here would freeze the
- * deploy-time default of `COLLECTION_NAME` into the manifest, silently deploying
- * the wrong document path and ignoring `.env`.
+ * The document path remains a CEL parameter expression so the Firebase CLI can
+ * resolve it after loading `.env`.
  *
  * @returns Deploy-time options wired from environment params.
  */
@@ -230,6 +200,5 @@ export function envDeployOptions(): DeployTimeOptions {
     // `.env`, the `{messageId}` wildcard stays literal (matches extension.yaml's
     // `${COLLECTION_NAME}/{messageId}` trigger resource).
     document: expr`${params.collectionName}/{messageId}`,
-    region: params.location,
   };
 }

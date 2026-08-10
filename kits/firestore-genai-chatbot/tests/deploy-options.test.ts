@@ -41,14 +41,12 @@ describe("envDeployOptions", () => {
     );
   });
 
-  test("region is a param expression", () => {
-    expect(cel(options.region)).toBe("{{ params.LOCATION }}");
+  test("does not set a function region", () => {
+    expect(options).not.toHaveProperty("region");
   });
 
-  test("no deploy-time option is a frozen undefined/empty literal", () => {
-    for (const value of Object.values(options)) {
-      expect(value).toBeInstanceOf(Expression);
-      expect(cel(value)).not.toContain("undefined");
-    }
+  test("document expression is not a frozen undefined/empty literal", () => {
+    expect(options.document).toBeInstanceOf(Expression);
+    expect(cel(options.document)).not.toContain("undefined");
   });
 });

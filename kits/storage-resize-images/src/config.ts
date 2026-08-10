@@ -88,7 +88,6 @@ const params = {
   }),
   customFilterPrompt: defineString("CUSTOM_FILTER_PROMPT", { default: "" }),
   placeholderImagePath: defineString("PLACEHOLDER_IMAGE_PATH", { default: "" }),
-  region: defineString("LOCATION", { default: "us-central1" }),
 };
 
 function optional(value: string): string | undefined {
@@ -116,7 +115,7 @@ export function configFromEnv(): ResizeImagesConfig {
       params.contentFilterLevel.value() as ResizeImagesConfig["contentFilterLevel"],
     customFilterPrompt: optional(params.customFilterPrompt.value()),
     placeholderImagePath: optional(params.placeholderImagePath.value()),
-    region: params.region.value(),
+    region: process.env.FUNCTION_REGION,
     projectId: projectID.value(),
   };
 }

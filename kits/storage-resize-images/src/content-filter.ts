@@ -27,7 +27,6 @@ const HARM_CATEGORIES = [
   "HARM_CATEGORY_SEXUALLY_EXPLICIT",
   "HARM_CATEGORY_HARASSMENT",
 ] as const;
-const DEFAULT_VERTEX_LOCATION = "us-central1";
 const RETRY_BASE_MS = 500;
 const RETRY_JITTER_MS = 200;
 const RETRY_MAX_MS = 5000;
@@ -73,11 +72,14 @@ export async function checkImageContent(
   filterLevel: SafetyThreshold | null,
   prompt: string | null,
   contentType: string,
-  location: string,
+  location?: string,
   maxAttempts = DEFAULT_MAX_ATTEMPTS
 ): Promise<boolean> {
   if (filterLevel === null && prompt === null) {
     return true;
+  }
+  if (!location) {
+    throw new Error("FUNCTION_REGION is required for Vertex AI filtering.");
   }
 
   const imageBuffer = fs.readFileSync(localOriginalFile);
@@ -85,7 +87,7 @@ export async function checkImageContent(
   const ai = genkit({
     plugins: [
       vertexAI({
-        location: location || DEFAULT_VERTEX_LOCATION,
+        location,
         models: ["gemini-2.5-flash"],
       }),
     ],

@@ -34,8 +34,8 @@ export type ViewType =
  * The export configuration. The main entry point builds it from deploy-time
  * params; handler consumers can construct it directly.
  *
- * `collectionPath`, `datasetId`, `tableId`, and `projectId` are required;
- * everything else has a sensible default.
+ * `collectionPath`, `datasetId`, `tableId`, `location`, and `projectId` are
+ * required; everything else has a sensible default.
  */
 export interface ExportConfig {
   /** Firestore collection (or collection group) path to mirror, e.g. `users`
@@ -46,8 +46,8 @@ export interface ExportConfig {
   /** BigQuery changelog table id. */
   tableId: ConfigValue<string>;
 
-  /** Region for the trigger and task queue. Defaults to `us-central1`. */
-  location?: ConfigValue<string>;
+  /** Region for the trigger and task queue. */
+  location: ConfigValue<string>;
   /** BigQuery dataset location, e.g. `us`, `eu`. Defaults to `us`. */
   datasetLocation?: ConfigValue<string>;
   /** Project that owns the BigQuery dataset, if different from the function's
@@ -146,7 +146,7 @@ export function resolveExportConfig(
     collectionPath: resolveConfigValue(config.collectionPath),
     datasetId: resolveConfigValue(config.datasetId),
     tableId: resolveConfigValue(config.tableId),
-    location: resolveOptionalConfigValue(config.location) ?? "us-central1",
+    location: resolveConfigValue(config.location),
     datasetLocation: resolveOptionalConfigValue(config.datasetLocation) ?? "us",
     bqProjectId: resolveOptionalConfigValue(config.bqProjectId),
     projectId,

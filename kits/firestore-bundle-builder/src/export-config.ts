@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import type { Expression } from "firebase-functions/params";
-
 /**
  * Public configuration for the bundle builder.
  *
@@ -34,8 +32,6 @@ export interface BundleBuilderConfig {
   bundleStorageBucket?: string;
   /** Object-name prefix for cached bundle files in Cloud Storage. */
   storagePrefix?: string;
-  /** Region for the HTTPS function. Defaults to `us-central1`. */
-  region?: string;
 }
 
 /** {@link BundleBuilderConfig} with all defaults applied. */
@@ -43,24 +39,6 @@ export interface ResolvedBundleBuilderConfig {
   bundleSpecCollection: string;
   bundleStorageBucket: string;
   storagePrefix: string;
-  region: string;
-}
-
-/**
- * Deploy-time function options that must be present in the deploy manifest, so
- * each may be a literal or a Firebase param {@link Expression}.
- *
- * The HTTPS `serve` function only binds one deploy-time option: its `region`.
- * It is read by the Firebase CLI during the deploy discovery pass and must never
- * be resolved with `.value()` at the module scope; passing the param object
- * through lets the SDK emit a CEL expression the CLI resolves after loading
- * `.env` / prompting.
- *
- * @see https://firebase.google.com/docs/functions/config-env
- */
-export interface DeployTimeOptions {
-  /** Region for the HTTPS function. */
-  region: string | Expression<string>;
 }
 
 const DEFAULT_BUNDLE_STORAGE_BUCKET = "bundle-builder-files";
@@ -86,6 +64,5 @@ export function resolveConfig(
       process.env.STORAGE_BUCKET ??
       DEFAULT_BUNDLE_STORAGE_BUCKET,
     storagePrefix: config.storagePrefix ?? "bundles",
-    region: config.region ?? "us-central1",
   };
 }

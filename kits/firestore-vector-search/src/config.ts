@@ -32,7 +32,6 @@ export const openAiApiKey = defineSecret("OPENAI_API_KEY");
 type ConfigExpression<T extends string | number | boolean> = T | Expression<T>;
 
 export interface ConfigExpressions {
-  region: ConfigExpression<string>;
   collectionDocument: ConfigExpression<string>;
   queryCollectionName: ConfigExpression<string>;
 }
@@ -49,29 +48,6 @@ const DISTANCE_MEASURE_OPTIONS = [
   "EUCLIDEAN",
   "DOT_PRODUCT",
 ] as const;
-const FUNCTION_REGION_OPTIONS = [
-  "us-central1",
-  "us-east1",
-  "us-east4",
-  "us-west2",
-  "us-west3",
-  "us-west4",
-  "europe-central2",
-  "europe-west1",
-  "europe-west2",
-  "europe-west3",
-  "europe-west6",
-  "asia-east2",
-  "asia-northeast1",
-  "asia-northeast2",
-  "asia-northeast3",
-  "asia-south1",
-  "asia-southeast2",
-  "northamerica-northeast1",
-  "southamerica-east1",
-  "australia-southeast1",
-] as const;
-
 const params = {
   instanceId: defineString("KIT_INSTANCE_ID", {
     default: "firestore-vector-search",
@@ -100,9 +76,6 @@ const params = {
   statusFieldName: defineString("STATUS_FIELD_NAME", { default: "status" }),
   doBackfill: defineBoolean("DO_BACKFILL"),
   updateOnConfigure: defineBoolean("UPDATE_ON_CONFIGURE"),
-  region: defineString("LOCATION", {
-    input: select([...FUNCTION_REGION_OPTIONS]),
-  }),
   updateTriggerQueueName: defineString("UPDATE_TRIGGER_QUEUE_NAME", {
     default: "updateTrigger",
   }),
@@ -118,7 +91,6 @@ const params = {
 };
 
 export const CONFIG_EXPRESSIONS = {
-  region: params.region,
   collectionDocument: expr`${params.collectionPath}/{docId}`,
   queryCollectionName: expr`_${params.instanceId}/index/queries`,
 } as const satisfies ConfigExpressions;
@@ -154,7 +126,7 @@ export function configFromEnv(): VectorSearchConfig {
     statusFieldName: params.statusFieldName.value(),
     doBackfill: params.doBackfill.value(),
     updateOnConfigure: params.updateOnConfigure.value(),
-    region: optionalString(params.region.value()),
+    region: process.env.FUNCTION_REGION,
     projectId: projectID.value(),
     instanceId: params.instanceId.value(),
     geminiApiKey: optionalString(geminiApiKey.value()),

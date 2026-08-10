@@ -23,7 +23,6 @@ describe("resolveConfig", () => {
   test("applies defaults", () => {
     const c = resolveConfig(base);
     expect(c.provider).toBe(GenerativeAIProvider.GOOGLE_AI);
-    expect(c.location).toBe("us-central1");
     expect(c.collectionName).toBe("generate");
     expect(c.promptField).toBe("prompt");
     expect(c.responseField).toBe("response");
@@ -35,8 +34,8 @@ describe("resolveConfig", () => {
     expect(c.safetySettings).toEqual([]);
   });
 
-  test("vertex model location defaults to the function location", () => {
-    expect(resolveConfig(base).vertex.modelLocation).toBe("us-central1");
+  test("keeps the vertex model location optional", () => {
+    expect(resolveConfig(base).vertex.modelLocation).toBeUndefined();
     expect(
       resolveConfig({ ...base, vertexModelLocation: "europe-west2" }).vertex
         .modelLocation

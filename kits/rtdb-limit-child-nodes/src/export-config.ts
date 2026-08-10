@@ -16,26 +16,21 @@
 
 import type { Expression } from "firebase-functions/params";
 
-const DEFAULT_REGION = "us-central1";
-
 export interface RtdbLimitConfig {
   nodePath: string;
   maxCount: number;
   databaseInstance: string;
-  region?: string;
 }
 
 export interface ResolvedRtdbLimitConfig {
   nodePath: string;
   maxCount: number;
   databaseInstance: string;
-  region: string;
 }
 
 export interface DeployTimeOptions {
   ref: string | Expression<string>;
   instance: string | Expression<string>;
-  region: string | Expression<string>;
 }
 
 function trimDatabasePath(path: string): string {
@@ -66,7 +61,6 @@ export function resolveRtdbLimitConfig(
     nodePath,
     maxCount: config.maxCount,
     databaseInstance,
-    region: config.region?.trim() || DEFAULT_REGION,
   };
 }
 

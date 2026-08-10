@@ -92,7 +92,6 @@ the CLI connects them to the function at deploy time.
 | `provider` | `TRANSLATION_PROVIDER` | yes | — | Translation provider |
 | `geminiModel` | `GEMINI_MODEL` | no | `gemini-2.5-flash` | Gemini model when used |
 | `googleAiApiKey` | `GOOGLE_AI_API_KEY` | secret | — | Google AI API key (Gemini) |
-| `region` | `LOCATION` | no | `us-central1` | Function region |
 
 ## Multiple instances
 

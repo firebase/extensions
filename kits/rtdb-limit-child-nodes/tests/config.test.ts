@@ -89,7 +89,6 @@ describe("configFromEnv", () => {
       nodePath: "messages",
       maxCount: 100,
       databaseInstance: "selected_database_instance-value",
-      region: "us-central1",
     });
     expect(defineString.mock.calls).toContainEqual([
       "RTDB_NODE_PATH",

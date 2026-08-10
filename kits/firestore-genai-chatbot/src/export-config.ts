@@ -47,9 +47,7 @@ export interface GenaiChatbotConfig {
   apiKey?: string;
   /** Model id, e.g. `gemini-2.5-flash`. */
   model: string;
-  /** Function region. Defaults to `us-central1`. */
-  location?: string;
-  /** Vertex AI model location. Defaults to `location`. */
+  /** Vertex AI model location. */
   vertexModelLocation?: string;
   /** GCP project id. */
   projectId: string;
@@ -96,7 +94,6 @@ export interface ResolvedGenaiChatbotConfig {
   googleAi: { model: string; apiKey?: string };
   model: string;
   context?: string;
-  location: string;
   projectId: string;
   collectionName: string;
   promptField: string;
@@ -118,8 +115,8 @@ export interface ResolvedGenaiChatbotConfig {
  * Deploy-time function options that must be present in the deploy manifest, so
  * each may be a literal or a Firebase param {@link Expression}.
  *
- * These shape the Firestore trigger (document path) and the function region, and
- * are read by the Firebase CLI during the deploy discovery pass. They must never
+ * These shape the Firestore trigger and are read by the Firebase CLI during the
+ * deploy discovery pass. They must never
  * be resolved with `.value()` at the module scope; pass the param objects through
  * so the SDK emits CEL expressions the CLI resolves after loading `.env` /
  * prompting. Resolving `document` eagerly would freeze its deploy-time default
@@ -130,8 +127,6 @@ export interface ResolvedGenaiChatbotConfig {
 export interface DeployTimeOptions {
   /** Watched Firestore document/collection path for the trigger. */
   document: string | Expression<string>;
-  /** Region for the trigger. */
-  region: string | Expression<string>;
 }
 
 /**
@@ -165,13 +160,11 @@ export function resolveConfig(
 ): ResolvedGenaiChatbotConfig {
   const provider =
     (config.provider as GenerativeAIProvider) ?? GenerativeAIProvider.GOOGLE_AI;
-  const location = config.location ?? "us-central1";
-
   return {
     provider,
     vertex: {
       model: config.model,
-      modelLocation: config.vertexModelLocation ?? location,
+      modelLocation: config.vertexModelLocation,
     },
     googleAi: {
       model: config.model,
@@ -179,7 +172,6 @@ export function resolveConfig(
     },
     model: config.model,
     context: config.context,
-    location,
     projectId: config.projectId,
     collectionName: config.collectionName ?? DEFAULT_COLLECTION,
     promptField: config.promptField ?? "prompt",

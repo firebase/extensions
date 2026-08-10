@@ -75,11 +75,10 @@ export interface ResolvedResizeImagesConfig {
   cacheControlHeader?: string;
   resizedImagesPath?: string;
   failedImagesPath?: string;
-  region: string;
+  region?: string;
   projectId?: string;
 }
 
-const DEFAULT_REGION = "us-central1";
 const DEFAULT_MEMORY: MemoryOption = "1GiB";
 const DEFAULT_IMAGE_TYPE = "false";
 const MEMORY_OPTIONS = {
@@ -175,7 +174,7 @@ export function resolveResizeImagesConfig(
     cacheControlHeader: config.cacheControlHeader,
     resizedImagesPath: config.resizedImagesPath,
     failedImagesPath: config.failedImagesPath,
-    region: config.region ?? DEFAULT_REGION,
+    region: config.region ?? process.env.FUNCTION_REGION,
     projectId: config.projectId,
   };
 }

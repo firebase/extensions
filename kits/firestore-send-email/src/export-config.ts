@@ -31,9 +31,8 @@ export type TtlExpireType =
   | "year";
 
 export interface SendEmailConfig {
-  region?: string;
   databaseId?: string;
-  databaseRegion?: string;
+  databaseRegion: string;
   mailCollection: string;
   smtpConnectionUri?: string;
   smtpPassword?: SecretValue;
@@ -62,7 +61,6 @@ export interface DeployTimeOptions {
 }
 
 export interface ResolvedSendEmailConfig {
-  region: string;
   databaseId: string;
   databaseRegion: string;
   mailCollection: string;
@@ -102,9 +100,8 @@ export function resolveConfig(
   config: SendEmailConfig
 ): ResolvedSendEmailConfig {
   return {
-    region: config.region || config.databaseRegion || "us-central1",
     databaseId: config.databaseId || "(default)",
-    databaseRegion: config.databaseRegion || config.region || "us-central1",
+    databaseRegion: config.databaseRegion,
     mailCollection: config.mailCollection,
     smtpConnectionUri: normalizeOptional(config.smtpConnectionUri),
     smtpPassword: normalizeOptional(resolveSecret(config.smtpPassword)),

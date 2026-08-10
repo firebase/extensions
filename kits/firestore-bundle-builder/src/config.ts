@@ -15,7 +15,7 @@
  */
 
 import { defineString, storageBucket } from "firebase-functions/params";
-import type { BundleBuilderConfig, DeployTimeOptions } from "./export-config";
+import type { BundleBuilderConfig } from "./export-config";
 
 /**
  * Deploy-time parameters. Set these via a `.env` / `.env.<project>` file or the
@@ -32,7 +32,6 @@ const params = {
     default: storageBucket,
   }),
   storagePrefix: defineString("STORAGE_PREFIX", { default: "bundles" }),
-  location: defineString("LOCATION", { default: "us-central1" }),
 };
 
 /**
@@ -45,24 +44,5 @@ export function configFromEnv(): BundleBuilderConfig {
     bundleSpecCollection: params.bundleSpecCollection.value(),
     bundleStorageBucket: params.bundleStorageBucket.value() || undefined,
     storagePrefix: params.storagePrefix.value(),
-    region: params.location.value(),
-  };
-}
-
-/**
- * Builds the {@link DeployTimeOptions} for the params-driven entry point.
- *
- * Unlike {@link configFromEnv}, this never calls `.value()`: it passes the
- * region param object through as a CEL {@link Expression} so the function's
- * region appears in the deploy manifest as `{{ params.LOCATION }}`, which the
- * Firebase CLI resolves after loading `.env` / prompting. Calling `.value()`
- * here would freeze the deploy-time default (`us-central1`) into the manifest,
- * which is the failure this indirection avoids.
- *
- * @returns Deploy-time options wired from environment params.
- */
-export function envDeployOptions(): DeployTimeOptions {
-  return {
-    region: params.location,
   };
 }

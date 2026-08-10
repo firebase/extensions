@@ -44,11 +44,10 @@ export interface ResolvedTranslateConfig {
   geminiProvider: GeminiProvider;
   geminiModel: string;
   googleAiApiKey?: string;
-  region: string;
+  region?: string;
   projectId?: string;
 }
 
-const DEFAULT_REGION = "us-central1";
 const DEFAULT_PROVIDER: TranslationProvider = "translate";
 const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
 
@@ -79,7 +78,7 @@ export function resolveTranslateConfig(
     geminiProvider: geminiProvider(provider),
     geminiModel: config.geminiModel ?? DEFAULT_GEMINI_MODEL,
     googleAiApiKey: config.googleAiApiKey,
-    region: config.region ?? DEFAULT_REGION,
+    region: config.region ?? process.env.FUNCTION_REGION,
     projectId: config.projectId,
   };
 }

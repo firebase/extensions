@@ -38,7 +38,7 @@ export class GenkitEmbedClient extends BaseEmbedClient {
     this.client = genkit({
       plugins: [
         isVertex
-          ? vertexAI({ location: config.region })
+          ? vertexAI(config.region ? { location: config.region } : {})
           : googleAI({ apiKey: config.geminiApiKey }),
       ],
     });

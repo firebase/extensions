@@ -84,7 +84,6 @@ loads them at deploy time and prompts for any required values that are missing.
 | `bundleSpecCollection` | `BUNDLESPEC_COLLECTION` | no | `bundles` | Collection of bundle specs |
 | `bundleStorageBucket` | `BUNDLE_STORAGE_BUCKET` | no | default Storage bucket | Bundle artifact bucket |
 | `storagePrefix` | `STORAGE_PREFIX` | no | `bundles` | Object prefix for artifacts |
-| `location` | `LOCATION` | no | `us-central1` | Function region |
 
 ## Multiple instances
 

@@ -59,7 +59,6 @@ function getConfig(): ResolvedRtdbLimitConfig {
 
 export const rtdblimit = onValueCreated(
   {
-    region: deploy.region,
     ref: deploy.ref,
     instance: deploy.instance,
   } as ReferenceOptions,

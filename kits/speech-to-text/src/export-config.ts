@@ -38,8 +38,6 @@ export interface SpeechToTextConfig {
   /** Whether Speech-to-Text should add automatic punctuation. Defaults to
    *  `true`. */
   enableAutomaticPunctuation?: boolean;
-  /** Function region. Defaults to `us-central1`. */
-  location?: string;
   /** Function timeout in seconds. Defaults to `540` (the v2 event-function
    *  ceiling) so long audio does not time out mid-transcription. */
   timeoutSeconds?: number;
@@ -67,7 +65,6 @@ export interface ResolvedSpeechToTextConfig {
   outputStoragePath?: string;
   collectionPath?: string;
   enableAutomaticPunctuation: boolean;
-  location: string;
   timeoutSeconds: number;
   memory: SpeechToTextMemory;
 }
@@ -76,8 +73,8 @@ export interface ResolvedSpeechToTextConfig {
  * Deploy-time function options that must be present in the deploy manifest, so
  * each may be a literal or a Firebase param {@link Expression}.
  *
- * These shape the trigger (the watched bucket) and the function region, and are
- * read by the Firebase CLI during the deploy discovery pass. They must never be
+ * These shape the trigger and are read by the Firebase CLI during the deploy
+ * discovery pass. They must never be
  * resolved with `.value()` at the module scope; pass the param objects through
  * so the SDK emits CEL expressions the CLI resolves after loading `.env` /
  * prompting. Freezing the `bucket` in particular would bind the trigger to the
@@ -88,8 +85,6 @@ export interface ResolvedSpeechToTextConfig {
 export interface DeployTimeOptions {
   /** Cloud Storage bucket the `onObjectFinalized` trigger listens to. */
   bucket: string | Expression<string>;
-  /** Region for the function. */
-  region: string | Expression<string>;
   /** Function timeout in seconds. */
   timeoutSeconds: number;
   /** Function memory. */
@@ -117,7 +112,6 @@ export function resolveConfig(
     outputStoragePath: optional(config.outputStoragePath),
     collectionPath: optional(config.collectionPath),
     enableAutomaticPunctuation: config.enableAutomaticPunctuation ?? true,
-    location: config.location ?? "us-central1",
     timeoutSeconds: config.timeoutSeconds ?? 540,
     memory: config.memory ?? "1GiB",
   };

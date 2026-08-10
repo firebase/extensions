@@ -32,7 +32,6 @@ describe("resolveConfig", () => {
       outputStoragePath: undefined,
       collectionPath: undefined,
       enableAutomaticPunctuation: true,
-      location: "us-central1",
       timeoutSeconds: 540,
       memory: "1GiB",
     });
@@ -46,7 +45,6 @@ describe("resolveConfig", () => {
       outputStoragePath: "out",
       collectionPath: "transcriptions",
       enableAutomaticPunctuation: false,
-      location: "europe-west2",
       timeoutSeconds: 300,
       memory: "2GiB",
     });
@@ -55,7 +53,6 @@ describe("resolveConfig", () => {
     expect(resolved.outputStoragePath).toBe("out");
     expect(resolved.collectionPath).toBe("transcriptions");
     expect(resolved.enableAutomaticPunctuation).toBe(false);
-    expect(resolved.location).toBe("europe-west2");
     expect(resolved.timeoutSeconds).toBe(300);
     expect(resolved.memory).toBe("2GiB");
   });

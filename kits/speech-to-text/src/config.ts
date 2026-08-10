@@ -17,7 +17,6 @@ import {
   BUCKET_PICKER,
   defineBoolean,
   defineString,
-  select,
   storageBucket,
 } from "firebase-functions/params";
 
@@ -26,17 +25,6 @@ import {
   resolveConfig,
   type SpeechToTextConfig,
 } from "./export-config";
-
-const FUNCTION_REGION_OPTIONS = [
-  "us-central1",
-  "us-east1",
-  "us-east4",
-  "europe-west1",
-  "europe-west2",
-  "europe-west3",
-  "asia-east2",
-  "asia-northeast1",
-] as const;
 
 /**
  * Deploy-time parameters. Set these via a `.env` / `.env.<project>` file or the
@@ -56,10 +44,6 @@ const params = {
   collectionPath: defineString("COLLECTION_PATH", { default: "" }),
   enableAutomaticPunctuation: defineBoolean("ENABLE_AUTOMATIC_PUNCTUATION", {
     default: true,
-  }),
-  location: defineString("LOCATION", {
-    default: "us-central1",
-    input: select([...FUNCTION_REGION_OPTIONS]),
   }),
 };
 
@@ -81,20 +65,14 @@ export function configFromEnv(): SpeechToTextConfig {
     outputStoragePath: optional(params.outputStoragePath.value()),
     collectionPath: optional(params.collectionPath.value()),
     enableAutomaticPunctuation: params.enableAutomaticPunctuation.value(),
-    location: params.location.value(),
   };
 }
 
 /**
  * Builds the {@link DeployTimeOptions} for the params-driven entry point.
  *
- * Unlike {@link configFromEnv}, this never calls `.value()` on the `bucket` and
- * `region` params: it passes the param objects through as CEL
- * {@link Expression}s so the trigger's bucket and the function region appear in
- * the deploy manifest as expressions the Firebase CLI resolves after loading
- * `.env` / prompting. Calling `.value()` here would freeze deploy-time defaults
- * into the manifest (e.g. an empty `bucket`, binding the trigger to the wrong
- * bucket), which is the failure this indirection avoids.
+ * The bucket stays a CEL parameter expression so the Firebase CLI resolves it
+ * after loading `.env`.
  *
  * `timeoutSeconds` and `memory` are not param-driven, so they pass through as
  * the resolved literal defaults.
@@ -103,12 +81,11 @@ export function configFromEnv(): SpeechToTextConfig {
  */
 export function envDeployOptions(): DeployTimeOptions {
   // Resolved with placeholder required fields purely to read the literal
-  // timeout/memory defaults; bucket/region below come straight from the params.
+  // timeout/memory defaults; bucket below comes straight from the params.
   const defaults = resolveConfig({ bucket: "", languageCode: "" });
 
   return {
     bucket: params.bucket,
-    region: params.location,
     timeoutSeconds: defaults.timeoutSeconds,
     memory: defaults.memory,
   };
