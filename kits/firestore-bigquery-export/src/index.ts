@@ -77,8 +77,12 @@ for (const { api, reason } of REQUIRED_APIS) {
   requiresAPI(api, reason);
 }
 
-afterFirstDeploy({ task: { function: INIT_BIGQUERY_SYNC_FUNCTION } });
-afterRedeploy({ task: { function: SETUP_BIGQUERY_SYNC_FUNCTION } });
+afterFirstDeploy({
+  task: { function: INIT_BIGQUERY_SYNC_FUNCTION, body: { data: {} } },
+});
+afterRedeploy({
+  task: { function: SETUP_BIGQUERY_SYNC_FUNCTION, body: { data: {} } },
+});
 
 let ctx: HandlerContext | undefined;
 
