@@ -19,7 +19,11 @@ import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onObjectFinalized } from "firebase-functions/v2/storage";
 import sharp from "sharp";
-import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
+import {
+  CONFIG_EXPRESSIONS,
+  configFromEnv,
+  validatePathListsFromEnv,
+} from "./config";
 import * as events from "./events";
 import { resolveResizeImagesConfig } from "./export-config";
 import { type HandlerContext, handleObjectFinalized } from "./handlers";
@@ -51,6 +55,7 @@ for (const { api, reason } of REQUIRED_APIS) {
 
 sharp.cache(false);
 
+validatePathListsFromEnv();
 let ctx: HandlerContext | undefined;
 
 function getContext(): HandlerContext {

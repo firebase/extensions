@@ -25,7 +25,11 @@ import {
   select,
   storageBucket,
 } from "firebase-functions/params";
-import type { DeleteOriginalFile, ResizeImagesConfig } from "./export-config";
+import {
+  validateAbsolutePathList,
+  type DeleteOriginalFile,
+  type ResizeImagesConfig,
+} from "./export-config";
 
 const IMAGE_TYPE_OPTIONS = [
   "jpeg",
@@ -43,6 +47,20 @@ const CONTENT_FILTER_OPTIONS = [
   "BLOCK_MEDIUM_AND_ABOVE",
   "BLOCK_LOW_AND_ABOVE",
 ] as const;
+const ABSOLUTE_PATH_LIST_VALIDATION = {
+  validationRegex: /^(?:(\/[^\s\/\,]+)+(\,(\/[^\s\/\,]+)+)*|)$/,
+  validationErrorMessage:
+    "Invalid paths, must be a comma-separated list of absolute path values.",
+};
+
+function absolutePathListInput(example: string) {
+  return {
+    text: {
+      example,
+      ...ABSOLUTE_PATH_LIST_VALIDATION,
+    },
+  };
+}
 
 const params = {
   bucket: defineString("IMG_BUCKET", {
@@ -62,8 +80,16 @@ const params = {
     default: false,
   }),
   resizedImagesPath: defineString("RESIZED_IMAGES_PATH", { default: "" }),
-  includePathList: defineString("INCLUDE_PATH_LIST", { default: "" }),
-  excludePathList: defineString("EXCLUDE_PATH_LIST", { default: "" }),
+  includePathList: defineString("INCLUDE_PATH_LIST", {
+    default: "",
+    input: absolutePathListInput("/users/avatars,/design/pictures"),
+  }),
+  excludePathList: defineString("EXCLUDE_PATH_LIST", {
+    default: "",
+    input: absolutePathListInput(
+      "/users/avatars/thumbs,/design/pictures/thumbs"
+    ),
+  }),
   failedImagesPath: defineString("FAILED_IMAGES_PATH", { default: "" }),
   cacheControlHeader: defineString("CACHE_CONTROL_HEADER", { default: "" }),
   imageTypes: defineList("IMAGE_TYPE", {
@@ -94,6 +120,11 @@ export const CONFIG_EXPRESSIONS = {
   bucket: params.bucket,
   memory: params.memory,
 } as const;
+
+export function validatePathListsFromEnv(): void {
+  validateAbsolutePathList(process.env.INCLUDE_PATH_LIST, "includePathList");
+  validateAbsolutePathList(process.env.EXCLUDE_PATH_LIST, "excludePathList");
+}
 
 function optional(value: string): string | undefined {
   return value.length > 0 ? value : undefined;

@@ -88,8 +88,8 @@ loads them at deploy time and prompts for any required values that are missing.
 | `deleteOriginal` | `DELETE_ORIGINAL_FILE` | no | `false` | Delete original after resize |
 | `makePublic` | `MAKE_PUBLIC` | no | `false` | Make resized objects public |
 | `resizedImagesPath` | `RESIZED_IMAGES_PATH` | no | (empty) | Output path prefix |
-| `includePathList` | `INCLUDE_PATH_LIST` | no | (empty) | Paths to include |
-| `excludePathList` | `EXCLUDE_PATH_LIST` | no | (empty) | Paths to exclude |
+| `includePathList` | `INCLUDE_PATH_LIST` | no | (empty) | Comma-separated absolute paths to include (for example, `/users/avatars,/design/pictures`) |
+| `excludePathList` | `EXCLUDE_PATH_LIST` | no | (empty) | Comma-separated absolute paths to exclude (for example, `/users/avatars/thumbs`) |
 | `failedImagesPath` | `FAILED_IMAGES_PATH` | no | (empty) | Failed-image output path |
 | `cacheControlHeader` | `CACHE_CONTROL_HEADER` | no | (empty) | Cache-Control for outputs |
 | `imageTypes` | `IMAGE_TYPE` | no | `["false"]` | Output image types list |
