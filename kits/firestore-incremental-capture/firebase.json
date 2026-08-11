@@ -3,14 +3,7 @@
     {
       "source": ".",
       "codebase": "firestore-incremental-capture",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "src",
-        "legacy",
-        "pipeline",
-        "*.local"
-      ],
+      "ignore": ["node_modules", ".git", "src", "pipeline", "*.local"],
       "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
     }
   ]

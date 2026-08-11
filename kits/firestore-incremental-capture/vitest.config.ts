@@ -18,8 +18,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    // Scoped to the kit's own tests: `pipeline/` is Java, and `legacy/` is the
-    // reference copy of the extension this kit was migrated from.
+    // Scoped to the kit's own tests; `pipeline/` is Java, built by Maven.
     include: ["tests/**/*.test.ts"],
   },
 });
