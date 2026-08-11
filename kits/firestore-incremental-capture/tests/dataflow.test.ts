@@ -51,6 +51,7 @@ function config(overrides: Partial<CaptureConfig> = {}) {
     backupInstanceId: "backup-db",
     datasetId: "ds",
     tableId: "tbl",
+    instanceId: "default",
     bucketName: "test-project.firebasestorage.app",
     ...overrides,
   });
@@ -81,7 +82,7 @@ describe("RestorationLauncher", () => {
 
     const [request] = client.launchFlexTemplate.mock.calls[0];
     expect(request.launchParameter.containerSpecGcsPath).toBe(
-      "gs://test-project.firebasestorage.app/firestore-incremental-capture-dataflow-restore"
+      "gs://test-project.firebasestorage.app/default-dataflow-restore"
     );
     expect(request.launchParameter.containerSpecGcsPath).toBe(
       cfg.flexTemplatePath
@@ -146,7 +147,7 @@ describe("RestorationLauncher", () => {
       timestamp: 1700000000,
     });
 
-    expect(a.runId).toBe("firestore-incremental-capture-restore-1700000000");
+    expect(a.runId).toBe("default-restore-1700000000");
     expect(b.runId).toBe(a.runId);
     expect(
       first.launchFlexTemplate.mock.calls[0][0].launchParameter.jobName
@@ -173,11 +174,9 @@ describe("RestorationLauncher", () => {
 
     expect(getFirestore).toHaveBeenCalledWith("(default)");
     expect(collection).toHaveBeenCalledWith(cfg.restoreCollection);
-    expect(doc).toHaveBeenCalledWith(
-      "firestore-incremental-capture-restore-1700000000"
-    );
+    expect(doc).toHaveBeenCalledWith("default-restore-1700000000");
     expect(set).toHaveBeenCalledWith({
-      runId: "firestore-incremental-capture-restore-1700000000",
+      runId: "default-restore-1700000000",
       jobName: "job-1",
       timestamp: 1700000000,
       status: "launched",

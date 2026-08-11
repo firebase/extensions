@@ -108,9 +108,9 @@ const params = {
   }),
   dataflowRegion: defineString("DATAFLOW_REGION", { default: "" }),
   bucketName: defineString("BUCKET_NAME", { default: "" }),
-  instanceId: defineString("INSTANCE_ID", {
-    default: "firestore-incremental-capture",
-  }),
+  // No default: it has to match this instance's key in the `instances` map, and
+  // a wrong value silently misnames the task queues.
+  instanceId: defineString("INSTANCE_ID"),
   logLevel: defineString("LOG_LEVEL", {
     default: "info",
     input: select([...LOG_LEVEL_OPTIONS]),
@@ -163,7 +163,7 @@ export function configFromEnv(defaultBucketName?: string): CaptureConfig {
     location: optional(params.location.value()),
     dataflowRegion: optional(params.dataflowRegion.value()),
     bucketName: optional(params.bucketName.value()) || defaultBucketName || "",
-    instanceId: optional(params.instanceId.value()),
+    instanceId: params.instanceId.value(),
     logLevel: normalizeLogLevel(params.logLevel.value()),
   };
 }

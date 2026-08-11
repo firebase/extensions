@@ -54,12 +54,14 @@ export interface CaptureConfig {
    */
   bucketName: string;
   /**
-   * Namespaces the deployed resources: the task queues, the flex template
-   * object, the Dataflow job names and the Firestore status documents. Deploy
-   * the kit twice under one project by giving each deployment its own value.
-   * Defaults to `firestore-incremental-capture`.
+   * This instance's key in the `instances` map of the kit stanza. Required, and
+   * must match exactly: the CLI deploys every function as
+   * `kit-<instanceId>-<export name>`, so a mismatch makes the kit enqueue onto
+   * task queues that do not exist. It also namespaces the flex template object,
+   * the Dataflow job names and the run-status documents, which is what keeps two
+   * instances in one project from colliding.
    */
-  instanceId?: string;
+  instanceId: string;
   /** Defaults to `info`. */
   logLevel?: LogLevel;
 }
@@ -88,7 +90,6 @@ export interface ResolvedCaptureConfig
 
 /** The only database the restoration pipeline can read a PITR baseline from. */
 const SOURCE_DATABASE_ID = "(default)";
-const DEFAULT_INSTANCE_ID = "firestore-incremental-capture";
 const DEFAULT_LOCATION = "us-central1";
 const DEFAULT_DATASET_LOCATION = "us";
 
@@ -97,21 +98,30 @@ const DEFAULT_DATASET_LOCATION = "us";
  *
  * @param config - Caller-supplied configuration.
  * @returns The fully resolved configuration.
- * @throws If `backupInstanceId` is empty or is the captured database, either of
- *   which would make a restoration write over the source it restores from; or if
+ * @throws If `instanceId` is empty, which would misname every task queue; if
+ *   `backupInstanceId` is empty or is the captured database, either of which
+ *   would make a restoration write over the source it restores from; or if
  *   `bucketName` is empty, which would leave the flex template path unresolvable.
  */
 export function resolveCaptureConfig(
   config: CaptureConfig
 ): ResolvedCaptureConfig {
   const location = config.location || DEFAULT_LOCATION;
-  const instanceId = config.instanceId || DEFAULT_INSTANCE_ID;
 
   const invalid = (detail: string): never => {
     throw new Error(
       `Invalid configuration for firestore-incremental-capture: ${detail}`
     );
   };
+
+  if (!config.instanceId) {
+    invalid(
+      "INSTANCE_ID is required. It must match this instance's key in the " +
+        "`instances` map of the kit stanza in firebase.json."
+    );
+  }
+
+  const instanceId = config.instanceId;
 
   if (!config.backupInstanceId) {
     invalid("BACKUP_INSTANCE_ID is required.");

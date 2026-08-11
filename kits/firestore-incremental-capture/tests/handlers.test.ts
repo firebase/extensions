@@ -63,6 +63,7 @@ function makeCtx(): HandlerContext {
       backupInstanceId: "backup-db",
       datasetId: "ds",
       tableId: "tbl",
+      instanceId: "default",
       bucketName: "test-project.firebasestorage.app",
     }),
     enqueueChangelogRow: vi.fn().mockResolvedValue(undefined),

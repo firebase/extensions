@@ -34,9 +34,10 @@
 #                        Default "us-central1".
 #   BUCKET_NAME          Bucket holding the flex template. Defaults to the
 #                        project's default bucket.
-#   INSTANCE_ID          Namespace for the deployed resources. Must match the
-#                        kit's INSTANCE_ID param. Default
-#                        "firestore-incremental-capture".
+#   INSTANCE_ID          This instance's key in the `instances` map of the kit
+#                        stanza, and the kit's INSTANCE_ID param. Must match
+#                        both: it names the flex template object the deployed
+#                        function launches. Default "default".
 #   WORKER_SERVICE_ACCOUNT  Service account the Dataflow workers run as.
 #                        Defaults to the Compute Engine default service account.
 #
@@ -58,7 +59,7 @@ readonly BACKUP_INSTANCE_ID="${BACKUP_INSTANCE_ID:-}"
 readonly SOURCE_DATABASE="(default)"
 readonly DATABASE_LOCATION="${DATABASE_LOCATION:-nam5}"
 readonly LOCATION="${LOCATION:-us-central1}"
-readonly INSTANCE_ID="${INSTANCE_ID:-firestore-incremental-capture}"
+readonly INSTANCE_ID="${INSTANCE_ID:-default}"
 readonly JAR_NAME="restore-firestore.jar"
 
 readonly GREEN='\033[0;32m'

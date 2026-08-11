@@ -28,6 +28,7 @@ function config(overrides: Partial<CaptureConfig> = {}): CaptureConfig {
     backupInstanceId: "backup-db",
     datasetId: "backup_dataset",
     tableId: "backup_table",
+    instanceId: "default",
     bucketName: "test-project.firebasestorage.app",
     ...overrides,
   };
@@ -40,8 +41,13 @@ describe("resolveCaptureConfig", () => {
     expect(resolved.databaseId).toBe("(default)");
     expect(resolved.location).toBe("us-central1");
     expect(resolved.datasetLocation).toBe("us");
-    expect(resolved.instanceId).toBe("firestore-incremental-capture");
     expect(resolved.logLevel).toBe("info");
+  });
+
+  test("requires an instance id, which must match the instances map key", () => {
+    expect(() => resolveCaptureConfig(config({ instanceId: "" }))).toThrow(
+      /INSTANCE_ID is required/
+    );
   });
 
   test("defaults the Dataflow region to the functions location", () => {
@@ -77,7 +83,7 @@ describe("resolveCaptureConfig", () => {
       "projects/test-project/databases/backup-db"
     );
     expect(resolved.flexTemplatePath).toBe(
-      "gs://test-project.firebasestorage.app/firestore-incremental-capture-dataflow-restore"
+      "gs://test-project.firebasestorage.app/default-dataflow-restore"
     );
   });
 

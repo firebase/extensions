@@ -17,22 +17,36 @@
 import { getFunctions } from "firebase-admin/functions";
 import type { ResolvedCaptureConfig } from "./capture-config";
 
-/** Names of the deployed task-queue functions. */
+/**
+ * Names the functions are exported under. The CLI renames them on deploy - see
+ * {@link queueName}.
+ */
 export const CHANGELOG_TASK_FUNCTION = "syncChangelogTask";
 export const RESTORATION_TASK_FUNCTION = "runRestorationTask";
 
 /**
  * Builds the fully-qualified task queue name for a deployed function.
  *
+ * A kit stanza deploys every function under `kit-<instance id>-<export name>`,
+ * so the queue to enqueue onto is not named after the export. `instanceId` must
+ * match this instance's key in the `instances` map for the name to resolve;
+ * a mismatch enqueues onto a queue that does not exist.
+ *
  * @param config - The resolved capture configuration.
- * @param functionName - The deployed function's name.
+ * @param functionName - The name the function is exported under.
  * @returns The queue resource name.
  */
 export function queueName(
   config: ResolvedCaptureConfig,
   functionName: string
 ): string {
-  return `locations/${config.location}/functions/${functionName}`;
+  const region = config.location || process.env.FUNCTION_REGION;
+
+  if (!region) {
+    throw new Error("A region is required to resolve task queues.");
+  }
+
+  return `locations/${region}/functions/kit-${config.instanceId}-${functionName}`;
 }
 
 /**
