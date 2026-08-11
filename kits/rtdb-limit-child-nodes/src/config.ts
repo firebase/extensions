@@ -56,15 +56,18 @@ export function configFromEnv(): RtdbLimitConfig {
 /**
  * Builds deploy-time trigger options.
  *
- * `ref` must be a concrete string: `onValueCreated` calls `normalizePath(ref)`
- * at module load and does not accept Expressions (unlike Firestore `document`).
- * Do not use `params.nodePath.value()` here — during CLI discovery `.value()`
- * resolves to "" (defaults are runtime-only), which freezes ref as `{nodeId}`.
- * Read `process.env` (CLI injects `.env.<project>` before load) with fallback.
- * `instance` stays an Expression so the CLI resolves it after discovery.
+ * `onValueCreated` requires `ref` to be a string, so the param Expression cannot
+ * be passed directly. During CLI discovery, preserve it as CEL inside the string;
+ * the CLI resolves that interpolation after loading the project's dotenv values.
+ * At runtime, resolve the param before constructing the path so event parameters
+ * are extracted against the concrete ref rather than the CEL placeholder.
  */
 export function envDeployOptions(): DeployTimeOptions {
-  const nodePath = (process.env.RTDB_NODE_PATH ?? "").trim() || "messages";
+  const nodePath =
+    process.env.FUNCTIONS_CONTROL_API === "true"
+      ? params.nodePath.toCEL()
+      : params.nodePath.value();
+
   return {
     ref: toTriggerRef(nodePath),
     instance: params.databaseInstance,
