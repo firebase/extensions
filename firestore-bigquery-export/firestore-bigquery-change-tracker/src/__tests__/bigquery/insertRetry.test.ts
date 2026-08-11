@@ -249,6 +249,101 @@ describe("insertData retry behaviour", () => {
     });
   });
 
+  describe("the user-configured partition column", () => {
+    // addPartitioningToSchema adds this column to an existing table too, so it
+    // has the same exposure as the other three.
+    const partitioned = {
+      partitioning: {
+        granularity: "HOUR",
+        bigqueryColumnName: "created_at",
+        bigqueryColumnType: "TIMESTAMP",
+        firestoreFieldName: "createdAt",
+      },
+    } as Partial<ChangeTrackerConfig>;
+
+    it("is treated as schema lag when field partitioning is configured", async () => {
+      const insert = jest
+        .fn()
+        .mockRejectedValueOnce(
+          partialFailure([
+            { message: "no such field.", location: "created_at" },
+          ])
+        )
+        .mockResolvedValueOnce(undefined);
+
+      await expect(
+        insertData(trackerWith(insert, partitioned))
+      ).resolves.toBeUndefined();
+
+      expect(insert).toHaveBeenCalledTimes(2);
+      expect(insert.mock.calls[1][1]).toMatchObject({
+        ignoreUnknownValues: true,
+      });
+    });
+
+    it("is not allowlisted when no partitioning is configured", async () => {
+      const insert = jest
+        .fn()
+        .mockRejectedValue(
+          partialFailure([
+            { message: "no such field.", location: "created_at" },
+          ])
+        );
+
+      await expect(insertData(trackerWith(insert))).rejects.toThrow(
+        "insert failed"
+      );
+
+      expect(insert).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("a transient blip followed by a schema lag", () => {
+    it("can still retry the schema lag", async () => {
+      // The two retries are tracked separately, so the blip must not consume
+      // the one the lag needs. Without that, the row is lost.
+      const insert = jest
+        .fn()
+        .mockRejectedValueOnce(transportFailure())
+        .mockRejectedValueOnce(
+          partialFailure([
+            { message: "no such field.", location: "document_id" },
+          ])
+        )
+        .mockResolvedValueOnce(undefined);
+
+      await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
+
+      expect(insert).toHaveBeenCalledTimes(3);
+      expect(insert.mock.calls[1][1]).toMatchObject({
+        ignoreUnknownValues: false,
+      });
+      expect(insert.mock.calls[2][1]).toMatchObject({
+        ignoreUnknownValues: true,
+      });
+      expect(handleFailedTransactionsMock).not.toHaveBeenCalled();
+    });
+
+    it("spends each retry at most once, bounding attempts at three", async () => {
+      const insert = jest
+        .fn()
+        .mockRejectedValueOnce(transportFailure())
+        .mockRejectedValueOnce(
+          partialFailure([
+            { message: "no such field.", location: "document_id" },
+          ])
+        )
+        .mockRejectedValue(transportFailure());
+
+      await expect(insertData(trackerWith(insert))).rejects.toThrow(
+        "ECONNRESET"
+      );
+
+      expect(insert).toHaveBeenCalledTimes(3);
+      expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("malformed failures", () => {
     it("survives a null entry in the errors array", async () => {
       // Not producible by the current library, but classifying must never throw
@@ -273,6 +368,37 @@ describe("insertData retry behaviour", () => {
       await expect(insertData(trackerWith(insert))).rejects.toBeUndefined();
 
       expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("still reports the insert error when error logging hits a bad entry", async () => {
+      // `e.errors` is the library's remapped copy and is logged on the terminal
+      // path. A bad entry there must not replace the error the caller sees.
+      const error: any = new Error("insert failed");
+      error.errors = [null];
+      error.response = {
+        insertErrors: [
+          { index: 0, errors: [{ message: "no such field.", location: "x" }] },
+        ],
+      };
+
+      const insert = jest.fn().mockRejectedValue(error);
+
+      await expect(insertData(trackerWith(insert))).rejects.toThrow(
+        "insert failed"
+      );
+
+      expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("still reports the insert error when errors is not an array", async () => {
+      const error: any = new Error("insert failed");
+      error.errors = { nested: "not an array" };
+
+      const insert = jest.fn().mockRejectedValue(error);
+
+      await expect(insertData(trackerWith(insert))).rejects.toThrow(
+        "insert failed"
+      );
     });
   });
 

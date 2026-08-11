@@ -229,18 +229,39 @@ export class FirestoreBigQueryEventHistoryTracker
     // Without per-field detail we cannot show the retry is safe.
     if (!errors.length) return false;
 
-    // Every column initializeRawChangeLogTable adds to a table that already
-    // exists, and so every column exposed to the lag. All three must stay
-    // listed: dropping one from this list would turn a row that lands today
-    // (with that column null) into an event lost after the caller exhausts its
-    // retries, since nothing on the write path reconciles the schema.
-    const addedColumns = [
+    return errors.every((error) =>
+      isUnknownFieldError(error, this.columnsAddedToExistingTables())
+    );
+  }
+
+  /**
+   * The columns initializeRawChangeLogTable adds to a table that already
+   * exists, and so every column exposed to the lag.
+   *
+   * This list must stay complete. Omitting a column turns a row that lands
+   * today, with that column null, into an event lost once the caller exhausts
+   * its retries, because nothing on the write path reconciles the schema.
+   */
+  private columnsAddedToExistingTables(): string[] {
+    const columns = [
       documentIdField.name,
       documentPathParams.name,
       oldDataField.name,
     ];
 
-    return errors.every((error) => isUnknownFieldError(error, addedColumns));
+    // addPartitioningToSchema adds the partition column to an existing table
+    // under the same conditions, so it has the same exposure.
+    const partitionColumn = this.partitioningConfig.getBigQueryColumnName();
+
+    if (
+      partitionColumn &&
+      (this.partitioningConfig.isFirestoreFieldPartitioning() ||
+        this.partitioningConfig.isFirestoreTimestampPartitioning())
+    ) {
+      columns.push(partitionColumn);
+    }
+
+    return columns;
   }
 
   /**
@@ -284,7 +305,11 @@ export class FirestoreBigQueryEventHistoryTracker
   private async insertData(
     rows: bigquery.RowMetadata[],
     overrideOptions: InsertRowsOptions = {},
-    retry: boolean = true
+    // Tracked separately, so a transient blip on the first attempt cannot
+    // consume the retry that a schema lag on a later attempt needs. Each is
+    // spent at most once, bounding this layer at three attempts.
+    allowSchemaLagRetry: boolean = true,
+    allowTransientRetry: boolean = true
   ) {
     const options = {
       skipInvalidRows: false,
@@ -300,24 +325,28 @@ export class FirestoreBigQueryEventHistoryTracker
       await table.insert(rows, options);
       logs.dataInserted(rows.length);
     } catch (e) {
-      if (retry) {
-        // A column we just added may not be streamable yet. Retry ignoring the
-        // fields BigQuery does not know about, so the rest of the row lands.
-        if (this.isSchemaLagInsertionError(e)) {
-          logs.dataInsertRetried(rows.length);
-          return this.insertData(
-            rows,
-            { ...overrideOptions, ignoreUnknownValues: true },
-            false
-          );
-        }
+      // A column we just added may not be streamable yet. Retry ignoring the
+      // fields BigQuery does not know about, so the rest of the row lands.
+      if (allowSchemaLagRetry && this.isSchemaLagInsertionError(e)) {
+        logs.dataInsertRetried(rows.length);
+        return this.insertData(
+          rows,
+          { ...overrideOptions, ignoreUnknownValues: true },
+          false,
+          allowTransientRetry
+        );
+      }
 
-        // Transient failures deserve a retry, but not with
-        // `ignoreUnknownValues`, which would silently drop real data.
-        if (this.isTransientInsertionError(e)) {
-          logs.dataInsertRetried(rows.length);
-          return this.insertData(rows, overrideOptions, false);
-        }
+      // Transient failures deserve a retry, but not with
+      // `ignoreUnknownValues`, which would silently drop real data.
+      if (allowTransientRetry && this.isTransientInsertionError(e)) {
+        logs.dataInsertRetried(rows.length);
+        return this.insertData(
+          rows,
+          overrideOptions,
+          allowSchemaLagRetry,
+          false
+        );
       }
 
       // Terminal: no further attempt will be made for these rows.
