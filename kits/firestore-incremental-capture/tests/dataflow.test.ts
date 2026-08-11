@@ -183,6 +183,19 @@ describe("RestorationLauncher", () => {
     });
   });
 
+  test("fails with an actionable error when no bucket is configured", async () => {
+    const client = fakeClient();
+
+    await expect(
+      new RestorationLauncher(
+        config({ bucketName: "" }),
+        client as never
+      ).launch({ timestamp: 1700000000 })
+    ).rejects.toThrow(/no Cloud Storage bucket is configured/);
+
+    expect(client.launchFlexTemplate).not.toHaveBeenCalled();
+  });
+
   test("records a null job name when Dataflow reports none", async () => {
     const client = fakeClient({});
 

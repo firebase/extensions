@@ -64,12 +64,21 @@ describe("resolveCaptureConfig", () => {
     expect(resolved.dataflowRegion).toBe("us-central1");
   });
 
-  test("requires an explicit bucket rather than guessing one", () => {
-    // Guessing is unsafe: the default bucket domain differs by project age, and
-    // a wrong guess means launching against a template that is not staged there.
-    expect(() => resolveCaptureConfig(config({ bucketName: "" }))).toThrow(
-      /BUCKET_NAME is required/
-    );
+  test("resolves without a bucket, so capture works without Cloud Storage", () => {
+    // Only restoration needs a bucket. Throwing here would take the capture
+    // path down on a project that never enabled Storage.
+    const resolved = resolveCaptureConfig(config({ bucketName: "" }));
+
+    expect(resolved.bucketName).toBeUndefined();
+    expect(resolved.flexTemplatePath).toBeUndefined();
+  });
+
+  test("never guesses a bucket name from the project id", () => {
+    // The default bucket domain differs by project age, and a wrong guess means
+    // launching against a template that was never staged there.
+    const resolved = resolveCaptureConfig(config({ bucketName: "" }));
+
+    expect(JSON.stringify(resolved)).not.toContain("test-project.");
   });
 
   test("pins the captured database to the only one the pipeline can restore", () => {

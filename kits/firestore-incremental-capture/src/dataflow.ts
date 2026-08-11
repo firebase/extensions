@@ -54,6 +54,15 @@ export class RestorationLauncher {
    */
   async launch(request: RestorationRequest): Promise<RestorationJob> {
     const { config } = this;
+
+    if (!config.flexTemplatePath) {
+      throw new Error(
+        "Cannot launch a restoration: no Cloud Storage bucket is configured. " +
+          "Set BUCKET_NAME to the bucket scripts/setup.sh staged the Dataflow " +
+          "flex template to."
+      );
+    }
+
     const runId = `${config.instanceId}-restore-${request.timestamp}`;
 
     logs.info(`Launching restoration job ${runId}`, {

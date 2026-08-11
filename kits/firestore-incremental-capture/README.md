@@ -144,7 +144,7 @@ loads them at deploy time and prompts for any required values that are missing.
 | `location`           | `LOCATION`             | no       | `us-central1`    | Region for the functions and task queues                    |
 | `datasetLocation`    | `DATASET_LOCATION`     | no       | `us`             | BigQuery dataset location                                   |
 | `dataflowRegion`     | `DATAFLOW_REGION`      | no       | `LOCATION`       | Region for Dataflow jobs                                    |
-| `bucketName`         | `BUCKET_NAME`          | no       | default bucket   | Bucket the flex template was staged to                      |
+| `bucketName`         | `BUCKET_NAME`          | no       | default bucket   | Bucket the flex template was staged to; restoration only    |
 | `logLevel`           | `LOG_LEVEL`            | no       | `info`           | `debug`, `info`, `warn`, `error`, `silent`                   |
 
 Three constraints are worth stating outright, because each one fails silently if
@@ -163,7 +163,9 @@ you assume otherwise:
   than guessed from the project id. The default bucket is
   `<projectId>.firebasestorage.app` for projects created after September 2024
   and `<projectId>.appspot.com` for older ones, and a wrong guess means
-  launching against a template that was never staged there.
+  launching against a template that was never staged there. Only restoration
+  reads it, so capture works on a project with no Storage bucket at all; the
+  error surfaces when a restoration is launched.
 
 ## Multiple instances
 
@@ -220,6 +222,12 @@ silently drops any field whose tag it does not handle:
   top level, so `[1, 2]` restores as a list of empty maps. Arrays of maps do
   round trip — see the note in `src/serializer.ts` on why array elements are
   encoded differently from map fields.
+- **A Timestamp, GeoPoint, DocumentReference or Buffer sitting _directly_ in an
+  array does not survive either**, for the same reason: its `{type, value}`
+  envelope is not a field map. The extension happened to preserve these as maps
+  of their internals (`_seconds`/`_nanoseconds` for a Timestamp), so they
+  restored with the wrong type but with the data present; here they restore as
+  empty maps. The same values nested inside a map element round trip correctly.
 - **Changelog replay writes to a malformed path.**
   `IncrementalCaptureLog.convertToFirestoreValue` applies `createDocumentName`
   to a path that has already been through it, producing a doubled

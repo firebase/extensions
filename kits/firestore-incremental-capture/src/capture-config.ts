@@ -25,8 +25,11 @@ export interface CaptureConfig {
   /** GCP project holding the Firestore databases, BigQuery dataset and jobs. */
   projectId: string;
   /**
-   * Collection to capture, relative to the database root. `{document=**}`
-   * captures every collection.
+   * Collection to capture, relative to the database root.
+   *
+   * A single collection only. A Firestore trigger accepts a multi-segment
+   * wildcard just as its final path segment, so `{document=**}` would build the
+   * undeployable pattern `{document=**}/{documentId}`.
    */
   syncCollectionPath: string;
   /**
@@ -45,14 +48,20 @@ export interface CaptureConfig {
   /** Region Dataflow jobs run in. Defaults to {@link CaptureConfig.location}. */
   dataflowRegion?: string;
   /**
-   * Cloud Storage bucket holding the Dataflow flex template. Required, and not
-   * guessed: the default bucket is `<projectId>.firebasestorage.app` for
-   * projects created after September 2024 and `<projectId>.appspot.com` for
-   * older ones, and guessing wrong means restoration launches against a
-   * template that is not there. The entry point fills this from the project's
-   * actual default bucket when the `BUCKET_NAME` param is unset.
+   * Cloud Storage bucket holding the Dataflow flex template.
+   *
+   * Never guessed from the project id: the default bucket is
+   * `<projectId>.firebasestorage.app` for projects created after September 2024
+   * and `<projectId>.appspot.com` for older ones, and guessing wrong means
+   * restoration launches against a template that is not there. The entry point
+   * fills this from the project's actual default bucket when the `BUCKET_NAME`
+   * param is unset.
+   *
+   * Optional because only restoration reads it. A project with no Storage
+   * bucket at all can still capture; the error surfaces when a restoration is
+   * launched, not on the write path.
    */
-  bucketName: string;
+  bucketName?: string;
   /**
    * This instance's key in the `instances` map of the kit stanza. Required, and
    * must match exactly: the CLI deploys every function as
@@ -68,8 +77,10 @@ export interface CaptureConfig {
 
 /** {@link CaptureConfig} with every default applied and paths derived. */
 export interface ResolvedCaptureConfig
-  extends Required<Omit<CaptureConfig, "dataflowRegion">> {
+  extends Required<Omit<CaptureConfig, "dataflowRegion" | "bucketName">> {
   dataflowRegion: string;
+  /** Absent when the project has no default bucket and none was configured. */
+  bucketName?: string;
   /**
    * Database the changes are captured from. Always `(default)`: the restoration
    * pipeline reads its PITR baseline from `FirestoreOptions.getDefaultInstance()`
@@ -81,9 +92,10 @@ export interface ResolvedCaptureConfig
   backupInstanceName: string;
   /**
    * Cloud Storage path of the Dataflow flex template spec. Built out-of-band by
-   * the setup script, which must write to this exact path.
+   * the setup script, which must write to this exact path. Absent when no
+   * bucket is known, which only blocks restoration.
    */
-  flexTemplatePath: string;
+  flexTemplatePath?: string;
   /** Firestore document tracking the state of each restoration run. */
   restoreCollection: string;
 }
@@ -98,10 +110,13 @@ const DEFAULT_DATASET_LOCATION = "us";
  *
  * @param config - Caller-supplied configuration.
  * @returns The fully resolved configuration.
- * @throws If `instanceId` is empty, which would misname every task queue; if
+ * Deliberately does not require `bucketName`. Only restoration reads it, and
+ * throwing here would take the capture path down with it on a project that has
+ * no Storage bucket - which the extension captured on quite happily.
+ *
+ * @throws If `instanceId` is empty, which would misname every task queue, or if
  *   `backupInstanceId` is empty or is the captured database, either of which
- *   would make a restoration write over the source it restores from; or if
- *   `bucketName` is empty, which would leave the flex template path unresolvable.
+ *   would make a restoration write over the source it restores from.
  */
 export function resolveCaptureConfig(
   config: CaptureConfig
@@ -135,14 +150,7 @@ export function resolveCaptureConfig(
     );
   }
 
-  if (!config.bucketName) {
-    invalid(
-      "BUCKET_NAME is required. It must name the bucket the Dataflow flex " +
-        "template was staged to by scripts/setup.sh."
-    );
-  }
-
-  const bucketName = config.bucketName;
+  const bucketName = config.bucketName || undefined;
 
   return {
     projectId: config.projectId,
@@ -158,14 +166,20 @@ export function resolveCaptureConfig(
     instanceId,
     logLevel: config.logLevel || "info",
     backupInstanceName: `projects/${config.projectId}/databases/${config.backupInstanceId}`,
-    flexTemplatePath: `gs://${bucketName}/${instanceId}-dataflow-restore`,
+    flexTemplatePath: bucketName
+      ? `gs://${bucketName}/${instanceId}-dataflow-restore`
+      : undefined,
     restoreCollection: `_${instanceId}/runs/restorations`,
   };
 }
 
 /**
- * Collection id the Dataflow pipeline reads from. The pipeline takes `*` to
- * mean every collection, where the Firestore trigger spells that `{document=**}`.
+ * Collection id the Dataflow pipeline reads from. The pipeline spells
+ * every-collection as `*`, where a Firestore trigger spells it `{document=**}`.
+ *
+ * The mapping is kept for callers that register their own trigger through
+ * `./lib`. It is unreachable from the wired `syncData` trigger, which cannot
+ * deploy a `{document=**}` pattern - see {@link CaptureConfig.syncCollectionPath}.
  *
  * @param syncCollectionPath - The configured collection path.
  * @returns The collection id in the pipeline's spelling.

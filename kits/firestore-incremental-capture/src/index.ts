@@ -97,6 +97,25 @@ for (const role of REQUIRED_ROLES) {
 afterFirstDeploy({ task: { function: INIT_FUNCTION } });
 afterRedeploy({ task: { function: INIT_FUNCTION } });
 
+/**
+ * The project's default Cloud Storage bucket, or `undefined` if it has none.
+ *
+ * Read from the initialized app rather than assembled from the project id: the
+ * default bucket is `<projectId>.firebasestorage.app` for projects created after
+ * September 2024 and `<projectId>.appspot.com` for older ones.
+ *
+ * Swallows the lookup failure because only restoration needs a bucket. A project
+ * that never enabled Storage has none, and letting this throw would take the
+ * capture path down with it - `getHandlerContext` is shared by every function.
+ */
+function defaultBucketName(): string | undefined {
+  try {
+    return getStorage().bucket().name;
+  } catch {
+    return undefined;
+  }
+}
+
 let ctx: HandlerContext | undefined;
 
 function getHandlerContext(): HandlerContext {
@@ -108,12 +127,7 @@ function getHandlerContext(): HandlerContext {
     initializeApp();
   }
 
-  // Read from the initialized app rather than assembled from the project id:
-  // the default bucket is <projectId>.firebasestorage.app for projects created
-  // after September 2024 and <projectId>.appspot.com for older ones.
-  const config = resolveCaptureConfig(
-    configFromEnv(getStorage().bucket().name)
-  );
+  const config = resolveCaptureConfig(configFromEnv(defaultBucketName()));
 
   logs.setLogLevel(config.logLevel);
 
@@ -165,6 +179,10 @@ export const syncData = onDocumentWritten(
 export const syncChangelogTask = onTaskDispatched<ChangelogRow>(
   {
     ...functionOptions,
+    // Matches the extension's allowance for this function; the v2 defaults
+    // (256MiB/60s) would be a silent downgrade.
+    memory: "512MiB",
+    timeoutSeconds: 540,
     retryConfig: { maxAttempts: 15, minBackoffSeconds: 10 },
   },
   (request) => handleChangelogTask(request.data, getHandlerContext())
@@ -219,6 +237,10 @@ export const runRestorationTask = onTaskDispatched<RestorationRequest>(
 export const initIncrementalCapture = onTaskDispatched(
   {
     ...functionOptions,
+    // As the extension's runInitialSetup: creating a dataset and table can be
+    // slow, and the v2 default 60s timeout would cut it short.
+    memory: "512MiB",
+    timeoutSeconds: 540,
     retryConfig: LIFECYCLE_RETRY_CONFIG,
   },
   async () => {
