@@ -145,7 +145,7 @@ describe("insertData retry behaviour", () => {
 
     it("backs up and throws when the retry also fails", async () => {
       const error = partialFailure([
-        { message: "no such field.", location: "old_data" },
+        { message: "no such field.", location: "path_params" },
       ]);
       const insert = jest.fn().mockRejectedValue(error);
       const tracker = trackerWith(insert);
@@ -155,6 +155,24 @@ describe("insertData retry behaviour", () => {
       expect(insert).toHaveBeenCalledTimes(2);
       expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
       expect(tracker._initialized).toBe(false);
+    });
+
+    it("does not extend the allowlist to old_data", async () => {
+      // old_data is also added to existing tables, but is deliberately not
+      // allowlisted: it takes the terminal path so the rows are backed up and
+      // the tracker reinitializes, rather than the column being dropped.
+      const insert = jest
+        .fn()
+        .mockRejectedValue(
+          partialFailure([{ message: "no such field.", location: "old_data" }])
+        );
+
+      await expect(insertData(trackerWith(insert))).rejects.toThrow(
+        "insert failed"
+      );
+
+      expect(insert).toHaveBeenCalledTimes(1);
+      expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
     });
   });
 

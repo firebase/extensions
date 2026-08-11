@@ -221,12 +221,12 @@ export class FirestoreBigQueryEventHistoryTracker
     // Without per-field detail we cannot show the retry is safe.
     if (!errors.length) return false;
 
-    // The columns initializeRawChangeLogTable adds to an existing table.
-    const addedColumns = [
-      documentIdField.name,
-      documentPathParams.name,
-      oldDataField.name,
-    ];
+    // Deliberately narrow. `old_data` is also added to existing tables by
+    // initializeRawChangeLogTable, but the lag has never been observed for it,
+    // and every column listed here is one whose contents we are willing to
+    // drop. An unlisted column takes the terminal path instead, which backs the
+    // rows up and reinitializes, so the schema still reconciles.
+    const addedColumns = [documentIdField.name, documentPathParams.name];
 
     return errors.every((error) => isUnknownFieldError(error, addedColumns));
   }
@@ -235,9 +235,9 @@ export class FirestoreBigQueryEventHistoryTracker
    * Whether a failed insertion is worth one plain retry, with options
    * unchanged.
    *
-   * A failure with no partial-failure body — a network blip, a quota
-   * rejection, a 5xx — says nothing about our schema, so retrying it as-is is
-   * safe. A partial failure we did not recognise is BigQuery rejecting the
+   * A failure with no partial-failure body (a network blip, a quota rejection,
+   * a 5xx) says nothing about our schema, so retrying it as-is is safe.
+   * A partial failure we did not recognise is BigQuery rejecting the
    * shape of the data itself, which a plain retry cannot fix.
    */
   private isTransientInsertionError(e: any): boolean {
@@ -301,7 +301,7 @@ export class FirestoreBigQueryEventHistoryTracker
         }
 
         // Transient failures deserve a retry, but not with
-        // `ignoreUnknownValues` — that would silently drop real data.
+        // `ignoreUnknownValues`, which would silently drop real data.
         if (this.isTransientInsertionError(e)) {
           logs.dataInsertRetried(rows.length);
           return this.insertData(rows, overrideOptions, false);
