@@ -229,18 +229,21 @@ export class FirestoreBigQueryEventHistoryTracker
     // Without per-field detail we cannot show the retry is safe.
     if (!errors.length) return false;
 
-    return errors.every((error) =>
-      isUnknownFieldError(error, this.columnsAddedToExistingTables())
-    );
+    const addedColumns = this.columnsAddedToExistingTables();
+
+    return errors.every((error) => isUnknownFieldError(error, addedColumns));
   }
 
   /**
-   * The columns initializeRawChangeLogTable adds to a table that already
-   * exists, and so every column exposed to the lag.
+   * The columns this tracker adds to a table that already exists, and so every
+   * column exposed to the lag.
    *
    * This list must stay complete. Omitting a column turns a row that lands
    * today, with that column null, into an event lost once the caller exhausts
    * its retries, because nothing on the write path reconciles the schema.
+   *
+   * It must also stay exact. Listing a column that is never added makes the
+   * retry drop that column's value on a table missing it, forever.
    */
   private columnsAddedToExistingTables(): string[] {
     const columns = [
@@ -250,13 +253,17 @@ export class FirestoreBigQueryEventHistoryTracker
     ];
 
     // addPartitioningToSchema adds the partition column to an existing table
-    // under the same conditions, so it has the same exposure.
+    // under the same conditions, so it has the same exposure. It returns early
+    // when the column name is already in the schema though, and every base
+    // column is, so a colliding name is never actually added. The Firestore
+    // timestamp strategy is exactly that case: its column is `timestamp`.
     const partitionColumn = this.partitioningConfig.getBigQueryColumnName();
 
     if (
       partitionColumn &&
       (this.partitioningConfig.isFirestoreFieldPartitioning() ||
-        this.partitioningConfig.isFirestoreTimestampPartitioning())
+        this.partitioningConfig.isFirestoreTimestampPartitioning()) &&
+      !RawChangelogSchema.fields.some((field) => field.name === partitionColumn)
     ) {
       columns.push(partitionColumn);
     }

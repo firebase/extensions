@@ -296,6 +296,58 @@ describe("insertData retry behaviour", () => {
 
       expect(insert).toHaveBeenCalledTimes(1);
     });
+
+    it("is not allowlisted under the Firestore timestamp strategy", async () => {
+      // That strategy partitions by the base `timestamp` column, which
+      // addPartitioningToSchema never adds because the name is already in the
+      // schema. Allowlisting it would drop the Firestore commit timestamp of
+      // every row on a table that lacks the column, permanently.
+      const insert = jest
+        .fn()
+        .mockRejectedValue(
+          partialFailure([{ message: "no such field.", location: "timestamp" }])
+        );
+
+      await expect(
+        insertData(
+          trackerWith(insert, {
+            partitioning: {
+              granularity: "DAY",
+              bigqueryColumnName: "timestamp",
+            },
+          } as Partial<ChangeTrackerConfig>)
+        )
+      ).rejects.toThrow("insert failed");
+
+      expect(insert).toHaveBeenCalledTimes(1);
+      expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("is not allowlisted when field partitioning names a base column", async () => {
+      // Same early return, reached by any configured name that collides with a
+      // base column rather than only by `timestamp`.
+      const insert = jest
+        .fn()
+        .mockRejectedValue(
+          partialFailure([{ message: "no such field.", location: "data" }])
+        );
+
+      await expect(
+        insertData(
+          trackerWith(insert, {
+            partitioning: {
+              granularity: "DAY",
+              bigqueryColumnName: "data",
+              bigqueryColumnType: "TIMESTAMP",
+              firestoreFieldName: "someField",
+            },
+          } as Partial<ChangeTrackerConfig>)
+        )
+      ).rejects.toThrow("insert failed");
+
+      expect(insert).toHaveBeenCalledTimes(1);
+      expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("a transient blip followed by a schema lag", () => {
@@ -341,6 +393,38 @@ describe("insertData retry behaviour", () => {
 
       expect(insert).toHaveBeenCalledTimes(3);
       expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("a schema lag followed by a transient blip", () => {
+    it("can still retry the blip, and keeps ignoring unknown values", async () => {
+      // The schema-lag retry must hand the transient retry on rather than
+      // spend it, and it must hand `ignoreUnknownValues` on with it. Losing
+      // either turns the blip into a lost row or a repeat of the same
+      // rejection.
+      const insert = jest
+        .fn()
+        .mockRejectedValueOnce(
+          partialFailure([
+            { message: "no such field.", location: "document_id" },
+          ])
+        )
+        .mockRejectedValueOnce(transportFailure())
+        .mockResolvedValueOnce(undefined);
+
+      await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
+
+      expect(insert).toHaveBeenCalledTimes(3);
+      expect(insert.mock.calls[0][1]).toMatchObject({
+        ignoreUnknownValues: false,
+      });
+      expect(insert.mock.calls[1][1]).toMatchObject({
+        ignoreUnknownValues: true,
+      });
+      expect(insert.mock.calls[2][1]).toMatchObject({
+        ignoreUnknownValues: true,
+      });
+      expect(handleFailedTransactionsMock).not.toHaveBeenCalled();
     });
   });
 
