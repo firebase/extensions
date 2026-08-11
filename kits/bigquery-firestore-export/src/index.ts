@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,112 @@
  */
 
 /**
- * bigquery-firestore-export — npm-shared Firebase Function migrated from the Firebase Extension of
- * the same name.
- *
- * Skeleton package: not yet implemented. Target shape follows the
- * firestore-bigquery-export reference package — a `define...` factory (tier 3)
- * over injectable handlers (tier 2), with a side-effect-free `./lib` surface and
- * this env-driven entry registering functions for the clone-and-deploy example.
+ * Main entry point. Exports the wired Pub/Sub and lifecycle task functions,
+ * while resolving concrete config and clients lazily at runtime. Import from
+ * `./lib` for the side-effect-free handlers, helpers, and config types.
  */
 
-export {};
+import { BigQuery } from "@google-cloud/bigquery";
+import { v1 as bigqueryDataTransfer } from "@google-cloud/bigquery-data-transfer";
+import { PubSub } from "@google-cloud/pubsub";
+import { getApps, initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import { onMessagePublished } from "firebase-functions/v2/pubsub";
+import { onTaskDispatched } from "firebase-functions/v2/tasks";
+import type { Role } from "firebase-functions/v2";
+import { requiresAPI, requiresRole } from "firebase-functions/v2";
+import {
+  afterFirstDeploy,
+  afterRedeploy,
+} from "firebase-functions/v2/lifecycle";
+import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
+import type { ResolvedBigqueryFirestoreExportConfig } from "./export-config";
+import { resolveConfig } from "./export-config";
+import {
+  type HandlerContext,
+  handleMessagePublished,
+  handleUpsertTransferConfig,
+} from "./handlers";
+import * as logs from "./logs";
+import type { TransferRunPayload } from "./types";
+
+export * from "./lib";
+
+const UPSERT_FUNCTION = "upsertTransferConfig";
+const REQUIRED_ROLES: ReadonlyArray<Role> = [
+  "roles/datastore.user",
+  "roles/bigquery.admin",
+  "roles/pubsub.admin",
+  "roles/eventarc.eventReceiver",
+  "roles/run.invoker",
+];
+const REQUIRED_APIS = [
+  {
+    api: "bigquery.googleapis.com",
+    reason: "Runs scheduled queries and reads their destination tables.",
+  },
+  {
+    api: "bigquerydatatransfer.googleapis.com",
+    reason: "Creates and reconciles the scheduled-query transfer config.",
+  },
+  {
+    api: "pubsub.googleapis.com",
+    reason: "Delivers BigQuery transfer-completion notifications.",
+  },
+] as const;
+
+for (const role of REQUIRED_ROLES) {
+  requiresRole(role);
+}
+
+for (const { api, reason } of REQUIRED_APIS) {
+  requiresAPI(api, reason);
+}
+
+afterFirstDeploy({
+  task: { function: UPSERT_FUNCTION, body: { data: {} } },
+});
+afterRedeploy({
+  task: { function: UPSERT_FUNCTION, body: { data: {} } },
+});
+
+let ctx: HandlerContext | undefined;
+
+function getContext(): HandlerContext {
+  if (ctx) return ctx;
+
+  const config: ResolvedBigqueryFirestoreExportConfig = resolveConfig(
+    configFromEnv()
+  );
+  if (getApps().length === 0) initializeApp({ projectId: config.projectId });
+  logs.init(config);
+
+  ctx = {
+    db: getFirestore(),
+    bigquery: new BigQuery({ projectId: config.projectId }),
+    dataTransfer: new bigqueryDataTransfer.DataTransferServiceClient({
+      projectId: config.projectId,
+    }),
+    pubsub: new PubSub({ projectId: config.projectId }),
+    config,
+  };
+  return ctx;
+}
+
+/** Consumes BigQuery Data Transfer completion notifications. */
+export const processMessages = onMessagePublished<TransferRunPayload>(
+  {
+    topic: CONFIG_EXPRESSIONS.pubSubTopic,
+    retry: true,
+  },
+  (event) => handleMessagePublished(event, getContext())
+);
+
+/** Creates, links, or reconciles this deployment's scheduled query. */
+export const upsertTransferConfig = onTaskDispatched(
+  {
+    memory: "1GiB",
+    retryConfig: { maxAttempts: 5, minBackoffSeconds: 30 },
+  },
+  () => handleUpsertTransferConfig(getContext())
+);

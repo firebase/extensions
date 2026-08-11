@@ -1,7 +1,7 @@
 {
   "name": "@firebase/bigquery-firestore-export",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "description": "Reverse-sync rows from BigQuery into Firestore",
   "license": "Apache-2.0",
   "main": "lib/index.js",
@@ -21,6 +21,23 @@
   },
   "scripts": {
     "build": "tsc -b",
-    "clean": "tsc -b --clean"
+    "clean": "tsc -b --clean",
+    "test": "vitest run",
+    "deploy": "pnpm build && firebase deploy --only functions",
+    "serve": "firebase emulators:start --only functions"
+  },
+  "dependencies": {
+    "@firebase/app": "^0.16.0",
+    "@google-cloud/bigquery": "^8.3.1",
+    "@google-cloud/bigquery-data-transfer": "^5.0.1",
+    "@google-cloud/pubsub": "^4.11.0",
+    "firebase-admin": "^14.1.0",
+    "firebase-functions": "7.3.2"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "uuid@9.0.1": "11.1.1"
   }
 }
