@@ -1,0 +1,223 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: firestore-incremental-capture
+version: 0.0.12
+specVersion: v1beta
+
+icon: icon.png
+
+displayName: Firestore Incremental Backup Stream
+description:
+  Offers a cost-effective, flexible disaster recovery mechanism for Firestore.
+
+license: Apache-2.0
+
+author:
+  authorName: Google Cloud
+  url: https://cloud.google.com/
+
+contributors:
+  - authorName: Invertase
+    email: oss@invertase.io
+    url: https://github.com/invertase
+
+sourceUrl: https://github.com/GoogleCloudPlatform/firebase-extensions/tree/main/
+releaseNotesUrl: https://github.com/GoogleCloudPlatform/firebase-extensions/tree/main/
+
+apis:
+  - apiName: eventarc.googleapis.com
+    reason: Powers all events and triggers
+
+  - apiName: bigquery.googleapis.com
+    reason: Running queries
+
+  - apiName: dataflow.googleapis.com
+    reason: Running dataflow jobs
+
+roles:
+  - role: datastore.user
+    reason: Allows the extension to write updates to the database.
+
+  - role: bigquery.dataEditor
+    reason: Allows the creation of BQ jobs to import Firestore backups.
+
+  # - role: dataflow.developer
+  #   reason: Allows this extension to create and run dataflow jobs.
+
+  # - role: artifactregistry.writer
+  #   reason: Allows this extension to write to the artifact registry.
+
+billingRequired: true
+
+resources:
+  - name: runInitialSetup
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Creates the backup BigQuery database if it does not exist
+    properties:
+      availableMemoryMb: 512
+      location: ${LOCATION}
+      runtime: nodejs22
+      timeout: 540s
+      taskQueueTrigger: {}
+
+  - name: syncData
+    type: firebaseextensions.v1beta.function
+    description: Enqueues a task to sync data to BigQuery
+    properties:
+      runtime: nodejs22
+      location: ${LOCATION}
+      eventTrigger:
+        eventType: providers/cloud.firestore/eventTypes/document.write
+        resource: projects/${param:PROJECT_ID}/databases/(default)/documents/${param:SYNC_COLLECTION_PATH}/{docId}
+
+  - name: syncDataTask
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Distributed cloud task for syncing data to BigQuery
+    properties:
+      availableMemoryMb: 512
+      location: ${LOCATION}
+      runtime: nodejs22
+      timeout: 540s
+      taskQueueTrigger: {}
+
+  - name: onHttpRunRestoration
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Starts a new restoration task
+    properties:
+      location: ${LOCATION}
+      runtime: nodejs22
+      httpsTrigger: {}
+
+  # TODO change to a Firestore trigger
+  - name: onBackupRestore
+    type: firebaseextensions.v1beta.function
+    description: >-
+      Exports data from storage to a pre-defined Firestore instance.
+    properties:
+      location: ${LOCATION}
+      runtime: nodejs22
+      availableMemoryMb: 1024
+      taskQueueTrigger: {}
+
+params:
+  - param: LOCATION
+    label: Cloud Functions location
+    description: >-
+      Where do you want to deploy the functions created for this extension? You
+      usually want a location close to your database. For help selecting a
+      location, refer to the [location selection
+      guide](https://firebase.google.com/docs/functions/locations).
+    type: select
+    options:
+      - label: Iowa (us-central1)
+        value: us-central1
+      - label: South Carolina (us-east1)
+        value: us-east1
+      - label: Northern Virginia (us-east4)
+        value: us-east4
+      - label: Los Angeles (us-west2)
+        value: us-west2
+      - label: Salt Lake City (us-west3)
+        value: us-west3
+      - label: Las Vegas (us-west4)
+        value: us-west4
+      - label: Warsaw (europe-central2)
+        value: europe-central2
+      - label: Belgium (europe-west1)
+        value: europe-west1
+      - label: London (europe-west2)
+        value: europe-west2
+      - label: Frankfurt (europe-west3)
+        value: europe-west3
+      - label: Zurich (europe-west6)
+        value: europe-west6
+      - label: Taiwan (asia-east1)
+        value: asia-east1
+      - label: Hong Kong (asia-east2)
+        value: asia-east2
+      - label: Tokyo (asia-northeast1)
+        value: asia-northeast1
+      - label: Osaka (asia-northeast2)
+        value: asia-northeast2
+      - label: Seoul (asia-northeast3)
+        value: asia-northeast3
+      - label: Mumbai (asia-south1)
+        value: asia-south1
+      - label: Singapore (asia-southeast1)
+        value: asia-southeast1
+      - label: Jakarta (asia-southeast2)
+        value: asia-southeast2
+      - label: Montreal (northamerica-northeast1)
+        value: northamerica-northeast1
+      - label: Sao Paulo (southamerica-east1)
+        value: southamerica-east1
+      - label: Sydney (australia-southeast1)
+        value: australia-southeast1
+    default: us-central1
+    required: true
+    immutable: true
+
+  - param: SYNC_COLLECTION_PATH
+    label: Collection path
+    description: >
+      What is the path to the collection that contains the strings that you want
+      to capture all changes of? Use `{document=**}` to capture all collections.
+    example: users
+    validationRegex: "^[^/]+(/[^/]+/[^/]+)*$"
+    validationErrorMessage: Must be a valid Cloud Firestore Collection
+    required: true
+
+  - param: SYNC_DATASET
+    label: Bigquery dataset Id
+    description: >
+      The id of the Bigquery dataset to sync data to.
+    example: backup_dataset
+    default: backup_dataset
+    validationRegex: "^[a-zA-Z0-9_]+$"
+    validationErrorMessage: >
+      BigQuery dataset IDs must be alphanumeric (plus underscores) and must be
+      no more than 1024 characters.
+    required: true
+
+  - param: SYNC_TABLE
+    label: Bigquery table Id
+    description: >
+      The id of the Bigquery table to sync data to.
+    example: backup_table
+    default: backup_table
+    required: true
+
+  - param: BACKUP_INSTANCE_ID
+    label: Backup instance Id
+    description: >
+      The name of the Firestore instance to backup the database to.
+    example: my-backup
+    validationRegex: "^[a-zA-Z][a-zA-Z0-9-]{2,61}[a-zA-Z0-9]$"
+    validationErrorMessage: Enter a valid instance id
+    required: true
+
+lifecycleEvents:
+  onInstall:
+    function: runInitialSetup
+    processingMessage: Creates the backup BigQuery database if it does not exist
+  onUpdate:
+    function: runInitialSetup
+    processingMessage: Creates the backup BigQuery database if it does not exist
+  onConfigure:
+    function: runInitialSetup
+    processingMessage: Creates the backup BigQuery database if it does not exist
