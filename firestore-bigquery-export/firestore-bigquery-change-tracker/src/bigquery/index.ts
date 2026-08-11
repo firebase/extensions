@@ -47,6 +47,55 @@ import type { ChangeTrackerConfig } from "./types";
 import { PartitioningConfig } from "./partitioning/config";
 export type { ChangeTrackerConfig } from "./types";
 
+/** A single error entry from a raw `insertAll` partial-failure response. */
+interface InsertAllError {
+  message?: string;
+  location?: string;
+  reason?: string;
+}
+
+/**
+ * Flattens the per-field errors out of a BigQuery insert failure.
+ *
+ * `PartialFailureError` carries the raw `insertAll` response on `response`,
+ * where `insertErrors` is an array of `{ index, errors }`. The error's own
+ * `errors` property is a remapped copy that keeps only `message` and `reason`,
+ * so it cannot be used to identify which column BigQuery rejected.
+ *
+ * Returns an empty array for any failure that is not a partial failure, e.g. a
+ * network error or a quota rejection.
+ */
+function extractInsertErrors(e: any): InsertAllError[] {
+  const insertErrors = e?.response?.insertErrors;
+
+  if (!Array.isArray(insertErrors)) return [];
+
+  return insertErrors.flatMap((insertError) =>
+    Array.isArray(insertError?.errors) ? insertError.errors : []
+  );
+}
+
+/**
+ * Whether an error entry reports an unknown field naming one of `columns`.
+ *
+ * BigQuery has reported this two ways: a bare `"no such field."` with the
+ * column in `location`, and an inlined `"no such field: document_id."`. Match
+ * either, and treat an unattributable message as not matching so that we fail
+ * loudly rather than dropping data.
+ */
+function isUnknownFieldError(
+  error: InsertAllError,
+  columns: string[]
+): boolean {
+  const message = error.message ?? "";
+
+  if (!/^no such field/i.test(message)) return false;
+
+  if (error.location) return columns.includes(error.location);
+
+  return columns.some((column) => message.includes(column));
+}
+
 /**
  * An FirestoreEventHistoryTracker that exports data to BigQuery.
  *
@@ -154,39 +203,45 @@ export class FirestoreBigQueryEventHistoryTracker
   }
 
   /**
-   * Check whether a failed operation is retryable or not.
-   * Reasons for retrying:
-   * 1) We added a new column to our schema. Sometimes BQ is not ready to stream insertion records immediately
-   *    after adding a new column to an existing table (https://issuetracker.google.com/35905247)
+   * Whether a failed insertion is the one case it is safe to retry while
+   * ignoring unknown values: a column this tracker adds to an existing table
+   * that BigQuery is not ready to stream into yet
+   * (https://issuetracker.google.com/35905247).
+   *
+   * Every field BigQuery rejected must be one of those columns. Any other
+   * unknown field is real schema drift, and retrying it with
+   * `ignoreUnknownValues` would silently drop the user's data.
+   *
+   * Deliberately not `async`: the result is used in a boolean guard, and a
+   * promise there is always truthy.
    */
-  private async isRetryableInsertionError(e) {
-    let isRetryable = true;
-    const expectedErrors = [
-      { message: "no such field.", location: documentIdField.name },
-      { message: "no such field.", location: documentPathParams.name },
+  private isSchemaLagInsertionError(e: any): boolean {
+    const errors = extractInsertErrors(e);
+
+    // Without per-field detail we cannot show the retry is safe.
+    if (!errors.length) return false;
+
+    // The columns initializeRawChangeLogTable adds to an existing table.
+    const addedColumns = [
+      documentIdField.name,
+      documentPathParams.name,
+      oldDataField.name,
     ];
-    if (
-      e.response &&
-      e.response.insertErrors &&
-      e.response.insertErrors.errors
-    ) {
-      const errors = e.response.insertErrors.errors;
-      errors?.forEach((error) => {
-        let isExpected = false;
-        expectedErrors?.forEach((expectedError) => {
-          if (
-            error.message === expectedError.message &&
-            error.location === expectedError.location
-          ) {
-            isExpected = true;
-          }
-        });
-        if (!isExpected) {
-          isRetryable = false;
-        }
-      });
-    }
-    return isRetryable;
+
+    return errors.every((error) => isUnknownFieldError(error, addedColumns));
+  }
+
+  /**
+   * Whether a failed insertion is worth one plain retry, with options
+   * unchanged.
+   *
+   * A failure with no partial-failure body — a network blip, a quota
+   * rejection, a 5xx — says nothing about our schema, so retrying it as-is is
+   * safe. A partial failure we did not recognise is BigQuery rejecting the
+   * shape of the data itself, which a plain retry cannot fix.
+   */
+  private isTransientInsertionError(e: any): boolean {
+    return extractInsertErrors(e).length === 0;
   }
 
   /**
@@ -233,18 +288,28 @@ export class FirestoreBigQueryEventHistoryTracker
       await table.insert(rows, options);
       logs.dataInserted(rows.length);
     } catch (e) {
-      if (retry && this.isRetryableInsertionError(e)) {
-        retry = false;
-        logs.dataInsertRetried(rows.length);
-        return this.insertData(
-          rows,
-          { ...overrideOptions, ignoreUnknownValues: true },
-          retry
-        );
+      if (retry) {
+        // A column we just added may not be streamable yet. Retry ignoring the
+        // fields BigQuery does not know about, so the rest of the row lands.
+        if (this.isSchemaLagInsertionError(e)) {
+          logs.dataInsertRetried(rows.length);
+          return this.insertData(
+            rows,
+            { ...overrideOptions, ignoreUnknownValues: true },
+            false
+          );
+        }
+
+        // Transient failures deserve a retry, but not with
+        // `ignoreUnknownValues` — that would silently drop real data.
+        if (this.isTransientInsertionError(e)) {
+          logs.dataInsertRetried(rows.length);
+          return this.insertData(rows, overrideOptions, false);
+        }
       }
 
-      // Exceeded number of retries, save in failed collection
-      if (!retry && this.config.backupTableId) {
+      // Terminal: no further attempt will be made for these rows.
+      if (this.config.backupTableId) {
         await handleFailedTransactions(rows, this.config, e);
       }
 
