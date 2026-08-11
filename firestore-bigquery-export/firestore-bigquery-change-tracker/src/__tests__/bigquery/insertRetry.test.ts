@@ -157,6 +157,22 @@ describe("insertData retry behaviour", () => {
       expect(tracker._initialized).toBe(false);
     });
 
+    it("does not match a column that merely contains an allowlisted name", async () => {
+      // A user column named document_id_v2 must not be mistaken for
+      // document_id, or its contents would be silently dropped.
+      const insert = jest
+        .fn()
+        .mockRejectedValue(
+          partialFailure([{ message: "no such field: document_id_v2." }])
+        );
+
+      await expect(insertData(trackerWith(insert))).rejects.toThrow(
+        "insert failed"
+      );
+
+      expect(insert).toHaveBeenCalledTimes(1);
+    });
+
     it("does not extend the allowlist to old_data", async () => {
       // old_data is also added to existing tables, but is deliberately not
       // allowlisted: it takes the terminal path so the rows are backed up and

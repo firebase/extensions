@@ -91,9 +91,15 @@ function isUnknownFieldError(
 
   if (!/^no such field/i.test(message)) return false;
 
+  // The bare form names the column in `location`.
   if (error.location) return columns.includes(error.location);
 
-  return columns.some((column) => message.includes(column));
+  // The inlined form carries the column in the message. Compare the whole name:
+  // a substring test would match a user column such as `document_id_v2` and
+  // silently drop it.
+  const named = message.match(/^no such field:\s*(.+?)\.?$/i);
+
+  return named ? columns.includes(named[1]) : false;
 }
 
 /**
