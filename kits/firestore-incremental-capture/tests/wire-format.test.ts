@@ -198,6 +198,13 @@ describe("changelog wire format", () => {
     });
   });
 
+  test("stringifies a BigInt so the row survives JSON.stringify", () => {
+    const serialized = serializeDocument({ big: 10n });
+
+    expect(serialized).toEqual({ big: { type: "bigint", value: "10" } });
+    expect(() => JSON.stringify(serialized)).not.toThrow();
+  });
+
   test("tags null rather than omitting the field", () => {
     expect(serializeDocument({ nullValue: null })).toEqual({
       nullValue: { type: "null", value: null },

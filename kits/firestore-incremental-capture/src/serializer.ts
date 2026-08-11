@@ -122,6 +122,13 @@ function serializeValue(value: unknown): SerializedValue {
     return { type: "map", value: serializeDocument(value) };
   }
 
+  // Stringified because JSON.stringify throws on a BigInt, which would fail the
+  // capture for this document permanently rather than dropping one field. The
+  // Firestore client only returns BigInt when configured with `useBigInt`.
+  if (typeof value === "bigint") {
+    return { type: "bigint", value: value.toString() };
+  }
+
   return { type: typeof value as SerializedType, value };
 }
 
