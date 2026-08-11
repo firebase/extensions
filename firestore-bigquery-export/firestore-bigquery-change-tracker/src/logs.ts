@@ -137,9 +137,20 @@ export const dataInserted = (rowCount: number) => {
   logger.debug(`Inserted ${rowCount} row(s) of data into BigQuery`);
 };
 
-export const dataInsertRetried = (rowCount: number) => {
+/**
+ * The two retry paths must be distinguishable in the logs: only one of them
+ * discards columns, and an operator investigating suspected column loss has no
+ * other way to tell which retry ran.
+ */
+export const dataInsertRetriedIgnoringUnknownColumns = (rowCount: number) => {
   logger.debug(
-    `Retried to insert ${rowCount} row(s) of data into BigQuery (ignoring unknown columns)`
+    `Retrying insert of ${rowCount} row(s) of data into BigQuery, ignoring unknown columns`
+  );
+};
+
+export const dataInsertRetriedAfterTransientError = (rowCount: number) => {
+  logger.debug(
+    `Retrying insert of ${rowCount} row(s) of data into BigQuery after a transient failure, with options unchanged`
   );
 };
 

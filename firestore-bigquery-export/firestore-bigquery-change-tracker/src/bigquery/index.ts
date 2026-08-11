@@ -246,17 +246,32 @@ export class FirestoreBigQueryEventHistoryTracker
    * retry drop that column's value on a table missing it, forever.
    */
   private columnsAddedToExistingTables(): string[] {
-    const columns = [
-      documentIdField.name,
-      documentPathParams.name,
-      oldDataField.name,
-    ];
+    const columns = [documentIdField.name, oldDataField.name];
 
-    // addPartitioningToSchema adds the partition column to an existing table
-    // under the same conditions, so it has the same exposure. It returns early
-    // when the column name is already in the schema though, and every base
-    // column is, so a colliding name is never actually added. The Firestore
-    // timestamp strategy is exactly that case: its column is `timestamp`.
+    // `path_params` is only ever added, and only ever emitted by `record`, when
+    // wildcard ids are enabled. Listing it unconditionally meant a transform
+    // function, whose response `transformRows` uses verbatim, could inject the
+    // key into a table that has no such column and have it discarded on every
+    // insert, for good.
+    if (this.config.wildcardIds) {
+      columns.push(documentPathParams.name);
+    }
+
+    // The partition column is also added to an existing table, so it shares the
+    // same exposure. It is deliberately excluded when its name collides with a
+    // base changelog column, which in practice means the Firestore timestamp
+    // strategy, whose column is `timestamp`.
+    //
+    // That exclusion is a judgement call, not dead code: `addPartitioningToSchema`
+    // is called with the live table's fields, so its early return only fires
+    // when the table already has the column. On a table missing `timestamp` the
+    // column really is added, so the lag is reachable. But `timestamp` is
+    // NULLABLE and is the ordering key for the latest view as well as the
+    // partition key, so tolerating the drop would silently misfile every
+    // affected row for good. Failing instead writes a backup row and throws,
+    // which the caller can retry. That reasoning does not extend to `old_data`,
+    // `document_id` or `path_params`: those are nullable metadata, where a
+    // dropped column costs one field and allowlisting keeps the event.
     const partitionColumn = this.partitioningConfig.getBigQueryColumnName();
 
     if (
@@ -335,7 +350,7 @@ export class FirestoreBigQueryEventHistoryTracker
       // A column we just added may not be streamable yet. Retry ignoring the
       // fields BigQuery does not know about, so the rest of the row lands.
       if (allowSchemaLagRetry && this.isSchemaLagInsertionError(e)) {
-        logs.dataInsertRetried(rows.length);
+        logs.dataInsertRetriedIgnoringUnknownColumns(rows.length);
         return this.insertData(
           rows,
           { ...overrideOptions, ignoreUnknownValues: true },
@@ -347,7 +362,7 @@ export class FirestoreBigQueryEventHistoryTracker
       // Transient failures deserve a retry, but not with
       // `ignoreUnknownValues`, which would silently drop real data.
       if (allowTransientRetry && this.isTransientInsertionError(e)) {
-        logs.dataInsertRetried(rows.length);
+        logs.dataInsertRetriedAfterTransientError(rows.length);
         return this.insertData(
           rows,
           overrideOptions,

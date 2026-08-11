@@ -17,6 +17,7 @@
 import { FirestoreBigQueryEventHistoryTracker } from "../../bigquery";
 import { ChangeTrackerConfig } from "../../bigquery/types";
 import handleFailedTransactions from "../../bigquery/handleFailedTransactions";
+import { logger } from "../../logger";
 
 jest.mock("../../bigquery/handleFailedTransactions", () => ({
   __esModule: true,
@@ -135,7 +136,9 @@ describe("insertData retry behaviour", () => {
         )
         .mockResolvedValueOnce(undefined);
 
-      await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
+      await expect(
+        insertData(trackerWith(insert, { wildcardIds: true }))
+      ).resolves.toBeUndefined();
 
       expect(insert).toHaveBeenCalledTimes(2);
       expect(insert.mock.calls[1][1]).toMatchObject({
@@ -148,7 +151,7 @@ describe("insertData retry behaviour", () => {
         { message: "no such field.", location: "path_params" },
       ]);
       const insert = jest.fn().mockRejectedValue(error);
-      const tracker = trackerWith(insert);
+      const tracker = trackerWith(insert, { wildcardIds: true });
 
       // Must start true, or asserting false below passes against an
       // implementation that never clears the flag at all.
@@ -177,9 +180,18 @@ describe("insertData retry behaviour", () => {
       expect(insert).toHaveBeenCalledTimes(1);
     });
 
-    it.each(["document_id", "path_params", "old_data"])(
+    // `path_params` needs its own config: `initializeRawChangeLogTable` only
+    // adds that column, and `record` only emits the key, when wildcard ids are
+    // enabled.
+    const addedColumns: Array<[string, Partial<ChangeTrackerConfig>]> = [
+      ["document_id", {}],
+      ["old_data", {}],
+      ["path_params", { wildcardIds: true }],
+    ];
+
+    it.each(addedColumns)(
       "covers %s, every column added to an existing table",
-      async (column) => {
+      async (column, overrides) => {
         // Dropping any of these from the allowlist would turn a row that lands
         // today, with that column null, into an event lost once the caller
         // exhausts its retries.
@@ -190,7 +202,9 @@ describe("insertData retry behaviour", () => {
           )
           .mockResolvedValueOnce(undefined);
 
-        await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
+        await expect(
+          insertData(trackerWith(insert, overrides))
+        ).resolves.toBeUndefined();
 
         expect(insert).toHaveBeenCalledTimes(2);
         expect(insert.mock.calls[1][1]).toMatchObject({
@@ -198,6 +212,29 @@ describe("insertData retry behaviour", () => {
         });
       }
     );
+
+    it("does not allowlist path_params when wildcard ids are disabled", async () => {
+      // Without wildcard ids the column is never created, so a rejected
+      // `path_params` is not our schema lag. `transformRows` hands the response
+      // of a user-supplied endpoint straight to the insert, so a transform can
+      // inject the key: allowlisting it there would discard whatever the
+      // transform put in it on every insert, forever, while still logging
+      // success.
+      const insert = jest
+        .fn()
+        .mockRejectedValue(
+          partialFailure([
+            { message: "no such field.", location: "path_params" },
+          ])
+        );
+
+      await expect(insertData(trackerWith(insert))).rejects.toThrow(
+        "insert failed"
+      );
+
+      expect(insert).toHaveBeenCalledTimes(1);
+      expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("schema drift we did not add", () => {
@@ -251,7 +288,7 @@ describe("insertData retry behaviour", () => {
 
   describe("the user-configured partition column", () => {
     // addPartitioningToSchema adds this column to an existing table too, so it
-    // has the same exposure as the other three.
+    // has the same exposure as the base columns above.
     const partitioned = {
       partitioning: {
         granularity: "HOUR",
@@ -298,10 +335,11 @@ describe("insertData retry behaviour", () => {
     });
 
     it("is not allowlisted under the Firestore timestamp strategy", async () => {
-      // That strategy partitions by the base `timestamp` column, which
-      // addPartitioningToSchema never adds because the name is already in the
-      // schema. Allowlisting it would drop the Firestore commit timestamp of
-      // every row on a table that lacks the column, permanently.
+      // That strategy partitions by the base `timestamp` column. On a table
+      // that lacks it the column really is added, so this is a deliberate
+      // choice rather than dead code: `timestamp` orders the latest view and
+      // keys the partition, so allowlisting it would silently misfile every
+      // affected row for good, where failing writes a backup row and throws.
       const insert = jest
         .fn()
         .mockRejectedValue(
@@ -324,8 +362,8 @@ describe("insertData retry behaviour", () => {
     });
 
     it("is not allowlisted when field partitioning names a base column", async () => {
-      // Same early return, reached by any configured name that collides with a
-      // base column rather than only by `timestamp`.
+      // The exclusion is keyed on the collision, not on `timestamp`, so any
+      // configured name that matches a base column reaches it.
       const insert = jest
         .fn()
         .mockRejectedValue(
@@ -569,6 +607,46 @@ describe("insertData retry behaviour", () => {
         expect.objectContaining({ backupTableId: "backup" }),
         expect.any(Error)
       );
+    });
+  });
+
+  describe("retry logging", () => {
+    let debug: jest.SpyInstance;
+
+    beforeEach(() => {
+      debug = jest.spyOn(logger, "debug").mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+      debug.mockRestore();
+    });
+
+    it("distinguishes the retry that drops columns from the one that does not", async () => {
+      // Only the schema-lag retry discards unknown columns. An operator
+      // investigating suspected column loss has nothing else to tell the two
+      // retries apart, so one message must not stand for both.
+      const insert = jest
+        .fn()
+        .mockRejectedValueOnce(
+          partialFailure([
+            { message: "no such field.", location: "document_id" },
+          ])
+        )
+        .mockRejectedValueOnce(transportFailure())
+        .mockResolvedValueOnce(undefined);
+
+      await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
+
+      const messages = debug.mock.calls.map(([message]) => String(message));
+      const dropped = messages.filter((message) =>
+        message.includes("ignoring unknown columns")
+      );
+
+      expect(dropped).toHaveLength(1);
+      expect(dropped[0]).toContain(`${ROWS.length} row(s)`);
+      expect(
+        messages.filter((message) => message.includes("transient"))
+      ).toHaveLength(1);
     });
   });
 });
