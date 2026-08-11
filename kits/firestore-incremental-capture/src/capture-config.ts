@@ -29,8 +29,6 @@ export interface CaptureConfig {
    * captures every collection.
    */
   syncCollectionPath: string;
-  /** Firestore database captured from. Defaults to `(default)`. */
-  databaseId?: string;
   /**
    * Firestore database restored into. Must already exist and must not be the
    * captured database - a restoration batch-writes over its contents.
@@ -47,12 +45,14 @@ export interface CaptureConfig {
   /** Region Dataflow jobs run in. Defaults to {@link CaptureConfig.location}. */
   dataflowRegion?: string;
   /**
-   * Cloud Storage bucket holding the Dataflow flex template. Defaults to
-   * `<projectId>.firebasestorage.app`, the default bucket for projects created
-   * after September 2024. Projects older than that use `<projectId>.appspot.com`
-   * and must set this explicitly.
+   * Cloud Storage bucket holding the Dataflow flex template. Required, and not
+   * guessed: the default bucket is `<projectId>.firebasestorage.app` for
+   * projects created after September 2024 and `<projectId>.appspot.com` for
+   * older ones, and guessing wrong means restoration launches against a
+   * template that is not there. The entry point fills this from the project's
+   * actual default bucket when the `BUCKET_NAME` param is unset.
    */
-  bucketName?: string;
+  bucketName: string;
   /**
    * Namespaces the deployed resources: the task queues, the flex template
    * object, the Dataflow job names and the Firestore status documents. Deploy
@@ -66,9 +66,15 @@ export interface CaptureConfig {
 
 /** {@link CaptureConfig} with every default applied and paths derived. */
 export interface ResolvedCaptureConfig
-  extends Required<Omit<CaptureConfig, "dataflowRegion" | "bucketName">> {
+  extends Required<Omit<CaptureConfig, "dataflowRegion">> {
   dataflowRegion: string;
-  bucketName: string;
+  /**
+   * Database the changes are captured from. Always `(default)`: the restoration
+   * pipeline reads its PITR baseline from `FirestoreOptions.getDefaultInstance()`
+   * (`RestorationPipeline.java`), so a non-default source would be captured to
+   * the changelog but silently absent from the restored baseline.
+   */
+  databaseId: "(default)";
   /** Fully-qualified name of the database restored into. */
   backupInstanceName: string;
   /**
@@ -80,7 +86,8 @@ export interface ResolvedCaptureConfig
   restoreCollection: string;
 }
 
-const DEFAULT_DATABASE_ID = "(default)";
+/** The only database the restoration pipeline can read a PITR baseline from. */
+const SOURCE_DATABASE_ID = "(default)";
 const DEFAULT_INSTANCE_ID = "firestore-incremental-capture";
 const DEFAULT_LOCATION = "us-central1";
 const DEFAULT_DATASET_LOCATION = "us";
@@ -90,30 +97,47 @@ const DEFAULT_DATASET_LOCATION = "us";
  *
  * @param config - Caller-supplied configuration.
  * @returns The fully resolved configuration.
- * @throws If the backup database is the same as the captured database, which
- *   would make a restoration overwrite the source it is restoring from.
+ * @throws If `backupInstanceId` is empty or is the captured database, either of
+ *   which would make a restoration write over the source it restores from; or if
+ *   `bucketName` is empty, which would leave the flex template path unresolvable.
  */
 export function resolveCaptureConfig(
   config: CaptureConfig
 ): ResolvedCaptureConfig {
-  const databaseId = config.databaseId || DEFAULT_DATABASE_ID;
   const location = config.location || DEFAULT_LOCATION;
   const instanceId = config.instanceId || DEFAULT_INSTANCE_ID;
-  const bucketName =
-    config.bucketName || `${config.projectId}.firebasestorage.app`;
 
-  if (config.backupInstanceId === databaseId) {
+  const invalid = (detail: string): never => {
     throw new Error(
-      `Invalid configuration for firestore-incremental-capture: BACKUP_INSTANCE_ID ` +
-        `("${config.backupInstanceId}") must differ from the captured database ` +
-        `("${databaseId}"). A restoration batch-writes over the backup database.`
+      `Invalid configuration for firestore-incremental-capture: ${detail}`
+    );
+  };
+
+  if (!config.backupInstanceId) {
+    invalid("BACKUP_INSTANCE_ID is required.");
+  }
+
+  if (config.backupInstanceId === SOURCE_DATABASE_ID) {
+    invalid(
+      `BACKUP_INSTANCE_ID ("${config.backupInstanceId}") must differ from the ` +
+        `captured database ("${SOURCE_DATABASE_ID}"). A restoration batch-writes ` +
+        `over the backup database.`
     );
   }
+
+  if (!config.bucketName) {
+    invalid(
+      "BUCKET_NAME is required. It must name the bucket the Dataflow flex " +
+        "template was staged to by scripts/setup.sh."
+    );
+  }
+
+  const bucketName = config.bucketName;
 
   return {
     projectId: config.projectId,
     syncCollectionPath: config.syncCollectionPath,
-    databaseId,
+    databaseId: SOURCE_DATABASE_ID,
     backupInstanceId: config.backupInstanceId,
     datasetId: config.datasetId,
     tableId: config.tableId,

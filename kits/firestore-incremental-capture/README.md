@@ -50,22 +50,51 @@ after setup ran.
 
 Set these in `.env` or `.env.<projectId>`.
 
-| Param                  | Default                         | Description                                                    |
-| ---------------------- | ------------------------------- | -------------------------------------------------------------- |
-| `LOCATION`             | `us-central1`                   | Region for the functions.                                       |
-| `DATABASE`             | `(default)`                     | Firestore database to capture.                                  |
-| `SYNC_COLLECTION_PATH` | `posts`                         | Collection to capture. `{document=**}` captures everything.     |
-| `SYNC_DATASET`         | `backup_dataset`                | BigQuery dataset for the changelog.                             |
-| `SYNC_TABLE`           | `backup_table`                  | BigQuery changelog table.                                       |
-| `BACKUP_INSTANCE_ID`   | _required_                      | Firestore database to restore into. Must not be `DATABASE`.     |
-| `DATASET_LOCATION`     | `us`                            | BigQuery dataset location.                                      |
-| `DATAFLOW_REGION`      | `LOCATION`                      | Region for Dataflow jobs.                                       |
-| `BUCKET_NAME`          | `<projectId>.firebasestorage.app` | Bucket holding the flex template.                             |
-| `INSTANCE_ID`          | `firestore-incremental-capture` | Namespaces the queues, template, jobs and status documents.     |
-| `LOG_LEVEL`            | `info`                          | `debug`, `info`, `warn`, `error` or `silent`.                   |
+| Param                  | Default                         | Description                                                 |
+| ---------------------- | ------------------------------- | ----------------------------------------------------------- |
+| `LOCATION`             | `us-central1`                   | Region for the functions.                                   |
+| `SYNC_COLLECTION_PATH` | `posts`                         | Collection to capture.                                      |
+| `SYNC_DATASET`         | `backup_dataset`                | BigQuery dataset for the changelog.                         |
+| `SYNC_TABLE`           | `backup_table`                  | BigQuery changelog table.                                   |
+| `BACKUP_INSTANCE_ID`   | _required_                      | Firestore database to restore into. Must not be `(default)`. |
+| `DATASET_LOCATION`     | `us`                            | BigQuery dataset location.                                  |
+| `DATAFLOW_REGION`      | `LOCATION`                      | Region for Dataflow jobs.                                   |
+| `BUCKET_NAME`          | the project's default bucket     | Bucket the flex template was staged to.                    |
+| `INSTANCE_ID`          | `firestore-incremental-capture` | Namespaces the queues, template, jobs and status documents. |
+| `LOG_LEVEL`            | `info`                          | `debug`, `info`, `warn`, `error` or `silent`.                |
 
-Projects created before September 2024 use `<projectId>.appspot.com` as their default bucket and must
-set `BUCKET_NAME` explicitly.
+**Only the `(default)` database can be captured.** The restoration pipeline reads its PITR baseline
+from `FirestoreOptions.getDefaultInstance()` (`RestorationPipeline.java`), so a non-default source
+database would be captured to the changelog but absent from the restored baseline. There is
+deliberately no param for it.
+
+**Only a single collection can be captured.** A Firestore trigger takes a multi-segment wildcard only
+as its final path segment, so `SYNC_COLLECTION_PATH={document=**}` produces the undeployable pattern
+`{document=**}/{documentId}`. Whole-database capture is not available.
+
+`BUCKET_NAME` is read from the project's default bucket when unset, rather than guessed from the
+project id - the default bucket is `<projectId>.firebasestorage.app` for projects created after
+September 2024 and `<projectId>.appspot.com` for older ones, and a wrong guess means restoration
+launches against a template that was never staged there.
+
+## Required IAM
+
+The package declares the roles below with `requiresRole(...)`. Firebase CLI 15.23.0 or later creates a
+managed runtime service account for the codebase, grants it these roles, and attaches it to every
+function. Declarative security cannot be combined with a custom runtime service account.
+
+| Role                          | Why                                                             |
+| ----------------------------- | --------------------------------------------------------------- |
+| `roles/bigquery.dataEditor`   | create the changelog dataset/table; insert rows                  |
+| `roles/bigquery.user`         | run BigQuery jobs                                               |
+| `roles/datastore.user`        | write the restoration run-status document                       |
+| `roles/dataflow.developer`    | launch the restoration job                                      |
+| `roles/iam.serviceAccountUser`| act as the Dataflow worker service account when launching        |
+| `roles/storage.objectViewer`  | read the staged flex template spec                              |
+
+`scripts/setup.sh` cannot grant these: the managed account does not exist until the first deploy. What
+the script does grant is the separate set of roles the **Dataflow worker** service account needs
+(`dataflow.worker`, `datastore.user`, BigQuery read, staging bucket access).
 
 ## Usage
 
@@ -103,11 +132,16 @@ switches on each value's type tag and **silently drops any field whose tag it do
 
 - **`binary` and `null` fields are dropped.** The pipeline has no case for either, so a restored
   document loses them.
-- **Arrays do not survive.** `buildFirestoreList` rebuilds every element as a map, so an array of
-  primitives restores as a list of empty maps.
+- **Arrays of primitives do not survive.** `buildFirestoreList` rebuilds every element by passing it
+  to `buildFirestoreMap`, which reads field names at the top level, so `[1, 2]` restores as a list of
+  empty maps. Arrays of maps do round trip - see the note in `src/serializer.ts` on why array
+  elements are encoded differently from map fields.
 - **Changelog replay writes to a malformed path.** `IncrementalCaptureLog.convertToFirestoreValue`
   applies `createDocumentName` to a path that has already been through it, producing a doubled
   `projects/…/databases/…/documents/` prefix.
+- **Documents sharing an id across collections collide.** The replay query ranks with
+  `ROW_NUMBER() OVER(PARTITION BY documentId …)`, partitioning by document id rather than path, so
+  only one of `users/x` and `orders/x` is replayed.
 
 The PITR baseline half of a restoration is unaffected; these apply to the changelog replay on top of
 it. Fixing them means changing the Java, which is out of scope for this migration.

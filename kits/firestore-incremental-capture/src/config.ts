@@ -82,7 +82,6 @@ const LOG_LEVEL_OPTIONS = ["debug", "info", "warn", "error", "silent"] as const;
 /** Deploy-time expressions the entry point needs before params can be read. */
 export interface ConfigExpressions {
   syncCollectionPath: Expression<string>;
-  database: Expression<string>;
   location: Expression<string>;
 }
 
@@ -97,7 +96,6 @@ const params = {
     default: "us-central1",
     input: select([...LOCATION_OPTIONS]),
   }),
-  database: defineString("DATABASE", { default: "(default)" }),
   syncCollectionPath: defineString("SYNC_COLLECTION_PATH", {
     default: "posts",
   }),
@@ -121,7 +119,6 @@ const params = {
 
 export const CONFIG_EXPRESSIONS: ConfigExpressions = {
   syncCollectionPath: params.syncCollectionPath,
-  database: params.database,
   location: params.location,
 };
 
@@ -150,20 +147,22 @@ function normalizeLogLevel(level: string): LogLevel {
  * deploy-time discovery pass can analyze the entry point without resolving
  * params early.
  *
+ * @param defaultBucketName - The project's default storage bucket, used when
+ *   the `BUCKET_NAME` param is unset. The param is not defaulted to a guessed
+ *   name because the default bucket's domain differs by project age.
  * @returns The capture configuration assembled from environment params.
  */
-export function configFromEnv(): CaptureConfig {
+export function configFromEnv(defaultBucketName?: string): CaptureConfig {
   return {
     projectId: projectID.value(),
     syncCollectionPath: params.syncCollectionPath.value(),
-    databaseId: optional(params.database.value()),
     backupInstanceId: params.backupInstanceId.value(),
     datasetId: params.syncDataset.value(),
     tableId: params.syncTable.value(),
     datasetLocation: optional(params.datasetLocation.value()),
     location: optional(params.location.value()),
     dataflowRegion: optional(params.dataflowRegion.value()),
-    bucketName: optional(params.bucketName.value()),
+    bucketName: optional(params.bucketName.value()) || defaultBucketName || "",
     instanceId: optional(params.instanceId.value()),
     logLevel: normalizeLogLevel(params.logLevel.value()),
   };

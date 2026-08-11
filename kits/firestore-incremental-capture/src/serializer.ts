@@ -61,7 +61,7 @@ export type SerializedDocument = Record<string, SerializedValue>;
  * because the pipeline prefixes `projects/…/databases/…/documents/` itself.
  *
  * The pipeline has no case for `binary` or `null`, so those fields are dropped
- * on restore. See the kit README for the full list of restoration gaps.
+ * on restore. See the restoration gaps section of the kit README.
  *
  * @param data - Firestore document data, or `undefined` for a document that
  *   does not exist on this side of the change.
@@ -115,7 +115,7 @@ function serializeValue(value: unknown): SerializedValue {
   }
 
   if (Array.isArray(value)) {
-    return { type: "array", value: value.map(serializeValue) };
+    return { type: "array", value: value.map(serializeArrayElement) };
   }
 
   if (typeof value === "object") {
@@ -123,4 +123,37 @@ function serializeValue(value: unknown): SerializedValue {
   }
 
   return { type: typeof value as SerializedType, value };
+}
+
+/**
+ * Serializes one array element.
+ *
+ * Map elements are emitted as a bare field map, NOT wrapped in a
+ * `{ type: "map" }` envelope like a map field would be. This asymmetry is
+ * required by the restoration pipeline: `FirestoreReconstructor.buildFirestoreList`
+ * passes each element straight to `buildFirestoreMap`, which expects field
+ * names at the top level and skips anything it cannot read as a tagged field.
+ * Wrapping a map element restores it as an empty map.
+ *
+ * Primitive elements stay tagged, matching the original extension. The pipeline
+ * cannot reconstruct those either - see the restoration gaps in the README -
+ * but changing the encoding here would not fix it.
+ *
+ * @param element - One element of a Firestore array field.
+ * @returns The serialized element.
+ */
+function serializeArrayElement(element: unknown): unknown {
+  if (
+    element !== null &&
+    typeof element === "object" &&
+    !Array.isArray(element) &&
+    !Buffer.isBuffer(element) &&
+    !(element instanceof Timestamp) &&
+    !(element instanceof GeoPoint) &&
+    !(element instanceof DocumentReference)
+  ) {
+    return serializeDocument(element);
+  }
+
+  return serializeValue(element);
 }

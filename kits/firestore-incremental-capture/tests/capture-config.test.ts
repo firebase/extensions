@@ -28,6 +28,7 @@ function config(overrides: Partial<CaptureConfig> = {}): CaptureConfig {
     backupInstanceId: "backup-db",
     datasetId: "backup_dataset",
     tableId: "backup_table",
+    bucketName: "test-project.firebasestorage.app",
     ...overrides,
   };
 }
@@ -57,10 +58,16 @@ describe("resolveCaptureConfig", () => {
     expect(resolved.dataflowRegion).toBe("us-central1");
   });
 
-  test("defaults the bucket to the post-2024 default bucket name", () => {
-    expect(resolveCaptureConfig(config()).bucketName).toBe(
-      "test-project.firebasestorage.app"
+  test("requires an explicit bucket rather than guessing one", () => {
+    // Guessing is unsafe: the default bucket domain differs by project age, and
+    // a wrong guess means launching against a template that is not staged there.
+    expect(() => resolveCaptureConfig(config({ bucketName: "" }))).toThrow(
+      /BUCKET_NAME is required/
     );
+  });
+
+  test("pins the captured database to the only one the pipeline can restore", () => {
+    expect(resolveCaptureConfig(config()).databaseId).toBe("(default)");
   });
 
   test("derives the backup instance name and flex template path", () => {
@@ -87,12 +94,12 @@ describe("resolveCaptureConfig", () => {
     expect(() =>
       resolveCaptureConfig(config({ backupInstanceId: "(default)" }))
     ).toThrow(/must differ from the captured database/);
+  });
 
+  test("rejects an empty backup database", () => {
     expect(() =>
-      resolveCaptureConfig(
-        config({ databaseId: "primary", backupInstanceId: "primary" })
-      )
-    ).toThrow(/must differ from the captured database/);
+      resolveCaptureConfig(config({ backupInstanceId: "" }))
+    ).toThrow(/BACKUP_INSTANCE_ID is required/);
   });
 });
 

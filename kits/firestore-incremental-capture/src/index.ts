@@ -32,6 +32,7 @@
  */
 
 import { getApps, initializeApp } from "firebase-admin/app";
+import { getStorage } from "firebase-admin/storage";
 import { onDocumentWritten } from "firebase-functions/firestore";
 import { onRequest } from "firebase-functions/https";
 import { expr } from "firebase-functions/params";
@@ -73,11 +74,20 @@ const LIFECYCLE_RETRY_CONFIG = {
   maxAttempts: 15,
   minBackoffSeconds: 60,
 } as const;
+// Granted by the Firebase CLI to the managed runtime service account it creates
+// for this codebase. The setup script cannot grant these: the account does not
+// exist until the first deploy, and declarative security rules out supplying a
+// runtime service account of your own.
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/bigquery.dataEditor",
   "roles/bigquery.user",
   "roles/datastore.user",
   "roles/dataflow.developer",
+  // Launching a flex template acts as the Dataflow worker service account.
+  // Without this, every restoration fails with iam.serviceAccounts.actAs denied.
+  "roles/iam.serviceAccountUser",
+  // Reads the staged flex template spec from Cloud Storage.
+  "roles/storage.objectViewer",
 ];
 
 for (const role of REQUIRED_ROLES) {
@@ -94,16 +104,24 @@ function getHandlerContext(): HandlerContext {
     return ctx;
   }
 
-  const config = resolveCaptureConfig(configFromEnv());
-
-  logs.setLogLevel(config.logLevel);
-
   if (getApps().length === 0) {
     initializeApp();
   }
 
+  // Read from the initialized app rather than assembled from the project id:
+  // the default bucket is <projectId>.firebasestorage.app for projects created
+  // after September 2024 and <projectId>.appspot.com for older ones.
+  const config = resolveCaptureConfig(
+    configFromEnv(getStorage().bucket().name)
+  );
+
+  logs.setLogLevel(config.logLevel);
+
   const changelog = new ChangelogTable(config);
-  const launcher = new RestorationLauncher(config);
+
+  // Constructed on first use: it loads gRPC protos, and the capture path - which
+  // is every invocation except a restoration - never touches Dataflow.
+  let launcher: RestorationLauncher | undefined;
 
   ctx = {
     config,
@@ -112,7 +130,10 @@ function getHandlerContext(): HandlerContext {
     insertChangelogRows: (rows) => changelog.insert(rows),
     enqueueRestoration: (request) =>
       enqueue(config, RESTORATION_TASK_FUNCTION, request),
-    launchRestorationJob: (request) => launcher.launch(request),
+    launchRestorationJob: (request) => {
+      launcher ??= new RestorationLauncher(config);
+      return launcher.launch(request);
+    },
   };
 
   return ctx;
@@ -132,7 +153,6 @@ export const syncData = onDocumentWritten(
   {
     ...functionOptions,
     document: expr`${CONFIG_EXPRESSIONS.syncCollectionPath}/{documentId}`,
-    database: CONFIG_EXPRESSIONS.database,
     retry: true,
   },
   (event) => handleDocumentWrite(event, getHandlerContext())

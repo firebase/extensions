@@ -30,12 +30,10 @@ export class RestorationLauncher {
   /**
    * @param config - The resolved capture configuration.
    * @param client - Dataflow flex templates client, injectable for tests.
-   * @param now - Clock, injectable so run ids are deterministic in tests.
    */
   constructor(
     private readonly config: ResolvedCaptureConfig,
-    private readonly client: FlexTemplatesServiceClient = new FlexTemplatesServiceClient(),
-    private readonly now: () => number = Date.now
+    private readonly client: FlexTemplatesServiceClient = new FlexTemplatesServiceClient()
   ) {}
 
   /**
@@ -45,12 +43,18 @@ export class RestorationLauncher {
    * {@link ResolvedCaptureConfig.flexTemplatePath}; see the kit's setup script.
    * Launching against a missing template fails here rather than at deploy.
    *
+   * The run id is derived from the target timestamp rather than the wall clock,
+   * so it is stable across task-queue retries. Dataflow rejects a duplicate
+   * active job name, which is what stops a retry after a partial failure - the
+   * launch succeeded but the status write did not - from starting a second job
+   * that writes over the backup database concurrently.
+   *
    * @param request - The validated restoration request.
    * @returns The launched job.
    */
   async launch(request: RestorationRequest): Promise<RestorationJob> {
     const { config } = this;
-    const runId = `${config.instanceId}-dataflow-run-${this.now()}`;
+    const runId = `${config.instanceId}-restore-${request.timestamp}`;
 
     logs.info(`Launching restoration job ${runId}`, {
       labels: { run_id: runId },

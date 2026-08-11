@@ -28,7 +28,6 @@
 #   BACKUP_INSTANCE_ID   Firestore database to restore into. Created if absent.
 #                        Must not be the captured database.
 # Optional:
-#   SOURCE_DATABASE      Captured database. Default "(default)".
 #   DATABASE_LOCATION    Location for a newly created backup database.
 #                        Default "nam5".
 #   LOCATION             Region for the functions and Artifact Registry.
@@ -38,8 +37,14 @@
 #   INSTANCE_ID          Namespace for the deployed resources. Must match the
 #                        kit's INSTANCE_ID param. Default
 #                        "firestore-incremental-capture".
-#   SERVICE_ACCOUNT      Runtime service account of the deployed functions.
-#                        Defaults to the App Engine default service account.
+#   WORKER_SERVICE_ACCOUNT  Service account the Dataflow workers run as.
+#                        Defaults to the Compute Engine default service account.
+#
+# This grants roles to the Dataflow *worker* service account only. The deployed
+# functions run as a managed runtime service account that the Firebase CLI
+# creates on first deploy and grants the roles declared with requiresRole() in
+# src/index.ts - it does not exist yet while this script runs, and cannot be
+# granted here.
 
 set -euo pipefail
 
@@ -48,7 +53,9 @@ readonly PIPELINE_DIR="${SCRIPT_DIR}/../pipeline"
 
 readonly PROJECT_ID="${PROJECT_ID:-}"
 readonly BACKUP_INSTANCE_ID="${BACKUP_INSTANCE_ID:-}"
-readonly SOURCE_DATABASE="${SOURCE_DATABASE:-(default)}"
+# The restoration pipeline reads its PITR baseline from the default database
+# (RestorationPipeline.java), so that is the only database the kit can capture.
+readonly SOURCE_DATABASE="(default)"
 readonly DATABASE_LOCATION="${DATABASE_LOCATION:-nam5}"
 readonly LOCATION="${LOCATION:-us-central1}"
 readonly INSTANCE_ID="${INSTANCE_ID:-firestore-incremental-capture}"
@@ -99,12 +106,15 @@ resolve_bucket() {
   fi
 }
 
-resolve_service_account() {
-  if [[ -n "${SERVICE_ACCOUNT:-}" ]]; then
-    echo "${SERVICE_ACCOUNT}"
-  else
-    echo "${PROJECT_ID}@appspot.gserviceaccount.com"
+resolve_worker_service_account() {
+  if [[ -n "${WORKER_SERVICE_ACCOUNT:-}" ]]; then
+    echo "${WORKER_SERVICE_ACCOUNT}"
+    return
   fi
+
+  local project_number
+  project_number="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
+  echo "${project_number}-compute@developer.gserviceaccount.com"
 }
 
 enable_apis() {
@@ -115,6 +125,8 @@ enable_apis() {
     dataflow.googleapis.com \
     firestore.googleapis.com \
     artifactregistry.googleapis.com \
+    storage.googleapis.com \
+    compute.googleapis.com \
     --project="${PROJECT_ID}"
   ok "APIs enabled."
 }
@@ -165,15 +177,22 @@ create_artifact_registry() {
   ok "Repository created."
 }
 
-grant_roles() {
+# Grants what the Dataflow workers need to run a restoration: read the changelog,
+# write the backup database, and use the staging bucket. On projects where the
+# default compute service account still holds Editor these are already implied,
+# but org policy commonly removes that.
+grant_worker_roles() {
   local service_account="$1"
 
-  step "Granting Dataflow roles to ${service_account}"
+  step "Granting Dataflow worker roles to ${service_account}"
 
-  # Launching a flex template needs dataflow.developer, and needs to act as the
-  # worker service account.
   local role
-  for role in roles/dataflow.developer roles/iam.serviceAccountUser; do
+  for role in \
+    roles/dataflow.worker \
+    roles/datastore.user \
+    roles/bigquery.dataViewer \
+    roles/bigquery.jobUser \
+    roles/storage.objectAdmin; do
     gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
       --member="serviceAccount:${service_account}" \
       --role="${role}" \
@@ -181,15 +200,7 @@ grant_roles() {
       --quiet >/dev/null
   done
 
-  gcloud artifacts repositories add-iam-policy-binding "${INSTANCE_ID}" \
-    --location="${LOCATION}" \
-    --project="${PROJECT_ID}" \
-    --member="serviceAccount:${service_account}" \
-    --role=roles/artifactregistry.writer \
-    --condition=None \
-    --quiet >/dev/null
-
-  ok "Roles granted."
+  ok "Worker roles granted."
 }
 
 # Built from the vendored source rather than downloaded: the prebuilt jar the
@@ -223,20 +234,29 @@ stage_flex_template() {
 main() {
   require_config
 
-  local bucket service_account jar
-  bucket="$(resolve_bucket)"
-  service_account="$(resolve_service_account)"
-
+  # APIs first: resolving the bucket and the worker account both need them.
   enable_apis
+
+  local bucket worker_service_account jar
+  bucket="$(resolve_bucket)"
+  worker_service_account="$(resolve_worker_service_account)"
+
   enable_pitr
   create_backup_database
   create_artifact_registry
-  grant_roles "${service_account}"
+  grant_worker_roles "${worker_service_account}"
   jar="$(build_jar | tail -n 1)"
   stage_flex_template "${jar}" "${bucket}"
 
   echo -e "\n${GREEN}Setup complete.${NC}"
-  echo "Deploy the kit with BACKUP_INSTANCE_ID=${BACKUP_INSTANCE_ID}, INSTANCE_ID=${INSTANCE_ID}, LOCATION=${LOCATION}, BUCKET_NAME=${bucket}."
+  echo
+  echo "Set these in .env before deploying:"
+  echo "  BACKUP_INSTANCE_ID=${BACKUP_INSTANCE_ID}"
+  echo "  INSTANCE_ID=${INSTANCE_ID}"
+  echo "  LOCATION=${LOCATION}"
+  echo "  BUCKET_NAME=${bucket}"
+  echo
+  echo "The functions' own roles are granted by the Firebase CLI on first deploy."
 }
 
 main "$@"
