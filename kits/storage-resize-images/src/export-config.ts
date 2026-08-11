@@ -104,6 +104,21 @@ function toArray(param: ReadonlyArray<string> | string | undefined) {
   return param;
 }
 
+const ABSOLUTE_PATH_PATTERN = /^(\/[^\s\/\,]+)+$/;
+
+export function validateAbsolutePathList(
+  param: ReadonlyArray<string> | string | undefined,
+  name: "includePathList" | "excludePathList"
+): ReadonlyArray<string> | undefined {
+  const paths = toArray(param);
+  if (paths?.some((path) => !ABSOLUTE_PATH_PATTERN.test(path))) {
+    throw new Error(
+      `Invalid ${name}: must be a comma-separated list of absolute path values.`
+    );
+  }
+  return paths;
+}
+
 function deleteOriginalFile(
   deleteType: DeleteOriginalFile | boolean | undefined
 ) {
@@ -160,8 +175,14 @@ export function resolveResizeImagesConfig(
     imageSizes: toArray(config.sizes) ?? [],
     deleteOriginalFile: deleteOriginalFile(config.deleteOriginal),
     makePublic: config.makePublic ?? false,
-    includePathList: toArray(config.includePathList),
-    excludePathList: toArray(config.excludePathList),
+    includePathList: validateAbsolutePathList(
+      config.includePathList,
+      "includePathList"
+    ),
+    excludePathList: validateAbsolutePathList(
+      config.excludePathList,
+      "excludePathList"
+    ),
     imageTypes: toArray(config.imageTypes) ?? [DEFAULT_IMAGE_TYPE],
     outputOptions: config.outputOptions,
     sharpOptions,
