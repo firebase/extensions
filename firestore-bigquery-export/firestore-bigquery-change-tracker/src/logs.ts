@@ -227,6 +227,12 @@ export const bigQueryTableInsertErrors = (
   });
 };
 
+export const failedBackupWrite = (error: unknown) => {
+  logger.warn(
+    `Could not write failed rows to the backup collection. The original insert error is still thrown. Backup error: ${error}`
+  );
+};
+
 export const updatedClustering = (fields: string) => {
   logger.info(`Clustering updated with new settings fields: ${fields}`);
 };

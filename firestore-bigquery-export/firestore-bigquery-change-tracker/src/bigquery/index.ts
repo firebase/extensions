@@ -87,7 +87,9 @@ function isUnknownFieldError(
   error: InsertAllError,
   columns: string[]
 ): boolean {
-  const message = error.message ?? "";
+  // Defensive to match extractInsertErrors: a null entry must classify as not
+  // matching, not throw from inside the catch block and lose the real error.
+  const message = error?.message ?? "";
 
   if (!/^no such field/i.test(message)) return false;
 
@@ -227,12 +229,16 @@ export class FirestoreBigQueryEventHistoryTracker
     // Without per-field detail we cannot show the retry is safe.
     if (!errors.length) return false;
 
-    // Deliberately narrow. `old_data` is also added to existing tables by
-    // initializeRawChangeLogTable, but the lag has never been observed for it,
-    // and every column listed here is one whose contents we are willing to
-    // drop. An unlisted column takes the terminal path instead, which backs the
-    // rows up and reinitializes, so the schema still reconciles.
-    const addedColumns = [documentIdField.name, documentPathParams.name];
+    // Every column initializeRawChangeLogTable adds to a table that already
+    // exists, and so every column exposed to the lag. All three must stay
+    // listed: dropping one from this list would turn a row that lands today
+    // (with that column null) into an event lost after the caller exhausts its
+    // retries, since nothing on the write path reconciles the schema.
+    const addedColumns = [
+      documentIdField.name,
+      documentPathParams.name,
+      oldDataField.name,
+    ];
 
     return errors.every((error) => isUnknownFieldError(error, addedColumns));
   }
@@ -316,12 +322,18 @@ export class FirestoreBigQueryEventHistoryTracker
 
       // Terminal: no further attempt will be made for these rows.
       if (this.config.backupTableId) {
-        await handleFailedTransactions(rows, this.config, e);
+        try {
+          await handleFailedTransactions(rows, this.config, e);
+        } catch (backupError) {
+          // Never let a failed backup write mask the insert error that caused
+          // it. The caller needs the original cause to decide whether to retry.
+          logs.failedBackupWrite(backupError);
+        }
       }
 
       // Reinitializing in case the destintation table is modified.
       this._initialized = false;
-      logs.bigQueryTableInsertErrors(e.errors);
+      logs.bigQueryTableInsertErrors(e?.errors);
       throw e;
     }
   }

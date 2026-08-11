@@ -150,6 +150,10 @@ describe("insertData retry behaviour", () => {
       const insert = jest.fn().mockRejectedValue(error);
       const tracker = trackerWith(insert);
 
+      // Must start true, or asserting false below passes against an
+      // implementation that never clears the flag at all.
+      tracker._initialized = true;
+
       await expect(insertData(tracker)).rejects.toThrow("insert failed");
 
       expect(insert).toHaveBeenCalledTimes(2);
@@ -173,23 +177,27 @@ describe("insertData retry behaviour", () => {
       expect(insert).toHaveBeenCalledTimes(1);
     });
 
-    it("does not extend the allowlist to old_data", async () => {
-      // old_data is also added to existing tables, but is deliberately not
-      // allowlisted: it takes the terminal path so the rows are backed up and
-      // the tracker reinitializes, rather than the column being dropped.
-      const insert = jest
-        .fn()
-        .mockRejectedValue(
-          partialFailure([{ message: "no such field.", location: "old_data" }])
-        );
+    it.each(["document_id", "path_params", "old_data"])(
+      "covers %s, every column added to an existing table",
+      async (column) => {
+        // Dropping any of these from the allowlist would turn a row that lands
+        // today, with that column null, into an event lost once the caller
+        // exhausts its retries.
+        const insert = jest
+          .fn()
+          .mockRejectedValueOnce(
+            partialFailure([{ message: "no such field.", location: column }])
+          )
+          .mockResolvedValueOnce(undefined);
 
-      await expect(insertData(trackerWith(insert))).rejects.toThrow(
-        "insert failed"
-      );
+        await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
 
-      expect(insert).toHaveBeenCalledTimes(1);
-      expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
-    });
+        expect(insert).toHaveBeenCalledTimes(2);
+        expect(insert.mock.calls[1][1]).toMatchObject({
+          ignoreUnknownValues: true,
+        });
+      }
+    );
   });
 
   describe("schema drift we did not add", () => {
@@ -241,6 +249,33 @@ describe("insertData retry behaviour", () => {
     });
   });
 
+  describe("malformed failures", () => {
+    it("survives a null entry in the errors array", async () => {
+      // Not producible by the current library, but classifying must never throw
+      // from inside the catch block: that would lose the real error and skip
+      // the backup entirely.
+      const insert = jest.fn().mockRejectedValue({
+        message: "insert failed",
+        response: { insertErrors: [{ index: 0, errors: [null] }] },
+      });
+
+      await expect(insertData(trackerWith(insert))).rejects.toMatchObject({
+        message: "insert failed",
+      });
+
+      expect(insert).toHaveBeenCalledTimes(1);
+      expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("survives a non-object thrown value", async () => {
+      const insert = jest.fn().mockRejectedValue(undefined);
+
+      await expect(insertData(trackerWith(insert))).rejects.toBeUndefined();
+
+      expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("transient failures", () => {
     it("retries once with options unchanged", async () => {
       const insert = jest
@@ -282,6 +317,26 @@ describe("insertData retry behaviour", () => {
       ).rejects.toThrow("insert failed");
 
       expect(handleFailedTransactionsMock).not.toHaveBeenCalled();
+    });
+
+    it("does not let its own failure mask the insert error", async () => {
+      handleFailedTransactionsMock.mockRejectedValueOnce(
+        new Error("firestore batch failed")
+      );
+
+      const insert = jest
+        .fn()
+        .mockRejectedValue(
+          partialFailure([{ message: "no such field.", location: "user_age" }])
+        );
+
+      // The caller needs the real cause to decide whether to retry, so the
+      // backup error must not replace it.
+      await expect(insertData(trackerWith(insert))).rejects.toThrow(
+        "insert failed"
+      );
+
+      expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
     });
 
     it("is used for a terminal failure on the first attempt", async () => {
