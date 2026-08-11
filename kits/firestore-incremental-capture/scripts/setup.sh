@@ -67,8 +67,9 @@ readonly YELLOW='\033[1;33m'
 readonly RED='\033[0;31m'
 readonly NC='\033[0m'
 
-step() { echo -e "\n${YELLOW}==> $*${NC}"; }
-ok() { echo -e "${GREEN}    $*${NC}"; }
+# Progress goes to stderr so stdout carries only a function's return value.
+step() { echo -e "\n${YELLOW}==> $*${NC}" >&2; }
+ok() { echo -e "${GREEN}    $*${NC}" >&2; }
 die() {
   echo -e "${RED}Error: $*${NC}" >&2
   exit 1
@@ -208,7 +209,8 @@ grant_worker_roles() {
 # extension fetched from GitHub is not a durable artifact.
 build_jar() {
   step "Building the restoration pipeline"
-  mvn -q -f "${PIPELINE_DIR}/pom.xml" clean package -DskipTests
+  # Maven to stderr as well: stdout is this function's return value.
+  mvn -q -f "${PIPELINE_DIR}/pom.xml" clean package -DskipTests >&2
   local jar="${PIPELINE_DIR}/target/${JAR_NAME}"
   [[ -f "${jar}" ]] || die "Expected ${jar} after the Maven build."
   ok "Built ${jar}."
@@ -246,7 +248,7 @@ main() {
   create_backup_database
   create_artifact_registry
   grant_worker_roles "${worker_service_account}"
-  jar="$(build_jar | tail -n 1)"
+  jar="$(build_jar)"
   stage_flex_template "${jar}" "${bucket}"
 
   echo -e "\n${GREEN}Setup complete.${NC}"
