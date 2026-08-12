@@ -798,8 +798,20 @@ describe("e2e", () => {
     test("successfully adds old data field if it does not yet exist", async () => {
       const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
 
-      /** Create a table without an old_data column */
-      let schema = [{ name: "Name", type: "STRING" }];
+      /**
+       * Create a table that is a valid changelog in every respect except that
+       * it predates `old_data`, which is the case this test is about.
+       *
+       * It used to be created with a single unrelated `Name` column, so the
+       * insert was rejected for the five base columns that were missing too.
+       * That passed only because every insert failure was retried with
+       * `ignoreUnknownValues`, which discarded them and reported success.
+       * Those columns are never added to a table that already exists, so the
+       * insert now fails closed rather than dropping the row's contents.
+       */
+      let schema = RawChangelogSchema.fields.filter(
+        (field) => field.name !== "old_data"
+      );
 
       let [originalRawTable] = await dataset.createTable(table_raw_changelog, {
         schema,
