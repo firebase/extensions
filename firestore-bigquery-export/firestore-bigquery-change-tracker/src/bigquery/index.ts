@@ -299,7 +299,23 @@ export class FirestoreBigQueryEventHistoryTracker
    * retry drop that column's value on a table missing it, forever.
    */
   private columnsAddedToExistingTables(): string[] {
-    const columns = [documentIdField.name, oldDataField.name];
+    // `document_id` is deliberately absent, though it is added to existing
+    // tables and so is exposed to the lag. It is the one column the default
+    // latest view groups on without wrapping in `FIRST_VALUE`
+    // (`snapshot.ts:128` and `:150`), so a row that lands with it null forms a
+    // separate group from the same document's later rows, and the document
+    // appears twice in `_latest`. Verified against a live instance: with the
+    // lag row and a later ordinary row both present, the legacy view returns
+    // two rows for one document, and the changelog is append-only so the
+    // duplicate never clears. The later write is what creates it.
+    //
+    // Tolerating the drop would therefore trade a delayed event for permanent,
+    // silent duplication of the view people query. Failing instead writes a
+    // backup row and throws, and the caller retries until BigQuery catches up.
+    // The standard view syntax is immune, since its join narrows to the latest
+    // timestamp before grouping, but it is off by default and is the user's
+    // setting rather than ours to rely on.
+    const columns = [oldDataField.name];
 
     // `path_params` is only ever added, and only ever emitted by `record`, when
     // wildcard ids are enabled. Listing it unconditionally meant a transform
@@ -324,14 +340,14 @@ export class FirestoreBigQueryEventHistoryTracker
     // writes a backup row and throws, which the caller can retry. The same goes
     // for a field strategy pointed at any other base column, `data` say.
     //
-    // The columns above are not free either, so this is a trade-off rather than
-    // a clean line. `document_id` and `path_params` are grouping keys in the
-    // latest view (`snapshot.ts:150` and `:191`, and the legacy form is the
-    // default), so a document written both during the lag and after it groups
-    // twice and appears twice in `_latest`. That is accepted here because the
-    // lag is transient and self-correcting, where losing the event is not, and
-    // because the view recovers once a later write lands with the column set.
-    // `timestamp` gets no such recovery, which is why it is excluded.
+    // The rule this all follows: a column is safe to drop only if a null it
+    // leaves behind heals on its own. The latest view wraps every column except
+    // `document_name` and `document_id` in `FIRST_VALUE(...) OVER (PARTITION BY
+    // document_name ORDER BY timestamp DESC)` (`snapshot.ts:134-140`), so their
+    // value is taken from the document's newest row and a null from the lag
+    // disappears as soon as any later row lands. `old_data`, `path_params` and a
+    // custom partition column are all in that set. `document_id` and
+    // `timestamp` are not, which is why neither is listed.
     const partitionColumn = this.partitioningConfig.getBigQueryColumnName();
 
     if (
