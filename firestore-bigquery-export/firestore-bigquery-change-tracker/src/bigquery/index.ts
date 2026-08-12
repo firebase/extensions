@@ -131,6 +131,9 @@ function withoutColumns(
   rows: bigquery.RowMetadata[],
   columns: string[]
 ): bigquery.RowMetadata[] {
+  // The ordinary insert strips nothing, so leave it its own rows.
+  if (!columns.length) return rows;
+
   return rows.map((row) => {
     if (!row?.json) return row;
 
@@ -408,13 +411,19 @@ export class FirestoreBigQueryEventHistoryTracker
 
   /**
    * Inserts rows of data into the BigQuery raw change log table.
+   *
+   * `rows` stays as the caller built it for the whole retry chain. A schema-lag
+   * retry narrows only the payload sent to BigQuery, so the backup written on
+   * the terminal path still holds every column, including any an earlier retry
+   * had to remove.
    */
   private async insertData(
     rows: bigquery.RowMetadata[],
     overrideOptions: InsertRowsOptions = {},
-    // Columns a schema-lag retry has already removed. Each retry must remove at
-    // least one column BigQuery has not named before, so this layer is bounded
-    // at one attempt per column in `columnsAddedToExistingTables`, plus one.
+    // Columns a schema-lag retry has already removed from the payload. Each
+    // retry must remove at least one column BigQuery has not named before, so
+    // this layer is bounded at one attempt per column in
+    // `columnsAddedToExistingTables`, plus one.
     strippedColumns: string[] = [],
     // Tracked separately from the above, so a transient blip on the first
     // attempt cannot consume the retry a schema lag on a later attempt needs.
@@ -431,7 +440,7 @@ export class FirestoreBigQueryEventHistoryTracker
       const table = dataset.table(this.rawChangeLogTableName());
 
       logs.dataInserting(rows.length);
-      await table.insert(rows, options);
+      await table.insert(withoutColumns(rows, strippedColumns), options);
       logs.dataInserted(rows.length);
     } catch (e) {
       // A column we just added may not be streamable yet. Remove the columns
@@ -450,7 +459,7 @@ export class FirestoreBigQueryEventHistoryTracker
       if (lagColumns.length) {
         logs.dataInsertRetriedWithoutColumns(rows.length, lagColumns);
         return this.insertData(
-          withoutColumns(rows, lagColumns),
+          rows,
           overrideOptions,
           [...strippedColumns, ...lagColumns],
           allowTransientRetry

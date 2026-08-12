@@ -316,6 +316,34 @@ describe("insertData retry behaviour", () => {
       expect(tracker._initialized).toBe(false);
     });
 
+    it("backs up the row the caller gave us, not the one the retry reduced", async () => {
+      // BigQuery names one unknown field per row, so a lag strip is routinely
+      // followed by a terminal rejection naming a different column. The backup
+      // is the only record of that row, so it must not be missing the column an
+      // earlier retry removed from the payload.
+      const insert = jest
+        .fn()
+        .mockRejectedValueOnce(
+          partialFailure([{ message: "no such field: document_id." }])
+        )
+        .mockRejectedValueOnce(
+          partialFailure([{ message: "no such field: injected_col." }])
+        );
+
+      await expect(insertData(trackerWith(insert))).rejects.toThrow(
+        "insert failed"
+      );
+
+      // Without this the assertion below could pass against an implementation
+      // that never stripped anything in the first place.
+      expect(payloadOf(insert, 1)).not.toHaveProperty("document_id");
+      expect(handleFailedTransactionsMock).toHaveBeenCalledWith(
+        ROWS,
+        expect.anything(),
+        expect.anything()
+      );
+    });
+
     it("does not match a column that merely contains an allowlisted name", async () => {
       // A user column named document_id_v2 must not be mistaken for
       // document_id, or its contents would be silently dropped.
