@@ -1,0 +1,250 @@
+name: Release Kit
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_kit:
+        description: "Kit / Package to publish"
+        required: true
+        type: choice
+        options:
+          - "kits/bigquery-firestore-export"
+          - "kits/delete-user-data"
+          - "kits/firestore-bigquery-export"
+          - "kits/firestore-bundle-builder"
+          - "kits/firestore-counter"
+          - "kits/firestore-genai-chatbot"
+          - "kits/firestore-incremental-capture"
+          - "kits/firestore-send-email"
+          - "kits/firestore-translate-text"
+          - "kits/firestore-vector-search"
+          - "kits/rtdb-limit-child-nodes"
+          - "kits/speech-to-text"
+          - "kits/storage-resize-images"
+      bump_level:
+        description: "Version Bump Level"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - "patch"
+          - "minor"
+          - "major"
+      is_prerelease:
+        description: "Publish as Release Candidate (RC)"
+        required: true
+        default: true
+        type: boolean
+      dry_run:
+        description: "Dry run (validate without pushing/publishing)"
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  # =========================================================
+  # 1. TEST JOB (Low Permissions: Read-Only)
+  # =========================================================
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Workspace Tests
+        run: npm test --workspace=${{ inputs.target_kit }}
+
+  # =========================================================
+  # 2. RELEASE JOB (Elevated Permissions: Write)
+  # =========================================================
+  release:
+    name: Version, Publish & Tag Release
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to push version commit, git tag & create GitHub Release
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: kits
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://wombat-dressing-room.appspot.com"
+
+      - name: Configure Git User
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Read & Validate CHANGELOG.md
+        id: changelog
+        working-directory: ${{ inputs.target_kit }}
+        run: |
+          CHANGELOG_FILE="CHANGELOG.md"
+
+          if [ ! -f "$CHANGELOG_FILE" ]; then
+            echo "::error file=${{ inputs.target_kit }}/CHANGELOG.md::CHANGELOG.md is missing! Releasing requires a CHANGELOG.md file."
+            exit 1
+          fi
+
+          NOTES=$(cat "$CHANGELOG_FILE")
+
+          if [ -z "$(echo "$NOTES" | tr -d '[:space:]')" ]; then
+            echo "::error file=${{ inputs.target_kit }}/CHANGELOG.md::CHANGELOG.md is empty! Please populate it with release notes before publishing."
+            exit 1
+          fi
+
+          # Output notes via multiline heredoc
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "notes<<$EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
+      - name: Determine Version Bump Type
+        id: config
+        working-directory: ${{ inputs.target_kit }}
+        run: |
+          CURRENT_VER=$(node -p "require('./package.json').version")
+          BUMP="${{ inputs.bump_level }}"
+          IS_PRERELEASE="${{ inputs.is_prerelease }}"
+
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            if [[ "$CURRENT_VER" =~ -rc\.[0-9]+$ ]]; then
+              BUMP_TYPE="prerelease"
+            else
+              BUMP_TYPE="pre${BUMP}"
+            fi
+            TARGET_TAG="next"
+          else
+            BUMP_TYPE="$BUMP"
+            TARGET_TAG="latest (and next)"
+          fi
+
+          echo "current_ver=$CURRENT_VER" >> $GITHUB_OUTPUT
+          echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+          echo "target_tag=$TARGET_TAG" >> $GITHUB_OUTPUT
+
+      - name: Install Dependencies & Build
+        run: |
+          npm ci
+          npm run build --workspace=${{ inputs.target_kit }}
+
+      - name: Bump Version (Clear CHANGELOG on Stable Release Only)
+        id: versioning
+        working-directory: ${{ inputs.target_kit }}
+        run: |
+          BUMP_TYPE="${{ steps.config.outputs.bump_type }}"
+          IS_PRERELEASE="${{ inputs.is_prerelease }}"
+          DRY_RUN="${{ inputs.dry_run }}"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            npm version $BUMP_TYPE --preid=rc --no-git-tag-version
+          else
+            # Only truncate CHANGELOG.md if this is a STABLE release (not a prerelease)
+            if [ "$IS_PRERELEASE" != "true" ]; then
+              echo "Stable release detected: clearing CHANGELOG.md..."
+              > CHANGELOG.md
+              git add CHANGELOG.md
+            else
+              echo "Prerelease detected: preserving CHANGELOG.md content."
+            fi
+
+            # Create version bump commit and git tag
+            if [[ "$BUMP_TYPE" == pre* ]] || [[ "$BUMP_TYPE" == "prerelease" ]]; then
+              npm version $BUMP_TYPE --preid=rc -m "chore(release): %s [skip ci]"
+            else
+              npm version $BUMP_TYPE -m "chore(release): %s [skip ci]"
+            fi
+          fi
+
+          NEW_VER=$(node -p "require('./package.json').version")
+          PKG_NAME=$(node -p "require('./package.json').name")
+
+          echo "version=$NEW_VER" >> $GITHUB_OUTPUT
+          echo "pkg_name=$PKG_NAME" >> $GITHUB_OUTPUT
+          echo "tag_name=${PKG_NAME}@${NEW_VER}" >> $GITHUB_OUTPUT
+
+      - name: Dry Run Summary
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "=========================================================="
+          echo "                 DRY RUN SUMMARY                          "
+          echo "=========================================================="
+          echo " Package Name:     ${{ steps.versioning.outputs.pkg_name }}"
+          echo " Target Directory: ${{ inputs.target_kit }}"
+          echo " Current Version:  ${{ steps.config.outputs.current_ver }}"
+          echo " Target Version:   ${{ steps.versioning.outputs.version }}"
+          echo " Version Bump:     ${{ steps.config.outputs.bump_type }}"
+          echo " NPM Dist-Tag:     ${{ steps.config.outputs.target_tag }}"
+          echo " Release Type:     $( [ "${{ inputs.is_prerelease }}" = "true" ] && echo "Release Candidate (RC)" || echo "Stable Release" )"
+          echo " Git Tag Name:     ${{ steps.versioning.outputs.tag_name }}"
+          echo " CHANGELOG State:  $( [ "${{ inputs.is_prerelease }}" = "true" ] && echo "Preserved" || echo "Will be cleared on publish" )"
+          echo "----------------------------------------------------------"
+          echo " Release Notes from CHANGELOG.md:"
+          echo "${{ steps.changelog.outputs.notes }}"
+          echo "=========================================================="
+
+      - name: Push Version Commit & Tags to Branch
+        if: ${{ !inputs.dry_run }}
+        run: git push origin kits --follow-tags
+
+      - name: Publish to NPM
+        working-directory: ${{ inputs.target_kit }}
+        run: |
+          IS_PRERELEASE="${{ inputs.is_prerelease }}"
+          DRY_RUN="${{ inputs.dry_run }}"
+          PKG_NAME="${{ steps.versioning.outputs.pkg_name }}"
+          VERSION="${{ steps.versioning.outputs.version }}"
+
+          DRY_RUN_FLAG=""
+          if [ "$DRY_RUN" = "true" ]; then
+            DRY_RUN_FLAG="--dry-run"
+            echo "Executing npm publish with --dry-run..."
+          fi
+
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            npm publish --tag next --access public $DRY_RUN_FLAG
+          else
+            npm publish --tag latest --access public $DRY_RUN_FLAG
+            if [ "$DRY_RUN" != "true" ]; then
+              npm dist-tag add ${PKG_NAME}@${VERSION} next
+            fi
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release via GitHub CLI
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${{ steps.versioning.outputs.tag_name }}"
+          PKG_NAME="${{ steps.versioning.outputs.pkg_name }}"
+          VERSION="${{ steps.versioning.outputs.version }}"
+          IS_PRERELEASE="${{ inputs.is_prerelease }}"
+
+          PRERELEASE_FLAG=""
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release create "$TAG_NAME" \
+            --title "$PKG_NAME v$VERSION" \
+            --notes "${{ steps.changelog.outputs.notes }}" \
+            --target kits \
+            $PRERELEASE_FLAG
