@@ -41,10 +41,11 @@ const MAX_ERROR_MESSAGES = 5;
 /** Cap, so one bad insert cannot write an unbounded Firestore field. */
 const MAX_ERROR_DETAILS_LENGTH = 1000;
 
-function truncate(value: string): string {
-  return value.length > MAX_ERROR_DETAILS_LENGTH
-    ? `${value.slice(0, MAX_ERROR_DETAILS_LENGTH - 3)}...`
-    : value;
+function truncate(
+  value: string,
+  limit: number = MAX_ERROR_DETAILS_LENGTH
+): string {
+  return value.length > limit ? `${value.slice(0, limit - 3)}...` : value;
 }
 
 /**
@@ -71,6 +72,17 @@ function nestedErrorMessages(e: unknown): string {
 
       if (typeof message === "string" && message.length > 0) {
         messages.add(message);
+        continue;
+      }
+
+      // A `stopped` entry, the row BigQuery did not attempt, carries an empty
+      // `message` and an empty `location`, so `reason` is the only field that
+      // identifies it. Without this a failure whose entries are all `stopped`
+      // recorded nothing but the error's class name.
+      const reason = (entry as any)?.reason;
+
+      if (typeof reason === "string" && reason.length > 0) {
+        messages.add(reason);
       }
     }
   }
@@ -80,10 +92,14 @@ function nestedErrorMessages(e: unknown): string {
   const all = Array.from(messages);
   const shown = all.slice(0, MAX_ERROR_MESSAGES);
   const remaining = all.length - shown.length;
+  const suffix = remaining > 0 ? ` (+${remaining} more)` : "";
 
-  return remaining > 0
-    ? `${shown.join("; ")} (+${remaining} more)`
-    : shown.join("; ");
+  // Truncating the messages rather than the finished string, so the count is
+  // not the part that gets cut off. The result still fits the cap.
+  return `${truncate(
+    shown.join("; "),
+    MAX_ERROR_DETAILS_LENGTH - suffix.length
+  )}${suffix}`;
 }
 
 /**
@@ -103,20 +119,24 @@ function nestedErrorMessages(e: unknown): string {
  * because it falls back on null and undefined but not on "".
  */
 function describeError(e: unknown): string {
-  const message = (e as any)?.message;
-
-  if (typeof message === "string" && message.length > 0) {
-    return truncate(message);
-  }
-
-  const nested = nestedErrorMessages(e);
-
-  if (nested.length > 0) return truncate(nested);
-
+  // The whole body is guarded, not just `String(e)`, so that reading `.message`
+  // off a value with a throwing getter cannot escape either.
   try {
+    const message = (e as any)?.message;
+
+    if (typeof message === "string" && message.length > 0) {
+      return truncate(message);
+    }
+
+    // Already capped, so it is not truncated a second time here.
+    const nested = nestedErrorMessages(e);
+
+    if (nested.length > 0) return nested;
+
     return truncate(String(e));
-  } catch (stringifyError) {
-    // A value whose `toString` throws, or an object with a null prototype.
+  } catch (describeFailure) {
+    // A value whose `toString` or `message` throws, or an object with a null
+    // prototype.
     return "Unknown error";
   }
 }

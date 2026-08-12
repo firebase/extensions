@@ -187,8 +187,12 @@ describe("handleFailedTransactions error details", () => {
       )
     );
 
-    expect(details).toHaveLength(1000);
-    expect(details.endsWith("...")).toBe(true);
+    // The count is the part an operator needs most when the messages are too
+    // long to keep, so it must survive the truncation rather than be cut off
+    // by it. The cap still holds.
+    expect(details.length).toBeLessThanOrEqual(1000);
+    expect(details.endsWith(" (+4 more)")).toBe(true);
+    expect(details).toContain("...");
 
     const short = await detailsFor(
       partialFailure(
@@ -199,6 +203,46 @@ describe("handleFailedTransactions error details", () => {
     );
 
     expect(short).toBe("field 0; field 1; field 2; field 3; field 4 (+3 more)");
+  });
+
+  it("falls back to the reason when an entry carries no message", async () => {
+    // A `stopped` entry, the row BigQuery did not attempt, arrives with an
+    // empty message and an empty location, so the reason is all there is. A
+    // batch rejected entirely this way used to record only the class name.
+    const details = await detailsFor(
+      partialFailure([
+        { errors: [{ message: "", location: "", reason: "stopped" }] },
+        { errors: [{ message: "", location: "", reason: "stopped" }] },
+      ])
+    );
+
+    expect(details).toBe("stopped");
+  });
+
+  it("prefers an entry's message over its reason", async () => {
+    const details = await detailsFor(
+      partialFailure([
+        {
+          errors: [
+            { message: "no such field: document_id.", reason: "invalid" },
+          ],
+        },
+      ])
+    );
+
+    expect(details).toBe("no such field: document_id.");
+  });
+
+  it("survives an error whose message getter throws", async () => {
+    // Nothing here may throw: this runs inside the caller's catch block, so an
+    // escape is reported as a failed backup and the row is lost.
+    const hostile = {
+      get message(): string {
+        throw new Error("hostile getter");
+      },
+    };
+
+    await expect(detailsFor(hostile)).resolves.toBe("Unknown error");
   });
 
   it("prefers a populated top-level message over the nested ones", async () => {
