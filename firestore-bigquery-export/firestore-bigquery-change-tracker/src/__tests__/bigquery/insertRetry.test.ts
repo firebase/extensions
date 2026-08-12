@@ -344,6 +344,27 @@ describe("insertData retry behaviour", () => {
       );
     });
 
+    it("clears initialization so a column that is really gone comes back", async () => {
+      // Stripping is only safe while the column exists and BigQuery has not
+      // caught up. Nothing here can tell that case from a column that was
+      // actually dropped, so the next batch must re-run initialize. Otherwise a
+      // warm instance strips it for its whole life and reports success.
+      const insert = jest
+        .fn()
+        .mockRejectedValueOnce(
+          partialFailure([{ message: "no such field: old_data." }])
+        )
+        .mockResolvedValueOnce(undefined);
+
+      const tracker = trackerWith(insert);
+      tracker._initialized = true;
+
+      await expect(insertData(tracker)).resolves.toBeUndefined();
+
+      expect(insert).toHaveBeenCalledTimes(2);
+      expect(tracker._initialized).toBe(false);
+    });
+
     it("does not match a column that merely contains an allowlisted name", async () => {
       // A user column named document_id_v2 must not be mistaken for
       // document_id, or its contents would be silently dropped.
@@ -465,8 +486,6 @@ describe("insertData retry behaviour", () => {
   });
 
   describe("the user-configured partition column", () => {
-    // addPartitioningToSchema adds this column to an existing table too, so it
-    // has the same exposure as the base columns above.
     const partitioned = {
       partitioning: {
         granularity: "HOUR",
@@ -476,22 +495,27 @@ describe("insertData retry behaviour", () => {
       },
     } as Partial<ChangeTrackerConfig>;
 
-    it("is treated as schema lag when field partitioning is configured", async () => {
+    it("is not allowlisted, even under the strategy that adds it", async () => {
+      // It is added only when `tableRequiresUpdate` is true, and that is false
+      // for a table which is already time-partitioned. So on exactly that table
+      // the column is never added, and allowlisting it would strip it from
+      // every row and report success, forever. Failing is recoverable, and
+      // little is lost either way: the value comes from a document field that
+      // `data` already carries.
       const insert = jest
         .fn()
-        .mockRejectedValueOnce(
+        .mockRejectedValue(
           partialFailure([
             { message: "no such field.", location: "created_at" },
           ])
-        )
-        .mockResolvedValueOnce(undefined);
+        );
 
       await expect(
         insertData(trackerWith(insert, partitioned))
-      ).resolves.toBeUndefined();
+      ).rejects.toThrow("insert failed");
 
-      expect(insert).toHaveBeenCalledTimes(2);
-      expect(payloadOf(insert, 1)).not.toHaveProperty("created_at");
+      expect(insert).toHaveBeenCalledTimes(1);
+      expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
     });
 
     it("is not allowlisted when no partitioning is configured", async () => {

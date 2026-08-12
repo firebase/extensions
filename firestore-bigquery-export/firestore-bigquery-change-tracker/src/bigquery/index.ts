@@ -295,10 +295,10 @@ export class FirestoreBigQueryEventHistoryTracker
    * column exposed to the lag.
    *
    * Every column added belongs here unless dropping it would cost more than
-   * losing the event, and `timestamp` below is the only one that does. Omitting
-   * a column turns a row that lands today, with that column null, into an event
-   * lost once the caller exhausts its retries, because nothing on the write
-   * path reconciles the schema.
+   * losing the event, or it is not reliably added at all. Both exceptions are
+   * below. Omitting a column turns a row that lands today, with that column
+   * null, into an event lost once the caller exhausts its retries, because
+   * nothing on the write path reconciles the schema.
    *
    * It must also stay exact. Listing a column that is never added makes the
    * retry drop that column's value on a table missing it, forever.
@@ -315,53 +315,44 @@ export class FirestoreBigQueryEventHistoryTracker
       columns.push(documentPathParams.name);
     }
 
-    // The partition column is also added to an existing table, so it shares the
-    // same exposure. Only the Firestore field strategy is listed. The Firestore
-    // timestamp strategy is excluded by construction, since its column is
-    // always `timestamp`, which the collision check below would reject anyway.
+    // The custom partition column is deliberately absent, though it is added to
+    // an existing table under the Firestore field strategy. It is added only
+    // when `tableRequiresUpdate` returns true, and that returns false for a
+    // table which is already time-partitioned
+    // (`checkUpdates.ts:39-44` via `isValidPartitionForExistingTable`, which is
+    // `!isPartitioned`). So an operator moving an already-partitioned table to
+    // field partitioning gets a column that is never added, and listing it here
+    // would make every insert strip it and report success, forever. That is the
+    // exactness failure this docstring warns about. `timestamp` is excluded
+    // too, for being the partition and ordering key: a silent null there
+    // misfiles the row for good, where a failure the caller can retry does not.
     //
-    // Both exclusions are a judgement call, not dead code: `addPartitioningToSchema`
-    // is called with the live table's fields, so its early return only fires
-    // when the table already has the column. On a table missing `timestamp` the
-    // column really is added, as NULLABLE. But `timestamp` is the ordering key
-    // for the latest view as well as the partition key, so tolerating the drop
-    // would silently misfile every affected row for good. Failing instead
-    // writes a backup row and throws, which the caller can retry. The same goes
-    // for a field strategy pointed at any other base column, `data` say.
+    // Little is lost by excluding it. The value is derived from a field of the
+    // document, which is serialised whole into `data` (`:200`, and `old_data`
+    // for a delete), so the row still carries it. And `Partitioning` refuses to
+    // repartition an existing table anyway, so the column has nowhere to go.
     //
     // The columns above are not free either, so this is a trade-off rather than
-    // a clean line. `document_id` is the one of them the default latest view
-    // does not wrap in `FIRST_VALUE`: the legacy query selects it raw and then
-    // groups on it (`snapshot.ts:133` and `:150`), so a row that lands with it
-    // null forms its own group and the document appears twice in `_latest`. The
-    // changelog is append-only, so a later write does not clear the duplicate.
-    // `old_data` and `path_params` are wrapped (`snapshot.ts:134-140`), and a
-    // null there is simply replaced by the newest row's value.
+    // a clean line. A null in a column the latest view groups on makes that row
+    // its own group, so the document appears twice in `_latest`, and the
+    // changelog is append-only so a later write does not clear the duplicate.
+    // Which columns those are depends on the view syntax, and only `event_id`,
+    // `data` and `old_data` are safe under both. The legacy view groups on
+    // `document_name` and `document_id` and wraps everything else in
+    // `FIRST_VALUE` (`snapshot.ts:126-152`). The standard view wraps only
+    // `nonGroupFields`, in `ANY_VALUE`, and groups on everything else,
+    // `path_params` and `timestamp` included (`snapshot.ts:174-194`). So
+    // `document_id` costs a duplicate on either, and `path_params` costs one on
+    // the standard syntax.
     //
-    // Tolerating the drop is still the better trade, because the duplication is
-    // not new. `document_id` is added to an existing table as a schema change
-    // and nothing backfills it, so on exactly the tables this lag can affect
+    // Tolerating that is still the better trade, because the duplication is not
+    // new. These columns are added to an existing table as a schema change with
+    // nothing backfilling them, so on exactly the tables this lag can affect
     // every pre-upgrade row is already null, and every document written both
-    // before and after the upgrade already appears twice in the legacy view,
-    // permanently. The lag adds a handful of rows to a set that is already
-    // there. Losing the event has no such floor: the caller's retries are
-    // finite and nothing reconciles the schema afterwards, so the change never
-    // reaches BigQuery at all.
-    //
-    // `timestamp` is wrapped like the rest, so its exclusion above is not a view
-    // concern; it is excluded for being the partition and ordering key. A custom
-    // partition column is not in the view at all, since the view is built from
-    // `RawChangelogViewSchema` rather than the live table's fields.
-    const partitionColumn = this.partitioningConfig.getBigQueryColumnName();
-
-    if (
-      partitionColumn &&
-      this.partitioningConfig.isFirestoreFieldPartitioning() &&
-      !RawChangelogSchema.fields.some((field) => field.name === partitionColumn)
-    ) {
-      columns.push(partitionColumn);
-    }
-
+    // before and after the upgrade already appears twice. The lag adds a
+    // handful of rows to a set that is already there. Losing the event has no
+    // such floor: the caller's retries are finite and nothing reconciles the
+    // schema afterwards, so the change never reaches BigQuery at all.
     return columns;
   }
 
@@ -458,6 +449,14 @@ export class FirestoreBigQueryEventHistoryTracker
 
       if (lagColumns.length) {
         logs.dataInsertRetriedWithoutColumns(rows.length, lagColumns);
+
+        // The whole case for stripping a column is that it exists and BigQuery
+        // has not caught up yet. When that is wrong, and the column really is
+        // gone, nothing here notices. Clearing this makes the next batch run
+        // `initialize` and add it back, so a mistaken lag costs one batch
+        // rather than the life of the instance.
+        this._initialized = false;
+
         return this.insertData(
           rows,
           overrideOptions,
