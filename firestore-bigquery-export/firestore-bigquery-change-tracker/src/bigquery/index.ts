@@ -91,32 +91,54 @@ function extractInsertErrors(e: any): InsertAllError[] {
 }
 
 /**
- * Whether an error entry reports an unknown field naming one of `columns`.
+ * The column an error entry reports as unknown, if it names one of `columns`.
+ * Null for anything else, so that an entry we cannot attribute fails loudly
+ * rather than causing data to be dropped.
  *
- * BigQuery has reported this two ways: a bare `"no such field."` with the
- * column in `location`, and an inlined `"no such field: document_id."`. Match
- * either, and treat an unattributable message as not matching so that we fail
- * loudly rather than dropping data.
+ * A live instance sends both forms at once: `location` set to the column, and
+ * an inlined `"no such field: document_id."`. Older responses carried only the
+ * bare `"no such field."` with `location`, so both are handled.
  */
-function isUnknownFieldError(
+function unknownFieldColumn(
   error: InsertAllError,
   columns: string[]
-): boolean {
+): string | null {
   // Defensive to match extractInsertErrors: a null entry must classify as not
   // matching, not throw from inside the catch block and lose the real error.
   const message = error?.message ?? "";
 
-  if (!/^no such field/i.test(message)) return false;
+  if (!/^no such field/i.test(message)) return null;
 
   // The bare form names the column in `location`.
-  if (error.location) return columns.includes(error.location);
+  if (error.location) {
+    return columns.includes(error.location) ? error.location : null;
+  }
 
   // The inlined form carries the column in the message. Compare the whole name:
   // a substring test would match a user column such as `document_id_v2` and
   // silently drop it.
   const named = message.match(/^no such field:\s*(.+?)\.?$/i);
 
-  return named ? columns.includes(named[1]) : false;
+  return named && columns.includes(named[1]) ? named[1] : null;
+}
+
+/**
+ * Copies `rows` with `columns` removed from each payload.
+ *
+ * Rows are inserted with `raw: true`, so the payload is under `json`.
+ */
+function withoutColumns(
+  rows: bigquery.RowMetadata[],
+  columns: string[]
+): bigquery.RowMetadata[] {
+  return rows.map((row) => {
+    if (!row?.json) return row;
+
+    const json = { ...row.json };
+    columns.forEach((column) => delete json[column]);
+
+    return { ...row, json };
+  });
 }
 
 /**
@@ -226,27 +248,35 @@ export class FirestoreBigQueryEventHistoryTracker
   }
 
   /**
-   * Whether a failed insertion is the one case it is safe to retry while
-   * ignoring unknown values: a column this tracker adds to an existing table
-   * that BigQuery is not ready to stream into yet
-   * (https://issuetracker.google.com/35905247).
+   * The rejected columns when a failed insertion is the one case it is safe to
+   * retry: a column this tracker adds to an existing table that BigQuery is not
+   * ready to stream into yet (https://issuetracker.google.com/35905247).
    *
-   * Every field BigQuery rejected must be one of those columns. Any other
-   * unknown field is real schema drift, and retrying it with
-   * `ignoreUnknownValues` would silently drop the user's data.
+   * Empty unless every field BigQuery rejected is one of those columns. Any
+   * other unknown field is real schema drift, and dropping it would lose the
+   * user's data.
    *
-   * Deliberately not `async`: the result is used in a boolean guard, and a
-   * promise there is always truthy.
+   * Deliberately not `async`: the result is used in a guard, and a promise
+   * there is always truthy.
    */
-  private isSchemaLagInsertionError(e: any): boolean {
+  private schemaLagColumns(e: any): string[] {
     const errors = extractInsertErrors(e);
 
     // Without per-field detail we cannot show the retry is safe.
-    if (!errors.length) return false;
+    if (!errors.length) return [];
 
     const addedColumns = this.columnsAddedToExistingTables();
+    const rejected: string[] = [];
 
-    return errors.every((error) => isUnknownFieldError(error, addedColumns));
+    for (const error of errors) {
+      const column = unknownFieldColumn(error, addedColumns);
+
+      if (!column) return [];
+
+      rejected.push(column);
+    }
+
+    return rejected;
   }
 
   /**
@@ -351,10 +381,12 @@ export class FirestoreBigQueryEventHistoryTracker
   private async insertData(
     rows: bigquery.RowMetadata[],
     overrideOptions: InsertRowsOptions = {},
-    // Tracked separately, so a transient blip on the first attempt cannot
-    // consume the retry that a schema lag on a later attempt needs. Each is
-    // spent at most once, bounding this layer at three attempts.
-    allowSchemaLagRetry: boolean = true,
+    // Columns a schema-lag retry has already removed. Each retry must remove at
+    // least one column BigQuery has not named before, so this layer is bounded
+    // at one attempt per column in `columnsAddedToExistingTables`, plus one.
+    strippedColumns: string[] = [],
+    // Tracked separately from the above, so a transient blip on the first
+    // attempt cannot consume the retry a schema lag on a later attempt needs.
     allowTransientRetry: boolean = true
   ) {
     const options = {
@@ -371,14 +403,25 @@ export class FirestoreBigQueryEventHistoryTracker
       await table.insert(rows, options);
       logs.dataInserted(rows.length);
     } catch (e) {
-      // A column we just added may not be streamable yet. Retry ignoring the
-      // fields BigQuery does not know about, so the rest of the row lands.
-      if (allowSchemaLagRetry && this.isSchemaLagInsertionError(e)) {
-        logs.dataInsertRetriedIgnoringUnknownColumns(rows.length);
+      // A column we just added may not be streamable yet. Remove the columns
+      // BigQuery named and retry, so the rest of the row lands.
+      //
+      // Deliberately not `ignoreUnknownValues`. A live instance reports one
+      // unknown field per row rather than all of them, so ignoring unknown
+      // values would also discard fields BigQuery never mentioned, including
+      // real drift this retry is not meant to tolerate. Removing only what it
+      // named leaves any other unknown column failing the insert, where it is
+      // backed up rather than lost.
+      const lagColumns = this.schemaLagColumns(e).filter(
+        (column) => !strippedColumns.includes(column)
+      );
+
+      if (lagColumns.length) {
+        logs.dataInsertRetriedWithoutColumns(rows.length, lagColumns);
         return this.insertData(
-          rows,
-          { ...overrideOptions, ignoreUnknownValues: true },
-          false,
+          withoutColumns(rows, lagColumns),
+          overrideOptions,
+          [...strippedColumns, ...lagColumns],
           allowTransientRetry
         );
       }
@@ -387,12 +430,7 @@ export class FirestoreBigQueryEventHistoryTracker
       // `ignoreUnknownValues`, which would silently drop real data.
       if (allowTransientRetry && this.isTransientInsertionError(e)) {
         logs.dataInsertRetriedAfterTransientError(rows.length);
-        return this.insertData(
-          rows,
-          overrideOptions,
-          allowSchemaLagRetry,
-          false
-        );
+        return this.insertData(rows, overrideOptions, strippedColumns, false);
       }
 
       // Terminal: no further attempt will be made for these rows.
