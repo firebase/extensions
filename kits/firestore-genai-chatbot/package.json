@@ -1,6 +1,6 @@
 {
-  "name": "@firebase/firestore-genai-chatbot",
-  "version": "0.1.0",
+  "name": "@firebase-function-kits/firestore-genai-chatbot",
+  "version": "0.0.0",
   "description": "Conversational GenAI chatbot backed by Firestore",
   "license": "Apache-2.0",
   "main": "lib/index.js",
