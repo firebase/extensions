@@ -141,10 +141,14 @@ export const dataInserted = (rowCount: number) => {
  * The two retry paths must be distinguishable in the logs: only one of them
  * discards columns, and an operator investigating suspected column loss has no
  * other way to tell which retry ran.
+ *
+ * Warn rather than debug: this is the one path that leaves a column permanently
+ * null for the rows it recovers, and debug is suppressed at the default log
+ * level, so an operator would have had to already suspect the loss to see it.
  */
 export const dataInsertRetriedIgnoringUnknownColumns = (rowCount: number) => {
-  logger.debug(
-    `Retrying insert of ${rowCount} row(s) of data into BigQuery, ignoring unknown columns`
+  logger.warn(
+    `Retrying insert of ${rowCount} row(s) of data into BigQuery, ignoring unknown columns. Any column BigQuery rejected will be null for these rows.`
   );
 };
 

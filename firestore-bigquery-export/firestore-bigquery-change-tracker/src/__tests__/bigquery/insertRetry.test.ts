@@ -50,22 +50,26 @@ const config = (
  * that drops `location`.
  */
 function partialFailure(
-  fieldErrors: Array<{ message: string; location?: string }>
+  fieldErrors: Array<{ message: string; location?: string; reason?: string }>
 ) {
+  // BigQuery always sets a reason on these entries, so default it rather than
+  // leaving it undefined: classification reads it.
+  const entries = fieldErrors.map((fieldError) => ({
+    reason: "invalid",
+    ...fieldError,
+  }));
+
   const e: any = new Error("insert failed");
   e.name = "PartialFailureError";
   e.errors = [
     {
       row: {},
-      errors: fieldErrors.map(({ message }) => ({
-        message,
-        reason: "invalid",
-      })),
+      errors: entries.map(({ message, reason }) => ({ message, reason })),
     },
   ];
   e.response = {
     kind: "bigquery#tableDataInsertAllResponse",
-    insertErrors: [{ index: 0, errors: fieldErrors }],
+    insertErrors: [{ index: 0, errors: entries }],
   };
   return e;
 }
@@ -525,6 +529,61 @@ describe("insertData retry behaviour", () => {
   });
 
   describe("transient failures", () => {
+    it("retries a partial failure whose reasons are all retryable", async () => {
+      // A rate limit or backend error arrives as a partial failure, not as a
+      // bare transport error. Classifying it as terminal would send a batch
+      // BigQuery asked us to resend straight to the backup collection.
+      const insert = jest
+        .fn()
+        .mockRejectedValueOnce(
+          partialFailure([
+            { message: "Backend error.", reason: "backendError" },
+            { message: "Row skipped.", reason: "stopped" },
+          ])
+        )
+        .mockResolvedValueOnce(undefined);
+
+      await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
+
+      expect(insert).toHaveBeenCalledTimes(2);
+      // Never with ignoreUnknownValues: nothing here says a column is unknown.
+      expect(insert.mock.calls[1][1]).toMatchObject({
+        ignoreUnknownValues: false,
+      });
+      expect(handleFailedTransactionsMock).not.toHaveBeenCalled();
+    });
+
+    it("does not retry when any reason is not retryable", async () => {
+      const insert = jest.fn().mockRejectedValue(
+        partialFailure([
+          { message: "Backend error.", reason: "backendError" },
+          { message: "Cannot convert value.", reason: "invalid" },
+        ])
+      );
+
+      await expect(insertData(trackerWith(insert))).rejects.toThrow(
+        "insert failed"
+      );
+
+      expect(insert).toHaveBeenCalledTimes(1);
+      expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not retry a partial failure with no reason to judge", async () => {
+      // Fail closed: an entry we cannot classify is not evidence of a blip.
+      const insert = jest
+        .fn()
+        .mockRejectedValue(
+          partialFailure([{ message: "", reason: undefined }])
+        );
+
+      await expect(insertData(trackerWith(insert))).rejects.toThrow(
+        "insert failed"
+      );
+
+      expect(insert).toHaveBeenCalledTimes(1);
+    });
+
     it("retries once with options unchanged", async () => {
       const insert = jest
         .fn()
@@ -612,13 +671,42 @@ describe("insertData retry behaviour", () => {
 
   describe("retry logging", () => {
     let debug: jest.SpyInstance;
+    let warn: jest.SpyInstance;
 
     beforeEach(() => {
       debug = jest.spyOn(logger, "debug").mockImplementation(() => undefined);
+      warn = jest.spyOn(logger, "warn").mockImplementation(() => undefined);
     });
 
     afterEach(() => {
       debug.mockRestore();
+      warn.mockRestore();
+    });
+
+    it("warns rather than debugs when a retry drops columns", async () => {
+      // Debug is suppressed at the default log level, so an operator would
+      // have to already suspect the loss to see the only record of it.
+      const insert = jest
+        .fn()
+        .mockRejectedValueOnce(
+          partialFailure([
+            { message: "no such field.", location: "document_id" },
+          ])
+        )
+        .mockResolvedValueOnce(undefined);
+
+      await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
+
+      expect(
+        warn.mock.calls.filter(([message]) =>
+          String(message).includes("ignoring unknown columns")
+        )
+      ).toHaveLength(1);
+      expect(
+        debug.mock.calls.filter(([message]) =>
+          String(message).includes("ignoring unknown columns")
+        )
+      ).toHaveLength(0);
     });
 
     it("distinguishes the retry that drops columns from the one that does not", async () => {
@@ -637,7 +725,9 @@ describe("insertData retry behaviour", () => {
 
       await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
 
-      const messages = debug.mock.calls.map(([message]) => String(message));
+      const messages = [...debug.mock.calls, ...warn.mock.calls].map(
+        ([message]) => String(message)
+      );
       const dropped = messages.filter((message) =>
         message.includes("ignoring unknown columns")
       );

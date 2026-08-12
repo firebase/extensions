@@ -55,6 +55,21 @@ interface InsertAllError {
 }
 
 /**
+ * The `insertAll` error reasons BigQuery documents as worth retrying.
+ *
+ * `stopped` means the row was not inserted because another row in the same
+ * request failed, so it never appears on its own. The reason that does appear
+ * alongside it decides whether the request is retryable.
+ */
+const RETRYABLE_INSERT_REASONS = [
+  "backendError",
+  "internalError",
+  "rateLimitExceeded",
+  "timeout",
+  "stopped",
+];
+
+/**
  * Flattens the per-field errors out of a BigQuery insert failure.
  *
  * `PartialFailureError` carries the raw `insertAll` response on `response`,
@@ -258,26 +273,26 @@ export class FirestoreBigQueryEventHistoryTracker
     }
 
     // The partition column is also added to an existing table, so it shares the
-    // same exposure. It is deliberately excluded when its name collides with a
-    // base changelog column, which in practice means the Firestore timestamp
-    // strategy, whose column is `timestamp`.
+    // same exposure. Only the Firestore field strategy is listed. The Firestore
+    // timestamp strategy is excluded by construction, since its column is
+    // always `timestamp`, which the collision check below would reject anyway.
     //
-    // That exclusion is a judgement call, not dead code: `addPartitioningToSchema`
+    // Both exclusions are a judgement call, not dead code: `addPartitioningToSchema`
     // is called with the live table's fields, so its early return only fires
     // when the table already has the column. On a table missing `timestamp` the
-    // column really is added, so the lag is reachable. But `timestamp` is
-    // NULLABLE and is the ordering key for the latest view as well as the
-    // partition key, so tolerating the drop would silently misfile every
-    // affected row for good. Failing instead writes a backup row and throws,
-    // which the caller can retry. That reasoning does not extend to `old_data`,
-    // `document_id` or `path_params`: those are nullable metadata, where a
-    // dropped column costs one field and allowlisting keeps the event.
+    // column really is added, as NULLABLE. But `timestamp` is the ordering key
+    // for the latest view as well as the partition key, so tolerating the drop
+    // would silently misfile every affected row for good. Failing instead
+    // writes a backup row and throws, which the caller can retry. The same goes
+    // for a field strategy pointed at any other base column, `data` say. That
+    // reasoning does not extend to `old_data`, `document_id` or `path_params`:
+    // those are nullable metadata, where a dropped column costs one field and
+    // allowlisting keeps the event.
     const partitionColumn = this.partitioningConfig.getBigQueryColumnName();
 
     if (
       partitionColumn &&
-      (this.partitioningConfig.isFirestoreFieldPartitioning() ||
-        this.partitioningConfig.isFirestoreTimestampPartitioning()) &&
+      this.partitioningConfig.isFirestoreFieldPartitioning() &&
       !RawChangelogSchema.fields.some((field) => field.name === partitionColumn)
     ) {
       columns.push(partitionColumn);
@@ -292,11 +307,20 @@ export class FirestoreBigQueryEventHistoryTracker
    *
    * A failure with no partial-failure body (a network blip, a quota rejection,
    * a 5xx) says nothing about our schema, so retrying it as-is is safe.
-   * A partial failure we did not recognise is BigQuery rejecting the
-   * shape of the data itself, which a plain retry cannot fix.
+   *
+   * A partial failure qualifies only when every entry names a reason BigQuery
+   * documents as retryable. Anything else is BigQuery rejecting the shape of
+   * the data itself, which a plain retry cannot fix. The schema-lag check runs
+   * first, so an unknown-field entry never reaches here.
    */
   private isTransientInsertionError(e: any): boolean {
-    return extractInsertErrors(e).length === 0;
+    const errors = extractInsertErrors(e);
+
+    if (!errors.length) return true;
+
+    return errors.every((error) =>
+      RETRYABLE_INSERT_REASONS.includes(error?.reason)
+    );
   }
 
   /**
