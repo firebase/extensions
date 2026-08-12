@@ -269,6 +269,13 @@ export class FirestoreBigQueryEventHistoryTracker
     const rejected: string[] = [];
 
     for (const error of errors) {
+      // `stopped` marks a row BigQuery did not attempt, because another row in
+      // the same request failed and `skipInvalidRows` is false. It says nothing
+      // about the schema, so treating it as unattributable would stop any
+      // multi-row batch from ever being recognised as lag. `scripts/import`
+      // records batches, so this is reachable.
+      if (error?.reason === "stopped") continue;
+
       const column = unknownFieldColumn(error, addedColumns);
 
       if (!column) return [];
@@ -276,7 +283,8 @@ export class FirestoreBigQueryEventHistoryTracker
       rejected.push(column);
     }
 
-    return rejected;
+    // One entry per row, so the same column appears once per rejected row.
+    return [...new Set(rejected)];
   }
 
   /**
@@ -314,10 +322,16 @@ export class FirestoreBigQueryEventHistoryTracker
     // for the latest view as well as the partition key, so tolerating the drop
     // would silently misfile every affected row for good. Failing instead
     // writes a backup row and throws, which the caller can retry. The same goes
-    // for a field strategy pointed at any other base column, `data` say. That
-    // reasoning does not extend to `old_data`, `document_id` or `path_params`:
-    // those are nullable metadata, where a dropped column costs one field and
-    // allowlisting keeps the event.
+    // for a field strategy pointed at any other base column, `data` say.
+    //
+    // The columns above are not free either, so this is a trade-off rather than
+    // a clean line. `document_id` and `path_params` are grouping keys in the
+    // latest view (`snapshot.ts:150` and `:191`, and the legacy form is the
+    // default), so a document written both during the lag and after it groups
+    // twice and appears twice in `_latest`. That is accepted here because the
+    // lag is transient and self-correcting, where losing the event is not, and
+    // because the view recovers once a later write lands with the column set.
+    // `timestamp` gets no such recovery, which is why it is excluded.
     const partitionColumn = this.partitioningConfig.getBigQueryColumnName();
 
     if (

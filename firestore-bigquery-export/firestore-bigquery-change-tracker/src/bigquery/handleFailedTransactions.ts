@@ -41,6 +41,13 @@ export default async (
   e: Error
 ): Promise<void> => {
   const db = backupFirestore(config.firestoreInstanceId!);
+
+  // The caught value is not always an Error: `insertData` reports whatever it
+  // caught. Reading `.message` off a non-object threw a TypeError from here,
+  // which the caller then reported as a failed backup, so nothing was written
+  // for exactly the malformed failures the backup is most needed for.
+  const errorDetails = (e as any)?.message ?? String(e);
+
   const batchArray = [db.batch()];
 
   let operationCounter = 0;
@@ -51,7 +58,7 @@ export default async (
 
     batchArray[batchIndex].set(ref, {
       ...row,
-      error_details: e.message,
+      error_details: errorDetails,
     });
 
     operationCounter++;

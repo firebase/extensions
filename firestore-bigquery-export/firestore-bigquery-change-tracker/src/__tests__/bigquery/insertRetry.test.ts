@@ -225,6 +225,60 @@ describe("insertData retry behaviour", () => {
       expect(handleFailedTransactionsMock).not.toHaveBeenCalled();
     });
 
+    it("ignores stopped rows when recognising the lag", async () => {
+      // With skipInvalidRows false BigQuery rejects the whole request and marks
+      // the rows it did not attempt as `stopped`. Those entries say nothing
+      // about the schema. Treating them as unattributable meant no multi-row
+      // batch could ever be recognised as lag, which `scripts/import` hits
+      // because it records batches rather than single events.
+      const insert = jest
+        .fn()
+        .mockRejectedValueOnce(
+          partialFailure([
+            {
+              message: "Row skipped due to another row's error.",
+              reason: "stopped",
+            },
+            { message: "no such field.", location: "document_id" },
+          ])
+        )
+        .mockResolvedValueOnce(undefined);
+
+      await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
+
+      expect(insert).toHaveBeenCalledTimes(2);
+      expect(payloadOf(insert, 1)).not.toHaveProperty("document_id");
+      expect(handleFailedTransactionsMock).not.toHaveBeenCalled();
+    });
+
+    it("names a column once however many rows rejected it", async () => {
+      const insert = jest
+        .fn()
+        .mockRejectedValueOnce(
+          partialFailure([
+            { message: "no such field.", location: "document_id" },
+            { message: "no such field.", location: "document_id" },
+          ])
+        )
+        .mockResolvedValueOnce(undefined);
+
+      const warn = jest
+        .spyOn(logger, "warn")
+        .mockImplementation(() => undefined);
+
+      await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
+
+      const messages = warn.mock.calls.map(([message]) => String(message));
+      warn.mockRestore();
+
+      expect(
+        messages.some((m) => m.includes("without document_id, document_id"))
+      ).toBe(false);
+      expect(messages.some((m) => m.includes("without document_id"))).toBe(
+        true
+      );
+    });
+
     it("gives up when a retry makes no progress", async () => {
       // The same column rejected twice means removing it did not help, so there
       // is nothing further to try. Without this the recursion never ends.
@@ -572,6 +626,9 @@ describe("insertData retry behaviour", () => {
 
       await expect(insertData(trackerWith(insert))).rejects.toBeUndefined();
 
+      // This only shows the backup was reached, since the module is mocked
+      // here. That it actually writes a row for a non-Error is pinned in
+      // backupSettings.test.ts against the real handler.
       expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
     });
 

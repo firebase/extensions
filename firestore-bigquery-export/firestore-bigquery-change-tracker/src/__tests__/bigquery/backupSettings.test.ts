@@ -26,7 +26,9 @@ const collection = jest.fn(() => ({ doc: (id: string) => ({ id }) }));
 jest.mock("firebase-admin", () => ({ apps: [{}] }));
 jest.mock("firebase-admin/app", () => ({ initializeApp: jest.fn() }));
 jest.mock("firebase-admin/firestore", () => ({
-  // One instance per database id, as the real `getFirestore` returns.
+  // A fresh object per call, deliberately: the guard must key on the database
+  // id rather than on instance identity, so this would catch a guard that
+  // relied on getting the same object back.
   getFirestore: jest.fn(() => ({ settings, batch, collection })),
 }));
 
@@ -80,6 +82,22 @@ describe("handleFailedTransactions Firestore settings", () => {
     ).resolves.toBeUndefined();
 
     expect(commit).toHaveBeenCalledTimes(1);
+  });
+
+  it("still writes the backup when the thrown value is not an Error", async () => {
+    // `insertData` reports whatever it caught, so this reaches the handler.
+    // Reading `.message` off it threw a TypeError, which the caller reported as
+    // a failed backup, so nothing was written for the very failures where the
+    // row is least recoverable from elsewhere. The retry suite could not catch
+    // this: it mocks this module, so it only proves the call site was reached.
+    const handler = loadHandler();
+
+    await expect(
+      handler(ROWS, config, undefined as any)
+    ).resolves.toBeUndefined();
+
+    expect(commit).toHaveBeenCalledTimes(1);
+    expect(typeof set.mock.calls[0][1].error_details).toBe("string");
   });
 
   it("writes one document per row, keyed by insertId", async () => {
