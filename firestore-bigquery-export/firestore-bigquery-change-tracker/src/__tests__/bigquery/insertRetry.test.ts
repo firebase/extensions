@@ -231,14 +231,14 @@ describe("insertData retry behaviour", () => {
       // about the schema. Treating them as unattributable meant no multi-row
       // batch could ever be recognised as lag, which `scripts/import` hits
       // because it records batches rather than single events.
+      //
+      // The empty message and location are the shape a live instance sends, so
+      // `reason` is the only thing that identifies this entry.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
           partialFailure([
-            {
-              message: "Row skipped due to another row's error.",
-              reason: "stopped",
-            },
+            { message: "", location: "", reason: "stopped" },
             { message: "no such field.", location: "document_id" },
           ])
         )
