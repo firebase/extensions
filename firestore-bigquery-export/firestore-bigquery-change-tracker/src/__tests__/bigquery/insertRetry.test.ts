@@ -84,8 +84,7 @@ function transportFailure() {
 /**
  * Deliberately carries every column the allowlist can name, so that asserting a
  * column was removed from a retry is a real assertion rather than one that
- * passes because the key was never there. `document_id` is here too, though it
- * is not allowlisted, so the test that it is refused has something to refuse.
+ * passes because the key was never there.
  */
 const ROWS = [
   {
@@ -94,7 +93,7 @@ const ROWS = [
       event_id: "e1",
       data: "{}",
       document_id: "d1",
-      old_data: '{"was":"here"}',
+      old_data: null,
       path_params: "{}",
       created_at: "2026-01-01 00:00:00",
     },
@@ -136,15 +135,17 @@ describe("insertData retry behaviour", () => {
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
-          partialFailure([{ message: "no such field.", location: "old_data" }])
+          partialFailure([
+            { message: "no such field.", location: "document_id" },
+          ])
         )
         .mockResolvedValueOnce(undefined);
 
       await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
 
       expect(insert).toHaveBeenCalledTimes(2);
-      expect(payloadOf(insert, 0)).toHaveProperty("old_data");
-      expect(payloadOf(insert, 1)).not.toHaveProperty("old_data");
+      expect(payloadOf(insert, 0)).toHaveProperty("document_id");
+      expect(payloadOf(insert, 1)).not.toHaveProperty("document_id");
       // Everything else must survive: only what BigQuery named is dropped.
       expect(payloadOf(insert, 1)).toMatchObject({
         event_id: "e1",
@@ -176,14 +177,16 @@ describe("insertData retry behaviour", () => {
 
     it("does not ignore an unknown field BigQuery did not name", async () => {
       // A live instance reports one unknown field per row, not all of them. So
-      // a table missing `old_data` while a transform has injected a stray key
-      // surfaces as a rejection naming only `old_data`. Retrying with
+      // a table missing `document_id` while a transform has injected a stray
+      // key surfaces as a rejection naming only `document_id`. Retrying with
       // ignoreUnknownValues would have discarded the stray key too, silently,
       // which is the loss this whole change exists to prevent.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
-          partialFailure([{ message: "no such field.", location: "old_data" }])
+          partialFailure([
+            { message: "no such field.", location: "document_id" },
+          ])
         )
         .mockRejectedValueOnce(
           partialFailure([{ message: "no such field.", location: "injected" }])
@@ -194,15 +197,13 @@ describe("insertData retry behaviour", () => {
       );
 
       expect(insert).toHaveBeenCalledTimes(2);
-      expect(payloadOf(insert, 1)).not.toHaveProperty("old_data");
+      expect(payloadOf(insert, 1)).not.toHaveProperty("document_id");
       // Terminal, so the row reaches the backup with the stray key intact
       // rather than being dropped and reported as a success.
       expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
     });
 
     it("strips one column per retry when BigQuery names them one at a time", async () => {
-      // Confirmed live: a row missing two allowlisted columns comes back naming
-      // only one of them, so the loop has to make progress across attempts.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
@@ -210,42 +211,18 @@ describe("insertData retry behaviour", () => {
         )
         .mockRejectedValueOnce(
           partialFailure([
-            { message: "no such field.", location: "path_params" },
+            { message: "no such field.", location: "document_id" },
           ])
         )
         .mockResolvedValueOnce(undefined);
 
-      await expect(
-        insertData(trackerWith(insert, { wildcardIds: true }))
-      ).resolves.toBeUndefined();
+      await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
 
       expect(insert).toHaveBeenCalledTimes(3);
       expect(payloadOf(insert, 1)).not.toHaveProperty("old_data");
       expect(payloadOf(insert, 2)).not.toHaveProperty("old_data");
-      expect(payloadOf(insert, 2)).not.toHaveProperty("path_params");
+      expect(payloadOf(insert, 2)).not.toHaveProperty("document_id");
       expect(handleFailedTransactionsMock).not.toHaveBeenCalled();
-    });
-
-    it("does not allowlist document_id, which the latest view groups on", async () => {
-      // `document_id` is added to existing tables like the others, but it is the
-      // one column the default latest view groups on without wrapping in
-      // FIRST_VALUE, so a row landing with it null shows the document twice in
-      // `_latest` and the changelog being append-only means that never clears.
-      // Verified against a live instance. Failing keeps the event recoverable.
-      const insert = jest
-        .fn()
-        .mockRejectedValue(
-          partialFailure([
-            { message: "no such field.", location: "document_id" },
-          ])
-        );
-
-      await expect(insertData(trackerWith(insert))).rejects.toThrow(
-        "insert failed"
-      );
-
-      expect(insert).toHaveBeenCalledTimes(1);
-      expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
     });
 
     it("ignores stopped rows when recognising the lag", async () => {
@@ -262,7 +239,7 @@ describe("insertData retry behaviour", () => {
         .mockRejectedValueOnce(
           partialFailure([
             { message: "", location: "", reason: "stopped" },
-            { message: "no such field.", location: "old_data" },
+            { message: "no such field.", location: "document_id" },
           ])
         )
         .mockResolvedValueOnce(undefined);
@@ -270,7 +247,7 @@ describe("insertData retry behaviour", () => {
       await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
 
       expect(insert).toHaveBeenCalledTimes(2);
-      expect(payloadOf(insert, 1)).not.toHaveProperty("old_data");
+      expect(payloadOf(insert, 1)).not.toHaveProperty("document_id");
       expect(handleFailedTransactionsMock).not.toHaveBeenCalled();
     });
 
@@ -279,8 +256,8 @@ describe("insertData retry behaviour", () => {
         .fn()
         .mockRejectedValueOnce(
           partialFailure([
-            { message: "no such field.", location: "old_data" },
-            { message: "no such field.", location: "old_data" },
+            { message: "no such field.", location: "document_id" },
+            { message: "no such field.", location: "document_id" },
           ])
         )
         .mockResolvedValueOnce(undefined);
@@ -295,9 +272,11 @@ describe("insertData retry behaviour", () => {
       warn.mockRestore();
 
       expect(
-        messages.some((m) => m.includes("without old_data, old_data"))
+        messages.some((m) => m.includes("without document_id, document_id"))
       ).toBe(false);
-      expect(messages.some((m) => m.includes("without old_data"))).toBe(true);
+      expect(messages.some((m) => m.includes("without document_id"))).toBe(
+        true
+      );
     });
 
     it("gives up when a retry makes no progress", async () => {
@@ -306,7 +285,9 @@ describe("insertData retry behaviour", () => {
       const insert = jest
         .fn()
         .mockRejectedValue(
-          partialFailure([{ message: "no such field.", location: "old_data" }])
+          partialFailure([
+            { message: "no such field.", location: "document_id" },
+          ])
         );
 
       await expect(insertData(trackerWith(insert))).rejects.toThrow(
@@ -336,12 +317,12 @@ describe("insertData retry behaviour", () => {
     });
 
     it("does not match a column that merely contains an allowlisted name", async () => {
-      // A user column named old_data_v2 must not be mistaken for old_data,
-      // or its contents would be silently dropped.
+      // A user column named document_id_v2 must not be mistaken for
+      // document_id, or its contents would be silently dropped.
       const insert = jest
         .fn()
         .mockRejectedValue(
-          partialFailure([{ message: "no such field: old_data_v2." }])
+          partialFailure([{ message: "no such field: document_id_v2." }])
         );
 
       await expect(insertData(trackerWith(insert))).rejects.toThrow(
@@ -355,6 +336,7 @@ describe("insertData retry behaviour", () => {
     // adds that column, and `record` only emits the key, when wildcard ids are
     // enabled.
     const addedColumns: Array<[string, Partial<ChangeTrackerConfig>]> = [
+      ["document_id", {}],
       ["old_data", {}],
       ["path_params", { wildcardIds: true }],
     ];
@@ -424,7 +406,7 @@ describe("insertData retry behaviour", () => {
     it("does not retry when only some rejected fields are ours", async () => {
       const insert = jest.fn().mockRejectedValue(
         partialFailure([
-          { message: "no such field.", location: "old_data" },
+          { message: "no such field.", location: "document_id" },
           { message: "no such field.", location: "user_age" },
         ])
       );
@@ -562,15 +544,17 @@ describe("insertData retry behaviour", () => {
         .fn()
         .mockRejectedValueOnce(transportFailure())
         .mockRejectedValueOnce(
-          partialFailure([{ message: "no such field.", location: "old_data" }])
+          partialFailure([
+            { message: "no such field.", location: "document_id" },
+          ])
         )
         .mockResolvedValueOnce(undefined);
 
       await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
 
       expect(insert).toHaveBeenCalledTimes(3);
-      expect(payloadOf(insert, 1)).toHaveProperty("old_data");
-      expect(payloadOf(insert, 2)).not.toHaveProperty("old_data");
+      expect(payloadOf(insert, 1)).toHaveProperty("document_id");
+      expect(payloadOf(insert, 2)).not.toHaveProperty("document_id");
       expect(handleFailedTransactionsMock).not.toHaveBeenCalled();
     });
 
@@ -579,7 +563,9 @@ describe("insertData retry behaviour", () => {
         .fn()
         .mockRejectedValueOnce(transportFailure())
         .mockRejectedValueOnce(
-          partialFailure([{ message: "no such field.", location: "old_data" }])
+          partialFailure([
+            { message: "no such field.", location: "document_id" },
+          ])
         )
         .mockRejectedValue(transportFailure());
 
@@ -600,7 +586,9 @@ describe("insertData retry behaviour", () => {
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
-          partialFailure([{ message: "no such field.", location: "old_data" }])
+          partialFailure([
+            { message: "no such field.", location: "document_id" },
+          ])
         )
         .mockRejectedValueOnce(transportFailure())
         .mockResolvedValueOnce(undefined);
@@ -608,9 +596,9 @@ describe("insertData retry behaviour", () => {
       await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
 
       expect(insert).toHaveBeenCalledTimes(3);
-      expect(payloadOf(insert, 0)).toHaveProperty("old_data");
-      expect(payloadOf(insert, 1)).not.toHaveProperty("old_data");
-      expect(payloadOf(insert, 2)).not.toHaveProperty("old_data");
+      expect(payloadOf(insert, 0)).toHaveProperty("document_id");
+      expect(payloadOf(insert, 1)).not.toHaveProperty("document_id");
+      expect(payloadOf(insert, 2)).not.toHaveProperty("document_id");
       expect(handleFailedTransactionsMock).not.toHaveBeenCalled();
     });
   });
@@ -837,7 +825,9 @@ describe("insertData retry behaviour", () => {
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
-          partialFailure([{ message: "no such field.", location: "old_data" }])
+          partialFailure([
+            { message: "no such field.", location: "document_id" },
+          ])
         )
         .mockResolvedValueOnce(undefined);
 
@@ -845,12 +835,12 @@ describe("insertData retry behaviour", () => {
 
       expect(
         warn.mock.calls.filter(([message]) =>
-          String(message).includes("without old_data")
+          String(message).includes("without document_id")
         )
       ).toHaveLength(1);
       expect(
         debug.mock.calls.filter(([message]) =>
-          String(message).includes("without old_data")
+          String(message).includes("without document_id")
         )
       ).toHaveLength(0);
     });
@@ -878,7 +868,9 @@ describe("insertData retry behaviour", () => {
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
-          partialFailure([{ message: "no such field.", location: "old_data" }])
+          partialFailure([
+            { message: "no such field.", location: "document_id" },
+          ])
         )
         .mockRejectedValueOnce(transportFailure())
         .mockResolvedValueOnce(undefined);
@@ -889,7 +881,7 @@ describe("insertData retry behaviour", () => {
         ([message]) => String(message)
       );
       const dropped = messages.filter((message) =>
-        message.includes("without old_data")
+        message.includes("without document_id")
       );
 
       expect(dropped).toHaveLength(1);

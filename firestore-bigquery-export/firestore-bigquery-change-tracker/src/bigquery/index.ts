@@ -291,31 +291,17 @@ export class FirestoreBigQueryEventHistoryTracker
    * The columns this tracker adds to a table that already exists, and so every
    * column exposed to the lag.
    *
-   * This list must stay complete. Omitting a column turns a row that lands
-   * today, with that column null, into an event lost once the caller exhausts
-   * its retries, because nothing on the write path reconciles the schema.
+   * Every column added belongs here unless dropping it would cost more than
+   * losing the event, and `timestamp` below is the only one that does. Omitting
+   * a column turns a row that lands today, with that column null, into an event
+   * lost once the caller exhausts its retries, because nothing on the write
+   * path reconciles the schema.
    *
    * It must also stay exact. Listing a column that is never added makes the
    * retry drop that column's value on a table missing it, forever.
    */
   private columnsAddedToExistingTables(): string[] {
-    // `document_id` is deliberately absent, though it is added to existing
-    // tables and so is exposed to the lag. It is the one column the default
-    // latest view groups on without wrapping in `FIRST_VALUE`
-    // (`snapshot.ts:128` and `:150`), so a row that lands with it null forms a
-    // separate group from the same document's later rows, and the document
-    // appears twice in `_latest`. Verified against a live instance: with the
-    // lag row and a later ordinary row both present, the legacy view returns
-    // two rows for one document, and the changelog is append-only so the
-    // duplicate never clears. The later write is what creates it.
-    //
-    // Tolerating the drop would therefore trade a delayed event for permanent,
-    // silent duplication of the view people query. Failing instead writes a
-    // backup row and throws, and the caller retries until BigQuery catches up.
-    // The standard view syntax is immune, since its join narrows to the latest
-    // timestamp before grouping, but it is off by default and is the user's
-    // setting rather than ours to rely on.
-    const columns = [oldDataField.name];
+    const columns = [documentIdField.name, oldDataField.name];
 
     // `path_params` is only ever added, and only ever emitted by `record`, when
     // wildcard ids are enabled. Listing it unconditionally meant a transform
@@ -340,14 +326,29 @@ export class FirestoreBigQueryEventHistoryTracker
     // writes a backup row and throws, which the caller can retry. The same goes
     // for a field strategy pointed at any other base column, `data` say.
     //
-    // The rule this all follows: a column is safe to drop only if a null it
-    // leaves behind heals on its own. The latest view wraps every column except
-    // `document_name` and `document_id` in `FIRST_VALUE(...) OVER (PARTITION BY
-    // document_name ORDER BY timestamp DESC)` (`snapshot.ts:134-140`), so their
-    // value is taken from the document's newest row and a null from the lag
-    // disappears as soon as any later row lands. `old_data`, `path_params` and a
-    // custom partition column are all in that set. `document_id` and
-    // `timestamp` are not, which is why neither is listed.
+    // The columns above are not free either, so this is a trade-off rather than
+    // a clean line. `document_id` is the one of them the default latest view
+    // does not wrap in `FIRST_VALUE`: the legacy query selects it raw and then
+    // groups on it (`snapshot.ts:133` and `:150`), so a row that lands with it
+    // null forms its own group and the document appears twice in `_latest`. The
+    // changelog is append-only, so a later write does not clear the duplicate.
+    // `old_data` and `path_params` are wrapped (`snapshot.ts:134-140`), and a
+    // null there is simply replaced by the newest row's value.
+    //
+    // Tolerating the drop is still the better trade, because the duplication is
+    // not new. `document_id` is added to an existing table as a schema change
+    // and nothing backfills it, so on exactly the tables this lag can affect
+    // every pre-upgrade row is already null, and every document written both
+    // before and after the upgrade already appears twice in the legacy view,
+    // permanently. The lag adds a handful of rows to a set that is already
+    // there. Losing the event has no such floor: the caller's retries are
+    // finite and nothing reconciles the schema afterwards, so the change never
+    // reaches BigQuery at all.
+    //
+    // `timestamp` is wrapped like the rest, so its exclusion above is not a view
+    // concern; it is excluded for being the partition and ordering key. A custom
+    // partition column is not in the view at all, since the view is built from
+    // `RawChangelogViewSchema` rather than the live table's fields.
     const partitionColumn = this.partitioningConfig.getBigQueryColumnName();
 
     if (
