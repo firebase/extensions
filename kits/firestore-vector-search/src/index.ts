@@ -60,6 +60,9 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/aiplatform.user",
   "roles/storage.objectAdmin",
   "roles/datastore.indexAdmin",
+  // Lifecycle setup enqueues the init task, which may enqueue backfill/update tasks.
+  "roles/cloudtasks.enqueuer",
+  "roles/iam.serviceAccountUser",
   // Gen2 Firestore triggers need Eventarc receive and run.invoker on the function SA.
   "roles/eventarc.eventReceiver",
   "roles/run.invoker",
