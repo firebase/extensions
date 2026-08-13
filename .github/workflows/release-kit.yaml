@@ -222,7 +222,9 @@ jobs:
 
       - name: Push Version Commit & Tags to Branch
         if: ${{ !inputs.dry_run }}
-        run: git push origin ${{ inputs.target_branch }} --follow-tags
+        env:
+          TARGET_BRANCH: ${{ inputs.target_branch }}
+        run: git push origin "$TARGET_BRANCH" --follow-tags
 
       - name: Publish to NPM
         # zizmor: ignore[use-trusted-publishing]
@@ -258,6 +260,7 @@ jobs:
           VERSION: ${{ steps.versioning.outputs.version }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
           NOTES: ${{ steps.changelog.outputs.notes }}
+          TARGET_BRANCH: ${{ inputs.target_branch }}
         run: |
           PRERELEASE_FLAG=""
           if [ "$IS_PRERELEASE" = "true" ]; then
@@ -267,5 +270,5 @@ jobs:
           gh release create "$TAG_NAME" \
             --title "$PKG_NAME v$VERSION" \
             --notes "$NOTES" \
-            --target "${{ inputs.target_branch }}" \
+            --target "$TARGET_BRANCH" \
             $PRERELEASE_FLAG
