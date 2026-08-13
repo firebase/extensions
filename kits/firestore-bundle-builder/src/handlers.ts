@@ -175,7 +175,9 @@ export async function handleServe(
 
   const parts = req.path.split("/");
   const bundleId = parts[parts.length - 1];
-  const bundleSpec = await ctx.getSpec(bundleId);
+  // Empty last segment (`/` or trailing slash): legacy in-memory `_specs[""]`
+  // is a miss → 404. Skip `.doc("")`, which throws `documentPath` (HTTP 500).
+  const bundleSpec = bundleId ? await ctx.getSpec(bundleId) : null;
 
   logger.debug("spec:", bundleSpec);
 

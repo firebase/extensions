@@ -39,6 +39,7 @@ export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/datastore.user",
+  // fileCache reads/writes bundle artifacts in Cloud Storage.
   "roles/storage.objectAdmin",
   // Gen2 event triggers need Eventarc receive and run.invoker on the function SA.
   "roles/eventarc.eventReceiver",
@@ -87,6 +88,6 @@ function getContext(): HandlerContext {
   return ctx;
 }
 
-export const serve = onRequest((req, res) =>
+export const serve = onRequest({ region: "us-central1" }, (req, res) =>
   handleServe(req, res, getContext())
 );

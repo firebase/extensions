@@ -25,7 +25,7 @@ service account for this codebase — it conflicts with that automatic setup.
 | Role | Why |
 |---|---|
 | `roles/datastore.user` | read bundle specs and query source data |
-| `roles/storage.objectAdmin` | write and serve bundle artifacts |
+| `roles/storage.objectAdmin` | save built bundles in Cloud Storage when `fileCache` is set |
 | `roles/eventarc.eventReceiver` | receive Gen2 event triggers |
 | `roles/run.invoker` | allow callers/Eventarc to invoke the Gen2 Cloud Run service |
 
@@ -39,6 +39,16 @@ export { serve } from "@firebase/firestore-bundle-builder";
 ```
 
 and configure with a `.env` (or `.env.<projectId>`).
+
+Call `serve` with the bundle ID as the last URL path segment. Query params fill
+bundle-spec parameters (for example `?name=david&limit=10`), not the id:
+
+```
+https://us-central1-<project>.cloudfunctions.net/kit-<instance>-serve/:bundleId
+https://us-central1-<project>.cloudfunctions.net/kit-<instance>-serve/:bundleId?name=david&limit=10
+```
+
+A Hosting rewrite to `/bundles/*` serves the same way: `/bundles/:bundleId`.
 
 Importing the package without exporting its functions deploys nothing — the CLI
 only deploys what your entry file exports.

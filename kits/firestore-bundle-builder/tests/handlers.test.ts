@@ -111,6 +111,34 @@ describe("handleServe", () => {
     expect(res.sent).toBe("Could not find bundle with ID missing");
   });
 
+  test("404 when the last path segment is empty", async () => {
+    const getSpec = vi.fn();
+    const ctx = makeCtx({ getSpec });
+    const res = fakeRes();
+    await handleServe(fakeReq("/"), res, ctx);
+    expect(res.statusCode).toBe(404);
+    expect(res.sent).toBe("Could not find bundle with ID ");
+    expect(getSpec).not.toHaveBeenCalled();
+  });
+
+  test("?id= is ignored; bundle id comes from the path", async () => {
+    const getSpec = vi.fn();
+    const ctx = makeCtx({ getSpec });
+    const res = fakeRes();
+    await handleServe(fakeReq("/", { query: { id: "smoke" } }), res, ctx);
+    expect(res.statusCode).toBe(404);
+    expect(getSpec).not.toHaveBeenCalled();
+  });
+
+  test("trailing slash uses the last path segment, including empty", async () => {
+    const getSpec = vi.fn();
+    const ctx = makeCtx({ getSpec });
+    const res = fakeRes();
+    await handleServe(fakeReq("/serve/b1/"), res, ctx);
+    expect(getSpec).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(404);
+  });
+
   test("sets cache-control from clientCache and serverCache", async () => {
     const spec: BundleSpec = { clientCache: 60, serverCache: 120 };
     (build as any).mockResolvedValue(fakeBundle("BUNDLE"));
