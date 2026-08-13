@@ -23,10 +23,7 @@ if (!admin.apps.length) {
   initializeApp();
 }
 
-/**
- * `settings()` may only be called once per Firestore instance, and only before
- * the instance is used, so it is attempted once per database id.
- */
+/** `settings()` may only be called once per instance, and before it is used. */
 const settingsApplied = new Set<string>();
 
 function backupFirestore(instanceId: string) {
@@ -38,8 +35,8 @@ function backupFirestore(instanceId: string) {
     try {
       db.settings({ ignoreUndefinedProperties: true });
     } catch (settingsError) {
-      // Something else in the process reached this instance first. The backup
-      // still goes ahead, without `ignoreUndefinedProperties`.
+      // Something else reached this instance first. The backup still goes
+      // ahead, without `ignoreUndefinedProperties`.
     }
   }
 
@@ -62,7 +59,7 @@ function truncate(
 /**
  * The per-field messages a `PartialFailureError` nests under
  * `errors[].errors[].message`, deduplicated because a batch usually fails the
- * same way for every row. `""` when there is nothing usable to report.
+ * same way for every row.
  */
 function nestedErrorMessages(e: unknown): string {
   const groups = (e as any)?.errors;
@@ -84,7 +81,7 @@ function nestedErrorMessages(e: unknown): string {
       }
 
       // A `stopped` entry, the row BigQuery did not attempt, arrives with an
-      // empty `message` and an empty `location`, so `reason` is all there is.
+      // empty `message` and `location`, so `reason` is all there is.
       const reason = (entry as any)?.reason;
 
       if (typeof reason === "string" && reason.length > 0) {
@@ -109,17 +106,14 @@ function nestedErrorMessages(e: unknown): string {
 }
 
 /**
- * A description of a failed insert that an operator can act on.
- *
- * `insertData` reports whatever it caught, so this is not always an Error and
- * its `message` is not always populated. On the common failure it never is: a
- * `PartialFailureError`'s message is built by `@google-cloud/common` from the
- * `message` of each entry in `errors`, and those entries are `{ errors, row }`
- * pairs carrying none, so the real reason sits one level further down.
+ * `insertData` reports whatever it caught, so this is not always an Error, and on
+ * the common failure its `message` is empty: `@google-cloud/common` builds a
+ * `PartialFailureError`'s message from entries that carry none, so the real
+ * reason sits one level down.
  */
 function describeError(e: unknown): string {
-  // This runs inside the caller's catch block, where a throw is reported as a
-  // failed backup, so the whole body is guarded rather than just `String(e)`.
+  // Runs inside the caller's catch block, where a throw is reported as a failed
+  // backup, so the whole body is guarded rather than just `String(e)`.
   try {
     const message = (e as any)?.message;
 

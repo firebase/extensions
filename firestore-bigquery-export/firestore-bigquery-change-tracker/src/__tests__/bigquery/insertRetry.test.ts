@@ -97,14 +97,11 @@ const ROWS = [
   },
 ];
 
-/** The payload of the row passed to the nth `insert` call, 0-indexed. */
+/** The row payload of the nth `insert` call, 0-indexed. */
 const payloadOf = (insert: jest.Mock, call: number) =>
   insert.mock.calls[call][0][0].json;
 
-/**
- * Returns a tracker whose inserts are served by `insert`, so no BigQuery
- * client is needed.
- */
+/** A tracker whose inserts are served by `insert`, so no client is needed. */
 function trackerWith(
   insert: jest.Mock,
   overrides?: Partial<ChangeTrackerConfig>
@@ -216,8 +213,7 @@ describe("insertData retry behaviour", () => {
 
     it("ignores stopped rows when recognising the lag", async () => {
       // With `skipInvalidRows` false BigQuery marks the rows it did not attempt
-      // as `stopped`, with the empty message and location a live instance sends,
-      // so `reason` is the only thing identifying the entry.
+      // as `stopped`, with the empty message and location a live instance sends.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
@@ -264,8 +260,7 @@ describe("insertData retry behaviour", () => {
     });
 
     it("gives up when a retry makes no progress", async () => {
-      // Bounds the recursion: the same column rejected twice means removing it
-      // did not help.
+      // Bounds the recursion: the same column twice means removing it did not help.
       const insert = jest
         .fn()
         .mockRejectedValue(
@@ -302,7 +297,7 @@ describe("insertData retry behaviour", () => {
 
     it("backs up the row the caller gave us, not the one the retry reduced", async () => {
       // A strip followed by a terminal rejection for a different column is the
-      // ordinary case, and the backup is the only record of the row.
+      // ordinary case, and the backup is the only record of the row that is left.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
@@ -316,8 +311,7 @@ describe("insertData retry behaviour", () => {
         "insert failed"
       );
 
-      // Without this the assertion below could pass against an implementation
-      // that never stripped anything.
+      // Without this, the assertion below passes even if nothing was stripped.
       expect(payloadOf(insert, 1)).not.toHaveProperty("document_id");
       expect(handleFailedTransactionsMock).toHaveBeenCalledWith(
         ROWS,
@@ -501,9 +495,8 @@ describe("insertData retry behaviour", () => {
     });
 
     it("is not allowlisted under the Firestore timestamp strategy", async () => {
-      // Excluded deliberately rather than for want of a code path: `timestamp`
-      // keys the partition and orders the latest view, so a null misfiles the
-      // row instead of costing an event the caller can retry.
+      // Excluded deliberately, not for want of a code path: `timestamp` keys the
+      // partition, so a null misfiles the row rather than costing an event.
       const insert = jest
         .fn()
         .mockRejectedValue(
@@ -526,8 +519,7 @@ describe("insertData retry behaviour", () => {
     });
 
     it("is not allowlisted when field partitioning names a base column", async () => {
-      // The exclusion is keyed on the collision, not on `timestamp`, so any
-      // configured name that matches a base column reaches it.
+      // Keyed on the collision, not on `timestamp`, so any base-column name hits it.
       const insert = jest
         .fn()
         .mockRejectedValue(
@@ -674,7 +666,7 @@ describe("insertData retry behaviour", () => {
 
   describe("transient failures", () => {
     it("retries a partial failure whose reasons are all retryable", async () => {
-      // A rate limit or backend error arrives as a partial failure rather than a
+      // A rate limit or backend error arrives as a partial failure, not as a
       // bare transport error.
       const insert = jest
         .fn()
@@ -864,8 +856,8 @@ describe("insertData retry behaviour", () => {
     });
 
     it("distinguishes the retry that drops columns from the one that does not", async () => {
-      // Only one of the two retries drops columns, and the logs are the only
-      // thing telling an operator which one ran.
+      // Only one of the two retries drops columns, and the logs are all an
+      // operator has to tell them apart.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(

@@ -107,9 +107,8 @@ describe("handleFailedTransactions Firestore settings", () => {
 });
 
 /**
- * A stand-in for `@google-cloud/bigquery`'s `PartialFailureError`: one entry per
- * failed row nesting the per-field errors, and the empty top-level `message`
- * that `@google-cloud/common` builds from entries carrying none.
+ * A stand-in for `PartialFailureError`: one entry per failed row nesting the
+ * per-field errors, and the empty message `@google-cloud/common` builds from them.
  */
 const partialFailure = (groups: any[]) =>
   Object.assign(new Error(""), { name: "PartialFailureError", errors: groups });
@@ -187,7 +186,7 @@ describe("handleFailedTransactions error details", () => {
 
   it("falls back to the reason when an entry carries no message", async () => {
     // A `stopped` entry, the row BigQuery did not attempt, arrives with an empty
-    // message and an empty location, so the reason is all there is.
+    // message and location, so the reason is all there is.
     const details = await detailsFor(
       partialFailure([
         { errors: [{ message: "", location: "", reason: "stopped" }] },
@@ -233,8 +232,7 @@ describe("handleFailedTransactions error details", () => {
   });
 
   it("still writes a string for every malformed shape of `errors`", async () => {
-    // The handler runs inside the caller's catch block, so a throw here is
-    // reported as a failed backup and the row is lost.
+    // The handler runs inside the caller's catch block, so a throw loses the row.
     const shapes: any[] = [
       partialFailure([]),
       Object.assign(new Error(""), { errors: "not an array" }),

@@ -139,8 +139,7 @@ export const dataInserted = (rowCount: number) => {
 
 /**
  * Warn rather than debug, and name the columns: this is the one retry path that
- * leaves a column permanently null for the rows it recovers, and debug is
- * suppressed at the default log level.
+ * leaves a column permanently null, and debug is off at the default log level.
  */
 export const dataInsertRetriedWithoutColumns = (
   rowCount: number,
@@ -233,8 +232,8 @@ export const bigQueryTableInsertErrors = (
 ) => {
   logger.warn(`Error when inserting data to table.`);
 
-  // Defensive throughout: this runs on the terminal path of a failed insert,
-  // and throwing here would replace the insert error the caller needs.
+  // Runs on the terminal path of a failed insert, so a throw here would replace
+  // the insert error the caller needs.
   if (!Array.isArray(insertErrors)) return;
 
   insertErrors.forEach((error) => {
