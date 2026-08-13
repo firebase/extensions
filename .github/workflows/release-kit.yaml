@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # zizmor: ignore[artipacked]
 
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c448218163
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "24"
 
@@ -80,7 +80,7 @@ jobs:
           ref: kits
 
       - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c448218163
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "24"
           registry-url: "https://wombat-dressing-room.appspot.com"
@@ -218,6 +218,7 @@ jobs:
         run: git push origin kits --follow-tags
 
       - name: Publish to NPM
+        # zizmor: ignore[use-trusted-publishing]
         working-directory: ${{ inputs.target_kit }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
