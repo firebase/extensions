@@ -118,10 +118,12 @@ jobs:
       - name: Determine Version Bump Type
         id: config
         working-directory: ${{ inputs.target_kit }}
+        env:
+          BUMP_LEVEL: ${{ inputs.bump_level }}
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
         run: |
           CURRENT_VER=$(node -p "require('./package.json').version")
-          BUMP="${{ inputs.bump_level }}"
-          IS_PRERELEASE="${{ inputs.is_prerelease }}"
+          BUMP="$BUMP_LEVEL"
 
           if [ "$IS_PRERELEASE" = "true" ]; then
             if [[ "$CURRENT_VER" =~ -rc\.[0-9]+$ ]]; then
@@ -140,18 +142,20 @@ jobs:
           echo "target_tag=$TARGET_TAG" >> $GITHUB_OUTPUT
 
       - name: Install Dependencies & Build
+        env:
+          TARGET_KIT: ${{ inputs.target_kit }}
         run: |
           npm ci
-          npm run build --workspace=${{ inputs.target_kit }}
+          npm run build --workspace=$TARGET_KIT
 
       - name: Bump Version (Clear CHANGELOG on Stable Release Only)
         id: versioning
         working-directory: ${{ inputs.target_kit }}
+        env:
+          BUMP_TYPE: ${{ steps.config.outputs.bump_type }}
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          BUMP_TYPE="${{ steps.config.outputs.bump_type }}"
-          IS_PRERELEASE="${{ inputs.is_prerelease }}"
-          DRY_RUN="${{ inputs.dry_run }}"
-
           if [ "$DRY_RUN" = "true" ]; then
             npm version $BUMP_TYPE --preid=rc --no-git-tag-version
           else
@@ -181,22 +185,32 @@ jobs:
 
       - name: Dry Run Summary
         if: ${{ inputs.dry_run }}
+        env:
+          PKG_NAME: ${{ steps.versioning.outputs.pkg_name }}
+          TARGET_KIT: ${{ inputs.target_kit }}
+          CURRENT_VER: ${{ steps.config.outputs.current_ver }}
+          VERSION: ${{ steps.versioning.outputs.version }}
+          BUMP_TYPE: ${{ steps.config.outputs.bump_type }}
+          TARGET_TAG: ${{ steps.config.outputs.target_tag }}
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          TAG_NAME: ${{ steps.versioning.outputs.tag_name }}
+          NOTES: ${{ steps.changelog.outputs.notes }}
         run: |
           echo "=========================================================="
           echo "                 DRY RUN SUMMARY                          "
           echo "=========================================================="
-          echo " Package Name:     ${{ steps.versioning.outputs.pkg_name }}"
-          echo " Target Directory: ${{ inputs.target_kit }}"
-          echo " Current Version:  ${{ steps.config.outputs.current_ver }}"
-          echo " Target Version:   ${{ steps.versioning.outputs.version }}"
-          echo " Version Bump:     ${{ steps.config.outputs.bump_type }}"
-          echo " NPM Dist-Tag:     ${{ steps.config.outputs.target_tag }}"
-          echo " Release Type:     $( [ "${{ inputs.is_prerelease }}" = "true" ] && echo "Release Candidate (RC)" || echo "Stable Release" )"
-          echo " Git Tag Name:     ${{ steps.versioning.outputs.tag_name }}"
-          echo " CHANGELOG State:  $( [ "${{ inputs.is_prerelease }}" = "true" ] && echo "Preserved" || echo "Will be cleared on publish" )"
+          echo " Package Name:     $PKG_NAME"
+          echo " Target Directory: $TARGET_KIT"
+          echo " Current Version:  $CURRENT_VER"
+          echo " Target Version:   $VERSION"
+          echo " Version Bump:     $BUMP_TYPE"
+          echo " NPM Dist-Tag:     $TARGET_TAG"
+          echo " Release Type:     $( [ "$IS_PRERELEASE" = "true" ] && echo "Release Candidate (RC)" || echo "Stable Release" )"
+          echo " Git Tag Name:     $TAG_NAME"
+          echo " CHANGELOG State:  $( [ "$IS_PRERELEASE" = "true" ] && echo "Preserved" || echo "Will be cleared on publish" )"
           echo "----------------------------------------------------------"
           echo " Release Notes from CHANGELOG.md:"
-          echo "${{ steps.changelog.outputs.notes }}"
+          echo "$NOTES"
           echo "=========================================================="
 
       - name: Push Version Commit & Tags to Branch
@@ -205,12 +219,13 @@ jobs:
 
       - name: Publish to NPM
         working-directory: ${{ inputs.target_kit }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          PKG_NAME: ${{ steps.versioning.outputs.pkg_name }}
+          VERSION: ${{ steps.versioning.outputs.version }}
         run: |
-          IS_PRERELEASE="${{ inputs.is_prerelease }}"
-          DRY_RUN="${{ inputs.dry_run }}"
-          PKG_NAME="${{ steps.versioning.outputs.pkg_name }}"
-          VERSION="${{ steps.versioning.outputs.version }}"
-
           DRY_RUN_FLAG=""
           if [ "$DRY_RUN" = "true" ]; then
             DRY_RUN_FLAG="--dry-run"
@@ -225,19 +240,17 @@ jobs:
               npm dist-tag add ${PKG_NAME}@${VERSION} next
             fi
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release via GitHub CLI
         if: ${{ !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.versioning.outputs.tag_name }}
+          PKG_NAME: ${{ steps.versioning.outputs.pkg_name }}
+          VERSION: ${{ steps.versioning.outputs.version }}
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          NOTES: ${{ steps.changelog.outputs.notes }}
         run: |
-          TAG_NAME="${{ steps.versioning.outputs.tag_name }}"
-          PKG_NAME="${{ steps.versioning.outputs.pkg_name }}"
-          VERSION="${{ steps.versioning.outputs.version }}"
-          IS_PRERELEASE="${{ inputs.is_prerelease }}"
-
           PRERELEASE_FLAG=""
           if [ "$IS_PRERELEASE" = "true" ]; then
             PRERELEASE_FLAG="--prerelease"
@@ -245,6 +258,6 @@ jobs:
 
           gh release create "$TAG_NAME" \
             --title "$PKG_NAME v$VERSION" \
-            --notes "${{ steps.changelog.outputs.notes }}" \
+            --notes "$NOTES" \
             --target kits \
             $PRERELEASE_FLAG
