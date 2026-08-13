@@ -1,5 +1,5 @@
 {
-  "name": "@firebase-functions-kits/firestore-send-email",
+  "name": "@firebase-function-kits/firestore-send-email",
   "version": "0.0.0",
   "description": "Send emails based on documents written to Firestore",
   "license": "Apache-2.0",

@@ -1,5 +1,5 @@
 {
-  "name": "@firebase-functions-kits/rtdb-limit-child-nodes",
+  "name": "@firebase-function-kits/rtdb-limit-child-nodes",
   "version": "0.0.0",
   "description": "Limit the number of child nodes under a Realtime Database path",
   "license": "Apache-2.0",
