@@ -24,12 +24,8 @@ if (!admin.apps.length) {
 }
 
 /**
- * Firestore instances whose `settings()` call has already been attempted.
- *
- * `getFirestore` returns one instance per database id, and `settings()` may only
- * be called once on it, before it is used. Calling it on every failed batch
- * therefore threw on every call after the first, so only the first failure in an
- * instance's lifetime was ever backed up.
+ * `settings()` may only be called once per Firestore instance, and only before
+ * the instance is used, so it is attempted once per database id.
  */
 const settingsApplied = new Set<string>();
 
@@ -43,8 +39,7 @@ function backupFirestore(instanceId: string) {
       db.settings({ ignoreUndefinedProperties: true });
     } catch (settingsError) {
       // Something else in the process reached this instance first. The backup
-      // still goes ahead, but an undefined value in a row will now throw from
-      // `set()` instead of being skipped.
+      // still goes ahead, without `ignoreUndefinedProperties`.
     }
   }
 
@@ -66,11 +61,8 @@ function truncate(
 
 /**
  * The per-field messages a `PartialFailureError` nests under
- * `errors[].errors[].message`, deduplicated and capped.
- *
- * One failure can name several rows, and each row several fields, but a whole
- * batch usually fails the same way, so the distinct messages are what an
- * operator needs. Returns `""` when there is nothing usable to report.
+ * `errors[].errors[].message`, deduplicated because a batch usually fails the
+ * same way for every row. `""` when there is nothing usable to report.
  */
 function nestedErrorMessages(e: unknown): string {
   const groups = (e as any)?.errors;
@@ -91,10 +83,8 @@ function nestedErrorMessages(e: unknown): string {
         continue;
       }
 
-      // A `stopped` entry, the row BigQuery did not attempt, carries an empty
-      // `message` and an empty `location`, so `reason` is the only field that
-      // identifies it. Without this a failure whose entries are all `stopped`
-      // recorded nothing but the error's class name.
+      // A `stopped` entry, the row BigQuery did not attempt, arrives with an
+      // empty `message` and an empty `location`, so `reason` is all there is.
       const reason = (entry as any)?.reason;
 
       if (typeof reason === "string" && reason.length > 0) {
@@ -111,7 +101,7 @@ function nestedErrorMessages(e: unknown): string {
   const suffix = remaining > 0 ? ` (+${remaining} more)` : "";
 
   // Truncating the messages rather than the finished string, so the count is
-  // not the part that gets cut off. The result still fits the cap.
+  // not the part that gets cut off.
   return `${truncate(
     shown.join("; "),
     MAX_ERROR_DETAILS_LENGTH - suffix.length
@@ -121,22 +111,15 @@ function nestedErrorMessages(e: unknown): string {
 /**
  * A description of a failed insert that an operator can act on.
  *
- * The caught value is not always an Error: `insertData` reports whatever it
- * caught. Reading `.message` off a non-object threw a TypeError from here,
- * which the caller then reported as a failed backup, so nothing was written
- * for exactly the malformed failures the backup is most needed for.
- *
- * Its message is also not always populated. The common failure is a
- * `PartialFailureError`, whose message `@google-cloud/common` builds from the
- * `message` of each entry in `errors`. Those entries are `{ errors, row }`
- * pairs and carry no `message` of their own, so the message it builds is the
- * empty string, and the reason for the failure ("no such field: document_id.")
- * is only reachable one level further down. `??` kept that empty string,
- * because it falls back on null and undefined but not on "".
+ * `insertData` reports whatever it caught, so this is not always an Error and
+ * its `message` is not always populated. On the common failure it never is: a
+ * `PartialFailureError`'s message is built by `@google-cloud/common` from the
+ * `message` of each entry in `errors`, and those entries are `{ errors, row }`
+ * pairs carrying none, so the real reason sits one level further down.
  */
 function describeError(e: unknown): string {
-  // The whole body is guarded, not just `String(e)`, so that reading `.message`
-  // off a value with a throwing getter cannot escape either.
+  // This runs inside the caller's catch block, where a throw is reported as a
+  // failed backup, so the whole body is guarded rather than just `String(e)`.
   try {
     const message = (e as any)?.message;
 

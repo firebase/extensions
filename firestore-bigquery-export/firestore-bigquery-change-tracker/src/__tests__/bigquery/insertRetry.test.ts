@@ -44,16 +44,14 @@ const config = (
   } as ChangeTrackerConfig);
 
 /**
- * Builds the error shape `@google-cloud/bigquery` actually throws: a
- * `PartialFailureError` whose `response` is the raw `insertAll` body, where
- * `insertErrors` is an array. Its own `errors` property is the remapped copy
- * that drops `location`.
+ * The error shape `@google-cloud/bigquery` actually throws: `response` is the raw
+ * `insertAll` body, where `insertErrors` is an array, and the error's own
+ * `errors` is the remapped copy that drops `location`.
  */
 function partialFailure(
   fieldErrors: Array<{ message: string; location?: string; reason?: string }>
 ) {
-  // BigQuery always sets a reason on these entries, so default it rather than
-  // leaving it undefined: classification reads it.
+  // BigQuery always sets a reason on these entries, and classification reads it.
   const entries = fieldErrors.map((fieldError) => ({
     reason: "invalid",
     ...fieldError,
@@ -82,9 +80,8 @@ function transportFailure() {
 }
 
 /**
- * Deliberately carries every column the allowlist can name, so that asserting a
- * column was removed from a retry is a real assertion rather than one that
- * passes because the key was never there.
+ * Carries every column the allowlist can name, so that asserting one was removed
+ * cannot pass because the key was never there.
  */
 const ROWS = [
   {
@@ -146,13 +143,10 @@ describe("insertData retry behaviour", () => {
       expect(insert).toHaveBeenCalledTimes(2);
       expect(payloadOf(insert, 0)).toHaveProperty("document_id");
       expect(payloadOf(insert, 1)).not.toHaveProperty("document_id");
-      // Everything else must survive: only what BigQuery named is dropped.
       expect(payloadOf(insert, 1)).toMatchObject({
         event_id: "e1",
         data: "{}",
       });
-      // Never ignoreUnknownValues, which would also discard fields BigQuery did
-      // not name.
       expect(insert.mock.calls[1][1]).toMatchObject({
         ignoreUnknownValues: false,
       });
@@ -176,11 +170,8 @@ describe("insertData retry behaviour", () => {
     });
 
     it("does not ignore an unknown field BigQuery did not name", async () => {
-      // A live instance reports one unknown field per row, not all of them. So
-      // a table missing `document_id` while a transform has injected a stray
-      // key surfaces as a rejection naming only `document_id`. Retrying with
-      // ignoreUnknownValues would have discarded the stray key too, silently,
-      // which is the loss this whole change exists to prevent.
+      // BigQuery names one unknown field per row, so a stray key alongside a
+      // lagging column only surfaces on the retry.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
@@ -198,8 +189,6 @@ describe("insertData retry behaviour", () => {
 
       expect(insert).toHaveBeenCalledTimes(2);
       expect(payloadOf(insert, 1)).not.toHaveProperty("document_id");
-      // Terminal, so the row reaches the backup with the stray key intact
-      // rather than being dropped and reported as a success.
       expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
     });
 
@@ -226,14 +215,9 @@ describe("insertData retry behaviour", () => {
     });
 
     it("ignores stopped rows when recognising the lag", async () => {
-      // With skipInvalidRows false BigQuery rejects the whole request and marks
-      // the rows it did not attempt as `stopped`. Those entries say nothing
-      // about the schema. Treating them as unattributable meant no multi-row
-      // batch could ever be recognised as lag, which `scripts/import` hits
-      // because it records batches rather than single events.
-      //
-      // The empty message and location are the shape a live instance sends, so
-      // `reason` is the only thing that identifies this entry.
+      // With `skipInvalidRows` false BigQuery marks the rows it did not attempt
+      // as `stopped`, with the empty message and location a live instance sends,
+      // so `reason` is the only thing identifying the entry.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
@@ -280,8 +264,8 @@ describe("insertData retry behaviour", () => {
     });
 
     it("gives up when a retry makes no progress", async () => {
-      // The same column rejected twice means removing it did not help, so there
-      // is nothing further to try. Without this the recursion never ends.
+      // Bounds the recursion: the same column rejected twice means removing it
+      // did not help.
       const insert = jest
         .fn()
         .mockRejectedValue(
@@ -306,7 +290,7 @@ describe("insertData retry behaviour", () => {
       const tracker = trackerWith(insert, { wildcardIds: true });
 
       // Must start true, or asserting false below passes against an
-      // implementation that never clears the flag at all.
+      // implementation that never clears the flag.
       tracker._initialized = true;
 
       await expect(insertData(tracker)).rejects.toThrow("insert failed");
@@ -317,10 +301,8 @@ describe("insertData retry behaviour", () => {
     });
 
     it("backs up the row the caller gave us, not the one the retry reduced", async () => {
-      // BigQuery names one unknown field per row, so a lag strip is routinely
-      // followed by a terminal rejection naming a different column. The backup
-      // is the only record of that row, so it must not be missing the column an
-      // earlier retry removed from the payload.
+      // A strip followed by a terminal rejection for a different column is the
+      // ordinary case, and the backup is the only record of the row.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
@@ -335,7 +317,7 @@ describe("insertData retry behaviour", () => {
       );
 
       // Without this the assertion below could pass against an implementation
-      // that never stripped anything in the first place.
+      // that never stripped anything.
       expect(payloadOf(insert, 1)).not.toHaveProperty("document_id");
       expect(handleFailedTransactionsMock).toHaveBeenCalledWith(
         ROWS,
@@ -345,10 +327,8 @@ describe("insertData retry behaviour", () => {
     });
 
     it("clears initialization so a column that is really gone comes back", async () => {
-      // Stripping is only safe while the column exists and BigQuery has not
-      // caught up. Nothing here can tell that case from a column that was
-      // actually dropped, so the next batch must re-run initialize. Otherwise a
-      // warm instance strips it for its whole life and reports success.
+      // Nothing here can tell a lagging column from one that was actually
+      // dropped, so a warm instance must not strip it for its whole life.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
@@ -366,8 +346,6 @@ describe("insertData retry behaviour", () => {
     });
 
     it("does not match a column that merely contains an allowlisted name", async () => {
-      // A user column named document_id_v2 must not be mistaken for
-      // document_id, or its contents would be silently dropped.
       const insert = jest
         .fn()
         .mockRejectedValue(
@@ -381,9 +359,8 @@ describe("insertData retry behaviour", () => {
       expect(insert).toHaveBeenCalledTimes(1);
     });
 
-    // `path_params` needs its own config: `initializeRawChangeLogTable` only
-    // adds that column, and `record` only emits the key, when wildcard ids are
-    // enabled.
+    // `path_params` needs its own config: the column is only added, and the key
+    // only emitted, when wildcard ids are enabled.
     const addedColumns: Array<[string, Partial<ChangeTrackerConfig>]> = [
       ["document_id", {}],
       ["old_data", {}],
@@ -393,9 +370,6 @@ describe("insertData retry behaviour", () => {
     it.each(addedColumns)(
       "covers %s, every column added to an existing table",
       async (column, overrides) => {
-        // Dropping any of these from the allowlist would turn a row that lands
-        // today, with that column null, into an event lost once the caller
-        // exhausts its retries.
         const insert = jest
           .fn()
           .mockRejectedValueOnce(
@@ -413,12 +387,8 @@ describe("insertData retry behaviour", () => {
     );
 
     it("does not allowlist path_params when wildcard ids are disabled", async () => {
-      // Without wildcard ids the column is never created, so a rejected
-      // `path_params` is not our schema lag. `transformRows` hands the response
-      // of a user-supplied endpoint straight to the insert, so a transform can
-      // inject the key: allowlisting it there would discard whatever the
-      // transform put in it on every insert, forever, while still logging
-      // success.
+      // The column is never created here, but a transform function can still
+      // inject the key, since `transformRows` uses its response verbatim.
       const insert = jest
         .fn()
         .mockRejectedValue(
@@ -496,12 +466,8 @@ describe("insertData retry behaviour", () => {
     } as Partial<ChangeTrackerConfig>;
 
     it("is not allowlisted, even under the strategy that adds it", async () => {
-      // It is added only when `tableRequiresUpdate` is true, and that is false
-      // for a table which is already time-partitioned. So on exactly that table
-      // the column is never added, and allowlisting it would strip it from
-      // every row and report success, forever. Failing is recoverable, and
-      // little is lost either way: the value comes from a document field that
-      // `data` already carries.
+      // `tableRequiresUpdate` is false for a table that is already
+      // time-partitioned, so on exactly that table the column is never added.
       const insert = jest
         .fn()
         .mockRejectedValue(
@@ -535,11 +501,9 @@ describe("insertData retry behaviour", () => {
     });
 
     it("is not allowlisted under the Firestore timestamp strategy", async () => {
-      // That strategy partitions by the base `timestamp` column. On a table
-      // that lacks it the column really is added, so this is a deliberate
-      // choice rather than dead code: `timestamp` orders the latest view and
-      // keys the partition, so allowlisting it would silently misfile every
-      // affected row for good, where failing writes a backup row and throws.
+      // Excluded deliberately rather than for want of a code path: `timestamp`
+      // keys the partition and orders the latest view, so a null misfiles the
+      // row instead of costing an event the caller can retry.
       const insert = jest
         .fn()
         .mockRejectedValue(
@@ -590,8 +554,6 @@ describe("insertData retry behaviour", () => {
 
   describe("a transient blip followed by a schema lag", () => {
     it("can still retry the schema lag", async () => {
-      // The two retries are tracked separately, so the blip must not consume
-      // the one the lag needs. Without that, the row is lost.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(transportFailure())
@@ -632,9 +594,6 @@ describe("insertData retry behaviour", () => {
 
   describe("a schema lag followed by a transient blip", () => {
     it("can still retry the blip, and keeps the column stripped", async () => {
-      // The schema-lag retry must hand the transient retry on rather than
-      // spend it, and the rows it hands on must stay stripped. Losing either
-      // turns the blip into a lost row or a repeat of the same rejection.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
@@ -657,9 +616,8 @@ describe("insertData retry behaviour", () => {
 
   describe("malformed failures", () => {
     it("survives a null entry in the errors array", async () => {
-      // Not producible by the current library, but classifying must never throw
-      // from inside the catch block: that would lose the real error and skip
-      // the backup entirely.
+      // Not producible by the current library, but classifying runs inside the
+      // catch block, where a throw loses the real error and skips the backup.
       const insert = jest.fn().mockRejectedValue({
         message: "insert failed",
         response: { insertErrors: [{ index: 0, errors: [null] }] },
@@ -678,15 +636,13 @@ describe("insertData retry behaviour", () => {
 
       await expect(insertData(trackerWith(insert))).rejects.toBeUndefined();
 
-      // This only shows the backup was reached, since the module is mocked
-      // here. That it actually writes a row for a non-Error is pinned in
-      // backupSettings.test.ts against the real handler.
+      // Only shows the backup was reached, since the module is mocked here. That
+      // it writes a row for a non-Error is pinned in backupSettings.test.ts.
       expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
     });
 
     it("still reports the insert error when error logging hits a bad entry", async () => {
-      // `e.errors` is the library's remapped copy and is logged on the terminal
-      // path. A bad entry there must not replace the error the caller sees.
+      // `e.errors` is the remapped copy logged on the terminal path.
       const error: any = new Error("insert failed");
       error.errors = [null];
       error.response = {
@@ -718,9 +674,8 @@ describe("insertData retry behaviour", () => {
 
   describe("transient failures", () => {
     it("retries a partial failure whose reasons are all retryable", async () => {
-      // A rate limit or backend error arrives as a partial failure, not as a
-      // bare transport error. Classifying it as terminal would send a batch
-      // BigQuery asked us to resend straight to the backup collection.
+      // A rate limit or backend error arrives as a partial failure rather than a
+      // bare transport error.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
@@ -734,7 +689,6 @@ describe("insertData retry behaviour", () => {
       await expect(insertData(trackerWith(insert))).resolves.toBeUndefined();
 
       expect(insert).toHaveBeenCalledTimes(2);
-      // Never with ignoreUnknownValues: nothing here says a column is unknown.
       expect(insert.mock.calls[1][1]).toMatchObject({
         ignoreUnknownValues: false,
       });
@@ -758,7 +712,7 @@ describe("insertData retry behaviour", () => {
     });
 
     it("does not retry a partial failure with no reason to judge", async () => {
-      // Fail closed: an entry we cannot classify is not evidence of a blip.
+      // Fails closed: an entry we cannot classify is not evidence of a blip.
       const insert = jest
         .fn()
         .mockRejectedValue(
@@ -825,8 +779,6 @@ describe("insertData retry behaviour", () => {
           partialFailure([{ message: "no such field.", location: "user_age" }])
         );
 
-      // The caller needs the real cause to decide whether to retry, so the
-      // backup error must not replace it.
       await expect(insertData(trackerWith(insert))).rejects.toThrow(
         "insert failed"
       );
@@ -845,8 +797,8 @@ describe("insertData retry behaviour", () => {
         "insert failed"
       );
 
-      // Regression guard: this failure never reaches a second attempt, so a
-      // backup condition keyed on "this is the second attempt" would skip it.
+      // This failure never reaches a second attempt, so a backup condition keyed
+      // on "this is the second attempt" would skip it.
       expect(insert).toHaveBeenCalledTimes(1);
       expect(handleFailedTransactionsMock).toHaveBeenCalledTimes(1);
       expect(handleFailedTransactionsMock).toHaveBeenCalledWith(
@@ -872,8 +824,7 @@ describe("insertData retry behaviour", () => {
     });
 
     it("warns rather than debugs when a retry drops columns", async () => {
-      // Debug is suppressed at the default log level, so an operator would
-      // have to already suspect the loss to see the only record of it.
+      // Debug is suppressed at the default log level.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
@@ -898,7 +849,6 @@ describe("insertData retry behaviour", () => {
     });
 
     it("names the columns it dropped", async () => {
-      // "a column was dropped" is not actionable. Which one is.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(
@@ -914,9 +864,8 @@ describe("insertData retry behaviour", () => {
     });
 
     it("distinguishes the retry that drops columns from the one that does not", async () => {
-      // Only the schema-lag retry discards unknown columns. An operator
-      // investigating suspected column loss has nothing else to tell the two
-      // retries apart, so one message must not stand for both.
+      // Only one of the two retries drops columns, and the logs are the only
+      // thing telling an operator which one ran.
       const insert = jest
         .fn()
         .mockRejectedValueOnce(

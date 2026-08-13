@@ -57,9 +57,8 @@ interface InsertAllError {
 /**
  * The `insertAll` error reasons BigQuery documents as worth retrying.
  *
- * `stopped` means the row was not inserted because another row in the same
- * request failed, so it never appears on its own. The reason that does appear
- * alongside it decides whether the request is retryable.
+ * `stopped` marks a row BigQuery did not attempt because another row in the same
+ * request failed, so it never appears alone, and the reason beside it decides.
  */
 const RETRYABLE_INSERT_REASONS = [
   "backendError",
@@ -70,15 +69,11 @@ const RETRYABLE_INSERT_REASONS = [
 ];
 
 /**
- * Flattens the per-field errors out of a BigQuery insert failure.
+ * Flattens the per-field errors out of a BigQuery insert failure. Empty for any
+ * failure that is not a partial failure, such as a network or quota error.
  *
- * `PartialFailureError` carries the raw `insertAll` response on `response`,
- * where `insertErrors` is an array of `{ index, errors }`. The error's own
- * `errors` property is a remapped copy that keeps only `message` and `reason`,
- * so it cannot be used to identify which column BigQuery rejected.
- *
- * Returns an empty array for any failure that is not a partial failure, e.g. a
- * network error or a quota rejection.
+ * Read from `response.insertErrors` rather than the error's own `errors`, which
+ * is a remapped copy that drops `location` and so cannot identify the column.
  */
 function extractInsertErrors(e: any): InsertAllError[] {
   const insertErrors = e?.response?.insertErrors;
@@ -103,8 +98,8 @@ function unknownFieldColumn(
   error: InsertAllError,
   columns: string[]
 ): string | null {
-  // Defensive to match extractInsertErrors: a null entry must classify as not
-  // matching, not throw from inside the catch block and lose the real error.
+  // This runs inside a catch block, so a malformed entry must classify as not
+  // matching rather than throw and lose the real error.
   const message = error?.message ?? "";
 
   if (!/^no such field/i.test(message)) return null;
@@ -131,7 +126,6 @@ function withoutColumns(
   rows: bigquery.RowMetadata[],
   columns: string[]
 ): bigquery.RowMetadata[] {
-  // The ordinary insert strips nothing, so leave it its own rows.
   if (!columns.length) return rows;
 
   return rows.map((row) => {
@@ -272,11 +266,9 @@ export class FirestoreBigQueryEventHistoryTracker
     const rejected: string[] = [];
 
     for (const error of errors) {
-      // `stopped` marks a row BigQuery did not attempt, because another row in
-      // the same request failed and `skipInvalidRows` is false. It says nothing
-      // about the schema, so treating it as unattributable would stop any
-      // multi-row batch from ever being recognised as lag. `scripts/import`
-      // records batches, so this is reachable.
+      // A row BigQuery did not attempt, because `skipInvalidRows` is false and
+      // another row in the request failed. It says nothing about the schema, and
+      // skipping it is what lets a multi-row batch be recognised as lag at all.
       if (error?.reason === "stopped") continue;
 
       const column = unknownFieldColumn(error, addedColumns);
@@ -291,82 +283,47 @@ export class FirestoreBigQueryEventHistoryTracker
   }
 
   /**
-   * The columns this tracker adds to a table that already exists, and so every
-   * column exposed to the lag.
+   * The columns this tracker adds to a table that already exists, and so the
+   * only columns a lag retry may drop.
    *
-   * Every column added belongs here unless dropping it would cost more than
-   * losing the event, or it is not reliably added at all. Both exceptions are
-   * below. Omitting a column turns a row that lands today, with that column
-   * null, into an event lost once the caller exhausts its retries, because
-   * nothing on the write path reconciles the schema.
+   * Exact in both directions. A column missing from here turns a row that would
+   * land with that column null into an event lost once the caller exhausts its
+   * retries, because nothing on the write path reconciles the schema. A column
+   * listed here that is never actually added is worse: every insert strips it
+   * and reports success, for the life of the table.
    *
-   * It must also stay exact. Listing a column that is never added makes the
-   * retry drop that column's value on a table missing it, forever.
+   * A null in a column the latest view groups on duplicates the document in
+   * `_latest`, permanently, since the changelog is append-only. That is accepted
+   * for the columns below, because those tables already hold pre-upgrade rows
+   * with the same nulls, and not accepted for `timestamp`, the partition and
+   * ordering key, where a null misfiles the row instead.
    */
   private columnsAddedToExistingTables(): string[] {
     const columns = [documentIdField.name, oldDataField.name];
 
-    // `path_params` is only ever added, and only ever emitted by `record`, when
-    // wildcard ids are enabled. Listing it unconditionally meant a transform
-    // function, whose response `transformRows` uses verbatim, could inject the
-    // key into a table that has no such column and have it discarded on every
-    // insert, for good.
+    // Only added, and only emitted by `record`, when wildcard ids are on. A
+    // transform function can inject the key regardless, and `transformRows` uses
+    // its response verbatim, so listing it unconditionally would strip it from
+    // every insert into a table that has no such column.
     if (this.config.wildcardIds) {
       columns.push(documentPathParams.name);
     }
 
-    // The custom partition column is deliberately absent, though it is added to
-    // an existing table under the Firestore field strategy. It is added only
-    // when `tableRequiresUpdate` returns true, and that returns false for a
-    // table which is already time-partitioned
-    // (`checkUpdates.ts:39-44` via `isValidPartitionForExistingTable`, which is
-    // `!isPartitioned`). So an operator moving an already-partitioned table to
-    // field partitioning gets a column that is never added, and listing it here
-    // would make every insert strip it and report success, forever. That is the
-    // exactness failure this docstring warns about. `timestamp` is excluded
-    // too, for being the partition and ordering key: a silent null there
-    // misfiles the row for good, where a failure the caller can retry does not.
-    //
-    // Little is lost by excluding it. The value is derived from a field of the
-    // document, which is serialised whole into `data` (`:200`, and `old_data`
-    // for a delete), so the row still carries it. And `Partitioning` refuses to
-    // repartition an existing table anyway, so the column has nowhere to go.
-    //
-    // The columns above are not free either, so this is a trade-off rather than
-    // a clean line. A null in a column the latest view groups on makes that row
-    // its own group, so the document appears twice in `_latest`, and the
-    // changelog is append-only so a later write does not clear the duplicate.
-    // Which columns those are depends on the view syntax, and only `event_id`,
-    // `data` and `old_data` are safe under both. The legacy view groups on
-    // `document_name` and `document_id` and wraps everything else in
-    // `FIRST_VALUE` (`snapshot.ts:126-152`). The standard view wraps only
-    // `nonGroupFields`, in `ANY_VALUE`, and groups on everything else,
-    // `path_params` and `timestamp` included (`snapshot.ts:174-194`). So
-    // `document_id` costs a duplicate on either, and `path_params` costs one on
-    // the standard syntax.
-    //
-    // Tolerating that is still the better trade, because the duplication is not
-    // new. These columns are added to an existing table as a schema change with
-    // nothing backfilling them, so on exactly the tables this lag can affect
-    // every pre-upgrade row is already null, and every document written both
-    // before and after the upgrade already appears twice. The lag adds a
-    // handful of rows to a set that is already there. Losing the event has no
-    // such floor: the caller's retries are finite and nothing reconciles the
-    // schema afterwards, so the change never reaches BigQuery at all.
+    // The custom partition column is absent even though the Firestore field
+    // strategy adds it to an existing table, because `tableRequiresUpdate` is
+    // false for a table that is already time-partitioned, so on exactly those
+    // tables the column is never added. Little is lost: the value comes from a
+    // document field that `data` already carries whole.
     return columns;
   }
 
   /**
-   * Whether a failed insertion is worth one plain retry, with options
-   * unchanged.
-   *
-   * A failure with no partial-failure body (a network blip, a quota rejection,
-   * a 5xx) says nothing about our schema, so retrying it as-is is safe.
+   * Whether a failed insertion is worth one plain retry, with options unchanged.
    *
    * A partial failure qualifies only when every entry names a reason BigQuery
-   * documents as retryable. Anything else is BigQuery rejecting the shape of
-   * the data itself, which a plain retry cannot fix. The schema-lag check runs
-   * first, so an unknown-field entry never reaches here.
+   * documents as retryable. Anything else is a rejection of the data itself,
+   * which a plain retry cannot fix. A failure with no partial-failure body says
+   * nothing about the schema, so it is retried as-is.
    */
   private isTransientInsertionError(e: any): boolean {
     const errors = extractInsertErrors(e);
@@ -403,21 +360,18 @@ export class FirestoreBigQueryEventHistoryTracker
   /**
    * Inserts rows of data into the BigQuery raw change log table.
    *
-   * `rows` stays as the caller built it for the whole retry chain. A schema-lag
-   * retry narrows only the payload sent to BigQuery, so the backup written on
-   * the terminal path still holds every column, including any an earlier retry
-   * had to remove.
+   * `rows` stays as the caller built it for the whole retry chain, and columns
+   * are removed at the `insert` call, so the backup written on the terminal path
+   * still holds every column.
    */
   private async insertData(
     rows: bigquery.RowMetadata[],
     overrideOptions: InsertRowsOptions = {},
     // Columns a schema-lag retry has already removed from the payload. Each
-    // retry must remove at least one column BigQuery has not named before, so
-    // this layer is bounded at one attempt per column in
-    // `columnsAddedToExistingTables`, plus one.
+    // retry must remove one not removed before, which bounds the recursion.
     strippedColumns: string[] = [],
-    // Tracked separately from the above, so a transient blip on the first
-    // attempt cannot consume the retry a schema lag on a later attempt needs.
+    // Tracked separately, so a transient blip on the first attempt cannot
+    // consume the retry a schema lag on a later attempt needs.
     allowTransientRetry: boolean = true
   ) {
     const options = {
@@ -437,12 +391,10 @@ export class FirestoreBigQueryEventHistoryTracker
       // A column we just added may not be streamable yet. Remove the columns
       // BigQuery named and retry, so the rest of the row lands.
       //
-      // Deliberately not `ignoreUnknownValues`. A live instance reports one
-      // unknown field per row rather than all of them, so ignoring unknown
-      // values would also discard fields BigQuery never mentioned, including
-      // real drift this retry is not meant to tolerate. Removing only what it
-      // named leaves any other unknown column failing the insert, where it is
-      // backed up rather than lost.
+      // Deliberately not `ignoreUnknownValues`, which would also discard fields
+      // BigQuery never mentioned: it reports one unknown field per row, not all
+      // of them. Removing only what it named leaves any other unknown column
+      // failing the insert, where it is backed up rather than lost.
       const lagColumns = this.schemaLagColumns(e).filter(
         (column) => !strippedColumns.includes(column)
       );
@@ -450,11 +402,9 @@ export class FirestoreBigQueryEventHistoryTracker
       if (lagColumns.length) {
         logs.dataInsertRetriedWithoutColumns(rows.length, lagColumns);
 
-        // The whole case for stripping a column is that it exists and BigQuery
-        // has not caught up yet. When that is wrong, and the column really is
-        // gone, nothing here notices. Clearing this makes the next batch run
-        // `initialize` and add it back, so a mistaken lag costs one batch
-        // rather than the life of the instance.
+        // If the column is genuinely gone rather than lagging, this makes the
+        // next batch run `initialize` and add it back, so the mistake costs one
+        // batch rather than the life of the instance.
         this._initialized = false;
 
         return this.insertData(
@@ -465,8 +415,6 @@ export class FirestoreBigQueryEventHistoryTracker
         );
       }
 
-      // Transient failures deserve a retry, but not with
-      // `ignoreUnknownValues`, which would silently drop real data.
       if (allowTransientRetry && this.isTransientInsertionError(e)) {
         logs.dataInsertRetriedAfterTransientError(rows.length);
         return this.insertData(rows, overrideOptions, strippedColumns, false);
@@ -477,8 +425,8 @@ export class FirestoreBigQueryEventHistoryTracker
         try {
           await handleFailedTransactions(rows, this.config, e);
         } catch (backupError) {
-          // Never let a failed backup write mask the insert error that caused
-          // it. The caller needs the original cause to decide whether to retry.
+          // The caller needs the insert error to decide whether to retry, so a
+          // failed backup write must not replace it.
           logs.failedBackupWrite(backupError);
         }
       }

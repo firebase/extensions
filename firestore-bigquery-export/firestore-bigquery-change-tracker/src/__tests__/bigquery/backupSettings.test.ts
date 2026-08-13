@@ -26,9 +26,8 @@ const collection = jest.fn(() => ({ doc: (id: string) => ({ id }) }));
 jest.mock("firebase-admin", () => ({ apps: [{}] }));
 jest.mock("firebase-admin/app", () => ({ initializeApp: jest.fn() }));
 jest.mock("firebase-admin/firestore", () => ({
-  // A fresh object per call, deliberately: the guard must key on the database
-  // id rather than on instance identity, so this would catch a guard that
-  // relied on getting the same object back.
+  // A fresh object per call, deliberately: the guard must key on the database id
+  // rather than on instance identity.
   getFirestore: jest.fn(() => ({ settings, batch, collection })),
 }));
 
@@ -56,9 +55,6 @@ describe("handleFailedTransactions Firestore settings", () => {
   });
 
   it("applies settings once across repeated failures", async () => {
-    // `settings()` may only be called once per instance, and only before the
-    // instance is used. Calling it on every batch threw on every call after the
-    // first, so only one failure per function instance was ever backed up.
     const handler = loadHandler();
 
     await handler(ROWS, config, new Error("insert failed"));
@@ -69,8 +65,6 @@ describe("handleFailedTransactions Firestore settings", () => {
   });
 
   it("still writes the backup when settings cannot be applied", async () => {
-    // Another part of the process may have reached the instance first. That
-    // costs `ignoreUndefinedProperties`, not the backup itself.
     settings.mockImplementation(() => {
       throw new Error("Firestore has already been initialized");
     });
@@ -85,11 +79,7 @@ describe("handleFailedTransactions Firestore settings", () => {
   });
 
   it("still writes the backup when the thrown value is not an Error", async () => {
-    // `insertData` reports whatever it caught, so this reaches the handler.
-    // Reading `.message` off it threw a TypeError, which the caller reported as
-    // a failed backup, so nothing was written for the very failures where the
-    // row is least recoverable from elsewhere. The retry suite could not catch
-    // this: it mocks this module, so it only proves the call site was reached.
+    // `insertData` reports whatever it caught, so a non-Error reaches here.
     const handler = loadHandler();
 
     await expect(
@@ -117,10 +107,9 @@ describe("handleFailedTransactions Firestore settings", () => {
 });
 
 /**
- * A stand-in for `@google-cloud/bigquery`'s `PartialFailureError`, built the
- * same way: one entry per failed row, each nesting the per-field errors, and a
- * top-level `message` that `@google-cloud/common` leaves empty because those
- * entries carry no `message` of their own.
+ * A stand-in for `@google-cloud/bigquery`'s `PartialFailureError`: one entry per
+ * failed row nesting the per-field errors, and the empty top-level `message`
+ * that `@google-cloud/common` builds from entries carrying none.
  */
 const partialFailure = (groups: any[]) =>
   Object.assign(new Error(""), { name: "PartialFailureError", errors: groups });
@@ -142,10 +131,7 @@ describe("handleFailedTransactions error details", () => {
   };
 
   it("records the nested per-field messages when the top-level message is empty", async () => {
-    // The observed failure. `PartialFailureError.message` is "", and `??` only
-    // falls back on null and undefined, so every backup document written for a
-    // real rejected insert recorded an empty string and told the operator
-    // nothing about why the row failed.
+    // The shape a real rejected insert arrives in.
     const details = await detailsFor(
       partialFailure([
         {
@@ -161,8 +147,6 @@ describe("handleFailedTransactions error details", () => {
   });
 
   it("deduplicates messages shared across failed rows", async () => {
-    // A batch normally fails the same way for every row, so repeating one
-    // message 500 times would push out the detail that differs.
     const details = await detailsFor(
       partialFailure([
         { errors: [{ message: "no such field: document_id." }] },
@@ -177,8 +161,6 @@ describe("handleFailedTransactions error details", () => {
   });
 
   it("caps the number of messages and the total length", async () => {
-    // `error_details` is a Firestore field, so it must not grow with the
-    // number of distinct failures in the batch.
     const details = await detailsFor(
       partialFailure(
         Array.from({ length: 9 }, (_, i) => ({
@@ -187,9 +169,7 @@ describe("handleFailedTransactions error details", () => {
       )
     );
 
-    // The count is the part an operator needs most when the messages are too
-    // long to keep, so it must survive the truncation rather than be cut off
-    // by it. The cap still holds.
+    // The count must survive the truncation rather than be cut off by it.
     expect(details.length).toBeLessThanOrEqual(1000);
     expect(details.endsWith(" (+4 more)")).toBe(true);
     expect(details).toContain("...");
@@ -206,9 +186,8 @@ describe("handleFailedTransactions error details", () => {
   });
 
   it("falls back to the reason when an entry carries no message", async () => {
-    // A `stopped` entry, the row BigQuery did not attempt, arrives with an
-    // empty message and an empty location, so the reason is all there is. A
-    // batch rejected entirely this way used to record only the class name.
+    // A `stopped` entry, the row BigQuery did not attempt, arrives with an empty
+    // message and an empty location, so the reason is all there is.
     const details = await detailsFor(
       partialFailure([
         { errors: [{ message: "", location: "", reason: "stopped" }] },
@@ -234,8 +213,6 @@ describe("handleFailedTransactions error details", () => {
   });
 
   it("survives an error whose message getter throws", async () => {
-    // Nothing here may throw: this runs inside the caller's catch block, so an
-    // escape is reported as a failed backup and the row is lost.
     const hostile = {
       get message(): string {
         throw new Error("hostile getter");
@@ -256,9 +233,8 @@ describe("handleFailedTransactions error details", () => {
   });
 
   it("still writes a string for every malformed shape of `errors`", async () => {
-    // This runs inside the caller's catch block: anything thrown here is
-    // reported as a failed backup and the row is lost, so no shape of the
-    // caught value may throw.
+    // The handler runs inside the caller's catch block, so a throw here is
+    // reported as a failed backup and the row is lost.
     const shapes: any[] = [
       partialFailure([]),
       Object.assign(new Error(""), { errors: "not an array" }),
