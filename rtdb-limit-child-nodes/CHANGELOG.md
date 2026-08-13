@@ -1,3 +1,19 @@
+## Version 0.1.20
+
+chore: bump Firebase Admin and Functions dependencies
+
+## Version 0.1.19
+
+chore: bump dependencies
+
+## Version 0.1.18
+
+chore: bump dependencies
+
+## Version 0.1.17
+
+chore: update Cloud Functions runtime to Node.js 22
+
 ## Version 0.1.16
 
 chore: bump dependencies

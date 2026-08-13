@@ -1,3 +1,19 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import {
   describe,
   it,
@@ -69,7 +85,7 @@ describe("Command Line Parser", () => {
       expect(commander.version).toHaveBeenCalledWith("1.0.0");
 
       // Check that all options are configured
-      expect(commander.option).toHaveBeenCalledTimes(10);
+      expect(commander.option).toHaveBeenCalledTimes(11);
 
       // Check specific options - just a sample to ensure we're setting up correctly
       expect(commander.option).toHaveBeenCalledWith(
@@ -88,6 +104,12 @@ describe("Command Line Parser", () => {
         "A collection of files from which to read schemas.",
         collect,
         []
+      );
+
+      expect(commander.option).toHaveBeenCalledWith(
+        "--query-collection-group",
+        "Use collection group query instead of regular collection query",
+        false
       );
     });
 

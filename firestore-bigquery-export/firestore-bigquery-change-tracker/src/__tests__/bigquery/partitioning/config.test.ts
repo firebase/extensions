@@ -1,3 +1,19 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import {
   PartitioningConfig,
   PartitioningType,
@@ -87,65 +103,30 @@ describe("PartitioningConfig", () => {
     });
   });
 
-  describe("static factory methods", () => {
-    test("none() creates a NONE config", () => {
-      const config = PartitioningConfig.none();
-      expect(config.getType()).toBe(PartitioningType.NONE);
-      expect(config.getGranularity()).toBe("NONE");
-    });
-
-    test("ingestionTime() creates an INGESTION_TIME config", () => {
-      const config = PartitioningConfig.ingestionTime("MONTH");
-      expect(config.getType()).toBe(PartitioningType.INGESTION_TIME);
-      expect(config.getGranularity()).toBe("MONTH");
-    });
-
-    test("firestoreTimestamp() creates a FIRESTORE_TIMESTAMP config", () => {
-      const config = PartitioningConfig.firestoreTimestamp("DAY");
-      expect(config.getType()).toBe(PartitioningType.FIRESTORE_TIMESTAMP);
-      expect(config.getBigQueryColumnName()).toBe("timestamp");
-      expect(config.getBigQueryColumnType()).toBeUndefined();
-    });
-
-    test("firestoreTimestamp() with columnType creates correct config", () => {
-      const config = PartitioningConfig.firestoreTimestamp("DAY", "DATE");
-      expect(config.getType()).toBe(PartitioningType.FIRESTORE_TIMESTAMP);
-      expect(config.getBigQueryColumnType()).toBe("DATE");
-    });
-
-    test("firestoreField() creates a FIRESTORE_FIELD config", () => {
-      const config = PartitioningConfig.firestoreField(
-        "YEAR",
-        "event_date",
-        "DATE",
-        "eventDate"
-      );
-      expect(config.getType()).toBe(PartitioningType.FIRESTORE_FIELD);
-      expect(config.getGranularity()).toBe("YEAR");
-      expect(config.getBigQueryColumnName()).toBe("event_date");
-      expect(config.getBigQueryColumnType()).toBe("DATE");
-      expect(config.getFirestoreFieldName()).toBe("eventDate");
-    });
-  });
-
   describe("getter methods", () => {
-    test("getStrategy() returns the original config", () => {
-      const originalConfig = {
+    test("getStrategy() returns the original strategy", () => {
+      const strategy = {
         granularity: "DAY" as const,
         bigqueryColumnName: "test",
         bigqueryColumnType: "TIMESTAMP" as const,
         firestoreFieldName: "test",
       };
-      const config = new PartitioningConfig(originalConfig);
-      expect(config.getStrategy()).toEqual(originalConfig);
+      const config = new PartitioningConfig(strategy);
+      expect(config.getStrategy()).toEqual(strategy);
     });
 
     test("all boolean methods return false for non-matching types", () => {
-      const config = PartitioningConfig.ingestionTime("DAY");
+      const config = new PartitioningConfig({ granularity: "DAY" });
       expect(config.isNoPartitioning()).toBe(false);
       expect(config.isFirestoreTimestampPartitioning()).toBe(false);
       expect(config.isFirestoreFieldPartitioning()).toBe(false);
       expect(config.isIngestionTimePartitioning()).toBe(true);
+    });
+
+    test("constructor defaults to no partitioning when undefined", () => {
+      const config = new PartitioningConfig();
+      expect(config.getType()).toBe(PartitioningType.NONE);
+      expect(config.getStrategy()).toEqual({ granularity: "NONE" });
     });
   });
 });

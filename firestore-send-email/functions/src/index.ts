@@ -179,6 +179,8 @@ async function deliver(ref: DocumentReference): Promise<void> {
       templateId: payload.sendGrid?.templateId,
       dynamicTemplateData: payload.sendGrid?.dynamicTemplateData,
       mailSettings: payload.sendGrid?.mailSettings,
+      customArgs: payload.sendGrid?.customArgs,
+      ipPoolName: payload.sendGrid?.ipPoolName,
     };
 
     logs.info("Sending via transport.sendMail()", { mailOptions });
@@ -364,7 +366,7 @@ export const processQueue = onDocumentWritten(
 
     try {
       await processWrite(change);
-    } catch (err: any) {
+    } catch (err) {
       await events.recordErrorEvent(
         change,
         change.after.data(),

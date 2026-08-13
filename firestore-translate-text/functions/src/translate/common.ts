@@ -1,11 +1,26 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { v2 } from "@google-cloud/translate";
 import * as logs from "../logs";
 import * as events from "../events";
 import * as admin from "firebase-admin";
 import config from "../config";
 import { genkit, Genkit, z, ModelReference } from "genkit";
-import vertexAI from "@genkit-ai/vertexai";
-import googleAI from "@genkit-ai/googleai";
+import { vertexAI, googleAI } from "@genkit-ai/google-genai";
 
 /**
  * Represents a translation result with target language and translated text

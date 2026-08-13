@@ -16,7 +16,6 @@
 import * as bigquery from "@google-cloud/bigquery";
 import { DocumentReference } from "firebase-admin/firestore";
 import * as traverse from "traverse";
-import fetch from "node-fetch";
 import {
   RawChangelogSchema,
   documentIdField,
@@ -44,9 +43,9 @@ import { initializeLatestView } from "./initializeLatestView";
 import { logger, LogLevel } from "../logger";
 
 export { RawChangelogSchema, RawChangelogViewSchema } from "./schema";
-import type { Config } from "./types";
+import type { ChangeTrackerConfig } from "./types";
 import { PartitioningConfig } from "./partitioning/config";
-export type { Config } from "./types";
+export type { ChangeTrackerConfig } from "./types";
 
 /**
  * An FirestoreEventHistoryTracker that exports data to BigQuery.
@@ -65,7 +64,7 @@ export class FirestoreBigQueryEventHistoryTracker
   _initialized: boolean = false;
   partitioningConfig: PartitioningConfig;
 
-  constructor(public config: Config) {
+  constructor(public config: ChangeTrackerConfig) {
     this.bq = new bigquery.BigQuery();
 
     this.bq.projectId = config.bqProjectId || process.env.PROJECT_ID;
@@ -125,7 +124,7 @@ export class FirestoreBigQueryEventHistoryTracker
         body: JSON.stringify({ data: rows }),
         headers: { "Content-Type": "application/json" },
       });
-      const responseJson = await response.json();
+      const responseJson: any = await response.json();
       // To support callable functions, first check result.data
       return responseJson?.result?.data ?? responseJson.data;
     }

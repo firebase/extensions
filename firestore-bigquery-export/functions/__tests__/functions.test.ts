@@ -1,3 +1,19 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import * as admin from "firebase-admin";
 import { logger } from "firebase-functions";
 import * as functionsTestInit from "../node_modules/firebase-functions-test";
@@ -75,10 +91,16 @@ let restoreEnv;
 let functionsTest;
 
 /** Helper to Mock Export */
-const mockExport = (document, data) => {
+const mockExport = (change, context = {}) => {
   const ref = require("../src/index").fsexportbigquery;
-  const wrapped = functionsTest.wrap(ref);
-  return wrapped(document, data);
+  return ref.run({
+    data: change,
+    document: "example/doc1",
+    id: "test-event-id",
+    time: new Date().toISOString(),
+    params: { documentId: "doc1" },
+    ...context,
+  });
 };
 
 describe("extension", () => {
@@ -120,9 +142,7 @@ describe("extension", () => {
         afterSnapshot
       );
 
-      const callResult = await mockExport(documentChange, {
-        resource: { name: "example/doc1" },
-      });
+      const callResult = await mockExport(documentChange);
 
       expect(callResult).toBeUndefined();
 
@@ -154,9 +174,7 @@ describe("extension", () => {
         afterSnapshot
       );
 
-      const callResult = await mockExport(documentChange, {
-        resource: { name: "example/doc1" },
-      });
+      const callResult = await mockExport(documentChange);
 
       expect(callResult).toBeUndefined();
 

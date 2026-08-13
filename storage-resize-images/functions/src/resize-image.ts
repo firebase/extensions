@@ -1,10 +1,26 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import * as os from "os";
 import sharp from "sharp";
 import * as path from "path";
 import * as fs from "fs";
 
 import { Bucket } from "@google-cloud/storage";
-import { uuid } from "uuidv4";
+import * as crypto from "crypto";
 
 import { config } from "./config";
 import * as logs from "./logs";
@@ -103,7 +119,7 @@ export const modifyImage = async ({
   let modifiedFile: string;
 
   try {
-    modifiedFile = path.join(os.tmpdir(), uuid());
+    modifiedFile = path.join(os.tmpdir(), crypto.randomUUID());
 
     // filename\*=utf-8''  selects any string match the filename notation.
     // [^;\s]+ searches any following string until either a space or semi-colon.
@@ -203,7 +219,7 @@ export const constructMetadata = (
     config.regenerateToken &&
     metadata.metadata.firebaseStorageDownloadTokens
   ) {
-    metadata.metadata.firebaseStorageDownloadTokens = uuid();
+    metadata.metadata.firebaseStorageDownloadTokens = crypto.randomUUID();
   }
   return metadata;
 };

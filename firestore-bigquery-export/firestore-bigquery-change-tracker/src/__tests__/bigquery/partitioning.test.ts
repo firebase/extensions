@@ -1,9 +1,25 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import * as admin from "firebase-admin";
 
 import { BigQuery, Dataset, Table } from "@google-cloud/bigquery";
 import { ChangeType, FirestoreDocumentChangeEvent } from "../..";
 
-import { Config } from "../../bigquery/types";
+import { ChangeTrackerConfig } from "../../bigquery/types";
 import { Partitioning } from "../../bigquery/partitioning";
 import { PartitioningConfig } from "../../bigquery/partitioning/config";
 import { deleteTable } from "../fixtures/clearTables";
@@ -15,8 +31,12 @@ let dataset: Dataset;
 let table: Table;
 let randomID: string;
 let datasetId: string;
+const describeIfBigQueryIntegration =
+  process.env.RUN_BIGQUERY_INTEGRATION_TESTS === "true"
+    ? describe
+    : describe.skip;
 
-describe("processing partitions on a new table", () => {
+describeIfBigQueryIntegration("processing partitions on a new table", () => {
   beforeAll(async () => {
     jest.spyOn(logger, "debug").mockImplementation(() => {});
     jest.spyOn(logger, "info").mockImplementation(() => {});
@@ -50,7 +70,7 @@ describe("processing partitions on a new table", () => {
   });
   describe("addPartitioningToSchema", () => {
     test("adds a custom TIMESTAMP to a schema", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "dataset",
         tableId: "table",
         datasetLocation: "US",
@@ -84,7 +104,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("adds a custom DATETIME to a schema", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "dataset",
         tableId: "table",
         datasetLocation: "US",
@@ -118,7 +138,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("does not add an invalid time partition type to a schema", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "dataset",
         tableId: "table",
         datasetLocation: "US",
@@ -147,7 +167,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("does not add partitioning without a valid timePartitioning value ", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -173,7 +193,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("does not add partitioning without a timePartitioningFirestoreField", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -201,7 +221,7 @@ describe("processing partitions on a new table", () => {
 
   describe("getPartitionValue", () => {
     test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -235,7 +255,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined, with a timestamp-like value", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -273,7 +293,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("returns an empty object when _seconds or _nanoseconds is not a number", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -310,7 +330,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("returns a value when timePartitioningField and timePartitioningFirestoreField string value has been defined, and is timestamp-like", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -347,7 +367,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("returns an empty object if timePartitioningFirestoreField has not been provided", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -380,7 +400,7 @@ describe("processing partitions on a new table", () => {
       expect(value).toEqual({});
     });
     test("returns an empty object if timePartitioningFirestoreField has not been provided", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -414,7 +434,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("returns an empty object if timePartitioningFirestoreField timePartitioningField", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -448,7 +468,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("returns an empty object if no event data has been provided", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -480,7 +500,7 @@ describe("processing partitions on a new table", () => {
     });
 
     test("returns an empty object if a non string or Timestamp value is synced from Firestore", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -516,7 +536,7 @@ describe("processing partitions on a new table", () => {
 
   describe("isTablePartitioned", () => {
     test("partition return false if table is not provided", async () => {
-      const config: Config = {
+      const config: ChangeTrackerConfig = {
         datasetId: "",
         tableId: "",
         datasetLocation: "",
@@ -541,7 +561,7 @@ describe("processing partitions on a new table", () => {
   });
 
   test("partition return false if table is not provided", async () => {
-    const config: Config = {
+    const config: ChangeTrackerConfig = {
       datasetId: "",
       tableId: "",
       datasetLocation: "",
@@ -576,7 +596,7 @@ describe("processing partitions on a new table", () => {
   });
 });
 
-describe("updateTableMetadata", () => {
+describeIfBigQueryIntegration("updateTableMetadata", () => {
   let testTable: Table;
   let testDataset: Dataset;
 
@@ -596,7 +616,7 @@ describe("updateTableMetadata", () => {
   });
 
   test("updates the table metadata with the timestamp field", async () => {
-    const config: Config = {
+    const config: ChangeTrackerConfig = {
       datasetId: "",
       tableId: "",
       datasetLocation: "",
@@ -623,7 +643,7 @@ describe("updateTableMetadata", () => {
     });
   });
   test("Should not update if there is a custom option with the timestamp option", async () => {
-    const config: Config = {
+    const config: ChangeTrackerConfig = {
       datasetId: "",
       tableId: "",
       datasetLocation: "",
@@ -728,103 +748,106 @@ describe("updateTableMetadata", () => {
   });
 });
 
-describe("getPartitionValue with DELETE operations", () => {
-  let testTable: Table;
-  let testDataset: Dataset;
+describeIfBigQueryIntegration(
+  "getPartitionValue with DELETE operations",
+  () => {
+    let testTable: Table;
+    let testDataset: Dataset;
 
-  beforeAll(async () => {
-    const randomID = (Math.random() + 1).toString(36).substring(7);
-    const testDatasetId = `bq_delete_${randomID}`;
-    [testDataset] = await bq.createDataset(testDatasetId, {
-      location: "europe-west2",
-    });
-    [testTable] = await testDataset.createTable(`bq_delete_${randomID}`, {});
-  });
-
-  afterAll(async () => {
-    await deleteTable({
-      datasetId: testDataset.id,
-    });
-  });
-
-  test("uses oldData for DELETE operations", () => {
-    const partitioningConfig = new PartitioningConfig({
-      granularity: "DAY",
-      bigqueryColumnName: "end_date",
-      bigqueryColumnType: "TIMESTAMP",
-      firestoreFieldName: "endDate",
+    beforeAll(async () => {
+      const randomID = (Math.random() + 1).toString(36).substring(7);
+      const testDatasetId = `bq_delete_${randomID}`;
+      [testDataset] = await bq.createDataset(testDatasetId, {
+        location: "europe-west2",
+      });
+      [testTable] = await testDataset.createTable(`bq_delete_${randomID}`, {});
     });
 
-    const oldDate = admin.firestore.Timestamp.fromDate(
-      new Date("2024-01-15T10:00:00Z")
-    );
-
-    const event: FirestoreDocumentChangeEvent = {
-      timestamp: "",
-      operation: ChangeType.DELETE,
-      documentName: "test/doc",
-      eventId: "event1",
-      documentId: "doc",
-      data: null,
-      oldData: { endDate: oldDate },
-    };
-
-    const partitioning = new Partitioning(partitioningConfig, testTable);
-    const value = partitioning.getPartitionValue(event);
-
-    expect(value.end_date).toBeDefined();
-  });
-
-  test("returns empty object for DELETE when oldData is null", () => {
-    const partitioningConfig = new PartitioningConfig({
-      granularity: "DAY",
-      bigqueryColumnName: "end_date",
-      bigqueryColumnType: "TIMESTAMP",
-      firestoreFieldName: "endDate",
+    afterAll(async () => {
+      await deleteTable({
+        datasetId: testDataset.id,
+      });
     });
 
-    const event: FirestoreDocumentChangeEvent = {
-      timestamp: "",
-      operation: ChangeType.DELETE,
-      documentName: "test/doc",
-      eventId: "event1",
-      documentId: "doc",
-      data: null,
-      oldData: null,
-    };
+    test("uses oldData for DELETE operations", () => {
+      const partitioningConfig = new PartitioningConfig({
+        granularity: "DAY",
+        bigqueryColumnName: "end_date",
+        bigqueryColumnType: "TIMESTAMP",
+        firestoreFieldName: "endDate",
+      });
 
-    const partitioning = new Partitioning(partitioningConfig, testTable);
-    const value = partitioning.getPartitionValue(event);
+      const oldDate = admin.firestore.Timestamp.fromDate(
+        new Date("2024-01-15T10:00:00Z")
+      );
 
-    expect(value).toEqual({});
-  });
+      const event: FirestoreDocumentChangeEvent = {
+        timestamp: "",
+        operation: ChangeType.DELETE,
+        documentName: "test/doc",
+        eventId: "event1",
+        documentId: "doc",
+        data: null,
+        oldData: { endDate: oldDate },
+      };
 
-  test("returns empty object for DELETE when oldData lacks the field", () => {
-    const partitioningConfig = new PartitioningConfig({
-      granularity: "DAY",
-      bigqueryColumnName: "end_date",
-      bigqueryColumnType: "TIMESTAMP",
-      firestoreFieldName: "endDate",
+      const partitioning = new Partitioning(partitioningConfig, testTable);
+      const value = partitioning.getPartitionValue(event);
+
+      expect(value.end_date).toBeDefined();
     });
 
-    const event: FirestoreDocumentChangeEvent = {
-      timestamp: "",
-      operation: ChangeType.DELETE,
-      documentName: "test/doc",
-      eventId: "event1",
-      documentId: "doc",
-      data: null,
-      oldData: { otherField: "value" },
-    };
+    test("returns empty object for DELETE when oldData is null", () => {
+      const partitioningConfig = new PartitioningConfig({
+        granularity: "DAY",
+        bigqueryColumnName: "end_date",
+        bigqueryColumnType: "TIMESTAMP",
+        firestoreFieldName: "endDate",
+      });
 
-    const partitioning = new Partitioning(partitioningConfig, testTable);
-    const value = partitioning.getPartitionValue(event);
+      const event: FirestoreDocumentChangeEvent = {
+        timestamp: "",
+        operation: ChangeType.DELETE,
+        documentName: "test/doc",
+        eventId: "event1",
+        documentId: "doc",
+        data: null,
+        oldData: null,
+      };
 
-    expect(value).toEqual({});
-  });
-});
+      const partitioning = new Partitioning(partitioningConfig, testTable);
+      const value = partitioning.getPartitionValue(event);
 
-describe("isValidPartitionForExistingTable", () => {
+      expect(value).toEqual({});
+    });
+
+    test("returns empty object for DELETE when oldData lacks the field", () => {
+      const partitioningConfig = new PartitioningConfig({
+        granularity: "DAY",
+        bigqueryColumnName: "end_date",
+        bigqueryColumnType: "TIMESTAMP",
+        firestoreFieldName: "endDate",
+      });
+
+      const event: FirestoreDocumentChangeEvent = {
+        timestamp: "",
+        operation: ChangeType.DELETE,
+        documentName: "test/doc",
+        eventId: "event1",
+        documentId: "doc",
+        data: null,
+        oldData: { otherField: "value" },
+      };
+
+      const partitioning = new Partitioning(partitioningConfig, testTable);
+      const value = partitioning.getPartitionValue(event);
+
+      expect(value).toEqual({});
+    });
+  }
+);
+
+describeIfBigQueryIntegration("isValidPartitionForExistingTable", () => {
   let testTable: Table;
   let testDataset: Dataset;
   let partitionedTable: Table;
@@ -886,7 +909,7 @@ describe("isValidPartitionForExistingTable", () => {
   });
 });
 
-describe("addPartitioningToSchema with DATE type", () => {
+describeIfBigQueryIntegration("addPartitioningToSchema with DATE type", () => {
   let testTable: Table;
   let testDataset: Dataset;
 
