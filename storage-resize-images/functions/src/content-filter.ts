@@ -21,7 +21,8 @@ import * as fs from "fs";
 import * as log from "./logs";
 import { globalRetryQueue } from "./global";
 
-const CONTENT_FILTER_MODEL = "gemini-3.6-flash";
+/** Similar price to previous `gemini-2.5-flash`, better quality than 2.5 Flash. Higher Flash/Lite tiers cost more. */
+const CONTENT_FILTER_MODEL = "gemini-3.1-flash-lite";
 
 /**
  * Creates a data URL from an image file

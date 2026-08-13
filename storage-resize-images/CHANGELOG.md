@@ -1,6 +1,6 @@
 ## Version 0.3.7
 
-chore - switch content filter from `gemini-2.5-flash` to `gemini-3.6-flash` (Gemini 2.5 Flash retires in October 2026)
+chore - switch content filter from `gemini-2.5-flash` to `gemini-3.1-flash-lite` (similar price to 2.5 Flash and better quality; 2.5 Flash retires October 2026)
 
 ## Version 0.3.6
 
