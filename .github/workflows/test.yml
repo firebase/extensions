@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: ["**"]
 
+permissions:
+  contents: read
+
 jobs:
   nodejs:
     runs-on: ubuntu-latest
@@ -14,9 +17,9 @@ jobs:
         node: ["22"]
     name: node.js_${{ matrix.node }}_test
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3.9.1
         with:
           node-version: ${{ matrix.node }}
           cache: "npm"
@@ -26,7 +29,7 @@ jobs:
       - name: Build emulator functions
         run: cd _emulator/functions && npm i && npm run build & cd ../..
       - name: Install Firebase CLI
-        uses: nick-invision/retry@v1
+        uses: nick-invision/retry@39da88d5f7d15a96aed861dbabbe8b7443e3182a # v1.0.4
         with:
           timeout_minutes: 10
           retry_wait_seconds: 60

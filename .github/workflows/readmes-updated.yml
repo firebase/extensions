@@ -17,20 +17,23 @@ concurrency:
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3.9.1
         with:
           node-version: 22
           cache: "npm"
@@ -44,7 +47,7 @@ jobs:
           echo "::set-output name=dir::$(npm config get prefix)"
 
       - name: Cache global dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ steps.global-deps-setup.outputs.dir }}
           key:
@@ -54,8 +57,10 @@ jobs:
             ${{ runner.os }}-npm-global-deps-v1-
 
       - name: Install Firebase and Lerna
+        env:
+          NPM_GLOBAL_PREFIX: ${{ steps.global-deps-setup.outputs.dir }}
         run: |
-          echo "${{ steps.global-deps-setup.outputs.dir }}/bin" >> $GITHUB_PATH
+          echo "${NPM_GLOBAL_PREFIX}/bin" >> "$GITHUB_PATH"
           npm install -g firebase-tools lerna
 
       - name: Install local dependencies
