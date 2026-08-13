@@ -21,6 +21,8 @@ import * as fs from "fs";
 import * as log from "./logs";
 import { globalRetryQueue } from "./global";
 
+const CONTENT_FILTER_MODEL = "gemini-3.6-flash";
+
 /**
  * Creates a data URL from an image file
  * @param imageBuffer Raw image file contents
@@ -135,7 +137,7 @@ export async function checkImageContent(
     plugins: [
       vertexAI({
         location: process.env.LOCATION ?? "us-central1",
-        models: ["gemini-2.5-flash"],
+        models: [CONTENT_FILTER_MODEL],
       }),
     ],
   });
@@ -166,7 +168,7 @@ export async function checkImageContent(
 
     try {
       const result = await ai.generate({
-        model: gemini("gemini-2.5-flash"),
+        model: gemini(CONTENT_FILTER_MODEL),
         messages: [
           {
             role: "user",

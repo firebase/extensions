@@ -187,7 +187,7 @@ describe("checkImageContent with mocks", () => {
 
     // Check basic structure without checking exact values of complex objects
     expect(callArgs.model?.name ?? callArgs.model).toBe(
-      "vertexai/gemini-2.5-flash"
+      "vertexai/gemini-3.6-flash"
     );
     expect(callArgs.messages[0].role).toBe("user");
     expect(callArgs.messages[0].content[0].text).toBe(

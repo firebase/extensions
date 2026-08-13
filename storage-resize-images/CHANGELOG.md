@@ -1,3 +1,7 @@
+## Version 0.3.7
+
+chore - switch content filter from `gemini-2.5-flash` to `gemini-3.6-flash` (Gemini 2.5 Flash retires in October 2026)
+
 ## Version 0.3.6
 
 chore: replace temp file helper dependencies with Node.js built-ins
