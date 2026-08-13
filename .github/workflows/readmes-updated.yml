@@ -47,7 +47,7 @@ jobs:
           echo "::set-output name=dir::$(npm config get prefix)"
 
       - name: Cache global dependencies
-        uses: actions/cache@6849a62b9183863484f7a264a7806655c65f9038
+        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
         with:
           path: ${{ steps.global-deps-setup.outputs.dir }}
           key:
