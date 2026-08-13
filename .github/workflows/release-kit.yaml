@@ -91,6 +91,7 @@ jobs:
         with:
           node-version: "24"
           registry-url: "https://wombat-dressing-room.appspot.com"
+          always-auth: false
 
       - name: Configure Git User
         if: ${{ !inputs.dry_run }}
@@ -151,7 +152,7 @@ jobs:
       - name: Install Dependencies & Build
         working-directory: ${{ inputs.target_kit }}
         run: |
-          npm ci
+          npm ci --registry=https://registry.npmjs.org
           npm run build
 
       - name: Bump Version (Clear CHANGELOG on Stable Release Only)
