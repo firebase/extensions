@@ -1,5 +1,5 @@
 {
-  "name": "@firebase-functions-kits/firestore-incremental-capture",
+  "name": "@firebase-function-kits/firestore-incremental-capture",
   "version": "0.0.0",
   "private": true,
   "description": "Incremental point-in-time capture of Firestore changes",

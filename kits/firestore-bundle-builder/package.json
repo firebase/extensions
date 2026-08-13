@@ -1,5 +1,5 @@
 {
-  "name": "@firebase-functions-kits/firestore-bundle-builder",
+  "name": "@firebase-function-kits/firestore-bundle-builder",
   "version": "0.0.0",
   "description": "Build and serve Firestore data bundles as a deployable Firebase Function",
   "license": "Apache-2.0",

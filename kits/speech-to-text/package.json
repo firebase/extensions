@@ -1,5 +1,5 @@
 {
-  "name": "@firebase-functions-kits/speech-to-text",
+  "name": "@firebase-function-kits/speech-to-text",
   "version": "0.0.0",
   "description": "Transcribe audio files in Cloud Storage to text using Cloud Speech-to-Text, as a deployable Firebase Function",
   "license": "Apache-2.0",
