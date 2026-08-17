@@ -16,7 +16,6 @@
 
 import { checkImageContent } from "../src/content-filter";
 import * as path from "path";
-import { HarmBlockThreshold } from "@google-cloud/vertexai";
 import { ValidationError } from "@genkit-ai/core/schema";
 
 // Mock genkit module
@@ -81,7 +80,7 @@ describe("checkImageContent with mocks", () => {
 
     const result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      "BLOCK_MEDIUM_AND_ABOVE",
       null,
       "image/png"
     );
@@ -106,7 +105,7 @@ describe("checkImageContent with mocks", () => {
 
     const result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+      "BLOCK_LOW_AND_ABOVE",
       "Is this image containing inappropriate content?",
       "image/png"
     );
@@ -132,7 +131,7 @@ describe("checkImageContent with mocks", () => {
 
     const result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      "BLOCK_MEDIUM_AND_ABOVE",
       null,
       "image/png",
       1
@@ -154,7 +153,7 @@ describe("checkImageContent with mocks", () => {
     await expect(
       checkImageContent(
         imagePath,
-        HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        "BLOCK_MEDIUM_AND_ABOVE",
         null,
         "image/png",
         1
@@ -175,7 +174,7 @@ describe("checkImageContent with mocks", () => {
 
     await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      "BLOCK_MEDIUM_AND_ABOVE",
       null,
       "image/png"
     );
@@ -212,7 +211,7 @@ describe("checkImageContent with mocks", () => {
 
     await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+      "BLOCK_MEDIUM_AND_ABOVE",
       customPrompt,
       "image/png"
     );
@@ -243,7 +242,7 @@ describe("checkImageContent with mocks", () => {
 
     let result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+      "BLOCK_LOW_AND_ABOVE",
       null,
       "image/png"
     );
@@ -267,7 +266,7 @@ describe("checkImageContent with mocks", () => {
 
     result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_ONLY_HIGH,
+      "BLOCK_ONLY_HIGH",
       null,
       "image/png"
     );
@@ -304,7 +303,7 @@ describe("checkImageContent with mocks", () => {
 
     const result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+      "BLOCK_LOW_AND_ABOVE",
       "Is this image inappropriate?",
       "image/png"
     );
@@ -333,7 +332,7 @@ describe("checkImageContent with mocks", () => {
 
     const result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+      "BLOCK_LOW_AND_ABOVE",
       "Is this image inappropriate?",
       "image/png"
     );
@@ -361,7 +360,7 @@ describe("checkImageContent with mocks", () => {
 
     const result = await checkImageContent(
       imagePath,
-      HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+      "BLOCK_LOW_AND_ABOVE",
       "prompt",
       "image/png"
     );
@@ -382,7 +381,7 @@ describe("checkImageContent with mocks", () => {
     await expect(
       checkImageContent(
         imagePath,
-        HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+        "BLOCK_LOW_AND_ABOVE",
         "prompt",
         "image/png",
         3
