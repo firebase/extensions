@@ -28,11 +28,10 @@ jest.mock("genkit", () => ({
   },
 }));
 
-// Mock vertexAI module
-jest.mock("@genkit-ai/vertexai", () => ({
-  __esModule: true,
-  default: jest.fn(),
-  gemini: jest.fn((version: string) => ({ name: `vertexai/${version}` })),
+jest.mock("@genkit-ai/google-genai", () => ({
+  vertexAI: Object.assign(jest.fn(), {
+    model: jest.fn((version: string) => ({ name: `vertexai/${version}` })),
+  }),
 }));
 
 // Mock logs so we can assert on which filter-blocked log fired.

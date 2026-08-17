@@ -2,6 +2,8 @@
 
 chore - switch content filter from `gemini-2.5-flash` to `gemini-3.1-flash-lite` (similar price to 2.5 Flash and better quality; 2.5 Flash retires October 2026)
 
+fix - content filter now calls Vertex at `global` via `@genkit-ai/google-genai`. `gemini-3.1-flash-lite` is not served on regional endpoints like `us-central1`, and the old `@genkit-ai/vertexai` plugin rejects `global`.
+
 ## Version 0.3.6
 
 chore: replace temp file helper dependencies with Node.js built-ins

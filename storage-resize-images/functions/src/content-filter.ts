@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import vertexAI, { gemini } from "@genkit-ai/vertexai";
+import { vertexAI } from "@genkit-ai/google-genai";
 import { genkit, z } from "genkit";
 import type { SafetyThreshold } from "./config";
 import * as fs from "fs";
@@ -23,6 +23,8 @@ import { globalRetryQueue } from "./global";
 
 /** Similar price to previous `gemini-2.5-flash`, better quality than 2.5 Flash. Higher Flash/Lite tiers cost more. */
 const CONTENT_FILTER_MODEL = "gemini-3.1-flash-lite";
+/** Vertex serves this model on `global` / `us` / `eu`, not single-region endpoints like `us-central1`. Old `@genkit-ai/vertexai` rejects `global`; `@genkit-ai/google-genai` accepts it. */
+const VERTEX_CONTENT_FILTER_LOCATION = "global";
 
 /**
  * Creates a data URL from an image file
@@ -137,8 +139,7 @@ export async function checkImageContent(
   const ai = genkit({
     plugins: [
       vertexAI({
-        location: process.env.LOCATION ?? "us-central1",
-        models: [CONTENT_FILTER_MODEL],
+        location: VERTEX_CONTENT_FILTER_LOCATION,
       }),
     ],
   });
@@ -169,7 +170,7 @@ export async function checkImageContent(
 
     try {
       const result = await ai.generate({
-        model: gemini(CONTENT_FILTER_MODEL),
+        model: vertexAI.model(CONTENT_FILTER_MODEL),
         messages: [
           {
             role: "user",
