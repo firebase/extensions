@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
+import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { Bucket, FileMetadata } from "@google-cloud/storage";
 import { logger } from "firebase-functions";
 import sharp from "sharp";
-import { v4 as uuidv4 } from "uuid";
 import { SUPPORTED_CONTENT_TYPES, SUPPORTED_EXTENSIONS } from "./global";
 import * as logs from "./logs";
 
@@ -105,7 +105,7 @@ export async function replaceWithConfiguredPlaceholder(
     );
 
     const placeholderFile = bucket.file(placeholderPath);
-    const tempPlaceholder = path.join(os.tmpdir(), uuidv4());
+    const tempPlaceholder = path.join(os.tmpdir(), crypto.randomUUID());
 
     await placeholderFile.download({ destination: tempPlaceholder });
 
@@ -125,7 +125,7 @@ export async function replaceWithDefaultPlaceholder(
   localFile: string
 ): Promise<void> {
   const localPlaceholderFile = path.join(__dirname, "placeholder.png");
-  const tempPlaceholder = path.join(os.tmpdir(), uuidv4());
+  const tempPlaceholder = path.join(os.tmpdir(), crypto.randomUUID());
   fs.copyFileSync(localPlaceholderFile, tempPlaceholder);
   fs.unlinkSync(localFile);
   fs.renameSync(tempPlaceholder, localFile);
