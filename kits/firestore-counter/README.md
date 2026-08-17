@@ -114,6 +114,96 @@ When `EVENTARC_CHANNEL` is configured, the functions publish lifecycle events
 such as `onStart`, `onError`, `onSuccess`, and `onCompletion` under
 `firebase.extensions.firestore-counter.v1.*`.
 
+## Differences from the Distributed Counter extension
+
+This kit is the extension repackaged as an npm package. It is a very close port:
+both settings keep their name, type and default, so an existing `.env` is a
+lift-and-shift, and the counting itself is untouched. Shards still live in the
+`_counter_shards_` subcollection, are aggregated by the same algorithm on the
+same schedule, and your existing security rules and client code keep working
+without changes. The differences below are worth knowing before you deploy.
+
+### Your settings are no longer validated before deploy
+
+`INTERNAL_STATE_PATH` must be a document path, meaning an even number of
+segments such as `_firebase_ext_/sharded_counter`. The extension rejected
+anything else at install time. Nothing checks it now, so a collection path such
+as `_firebase_ext_` deploys happily and then throws on every controller run:
+
+```
+Value for argument "documentPath" must point to a document, but was
+"_firebase_ext_". Your path does not contain an even number of components.
+```
+
+Counters silently stop aggregating, and the only sign is the error in your
+function logs.
+
+`SCHEDULE_FREQUENCY` is still a plain number of minutes, and the kit builds the
+same `every N minutes` schedule from it. It is also unvalidated now, so a value
+like `*/5 * * * *` or `5 minutes`, which the install prompt used to reject,
+reaches your deploy instead.
+
+### The worker function publishes no events
+
+The extension published `onError` from all three of its functions. In the kit,
+the worker function does not: the Eventarc channel is only configured on the
+controller and shard-write functions. Failures that happen while a worker is
+aggregating, which is the path that handles counters big enough to need workers,
+now show up only in the logs. Events from the controller and shard-write
+functions are unaffected.
+
+### Events must be wired up by hand
+
+Enabling events was part of the extension's install flow, which created the
+channel and set the environment for you. The kit reads `EVENTARC_CHANNEL` and
+`EXT_SELECTED_EVENTS` straight from the environment and the CLI never prompts
+for them, so no events are published until you create a channel and put both
+values in your `.env`. If you set `EVENTARC_CHANNEL` and leave
+`EXT_SELECTED_EVENTS` unset, every event type is published.
+
+### Event payloads have a different shape
+
+The event types are unchanged, but what they carry is not. `onStart` used to
+carry `{change, context}` and now carries `{data, params}`: the write is under
+`data` instead of `change`, and the 1st gen `context` is gone. `onCompletion`
+used to carry `{context}` and now carries `{params}` only. Anything reading
+`context.eventId`, `context.timestamp`, `context.eventType` or
+`context.resource` from these events needs updating; the trigger wildcards
+(`collection`, `counter`, `shardId`) survive as `params`.
+
+### Your codebase's global options apply to these functions
+
+The functions are exported from your own functions codebase, so a
+`setGlobalOptions` call there applies to them: region, memory, and instance
+limits. The extension deployed with fixed settings you could not influence, and
+always in `us-central1`.
+
+The controller and shard-write functions keep their own limit of one instance,
+which a global setting does not override, so the single-writer behaviour is
+safe. The worker function has no limit of its own and does pick up a global
+`maxInstances`. The extension left workers unbounded, so a low global cap now
+throttles aggregation exactly when the controller wants to spread the work over
+many workers.
+
+### Client samples and the stress test app are not in the package
+
+The extension repo shipped counter clients for Web, Node, Android, iOS and Dart
+plus a stress test app. The npm package contains only the functions. Nothing
+about the shard layout changed, so the clients you already use keep working;
+carry on getting them from the extension repo.
+
+### Unchanged
+
+- Both settings, with the same names and the same defaults
+  (`_firebase_ext_/sharded_counter`, `1` minute).
+- The `_counter_shards_` subcollection name, the shard document format, and
+  therefore your security rules.
+- The aggregation behaviour: inline aggregation up to 200 shards, workers above
+  that, 45 second self-scheduling worker runs, partial shard cleanup, and
+  deletion of shards once they are summed into the counter field.
+- The three functions and the event types they publish, aside from the worker
+  and payload points above.
+
 ## API surface
 
 - **Main entry** (`@firebase/firestore-counter`): exports `controllerCore`,
