@@ -240,6 +240,60 @@ The PITR baseline half of a restoration is unaffected; these apply to the
 changelog replay on top of it. Fixing them means changing the Java, which is out
 of scope for this migration.
 
+## Changes from the legacy extension
+
+This kit replaces the Firestore Incremental Backup Stream extension
+(`firestore-incremental-capture`, last published as 0.0.12). The changelog wire
+format is carried over - `CHANGELOG_SCHEMA` is field-for-field the extension's
+BigQuery schema, and `tests/wire-format.test.ts` pins the value encoding to the
+extension's own serializer tests - so the kit can point at the extension's
+existing dataset and table and the accumulated history stays replayable. The
+one deliberate encoding change: DocumentReference values are tagged
+`reference`, not `documentReference`, because the pipeline switches on
+`REFERENCE` and silently dropped the extension's spelling on restore.
+Everything around the format moved:
+
+- **Distribution.** An npm package you re-export from your own functions
+  codebase instead of `firebase ext:install`. Functions deploy as
+  `kit-<instance id>-<name>` rather than `ext-<instance id>-<name>`.
+- **Function names.** `syncData` and `onHttpRunRestoration` keep their names.
+  `syncDataTask` is now `syncChangelogTask`, `onBackupRestore` is now
+  `runRestorationTask`, and the `runInitialSetup` lifecycle function is now the
+  `initIncrementalCapture` lifecycle task.
+- **Dropped functions.** `buildFlexTemplate`, `onCloudBuildComplete` and
+  `onFirestoreBackupInit` are gone. The extension staged the Dataflow flex
+  template through Cloud Build jobs launched from functions; the kit builds the
+  jar and stages the template in `scripts/setup.sh`, which also absorbs the
+  extension's POSTINSTALL gcloud checklist (PITR, backup database, Artifact
+  Registry, worker roles) into one idempotent script.
+- **Template path.** The template is staged to
+  `gs://<bucket>/<instance id>-dataflow-restore`, not the extension's
+  `gs://<bucket>/<instance id>/templates/myTemplate`, so an extension-staged
+  template is not reused - run `scripts/setup.sh` before the first restoration.
+- **Configuration.** `INSTANCE_ID` is new and required (the extension injected
+  `EXT_INSTANCE_ID` itself). `LOCATION` is free-form and mutable instead of an
+  immutable install-time select. `SYNC_COLLECTION_PATH` is optional with a
+  default, and no longer advertises `{document=**}` whole-database capture -
+  that pattern never produced a deployable trigger (see Configuration).
+  `DATASET_LOCATION` is configurable instead of hardcoded to `us`.
+  `DATAFLOW_REGION` and `BUCKET_NAME` are documented params instead of
+  undocumented env vars, and an unset `BUCKET_NAME` reads the project's actual
+  default bucket rather than guessing `<projectId>.appspot.com`.
+  `BACKUP_INSTANCE_ID=(default)` is rejected at startup instead of letting a
+  restoration write over its own source.
+- **Serializer.** BigInt field values are stringified instead of throwing.
+- **Status documents.** Restoration run status lives at
+  `_<instance id>/runs/restorations`, not the extension's `_ext-<instance id>`
+  documents.
+- **Pipeline.** The Java pipeline is vendored logic-unchanged (its known gaps
+  are listed above), with Beam bumped to 2.75.0 for CVE fixes.
+
+To migrate: run `scripts/setup.sh`, set the kit's `.env` to the extension's
+param values (same `SYNC_DATASET`/`SYNC_TABLE` to keep the history), deploy,
+then uninstall the extension. A brief overlap writes duplicate changelog rows
+for the same writes; replay ranks one row per document, so restores are
+unaffected.
+
 ## API surface
 
 - **Main entry** (`@firebase/firestore-incremental-capture`): exports the five
