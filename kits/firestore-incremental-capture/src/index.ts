@@ -83,6 +83,12 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/bigquery.user",
   "roles/datastore.user",
   "roles/dataflow.developer",
+  // Gen2 event triggers need Eventarc receive and run.invoker on the function
+  // SA; task queue pushes and lifecycle hooks authenticate as it too.
+  "roles/eventarc.eventReceiver",
+  "roles/run.invoker",
+  // syncData and onHttpRunRestoration enqueue onto this kit's own task queues.
+  "roles/cloudtasks.enqueuer",
   // Launching a flex template acts as the Dataflow worker service account.
   // Without this, every restoration fails with iam.serviceAccounts.actAs denied.
   "roles/iam.serviceAccountUser",
@@ -94,8 +100,10 @@ for (const role of REQUIRED_ROLES) {
   requiresRole(role);
 }
 
-afterFirstDeploy({ task: { function: INIT_FUNCTION } });
-afterRedeploy({ task: { function: INIT_FUNCTION } });
+// The empty data envelope is required: the CLI enqueues the hook body
+// verbatim, and the tasks handler rejects a request without a `data` key.
+afterFirstDeploy({ task: { function: INIT_FUNCTION, body: { data: {} } } });
+afterRedeploy({ task: { function: INIT_FUNCTION, body: { data: {} } } });
 
 /**
  * The project's default Cloud Storage bucket, or `undefined` if it has none.
@@ -123,7 +131,10 @@ function getHandlerContext(): HandlerContext {
     return ctx;
   }
 
-  if (getApps().length === 0) {
+  // Checked by name, not by count: firebase-functions registers its own
+  // "__FIREBASE_FUNCTIONS_SDK__" app before event handlers run, so a non-empty
+  // list does not imply the default app the admin SDK entry points need.
+  if (!getApps().some((app) => app.name === "[DEFAULT]")) {
     initializeApp();
   }
 

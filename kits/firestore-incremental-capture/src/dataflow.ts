@@ -84,6 +84,13 @@ export class RestorationLauncher {
           bigQueryTable: config.tableId,
         },
         containerSpecGcsPath: config.flexTemplatePath,
+        // Without an explicit temp location Dataflow tries to create its
+        // default staging bucket, which needs storage.buckets.create that
+        // neither the launcher nor the worker holds.
+        environment: {
+          tempLocation: `gs://${config.bucketName}/${config.instanceId}-dataflow-temp`,
+          stagingLocation: `gs://${config.bucketName}/${config.instanceId}-dataflow-staging`,
+        },
       },
     });
 

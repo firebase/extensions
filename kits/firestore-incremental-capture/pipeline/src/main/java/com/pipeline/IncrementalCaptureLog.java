@@ -114,8 +114,10 @@ public class IncrementalCaptureLog
 
     // using static methods as beam seems to error when passing an instance version
     // of FirestoreReconstructor to the transform
-    Document doc = Document.newBuilder().putAllFields((Map<String, Value>) firestoreMap).setName(createDocumentName(
-        documentPath, projectId, databaseId)).build();
+    // documentPath is already fully qualified (line above); qualifying it again
+    // produced a doubled projects/.../documents/ prefix that Firestore rejects,
+    // failing the whole batch write and with it the restoration job.
+    Document doc = Document.newBuilder().putAllFields((Map<String, Value>) firestoreMap).setName(documentPath).build();
 
     KV<String, Document> kv = KV.of(changeType, doc);
 

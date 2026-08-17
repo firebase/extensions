@@ -30,6 +30,9 @@ service account for this codebase — it conflicts with that automatic setup.
 | `roles/bigquery.user`          | run BigQuery jobs                                         |
 | `roles/datastore.user`         | write the restoration run-status document                 |
 | `roles/dataflow.developer`     | launch the restoration job                                |
+| `roles/eventarc.eventReceiver` | receive Firestore events on the `syncData` trigger        |
+| `roles/run.invoker`            | invoke the gen2 functions from Eventarc and Cloud Tasks   |
+| `roles/cloudtasks.enqueuer`    | enqueue onto the kit's own task queues                    |
 | `roles/iam.serviceAccountUser` | act as the Dataflow worker service account when launching |
 | `roles/storage.objectViewer`   | read the staged flex template spec                        |
 
@@ -67,17 +70,18 @@ only deploys what your entry file exports.
 Trigger a restoration with a whole number of seconds since the Unix epoch:
 
 ```sh
-curl -X POST https://<region>-<project>.cloudfunctions.net/kit-default-onHttpRunRestoration \
+curl -X POST https://<onHttpRunRestoration URL printed by firebase deploy> \
+  -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
   -H 'Content-Type: application/json' \
   -d '{"timestamp": 1700000000}'
 ```
 
-> **`onHttpRunRestoration` is unauthenticated**, matching the extension it was
-> migrated from. Anyone who can reach the URL can start a Dataflow job that
-> batch-writes over the backup database. Before deploying to production,
-> restrict it: set Cloud Run ingress, apply an IAM invoker policy, or drop the
-> endpoint and have your own authorized code enqueue `runRestorationTask`
-> directly.
+> **`onHttpRunRestoration` requires an authenticated caller.** Unlike the
+> extension it was migrated from, a kit deploy does not grant `allUsers` the
+> invoker role, so the URL rejects anonymous calls with a 403. Grant
+> `roles/run.invoker` on the function to the principals allowed to start a
+> restoration - a restoration batch-writes over the backup database, so keep
+> that set small. Making it public re-creates the extension's exposure; don't.
 
 ## Deploy
 
@@ -211,7 +215,10 @@ and the flex template all need gcloud. That is what `scripts/setup.sh` is for.
 ## Restoration gaps
 
 The restoration pipeline in `pipeline/` is vendored from the original extension
-unchanged, and it does not round trip everything the capture side records.
+with one fix: the extension doubled the `projects/…/databases/…/documents/`
+prefix on every changelog replay write, which Firestore rejects - failing the
+whole restoration job whenever the replay window contained any changelog rows.
+The pipeline still does not round trip everything the capture side records.
 `FirestoreReconstructor.buildFirestoreMap` switches on each value's type tag and
 silently drops any field whose tag it does not handle:
 
@@ -228,10 +235,6 @@ silently drops any field whose tag it does not handle:
   of their internals (`_seconds`/`_nanoseconds` for a Timestamp), so they
   restored with the wrong type but with the data present; here they restore as
   empty maps. The same values nested inside a map element round trip correctly.
-- **Changelog replay writes to a malformed path.**
-  `IncrementalCaptureLog.convertToFirestoreValue` applies `createDocumentName`
-  to a path that has already been through it, producing a doubled
-  `projects/…/databases/…/documents/` prefix.
 - **Documents sharing an id across collections collide.** The replay query ranks
   with `ROW_NUMBER() OVER(PARTITION BY documentId …)`, partitioning by document
   id rather than path, so only one of `users/x` and `orders/x` is replayed.
@@ -285,8 +288,10 @@ Everything around the format moved:
 - **Status documents.** Restoration run status lives at
   `_<instance id>/runs/restorations`, not the extension's `_ext-<instance id>`
   documents.
-- **Pipeline.** The Java pipeline is vendored logic-unchanged (its known gaps
-  are listed above), with Beam bumped to 2.75.0 for CVE fixes.
+- **Pipeline.** The Java pipeline is vendored with Beam bumped to 2.75.0 for
+  CVE fixes and one logic fix: the doubled document-path prefix that failed
+  every restoration whose replay window contained changelog rows (see
+  Restoration gaps for what still does not round trip).
 
 To migrate: run `scripts/setup.sh`, set the kit's `.env` to the extension's
 param values (same `SYNC_DATASET`/`SYNC_TABLE` to keep the history), deploy,
