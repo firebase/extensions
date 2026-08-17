@@ -102,7 +102,11 @@ public class IncrementalCaptureLog
 
     GenericRecord record = schemaAndRecord.getRecord();
 
-    String data = record.get("afterData").toString();
+    // The extension wrote NULL afterData on deletes; the kit writes serialized
+    // JSON. Default to an empty map so replaying a migrated changelog does not
+    // NPE on the extension's rows.
+    Object afterData = record.get("afterData");
+    String data = afterData != null ? afterData.toString() : "{}";
     String documentPath = createDocumentName(record.get("documentPath").toString(), projectId, databaseId);
     String changeType = record.get("changeType").toString();
 
