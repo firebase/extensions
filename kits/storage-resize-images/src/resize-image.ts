@@ -61,7 +61,10 @@ export function resize(
   }
 
   const ops = {
-    failOnError: false,
+    // sharp 0.35 dropped `failOnError`; unknown constructor keys are ignored,
+    // so the old spelling would silently restore the default of failing on a
+    // libvips warning and reject partially decodable images.
+    failOn: "none" as const,
     ...(sharpOptions || {}),
     animated: config.animated,
   };
