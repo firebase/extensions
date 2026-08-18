@@ -21,6 +21,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
+    "test": "vitest run",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
@@ -33,6 +34,7 @@
     "mkdirp": "^3.0.1"
   },
   "devDependencies": {
-    "@types/fluent-ffmpeg": "^2.1.27"
+    "@types/fluent-ffmpeg": "^2.1.27",
+    "vitest": "^4.1.10"
   }
 }

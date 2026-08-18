@@ -21,6 +21,7 @@
   "scripts": {
     "build": "tsc -b && node -e \"require('fs').copyFileSync('src/placeholder.png','lib/placeholder.png')\"",
     "clean": "tsc -b --clean",
+    "test": "echo \"Warning: tests are not implemented for this package\"",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
