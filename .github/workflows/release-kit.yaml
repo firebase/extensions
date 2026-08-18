@@ -8,7 +8,6 @@ on:
         required: true
         type: choice
         options:
-          - "kits/bigquery-firestore-export"
           - "kits/delete-user-data"
           - "kits/firestore-bigquery-export"
           - "kits/firestore-bundle-builder"
