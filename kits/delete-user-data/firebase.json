@@ -1,0 +1,35 @@
+{
+  "functions": [
+    {
+      "source": "tests/emulator/app",
+      "codebase": "delete-user-data"
+    }
+  ],
+  "emulators": {
+    "firestore": {
+      "host": "127.0.0.1",
+      "port": 8080
+    },
+    "auth": {
+      "port": 9099
+    },
+    "pubsub": {
+      "port": 8085
+    },
+    "functions": {
+      "port": 5001
+    },
+    "eventarc": {
+      "port": 9299
+    },
+    "ui": {
+      "enabled": false
+    },
+    "database": {
+      "port": 9000
+    }
+  },
+  "database": {
+    "rules": "tests/emulator/database.rules.json"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "delete-user-data-emulator-app",
+  "private": true,
+  "main": "index.js",
+  "engines": { "node": "24" }
+}

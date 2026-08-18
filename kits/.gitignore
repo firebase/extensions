@@ -9,6 +9,8 @@ dist/
 # Env / secrets
 .env
 .env.*
+# Emulator test apps commit their params: demo values, never secrets.
+!*/tests/emulator/app/.env
 
 # Test / coverage
 coverage/
