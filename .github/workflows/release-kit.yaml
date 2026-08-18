@@ -20,11 +20,6 @@ on:
           - "kits/rtdb-limit-child-nodes"
           - "kits/speech-to-text"
           - "kits/storage-resize-images"
-      target_branch:
-        description: "Branch to release from"
-        required: true
-        default: "kits"
-        type: string
       bump_level:
         description: "Version Bump Level"
         required: true
@@ -57,7 +52,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # zizmor: ignore[artipacked]
         with:
-          ref: ${{ inputs.target_branch }}
+          ref: "kits"
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -83,7 +78,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # zizmor: ignore[artipacked]
         with:
-          ref: ${{ inputs.target_branch }}
+          ref: "kits"
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -222,7 +217,7 @@ jobs:
       - name: Push Version Commit & Tags to Branch
         if: ${{ !inputs.dry_run }}
         env:
-          TARGET_BRANCH: ${{ inputs.target_branch }}
+          TARGET_BRANCH: "kits"
         run: git push origin "$TARGET_BRANCH" --follow-tags
 
       - name: Publish to NPM
@@ -259,7 +254,7 @@ jobs:
           VERSION: ${{ steps.versioning.outputs.version }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
           NOTES: ${{ steps.changelog.outputs.notes }}
-          TARGET_BRANCH: ${{ inputs.target_branch }}
+          TARGET_BRANCH: "kits"
         run: |
           PRERELEASE_FLAG=""
           if [ "$IS_PRERELEASE" = "true" ]; then
