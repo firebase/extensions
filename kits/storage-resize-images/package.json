@@ -35,5 +35,10 @@
     "p-queue": "^6.6.2",
     "sharp": "^0.34.5",
     "uuid": "^11.0.5"
+  },
+  "private": false,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://wombat-dressing-room.appspot.com"
   }
 }

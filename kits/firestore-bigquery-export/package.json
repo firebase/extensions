@@ -36,5 +36,10 @@
   "devDependencies": {
     "@types/lodash": "^4.17.0",
     "vitest": "^3.2.4"
+  },
+  "private": false,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://wombat-dressing-room.appspot.com"
   }
 }

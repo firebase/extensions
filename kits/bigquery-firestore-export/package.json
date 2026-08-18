@@ -39,5 +39,9 @@
   },
   "overrides": {
     "uuid@9.0.1": "11.1.1"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://wombat-dressing-room.appspot.com"
   }
 }

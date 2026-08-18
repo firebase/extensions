@@ -34,5 +34,10 @@
     "genkit": "^1.27.0",
     "openai": "^4.20.1",
     "zod": "^3.22.4"
+  },
+  "private": false,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://wombat-dressing-room.appspot.com"
   }
 }

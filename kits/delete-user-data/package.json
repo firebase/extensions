@@ -35,5 +35,10 @@
   "devDependencies": {
     "@types/lodash.chunk": "^4.2.7",
     "@types/node-fetch": "^2.6.2"
+  },
+  "private": false,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://wombat-dressing-room.appspot.com"
   }
 }

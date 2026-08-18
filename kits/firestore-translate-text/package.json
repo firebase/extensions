@@ -31,5 +31,10 @@
     "firebase-admin": "^14.1.0",
     "firebase-functions": "7.3.2",
     "genkit": "^1.31.0"
+  },
+  "private": false,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://wombat-dressing-room.appspot.com"
   }
 }
