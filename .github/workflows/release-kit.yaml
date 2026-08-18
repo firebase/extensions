@@ -85,8 +85,6 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "24"
-          registry-url: "https://wombat-dressing-room.appspot.com"
-          always-auth: false
 
       - name: Configure Git User
         if: ${{ !inputs.dry_run }}
@@ -238,9 +236,9 @@ jobs:
           fi
 
           if [ "$IS_PRERELEASE" = "true" ]; then
-            npm publish --tag next --access public $DRY_RUN_FLAG
+            npm publish --provenance --tag next --access public $DRY_RUN_FLAG
           else
-            npm publish --tag latest --access public $DRY_RUN_FLAG
+            npm publish --provenance --tag latest --access public $DRY_RUN_FLAG
             if [ "$DRY_RUN" != "true" ]; then
               npm dist-tag add ${PKG_NAME}@${VERSION} next
             fi
