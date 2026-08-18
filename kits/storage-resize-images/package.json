@@ -21,7 +21,7 @@
   "scripts": {
     "build": "tsc -b && node -e \"require('fs').copyFileSync('src/placeholder.png','lib/placeholder.png')\"",
     "clean": "tsc -b --clean",
-    "test": "echo \"Warning: tests are not implemented for this package\"",
+    "test": "vitest run",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
@@ -35,5 +35,9 @@
     "p-queue": "^6.6.2",
     "sharp": "^0.34.5",
     "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "@genkit-ai/core": "^1.2.0",
+    "vitest": "^4.1.10"
   }
 }
