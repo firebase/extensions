@@ -25,7 +25,6 @@
     "test": "echo \"Warning: tests are not implemented for this package\""
   },
   "publishConfig": {
-    "access": "public",
     "registry": "https://wombat-dressing-room.appspot.com"
   }
 }
