@@ -3,7 +3,7 @@
     "outDir": "lib",
     "rootDir": "src",
     "target": "ES2022",
-    "module": "commonjs",
+    "module": "nodenext",
     "moduleResolution": "nodenext",
     "declaration": true,
     "declarationMap": true,
