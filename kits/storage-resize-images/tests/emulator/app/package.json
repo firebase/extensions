@@ -1,0 +1,6 @@
+{
+  "name": "storage-resize-images-emulator-app",
+  "private": true,
+  "main": "index.js",
+  "engines": { "node": "24" }
+}

@@ -22,6 +22,7 @@
     "build": "tsc -b && node -e \"require('fs').copyFileSync('src/placeholder.png','lib/placeholder.png')\"",
     "clean": "tsc -b --clean",
     "test": "vitest run",
+    "test:emulator": "npm run build && firebase emulators:exec --only functions,storage --project demo-test \"vitest run --config vitest.emulator.config.ts\"",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },

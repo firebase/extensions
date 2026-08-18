@@ -1,0 +1,12 @@
+{
+  "functions": [
+    { "source": "tests/emulator/app", "codebase": "storage-resize-images" }
+  ],
+  "storage": { "rules": "tests/emulator/storage.rules" },
+  "emulators": {
+    "storage": { "port": 9199 },
+    "functions": { "port": 5001 },
+    "eventarc": { "port": 9299 },
+    "ui": { "enabled": false }
+  }
+}
