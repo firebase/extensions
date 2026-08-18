@@ -65,19 +65,32 @@ describe("GenkitDiscussionClient.shouldUseGenkitClient", () => {
     expect(GenkitDiscussionClient.shouldUseGenkitClient(config)).toBe(false);
   });
 
-  test("true for a current model id that is not in the legacy allowlist", () => {
-    const config = resolveConfig({
-      ...baseInput,
-      model: "gemini-3.6-flash",
-      candidateCount: 1,
-    });
+  test("true when a single candidate is requested", () => {
+    const config = resolveConfig({ ...baseInput, candidateCount: 1 });
     expect(GenkitDiscussionClient.shouldUseGenkitClient(config)).toBe(true);
-    expect(() =>
+  });
+});
+
+describe("GenkitDiscussionClient.createModelReference", () => {
+  test("passes any model id through to the plugin", () => {
+    expect(
       GenkitDiscussionClient.createModelReference(
         "gemini-3.6-flash",
         "google-ai"
-      )
-    ).not.toThrow();
+      ).name
+    ).toBe("googleai/gemini-3.6-flash");
+    expect(
+      GenkitDiscussionClient.createModelReference(
+        "gemini-9-flash",
+        "google-ai"
+      ).name
+    ).toBe("googleai/gemini-9-flash");
+    expect(
+      GenkitDiscussionClient.createModelReference(
+        "gemini-9-flash",
+        "vertex-ai"
+      ).name
+    ).toBe("vertexai/gemini-9-flash");
   });
 });
 

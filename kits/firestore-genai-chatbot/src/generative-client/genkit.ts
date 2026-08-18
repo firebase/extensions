@@ -104,42 +104,16 @@ export class GenkitDiscussionClient extends DiscussionClient<
   }
 
   /**
-   * Resolves a Genkit model reference for the configured provider.
-   *
-   * Known ids are registered first so version aliases still match. Unknown
-   * ids fall through to `googleAI.model()` / `vertexAI.model()` so current
-   * Gemini releases work without a package update.
+   * Resolves a Genkit model reference via `googleAI.model()` / `vertexAI.model()`.
+   * Any id is passed through so current Gemini releases work without a package update.
    */
   static createModelReference(
     model: string,
     provider: string
   ): ModelReference<any> {
-    const isGoogleAi = provider === "google-ai";
-    const pluginName = isGoogleAi ? "googleai" : "vertexai";
-    const knownIds = [
-      "gemini-3.6-flash",
-      "gemini-3.5-flash",
-      "gemini-3.5-flash-lite",
-      "gemini-3.1-flash-lite",
-      "gemini-3.1-pro-preview",
-      "gemini-2.5-flash-lite",
-      "gemini-2.5-flash",
-      "gemini-2.5-pro",
-    ] as const;
-
-    const modelReferences = knownIds.map((id) =>
-      isGoogleAi ? googleAI.model(id) : vertexAI.model(id)
-    );
-
-    for (const modelReference of modelReferences) {
-      if (modelReference.name === `${pluginName}/${model}`) {
-        return modelReference;
-      }
-      if (modelReference.info?.versions?.includes(model)) {
-        return modelReference.withVersion(model);
-      }
-    }
-    return isGoogleAi ? googleAI.model(model) : vertexAI.model(model);
+    return provider === "google-ai"
+      ? googleAI.model(model)
+      : vertexAI.model(model);
   }
 
   private createGenerateOptions(
@@ -168,13 +142,7 @@ export class GenkitDiscussionClient extends DiscussionClient<
   static shouldUseGenkitClient(config: ResolvedGenaiChatbotConfig): boolean {
     const shouldReturnMultipleCandidates =
       config.candidateCount && config.candidateCount > 1;
-    return (
-      !shouldReturnMultipleCandidates &&
-      !!GenkitDiscussionClient.createModelReference(
-        config.model,
-        config.provider
-      )
-    );
+    return !shouldReturnMultipleCandidates;
   }
 
   async generateResponse(
