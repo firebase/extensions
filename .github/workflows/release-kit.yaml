@@ -8,19 +8,19 @@ on:
         required: true
         type: choice
         options:
-          - "kits/bigquery-firestore-export"
-          - "kits/delete-user-data"
-          - "kits/firestore-bigquery-export"
-          - "kits/firestore-bundle-builder"
-          - "kits/firestore-counter"
-          - "kits/firestore-genai-chatbot"
-          - "kits/firestore-incremental-capture"
-          - "kits/firestore-send-email"
-          - "kits/firestore-translate-text"
-          - "kits/firestore-vector-search"
-          - "kits/rtdb-limit-child-nodes"
-          - "kits/speech-to-text"
-          - "kits/storage-resize-images"
+          - "bigquery-firestore-export"
+          - "delete-user-data"
+          - "firestore-bigquery-export"
+          - "firestore-bundle-builder"
+          - "firestore-counter"
+          - "firestore-genai-chatbot"
+          - "firestore-incremental-capture"
+          - "firestore-send-email"
+          - "firestore-translate-text"
+          - "firestore-vector-search"
+          - "rtdb-limit-child-nodes"
+          - "speech-to-text"
+          - "storage-resize-images"
       bump_level:
         description: "Version Bump Level"
         required: true
@@ -61,7 +61,7 @@ jobs:
           node-version: "24"
 
       - name: Install Dependencies & Run Tests
-        working-directory: ${{ inputs.target_kit }}
+        working-directory: kits/${{ inputs.target_kit }}
         run: |
           npm ci
           npm test
@@ -96,19 +96,19 @@ jobs:
 
       - name: Read & Validate CHANGELOG.md
         id: changelog
-        working-directory: ${{ inputs.target_kit }}
+        working-directory: kits/${{ inputs.target_kit }}
         run: |
           CHANGELOG_FILE="CHANGELOG.md"
 
           if [ ! -f "$CHANGELOG_FILE" ]; then
-            echo "::error file=${{ inputs.target_kit }}/CHANGELOG.md::CHANGELOG.md is missing! Releasing requires a CHANGELOG.md file."
+            echo "::error file=kits/${{ inputs.target_kit }}/CHANGELOG.md::CHANGELOG.md is missing! Releasing requires a CHANGELOG.md file."
             exit 1
           fi
 
           NOTES=$(cat "$CHANGELOG_FILE")
 
           if [ -z "$(echo "$NOTES" | tr -d '[:space:]')" ]; then
-            echo "::error file=${{ inputs.target_kit }}/CHANGELOG.md::CHANGELOG.md is empty! Please populate it with release notes before publishing."
+            echo "::error file=kits/${{ inputs.target_kit }}/CHANGELOG.md::CHANGELOG.md is empty! Please populate it with release notes before publishing."
             exit 1
           fi
 
@@ -120,7 +120,7 @@ jobs:
 
       - name: Determine Version Bump Type
         id: config
-        working-directory: ${{ inputs.target_kit }}
+        working-directory: kits/${{ inputs.target_kit }}
         env:
           BUMP_LEVEL: ${{ inputs.bump_level }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
@@ -145,14 +145,14 @@ jobs:
           echo "target_tag=$TARGET_TAG" >> $GITHUB_OUTPUT
 
       - name: Install Dependencies & Build
-        working-directory: ${{ inputs.target_kit }}
+        working-directory: kits/${{ inputs.target_kit }}
         run: |
           npm ci --registry=https://registry.npmjs.org
           npm run build
 
       - name: Bump Version (Clear CHANGELOG on Stable Release Only)
         id: versioning
-        working-directory: ${{ inputs.target_kit }}
+        working-directory: kits/${{ inputs.target_kit }}
         env:
           BUMP_TYPE: ${{ steps.config.outputs.bump_type }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
@@ -189,7 +189,7 @@ jobs:
         if: ${{ inputs.dry_run }}
         env:
           PKG_NAME: ${{ steps.versioning.outputs.pkg_name }}
-          TARGET_KIT: ${{ inputs.target_kit }}
+          TARGET_KIT: kits/${{ inputs.target_kit }}
           CURRENT_VER: ${{ steps.config.outputs.current_ver }}
           VERSION: ${{ steps.versioning.outputs.version }}
           BUMP_TYPE: ${{ steps.config.outputs.bump_type }}
@@ -221,11 +221,17 @@ jobs:
           TARGET_BRANCH: "kits"
         run: git push origin "$TARGET_BRANCH" --follow-tags
 
+      - name: Determine Secret Key Name
+        id: secret_key
+        run: |
+          KEY_NAME="WOMBAT_KEY_$(echo "${{ inputs.target_kit }}" | tr '[:lower:]-' '[:upper:]_')"
+          echo "key=$KEY_NAME" >> $GITHUB_OUTPUT
+
       - name: Publish to NPM
         # zizmor: ignore[use-trusted-publishing]
-        working-directory: ${{ inputs.target_kit }}
+        working-directory: kits/${{ inputs.target_kit }}
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets[steps.secret_key.outputs.key] }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
           DRY_RUN: ${{ inputs.dry_run }}
           PKG_NAME: ${{ steps.versioning.outputs.pkg_name }}
