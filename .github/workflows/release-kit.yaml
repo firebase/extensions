@@ -75,6 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # Needed to push version commit, git tag & create GitHub Release
+      id-token: write # Needed to publish to npm
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # zizmor: ignore[artipacked]
@@ -223,9 +224,6 @@ jobs:
       - name: Publish to NPM
         # zizmor: ignore[use-trusted-publishing]
         working-directory: ${{ inputs.target_kit }}
-        permissions:
-          contents: read
-          id-token: write
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
