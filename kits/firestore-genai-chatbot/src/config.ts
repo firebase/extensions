@@ -84,7 +84,7 @@ const params = {
     input: select([...GENERATIVE_AI_PROVIDER_OPTIONS]),
   }),
   apiKey: defineSecret("API_KEY"),
-  model: defineString("MODEL", { default: "gemini-2.5-flash" }),
+  model: defineString("MODEL", { default: "gemini-3.6-flash" }),
   vertexModelLocation: defineString("VERTEX_AI_MODEL_LOCATION", {
     default: "null",
     input: select([...VERTEX_MODEL_LOCATION_OPTIONS]),

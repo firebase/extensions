@@ -37,6 +37,9 @@ const TRANSLATION_PROVIDER_OPTIONS = [
   "gemini-vertexai",
 ] as const;
 const GEMINI_MODEL_OPTIONS = [
+  "gemini-3.1-pro-preview",
+  "gemini-3.6-flash",
+  "gemini-3.1-flash-lite",
   "gemini-2.5-pro",
   "gemini-2.5-flash",
   "gemini-2.5-flash-lite",
@@ -54,7 +57,7 @@ const params = {
     input: select([...TRANSLATION_PROVIDER_OPTIONS]),
   }),
   geminiModel: defineString("GEMINI_MODEL", {
-    default: "gemini-2.5-flash",
+    default: "gemini-3.6-flash",
     input: select([...GEMINI_MODEL_OPTIONS]),
   }),
 };

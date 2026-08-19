@@ -27,6 +27,7 @@ const HARM_CATEGORIES = [
   "HARM_CATEGORY_SEXUALLY_EXPLICIT",
   "HARM_CATEGORY_HARASSMENT",
 ] as const;
+const CONTENT_FILTER_MODEL = "gemini-3.6-flash";
 const RETRY_BASE_MS = 500;
 const RETRY_JITTER_MS = 200;
 const RETRY_MAX_MS = 5000;
@@ -88,7 +89,7 @@ export async function checkImageContent(
     plugins: [
       vertexAI({
         location,
-        models: ["gemini-2.5-flash"],
+        models: [CONTENT_FILTER_MODEL],
       }),
     ],
   });
@@ -112,7 +113,7 @@ export async function checkImageContent(
 
     try {
       const result = await ai.generate({
-        model: gemini("gemini-2.5-flash"),
+        model: gemini(CONTENT_FILTER_MODEL),
         messages: [
           {
             role: "user",

@@ -45,7 +45,7 @@ export interface GenaiChatbotConfig {
   provider?: GenerativeAIProvider | "google-ai" | "vertex-ai";
   /** API key for the `google-ai` provider. */
   apiKey?: string;
-  /** Model id, e.g. `gemini-2.5-flash`. */
+  /** Model id, e.g. `gemini-3.6-flash`. */
   model: string;
   /** Vertex AI model location. */
   vertexModelLocation?: string;

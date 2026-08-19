@@ -103,41 +103,33 @@ export class GenkitDiscussionClient extends DiscussionClient<
     return genkit(genkitConfig);
   }
 
-  // TODO(migration): inherited verbatim from the legacy extension — this
-  // hardcoded model allowlist means new/custom/fine-tuned models need a package
-  // update. `googleAI.model()` / `vertexAI.model()` resolve any id dynamically;
-  // consider simplifying to that. Improvement, not a bug. Deferred from PR #431 review.
+  /**
+   * Resolves a Genkit model reference for the configured provider.
+   *
+   * Known ids are registered first so version aliases still match. Unknown
+   * ids fall through to `googleAI.model()` / `vertexAI.model()` so current
+   * Gemini releases work without a package update.
+   */
   static createModelReference(
     model: string,
     provider: string
   ): ModelReference<any> {
-    const modelReferences =
-      provider === "google-ai"
-        ? [
-            googleAI.model("gemini-1.5-flash"),
-            googleAI.model("gemini-1.5-pro"),
-            googleAI.model("gemini-2.0-flash"),
-            googleAI.model("gemini-2.0-flash-lite"),
-            googleAI.model("gemini-2.5-flash-lite"),
-            googleAI.model("gemini-2.5-flash"),
-            googleAI.model("gemini-2.5-pro"),
-            googleAI.model("gemini-3-pro-preview"),
-            googleAI.model("gemini-3-pro-image-preview"),
-          ]
-        : [
-            vertexAI.model("gemini-1.5-flash"),
-            vertexAI.model("gemini-1.5-pro"),
-            vertexAI.model("gemini-2.0-flash"),
-            vertexAI.model("gemini-2.0-flash-lite"),
-            vertexAI.model("gemini-2.0-flash-001"),
-            vertexAI.model("gemini-2.5-flash-lite"),
-            vertexAI.model("gemini-2.5-flash"),
-            vertexAI.model("gemini-2.5-pro"),
-            vertexAI.model("gemini-3-pro-preview"),
-            vertexAI.model("gemini-3-pro-image-preview"),
-          ];
+    const isGoogleAi = provider === "google-ai";
+    const pluginName = isGoogleAi ? "googleai" : "vertexai";
+    const knownIds = [
+      "gemini-3.6-flash",
+      "gemini-3.5-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.1-flash-lite",
+      "gemini-3.1-pro-preview",
+      "gemini-2.5-flash-lite",
+      "gemini-2.5-flash",
+      "gemini-2.5-pro",
+    ] as const;
 
-    const pluginName = provider === "google-ai" ? "googleai" : "vertexai";
+    const modelReferences = knownIds.map((id) =>
+      isGoogleAi ? googleAI.model(id) : vertexAI.model(id)
+    );
 
     for (const modelReference of modelReferences) {
       if (modelReference.name === `${pluginName}/${model}`) {
@@ -147,7 +139,7 @@ export class GenkitDiscussionClient extends DiscussionClient<
         return modelReference.withVersion(model);
       }
     }
-    throw new Error("Model not found.");
+    return isGoogleAi ? googleAI.model(model) : vertexAI.model(model);
   }
 
   private createGenerateOptions(
@@ -172,7 +164,7 @@ export class GenkitDiscussionClient extends DiscussionClient<
     };
   }
 
-  /** Whether the Genkit client can serve this config (single candidate + known model). */
+  /** Whether the Genkit client can serve this config (single candidate). */
   static shouldUseGenkitClient(config: ResolvedGenaiChatbotConfig): boolean {
     const shouldReturnMultipleCandidates =
       config.candidateCount && config.candidateCount > 1;

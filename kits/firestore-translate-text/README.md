@@ -90,7 +90,7 @@ the CLI connects them to the function at deploy time.
 | `languages` | `LANGUAGES` | no | `en,es,de,fr` | Target language codes |
 | `languagesFieldName` | `LANGUAGES_FIELD_NAME` | no | `languages` | Per-doc languages field |
 | `provider` | `TRANSLATION_PROVIDER` | yes | — | Translation provider |
-| `geminiModel` | `GEMINI_MODEL` | no | `gemini-2.5-flash` | Gemini model when used |
+| `geminiModel` | `GEMINI_MODEL` | no | `gemini-3.6-flash` | Gemini model when used |
 | `googleAiApiKey` | `GOOGLE_AI_API_KEY` | secret | — | Google AI API key (Gemini) |
 
 ## Multiple instances

@@ -64,6 +64,21 @@ describe("GenkitDiscussionClient.shouldUseGenkitClient", () => {
     const config = resolveConfig({ ...baseInput, candidateCount: 2 });
     expect(GenkitDiscussionClient.shouldUseGenkitClient(config)).toBe(false);
   });
+
+  test("true for a current model id that is not in the legacy allowlist", () => {
+    const config = resolveConfig({
+      ...baseInput,
+      model: "gemini-3.6-flash",
+      candidateCount: 1,
+    });
+    expect(GenkitDiscussionClient.shouldUseGenkitClient(config)).toBe(true);
+    expect(() =>
+      GenkitDiscussionClient.createModelReference(
+        "gemini-3.6-flash",
+        "google-ai"
+      )
+    ).not.toThrow();
+  });
 });
 
 describe("VertexDiscussionClient", () => {
