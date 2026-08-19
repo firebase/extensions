@@ -85,8 +85,17 @@ const params = {
   }),
   apiKey: defineSecret("API_KEY"),
   model: defineString("MODEL", { default: "gemini-3.6-flash" }),
+  /**
+   * Vertex AI location for the model. Defaults to `global` rather than the
+   * function region: Gemini 3.x is served on the `global`, `us` and `eu`
+   * endpoints only, so a single region such as `us-central1` returns 404 for the
+   * default `gemini-3.6-flash`. Set a specific region only with a model that is
+   * served there (for example a Gemini 2.5 model).
+   *
+   * @see https://cloud.google.com/vertex-ai/generative-ai/docs/learn/locations
+   */
   vertexModelLocation: defineString("VERTEX_AI_MODEL_LOCATION", {
-    default: "null",
+    default: "global",
     input: select([...VERTEX_MODEL_LOCATION_OPTIONS]),
   }),
   collectionName: defineString("COLLECTION_NAME", { default: "generate" }),
@@ -97,6 +106,12 @@ const params = {
     default: "candidates",
   }),
   context: defineString("CONTEXT", { default: "" }),
+  /**
+   * Sampling controls. Gemini 3.x deprecates `temperature`, `topP` and `topK`;
+   * the Vertex AI model card for `gemini-3.6-flash` states custom values are
+   * ignored. They still apply to Gemini 2.5 models, which retire in October
+   * 2026, so the params are kept for existing configurations.
+   */
   temperature: defineString("TEMPERATURE", { default: "" }),
   topP: defineString("TOP_P", { default: "" }),
   topK: defineString("TOP_K", { default: "" }),

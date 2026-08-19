@@ -54,6 +54,18 @@ export class GoogleTranslator implements Translator {
   }
 }
 
+/**
+ * Vertex AI location for Gemini translations.
+ *
+ * Gemini 3.x is served on the `global`, `us` and `eu` endpoints only — a single
+ * region such as `us-central1` returns 404 for `gemini-3.6-flash`. The function
+ * region is therefore not a safe default. Change this to `us` or `eu` if you
+ * need to keep requests inside those multi-regions.
+ *
+ * @see https://cloud.google.com/vertex-ai/generative-ai/docs/learn/locations
+ */
+const VERTEX_LOCATION = "global";
+
 export class GenkitTranslator implements Translator {
   private client: Genkit;
   private model: ModelReference<z.ZodTypeAny>;
@@ -72,7 +84,7 @@ export class GenkitTranslator implements Translator {
 
     const plugins =
       config.geminiProvider === "vertexai"
-        ? [vertexAI(config.region ? { location: config.region } : {})]
+        ? [vertexAI({ location: VERTEX_LOCATION })]
         : [googleAI({ apiKey: config.googleAiApiKey })];
 
     this.client = genkit({ plugins });

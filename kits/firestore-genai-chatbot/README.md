@@ -91,16 +91,16 @@ the CLI connects them to the function at deploy time.
 | `provider` | `GENERATIVE_AI_PROVIDER` | no | `google-ai` | `google-ai` or `vertex-ai` |
 | `apiKey` | `API_KEY` | secret | — | Google AI API key |
 | `model` | `MODEL` | no | `gemini-3.6-flash` | Model id |
-| `vertexModelLocation` | `VERTEX_AI_MODEL_LOCATION` | no | `null` | Vertex model region |
+| `vertexModelLocation` | `VERTEX_AI_MODEL_LOCATION` | no | `global` | Vertex model region. Gemini 3.x is only served on `global`, `us` and `eu` |
 | `collectionName` | `COLLECTION_NAME` | no | `generate` | Discussion collection |
 | `promptField` | `PROMPT_FIELD` | no | `prompt` | Prompt field name |
 | `responseField` | `RESPONSE_FIELD` | no | `response` | Response field name |
 | `orderField` | `ORDER_FIELD` | no | `createTime` | Ordering field |
 | `candidatesField` | `CANDIDATES_FIELD` | no | `candidates` | Candidates field name |
 | `context` | `CONTEXT` | no | (empty) | System context |
-| `temperature` | `TEMPERATURE` | no | (empty) | Sampling temperature |
-| `topP` | `TOP_P` | no | (empty) | Top-p |
-| `topK` | `TOP_K` | no | (empty) | Top-k |
+| `temperature` | `TEMPERATURE` | no | (empty) | Sampling temperature. Ignored by Gemini 3.x |
+| `topP` | `TOP_P` | no | (empty) | Top-p. Ignored by Gemini 3.x |
+| `topK` | `TOP_K` | no | (empty) | Top-k. Ignored by Gemini 3.x |
 | `candidateCount` | `CANDIDATE_COUNT` | no | `1` | Candidate count |
 | `maxOutputTokens` | `MAX_OUTPUT_TOKENS` | no | (empty) | Max output tokens |
 | `enableOverrides` | `ENABLE_DISCUSSION_OPTION_OVERRIDES` | no | `false` | Per-discussion option overrides |

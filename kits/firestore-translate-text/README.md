@@ -91,6 +91,7 @@ the CLI connects them to the function at deploy time.
 | `languagesFieldName` | `LANGUAGES_FIELD_NAME` | no | `languages` | Per-doc languages field |
 | `provider` | `TRANSLATION_PROVIDER` | yes | — | Translation provider |
 | `geminiModel` | `GEMINI_MODEL` | no | `gemini-3.6-flash` | Gemini model when used |
+| `region` | `FUNCTION_REGION` | no | (platform default) | Function region. Vertex Gemini calls always use the `global` endpoint — Gemini 3.x is not served on single regions |
 | `googleAiApiKey` | `GOOGLE_AI_API_KEY` | secret | — | Google AI API key (Gemini) |
 
 ## Multiple instances
