@@ -159,7 +159,10 @@ params:
       performance, and availability in your selected provider. This is only
       required if you select "AI Translations Using Gemini" as your translation
       model. By default, the extension uses Gemini 3.6 Flash for a balance of
-      speed and cost. Gemini 2.5 models retire in October 2026.
+      speed and cost. Gemini 2.5 models retire in October 2026. Note: with the
+      Vertex AI provider, translation requests are sent to the Vertex AI 'global'
+      endpoint rather than the Cloud Functions location, because Gemini 3.x
+      models are only served from the 'global', 'us' and 'eu' endpoints.
     type: select
     required: false
     options:
