@@ -45,8 +45,6 @@ export interface BigqueryFirestoreExportConfig {
   pubSubTopic?: string;
   /** Root Firestore collection for configs and run output. */
   firestoreCollection?: string;
-  /** Runtime identity used when creating a DTS config. */
-  serviceAccount?: string;
   /** Log verbosity. Defaults to `info`. */
   logLevel?: LogLevel;
 }
@@ -65,7 +63,6 @@ export interface ResolvedBigqueryFirestoreExportConfig {
   schedule: string;
   pubSubTopic: string;
   firestoreCollection: string;
-  serviceAccount?: string;
   logLevel: LogLevel;
 }
 
@@ -117,7 +114,6 @@ export function resolveConfig(
       optional(config.pubSubTopic) ?? `kit-${instanceId}-processMessages`,
     firestoreCollection:
       optional(config.firestoreCollection) ?? "transferConfigs",
-    serviceAccount: optional(config.serviceAccount),
     logLevel,
   };
 }
