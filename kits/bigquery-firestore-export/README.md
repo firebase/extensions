@@ -152,11 +152,14 @@ query on first deploy, then reconciles supported query, table, schedule,
 dataset, partitioning, and topic changes on later deploys. It retries transient
 failures up to five times with at least 30 seconds of backoff.
 
-Set `TRANSFER_CONFIG_NAME` to link an existing scheduled-query config without
-changing it. Otherwise the kit stores `extInstanceId` on the Firestore config
-document and uses that value to find the config on later deploys. BigQuery DTS
-does not support clearing a partitioning field once set; create a new transfer
-config to remove partitioning.
+Set `TRANSFER_CONFIG_NAME` to link an existing scheduled-query config. The kit
+points that config's completion notifications at this instance's topic, which
+it needs to read the run output, and changes nothing else: the query, schedule,
+destination, and display name stay as they are. Otherwise the kit stores
+`extInstanceId` on the Firestore config document and uses that value to find
+the config on later deploys. BigQuery DTS does not support clearing a
+partitioning field once set; create a new transfer config to remove
+partitioning.
 
 ## Firestore layout
 

@@ -65,6 +65,12 @@ function stringField(value: string | undefined): { stringValue: string } {
   return { stringValue: value ?? "" };
 }
 
+function notificationTopicName(
+  config: ResolvedBigqueryFirestoreExportConfig
+): string {
+  return `projects/${config.projectId}/topics/${config.pubSubTopic}`;
+}
+
 /** Creates the protobuf-shaped request used for a scheduled query. */
 export function createTransferConfigRequest(
   config: ResolvedBigqueryFirestoreExportConfig,
@@ -87,7 +93,7 @@ export function createTransferConfigRequest(
         },
       },
       schedule: config.schedule,
-      notificationPubsubTopic: `projects/${config.projectId}/topics/${config.pubSubTopic}`,
+      notificationPubsubTopic: notificationTopicName(config),
       ...(serviceAccountEmail
         ? { serviceAccountName: serviceAccountEmail }
         : {}),
@@ -127,6 +133,40 @@ export async function createTransferConfig(
   }
   logs.transferConfigCreated(created.name);
   return created;
+}
+
+/**
+ * Points an adopted config at this deployment's notification topic. The mask
+ * covers only the topic: everything else, including the query, schedule and
+ * destination, stays as the config's owner set it.
+ */
+export async function updateNotificationTopic(
+  client: DataTransferClient,
+  transferConfig: TransferConfig,
+  config: ResolvedBigqueryFirestoreExportConfig
+): Promise<TransferConfig> {
+  const expectedTopic = notificationTopicName(config);
+  if (transferConfig.notificationPubsubTopic === expectedTopic) {
+    return transferConfig;
+  }
+  if (!transferConfig.name) {
+    throw new Error("BigQuery transfer config is missing its resource name");
+  }
+
+  logs.updateNotificationTopic(transferConfig.name, expectedTopic);
+  const converted =
+    bigqueryDataTransfer.protos.google.cloud.bigquery.datatransfer.v1.UpdateTransferConfigRequest.fromObject(
+      {
+        transferConfig: {
+          name: transferConfig.name,
+          notificationPubsubTopic: expectedTopic,
+        },
+        updateMask: { paths: ["notification_pubsub_topic"] },
+      }
+    );
+  const [updated] = await client.updateTransferConfig(converted);
+  logs.notificationTopicUpdated(transferConfig.name, expectedTopic);
+  return updated;
 }
 
 /** Builds a minimal update mask while retaining unsupported immutable fields. */
@@ -181,7 +221,7 @@ export async function constructUpdateTransferConfigRequest(
     updatedConfig.schedule = config.schedule;
   }
 
-  const expectedTopic = `projects/${config.projectId}/topics/${config.pubSubTopic}`;
+  const expectedTopic = notificationTopicName(config);
   if (expectedTopic !== transferConfig.notificationPubsubTopic) {
     updateMask.push("notification_pubsub_topic");
     updatedConfig.notificationPubsubTopic = expectedTopic;

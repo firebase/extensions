@@ -122,6 +122,20 @@ export function transferConfigUpdated(name: string): void {
   logger.info("Updated BigQuery Data Transfer config", { name });
 }
 
+export function updateNotificationTopic(name: string, topic: string): void {
+  logger.info("Pointing a linked transfer config at this instance's topic", {
+    name,
+    topic,
+  });
+}
+
+export function notificationTopicUpdated(name: string, topic: string): void {
+  logger.info("Updated the notification topic of a linked transfer config", {
+    name,
+    topic,
+  });
+}
+
 export function transferConfigNotFound(name: string): void {
   logger.error("BigQuery Data Transfer config not found", { name });
 }
