@@ -85,7 +85,6 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "24"
-          registry-url: "https://wombat-dressing-room.appspot.com"
           always-auth: false
 
       - name: Configure Git User
@@ -224,6 +223,9 @@ jobs:
       - name: Publish to NPM
         # zizmor: ignore[use-trusted-publishing]
         working-directory: ${{ inputs.target_kit }}
+        permissions:
+          contents: read
+          id-token: write
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
@@ -238,9 +240,9 @@ jobs:
           fi
 
           if [ "$IS_PRERELEASE" = "true" ]; then
-            npm publish --tag next --access public $DRY_RUN_FLAG
+            npm publish --tag next --provenance --access public $DRY_RUN_FLAG
           else
-            npm publish --tag latest --access public $DRY_RUN_FLAG
+            npm publish --tag latest --provenance --access public $DRY_RUN_FLAG
             if [ "$DRY_RUN" != "true" ]; then
               npm dist-tag add ${PKG_NAME}@${VERSION} next
             fi
