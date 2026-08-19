@@ -22,6 +22,7 @@ import {
 } from "@google/genai";
 import { logger } from "../logger";
 import { DiscussionClient, type Message } from "./base_class";
+import { answerText } from "./parts";
 
 interface GeminiChatOptions {
   history?: Message[];
@@ -128,7 +129,7 @@ export class VertexDiscussionClient extends DiscussionClient<
     }
 
     const candidates = result.candidates
-      .map((candidate) => candidate.content?.parts?.[0]?.text)
+      .map((candidate) => answerText(candidate.content?.parts))
       .filter((text): text is string => typeof text === "string");
 
     if (candidates.length === 0) {

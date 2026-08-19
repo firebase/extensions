@@ -29,6 +29,13 @@ import {
   type SafetySetting,
 } from "./export-config";
 
+/**
+ * Shape check only — model ids are not validated against the provider, so an id
+ * that exists but is not served fails at request time. This catches typos like
+ * `gemini 3.6-flash` at deploy time instead of on every write.
+ */
+const MODEL_ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9.\-_/]*$/;
+
 const GENERATIVE_AI_PROVIDER_OPTIONS = ["google-ai", "vertex-ai"] as const;
 const VERTEX_MODEL_LOCATION_OPTIONS = [
   "null",
@@ -84,7 +91,17 @@ const params = {
     input: select([...GENERATIVE_AI_PROVIDER_OPTIONS]),
   }),
   apiKey: defineSecret("API_KEY"),
-  model: defineString("MODEL", { default: "gemini-3.6-flash" }),
+  model: defineString("MODEL", {
+    default: "gemini-3.6-flash",
+    input: {
+      text: {
+        example: "gemini-3.6-flash",
+        validationRegex: MODEL_ID_PATTERN.source,
+        validationErrorMessage:
+          "Model ids have no spaces, for example 'gemini-3.6-flash'.",
+      },
+    },
+  }),
   /**
    * Vertex AI location for the model. Defaults to `global` rather than the
    * function region: Gemini 3.x is served on the `global`, `us` and `eu`
@@ -144,6 +161,16 @@ const params = {
 /** The secret bound on the function so its value is available at runtime. */
 export const apiKeySecret = params.apiKey;
 
+/** Rejects a model id that cannot be a model id at all. */
+function requireModelId(model: string): string {
+  if (!MODEL_ID_PATTERN.test(model)) {
+    throw new Error(
+      `MODEL must be a model id with no spaces, for example 'gemini-3.6-flash'. Received: '${model}'`
+    );
+  }
+  return model;
+}
+
 /** Coerce an empty-string param value to `undefined`. */
 function optional(value: string): string | undefined {
   return value.length > 0 ? value : undefined;
@@ -179,7 +206,7 @@ export function configFromEnv(): GenaiChatbotConfig {
       (optional(params.provider.value()) as GenerativeAIProvider) ??
       GenerativeAIProvider.GOOGLE_AI,
     apiKey: params.apiKey.value(),
-    model: params.model.value(),
+    model: requireModelId(params.model.value()),
     vertexModelLocation:
       vertexModelLocation === "null" ? undefined : vertexModelLocation,
     projectId: getProjectId(),

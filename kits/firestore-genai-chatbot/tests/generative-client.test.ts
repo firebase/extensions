@@ -80,16 +80,12 @@ describe("GenkitDiscussionClient.createModelReference", () => {
       ).name
     ).toBe("googleai/gemini-3.6-flash");
     expect(
-      GenkitDiscussionClient.createModelReference(
-        "gemini-9-flash",
-        "google-ai"
-      ).name
+      GenkitDiscussionClient.createModelReference("gemini-9-flash", "google-ai")
+        .name
     ).toBe("googleai/gemini-9-flash");
     expect(
-      GenkitDiscussionClient.createModelReference(
-        "gemini-9-flash",
-        "vertex-ai"
-      ).name
+      GenkitDiscussionClient.createModelReference("gemini-9-flash", "vertex-ai")
+        .name
     ).toBe("vertexai/gemini-9-flash");
   });
 });

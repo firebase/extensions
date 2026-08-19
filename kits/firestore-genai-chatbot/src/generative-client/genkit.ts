@@ -30,6 +30,7 @@ import {
 } from "genkit";
 import { logger as genkitLogger } from "genkit/logging";
 import type { GenkitPluginV2 } from "genkit/plugin";
+import { wantsMultipleCandidates } from "../candidates";
 import type { ResolvedGenaiChatbotConfig } from "../export-config";
 import { logger } from "../logger";
 import {
@@ -120,7 +121,7 @@ export class GenkitDiscussionClient extends DiscussionClient<
     config: ResolvedGenaiChatbotConfig
   ): GenerateOptions {
     if (!config.model) {
-      throw new Error("Model not found.");
+      throw new Error("Model must be specified in the configuration.");
     }
 
     return {
@@ -138,11 +139,20 @@ export class GenkitDiscussionClient extends DiscussionClient<
     };
   }
 
-  /** Whether the Genkit client can serve this config (single candidate). */
-  static shouldUseGenkitClient(config: ResolvedGenaiChatbotConfig): boolean {
-    const shouldReturnMultipleCandidates =
-      config.candidateCount && config.candidateCount > 1;
-    return !shouldReturnMultipleCandidates;
+  /**
+   * Whether the Genkit client can serve this request (single candidate).
+   *
+   * `candidateCount` is passed separately because per-discussion overrides can
+   * raise it above the deploy-time value.
+   */
+  static shouldUseGenkitClient(
+    config: ResolvedGenaiChatbotConfig,
+    candidateCount = config.candidateCount
+  ): boolean {
+    return !wantsMultipleCandidates({
+      candidateCount,
+      candidatesField: config.candidatesField,
+    });
   }
 
   async generateResponse(
