@@ -1,6 +1,11 @@
 {
   "name": "@firebase-function-kits/speech-to-text",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firebase/extensions.git",
+    "directory": "kits/speech-to-text"
+  },
   "description": "Transcribe audio files in Cloud Storage to text using Cloud Speech-to-Text, as a deployable Firebase Function",
   "license": "Apache-2.0",
   "main": "lib/index.js",
