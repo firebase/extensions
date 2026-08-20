@@ -15,6 +15,7 @@
  */
 
 import type { DocumentSnapshot } from "firebase-admin/firestore";
+import { wantsMultipleCandidates } from "./candidates";
 import type { ResolvedGenaiChatbotConfig } from "./export-config";
 import { fetchDiscussionOptions, fetchHistory } from "./firestore";
 import { getGenerativeClient } from "./generative-client";
@@ -53,12 +54,16 @@ export function createGenerateChatResponse(config: ResolvedGenaiChatbotConfig) {
       requestOptions = { ...requestOptions, ...discussionOptions };
     }
 
-    const shouldAddCandidatesField =
-      config.candidatesField &&
-      requestOptions.candidateCount &&
-      requestOptions.candidateCount > 1;
+    // Per-discussion overrides can raise the candidate count, so the client
+    // gate and this write decision must both use the effective value.
+    const candidateCount =
+      requestOptions.candidateCount ?? config.candidateCount;
+    const shouldAddCandidatesField = wantsMultipleCandidates({
+      candidateCount,
+      candidatesField: config.candidatesField,
+    });
 
-    const discussionClient = getGenerativeClient(config);
+    const discussionClient = getGenerativeClient(config, candidateCount);
     const result = await discussionClient.send(prompt, requestOptions);
     const response = result.response;
 

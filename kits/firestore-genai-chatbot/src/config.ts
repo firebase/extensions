@@ -29,6 +29,13 @@ import {
   type SafetySetting,
 } from "./export-config";
 
+/**
+ * Shape check only — model ids are not validated against the provider, so an id
+ * that exists but is not served fails at request time. This catches typos like
+ * `gemini 3.6-flash` at deploy time instead of on every write.
+ */
+const MODEL_ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9.\-_/]*$/;
+
 const GENERATIVE_AI_PROVIDER_OPTIONS = ["google-ai", "vertex-ai"] as const;
 const VERTEX_MODEL_LOCATION_OPTIONS = [
   "null",
@@ -84,9 +91,28 @@ const params = {
     input: select([...GENERATIVE_AI_PROVIDER_OPTIONS]),
   }),
   apiKey: defineSecret("API_KEY"),
-  model: defineString("MODEL", { default: "gemini-2.5-flash" }),
+  model: defineString("MODEL", {
+    default: "gemini-3.6-flash",
+    input: {
+      text: {
+        example: "gemini-3.6-flash",
+        validationRegex: MODEL_ID_PATTERN.source,
+        validationErrorMessage:
+          "Model ids have no spaces, for example 'gemini-3.6-flash'.",
+      },
+    },
+  }),
+  /**
+   * Vertex AI location for the model. Defaults to `global` rather than the
+   * function region: Gemini 3.x is served on the `global`, `us` and `eu`
+   * endpoints only, so a single region such as `us-central1` returns 404 for the
+   * default `gemini-3.6-flash`. Set a specific region only with a model that is
+   * served there (for example a Gemini 2.5 model).
+   *
+   * @see https://cloud.google.com/vertex-ai/generative-ai/docs/learn/locations
+   */
   vertexModelLocation: defineString("VERTEX_AI_MODEL_LOCATION", {
-    default: "null",
+    default: "global",
     input: select([...VERTEX_MODEL_LOCATION_OPTIONS]),
   }),
   collectionName: defineString("COLLECTION_NAME", { default: "generate" }),
@@ -97,6 +123,12 @@ const params = {
     default: "candidates",
   }),
   context: defineString("CONTEXT", { default: "" }),
+  /**
+   * Sampling controls. Gemini 3.x deprecates `temperature`, `topP` and `topK`;
+   * the Vertex AI model card for `gemini-3.6-flash` states custom values are
+   * ignored. They still apply to Gemini 2.5 models, which retire in October
+   * 2026, so the params are kept for existing configurations.
+   */
   temperature: defineString("TEMPERATURE", { default: "" }),
   topP: defineString("TOP_P", { default: "" }),
   topK: defineString("TOP_K", { default: "" }),
@@ -128,6 +160,16 @@ const params = {
 
 /** The secret bound on the function so its value is available at runtime. */
 export const apiKeySecret = params.apiKey;
+
+/** Rejects a model id that cannot be a model id at all. */
+function requireModelId(model: string): string {
+  if (!MODEL_ID_PATTERN.test(model)) {
+    throw new Error(
+      `MODEL must be a model id with no spaces, for example 'gemini-3.6-flash'. Received: '${model}'`
+    );
+  }
+  return model;
+}
 
 /** Coerce an empty-string param value to `undefined`. */
 function optional(value: string): string | undefined {
@@ -164,7 +206,7 @@ export function configFromEnv(): GenaiChatbotConfig {
       (optional(params.provider.value()) as GenerativeAIProvider) ??
       GenerativeAIProvider.GOOGLE_AI,
     apiKey: params.apiKey.value(),
-    model: params.model.value(),
+    model: requireModelId(params.model.value()),
     vertexModelLocation:
       vertexModelLocation === "null" ? undefined : vertexModelLocation,
     projectId: getProjectId(),

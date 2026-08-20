@@ -64,6 +64,30 @@ describe("GenkitDiscussionClient.shouldUseGenkitClient", () => {
     const config = resolveConfig({ ...baseInput, candidateCount: 2 });
     expect(GenkitDiscussionClient.shouldUseGenkitClient(config)).toBe(false);
   });
+
+  test("true when a single candidate is requested", () => {
+    const config = resolveConfig({ ...baseInput, candidateCount: 1 });
+    expect(GenkitDiscussionClient.shouldUseGenkitClient(config)).toBe(true);
+  });
+});
+
+describe("GenkitDiscussionClient.createModelReference", () => {
+  test("passes any model id through to the plugin", () => {
+    expect(
+      GenkitDiscussionClient.createModelReference(
+        "gemini-3.6-flash",
+        "google-ai"
+      ).name
+    ).toBe("googleai/gemini-3.6-flash");
+    expect(
+      GenkitDiscussionClient.createModelReference("gemini-9-flash", "google-ai")
+        .name
+    ).toBe("googleai/gemini-9-flash");
+    expect(
+      GenkitDiscussionClient.createModelReference("gemini-9-flash", "vertex-ai")
+        .name
+    ).toBe("vertexai/gemini-9-flash");
+  });
 });
 
 describe("VertexDiscussionClient", () => {

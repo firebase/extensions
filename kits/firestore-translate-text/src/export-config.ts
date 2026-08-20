@@ -49,7 +49,7 @@ export interface ResolvedTranslateConfig {
 }
 
 const DEFAULT_PROVIDER: TranslationProvider = "translate";
-const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
+const DEFAULT_GEMINI_MODEL = "gemini-3.6-flash";
 
 function toUniqueArray(
   languages: ReadonlyArray<string> | string

@@ -29,17 +29,20 @@ import { VertexDiscussionClient } from "./vertex_ai";
 type Client = Genkit | GoogleGenAI | GoogleGenerativeAI;
 
 /**
- * Selects and constructs the generative client for a resolved config. Prefers
- * the Genkit client when it can serve the request (single candidate, known
- * model), falling back to the provider-specific SDK clients.
+ * Selects and constructs the generative client for a request. Prefers the
+ * Genkit client when it can serve the request (single candidate), falling back
+ * to the provider-specific SDK clients.
  *
  * @param config - The resolved chatbot configuration.
+ * @param candidateCount - Effective candidate count for this request, which
+ *   per-discussion overrides can raise above the deploy-time value.
  * @returns A ready-to-use discussion client.
  */
 export const getGenerativeClient = (
-  config: ResolvedGenaiChatbotConfig
+  config: ResolvedGenaiChatbotConfig,
+  candidateCount = config.candidateCount
 ): DiscussionClient<Client, any, any> => {
-  if (GenkitDiscussionClient.shouldUseGenkitClient(config)) {
+  if (GenkitDiscussionClient.shouldUseGenkitClient(config, candidateCount)) {
     return new GenkitDiscussionClient(config);
   }
 
