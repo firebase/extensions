@@ -1,7 +1,11 @@
 {
   "name": "@firebase-function-kits/delete-user-data",
   "version": "0.0.1",
-  "repository": "firebase/extensions",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firebase/extensions.git",
+    "directory": "kits/delete-user-data"
+  },
   "description": "Delete user data across Firestore, RTDB, and Storage on account deletion",
   "license": "Apache-2.0",
   "main": "lib/index.js",

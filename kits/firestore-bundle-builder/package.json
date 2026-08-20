@@ -1,7 +1,11 @@
 {
   "name": "@firebase-function-kits/firestore-bundle-builder",
   "version": "0.0.1",
-  "repository": "firebase/extensions",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firebase/extensions.git",
+    "directory": "kits/firestore-bundle-builder"
+  },
   "description": "Build and serve Firestore data bundles as a deployable Firebase Function",
   "license": "Apache-2.0",
   "main": "lib/index.js",
