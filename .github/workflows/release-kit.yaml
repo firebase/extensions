@@ -224,7 +224,6 @@ jobs:
         # zizmor: ignore[use-trusted-publishing]
         working-directory: ${{ inputs.target_kit }}
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
           DRY_RUN: ${{ inputs.dry_run }}
           PKG_NAME: ${{ steps.versioning.outputs.pkg_name }}
