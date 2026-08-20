@@ -15,7 +15,10 @@
  */
 
 import type { DocumentSnapshot } from "firebase-admin/firestore";
-import * as path from "path";
+import * as nodePath from "path";
+
+// Firestore document paths are always POSIX-style, regardless of host OS.
+const path = nodePath.posix;
 
 /**
  * There are two types of shards: "shard" and "partial".

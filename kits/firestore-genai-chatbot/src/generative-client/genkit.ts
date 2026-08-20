@@ -20,7 +20,6 @@ import {
   googleAI,
   vertexAI,
 } from "@genkit-ai/google-genai";
-import type { VertexPluginOptions } from "@genkit-ai/google-genai/lib/vertexai";
 import {
   type MessageData as ApiMessage,
   type GenerateOptions,
@@ -37,6 +36,9 @@ import {
   DiscussionClient,
   type Message,
 } from "./base_class";
+
+// @genkit-ai/google-genai does not re-export this type from its package root.
+type VertexPluginOptions = NonNullable<Parameters<typeof vertexAI>[0]>;
 
 genkitLogger.setLogLevel("info");
 
