@@ -1,6 +1,7 @@
 {
   "name": "@firebase-function-kits/firestore-counter",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "repository": "firebase/extensions",
   "description": "Distributed, sharded counters for Firestore",
   "license": "Apache-2.0",
   "main": "lib/index.js",

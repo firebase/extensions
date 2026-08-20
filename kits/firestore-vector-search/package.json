@@ -1,6 +1,7 @@
 {
   "name": "@firebase-function-kits/firestore-vector-search",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "repository": "firebase/extensions",
   "description": "Vector similarity search over a Firestore collection",
   "license": "Apache-2.0",
   "main": "lib/index.js",

@@ -1,6 +1,7 @@
 {
   "name": "@firebase-function-kits/storage-resize-images",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "repository": "firebase/extensions",
   "description": "Resize images uploaded to Cloud Storage",
   "license": "Apache-2.0",
   "main": "lib/index.js",

@@ -1,6 +1,7 @@
 {
   "name": "@firebase-function-kits/bigquery-firestore-export",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "repository": "firebase/extensions",
   "private": false,
   "description": "Reverse-sync rows from BigQuery into Firestore",
   "license": "Apache-2.0",
