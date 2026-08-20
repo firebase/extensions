@@ -21,7 +21,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
-    "test": "echo \"Warning: tests are not implemented for this package\"",
+    "test": "vitest run",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
@@ -32,6 +32,7 @@
     "uuid": "^11.0.5"
   },
   "devDependencies": {
-    "@types/deep-equal": "^1.0.1"
+    "@types/deep-equal": "^1.0.1",
+    "vitest": "^4.1.10"
   }
 }
