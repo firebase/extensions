@@ -51,6 +51,12 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Print inputs
+        env:
+          INPUTS: ${{ toJSON(inputs) }}
+        run: |
+          echo "$INPUTS"
+
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # zizmor: ignore[artipacked]
         with:
           ref: "kits"
