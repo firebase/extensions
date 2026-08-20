@@ -75,6 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # Needed to push version commit, git tag & create GitHub Release
+      id-token: write # Needed to publish to npm
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # zizmor: ignore[artipacked]
@@ -85,8 +86,6 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "24"
-          registry-url: "https://wombat-dressing-room.appspot.com"
-          always-auth: false
 
       - name: Configure Git User
         if: ${{ !inputs.dry_run }}
@@ -225,7 +224,6 @@ jobs:
         # zizmor: ignore[use-trusted-publishing]
         working-directory: ${{ inputs.target_kit }}
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
           DRY_RUN: ${{ inputs.dry_run }}
           PKG_NAME: ${{ steps.versioning.outputs.pkg_name }}
@@ -238,9 +236,9 @@ jobs:
           fi
 
           if [ "$IS_PRERELEASE" = "true" ]; then
-            npm publish --tag next --access public $DRY_RUN_FLAG
+            npm publish --tag next --provenance --access public $DRY_RUN_FLAG
           else
-            npm publish --tag latest --access public $DRY_RUN_FLAG
+            npm publish --tag latest --provenance --access public $DRY_RUN_FLAG
             if [ "$DRY_RUN" != "true" ]; then
               npm dist-tag add ${PKG_NAME}@${VERSION} next
             fi
