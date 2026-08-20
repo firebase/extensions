@@ -139,6 +139,9 @@ export async function createTransferConfig(
  * Points an adopted config at this deployment's notification topic. The mask
  * covers only the topic: everything else, including the query, schedule and
  * destination, stays as the config's owner set it.
+ *
+ * A config notifies exactly one topic, so this claims it. The previous value is
+ * logged at warn because nothing else records it, and it is the only way back.
  */
 export async function updateNotificationTopic(
   client: DataTransferClient,
@@ -151,6 +154,15 @@ export async function updateNotificationTopic(
   }
   if (!transferConfig.name) {
     throw new Error("BigQuery transfer config is missing its resource name");
+  }
+
+  const previousTopic = transferConfig.notificationPubsubTopic;
+  if (previousTopic) {
+    logs.notificationTopicTakeover(
+      transferConfig.name,
+      previousTopic,
+      expectedTopic
+    );
   }
 
   logs.updateNotificationTopic(transferConfig.name, expectedTopic);

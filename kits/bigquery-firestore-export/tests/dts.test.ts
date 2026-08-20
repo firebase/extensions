@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { logger } from "firebase-functions";
 import {
   constructUpdateTransferConfigRequest,
   createTransferConfigRequest,
@@ -139,7 +140,12 @@ describe("updateNotificationTopic", () => {
     },
   };
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   test("updates only the notification topic when it differs", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const updateTransferConfig = vi
       .fn()
       .mockResolvedValue([{ ...linked, notificationPubsubTopic: "updated" }]);
@@ -153,6 +159,11 @@ describe("updateNotificationTopic", () => {
       config
     );
 
+    expect(warn).toHaveBeenCalledWith(expect.any(String), {
+      name: linked.name,
+      previousTopic: "projects/p/topics/ext-old-topic",
+      topic: "projects/test-project/topics/kit-users-export-processMessages",
+    });
     const request = updateTransferConfig.mock.calls[0][0];
     expect(request.updateMask.paths).toEqual(["notification_pubsub_topic"]);
     expect(request.transferConfig.notificationPubsubTopic).toBe(
@@ -166,6 +177,7 @@ describe("updateNotificationTopic", () => {
   });
 
   test("leaves a config already notifying this instance untouched", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const updateTransferConfig = vi.fn();
     const client = {
       updateTransferConfig,
@@ -184,5 +196,21 @@ describe("updateNotificationTopic", () => {
 
     expect(updateTransferConfig).not.toHaveBeenCalled();
     expect(returned).toBe(alreadyLinked);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  test("does not warn about a takeover when the config had no topic", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    const updateTransferConfig = vi
+      .fn()
+      .mockResolvedValue([{ ...linked, notificationPubsubTopic: "updated" }]);
+    const client = {
+      updateTransferConfig,
+    } as unknown as DataTransferClient;
+
+    await updateNotificationTopic(client, linked, config);
+
+    expect(updateTransferConfig).toHaveBeenCalledTimes(1);
+    expect(warn).not.toHaveBeenCalled();
   });
 });
