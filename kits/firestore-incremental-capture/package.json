@@ -28,5 +28,8 @@
     "build": "tsc -b",
     "clean": "tsc -b --clean",
     "test": "echo \"Warning: tests are not implemented for this package\""
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0"
   }
 }
