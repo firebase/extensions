@@ -6,7 +6,7 @@
     "url": "https://github.com/firebase/extensions.git",
     "directory": "kits/firestore-incremental-capture"
   },
-  "private": true,
+  "private": false,
   "description": "Incremental point-in-time capture of Firestore changes",
   "license": "Apache-2.0",
   "main": "lib/index.js",
