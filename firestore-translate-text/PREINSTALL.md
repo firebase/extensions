@@ -1,6 +1,6 @@
-<!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/firestore-translate-text" package="@firebase/firestore-translate-text" -->
+<!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/firestore-translate-text" package="@firebase-function-kits/firestore-translate-text" -->
 
-> **Deprecation Notice:** The Firebase Extension `firebase/firestore-translate-text` is deprecated. Please migrate to the [`@firebase/firestore-translate-text`](https://www.npmjs.com/package/@firebase/firestore-translate-text) package.
+> **Deprecation Notice:** The Firebase Extension `firebase/firestore-translate-text` is deprecated. Please migrate to the [`@firebase-function-kits/firestore-translate-text`](https://www.npmjs.com/package/@firebase-function-kits/firestore-translate-text) package.
 
 Use this extension to translate strings (for example, text messages) written to a Cloud Firestore collection.
 
