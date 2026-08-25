@@ -43,10 +43,27 @@ const GEMINI_MODEL_OPTIONS = [
 ] as const;
 
 const params = {
-  collectionPath: defineString("COLLECTION_PATH", { default: "translations" }),
+  collectionPath: defineString("COLLECTION_PATH", {
+    default: "translations",
+    input: {
+      text: {
+        validationRegex: /^[^\/]+(\/[^\/]+\/[^\/]+)*$/,
+        validationErrorMessage: "Must be a valid Cloud Firestore Collection",
+      },
+    },
+  }),
   inputFieldName: defineString("INPUT_FIELD_NAME", { default: "input" }),
   outputFieldName: defineString("OUTPUT_FIELD_NAME", { default: "translated" }),
-  languages: defineString("LANGUAGES", { default: "en,es,de,fr" }),
+  languages: defineString("LANGUAGES", {
+    default: "en,es,de,fr",
+    input: {
+      text: {
+        validationRegex: /^[a-zA-Z,-]*[a-zA-Z-]{2,}$/,
+        validationErrorMessage:
+          "Languages must be a comma-separated list of ISO-639-1 language codes.",
+      },
+    },
+  }),
   languagesFieldName: defineString("LANGUAGES_FIELD_NAME", {
     default: "languages",
   }),

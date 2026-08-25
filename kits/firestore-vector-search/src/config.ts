@@ -65,8 +65,26 @@ const params = {
   customEmbeddingsDimension: defineString("CUSTOM_EMBEDDINGS_DIMENSION", {
     default: "",
   }),
-  collectionPath: defineString("COLLECTION_NAME", { default: "products" }),
-  defaultQueryLimit: defineInt("DEFAULT_QUERY_LIMIT", { default: 3 }),
+  collectionPath: defineString("COLLECTION_NAME", {
+    default: "products",
+    input: {
+      text: {
+        validationRegex: /^[^\/]+(\/[^\/]+\/[^\/]+)*$/,
+        validationErrorMessage: "Must be a valid Cloud Firestore Collection",
+      },
+    },
+  }),
+  // The extension's error message here was a copy-paste mistake ("Must be a
+  // valid Cloud Firestore Collection"); its regex was also unanchored.
+  defaultQueryLimit: defineInt("DEFAULT_QUERY_LIMIT", {
+    default: 3,
+    input: {
+      text: {
+        validationRegex: /^[1-9][0-9]*$/,
+        validationErrorMessage: "Must be a positive integer.",
+      },
+    },
+  }),
   distanceMeasure: defineString("DISTANCE_MEASURE", {
     default: "COSINE",
     input: select([...DISTANCE_MEASURE_OPTIONS]),

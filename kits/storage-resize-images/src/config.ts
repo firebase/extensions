@@ -67,7 +67,16 @@ const params = {
     default: storageBucket,
     input: BUCKET_PICKER,
   }),
-  sizes: defineString("IMG_SIZES", { default: "200x200" }),
+  sizes: defineString("IMG_SIZES", {
+    default: "200x200",
+    input: {
+      text: {
+        validationRegex: /^\d+x(\d+,\d+x)*\d+$/,
+        validationErrorMessage:
+          "Invalid sizes, must be a comma-separated list of WIDTHxHEIGHT values.",
+      },
+    },
+  }),
   deleteOriginal: defineString("DELETE_ORIGINAL_FILE", {
     default: "false",
     input: select({
@@ -90,14 +99,40 @@ const params = {
       "/users/avatars/thumbs,/design/pictures/thumbs"
     ),
   }),
-  failedImagesPath: defineString("FAILED_IMAGES_PATH", { default: "" }),
+  failedImagesPath: defineString("FAILED_IMAGES_PATH", {
+    default: "",
+    input: {
+      text: {
+        validationRegex: /^([^\/.]*|)$/,
+        validationErrorMessage: 'Values cannot include "/", ".".',
+      },
+    },
+  }),
   cacheControlHeader: defineString("CACHE_CONTROL_HEADER", { default: "" }),
   imageTypes: defineList("IMAGE_TYPE", {
     default: ["false"],
     input: multiSelect([...IMAGE_TYPE_OPTIONS]),
   }),
-  outputOptions: defineString("OUTPUT_OPTIONS", { default: "" }),
-  sharpOptions: defineString("SHARP_OPTIONS", { default: "{}" }),
+  outputOptions: defineString("OUTPUT_OPTIONS", {
+    default: "",
+    input: {
+      text: {
+        // Extension regex, with an empty branch added: the param is optional.
+        validationRegex: /^(?:({(.*?)})|)$/,
+        validationErrorMessage: "Please provide a valid JSON object.",
+      },
+    },
+  }),
+  sharpOptions: defineString("SHARP_OPTIONS", {
+    default: "{}",
+    input: {
+      text: {
+        // Extension regex, with an empty branch added: the param is optional.
+        validationRegex: /^(?:({(.*?)})|)$/,
+        validationErrorMessage: "Please provide a valid JSON object.",
+      },
+    },
+  }),
   isAnimated: defineBoolean("IS_ANIMATED", {
     default: true,
   }),
@@ -113,7 +148,18 @@ const params = {
     input: select([...CONTENT_FILTER_OPTIONS]),
   }),
   customFilterPrompt: defineString("CUSTOM_FILTER_PROMPT", { default: "" }),
-  placeholderImagePath: defineString("PLACEHOLDER_IMAGE_PATH", { default: "" }),
+  placeholderImagePath: defineString("PLACEHOLDER_IMAGE_PATH", {
+    default: "",
+    input: {
+      text: {
+        // Extension regex, with an empty branch added: the param is optional.
+        validationRegex:
+          /^(?:([a-zA-Z0-9_\-\.\/]+)\.(png|jpg|jpeg|gif|webp)|)$/,
+        validationErrorMessage:
+          "Please provide a valid image path within your bucket.",
+      },
+    },
+  }),
 };
 
 export const CONFIG_EXPRESSIONS = {

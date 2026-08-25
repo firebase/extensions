@@ -33,16 +33,44 @@ function defaultDatabaseInstance(): string | undefined {
 
 const databaseInstanceDefault = defaultDatabaseInstance();
 
+const DATABASE_INSTANCE_VALIDATION = {
+  text: {
+    validationRegex: /^([0-9a-z_.-]*)$/,
+    validationErrorMessage: "Invalid database instance",
+  },
+};
+
 const params = {
   // Do not use NODE_PATH: Node.js reserves it for module resolution and will
   // overwrite the param at runtime (and can freeze a bad ref at deploy).
-  nodePath: defineString("RTDB_NODE_PATH"),
-  maxCount: defineInt("MAX_COUNT"),
+  nodePath: defineString("RTDB_NODE_PATH", {
+    input: {
+      text: {
+        validationRegex: /^\S+$/,
+        validationErrorMessage: "Path cannot have spaces.",
+      },
+    },
+  }),
+  // The extension regex was ^\d+$, which accepted 0 -- and a MAX_COUNT of 0
+  // deletes every child on every write. Require a positive integer instead,
+  // matching what resolveRtdbLimitConfig enforces at runtime.
+  maxCount: defineInt("MAX_COUNT", {
+    input: {
+      text: {
+        validationRegex: /^[1-9][0-9]*$/,
+        validationErrorMessage:
+          "Invalid MAX_COUNT, must be a positive integer.",
+      },
+    },
+  }),
   databaseInstance: databaseInstanceDefault
     ? defineString("SELECTED_DATABASE_INSTANCE", {
         default: databaseInstanceDefault,
+        input: DATABASE_INSTANCE_VALIDATION,
       })
-    : defineString("SELECTED_DATABASE_INSTANCE"),
+    : defineString("SELECTED_DATABASE_INSTANCE", {
+        input: DATABASE_INSTANCE_VALIDATION,
+      }),
 };
 
 export function configFromEnv(): RtdbLimitConfig {

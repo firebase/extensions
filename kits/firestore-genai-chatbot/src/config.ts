@@ -78,6 +78,25 @@ const SAFETY_THRESHOLD_OPTIONS = [
  *
  * @see https://firebase.google.com/docs/functions/config-env
  */
+
+const ZERO_TO_ONE_VALIDATION = {
+  text: {
+    validationRegex: /^(?:0*(?:\.\d+)?|1(\.0*)?)$/,
+    validationErrorMessage:
+      "Please specify a decimal representation of a number between 0 and 1.",
+  },
+};
+
+// The extension regex was unanchored (^[1-9][0-9]*), so trailing junk like
+// "5abc" passed validation. Anchor it, and allow empty: the params are
+// optional.
+const POSITIVE_INT_VALIDATION = {
+  text: {
+    validationRegex: /^(?:[1-9][0-9]*|)$/,
+    validationErrorMessage: "Please specify a positive integer.",
+  },
+};
+
 const params = {
   provider: defineString("GENERATIVE_AI_PROVIDER", {
     default: "google-ai",
@@ -89,7 +108,15 @@ const params = {
     default: "null",
     input: select([...VERTEX_MODEL_LOCATION_OPTIONS]),
   }),
-  collectionName: defineString("COLLECTION_NAME", { default: "generate" }),
+  collectionName: defineString("COLLECTION_NAME", {
+    default: "generate",
+    input: {
+      text: {
+        validationRegex: /^[^\/]+(\/[^\/]+\/[^\/]+)*$/,
+        validationErrorMessage: "Must be a valid Cloud Firestore Collection",
+      },
+    },
+  }),
   promptField: defineString("PROMPT_FIELD", { default: "prompt" }),
   responseField: defineString("RESPONSE_FIELD", { default: "response" }),
   orderField: defineString("ORDER_FIELD", { default: "createTime" }),
@@ -97,11 +124,26 @@ const params = {
     default: "candidates",
   }),
   context: defineString("CONTEXT", { default: "" }),
-  temperature: defineString("TEMPERATURE", { default: "" }),
-  topP: defineString("TOP_P", { default: "" }),
-  topK: defineString("TOP_K", { default: "" }),
-  candidateCount: defineString("CANDIDATE_COUNT", { default: "1" }),
-  maxOutputTokens: defineString("MAX_OUTPUT_TOKENS", { default: "" }),
+  temperature: defineString("TEMPERATURE", {
+    default: "",
+    input: ZERO_TO_ONE_VALIDATION,
+  }),
+  topP: defineString("TOP_P", {
+    default: "",
+    input: ZERO_TO_ONE_VALIDATION,
+  }),
+  topK: defineString("TOP_K", {
+    default: "",
+    input: POSITIVE_INT_VALIDATION,
+  }),
+  candidateCount: defineString("CANDIDATE_COUNT", {
+    default: "1",
+    input: POSITIVE_INT_VALIDATION,
+  }),
+  maxOutputTokens: defineString("MAX_OUTPUT_TOKENS", {
+    default: "",
+    input: POSITIVE_INT_VALIDATION,
+  }),
   enableOverrides: defineBoolean("ENABLE_DISCUSSION_OPTION_OVERRIDES", {
     default: false,
   }),
