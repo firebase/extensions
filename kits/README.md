@@ -8,7 +8,7 @@ Where an extension is installed as a managed instance you configure through the
 Firebase console or CLI, a kit is code you own: you install the package, export
 the functions you want from your functions entry file, configure it with a
 `.env`, and deploy with `firebase deploy`. There is no hosted version, so the
-functions run in your project, under your service account, on your deploy
+functions run in your project, under your service account, on your deployment
 schedule. That also means you can read the source, fork it, or import the
 package's `./lib` entry point and register the triggers yourself.
 
