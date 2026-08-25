@@ -4,7 +4,7 @@ This directory contains the source for Firebase Function Kits. A kit is a
 Firebase Extension repackaged as an npm package that you add to your own
 Firebase Functions codebase and deploy into your own project.
 
-Where an extension is installed as a managed instance you configure through the
+While an extension is installed as a managed instance configured through the
 Firebase console or CLI, a kit is code you own: you install the package, export
 the functions you want from your functions entry file, configure it with a
 `.env`, and deploy with `firebase deploy`. There is no hosted version, so the
