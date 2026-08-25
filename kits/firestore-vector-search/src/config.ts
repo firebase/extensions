@@ -74,14 +74,14 @@ const params = {
       },
     },
   }),
-  // The extension's error message here was a copy-paste mistake ("Must be a
-  // valid Cloud Firestore Collection"); its regex was also unanchored.
+  // Extension regex and error message, kept verbatim for strict parity: the
+  // regex is unanchored and the message is upstream's copy-paste mistake.
   defaultQueryLimit: defineInt("DEFAULT_QUERY_LIMIT", {
     default: 3,
     input: {
       text: {
-        validationRegex: /^[1-9][0-9]*$/,
-        validationErrorMessage: "Must be a positive integer.",
+        validationRegex: /^[1-9][0-9]*/,
+        validationErrorMessage: "Must be a valid Cloud Firestore Collection",
       },
     },
   }),

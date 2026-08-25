@@ -51,13 +51,13 @@ const params = {
       },
     },
   }),
-  // The extension regex was ^\d+$, which accepted 0 -- and a MAX_COUNT of 0
-  // deletes every child on every write. Require a positive integer instead,
-  // matching what resolveRtdbLimitConfig enforces at runtime.
+  // Extension regex, kept verbatim for strict parity. It accepts 0 even
+  // though a MAX_COUNT of 0 would delete every child on every write;
+  // resolveRtdbLimitConfig still rejects non-positive values at runtime.
   maxCount: defineInt("MAX_COUNT", {
     input: {
       text: {
-        validationRegex: /^[1-9][0-9]*$/,
+        validationRegex: /^\d+$/,
         validationErrorMessage:
           "Invalid MAX_COUNT, must be a positive integer.",
       },

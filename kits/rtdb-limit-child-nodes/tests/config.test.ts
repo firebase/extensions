@@ -120,7 +120,7 @@ describe("configFromEnv", () => {
       input: { text: { validationRegex: /^\S+$/ } },
     });
     expect(maxCountOptions).toMatchObject({
-      input: { text: { validationRegex: /^[1-9][0-9]*$/ } },
+      input: { text: { validationRegex: /^\d+$/ } },
     });
   });
 });

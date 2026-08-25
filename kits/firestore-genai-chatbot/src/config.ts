@@ -87,12 +87,12 @@ const ZERO_TO_ONE_VALIDATION = {
   },
 };
 
-// The extension regex was unanchored (^[1-9][0-9]*), so trailing junk like
-// "5abc" passed validation. Anchor it, and allow empty: the params are
+// Extension regex, kept unanchored for strict parity (trailing junk like
+// "5abc" passes, as upstream), with an empty branch added: the params are
 // optional.
 const POSITIVE_INT_VALIDATION = {
   text: {
-    validationRegex: /^(?:[1-9][0-9]*|)$/,
+    validationRegex: /^[1-9][0-9]*|^$/,
     validationErrorMessage: "Please specify a positive integer.",
   },
 };
