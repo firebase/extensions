@@ -32,7 +32,7 @@ const params = {
       text: {
         validationRegex: /^[^\/]+\/[^\/]+(\/[^\/]+\/[^\/]+)*$/,
         validationErrorMessage:
-          "Enter a document path, not a collection path. The path must have an even number of segments.",
+          "Enter a document path, not a collection path. The path must have an even number of segments, for example, `my_collection/doc` or `my_collection/doc/subcollection/doc`, but not `my_collection`.",
       },
     },
   }),
