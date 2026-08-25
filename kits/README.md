@@ -67,8 +67,8 @@ for its exports, its settings, and the roles the CLI grants on deploy.
 
 ## Migrating from an extension
 
-A kit ports the extension's behaviour, but it is not a drop-in replacement for
-an installed instance. Deploy still handles the platform setup for you: Firebase
+A kit ports the extension's behavior, but it is not a drop-in replacement for
+an installed instance. Deployment still handles the platform setup for you: Firebase
 CLI 15.23.0 or later creates the runtime service account, grants it the roles
 the kit needs, enables the required APIs, and connects any secrets. What moves
 to you is the configuration itself, so check the kit's README against your
