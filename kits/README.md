@@ -60,8 +60,8 @@ instances to deploy:
 }
 ```
 
-Each instance id maps to the directory holding that instance's `.env`, and the
-CLI prefixes every function name with `kit-<instance id>-`, so one kit can run
+Each instance ID maps to the directory holding that instance's `.env`, and the
+CLI prefixes every function name with `kit-<instance-id>-`, so one kit can run
 several independently configured instances side by side. See each kit's README
 for its exports, its settings, and the roles the CLI grants on deploy.
 
