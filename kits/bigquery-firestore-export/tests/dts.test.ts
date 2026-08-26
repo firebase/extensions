@@ -164,4 +164,19 @@ describe("constructUpdateTransferConfigRequest", () => {
       await rejects.toThrow("Only scheduled queries are supported");
     }
   );
+
+  test("reports a vanished transfer config as permanent", async () => {
+    const notFound = Object.assign(new Error("5 NOT_FOUND"), { code: 5 });
+    const client = {
+      getTransferConfig: vi.fn().mockRejectedValue(notFound),
+    } as unknown as DataTransferClient;
+
+    await expect(
+      constructUpdateTransferConfigRequest(
+        client,
+        "projects/p/locations/us/transferConfigs/gone",
+        config
+      )
+    ).rejects.toThrow(PermanentConfigurationError);
+  });
 });

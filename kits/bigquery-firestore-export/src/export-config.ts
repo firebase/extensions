@@ -16,6 +16,8 @@
 
 import type { Expression } from "firebase-functions/params";
 
+import { PermanentConfigurationError } from "./errors";
+
 /** Log levels supported by the original extension. */
 export type LogLevel = "debug" | "info" | "warn" | "error" | "silent";
 
@@ -77,7 +79,9 @@ export interface DeployTimeOptions {
 function required(value: string, field: string): string {
   const normalized = value.trim();
   if (!normalized) {
-    throw new Error(`${field} must be a non-empty string.`);
+    throw new PermanentConfigurationError(
+      `${field} must be a non-empty string. Set it in the deployment configuration, then redeploy.`
+    );
   }
   return normalized;
 }
@@ -96,7 +100,9 @@ export function resolveConfig(
   const logLevel = config.logLevel ?? "info";
 
   if (!["debug", "info", "warn", "error", "silent"].includes(logLevel)) {
-    throw new Error(`Unsupported logLevel: ${logLevel}`);
+    throw new PermanentConfigurationError(
+      `Unsupported logLevel: ${logLevel}. Use one of debug, info, warn, error, silent, then redeploy.`
+    );
   }
 
   return {

@@ -100,12 +100,16 @@ export async function handleMessagePublished(
  * Cloud Tasks retries every non-2xx response and the enqueued lifecycle task
  * has no channel for reporting deploy status, so a failure that no retry can
  * resolve is logged at error level and the task returns successfully.
+ *
+ * The context arrives as a factory so that config resolution runs inside the
+ * try. Resolving it in the caller would put param validation outside this
+ * catch, which is the one failure most certain that no retry can fix.
  */
 export async function handleUpsertTransferConfig(
-  ctx: HandlerContext
+  getCtx: () => HandlerContext
 ): Promise<void> {
   try {
-    await upsertTransferConfig(ctx);
+    await upsertTransferConfig(getCtx());
   } catch (err) {
     if (!(err instanceof PermanentConfigurationError)) throw err;
     logs.upsertTransferConfigAborted(err);

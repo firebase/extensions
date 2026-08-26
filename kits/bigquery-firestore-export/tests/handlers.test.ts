@@ -113,7 +113,7 @@ describe("handleUpsertTransferConfig", () => {
     mocks.createTransferConfig.mockResolvedValue(created);
     const { ctx, set } = makeContext({});
 
-    await handleUpsertTransferConfig(ctx);
+    await handleUpsertTransferConfig(() => ctx);
 
     expect(mocks.createTransferConfig).toHaveBeenCalledWith(
       ctx.dataTransfer,
@@ -144,7 +144,7 @@ describe("handleUpsertTransferConfig", () => {
       },
     });
 
-    await handleUpsertTransferConfig(ctx);
+    await handleUpsertTransferConfig(() => ctx);
 
     expect(mocks.updateTransferConfig).toHaveBeenCalledOnce();
     expect(mocks.getTransferConfig).not.toHaveBeenCalled();
@@ -163,7 +163,7 @@ describe("handleUpsertTransferConfig", () => {
       transferConfigName: linked.name,
     });
 
-    await handleUpsertTransferConfig(ctx);
+    await handleUpsertTransferConfig(() => ctx);
 
     expect(mocks.getTransferConfig).toHaveBeenCalledWith(
       ctx.dataTransfer,
@@ -186,7 +186,9 @@ describe("handleUpsertTransferConfig permanent failures", () => {
       transferConfigName: "projects/p/locations/us/transferConfigs/missing",
     });
 
-    await expect(handleUpsertTransferConfig(ctx)).resolves.toBeUndefined();
+    await expect(
+      handleUpsertTransferConfig(() => ctx)
+    ).resolves.toBeUndefined();
 
     expect(set).not.toHaveBeenCalled();
     expect(aborted).toHaveBeenCalledOnce();
@@ -216,7 +218,9 @@ describe("handleUpsertTransferConfig permanent failures", () => {
       },
     });
 
-    await expect(handleUpsertTransferConfig(ctx)).resolves.toBeUndefined();
+    await expect(
+      handleUpsertTransferConfig(() => ctx)
+    ).resolves.toBeUndefined();
 
     expect(set).not.toHaveBeenCalled();
     expect(aborted).toHaveBeenCalledOnce();
@@ -235,7 +239,9 @@ describe("handleUpsertTransferConfig permanent failures", () => {
       },
     });
 
-    await expect(handleUpsertTransferConfig(ctx)).resolves.toBeUndefined();
+    await expect(
+      handleUpsertTransferConfig(() => ctx)
+    ).resolves.toBeUndefined();
 
     expect(mocks.updateTransferConfig).not.toHaveBeenCalled();
     expect(set).not.toHaveBeenCalled();
@@ -265,7 +271,9 @@ describe("handleUpsertTransferConfig permanent failures", () => {
       },
     });
 
-    await expect(handleUpsertTransferConfig(ctx)).resolves.toBeUndefined();
+    await expect(
+      handleUpsertTransferConfig(() => ctx)
+    ).resolves.toBeUndefined();
 
     expect(set).not.toHaveBeenCalled();
     expect(aborted).toHaveBeenCalledOnce();
@@ -288,7 +296,9 @@ describe("handleUpsertTransferConfig transient failures", () => {
     mocks.createTransferConfig.mockRejectedValue(unavailable);
     const { ctx } = makeContext({});
 
-    await expect(handleUpsertTransferConfig(ctx)).rejects.toBe(unavailable);
+    await expect(handleUpsertTransferConfig(() => ctx)).rejects.toBe(
+      unavailable
+    );
     expect(aborted).not.toHaveBeenCalled();
   });
 
@@ -296,7 +306,37 @@ describe("handleUpsertTransferConfig transient failures", () => {
     const unavailable = new Error("5 DEADLINE_EXCEEDED: Deadline exceeded");
     const { ctx } = makeContext({ existingError: unavailable });
 
-    await expect(handleUpsertTransferConfig(ctx)).rejects.toBe(unavailable);
+    await expect(handleUpsertTransferConfig(() => ctx)).rejects.toBe(
+      unavailable
+    );
+    expect(aborted).not.toHaveBeenCalled();
+  });
+});
+
+describe("handleUpsertTransferConfig context resolution", () => {
+  const aborted = vi.mocked(logs.upsertTransferConfigAborted);
+
+  test("aborts when building the context hits a misconfiguration", async () => {
+    const invalid = new PermanentConfigurationError(
+      "datasetId must be a non-empty string. Set it in the deployment configuration, then redeploy."
+    );
+
+    await expect(
+      handleUpsertTransferConfig(() => {
+        throw invalid;
+      })
+    ).resolves.toBeUndefined();
+    expect(aborted).toHaveBeenCalledWith(invalid);
+  });
+
+  test("rethrows a transient context failure so the task is retried", async () => {
+    const unavailable = new Error("14 UNAVAILABLE: metadata server");
+
+    await expect(
+      handleUpsertTransferConfig(() => {
+        throw unavailable;
+      })
+    ).rejects.toBe(unavailable);
     expect(aborted).not.toHaveBeenCalled();
   });
 });

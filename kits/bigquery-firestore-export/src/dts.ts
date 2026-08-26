@@ -141,7 +141,11 @@ export async function constructUpdateTransferConfigRequest(
   config: ResolvedBigqueryFirestoreExportConfig
 ): Promise<bigqueryDataTransfer.protos.google.cloud.bigquery.datatransfer.v1.IUpdateTransferConfigRequest> {
   const transferConfig = await getTransferConfig(client, transferConfigName);
-  if (!transferConfig) throw new Error("Transfer config not found");
+  if (!transferConfig) {
+    throw new PermanentConfigurationError(
+      `Transfer config not found: ${transferConfigName}. The scheduled query recorded for this deployment no longer exists in BigQuery. Delete its document from the configs collection so a new query is created, then redeploy.`
+    );
+  }
 
   const fields = transferConfigFields(transferConfig);
   const updatedConfig = JSON.parse(
