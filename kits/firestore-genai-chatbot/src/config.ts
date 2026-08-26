@@ -99,16 +99,37 @@ const POSITIVE_INT_VALIDATION = {
 
 const params = {
   provider: defineString("GENERATIVE_AI_PROVIDER", {
+    label: "Gemini API Provider",
+    description:
+      "This extension makes use of the Gemini family of generative models. For Google AI you will require an API key, whereas Vertex AI will authenticate using application default credentials. For more information see the [docs](https://firebase.google.com/docs/admin/setup#initialize-sdk).",
+
     default: "google-ai",
     input: select([...GENERATIVE_AI_PROVIDER_OPTIONS]),
   }),
-  apiKey: defineSecret("API_KEY"),
-  model: defineString("MODEL", { default: "gemini-2.5-flash" }),
+  apiKey: defineSecret("API_KEY", {
+    label: "Google AI API Key",
+    description:
+      "If you have selected Google AI as your provider, then this parameteris required. If you have instead selected Vertex AI, then this parameter is not required, and application default credentials will be used.",
+  }),
+  model: defineString("MODEL", {
+    label: "Gemini model",
+    description:
+      "Input the name of the Gemini model you would like to use. To view available models for each provider, see: [Vertex AI Gemini models](https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models), [Google AI Gemini models](https://ai.google.dev/models/gemini). Note: Any models in preview on Vertex AI will require Vertex AI Model Location to be set to 'global'.",
+    default: "gemini-2.5-flash",
+  }),
   vertexModelLocation: defineString("VERTEX_AI_MODEL_LOCATION", {
+    label: "Vertex AI Model Location",
+    description:
+      "If you are using Vertex AI as your provider, which location should be used for the Vertex AI API? This can differ from the Cloud Functions location.\nIf not specified, defaults to the Cloud Functions location. Note: Models in preview on Vertex AI require 'Global'. See [available locations](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/locations).",
+
     default: "null",
     input: select([...VERTEX_MODEL_LOCATION_OPTIONS]),
   }),
   collectionName: defineString("COLLECTION_NAME", {
+    label: "Firestore Collection Path",
+    description:
+      "Used to store conversation history represented as documents. This extension will listen to the specified collection(s) for new message documents.",
+
     default: "generate",
     input: {
       text: {
@@ -117,52 +138,122 @@ const params = {
       },
     },
   }),
-  promptField: defineString("PROMPT_FIELD", { default: "prompt" }),
-  responseField: defineString("RESPONSE_FIELD", { default: "response" }),
-  orderField: defineString("ORDER_FIELD", { default: "createTime" }),
+  promptField: defineString("PROMPT_FIELD", {
+    label: "Prompt Field",
+    description: "The field in the message document that contains the prompt.",
+    default: "prompt",
+    input: { text: { example: "prompt" } },
+  }),
+  responseField: defineString("RESPONSE_FIELD", {
+    label: "Response Field",
+    description:
+      "The field in the message document into which to put the response.",
+    default: "response",
+    input: { text: { example: "response" } },
+  }),
+  orderField: defineString("ORDER_FIELD", {
+    label: "Order Field",
+    description:
+      "The field by which to order when fetching conversation history. If absent when processing begins, the current timestamp will be written to this field. Sorting will be in descending order.",
+    default: "createTime",
+    input: { text: { example: "createTime" } },
+  }),
   candidatesField: defineString("CANDIDATES_FIELD", {
+    label: "Candidates field",
+    description:
+      "The field in the message document into which to put the other candidate responses if the candidate count parameter is greater than one.",
+
     default: "candidates",
   }),
-  context: defineString("CONTEXT", { default: "" }),
+  context: defineString("CONTEXT", {
+    label: "Context",
+    description:
+      "Contextual preamble for the generative AI model. A string giving context for the discussion.",
+    default: "",
+  }),
   temperature: defineString("TEMPERATURE", {
+    label: "Temperature",
+    description:
+      "Controls the randomness of the output. Values can range over [0,1], inclusive. A value closer to 1 will produce responses that are more varied, while a value closer to 0 will typically result in less surprising responses from the model.",
+
     default: "",
     input: ZERO_TO_ONE_VALIDATION,
   }),
   topP: defineString("TOP_P", {
+    label: "Nucleus sampling probability",
+    description:
+      "If specified, nucleus sampling will be used as the decoding strategy. Nucleus sampling considers the smallest set of tokens whose probability sum is at least a fixed value. Enter a value between 0 and 1.",
+
     default: "",
     input: ZERO_TO_ONE_VALIDATION,
   }),
   topK: defineString("TOP_K", {
+    label: "Sampling strategy parameter",
+    description:
+      "If specified, top-k sampling will be used as the decoding strategy. Top-k sampling considers the set of topK most probable tokens.",
+
     default: "",
     input: POSITIVE_INT_VALIDATION,
   }),
   candidateCount: defineString("CANDIDATE_COUNT", {
+    label: "Candidate count",
+    description:
+      "The default value is one. When set to an integer higher than one, additional candidate responses, up to the specified number, will be stored in Firestore under the 'candidates' field.",
+
     default: "1",
     input: POSITIVE_INT_VALIDATION,
   }),
   maxOutputTokens: defineString("MAX_OUTPUT_TOKENS", {
+    label: "Max Output Tokens",
+    description:
+      "If specified, this parameter is passed to the Gemini API to control the length of the response.",
+
     default: "",
     input: POSITIVE_INT_VALIDATION,
   }),
   enableOverrides: defineBoolean("ENABLE_DISCUSSION_OPTION_OVERRIDES", {
+    label: "Enable per document overrides.",
+    description:
+      'If set to \\"Yes\\", discussion parameters may be overwritten by fields in the discussion collection.',
+
     default: false,
   }),
   enableGenkitMonitoring: defineBoolean("ENABLE_GENKIT_MONITORING", {
+    label: "Enable Genkit Monitoring",
+    description:
+      'If set to "Yes", enables Genkit Monitoring for collecting and viewing real-time telemetry data. This requires the Cloud Logging API, Cloud Trace API, and Cloud Monitoring API to be enabled, and appropriate IAM roles to be configured. See the documentation for more details.',
+
     default: false,
   }),
   harmHateSpeech: defineString("HARM_CATEGORY_HATE_SPEECH", {
+    label: "Hate Speech Threshold",
+    description:
+      "Threshold for hate speech content. Specify what probability level of hate speech content is blocked by the Gemini provider.",
+
     default: "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
     input: select([...SAFETY_THRESHOLD_OPTIONS]),
   }),
   harmDangerous: defineString("HARM_CATEGORY_DANGEROUS_CONTENT", {
+    label: "Dangerous Content Threshold",
+    description:
+      "Threshold for dangerous content. Specify what probability level of dangerous content is blocked by the Gemini provider.",
+
     default: "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
     input: select([...SAFETY_THRESHOLD_OPTIONS]),
   }),
   harmHarassment: defineString("HARM_CATEGORY_HARASSMENT", {
+    label: "Harassment Content Threshold",
+    description:
+      "Threshold for harassment content. Specify what probability level of harassment content is blocked by the Gemini provider.",
+
     default: "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
     input: select([...SAFETY_THRESHOLD_OPTIONS]),
   }),
   harmSexual: defineString("HARM_CATEGORY_SEXUALLY_EXPLICIT", {
+    label: "Sexual Content Threshold",
+    description:
+      "Threshold for sexually explicit content. Specify what probability level of sexual content is blocked by the Gemini provider.",
+
     default: "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
     input: select([...SAFETY_THRESHOLD_OPTIONS]),
   }),

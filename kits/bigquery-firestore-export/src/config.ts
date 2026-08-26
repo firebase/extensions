@@ -32,25 +32,71 @@ const instanceId = defineString("INSTANCE_ID");
 const params = {
   instanceId,
   bigqueryDatasetLocation: defineString("BIGQUERY_DATASET_LOCATION", {
+    label: "BigQuery Dataset Location",
+    description:
+      "What is the location of the BigQuery dataset referenced in the query?",
+
     default: "US",
   }),
   transferConfigName: defineString("TRANSFER_CONFIG_NAME", { default: "" }),
-  datasetId: defineString("DATASET_ID"),
-  tableName: defineString("TABLE_NAME"),
-  queryString: defineString("QUERY_STRING"),
-  displayName: defineString("DISPLAY_NAME"),
-  partitioningField: defineString("PARTITIONING_FIELD", { default: "" }),
-  schedule: defineString("SCHEDULE"),
+  datasetId: defineString("DATASET_ID", {
+    label: "Dataset ID",
+    description:
+      "What's the BigQuery destination dataset you'd like to use? Each transfer run will write to a table in this destination dataset.",
+    input: { text: { example: "customer_data" } },
+  }),
+  tableName: defineString("TABLE_NAME", {
+    label: "Destination Table Name",
+    description:
+      "What's the destination table name prefix you'd like to use? Each transfer run will write to the table with this name, postfixed with the runtime.",
+    input: { text: { example: "transactions" } },
+  }),
+  queryString: defineString("QUERY_STRING", {
+    label: "Query String",
+    description: "What's the BQ query you'd like to execute?",
+    input: {
+      text: {
+        example: "SELECT * from <PROJECT_ID>.customer_data.transactions",
+      },
+    },
+  }),
+  displayName: defineString("DISPLAY_NAME", {
+    label: "Display Name",
+    description: "What display name would you like to use?",
+    input: { text: { example: "Daily Rollup - Customer Transactions" } },
+  }),
+  partitioningField: defineString("PARTITIONING_FIELD", {
+    label: "Partitioning Field",
+    description:
+      "What's the partitioning field on the destination table ID? Leave empty if not using a partitioning field.",
+    default: "",
+    input: { text: { example: "timestamp" } },
+  }),
+  schedule: defineString("SCHEDULE", {
+    label: "Schedule",
+    description:
+      "What's the execution schedule you'd like to use for this query?",
+    input: { text: { example: "every 15 minutes" } },
+  }),
   firestoreCollection: defineString("COLLECTION_PATH", {
+    label: "Firestore Collection",
+    description:
+      "What's the top-level Firestore Collection to store transfer configs, run metadata, and query output?",
+
     default: "transferConfigs",
     input: {
       text: {
+        example: "transferConfigs",
+
         validationRegex: /^[^\/]+(\/[^\/]+\/[^\/]+)*$/,
         validationErrorMessage: "Must be a valid Cloud Firestore Collection",
       },
     },
   }),
   logLevel: defineString("LOG_LEVEL", {
+    label: "Log Level",
+    description: "What's the log level you'd like to use for this extension?",
+
     default: "info",
     input: select([...LOG_LEVEL_OPTIONS]),
   }),

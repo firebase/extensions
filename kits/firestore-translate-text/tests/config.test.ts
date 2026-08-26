@@ -172,11 +172,11 @@ describe("configFromEnv", () => {
     ]);
     expect(defineString.mock.calls).toContainEqual([
       "INPUT_FIELD_NAME",
-      { default: "input" },
+      expect.objectContaining({ default: "input" }),
     ]);
     expect(defineString.mock.calls).toContainEqual([
       "OUTPUT_FIELD_NAME",
-      { default: "translated" },
+      expect.objectContaining({ default: "translated" }),
     ]);
     expect(defineString.mock.calls).toContainEqual([
       "LANGUAGES",
@@ -184,7 +184,7 @@ describe("configFromEnv", () => {
     ]);
     expect(defineString.mock.calls).toContainEqual([
       "LANGUAGES_FIELD_NAME",
-      { default: "languages" },
+      expect.objectContaining({ default: "languages" }),
     ]);
   });
 
@@ -232,7 +232,10 @@ describe("googleAiApiKey", () => {
   test("is declared as a secret param", async () => {
     const { googleAiApiKey } = await importConfig();
 
-    expect(defineSecret).toHaveBeenCalledWith("GOOGLE_AI_API_KEY");
+    expect(defineSecret).toHaveBeenCalledWith(
+      "GOOGLE_AI_API_KEY",
+      expect.objectContaining({ label: "Google AI API Key" })
+    );
     expect((googleAiApiKey as unknown as { name: string }).name).toBe(
       "GOOGLE_AI_API_KEY"
     );

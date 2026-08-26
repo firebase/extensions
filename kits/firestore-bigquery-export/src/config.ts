@@ -160,16 +160,36 @@ export interface ConfigExpressions {
  */
 const params = {
   bigqueryProjectId: defineString("BIGQUERY_PROJECT_ID", {
+    label: "BigQuery Project ID",
+    description:
+      "Override the default project for BigQuery instance. This can allow updates to be directed to to a BigQuery instance on another GCP project.",
+
     default: projectID,
   }),
-  database: defineString("DATABASE", { default: "(default)" }),
+  database: defineString("DATABASE", {
+    label: "Firestore Instance ID",
+    description:
+      'The Firestore database to use. Use "(default)" for the default database. You can view your available Firestore databases at https://console.cloud.google.com/firestore/databases.',
+    default: "(default)",
+    input: { text: { example: "(default)" } },
+  }),
   databaseRegion: defineString("DATABASE_REGION", {
+    label: "Firestore Instance Location",
+    description:
+      "Where is the Firestore database located? You can check your current database location at https://console.cloud.google.com/firestore/databases.",
+
     input: select([...DATABASE_REGION_OPTIONS]),
   }),
   collectionPath: defineString("COLLECTION_PATH", {
+    label: "Collection path",
+    description:
+      "What is the path of the collection that you would like to export? You may use `{wildcard}` notation to match a subcollection of all documents in a collection (for example: `chatrooms/{chatid}/posts`). Parent Firestore Document IDs from `{wildcards}` can be returned in `path_params` as a JSON formatted string.",
+
     default: "posts",
     input: {
       text: {
+        example: "posts",
+
         validationRegex: /^[^\/]+(\/[^\/]+\/[^\/]+)*$/,
         validationErrorMessage:
           'Firestore collection paths must be an odd number of segments separated by slashes, e.g. "path/to/collection".',
@@ -177,9 +197,15 @@ const params = {
     },
   }),
   datasetId: defineString("DATASET_ID", {
+    label: "Dataset ID",
+    description:
+      "What ID would you like to use for your BigQuery dataset? This extension will create the dataset, if it doesn't already exist.",
+
     default: "firestore_export",
     input: {
       text: {
+        example: "firestore_export",
+
         validationRegex: /^[a-zA-Z0-9_]+$/,
         validationErrorMessage:
           "BigQuery dataset IDs must be alphanumeric (plus underscores) and must be no more than 1024 characters.",
@@ -187,9 +213,15 @@ const params = {
     },
   }),
   tableId: defineString("TABLE_ID", {
+    label: "Table ID",
+    description:
+      "What identifying prefix would you like to use for your table and view inside your BigQuery dataset? This extension will create the table and view, if they don't already exist.",
+
     default: "posts",
     input: {
       text: {
+        example: "posts",
+
         validationRegex: /^[a-zA-Z0-9_]+$/,
         validationErrorMessage:
           "BigQuery table IDs must be alphanumeric (plus underscores) and must be no more than 1024 characters.",
@@ -197,30 +229,74 @@ const params = {
     },
   }),
   datasetLocation: defineString("DATASET_LOCATION", {
+    label: "BigQuery Dataset location",
+    description:
+      "Where do you want to deploy the BigQuery dataset created for this extension? For help selecting a location, refer to the [location selection guide](https://cloud.google.com/bigquery/docs/locations).",
+
     default: "us",
     input: select([...DATASET_LOCATION_OPTIONS]),
   }),
-  backupCollection: defineString("BACKUP_COLLECTION", { default: "" }),
-  transformFunction: defineString("TRANSFORM_FUNCTION", { default: "" }),
+  backupCollection: defineString("BACKUP_COLLECTION", {
+    label: "Backup Collection Name",
+    description:
+      "This (optional) parameter will allow you to specify a collection for which failed BigQuery updates will be written to.",
+    default: "",
+  }),
+  transformFunction: defineString("TRANSFORM_FUNCTION", {
+    label: "Transform function URL",
+    description:
+      "Specify a function URL to call that will transform the payload that will be written to BigQuery. See the pre-install documentation for more details.",
+    default: "",
+    input: {
+      text: {
+        example:
+          "https://us-west1-my-project-id.cloudfunctions.net/myTransformFunction",
+      },
+    },
+  }),
   tablePartitioning: defineString("TABLE_PARTITIONING", {
+    label: "BigQuery SQL table Time Partitioning option type",
+    description:
+      "This parameter will allow you to partition the BigQuery table and BigQuery view created by the extension based on data ingestion time. You may select the granularity of partitioning based upon one of: HOUR, DAY, MONTH, YEAR. This will generate one partition per day, hour, month or year, respectively.",
+
     default: "NONE",
     input: select([...TABLE_PARTITIONING_OPTIONS]),
   }),
   timePartitioningField: defineString("TIME_PARTITIONING_FIELD", {
+    label: "BigQuery Time Partitioning column name",
+    description:
+      "BigQuery table column/schema field name for TimePartitioning. You can choose schema available as `timestamp` OR a new custom defined column that will be assigned to the selected Firestore Document field below. Defaults to pseudo column _PARTITIONTIME if unspecified. Cannot be changed if Table is already partitioned.",
+
     default: "",
   }),
   timePartitioningFieldType: defineString("TIME_PARTITIONING_FIELD_TYPE", {
+    label: "BigQuery SQL Time Partitioning table schema field(column) type",
+    description:
+      "Parameter for BigQuery SQL schema field type for the selected Time Partitioning Firestore Document field option. Cannot be changed if Table is already partitioned.",
+
     default: "omit",
     input: select([...TIME_PARTITIONING_FIELD_TYPE_OPTIONS]),
   }),
   timePartitioningFirestoreField: defineString(
     "TIME_PARTITIONING_FIRESTORE_FIELD",
-    { default: "" }
+    {
+      label:
+        "Firestore Document field name for BigQuery SQL Time Partitioning field option",
+      description:
+        "This parameter will allow you to partition the BigQuery table created by the extension based on selected. The Firestore Document field value must be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or Firestore timestamp(will be converted to BigQuery TIMESTAMP). Cannot be changed if Table is already partitioned.\n example: `postDate`(Ensure that the Firestore-BigQuery export extension\ncreates the dataset and table before initiating any backfill scripts.\n This step is crucial for the partitioning to function correctly. It is\nessential for the script to insert data into an already partitioned table.)",
+      default: "",
+    }
   ),
   clustering: defineString("CLUSTERING", {
+    label: "BigQuery SQL table clustering",
+    description:
+      "This parameter allows you to set up clustering for the BigQuery table created by the extension. Specify up to 4 comma-separated fields (for example:  `data,document_id,timestamp` - no whitespaces). The order of the specified  columns determines the sort order of the data. \nNote: Cluster columns must be top-level, non-repeated columns of one of the  following types: BIGNUMERIC, BOOL, DATE, DATETIME, GEOGRAPHY, INT64, NUMERIC,  RANGE, STRING, TIMESTAMP. Clustering will not be added if a field with an invalid type is present in this parameter.\nAvailable schema extensions table fields for clustering include: `document_id, document_name, timestamp, event_id,  operation, data`.",
+
     default: "",
     input: {
       text: {
+        example: "data,document_id,timestamp",
+
         // Extension regex, with an empty branch added: the param is optional.
         validationRegex: /^(?:[^,\s]+(?:,[^,\s]+){0,3}|)$/,
         validationErrorMessage:
@@ -229,23 +305,51 @@ const params = {
     },
   }),
   wildcardIds: defineBoolean("WILDCARD_IDS", {
+    label: "Enable Wildcard Column field with Parent Firestore Document IDs",
+    description:
+      "If enabled, creates a column containing a JSON object of all wildcard ids from a documents path.",
+
     default: false,
   }),
   useNewSnapshotQuerySyntax: defineBoolean("USE_NEW_SNAPSHOT_QUERY_SYNTAX", {
+    label: "Use new query syntax for snapshots",
+    description:
+      "If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential resource limitations.",
+
     default: false,
   }),
   excludeOldData: defineBoolean("EXCLUDE_OLD_DATA", {
+    label: "Exclude old data payloads",
+    description:
+      "If enabled, table rows will never contain old data (document snapshot before the Firestore onDocumentUpdate event: `change.before.data()`). The reduction in data should be more performant, and avoid potential resource limitations.",
+
     default: false,
   }),
   viewType: defineString("VIEW_TYPE", {
+    label: "View Type",
+    description:
+      "Select the type of view to create in BigQuery. A regular view is a virtual table defined by a SQL query.  A materialized view persists the results of a query for faster access, with either incremental or  non-incremental updates. Please note that materialized views in this extension come with several  important caveats and limitations - carefully review the pre-install documentation before selecting  these options to ensure they are appropriate for your use case.",
+
     default: "view",
     input: select([...VIEW_TYPE_OPTIONS]),
   }),
-  maxStaleness: defineString("MAX_STALENESS", { default: "" }),
+  maxStaleness: defineString("MAX_STALENESS", {
+    label: "Maximum Staleness Duration",
+    description:
+      "For materialized views only: Specifies the maximum staleness acceptable for the materialized view.  Should be specified as an INTERVAL value following BigQuery SQL syntax.  This parameter will only take effect if View Type is set to a materialized view option.",
+    default: "",
+    input: { text: { example: 'INTERVAL "8:0:0" HOUR TO SECOND' } },
+  }),
   refreshIntervalMinutes: defineString("REFRESH_INTERVAL_MINUTES", {
+    label: "Refresh Interval (Minutes)",
+    description:
+      "For materialized views only: Specifies how often the materialized view should be refreshed, in minutes.  This parameter will only take effect if View Type is set to a materialized view option.",
+
     default: "",
     input: {
       text: {
+        example: "60",
+
         // Extension regex, with an empty branch added: the param is optional.
         validationRegex: /^(?:[1-9][0-9]*|)$/,
         validationErrorMessage: "Must be a positive integer",
@@ -253,6 +357,10 @@ const params = {
     },
   }),
   kmsKeyName: defineString("KMS_KEY_NAME", {
+    label: "Cloud KMS key name",
+    description:
+      "Instead of Google managing the key encryption keys that protect your data, you control and manage key encryption keys in Cloud KMS. If this parameter is set, the extension will specify the KMS key name when creating the BQ table. See the PREINSTALL.md for more details.",
+
     default: "",
     input: {
       text: {
@@ -266,6 +374,10 @@ const params = {
     },
   }),
   logLevel: defineString("LOG_LEVEL", {
+    label: "Log level",
+    description:
+      "The log level for the extension. The log level controls the verbosity of the extension's logs. The available log levels are: debug, info, warn, and error. To reduce the volume of logs, use a log level of warn or error.",
+
     default: "info",
     input: select([...LOG_LEVEL_OPTIONS]),
   }),
