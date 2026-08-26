@@ -43,6 +43,12 @@ const params = {
   schedule: defineString("SCHEDULE"),
   firestoreCollection: defineString("COLLECTION_PATH", {
     default: "transferConfigs",
+    input: {
+      text: {
+        validationRegex: /^[^\/]+(\/[^\/]+\/[^\/]+)*$/,
+        validationErrorMessage: "Must be a valid Cloud Firestore Collection",
+      },
+    },
   }),
   logLevel: defineString("LOG_LEVEL", {
     default: "info",

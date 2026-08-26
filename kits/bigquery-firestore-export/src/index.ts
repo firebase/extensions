@@ -111,7 +111,7 @@ function getContext(): HandlerContext {
 export const processMessages = onMessagePublished<TransferRunPayload>(
   {
     topic: CONFIG_EXPRESSIONS.pubSubTopic,
-    retry: true,
+    retry: false,
   },
   (event) => handleMessagePublished(event, getContext())
 );

@@ -37,7 +37,17 @@ const params = {
     default: "shallow",
     input: select(["recursive", "shallow"]),
   }),
-  rtdbInstance: defineString("SELECTED_DATABASE_INSTANCE", { default: "" }),
+  rtdbInstance: defineString("SELECTED_DATABASE_INSTANCE", {
+    default: "",
+    input: {
+      text: {
+        // Extension regex, with an empty branch added: the param is optional.
+        validationRegex: /^(?:[^\.\$\#\]\[\/\x00-\x1F\x7F]+|)$/,
+        validationErrorMessage:
+          "Invalid database instance. Make sure that you have entered just the instance ID, and not the entire database URL.",
+      },
+    },
+  }),
   rtdbLocation: defineString("SELECTED_DATABASE_LOCATION", {
     default: "us-central1",
     input: select(["us-central1", "europe-west1", "asia-southeast1"]),
@@ -45,6 +55,12 @@ const params = {
   rtdbPaths: defineString("RTDB_PATHS", { default: "" }),
   storageBucket: defineString("CLOUD_STORAGE_BUCKET", {
     default: storageBucket,
+    input: {
+      text: {
+        validationRegex: /^([0-9a-z_.-]*)$/,
+        validationErrorMessage: "Invalid storage bucket",
+      },
+    },
   }),
   storagePaths: defineString("STORAGE_PATHS", { default: "" }),
   enableAutoDiscovery: defineBoolean("ENABLE_AUTO_DISCOVERY", {

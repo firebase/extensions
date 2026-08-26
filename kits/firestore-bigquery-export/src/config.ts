@@ -166,9 +166,36 @@ const params = {
   databaseRegion: defineString("DATABASE_REGION", {
     input: select([...DATABASE_REGION_OPTIONS]),
   }),
-  collectionPath: defineString("COLLECTION_PATH", { default: "posts" }),
-  datasetId: defineString("DATASET_ID", { default: "firestore_export" }),
-  tableId: defineString("TABLE_ID", { default: "posts" }),
+  collectionPath: defineString("COLLECTION_PATH", {
+    default: "posts",
+    input: {
+      text: {
+        validationRegex: /^[^\/]+(\/[^\/]+\/[^\/]+)*$/,
+        validationErrorMessage:
+          'Firestore collection paths must be an odd number of segments separated by slashes, e.g. "path/to/collection".',
+      },
+    },
+  }),
+  datasetId: defineString("DATASET_ID", {
+    default: "firestore_export",
+    input: {
+      text: {
+        validationRegex: /^[a-zA-Z0-9_]+$/,
+        validationErrorMessage:
+          "BigQuery dataset IDs must be alphanumeric (plus underscores) and must be no more than 1024 characters.",
+      },
+    },
+  }),
+  tableId: defineString("TABLE_ID", {
+    default: "posts",
+    input: {
+      text: {
+        validationRegex: /^[a-zA-Z0-9_]+$/,
+        validationErrorMessage:
+          "BigQuery table IDs must be alphanumeric (plus underscores) and must be no more than 1024 characters.",
+      },
+    },
+  }),
   datasetLocation: defineString("DATASET_LOCATION", {
     default: "us",
     input: select([...DATASET_LOCATION_OPTIONS]),
@@ -190,7 +217,17 @@ const params = {
     "TIME_PARTITIONING_FIRESTORE_FIELD",
     { default: "" }
   ),
-  clustering: defineString("CLUSTERING", { default: "" }),
+  clustering: defineString("CLUSTERING", {
+    default: "",
+    input: {
+      text: {
+        // Extension regex, with an empty branch added: the param is optional.
+        validationRegex: /^(?:[^,\s]+(?:,[^,\s]+){0,3}|)$/,
+        validationErrorMessage:
+          "No whitespaces. Max 4 fields. e.g. `data,timestamp,event_id,operation`",
+      },
+    },
+  }),
   wildcardIds: defineBoolean("WILDCARD_IDS", {
     default: false,
   }),
@@ -207,8 +244,27 @@ const params = {
   maxStaleness: defineString("MAX_STALENESS", { default: "" }),
   refreshIntervalMinutes: defineString("REFRESH_INTERVAL_MINUTES", {
     default: "",
+    input: {
+      text: {
+        // Extension regex, with an empty branch added: the param is optional.
+        validationRegex: /^(?:[1-9][0-9]*|)$/,
+        validationErrorMessage: "Must be a positive integer",
+      },
+    },
   }),
-  kmsKeyName: defineString("KMS_KEY_NAME", { default: "" }),
+  kmsKeyName: defineString("KMS_KEY_NAME", {
+    default: "",
+    input: {
+      text: {
+        // Extension regex (unanchored, as upstream), with an empty branch
+        // added: the param is optional.
+        validationRegex:
+          /projects\/([^\/]+)\/locations\/([^\/]+)\/keyRings\/([^\/]+)\/cryptoKeys\/([^\/]+)|^$/,
+        validationErrorMessage:
+          "The key name must be of the format 'projects/PROJECT_NAME/locations/KEY_RING_LOCATION/keyRings/KEY_RING_ID/cryptoKeys/KEY_ID'.",
+      },
+    },
+  }),
   logLevel: defineString("LOG_LEVEL", {
     default: "info",
     input: select([...LOG_LEVEL_OPTIONS]),

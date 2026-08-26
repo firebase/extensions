@@ -168,7 +168,7 @@ describe("configFromEnv", () => {
 
     expect(defineString.mock.calls).toContainEqual([
       "COLLECTION_PATH",
-      { default: "translations" },
+      expect.objectContaining({ default: "translations" }),
     ]);
     expect(defineString.mock.calls).toContainEqual([
       "INPUT_FIELD_NAME",
@@ -180,12 +180,26 @@ describe("configFromEnv", () => {
     ]);
     expect(defineString.mock.calls).toContainEqual([
       "LANGUAGES",
-      { default: "en,es,de,fr" },
+      expect.objectContaining({ default: "en,es,de,fr" }),
     ]);
     expect(defineString.mock.calls).toContainEqual([
       "LANGUAGES_FIELD_NAME",
       { default: "languages" },
     ]);
+  });
+
+  test("restores the extension's validation regexes", async () => {
+    await importConfig();
+
+    const options = new Map(
+      defineString.mock.calls.map(([name, opts]) => [name, opts])
+    );
+    expect(options.get("LANGUAGES")).toMatchObject({
+      input: { text: { validationRegex: /^[a-zA-Z,-]*[a-zA-Z-]{2,}$/ } },
+    });
+    expect(options.get("COLLECTION_PATH")).toMatchObject({
+      input: { text: { validationRegex: /^[^\/]+(\/[^\/]+\/[^\/]+)*$/ } },
+    });
   });
 
   test("offers the supported providers and gemini models as a select", async () => {
