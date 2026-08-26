@@ -43,10 +43,7 @@ function clientWithTransferConfig(transferConfig: object): DataTransferClient {
 
 describe("createTransferConfigRequest", () => {
   test("creates the scheduled-query request", () => {
-    const request = createTransferConfigRequest(
-      config,
-      "runtime@test-project.iam.gserviceaccount.com"
-    );
+    const request = createTransferConfigRequest(config);
 
     expect(request).toMatchObject({
       parent: "projects/test-project",
@@ -57,13 +54,18 @@ describe("createTransferConfigRequest", () => {
         schedule: "every 24 hours",
         notificationPubsubTopic:
           "projects/test-project/topics/kit-users-export-processMessages",
-        serviceAccountName: "runtime@test-project.iam.gserviceaccount.com",
       },
     });
     expect(
       request.transferConfig?.params?.fields?.destination_table_name_template
         ?.stringValue
     ).toBe('users_{run_time|"%H%M%S"}');
+  });
+
+  test("names no owner for the scheduled query", () => {
+    const request = createTransferConfigRequest(config);
+
+    expect(JSON.stringify(request)).not.toContain("serviceAccountName");
   });
 });
 
