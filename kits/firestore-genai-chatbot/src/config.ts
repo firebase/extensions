@@ -242,5 +242,8 @@ export function envDeployOptions(): DeployTimeOptions {
     // `.env`, the `{messageId}` wildcard stays literal (matches extension.yaml's
     // `${COLLECTION_NAME}/{messageId}` trigger resource).
     document: expr`${params.collectionName}/{messageId}`,
+    // extension.yaml sets `timeout: 540s`; without this the function takes
+    // the 60s default and long generations time out.
+    timeoutSeconds: 540,
   };
 }
