@@ -103,7 +103,7 @@ const params = {
   authType: defineString("AUTH_TYPE", {
     label: "Authentication Type",
     description:
-      "The authentication type to be used for the SMTP server (e.g., OAuth2, Username & Password.",
+      "The authentication type to be used for the SMTP server (e.g., OAuth2, Username & Password).",
 
     default: AuthenticatonType.UsernamePassword,
     input: select([

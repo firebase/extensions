@@ -109,7 +109,7 @@ const params = {
   apiKey: defineSecret("API_KEY", {
     label: "Google AI API Key",
     description:
-      "If you have selected Google AI as your provider, then this parameteris required. If you have instead selected Vertex AI, then this parameter is not required, and application default credentials will be used.",
+      "If you have selected Google AI as your provider, then this parameter is required. If you have instead selected Vertex AI, then this parameter is not required, and application default credentials will be used.",
   }),
   model: defineString("MODEL", {
     label: "Gemini model",
@@ -214,7 +214,7 @@ const params = {
   enableOverrides: defineBoolean("ENABLE_DISCUSSION_OPTION_OVERRIDES", {
     label: "Enable per document overrides.",
     description:
-      'If set to \\"Yes\\", discussion parameters may be overwritten by fields in the discussion collection.',
+      'If set to "Yes", discussion parameters may be overwritten by fields in the discussion collection.',
 
     default: false,
   }),

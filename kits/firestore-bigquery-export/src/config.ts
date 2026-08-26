@@ -283,7 +283,7 @@ const params = {
       label:
         "Firestore Document field name for BigQuery SQL Time Partitioning field option",
       description:
-        "This parameter will allow you to partition the BigQuery table created by the extension based on selected. The Firestore Document field value must be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or Firestore timestamp(will be converted to BigQuery TIMESTAMP). Cannot be changed if Table is already partitioned.\n example: `postDate`(Ensure that the Firestore-BigQuery export extension\ncreates the dataset and table before initiating any backfill scripts.\n This step is crucial for the partitioning to function correctly. It is\nessential for the script to insert data into an already partitioned table.)",
+        "This parameter will allow you to partition the BigQuery table created by the extension based on the selected Firestore Document field. The Firestore Document field value must be a top-level TIMESTAMP, DATETIME, DATE field BigQuery string format or Firestore timestamp(will be converted to BigQuery TIMESTAMP). Cannot be changed if Table is already partitioned.\n example: `postDate`(Ensure that the Firestore-BigQuery export extension\ncreates the dataset and table before initiating any backfill scripts.\n This step is crucial for the partitioning to function correctly. It is\nessential for the script to insert data into an already partitioned table.)",
       default: "",
     }
   ),

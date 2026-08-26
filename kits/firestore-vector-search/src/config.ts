@@ -71,21 +71,21 @@ const params = {
   customEmbeddingsEndpoint: defineString("CUSTOM_EMBEDDINGS_ENDPOINT", {
     label: "LLM Function",
     description:
-      'If you selected \\"Other\\" as your embedding provider, please provide the URL of your function that will calculate the embeddings.',
+      'If you selected "Other" as your embedding provider, please provide the URL of your function that will calculate the embeddings.',
 
     default: "",
   }),
   customEmbeddingsBatchSize: defineString("CUSTOM_EMBEDDINGS_BATCH_SIZE", {
     label: "LLM Function batch size",
     description:
-      'If you selected \\"Other\\" as your embedding provider, please provide the batch size of your function that will calculate the embeddings.',
+      'If you selected "Other" as your embedding provider, please provide the batch size of your function that will calculate the embeddings.',
 
     default: "",
   }),
   customEmbeddingsDimension: defineString("CUSTOM_EMBEDDINGS_DIMENSION", {
     label: "LLM Function dimension",
     description:
-      'If you selected \\"Other\\" as your embedding provider, please provide the dimension of the embedding you will be using.',
+      'If you selected "Other" as your embedding provider, please provide the dimension of the embedding you will be using.',
 
     default: "",
   }),
