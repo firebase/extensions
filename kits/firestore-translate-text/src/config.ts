@@ -105,7 +105,13 @@ const params = {
     description:
       'Choose the translation provider to use for this extension. "Cloud Translation API" uses the standard Google Cloud Translation service (fast, cost-effective). "Gemini (Google AI)" leverages Google\'s Gemini models via Google AI Studio for more accurate and context-aware translations (requires Gemini API access and API key). "Gemini (Vertex AI)" uses Gemini models through Vertex AI in your Google Cloud project (requires Vertex AI access).',
 
-    input: select([...TRANSLATION_PROVIDER_OPTIONS]),
+    input: select({
+      "Cloud Translation API (standard, fast, cost-effective)": "translate",
+      "Gemini (Google AI) (more context-aware, requires Gemini API key)":
+        "gemini-googleai",
+      "Gemini (Vertex AI) (more context-aware, requires Vertex AI access)":
+        "gemini-vertexai",
+    }),
   }),
   geminiModel: defineString("GEMINI_MODEL", {
     label: "Gemini Model",
@@ -113,7 +119,14 @@ const params = {
       'Choose the Gemini model to use for translations. Consider model pricing, performance, and availability in your selected provider. This is only required if you select "AI Translations Using Gemini" as your translation model. By default, the extension uses Gemini 2.5 Flash for a balance of speed and cost.',
 
     default: "gemini-2.5-flash",
-    input: select([...GEMINI_MODEL_OPTIONS]),
+    input: select({
+      "Gemini 2.5 Pro (highest quality, expensive, large max output size)":
+        "gemini-2.5-pro",
+      "Gemini 2.5 Flash (cost-effective, high quality, large max output size)":
+        "gemini-2.5-flash",
+      "Gemini 2.5 Flash Lite (cheap, good quality, large max output size)":
+        "gemini-2.5-flash-lite",
+    }),
   }),
 };
 

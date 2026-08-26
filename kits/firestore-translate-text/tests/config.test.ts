@@ -205,12 +205,15 @@ describe("configFromEnv", () => {
   test("offers the supported providers and gemini models as a select", async () => {
     await importConfig();
 
-    expect(select).toHaveBeenCalledWith([
+    const selectValues = select.mock.calls.map(([options]) =>
+      Array.isArray(options) ? options : Object.values(options as object)
+    );
+    expect(selectValues).toContainEqual([
       "translate",
       "gemini-googleai",
       "gemini-vertexai",
     ]);
-    expect(select).toHaveBeenCalledWith([
+    expect(selectValues).toContainEqual([
       "gemini-2.5-pro",
       "gemini-2.5-flash",
       "gemini-2.5-flash-lite",

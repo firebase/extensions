@@ -17,6 +17,7 @@ import {
   BUCKET_PICKER,
   defineBoolean,
   defineString,
+  select,
   storageBucket,
 } from "firebase-functions/params";
 
@@ -93,6 +94,7 @@ const params = {
       "Should the transcription algorithm attempt to add punctuation to the transcription? For details, see [the documentation](https://cloud.google.com/speech-to-text/docs/automatic-punctuation)",
 
     default: true,
+    input: select({ Enabled: true, Disabled: false }),
   }),
 };
 

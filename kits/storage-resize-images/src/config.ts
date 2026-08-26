@@ -159,7 +159,15 @@ const params = {
       "The image types you'd like your source image to convert to.  The default for this option will be to keep the original file type as the destination file type.",
 
     default: ["false"],
-    input: multiSelect([...IMAGE_TYPE_OPTIONS]),
+    input: multiSelect({
+      jpeg: "jpeg",
+      webp: "webp",
+      png: "png",
+      tiff: "tiff",
+      gif: "gif",
+      avif: "avif",
+      original: "False",
+    }),
   }),
   outputOptions: defineString("OUTPUT_OPTIONS", {
     label: "Output options for selected formats",
@@ -194,6 +202,7 @@ const params = {
     description: "Keep animation of GIF and WEBP formats.",
 
     default: true,
+    input: select({ True: true, "No (1st frame only)": false }),
   }),
   memory: defineInt("FUNCTION_MEMORY", {
     label: "Cloud Function memory",
@@ -201,7 +210,13 @@ const params = {
       "Memory of the function responsible of resizing images.  Choose how much memory to give to the function that resize images. (For animated GIF => GIF we recommend using a minimum of 2GB).",
 
     default: 1024,
-    input: select([...MEMORY_OPTIONS]),
+    input: select({
+      "512 MB": 512,
+      "1 GB": 1024,
+      "2 GB": 2048,
+      "4 GB": 4096,
+      "8 GB": 8192,
+    }),
   }),
   regenerateToken: defineBoolean("REGENERATE_TOKEN", {
     label: "Assign new access token",
@@ -216,7 +231,14 @@ const params = {
       "Set the level of content filtering to apply to uploaded images. Choose 'OFF' to disable content filtering entirely, 'BLOCK_ONLY_HIGH' to block only high-severity inappropriate content, 'BLOCK_MEDIUM_AND_ABOVE' for medium and high severity content, or 'BLOCK_LOW_AND_ABOVE' for the strictest filtering (blocks low, medium, and high severity content).",
 
     default: "OFF",
-    input: select([...CONTENT_FILTER_OPTIONS]),
+    input: select({
+      "Off (No filtering)": "False",
+      "Low strictness (Block only high severity content)": "BLOCK_ONLY_HIGH",
+      "Medium strictness (Block medium and high severity content)":
+        "BLOCK_MEDIUM_AND_ABOVE",
+      "High strictness (Block low, medium, and high severity content)":
+        "BLOCK_LOW_AND_ABOVE",
+    }),
   }),
   customFilterPrompt: defineString("CUSTOM_FILTER_PROMPT", {
     label: "Custom content filter prompt",

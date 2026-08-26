@@ -49,7 +49,7 @@ const params = {
       "(Only applicable if you use the `Cloud Firestore paths` parameter.) How do you want to delete Cloud Firestore documents? To also delete documents in subcollections, set this parameter to `recursive`.",
 
     default: "shallow",
-    input: select(["recursive", "shallow"]),
+    input: select({ Recursive: "recursive", Shallow: "shallow" }),
   }),
   rtdbInstance: defineString("SELECTED_DATABASE_INSTANCE", {
     label: "Realtime Database instance",
@@ -74,7 +74,11 @@ const params = {
       "(Only applicable if you provided the `Realtime Database instance` parameter.) From which Realtime Database location do you want to delete data keyed on a user ID?",
 
     default: "us-central1",
-    input: select(["us-central1", "europe-west1", "asia-southeast1"]),
+    input: select({
+      "United States": "us-central1",
+      Belgium: "europe-west1",
+      Singapore: "asia-southeast1",
+    }),
   }),
   rtdbPaths: defineString("RTDB_PATHS", {
     label: "Realtime Database paths",

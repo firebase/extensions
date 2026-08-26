@@ -66,7 +66,13 @@ const params = {
       "Which embedding API do you want to use? Note: **Vertex AI provider** is supported only with the **us-central1** location.",
 
     default: "gemini",
-    input: select([...EMBEDDING_PROVIDER_OPTIONS]),
+    input: select({
+      Gemini: "gemini",
+      Multimodal: "multimodal",
+      OpenAI: "openai",
+      "Vertex AI": "vertex",
+      "Other (User-provided endpoint)": "custom",
+    }),
   }),
   customEmbeddingsEndpoint: defineString("CUSTOM_EMBEDDINGS_ENDPOINT", {
     label: "LLM Function",
@@ -125,7 +131,11 @@ const params = {
       "What distance measure do you want to be used to rank the results of your vector search?",
 
     default: "COSINE",
-    input: select([...DISTANCE_MEASURE_OPTIONS]),
+    input: select({
+      Cosine: "COSINE",
+      Euclidean: "EUCLIDEAN",
+      "Dot Product": "DOT_PRODUCT",
+    }),
   }),
   inputFieldName: defineString("INPUT_FIELD_NAME", {
     label: "Input field name",

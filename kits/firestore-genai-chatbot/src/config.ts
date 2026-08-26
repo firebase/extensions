@@ -104,7 +104,7 @@ const params = {
       "This extension makes use of the Gemini family of generative models. For Google AI you will require an API key, whereas Vertex AI will authenticate using application default credentials. For more information see the [docs](https://firebase.google.com/docs/admin/setup#initialize-sdk).",
 
     default: "google-ai",
-    input: select([...GENERATIVE_AI_PROVIDER_OPTIONS]),
+    input: select({ "Google AI": "google-ai", "Vertex AI": "vertex-ai" }),
   }),
   apiKey: defineSecret("API_KEY", {
     label: "Google AI API Key",
@@ -123,7 +123,39 @@ const params = {
       "If you are using Vertex AI as your provider, which location should be used for the Vertex AI API? This can differ from the Cloud Functions location.\nIf not specified, defaults to the Cloud Functions location. Note: Models in preview on Vertex AI require 'Global'. See [available locations](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/locations).",
 
     default: "null",
-    input: select([...VERTEX_MODEL_LOCATION_OPTIONS]),
+    input: select({
+      "Same as Cloud Functions Location (default)": "null",
+      "Global (required for preview models)": "global",
+      "Columbus, Ohio (us-east5)": "us-east5",
+      "Dallas, Texas (us-south1)": "us-south1",
+      "Iowa (us-central1)": "us-central1",
+      "Las Vegas, Nevada (us-west4)": "us-west4",
+      "Moncks Corner, South Carolina (us-east1)": "us-east1",
+      "Northern Virginia (us-east4)": "us-east4",
+      "Oregon (us-west1)": "us-west1",
+      "Montréal (northamerica-northeast1)": "northamerica-northeast1",
+      "São Paulo, Brazil (southamerica-east1)": "southamerica-east1",
+      "Netherlands (europe-west4)": "europe-west4",
+      "Paris, France (europe-west9)": "europe-west9",
+      "London, United Kingdom (europe-west2)": "europe-west2",
+      "Frankfurt, Germany (europe-west3)": "europe-west3",
+      "Belgium (europe-west1)": "europe-west1",
+      "Zürich, Switzerland (europe-west6)": "europe-west6",
+      "Madrid, Spain (europe-southwest1)": "europe-southwest1",
+      "Milan, Italy (europe-west8)": "europe-west8",
+      "Finland (europe-north1)": "europe-north1",
+      "Warsaw, Poland (europe-central2)": "europe-central2",
+      "Tokyo, Japan (asia-northeast1)": "asia-northeast1",
+      "Sydney, Australia (australia-southeast1)": "australia-southeast1",
+      "Singapore (asia-southeast1)": "asia-southeast1",
+      "Seoul, Korea (asia-northeast3)": "asia-northeast3",
+      "Taiwan (asia-east1)": "asia-east1",
+      "Hong Kong, China (asia-east2)": "asia-east2",
+      "Mumbai, India (asia-south1)": "asia-south1",
+      "Dammam, Saudi Arabia (me-central2)": "me-central2",
+      "Doha, Qatar (me-central1)": "me-central1",
+      "Tel Aviv, Israel (me-west1)": "me-west1",
+    }),
   }),
   collectionName: defineString("COLLECTION_NAME", {
     label: "Firestore Collection Path",
@@ -231,7 +263,13 @@ const params = {
       "Threshold for hate speech content. Specify what probability level of hate speech content is blocked by the Gemini provider.",
 
     default: "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
-    input: select([...SAFETY_THRESHOLD_OPTIONS]),
+    input: select({
+      Default: "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
+      "Block low and above": "BLOCK_LOW_AND_ABOVE",
+      "Block medium and above": "BLOCK_MEDIUM_AND_ABOVE",
+      "Block only high": "BLOCK_ONLY_HIGH",
+      "Block none": "BLOCK_NONE",
+    }),
   }),
   harmDangerous: defineString("HARM_CATEGORY_DANGEROUS_CONTENT", {
     label: "Dangerous Content Threshold",
@@ -239,7 +277,13 @@ const params = {
       "Threshold for dangerous content. Specify what probability level of dangerous content is blocked by the Gemini provider.",
 
     default: "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
-    input: select([...SAFETY_THRESHOLD_OPTIONS]),
+    input: select({
+      Default: "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
+      "Block low and above": "BLOCK_LOW_AND_ABOVE",
+      "Block medium and above": "BLOCK_MEDIUM_AND_ABOVE",
+      "Block only high": "BLOCK_ONLY_HIGH",
+      "Block none": "BLOCK_NONE",
+    }),
   }),
   harmHarassment: defineString("HARM_CATEGORY_HARASSMENT", {
     label: "Harassment Content Threshold",
@@ -247,7 +291,13 @@ const params = {
       "Threshold for harassment content. Specify what probability level of harassment content is blocked by the Gemini provider.",
 
     default: "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
-    input: select([...SAFETY_THRESHOLD_OPTIONS]),
+    input: select({
+      Default: "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
+      "Block low and above": "BLOCK_LOW_AND_ABOVE",
+      "Block medium and above": "BLOCK_MEDIUM_AND_ABOVE",
+      "Block only high": "BLOCK_ONLY_HIGH",
+      "Block none": "BLOCK_NONE",
+    }),
   }),
   harmSexual: defineString("HARM_CATEGORY_SEXUALLY_EXPLICIT", {
     label: "Sexual Content Threshold",
@@ -255,7 +305,13 @@ const params = {
       "Threshold for sexually explicit content. Specify what probability level of sexual content is blocked by the Gemini provider.",
 
     default: "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
-    input: select([...SAFETY_THRESHOLD_OPTIONS]),
+    input: select({
+      Default: "HARM_BLOCK_THRESHOLD_UNSPECIFIED",
+      "Block low and above": "BLOCK_LOW_AND_ABOVE",
+      "Block medium and above": "BLOCK_MEDIUM_AND_ABOVE",
+      "Block only high": "BLOCK_ONLY_HIGH",
+      "Block none": "BLOCK_NONE",
+    }),
   }),
 };
 
