@@ -176,6 +176,11 @@ export async function constructUpdateTransferConfigRequest(
     updatedFields.partitioning_field.stringValue = newPartitioningField;
   }
 
+  if (config.displayName !== transferConfig.displayName) {
+    updateMask.push("display_name");
+    updatedConfig.displayName = config.displayName;
+  }
+
   if (config.schedule !== transferConfig.schedule) {
     updateMask.push("schedule");
     updatedConfig.schedule = config.schedule;
