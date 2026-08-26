@@ -25,6 +25,7 @@ import {
   getTransferConfig,
   updateTransferConfig,
 } from "./dts";
+import { PermanentConfigurationError } from "./errors";
 import type { ResolvedBigqueryFirestoreExportConfig } from "./export-config";
 import { handleTransferRunMessage, parseTransferConfigName } from "./helper";
 import * as logs from "./logs";
@@ -93,10 +94,26 @@ export async function handleMessagePublished(
   }
 }
 
-/** Idempotently creates, links, or updates this deployment's DTS config. */
+/**
+ * Runs the upsert and stops permanently on a misconfiguration.
+ *
+ * Cloud Tasks retries every non-2xx response and the enqueued lifecycle task
+ * has no channel for reporting deploy status, so a failure that no retry can
+ * resolve is logged at error level and the task returns successfully.
+ */
 export async function handleUpsertTransferConfig(
   ctx: HandlerContext
 ): Promise<void> {
+  try {
+    await upsertTransferConfig(ctx);
+  } catch (err) {
+    if (!(err instanceof PermanentConfigurationError)) throw err;
+    logs.upsertTransferConfigAborted(err);
+  }
+}
+
+/** Idempotently creates, links, or updates this deployment's DTS config. */
+async function upsertTransferConfig(ctx: HandlerContext): Promise<void> {
   await ensureNotificationTopic(ctx);
 
   if (ctx.config.transferConfigName) {
@@ -105,8 +122,8 @@ export async function handleUpsertTransferConfig(
       ctx.config.transferConfigName
     );
     if (!linked) {
-      throw new Error(
-        `Transfer config not found: ${ctx.config.transferConfigName}`
+      throw new PermanentConfigurationError(
+        `Transfer config not found: ${ctx.config.transferConfigName}. Set TRANSFER_CONFIG_NAME to a scheduled query that exists in this project, or clear it so this deployment creates its own, then redeploy.`
       );
     }
     await storeTransferConfig(ctx, linked);
@@ -127,8 +144,8 @@ export async function handleUpsertTransferConfig(
 
   const transferConfigName = existing.docs[0].data().name;
   if (typeof transferConfigName !== "string" || !transferConfigName) {
-    throw new Error(
-      `Existing transfer config document in ${ctx.config.firestoreCollection} is missing required 'name' field.`
+    throw new PermanentConfigurationError(
+      `Existing transfer config document ${existing.docs[0].id} in ${ctx.config.firestoreCollection} is missing required 'name' field. Delete that document so this deployment creates a new scheduled query, or restore its 'name' field, then redeploy.`
     );
   }
 

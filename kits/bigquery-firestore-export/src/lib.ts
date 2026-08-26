@@ -30,6 +30,7 @@ export {
   type TransferConfig,
   updateTransferConfig,
 } from "./dts";
+export { PermanentConfigurationError } from "./errors";
 export {
   type BigqueryFirestoreExportConfig,
   type DeployTimeOptions,

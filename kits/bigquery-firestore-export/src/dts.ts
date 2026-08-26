@@ -15,6 +15,7 @@
  */
 
 import * as bigqueryDataTransfer from "@google-cloud/bigquery-data-transfer";
+import { PermanentConfigurationError } from "./errors";
 import type { ResolvedBigqueryFirestoreExportConfig } from "./export-config";
 import * as logs from "./logs";
 
@@ -31,6 +32,10 @@ export const PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX =
   PACKAGE_PARTITIONING_ERROR;
 export const PARTITIONING_FIELD_REMOVAL_ERROR = `${PACKAGE_PARTITIONING_ERROR}. The BigQuery Data Transfer API does not support clearing this parameter once it has been set. To change partitioning, create a new transfer config with the desired setting.`;
 
+const STRUCTURE_ERROR_PREFIX = "Transfer config has invalid structure:";
+const STRUCTURE_REMEDIATION =
+  "Only scheduled queries are supported. Point TRANSFER_CONFIG_NAME at a scheduled-query transfer config, or clear it so this deployment creates its own, then redeploy.";
+
 function isNotFoundError(err: unknown): boolean {
   return (
     typeof err === "object" &&
@@ -43,18 +48,18 @@ function isNotFoundError(err: unknown): boolean {
 function transferConfigFields(config: TransferConfig) {
   const fields = config.params?.fields;
   if (!fields) {
-    throw new Error(
-      "Transfer config has invalid structure: missing params.fields"
+    throw new PermanentConfigurationError(
+      `${STRUCTURE_ERROR_PREFIX} missing params.fields. ${STRUCTURE_REMEDIATION}`
     );
   }
   if (!fields.query) {
-    throw new Error(
-      "Transfer config has invalid structure: missing params.fields.query"
+    throw new PermanentConfigurationError(
+      `${STRUCTURE_ERROR_PREFIX} missing params.fields.query. ${STRUCTURE_REMEDIATION}`
     );
   }
   if (!fields.destination_table_name_template) {
-    throw new Error(
-      "Transfer config has invalid structure: missing params.fields.destination_table_name_template"
+    throw new PermanentConfigurationError(
+      `${STRUCTURE_ERROR_PREFIX} missing params.fields.destination_table_name_template. ${STRUCTURE_REMEDIATION}`
     );
   }
 
@@ -169,7 +174,7 @@ export async function constructUpdateTransferConfigRequest(
         transferConfigName,
         existingPartitioningField
       );
-      throw new Error(PARTITIONING_FIELD_REMOVAL_ERROR);
+      throw new PermanentConfigurationError(PARTITIONING_FIELD_REMOVAL_ERROR);
     }
     updateMask.push("params");
     updatedFields.partitioning_field ??= {};
