@@ -1,0 +1,30 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`resolveResizeImagesConfig > configuration resolved from the input config 1`] = `
+{
+  "animated": true,
+  "bucket": "extensions-testing.appspot.com",
+  "cacheControlHeader": undefined,
+  "contentFilterLevel": null,
+  "customFilterPrompt": null,
+  "deleteOriginalFile": 0,
+  "excludePathList": undefined,
+  "failedImagesPath": undefined,
+  "imageSizes": [
+    "200x200",
+  ],
+  "imageTypes": [
+    "false",
+  ],
+  "includePathList": undefined,
+  "makePublic": false,
+  "memory": "1GiB",
+  "outputOptions": undefined,
+  "placeholderImagePath": null,
+  "projectId": undefined,
+  "regenerateToken": true,
+  "region": undefined,
+  "resizedImagesPath": undefined,
+  "sharpOptions": "{}",
+}
+`;

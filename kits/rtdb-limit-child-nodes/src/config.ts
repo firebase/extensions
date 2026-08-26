@@ -36,8 +36,8 @@ const databaseInstanceDefault = defaultDatabaseInstance();
 const params = {
   // Do not use NODE_PATH: Node.js reserves it for module resolution and will
   // overwrite the param at runtime (and can freeze a bad ref at deploy).
-  nodePath: defineString("RTDB_NODE_PATH", { default: "messages" }),
-  maxCount: defineInt("MAX_COUNT", { default: 100 }),
+  nodePath: defineString("RTDB_NODE_PATH"),
+  maxCount: defineInt("MAX_COUNT"),
   databaseInstance: databaseInstanceDefault
     ? defineString("SELECTED_DATABASE_INSTANCE", {
         default: databaseInstanceDefault,

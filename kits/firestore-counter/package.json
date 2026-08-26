@@ -1,6 +1,11 @@
 {
   "name": "@firebase-function-kits/firestore-counter",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firebase/extensions.git",
+    "directory": "kits/firestore-counter"
+  },
   "description": "Distributed, sharded counters for Firestore",
   "license": "Apache-2.0",
   "main": "lib/index.js",
@@ -21,7 +26,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
-    "test": "echo \"Warning: tests are not implemented for this package\"",
+    "test": "vitest run",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
@@ -32,6 +37,7 @@
     "uuid": "^11.0.5"
   },
   "devDependencies": {
-    "@types/deep-equal": "^1.0.1"
+    "@types/deep-equal": "^1.0.1",
+    "vitest": "^4.1.10"
   }
 }

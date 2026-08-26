@@ -1,6 +1,6 @@
-<!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/firestore-send-email" package="@firebase/firestore-send-email" -->
+<!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/firestore-send-email" package="@firebase-function-kits/firestore-send-email" -->
 
-> **Deprecation Notice:** The Firebase Extension `firebase/firestore-send-email` is deprecated. Please migrate to the [`@firebase/firestore-send-email`](https://www.npmjs.com/package/@firebase/firestore-send-email) package.
+> **Deprecation Notice:** The Firebase Extension `firebase/firestore-send-email` is deprecated. Please migrate to the [`@firebase-function-kits/firestore-send-email`](https://www.npmjs.com/package/@firebase-function-kits/firestore-send-email) package.
 
 Use this extension to render and send emails that contain the information from documents added to a specified Cloud Firestore collection.
 

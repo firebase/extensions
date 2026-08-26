@@ -1,6 +1,11 @@
 {
   "name": "@firebase-function-kits/firestore-vector-search",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firebase/extensions.git",
+    "directory": "kits/firestore-vector-search"
+  },
   "description": "Vector similarity search over a Firestore collection",
   "license": "Apache-2.0",
   "main": "lib/index.js",
@@ -21,7 +26,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
-    "test": "echo \"Warning: tests are not implemented for this package\"",
+    "test": "vitest run",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
@@ -34,5 +39,8 @@
     "genkit": "^1.27.0",
     "openai": "^4.20.1",
     "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.10"
   }
 }

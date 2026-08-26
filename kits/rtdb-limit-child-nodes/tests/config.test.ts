@@ -86,16 +86,22 @@ describe("configFromEnv", () => {
     const { configFromEnv } = await importConfig();
 
     expect(configFromEnv()).toMatchObject({
-      nodePath: "messages",
-      maxCount: 100,
+      nodePath: "rtdb_node_path-value",
+      maxCount: 10,
       databaseInstance: "selected_database_instance-value",
     });
     expect(defineString.mock.calls).toContainEqual([
-      "RTDB_NODE_PATH",
-      { default: "messages" },
-    ]);
-    expect(defineString.mock.calls).toContainEqual([
       "SELECTED_DATABASE_INSTANCE",
     ]);
+  });
+
+  // The extension declared NODE_PATH and MAX_COUNT as required with no default,
+  // so the CLI prompted for both at install. Declaring a default here would let
+  // a deploy that omits MAX_COUNT silently prune every node down to that value.
+  test("declares no default for RTDB_NODE_PATH or MAX_COUNT", async () => {
+    await importConfig();
+
+    expect(defineString.mock.calls).toContainEqual(["RTDB_NODE_PATH"]);
+    expect(defineInt.mock.calls).toContainEqual(["MAX_COUNT"]);
   });
 });
