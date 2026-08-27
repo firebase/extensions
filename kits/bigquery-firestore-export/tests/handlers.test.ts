@@ -198,6 +198,9 @@ describe("handleUpsertTransferConfig permanent failures", () => {
     expect(aborted.mock.calls[0][0].message).toContain(
       "Set TRANSFER_CONFIG_NAME"
     );
+    expect(aborted.mock.calls[0][0].message).toContain(
+      "clear TRANSFER_CONFIG_NAME and delete this instance's document from the transferConfigs collection"
+    );
   });
 
   test("stops when the partitioning field is cleared on an existing config", async () => {

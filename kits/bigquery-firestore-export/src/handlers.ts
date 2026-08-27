@@ -127,7 +127,7 @@ async function upsertTransferConfig(ctx: HandlerContext): Promise<void> {
     );
     if (!linked) {
       throw new PermanentConfigurationError(
-        `Transfer config not found: ${ctx.config.transferConfigName}. Set TRANSFER_CONFIG_NAME to a scheduled query that exists in this project, or clear it so this deployment creates its own, then redeploy.`
+        `Transfer config not found: ${ctx.config.transferConfigName}. Set TRANSFER_CONFIG_NAME to a scheduled query that exists in this project, then redeploy. To have this deployment create its own scheduled query instead, clear TRANSFER_CONFIG_NAME and delete this instance's document from the ${ctx.config.firestoreCollection} collection, otherwise a previously linked query is updated in place.`
       );
     }
     await storeTransferConfig(ctx, linked);

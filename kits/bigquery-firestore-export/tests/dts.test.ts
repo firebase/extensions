@@ -162,6 +162,9 @@ describe("constructUpdateTransferConfigRequest", () => {
         `Transfer config has invalid structure: ${expectedMessage}`
       );
       await rejects.toThrow("Only scheduled queries are supported");
+      await rejects.toThrow(
+        "Delete this deployment's document from the configs collection"
+      );
     }
   );
 

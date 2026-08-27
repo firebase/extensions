@@ -33,8 +33,11 @@ export const PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX =
 export const PARTITIONING_FIELD_REMOVAL_ERROR = `${PACKAGE_PARTITIONING_ERROR}. The BigQuery Data Transfer API does not support clearing this parameter once it has been set. To change partitioning, create a new transfer config with the desired setting.`;
 
 const STRUCTURE_ERROR_PREFIX = "Transfer config has invalid structure:";
+// This check is only reached from the stored-document branch of the upsert,
+// which runs when TRANSFER_CONFIG_NAME is unset, so that param is never the
+// remedy here.
 const STRUCTURE_REMEDIATION =
-  "Only scheduled queries are supported. Point TRANSFER_CONFIG_NAME at a scheduled-query transfer config, or clear it so this deployment creates its own, then redeploy.";
+  "Only scheduled queries are supported. Delete this deployment's document from the configs collection so a new scheduled query is created, then redeploy.";
 
 function isNotFoundError(err: unknown): boolean {
   return (
