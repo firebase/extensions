@@ -60,7 +60,12 @@ jobs:
     permissions:
       contents: read
     steps:
+      # Kits live only on the kits branch; the ref is pinned so dispatching
+      # from any branch (including next, which lists the workflow in the UI)
+      # releases the same content.
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # zizmor: ignore[artipacked]
+        with:
+          ref: "kits"
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -82,16 +87,17 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # Needed to push version commit, git tag & create GitHub Release
+      id-token: write # Needed to publish to npm via trusted publishing
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # zizmor: ignore[artipacked]
+        with:
+          ref: "kits"
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "24"
-          registry-url: "https://wombat-dressing-room.appspot.com"
-          always-auth: false
 
       - name: Configure Git User
         if: ${{ !inputs.dry_run }}
@@ -135,13 +141,6 @@ jobs:
           NPM_CONFIG_REGISTRY: https://registry.npmjs.org
         run: |
           set -o pipefail
-
-          # The push at the end of the job would create a stray branch named
-          # after the ref if this were dispatched from a tag.
-          if [ "$GITHUB_REF_TYPE" != "branch" ]; then
-            echo "::error::Release Kit must be dispatched from a branch, got $GITHUB_REF_TYPE '$GITHUB_REF_NAME'."
-            exit 1
-          fi
 
           PKG_NAME=$(node -p "require('./package.json').name")
           LOCAL_VER=$(node -p "require('./package.json').version")
@@ -283,10 +282,8 @@ jobs:
           echo "=========================================================="
 
       - name: Publish to NPM
-        # zizmor: ignore[use-trusted-publishing]
         working-directory: ${{ inputs.target_kit }}
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
           DRY_RUN: ${{ inputs.dry_run }}
           PKG_NAME: ${{ steps.config.outputs.pkg_name }}
@@ -299,9 +296,9 @@ jobs:
           fi
 
           if [ "$IS_PRERELEASE" = "true" ]; then
-            npm publish --tag next --access public $DRY_RUN_FLAG
+            npm publish --tag next --provenance --access public $DRY_RUN_FLAG
           else
-            npm publish --tag latest --access public $DRY_RUN_FLAG
+            npm publish --tag latest --provenance --access public $DRY_RUN_FLAG
             if [ "$DRY_RUN" != "true" ]; then
               npm dist-tag add ${PKG_NAME}@${VERSION} next
             fi
@@ -313,10 +310,10 @@ jobs:
       - name: Push Version Commit & Tag to Branch
         if: ${{ !inputs.dry_run }}
         env:
-          REF_NAME: ${{ github.ref_name }}
+          TARGET_BRANCH: "kits"
           TAG_NAME: ${{ steps.config.outputs.tag_name }}
         run: |
-          git push --atomic origin "HEAD:refs/heads/$REF_NAME" "refs/tags/$TAG_NAME"
+          git push --atomic origin "HEAD:refs/heads/$TARGET_BRANCH" "refs/tags/$TAG_NAME"
 
       - name: Create GitHub Release via GitHub CLI
         if: ${{ !inputs.dry_run }}
@@ -327,7 +324,7 @@ jobs:
           VERSION: ${{ steps.config.outputs.version }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
           NOTES: ${{ steps.changelog.outputs.notes }}
-          REF_NAME: ${{ github.ref_name }}
+          TARGET_BRANCH: "kits"
         run: |
           PRERELEASE_FLAG=""
           if [ "$IS_PRERELEASE" = "true" ]; then
@@ -344,5 +341,5 @@ jobs:
           gh release create "$TAG_NAME" \
             --title "$PKG_NAME v$VERSION" \
             --notes "$NOTES" \
-            --target "$REF_NAME" \
+            --target "$TARGET_BRANCH" \
             $PRERELEASE_FLAG
