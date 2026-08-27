@@ -79,9 +79,9 @@ const REQUIRED_APIS = [
   },
 ] as const;
 const FUNCTION_SECRETS = [geminiApiKey, openAiApiKey];
-// The task and trigger functions reach getSingleEmbedding, so they need the
-// provider API keys bound like the Firestore and callable functions do --
-// without them a gemini/openai backfill reads an undefined key.
+// Only the task functions reach getSingleEmbedding, but every function here
+// resolves the same config (which reads the provider keys), and the extension
+// bound its secrets to all functions in the instance -- so bind them uniformly.
 const DEFAULT_TASK_OPTIONS = {
   memory: "512MiB",
   timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
