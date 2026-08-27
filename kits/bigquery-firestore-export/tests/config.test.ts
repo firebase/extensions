@@ -108,7 +108,7 @@ describe("COLLECTION_PATH input", () => {
   const input = params.firestoreCollection.options.input as TextInput<string>;
 
   test("declares the collection path validator and its error message", () => {
-    expect(input.text.validationRegex).toBe("^[^/]+(/[^/]+/[^/]+)*$");
+    expect(input.text.validationRegex).toEqual(/^[^\/]+(\/[^\/]+\/[^\/]+)*$/);
     expect(input.text.validationErrorMessage).toBe(
       "Must be a valid Cloud Firestore Collection"
     );
@@ -126,7 +126,7 @@ describe("COLLECTION_PATH input", () => {
     ["a/", false],
     ["", false],
   ])("%s is accepted: %s", (path, accepted) => {
-    const regex = new RegExp(input.text.validationRegex as string);
+    const regex = new RegExp(input.text.validationRegex!);
     expect(regex.test(path)).toBe(accepted);
   });
 });

@@ -28,9 +28,23 @@ export interface ConfigExpressions {
 const params = {
   internalStatePath: defineString("INTERNAL_STATE_PATH", {
     default: "_firebase_ext_/sharded_counter",
+    input: {
+      text: {
+        validationRegex: /^[^\/]+\/[^\/]+(\/[^\/]+\/[^\/]+)*$/,
+        validationErrorMessage:
+          "Enter a document path, not a collection path. The path must have an even number of segments, for example, `my_collection/doc` or `my_collection/doc/subcollection/doc`, but not `my_collection`.",
+      },
+    },
   }),
   scheduleFrequencyMinutes: defineString("SCHEDULE_FREQUENCY", {
     default: "1",
+    input: {
+      text: {
+        validationRegex: /^[1-9][0-9]*$/,
+        validationErrorMessage:
+          "The number of minutes must be an integer value greater than zero.",
+      },
+    },
   }),
 };
 

@@ -38,10 +38,27 @@ const params = {
     default: storageBucket,
     input: BUCKET_PICKER,
   }),
-  languageCode: defineString("LANGUAGE_CODE"),
+  languageCode: defineString("LANGUAGE_CODE", {
+    input: {
+      text: {
+        validationRegex: /^([a-zA-Z-])*[A-Z][A-Z]$/,
+        validationErrorMessage:
+          "Must be a valid code from https://cloud.google.com/speech-to-text/docs/languages",
+      },
+    },
+  }),
   model: defineString("MODEL", { default: "default" }),
   outputStoragePath: defineString("OUTPUT_STORAGE_PATH", { default: "" }),
-  collectionPath: defineString("COLLECTION_PATH", { default: "" }),
+  collectionPath: defineString("COLLECTION_PATH", {
+    default: "",
+    input: {
+      text: {
+        // Extension regex, with an empty branch added: the param is optional.
+        validationRegex: /^(?:[^\/]+(\/[^\/]+\/[^\/]+)*|)$/,
+        validationErrorMessage: "Must be a valid Cloud Firestore Collection",
+      },
+    },
+  }),
   enableAutomaticPunctuation: defineBoolean("ENABLE_AUTOMATIC_PUNCTUATION", {
     default: true,
   }),

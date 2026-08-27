@@ -97,7 +97,17 @@ const params = {
       AuthenticatonType.OAuth2,
     ]),
   }),
-  smtpConnectionUri: defineString("SMTP_CONNECTION_URI", { default: "" }),
+  smtpConnectionUri: defineString("SMTP_CONNECTION_URI", {
+    default: "",
+    input: {
+      text: {
+        validationRegex:
+          /^(smtp[s]*:\/\/(.*?(:[^:@]*)?@)?[^:@]+:[0-9]+(\?[^ ]*)?)|^$/,
+        validationErrorMessage:
+          "Invalid SMTP connection URI. Must be in the form `smtp(s)://username:password@hostname:port` or `smtp(s)://username@hostname:port` or to be left blank.",
+      },
+    },
+  }),
   smtpPassword: defineSecret("SMTP_PASSWORD"),
   host: defineString("HOST", { default: "" }),
   oauthPort: defineInt("OAUTH_PORT", { default: 465 }),
@@ -108,8 +118,25 @@ const params = {
   clientSecret: defineSecret("CLIENT_SECRET"),
   refreshToken: defineSecret("REFRESH_TOKEN"),
   user: defineString("USER", { default: "" }),
-  mailCollection: defineString("MAIL_COLLECTION", { default: "mail" }),
-  defaultFrom: defineString("DEFAULT_FROM"),
+  mailCollection: defineString("MAIL_COLLECTION", {
+    default: "mail",
+    input: {
+      text: {
+        validationRegex: /^[^\/]+(\/[^\/]+\/[^\/]+)*$/,
+        validationErrorMessage: "Must be a valid Cloud Firestore collection",
+      },
+    },
+  }),
+  defaultFrom: defineString("DEFAULT_FROM", {
+    input: {
+      text: {
+        validationRegex:
+          /^(([^<>()\[\]\.,;:\s@"]+(\.[^<>()\[\]\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\.,;:\s@"]+\.)+[^<>()[\]\.,;:\s@"]{2,})$|^.*<(([^<>()\[\]\.,;:\s@"]+(\.[^<>()\[\]\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\.,;:\s@"]+\.)+[^<>()[\]\.,;:\s@"]{2,})>$/,
+        validationErrorMessage:
+          "Must be a valid email address or valid name plus email address",
+      },
+    },
+  }),
   defaultReplyTo: defineString("DEFAULT_REPLY_TO", { default: "" }),
   usersCollection: defineString("USERS_COLLECTION", { default: "" }),
   templatesCollection: defineString("TEMPLATES_COLLECTION", { default: "" }),
@@ -117,7 +144,16 @@ const params = {
     default: "never",
     input: select([...TTL_EXPIRE_TYPE_OPTIONS]),
   }),
-  ttlExpireValue: defineInt("TTL_EXPIRE_VALUE", { default: 1 }),
+  ttlExpireValue: defineInt("TTL_EXPIRE_VALUE", {
+    default: 1,
+    input: {
+      text: {
+        validationRegex: /^[1-9][0-9]*$/,
+        validationErrorMessage:
+          "The value must be an integer value greater than zero.",
+      },
+    },
+  }),
   tlsOptions: defineString("TLS_OPTIONS", { default: "{}" }),
 };
 

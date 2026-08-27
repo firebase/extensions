@@ -71,8 +71,6 @@ const BIGQUERY_DATASET_LOCATION_OPTIONS: Record<string, string> = {
   "EU Multi-Region (EU)": "EU",
 };
 
-/** A Firestore collection path has an odd number of slash-separated segments. */
-const COLLECTION_PATH_REGEX = "^[^/]+(/[^/]+/[^/]+)*$";
 const instanceId = defineString("INSTANCE_ID");
 
 export const params = {
@@ -93,7 +91,7 @@ export const params = {
     input: {
       text: {
         example: "transferConfigs",
-        validationRegex: COLLECTION_PATH_REGEX,
+        validationRegex: /^[^\/]+(\/[^\/]+\/[^\/]+)*$/,
         validationErrorMessage: "Must be a valid Cloud Firestore Collection",
       },
     },
