@@ -41,6 +41,12 @@ on:
         default: true
         type: boolean
 
+# All releases push to the same branch; a concurrent run would fail its push
+# after already publishing to npm, leaving a version with no commit or tag.
+concurrency:
+  group: release-kit
+  cancel-in-progress: false
+
 jobs:
   # =========================================================
   # 1. TEST JOB (Low Permissions: Read-Only)
@@ -125,6 +131,8 @@ jobs:
           # branch can lag behind what was actually released.
           NPM_CONFIG_REGISTRY: https://registry.npmjs.org
         run: |
+          set -o pipefail
+
           PKG_NAME=$(node -p "require('./package.json').name")
           LOCAL_VER=$(node -p "require('./package.json').version")
 
@@ -141,21 +149,28 @@ jobs:
             console.log(Object.keys(data).filter(v => v !== "created" && v !== "modified").join(" "));
           ')
 
-          HIGHEST=$(npx --yes semver@7 $LOCAL_VER $TAKEN | tail -n 1)
+          HIGHEST=$(npx --yes semver@7.8.5 $LOCAL_VER $TAKEN | tail -n 1)
+          # 0.0.0 seed keeps grep from emptying the pipe when no stable exists yet.
+          HIGHEST_STABLE=$(npx --yes semver@7.8.5 0.0.0 $LOCAL_VER $TAKEN | grep -v -- - | tail -n 1)
 
+          # The bump level is applied to the highest stable version; an existing
+          # rc line continues unless the requested level opens a higher line.
           if [ "$IS_PRERELEASE" = "true" ]; then
+            NEW_VER=$(npx --yes semver@7.8.5 -i "pre${BUMP_LEVEL}" --preid rc "$HIGHEST_STABLE")
+            BUMP_TYPE="pre${BUMP_LEVEL}"
             if [[ "$HIGHEST" == *-rc.* ]]; then
-              BUMP_TYPE="prerelease"
-            else
-              BUMP_TYPE="pre${BUMP_LEVEL}"
+              CONTINUED=$(npx --yes semver@7.8.5 -i prerelease --preid rc "$HIGHEST")
+              if [ "$(npx --yes semver@7.8.5 "$NEW_VER" "$CONTINUED" | tail -n 1)" = "$CONTINUED" ]; then
+                NEW_VER="$CONTINUED"
+                BUMP_TYPE="prerelease"
+              fi
             fi
             TARGET_TAG="next"
           else
+            NEW_VER=$(npx --yes semver@7.8.5 -i "$BUMP_LEVEL" "$HIGHEST_STABLE")
             BUMP_TYPE="$BUMP_LEVEL"
             TARGET_TAG="latest (and next)"
           fi
-
-          NEW_VER=$(npx --yes semver@7 -i "$BUMP_TYPE" --preid rc "$HIGHEST")
 
           for v in $TAKEN; do
             if [ "$v" = "$NEW_VER" ]; then
@@ -166,6 +181,7 @@ jobs:
 
           echo "current_ver=$LOCAL_VER" >> $GITHUB_OUTPUT
           echo "highest_ver=$HIGHEST" >> $GITHUB_OUTPUT
+          echo "highest_stable=$HIGHEST_STABLE" >> $GITHUB_OUTPUT
           echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
           echo "target_tag=$TARGET_TAG" >> $GITHUB_OUTPUT
           echo "version=$NEW_VER" >> $GITHUB_OUTPUT
@@ -202,6 +218,8 @@ jobs:
           TAG_NAME: ${{ steps.config.outputs.tag_name }}
         run: |
           git add "$TARGET_KIT/package.json"
+          # npm version also bumps the lockfile; kits currently ship npm-shrinkwrap.json.
+          [ -f "$TARGET_KIT/npm-shrinkwrap.json" ] && git add "$TARGET_KIT/npm-shrinkwrap.json"
           [ -f "$TARGET_KIT/package-lock.json" ] && git add "$TARGET_KIT/package-lock.json"
           [ -f "$TARGET_KIT/CHANGELOG.md" ] && git add "$TARGET_KIT/CHANGELOG.md"
           # git commit exits non-zero if the bump staged no changes, so a broken
@@ -216,6 +234,7 @@ jobs:
           TARGET_KIT: ${{ inputs.target_kit }}
           CURRENT_VER: ${{ steps.config.outputs.current_ver }}
           HIGHEST_VER: ${{ steps.config.outputs.highest_ver }}
+          HIGHEST_STABLE: ${{ steps.config.outputs.highest_stable }}
           VERSION: ${{ steps.config.outputs.version }}
           BUMP_TYPE: ${{ steps.config.outputs.bump_type }}
           TARGET_TAG: ${{ steps.config.outputs.target_tag }}
@@ -230,6 +249,7 @@ jobs:
           echo " Target Directory: $TARGET_KIT"
           echo " package.json Ver: $CURRENT_VER"
           echo " Highest Known:    $HIGHEST_VER"
+          echo " Highest Stable:   $HIGHEST_STABLE"
           echo " Target Version:   $VERSION"
           echo " Version Bump:     $BUMP_TYPE"
           echo " NPM Dist-Tag:     $TARGET_TAG"
@@ -274,7 +294,9 @@ jobs:
         env:
           REF_NAME: ${{ github.ref_name }}
           TAG_NAME: ${{ steps.config.outputs.tag_name }}
-        run: git push origin "HEAD:refs/heads/$REF_NAME" "refs/tags/$TAG_NAME"
+        run:
+          git push --atomic origin "HEAD:refs/heads/$REF_NAME"
+          "refs/tags/$TAG_NAME"
 
       - name: Create GitHub Release via GitHub CLI
         if: ${{ !inputs.dry_run }}
