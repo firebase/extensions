@@ -43,6 +43,9 @@ on:
 
 # All releases push to the same branch; a concurrent run would fail its push
 # after already publishing to npm, leaving a version with no commit or tag.
+# GitHub keeps at most ONE pending run per group: with a run in progress and
+# one queued, a third dispatch cancels the queued one. Dispatch kits one at a
+# time and check for a "Canceled" run before assuming a release happened.
 concurrency:
   group: release-kit
   cancel-in-progress: false
@@ -133,11 +136,25 @@ jobs:
         run: |
           set -o pipefail
 
+          # The push at the end of the job would create a stray branch named
+          # after the ref if this were dispatched from a tag.
+          if [ "$GITHUB_REF_TYPE" != "branch" ]; then
+            echo "::error::Release Kit must be dispatched from a branch, got $GITHUB_REF_TYPE '$GITHUB_REF_NAME'."
+            exit 1
+          fi
+
           PKG_NAME=$(node -p "require('./package.json').name")
           LOCAL_VER=$(node -p "require('./package.json').version")
 
-          # `npm view <pkg> time` keys include unpublished versions, unlike `versions`.
-          VIEW_OUT=$(npm view "$PKG_NAME" time --json || true)
+          # `npm view <pkg> time` keys include per-version-unpublished versions
+          # (unlike `versions`); a fully unpublished package keeps its reserved
+          # versions under time.unpublished.versions instead.
+          VIEW_STATUS=0
+          VIEW_OUT=$(npm view "$PKG_NAME" time --json) || VIEW_STATUS=$?
+          if [ "$VIEW_STATUS" -ne 0 ] && [ -z "$VIEW_OUT" ]; then
+            echo "::error::npm view exited $VIEW_STATUS with no output; cannot trust the version computation."
+            exit 1
+          fi
           TAKEN=$(echo "$VIEW_OUT" | node -e '
             const raw = require("fs").readFileSync(0, "utf8").trim();
             const data = raw ? JSON.parse(raw) : {};
@@ -146,7 +163,11 @@ jobs:
               console.error(data.error.summary || data.error.code);
               process.exit(1);
             }
-            console.log(Object.keys(data).filter(v => v !== "created" && v !== "modified").join(" "));
+            const meta = ["created", "modified", "unpublished"];
+            const keys = Object.keys(data).filter(v => !meta.includes(v));
+            const unpub = (data.unpublished && data.unpublished.versions) || [];
+            const unpubList = Array.isArray(unpub) ? unpub : Object.keys(unpub);
+            console.log(keys.concat(unpubList).join(" "));
           ')
 
           HIGHEST=$(npx --yes semver@7.8.5 $LOCAL_VER $TAKEN | tail -n 1)
@@ -294,9 +315,8 @@ jobs:
         env:
           REF_NAME: ${{ github.ref_name }}
           TAG_NAME: ${{ steps.config.outputs.tag_name }}
-        run:
-          git push --atomic origin "HEAD:refs/heads/$REF_NAME"
-          "refs/tags/$TAG_NAME"
+        run: |
+          git push --atomic origin "HEAD:refs/heads/$REF_NAME" "refs/tags/$TAG_NAME"
 
       - name: Create GitHub Release via GitHub CLI
         if: ${{ !inputs.dry_run }}
@@ -312,6 +332,13 @@ jobs:
           PRERELEASE_FLAG=""
           if [ "$IS_PRERELEASE" = "true" ]; then
             PRERELEASE_FLAG="--prerelease"
+          fi
+
+          # A re-run after a transient gh failure must not mint a new version
+          # just to get a release page, so creation is skipped if it exists.
+          if gh release view "$TAG_NAME" > /dev/null 2>&1; then
+            echo "Release $TAG_NAME already exists; skipping creation."
+            exit 0
           fi
 
           gh release create "$TAG_NAME" \
