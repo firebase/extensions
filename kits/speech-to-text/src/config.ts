@@ -17,6 +17,7 @@ import {
   BUCKET_PICKER,
   defineBoolean,
   defineString,
+  select,
   storageBucket,
 } from "firebase-functions/params";
 
@@ -35,24 +36,52 @@ import {
  */
 const params = {
   bucket: defineString("EXTENSION_BUCKET", {
+    label: "Cloud Storage bucket for input and output",
+    description:
+      "The Cloud Storage bucket that the extension should be listening to. Files uploaded to this bucket will be transcribed by the extension. If cloud storage output is enabled, transcriptions will be written to this bucket.",
+
     default: storageBucket,
     input: BUCKET_PICKER,
   }),
   languageCode: defineString("LANGUAGE_CODE", {
+    label: "BCP-47 code of the transcription language",
+    description:
+      "The BCP-47 code of the transcription language, as shown in the [Language support documentation](https://cloud.google.com/speech-to-text/docs/languages)",
+
     input: {
       text: {
+        example: "e.g. en-US",
+
         validationRegex: /^([a-zA-Z-])*[A-Z][A-Z]$/,
         validationErrorMessage:
           "Must be a valid code from https://cloud.google.com/speech-to-text/docs/languages",
       },
     },
   }),
-  model: defineString("MODEL", { default: "default" }),
-  outputStoragePath: defineString("OUTPUT_STORAGE_PATH", { default: "" }),
+  model: defineString("MODEL", {
+    label: "Language model used for transcription",
+    description:
+      "Which kind of use-case should the speech-to-text transcription algorithm be honed for? For details, see [the model field in the documentation](https://cloud.google.com/speech-to-text/docs/reference/rest/v1/RecognitionConfig)\nIf you're not sure, just use the default.",
+    default: "default",
+    input: { text: { example: "default" } },
+  }),
+  outputStoragePath: defineString("OUTPUT_STORAGE_PATH", {
+    label: "Storage path for transcriptions",
+    description:
+      "The storage path in which to output transcriptions. If this is not set, the extension will output to the root of the bucket.",
+    default: "",
+    input: { text: { example: "transcriptions" } },
+  }),
   collectionPath: defineString("COLLECTION_PATH", {
+    label: "Firestore collection for storing transcribed audio",
+    description:
+      "The firestore collection in which to output transcriptions. If this is not set, the extension will not output the data to Firestore.",
+
     default: "",
     input: {
       text: {
+        example: "transcriptions",
+
         // Extension regex, with an empty branch added: the param is optional.
         validationRegex: /^(?:[^\/]+(\/[^\/]+\/[^\/]+)*|)$/,
         validationErrorMessage: "Must be a valid Cloud Firestore Collection",
@@ -60,7 +89,12 @@ const params = {
     },
   }),
   enableAutomaticPunctuation: defineBoolean("ENABLE_AUTOMATIC_PUNCTUATION", {
+    label: "Enable automatic punctuation",
+    description:
+      "Should the transcription algorithm attempt to add punctuation to the transcription? For details, see [the documentation](https://cloud.google.com/speech-to-text/docs/automatic-punctuation)",
+
     default: true,
+    input: select({ Enabled: true, Disabled: false }),
   }),
 };
 
