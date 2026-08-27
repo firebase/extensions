@@ -114,31 +114,63 @@ jobs:
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
 
-      - name: Determine Version Bump Type
+      - name: Determine Next Version
         id: config
         working-directory: ${{ inputs.target_kit }}
         env:
           BUMP_LEVEL: ${{ inputs.bump_level }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          # The registry is the source of truth for versions: npm reserves every
+          # version ever published (even after unpublish), and package.json on the
+          # branch can lag behind what was actually released.
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
         run: |
-          CURRENT_VER=$(node -p "require('./package.json').version")
-          BUMP="$BUMP_LEVEL"
+          PKG_NAME=$(node -p "require('./package.json').name")
+          LOCAL_VER=$(node -p "require('./package.json').version")
+
+          # `npm view <pkg> time` keys include unpublished versions, unlike `versions`.
+          VIEW_OUT=$(npm view "$PKG_NAME" time --json || true)
+          TAKEN=$(echo "$VIEW_OUT" | node -e '
+            const raw = require("fs").readFileSync(0, "utf8").trim();
+            const data = raw ? JSON.parse(raw) : {};
+            if (data.error) {
+              if (data.error.code === "E404") process.exit(0);
+              console.error(data.error.summary || data.error.code);
+              process.exit(1);
+            }
+            console.log(Object.keys(data).filter(v => v !== "created" && v !== "modified").join(" "));
+          ')
+
+          HIGHEST=$(npx --yes semver@7 $LOCAL_VER $TAKEN | tail -n 1)
 
           if [ "$IS_PRERELEASE" = "true" ]; then
-            if [[ "$CURRENT_VER" =~ -rc\.[0-9]+$ ]]; then
+            if [[ "$HIGHEST" == *-rc.* ]]; then
               BUMP_TYPE="prerelease"
             else
-              BUMP_TYPE="pre${BUMP}"
+              BUMP_TYPE="pre${BUMP_LEVEL}"
             fi
             TARGET_TAG="next"
           else
-            BUMP_TYPE="$BUMP"
+            BUMP_TYPE="$BUMP_LEVEL"
             TARGET_TAG="latest (and next)"
           fi
 
-          echo "current_ver=$CURRENT_VER" >> $GITHUB_OUTPUT
+          NEW_VER=$(npx --yes semver@7 -i "$BUMP_TYPE" --preid rc "$HIGHEST")
+
+          for v in $TAKEN; do
+            if [ "$v" = "$NEW_VER" ]; then
+              echo "::error::Computed version $NEW_VER already exists on the registry."
+              exit 1
+            fi
+          done
+
+          echo "current_ver=$LOCAL_VER" >> $GITHUB_OUTPUT
+          echo "highest_ver=$HIGHEST" >> $GITHUB_OUTPUT
           echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
           echo "target_tag=$TARGET_TAG" >> $GITHUB_OUTPUT
+          echo "version=$NEW_VER" >> $GITHUB_OUTPUT
+          echo "pkg_name=$PKG_NAME" >> $GITHUB_OUTPUT
+          echo "tag_name=${PKG_NAME}@${NEW_VER}" >> $GITHUB_OUTPUT
 
       - name: Install Dependencies & Build
         working-directory: ${{ inputs.target_kit }}
@@ -146,52 +178,49 @@ jobs:
           npm ci --registry=https://registry.npmjs.org
           npm run build
 
-      - name: Bump Version (Clear CHANGELOG on Stable Release Only)
-        id: versioning
+      - name: Apply Version Bump (Clear CHANGELOG on Stable Release Only)
         working-directory: ${{ inputs.target_kit }}
         env:
-          BUMP_TYPE: ${{ steps.config.outputs.bump_type }}
+          NEW_VER: ${{ steps.config.outputs.version }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          if [ "$DRY_RUN" = "true" ]; then
-            npm version $BUMP_TYPE --preid=rc --no-git-tag-version
-          else
-            # Only truncate CHANGELOG.md if this is a STABLE release (not a prerelease)
-            if [ "$IS_PRERELEASE" != "true" ]; then
-              echo "Stable release detected: clearing CHANGELOG.md..."
-              > CHANGELOG.md
-              git add CHANGELOG.md
-            else
-              echo "Prerelease detected: preserving CHANGELOG.md content."
-            fi
+          # npm version only performs git operations when .git sits next to
+          # package.json; kits live in kits/<name>/ with .git at the repo root,
+          # so git commit/tag are done explicitly in the next step.
+          npm version "$NEW_VER" --no-git-tag-version
 
-            # Create version bump commit and git tag
-            if [[ "$BUMP_TYPE" == pre* ]] || [[ "$BUMP_TYPE" == "prerelease" ]]; then
-              npm version $BUMP_TYPE --preid=rc -m "chore(release): %s [skip ci]"
-            else
-              npm version $BUMP_TYPE -m "chore(release): %s [skip ci]"
-            fi
+          if [ "$DRY_RUN" != "true" ] && [ "$IS_PRERELEASE" != "true" ]; then
+            echo "Stable release detected: clearing CHANGELOG.md..."
+            > CHANGELOG.md
           fi
 
-          NEW_VER=$(node -p "require('./package.json').version")
-          PKG_NAME=$(node -p "require('./package.json').name")
-
-          echo "version=$NEW_VER" >> $GITHUB_OUTPUT
-          echo "pkg_name=$PKG_NAME" >> $GITHUB_OUTPUT
-          echo "tag_name=${PKG_NAME}@${NEW_VER}" >> $GITHUB_OUTPUT
+      - name: Commit & Tag Release
+        if: ${{ !inputs.dry_run }}
+        env:
+          TARGET_KIT: ${{ inputs.target_kit }}
+          TAG_NAME: ${{ steps.config.outputs.tag_name }}
+        run: |
+          git add "$TARGET_KIT/package.json"
+          [ -f "$TARGET_KIT/package-lock.json" ] && git add "$TARGET_KIT/package-lock.json"
+          [ -f "$TARGET_KIT/CHANGELOG.md" ] && git add "$TARGET_KIT/CHANGELOG.md"
+          # git commit exits non-zero if the bump staged no changes, so a broken
+          # bump fails the release instead of publishing without a release commit.
+          git commit -m "chore(release): $TAG_NAME [skip ci]"
+          git tag -a "$TAG_NAME" -m "$TAG_NAME"
 
       - name: Dry Run Summary
         if: ${{ inputs.dry_run }}
         env:
-          PKG_NAME: ${{ steps.versioning.outputs.pkg_name }}
+          PKG_NAME: ${{ steps.config.outputs.pkg_name }}
           TARGET_KIT: ${{ inputs.target_kit }}
           CURRENT_VER: ${{ steps.config.outputs.current_ver }}
-          VERSION: ${{ steps.versioning.outputs.version }}
+          HIGHEST_VER: ${{ steps.config.outputs.highest_ver }}
+          VERSION: ${{ steps.config.outputs.version }}
           BUMP_TYPE: ${{ steps.config.outputs.bump_type }}
           TARGET_TAG: ${{ steps.config.outputs.target_tag }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
-          TAG_NAME: ${{ steps.versioning.outputs.tag_name }}
+          TAG_NAME: ${{ steps.config.outputs.tag_name }}
           NOTES: ${{ steps.changelog.outputs.notes }}
         run: |
           echo "=========================================================="
@@ -199,7 +228,8 @@ jobs:
           echo "=========================================================="
           echo " Package Name:     $PKG_NAME"
           echo " Target Directory: $TARGET_KIT"
-          echo " Current Version:  $CURRENT_VER"
+          echo " package.json Ver: $CURRENT_VER"
+          echo " Highest Known:    $HIGHEST_VER"
           echo " Target Version:   $VERSION"
           echo " Version Bump:     $BUMP_TYPE"
           echo " NPM Dist-Tag:     $TARGET_TAG"
@@ -211,12 +241,6 @@ jobs:
           echo "$NOTES"
           echo "=========================================================="
 
-      - name: Push Version Commit & Tags to Branch
-        if: ${{ !inputs.dry_run }}
-        env:
-          REF_NAME: ${{ github.ref_name }}
-        run: git push origin "$REF_NAME" --follow-tags
-
       - name: Publish to NPM
         # zizmor: ignore[use-trusted-publishing]
         working-directory: ${{ inputs.target_kit }}
@@ -224,8 +248,8 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
           DRY_RUN: ${{ inputs.dry_run }}
-          PKG_NAME: ${{ steps.versioning.outputs.pkg_name }}
-          VERSION: ${{ steps.versioning.outputs.version }}
+          PKG_NAME: ${{ steps.config.outputs.pkg_name }}
+          VERSION: ${{ steps.config.outputs.version }}
         run: |
           DRY_RUN_FLAG=""
           if [ "$DRY_RUN" = "true" ]; then
@@ -242,13 +266,23 @@ jobs:
             fi
           fi
 
+      # Pushed only after a successful publish: a failed publish leaves the
+      # branch untouched, and the next run recomputes the version from the
+      # registry either way.
+      - name: Push Version Commit & Tag to Branch
+        if: ${{ !inputs.dry_run }}
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          TAG_NAME: ${{ steps.config.outputs.tag_name }}
+        run: git push origin "HEAD:refs/heads/$REF_NAME" "refs/tags/$TAG_NAME"
+
       - name: Create GitHub Release via GitHub CLI
         if: ${{ !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ steps.versioning.outputs.tag_name }}
-          PKG_NAME: ${{ steps.versioning.outputs.pkg_name }}
-          VERSION: ${{ steps.versioning.outputs.version }}
+          TAG_NAME: ${{ steps.config.outputs.tag_name }}
+          PKG_NAME: ${{ steps.config.outputs.pkg_name }}
+          VERSION: ${{ steps.config.outputs.version }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
           NOTES: ${{ steps.changelog.outputs.notes }}
           REF_NAME: ${{ github.ref_name }}
