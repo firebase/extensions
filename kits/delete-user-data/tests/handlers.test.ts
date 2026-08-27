@@ -422,9 +422,6 @@ describe("handleClear", () => {
     });
   });
 
-  // Parity: the extension gates RTDB deletion on `rtdbPaths && databaseURL`,
-  // so paths without a configured instance must be skipped, not deleted
-  // against whatever default RTDB the app resolves.
   test("skips rtdb deletion when no database instance is configured", async () => {
     const ctx = makeContext({
       config: { rtdbPaths: "users/{UID}" },

@@ -157,9 +157,6 @@ export async function handleClear(
   } else {
     logs.firestoreNotConfigured();
   }
-  // Parity with the extension: RTDB deletion runs only when a database URL
-  // can be derived from the configured instance. Without this, the paths
-  // would be deleted against whatever default instance the app resolves.
   if (
     ctx.config.rtdbPaths &&
     getDatabaseUrl(ctx.config.rtdbInstance, ctx.config.rtdbLocation)
