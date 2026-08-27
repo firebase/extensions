@@ -146,29 +146,29 @@ jobs:
           PKG_NAME=$(node -p "require('./package.json').name")
           LOCAL_VER=$(node -p "require('./package.json').version")
 
-          # `npm view <pkg> time` keys include per-version-unpublished versions
-          # (unlike `versions`); a fully unpublished package keeps its reserved
-          # versions under time.unpublished.versions instead.
-          VIEW_STATUS=0
-          VIEW_OUT=$(npm view "$PKG_NAME" time --json) || VIEW_STATUS=$?
-          if [ "$VIEW_STATUS" -ne 0 ] && [ -z "$VIEW_OUT" ]; then
-            echo "::error::npm view exited $VIEW_STATUS with no output; cannot trust the version computation."
+          # The packument is fetched directly rather than via `npm view`: npm
+          # hides a fully unpublished package behind E404 (dropping its reserved
+          # versions in time.unpublished) and its --json output shape changes
+          # across npm majors. The registry itself 404s only for never-published
+          # names. time keys include per-version-unpublished versions.
+          PACKUMENT="$RUNNER_TEMP/packument.json"
+          HTTP_STATUS=$(curl -sS --retry 3 -o "$PACKUMENT" -w '%{http_code}' "$NPM_CONFIG_REGISTRY/$PKG_NAME")
+          if [ "$HTTP_STATUS" = "404" ]; then
+            TAKEN=""
+          elif [ "$HTTP_STATUS" != "200" ]; then
+            echo "::error::Registry returned HTTP $HTTP_STATUS for $PKG_NAME; cannot trust the version computation."
             exit 1
+          else
+            TAKEN=$(node -e '
+              const data = JSON.parse(require("fs").readFileSync(0, "utf8"));
+              const time = data.time || {};
+              const meta = ["created", "modified", "unpublished"];
+              const keys = Object.keys(time).filter(v => !meta.includes(v));
+              const unpub = (time.unpublished && time.unpublished.versions) || [];
+              const unpubList = Array.isArray(unpub) ? unpub : Object.keys(unpub);
+              console.log(keys.concat(unpubList).join(" "));
+            ' < "$PACKUMENT")
           fi
-          TAKEN=$(echo "$VIEW_OUT" | node -e '
-            const raw = require("fs").readFileSync(0, "utf8").trim();
-            const data = raw ? JSON.parse(raw) : {};
-            if (data.error) {
-              if (data.error.code === "E404") process.exit(0);
-              console.error(data.error.summary || data.error.code);
-              process.exit(1);
-            }
-            const meta = ["created", "modified", "unpublished"];
-            const keys = Object.keys(data).filter(v => !meta.includes(v));
-            const unpub = (data.unpublished && data.unpublished.versions) || [];
-            const unpubList = Array.isArray(unpub) ? unpub : Object.keys(unpub);
-            console.log(keys.concat(unpubList).join(" "));
-          ')
 
           HIGHEST=$(npx --yes semver@7.8.5 $LOCAL_VER $TAKEN | tail -n 1)
           # 0.0.0 seed keeps grep from emptying the pipe when no stable exists yet.
