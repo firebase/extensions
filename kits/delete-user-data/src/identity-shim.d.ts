@@ -19,8 +19,11 @@ import type { CloudEvent, CloudFunction } from "firebase-functions/v2";
 
 /**
  * `onUserDeleted` ships in firebase-functions 7.3.2 and emits a `gcfv2`
- * endpoint, but is absent from the published type declarations. Remove this
- * file once the types catch up.
+ * endpoint, but is marked `@beta @internal` upstream and so is stripped from
+ * the published type declarations. It is the only 2nd gen Firebase Auth
+ * deletion trigger, and kits reject 1st gen endpoints. Keep `firebase-functions`
+ * pinned exactly: this signature carries no stability guarantee. Delete this
+ * file once the export is public.
  */
 declare module "firebase-functions/v2/identity" {
   export function onUserDeleted(
