@@ -81,9 +81,16 @@ function getContext(): HandlerContext {
   return ctx;
 }
 
-export const clearData = onUserDeleted((event) =>
-  handleClear(event.data.uid, getContext())
-);
+export const clearData = onUserDeleted((event) => {
+  // The Auth event delivers no user record when the payload envelope is empty,
+  // so bail before getContext() rather than initialising the SDKs for nothing.
+  const uid = event.data?.uid;
+  if (!uid) {
+    logs.deletionEventMissingUid(event.id);
+    return;
+  }
+  return handleClear(uid, getContext());
+});
 
 export const handleSearch = onMessagePublished(
   {
