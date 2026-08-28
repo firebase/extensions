@@ -27,9 +27,15 @@ export interface ConfigExpressions {
 
 const params = {
   internalStatePath: defineString("INTERNAL_STATE_PATH", {
+    label: "Document path for internal state",
+    description:
+      "What is the path to the document where the extension can keep its internal state?",
+
     default: "_firebase_ext_/sharded_counter",
     input: {
       text: {
+        example: "_firebase_ext_/sharded_counter",
+
         validationRegex: /^[^\/]+\/[^\/]+(\/[^\/]+\/[^\/]+)*$/,
         validationErrorMessage:
           "Enter a document path, not a collection path. The path must have an even number of segments, for example, `my_collection/doc` or `my_collection/doc/subcollection/doc`, but not `my_collection`.",
@@ -37,6 +43,10 @@ const params = {
     },
   }),
   scheduleFrequencyMinutes: defineString("SCHEDULE_FREQUENCY", {
+    label: "Frequency for controllerCore function to be run",
+    description:
+      "In minutes, how often should the function to aggregate shards be run?",
+
     default: "1",
     input: {
       text: {
