@@ -28,3 +28,7 @@ ui-debug.log*
 # OS / editor
 .DS_Store
 *.local
+
+# Allow test fixtures
+!fixtures/
+!**/tests/fixtures/**
