@@ -1,6 +1,6 @@
 {
   "name": "@firebase-function-kits/storage-resize-images",
-  "version": "0.0.1",
+  "version": "0.0.2-rc.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/firebase/extensions.git",
