@@ -30,5 +30,4 @@ ui-debug.log*
 *.local
 
 # Allow test fixtures
-!fixtures/
-!**/tests/fixtures/**
+!**/tests/fixtures/
