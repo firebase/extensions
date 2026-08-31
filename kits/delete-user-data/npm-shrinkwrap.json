@@ -1,12 +1,12 @@
 {
   "name": "@firebase-function-kits/delete-user-data",
-  "version": "0.0.1",
+  "version": "0.0.2-rc.1",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@firebase-function-kits/delete-user-data",
-      "version": "0.0.1",
+      "version": "0.0.2-rc.1",
       "license": "Apache-2.0",
       "dependencies": {
         "@google-cloud/pubsub": "^4.3.3",
