@@ -60,6 +60,12 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Print inputs
+        env:
+          INPUTS: ${{ toJSON(inputs) }}
+        run: |
+          echo "$INPUTS"
+
       # Kits live only on the kits branch; the ref is pinned so dispatching
       # from any branch (including next, which lists the workflow in the UI)
       # releases the same content.
