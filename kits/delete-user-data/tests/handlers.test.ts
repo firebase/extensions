@@ -20,7 +20,7 @@ const mocks = vi.hoisted(() => ({ fetch: vi.fn() }));
 
 vi.mock("../src/logs");
 vi.mock("../src/events");
-vi.mock("node-fetch", () => ({ default: mocks.fetch }));
+vi.stubGlobal("fetch", mocks.fetch);
 
 import * as events from "../src/events";
 import { handleClear, handleDeletion, handleSearch } from "../src/handlers";
