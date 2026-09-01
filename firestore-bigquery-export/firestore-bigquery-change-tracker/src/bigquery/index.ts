@@ -32,6 +32,7 @@ import {
 import * as logs from "../logs";
 import {
   InsertRowsOptions,
+  TableField,
   TableMetadata,
 } from "@google-cloud/bigquery/build/src/table";
 
@@ -281,11 +282,10 @@ export class FirestoreBigQueryEventHistoryTracker
       columns.push(documentPathParams.name);
     }
 
-    // The custom partition column is deliberately not allowlisted. Initialize
-    // can still add it to an existing table (the clustering comparison in
-    // `tableRequiresUpdate` returns true for default installs), so it can lag;
-    // when it does, the insert fails terminally and the row is backed up
-    // intact rather than stripped and retried. Safe in the lossy direction.
+    // The custom partition column is deliberately not allowlisted: stripping
+    // it for a lag retry writes a null that misfiles the row into the wrong
+    // partition permanently. An insert racing the column's propagation fails
+    // terminally instead, with the rows backed up intact.
     return columns;
   }
 
@@ -482,18 +482,21 @@ export class FirestoreBigQueryEventHistoryTracker
       logs.bigQueryTableAlreadyExists(table.id, dataset.id);
 
       const [metadata] = await table.getMetadata();
-      const fields = metadata.schema ? metadata.schema.fields : [];
+      // The annotation is load-bearing: it keeps the column checks below
+      // boolean, so a non-boolean (e.g. a `find` result) cannot reach
+      // `tableRequiresUpdate` and re-fire the update on every initialize.
+      const fields: TableField[] = metadata.schema
+        ? metadata.schema.fields
+        : [];
 
-      await clustering.updateClustering(metadata);
-
-      const documentIdColExists = fields.find(
+      const documentIdColExists = fields.some(
         (column) => column.name === "document_id"
       );
-      const pathParamsColExists = fields.find(
+      const pathParamsColExists = fields.some(
         (column) => column.name === "path_params"
       );
 
-      const oldDataColExists = fields.find(
+      const oldDataColExists = fields.some(
         (column) => column.name === "old_data"
       );
 
@@ -524,6 +527,11 @@ export class FirestoreBigQueryEventHistoryTracker
       });
 
       if (shouldUpdate) {
+        // Must run after `tableRequiresUpdate`: it rewrites `metadata.clustering`
+        // to the desired state, and the update check compares that same object
+        // against the config.
+        await clustering.updateClustering(metadata);
+
         /** set partitioning */
         await partitioning.addPartitioningToSchema(metadata.schema.fields);
 
