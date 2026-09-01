@@ -165,7 +165,7 @@ export class SendGridTransport {
       }
 
       sgMail
-        .send(msg as sgMail.MailDataRequired)
+        .send(msg as Parameters<typeof sgMail.send>[0])
         .then(([response]) => {
           const rawQueueId = (response.headers["x-message-id"] ||
             response.headers["X-Message-Id"]) as string | undefined;

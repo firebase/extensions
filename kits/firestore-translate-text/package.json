@@ -38,6 +38,7 @@
     "genkit": "^1.31.0"
   },
   "devDependencies": {
+    "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   }
 }

@@ -35,6 +35,7 @@
     "firebase-functions": "^7.3.2"
   },
   "devDependencies": {
+    "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   }
 }
