@@ -266,6 +266,33 @@ describe("run", () => {
     );
   });
 
+  test("treats loosely-equal metadata values as a change", async () => {
+    db.seed("test/worker", { slice: { start: "", end: "" }, timestamp: 0 });
+    const metadoc = db.snapshot("test/worker");
+    db.seed("test/counter1", { counter: 0 });
+    db.seed(`test/counter1/${SHARDS_COLLECTION_ID}/012345678`, { counter: 1 });
+
+    const worker = new ShardedCounterWorker(
+      metadoc,
+      SHARDS_COLLECTION_ID,
+      true
+    );
+
+    // `0 == false`, so a non-strict comparison misses this reassignment.
+    db.seed("test/worker", {
+      slice: { start: "", end: "" },
+      timestamp: false,
+    });
+
+    await runWorker(worker);
+
+    expect(db.snapshot("test/counter1").data()).toEqual({ counter: 0 });
+    expect(
+      db.snapshot(`test/counter1/${SHARDS_COLLECTION_ID}/012345678`).exists
+    ).toBe(true);
+    expect(db.snapshot("test/worker").data().stats).toBeUndefined();
+  });
+
   test("shuts down without aggregating when its metadata changes", async () => {
     const metadoc = seedMetadoc();
     db.seed("test/counter1", { counter: 0 });
