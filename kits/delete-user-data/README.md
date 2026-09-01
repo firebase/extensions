@@ -51,8 +51,9 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
-later, behind the `kits` experiment):
+The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.27.0 or
+later, behind the `kits` experiment — earlier CLIs do not provide the
+`FIREBASE_KIT_INSTANCE_ID` variable this kit reads its instance id from):
 
 ```json
 {
@@ -86,9 +87,13 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
 loads them at deploy time and prompts for any required values that are missing.
 
+The instance id is not a setting: the CLI provides it to each instance as
+`FIREBASE_KIT_INSTANCE_ID`, set to that instance's key in the `instances` map.
+`FIREBASE_` is a reserved prefix in `.env` files, so it cannot be set or
+overridden there.
+
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
-| `instanceId` | `INSTANCE_ID` | yes | — | Must match this instance's key in the `instances` map |
 | `firestorePaths` | `FIRESTORE_PATHS` | no | (empty) | Comma-separated Firestore paths with `{UID}` |
 | `firestoreDatabaseId` | `FIRESTORE_DATABASE_ID` | no | `(default)` | Firestore database id |
 | `firestoreDeleteMode` | `FIRESTORE_DELETE_MODE` | no | `shallow` | `shallow` or `recursive` |
@@ -101,8 +106,8 @@ loads them at deploy time and prompts for any required values that are missing.
 | `searchDepth` | `AUTO_DISCOVERY_SEARCH_DEPTH` | no | `3` | Discovery depth |
 | `searchFields` | `AUTO_DISCOVERY_SEARCH_FIELDS` | no | `id,uid,userId` | Fields treated as user ids |
 | `searchFunction` | `SEARCH_FUNCTION` | no | (empty) | Optional custom search function |
-| `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | no | `kit-<INSTANCE_ID>-discovery` | Pub/Sub discovery topic |
-| `deletionTopicName` | `DELETION_TOPIC_NAME` | no | `kit-<INSTANCE_ID>-deletion` | Pub/Sub deletion topic |
+| `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | no | `kit-<instance id>-discovery` | Pub/Sub discovery topic |
+| `deletionTopicName` | `DELETION_TOPIC_NAME` | no | `kit-<instance id>-deletion` | Pub/Sub deletion topic |
 
 ## Multiple instances
 
@@ -126,8 +131,9 @@ map, each pointing at its own config directory with its own `.env`:
 
 Instance ids must be unique across all kit stanzas in the project, and every
 instance's function names are namespaced by its `kit-<instance id>-` prefix, so
-the instances cannot collide. Set `INSTANCE_ID` in each config directory to the
-same value as that directory's key in the `instances` map.
+the instances cannot collide. Each instance learns its own id from the
+`FIREBASE_KIT_INSTANCE_ID` variable the CLI provides; there is nothing to keep
+in sync by hand.
 
 ## Events
 
@@ -148,17 +154,17 @@ enables it. The extension used `yes` / `no`, so copying an old config across
 leaves auto-discovery silently switched off. Change `yes` to `true` in your
 `.env`.
 
-### You set `INSTANCE_ID` yourself
+### The instance id comes from `firebase.json`
 
 The extension derived an instance id at install time and used it to name the
-Pub/Sub topics. Here it is a setting you provide, and it must match this
-instance's key in the `instances` map in `firebase.json`. If the two disagree,
-auto-discovery publishes to a topic nothing is listening on.
+Pub/Sub topics. Here the CLI derives it from this instance's key in the
+`instances` map in `firebase.json` and provides it to the functions as
+`FIREBASE_KIT_INSTANCE_ID`. There is no `INSTANCE_ID` setting to configure.
 
 ### Pub/Sub topics are named differently
 
-Discovery and deletion topics are now `kit-<INSTANCE_ID>-discovery` and
-`kit-<INSTANCE_ID>-deletion`, where the extension used an `ext-` prefix. The
+Discovery and deletion topics are now `kit-<instance id>-discovery` and
+`kit-<instance id>-deletion`, where the extension used an `ext-` prefix. The
 Firebase CLI creates them for you on deploy, so there is no manual setup step,
 but the old topics from an extension install are not reused and can be deleted
 once you have migrated.
