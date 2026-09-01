@@ -94,13 +94,11 @@ describe("writeRunResultsToFirestore", () => {
           })
       ),
     } as unknown as Firestore;
+    const getQueryResults = vi.fn().mockResolvedValue([[{ value: 1 }]]);
     const bigquery = {
-      createQueryJob: vi.fn().mockResolvedValue([
-        {
-          id: "job-1",
-          getQueryResults: vi.fn().mockResolvedValue([[{ value: 1 }]]),
-        },
-      ]),
+      createQueryJob: vi
+        .fn()
+        .mockResolvedValue([{ id: "job-1", getQueryResults }]),
     } as unknown as BigQuery;
     const config = resolveConfig({
       bigqueryDatasetLocation: "US",
@@ -128,6 +126,9 @@ describe("writeRunResultsToFirestore", () => {
     const logSpy = vi.mocked(logs.writeRunResultsToFirestore);
     expect(logSpy).toHaveBeenCalledTimes(1);
     expect(logSpy).toHaveBeenCalledWith("run-1");
+    expect(logSpy.mock.invocationCallOrder[0]).toBeGreaterThan(
+      getQueryResults.mock.invocationCallOrder[0]
+    );
     expect(logSpy.mock.invocationCallOrder[0]).toBeLessThan(
       add.mock.invocationCallOrder[0]
     );
