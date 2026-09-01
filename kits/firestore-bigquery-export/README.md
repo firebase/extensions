@@ -175,8 +175,8 @@ queues, matching the extension's install vs update/configure split.
 If automatic post-deploy enqueue did not run, enqueue a task yourself. The
 snippets below use the `default` instance; substitute your instance id in the
 `kit-<instance id>-` prefix if you named yours differently, and set
-`FUNCTION_REGION` to the region the functions deployed to (the deploy output
-prints it; `us-central1` unless you overrode it). Prefer
+`FUNCTION_REGION` to the task functions' region (`us-central1` unless you
+overrode the deploy region). Prefer
 `initBigQuerySync` after a first deploy and `setupBigQuerySync` after a
 redeploy or schema-related config change (`TABLE_PARTITIONING`, `CLUSTERING`,
 `WILDCARD_IDS`, `VIEW_TYPE`, and related fields).
@@ -260,15 +260,19 @@ the path parameters only.
 
 ### No function location parameter
 
-The extension's `LOCATION` parameter is gone: the Firebase CLI resolves the
-deploy region for kit functions itself. A function keeps the region it is
-already deployed in; on a first deploy the CLI places the Firestore trigger
-near the database (multi-regions map to a real region, for example `nam5` to
-`us-central1`) and everything else in `us-central1`. Set the
-`FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
-`firebase deploy` to choose a different region. The Firestore trigger itself
-always fires in the database's own region, whatever region the function runs
-in.
+The extension's `LOCATION` parameter is gone: the functions in this kit declare
+no region, and the Firebase CLI resolves one at deploy time. A function keeps
+the region it is already deployed in; on a first deploy all functions land in
+`us-central1`. The Firestore trigger itself always fires in the database's own
+region, whatever region the function runs in. To deploy the functions
+elsewhere, set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable
+when running `firebase deploy`. Careful with that variable: it applies to
+every no-region function in the deploy, not just this kit, and changing it on
+an existing install deletes and recreates the functions in the new region -
+new URLs, a recreated task queue, and any in-flight tasks are lost.
+
+If you copied `DATABASE_REGION` into your `.env` from an extension install, it
+is now ignored; delete the line or leave it.
 
 ### Defaults
 
