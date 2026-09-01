@@ -27,6 +27,8 @@ import type { DeleteUserDataConfig } from "./export-config";
 
 const instanceId = defineString("INSTANCE_ID");
 
+const SEARCH_DEPTH_PARAM = "AUTO_DISCOVERY_SEARCH_DEPTH";
+
 const params = {
   instanceId,
   firestorePaths: defineString("FIRESTORE_PATHS", {
@@ -120,7 +122,7 @@ const params = {
 
     default: false,
   }),
-  searchDepth: defineInt("AUTO_DISCOVERY_SEARCH_DEPTH", {
+  searchDepth: defineInt(SEARCH_DEPTH_PARAM, {
     label: "Auto discovery search depth",
     description:
       "If auto discovery is enabled, how deep should auto discovery find collections and documents. For example, setting to `1` would only discover root collections and documents, whereas setting to `9` would search sub-collections 9 levels deep. Defaults to `3`.",
@@ -164,6 +166,17 @@ function optional(value: string): string | undefined {
   return value.length > 0 ? value : undefined;
 }
 
+// defineInt resolves a missing or blank env var to 0, so a declared default
+// never reaches runtime. Report those as unset and let the resolver apply the
+// documented default. An explicit 0 is a real setting and is preserved.
+function optionalInt(
+  name: string,
+  param: { value(): number }
+): number | undefined {
+  const raw = process.env[name];
+  return raw === undefined || raw === "" ? undefined : param.value();
+}
+
 export function configFromEnv(): DeleteUserDataConfig {
   return {
     firestorePaths: optional(params.firestorePaths.value()),
@@ -177,7 +190,7 @@ export function configFromEnv(): DeleteUserDataConfig {
       optional(params.storageBucket.value()) ?? process.env.STORAGE_BUCKET,
     storagePaths: optional(params.storagePaths.value()),
     enableAutoDiscovery: params.enableAutoDiscovery.value(),
-    searchDepth: params.searchDepth.value(),
+    searchDepth: optionalInt(SEARCH_DEPTH_PARAM, params.searchDepth),
     searchFields: params.searchFields.value(),
     searchFunction: optional(params.searchFunction.value()),
     instanceId: params.instanceId.value(),

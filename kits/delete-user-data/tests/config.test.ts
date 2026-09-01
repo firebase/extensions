@@ -105,7 +105,6 @@ describe("configFromEnv", () => {
       firestoreDeleteMode: "shallow",
       rtdbLocation: "us-central1",
       enableAutoDiscovery: false,
-      searchDepth: 3,
       searchFields: "id,uid,userId",
       projectId: "demo-test",
     });
@@ -120,6 +119,7 @@ describe("configFromEnv", () => {
     expect(config.storagePaths).toBeUndefined();
     expect(config.searchFunction).toBeUndefined();
     expect(config.rtdbInstance).toBeUndefined();
+    expect(config.searchDepth).toBeUndefined();
   });
 
   test("declares the params the extension exposes", async () => {
