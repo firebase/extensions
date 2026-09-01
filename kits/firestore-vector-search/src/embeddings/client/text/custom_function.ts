@@ -57,12 +57,18 @@ export class CustomEndpointClient extends BaseEmbedClient {
     }
 
     const data = await response.json();
-    const parsed = z
-      .object({ embeddings: z.array(z.array(z.number())) })
-      .parse(data);
+    const schema = z.object({ embeddings: z.array(z.array(z.number())) });
+    let parsed: z.infer<typeof schema>;
+    try {
+      parsed = schema.parse(data);
+    } catch {
+      throw new Error(
+        "Error getting embeddings from custom endpoint: response does not match expected schema"
+      );
+    }
     if (parsed.embeddings.length !== inputs.length) {
       throw new Error(
-        "Error getting embeddings from custom endpoint: response does not contain embeddings for all inputs"
+        "Error getting embeddings from custom endpoint: response does not contain embeddings"
       );
     }
     return parsed.embeddings;

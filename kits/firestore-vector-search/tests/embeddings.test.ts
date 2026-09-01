@@ -206,6 +206,40 @@ describe("CustomEndpointClient", () => {
     await expect(client.getEmbeddings(["input"])).resolves.toEqual([[1, 2, 3]]);
   });
 
+  test("throws a clear error when the JSON does not match the expected schema", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ foo: "bar" }), {
+            headers: { "content-type": "application/json" },
+          })
+      )
+    );
+
+    const client = new CustomEndpointClient(customConfig());
+    await expect(client.getEmbeddings(["input"])).rejects.toThrow(
+      "Error getting embeddings from custom endpoint: response does not match expected schema"
+    );
+  });
+
+  test("throws a clear error when embeddings are missing for some inputs", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ embeddings: [[1, 2, 3]] }), {
+            headers: { "content-type": "application/json" },
+          })
+      )
+    );
+
+    const client = new CustomEndpointClient(customConfig());
+    await expect(client.getEmbeddings(["input1", "input2"])).rejects.toThrow(
+      /Error getting embeddings from custom endpoint: response does not contain embeddings$/
+    );
+  });
+
   test("throws a clear error when the response is not JSON", async () => {
     vi.stubGlobal(
       "fetch",
