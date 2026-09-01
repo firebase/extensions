@@ -35,6 +35,11 @@ on:
         required: true
         default: true
         type: boolean
+      use_firebase_functions_rc:
+        description: "Use firebase-functions RC"
+        required: true
+        default: false
+        type: boolean
       dry_run:
         description: "Dry run (validate without pushing/publishing)"
         required: true
@@ -78,10 +83,25 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Validate Inputs
+        env:
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          USE_FIREBASE_FUNCTIONS_RC: ${{ inputs.use_firebase_functions_rc }}
+        run: |
+          if [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ] && [ "$IS_PRERELEASE" != "true" ]; then
+            echo "::error::'Use firebase-functions RC' can only be checked when creating a kit RC (Publish as Release Candidate must be true)."
+            exit 1
+          fi
+
       - name: Install Dependencies & Run Tests
         working-directory: ${{ inputs.target_kit }}
+        env:
+          USE_FIREBASE_FUNCTIONS_RC: ${{ inputs.use_firebase_functions_rc }}
         run: |
           npm ci
+          if [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ]; then
+            npm install --save firebase-functions@next
+          fi
           npm test
 
   # =========================================================
@@ -104,6 +124,16 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "24"
+
+      - name: Validate Inputs
+        env:
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          USE_FIREBASE_FUNCTIONS_RC: ${{ inputs.use_firebase_functions_rc }}
+        run: |
+          if [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ] && [ "$IS_PRERELEASE" != "true" ]; then
+            echo "::error::'Use firebase-functions RC' can only be checked when creating a kit RC (Publish as Release Candidate must be true)."
+            exit 1
+          fi
 
       - name: Configure Git User
         if: ${{ !inputs.dry_run }}
@@ -216,8 +246,13 @@ jobs:
 
       - name: Install Dependencies & Build
         working-directory: ${{ inputs.target_kit }}
+        env:
+          USE_FIREBASE_FUNCTIONS_RC: ${{ inputs.use_firebase_functions_rc }}
         run: |
           npm ci --registry=https://registry.npmjs.org
+          if [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ]; then
+            npm install --save firebase-functions@next
+          fi
           npm run build
 
       - name: Apply Version Bump (Clear CHANGELOG on Stable Release Only)
@@ -265,6 +300,7 @@ jobs:
           BUMP_TYPE: ${{ steps.config.outputs.bump_type }}
           TARGET_TAG: ${{ steps.config.outputs.target_tag }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          USE_FIREBASE_FUNCTIONS_RC: ${{ inputs.use_firebase_functions_rc }}
           TAG_NAME: ${{ steps.config.outputs.tag_name }}
           NOTES: ${{ steps.changelog.outputs.notes }}
         run: |
@@ -280,6 +316,7 @@ jobs:
           echo " Version Bump:     $BUMP_TYPE"
           echo " NPM Dist-Tag:     $TARGET_TAG"
           echo " Release Type:     $( [ "$IS_PRERELEASE" = "true" ] && echo "Release Candidate (RC)" || echo "Stable Release" )"
+          echo " Functions RC:     $( [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ] && echo "Yes (firebase-functions@next)" || echo "No" )"
           echo " Git Tag Name:     $TAG_NAME"
           echo " CHANGELOG State:  $( [ "$IS_PRERELEASE" = "true" ] && echo "Preserved" || echo "Will be cleared on publish" )"
           echo "----------------------------------------------------------"
