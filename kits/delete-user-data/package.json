@@ -1,6 +1,11 @@
 {
-  "name": "@firebase/delete-user-data",
-  "version": "0.1.0",
+  "name": "@firebase-function-kits/delete-user-data",
+  "version": "0.0.2-rc.2",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firebase/extensions.git",
+    "directory": "kits/delete-user-data"
+  },
   "description": "Delete user data across Firestore, RTDB, and Storage on account deletion",
   "license": "Apache-2.0",
   "main": "lib/index.js",
@@ -21,6 +26,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
+    "test": "vitest run",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
@@ -33,6 +39,7 @@
   },
   "devDependencies": {
     "@types/lodash.chunk": "^4.2.7",
-    "@types/node-fetch": "^2.6.2"
+    "@types/node-fetch": "^2.6.2",
+    "vitest": "^4.1.10"
   }
 }

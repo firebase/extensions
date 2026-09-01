@@ -120,6 +120,12 @@ export const customFunctionError = (err: Error) => {
   logger.error(`Call to custom hook function threw an error`, err);
 };
 
+export const deletionEventMissingUid = (eventId: string) => {
+  logger.error(
+    `Auth deletion event ${eventId} carried no user id, so no data was deleted`
+  );
+};
+
 export function warnInvalidPaths(invalidPathCount: number, uid: string) {
   logger.warn(
     `Attempted to delete ${invalidPathCount} invalid paths for deleted user ${uid}`

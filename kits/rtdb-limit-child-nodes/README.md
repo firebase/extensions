@@ -114,6 +114,75 @@ Instance ids must be unique across all kit stanzas in the project, and every
 instance's function names are namespaced by its `kit-<instance id>-` prefix, so
 the instances cannot collide.
 
+## Differences from the Limit Child Nodes extension
+
+This kit is the extension repackaged as an npm package. The trimming logic is
+identical: it still watches direct children of one path, counts the parent's
+children on every create, and deletes the oldest first until the maximum is met.
+Your data is untouched by the move. What changes is the name of one setting, when
+bad values are caught, and where the function runs.
+
+### `NODE_PATH` is now `RTDB_NODE_PATH`
+
+Node.js reserves `NODE_PATH` for its own module resolution and overwrites it in
+the function runtime, so the setting had to be renamed. Copying `NODE_PATH` from
+an installed instance's config has no effect: the kit ignores it and falls back
+to its default of `messages`, so it watches the wrong path and silently trims
+nothing you care about. Rename the key to `RTDB_NODE_PATH` in your `.env`.
+
+Leading and trailing slashes are now trimmed, so `/rooms/messages/` and
+`rooms/messages` are equivalent.
+
+### `MAX_COUNT` now defaults to 100, and 0 is rejected
+
+Both settings were required at install; both now have defaults
+(`RTDB_NODE_PATH: messages`, `MAX_COUNT: 100`), so an incomplete config deploys
+instead of stopping to ask you. `MAX_COUNT` is also a proper integer setting now.
+The extension accepted `0`, which meant "delete every child on every write"; the
+kit rejects it along with negative and non-integer values.
+
+### Bad settings surface on the first write, not at install
+
+The install prompts used to reject a path containing spaces, a non-numeric
+`MAX_COUNT` and an invalid database instance id before anything was deployed.
+Those checks now run when the function handles its first event, so a bad value
+deploys cleanly and then throws on every write to the watched path:
+
+```
+maxCount must be a positive integer.
+```
+
+The parent node is not trimmed, and the only sign is the error in your function
+logs.
+
+### `SELECTED_DATABASE_INSTANCE` and the function's region
+
+`SELECTED_DATABASE_INSTANCE` still defaults to your project's default database,
+read from `FIREBASE_CONFIG` rather than injected by the install flow. If your
+`FIREBASE_CONFIG` has no `databaseURL`, there is no default and the CLI prompts
+for the instance at deploy time.
+
+The function itself no longer has a location setting. It deploys to your
+codebase's default region (`us-central1` unless you have changed it) rather than
+the location you picked at install.
+
+### The trigger is 2nd gen
+
+`rtdblimit` is a 2nd gen Realtime Database function where the extension was 1st
+gen. Its service account needs `roles/eventarc.eventReceiver` and
+`roles/run.invoker` on top of `roles/firebasedatabase.admin`; the Firebase CLI
+grants these for you. This otherwise only matters if you have alerting keyed to
+function generation.
+
+### Unchanged
+
+- The trigger fires on creates of direct children of the watched path, and the
+  parent is trimmed by deleting the oldest children first in a single update.
+- Nothing is deleted while the child count is at or below `MAX_COUNT`.
+- Errors are caught and logged rather than retried, and the log messages are
+  the same.
+- There are no events to subscribe to; the extension did not publish any either.
+
 ## API surface
 
 - **Main entry** (`@firebase/rtdb-limit-child-nodes`): exports `rtdblimit`. The

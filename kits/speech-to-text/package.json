@@ -1,6 +1,11 @@
 {
-  "name": "@firebase/speech-to-text",
-  "version": "0.1.0",
+  "name": "@firebase-function-kits/speech-to-text",
+  "version": "0.0.2-rc.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firebase/extensions.git",
+    "directory": "kits/speech-to-text"
+  },
   "description": "Transcribe audio files in Cloud Storage to text using Cloud Speech-to-Text, as a deployable Firebase Function",
   "license": "Apache-2.0",
   "main": "lib/index.js",
@@ -21,6 +26,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
+    "test": "vitest run",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
@@ -33,6 +39,7 @@
     "mkdirp": "^3.0.1"
   },
   "devDependencies": {
-    "@types/fluent-ffmpeg": "^2.1.27"
+    "@types/fluent-ffmpeg": "^2.1.27",
+    "vitest": "^4.1.10"
   }
 }

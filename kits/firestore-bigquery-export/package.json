@@ -1,6 +1,11 @@
 {
-  "name": "@firebase/firestore-bigquery-export",
-  "version": "0.1.0",
+  "name": "@firebase-function-kits/firestore-bigquery-export",
+  "version": "0.0.2-rc.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firebase/extensions.git",
+    "directory": "kits/firestore-bigquery-export"
+  },
   "description": "Stream a Cloud Firestore collection to BigQuery as a deployable Firebase Function",
   "license": "Apache-2.0",
   "main": "lib/index.js",

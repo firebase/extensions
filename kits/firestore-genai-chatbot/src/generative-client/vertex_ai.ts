@@ -16,11 +16,10 @@
 
 import {
   type Content,
-  type GenerateContentRequest,
+  GoogleGenAI,
   type Part,
-  VertexAI,
   type SafetySetting as VertexSafetySetting,
-} from "@google-cloud/vertexai";
+} from "@google/genai";
 import { logger } from "../logger";
 import { DiscussionClient, type Message } from "./base_class";
 
@@ -50,7 +49,7 @@ enum Role {
 
 /** Chat client backed by the Vertex AI SDK. */
 export class VertexDiscussionClient extends DiscussionClient<
-  VertexAI,
+  GoogleGenAI,
   GeminiChatOptions,
   ApiMessage
 > {
@@ -66,7 +65,8 @@ export class VertexDiscussionClient extends DiscussionClient<
     modelLocation?: string;
   }) {
     super();
-    this.client = new VertexAI({
+    this.client = new GoogleGenAI({
+      vertexai: true,
       project: projectId,
       location: modelLocation,
     });
@@ -96,25 +96,21 @@ export class VertexDiscussionClient extends DiscussionClient<
       throw new Error("Client not initialized.");
     }
 
-    const generativeModel = this.client.preview.getGenerativeModel({
-      model: this.modelName,
-    });
-
     const contents = [...this.messagesToApi(history), latestApiMessage];
 
-    const request: GenerateContentRequest = {
-      contents,
-      generationConfig: {
-        topK: options.topK,
-        topP: options.topP,
-        temperature: options.temperature,
-        candidateCount: options.candidateCount,
-        maxOutputTokens: options.maxOutputTokens,
-      },
-      safetySettings: options.safetySettings,
-    };
-    const responseStream = await generativeModel
-      .generateContentStream(request)
+    const result = await this.client.models
+      .generateContent({
+        model: this.modelName,
+        contents,
+        config: {
+          topK: options.topK,
+          topP: options.topP,
+          temperature: options.temperature,
+          candidateCount: options.candidateCount,
+          maxOutputTokens: options.maxOutputTokens,
+          safetySettings: options.safetySettings,
+        },
+      })
       .catch((e) => {
         logger.error("Failed to generate response", e);
         // The upstream error can expose the API key, so surface a safe message.
@@ -122,7 +118,6 @@ export class VertexDiscussionClient extends DiscussionClient<
           "Failed to generate response, see function logs for more details."
         );
       });
-    const result = await responseStream.response;
 
     if (
       !result.candidates ||

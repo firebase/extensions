@@ -1,11 +1,10 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "lib",
     "rootDir": "src",
     "target": "ES2022",
-    "module": "Node16",
-    "moduleResolution": "Node16",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,

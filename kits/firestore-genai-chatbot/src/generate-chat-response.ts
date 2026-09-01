@@ -30,11 +30,6 @@ import type { GenerateMessageOptions } from "./types";
  * @returns A function mapping a prompt + message snapshot to the update object.
  */
 export function createGenerateChatResponse(config: ResolvedGenaiChatbotConfig) {
-  const shouldAddCandidatesField =
-    config.candidatesField &&
-    config.candidateCount &&
-    config.candidateCount > 1;
-
   return async function generateChatResponse(
     prompt: string,
     after: DocumentSnapshot
@@ -45,6 +40,10 @@ export function createGenerateChatResponse(config: ResolvedGenaiChatbotConfig) {
     let requestOptions: GenerateMessageOptions = {
       history,
       context: config.context,
+      temperature: config.temperature,
+      topP: config.topP,
+      topK: config.topK,
+      candidateCount: config.candidateCount,
       maxOutputTokens: config.maxOutputTokens,
       safetySettings: config.safetySettings || [],
     };
@@ -53,6 +52,11 @@ export function createGenerateChatResponse(config: ResolvedGenaiChatbotConfig) {
       const discussionOptions = await fetchDiscussionOptions(ref);
       requestOptions = { ...requestOptions, ...discussionOptions };
     }
+
+    const shouldAddCandidatesField =
+      config.candidatesField &&
+      requestOptions.candidateCount &&
+      requestOptions.candidateCount > 1;
 
     const discussionClient = getGenerativeClient(config);
     const result = await discussionClient.send(prompt, requestOptions);

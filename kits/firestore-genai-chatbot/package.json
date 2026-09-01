@@ -1,6 +1,11 @@
 {
-  "name": "@firebase/firestore-genai-chatbot",
-  "version": "0.1.0",
+  "name": "@firebase-function-kits/firestore-genai-chatbot",
+  "version": "0.0.2-rc.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firebase/extensions.git",
+    "directory": "kits/firestore-genai-chatbot"
+  },
   "description": "Conversational GenAI chatbot backed by Firestore",
   "license": "Apache-2.0",
   "main": "lib/index.js",
@@ -21,18 +26,22 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
+    "test": "vitest run",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
   "dependencies": {
     "@genkit-ai/firebase": "^1.24.0",
     "@genkit-ai/google-genai": "^1.24.0",
-    "@google-cloud/vertexai": "^1.1.0",
+    "@google/genai": "^1.52.0",
     "@google/generative-ai": "^0.1.1",
     "firebase-admin": "^14.1.0",
     "firebase-functions": "7.3.2",
     "genkit": "^1.24.0",
     "google-gax": "^4.3.2",
     "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.10"
   }
 }

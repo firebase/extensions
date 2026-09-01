@@ -1,0 +1,345 @@
+name: Release Kit
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_kit:
+        description: "Kit / Package to publish"
+        required: true
+        type: choice
+        options:
+          - "kits/bigquery-firestore-export"
+          - "kits/delete-user-data"
+          - "kits/firestore-bigquery-export"
+          - "kits/firestore-bundle-builder"
+          - "kits/firestore-counter"
+          - "kits/firestore-genai-chatbot"
+          - "kits/firestore-incremental-capture"
+          - "kits/firestore-send-email"
+          - "kits/firestore-translate-text"
+          - "kits/firestore-vector-search"
+          - "kits/rtdb-limit-child-nodes"
+          - "kits/speech-to-text"
+          - "kits/storage-resize-images"
+      bump_level:
+        description: "Version Bump Level"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - "patch"
+          - "minor"
+          - "major"
+      is_prerelease:
+        description: "Publish as Release Candidate (RC)"
+        required: true
+        default: true
+        type: boolean
+      dry_run:
+        description: "Dry run (validate without pushing/publishing)"
+        required: true
+        default: true
+        type: boolean
+
+# All releases push to the same branch; a concurrent run would fail its push
+# after already publishing to npm, leaving a version with no commit or tag.
+# GitHub keeps at most ONE pending run per group: with a run in progress and
+# one queued, a third dispatch cancels the queued one. Dispatch kits one at a
+# time and check for a "Canceled" run before assuming a release happened.
+concurrency:
+  group: release-kit
+  cancel-in-progress: false
+
+jobs:
+  # =========================================================
+  # 1. TEST JOB (Low Permissions: Read-Only)
+  # =========================================================
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      # Kits live only on the kits branch; the ref is pinned so dispatching
+      # from any branch (including next, which lists the workflow in the UI)
+      # releases the same content.
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # zizmor: ignore[artipacked]
+        with:
+          ref: "kits"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+
+      - name: Install Dependencies & Run Tests
+        working-directory: ${{ inputs.target_kit }}
+        run: |
+          npm ci
+          npm test
+
+  # =========================================================
+  # 2. RELEASE JOB (Elevated Permissions: Write)
+  # =========================================================
+  release:
+    name: Version, Publish & Tag Release
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to push version commit, git tag & create GitHub Release
+      id-token: write # Needed to publish to npm via trusted publishing
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # zizmor: ignore[artipacked]
+        with:
+          ref: "kits"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+
+      - name: Configure Git User
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Read & Validate CHANGELOG.md
+        id: changelog
+        working-directory: ${{ inputs.target_kit }}
+        run: |
+          CHANGELOG_FILE="CHANGELOG.md"
+
+          if [ ! -f "$CHANGELOG_FILE" ]; then
+            echo "::error file=${{ inputs.target_kit }}/CHANGELOG.md::CHANGELOG.md is missing! Releasing requires a CHANGELOG.md file."
+            exit 1
+          fi
+
+          NOTES=$(cat "$CHANGELOG_FILE")
+
+          if [ -z "$(echo "$NOTES" | tr -d '[:space:]')" ]; then
+            echo "::error file=${{ inputs.target_kit }}/CHANGELOG.md::CHANGELOG.md is empty! Please populate it with release notes before publishing."
+            exit 1
+          fi
+
+          # Output notes via multiline heredoc
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "notes<<$EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
+      - name: Determine Next Version
+        id: config
+        working-directory: ${{ inputs.target_kit }}
+        env:
+          BUMP_LEVEL: ${{ inputs.bump_level }}
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          # The registry is the source of truth for versions: npm reserves every
+          # version ever published (even after unpublish), and package.json on the
+          # branch can lag behind what was actually released.
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
+        run: |
+          set -o pipefail
+
+          PKG_NAME=$(node -p "require('./package.json').name")
+          LOCAL_VER=$(node -p "require('./package.json').version")
+
+          # The packument is fetched directly rather than via `npm view`: npm
+          # hides a fully unpublished package behind E404 (dropping its reserved
+          # versions in time.unpublished) and its --json output shape changes
+          # across npm majors. The registry itself 404s only for never-published
+          # names. time keys include per-version-unpublished versions.
+          PACKUMENT="$RUNNER_TEMP/packument.json"
+          HTTP_STATUS=$(curl -sS --retry 3 -o "$PACKUMENT" -w '%{http_code}' "$NPM_CONFIG_REGISTRY/$PKG_NAME")
+          if [ "$HTTP_STATUS" = "404" ]; then
+            TAKEN=""
+          elif [ "$HTTP_STATUS" != "200" ]; then
+            echo "::error::Registry returned HTTP $HTTP_STATUS for $PKG_NAME; cannot trust the version computation."
+            exit 1
+          else
+            TAKEN=$(node -e '
+              const data = JSON.parse(require("fs").readFileSync(0, "utf8"));
+              const time = data.time || {};
+              const meta = ["created", "modified", "unpublished"];
+              const keys = Object.keys(time).filter(v => !meta.includes(v));
+              const unpub = (time.unpublished && time.unpublished.versions) || [];
+              const unpubList = Array.isArray(unpub) ? unpub : Object.keys(unpub);
+              console.log(keys.concat(unpubList).join(" "));
+            ' < "$PACKUMENT")
+          fi
+
+          HIGHEST=$(npx --yes semver@7.8.5 $LOCAL_VER $TAKEN | tail -n 1)
+          # 0.0.0 seed keeps grep from emptying the pipe when no stable exists yet.
+          HIGHEST_STABLE=$(npx --yes semver@7.8.5 0.0.0 $LOCAL_VER $TAKEN | grep -v -- - | tail -n 1)
+
+          # The bump level is applied to the highest stable version; an existing
+          # rc line continues unless the requested level opens a higher line.
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            NEW_VER=$(npx --yes semver@7.8.5 -i "pre${BUMP_LEVEL}" --preid rc "$HIGHEST_STABLE")
+            BUMP_TYPE="pre${BUMP_LEVEL}"
+            if [[ "$HIGHEST" == *-rc.* ]]; then
+              CONTINUED=$(npx --yes semver@7.8.5 -i prerelease --preid rc "$HIGHEST")
+              if [ "$(npx --yes semver@7.8.5 "$NEW_VER" "$CONTINUED" | tail -n 1)" = "$CONTINUED" ]; then
+                NEW_VER="$CONTINUED"
+                BUMP_TYPE="prerelease"
+              fi
+            fi
+            TARGET_TAG="next"
+          else
+            NEW_VER=$(npx --yes semver@7.8.5 -i "$BUMP_LEVEL" "$HIGHEST_STABLE")
+            BUMP_TYPE="$BUMP_LEVEL"
+            TARGET_TAG="latest (and next)"
+          fi
+
+          for v in $TAKEN; do
+            if [ "$v" = "$NEW_VER" ]; then
+              echo "::error::Computed version $NEW_VER already exists on the registry."
+              exit 1
+            fi
+          done
+
+          echo "current_ver=$LOCAL_VER" >> $GITHUB_OUTPUT
+          echo "highest_ver=$HIGHEST" >> $GITHUB_OUTPUT
+          echo "highest_stable=$HIGHEST_STABLE" >> $GITHUB_OUTPUT
+          echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+          echo "target_tag=$TARGET_TAG" >> $GITHUB_OUTPUT
+          echo "version=$NEW_VER" >> $GITHUB_OUTPUT
+          echo "pkg_name=$PKG_NAME" >> $GITHUB_OUTPUT
+          echo "tag_name=${PKG_NAME}@${NEW_VER}" >> $GITHUB_OUTPUT
+
+      - name: Install Dependencies & Build
+        working-directory: ${{ inputs.target_kit }}
+        run: |
+          npm ci --registry=https://registry.npmjs.org
+          npm run build
+
+      - name: Apply Version Bump (Clear CHANGELOG on Stable Release Only)
+        working-directory: ${{ inputs.target_kit }}
+        env:
+          NEW_VER: ${{ steps.config.outputs.version }}
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          # npm version only performs git operations when .git sits next to
+          # package.json; kits live in kits/<name>/ with .git at the repo root,
+          # so git commit/tag are done explicitly in the next step.
+          npm version "$NEW_VER" --no-git-tag-version
+
+          if [ "$DRY_RUN" != "true" ] && [ "$IS_PRERELEASE" != "true" ]; then
+            echo "Stable release detected: clearing CHANGELOG.md..."
+            > CHANGELOG.md
+          fi
+
+      - name: Commit & Tag Release
+        if: ${{ !inputs.dry_run }}
+        env:
+          TARGET_KIT: ${{ inputs.target_kit }}
+          TAG_NAME: ${{ steps.config.outputs.tag_name }}
+        run: |
+          git add "$TARGET_KIT/package.json"
+          # npm version also bumps the lockfile; kits currently ship npm-shrinkwrap.json.
+          [ -f "$TARGET_KIT/npm-shrinkwrap.json" ] && git add "$TARGET_KIT/npm-shrinkwrap.json"
+          [ -f "$TARGET_KIT/package-lock.json" ] && git add "$TARGET_KIT/package-lock.json"
+          [ -f "$TARGET_KIT/CHANGELOG.md" ] && git add "$TARGET_KIT/CHANGELOG.md"
+          # git commit exits non-zero if the bump staged no changes, so a broken
+          # bump fails the release instead of publishing without a release commit.
+          git commit -m "chore(release): $TAG_NAME [skip ci]"
+          git tag -a "$TAG_NAME" -m "$TAG_NAME"
+
+      - name: Dry Run Summary
+        if: ${{ inputs.dry_run }}
+        env:
+          PKG_NAME: ${{ steps.config.outputs.pkg_name }}
+          TARGET_KIT: ${{ inputs.target_kit }}
+          CURRENT_VER: ${{ steps.config.outputs.current_ver }}
+          HIGHEST_VER: ${{ steps.config.outputs.highest_ver }}
+          HIGHEST_STABLE: ${{ steps.config.outputs.highest_stable }}
+          VERSION: ${{ steps.config.outputs.version }}
+          BUMP_TYPE: ${{ steps.config.outputs.bump_type }}
+          TARGET_TAG: ${{ steps.config.outputs.target_tag }}
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          TAG_NAME: ${{ steps.config.outputs.tag_name }}
+          NOTES: ${{ steps.changelog.outputs.notes }}
+        run: |
+          echo "=========================================================="
+          echo "                 DRY RUN SUMMARY                          "
+          echo "=========================================================="
+          echo " Package Name:     $PKG_NAME"
+          echo " Target Directory: $TARGET_KIT"
+          echo " package.json Ver: $CURRENT_VER"
+          echo " Highest Known:    $HIGHEST_VER"
+          echo " Highest Stable:   $HIGHEST_STABLE"
+          echo " Target Version:   $VERSION"
+          echo " Version Bump:     $BUMP_TYPE"
+          echo " NPM Dist-Tag:     $TARGET_TAG"
+          echo " Release Type:     $( [ "$IS_PRERELEASE" = "true" ] && echo "Release Candidate (RC)" || echo "Stable Release" )"
+          echo " Git Tag Name:     $TAG_NAME"
+          echo " CHANGELOG State:  $( [ "$IS_PRERELEASE" = "true" ] && echo "Preserved" || echo "Will be cleared on publish" )"
+          echo "----------------------------------------------------------"
+          echo " Release Notes from CHANGELOG.md:"
+          echo "$NOTES"
+          echo "=========================================================="
+
+      - name: Publish to NPM
+        working-directory: ${{ inputs.target_kit }}
+        env:
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          PKG_NAME: ${{ steps.config.outputs.pkg_name }}
+          VERSION: ${{ steps.config.outputs.version }}
+        run: |
+          DRY_RUN_FLAG=""
+          if [ "$DRY_RUN" = "true" ]; then
+            DRY_RUN_FLAG="--dry-run"
+            echo "Executing npm publish with --dry-run..."
+          fi
+
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            npm publish --tag next --provenance --access public $DRY_RUN_FLAG
+          else
+            npm publish --tag latest --provenance --access public $DRY_RUN_FLAG
+            if [ "$DRY_RUN" != "true" ]; then
+              npm dist-tag add ${PKG_NAME}@${VERSION} next
+            fi
+          fi
+
+      # Pushed only after a successful publish: a failed publish leaves the
+      # branch untouched, and the next run recomputes the version from the
+      # registry either way.
+      - name: Push Version Commit & Tag to Branch
+        if: ${{ !inputs.dry_run }}
+        env:
+          TARGET_BRANCH: "kits"
+          TAG_NAME: ${{ steps.config.outputs.tag_name }}
+        run: |
+          git push --atomic origin "HEAD:refs/heads/$TARGET_BRANCH" "refs/tags/$TAG_NAME"
+
+      - name: Create GitHub Release via GitHub CLI
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.config.outputs.tag_name }}
+          PKG_NAME: ${{ steps.config.outputs.pkg_name }}
+          VERSION: ${{ steps.config.outputs.version }}
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          NOTES: ${{ steps.changelog.outputs.notes }}
+          TARGET_BRANCH: "kits"
+        run: |
+          PRERELEASE_FLAG=""
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          # A re-run after a transient gh failure must not mint a new version
+          # just to get a release page, so creation is skipped if it exists.
+          if gh release view "$TAG_NAME" > /dev/null 2>&1; then
+            echo "Release $TAG_NAME already exists; skipping creation."
+            exit 0
+          fi
+
+          gh release create "$TAG_NAME" \
+            --title "$PKG_NAME v$VERSION" \
+            --notes "$NOTES" \
+            --target "$TARGET_BRANCH" \
+            $PRERELEASE_FLAG

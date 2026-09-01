@@ -1,6 +1,11 @@
 {
-  "name": "@firebase/firestore-bundle-builder",
-  "version": "0.1.0",
+  "name": "@firebase-function-kits/firestore-bundle-builder",
+  "version": "0.0.2-rc.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firebase/extensions.git",
+    "directory": "kits/firestore-bundle-builder"
+  },
   "description": "Build and serve Firestore data bundles as a deployable Firebase Function",
   "license": "Apache-2.0",
   "main": "lib/index.js",
@@ -21,6 +26,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
+    "test": "vitest run",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
@@ -29,5 +35,8 @@
     "@google-cloud/storage": "^7.19.0",
     "firebase-admin": "^13.2.0",
     "firebase-functions": "7.3.2"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.10"
   }
 }

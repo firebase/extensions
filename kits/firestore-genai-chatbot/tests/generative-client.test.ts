@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { GenerativeAIProvider, resolveConfig } from "../src/export-config";
 import { getGenerativeClient } from "../src/generative-client";
 import { GenkitDiscussionClient } from "../src/generative-client/genkit";
@@ -63,5 +63,48 @@ describe("GenkitDiscussionClient.shouldUseGenkitClient", () => {
   test("false when more than one candidate is requested", () => {
     const config = resolveConfig({ ...baseInput, candidateCount: 2 });
     expect(GenkitDiscussionClient.shouldUseGenkitClient(config)).toBe(false);
+  });
+});
+
+describe("VertexDiscussionClient", () => {
+  test("maps request generation options to the Google Gen AI SDK", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        { content: { parts: [{ text: "first" }] } },
+        { content: { parts: [{ text: "second" }] } },
+      ],
+    });
+    const client = new VertexDiscussionClient({
+      modelName: "gemini-2.5-flash",
+      projectId: "project",
+      modelLocation: "us-central1",
+    });
+    client.client = { models: { generateContent } } as any;
+
+    const result = await client.send("hello", {
+      model: "gemini-2.5-flash",
+      projectId: "project",
+      location: "us-central1",
+      temperature: 0.7,
+      topP: 0.8,
+      topK: 9,
+      candidateCount: 2,
+      maxOutputTokens: 50,
+      safetySettings: [],
+    });
+
+    expect(generateContent).toHaveBeenCalledWith({
+      model: "gemini-2.5-flash",
+      contents: [{ role: "user", parts: [{ text: "hello" }] }],
+      config: {
+        temperature: 0.7,
+        topP: 0.8,
+        topK: 9,
+        candidateCount: 2,
+        maxOutputTokens: 50,
+        safetySettings: [],
+      },
+    });
+    expect(result.candidates).toEqual(["first", "second"]);
   });
 });

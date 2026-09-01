@@ -33,16 +33,65 @@ function defaultDatabaseInstance(): string | undefined {
 
 const databaseInstanceDefault = defaultDatabaseInstance();
 
+const DATABASE_INSTANCE_VALIDATION = {
+  text: {
+    example: "my-instance",
+    validationRegex: /^([0-9a-z_.-]*)$/,
+    validationErrorMessage: "Invalid database instance",
+  },
+};
+
 const params = {
   // Do not use NODE_PATH: Node.js reserves it for module resolution and will
   // overwrite the param at runtime (and can freeze a bad ref at deploy).
-  nodePath: defineString("RTDB_NODE_PATH", { default: "messages" }),
-  maxCount: defineInt("MAX_COUNT", { default: 100 }),
+  nodePath: defineString("RTDB_NODE_PATH", {
+    label: "Realtime Database path",
+    description:
+      "What is the Realtime Database path for which you want to limit the number of child nodes?",
+
+    input: {
+      text: {
+        example: "path/to/limit",
+
+        validationRegex: /^\S+$/,
+        validationErrorMessage: "Path cannot have spaces.",
+      },
+    },
+  }),
+  // Extension regex, kept verbatim for strict parity. It accepts 0 even
+  // though a MAX_COUNT of 0 would delete every child on every write;
+  // resolveRtdbLimitConfig still rejects non-positive values at runtime.
+  maxCount: defineInt("MAX_COUNT", {
+    label: "Maximum count of nodes to keep",
+    description:
+      "What is the maximum count of nodes to keep in your specified database path? The oldest nodes will be deleted first to maintain this max count.",
+
+    input: {
+      text: {
+        example: "10",
+
+        validationRegex: /^\d+$/,
+        validationErrorMessage:
+          "Invalid MAX_COUNT, must be a positive integer.",
+      },
+    },
+  }),
   databaseInstance: databaseInstanceDefault
     ? defineString("SELECTED_DATABASE_INSTANCE", {
+        label: "Realtime Database",
+        description:
+          "From which Realtime Database instance do you want to limit child nodes?",
+
         default: databaseInstanceDefault,
+        input: DATABASE_INSTANCE_VALIDATION,
       })
-    : defineString("SELECTED_DATABASE_INSTANCE"),
+    : defineString("SELECTED_DATABASE_INSTANCE", {
+        label: "Realtime Database",
+        description:
+          "From which Realtime Database instance do you want to limit child nodes?",
+
+        input: DATABASE_INSTANCE_VALIDATION,
+      }),
 };
 
 export function configFromEnv(): RtdbLimitConfig {

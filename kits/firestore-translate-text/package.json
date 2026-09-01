@@ -1,6 +1,11 @@
 {
-  "name": "@firebase/firestore-translate-text",
-  "version": "0.1.0",
+  "name": "@firebase-function-kits/firestore-translate-text",
+  "version": "0.0.2-rc.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firebase/extensions.git",
+    "directory": "kits/firestore-translate-text"
+  },
   "description": "Translate text written to a Firestore collection",
   "license": "Apache-2.0",
   "main": "lib/index.js",
@@ -21,6 +26,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
+    "test": "vitest run",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
@@ -30,5 +36,8 @@
     "firebase-admin": "^14.1.0",
     "firebase-functions": "7.3.2",
     "genkit": "^1.31.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.10"
   }
 }

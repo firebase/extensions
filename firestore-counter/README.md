@@ -6,9 +6,9 @@
 
 
 
-**Details**: <!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/firestore-counter" package="@firebase/firestore-counter" -->
+**Details**: <!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/firestore-counter" package="@firebase-function-kits/firestore-counter" -->
 
-> **Deprecation Notice:** The Firebase Extension `firebase/firestore-counter` is deprecated. Please migrate to the [`@firebase/firestore-counter`](https://www.npmjs.com/package/@firebase/firestore-counter) package.
+> **Deprecation Notice:** The Firebase Extension `firebase/firestore-counter` is deprecated. Please migrate to the [`@firebase-function-kits/firestore-counter`](https://www.npmjs.com/package/@firebase-function-kits/firestore-counter) package.
 
 Use this extension to add a highly scalable counter service to your app. This is ideal for applications that count viral actions or any very high-velocity action such as views, likes, or shares.
 

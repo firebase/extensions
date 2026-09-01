@@ -1,6 +1,11 @@
 {
-  "name": "@firebase/firestore-send-email",
-  "version": "0.1.0",
+  "name": "@firebase-function-kits/firestore-send-email",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firebase/extensions.git",
+    "directory": "kits/firestore-send-email"
+  },
   "description": "Send emails based on documents written to Firestore",
   "license": "Apache-2.0",
   "main": "lib/index.js",
@@ -21,6 +26,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
+    "test": "vitest run",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
@@ -31,5 +37,8 @@
     "handlebars": "^4.7.8",
     "nodemailer": "^7.0.5",
     "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.10"
   }
 }

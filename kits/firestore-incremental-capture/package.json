@@ -1,6 +1,12 @@
 {
-  "name": "@firebase/firestore-incremental-capture",
-  "version": "0.1.0",
+  "name": "@firebase-function-kits/firestore-incremental-capture",
+  "version": "0.0.2-rc.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firebase/extensions.git",
+    "directory": "kits/firestore-incremental-capture"
+  },
+  "private": false,
   "description": "Incremental point-in-time capture of Firestore changes as a deployable Firebase Function",
   "license": "Apache-2.0",
   "main": "lib/index.js",
@@ -32,6 +38,7 @@
     "firebase-functions": "7.3.2"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
     "vitest": "^3.2.4"
   }
 }

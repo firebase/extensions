@@ -15,7 +15,7 @@
  */
 
 import type { GoogleGenerativeAI } from "@google/generative-ai";
-import type { VertexAI } from "@google-cloud/vertexai";
+import type { GoogleGenAI } from "@google/genai";
 import type { Genkit } from "genkit";
 import {
   GenerativeAIProvider,
@@ -26,7 +26,7 @@ import { GenkitDiscussionClient } from "./genkit";
 import { GeminiDiscussionClient } from "./google_ai";
 import { VertexDiscussionClient } from "./vertex_ai";
 
-type Client = Genkit | VertexAI | GoogleGenerativeAI;
+type Client = Genkit | GoogleGenAI | GoogleGenerativeAI;
 
 /**
  * Selects and constructs the generative client for a resolved config. Prefers
