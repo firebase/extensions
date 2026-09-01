@@ -14,6 +14,22 @@
  * limitations under the License.
  */
 
+const SECRET_KEY_PATTERN = /api[-_]?key|secret|password|token|credential/i;
+
+/**
+ * Returns a copy of the config with every set, secret-shaped value replaced by
+ * `"<omitted>"`, so config logging never writes a credential to Cloud Logging.
+ */
+export function redactSecrets(config: object): Record<string, unknown> {
+  const redacted: Record<string, unknown> = { ...config };
+  for (const key of Object.keys(redacted)) {
+    if (SECRET_KEY_PATTERN.test(key) && redacted[key] !== undefined) {
+      redacted[key] = "<omitted>";
+    }
+  }
+  return redacted;
+}
+
 export const messages = {
   complete: () => "Completed execution of extension",
   documentCreatedNoInput: () =>
@@ -31,15 +47,15 @@ export const messages = {
   error: (err: Error) => ["Failed execution of extension", err],
   fieldNamesNotDifferent: () =>
     "The `Input` and `Output` field names must be different for this extension to function correctly",
-  init: (config = {}) => [
+  init: (config: object = {}) => [
     "Initializing extension with the parameter values",
-    config,
+    redactSecrets(config),
   ],
   inputFieldNameIsOutputPath: () =>
     "The `Input` field name must not be the same as an `Output` path for this extension to function correctly",
-  start: (config = {}) => [
+  start: (config: object = {}) => [
     "Started execution of extension with configuration",
-    config,
+    redactSecrets(config),
   ],
   translateStringComplete: (
     string: string,
