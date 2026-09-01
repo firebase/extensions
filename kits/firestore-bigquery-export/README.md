@@ -1,4 +1,4 @@
-# @firebase/firestore-bigquery-export
+# @firebase-function-kits/firestore-bigquery-export
 
 Stream a Cloud Firestore collection to BigQuery. This is the Stream Firestore to
 BigQuery Firebase Extension as an npm package you add to your own Firebase
@@ -12,7 +12,7 @@ project; there is no hosted version, so you deploy them yourself.
 ## Install
 
 ```sh
-npm install @firebase/firestore-bigquery-export
+npm install @firebase-function-kits/firestore-bigquery-export
 ```
 
 ## Required IAM
@@ -46,7 +46,7 @@ export {
   fsexportbigquery,
   initBigQuerySync,
   setupBigQuerySync,
-} from "@firebase/firestore-bigquery-export";
+} from "@firebase-function-kits/firestore-bigquery-export";
 ```
 
 and configure them with a `.env` (or `.env.<projectId>`):
@@ -215,9 +215,78 @@ missing when a write arrives, the inline write fails, the handler calls
 failure is surfaced to the function runtime retry policy (`retry: true` on
 `fsexportbigquery`).
 
+## Differences from the Stream Firestore to BigQuery extension
+
+This kit is the extension repackaged as an npm package, but a few things behave
+differently. If you are moving from an installed extension instance, read this
+section before you deploy.
+
+### Boolean settings use `true` / `false`
+
+`WILDCARD_IDS`, `USE_NEW_SNAPSHOT_QUERY_SYNTAX` and `EXCLUDE_OLD_DATA` are
+boolean params, and only the literal string `true` enables them. The extension
+used `yes` / `no` for the last two, so copying an old config across leaves them
+silently disabled. Change any `yes` to `true` in your `.env`.
+
+### Failed writes retry differently
+
+The extension pushed a failed BigQuery write onto a Cloud Tasks queue
+(`syncBigQuery`) and retried it from there. This kit has no task queue on the
+write path. A failed write is retried once in place, and anything still failing
+is handed to the Cloud Functions runtime retry policy, which redelivers the
+Firestore event.
+
+The practical effects: retries no longer show up as a separate function or
+queue in the console, and the two knobs that tuned that queue,
+`MAX_DISPATCHES_PER_SECOND` and `MAX_ENQUEUE_ATTEMPTS`, no longer exist.
+
+### Events
+
+`onSuccess` is no longer published. The extension emitted it from the task
+queue handler, which is gone, so the kit publishes `onStart` and `onError`
+only.
+
+Events are published under `firebase.extensions.firestore-bigquery-export.v1.*`
+only. The extension also published a duplicate copy of every event under
+`firebase.extensions.firestore-counter.v1.*`, a historical naming mistake kept
+for backwards compatibility. If you have Eventarc triggers listening on those
+`firestore-counter` types, point them at the `firestore-bigquery-export` types.
+
+### Wildcard columns include the document ID
+
+With `WILDCARD_IDS=true`, the wildcard column now contains a `documentId` key
+alongside the path parameters from your collection path. The extension wrote
+the path parameters only.
+
+### Functions deploy to your Firestore region
+
+The extension let you pick a function location separately from the Firestore
+database location. Here, `DATABASE_REGION` sets both: the trigger, the
+lifecycle tasks, and the database being watched.
+
+### Defaults
+
+Two settings now have defaults rather than being passed through empty:
+`DATASET_LOCATION` defaults to `us`, and `BIGQUERY_PROJECT_ID` defaults to the
+project the functions are deployed to.
+
+### Tooling that is not included
+
+The extension shipped companion scripts that this package does not:
+
+- `fs-bq-import-collection`, for backfilling documents that already existed
+  before the export started.
+- `gen-schema-view`, for generating strongly typed BigQuery views over the
+  changelog.
+- The cross-project access grant scripts.
+
+`IMPORT_COLLECTION_PATH` is not a setting here. If you rely on any of these,
+keep using the versions from the extension repository. They operate on the same
+BigQuery changelog table, so they still work against data this kit writes.
+
 ## API surface
 
-- **Main entry** (`@firebase/firestore-bigquery-export`): exports
+- **Main entry** (`@firebase-function-kits/firestore-bigquery-export`): exports
   `fsexportbigquery`, `initBigQuerySync`, and `setupBigQuerySync`, and
   registers the first-deploy / redeploy provisioning hooks. Runtime config is
   resolved lazily on first invocation. Use this entry from Firebase

@@ -1,4 +1,4 @@
-# @firebase/firestore-send-email
+# @firebase-function-kits/firestore-send-email
 
 Send emails based on documents written to Firestore. This is the Trigger Email
 from Firestore Firebase Extension as an npm package you add to your own Firebase
@@ -12,7 +12,7 @@ yourself.
 ## Install
 
 ```sh
-npm install @firebase/firestore-send-email
+npm install @firebase-function-kits/firestore-send-email
 ```
 
 ## Required IAM
@@ -34,7 +34,7 @@ Export the function from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
-export { processQueue } from "@firebase/firestore-send-email";
+export { processQueue } from "@firebase-function-kits/firestore-send-email";
 ```
 
 and configure it with a `.env` (or `.env.<projectId>`).
@@ -134,9 +134,104 @@ such as `onStart`, `onProcessing`, `onSuccess`, `onError`, `onComplete`,
 `onPending`, and `onRetry` under
 `firebase.extensions.firestore-send-email.v1.*`.
 
+## Differences from the Trigger Email from Firestore extension
+
+This kit is version 0.2.10 of the extension repackaged as an npm package you add
+to your own functions codebase. Delivery, the `delivery` state machine, the
+lease and retry handling, Handlebars templates and partials, UID recipient
+lookup, the SendGrid transport, payload validation and the TTL field are all
+ported verbatim. Every setting keeps its extension environment variable name and
+default, so a `.env` copied from your installed instance needs no value changes.
+What does change is where the four secrets come from, where the function runs,
+and what is no longer checked or set up for you.
+
+### Create the four secrets by name, all of them
+
+The extension stored each secret param as `ext-<instance id>-<PARAM>` in Secret
+Manager. The kit asks for secrets named exactly `SMTP_PASSWORD`, `CLIENT_ID`,
+`CLIENT_SECRET` and `REFRESH_TOKEN`, so your existing extension secrets are not
+picked up. All four are attached to the function whatever `AUTH_TYPE` is set to,
+and were optional in the extension. If a secret does not exist, `firebase deploy`
+prompts you for a value, and fails outright when running non-interactively (CI).
+On username/password auth create the three OAuth2 secrets with a placeholder
+value, and on OAuth2 auth do the same for `SMTP_PASSWORD`.
+
+### DATABASE_REGION now decides where the function runs
+
+In the extension it only told the trigger where your database lived; the function
+itself ran in the Cloud Functions location you picked at install. The kit passes
+`DATABASE_REGION` straight through as the function's region, so the function
+moves to your database's region and the install-time location setting has no
+replacement. If your Firestore is multi-region or dual-region (`nam5`, `nam7`,
+`eur3`), that value is not a Cloud Functions region and the deploy fails; deploy
+the trigger yourself from the package's `./lib` entry point with a real region
+such as `us-central1` or `europe-west1`. This was not exercised against a live
+deploy.
+
+### Create the Eventarc channel yourself for events
+
+Choosing events at install used to create the channel and set both event
+variables for you. The kit only reads them: set `EVENTARC_CHANNEL` in your `.env`
+to a channel you have created, and the same seven
+`firebase.extensions.firestore-send-email.v1.*` events are published. Per-event
+selection is gone in practice, because the CLI rejects any `.env` key beginning
+with `EXT_`, so
+`EXT_SELECTED_EVENTS` cannot be set and every event type is published. With
+`EVENTARC_CHANNEL` unset, nothing is published and the function is otherwise
+unaffected.
+
+### Nothing checks your settings at deploy time
+
+The extension rejected a malformed `DEFAULT_FROM`, a `MAIL_COLLECTION` that was
+not a valid collection path, an `SMTP_CONNECTION_URI` that was not
+`smtp(s)://...:port`, and a `TTL_EXPIRE_VALUE` that was not a positive integer,
+before it would install. None of that is checked now. A bad from address or
+connection URI deploys cleanly and every document fails at send time with
+`delivery.state: ERROR` instead. `TTL_EXPIRE_VALUE: 0` is silently treated as
+`1`, and a negative value produces a `delivery.expireAt` in the past, which a TTL
+policy will act on immediately.
+
+### The setup steps and the OAuth2 helper are not in the README
+
+Two install-time instructions have no equivalent here. Automatic deletion still
+needs you to create a Firestore TTL policy on `delivery.expireAt` by hand for the
+collection the function watches, and the SendGrid guidance (categories, dynamic
+templates, the `sendgridQueueId` in `delivery.info`) is documented only in the
+extension. Both still apply unchanged. The standalone
+`oauth2-refresh-token-helper.js` script is not shipped with the package, but it
+is a plain download from the extension repository and still works for generating
+a refresh token.
+
+### A missing template name now says so
+
+Rendering a template whose name does not exist in your templates collection wrote
+a `TypeError` about reading `attachments` into `delivery.error`. It now writes
+`Tried to render non-existent template '<name>'`.
+
+### Unchanged
+
+- The watched path is still `MAIL_COLLECTION/{documentId}`, still matched as a
+  path pattern so nested collections such as `users/{uid}/mail` keep working, and
+  `MAIL_COLLECTION` still defaults to `mail`.
+- Every environment variable keeps its name, type and default, including
+  `OAUTH_SECURE`, which was a `true`/`false` dropdown and is now a boolean that
+  reads those same two values.
+- Document fields and their meanings are identical: `to`, `cc`, `bcc`, the
+  `*Uids` variants, `message`, `template`, `sendGrid`, `headers`, `categories`,
+  `from` and `replyTo`, along with the validation error messages written to
+  `delivery.error`.
+- The `delivery` state machine is unchanged, including the 60 second processing
+  lease, that a document in `SUCCESS` or `ERROR` is never reprocessed, and the
+  `delivery.info` shape.
+- SendGrid is still selected by an `smtp.sendgrid.net` connection URI with the
+  API key in `SMTP_PASSWORD`, and Outlook hosts still get their explicit
+  transport configuration.
+- The function still runs with a 120 second timeout, and `TLS_OPTIONS`,
+  `DATABASE`, `USERS_COLLECTION` and `TEMPLATES_COLLECTION` behave as before.
+
 ## API surface
 
-- **Main entry** (`@firebase/firestore-send-email`): exports `processQueue`. The
+- **Main entry** (`@firebase-function-kits/firestore-send-email`): exports `processQueue`. The
   main entry reads environment variables when the module loads, so use it from
   Firebase deploy/emulator/runtime. For your own triggers, import from `./lib`
   instead.

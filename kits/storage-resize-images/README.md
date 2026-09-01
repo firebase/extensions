@@ -1,4 +1,4 @@
-# @firebase/storage-resize-images
+# @firebase-function-kits/storage-resize-images
 
 Resize images uploaded to Cloud Storage. This is the Resize Images Firebase
 Extension as an npm package you add to your own Firebase Functions codebase and
@@ -12,7 +12,7 @@ is no hosted version, so you deploy it yourself.
 ## Install
 
 ```sh
-npm install @firebase/storage-resize-images
+npm install @firebase-function-kits/storage-resize-images
 ```
 
 ## Required IAM
@@ -37,7 +37,7 @@ Export the function from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
-export { generateResizedImage } from "@firebase/storage-resize-images";
+export { generateResizedImage } from "@firebase-function-kits/storage-resize-images";
 ```
 
 and configure with a `.env` (or `.env.<projectId>`).
@@ -133,9 +133,61 @@ When `EVENTARC_CHANNEL` is configured, the function publishes lifecycle events
 such as `onStart`, `onStartResize`, `onSuccess`, `onError`, and `onCompletion`
 under `firebase.extensions.storage-resize-images.v1.*`.
 
+## Differences from the Resize Images extension
+
+This kit is the extension repackaged as an npm package. It is a close port: every
+setting keeps its name, type, default and meaning, so an existing `.env` is a
+lift-and-shift, and the resizing behaviour, output naming, metadata handling,
+download-token regeneration and Eventarc events are unchanged. The differences
+below are worth knowing before you deploy.
+
+### Content filtering runs in the function's region
+
+When `CONTENT_FILTER_LEVEL` is set (or you supply a `CUSTOM_FILTER_PROMPT`),
+the Vertex AI call now uses the region the function is deployed to. The
+extension used the region you picked at install time, falling back to
+`us-central1`.
+
+Gemini is not available in every region. If you deploy to a region it does not
+serve, filtering fails and the image is treated as a filter error: it is not
+resized, and the original is written to your `FAILED_IMAGES_PATH`. Deploy to a
+region with Vertex AI support if you use content filtering, or leave
+`CONTENT_FILTER_LEVEL` at `OFF`, in which case no Vertex call is made at all.
+
+### The trigger is 2nd gen
+
+`generateResizedImage` is a 2nd gen Cloud Storage function, where the extension
+was 1st gen. `FUNCTION_MEMORY` still accepts the same values (512 through 8192)
+and maps onto the equivalent 2nd gen memory setting.
+
+The function's service account needs `roles/eventarc.eventReceiver` and
+`roles/run.invoker` on top of the roles the extension asked for. The Firebase
+CLI grants these for you.
+
+### Region
+
+The function deploys to your codebase's default region (`us-central1` unless
+you have changed it), rather than a region chosen at install time. See the
+content filtering note above, since the two are now linked.
+
+### Path lists are validated at deploy time
+
+`INCLUDE_PATH_LIST` and `EXCLUDE_PATH_LIST` must still be comma-separated
+absolute paths, but the check now runs when the function loads rather than when
+the extension is installed. A malformed value fails the deploy with
+`Invalid includePathList: must be a comma-separated list of absolute path
+values.` rather than being rejected by an install prompt.
+
+### No backfill
+
+There is no function to resize images that already exist in the bucket. The
+extension carried the same limitation (its backfill function was disabled), so
+this is not a regression, but it is worth stating: only objects uploaded after
+you deploy are resized.
+
 ## API surface
 
-- **Main entry** (`@firebase/storage-resize-images`): exports
+- **Main entry** (`@firebase-function-kits/storage-resize-images`): exports
   `generateResizedImage`. The main entry reads environment variables when the
   module loads, so use it from Firebase deploy/emulator/runtime. For your own
   triggers, import from `./lib` instead.

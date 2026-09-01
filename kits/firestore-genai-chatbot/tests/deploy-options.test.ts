@@ -45,6 +45,10 @@ describe("envDeployOptions", () => {
     expect(options).not.toHaveProperty("region");
   });
 
+  test("declares the extension's 540s timeout", () => {
+    expect(options.timeoutSeconds).toBe(540);
+  });
+
   test("document expression is not a frozen undefined/empty literal", () => {
     expect(options.document).toBeInstanceOf(Expression);
     expect(cel(options.document)).not.toContain("undefined");

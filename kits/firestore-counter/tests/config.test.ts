@@ -38,7 +38,7 @@ class FakeStringParam extends FakeExpression<string> {
 }
 
 const defineString = vi.fn(
-  (name: string, opts?: { default?: string }) =>
+  (name: string, opts?: { default?: string; input?: unknown }) =>
     new FakeStringParam(name, opts?.default)
 );
 
@@ -81,12 +81,28 @@ describe("configFromEnv", () => {
     });
     expect(defineString.mock.calls).toContainEqual([
       "INTERNAL_STATE_PATH",
-      { default: "_firebase_ext_/sharded_counter" },
+      expect.objectContaining({ default: "_firebase_ext_/sharded_counter" }),
     ]);
     expect(defineString.mock.calls).toContainEqual([
       "SCHEDULE_FREQUENCY",
-      { default: "1" },
+      expect.objectContaining({ default: "1" }),
     ]);
+  });
+
+  test("restores the extension's validation regexes", async () => {
+    await importConfig();
+
+    const options = new Map(
+      defineString.mock.calls.map(([name, opts]) => [name, opts])
+    );
+    expect(options.get("INTERNAL_STATE_PATH")).toMatchObject({
+      input: {
+        text: { validationRegex: /^[^\/]+\/[^\/]+(\/[^\/]+\/[^\/]+)*$/ },
+      },
+    });
+    expect(options.get("SCHEDULE_FREQUENCY")).toMatchObject({
+      input: { text: { validationRegex: /^[1-9][0-9]*$/ } },
+    });
   });
 
   test("coerces the schedule frequency to a number", async () => {

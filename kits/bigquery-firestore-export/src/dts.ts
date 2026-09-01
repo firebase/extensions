@@ -71,10 +71,16 @@ function notificationTopicName(
   return `projects/${config.projectId}/topics/${config.pubSubTopic}`;
 }
 
-/** Creates the protobuf-shaped request used for a scheduled query. */
+/**
+ * Creates the protobuf-shaped request used for a scheduled query.
+ *
+ * The query runs as whichever identity creates it, which is this function. To
+ * name a different account, `serviceAccountName` goes on the request rather
+ * than on the transfer config, and the caller needs `actAs` on the account it
+ * names, including its own.
+ */
 export function createTransferConfigRequest(
-  config: ResolvedBigqueryFirestoreExportConfig,
-  serviceAccountEmail?: string
+  config: ResolvedBigqueryFirestoreExportConfig
 ): bigqueryDataTransfer.protos.google.cloud.bigquery.datatransfer.v1.ICreateTransferConfigRequest {
   return {
     parent: `projects/${config.projectId}`,
@@ -94,9 +100,6 @@ export function createTransferConfigRequest(
       },
       schedule: config.schedule,
       notificationPubsubTopic: notificationTopicName(config),
-      ...(serviceAccountEmail
-        ? { serviceAccountName: serviceAccountEmail }
-        : {}),
     },
   };
 }
@@ -126,7 +129,7 @@ export async function createTransferConfig(
 ): Promise<TransferConfig> {
   logs.createTransferConfig();
   const [created] = await client.createTransferConfig(
-    createTransferConfigRequest(config, config.serviceAccount)
+    createTransferConfigRequest(config)
   );
   if (!created.name) {
     throw new Error("BigQuery API returned a transfer config without a name");

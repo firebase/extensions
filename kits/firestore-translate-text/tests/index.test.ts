@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 
 import type { TranslateConfig } from "../src/export-config";
 import { resolveTranslateConfig } from "../src/export-config";
@@ -97,6 +97,14 @@ async function importIndex(config: TranslateConfig = baseConfig) {
 }
 
 describe("index", () => {
+  // Importing `../src/index` pulls in genkit and `@google-cloud/translate`, and
+  // every test re-imports it after `vi.resetModules()`. Warm the module graph
+  // once here so the first test does not race the default test timeout while
+  // paying the cold load cost.
+  beforeAll(async () => {
+    await importIndex();
+  }, 60_000);
+
   beforeEach(() => {
     vi.clearAllMocks();
     getApp.mockImplementation(() => {

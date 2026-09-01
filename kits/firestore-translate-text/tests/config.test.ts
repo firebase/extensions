@@ -168,35 +168,52 @@ describe("configFromEnv", () => {
 
     expect(defineString.mock.calls).toContainEqual([
       "COLLECTION_PATH",
-      { default: "translations" },
+      expect.objectContaining({ default: "translations" }),
     ]);
     expect(defineString.mock.calls).toContainEqual([
       "INPUT_FIELD_NAME",
-      { default: "input" },
+      expect.objectContaining({ default: "input" }),
     ]);
     expect(defineString.mock.calls).toContainEqual([
       "OUTPUT_FIELD_NAME",
-      { default: "translated" },
+      expect.objectContaining({ default: "translated" }),
     ]);
     expect(defineString.mock.calls).toContainEqual([
       "LANGUAGES",
-      { default: "en,es,de,fr" },
+      expect.objectContaining({ default: "en,es,de,fr" }),
     ]);
     expect(defineString.mock.calls).toContainEqual([
       "LANGUAGES_FIELD_NAME",
-      { default: "languages" },
+      expect.objectContaining({ default: "languages" }),
     ]);
+  });
+
+  test("restores the extension's validation regexes", async () => {
+    await importConfig();
+
+    const options = new Map(
+      defineString.mock.calls.map(([name, opts]) => [name, opts])
+    );
+    expect(options.get("LANGUAGES")).toMatchObject({
+      input: { text: { validationRegex: /^[a-zA-Z,-]*[a-zA-Z-]{2,}$/ } },
+    });
+    expect(options.get("COLLECTION_PATH")).toMatchObject({
+      input: { text: { validationRegex: /^[^\/]+(\/[^\/]+\/[^\/]+)*$/ } },
+    });
   });
 
   test("offers the supported providers and gemini models as a select", async () => {
     await importConfig();
 
-    expect(select).toHaveBeenCalledWith([
+    const selectValues = select.mock.calls.map(([options]) =>
+      Array.isArray(options) ? options : Object.values(options as object)
+    );
+    expect(selectValues).toContainEqual([
       "translate",
       "gemini-googleai",
       "gemini-vertexai",
     ]);
-    expect(select).toHaveBeenCalledWith([
+    expect(selectValues).toContainEqual([
       "gemini-2.5-pro",
       "gemini-2.5-flash",
       "gemini-2.5-flash-lite",
@@ -218,7 +235,10 @@ describe("googleAiApiKey", () => {
   test("is declared as a secret param", async () => {
     const { googleAiApiKey } = await importConfig();
 
-    expect(defineSecret).toHaveBeenCalledWith("GOOGLE_AI_API_KEY");
+    expect(defineSecret).toHaveBeenCalledWith(
+      "GOOGLE_AI_API_KEY",
+      expect.objectContaining({ label: "Google AI API Key" })
+    );
     expect((googleAiApiKey as unknown as { name: string }).name).toBe(
       "GOOGLE_AI_API_KEY"
     );

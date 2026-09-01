@@ -145,11 +145,11 @@ describe("configFromEnv", () => {
     );
     expect(defineInt.mock.calls).toContainEqual([
       "AUTO_DISCOVERY_SEARCH_DEPTH",
-      { default: 3 },
+      expect.objectContaining({ default: 3 }),
     ]);
     expect(defineBoolean.mock.calls).toContainEqual([
       "ENABLE_AUTO_DISCOVERY",
-      { default: false },
+      expect.objectContaining({ default: false }),
     ]);
   });
 
