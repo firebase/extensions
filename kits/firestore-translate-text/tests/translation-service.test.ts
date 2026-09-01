@@ -125,12 +125,12 @@ describe("GenkitTranslator", () => {
     expect(vertexAI.model).toHaveBeenCalledWith("gemini-2.5-pro");
   });
 
-  test("registers the vertexai plugin without a location when no region is set", () => {
+  test("falls back to the default location when no region is set", () => {
     new GenkitTranslator(
       makeConfig({ provider: "gemini-vertexai", region: "" })
     );
 
-    expect(vertexAI).toHaveBeenCalledWith({});
+    expect(vertexAI).toHaveBeenCalledWith({ location: "us-central1" });
   });
 
   test("returns the structured translation and logs completion", async () => {

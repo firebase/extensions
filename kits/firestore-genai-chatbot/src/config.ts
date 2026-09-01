@@ -29,6 +29,16 @@ import {
   type SafetySetting,
 } from "./export-config";
 
+/**
+ * Region used for Vertex AI when the function's own region is unavailable.
+ *
+ * Kits read their region from `FUNCTION_REGION`, which the extension got from
+ * its install-time `LOCATION` param. That variable is absent outside a
+ * deployed function (emulator runs, library consumers), so fall back rather
+ * than leaving the SDK to pick a region.
+ */
+const DEFAULT_VERTEX_LOCATION = "us-central1";
+
 const GENERATIVE_AI_PROVIDER_OPTIONS = ["google-ai", "vertex-ai"] as const;
 const VERTEX_MODEL_LOCATION_OPTIONS = [
   "null",
@@ -354,8 +364,13 @@ export function configFromEnv(): GenaiChatbotConfig {
       GenerativeAIProvider.GOOGLE_AI,
     apiKey: params.apiKey.value(),
     model: params.model.value(),
+    // "null" is the param's "Same as Cloud Functions Location" option. The
+    // extension resolved it to the install LOCATION; FUNCTION_REGION is the
+    // kit's equivalent, since kits take their region from the deployment.
     vertexModelLocation:
-      vertexModelLocation === "null" ? undefined : vertexModelLocation,
+      vertexModelLocation === "null"
+        ? process.env.FUNCTION_REGION || DEFAULT_VERTEX_LOCATION
+        : vertexModelLocation,
     projectId: getProjectId(),
     collectionName: optional(params.collectionName.value()),
     promptField: optional(params.promptField.value()),

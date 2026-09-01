@@ -21,6 +21,16 @@ import type { SafetyThreshold } from "./export-config";
 import { GLOBAL_RETRY_QUEUE } from "./global";
 import * as log from "./logs";
 
+/**
+ * Region used for Vertex AI when the function's own region is unavailable.
+ *
+ * Kits read their region from `FUNCTION_REGION`, which the extension got from
+ * its install-time `LOCATION` param. That variable is absent outside a
+ * deployed function (emulator runs, library consumers), so fall back rather
+ * than leaving the SDK to pick a region or failing the call.
+ */
+const DEFAULT_VERTEX_LOCATION = "us-central1";
+
 const HARM_CATEGORIES = [
   "HARM_CATEGORY_HATE_SPEECH",
   "HARM_CATEGORY_DANGEROUS_CONTENT",
@@ -78,16 +88,13 @@ export async function checkImageContent(
   if (filterLevel === null && prompt === null) {
     return true;
   }
-  if (!location) {
-    throw new Error("FUNCTION_REGION is required for Vertex AI filtering.");
-  }
 
   const imageBuffer = fs.readFileSync(localOriginalFile);
   const dataUrl = createImageDataUrl(imageBuffer, contentType);
   const ai = genkit({
     plugins: [
       vertexAI({
-        location,
+        location: location || DEFAULT_VERTEX_LOCATION,
         models: ["gemini-2.5-flash"],
       }),
     ],

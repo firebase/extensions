@@ -22,6 +22,16 @@ import * as events from "../events";
 import type { ResolvedTranslateConfig } from "../export-config";
 import * as logs from "../logs";
 
+/**
+ * Region used for Vertex AI when the function's own region is unavailable.
+ *
+ * Kits read their region from `FUNCTION_REGION`, which the extension got from
+ * its install-time `LOCATION` param. That variable is absent outside a
+ * deployed function (emulator runs, library consumers), so fall back rather
+ * than leaving the SDK to pick a region or failing the call.
+ */
+const DEFAULT_VERTEX_LOCATION = "us-central1";
+
 export type Translation = {
   language: string;
   output: string;
@@ -72,7 +82,7 @@ export class GenkitTranslator implements Translator {
 
     const plugins =
       config.geminiProvider === "vertexai"
-        ? [vertexAI(config.region ? { location: config.region } : {})]
+        ? [vertexAI({ location: config.region || DEFAULT_VERTEX_LOCATION })]
         : [googleAI({ apiKey: config.googleAiApiKey })];
 
     this.client = genkit({ plugins });

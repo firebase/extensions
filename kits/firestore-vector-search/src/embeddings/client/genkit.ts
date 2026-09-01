@@ -19,6 +19,16 @@ import { type EmbedderReference, type Genkit, genkit } from "genkit";
 import type { ResolvedVectorSearchConfig } from "../../export-config";
 import { BaseEmbedClient } from "./base_class";
 
+/**
+ * Region used for Vertex AI when the function's own region is unavailable.
+ *
+ * Kits read their region from `FUNCTION_REGION`, which the extension got from
+ * its install-time `LOCATION` param. That variable is absent outside a
+ * deployed function (emulator runs, library consumers), so fall back rather
+ * than leaving the SDK to pick a region or failing the call.
+ */
+const DEFAULT_VERTEX_LOCATION = "us-central1";
+
 export class GenkitEmbedClient extends BaseEmbedClient {
   private readonly client: Genkit;
   private readonly embedder: EmbedderReference;
@@ -38,7 +48,7 @@ export class GenkitEmbedClient extends BaseEmbedClient {
     this.client = genkit({
       plugins: [
         isVertex
-          ? vertexAI(config.region ? { location: config.region } : {})
+          ? vertexAI({ location: config.region || DEFAULT_VERTEX_LOCATION })
           : googleAI({ apiKey: config.geminiApiKey }),
       ],
     });

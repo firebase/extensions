@@ -70,12 +70,12 @@ describe("GenkitEmbedClient", () => {
       expect(genkit).toHaveBeenCalledWith({ plugins: [undefined] });
     });
 
-    test("omits the location when no region is configured", () => {
+    test("falls back to the default location when no region is configured", () => {
       new GenkitEmbedClient(
         config({ embeddingProvider: "vertex", region: undefined })
       );
 
-      expect(vertexAI).toHaveBeenCalledWith({});
+      expect(vertexAI).toHaveBeenCalledWith({ location: "us-central1" });
     });
 
     test("initializes with the Google AI provider", () => {
