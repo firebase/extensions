@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
+import {
+  HarmBlockThreshold as VertexAIHarmBlockThreshold,
+  HarmCategory as VertexAIHarmCategory,
+  type SafetySetting as VertexAISafetySetting,
+} from "@google/genai";
+import {
+  HarmBlockThreshold as GoogleAIHarmBlockThreshold,
+  HarmCategory as GoogleAIHarmCategory,
+  type SafetySetting as GoogleAISafetySetting,
+} from "@google/generative-ai";
 import type { Expression } from "firebase-functions/params";
 
 /** The type returned by `defineSecret` (not exported by name from the module). */
@@ -27,10 +37,37 @@ export enum GenerativeAIProvider {
   VERTEX_AI = "vertex-ai",
 }
 
-/** A model safety setting (`{ category, threshold }`), accepted by both SDKs. */
-export interface SafetySetting {
-  category: string;
-  threshold: string;
+/** A model safety setting, typed with the SDKs' own category/threshold enums. */
+export type SafetySetting = GoogleAISafetySetting | VertexAISafetySetting;
+
+const HARM_ENUMS: Record<
+  GenerativeAIProvider,
+  { categories: Set<string>; thresholds: Set<string> }
+> = {
+  [GenerativeAIProvider.GOOGLE_AI]: {
+    categories: new Set(Object.values(GoogleAIHarmCategory)),
+    thresholds: new Set(Object.values(GoogleAIHarmBlockThreshold)),
+  },
+  [GenerativeAIProvider.VERTEX_AI]: {
+    categories: new Set(Object.values(VertexAIHarmCategory)),
+    thresholds: new Set(Object.values(VertexAIHarmBlockThreshold)),
+  },
+};
+
+function validateSafetySettings(
+  settings: SafetySetting[],
+  provider: GenerativeAIProvider
+): void {
+  const enums =
+    HARM_ENUMS[provider] ?? HARM_ENUMS[GenerativeAIProvider.GOOGLE_AI];
+  for (const { category, threshold } of settings) {
+    if (category !== undefined && !enums.categories.has(category)) {
+      throw new Error(`Invalid safety setting category: ${category}`);
+    }
+    if (threshold !== undefined && !enums.thresholds.has(threshold)) {
+      throw new Error(`Invalid safety setting threshold: ${threshold}`);
+    }
+  }
 }
 
 /**
@@ -140,12 +177,13 @@ export interface DeployTimeOptions {
  */
 export function getProjectId(): string {
   const config = process.env.FIREBASE_CONFIG;
+  const projectId = config ? JSON.parse(config).projectId : undefined;
 
-  if (!config) {
-    throw new Error("FIREBASE_CONFIG is not set");
+  if (!projectId) {
+    throw new Error("Missing required environment variables: PROJECT_ID");
   }
 
-  return JSON.parse(config).projectId;
+  return projectId;
 }
 
 const DEFAULT_COLLECTION = "generate";
@@ -162,6 +200,8 @@ export function resolveConfig(
 ): ResolvedGenaiChatbotConfig {
   const provider =
     (config.provider as GenerativeAIProvider) ?? GenerativeAIProvider.GOOGLE_AI;
+  const safetySettings = config.safetySettings ?? [];
+  validateSafetySettings(safetySettings, provider);
   return {
     provider,
     vertex: {
@@ -187,7 +227,7 @@ export function resolveConfig(
     topK: config.topK,
     candidateCount: config.candidateCount ?? 1,
     maxOutputTokens: config.maxOutputTokens,
-    safetySettings: config.safetySettings ?? [],
+    safetySettings,
     secrets: config.secrets,
   };
 }

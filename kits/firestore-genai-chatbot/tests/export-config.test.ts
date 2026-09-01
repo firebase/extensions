@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-import { describe, expect, test } from "vitest";
-import { GenerativeAIProvider, resolveConfig } from "../src/export-config";
+import { HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
+import { afterEach, describe, expect, test } from "vitest";
+import {
+  GenerativeAIProvider,
+  getProjectId,
+  resolveConfig,
+} from "../src/export-config";
 
 describe("resolveConfig", () => {
   const base = { projectId: "p", model: "gemini-2.5-flash" };
@@ -61,5 +66,95 @@ describe("resolveConfig", () => {
     expect(c.enableDiscussionOptionOverrides).toBe(true);
     expect(c.candidateCount).toBe(3);
     expect(c.temperature).toBe(0.5);
+  });
+
+  test("accepts safety settings built from the SDK enums", () => {
+    const c = resolveConfig({
+      ...base,
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+      ],
+    });
+    expect(c.safetySettings).toEqual([
+      {
+        category: "HARM_CATEGORY_HATE_SPEECH",
+        threshold: "BLOCK_ONLY_HIGH",
+      },
+    ]);
+  });
+
+  test("rejects a safety setting category the SDK does not define", () => {
+    expect(() =>
+      resolveConfig({
+        ...base,
+        safetySettings: [
+          { category: "HARM_CATEGORY_TYPO", threshold: "BLOCK_NONE" },
+        ],
+      })
+    ).toThrow("Invalid safety setting category: HARM_CATEGORY_TYPO");
+  });
+
+  test("rejects a safety setting threshold the SDK does not define", () => {
+    expect(() =>
+      resolveConfig({
+        ...base,
+        safetySettings: [
+          {
+            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold: "BLOCK_EVERYTHING",
+          },
+        ],
+      })
+    ).toThrow("Invalid safety setting threshold: BLOCK_EVERYTHING");
+  });
+
+  test("validates against the Vertex AI enums when the provider is vertex-ai", () => {
+    const vertexOnly = [
+      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "OFF" },
+    ];
+    expect(
+      resolveConfig({
+        ...base,
+        provider: "vertex-ai",
+        safetySettings: vertexOnly,
+      }).safetySettings
+    ).toEqual(vertexOnly);
+    expect(() =>
+      resolveConfig({ ...base, safetySettings: vertexOnly })
+    ).toThrow("Invalid safety setting threshold: OFF");
+  });
+});
+
+describe("getProjectId", () => {
+  const savedFirebaseConfig = process.env.FIREBASE_CONFIG;
+
+  afterEach(() => {
+    if (savedFirebaseConfig === undefined) {
+      delete process.env.FIREBASE_CONFIG;
+    } else {
+      process.env.FIREBASE_CONFIG = savedFirebaseConfig;
+    }
+  });
+
+  test("reads the project id from FIREBASE_CONFIG", () => {
+    process.env.FIREBASE_CONFIG = JSON.stringify({ projectId: "my-project" });
+    expect(getProjectId()).toBe("my-project");
+  });
+
+  test("throws the extension's missing-var error when FIREBASE_CONFIG is not set", () => {
+    delete process.env.FIREBASE_CONFIG;
+    expect(getProjectId).toThrow(
+      "Missing required environment variables: PROJECT_ID"
+    );
+  });
+
+  test("throws the extension's missing-var error when FIREBASE_CONFIG has no project id", () => {
+    process.env.FIREBASE_CONFIG = JSON.stringify({});
+    expect(getProjectId).toThrow(
+      "Missing required environment variables: PROJECT_ID"
+    );
   });
 });

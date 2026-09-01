@@ -335,9 +335,13 @@ function buildSafetySettings(): SafetySetting[] {
     ["HARM_CATEGORY_HARASSMENT", params.harmHarassment.value()],
     ["HARM_CATEGORY_SEXUALLY_EXPLICIT", params.harmSexual.value()],
   ];
+  // The select params only offer SDK enum values, so the cast is sound.
   return entries
     .filter(([, threshold]) => threshold.length > 0)
-    .map(([category, threshold]) => ({ category, threshold }));
+    .map(([category, threshold]) => ({
+      category,
+      threshold,
+    })) as SafetySetting[];
 }
 
 /**
