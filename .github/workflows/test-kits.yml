@@ -69,3 +69,10 @@ jobs:
       - name: Test
         working-directory: ${{ matrix.kit }}
         run: npm test
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@15
+
+      - name: Emulator tests
+        working-directory: ${{ matrix.kit }}
+        run: npm run test:emulator --if-present
