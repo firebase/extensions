@@ -31,6 +31,7 @@ import { randomUUID } from "node:crypto";
 import { deleteApp, initializeApp, type App } from "firebase-admin/app";
 import {
   getFirestore,
+  Timestamp,
   type DocumentReference,
   type Firestore,
 } from "firebase-admin/firestore";
@@ -100,7 +101,7 @@ describeEmulator("Controller (emulator)", () => {
       await controllerDocRef.set({
         workers: [
           { start: "00000000", end: "33333333" },
-          { start: "3333333", end: "66666666" },
+          { start: "33333333", end: "66666666" },
         ],
         timestamp: Date.now(),
       });
@@ -115,7 +116,7 @@ describeEmulator("Controller (emulator)", () => {
         },
       });
       await workersRef.doc("0001").set({
-        slice: { start: "3333333", end: "66666666" },
+        slice: { start: "33333333", end: "66666666" },
         stats: {
           lastSuccessfulRun: Date.now(),
           shardsAggregated: 2,
@@ -138,6 +139,10 @@ describeEmulator("Controller (emulator)", () => {
         start: "00000000",
         end: "66666666",
       });
+      // The reshard path writes FieldValue.serverTimestamp(); only a real
+      // backend resolves that sentinel into a Timestamp.
+      expect(workers.docs[0].get("timestamp")).toBeInstanceOf(Timestamp);
+      expect(controllerDoc.get("timestamp")).toBeInstanceOf(Timestamp);
     } finally {
       await deleteRecursively(controllerDocRef);
     }
