@@ -19,7 +19,7 @@
         "vitest": "^3.2.4"
       },
       "engines": {
-        "node": ">=22"
+        "node": "22"
       }
     },
     "node_modules/@esbuild/aix-ppc64": {

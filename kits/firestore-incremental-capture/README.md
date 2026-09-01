@@ -76,12 +76,15 @@ curl -X POST https://<onHttpRunRestoration URL printed by firebase deploy> \
   -d '{"timestamp": 1700000000}'
 ```
 
-> **`onHttpRunRestoration` requires an authenticated caller.** Unlike the
-> extension it was migrated from, a kit deploy does not grant `allUsers` the
-> invoker role, so the URL rejects anonymous calls with a 403. Grant
-> `roles/run.invoker` on the function to the principals allowed to start a
-> restoration - a restoration batch-writes over the backup database, so keep
-> that set small. Making it public re-creates the extension's exposure; don't.
+> **`onHttpRunRestoration` requires an authenticated caller.** The kit deploys
+> it with `invoker: "private"`, so the URL rejects anonymous calls with a 403.
+> Callers need `roles/run.invoker` on the function's Cloud Run service and must
+> send an identity token, as in the `curl` above. Grant that role only to the
+> principals allowed to start a restoration - a restoration batch-writes over
+> the backup database, so keep that set small. An operator who truly wants the
+> endpoint public can grant `roles/run.invoker` to `allUsers` on the service
+> after deploy, but that lets anyone on the internet overwrite the backup
+> database; don't.
 
 ## Deploy
 
@@ -132,6 +135,13 @@ firebase deploy --only functions
 ```
 
 Deploy a single instance with `firebase deploy --only functions:<instance id>`.
+
+A non-interactive deploy needs a value in the instance `.env` for every param,
+defaults included - the CLI applies param defaults only when prompting
+interactively. `DATAFLOW_REGION` is the one most easily missed because it is
+optional at runtime: without a value the deploy fails with "no value for the
+following environment variables: DATAFLOW_REGION". Set it explicitly, for
+example `DATAFLOW_REGION=us-east1`.
 
 ## Configuration
 
