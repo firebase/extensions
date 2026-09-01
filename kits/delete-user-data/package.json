@@ -1,6 +1,6 @@
 {
   "name": "@firebase-function-kits/delete-user-data",
-  "version": "0.0.2-rc.2",
+  "version": "0.0.2-rc.3",
   "repository": {
     "type": "git",
     "url": "https://github.com/firebase/extensions.git",
