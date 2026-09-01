@@ -40,6 +40,7 @@
   "devDependencies": {
     "@types/lodash.chunk": "^4.2.7",
     "@types/node-fetch": "^2.6.2",
+    "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   }
 }
