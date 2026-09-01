@@ -74,7 +74,11 @@ function getContext(): HandlerContext {
   ctx = {
     firestore: getFirestore(resolved.firestoreDatabaseId),
     storage: admin.storage(),
-    database: admin.database(),
+    // Resolved on first use. Without a configured RTDB instance there is no
+    // databaseURL to initialize the app with, and admin.database() throws.
+    get database() {
+      return admin.database();
+    },
     pubsub: new PubSub({ projectId: resolved.projectId }),
     config: resolved,
   };
