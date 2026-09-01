@@ -1,4 +1,4 @@
-# @firebase/speech-to-text
+# @firebase-function-kits/speech-to-text
 
 Transcribe audio files in Cloud Storage to text. This is the Transcribe Speech to
 Text Firebase Extension as an npm package you add to your own Firebase Functions
@@ -12,7 +12,7 @@ Firebase project; there is no hosted version, so you deploy it yourself.
 ## Install
 
 ```sh
-npm install @firebase/speech-to-text
+npm install @firebase-function-kits/speech-to-text
 ```
 
 ## Required IAM
@@ -37,7 +37,7 @@ Export the function from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
-export { transcribeAudio } from "@firebase/speech-to-text";
+export { transcribeAudio } from "@firebase-function-kits/speech-to-text";
 ```
 
 and configure it with a `.env` (or `.env.<projectId>`).
@@ -225,7 +225,7 @@ gen. Its service account needs `roles/eventarc.eventReceiver` and
 
 ## API surface
 
-- **Main entry** (`@firebase/speech-to-text`): exports `transcribeAudio`. The
+- **Main entry** (`@firebase-function-kits/speech-to-text`): exports `transcribeAudio`. The
   main entry reads environment variables when the module loads, so use it from
   Firebase deploy/emulator/runtime. For your own triggers, import from `./lib`
   instead.

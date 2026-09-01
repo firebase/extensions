@@ -1,4 +1,4 @@
-# @firebase/rtdb-limit-child-nodes
+# @firebase-function-kits/rtdb-limit-child-nodes
 
 Limit the number of child nodes under a Realtime Database path. This is the
 Limit Child Nodes Firebase Extension as an npm package you add to your own
@@ -11,7 +11,7 @@ own Firebase project; there is no hosted version, so you deploy it yourself.
 ## Install
 
 ```sh
-npm install @firebase/rtdb-limit-child-nodes
+npm install @firebase-function-kits/rtdb-limit-child-nodes
 ```
 
 ## Required IAM
@@ -33,7 +33,7 @@ Export the function from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
-export { rtdblimit } from "@firebase/rtdb-limit-child-nodes";
+export { rtdblimit } from "@firebase-function-kits/rtdb-limit-child-nodes";
 ```
 
 and configure it with a `.env` (or `.env.<projectId>`).
@@ -185,7 +185,7 @@ function generation.
 
 ## API surface
 
-- **Main entry** (`@firebase/rtdb-limit-child-nodes`): exports `rtdblimit`. The
+- **Main entry** (`@firebase-function-kits/rtdb-limit-child-nodes`): exports `rtdblimit`. The
   main entry reads environment variables when the module loads, so use it from
   Firebase deploy/emulator/runtime. For your own triggers, import from `./lib`
   instead.

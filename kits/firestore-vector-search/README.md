@@ -1,4 +1,4 @@
-# @firebase/firestore-vector-search
+# @firebase-function-kits/firestore-vector-search
 
 Vector similarity search over a Firestore collection. This is the Vector Search
 with Firestore Firebase Extension as an npm package you add to your own Firebase
@@ -12,7 +12,7 @@ Firebase project; there is no hosted version, so you deploy them yourself.
 ## Install
 
 ```sh
-npm install @firebase/firestore-vector-search
+npm install @firebase-function-kits/firestore-vector-search
 ```
 
 ## Required IAM
@@ -49,7 +49,7 @@ export {
   queryOnWrite,
   queryCallable,
   initVectorSearch,
-} from "@firebase/firestore-vector-search";
+} from "@firebase-function-kits/firestore-vector-search";
 ```
 
 and configure with a `.env` (or `.env.<projectId>`).
@@ -322,7 +322,7 @@ for; the Firebase CLI grants these for you.
 
 ## API surface
 
-- **Main entry** (`@firebase/firestore-vector-search`): exports
+- **Main entry** (`@firebase-function-kits/firestore-vector-search`): exports
   `updateTrigger`, `updateTask`, `backfillTrigger`, `backfillTask`,
   `embedOnWrite`, `queryOnWrite`, `queryCallable`, and `initVectorSearch`. The
   main entry reads environment variables when the module loads, so use it from

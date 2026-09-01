@@ -1,4 +1,4 @@
-# @firebase/firestore-bundle-builder
+# @firebase-function-kits/firestore-bundle-builder
 
 Build and serve Firestore data bundles. This is the Firestore Bundle Builder
 Firebase Extension as an npm package you add to your own Firebase Functions
@@ -12,7 +12,7 @@ project; there is no hosted version, so you deploy it yourself.
 ## Install
 
 ```sh
-npm install @firebase/firestore-bundle-builder
+npm install @firebase-function-kits/firestore-bundle-builder
 ```
 
 ## Required IAM
@@ -35,7 +35,7 @@ Export the function from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
-export { serve } from "@firebase/firestore-bundle-builder";
+export { serve } from "@firebase-function-kits/firestore-bundle-builder";
 ```
 
 and configure with a `.env` (or `.env.<projectId>`).
@@ -213,7 +213,7 @@ bundles are unaffected.
 
 ## API surface
 
-- **Main entry** (`@firebase/firestore-bundle-builder`): exports `serve`. The
+- **Main entry** (`@firebase-function-kits/firestore-bundle-builder`): exports `serve`. The
   main entry reads environment variables when the module loads, so use it from
   Firebase deploy/emulator/runtime. For your own triggers, import from `./lib`
   instead.

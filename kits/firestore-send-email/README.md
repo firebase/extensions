@@ -1,4 +1,4 @@
-# @firebase/firestore-send-email
+# @firebase-function-kits/firestore-send-email
 
 Send emails based on documents written to Firestore. This is the Trigger Email
 from Firestore Firebase Extension as an npm package you add to your own Firebase
@@ -12,7 +12,7 @@ yourself.
 ## Install
 
 ```sh
-npm install @firebase/firestore-send-email
+npm install @firebase-function-kits/firestore-send-email
 ```
 
 ## Required IAM
@@ -34,7 +34,7 @@ Export the function from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
-export { processQueue } from "@firebase/firestore-send-email";
+export { processQueue } from "@firebase-function-kits/firestore-send-email";
 ```
 
 and configure it with a `.env` (or `.env.<projectId>`).
@@ -231,7 +231,7 @@ a `TypeError` about reading `attachments` into `delivery.error`. It now writes
 
 ## API surface
 
-- **Main entry** (`@firebase/firestore-send-email`): exports `processQueue`. The
+- **Main entry** (`@firebase-function-kits/firestore-send-email`): exports `processQueue`. The
   main entry reads environment variables when the module loads, so use it from
   Firebase deploy/emulator/runtime. For your own triggers, import from `./lib`
   instead.

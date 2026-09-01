@@ -1,4 +1,4 @@
-# @firebase/firestore-bigquery-export
+# @firebase-function-kits/firestore-bigquery-export
 
 Stream a Cloud Firestore collection to BigQuery. This is the Stream Firestore to
 BigQuery Firebase Extension as an npm package you add to your own Firebase
@@ -12,7 +12,7 @@ project; there is no hosted version, so you deploy them yourself.
 ## Install
 
 ```sh
-npm install @firebase/firestore-bigquery-export
+npm install @firebase-function-kits/firestore-bigquery-export
 ```
 
 ## Required IAM
@@ -46,7 +46,7 @@ export {
   fsexportbigquery,
   initBigQuerySync,
   setupBigQuerySync,
-} from "@firebase/firestore-bigquery-export";
+} from "@firebase-function-kits/firestore-bigquery-export";
 ```
 
 and configure them with a `.env` (or `.env.<projectId>`):
@@ -286,7 +286,7 @@ BigQuery changelog table, so they still work against data this kit writes.
 
 ## API surface
 
-- **Main entry** (`@firebase/firestore-bigquery-export`): exports
+- **Main entry** (`@firebase-function-kits/firestore-bigquery-export`): exports
   `fsexportbigquery`, `initBigQuerySync`, and `setupBigQuerySync`, and
   registers the first-deploy / redeploy provisioning hooks. Runtime config is
   resolved lazily on first invocation. Use this entry from Firebase

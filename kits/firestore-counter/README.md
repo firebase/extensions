@@ -1,4 +1,4 @@
-# @firebase/firestore-counter
+# @firebase-function-kits/firestore-counter
 
 Distributed, sharded counters for Firestore. This is the Distributed Counter
 Firebase Extension as an npm package you add to your own Firebase Functions
@@ -11,7 +11,7 @@ own Firebase project; there is no hosted version, so you deploy them yourself.
 ## Install
 
 ```sh
-npm install @firebase/firestore-counter
+npm install @firebase-function-kits/firestore-counter
 ```
 
 ## Required IAM
@@ -34,7 +34,7 @@ Export the functions from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
-export { controllerCore, onWrite, worker } from "@firebase/firestore-counter";
+export { controllerCore, onWrite, worker } from "@firebase-function-kits/firestore-counter";
 ```
 
 and configure with a `.env` (or `.env.<projectId>`).
@@ -206,7 +206,7 @@ carry on getting them from the extension repo.
 
 ## API surface
 
-- **Main entry** (`@firebase/firestore-counter`): exports `controllerCore`,
+- **Main entry** (`@firebase-function-kits/firestore-counter`): exports `controllerCore`,
   `onWrite`, and `worker`. The main entry reads environment variables when the
   module loads, so use it from Firebase deploy/emulator/runtime. For your own
   triggers, import from `./lib` instead.

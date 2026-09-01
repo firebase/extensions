@@ -1,4 +1,4 @@
-# @firebase/storage-resize-images
+# @firebase-function-kits/storage-resize-images
 
 Resize images uploaded to Cloud Storage. This is the Resize Images Firebase
 Extension as an npm package you add to your own Firebase Functions codebase and
@@ -12,7 +12,7 @@ is no hosted version, so you deploy it yourself.
 ## Install
 
 ```sh
-npm install @firebase/storage-resize-images
+npm install @firebase-function-kits/storage-resize-images
 ```
 
 ## Required IAM
@@ -37,7 +37,7 @@ Export the function from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
-export { generateResizedImage } from "@firebase/storage-resize-images";
+export { generateResizedImage } from "@firebase-function-kits/storage-resize-images";
 ```
 
 and configure with a `.env` (or `.env.<projectId>`).
@@ -187,7 +187,7 @@ you deploy are resized.
 
 ## API surface
 
-- **Main entry** (`@firebase/storage-resize-images`): exports
+- **Main entry** (`@firebase-function-kits/storage-resize-images`): exports
   `generateResizedImage`. The main entry reads environment variables when the
   module loads, so use it from Firebase deploy/emulator/runtime. For your own
   triggers, import from `./lib` instead.

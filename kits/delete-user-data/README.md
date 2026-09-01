@@ -1,4 +1,4 @@
-# @firebase/delete-user-data
+# @firebase-function-kits/delete-user-data
 
 Delete user data across Firestore, RTDB, and Storage on account deletion. This
 is the Delete User Data Firebase Extension as an npm package you add to your own
@@ -12,7 +12,7 @@ Firebase project; there is no hosted version, so you deploy them yourself.
 ## Install
 
 ```sh
-npm install @firebase/delete-user-data
+npm install @firebase-function-kits/delete-user-data
 ```
 
 ## Required IAM
@@ -41,7 +41,7 @@ export {
   clearData,
   handleSearch,
   handleDeletion,
-} from "@firebase/delete-user-data";
+} from "@firebase-function-kits/delete-user-data";
 ```
 
 and configure with a `.env` (or `.env.<projectId>`).
@@ -208,7 +208,7 @@ and the custom `SEARCH_FUNCTION` contract all behave as they did.
 
 ## API surface
 
-- **Main entry** (`@firebase/delete-user-data`): exports `clearData`,
+- **Main entry** (`@firebase-function-kits/delete-user-data`): exports `clearData`,
   `handleSearch`, and `handleDeletion`. The main entry reads environment
   variables when the module loads, so use it from Firebase deploy/emulator/runtime.
   For your own triggers, import from `./lib` instead.

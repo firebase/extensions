@@ -1,4 +1,4 @@
-# @firebase/bigquery-firestore-export
+# @firebase-function-kits/bigquery-firestore-export
 
 Schedule a BigQuery query and write each run's rows and metadata to Firestore.
 This is the Export BigQuery to Firestore Firebase Extension as an npm package
@@ -12,7 +12,7 @@ there is no hosted version, so you deploy them yourself.
 ## Install
 
 ```sh
-npm install @firebase/bigquery-firestore-export
+npm install @firebase-function-kits/bigquery-firestore-export
 ```
 
 ## Required IAM
@@ -43,7 +43,7 @@ Export both functions from your functions codebase entry:
 export {
   processMessages,
   upsertTransferConfig,
-} from "@firebase/bigquery-firestore-export";
+} from "@firebase-function-kits/bigquery-firestore-export";
 ```
 
 and configure them with a `.env` (or `.env.<projectId>`):
@@ -295,7 +295,7 @@ Pub/Sub API is now requested explicitly. The Firebase CLI handles all of this.
 
 ## API surface
 
-- **Main entry** (`@firebase/bigquery-firestore-export`): exports
+- **Main entry** (`@firebase-function-kits/bigquery-firestore-export`): exports
   `processMessages` and `upsertTransferConfig`, registers first-deploy and
   redeploy lifecycle hooks, and resolves runtime dependencies lazily. Use this
   entry from Firebase deploy/emulator/runtime.

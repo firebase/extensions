@@ -1,4 +1,4 @@
-# @firebase/firestore-genai-chatbot
+# @firebase-function-kits/firestore-genai-chatbot
 
 Conversational GenAI chatbot backed by Firestore. This is the Chatbot with
 Generative AI Firebase Extension as an npm package you add to your own Firebase
@@ -12,7 +12,7 @@ yourself.
 ## Install
 
 ```sh
-npm install @firebase/firestore-genai-chatbot
+npm install @firebase-function-kits/firestore-genai-chatbot
 ```
 
 ## Required IAM
@@ -40,7 +40,7 @@ Export the function from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
-export { generateMessage } from "@firebase/firestore-genai-chatbot";
+export { generateMessage } from "@firebase-function-kits/firestore-genai-chatbot";
 ```
 
 and configure with a `.env` (or `.env.<projectId>`).
@@ -221,7 +221,7 @@ model call rather than being caught at deploy time.
 
 ## API surface
 
-- **Main entry** (`@firebase/firestore-genai-chatbot`): exports
+- **Main entry** (`@firebase-function-kits/firestore-genai-chatbot`): exports
   `generateMessage`. The main entry reads environment variables when the module
   loads, so use it from Firebase deploy/emulator/runtime. For your own triggers,
   import from `./lib` instead.

@@ -1,4 +1,4 @@
-# @firebase/firestore-translate-text
+# @firebase-function-kits/firestore-translate-text
 
 Translate text written to a Firestore collection. This is the Translate Text in
 Firestorestore Firebase Extension as an npm package you add to your own Firebase
@@ -12,7 +12,7 @@ project; there is no hosted version, so you deploy it yourself.
 ## Install
 
 ```sh
-npm install @firebase/firestore-translate-text
+npm install @firebase-function-kits/firestore-translate-text
 ```
 
 ## Required IAM
@@ -36,7 +36,7 @@ Export the function from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
-export { fstranslate } from "@firebase/firestore-translate-text";
+export { fstranslate } from "@firebase-function-kits/firestore-translate-text";
 ```
 
 and configure with a `.env` (or `.env.<projectId>`).
@@ -226,7 +226,7 @@ Cloud Translation API is still required whichever provider you choose.
 
 ## API surface
 
-- **Main entry** (`@firebase/firestore-translate-text`): exports `fstranslate`.
+- **Main entry** (`@firebase-function-kits/firestore-translate-text`): exports `fstranslate`.
   The main entry reads environment variables when the module loads, so use it
   from Firebase deploy/emulator/runtime. For your own triggers, import from
   `./lib` instead.
