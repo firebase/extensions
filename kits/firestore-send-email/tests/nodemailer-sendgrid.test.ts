@@ -46,7 +46,7 @@ function mailFrom(source: Partial<MailSource>): MailSource {
   } as MailSource;
 }
 
-/** Yields to the microtask queue so the transport's normalize/send chain settles. */
+/** Defers to the check phase, after the transport's normalize/send promise chain settles. */
 function flush(): Promise<void> {
   return new Promise((resolve) => setImmediate(resolve));
 }
@@ -224,6 +224,17 @@ describe("SendGridTransport", () => {
     expect(cb).toHaveBeenCalledWith(null, successInfo);
   });
 
+  test("skips an empty watchHtml instead of emitting a content entry", async () => {
+    const transport = new SendGridTransport();
+    const cb = vi.fn();
+
+    transport.send(mailFrom({ watchHtml: "" }), cb);
+    await flush();
+
+    expect(sentMessage().content).toBeUndefined();
+    expect(cb).toHaveBeenCalledWith(null, successInfo);
+  });
+
   test("merges normalizedHeaders and messageId into headers", async () => {
     const transport = new SendGridTransport();
     const cb = vi.fn();
@@ -245,6 +256,20 @@ describe("SendGridTransport", () => {
       ...successInfo,
       messageId: "msg-123",
     });
+  });
+
+  test("skips an empty messageId instead of emitting a message-id header", async () => {
+    const transport = new SendGridTransport();
+    const cb = vi.fn();
+
+    transport.send(
+      mailFrom({ normalizedHeaders: { "X-Custom": "val" }, messageId: "" }),
+      cb
+    );
+    await flush();
+
+    expect(sentMessage().headers).toEqual({ "X-Custom": "val" });
+    expect(cb).toHaveBeenCalledWith(null, successInfo);
   });
 
   test("folds text and html into the content array when alternatives exist", async () => {
