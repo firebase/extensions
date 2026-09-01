@@ -1,12 +1,12 @@
 {
   "name": "@firebase-function-kits/firestore-incremental-capture",
-  "version": "0.0.2-rc.1",
+  "version": "0.0.2-rc.2",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@firebase-function-kits/firestore-incremental-capture",
-      "version": "0.0.2-rc.1",
+      "version": "0.0.2-rc.2",
       "license": "Apache-2.0",
       "dependencies": {
         "@google-cloud/bigquery": "^7.6.0",
