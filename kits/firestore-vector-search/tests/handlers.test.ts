@@ -289,6 +289,21 @@ describe("handleQueryOnWrite", () => {
     expect(set).not.toHaveBeenCalled();
   });
 
+  test("skips when the unchanged limit is NaN", async () => {
+    const { ctx } = makeCtx();
+    const doc = {
+      query: "test query",
+      limit: Number.NaN,
+      result: { ids: IDS },
+    };
+    const { event, set } = writeEvent(doc, doc);
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
   test("re-runs the query when only the limit changes", async () => {
     const { ctx, chain } = makeCtx();
     const { event, set } = writeEvent(

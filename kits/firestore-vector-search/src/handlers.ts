@@ -134,9 +134,14 @@ export async function handleQueryOnWrite(
     : undefined;
   if (
     before !== undefined &&
-    before.query === query &&
-    before.limit === data.limit &&
-    isDeepStrictEqual(before.prefilters, data.prefilters) &&
+    isDeepStrictEqual(
+      {
+        query: before.query,
+        limit: before.limit,
+        prefilters: before.prefilters,
+      },
+      { query, limit: data.limit, prefilters: data.prefilters }
+    ) &&
     data.result
   ) {
     return;
