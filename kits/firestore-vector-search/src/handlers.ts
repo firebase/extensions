@@ -125,6 +125,12 @@ export async function handleQueryOnWrite(
   const data = event.data.after.data() ?? {};
   const query = data.query;
   if (typeof query !== "string") return;
+  // The result write below re-fires this trigger; an unchanged query that
+  // already has a result is that echo, not a new request.
+  const beforeQuery = event.data.before.exists
+    ? event.data.before.get("query")
+    : undefined;
+  if (beforeQuery === query && data.result) return;
 
   const result = await performTextQuery({
     query,

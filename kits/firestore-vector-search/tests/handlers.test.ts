@@ -36,7 +36,12 @@ vi.mock("../src/embeddings", () => ({
 // handler never needs it.
 vi.mock("../src/queries/setup", () => ({ createIndex: vi.fn() }));
 
-import { type HandlerContext, handleQueryCall } from "../src/handlers";
+import {
+  type HandlerContext,
+  type VectorWriteEvent,
+  handleQueryCall,
+  handleQueryOnWrite,
+} from "../src/handlers";
 import { resolveVectorSearchConfig } from "../src/export-config";
 
 const config = resolveVectorSearchConfig({
@@ -68,6 +73,28 @@ function makeCtx() {
 
 function request(data: unknown, auth: unknown = { uid: "test-user" }) {
   return { data, auth } as unknown as CallableRequest<unknown>;
+}
+
+function snapshot(data: Record<string, unknown> | undefined, set: unknown) {
+  return {
+    exists: data !== undefined,
+    data: () => data,
+    get: (field: string) => data?.[field],
+    ref: { set, path: "test-collection/doc-1" },
+  };
+}
+
+/** A write event over the same document, with a spy on the after ref's set. */
+function writeEvent(
+  before: Record<string, unknown> | undefined,
+  after: Record<string, unknown> | undefined
+) {
+  const set = vi.fn();
+  const event = {
+    data: { before: snapshot(before, set), after: snapshot(after, set) },
+    params: {},
+  } as unknown as VectorWriteEvent;
+  return { event, set };
 }
 
 describe("handleQueryCall", () => {
@@ -203,5 +230,72 @@ describe("handleQueryCall", () => {
 
     expect((err as { code: string }).code).toBe("unknown");
     expect((err as Error).message).toBe("Query failed");
+  });
+});
+
+describe("handleQueryOnWrite", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getSingleEmbedding.mockResolvedValue(EMBEDDING);
+  });
+
+  test("runs the query and writes the result on create", async () => {
+    const { ctx } = makeCtx();
+    const { event, set } = writeEvent(undefined, { query: "test query" });
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("test query");
+    expect(set).toHaveBeenCalledWith({ result: { ids: IDS } }, { merge: true });
+  });
+
+  test("skips the query when the query is unchanged and a result exists", async () => {
+    const { ctx } = makeCtx();
+    const doc = { query: "test query", result: { ids: IDS } };
+    const { event, set } = writeEvent(doc, doc);
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("re-runs the query when the query string changes", async () => {
+    const { ctx } = makeCtx();
+    const { event, set } = writeEvent(
+      { query: "old query", result: { ids: ["stale"] } },
+      { query: "new query", result: { ids: ["stale"] } }
+    );
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("new query");
+    expect(set).toHaveBeenCalledWith({ result: { ids: IDS } }, { merge: true });
+  });
+
+  test("re-runs the query when the result field is missing", async () => {
+    const { ctx } = makeCtx();
+    const { event, set } = writeEvent(
+      { query: "test query" },
+      { query: "test query" }
+    );
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("test query");
+    expect(set).toHaveBeenCalledWith({ result: { ids: IDS } }, { merge: true });
+  });
+
+  test("ignores a document without a string query", async () => {
+    const { ctx } = makeCtx();
+    const { event, set } = writeEvent(
+      { query: "test query", result: { ids: IDS } },
+      { result: { ids: IDS } }
+    );
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
   });
 });
