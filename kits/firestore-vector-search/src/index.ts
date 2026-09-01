@@ -79,14 +79,19 @@ const REQUIRED_APIS = [
   },
 ] as const;
 const FUNCTION_SECRETS = [geminiApiKey, openAiApiKey];
+// Only the task functions reach getSingleEmbedding, but every function here
+// resolves the same config (which reads the provider keys), and the extension
+// bound its secrets to all functions in the instance -- so bind them uniformly.
 const DEFAULT_TASK_OPTIONS = {
   memory: "512MiB",
   timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
+  secrets: FUNCTION_SECRETS,
 } as const;
 const EMBEDDING_TASK_OPTIONS = {
   memory: "1GiB",
   timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
   retryConfig: { maxAttempts: TASK_MAX_ATTEMPTS },
+  secrets: FUNCTION_SECRETS,
 } as const;
 const FIRESTORE_FUNCTION_OPTIONS = {
   memory: "512MiB",
@@ -191,10 +196,7 @@ export const queryCallable = onCall(CALLABLE_FUNCTION_OPTIONS, (request) =>
 );
 
 export const initVectorSearch = onTaskDispatched(
-  {
-    ...DEFAULT_TASK_OPTIONS,
-    secrets: FUNCTION_SECRETS,
-  },
+  DEFAULT_TASK_OPTIONS,
   async () => {
     await handleInit(getContext());
   }
