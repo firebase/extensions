@@ -27,12 +27,10 @@ conflicts with that automatic setup.
 |---|---|
 | `roles/datastore.user` | read/write documents and embeddings |
 | `roles/aiplatform.user` | Vertex AI embeddings when configured |
-| `roles/storage.objectAdmin` | read image inputs from Cloud Storage |
 | `roles/datastore.indexAdmin` | manage vector indexes |
 | `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
 | `roles/run.invoker` | allow Eventarc/Tasks to invoke the Gen2 Cloud Run service |
 | `aiplatform.googleapis.com` | Vertex AI embedding/search |
-| `storage-component.googleapis.com` | read image data from Cloud Storage |
 
 ## Usage
 
