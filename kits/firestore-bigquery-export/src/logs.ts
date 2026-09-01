@@ -180,8 +180,8 @@ export const init = (config?: unknown) => {
   logger.info("Initializing with configuration", config);
 };
 
-export const start = (config?: unknown) => {
-  logger.info("Started execution with configuration", config);
+export const start = () => {
+  logger.info("Started execution of extension");
 };
 
 export const timestampMissingValue = (fieldName: string) => {
