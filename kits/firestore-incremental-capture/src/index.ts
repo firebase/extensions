@@ -202,15 +202,15 @@ export const syncChangelogTask = onTaskDispatched<ChangelogRow>(
 /**
  * Starts a restoration of the backup database to a point in time.
  *
- * SECURITY: this endpoint is intentionally unauthenticated, matching the
- * firestore-incremental-capture extension it was migrated from. Anyone who can
- * reach the URL can trigger a Dataflow job that batch-writes over the backup
- * database. Restrict it before deploying to production - with Cloud Run ingress
- * settings, an IAM invoker policy, or by fronting it with your own authorized
- * endpoint that enqueues `runRestorationTask` directly.
+ * SECURITY: deployed IAM-gated. `invoker: "private"` is set explicitly rather
+ * than relying on the CLI's default invoker policy, which has been observed to
+ * grant `allUsers` on the deployed Cloud Run service. Callers need
+ * `roles/run.invoker` on the service and must send an identity token; anyone
+ * who can invoke it can trigger a Dataflow job that batch-writes over the
+ * backup database.
  */
 export const onHttpRunRestoration = onRequest(
-  functionOptions,
+  { ...functionOptions, invoker: "private" },
   async (request, response) => {
     const result = await handleRestorationRequest(
       request.body,
