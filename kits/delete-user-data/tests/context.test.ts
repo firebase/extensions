@@ -14,16 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // Stands in for a project with no Realtime Database URL available, which is what
 // an empty SELECTED_DATABASE_INSTANCE leaves behind.
@@ -84,19 +75,14 @@ function contextFrom(uid: string): HandlerContext {
 }
 
 describe("handler context", () => {
-  beforeAll(() => {
-    vi.stubEnv("FIRESTORE_DATABASE_ID", FIRESTORE_DATABASE_ID);
-    // The projectID param reads the project from FIREBASE_CONFIG.
-    vi.stubEnv("FIREBASE_CONFIG", JSON.stringify({ projectId: PROJECT_ID }));
-  });
-
-  afterAll(() => {
-    vi.unstubAllEnvs();
-  });
-
+  // Stubbed per test: the afterEach unstubAllEnvs would wipe beforeAll stubs
+  // after the first test.
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("FIREBASE_KIT_INSTANCE_ID", "test-instance");
+    vi.stubEnv("FIRESTORE_DATABASE_ID", FIRESTORE_DATABASE_ID);
+    // The projectID param reads the project from FIREBASE_CONFIG.
+    vi.stubEnv("FIREBASE_CONFIG", JSON.stringify({ projectId: PROJECT_ID }));
   });
 
   afterEach(() => {
