@@ -14,7 +14,7 @@
         "@google-cloud/bigquery-data-transfer": "^5.0.1",
         "@google-cloud/pubsub": "^4.11.0",
         "firebase-admin": "^14.1.0",
-        "firebase-functions": "7.3.2"
+        "firebase-functions": "^7.3.2"
       },
       "devDependencies": {
         "vitest": "^4.1.10"
