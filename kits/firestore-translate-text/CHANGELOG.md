@@ -1,2 +1,3 @@
+- Construct the translation client once per process instead of on every invocation, matching the legacy extension
 - Initial release of kit, see README for differences between the legacy extension and this kit
 - The Google AI API key (and any other secret-shaped config value) is now masked as `<omitted>` in the config logged at startup and on each invocation; the legacy extension logs it in cleartext

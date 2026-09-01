@@ -38,6 +38,9 @@ const { logger, requiresAPI, requiresRole } = vi.hoisted(() => ({
 
 vi.mock("firebase-functions", () => ({ logger, requiresAPI, requiresRole }));
 
+vi.mock("@google-cloud/translate", () => import("./mocks/translate"));
+vi.mock("genkit", () => import("./mocks/genkit"));
+vi.mock("@genkit-ai/google-genai", () => import("./mocks/google-genai"));
 vi.mock("../src/events");
 
 const configFromEnv = vi.fn<() => TranslateConfig>();
@@ -166,10 +169,11 @@ describe("index", () => {
     await handler(event);
 
     expect(handleDocumentWrite).toHaveBeenNthCalledWith(1, event, {
-      firestore,
       config: resolveTranslateConfig(baseConfig),
-      googleAiApiKey: undefined,
+      service: expect.anything(),
     });
+    const contexts = handleDocumentWrite.mock.calls.map(([, ctx]) => ctx);
+    expect(contexts[1]).toBe(contexts[0]);
     expect(configFromEnv).toHaveBeenCalledTimes(1);
     expect(getFirestore).toHaveBeenCalledTimes(1);
     expect(events.setupEventChannel).toHaveBeenCalledTimes(1);
@@ -204,7 +208,27 @@ describe("index", () => {
     expect(googleAiApiKey.value).toHaveBeenCalledTimes(1);
     expect(handleDocumentWrite).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ googleAiApiKey: "api-key" })
+      expect.objectContaining({
+        config: expect.objectContaining({ googleAiApiKey: "api-key" }),
+      })
+    );
+  });
+
+  test("prefers the secret over the configured Google AI API key", async () => {
+    await importIndex({
+      ...baseConfig,
+      provider: "gemini-googleai",
+      googleAiApiKey: "from-config",
+    });
+    const [, handler] = onDocumentWritten.mock.calls[0];
+
+    await handler(makeEvent(makeSnapshot(), makeSnapshot({ input: "hello" })));
+
+    expect(handleDocumentWrite).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        config: expect.objectContaining({ googleAiApiKey: "api-key" }),
+      })
     );
   });
 
