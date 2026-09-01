@@ -92,7 +92,7 @@ loads them at deploy time and prompts for any required values that are missing.
 | `firestorePaths` | `FIRESTORE_PATHS` | no | (empty) | Comma-separated Firestore paths with `{UID}` |
 | `firestoreDatabaseId` | `FIRESTORE_DATABASE_ID` | no | `(default)` | Firestore database id |
 | `firestoreDeleteMode` | `FIRESTORE_DELETE_MODE` | no | `shallow` | `shallow` or `recursive` |
-| `rtdbInstance` | `SELECTED_DATABASE_INSTANCE` | no | (empty) | RTDB instance id |
+| `rtdbInstance` | `SELECTED_DATABASE_INSTANCE` | no | (empty) | RTDB instance id; required for RTDB deletion — without it `rtdbPaths` are skipped |
 | `rtdbLocation` | `SELECTED_DATABASE_LOCATION` | no | `us-central1` | RTDB location |
 | `rtdbPaths` | `RTDB_PATHS` | no | (empty) | Comma-separated RTDB paths with `{UID}` |
 | `storageBucket` | `CLOUD_STORAGE_BUCKET` | no | default Storage bucket | Bucket to clear |
@@ -167,15 +167,6 @@ You can also override both names with `DISCOVERY_TOPIC_NAME` and
 `DELETION_TOPIC_NAME`, which the extension did not allow. Change them together,
 since one function publishes to a topic the other is triggered by.
 
-### Realtime Database deletion no longer needs a database instance
-
-The extension only cleared RTDB paths when both `SELECTED_DATABASE_INSTANCE`
-and `SELECTED_DATABASE_LOCATION` were set. This kit clears them whenever
-`RTDB_PATHS` is set, falling back to your project's default database when no
-instance is named. Set `SELECTED_DATABASE_INSTANCE` explicitly if you are
-targeting a secondary database, and leave `RTDB_PATHS` empty if you do not want
-RTDB touched at all.
-
 ### Functions deploy to your default region
 
 The extension deployed to the location you picked at install time. This kit
@@ -204,7 +195,11 @@ publish `firebase.extensions.delete-user-data.v1.firestore`, `.database` and
 `.storage` with the same payloads. Path syntax (`{UID}` substitution, comma
 separated lists, `{DEFAULT}` for the default Storage bucket), the shallow and
 recursive Firestore delete modes, the search depth and field matching rules,
-and the custom `SEARCH_FUNCTION` contract all behave as they did.
+and the custom `SEARCH_FUNCTION` contract all behave as they did. RTDB
+deletion also keeps the extension's gate: paths are only cleared when a
+database URL can be derived from `SELECTED_DATABASE_INSTANCE` and
+`SELECTED_DATABASE_LOCATION`; otherwise they are skipped with a
+`Realtime Database paths are not configured, skipping` log.
 
 ## API surface
 
