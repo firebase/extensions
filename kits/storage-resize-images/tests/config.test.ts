@@ -102,6 +102,43 @@ describe("configFromEnv", () => {
     expect(config.projectId).toBe("extensions-testing");
   });
 
+  // The extension read process.env directly and degraded gracefully against a
+  // partial environment; the params layer must not turn that into a cold-start
+  // crash (ListParam JSON-parses IMAGE_TYPE, IntParam yields 0 for
+  // FUNCTION_MEMORY).
+  test("survives an unset IMAGE_TYPE", async () => {
+    delete process.env.IMAGE_TYPE;
+    const { configFromEnv } = await import("../src/config");
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+
+    const config = configFromEnv();
+    expect(config.imageTypes).toBeUndefined();
+    expect(resolveResizeImagesConfig(config).imageTypes).toEqual(["false"]);
+  });
+
+  test("accepts an extension-style comma-separated IMAGE_TYPE", async () => {
+    process.env.IMAGE_TYPE = "jpeg,webp";
+    const { configFromEnv } = await import("../src/config");
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+
+    const config = configFromEnv();
+    expect(config.imageTypes).toBe("jpeg,webp");
+    expect(resolveResizeImagesConfig(config).imageTypes).toEqual([
+      "jpeg",
+      "webp",
+    ]);
+  });
+
+  test("falls back to the default memory when FUNCTION_MEMORY is unset", async () => {
+    delete process.env.FUNCTION_MEMORY;
+    const { configFromEnv } = await import("../src/config");
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+
+    const config = configFromEnv();
+    expect(config.memory).toBeUndefined();
+    expect(resolveResizeImagesConfig(config).memory).toBe("1GiB");
+  });
+
   test("collapses unset optional strings to undefined", async () => {
     const { configFromEnv } = await import("../src/config");
     const config = configFromEnv();
@@ -133,6 +170,8 @@ describe("configFromEnv", () => {
     // runtime contract. `.value()` reads only `process.env`; the declared
     // `default:` is written into the deployed `.env` by the CLI. A hand-rolled
     // or partial `.env` therefore yields these values, not the declared ones.
+    // (memory is the exception: configFromEnv maps IntParam's 0 sentinel to
+    // undefined so the resolver can apply its default.)
     delete process.env.IS_ANIMATED;
     delete process.env.REGENERATE_TOKEN;
     delete process.env.FUNCTION_MEMORY;
@@ -143,29 +182,8 @@ describe("configFromEnv", () => {
 
     expect(config.isAnimated).toBe(false);
     expect(config.regenerateToken).toBe(false);
-    expect(config.memory).toBe(0);
+    expect(config.memory).toBeUndefined();
     expect(config.sharpOptions).toBe("");
-  });
-
-  test("a missing IMAGE_TYPE throws instead of falling back to its default", async () => {
-    // The list param JSON-parses the raw env var, so an absent IMAGE_TYPE is
-    // a cold-start crash — the kit's counterpart to the extension's
-    // `IMG_SIZES.split(",")` TypeError on a missing variable.
-    delete process.env.IMAGE_TYPE;
-
-    const { configFromEnv } = await import("../src/config");
-    expect(() => configFromEnv()).toThrow(SyntaxError);
-  });
-
-  test("IMAGE_TYPE is read as a JSON array, not a comma-separated string", async () => {
-    // The extension reads the same variable with `.split(",")`, so an
-    // extension-style value does not carry over.
-    process.env.IMAGE_TYPE = "jpeg,webp";
-    const { configFromEnv } = await import("../src/config");
-    expect(() => configFromEnv()).toThrow(SyntaxError);
-
-    process.env.IMAGE_TYPE = '["jpeg","webp"]';
-    expect(configFromEnv().imageTypes).toEqual(["jpeg", "webp"]);
   });
 
   test("reads explicit values for every param", async () => {
