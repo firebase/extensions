@@ -132,7 +132,9 @@ function withoutColumns(
  * If any subsequent data export fails, it will attempt to reinitialize.
  */
 
-export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHistoryTracker {
+export class FirestoreBigQueryEventHistoryTracker
+  implements FirestoreEventHistoryTracker
+{
   bq: bigquery.BigQuery;
   _initialized: boolean = false;
   partitioningConfig: PartitioningConfig;
@@ -209,19 +211,19 @@ export class FirestoreBigQueryEventHistoryTracker implements FirestoreEventHisto
       return undefined;
     }
 
-    const data = traverse<traverse.Traverse<any>>(eventData).map(
-      function (property) {
-        if (property && property.constructor) {
-          if (property.constructor.name === "Buffer") {
-            this.remove();
-          }
+    const data = traverse<traverse.Traverse<any>>(eventData).map(function (
+      property
+    ) {
+      if (property && property.constructor) {
+        if (property.constructor.name === "Buffer") {
+          this.remove();
+        }
 
-          if (property.constructor.name === DocumentReference.name) {
-            this.update(property.path);
-          }
+        if (property.constructor.name === DocumentReference.name) {
+          this.update(property.path);
         }
       }
-    );
+    });
 
     return data;
   }
