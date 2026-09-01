@@ -173,7 +173,9 @@ function optionalInt(
   name: string,
   param: { value(): number }
 ): number | undefined {
-  const raw = process.env[name];
+  // Quoted values keep their whitespace through the CLI's .env parser, and a
+  // whitespace-only value would otherwise parse to 0.
+  const raw = process.env[name]?.trim();
   return raw === undefined || raw === "" ? undefined : param.value();
 }
 

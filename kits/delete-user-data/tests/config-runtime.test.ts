@@ -53,6 +53,11 @@ describe("searchDepth from the runtime environment", () => {
     expect(resolvedSearchDepth("")).toBe(3);
   });
 
+  // A quoted "   " survives the CLI's .env parser untrimmed.
+  test("falls back to the documented default when whitespace only", () => {
+    expect(resolvedSearchDepth("   ")).toBe(3);
+  });
+
   test("preserves an explicit zero", () => {
     expect(resolvedSearchDepth("0")).toBe(0);
   });
