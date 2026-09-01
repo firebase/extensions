@@ -125,7 +125,7 @@ describe("setSmtpCredentials", () => {
     expect(credentials.options.service).toBe("gmail");
   });
 
-  test("percent-encodes special characters in the smtpPassword secret", () => {
+  test("round-trips special characters in the smtpPassword secret", () => {
     const config = makeConfig({
       smtpConnectionUri:
         "smtp://fakeemail@gmail.com@smtp.gmail.com:465?pool=true&service=gmail",
@@ -144,7 +144,7 @@ describe("setSmtpCredentials", () => {
     expect(credentials.options.service).toBe("gmail");
   });
 
-  test("percent-encodes special characters in the URI password", () => {
+  test("round-trips special characters in the URI password", () => {
     const config = makeConfig({
       smtpConnectionUri:
         "smtp://fakeemail@gmail.com:4,hdhuNTbv9zMrP4&7&7%*3@smtp.gmail.com:465?pool=true&service=gmail",
@@ -160,6 +160,22 @@ describe("setSmtpCredentials", () => {
     expect(credentials.options.secure).toBe(false);
     expect(credentials.options.pool).toBe(true);
     expect(credentials.options.service).toBe("gmail");
+  });
+
+  test("builds a hotmail service transport for Microsoft SMTP hosts", () => {
+    const config = makeConfig({
+      smtpConnectionUri:
+        "smtp://fakeemail@outlook.com@smtp-mail.outlook.com:587",
+      smtpPassword: "secret/password",
+    });
+
+    const credentials = setSmtpCredentials(config);
+
+    expect(credentials).toBeInstanceOf(Mail);
+    expect(credentials.options.service).toBe("hotmail");
+    expect(credentials.options.auth.user).toBe("fakeemail@outlook.com");
+    expect(credentials.options.auth.pass).toBe("secret/password");
+    expect(credentials.options.tls).toBeUndefined();
   });
 
   test("throws and warns when the URI cannot be parsed", () => {

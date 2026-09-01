@@ -221,7 +221,7 @@ describe("preparePayload template merging", () => {
     expect(result.message.attachments).toEqual([{ filename: "original.doc" }]);
   });
 
-  test("a template that renders nothing leaves the message intact", async () => {
+  test("a template that renders nothing only adds an empty attachments array", async () => {
     const result = await prepare({
       to: "test@example.com",
       template: { name: "empty-template", data: {} },

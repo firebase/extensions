@@ -16,10 +16,22 @@
 
 import { describe, expect, test, vi } from "vitest";
 
+interface StringParamOpts {
+  default?: string;
+  input?: { text?: { validationRegex?: RegExp } };
+}
+
+const { stringParamOpts } = vi.hoisted(() => ({
+  stringParamOpts: new Map<string, StringParamOpts | undefined>(),
+}));
+
 vi.mock("firebase-functions/params", () => ({
-  defineString: (_name: string, opts?: { default?: string }) => ({
-    value: () => opts?.default ?? "",
-  }),
+  defineString: (name: string, opts?: StringParamOpts) => {
+    stringParamOpts.set(name, opts);
+    return {
+      value: () => opts?.default ?? "",
+    };
+  },
   defineInt: (_name: string, opts?: { default?: number }) => ({
     value: () => opts?.default ?? 0,
   }),
@@ -87,6 +99,43 @@ describe("secretParamsForAuthType", () => {
     expect(() => secretParamsForAuthType("Unknown")).toThrow(
       "Unsupported AUTH_TYPE for firestore-send-email: Unknown"
     );
+  });
+});
+
+describe("SMTP_CONNECTION_URI validationRegex", () => {
+  function connectionUriRegex(): RegExp {
+    const regex = stringParamOpts.get("SMTP_CONNECTION_URI")?.input?.text
+      ?.validationRegex;
+    if (!regex) {
+      throw new Error("SMTP_CONNECTION_URI declares no validationRegex");
+    }
+    return regex;
+  }
+
+  test("accepts the documented URI forms and a blank value", () => {
+    for (const uri of [
+      "smtps://username@smtp.hostname.com:465",
+      "smtps://smtp.gmail.com:465",
+      "smtps://username@gmail.com:password@smtp.gmail.com:465",
+      "smtp://smtp.gmail.com:587?pool=true",
+      "",
+    ]) {
+      expect(connectionUriRegex().test(uri)).toBe(true);
+    }
+  });
+
+  test("rejects a URI without a scheme or without a port", () => {
+    expect(connectionUriRegex().test("smtp.gmail.com:465")).toBe(false);
+    expect(connectionUriRegex().test("smtp://smtp.gmail.com")).toBe(false);
+  });
+
+  test("accepts trailing garbage after a valid prefix because the first alternative is unanchored", () => {
+    for (const uri of [
+      "smtp://fakeemail@gmail.com:4,h?dhuNTbv9zMrP4&7&7%*3:smtp.gmail.com:465?pool=true&service=gmail",
+      "smtps://smtp.gmail.com:465 and then total garbage",
+    ]) {
+      expect(connectionUriRegex().test(uri)).toBe(true);
+    }
   });
 });
 
