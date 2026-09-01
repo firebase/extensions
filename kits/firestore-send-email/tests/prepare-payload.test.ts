@@ -211,6 +211,16 @@ describe("preparePayload template merging", () => {
     expect(result.message.attachments).toEqual([{ filename: "template.pdf" }]);
   });
 
+  test("message attachments survive a template that renders none", async () => {
+    const result = await prepare({
+      to: "test@example.com",
+      template: { name: "html-only-template", data: {} },
+      message: { attachments: [{ filename: "original.doc" }] },
+    });
+
+    expect(result.message.attachments).toEqual([{ filename: "original.doc" }]);
+  });
+
   test("a template that renders nothing leaves the message intact", async () => {
     const result = await prepare({
       to: "test@example.com",
@@ -231,7 +241,6 @@ describe("preparePayload template merging", () => {
       to: "test@example.com",
       template: { name: "html-only-template", data: {} },
       message: { text: "Original text content", subject: "Original Subject" },
-      attachments: [{ filename: "original.doc" }],
     });
 
     expect(result.message.html).toBe("<h1>Template HTML</h1>");
