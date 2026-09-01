@@ -74,6 +74,18 @@ function unchangedTransferConfig(): TransferConfig {
   } as TransferConfig;
 }
 
+/**
+ * The stored config with only `delta` applied, so a change case can assert the
+ * whole updated config and catch edits the update mask does not mention.
+ */
+function transferConfigWithDelta(
+  delta: (transferConfig: TransferConfig) => void
+): TransferConfig {
+  const expected = unchangedTransferConfig();
+  delta(expected);
+  return expected;
+}
+
 function clientReturning(transferConfig: TransferConfig | null) {
   return {
     getTransferConfig: vi.fn().mockResolvedValue([transferConfig]),
@@ -128,10 +140,11 @@ describe("constructUpdateTransferConfigRequest change detection", () => {
     );
 
     expect(request.updateMask?.paths).toEqual(["schedule"]);
-    expect(request.transferConfig?.schedule).toBe("every 15 minutes");
-    expect(
-      request.transferConfig?.params?.fields?.partitioning_field?.stringValue
-    ).toBe("");
+    expect(request.transferConfig).toEqual(
+      transferConfigWithDelta((expected) => {
+        expected.schedule = "every 15 minutes";
+      })
+    );
   });
 
   test("masks params when the destination table name changed", async () => {
@@ -142,10 +155,12 @@ describe("constructUpdateTransferConfigRequest change detection", () => {
     );
 
     expect(request.updateMask?.paths).toEqual(["params"]);
-    expect(
-      request.transferConfig?.params?.fields?.destination_table_name_template
-        ?.stringValue
-    ).toBe('different_table_{run_time|"%H%M%S"}');
+    expect(request.transferConfig).toEqual(
+      transferConfigWithDelta((expected) => {
+        expected.params.fields.destination_table_name_template.stringValue =
+          'different_table_{run_time|"%H%M%S"}';
+      })
+    );
   });
 
   test("masks params when the query changed", async () => {
@@ -156,8 +171,11 @@ describe("constructUpdateTransferConfigRequest change detection", () => {
     );
 
     expect(request.updateMask?.paths).toEqual(["params"]);
-    expect(request.transferConfig?.params?.fields?.query?.stringValue).toBe(
-      "SELECT * FROM source.accounts"
+    expect(request.transferConfig).toEqual(
+      transferConfigWithDelta((expected) => {
+        expected.params.fields.query.stringValue =
+          "SELECT * FROM source.accounts";
+      })
     );
   });
 
@@ -165,12 +183,20 @@ describe("constructUpdateTransferConfigRequest change detection", () => {
     const request = await constructUpdateTransferConfigRequest(
       clientReturning(unchangedTransferConfig()),
       TRANSFER_CONFIG_NAME,
-      { ...config, queryString: "SELECT * FROM source.accounts" }
+      {
+        ...config,
+        partitioningField: undefined,
+        queryString: "SELECT * FROM source.accounts",
+      }
     );
 
-    expect(
-      request.transferConfig?.params?.fields?.partitioning_field?.stringValue
-    ).toBe("");
+    expect(request.updateMask?.paths).toEqual(["params"]);
+    expect(request.transferConfig).toEqual(
+      transferConfigWithDelta((expected) => {
+        expected.params.fields.query.stringValue =
+          "SELECT * FROM source.accounts";
+      })
+    );
   });
 
   test("masks the notification topic when the stored one drifted", async () => {
@@ -183,10 +209,14 @@ describe("constructUpdateTransferConfigRequest change detection", () => {
       { ...config, schedule: "every 15 minutes" }
     );
 
-    expect(request.updateMask?.paths).toContain("notification_pubsub_topic");
-    expect(request.updateMask?.paths).toContain("schedule");
-    expect(request.transferConfig?.notificationPubsubTopic).toBe(
-      EXPECTED_TOPIC
+    expect(request.updateMask?.paths).toEqual([
+      "schedule",
+      "notification_pubsub_topic",
+    ]);
+    expect(request.transferConfig).toEqual(
+      transferConfigWithDelta((expected) => {
+        expected.schedule = "every 15 minutes";
+      })
     );
   });
 
@@ -197,8 +227,12 @@ describe("constructUpdateTransferConfigRequest change detection", () => {
       { ...config, datasetId: "new_dataset_id" }
     );
 
-    expect(request.updateMask?.paths).toContain("destination_dataset_id");
-    expect(request.transferConfig?.destinationDatasetId).toBe("new_dataset_id");
+    expect(request.updateMask?.paths).toEqual(["destination_dataset_id"]);
+    expect(request.transferConfig).toEqual(
+      transferConfigWithDelta((expected) => {
+        expected.destinationDatasetId = "new_dataset_id";
+      })
+    );
   });
 
   test("adds a partitioning field that was not previously set", async () => {
@@ -209,9 +243,11 @@ describe("constructUpdateTransferConfigRequest change detection", () => {
     );
 
     expect(request.updateMask?.paths).toEqual(["params"]);
-    expect(
-      request.transferConfig?.params?.fields?.partitioning_field?.stringValue
-    ).toBe("created_at");
+    expect(request.transferConfig).toEqual(
+      transferConfigWithDelta((expected) => {
+        expected.params.fields.partitioning_field.stringValue = "created_at";
+      })
+    );
   });
 
   test("rejects a stored config without params.fields", async () => {

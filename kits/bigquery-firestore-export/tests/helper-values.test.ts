@@ -123,6 +123,8 @@ describe("convertUnsupportedDataTypes", () => {
     });
 
     expect(converted.data).toBeInstanceOf(Uint8Array);
+    // Buffer extends Uint8Array, so only this pins the conversion.
+    expect(converted.data).not.toBeInstanceOf(Buffer);
     expect(Array.from(converted.data as Uint8Array)).toEqual([1, 2, 3, 4]);
   });
 
