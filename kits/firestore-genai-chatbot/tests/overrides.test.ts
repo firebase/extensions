@@ -89,4 +89,16 @@ describe("extractOverrides", () => {
 
     expect(overrides.topK).toBeUndefined();
   });
+
+  test("drops an integer field whose string value is zero", () => {
+    const overrides = extractOverrides(snap({ topK: "0" }));
+
+    expect(overrides.topK).toBeUndefined();
+  });
+
+  test("lets NaN through for a float field whose string value is not numeric", () => {
+    const overrides = extractOverrides(snap({ temperature: "not-a-number" }));
+
+    expect(Number.isNaN(overrides.temperature)).toBe(true);
+  });
 });
