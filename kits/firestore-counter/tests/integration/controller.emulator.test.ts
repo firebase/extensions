@@ -21,9 +21,7 @@
  *
  * They are skipped unless FIRESTORE_EMULATOR_HOST is set.
  *
- * Run locally from kits/firestore-counter:
- *   npx firebase emulators:exec --only firestore -P demo-test \
- *     --config ../../_emulator/firebase.json "npx vitest run tests/integration"
+ * Run from kits/firestore-counter: npm run test:emulator
  */
 
 import { randomUUID } from "node:crypto";
