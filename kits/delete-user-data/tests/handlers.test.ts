@@ -406,7 +406,11 @@ describe("handleClear", () => {
 
   test("deletes the configured rtdb paths", async () => {
     const ctx = makeContext({
-      config: { rtdbPaths: "users/{UID},admins/{UID}" },
+      config: {
+        rtdbPaths: "users/{UID},admins/{UID}",
+        rtdbInstance: "test-rtdb-instance",
+        rtdbLocation: "us-central1",
+      },
     });
 
     await handleClear(UID, ctx);
@@ -416,6 +420,17 @@ describe("handleClear", () => {
       uid: UID,
       paths: [`users/${UID}`, `admins/${UID}`],
     });
+  });
+
+  test("skips rtdb deletion when no database instance is configured", async () => {
+    const ctx = makeContext({
+      config: { rtdbPaths: "users/{UID}" },
+    });
+
+    await handleClear(UID, ctx);
+
+    expect(ctx.rtdbRemovals).toEqual([]);
+    expect(log.rtdbNotConfigured).toHaveBeenCalled();
   });
 
   test("deletes the configured storage paths", async () => {
@@ -463,7 +478,11 @@ describe("handleClear", () => {
   test("logs rtdb errors without failing", async () => {
     const error = new Error("boom");
     const ctx = makeContext({
-      config: { rtdbPaths: "users/{UID}" },
+      config: {
+        rtdbPaths: "users/{UID}",
+        rtdbInstance: "test-rtdb-instance",
+        rtdbLocation: "us-central1",
+      },
       rtdbError: error,
     });
 
