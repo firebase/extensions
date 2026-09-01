@@ -19,13 +19,14 @@ import {
   defineInt,
   defineString,
   expr,
+  type IntParam,
   projectID,
   select,
   storageBucket,
 } from "firebase-functions/params";
 import type { DeleteUserDataConfig } from "./export-config";
 
-const instanceId = defineString("INSTANCE_ID");
+const instanceId = defineString("FIREBASE_KIT_INSTANCE_ID");
 
 const params = {
   instanceId,
@@ -164,6 +165,16 @@ function optional(value: string): string | undefined {
   return value.length > 0 ? value : undefined;
 }
 
+// defineInt resolves a missing or blank env var to 0, so a declared default
+// never reaches runtime. Report those as unset and let the resolver apply the
+// documented default. An explicit 0 is a real setting and is preserved.
+function optionalInt(param: IntParam): number | undefined {
+  // Quoted values keep their whitespace through the CLI's .env parser, and a
+  // whitespace-only value would otherwise parse to 0.
+  const raw = process.env[param.name]?.trim();
+  return raw === undefined || raw === "" ? undefined : param.value();
+}
+
 export function configFromEnv(): DeleteUserDataConfig {
   return {
     firestorePaths: optional(params.firestorePaths.value()),
@@ -177,7 +188,7 @@ export function configFromEnv(): DeleteUserDataConfig {
       optional(params.storageBucket.value()) ?? process.env.STORAGE_BUCKET,
     storagePaths: optional(params.storagePaths.value()),
     enableAutoDiscovery: params.enableAutoDiscovery.value(),
-    searchDepth: params.searchDepth.value(),
+    searchDepth: optionalInt(params.searchDepth),
     searchFields: params.searchFields.value(),
     searchFunction: optional(params.searchFunction.value()),
     instanceId: params.instanceId.value(),
