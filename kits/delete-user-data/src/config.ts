@@ -19,6 +19,7 @@ import {
   defineInt,
   defineString,
   expr,
+  type IntParam,
   projectID,
   select,
   storageBucket,
@@ -26,8 +27,6 @@ import {
 import type { DeleteUserDataConfig } from "./export-config";
 
 const instanceId = defineString("INSTANCE_ID");
-
-const SEARCH_DEPTH_PARAM = "AUTO_DISCOVERY_SEARCH_DEPTH";
 
 const params = {
   instanceId,
@@ -122,7 +121,7 @@ const params = {
 
     default: false,
   }),
-  searchDepth: defineInt(SEARCH_DEPTH_PARAM, {
+  searchDepth: defineInt("AUTO_DISCOVERY_SEARCH_DEPTH", {
     label: "Auto discovery search depth",
     description:
       "If auto discovery is enabled, how deep should auto discovery find collections and documents. For example, setting to `1` would only discover root collections and documents, whereas setting to `9` would search sub-collections 9 levels deep. Defaults to `3`.",
@@ -169,13 +168,10 @@ function optional(value: string): string | undefined {
 // defineInt resolves a missing or blank env var to 0, so a declared default
 // never reaches runtime. Report those as unset and let the resolver apply the
 // documented default. An explicit 0 is a real setting and is preserved.
-function optionalInt(
-  name: string,
-  param: { value(): number }
-): number | undefined {
+function optionalInt(param: IntParam): number | undefined {
   // Quoted values keep their whitespace through the CLI's .env parser, and a
   // whitespace-only value would otherwise parse to 0.
-  const raw = process.env[name]?.trim();
+  const raw = process.env[param.name]?.trim();
   return raw === undefined || raw === "" ? undefined : param.value();
 }
 
@@ -192,7 +188,7 @@ export function configFromEnv(): DeleteUserDataConfig {
       optional(params.storageBucket.value()) ?? process.env.STORAGE_BUCKET,
     storagePaths: optional(params.storagePaths.value()),
     enableAutoDiscovery: params.enableAutoDiscovery.value(),
-    searchDepth: optionalInt(SEARCH_DEPTH_PARAM, params.searchDepth),
+    searchDepth: optionalInt(params.searchDepth),
     searchFields: params.searchFields.value(),
     searchFunction: optional(params.searchFunction.value()),
     instanceId: params.instanceId.value(),

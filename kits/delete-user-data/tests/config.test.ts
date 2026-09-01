@@ -48,7 +48,9 @@ const defineString = vi.fn(
     new FakeStringParam(name, opts?.default)
 );
 
-const defineInt = vi.fn((_name: string, opts?: { default?: number }) => ({
+// Carries name so configFromEnv can look the variable up, as the real one does.
+const defineInt = vi.fn((name: string, opts?: { default?: number }) => ({
+  name,
   value: () => opts?.default ?? 0,
 }));
 
