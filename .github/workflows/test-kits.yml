@@ -1,0 +1,71 @@
+name: Kit Tests
+
+on:
+  pull_request:
+    paths:
+      - "kits/**"
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Detect changed kits
+    runs-on: ubuntu-latest
+    outputs:
+      kits: ${{ steps.kits.outputs.kits }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Compute changed kit list
+        id: kits
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          # A kit is a kits/<name> directory with a package.json; files directly
+          # under kits/ (e.g. kits/README.md) belong to no kit. A kit deleted by
+          # the PR has no package.json on the merge ref and is skipped.
+          KITS=$(git diff --name-only "$BASE_SHA" HEAD -- 'kits/' \
+            | awk -F/ 'NF >= 3 { print $1 "/" $2 }' \
+            | sort -u)
+          MATRIX=$(for kit in $KITS; do
+            if [ -f "$kit/package.json" ]; then echo "$kit"; fi
+          done | jq --raw-input . | jq --compact-output --slurp .)
+          echo "Changed kits: $MATRIX"
+          echo "kits=$MATRIX" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Test ${{ matrix.kit }}
+    needs: changes
+    if: ${{ needs.changes.outputs.kits != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        kit: ${{ fromJSON(needs.changes.outputs.kits) }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: ${{ matrix.kit }}/npm-shrinkwrap.json
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.kit }}
+        run: npm ci
+
+      - name: Build
+        working-directory: ${{ matrix.kit }}
+        run: npm run build
+
+      - name: Test
+        working-directory: ${{ matrix.kit }}
+        run: npm test
