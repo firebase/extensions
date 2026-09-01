@@ -198,6 +198,17 @@ describe("constructMetadata", () => {
     expect(metadata.cacheControl).toBe("max-age=60");
   });
 
+  test("treats an empty cacheControlHeader as unset", () => {
+    const metadata = constructMetadata(
+      "test_200x200.png",
+      "image/png",
+      { ...objectMetadata, cacheControl: "max-age=60" },
+      makeConfig({ cacheControlHeader: "" })
+    );
+
+    expect(metadata.cacheControl).toBe("max-age=60");
+  });
+
   test("regenerates an existing download token", () => {
     const metadata = constructMetadata(
       "test_200x200.png",
