@@ -182,12 +182,14 @@ The extension deployed to the location you picked at install time. This kit
 sets no region, so its functions deploy to your codebase's default
 (`us-central1` unless you have changed it).
 
-### Pub/Sub handlers are 2nd gen
+### All functions are 2nd gen
 
-`handleSearch` and `handleDeletion` are now 2nd gen functions. `clearData`
-stays 1st gen, because the Firebase Auth `user.delete` trigger has no 2nd gen
-equivalent. This mainly matters if you have infrastructure or alerting keyed to
-function generation.
+`clearData`, `handleSearch` and `handleDeletion` are all 2nd gen functions. Kits
+do not support 1st gen endpoints, so `clearData` listens on the 2nd gen Firebase
+Auth event `google.firebase.auth.user.v2.deleted` instead of the 1st gen
+`user.delete` trigger. That event type is still beta in `firebase-functions`.
+This mainly matters if you have infrastructure or alerting keyed to function
+generation.
 
 ### Empty search fields no longer error
 

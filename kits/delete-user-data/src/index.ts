@@ -17,9 +17,9 @@
 import { PubSub } from "@google-cloud/pubsub";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
-import * as functionsV1 from "firebase-functions/v1";
 import type { Role } from "firebase-functions/v2";
 import { requiresRole } from "firebase-functions/v2";
+import { onUserDeleted } from "firebase-functions/v2/identity";
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
 import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
 import * as events from "./events";
@@ -81,8 +81,15 @@ function getContext(): HandlerContext {
   return ctx;
 }
 
-export const clearData = functionsV1.auth.user().onDelete((user) => {
-  return handleClear(user.uid, getContext());
+export const clearData = onUserDeleted((event) => {
+  // The Auth event delivers no user record when the payload envelope is empty,
+  // so bail before getContext() rather than initialising the SDKs for nothing.
+  const uid = event.data?.uid;
+  if (!uid) {
+    logs.deletionEventMissingUid(event.id);
+    return;
+  }
+  return handleClear(uid, getContext());
 });
 
 export const handleSearch = onMessagePublished(
