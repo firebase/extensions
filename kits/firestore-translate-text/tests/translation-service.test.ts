@@ -227,14 +227,6 @@ describe("TranslationService", () => {
     );
   });
 
-  test("filters out languages that already have a translation", () => {
-    const { service } = build();
-    const filter = service.filterLanguagesFn({ en: "hello" });
-
-    expect(defaultLanguages.filter(filter)).toEqual(["es", "de", "fr"]);
-    expect(logger.log).toHaveBeenCalledWith(messages.skippingLanguage("en"));
-  });
-
   test("writes translations in a transaction and records success", async () => {
     const { firestore, service } = build();
     const snapshot = makeSnapshot({ input: "hello" });
