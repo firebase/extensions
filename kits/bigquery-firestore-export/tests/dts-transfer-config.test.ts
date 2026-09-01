@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as bigqueryDataTransfer from "@google-cloud/bigquery-data-transfer";
 import { describe, expect, test, vi } from "vitest";
 import {
   constructUpdateTransferConfigRequest,
@@ -34,6 +35,9 @@ vi.mock("../src/logs", () => ({
   transferConfigUpdated: vi.fn(),
   updateTransferConfig: vi.fn(),
 }));
+
+const { UpdateTransferConfigRequest } =
+  bigqueryDataTransfer.protos.google.cloud.bigquery.datatransfer.v1;
 
 const TRANSFER_CONFIG_NAME =
   "projects/test-project/locations/us/transferConfigs/642f3a36-0000-2fbb-ad1d-001a114e2fa6";
@@ -334,7 +338,26 @@ describe("updateTransferConfig", () => {
     });
 
     expect(result).toEqual(updated);
-    expect(client.updateTransferConfig).toHaveBeenCalledOnce();
+    expect(client.updateTransferConfig).toHaveBeenCalledWith(
+      UpdateTransferConfigRequest.fromObject({
+        transferConfig: transferConfigWithDelta((expected) => {
+          expected.schedule = "every 15 minutes";
+        }),
+        updateMask: { paths: ["schedule"] },
+      })
+    );
+  });
+
+  test("still sends the update, with an empty mask, when nothing changed", async () => {
+    const client = clientReturning(unchangedTransferConfig());
+    client.updateTransferConfig.mockResolvedValue([unchangedTransferConfig()]);
+
+    await updateTransferConfig(client, TRANSFER_CONFIG_NAME, config);
+
+    const sent = client.updateTransferConfig.mock.calls[0][0];
+    expect(sent.updateMask?.paths).toEqual([]);
+    // On the wire the empty path list serializes as an empty FieldMask.
+    expect(sent.toJSON().updateMask).toEqual({});
   });
 
   test("rejects when the transfer config no longer exists", async () => {

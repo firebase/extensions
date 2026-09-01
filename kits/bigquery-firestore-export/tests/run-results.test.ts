@@ -15,7 +15,6 @@
  */
 
 import type { BigQuery } from "@google-cloud/bigquery";
-import type { Firestore } from "firebase-admin/firestore";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { resolveConfig } from "../src/export-config";
 import type { BigQueryRow, TransferRunMessage } from "../src/types";

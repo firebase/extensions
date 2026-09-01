@@ -90,21 +90,30 @@ describe("convertUnsupportedDataTypes", () => {
     expect(convertUnsupportedDataTypes(true)).toBe(true);
   });
 
-  test("converts every BigQuery temporal type to a Firestore Timestamp", () => {
+  test("converts timestamp, date, and datetime values to Firestore Timestamps", () => {
     const converted = convertUnsupportedDataTypes({
       timestamp: new BigQueryTimestamp("2023-01-15T10:30:00Z"),
       date: new BigQueryDate("2023-01-15"),
       datetime: new BigQueryDatetime("2023-01-15T10:30:00"),
-      time: new BigQueryTime("1970-01-01T10:30:00Z"),
     });
 
-    expect(converted.timestamp).toBeInstanceOf(Timestamp);
-    expect(converted.date).toBeInstanceOf(Timestamp);
-    expect(converted.datetime).toBeInstanceOf(Timestamp);
-    expect(converted.time).toBeInstanceOf(Timestamp);
     expect((converted.timestamp as Timestamp).toDate().toISOString()).toBe(
       "2023-01-15T10:30:00.000Z"
     );
+    expect((converted.date as Timestamp).toDate().toISOString()).toBe(
+      "2023-01-15T00:00:00.000Z"
+    );
+    // A DATETIME carries no offset, so the conversion reads it in the
+    // machine's zone rather than UTC.
+    expect(converted.datetime).toEqual(
+      Timestamp.fromDate(new Date("2023-01-15T10:30:00"))
+    );
+  });
+
+  test("throws on a TIME value, which no Date can represent", () => {
+    expect(() =>
+      convertUnsupportedDataTypes({ time: new BigQueryTime("10:30:00") })
+    ).toThrow('Value for argument "seconds" is not a valid integer.');
   });
 
   test("converts a plain Date to a Firestore Timestamp", () => {
