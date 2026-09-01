@@ -14,20 +14,38 @@
  * limitations under the License.
  */
 
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 // Stands in for a project with no Realtime Database URL available, which is what
 // an empty SELECTED_DATABASE_INSTANCE leaves behind.
 const NO_DATABASE_URL = "Can't determine Firebase Database URL.";
+
+const FIRESTORE_DATABASE_ID = "user-data";
+const PROJECT_ID = "test-project";
 
 vi.mock("../src/logs");
 vi.mock("../src/handlers", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../src/handlers")>()),
   handleClear: vi.fn(),
 }));
-vi.mock("@google-cloud/pubsub", () => ({ PubSub: vi.fn() }));
+// The clients carry their construction arguments, which survive the beforeEach
+// that clears the call history recorded when the context was memoized.
+vi.mock("@google-cloud/pubsub", () => ({
+  PubSub: class {
+    constructor(public readonly options?: { projectId?: string }) {}
+  },
+}));
 vi.mock("firebase-admin/firestore", () => ({
-  getFirestore: vi.fn(() => ({})),
+  getFirestore: vi.fn((databaseId?: string) => ({ databaseId })),
 }));
 vi.mock("firebase-admin", () => ({
   apps: [],
@@ -55,7 +73,27 @@ function deletionEvent(uid: string) {
   } as any;
 }
 
+function contextFrom(uid: string): HandlerContext {
+  clearData(deletionEvent(uid));
+
+  const [, ctx] = vi.mocked(handleClear).mock.lastCall as [
+    string,
+    HandlerContext
+  ];
+  return ctx;
+}
+
 describe("handler context", () => {
+  beforeAll(() => {
+    vi.stubEnv("FIRESTORE_DATABASE_ID", FIRESTORE_DATABASE_ID);
+    // The projectID param reads the project from FIREBASE_CONFIG.
+    vi.stubEnv("FIREBASE_CONFIG", JSON.stringify({ projectId: PROJECT_ID }));
+  });
+
+  afterAll(() => {
+    vi.unstubAllEnvs();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("FIREBASE_KIT_INSTANCE_ID", "test-instance");
@@ -73,14 +111,25 @@ describe("handler context", () => {
   });
 
   test("resolves the RTDB client when the deletion path reads it", () => {
-    clearData(deletionEvent("uid-2"));
-
-    const [, ctx] = vi.mocked(handleClear).mock.lastCall as [
-      string,
-      HandlerContext
-    ];
+    const ctx = contextFrom("uid-2");
 
     expect(() => ctx.database).toThrow(NO_DATABASE_URL);
     expect(admin.database).toHaveBeenCalled();
+  });
+
+  test("reuses one context across invocations", () => {
+    expect(contextFrom("uid-3")).toBe(contextFrom("uid-4"));
+  });
+
+  test("builds the Firestore client for the configured database", () => {
+    expect(contextFrom("uid-5").firestore).toEqual({
+      databaseId: FIRESTORE_DATABASE_ID,
+    });
+  });
+
+  test("builds the Pub/Sub client for the configured project", () => {
+    expect(contextFrom("uid-6").pubsub).toEqual({
+      options: { projectId: PROJECT_ID },
+    });
   });
 });
