@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { configFromEnv } from "../src/config";
 import { resolveDeleteUserDataConfig } from "../src/export-config";
 
@@ -33,10 +33,11 @@ describe("searchDepth from the runtime environment", () => {
   const original = process.env.AUTO_DISCOVERY_SEARCH_DEPTH;
 
   beforeEach(() => {
-    process.env.INSTANCE_ID = "test-instance";
+    vi.stubEnv("FIREBASE_KIT_INSTANCE_ID", "test-instance");
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs();
     if (original === undefined) {
       delete process.env.AUTO_DISCOVERY_SEARCH_DEPTH;
     } else {

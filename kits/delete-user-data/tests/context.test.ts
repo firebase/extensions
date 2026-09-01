@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // Stands in for a project with no Realtime Database URL available, which is what
 // an empty SELECTED_DATABASE_INSTANCE leaves behind.
@@ -58,6 +58,11 @@ function deletionEvent(uid: string) {
 describe("handler context", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("FIREBASE_KIT_INSTANCE_ID", "test-instance");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   test("builds without resolving the RTDB client", () => {

@@ -18,7 +18,6 @@ import {
   defineBoolean,
   defineInt,
   defineString,
-  expr,
   type IntParam,
   projectID,
   select,
@@ -26,10 +25,13 @@ import {
 } from "firebase-functions/params";
 import type { DeleteUserDataConfig } from "./export-config";
 
-const instanceId = defineString("FIREBASE_KIT_INSTANCE_ID");
+// firebase-tools injects this for kit instances (set to the instance's key in
+// firebase.json) during discovery, in the emulator, and on deployed functions.
+// The FIREBASE_ prefix is reserved in .env files and the params machinery never
+// sees injected values, so it must be a plain env read, not a defineString.
+const instanceId = process.env.FIREBASE_KIT_INSTANCE_ID;
 
 const params = {
-  instanceId,
   firestorePaths: defineString("FIRESTORE_PATHS", {
     label: "Cloud Firestore paths",
     description:
@@ -149,10 +151,10 @@ const params = {
   // Non-empty defaults so Pub/Sub trigger bindings resolve during deploy
   // discovery without freezing an empty topic name into the manifest.
   discoveryTopicName: defineString("DISCOVERY_TOPIC_NAME", {
-    default: expr`kit-${instanceId}-discovery`,
+    default: `kit-${instanceId}-discovery`,
   }),
   deletionTopicName: defineString("DELETION_TOPIC_NAME", {
-    default: expr`kit-${instanceId}-deletion`,
+    default: `kit-${instanceId}-deletion`,
   }),
 };
 
@@ -176,6 +178,14 @@ function optionalInt(param: IntParam): number | undefined {
 }
 
 export function configFromEnv(): DeleteUserDataConfig {
+  const instanceId = process.env.FIREBASE_KIT_INSTANCE_ID;
+  if (!instanceId) {
+    throw new Error(
+      "FIREBASE_KIT_INSTANCE_ID is not set. It is provided automatically to " +
+        "kit instances by firebase-tools >= 15.27.0; deploy or emulate this " +
+        "kit with a supported CLI version."
+    );
+  }
   return {
     firestorePaths: optional(params.firestorePaths.value()),
     firestoreDatabaseId: params.firestoreDatabaseId.value(),
@@ -191,7 +201,7 @@ export function configFromEnv(): DeleteUserDataConfig {
     searchDepth: optionalInt(params.searchDepth),
     searchFields: params.searchFields.value(),
     searchFunction: optional(params.searchFunction.value()),
-    instanceId: params.instanceId.value(),
+    instanceId,
     discoveryTopicName: optional(params.discoveryTopicName.value()),
     deletionTopicName: optional(params.deletionTopicName.value()),
     projectId: projectID.value(),

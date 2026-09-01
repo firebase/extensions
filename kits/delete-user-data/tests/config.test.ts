@@ -58,17 +58,6 @@ const defineBoolean = vi.fn((_name: string, opts?: { default?: boolean }) => ({
   value: () => opts?.default ?? false,
 }));
 
-const expr = vi.fn(
-  (strings: TemplateStringsArray, ...values: unknown[]) =>
-    new FakeExpression(
-      strings.reduce(
-        (result, part, index) =>
-          result + part + (index < values.length ? cel(values[index]) : ""),
-        ""
-      )
-    )
-);
-
 function cel(value: unknown): string {
   return value instanceof FakeExpression ? value.toCEL() : String(value);
 }
@@ -78,7 +67,6 @@ vi.mock("firebase-functions/params", () => ({
   defineBoolean,
   defineInt,
   defineString,
-  expr,
   projectID: { value: () => "demo-test" },
   select: vi.fn((options: string[]) => ({ options })),
   storageBucket: new FakeStringParam("STORAGE_BUCKET", "demo-test.appspot.com"),
@@ -89,7 +77,7 @@ async function importConfig() {
   defineString.mockClear();
   defineInt.mockClear();
   defineBoolean.mockClear();
-  expr.mockClear();
+  vi.stubEnv("FIREBASE_KIT_INSTANCE_ID", "test-instance");
 
   return import("../src/config");
 }
@@ -130,7 +118,6 @@ describe("configFromEnv", () => {
     const declared = defineString.mock.calls.map(([name]) => name);
     expect(declared).toEqual(
       expect.arrayContaining([
-        "INSTANCE_ID",
         "FIRESTORE_PATHS",
         "FIRESTORE_DATABASE_ID",
         "FIRESTORE_DELETE_MODE",
@@ -155,7 +142,33 @@ describe("configFromEnv", () => {
     ]);
   });
 
-  test("defaults the topic names to kit-{instanceId}-* expressions", async () => {
+  // The CLI injects FIREBASE_KIT_INSTANCE_ID as a reserved env var; declaring
+  // it (or INSTANCE_ID) as a param makes the CLI prompt for a value it cannot
+  // accept and abort loading the kit.
+  test("does not declare an instance-id param", async () => {
+    await importConfig();
+
+    const declared = defineString.mock.calls.map(([name]) => name);
+    expect(declared).not.toContain("INSTANCE_ID");
+    expect(declared).not.toContain("FIREBASE_KIT_INSTANCE_ID");
+  });
+
+  test("reads the instance id from the injected environment", async () => {
+    const { configFromEnv } = await importConfig();
+
+    expect(configFromEnv().instanceId).toBe("test-instance");
+  });
+
+  test("throws when FIREBASE_KIT_INSTANCE_ID is missing", async () => {
+    const { configFromEnv } = await importConfig();
+    vi.stubEnv("FIREBASE_KIT_INSTANCE_ID", undefined);
+
+    expect(() => configFromEnv()).toThrow(
+      /FIREBASE_KIT_INSTANCE_ID is not set/
+    );
+  });
+
+  test("defaults the topic names to kit-{instanceId}-*", async () => {
     const { CONFIG_EXPRESSIONS } = await importConfig();
 
     expect(cel(CONFIG_EXPRESSIONS.discoveryTopicName)).toBe(
@@ -164,13 +177,13 @@ describe("configFromEnv", () => {
     expect(cel(CONFIG_EXPRESSIONS.deletionTopicName)).toBe(
       "{{ params.DELETION_TOPIC_NAME }}"
     );
-    expect(expr.mock.results.map((result) => cel(result.value))).toEqual([
-      "kit-{{ params.INSTANCE_ID }}-discovery",
-      "kit-{{ params.INSTANCE_ID }}-deletion",
-    ]);
     expect(defineString.mock.calls).toContainEqual([
       "DISCOVERY_TOPIC_NAME",
-      { default: expect.anything() },
+      { default: "kit-test-instance-discovery" },
+    ]);
+    expect(defineString.mock.calls).toContainEqual([
+      "DELETION_TOPIC_NAME",
+      { default: "kit-test-instance-deletion" },
     ]);
   });
 

@@ -1,1 +1,2 @@
 - Initial release of kit, see README for differences between the legacy extension and this kit
+- The instance id now comes from `FIREBASE_KIT_INSTANCE_ID`, which the Firebase CLI (15.27.0 or later) provides to each kit instance; `INSTANCE_ID` is no longer a configuration parameter
