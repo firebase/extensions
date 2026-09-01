@@ -282,10 +282,11 @@ export class FirestoreBigQueryEventHistoryTracker
     }
 
     // The custom partition column is deliberately not allowlisted. Initialize
-    // can still add it to an existing table (the clustering comparison in
-    // `tableRequiresUpdate` returns true for default installs), so it can lag;
-    // when it does, the insert fails terminally and the row is backed up
-    // intact rather than stripped and retried. Safe in the lossy direction.
+    // adds it to an existing table only when the table is still unpartitioned
+    // (the partitioning check in `tableRequiresUpdate` fires); on an
+    // already-partitioned table it can lag, and the insert then fails
+    // terminally with the row backed up intact rather than stripped and
+    // retried. Safe in the lossy direction.
     return columns;
   }
 
@@ -484,8 +485,6 @@ export class FirestoreBigQueryEventHistoryTracker
       const [metadata] = await table.getMetadata();
       const fields = metadata.schema ? metadata.schema.fields : [];
 
-      await clustering.updateClustering(metadata);
-
       const documentIdColExists = fields.some(
         (column) => column.name === "document_id"
       );
@@ -524,6 +523,11 @@ export class FirestoreBigQueryEventHistoryTracker
       });
 
       if (shouldUpdate) {
+        // Must run after `tableRequiresUpdate`: it rewrites `metadata.clustering`
+        // to the desired state, and the update check compares that same object
+        // against the config.
+        await clustering.updateClustering(metadata);
+
         /** set partitioning */
         await partitioning.addPartitioningToSchema(metadata.schema.fields);
 
