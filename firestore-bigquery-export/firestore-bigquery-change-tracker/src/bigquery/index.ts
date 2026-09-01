@@ -281,9 +281,11 @@ export class FirestoreBigQueryEventHistoryTracker
       columns.push(documentPathParams.name);
     }
 
-    // The custom partition column is absent even though the Firestore field
-    // strategy adds it, because `tableRequiresUpdate` is false for an already
-    // time-partitioned table, so on exactly those tables it is never added.
+    // The custom partition column is deliberately not allowlisted. Initialize
+    // can still add it to an existing table (the clustering comparison in
+    // `tableRequiresUpdate` returns true for default installs), so it can lag;
+    // when it does, the insert fails terminally and the row is backed up
+    // intact rather than stripped and retried. Safe in the lossy direction.
     return columns;
   }
 
