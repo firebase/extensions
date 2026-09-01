@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // Stands in for a project with no Realtime Database URL available, which is what
 // an empty SELECTED_DATABASE_INSTANCE leaves behind.
@@ -56,6 +56,10 @@ function deletionEvent(uid: string) {
 }
 
 describe("handler context", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   test("builds without resolving the RTDB client", () => {
     expect(() => clearData(deletionEvent("uid-1"))).not.toThrow();
 
@@ -64,7 +68,9 @@ describe("handler context", () => {
   });
 
   test("resolves the RTDB client when the deletion path reads it", () => {
-    const [, ctx] = vi.mocked(handleClear).mock.calls[0] as [
+    clearData(deletionEvent("uid-2"));
+
+    const [, ctx] = vi.mocked(handleClear).mock.lastCall as [
       string,
       HandlerContext
     ];
