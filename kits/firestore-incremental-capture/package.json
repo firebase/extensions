@@ -7,7 +7,7 @@
     "directory": "kits/firestore-incremental-capture"
   },
   "private": false,
-  "description": "Incremental point-in-time capture of Firestore changes",
+  "description": "Incremental point-in-time capture of Firestore changes as a deployable Firebase Function",
   "license": "Apache-2.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -27,9 +27,18 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
-    "test": "echo \"Warning: tests are not implemented for this package\""
+    "test": "vitest run",
+    "deploy": "pnpm build && firebase deploy --only functions",
+    "serve": "firebase emulators:start --only functions"
+  },
+  "dependencies": {
+    "@google-cloud/bigquery": "^7.6.0",
+    "@google-cloud/dataflow": "^3.2.0",
+    "firebase-admin": "^14.1.0",
+    "firebase-functions": "7.3.2"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0"
+    "@types/node": "^26.2.0",
+    "vitest": "^3.2.4"
   }
 }

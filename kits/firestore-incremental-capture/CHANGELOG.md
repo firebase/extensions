@@ -1,1 +1,2 @@
-- Initial release
+- Full implementation, replacing the skeleton package: Firestore capture to a BigQuery changelog, Dataflow-based point-in-time restoration, and first-deploy provisioning. See the README for differences between the legacy extension and this kit.
+- The restoration pipeline is consumed as a pinned, digest-verified release of GoogleCloudPlatform/firebase-extensions (`firestore-incremental-capture-pipeline-v0.1.0`) downloaded by `scripts/setup.sh`; Maven is no longer required.
