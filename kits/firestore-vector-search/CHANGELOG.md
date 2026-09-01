@@ -1,1 +1,2 @@
+- Removed the unimplemented `multimodal` embedding provider: `EMBEDDING_PROVIDER` no longer offers the value, and config resolution rejects it instead of deploying functions that fail on every embedding. The multimodal-only Cloud Storage requirements (`storage-component.googleapis.com` API, `roles/storage.objectAdmin` role) were dropped with it.
 - Initial release of kit, see README for differences between the legacy extension and this kit

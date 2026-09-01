@@ -58,7 +58,6 @@ const TASK_MAX_ATTEMPTS = 50;
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/datastore.user",
   "roles/aiplatform.user",
-  "roles/storage.objectAdmin",
   "roles/datastore.indexAdmin",
   // Lifecycle setup enqueues the init task, which may enqueue backfill/update tasks.
   "roles/cloudtasks.enqueuer",
@@ -72,10 +71,6 @@ const REQUIRED_APIS = [
     api: "aiplatform.googleapis.com",
     reason:
       "This extension uses Vertex AI for embedding and vector search when configured.",
-  },
-  {
-    api: "storage-component.googleapis.com",
-    reason: "Needed to read image data from Cloud Storage.",
   },
 ] as const;
 const FUNCTION_SECRETS = [geminiApiKey, openAiApiKey];

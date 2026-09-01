@@ -23,7 +23,6 @@ import {
   expr,
   projectID,
   select,
-  storageBucket,
 } from "firebase-functions/params";
 import type { VectorSearchConfig } from "./export-config";
 
@@ -48,7 +47,6 @@ const instanceId = defineString("INSTANCE_ID");
 
 const EMBEDDING_PROVIDER_OPTIONS = [
   "gemini",
-  "multimodal",
   "openai",
   "vertex",
   "custom",
@@ -68,7 +66,6 @@ const params = {
     default: "gemini",
     input: select({
       Gemini: "gemini",
-      Multimodal: "multimodal",
       OpenAI: "openai",
       "Vertex AI": "vertex",
       "Other (User-provided endpoint)": "custom",
@@ -223,7 +220,6 @@ export function configFromEnv(): VectorSearchConfig {
     instanceId: params.instanceId.value(),
     geminiApiKey: optionalString(geminiApiKey.value()),
     openAiApiKey: optionalString(openAiApiKey.value()),
-    bucketName: optionalString(storageBucket.value()),
     queueNames: {
       updateTrigger: params.updateTriggerQueueName.value(),
       updateTask: params.updateTaskQueueName.value(),

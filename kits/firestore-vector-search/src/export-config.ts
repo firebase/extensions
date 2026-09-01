@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-export type EmbeddingProvider =
-  | "gemini"
-  | "multimodal"
-  | "openai"
-  | "vertex"
-  | "custom";
+export const EMBEDDING_PROVIDERS = [
+  "gemini",
+  "openai",
+  "vertex",
+  "custom",
+] as const;
+
+export type EmbeddingProvider = (typeof EMBEDDING_PROVIDERS)[number];
 
 export type DistanceMeasure = "COSINE" | "EUCLIDEAN" | "DOT_PRODUCT";
 
@@ -47,7 +49,6 @@ export interface VectorSearchConfig {
   updateOnConfigure?: boolean;
   region?: string;
   projectId: string;
-  bucketName?: string;
   instanceId: string;
   queueNames?: Partial<QueueNames>;
 }
@@ -69,7 +70,6 @@ export interface ResolvedVectorSearchConfig {
   updateOnConfigure: boolean;
   region?: string;
   projectId: string;
-  bucketName: string;
   instanceId: string;
   queueNames: QueueNames;
   dimension: number;
@@ -85,8 +85,6 @@ function dimensionFor(config: VectorSearchConfig): number {
     case "gemini":
     case "vertex":
       return 768;
-    case "multimodal":
-      return 1408;
     case "openai":
       return 512;
     case "custom":
@@ -118,8 +116,15 @@ export function resolveVectorSearchConfig(
 ): ResolvedVectorSearchConfig {
   const instanceId = config.instanceId;
   const projectId = config.projectId;
+  const embeddingProvider = config.embeddingProvider ?? "gemini";
+  if (!EMBEDDING_PROVIDERS.includes(embeddingProvider)) {
+    throw new Error(
+      `Unsupported embedding provider "${embeddingProvider}". ` +
+        `Supported providers: ${EMBEDDING_PROVIDERS.join(", ")}.`
+    );
+  }
   return {
-    embeddingProvider: config.embeddingProvider ?? "gemini",
+    embeddingProvider,
     geminiApiKey: config.geminiApiKey,
     openAiApiKey: config.openAiApiKey,
     customEmbeddingsEndpoint: config.customEmbeddingsEndpoint,
@@ -135,7 +140,6 @@ export function resolveVectorSearchConfig(
     updateOnConfigure: config.updateOnConfigure ?? false,
     region: config.region ?? process.env.FUNCTION_REGION,
     projectId,
-    bucketName: config.bucketName ?? `${projectId}.appspot.com`,
     instanceId,
     queueNames: resolveQueueNames(instanceId, config.queueNames),
     dimension: dimensionFor(config),

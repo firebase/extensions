@@ -160,12 +160,12 @@ changes. The embedding providers, the backfill, and the shape of the status fiel
 written onto your documents all changed, so read this before you point the kit at
 a collection an installed instance has already embedded.
 
-### `EMBEDDING_PROVIDER: multimodal` is not implemented
+### `EMBEDDING_PROVIDER: multimodal` is not available
 
-Selecting `multimodal` deploys, and then every embedding attempt throws
-`Multimodal embeddings are not implemented in this package`. The extension's
-multimodal image embedding, including reading images out of Cloud Storage, has no
-equivalent here. If you use it, stay on the extension.
+The extension's multimodal image embedding, including reading images out of Cloud
+Storage, has no equivalent here. The kit does not offer the `multimodal` value,
+and config resolution rejects it with `Unsupported embedding provider
+"multimodal"`. If you use it, stay on the extension.
 
 ### OpenAI embeddings are a different model and a different size
 
