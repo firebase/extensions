@@ -55,6 +55,14 @@ export async function tableRequiresUpdate({
   /** Check partitioning */
   const partitioningConfig = new PartitioningConfig(config.partitioning);
   const partitioning = new Partitioning(partitioningConfig, table);
+
+  /** Check the configured partition column exists in the schema */
+  const partitionFieldMissing =
+    partitioning.customPartitionFieldMissingFromSchema(
+      metadata.schema?.fields || []
+    );
+  if (partitionFieldMissing) return true;
+
   const isValidPartition =
     await partitioning.isValidPartitionForExistingTable();
   if (isValidPartition) return true;
