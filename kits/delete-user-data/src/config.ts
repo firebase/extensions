@@ -26,7 +26,7 @@ import {
 } from "firebase-functions/params";
 import type { DeleteUserDataConfig } from "./export-config";
 
-const instanceId = defineString("FIREBASE_KIT_INSTANCE_ID");
+const instanceId = defineString("INSTANCE_ID");
 
 const params = {
   instanceId,
