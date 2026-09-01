@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-import {
+import type {
   HarmBlockThreshold as VertexAIHarmBlockThreshold,
   HarmCategory as VertexAIHarmCategory,
-  type SafetySetting as VertexAISafetySetting,
 } from "@google/genai";
-import {
+import type {
   HarmBlockThreshold as GoogleAIHarmBlockThreshold,
   HarmCategory as GoogleAIHarmCategory,
-  type SafetySetting as GoogleAISafetySetting,
 } from "@google/generative-ai";
 import type { Expression } from "firebase-functions/params";
 
@@ -37,35 +35,31 @@ export enum GenerativeAIProvider {
   VERTEX_AI = "vertex-ai",
 }
 
-/** A model safety setting, typed with the SDKs' own category/threshold enums. */
-export type SafetySetting = GoogleAISafetySetting | VertexAISafetySetting;
+/**
+ * A model safety setting. Category and threshold are typed against both pinned
+ * SDKs' enums as string-literal unions, so enum members and plain string
+ * literals both compile.
+ */
+export interface SafetySetting {
+  category: `${GoogleAIHarmCategory}` | `${VertexAIHarmCategory}`;
+  threshold: `${GoogleAIHarmBlockThreshold}` | `${VertexAIHarmBlockThreshold}`;
+}
 
-const HARM_ENUMS: Record<
-  GenerativeAIProvider,
-  { categories: Set<string>; thresholds: Set<string> }
-> = {
-  [GenerativeAIProvider.GOOGLE_AI]: {
-    categories: new Set(Object.values(GoogleAIHarmCategory)),
-    thresholds: new Set(Object.values(GoogleAIHarmBlockThreshold)),
-  },
-  [GenerativeAIProvider.VERTEX_AI]: {
-    categories: new Set(Object.values(VertexAIHarmCategory)),
-    thresholds: new Set(Object.values(VertexAIHarmBlockThreshold)),
-  },
-};
-
-function validateSafetySettings(
-  settings: SafetySetting[],
-  provider: GenerativeAIProvider
-): void {
-  const enums =
-    HARM_ENUMS[provider] ?? HARM_ENUMS[GenerativeAIProvider.GOOGLE_AI];
-  for (const { category, threshold } of settings) {
-    if (category !== undefined && !enums.categories.has(category)) {
-      throw new Error(`Invalid safety setting category: ${category}`);
-    }
-    if (threshold !== undefined && !enums.thresholds.has(threshold)) {
-      throw new Error(`Invalid safety setting threshold: ${threshold}`);
+// Structural only: the SDK enums lag the live API's accepted values, so
+// membership is left to the model backend.
+function validateSafetySettings(settings: SafetySetting[]): void {
+  for (const setting of settings) {
+    if (
+      typeof setting !== "object" ||
+      setting === null ||
+      typeof setting.category !== "string" ||
+      typeof setting.threshold !== "string"
+    ) {
+      throw new Error(
+        `Invalid safety setting: ${JSON.stringify(
+          setting
+        )}. Expected an object with string category and threshold.`
+      );
     }
   }
 }
@@ -200,8 +194,11 @@ export function resolveConfig(
 ): ResolvedGenaiChatbotConfig {
   const provider =
     (config.provider as GenerativeAIProvider) ?? GenerativeAIProvider.GOOGLE_AI;
+  if (!Object.values(GenerativeAIProvider).includes(provider)) {
+    throw new Error(`Invalid Provider: ${provider}`);
+  }
   const safetySettings = config.safetySettings ?? [];
-  validateSafetySettings(safetySettings, provider);
+  validateSafetySettings(safetySettings);
   return {
     provider,
     vertex: {

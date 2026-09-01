@@ -20,6 +20,7 @@ import {
   GenerativeAIProvider,
   getProjectId,
   resolveConfig,
+  type SafetySetting,
 } from "../src/export-config";
 
 describe("resolveConfig", () => {
@@ -86,45 +87,40 @@ describe("resolveConfig", () => {
     ]);
   });
 
-  test("rejects a safety setting category the SDK does not define", () => {
-    expect(() =>
-      resolveConfig({
-        ...base,
-        safetySettings: [
-          { category: "HARM_CATEGORY_TYPO", threshold: "BLOCK_NONE" },
-        ],
-      })
-    ).toThrow("Invalid safety setting category: HARM_CATEGORY_TYPO");
-  });
-
-  test("rejects a safety setting threshold the SDK does not define", () => {
-    expect(() =>
-      resolveConfig({
-        ...base,
-        safetySettings: [
-          {
-            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-            threshold: "BLOCK_EVERYTHING",
-          },
-        ],
-      })
-    ).toThrow("Invalid safety setting threshold: BLOCK_EVERYTHING");
-  });
-
-  test("validates against the Vertex AI enums when the provider is vertex-ai", () => {
-    const vertexOnly = [
-      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "OFF" },
+  test("accepts string-literal safety settings, including values newer than the older SDK's enums", () => {
+    const settings: SafetySetting[] = [
+      { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+      { category: "HARM_CATEGORY_CIVIC_INTEGRITY", threshold: "OFF" },
     ];
     expect(
+      resolveConfig({ ...base, safetySettings: settings }).safetySettings
+    ).toEqual(settings);
+  });
+
+  test("rejects a safety setting that is not a category/threshold string pair", () => {
+    expect(() =>
       resolveConfig({
         ...base,
-        provider: "vertex-ai",
-        safetySettings: vertexOnly,
-      }).safetySettings
-    ).toEqual(vertexOnly);
+        safetySettings: ["BLOCK_NONE"] as unknown as SafetySetting[],
+      })
+    ).toThrow("Invalid safety setting");
     expect(() =>
-      resolveConfig({ ...base, safetySettings: vertexOnly })
-    ).toThrow("Invalid safety setting threshold: OFF");
+      resolveConfig({
+        ...base,
+        safetySettings: [
+          { category: "HARM_CATEGORY_HATE_SPEECH" },
+        ] as unknown as SafetySetting[],
+      })
+    ).toThrow("Invalid safety setting");
+  });
+
+  test("rejects an unknown provider with the extension's wording", () => {
+    expect(() =>
+      resolveConfig({
+        ...base,
+        provider: "vertexai" as unknown as GenerativeAIProvider,
+      })
+    ).toThrow("Invalid Provider: vertexai");
   });
 });
 
