@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { isDeepStrictEqual } from "node:util";
 import { type DocumentSnapshot, FieldValue } from "firebase-admin/firestore";
 import { getFunctions } from "firebase-admin/functions";
 import type { Change, FirestoreEvent } from "firebase-functions/v2/firestore";
@@ -125,12 +126,21 @@ export async function handleQueryOnWrite(
   const data = event.data.after.data() ?? {};
   const query = data.query;
   if (typeof query !== "string") return;
-  // The result write below re-fires this trigger; an unchanged query that
-  // already has a result is that echo, not a new request.
-  const beforeQuery = event.data.before.exists
-    ? event.data.before.get("query")
+  // The result write below re-fires this trigger; an unchanged request
+  // (query, limit, prefilters) that already has a result is that echo,
+  // not a new request.
+  const before = event.data.before.exists
+    ? event.data.before.data()
     : undefined;
-  if (beforeQuery === query && data.result) return;
+  if (
+    before !== undefined &&
+    before.query === query &&
+    before.limit === data.limit &&
+    isDeepStrictEqual(before.prefilters, data.prefilters) &&
+    data.result
+  ) {
+    return;
+  }
 
   const result = await performTextQuery({
     query,

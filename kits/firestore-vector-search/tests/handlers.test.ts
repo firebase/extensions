@@ -260,6 +260,75 @@ describe("handleQueryOnWrite", () => {
     expect(set).not.toHaveBeenCalled();
   });
 
+  test("skips the first echo, where only the result was added", async () => {
+    const { ctx } = makeCtx();
+    const { event, set } = writeEvent(
+      { query: "test query" },
+      { query: "test query", result: { ids: IDS } }
+    );
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("skips when query, limit, and prefilters are all unchanged", async () => {
+    const { ctx } = makeCtx();
+    const doc = {
+      query: "test query",
+      limit: 5,
+      prefilters: [{ field: "category", operator: "==", value: "test" }],
+      result: { ids: IDS },
+    };
+    const { event, set } = writeEvent(doc, doc);
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("re-runs the query when only the limit changes", async () => {
+    const { ctx, chain } = makeCtx();
+    const { event, set } = writeEvent(
+      { query: "test query", limit: 3, result: { ids: ["stale"] } },
+      { query: "test query", limit: 5, result: { ids: ["stale"] } }
+    );
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("test query");
+    expect(chain.findNearest).toHaveBeenCalledWith(
+      config.outputFieldName,
+      EMBEDDING,
+      { limit: 5, distanceMeasure: config.distanceMeasure }
+    );
+    expect(set).toHaveBeenCalledWith({ result: { ids: IDS } }, { merge: true });
+  });
+
+  test("re-runs the query when only the prefilters change", async () => {
+    const { ctx, chain } = makeCtx();
+    const { event, set } = writeEvent(
+      {
+        query: "test query",
+        prefilters: [{ field: "category", operator: "==", value: "old" }],
+        result: { ids: ["stale"] },
+      },
+      {
+        query: "test query",
+        prefilters: [{ field: "category", operator: "==", value: "new" }],
+        result: { ids: ["stale"] },
+      }
+    );
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("test query");
+    expect(chain.where).toHaveBeenCalledWith("category", "==", "new");
+    expect(set).toHaveBeenCalledWith({ result: { ids: IDS } }, { merge: true });
+  });
+
   test("re-runs the query when the query string changes", async () => {
     const { ctx } = makeCtx();
     const { event, set } = writeEvent(
