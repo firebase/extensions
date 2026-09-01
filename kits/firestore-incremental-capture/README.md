@@ -136,6 +136,13 @@ firebase deploy --only functions
 
 Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 
+A non-interactive deploy needs a value in the instance `.env` for every param,
+defaults included - the CLI applies param defaults only when prompting
+interactively. `DATAFLOW_REGION` is the one most easily missed because it is
+optional at runtime: without a value the deploy fails with "no value for the
+following environment variables: DATAFLOW_REGION". Set it explicitly, for
+example `DATAFLOW_REGION=us-east1`.
+
 ## Configuration
 
 Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
