@@ -32,6 +32,7 @@ import {
 import * as logs from "../logs";
 import {
   InsertRowsOptions,
+  TableField,
   TableMetadata,
 } from "@google-cloud/bigquery/build/src/table";
 
@@ -481,7 +482,12 @@ export class FirestoreBigQueryEventHistoryTracker
       logs.bigQueryTableAlreadyExists(table.id, dataset.id);
 
       const [metadata] = await table.getMetadata();
-      const fields = metadata.schema ? metadata.schema.fields : [];
+      // The annotation is load-bearing: it keeps the column checks below
+      // boolean, so a non-boolean (e.g. a `find` result) cannot reach
+      // `tableRequiresUpdate` and re-fire the update on every initialize.
+      const fields: TableField[] = metadata.schema
+        ? metadata.schema.fields
+        : [];
 
       const documentIdColExists = fields.some(
         (column) => column.name === "document_id"
