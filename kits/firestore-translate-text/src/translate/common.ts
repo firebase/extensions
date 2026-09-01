@@ -146,18 +146,6 @@ export class TranslationService {
     );
   }
 
-  filterLanguagesFn(
-    existingTranslations: Record<string, unknown>
-  ): (targetLanguage: string) => boolean {
-    return (targetLanguage: string) => {
-      if (existingTranslations[targetLanguage] !== undefined) {
-        logs.skippingLanguage(targetLanguage);
-        return false;
-      }
-      return true;
-    };
-  }
-
   async updateTranslations(
     snapshot: DocumentSnapshot,
     translations: unknown
