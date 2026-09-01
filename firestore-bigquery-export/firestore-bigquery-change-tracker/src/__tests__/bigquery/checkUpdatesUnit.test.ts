@@ -62,7 +62,7 @@ const customFieldPartitioning: PartitioningStrategy = {
   firestoreFieldName: "created_at",
 };
 
-const allColumnsPresent = {
+const columnsForNonWildcardTable = {
   documentIdColExists: true,
   pathParamsColExists: false,
   oldDataColExists: true,
@@ -73,7 +73,7 @@ describe("tableRequiresUpdate (offline)", () => {
     const result = await tableRequiresUpdate({
       table: stubTable(),
       config: baseConfig({ clustering: null }),
-      ...allColumnsPresent,
+      ...columnsForNonWildcardTable,
     });
     expect(result).toBe(false);
   });
@@ -82,7 +82,7 @@ describe("tableRequiresUpdate (offline)", () => {
     const result = await tableRequiresUpdate({
       table: stubTable({ clusteringFields: ["timestamp"] }),
       config: baseConfig({ clustering: null }),
-      ...allColumnsPresent,
+      ...columnsForNonWildcardTable,
     });
     expect(result).toBe(true);
   });
@@ -91,7 +91,7 @@ describe("tableRequiresUpdate (offline)", () => {
     const result = await tableRequiresUpdate({
       table: stubTable(),
       config: baseConfig({ clustering: ["timestamp"] }),
-      ...allColumnsPresent,
+      ...columnsForNonWildcardTable,
     });
     expect(result).toBe(true);
   });
@@ -100,7 +100,7 @@ describe("tableRequiresUpdate (offline)", () => {
     const result = await tableRequiresUpdate({
       table: stubTable({ clusteringFields: ["timestamp", "data"] }),
       config: baseConfig({ clustering: ["timestamp", "data"] }),
-      ...allColumnsPresent,
+      ...columnsForNonWildcardTable,
     });
     expect(result).toBe(false);
   });
@@ -109,25 +109,36 @@ describe("tableRequiresUpdate (offline)", () => {
     const result = await tableRequiresUpdate({
       table: stubTable({ clusteringFields: ["data", "timestamp"] }),
       config: baseConfig({ clustering: ["timestamp", "data"] }),
-      ...allColumnsPresent,
+      ...columnsForNonWildcardTable,
     });
     expect(result).toBe(true);
-  });
-
-  test("wildcards off with no path_params column is a no-op", async () => {
-    const result = await tableRequiresUpdate({
-      table: stubTable(),
-      config: baseConfig({ clustering: null, wildcardIds: false }),
-      ...allColumnsPresent,
-    });
-    expect(result).toBe(false);
   });
 
   test("wildcards on with no path_params column fires an update", async () => {
     const result = await tableRequiresUpdate({
       table: stubTable(),
       config: baseConfig({ clustering: null, wildcardIds: true }),
-      ...allColumnsPresent,
+      ...columnsForNonWildcardTable,
+    });
+    expect(result).toBe(true);
+  });
+
+  test("wildcards on with a path_params column is a no-op", async () => {
+    const result = await tableRequiresUpdate({
+      table: stubTable(),
+      config: baseConfig({ clustering: null, wildcardIds: true }),
+      ...columnsForNonWildcardTable,
+      pathParamsColExists: true,
+    });
+    expect(result).toBe(false);
+  });
+
+  test("wildcards off with a path_params column still present fires an update", async () => {
+    const result = await tableRequiresUpdate({
+      table: stubTable(),
+      config: baseConfig({ clustering: null, wildcardIds: false }),
+      ...columnsForNonWildcardTable,
+      pathParamsColExists: true,
     });
     expect(result).toBe(true);
   });
@@ -139,7 +150,7 @@ describe("tableRequiresUpdate (offline)", () => {
         timePartitioning: { type: "DAY", field: "created_at" },
       }),
       config: baseConfig({ partitioning: customFieldPartitioning }),
-      ...allColumnsPresent,
+      ...columnsForNonWildcardTable,
     });
     expect(result).toBe(true);
   });
@@ -151,7 +162,7 @@ describe("tableRequiresUpdate (offline)", () => {
         timePartitioning: { type: "DAY", field: "created_at" },
       }),
       config: baseConfig({ partitioning: customFieldPartitioning }),
-      ...allColumnsPresent,
+      ...columnsForNonWildcardTable,
     });
     expect(result).toBe(false);
   });
@@ -165,7 +176,7 @@ describe("tableRequiresUpdate (offline)", () => {
       config: baseConfig({
         partitioning: { granularity: "DAY", bigqueryColumnName: "timestamp" },
       }),
-      ...allColumnsPresent,
+      ...columnsForNonWildcardTable,
     });
     expect(result).toBe(false);
   });
