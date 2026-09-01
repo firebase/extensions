@@ -281,11 +281,11 @@ export class FirestoreBigQueryEventHistoryTracker
       columns.push(documentPathParams.name);
     }
 
-    // The custom partition column is deliberately not allowlisted. Initialize
-    // adds it to an existing table only when the table is still unpartitioned
-    // (the partitioning check in `tableRequiresUpdate` fires); on an
-    // already-partitioned table it can lag, and the insert then fails
-    // terminally with the row backed up intact rather than stripped and
+    // The custom partition column is deliberately not allowlisted.
+    // `addPartitioningToSchema` runs whenever any `tableRequiresUpdate`
+    // trigger fires, but only the unpartitioned-table case fires reliably;
+    // on an already-partitioned table the column can lag, and the insert then
+    // fails terminally with the row backed up intact rather than stripped and
     // retried. Safe in the lossy direction.
     return columns;
   }
