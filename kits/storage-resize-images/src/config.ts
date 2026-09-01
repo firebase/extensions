@@ -41,12 +41,6 @@ const IMAGE_TYPE_OPTIONS = [
   "false",
 ] as const;
 const MEMORY_OPTIONS = [512, 1024, 2048, 4096, 8192] as const;
-const CONTENT_FILTER_OPTIONS = [
-  "OFF",
-  "BLOCK_ONLY_HIGH",
-  "BLOCK_MEDIUM_AND_ABOVE",
-  "BLOCK_LOW_AND_ABOVE",
-] as const;
 const ABSOLUTE_PATH_LIST_VALIDATION = {
   validationRegex: /^(?:(\/[^\s\/\,]+)+(\,(\/[^\s\/\,]+)+)*|)$/,
   validationErrorMessage:
@@ -232,7 +226,7 @@ const params = {
 
     default: "OFF",
     input: select({
-      "Off (No filtering)": "False",
+      "Off (No filtering)": "OFF",
       "Low strictness (Block only high severity content)": "BLOCK_ONLY_HIGH",
       "Medium strictness (Block medium and high severity content)":
         "BLOCK_MEDIUM_AND_ABOVE",
