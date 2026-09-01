@@ -50,6 +50,12 @@ export class CustomEndpointClient extends BaseEmbedClient {
       );
     }
 
+    if (!response.headers.get("content-type")?.includes("application/json")) {
+      throw new Error(
+        "Error getting embeddings from custom endpoint: response is not JSON"
+      );
+    }
+
     const data = await response.json();
     const parsed = z
       .object({ embeddings: z.array(z.array(z.number())) })

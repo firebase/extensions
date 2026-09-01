@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const { embedMany } = vi.hoisted(() => ({ embedMany: vi.fn() }));
 
@@ -35,6 +35,7 @@ import { googleAI, vertexAI } from "@genkit-ai/google-genai";
 import { genkit } from "genkit";
 
 import { GenkitEmbedClient } from "../src/embeddings/client/genkit";
+import { CustomEndpointClient } from "../src/embeddings/client/text/custom_function";
 import {
   type ResolvedVectorSearchConfig,
   resolveVectorSearchConfig,
@@ -174,5 +175,51 @@ describe("GenkitEmbedClient", () => {
         "Embedding failed"
       );
     });
+  });
+});
+
+describe("CustomEndpointClient", () => {
+  const customConfig = () =>
+    config({
+      embeddingProvider: "custom",
+      customEmbeddingsEndpoint: "https://example.com/embed",
+      customEmbeddingsBatchSize: 2,
+      customEmbeddingsDimension: 3,
+    });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  test("returns embeddings from a JSON response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ embeddings: [[1, 2, 3]] }), {
+            headers: { "content-type": "application/json; charset=utf-8" },
+          })
+      )
+    );
+
+    const client = new CustomEndpointClient(customConfig());
+    await expect(client.getEmbeddings(["input"])).resolves.toEqual([[1, 2, 3]]);
+  });
+
+  test("throws a clear error when the response is not JSON", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response("<html>ok</html>", {
+            headers: { "content-type": "text/html" },
+          })
+      )
+    );
+
+    const client = new CustomEndpointClient(customConfig());
+    await expect(client.getEmbeddings(["input"])).rejects.toThrow(
+      "Error getting embeddings from custom endpoint: response is not JSON"
+    );
   });
 });
