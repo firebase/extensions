@@ -37,9 +37,9 @@ export interface ChangelogRow {
 /**
  * Schema of the changelog table.
  *
- * The Dataflow pipeline queries these columns by name
- * (`IncrementalCaptureLog`), so the column names are part of the contract
- * between the kit and `pipeline/`.
+ * The Dataflow pipeline queries these columns by name, so the column names
+ * are part of the contract between the kit and the restoration pipeline
+ * release the kit is pinned to.
  */
 export const CHANGELOG_SCHEMA = [
   { name: "documentId", type: "STRING", mode: "REQUIRED" },

@@ -84,7 +84,7 @@ export interface ResolvedCaptureConfig
   /**
    * Database the changes are captured from. Always `(default)`: the restoration
    * pipeline reads its PITR baseline from `FirestoreOptions.getDefaultInstance()`
-   * (`RestorationPipeline.java`), so a non-default source would be captured to
+   * (`RestorationPipeline`), so a non-default source would be captured to
    * the changelog but silently absent from the restored baseline.
    */
   databaseId: "(default)";

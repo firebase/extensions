@@ -17,16 +17,18 @@
 /**
  * Golden shapes for the changelog wire format.
  *
- * The restoration pipeline (`pipeline/`, Java) parses whatever this produces, so
- * these assertions are the contract between the two languages, not merely a
- * description of the current implementation. The expected values are
- * transcribed from the original extension's serializer tests, which are the
- * authoritative record of the format the pipeline was written against.
+ * The Java restoration pipeline parses whatever this produces, so these
+ * assertions are the contract between the two languages, not merely a
+ * description of the current implementation. The format is pinned against
+ * pipeline release v0.1.0 (GoogleCloudPlatform/firebase-extensions, tag
+ * firestore-incremental-capture-pipeline-v0.1.0 - the release scripts/setup.sh
+ * downloads and verifies). The expected values are transcribed from the
+ * original extension's serializer tests, which are the authoritative record of
+ * the format the pipeline was written against.
  *
  * One deliberate divergence: DocumentReference is tagged `reference`, not the
- * extension's `documentReference`. `FirestoreReconstructor` upper-cases the tag
- * and switches on `REFERENCE`, so the extension's spelling fell through to
- * `default: continue` and dropped the field.
+ * extension's `documentReference`. Pipeline v0.1.0 accepts both spellings, so
+ * changelogs written by either the kit or the extension replay correctly.
  */
 
 import { initializeApp } from "firebase-admin/app";
@@ -74,7 +76,8 @@ describe("changelog wire format", () => {
 
   test("tags a DocumentReference as 'reference' with its relative path", () => {
     // The pipeline prefixes `projects/…/databases/…/documents/` itself, so the
-    // value must be the relative path, and the tag must match `case "REFERENCE"`.
+    // value must be the relative path. Pipeline v0.1.0 accepts both this tag
+    // and the extension's `documentReference` spelling.
     expect(serializeDocument({ documentReferenceValue: ref })).toEqual({
       documentReferenceValue: { type: "reference", value: "products/abc" },
     });
@@ -103,9 +106,9 @@ describe("changelog wire format", () => {
   });
 
   test("emits array elements that are maps as bare field maps", () => {
-    // No `{ type: "map" }` envelope: buildFirestoreList passes each element
-    // straight to buildFirestoreMap, which reads field names at the top level.
-    // Wrapping these restores them as empty maps.
+    // No `{ type: "map" }` envelope: the pipeline rebuilds each array element
+    // as a field map, reading field names at the top level. Wrapping these
+    // restores them as empty maps.
     expect(
       serializeDocument({
         arrayValue: [

@@ -1,4 +1,4 @@
-# @firebase/firestore-incremental-capture
+# @firebase-function-kits/firestore-incremental-capture
 
 Incremental point-in-time capture of Firestore changes. This is the Firestore
 Incremental Backup Stream Firebase Extension as an npm package you add to your
@@ -14,7 +14,7 @@ yourself.
 ## Install
 
 ```sh
-npm install @firebase/firestore-incremental-capture
+npm install @firebase-function-kits/firestore-incremental-capture
 ```
 
 ## Required IAM
@@ -22,7 +22,7 @@ npm install @firebase/firestore-incremental-capture
 Deploy needs these Google Cloud roles for the function's service account.
 Firebase CLI 15.23.0 or later creates that account, grants the roles below, and
 attaches the account to every function in this kit. Do not set a custom runtime
-service account for this codebase — it conflicts with that automatic setup.
+service account for this codebase - it conflicts with that automatic setup.
 
 | Role                           | Why                                                       |
 | ------------------------------ | --------------------------------------------------------- |
@@ -52,7 +52,7 @@ export {
   runRestorationTask,
   syncChangelogTask,
   syncData,
-} from "@firebase/firestore-incremental-capture";
+} from "@firebase-function-kits/firestore-incremental-capture";
 ```
 
 - `syncData` is the Firestore trigger. It serializes each write and queues it.
@@ -64,7 +64,7 @@ export {
 - `initIncrementalCapture` is the first-deploy and redeploy provisioning
   lifecycle task.
 
-Importing the package without exporting its functions deploys nothing — the CLI
+Importing the package without exporting its functions deploys nothing - the CLI
 only deploys what your entry file exports.
 
 Trigger a restoration with a whole number of seconds since the Unix epoch:
@@ -85,8 +85,8 @@ curl -X POST https://<onHttpRunRestoration URL printed by firebase deploy> \
 
 ## Deploy
 
-Restoration depends on setup the functions runtime cannot do for itself: it has
-neither gcloud nor Maven. Run the setup script once, before deploying:
+Restoration depends on setup the functions runtime cannot do for itself: it
+has no gcloud. Run the setup script once, before deploying:
 
 ```sh
 PROJECT_ID=my-project BACKUP_INSTANCE_ID=my-backup ./scripts/setup.sh
@@ -94,9 +94,10 @@ PROJECT_ID=my-project BACKUP_INSTANCE_ID=my-backup ./scripts/setup.sh
 
 It enables the required APIs, turns on PITR for the source database, creates the
 backup database, creates an Artifact Registry repository, grants the Dataflow
-worker roles, builds the pipeline jar from `pipeline/`, and stages the Dataflow
-flex template. Every step is idempotent, so re-running after a partial failure
-is safe. The script prints the config values to use below.
+worker roles, downloads the pinned restoration pipeline jar (see The
+restoration pipeline below), and stages the Dataflow flex template. Every step
+is idempotent, so re-running after a partial failure is safe. The script prints
+the config values to use below.
 
 PITR only covers writes made after it is enabled, so a restoration can only
 target a point in time after setup ran.
@@ -140,8 +141,8 @@ loads them at deploy time and prompts for any required values that are missing.
 
 | Field                | Env var                | Required | Default          | Description                                                 |
 | -------------------- | ---------------------- | -------- | ---------------- | ----------------------------------------------------------- |
-| `instanceId`         | `INSTANCE_ID`          | yes      | —                | Must match this instance's key in the `instances` map        |
-| `backupInstanceId`   | `BACKUP_INSTANCE_ID`   | yes      | —                | Firestore database to restore into; must not be `(default)`  |
+| `instanceId`         | `INSTANCE_ID`          | yes      | -                | Must match this instance's key in the `instances` map        |
+| `backupInstanceId`   | `BACKUP_INSTANCE_ID`   | yes      | -                | Firestore database to restore into; must not be `(default)`  |
 | `syncCollectionPath` | `SYNC_COLLECTION_PATH` | no       | `posts`          | Collection to capture                                       |
 | `datasetId`          | `SYNC_DATASET`         | no       | `backup_dataset` | BigQuery dataset for the changelog                          |
 | `tableId`            | `SYNC_TABLE`           | no       | `backup_table`   | BigQuery changelog table                                    |
@@ -156,7 +157,7 @@ you assume otherwise:
 
 - **Only the `(default)` database can be captured.** The pipeline reads its PITR
   baseline from `FirestoreOptions.getDefaultInstance()`
-  (`RestorationPipeline.java`), so a non-default source would be captured to the
+  (the pipeline's `RestorationPipeline`), so a non-default source would be captured to the
   changelog but absent from the restored baseline. There is deliberately no
   param for it.
 - **Only a single collection can be captured.** A Firestore trigger accepts a
@@ -194,7 +195,7 @@ map, each pointing at its own config directory with its own `.env`:
 Instance ids must be unique across all kit stanzas in the project, and every
 instance's function names are namespaced by its `kit-<instance id>-` prefix, so
 the instances cannot collide. Set `INSTANCE_ID` in each config directory to that
-instance's key — the kit uses it to address its own task queues, and a mismatch
+instance's key - the kit uses it to address its own task queues, and a mismatch
 enqueues onto a queue that does not exist.
 
 Give each instance its own `SYNC_DATASET`/`SYNC_TABLE` or its own
@@ -209,39 +210,69 @@ the function's own identity so it has the runtime service account the creation
 needs. It is idempotent, and Cloud Tasks retries it on a transient BigQuery
 error so a blip does not leave the changelog unprovisioned.
 
-It does not provision the restoration prerequisites — PITR, the backup database
+It does not provision the restoration prerequisites - PITR, the backup database
 and the flex template all need gcloud. That is what `scripts/setup.sh` is for.
 
-## Restoration gaps
+## The restoration pipeline
 
-The restoration pipeline in `pipeline/` is vendored from the original extension
-with one fix: the extension doubled the `projects/…/databases/…/documents/`
-prefix on every changelog replay write, which Firestore rejects - failing the
-whole restoration job whenever the replay window contained any changelog rows.
-The pipeline still does not round trip everything the capture side records.
-`FirestoreReconstructor.buildFirestoreMap` switches on each value's type tag and
-silently drops any field whose tag it does not handle:
+The Dataflow restoration pipeline is not part of this package. Its canonical
+home is
+[GoogleCloudPlatform/firebase-extensions](https://github.com/GoogleCloudPlatform/firebase-extensions)
+(`firestore-incremental-capture-pipeline`), which publishes it as a versioned
+GitHub release: tag `firestore-incremental-capture-pipeline-v0.1.0`, assets
+`restore-firestore.jar` and `restore-firestore.jar.sha256`, plus a GitHub
+build provenance attestation bound to that tag.
 
-- **`binary` and `null` fields are dropped.** The pipeline has no case for
-  either, so a restored document loses them.
-- **Arrays of primitives do not survive.** `buildFirestoreList` rebuilds every
-  element by passing it to `buildFirestoreMap`, which reads field names at the
-  top level, so `[1, 2]` restores as a list of empty maps. Arrays of maps do
-  round trip — see the note in `src/serializer.ts` on why array elements are
-  encoded differently from map fields.
-- **A Timestamp, GeoPoint, DocumentReference or Buffer sitting _directly_ in an
-  array does not survive either**, for the same reason: its `{type, value}`
-  envelope is not a field map. The extension happened to preserve these as maps
-  of their internals (`_seconds`/`_nanoseconds` for a Timestamp), so they
-  restored with the wrong type but with the data present; here they restore as
-  empty maps. The same values nested inside a map element round trip correctly.
-- **Documents sharing an id across collections collide.** The replay query ranks
-  with `ROW_NUMBER() OVER(PARTITION BY documentId …)`, partitioning by document
-  id rather than path, so only one of `users/x` and `orders/x` is replayed.
+`scripts/setup.sh` consumes it as a pinned artifact: the release tag and the
+jar's SHA-256 digest are pinned together at the top of the script, and the
+script verifies the download against the pinned digest before staging - on a
+download failure, a digest mismatch, or missing `shasum`/`sha256sum` tooling
+it deletes the file and exits non-zero. For an independent provenance check
+beyond the digest, run:
 
-The PITR baseline half of a restoration is unaffected; these apply to the
-changelog replay on top of it. Fixing them means changing the Java, which is out
-of scope for this migration.
+```sh
+gh attestation verify restore-firestore.jar --repo GoogleCloudPlatform/firebase-extensions
+```
+
+To pick up a newer pipeline, bump the tag and the digest together in
+`scripts/setup.sh` and re-run it.
+
+### Known limitations
+
+Pipeline release v0.1.0 fixes the restoration gaps this kit previously had to
+document around the extension's pipeline:
+
+- The doubled `projects/…/databases/…/documents/` prefix on changelog replay
+  writes, which failed the whole restoration job whenever the replay window
+  contained any changelog rows.
+- A NullPointerException on the NULL `afterData` the extension writes for a
+  delete.
+- The dedupe-by-documentId collision: documents sharing an id across
+  collections (`users/x` and `orders/x`) collided in the replay query, so only
+  one was restored
+  ([GoogleCloudPlatform/firebase-extensions#1138](https://github.com/GoogleCloudPlatform/firebase-extensions/issues/1138)).
+- Dropped `documentReference`, `binary` and `null` fields: the reconstructor
+  had no case for those type tags and silently discarded the fields on restore
+  ([GoogleCloudPlatform/firebase-extensions#1144](https://github.com/GoogleCloudPlatform/firebase-extensions/issues/1144)).
+
+Still open in v0.1.0:
+
+- **Arrays do not round-trip**
+  ([GoogleCloudPlatform/firebase-extensions#1147](https://github.com/GoogleCloudPlatform/firebase-extensions/issues/1147),
+  deliberately deferred). The reconstructor rebuilds every array element as a
+  field map, so primitive elements - and a Timestamp, GeoPoint,
+  DocumentReference or Buffer sitting directly in an array - restore as empty
+  maps. Arrays of maps do round trip; see the note in `src/serializer.ts` on
+  why array elements are encoded differently from map fields.
+
+The PITR baseline half of a restoration is unaffected; this applies to the
+changelog replay on top of it.
+
+### Serializer tag compatibility
+
+This kit tags a DocumentReference value `reference`; the legacy extension
+tagged it `documentReference`. Pipeline v0.1.0 accepts both spellings, so
+changelogs written by either the kit or the extension replay correctly.
 
 ## Changes from the legacy extension
 
@@ -252,9 +283,9 @@ BigQuery schema, and `tests/wire-format.test.ts` pins the value encoding to the
 extension's own serializer tests - so the kit can point at the extension's
 existing dataset and table and the accumulated history stays replayable. The
 one deliberate encoding change: DocumentReference values are tagged
-`reference`, not `documentReference`, because the pipeline switches on
-`REFERENCE` and silently dropped the extension's spelling on restore.
-Everything around the format moved:
+`reference`, not `documentReference`. Pipeline v0.1.0 accepts both spellings
+(see Serializer tag compatibility), so rows written by either side replay
+correctly. Everything around the format moved:
 
 - **Distribution.** An npm package you re-export from your own functions
   codebase instead of `firebase ext:install`. Functions deploy as
@@ -265,8 +296,9 @@ Everything around the format moved:
   `initIncrementalCapture` lifecycle task.
 - **Dropped functions.** `buildFlexTemplate`, `onCloudBuildComplete` and
   `onFirestoreBackupInit` are gone. The extension staged the Dataflow flex
-  template through Cloud Build jobs launched from functions; the kit builds the
-  jar and stages the template in `scripts/setup.sh`, which also absorbs the
+  template through Cloud Build jobs launched from functions; the kit downloads
+  the pinned pipeline jar and stages the template in `scripts/setup.sh`, which
+  also absorbs the
   extension's POSTINSTALL gcloud checklist (PITR, backup database, Artifact
   Registry, worker roles) into one idempotent script.
 - **Template path.** The template is staged to
@@ -288,10 +320,10 @@ Everything around the format moved:
 - **Status documents.** Restoration run status lives at
   `_<instance id>/runs/restorations`, not the extension's `_ext-<instance id>`
   documents.
-- **Pipeline.** The Java pipeline is vendored with Beam bumped to 2.75.0 for
-  CVE fixes and one logic fix: the doubled document-path prefix that failed
-  every restoration whose replay window contained changelog rows (see
-  Restoration gaps for what still does not round trip).
+- **Pipeline.** The Java pipeline is no longer fetched as an unversioned
+  prebuilt jar. It is consumed as a pinned, digest-verified,
+  provenance-attested GitHub release of GoogleCloudPlatform/firebase-extensions
+  (see The restoration pipeline for what v0.1.0 fixes and what remains open).
 
 To migrate: run `scripts/setup.sh`, set the kit's `.env` to the extension's
 param values (same `SYNC_DATASET`/`SYNC_TABLE` to keep the history), deploy,
@@ -301,7 +333,8 @@ unaffected.
 
 ## API surface
 
-- **Main entry** (`@firebase/firestore-incremental-capture`): exports the five
+- **Main entry** (`@firebase-function-kits/firestore-incremental-capture`):
+  exports the five
   wired functions listed under Usage, and registers the first-deploy / redeploy
   provisioning hooks. Runtime config is resolved lazily on first invocation. Use
   this entry from Firebase deploy/emulator/runtime. For your own triggers,
@@ -314,8 +347,9 @@ unaffected.
   `ChangelogRow`, `serializeDocument`) for reading the changelog or
   reimplementing the restoration side. Safe to import anywhere.
 
-`pipeline/` is the Java/Beam restoration pipeline, built by `scripts/setup.sh`.
-To work on it directly, see `pipeline/README.md`.
+The Java/Beam restoration pipeline lives in
+GoogleCloudPlatform/firebase-extensions and is consumed as a pinned release by
+`scripts/setup.sh` - see The restoration pipeline.
 
 ## License
 

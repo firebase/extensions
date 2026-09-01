@@ -53,15 +53,14 @@ export type SerializedDocument = Record<string, SerializedValue>;
  * trips through BigQuery JSON columns, which cannot represent a Timestamp,
  * GeoPoint, DocumentReference or Buffer.
  *
- * The tags are a wire format shared with the Dataflow restoration pipeline:
- * `FirestoreReconstructor.buildFirestoreMap` upper-cases each tag and switches
- * on it, dropping any field whose tag it does not recognise. Renaming a tag on
- * one side silently discards data on restore. `reference` is spelled to match
- * the pipeline's `REFERENCE` case, and carries the relative document path
- * because the pipeline prefixes `projects/…/databases/…/documents/` itself.
- *
- * The pipeline has no case for `binary` or `null`, so those fields are dropped
- * on restore. See the restoration gaps section of the kit README.
+ * The tags are a wire format shared with the Dataflow restoration pipeline
+ * (pinned release v0.1.0, see the kit README): the reconstructor switches on
+ * each value's type tag and drops any field whose tag it does not recognise,
+ * so renaming a tag on one side silently discards data on restore. A
+ * DocumentReference is tagged `reference` (the pipeline also accepts the
+ * legacy extension's `documentReference`), and carries the relative document
+ * path because the pipeline prefixes `projects/…/databases/…/documents/`
+ * itself.
  *
  * @param data - Firestore document data, or `undefined` for a document that
  *   does not exist on this side of the change.
@@ -137,14 +136,14 @@ function serializeValue(value: unknown): SerializedValue {
  *
  * Map elements are emitted as a bare field map, NOT wrapped in a
  * `{ type: "map" }` envelope like a map field would be. This asymmetry is
- * required by the restoration pipeline: `FirestoreReconstructor.buildFirestoreList`
- * passes each element straight to `buildFirestoreMap`, which expects field
- * names at the top level and skips anything it cannot read as a tagged field.
- * Wrapping a map element restores it as an empty map.
+ * required by the restoration pipeline: it rebuilds each array element as a
+ * field map, reading field names at the top level and skipping anything it
+ * cannot read as a tagged field. Wrapping a map element restores it as an
+ * empty map.
  *
- * Primitive elements stay tagged, matching the original extension. The pipeline
- * cannot reconstruct those either - see the restoration gaps in the README -
- * but changing the encoding here would not fix it.
+ * Primitive elements stay tagged, matching the original extension. Pipeline
+ * v0.1.0 cannot reconstruct those (arrays do not round-trip, see the known
+ * limitations in the README), but changing the encoding here would not fix it.
  *
  * @param element - One element of a Firestore array field.
  * @returns The serialized element.

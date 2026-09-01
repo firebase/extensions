@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 # Provisions the restoration prerequisites that the deployed functions cannot
-# provision themselves: they need gcloud and a Maven build, neither of which
-# exists in the Cloud Functions runtime.
+# provision themselves: they need gcloud, which does not exist in the Cloud
+# Functions runtime. Needs gcloud, curl and shasum (or sha256sum) on PATH.
 #
 # Every step is idempotent, so re-running after a partial failure is safe.
 #
@@ -49,8 +49,15 @@
 
 set -euo pipefail
 
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly PIPELINE_DIR="${SCRIPT_DIR}/../pipeline"
+readonly JAR_NAME="restore-firestore.jar"
+
+# The restoration pipeline is consumed as a prebuilt release artifact of
+# GoogleCloudPlatform/firebase-extensions, pinned by tag AND digest. Bump the
+# two together: the digest is the sha256 of the restore-firestore.jar asset on
+# that release.
+readonly PIPELINE_RELEASE_TAG="firestore-incremental-capture-pipeline-v0.1.0"
+readonly PIPELINE_JAR_SHA256="41c59a69a553a55d603763fca146b49e00e2e63139e9cf029c55a1ce8ee47ef8"
+readonly PIPELINE_JAR_URL="https://github.com/GoogleCloudPlatform/firebase-extensions/releases/download/${PIPELINE_RELEASE_TAG}/${JAR_NAME}"
 
 readonly PROJECT_ID="${PROJECT_ID:-}"
 readonly BACKUP_INSTANCE_ID="${BACKUP_INSTANCE_ID:-}"
@@ -60,7 +67,6 @@ readonly SOURCE_DATABASE="(default)"
 readonly DATABASE_LOCATION="${DATABASE_LOCATION:-nam5}"
 readonly LOCATION="${LOCATION:-us-central1}"
 readonly INSTANCE_ID="${INSTANCE_ID:-default}"
-readonly JAR_NAME="restore-firestore.jar"
 
 readonly GREEN='\033[0;32m'
 readonly YELLOW='\033[1;33m'
@@ -85,7 +91,9 @@ require_config() {
     die "BACKUP_INSTANCE_ID must differ from SOURCE_DATABASE (${SOURCE_DATABASE})."
 
   command -v gcloud >/dev/null || die "gcloud is required but was not found."
-  command -v mvn >/dev/null || die "Maven is required but was not found."
+  command -v curl >/dev/null || die "curl is required but was not found."
+  command -v shasum >/dev/null || command -v sha256sum >/dev/null ||
+    die "shasum or sha256sum is required to verify ${JAR_NAME}."
 }
 
 # Resolves the bucket holding the flex template. Projects created after
@@ -205,15 +213,40 @@ grant_worker_roles() {
   ok "Worker roles granted."
 }
 
-# Built from the vendored source rather than downloaded: the prebuilt jar the
-# extension fetched from GitHub is not a durable artifact.
-build_jar() {
-  step "Building the restoration pipeline"
-  # Maven to stderr as well: stdout is this function's return value.
-  mvn -q -f "${PIPELINE_DIR}/pom.xml" clean package -DskipTests >&2
-  local jar="${PIPELINE_DIR}/target/${JAR_NAME}"
-  [[ -f "${jar}" ]] || die "Expected ${jar} after the Maven build."
-  ok "Built ${jar}."
+# Fails closed: an unverifiable jar is deleted and the script exits, because
+# staging an unverified pipeline hands it write access to the backup database.
+# The release also carries a GitHub build provenance attestation; for an
+# independent check beyond the pinned digest, run
+#   gh attestation verify restore-firestore.jar --repo GoogleCloudPlatform/firebase-extensions
+download_jar() {
+  step "Downloading the restoration pipeline (${PIPELINE_RELEASE_TAG})"
+
+  local dir jar
+  dir="$(mktemp -d)"
+  jar="${dir}/${JAR_NAME}"
+
+  # curl to stderr: stdout is this function's return value.
+  if ! curl -fSL --retry 3 -o "${jar}" "${PIPELINE_JAR_URL}" >&2; then
+    rm -f "${jar}"
+    die "Failed to download ${PIPELINE_JAR_URL}."
+  fi
+
+  local actual
+  if command -v shasum >/dev/null; then
+    actual="$(shasum -a 256 "${jar}" | awk '{print $1}')"
+  elif command -v sha256sum >/dev/null; then
+    actual="$(sha256sum "${jar}" | awk '{print $1}')"
+  else
+    rm -f "${jar}"
+    die "shasum or sha256sum is required to verify ${JAR_NAME}."
+  fi
+
+  if [[ "${actual}" != "${PIPELINE_JAR_SHA256}" ]]; then
+    rm -f "${jar}"
+    die "SHA-256 mismatch for ${JAR_NAME}: expected ${PIPELINE_JAR_SHA256}, got ${actual}."
+  fi
+
+  ok "Verified ${jar} against the pinned digest."
   echo "${jar}"
 }
 
@@ -248,7 +281,7 @@ main() {
   create_backup_database
   create_artifact_registry
   grant_worker_roles "${worker_service_account}"
-  jar="$(build_jar)"
+  jar="$(download_jar)"
   stage_flex_template "${jar}" "${bucket}"
 
   echo -e "\n${GREEN}Setup complete.${NC}"
