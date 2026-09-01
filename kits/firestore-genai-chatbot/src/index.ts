@@ -86,6 +86,7 @@ export const generateMessage = onDocumentWritten(
   {
     document: deployOptions.document,
     secrets: [apiKeySecret],
+    timeoutSeconds: deployOptions.timeoutSeconds,
   },
   (event) => handleDocumentWrite(event, getContext())
 );
