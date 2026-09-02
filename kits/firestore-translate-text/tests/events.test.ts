@@ -72,11 +72,25 @@ describe("events", () => {
   test("publishes the start event", async () => {
     const events = await importEvents(CHANNEL);
 
-    await events.recordStartEvent({ params: { messageId: "id1" } });
+    const context = {
+      eventId: "event-1",
+      timestamp: "2026-01-01T00:00:00.000Z",
+      eventType: "google.firestore.document.write",
+      resource: {
+        service: "firestore.googleapis.com",
+        name: "projects/demo-project/databases/(default)/documents/translations/id1",
+      },
+      params: { messageId: "id1" },
+    };
+
+    await events.recordStartEvent({
+      change: { before: {}, after: {} },
+      context,
+    });
 
     expect(publish).toHaveBeenCalledWith({
       type: `${EVENT_PREFIX}.onStart`,
-      data: { params: { messageId: "id1" } },
+      data: { change: { before: {}, after: {} }, context },
     });
   });
 
@@ -109,11 +123,22 @@ describe("events", () => {
   test("publishes the completion event", async () => {
     const events = await importEvents(CHANNEL);
 
-    await events.recordCompletionEvent({ params: { messageId: "id1" } });
+    const context = {
+      eventId: "event-1",
+      timestamp: "2026-01-01T00:00:00.000Z",
+      eventType: "google.firestore.document.write",
+      resource: {
+        service: "firestore.googleapis.com",
+        name: "projects/demo-project/databases/(default)/documents/translations/id1",
+      },
+      params: { messageId: "id1" },
+    };
+
+    await events.recordCompletionEvent({ context });
 
     expect(publish).toHaveBeenCalledWith({
       type: `${EVENT_PREFIX}.onCompletion`,
-      data: { params: { messageId: "id1" } },
+      data: { context },
     });
   });
 

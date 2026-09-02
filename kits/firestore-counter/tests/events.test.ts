@@ -81,11 +81,25 @@ describe("event publishing", () => {
   test("publishes start events", async () => {
     const events = await setupEnabledEvents();
 
-    await events.recordStartEvent({ params: { shardId: "0000" } });
+    const context = {
+      eventId: "event-1",
+      timestamp: "2026-01-01T00:00:00.000Z",
+      eventType: "google.firestore.document.write",
+      resource: {
+        service: "firestore.googleapis.com",
+        name: "projects/demo-project/databases/(default)/documents/_firebase_ext_/sharded_counter",
+      },
+      params: { shardId: "0000" },
+    };
+
+    await events.recordStartEvent({
+      change: { before: {}, after: {} },
+      context,
+    });
 
     expect(publish).toHaveBeenCalledWith({
       type: "firebase.extensions.firestore-counter.v1.onStart",
-      data: { params: { shardId: "0000" } },
+      data: { change: { before: {}, after: {} }, context },
     });
   });
 
@@ -119,11 +133,22 @@ describe("event publishing", () => {
   test("publishes completion events", async () => {
     const events = await setupEnabledEvents();
 
-    await events.recordCompletionEvent({ params: { shardId: "0000" } });
+    const context = {
+      eventId: "event-1",
+      timestamp: "2026-01-01T00:00:00.000Z",
+      eventType: "google.firestore.document.write",
+      resource: {
+        service: "firestore.googleapis.com",
+        name: "projects/demo-project/databases/(default)/documents/_firebase_ext_/sharded_counter",
+      },
+      params: { shardId: "0000" },
+    };
+
+    await events.recordCompletionEvent({ context });
 
     expect(publish).toHaveBeenCalledWith({
       type: "firebase.extensions.firestore-counter.v1.onCompletion",
-      data: { params: { shardId: "0000" } },
+      data: { context },
     });
   });
 

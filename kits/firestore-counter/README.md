@@ -161,16 +161,6 @@ for them, so no events are published until you create a channel and put both
 values in your `.env`. If you set `EVENTARC_CHANNEL` and leave
 `EXT_SELECTED_EVENTS` unset, every event type is published.
 
-### Event payloads have a different shape
-
-The event types are unchanged, but what they carry is not. `onStart` used to
-carry `{change, context}` and now carries `{data, params}`: the write is under
-`data` instead of `change`, and the 1st gen `context` is gone. `onCompletion`
-used to carry `{context}` and now carries `{params}` only. Anything reading
-`context.eventId`, `context.timestamp`, `context.eventType` or
-`context.resource` from these events needs updating; the trigger wildcards
-(`collection`, `counter`, `shardId`) survive as `params`.
-
 ### Your codebase's global options apply to these functions
 
 The functions are exported from your own functions codebase, so a
@@ -201,8 +191,11 @@ carry on getting them from the extension repo.
 - The aggregation behaviour: inline aggregation up to 200 shards, workers above
   that, 45 second self-scheduling worker runs, partial shard cleanup, and
   deletion of shards once they are summed into the counter field.
-- The three functions and the event types they publish, aside from the worker
-  and payload points above.
+- The three functions, the event types they publish and their payloads:
+  `onStart` still carries `{change, context}` and `onCompletion` still carries
+  `{context}`, with `context.eventId`, `context.timestamp`, `context.eventType`,
+  `context.resource` and the trigger wildcards under `context.params`. Aside
+  from the worker point above.
 
 ## API surface
 

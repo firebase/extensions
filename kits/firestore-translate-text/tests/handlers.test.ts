@@ -29,6 +29,7 @@ import { messages } from "../src/logs/messages";
 import {
   defaultEnvironment,
   defaultLanguages,
+  expectedEventContext,
   makeConfig,
   makeEvent,
   makeFirestore,
@@ -91,12 +92,14 @@ describe("handleDocumentWrite", () => {
 
     await handleDocumentWrite(event, context());
 
+    // The extension published the 1st gen `{change, context}` payload, so the
+    // kit rebuilds the same shape rather than exposing the 2nd gen event.
     expect(events.recordStartEvent).toHaveBeenCalledWith({
-      data: event.data,
-      params: event.params,
+      change: event.data,
+      context: expectedEventContext(),
     });
     expect(events.recordCompletionEvent).toHaveBeenCalledWith({
-      params: event.params,
+      context: expectedEventContext(),
     });
   });
 
@@ -353,7 +356,7 @@ describe("handleDocumentWrite", () => {
     expect(firestore.update).not.toHaveBeenCalled();
     // the handler still completes so the extension lifecycle event fires
     expect(events.recordCompletionEvent).toHaveBeenCalledWith({
-      params: { messageId: "id1" },
+      context: expectedEventContext(),
     });
   });
 

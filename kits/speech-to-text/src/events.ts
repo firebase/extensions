@@ -83,6 +83,12 @@ export const recordFailureEvent = async (
 /**
  * Publishes the `fail` event for an unexpected error thrown by the pipeline.
  *
+ * The error is published as-is to keep the payload identical to the extension's.
+ * An `Error`'s `message` and `stack` are not enumerable, so a genuine `Error`
+ * serialises to `{"error":{}}`, while the plain object `errorFromAny` builds for
+ * a thrown non-error keeps its `name` and `message`. Anything richer would be a
+ * payload change for existing subscribers.
+ *
  * @param error - The error that aborted processing.
  */
 export const recordErrorEvent = async (error: Error): Promise<void> => {
@@ -90,10 +96,7 @@ export const recordErrorEvent = async (error: Error): Promise<void> => {
   await eventChannel.publish({
     type: FAIL_EVENT_TYPE,
     data: {
-      error: {
-        message: error.message,
-        stack: error.stack,
-      },
+      error,
     },
   });
 };
