@@ -316,7 +316,8 @@ for; the Firebase CLI grants these for you.
 - `DEFAULT_QUERY_LIMIT` (default 3) and `DISTANCE_MEASURE` (`COSINE`,
   `EUCLIDEAN`, `DOT_PRODUCT`, default `COSINE`) behave as before.
 - Gemini and Vertex AI embeddings are still `gemini-embedding-001` at 768
-  dimensions.
+  dimensions, though the kit has to truncate the model's response to get there.
+  See *Gemini and Vertex AI embeddings are truncated to 768 dimensions* above.
 - OpenAI embeddings are still `text-embedding-ada-002` at its native 1536
   dimensions, so vectors already written by an installed instance stay
   comparable with the ones the kit writes. The vector index the kit creates for
