@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { FieldValue } from "firebase-admin/firestore";
 import type { CallableRequest } from "firebase-functions/v2/https";
 import { HttpsError } from "firebase-functions/v2/https";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -36,7 +37,12 @@ vi.mock("../src/embeddings", () => ({
 // handler never needs it.
 vi.mock("../src/queries/setup", () => ({ createIndex: vi.fn() }));
 
-import { type HandlerContext, handleQueryCall } from "../src/handlers";
+import {
+  type HandlerContext,
+  type VectorWriteEvent,
+  handleEmbedOnWrite,
+  handleQueryCall,
+} from "../src/handlers";
 import { resolveVectorSearchConfig } from "../src/export-config";
 
 const config = resolveVectorSearchConfig({
@@ -203,5 +209,154 @@ describe("handleQueryCall", () => {
 
     expect((err as { code: string }).code).toBe("unknown");
     expect((err as Error).message).toBe("Query failed");
+  });
+});
+
+/** A minimal `DocumentSnapshot` stand-in backed by a plain object. */
+function snapshot(data: Record<string, unknown> | null) {
+  const set = vi.fn().mockResolvedValue(undefined);
+  return {
+    snap: {
+      exists: data !== null,
+      data: () => data ?? undefined,
+      get: (field: string) => data?.[field],
+      ref: { path: `${config.collectionPath}/doc-1`, set },
+    },
+    set,
+  };
+}
+
+function writeEvent(
+  before: Record<string, unknown> | null,
+  after: Record<string, unknown> | null
+) {
+  const beforeSnap = snapshot(before);
+  const afterSnap = snapshot(after);
+  const event = {
+    params: { docId: "doc-1" },
+    data: { before: beforeSnap.snap, after: afterSnap.snap },
+  } as unknown as VectorWriteEvent;
+  return { event, set: afterSnap.set };
+}
+
+function embedCtx() {
+  return { firestore: {}, config } as unknown as HandlerContext;
+}
+
+describe("handleEmbedOnWrite", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getSingleEmbedding.mockResolvedValue(EMBEDDING);
+  });
+
+  test("embeds a new document and marks it COMPLETED", async () => {
+    const { event, set } = writeEvent(null, { input: "hello" });
+
+    await handleEmbedOnWrite(event, embedCtx());
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
+    expect(set).toHaveBeenCalledWith(
+      {
+        [config.outputFieldName]: FieldValue.vector(EMBEDDING),
+        [config.statusFieldName]: { state: "COMPLETED" },
+      },
+      { merge: true }
+    );
+  });
+
+  test("embeds a document that already has an embedding but no status", async () => {
+    const { event } = writeEvent(null, {
+      input: "hello",
+      [config.outputFieldName]: FieldValue.vector(EMBEDDING),
+    });
+
+    await handleEmbedOnWrite(event, embedCtx());
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
+  });
+
+  test("marks the document ERROR and rethrows when embedding fails", async () => {
+    const { event, set } = writeEvent(null, { input: "hello" });
+    getSingleEmbedding.mockRejectedValue(new Error("Embedding failed"));
+
+    await expect(handleEmbedOnWrite(event, embedCtx())).rejects.toThrow(
+      "Embedding failed"
+    );
+    expect(set).toHaveBeenCalledWith(
+      {
+        [config.statusFieldName]: {
+          state: "ERROR",
+          message: "Embedding failed",
+        },
+      },
+      { merge: true }
+    );
+  });
+
+  test("skips a deleted document", async () => {
+    const { event, set } = writeEvent({ input: "hello" }, null);
+
+    await handleEmbedOnWrite(event, embedCtx());
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("skips a document whose input is not a string", async () => {
+    const { event, set } = writeEvent(null, { input: 42 });
+
+    await handleEmbedOnWrite(event, embedCtx());
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  // Parity with the extension: `FirestoreOnWriteProcessor` skipped any document
+  // already in a final state, so an edited input never produced a new embedding
+  // and a failure was never retried.
+  for (const state of ["PROCESSING", "COMPLETED", "ERROR", "BACKFILLED"]) {
+    test(`does not re-embed a document in the ${state} state`, async () => {
+      const { event, set } = writeEvent(
+        { input: "hello", [config.statusFieldName]: { state } },
+        { input: "goodbye", [config.statusFieldName]: { state } }
+      );
+
+      await handleEmbedOnWrite(event, embedCtx());
+
+      expect(getSingleEmbedding).not.toHaveBeenCalled();
+      expect(set).not.toHaveBeenCalled();
+    });
+  }
+
+  test("embeds a document in an unrecognised state", async () => {
+    const { event } = writeEvent(null, {
+      input: "hello",
+      [config.statusFieldName]: { state: "SOMETHING_ELSE" },
+    });
+
+    await handleEmbedOnWrite(event, embedCtx());
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
+  });
+
+  test("honours a custom status field name", async () => {
+    const customConfig = resolveVectorSearchConfig({
+      projectId: "test-project",
+      instanceId: "test-instance",
+      statusFieldName: "embedStatus",
+    });
+    const { event, set } = writeEvent(null, {
+      input: "hello",
+      status: { state: "COMPLETED" },
+      embedStatus: { state: "COMPLETED" },
+    });
+
+    await handleEmbedOnWrite(event, {
+      firestore: {},
+      config: customConfig,
+    } as unknown as HandlerContext);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
   });
 });

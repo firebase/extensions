@@ -47,6 +47,27 @@ export type VectorWriteEvent = FirestoreEvent<
   Record<string, string>
 >;
 
+/**
+ * States the extension's `FirestoreOnWriteProcessor` treated as final. A
+ * document that has reached one of these is never processed again, so each
+ * document is embedded once and a failure is never retried.
+ */
+const TERMINAL_STATES = new Set([
+  "PROCESSING",
+  "COMPLETED",
+  "ERROR",
+  "BACKFILLED",
+]);
+
+function isInTerminalState(
+  data: FirebaseFirestore.DocumentData,
+  statusFieldName: string
+): boolean {
+  const status = data[statusFieldName] as { state?: unknown } | undefined;
+  const state = status?.state;
+  return typeof state === "string" && TERMINAL_STATES.has(state);
+}
+
 function queuePath(
   config: ResolvedVectorSearchConfig,
   queueName: string
@@ -78,12 +99,9 @@ export async function handleEmbedOnWrite(
   logs.start("embedOnWrite");
 
   const data = event.data.after.data() ?? {};
+  if (isInTerminalState(data, ctx.config.statusFieldName)) return;
   const input = data[ctx.config.inputFieldName];
   if (typeof input !== "string") return;
-  const beforeInput = event.data.before.exists
-    ? event.data.before.get(ctx.config.inputFieldName)
-    : undefined;
-  if (beforeInput === input && data[ctx.config.outputFieldName]) return;
 
   try {
     const embedding = await embedClient(ctx).getSingleEmbedding(input);
