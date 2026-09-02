@@ -132,7 +132,21 @@ describe("GenkitEmbedClient", () => {
       ]);
     });
 
-    test("returns the embeddings as the embedder produced them", async () => {
+    // gemini-embedding-001 ignores the embedder's outputDimensionality and
+    // returns its full 3072-dimension vector, which Firestore rejects outright.
+    test("truncates embeddings longer than the configured dimension", async () => {
+      const client = new GenkitEmbedClient(
+        config({
+          embeddingProvider: "custom",
+          customEmbeddingsDimension: 2,
+        })
+      );
+      embedMany.mockResolvedValueOnce([{ embedding: [1, 2, 3, 4] }]);
+
+      await expect(client.getEmbeddings(["input"])).resolves.toEqual([[1, 2]]);
+    });
+
+    test("leaves embeddings shorter than the dimension untouched", async () => {
       const client = new GenkitEmbedClient(config());
       embedMany.mockResolvedValueOnce([{ embedding: [1, 2, 3] }]);
 

@@ -167,6 +167,20 @@ Selecting `multimodal` deploys, and then every embedding attempt throws
 multimodal image embedding, including reading images out of Cloud Storage, has no
 equivalent here. If you use it, stay on the extension.
 
+### Gemini and Vertex AI embeddings are truncated to 768 dimensions
+
+Both the extension and the kit ask for `gemini-embedding-001` with
+`outputDimensionality: 768`, set on the embedder reference. Genkit does not apply
+it there, so the model returns its full 3072-dimension vector. Firestore refuses
+any vector above 2048 dimensions, so on the extension every gemini and vertex
+embed fails with `Vectors must be at most 2048 dimensions` and the document is
+marked `ERROR`.
+
+The kit truncates each returned embedding to 768 before writing it, which is the
+dimension both the extension and the kit declare their vector index with, so the
+default provider works. This is the one place the kit deliberately does not match
+the extension's behaviour, because matching it means writing nothing at all.
+
 ### You set `INSTANCE_ID` yourself, and it names the query collection
 
 The extension derived its instance id at install and used it for the query
