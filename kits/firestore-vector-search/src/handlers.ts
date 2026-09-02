@@ -117,25 +117,88 @@ export async function handleEmbedOnWrite(
   }
 }
 
+/**
+ * The extension ran the query through a `FirestoreOnWriteProcessor` built with
+ * no `statusField`, so query documents used the processor's literal `status`
+ * default rather than `STATUS_FIELD_NAME`, under the process id `textQuery`.
+ */
+const QUERY_STATUS_PATH = "status.textQuery";
+
+/** The fields the extension's `fieldDependencyArray` watched. */
+const QUERY_INPUT_FIELDS = ["query", "limit"] as const;
+
+/**
+ * States the extension's processor treated as final: a query document in any of
+ * them is never processed again. `PROCESSING` is one of them, so neither of the
+ * status writes below can re-trigger a run.
+ */
+const FINAL_QUERY_STATES = new Set([
+  "PROCESSING",
+  "COMPLETED",
+  "ERROR",
+  "BACKFILLED",
+]);
+
 export async function handleQueryOnWrite(
   event: VectorWriteEvent,
   ctx: HandlerContext
 ): Promise<void> {
   if (!event.data?.after.exists) return;
-  const data = event.data.after.data() ?? {};
+  const after = event.data.after;
+  const data = after.data() ?? {};
   const query = data.query;
   if (typeof query !== "string") return;
 
-  const result = await performTextQuery({
-    query,
-    limit: data.limit ? parseLimit(data.limit) : ctx.config.defaultQueryLimit,
-    prefilters: (data.prefilters as Prefilter[] | undefined) ?? [],
-    embedClient: embedClient(ctx),
-    vectorStore: vectorStore(ctx),
-    config: ctx.config,
+  // The result write below re-fires this trigger. Skipping documents whose
+  // status is already final stops the loop, and matches the extension: a query
+  // document runs once and is never re-run, not even when its inputs change.
+  const state = after.get(`${QUERY_STATUS_PATH}.state`);
+  if (typeof state === "string" && FINAL_QUERY_STATES.has(state)) return;
+
+  const before = event.data.before.exists
+    ? event.data.before.data()
+    : undefined;
+  const inputsChanged = QUERY_INPUT_FIELDS.some(
+    (field) => data[field] !== before?.[field]
+  );
+  if (!inputsChanged) return;
+
+  const startTime = FieldValue.serverTimestamp();
+  await after.ref.update({
+    [QUERY_STATUS_PATH]: {
+      state: "PROCESSING",
+      startTime,
+      createTime:
+        after.get(`${QUERY_STATUS_PATH}.createTime`) || after.createTime,
+      updateTime: startTime,
+    },
   });
 
-  await event.data.after.ref.set(result, { merge: true });
+  try {
+    const result = await performTextQuery({
+      query,
+      limit: data.limit ? parseLimit(data.limit) : ctx.config.defaultQueryLimit,
+      prefilters: (data.prefilters as Prefilter[] | undefined) ?? [],
+      embedClient: embedClient(ctx),
+      vectorStore: vectorStore(ctx),
+      config: ctx.config,
+    });
+    const completeTime = FieldValue.serverTimestamp();
+    await after.ref.update({
+      ...result,
+      [`${QUERY_STATUS_PATH}.state`]: "COMPLETED",
+      [`${QUERY_STATUS_PATH}.updateTime`]: completeTime,
+      [`${QUERY_STATUS_PATH}.completeTime`]: completeTime,
+    });
+  } catch (err) {
+    // The extension's `errorFn` logged and swallowed, so a failed query marks
+    // the document ERROR and the invocation succeeds rather than retrying.
+    logs.error("queryOnWrite", err);
+    await after.ref.update({
+      [`${QUERY_STATUS_PATH}.state`]: "ERROR",
+      [`${QUERY_STATUS_PATH}.updateTime`]: FieldValue.serverTimestamp(),
+    });
+  }
 }
 
 export async function handleQueryCall(
