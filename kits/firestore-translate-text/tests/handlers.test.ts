@@ -36,6 +36,7 @@ import {
   testTranslations,
 } from "./helpers";
 import { logger, resetLoggerMocks } from "./mocks/firebase-functions";
+import { googleAI, resetGoogleGenaiMocks } from "./mocks/google-genai";
 import {
   resetTranslateMocks,
   translateClass,
@@ -61,6 +62,7 @@ describe("handleDocumentWrite", () => {
     vi.clearAllMocks();
     resetLoggerMocks();
     resetTranslateMocks();
+    resetGoogleGenaiMocks();
     firestore = makeFirestore();
   });
 
@@ -375,14 +377,36 @@ describe("handleDocumentWrite", () => {
       makeEvent(makeSnapshot(), makeSnapshot({ input: "hello" })),
       {
         firestore: firestore.firestore,
-        config: makeConfig({ googleAiApiKey: "from-config" }),
+        config: makeConfig({
+          provider: "gemini-googleai",
+          googleAiApiKey: "from-config",
+        }),
         googleAiApiKey: "from-secret",
       }
     );
 
+    expect(googleAI).toHaveBeenCalledWith({ apiKey: "from-secret" });
+  });
+
+  test("redacts the Google AI API key from the start log", async () => {
+    const ctx = {
+      firestore: firestore.firestore,
+      config: makeConfig(),
+      googleAiApiKey: "super-secret",
+    };
+
+    await handleDocumentWrite(
+      makeEvent(makeSnapshot(), makeSnapshot({ input: "hello" })),
+      ctx
+    );
+
     expect(logger.log).toHaveBeenCalledWith(
       "Started execution of extension with configuration",
-      expect.objectContaining({ googleAiApiKey: "from-secret" })
+      expect.objectContaining({
+        collectionPath: ctx.config.collectionPath,
+        googleAiApiKey: "<omitted>",
+      })
     );
+    expect(JSON.stringify(logger.log.mock.calls)).not.toContain("super-secret");
   });
 });
