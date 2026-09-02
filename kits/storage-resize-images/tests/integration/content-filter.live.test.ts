@@ -57,7 +57,6 @@ function guessContentType(filePath: string): string {
 const runLive = process.env.RUN_LIVE_CONTENT_FILTER_TESTS === "true";
 const describeLive = runLive ? describe : describe.skip;
 
-// The kit requires an explicit region — it has no "us-central1" fallback.
 const LOCATION = process.env.FUNCTION_REGION ?? "us-central1";
 
 describeLive(
