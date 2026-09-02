@@ -26,10 +26,15 @@ const { stringParamOpts } = vi.hoisted(() => ({
 }));
 
 vi.mock("firebase-functions/params", () => ({
+  // Only stubbed names may read the env: ambient shell vars (USER, HOST)
+  // collide with real param names and would make results machine-dependent.
   defineString: (name: string, opts?: StringParamOpts) => {
     stringParamOpts.set(name, opts);
     return {
-      value: () => process.env[name] ?? opts?.default ?? "",
+      value: () =>
+        (name === "AUTH_TYPE" ? process.env[name] : undefined) ??
+        opts?.default ??
+        "",
     };
   },
   defineInt: (_name: string, opts?: { default?: number }) => ({
