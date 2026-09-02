@@ -22,11 +22,11 @@ Firebase CLI 15.23.0 or later creates that account, grants the roles below,
 and attaches it to every function in this kit. Do not set a custom runtime
 service account for this codebase — it conflicts with that automatic setup.
 
-| Role | Why |
-|---|---|
-| `roles/datastore.user` | read mail documents and write delivery status |
-| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
-| `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
+| Role                           | Why                                                 |
+| ------------------------------ | --------------------------------------------------- |
+| `roles/datastore.user`         | read mail documents and write delivery status       |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events               |
+| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service |
 
 ## Usage
 
@@ -80,28 +80,28 @@ loads them at deploy time and prompts for any required values that are missing.
 Rows marked `secret` live in Secret Manager. You can reuse existing secrets;
 the CLI connects them to the function at deploy time.
 
-| Field | Env var | Required | Default | Description |
-|---|---|---|---|---|
-| `mailCollection` | `MAIL_COLLECTION` | no | `mail` | Firestore collection of outbound mail docs |
-| `defaultFrom` | `DEFAULT_FROM` | yes | — | Default From address |
-| `defaultReplyTo` | `DEFAULT_REPLY_TO` | no | (empty) | Default Reply-To address |
-| `databaseRegion` | `DATABASE_REGION` | yes | — | Region for the trigger |
-| `databaseId` | `DATABASE` | no | `(default)` | Firestore database id |
-| `authType` | `AUTH_TYPE` | no | `UsernamePassword` | `UsernamePassword` or `OAuth2` |
-| `smtpConnectionUri` | `SMTP_CONNECTION_URI` | no | (empty) | SMTP connection URI (username/password auth) |
-| `smtpPassword` | `SMTP_PASSWORD` | secret | — | SMTP password |
-| `host` | `HOST` | no | (empty) | SMTP host (OAuth2) |
-| `oauthPort` | `OAUTH_PORT` | no | `465` | SMTP port (OAuth2) |
-| `oauthSecure` | `OAUTH_SECURE` | no | `true` | Use TLS (OAuth2) |
-| `user` | `USER` | no | (empty) | SMTP username (OAuth2) |
-| `clientId` | `CLIENT_ID` | secret | — | OAuth2 client id |
-| `clientSecret` | `CLIENT_SECRET` | secret | — | OAuth2 client secret |
-| `refreshToken` | `REFRESH_TOKEN` | secret | — | OAuth2 refresh token |
-| `templatesCollection` | `TEMPLATES_COLLECTION` | no | (empty) | Optional Handlebars templates collection |
-| `usersCollection` | `USERS_COLLECTION` | no | (empty) | Optional users collection for recipient lookup |
-| `ttlExpireType` | `TTL_EXPIRE_TYPE` | no | `never` | TTL policy for processed docs |
-| `ttlExpireValue` | `TTL_EXPIRE_VALUE` | no | `1` | TTL amount when expire type is set |
-| `tlsOptions` | `TLS_OPTIONS` | no | `{}` | JSON TLS options for the SMTP transport |
+| Field                 | Env var                | Required | Default            | Description                                           |
+| --------------------- | ---------------------- | -------- | ------------------ | ----------------------------------------------------- |
+| `mailCollection`      | `MAIL_COLLECTION`      | no       | `mail`             | Firestore collection of outbound mail docs            |
+| `defaultFrom`         | `DEFAULT_FROM`         | yes      | —                  | Default From address                                  |
+| `defaultReplyTo`      | `DEFAULT_REPLY_TO`     | no       | (empty)            | Default Reply-To address                              |
+| `databaseRegion`      | `DATABASE_REGION`      | yes      | (prompted)         | Firestore database location; also places the function |
+| `databaseId`          | `DATABASE`             | no       | `(default)`        | Firestore database id                                 |
+| `authType`            | `AUTH_TYPE`            | no       | `UsernamePassword` | `UsernamePassword` or `OAuth2`                        |
+| `smtpConnectionUri`   | `SMTP_CONNECTION_URI`  | no       | (empty)            | SMTP connection URI (username/password auth)          |
+| `smtpPassword`        | `SMTP_PASSWORD`        | secret   | —                  | SMTP password                                         |
+| `host`                | `HOST`                 | no       | (empty)            | SMTP host (OAuth2)                                    |
+| `oauthPort`           | `OAUTH_PORT`           | no       | `465`              | SMTP port (OAuth2)                                    |
+| `oauthSecure`         | `OAUTH_SECURE`         | no       | `true`             | Use TLS (OAuth2)                                      |
+| `user`                | `USER`                 | no       | (empty)            | SMTP username (OAuth2)                                |
+| `clientId`            | `CLIENT_ID`            | secret   | —                  | OAuth2 client id                                      |
+| `clientSecret`        | `CLIENT_SECRET`        | secret   | —                  | OAuth2 client secret                                  |
+| `refreshToken`        | `REFRESH_TOKEN`        | secret   | —                  | OAuth2 refresh token                                  |
+| `templatesCollection` | `TEMPLATES_COLLECTION` | no       | (empty)            | Optional Handlebars templates collection              |
+| `usersCollection`     | `USERS_COLLECTION`     | no       | (empty)            | Optional users collection for recipient lookup        |
+| `ttlExpireType`       | `TTL_EXPIRE_TYPE`      | no       | `never`            | TTL policy for processed docs                         |
+| `ttlExpireValue`      | `TTL_EXPIRE_VALUE`     | no       | `1`                | TTL amount when expire type is set                    |
+| `tlsOptions`          | `TLS_OPTIONS`          | no       | `{}`               | JSON TLS options for the SMTP transport               |
 
 ## Multiple instances
 
@@ -158,15 +158,25 @@ value, and on OAuth2 auth do the same for `SMTP_PASSWORD`.
 
 ### DATABASE_REGION now decides where the function runs
 
-In the extension it only told the trigger where your database lived; the function
-itself ran in the Cloud Functions location you picked at install. The kit passes
-`DATABASE_REGION` straight through as the function's region, so the function
-moves to your database's region and the install-time location setting has no
-replacement. If your Firestore is multi-region or dual-region (`nam5`, `nam7`,
-`eur3`), that value is not a Cloud Functions region and the deploy fails; deploy
-the trigger yourself from the package's `./lib` entry point with a real region
-such as `us-central1` or `europe-west1`. This was not exercised against a live
-deploy.
+In the extension it only told the trigger where your database lived; the
+function itself ran in the Cloud Functions location you picked at install. The
+kit deploys the function to the region derived from `DATABASE_REGION`, so the
+function moves next to your database and the install-time location setting has
+no replacement. Regional Firestore locations (`europe-west2`, `us-east1`, ...)
+are used as-is; the multi-region locations map to a Cloud Run region inside
+them - `nam5` and `nam7` to `us-central1`, `eur3` to `europe-west1` - because
+they are not Cloud Run regions themselves and would fail the deploy. The
+Firestore trigger always fires in the database's own region, whatever region
+the function runs in.
+
+With `DATABASE_REGION` unset or empty, the function declares no region and the
+Firebase CLI resolves one at deploy time: it keeps the region it is already
+deployed in, and on a first deploy lands in `us-central1` unless you set the
+`FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+`firebase deploy`. Careful with that variable: it applies to every no-region
+function in the deploy, not just this kit. Note that changing an existing
+install's function region deletes and recreates the function in the new
+region.
 
 ### Create the Eventarc channel yourself for events
 
