@@ -318,6 +318,39 @@ jobs:
           echo "$NOTES"
           echo "=========================================================="
 
+      # npm expands a dependency's npm-shrinkwrap.json verbatim into the
+      # consumer's install, so dev-only entries (the esbuild platform binaries
+      # among them) fail consumer `npm ci` under npm 10 with EBADPLATFORM -
+      # which is what the Cloud Functions buildpack runs. The committed
+      # shrinkwrap keeps its dev pins for local `npm ci`; only the published
+      # copy is pruned, keeping the exact prod versions the tests ran against.
+      # Runs after Commit & Tag so the release commit stays unpruned.
+      - name: Prune dev entries from the published package
+        working-directory: ${{ inputs.target_kit }}
+        run: |
+          node - <<'EOF'
+          const fs = require("fs");
+          if (!fs.existsSync("npm-shrinkwrap.json")) {
+            console.log("No npm-shrinkwrap.json; nothing to prune.");
+            process.exit(0);
+          }
+          const lock = JSON.parse(fs.readFileSync("npm-shrinkwrap.json", "utf8"));
+          for (const [path, entry] of Object.entries(lock.packages)) {
+            if (entry.dev) delete lock.packages[path];
+          }
+          delete lock.packages[""].devDependencies;
+          fs.writeFileSync("npm-shrinkwrap.json", JSON.stringify(lock, null, 2) + "\n");
+          const written = JSON.parse(fs.readFileSync("npm-shrinkwrap.json", "utf8"));
+          const leftovers = Object.keys(written.packages).filter(
+            (path) => written.packages[path].dev || path.includes("node_modules/@esbuild/")
+          );
+          if (leftovers.length > 0) {
+            throw new Error(`dev entries survived the prune: ${leftovers.join(", ")}`);
+          }
+          console.log(`Pruned shrinkwrap to ${Object.keys(written.packages).length} entries`);
+          EOF
+          npm pkg delete devDependencies
+
       - name: Publish to NPM
         working-directory: ${{ inputs.target_kit }}
         env:
