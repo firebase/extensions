@@ -67,6 +67,8 @@ function backoffMs(attempt: number, jitter: number): number {
  *
  * @param payload - The task payload.
  * @param maxAttempts - How many enqueue attempts to make before giving up.
+ *   Clamped to at least 1: resolving without an enqueue would report success
+ *   for an event that was never buffered anywhere.
  * @throws The last enqueue error, once every attempt has failed.
  */
 export async function enqueueSyncTask(
@@ -75,10 +77,11 @@ export async function enqueueSyncTask(
 ): Promise<void> {
   const queue = getFunctions().taskQueue(syncQueuePath());
 
+  const attemptBudget = Math.max(1, maxAttempts);
   const jitter = Math.random() * JITTER_MS;
   let attempts = 0;
 
-  while (attempts < maxAttempts) {
+  while (attempts < attemptBudget) {
     if (attempts > 0) {
       await new Promise((resolve) =>
         setTimeout(resolve, backoffMs(attempts, jitter))
@@ -90,7 +93,7 @@ export async function enqueueSyncTask(
       await queue.enqueue(payload);
       return;
     } catch (enqueueErr) {
-      if (attempts >= maxAttempts) {
+      if (attempts >= attemptBudget) {
         throw enqueueErr;
       }
     }

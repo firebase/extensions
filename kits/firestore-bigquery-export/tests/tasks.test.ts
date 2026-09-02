@@ -106,6 +106,15 @@ describe("enqueueSyncTask", () => {
     expect(enqueue).toHaveBeenCalledWith({ eventId: "evt-1" });
   });
 
+  test("a non-positive attempt budget still enqueues once", async () => {
+    const enqueue = vi.fn().mockResolvedValue(undefined);
+    mockQueue(enqueue);
+
+    await enqueueSyncTask({ eventId: "evt-1" }, 0);
+
+    expect(enqueue).toHaveBeenCalledTimes(1);
+  });
+
   test("retries a failed enqueue after a backoff and then succeeds", async () => {
     vi.useFakeTimers();
     const enqueue = vi
