@@ -53,7 +53,7 @@ const EMBEDDING = [0.1, 0.2, 0.3];
 const IDS = ["doc-1", "doc-2"];
 
 /** A HandlerContext whose Firestore returns `IDS` from any vector query. */
-function makeCtx() {
+function makeCtx(ctxConfig = config) {
   const chain = {
     where: vi.fn(),
     findNearest: vi.fn(),
@@ -66,7 +66,7 @@ function makeCtx() {
   const collection = vi.fn(() => chain);
   const ctx = {
     firestore: { collection },
-    config,
+    config: ctxConfig,
   } as unknown as HandlerContext;
   return { ctx, collection, chain };
 }
@@ -84,17 +84,21 @@ function snapshot(data: Record<string, unknown> | undefined, set: unknown) {
   };
 }
 
-/** A write event over the same document, with a spy on the after ref's set. */
+/**
+ * A write event over the same document. Each snapshot gets its own set spy so
+ * a write routed through `before.ref` cannot pass as one through `after.ref`.
+ */
 function writeEvent(
   before: Record<string, unknown> | undefined,
   after: Record<string, unknown> | undefined
 ) {
   const set = vi.fn();
+  const beforeSet = vi.fn();
   const event = {
-    data: { before: snapshot(before, set), after: snapshot(after, set) },
+    data: { before: snapshot(before, beforeSet), after: snapshot(after, set) },
     params: {},
   } as unknown as VectorWriteEvent;
-  return { event, set };
+  return { event, set, beforeSet };
 }
 
 describe("handleQueryCall", () => {
@@ -253,7 +257,9 @@ describe("handleQueryOnWrite", () => {
 
   test("runs the query and writes the result with its request record on create", async () => {
     const { ctx } = makeCtx();
-    const { event, set } = writeEvent(undefined, { query: "test query" });
+    const { event, set, beforeSet } = writeEvent(undefined, {
+      query: "test query",
+    });
 
     await handleQueryOnWrite(event, ctx);
 
@@ -265,6 +271,7 @@ describe("handleQueryOnWrite", () => {
       },
       { merge: true }
     );
+    expect(beforeSet).not.toHaveBeenCalled();
   });
 
   test("skips when the stored request matches and a result exists", async () => {
@@ -499,5 +506,34 @@ describe("handleQueryOnWrite", () => {
 
     expect(getSingleEmbedding).not.toHaveBeenCalled();
     expect(set).not.toHaveBeenCalled();
+  });
+
+  test("stores the request record under a non-default statusFieldName and skips its echo", async () => {
+    const customConfig = resolveVectorSearchConfig({
+      projectId: "test-project",
+      instanceId: "test-instance",
+      statusFieldName: "vectorStatus",
+    });
+    const { ctx } = makeCtx(customConfig);
+    const first = writeEvent(undefined, { query: "test query" });
+
+    await handleQueryOnWrite(first.event, ctx);
+
+    expect(first.set).toHaveBeenCalledWith(
+      {
+        result: { ids: IDS },
+        vectorStatus: completed({ query: "test query" }),
+      },
+      { merge: true }
+    );
+
+    const echoDoc = { query: "test query", ...first.set.mock.calls[0][0] };
+    const echo = writeEvent({ query: "test query" }, echoDoc);
+    getSingleEmbedding.mockClear();
+
+    await handleQueryOnWrite(echo.event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(echo.set).not.toHaveBeenCalled();
   });
 });
