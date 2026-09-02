@@ -36,7 +36,12 @@ vi.mock("../src/embeddings", () => ({
 // handler never needs it.
 vi.mock("../src/queries/setup", () => ({ createIndex: vi.fn() }));
 
-import { type HandlerContext, handleQueryCall } from "../src/handlers";
+import {
+  type HandlerContext,
+  type VectorWriteEvent,
+  handleEmbedOnWrite,
+  handleQueryCall,
+} from "../src/handlers";
 import { resolveVectorSearchConfig } from "../src/export-config";
 
 const config = resolveVectorSearchConfig({
@@ -203,5 +208,60 @@ describe("handleQueryCall", () => {
 
     expect((err as { code: string }).code).toBe("unknown");
     expect((err as Error).message).toBe("Query failed");
+  });
+});
+
+describe("handleEmbedOnWrite terminal states", () => {
+  /** A write event whose after-snapshot carries `data`. */
+  function writeEvent(
+    data: Record<string, unknown>,
+    before?: Record<string, unknown>
+  ) {
+    const set = vi.fn().mockResolvedValue(undefined);
+    const event = {
+      params: {},
+      data: {
+        before: before
+          ? { exists: true, get: (f: string) => before[f], data: () => before }
+          : { exists: false, get: () => undefined },
+        after: {
+          exists: true,
+          data: () => data,
+          ref: { path: "products/doc-1", set },
+        },
+      },
+    } as unknown as VectorWriteEvent;
+    return { event, set };
+  }
+
+  const ctx = () => ({ firestore: {}, config } as unknown as HandlerContext);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getSingleEmbedding.mockResolvedValue(EMBEDDING);
+  });
+
+  test.each(["PROCESSING", "COMPLETED", "ERROR", "BACKFILLED"])(
+    "skips a document already in the %s state",
+    async (state) => {
+      const { event, set } = writeEvent({
+        input: "changed text",
+        status: { state },
+      });
+
+      await handleEmbedOnWrite(event, ctx());
+
+      expect(getSingleEmbedding).not.toHaveBeenCalled();
+      expect(set).not.toHaveBeenCalled();
+    }
+  );
+
+  test("embeds a document that has no prior state", async () => {
+    const { event, set } = writeEvent({ input: "new text" });
+
+    await handleEmbedOnWrite(event, ctx());
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("new text");
+    expect(set).toHaveBeenCalledTimes(1);
   });
 });

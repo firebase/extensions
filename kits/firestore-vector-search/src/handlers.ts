@@ -69,6 +69,30 @@ function vectorStore(ctx: HandlerContext) {
   );
 }
 
+/**
+ * States the extension treated as final. Its processor skipped any document
+ * already carrying one of these, so a document was embedded at most once --
+ * editing the input afterwards, or writing to a document that had failed, did
+ * not trigger another embedding.
+ */
+const TERMINAL_STATES = new Set([
+  "PROCESSING",
+  "COMPLETED",
+  "ERROR",
+  "BACKFILLED",
+]);
+
+/** Reads the document's embedding state, if it has been embedded before. */
+function embeddingState(
+  data: Record<string, unknown>,
+  statusFieldName: string
+): string | undefined {
+  const status = data[statusFieldName];
+  if (typeof status !== "object" || status === null) return undefined;
+  const state = (status as { state?: unknown }).state;
+  return typeof state === "string" ? state : undefined;
+}
+
 export async function handleEmbedOnWrite(
   event: VectorWriteEvent,
   ctx: HandlerContext
@@ -84,6 +108,12 @@ export async function handleEmbedOnWrite(
     ? event.data.before.get(ctx.config.inputFieldName)
     : undefined;
   if (beforeInput === input && data[ctx.config.outputFieldName]) return;
+
+  // Parity with the extension: a document that already reached a final state
+  // is never embedded again, even if its input changed or the previous attempt
+  // errored.
+  const state = embeddingState(data, ctx.config.statusFieldName);
+  if (state !== undefined && TERMINAL_STATES.has(state)) return;
 
   try {
     const embedding = await embedClient(ctx).getSingleEmbedding(input);
