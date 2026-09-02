@@ -25,15 +25,17 @@ jobs:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
           git fetch --no-tags origin "$BASE_REF"
-          # Three-dot diff against the live base ref: the event's base.sha goes
-          # stale when the base advances after the PR's last push, which pulled
-          # base-side kits into the matrix.
+          # Two-dot diff of the PR merge ref against the live base tip. The
+          # event's base.sha goes stale when the base advances after the PR's
+          # last push, and a three-dot diff has no reachable merge base on the
+          # depth-1 merge-ref checkout.
           # A kit is a kits/<name> directory with a package.json; files directly
           # under kits/ (e.g. kits/README.md) belong to no kit. A kit deleted by
           # the PR has no package.json on the merge ref and is skipped.
-          KITS=$(git diff --name-only "origin/$BASE_REF...HEAD" -- 'kits/' \
-            | awk -F/ 'NF >= 3 { print $1 "/" $2 }' \
-            | sort -u)
+          # The diff runs separately first: inside $( ) a git failure would
+          # silently yield an empty matrix and skip all testing.
+          git diff --name-only "origin/$BASE_REF" HEAD -- 'kits/' > /tmp/changed-files
+          KITS=$(awk -F/ 'NF >= 3 { print $1 "/" $2 }' /tmp/changed-files | sort -u)
           MATRIX=$(for kit in $KITS; do
             if [ -f "$kit/package.json" ]; then echo "$kit"; fi
           done | jq --raw-input . | jq --compact-output --slurp .)
