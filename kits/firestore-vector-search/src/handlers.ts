@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { isDeepStrictEqual } from "node:util";
 import { type DocumentSnapshot, FieldValue } from "firebase-admin/firestore";
 import { getFunctions } from "firebase-admin/functions";
 import type { Change, FirestoreEvent } from "firebase-functions/v2/firestore";
@@ -126,6 +127,25 @@ export async function handleQueryOnWrite(
   const query = data.query;
   if (typeof query !== "string") return;
 
+  // All three keys are always present (null for absent fields) so the merge
+  // write below fully replaces a previously stored request.
+  const request = {
+    query,
+    limit: data.limit ?? null,
+    prefilters: data.prefilters ?? null,
+  };
+
+  // The result write below re-fires this trigger. The status field stores the
+  // request that produced the current result; comparing against that stored
+  // record (not the event's before snapshot) lets a stale overwrite from a
+  // slow concurrent run mismatch and self-heal on the next trigger.
+  const status = data[ctx.config.statusFieldName];
+  const storedRequest =
+    typeof status === "object" && status !== null
+      ? (status as { request?: unknown }).request
+      : undefined;
+  if (data.result && isDeepStrictEqual(storedRequest, request)) return;
+
   const result = await performTextQuery({
     query,
     limit: data.limit ? parseLimit(data.limit) : ctx.config.defaultQueryLimit,
@@ -135,7 +155,13 @@ export async function handleQueryOnWrite(
     config: ctx.config,
   });
 
-  await event.data.after.ref.set(result, { merge: true });
+  await event.data.after.ref.set(
+    {
+      ...result,
+      [ctx.config.statusFieldName]: { state: "COMPLETED", request },
+    },
+    { merge: true }
+  );
 }
 
 export async function handleQueryCall(

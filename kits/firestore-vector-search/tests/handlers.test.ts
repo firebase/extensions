@@ -53,7 +53,7 @@ const EMBEDDING = [0.1, 0.2, 0.3];
 const IDS = ["doc-1", "doc-2"];
 
 /** A HandlerContext whose Firestore returns `IDS` from any vector query. */
-function makeCtx() {
+function makeCtx(ctxConfig = config) {
   const chain = {
     where: vi.fn(),
     findNearest: vi.fn(),
@@ -66,13 +66,39 @@ function makeCtx() {
   const collection = vi.fn(() => chain);
   const ctx = {
     firestore: { collection },
-    config,
+    config: ctxConfig,
   } as unknown as HandlerContext;
   return { ctx, collection, chain };
 }
 
 function request(data: unknown, auth: unknown = { uid: "test-user" }) {
   return { data, auth } as unknown as CallableRequest<unknown>;
+}
+
+function snapshot(data: Record<string, unknown> | undefined, set: unknown) {
+  return {
+    exists: data !== undefined,
+    data: () => data,
+    get: (field: string) => data?.[field],
+    ref: { set, path: "test-collection/doc-1" },
+  };
+}
+
+/**
+ * A write event over the same document. Each snapshot gets its own set spy so
+ * a write routed through `before.ref` cannot pass as one through `after.ref`.
+ */
+function writeEvent(
+  before: Record<string, unknown> | undefined,
+  after: Record<string, unknown> | undefined
+) {
+  const set = vi.fn();
+  const beforeSet = vi.fn();
+  const event = {
+    data: { before: snapshot(before, beforeSet), after: snapshot(after, set) },
+    params: {},
+  } as unknown as VectorWriteEvent;
+  return { event, set, beforeSet };
 }
 
 describe("handleQueryCall", () => {
@@ -211,32 +237,316 @@ describe("handleQueryCall", () => {
   });
 });
 
+describe("handleQueryOnWrite", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getSingleEmbedding.mockResolvedValue(EMBEDDING);
+  });
+
+  /** The status record the handler stores alongside a completed result. */
+  function completed(request: {
+    query: string;
+    limit?: unknown;
+    prefilters?: unknown;
+  }) {
+    return {
+      state: "COMPLETED",
+      request: { limit: null, prefilters: null, ...request },
+    };
+  }
+
+  test("runs the query and writes the result with its request record on create", async () => {
+    const { ctx } = makeCtx();
+    const { event, set, beforeSet } = writeEvent(undefined, {
+      query: "test query",
+    });
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("test query");
+    expect(set).toHaveBeenCalledWith(
+      {
+        result: { ids: IDS },
+        [config.statusFieldName]: completed({ query: "test query" }),
+      },
+      { merge: true }
+    );
+    expect(beforeSet).not.toHaveBeenCalled();
+  });
+
+  test("skips when the stored request matches and a result exists", async () => {
+    const { ctx } = makeCtx();
+    const doc = {
+      query: "test query",
+      result: { ids: IDS },
+      [config.statusFieldName]: completed({ query: "test query" }),
+    };
+    const { event, set } = writeEvent(doc, doc);
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("skips the result-write echo", async () => {
+    const { ctx } = makeCtx();
+    const { event, set } = writeEvent(
+      { query: "test query" },
+      {
+        query: "test query",
+        result: { ids: IDS },
+        [config.statusFieldName]: completed({ query: "test query" }),
+      }
+    );
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("skips when stored query, limit, and prefilters all match", async () => {
+    const { ctx } = makeCtx();
+    const prefilters = [{ field: "category", operator: "==", value: "test" }];
+    const doc = {
+      query: "test query",
+      limit: 5,
+      prefilters,
+      result: { ids: IDS },
+      [config.statusFieldName]: completed({
+        query: "test query",
+        limit: 5,
+        prefilters: [{ field: "category", operator: "==", value: "test" }],
+      }),
+    };
+    const { event, set } = writeEvent(doc, doc);
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("skips when the matching stored limit is NaN", async () => {
+    const { ctx } = makeCtx();
+    const doc = {
+      query: "test query",
+      limit: Number.NaN,
+      result: { ids: IDS },
+      [config.statusFieldName]: completed({
+        query: "test query",
+        limit: Number.NaN,
+      }),
+    };
+    const { event, set } = writeEvent(doc, doc);
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("re-runs the query when the limit differs from the stored request", async () => {
+    const { ctx, chain } = makeCtx();
+    const doc = {
+      query: "test query",
+      limit: 5,
+      result: { ids: ["stale"] },
+      [config.statusFieldName]: completed({ query: "test query", limit: 3 }),
+    };
+    const { event, set } = writeEvent(doc, doc);
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("test query");
+    expect(chain.findNearest).toHaveBeenCalledWith(
+      config.outputFieldName,
+      EMBEDDING,
+      { limit: 5, distanceMeasure: config.distanceMeasure }
+    );
+    expect(set).toHaveBeenCalledWith(
+      {
+        result: { ids: IDS },
+        [config.statusFieldName]: completed({ query: "test query", limit: 5 }),
+      },
+      { merge: true }
+    );
+  });
+
+  test("re-runs the query when the prefilters differ from the stored request", async () => {
+    const { ctx, chain } = makeCtx();
+    const doc = {
+      query: "test query",
+      prefilters: [{ field: "category", operator: "==", value: "new" }],
+      result: { ids: ["stale"] },
+      [config.statusFieldName]: completed({
+        query: "test query",
+        prefilters: [{ field: "category", operator: "==", value: "old" }],
+      }),
+    };
+    const { event, set } = writeEvent(doc, doc);
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("test query");
+    expect(chain.where).toHaveBeenCalledWith("category", "==", "new");
+    expect(set).toHaveBeenCalledWith(
+      {
+        result: { ids: IDS },
+        [config.statusFieldName]: completed({
+          query: "test query",
+          prefilters: [{ field: "category", operator: "==", value: "new" }],
+        }),
+      },
+      { merge: true }
+    );
+  });
+
+  test("re-runs the query when the query differs from the stored request", async () => {
+    const { ctx } = makeCtx();
+    const doc = {
+      query: "new query",
+      result: { ids: ["stale"] },
+      [config.statusFieldName]: completed({ query: "old query" }),
+    };
+    const { event, set } = writeEvent(doc, doc);
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("new query");
+    expect(set).toHaveBeenCalledWith(
+      {
+        result: { ids: IDS },
+        [config.statusFieldName]: completed({ query: "new query" }),
+      },
+      { merge: true }
+    );
+  });
+
+  test("re-runs the query when the result field is missing", async () => {
+    const { ctx } = makeCtx();
+    const doc = {
+      query: "test query",
+      [config.statusFieldName]: completed({ query: "test query" }),
+    };
+    const { event, set } = writeEvent(doc, doc);
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("test query");
+    expect(set).toHaveBeenCalledWith(
+      {
+        result: { ids: IDS },
+        [config.statusFieldName]: completed({ query: "test query" }),
+      },
+      { merge: true }
+    );
+  });
+
+  test("re-runs once for a result without a stored request record", async () => {
+    const { ctx } = makeCtx();
+    const doc = { query: "test query", result: { ids: ["legacy"] } };
+    const { event, set } = writeEvent(doc, doc);
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("test query");
+    expect(set).toHaveBeenCalledWith(
+      {
+        result: { ids: IDS },
+        [config.statusFieldName]: completed({ query: "test query" }),
+      },
+      { merge: true }
+    );
+  });
+
+  test("a stale overwrite from a slow concurrent run self-heals, then stops", async () => {
+    // Query A's late completion wrote A's result and A's request record onto
+    // a document that already holds query B's inputs.
+    const { ctx } = makeCtx();
+    const staleDoc = {
+      query: "query B",
+      result: { ids: ["result A"] },
+      [config.statusFieldName]: completed({ query: "query A" }),
+    };
+    const first = writeEvent(staleDoc, staleDoc);
+
+    await handleQueryOnWrite(first.event, ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("query B");
+    expect(first.set).toHaveBeenCalledWith(
+      {
+        result: { ids: IDS },
+        [config.statusFieldName]: completed({ query: "query B" }),
+      },
+      { merge: true }
+    );
+
+    // The corrective write echoes back as a new event; its record now
+    // matches the document's inputs, so the loop terminates.
+    const healedDoc = { ...staleDoc, ...first.set.mock.calls[0][0] };
+    const second = writeEvent(staleDoc, healedDoc);
+    getSingleEmbedding.mockClear();
+
+    await handleQueryOnWrite(second.event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(second.set).not.toHaveBeenCalled();
+  });
+
+  test("ignores a document without a string query", async () => {
+    const { ctx } = makeCtx();
+    const { event, set } = writeEvent(
+      { query: "test query", result: { ids: IDS } },
+      { result: { ids: IDS } }
+    );
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("stores the request record under a non-default statusFieldName and skips its echo", async () => {
+    const customConfig = resolveVectorSearchConfig({
+      projectId: "test-project",
+      instanceId: "test-instance",
+      statusFieldName: "vectorStatus",
+    });
+    const { ctx } = makeCtx(customConfig);
+    const first = writeEvent(undefined, { query: "test query" });
+
+    await handleQueryOnWrite(first.event, ctx);
+
+    expect(first.set).toHaveBeenCalledWith(
+      {
+        result: { ids: IDS },
+        vectorStatus: completed({ query: "test query" }),
+      },
+      { merge: true }
+    );
+
+    const echoDoc = { query: "test query", ...first.set.mock.calls[0][0] };
+    const echo = writeEvent({ query: "test query" }, echoDoc);
+    getSingleEmbedding.mockClear();
+
+    await handleQueryOnWrite(echo.event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(echo.set).not.toHaveBeenCalled();
+  });
+});
+
 describe("handleQueryOnWrite prefilters validation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getSingleEmbedding.mockResolvedValue(EMBEDDING);
   });
 
-  /** A create event for a watched query document with a spy on ref.set. */
-  function queryDocEvent(data: Record<string, unknown>) {
-    const set = vi.fn();
-    const event = {
-      data: {
-        before: { exists: false, data: () => undefined },
-        after: {
-          exists: true,
-          data: () => data,
-          ref: { set, path: "test-collection/doc-1" },
-        },
-      },
-      params: {},
-    } as unknown as VectorWriteEvent;
-    return { event, set };
-  }
-
   test("runs the query and applies valid prefilters", async () => {
     const { ctx, chain } = makeCtx();
-    const { event, set } = queryDocEvent({
+    const { event, set } = writeEvent(undefined, {
       query: "test query",
       prefilters: [{ field: "category", operator: "==", value: "test" }],
     });
@@ -244,12 +554,15 @@ describe("handleQueryOnWrite prefilters validation", () => {
     await handleQueryOnWrite(event, ctx);
 
     expect(chain.where).toHaveBeenCalledWith("category", "==", "test");
-    expect(set).toHaveBeenCalledWith({ result: { ids: IDS } }, { merge: true });
+    expect(set).toHaveBeenCalledWith(
+      expect.objectContaining({ result: { ids: IDS } }),
+      { merge: true }
+    );
   });
 
   test("rejects a non-array prefilters value before embedding", async () => {
     const { ctx } = makeCtx();
-    const { event, set } = queryDocEvent({
+    const { event, set } = writeEvent(undefined, {
       query: "test query",
       prefilters: "not an array",
     });
@@ -263,7 +576,7 @@ describe("handleQueryOnWrite prefilters validation", () => {
 
   test("rejects a prefilter entry that is not an object", async () => {
     const { ctx } = makeCtx();
-    const { event, set } = queryDocEvent({
+    const { event, set } = writeEvent(undefined, {
       query: "test query",
       prefilters: ["category == test"],
     });
@@ -277,17 +590,20 @@ describe("handleQueryOnWrite prefilters validation", () => {
 
   test("treats missing prefilters as no prefilters", async () => {
     const { ctx, chain } = makeCtx();
-    const { event, set } = queryDocEvent({ query: "test query" });
+    const { event, set } = writeEvent(undefined, { query: "test query" });
 
     await handleQueryOnWrite(event, ctx);
 
     expect(chain.where).not.toHaveBeenCalled();
-    expect(set).toHaveBeenCalledWith({ result: { ids: IDS } }, { merge: true });
+    expect(set).toHaveBeenCalledWith(
+      expect.objectContaining({ result: { ids: IDS } }),
+      { merge: true }
+    );
   });
 
   test("treats an explicit null prefilters as no prefilters", async () => {
     const { ctx, chain } = makeCtx();
-    const { event, set } = queryDocEvent({
+    const { event, set } = writeEvent(undefined, {
       query: "test query",
       prefilters: null,
     });
@@ -295,12 +611,15 @@ describe("handleQueryOnWrite prefilters validation", () => {
     await handleQueryOnWrite(event, ctx);
 
     expect(chain.where).not.toHaveBeenCalled();
-    expect(set).toHaveBeenCalledWith({ result: { ids: IDS } }, { merge: true });
+    expect(set).toHaveBeenCalledWith(
+      expect.objectContaining({ result: { ids: IDS } }),
+      { merge: true }
+    );
   });
 
   test("names the offending entry's index in the error", async () => {
     const { ctx } = makeCtx();
-    const { event } = queryDocEvent({
+    const { event } = writeEvent(undefined, {
       query: "test query",
       prefilters: [{ field: "category", operator: "==", value: "test" }, 42],
     });
