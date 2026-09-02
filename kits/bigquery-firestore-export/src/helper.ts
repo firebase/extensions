@@ -23,10 +23,9 @@ import {
   Geography,
 } from "@google-cloud/bigquery";
 import {
-  type DocumentData,
-  type DocumentReference,
   type Firestore,
   Timestamp,
+  type WriteResult,
 } from "firebase-admin/firestore";
 import type { ResolvedBigqueryFirestoreExportConfig } from "./export-config";
 import * as logs from "./logs";
@@ -62,6 +61,17 @@ const TRANSFER_RUN_NAME_REGEX =
 const TRANSFER_CONFIG_NAME_REGEX =
   /^projects\/([^/]+)\/locations\/([^/]+)\/transferConfigs\/([^/]+)$/;
 const FIRESTORE_WRITE_CHUNK_SIZE = 10_000;
+const OUTPUT_DOC_ID_LENGTH = 12;
+
+/**
+ * Document id for the row at `index` of a run's results. `processMessages`
+ * deploys with `retry: true`, so a run that dies part way through is redelivered
+ * and rewritten; keying output documents by row index makes that rewrite an
+ * overwrite instead of a second copy of the result set.
+ */
+function outputDocumentId(index: number): string {
+  return String(index).padStart(OUTPUT_DOC_ID_LENGTH, "0");
+}
 
 export function parseTransferRunName(name: string): ParsedTransferRunName {
   const match = name.match(TRANSFER_RUN_NAME_REGEX);
@@ -233,13 +243,17 @@ export async function writeRunResultsToFirestore(
   let succeededRowCount = 0;
 
   for (let i = 0; i < rows.length; i += FIRESTORE_WRITE_CHUNK_SIZE) {
-    const writes: Array<Promise<DocumentReference<DocumentData>>> = [];
+    const writes: Array<Promise<WriteResult>> = [];
     for (
       let j = i;
       j < i + FIRESTORE_WRITE_CHUNK_SIZE && j < rows.length;
       j++
     ) {
-      writes.push(collection.add(convertUnsupportedDataTypes(rows[j])));
+      writes.push(
+        collection
+          .doc(outputDocumentId(j))
+          .set(convertUnsupportedDataTypes(rows[j]))
+      );
     }
 
     const results = await Promise.allSettled(writes);
