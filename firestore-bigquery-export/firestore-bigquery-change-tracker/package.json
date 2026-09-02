@@ -27,6 +27,8 @@
     "@google-cloud/resource-manager": "^5.1.0",
     "firebase-admin": "^13.2.0",
     "firebase-functions": "^6.3.2",
+    "google-auth-library": "^10.6.1",
+    "node-fetch": "^2.6.1",
     "sql-formatter": "^2.3.3",
     "traverse": "^0.6.6"
   },
