@@ -126,26 +126,25 @@ export async function handleQueryOnWrite(
   const data = event.data.after.data() ?? {};
   const query = data.query;
   if (typeof query !== "string") return;
-  // The result write below re-fires this trigger; an unchanged request
-  // (query, limit, prefilters) that already has a result is that echo,
-  // not a new request.
-  const before = event.data.before.exists
-    ? event.data.before.data()
-    : undefined;
-  if (
-    before !== undefined &&
-    isDeepStrictEqual(
-      {
-        query: before.query,
-        limit: before.limit,
-        prefilters: before.prefilters,
-      },
-      { query, limit: data.limit, prefilters: data.prefilters }
-    ) &&
-    data.result
-  ) {
-    return;
-  }
+
+  // All three keys are always present (null for absent fields) so the merge
+  // write below fully replaces a previously stored request.
+  const request = {
+    query,
+    limit: data.limit ?? null,
+    prefilters: data.prefilters ?? null,
+  };
+
+  // The result write below re-fires this trigger. The status field stores the
+  // request that produced the current result; comparing against that stored
+  // record (not the event's before snapshot) lets a stale overwrite from a
+  // slow concurrent run mismatch and self-heal on the next trigger.
+  const status = data[ctx.config.statusFieldName];
+  const storedRequest =
+    typeof status === "object" && status !== null
+      ? (status as { request?: unknown }).request
+      : undefined;
+  if (data.result && isDeepStrictEqual(storedRequest, request)) return;
 
   const result = await performTextQuery({
     query,
@@ -156,7 +155,13 @@ export async function handleQueryOnWrite(
     config: ctx.config,
   });
 
-  await event.data.after.ref.set(result, { merge: true });
+  await event.data.after.ref.set(
+    {
+      ...result,
+      [ctx.config.statusFieldName]: { state: "COMPLETED", request },
+    },
+    { merge: true }
+  );
 }
 
 export async function handleQueryCall(
