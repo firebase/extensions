@@ -156,7 +156,7 @@ This kit is version 0.1.3 of the extension repackaged as an npm package, and it 
 the least literal of the ports. The seven functions, the Firestore vector index,
 the query document collection and the callable all survive with their names and
 settings intact, so a `.env` copied from your installed instance needs no value
-changes. The embedding providers, the backfill, and the shape of the status field
+changes. Multimodal embedding, the backfill, and the shape of the status field
 written onto your documents all changed, so read this before you point the kit at
 a collection an installed instance has already embedded.
 
@@ -306,12 +306,10 @@ for; the Firebase CLI grants these for you.
 - OpenAI embeddings are still `text-embedding-ada-002` at its native 1536
   dimensions, so vectors already written by an installed instance stay
   comparable with the ones the kit writes. The vector index the kit creates for
-  `EMBEDDING_PROVIDER: openai` is still declared with 512 dimensions, as the
-  extension declared it, so it does not cover those 1536-dimension vectors and
-  `findNearest` fails against it. That mismatch is the extension's, and it is
-  tracked in [firebase/extensions#3029](https://github.com/firebase/extensions/issues/3029);
-  until it is resolved, create the 1536-dimension index yourself if you query an
-  OpenAI-embedded collection.
+  `EMBEDDING_PROVIDER: openai` is still declared with 512 dimensions, exactly as
+  the extension declared it, so it does not cover those 1536-dimension vectors
+  and `findNearest` fails against it. Create the 1536-dimension index yourself if
+  you query an OpenAI-embedded collection.
 - A custom endpoint still receives `{ batch: [...] }` and must return
   `{ embeddings: [[...]] }`, and still requires all three of
   `CUSTOM_EMBEDDINGS_ENDPOINT`, `CUSTOM_EMBEDDINGS_BATCH_SIZE` and
