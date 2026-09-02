@@ -86,6 +86,17 @@ export interface ExportConfig {
 
   /** Log verbosity. Defaults to `info`. */
   logLevel?: ConfigValue<TrackerLogLevel | LogLevel>;
+
+  /**
+   * Cloud Tasks dispatch rate for the `syncBigQuery` queue, in tasks per
+   * second. Defaults to `100`.
+   */
+  maxDispatchesPerSecond?: ConfigValue<number>;
+  /**
+   * How many times the trigger tries to enqueue a failed write onto the
+   * `syncBigQuery` queue before giving up and rethrowing. Defaults to `3`.
+   */
+  maxEnqueueAttempts?: ConfigValue<number>;
 }
 
 /** {@link ExportConfig} with all defaults applied. */
@@ -109,6 +120,8 @@ export interface ResolvedExportConfig {
   transformFunction?: string;
   kmsKeyName?: string;
   logLevel: TrackerLogLevel;
+  maxDispatchesPerSecond: number;
+  maxEnqueueAttempts: number;
 }
 
 function isExpression<T extends string | number | boolean | string[]>(
@@ -165,6 +178,10 @@ export function resolveExportConfig(
     transformFunction: resolveOptionalConfigValue(config.transformFunction),
     kmsKeyName: resolveOptionalConfigValue(config.kmsKeyName),
     logLevel: (logLevel as TrackerLogLevel) ?? "info",
+    maxDispatchesPerSecond:
+      resolveOptionalConfigValue(config.maxDispatchesPerSecond) ?? 100,
+    maxEnqueueAttempts:
+      resolveOptionalConfigValue(config.maxEnqueueAttempts) ?? 3,
   };
 }
 

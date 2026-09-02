@@ -17,8 +17,8 @@
 /**
  * Main entry point. Exports the wired functions with deploy-time param
  * expressions, then resolves concrete config lazily at runtime. Re-export
- * `fsexportbigquery` and `initBigQuerySync` from your own functions codebase
- * entry; configuration comes from a `.env` (or
+ * `fsexportbigquery`, `syncBigQuery`, and `initBigQuerySync` from your own
+ * functions codebase entry; configuration comes from a `.env` (or
  * `.env.<projectId>`), which the Firebase CLI loads at deploy.
  *
  * Because this module initializes runtime dependencies lazily, deploy discovery
@@ -41,10 +41,16 @@ import {
 import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
 import * as events from "./events";
 import { resolveExportConfig, toTrackerConfig } from "./export-config";
-import { type HandlerContext, handleDocumentWrite } from "./handlers";
+import {
+  type HandlerContext,
+  type SerializedDocumentChange,
+  handleDocumentWrite,
+  handleSyncBigQueryTask,
+} from "./handlers";
 import { createEnsureInitialized } from "./init";
 import * as logs from "./logs";
 import { firestoreLocationToFunctionRegion } from "./region";
+import { enqueueSyncTask } from "./tasks";
 
 // Re-export the side-effect-free library surface (handlers and config types).
 export * from "./lib";
@@ -55,6 +61,11 @@ const LIFECYCLE_RETRY_CONFIG = {
   maxAttempts: 15,
   minBackoffSeconds: 60,
 } as const;
+const SYNC_RETRY_CONFIG = {
+  maxAttempts: 5,
+  minBackoffSeconds: 60,
+} as const;
+const SYNC_MAX_CONCURRENT_DISPATCHES = 500;
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/bigquery.dataEditor",
   "roles/datastore.user",
@@ -62,6 +73,8 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   // Gen2 Firestore triggers need Eventarc receive and run.invoker on the function SA.
   "roles/eventarc.eventReceiver",
   "roles/run.invoker",
+  // The trigger enqueues failed writes onto its own syncBigQuery task queue.
+  "roles/cloudtasks.enqueuer",
 ];
 const REQUIRED_APIS = [
   {
@@ -112,6 +125,8 @@ function getHandlerContext(): HandlerContext {
     tracker,
     config,
     ensureInitialized,
+    enqueue: (change: SerializedDocumentChange) =>
+      enqueueSyncTask(change, config.maxEnqueueAttempts),
   };
 
   return ctx;
@@ -131,8 +146,10 @@ const functionRegion = firestoreLocationToFunctionRegion(
 
 /**
  * Firestore trigger: streams document writes on the watched collection into the
- * BigQuery changelog table. Failed executions are retried by the Firebase
- * Functions runtime.
+ * BigQuery changelog table. A failed inline write buffers through the
+ * `syncBigQuery` queue and the execution still succeeds; `retry: true` stays on
+ * so an event whose enqueue ALSO failed (rethrown by the handler) is
+ * redelivered instead of dropped.
  */
 export const fsexportbigquery = onDocumentWritten(
   {
@@ -142,6 +159,25 @@ export const fsexportbigquery = onDocumentWritten(
     retry: true,
   },
   (event) => handleDocumentWrite(event, getHandlerContext())
+);
+
+/**
+ * Write-buffer task queue: re-attempts writes that failed inline, on Cloud
+ * Tasks' schedule (5 attempts, 60s minimum backoff, dispatch-throttled by
+ * `MAX_DISPATCHES_PER_SECOND`). After the last attempt the task is dropped;
+ * by then the tracker has written the row to `BACKUP_COLLECTION` on every
+ * terminal insert failure, when that collection is configured.
+ */
+export const syncBigQuery = onTaskDispatched<SerializedDocumentChange>(
+  {
+    ...(functionRegion ? { region: functionRegion } : {}),
+    retryConfig: SYNC_RETRY_CONFIG,
+    rateLimits: {
+      maxConcurrentDispatches: SYNC_MAX_CONCURRENT_DISPATCHES,
+      maxDispatchesPerSecond: CONFIG_EXPRESSIONS.maxDispatchesPerSecond,
+    },
+  },
+  (req) => handleSyncBigQueryTask(req, getHandlerContext())
 );
 
 async function handleBigQuerySyncInitialization(): Promise<void> {

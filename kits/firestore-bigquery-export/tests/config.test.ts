@@ -171,11 +171,46 @@ describe("configFromEnv", () => {
     expect(resolveExportConfig(config)).not.toHaveProperty("location");
   });
 
+  test("queue params keep the extension's defaults", () => {
+    const config = configFromEnv();
+    expect(config.maxDispatchesPerSecond).toBe(100);
+    expect(config.maxEnqueueAttempts).toBe(3);
+  });
+
   test("exposes deploy-time expressions for trigger metadata", () => {
     expect(CONFIG_EXPRESSIONS.collectionPath.toString()).toBe(
       "params.COLLECTION_PATH"
     );
     expect(CONFIG_EXPRESSIONS.database.toString()).toBe("params.DATABASE");
+    expect(CONFIG_EXPRESSIONS.maxDispatchesPerSecond.toString()).toBe(
+      "params.MAX_DISPATCHES_PER_SECOND"
+    );
     expect(CONFIG_EXPRESSIONS).not.toHaveProperty("location");
+  });
+});
+
+describe("resolveExportConfig queue defaults", () => {
+  test("applies the extension's queue defaults when unset", () => {
+    const resolved = resolveExportConfig({
+      collectionPath: "users",
+      datasetId: "ds",
+      tableId: "tbl",
+      projectId: "p",
+    });
+    expect(resolved.maxDispatchesPerSecond).toBe(100);
+    expect(resolved.maxEnqueueAttempts).toBe(3);
+  });
+
+  test("passes explicit queue values through", () => {
+    const resolved = resolveExportConfig({
+      collectionPath: "users",
+      datasetId: "ds",
+      tableId: "tbl",
+      projectId: "p",
+      maxDispatchesPerSecond: 250,
+      maxEnqueueAttempts: 5,
+    });
+    expect(resolved.maxDispatchesPerSecond).toBe(250);
+    expect(resolved.maxEnqueueAttempts).toBe(5);
   });
 });

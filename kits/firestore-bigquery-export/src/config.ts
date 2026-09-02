@@ -23,6 +23,7 @@ import { LogLevel } from "@firebaseextensions/firestore-bigquery-change-tracker"
 import type { Expression } from "firebase-functions/params";
 import {
   defineBoolean,
+  defineInt,
   defineString,
   projectID,
   select,
@@ -102,6 +103,7 @@ export interface ConfigExpressions {
   datasetId: ConfigExpression<string>;
   tableId: ConfigExpression<string>;
   database: ConfigExpression<string>;
+  maxDispatchesPerSecond: ConfigExpression<number>;
 }
 
 /**
@@ -287,8 +289,38 @@ const params = {
   backupCollection: defineString("BACKUP_COLLECTION", {
     label: "Backup Collection Name",
     description:
-      "This (optional) parameter will allow you to specify a collection for which failed BigQuery updates will be written to.",
+      "Strongly recommended. The Firestore collection where rows that still fail after the sync queue's five attempts are written; without it, those rows are dropped. See the README for how to reconcile backed-up rows into BigQuery.",
     default: "",
+  }),
+  maxDispatchesPerSecond: defineInt("MAX_DISPATCHES_PER_SECOND", {
+    label: "Maximum number of synced documents per second",
+    description:
+      "This parameter will set the maximum number of synchronized documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota. Ensure that you have set a low enough number to compensate. Defaults to 100.",
+
+    default: 100,
+    input: {
+      text: {
+        example: "100",
+
+        validationRegex: /^([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)$/,
+        validationErrorMessage: "Please select a number between 1 and 500",
+      },
+    },
+  }),
+  maxEnqueueAttempts: defineInt("MAX_ENQUEUE_ATTEMPTS", {
+    label: "Maximum number of enqueue attempts",
+    description:
+      "This parameter will set the maximum number of attempts to enqueue a document to cloud tasks for export to BigQuery.",
+
+    default: 3,
+    input: {
+      text: {
+        example: "3",
+
+        validationRegex: /^(10|[1-9])$/,
+        validationErrorMessage: "Please select an integer between 1 and 10",
+      },
+    },
   }),
   transformFunction: defineString("TRANSFORM_FUNCTION", {
     label: "Transform function URL",
@@ -452,6 +484,7 @@ export const CONFIG_EXPRESSIONS: ConfigExpressions = {
   datasetId: params.datasetId,
   tableId: params.tableId,
   database: params.database,
+  maxDispatchesPerSecond: params.maxDispatchesPerSecond,
 };
 
 function timePartitioning(
@@ -646,5 +679,7 @@ export function configFromEnv(): ExportConfig {
     transformFunction: optional(params.transformFunction.value()),
     kmsKeyName: optional(params.kmsKeyName.value()),
     logLevel: normalizeLogLevel(params.logLevel.value()),
+    maxDispatchesPerSecond: params.maxDispatchesPerSecond.value(),
+    maxEnqueueAttempts: params.maxEnqueueAttempts.value(),
   };
 }
