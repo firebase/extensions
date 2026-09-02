@@ -9,7 +9,7 @@
       "version": "0.0.2-rc.2",
       "license": "Apache-2.0",
       "dependencies": {
-        "@firebaseextensions/firestore-bigquery-change-tracker": "^2.0.4",
+        "@firebaseextensions/firestore-bigquery-change-tracker": "^2.1.0",
         "@google-cloud/bigquery": "^7.6.0",
         "firebase-admin": "^13.6.0",
         "firebase-functions": "^7.3.2",
@@ -590,9 +590,9 @@
       }
     },
     "node_modules/@firebaseextensions/firestore-bigquery-change-tracker": {
-      "version": "2.0.4",
-      "resolved": "https://registry.npmjs.org/@firebaseextensions/firestore-bigquery-change-tracker/-/firestore-bigquery-change-tracker-2.0.4.tgz",
-      "integrity": "sha512-62iCf9hCzav8j4HxOPg94fVTDjO00CaoWQcQduq2+I2YNhPgRASXQCPcvJM/NuSdYqq/FUW/zbwtItn0K8Q4og==",
+      "version": "2.1.0",
+      "resolved": "https://registry.npmjs.org/@firebaseextensions/firestore-bigquery-change-tracker/-/firestore-bigquery-change-tracker-2.1.0.tgz",
+      "integrity": "sha512-gb4o9yFH5RnaH10n0SY97MXJFrfwG8Q7u8jPlgVduzq7nJfCeD4TsHGMYv+lwKqsfog8UUdRzns/aFEJo0w/fQ==",
       "license": "Apache-2.0",
       "dependencies": {
         "@google-cloud/bigquery": "^7.6.0",
