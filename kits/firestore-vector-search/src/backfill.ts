@@ -25,13 +25,18 @@ export const TASK_CHUNK_SIZE = 50;
 /** Embedding batch size used when a process declares none. */
 export const DEFAULT_BATCH_SIZE = 50;
 
-export type BackfillJobStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
+export type BackfillJobStatus =
+  | "PENDING"
+  | "RUNNING"
+  | "PROCESSING"
+  | "DONE"
+  | "FAILED";
 
 /** The state written onto a document once its backfill pass has finished. */
 export const BACKFILLED_STATE = "BACKFILLED";
 export const FAILED_BACKFILL_STATE = "FAILED_BACKFILL";
 
-export type DocumentData = Record<string, unknown>;
+export type BackfillDocumentData = Record<string, unknown>;
 
 /** Payload of a `backfillTask` / `updateTask` dispatch. */
 export interface BackfillTaskData {
@@ -60,14 +65,14 @@ export interface BackfillMetadata {
 export interface BackfillProcess {
   id: string;
   batchSize: number;
-  shouldBackfill(data: DocumentData): boolean;
-  processFn(data: DocumentData): Promise<DocumentData>;
+  shouldBackfill(data: BackfillDocumentData): boolean;
+  processFn(data: BackfillDocumentData): Promise<BackfillDocumentData>;
   /**
    * Embeds a whole batch in one call. Processes without one fall back to
    * `processFn` per document, and a single document failing then fails only
    * that document.
    */
-  batchFn?(data: DocumentData[]): Promise<DocumentData[]>;
+  batchFn?(data: BackfillDocumentData[]): Promise<BackfillDocumentData[]>;
 }
 
 export interface BackfillOptions {
@@ -90,12 +95,12 @@ export function chunkArray<T>(array: readonly T[], chunkSize: number): T[][] {
   return result;
 }
 
-function isRecord(value: unknown): value is DocumentData {
+function isRecord(value: unknown): value is BackfillDocumentData {
   return typeof value === "object" && value !== null;
 }
 
 function metadataChanged(
-  current: DocumentData,
+  current: BackfillDocumentData,
   metadata: BackfillMetadata
 ): boolean {
   return (
@@ -252,7 +257,9 @@ export async function runBackfillTask(params: {
   logger.info(`Handling ${chunk.length} documents`);
 
   const taskRef = firestore.doc(`${tasksDoc}/enqueues/${taskId}`);
-  await taskRef.update({ status: "PROCESSING" });
+  await taskRef.update({
+    status: "PROCESSING" satisfies BackfillJobStatus,
+  });
 
   const { success, failed, skipped } = await runChunk(process, chunk, options);
 
@@ -413,8 +420,8 @@ async function runChunk(
 async function batchProcess(
   process: BackfillProcess,
   batch: readonly DocumentSnapshot[]
-): Promise<(DocumentData | undefined)[]> {
-  const data = batch.map((doc) => doc.data() as DocumentData);
+): Promise<(BackfillDocumentData | undefined)[]> {
+  const data = batch.map((doc) => doc.data() as BackfillDocumentData);
 
   if (process.batchFn) {
     return process.batchFn(data);
@@ -481,7 +488,9 @@ async function handleSingleDocument(
   options: BackfillOptions
 ): Promise<ChunkResult> {
   try {
-    const result = await process.processFn(document.data() as DocumentData);
+    const result = await process.processFn(
+      document.data() as BackfillDocumentData
+    );
     await document.ref.update({
       ...result,
       ...backfilledPayload(options),
@@ -494,14 +503,14 @@ async function handleSingleDocument(
   }
 }
 
-function backfilledPayload(options: BackfillOptions): DocumentData {
+function backfilledPayload(options: BackfillOptions): BackfillDocumentData {
   return {
     [`${options.statusField}.state`]: BACKFILLED_STATE,
     [`${options.statusField}.completeTime`]: FieldValue.serverTimestamp(),
   };
 }
 
-function failedPayload(options: BackfillOptions): DocumentData {
+function failedPayload(options: BackfillOptions): BackfillDocumentData {
   return {
     [`${options.statusField}.state`]: FAILED_BACKFILL_STATE,
     [`${options.statusField}.completeTime`]: FieldValue.serverTimestamp(),

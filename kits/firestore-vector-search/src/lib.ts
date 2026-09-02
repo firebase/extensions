@@ -15,6 +15,7 @@
  */
 
 export {
+  type BackfillDocumentData,
   type BackfillMetadata,
   type BackfillProcess,
   type BackfillTaskData,
