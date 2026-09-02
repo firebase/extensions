@@ -24,10 +24,9 @@ const workerRun = vi.fn();
 const workerCtor = vi.fn();
 
 vi.mock("../src/controller", async () => {
-  const actual =
-    await vi.importActual<typeof import("../src/controller")>(
-      "../src/controller"
-    );
+  const actual = await vi.importActual<typeof import("../src/controller")>(
+    "../src/controller"
+  );
   return {
     ControllerStatus: actual.ControllerStatus,
     ShardedCounterController: class {
