@@ -253,7 +253,8 @@ updating. The field name is still `STATUS_FIELD_NAME`, defaulting to `status`.
 
 This applies to the documents in your indexed collection only. Query documents
 keep the extension's nested shape, `status.textQuery`, with the same states and
-timestamps, so anything waiting on that path still works.
+timestamps, so anything waiting on that path still works. As in the extension,
+that path is always literally `status`, whatever `STATUS_FIELD_NAME` is set to.
 
 ### Editing a document's input re-embeds it
 

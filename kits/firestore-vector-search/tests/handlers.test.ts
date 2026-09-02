@@ -399,6 +399,20 @@ describe("handleQueryOnWrite", () => {
     expect(failure.result).toBeUndefined();
   });
 
+  test("propagates a failed result write instead of marking it ERROR", async () => {
+    const { ctx } = makeCtx();
+    const after = snapshot({ query: "test query" });
+    after.update
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error("Document does not exist"));
+
+    await expect(
+      handleQueryOnWrite(writeEvent(snapshot(undefined), after), ctx)
+    ).rejects.toThrow("Document does not exist");
+
+    expect(after.update).toHaveBeenCalledTimes(2);
+  });
+
   test("ignores a document without a string query", async () => {
     const { ctx } = makeCtx();
     const after = snapshot({ query: 42 });

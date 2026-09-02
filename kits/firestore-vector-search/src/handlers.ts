@@ -174,21 +174,18 @@ export async function handleQueryOnWrite(
     },
   });
 
+  // Only the query itself is guarded, as in the extension, where the status
+  // writes sat outside the processor's try block. A failed status write still
+  // fails the invocation; the retry sees PROCESSING and skips.
+  let result: Awaited<ReturnType<typeof performTextQuery>>;
   try {
-    const result = await performTextQuery({
+    result = await performTextQuery({
       query,
       limit: data.limit ? parseLimit(data.limit) : ctx.config.defaultQueryLimit,
       prefilters: (data.prefilters as Prefilter[] | undefined) ?? [],
       embedClient: embedClient(ctx),
       vectorStore: vectorStore(ctx),
       config: ctx.config,
-    });
-    const completeTime = FieldValue.serverTimestamp();
-    await after.ref.update({
-      ...result,
-      [`${QUERY_STATUS_PATH}.state`]: "COMPLETED",
-      [`${QUERY_STATUS_PATH}.updateTime`]: completeTime,
-      [`${QUERY_STATUS_PATH}.completeTime`]: completeTime,
     });
   } catch (err) {
     // The extension's `errorFn` logged and swallowed, so a failed query marks
@@ -198,7 +195,16 @@ export async function handleQueryOnWrite(
       [`${QUERY_STATUS_PATH}.state`]: "ERROR",
       [`${QUERY_STATUS_PATH}.updateTime`]: FieldValue.serverTimestamp(),
     });
+    return;
   }
+
+  const completeTime = FieldValue.serverTimestamp();
+  await after.ref.update({
+    ...result,
+    [`${QUERY_STATUS_PATH}.state`]: "COMPLETED",
+    [`${QUERY_STATUS_PATH}.updateTime`]: completeTime,
+    [`${QUERY_STATUS_PATH}.completeTime`]: completeTime,
+  });
 }
 
 export async function handleQueryCall(
