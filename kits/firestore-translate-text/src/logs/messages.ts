@@ -17,13 +17,15 @@
 const SECRET_KEY_PATTERN = /api[-_]?key|secret|password|token|credential/i;
 
 /**
- * Returns a copy of the config with every set, secret-shaped value replaced by
- * `"<omitted>"`, so config logging never writes a credential to Cloud Logging.
+ * Returns a copy of the config with every non-empty, secret-shaped value
+ * replaced by `"<omitted>"`, so config logging never writes a credential to
+ * Cloud Logging. Empty values pass through untouched: they carry no secret,
+ * and masking them would misreport an unconfigured secret as set.
  */
 export function redactSecrets(config: object): Record<string, unknown> {
   const redacted: Record<string, unknown> = { ...config };
   for (const key of Object.keys(redacted)) {
-    if (SECRET_KEY_PATTERN.test(key) && redacted[key] !== undefined) {
+    if (SECRET_KEY_PATTERN.test(key) && redacted[key]) {
       redacted[key] = "<omitted>";
     }
   }

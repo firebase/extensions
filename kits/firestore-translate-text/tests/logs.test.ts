@@ -55,6 +55,15 @@ describe("config log redaction", () => {
     });
   });
 
+  test("an empty or null secret is not reported as omitted", () => {
+    const [, payload] = messages.init({
+      googleAiApiKey: "",
+      accessToken: null,
+    });
+
+    expect(payload).toEqual({ googleAiApiKey: "", accessToken: null });
+  });
+
   test("init masks the Google AI API key when it is set", () => {
     const [, payload] = messages.init({ googleAiApiKey: "super-secret" });
 
