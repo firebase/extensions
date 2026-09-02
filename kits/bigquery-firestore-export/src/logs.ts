@@ -70,6 +70,10 @@ export function bigqueryQueryFailed(
   });
 }
 
+export function writeRunResultsToFirestore(runId: string): void {
+  logger.debug("Writing BigQuery results to Firestore", { runId });
+}
+
 export function runResultsWrittenToFirestore(
   runId: string,
   successCount: number,
@@ -138,6 +142,19 @@ export function partitioningFieldRemovalAttempted(
     name,
     existingField,
   });
+}
+
+export function linkedTransferConfigMissing(name: string): void {
+  logger.error(
+    "The scheduled query named by TRANSFER_CONFIG_NAME does not exist, so nothing was linked. Set it to a scheduled query that exists in this project and redeploy, or clear it to have this deployment create its own.",
+    { name }
+  );
+}
+
+// The reason carries the remediation, and an Error passed as structured data
+// serialises to {}, so it goes in the message.
+export function partitioningFieldRemovalAborted(reason: string): void {
+  logger.error(`Stopped without updating the scheduled query. ${reason}`);
 }
 
 export function topicCreated(name: string): void {

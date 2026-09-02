@@ -69,7 +69,10 @@ export interface ExportConfig {
   partitioning?: ChangeTrackerConfig["partitioning"];
   /** Clustering columns (max 4). */
   clustering?: string[] | null;
-  /** Materialized-view max staleness interval, e.g. `0-0 0 4:0:0`. */
+  /**
+   * Materialized-view max staleness interval, e.g.
+   * `INTERVAL "8:0:0" HOUR TO SECOND`.
+   */
   maxStaleness?: ConfigValue<string>;
   /** Incremental materialized-view refresh interval in minutes. */
   refreshIntervalMinutes?: ConfigValue<number>;

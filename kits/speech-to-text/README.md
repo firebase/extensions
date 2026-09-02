@@ -150,8 +150,11 @@ The transcript itself is written to the same place as before
 (`<original path>.wav_transcription.txt`, under `OUTPUT_STORAGE_PATH` when set),
 so only the intermediate audio moves. If you have lifecycle rules, cleanup jobs
 or client code that expect the WAV under a `tmp/` prefix, point them at the new
-path. Both files still carry the `isTranscodeOutput` metadata flag that stops the
-function from processing its own output.
+path. The transcoded `.wav` still carries the `isTranscodeOutput` metadata flag
+that stops the function from processing its own output. The transcript `.txt` is
+written directly by the Speech-to-Text API and carries no metadata, so its
+finalize event runs the function again; that run creates a transcript document
+for the `.txt` object and marks it `FAILED` with "Invalid content type.".
 
 ### The function may now run for nine minutes
 
