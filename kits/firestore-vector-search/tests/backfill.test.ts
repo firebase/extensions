@@ -66,6 +66,7 @@ import {
   type HandlerContext,
   handleBackfillTask,
   handleBackfillTrigger,
+  handleInit,
   handleUpdateTask,
   handleUpdateTrigger,
 } from "../src/handlers";
@@ -225,6 +226,9 @@ function stateOf(writes: Write[], id: string) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // `clearAllMocks` keeps implementations, and some tests install a rejecting
+  // or recording `enqueue`.
+  enqueue.mockReset();
   batchSize.value = 2;
   getSingleEmbedding.mockResolvedValue(EMBEDDING);
   getEmbeddings.mockImplementation(async (inputs: string[]) =>
@@ -799,5 +803,49 @@ describe.each([
     enqueue.mockRejectedValue(new Error("queue not found"));
 
     await expect(handler(request, ctx)).resolves.toBeUndefined();
+  });
+});
+
+describe("handleInit", () => {
+  function ctxWith(overrides: {
+    doBackfill: boolean;
+    updateOnConfigure: boolean;
+  }) {
+    const { firestore } = makeFirestore();
+    return {
+      firestore,
+      config: resolveVectorSearchConfig({
+        projectId: "test-project",
+        instanceId: "test-instance",
+        region: "us-central1",
+        ...overrides,
+      }),
+    } as unknown as HandlerContext;
+  }
+
+  test("enqueues only the backfill trigger when both passes are enabled", async () => {
+    await handleInit(ctxWith({ doBackfill: true, updateOnConfigure: true }));
+
+    // Both passes share one task thread on the metadata document, so running
+    // them together would have them overwrite each other's progress.
+    expect(enqueue).toHaveBeenCalledTimes(1);
+  });
+
+  test("enqueues the backfill trigger on its own", async () => {
+    await handleInit(ctxWith({ doBackfill: true, updateOnConfigure: false }));
+
+    expect(enqueue).toHaveBeenCalledTimes(1);
+  });
+
+  test("enqueues the update trigger on its own", async () => {
+    await handleInit(ctxWith({ doBackfill: false, updateOnConfigure: true }));
+
+    expect(enqueue).toHaveBeenCalledTimes(1);
+  });
+
+  test("enqueues nothing when neither pass is enabled", async () => {
+    await handleInit(ctxWith({ doBackfill: false, updateOnConfigure: false }));
+
+    expect(enqueue).not.toHaveBeenCalled();
   });
 });

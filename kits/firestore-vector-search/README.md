@@ -215,6 +215,11 @@ embedding provider, the vector dimension or the input/output field names differ
 from what the last pass recorded there. Redeploying without changing any of them
 enqueues nothing and costs nothing.
 
+The two passes share that document as their task thread, so only one of them
+runs per deploy: with both settings on, the backfill pass runs, which covers
+every document the update pass would have (the update pass is the same
+eligibility rule plus "and already has an embedding").
+
 The extension's gate did not survive its own first pass, because the progress
 counters it wrote to the same document replaced the recorded configuration. The
 kit merges instead, so the comparison fields persist and the gate holds on every

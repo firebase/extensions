@@ -183,6 +183,10 @@ export async function handleInit(ctx: HandlerContext): Promise<void> {
 
   if (ctx.config.doBackfill) {
     await enqueueBackfillTrigger(ctx);
+    // The two passes share one task thread on the index metadata document, and
+    // the backfill pass covers every document the update pass would. Running
+    // both at once would have them overwrite each other's progress.
+    return;
   }
   if (ctx.config.updateOnConfigure) {
     await enqueueUpdateTrigger(ctx);
