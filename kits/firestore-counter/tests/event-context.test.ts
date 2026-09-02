@@ -27,8 +27,8 @@ describe("toEventContext", () => {
     time: "2026-01-01T00:00:00.000Z",
     project: "demo-project",
     database: "(default)",
-    document: "_firebase_ext_/sharded_counter",
-    params: { shardId: "0000" },
+    document: "pages/home/_counter_shards_/0000",
+    params: { collection: "pages", counter: "home", shardId: "0000" },
   } as any;
 
   test("rebuilds the 1st gen event context from a 2nd gen event", () => {
@@ -38,9 +38,9 @@ describe("toEventContext", () => {
       eventType: "google.firestore.document.write",
       resource: {
         service: "firestore.googleapis.com",
-        name: "projects/demo-project/databases/(default)/documents/_firebase_ext_/sharded_counter",
+        name: "projects/demo-project/databases/(default)/documents/pages/home/_counter_shards_/0000",
       },
-      params: { shardId: "0000" },
+      params: { collection: "pages", counter: "home", shardId: "0000" },
     });
   });
 
@@ -48,12 +48,12 @@ describe("toEventContext", () => {
     const context = toEventContext({ ...event, database: "counters" });
 
     expect(context.resource.name).toBe(
-      "projects/demo-project/databases/counters/documents/_firebase_ext_/sharded_counter"
+      "projects/demo-project/databases/counters/documents/pages/home/_counter_shards_/0000"
     );
   });
 
   test("passes the trigger wildcards through unchanged", () => {
-    const params = { collection: "pages", counter: "home", shardId: "0001" };
+    const params = { collection: "docs", counter: "a/b/c", shardId: "0001" };
 
     expect(toEventContext({ ...event, params }).params).toEqual(params);
   });

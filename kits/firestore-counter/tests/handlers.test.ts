@@ -118,9 +118,9 @@ describe("handleShardWrite", () => {
       time: "2026-01-01T00:00:00.000Z",
       project: "demo-project",
       database: "(default)",
-      document: "_firebase_ext_/sharded_counter",
+      document: "pages/home/_counter_shards_/0000",
       data: { after: { exists: true } },
-      params: { shardId: "0000" },
+      params: { collection: "pages", counter: "home", shardId: "0000" },
     } as any;
 
     await handleShardWrite(event, makeCtx());
@@ -133,9 +133,9 @@ describe("handleShardWrite", () => {
       eventType: "google.firestore.document.write",
       resource: {
         service: "firestore.googleapis.com",
-        name: "projects/demo-project/databases/(default)/documents/_firebase_ext_/sharded_counter",
+        name: "projects/demo-project/databases/(default)/documents/pages/home/_counter_shards_/0000",
       },
-      params: { shardId: "0000" },
+      params: { collection: "pages", counter: "home", shardId: "0000" },
     };
 
     expect(events.recordStartEvent).toHaveBeenCalledWith({
