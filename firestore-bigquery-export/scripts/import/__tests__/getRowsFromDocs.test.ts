@@ -15,6 +15,7 @@
  */
 
 import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import { FIRESTORE_DEFAULT_DATABASE } from "../src/config";
 import { getRowsFromDocs } from "../src/helper";
 
 describe("getRowsFromDocs", () => {
@@ -36,6 +37,7 @@ describe("getRowsFromDocs", () => {
       projectId: "test-project",
       sourceCollectionPath: "users",
       queryCollectionGroup: false,
+      firestoreInstanceId: FIRESTORE_DEFAULT_DATABASE,
     } as any;
 
     const beforeTimestamp = new Date().toISOString();
@@ -78,6 +80,7 @@ describe("getRowsFromDocs", () => {
       projectId: "test-project",
       sourceCollectionPath: "regions/{regionId}/countries/{countryId}/cities",
       queryCollectionGroup: false,
+      firestoreInstanceId: FIRESTORE_DEFAULT_DATABASE,
     } as any;
 
     const result = getRowsFromDocs(mockDocs, mockConfig);
@@ -115,6 +118,7 @@ describe("getRowsFromDocs", () => {
       projectId: "test-project",
       sourceCollectionPath: "my/{testId}/collection",
       queryCollectionGroup: false,
+      firestoreInstanceId: FIRESTORE_DEFAULT_DATABASE,
     } as any;
 
     const result = getRowsFromDocs(mockDocs, mockConfig);
@@ -169,6 +173,7 @@ describe("getRowsFromDocs", () => {
       projectId: "test-project",
       sourceCollectionPath: "organizations/{orgId}/users", // Template path
       queryCollectionGroup: true,
+      firestoreInstanceId: FIRESTORE_DEFAULT_DATABASE,
     } as any;
 
     const result = getRowsFromDocs(mockDocs, mockConfig);
@@ -233,6 +238,7 @@ describe("getRowsFromDocs", () => {
       projectId: "test-project",
       sourceCollectionPath: "my/{coolId}/collection",
       queryCollectionGroup: true,
+      firestoreInstanceId: FIRESTORE_DEFAULT_DATABASE,
     } as any;
 
     const myResult = getRowsFromDocs(mockDocs, myConfig);
@@ -249,6 +255,7 @@ describe("getRowsFromDocs", () => {
       projectId: "test-project",
       sourceCollectionPath: "my_other/{coolId}/collection",
       queryCollectionGroup: true,
+      firestoreInstanceId: FIRESTORE_DEFAULT_DATABASE,
     } as any;
 
     const myOtherResult = getRowsFromDocs(mockDocs, myOtherConfig);
@@ -307,6 +314,7 @@ describe("getRowsFromDocs", () => {
       projectId: "test-project",
       sourceCollectionPath: "my_other/{coolId}/collection",
       queryCollectionGroup: true,
+      firestoreInstanceId: FIRESTORE_DEFAULT_DATABASE,
     } as any;
 
     const myOtherResult = getRowsFromDocs(mockDocs, myOtherConfig);
@@ -321,6 +329,7 @@ describe("getRowsFromDocs", () => {
       projectId: "test-project",
       sourceCollectionPath: "my/{coolId}/collection",
       queryCollectionGroup: true,
+      firestoreInstanceId: FIRESTORE_DEFAULT_DATABASE,
     } as any;
 
     const myResult = getRowsFromDocs(mockDocs, myConfig);
@@ -342,6 +351,69 @@ describe("getRowsFromDocs", () => {
     // Verify all my paths start correctly
     myResult.forEach((row) => {
       expect(row.documentName).toContain("/my/");
+    });
+  });
+
+  it("uses non-default Firestore database ID in document_name when specified", () => {
+    const mockDocs = [
+      {
+        id: "doc1",
+        ref: {
+          path: "posts/doc1",
+        },
+        data: () => ({
+          title: "Test Post",
+        }),
+      },
+    ] as any[];
+
+    // Test with non-default database ID
+    const mockConfig = {
+      projectId: "test-project",
+      sourceCollectionPath: "posts",
+      queryCollectionGroup: false,
+      firestoreInstanceId: "alpha",
+    } as any;
+
+    const result = getRowsFromDocs(mockDocs, mockConfig);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].documentName).toBe(
+      "projects/test-project/databases/alpha/documents/posts/doc1"
+    );
+    expect(result[0].documentId).toBe("doc1");
+  });
+
+  it("uses non-default Firestore database ID in collection group queries", () => {
+    const mockDocs = [
+      {
+        id: "doc1",
+        ref: {
+          path: "organizations/org1/posts/doc1",
+        },
+        data: () => ({
+          title: "Test Post",
+        }),
+      },
+    ] as any[];
+
+    // Test with non-default database ID and collection group query
+    const mockConfig = {
+      projectId: "test-project",
+      sourceCollectionPath: "organizations/{orgId}/posts",
+      queryCollectionGroup: true,
+      firestoreInstanceId: "alpha",
+    } as any;
+
+    const result = getRowsFromDocs(mockDocs, mockConfig);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].documentName).toBe(
+      "projects/test-project/databases/alpha/documents/organizations/org1/posts/doc1"
+    );
+    expect(result[0].documentId).toBe("doc1");
+    expect(result[0].pathParams).toEqual({
+      orgId: "org1",
     });
   });
 });
