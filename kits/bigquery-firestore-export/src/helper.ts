@@ -227,6 +227,7 @@ export async function writeRunResultsToFirestore(
     message.json.destinationDatasetId,
     tableName
   );
+  logs.writeRunResultsToFirestore(runId);
   const collection = db.collection(
     `${config.firestoreCollection}/${transferConfigId}/runs/${runId}/output`
   );
