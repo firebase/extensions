@@ -64,6 +64,10 @@ export async function handleDocumentWrite(
     googleAiApiKey: ctx.googleAiApiKey ?? ctx.config.googleAiApiKey,
   };
 
+  // Built before the first event is published: the Genkit translator throws on
+  // an invalid provider config, and that must not leave an onStart unpaired.
+  const service = createTranslationService(config, ctx.firestore);
+
   logs.start(config);
   await events.recordStartEvent({ data: event.data, params: event.params });
 
@@ -74,8 +78,6 @@ export async function handleDocumentWrite(
     await events.recordCompletionEvent({ params: event.params });
     return;
   }
-
-  const service = createTranslationService(config, ctx.firestore);
 
   const { languages, inputFieldName, outputFieldName } = config;
 
