@@ -17,7 +17,6 @@
 import type { ResolvedVectorSearchConfig } from "../export-config";
 import type { EmbedClient } from "./client/base_class";
 import { GenkitEmbedClient } from "./client/genkit";
-import { MultimodalEmbedClient } from "./client/multimodal";
 import { CustomEndpointClient } from "./client/text/custom_function";
 import { OpenAiEmbedClient } from "./client/text/open_ai";
 
@@ -34,7 +33,5 @@ export function createEmbedClient(
       return new OpenAiEmbedClient(config);
     case "custom":
       return new CustomEndpointClient(config);
-    case "multimodal":
-      return new MultimodalEmbedClient(config);
   }
 }
