@@ -339,24 +339,56 @@ describe("handleEmbedOnWrite", () => {
     expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
   });
 
-  test("honours a custom status field name", async () => {
+  // The extension's skip rule was the status state alone, with no comparison
+  // against the previous input, so an unchanged document with an embedding but
+  // no status was still processed.
+  test("embeds an unchanged document that has an embedding but no status", async () => {
+    const doc = {
+      input: "hello",
+      [config.outputFieldName]: FieldValue.vector(EMBEDDING),
+    };
+    const { event } = writeEvent({ ...doc }, { ...doc });
+
+    await handleEmbedOnWrite(event, embedCtx());
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
+  });
+
+  describe("with a custom status field name", () => {
     const customConfig = resolveVectorSearchConfig({
       projectId: "test-project",
       instanceId: "test-instance",
       statusFieldName: "embedStatus",
     });
-    const { event, set } = writeEvent(null, {
-      input: "hello",
-      status: { state: "COMPLETED" },
-      embedStatus: { state: "COMPLETED" },
+
+    function customCtx() {
+      return {
+        firestore: {},
+        config: customConfig,
+      } as unknown as HandlerContext;
+    }
+
+    test("skips on the configured field", async () => {
+      const { event, set } = writeEvent(null, {
+        input: "hello",
+        embedStatus: { state: "COMPLETED" },
+      });
+
+      await handleEmbedOnWrite(event, customCtx());
+
+      expect(getSingleEmbedding).not.toHaveBeenCalled();
+      expect(set).not.toHaveBeenCalled();
     });
 
-    await handleEmbedOnWrite(event, {
-      firestore: {},
-      config: customConfig,
-    } as unknown as HandlerContext);
+    test("ignores a terminal state on the default field", async () => {
+      const { event } = writeEvent(null, {
+        input: "hello",
+        status: { state: "COMPLETED" },
+      });
 
-    expect(getSingleEmbedding).not.toHaveBeenCalled();
-    expect(set).not.toHaveBeenCalled();
+      await handleEmbedOnWrite(event, customCtx());
+
+      expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
+    });
   });
 });
