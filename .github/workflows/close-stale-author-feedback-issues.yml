@@ -1,0 +1,214 @@
+name: Close stale author-feedback issues
+
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Log intended changes without updating issues.
+        required: false
+        type: boolean
+        default: true
+  issue_comment:
+    types:
+      - created
+
+env:
+  AUTHOR_FEEDBACK_LABELS: |
+    needs: author feedback
+  STALE_AFTER_DAYS: "30"
+
+jobs:
+  remove-author-feedback-label:
+    if: >
+      github.event_name == 'issue_comment' && github.event.issue.pull_request ==
+      null && github.event.issue.state == 'open' &&
+      github.event.comment.user.login == github.event.issue.user.login
+    permissions:
+      issues: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove author-feedback label
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        with:
+          script: |
+            const labels = process.env.AUTHOR_FEEDBACK_LABELS
+              .split(/\r?\n/)
+              .map((label) => label.trim())
+              .filter(Boolean);
+
+            const issueLabels = context.payload.issue.labels.map((label) => label.name);
+            const labelsToRemove = labels.filter((label) => issueLabels.includes(label));
+
+            if (labelsToRemove.length === 0) {
+              core.info(`Issue #${context.payload.issue.number} has no author-feedback label.`);
+              return;
+            }
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.issue.number;
+
+            for (const label of labelsToRemove) {
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number,
+                  name: label,
+                });
+                core.info(`Removed label "${label}" from issue #${issue_number}.`);
+              } catch (error) {
+                if (error.status === 404) {
+                  core.info(`Label "${label}" already removed from issue #${issue_number}.`);
+                  continue;
+                }
+
+                throw error;
+              }
+            }
+
+  close-stale-issues:
+    if: github.event_name != 'issue_comment'
+    permissions:
+      issues: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close stale author-feedback issues
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        with:
+          script: |
+            const configuredLabels = process.env.AUTHOR_FEEDBACK_LABELS
+              .split(/\r?\n/)
+              .map((label) => label.trim())
+              .filter(Boolean);
+            const staleAfterDays = Number.parseInt(process.env.STALE_AFTER_DAYS, 10);
+            const dryRun =
+              context.eventName === 'workflow_dispatch' &&
+              context.payload.inputs?.dry_run === 'true';
+
+            if (!Number.isFinite(staleAfterDays) || staleAfterDays < 1) {
+              throw new Error(`STALE_AFTER_DAYS must be a positive integer, got "${process.env.STALE_AFTER_DAYS}".`);
+            }
+
+            const { owner, repo } = context.repo;
+            const repoLabels = await github.paginate(github.rest.issues.listLabelsForRepo, {
+              owner,
+              repo,
+              per_page: 100,
+            });
+            const existingLabelNames = new Set(repoLabels.map((label) => label.name));
+            const targetLabels = configuredLabels.filter((label) => existingLabelNames.has(label));
+
+            if (targetLabels.length === 0) {
+              core.warning(`None of the configured labels exist: ${configuredLabels.join(", ")}`);
+              return;
+            }
+
+            const cutoff = Date.now() - staleAfterDays * 24 * 60 * 60 * 1000;
+            const candidatesByNumber = new Map();
+
+            for (const label of targetLabels) {
+              const issues = await github.paginate(github.rest.issues.listForRepo, {
+                owner,
+                repo,
+                state: "open",
+                labels: label,
+                per_page: 100,
+              });
+
+              for (const issue of issues) {
+                if (issue.pull_request) {
+                  continue;
+                }
+
+                candidatesByNumber.set(issue.number, issue);
+              }
+            }
+
+            core.info(`Found ${candidatesByNumber.size} open issue(s) with author-feedback labels.`);
+
+            for (const issue of candidatesByNumber.values()) {
+              const issueLabels = issue.labels.map((label) => label.name);
+              const labelsOnIssue = targetLabels.filter((label) => issueLabels.includes(label));
+              const events = await github.paginate(github.rest.issues.listEvents, {
+                owner,
+                repo,
+                issue_number: issue.number,
+                per_page: 100,
+              });
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner,
+                repo,
+                issue_number: issue.number,
+                per_page: 100,
+              });
+
+              for (const label of labelsOnIssue) {
+                const labelEvents = events
+                  .filter((event) => event.event === "labeled" && event.label?.name === label)
+                  .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+
+                const latestLabelEvent = labelEvents[0];
+
+                if (!latestLabelEvent) {
+                  core.warning(`Skipping issue #${issue.number}: no label event found for "${label}".`);
+                  continue;
+                }
+
+                const labelAddedAt = Date.parse(latestLabelEvent.created_at);
+                const authorCommentAfterLabel = comments.some((comment) => {
+                  return (
+                    comment.user?.login === issue.user.login &&
+                    Date.parse(comment.created_at) > labelAddedAt
+                  );
+                });
+
+                if (authorCommentAfterLabel) {
+                  const message = `Issue #${issue.number}: author replied after "${label}" was added; removing label.`;
+                  core.info(dryRun ? `[dry-run] ${message}` : message);
+
+                  if (!dryRun) {
+                    await github.rest.issues.removeLabel({
+                      owner,
+                      repo,
+                      issue_number: issue.number,
+                      name: label,
+                    });
+                  }
+
+                  continue;
+                }
+
+                if (labelAddedAt > cutoff) {
+                  const ageDays = Math.floor((Date.now() - labelAddedAt) / (24 * 60 * 60 * 1000));
+                  core.info(`Issue #${issue.number}: "${label}" age ${ageDays} day(s), below ${staleAfterDays}.`);
+                  continue;
+                }
+
+                const closeMessage = [
+                  `Closing because this issue has been labelled \`${label}\` for more than ${staleAfterDays} days without feedback from the issue author.`,
+                  "If this is still reproducible, please open a new issue with updated details.",
+                ].join("\n\n");
+                const message = `Issue #${issue.number}: closing after ${staleAfterDays}+ days without author feedback.`;
+                core.info(dryRun ? `[dry-run] ${message}` : message);
+
+                if (!dryRun) {
+                  await github.rest.issues.createComment({
+                    owner,
+                    repo,
+                    issue_number: issue.number,
+                    body: closeMessage,
+                  });
+                  await github.rest.issues.update({
+                    owner,
+                    repo,
+                    issue_number: issue.number,
+                    state: "closed",
+                    state_reason: "not_planned",
+                  });
+                }
+
+                break;
+              }
+            }
