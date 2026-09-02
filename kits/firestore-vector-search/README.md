@@ -144,12 +144,6 @@ the instances cannot collide. Set `INSTANCE_ID` in each config directory to the
 same value as that directory's key in the `instances` map; it also namespaces
 the internal Firestore metadata/query paths and task queue references.
 
-## Events
-
-When `EVENTARC_CHANNEL` is configured, the functions publish lifecycle events
-such as `onStart`, `onError`, `onSuccess`, and `onCompletion` under
-`firebase.extensions.firestore-vector-search.v1.*`.
-
 ## Differences from the Vector Search with Firestore extension
 
 This kit is version 0.1.3 of the extension repackaged as an npm package, and it is
@@ -283,16 +277,6 @@ rather than the install-time location. Gemini embedding is not served in every
 region; if you deploy somewhere it is unavailable, embedding fails and the error
 is written to the document's status field.
 
-### Events are actually published now
-
-The extension declared four event types but never published any. The kit
-publishes `onStart`, `onSuccess`, `onError` and `onCompletion` under
-`firebase.extensions.firestore-vector-search.v1.*` from `embedOnWrite`, once you
-set `EVENTARC_CHANNEL` in your `.env` to a channel you have created. Per-event
-selection is not available, because the CLI rejects any `.env` key beginning with
-`EXT_`, so `EXT_SELECTED_EVENTS` cannot be set and every event type is published.
-With `EVENTARC_CHANNEL` unset, nothing is published.
-
 ### The triggers are 2nd gen
 
 All seven functions are 2nd gen. Their service accounts need
@@ -302,6 +286,10 @@ for; the Firebase CLI grants these for you.
 
 ### Unchanged
 
+- No Eventarc events are published. The extension declared `onStart`,
+  `onSuccess`, `onError` and `onCompletion` under
+  `firebase.extensions.firestore-vector-search.v1.*` but never published any of
+  them, and the kit publishes none either. `EVENTARC_CHANNEL` is not read.
 - The indexed collection is still `COLLECTION_NAME` (default `products`), the
   input, output and status fields still default to `input`, `embedding` and
   `status`, and embeddings are still written as native Firestore vectors.

@@ -31,7 +31,6 @@ import {
   geminiApiKey,
   openAiApiKey,
 } from "./config";
-import * as events from "./events";
 import {
   type ResolvedVectorSearchConfig,
   resolveVectorSearchConfig,
@@ -140,8 +139,6 @@ function getContext(): HandlerContext {
   }
 
   ensureDefaultApp();
-
-  events.setupEventChannel();
 
   ctx = {
     firestore: getFirestore(),
