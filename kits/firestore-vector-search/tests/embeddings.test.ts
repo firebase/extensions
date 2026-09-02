@@ -16,7 +16,10 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
-const { embedMany } = vi.hoisted(() => ({ embedMany: vi.fn() }));
+const { embedMany, createEmbeddings } = vi.hoisted(() => ({
+  embedMany: vi.fn(),
+  createEmbeddings: vi.fn(),
+}));
 
 vi.mock("genkit", () => ({
   genkit: vi.fn(() => ({ embedMany })),
@@ -31,11 +34,18 @@ vi.mock("@genkit-ai/google-genai", () => ({
   }),
 }));
 
+vi.mock("openai", () => ({
+  default: class {
+    embeddings = { create: createEmbeddings };
+  },
+}));
+
 import { googleAI, vertexAI } from "@genkit-ai/google-genai";
 import { genkit } from "genkit";
 
 import { GenkitEmbedClient } from "../src/embeddings/client/genkit";
 import { CustomEndpointClient } from "../src/embeddings/client/text/custom_function";
+import { OpenAiEmbedClient } from "../src/embeddings/client/text/open_ai";
 import {
   type ResolvedVectorSearchConfig,
   resolveVectorSearchConfig,
@@ -255,5 +265,49 @@ describe("CustomEndpointClient", () => {
     await expect(client.getEmbeddings(["input"])).rejects.toThrow(
       "Error getting embeddings from custom endpoint: response is not JSON"
     );
+  });
+});
+
+describe("OpenAiEmbedClient", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function openAiConfig() {
+    return config({ embeddingProvider: "openai", openAiApiKey: "test-key" });
+  }
+
+  test("requires an API key", () => {
+    expect(
+      () =>
+        new OpenAiEmbedClient(
+          config({ embeddingProvider: "openai", openAiApiKey: undefined })
+        )
+    ).toThrow("OpenAI embeddings require OPENAI_API_KEY");
+  });
+
+  test("embeds 16 inputs per batch, as the extension did", () => {
+    expect(new OpenAiEmbedClient(openAiConfig()).batchSize).toBe(16);
+  });
+
+  test("sends a whole batch in one request", async () => {
+    createEmbeddings.mockResolvedValueOnce({
+      data: [{ embedding: [1, 2, 3] }, { embedding: [4, 5, 6] }],
+    });
+
+    const embeddings = await new OpenAiEmbedClient(
+      openAiConfig()
+    ).getEmbeddings(["one", "two"]);
+
+    expect(createEmbeddings).toHaveBeenCalledTimes(1);
+    expect(createEmbeddings).toHaveBeenCalledWith({
+      model: "text-embedding-3-small",
+      input: ["one", "two"],
+      dimensions: 512,
+    });
+    expect(embeddings).toEqual([
+      [1, 2, 3],
+      [4, 5, 6],
+    ]);
   });
 });
