@@ -28,6 +28,14 @@
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
+import type {
+  ListParam,
+  MultiSelectInput,
+  SelectInput,
+  StringParam,
+} from "firebase-functions/params";
+import type { ContentFilterLevel } from "../src/export-config";
+
 const ENV_KEYS = [
   "IMG_BUCKET",
   "IMG_SIZES",
@@ -211,6 +219,108 @@ describe("configFromEnv", () => {
       customFilterPrompt: "Is this image appropriate?",
       placeholderImagePath: "placeholder.png",
     });
+  });
+});
+
+/**
+ * The select is the only source of CONTENT_FILTER_LEVEL values at deploy
+ * time, so every option it offers must be a value the resolver accepts.
+ */
+describe("CONTENT_FILTER_LEVEL select", () => {
+  const baseConfig = {
+    bucket: "extensions-testing.appspot.com",
+    sizes: "200x200",
+  } as const;
+
+  async function selectOptions() {
+    await import("../src/config");
+    const { declaredParams } = await import("firebase-functions/params");
+    const param = declaredParams.find(
+      (declared) => declared.name === "CONTENT_FILTER_LEVEL"
+    ) as StringParam | undefined;
+    const input = param?.options.input as SelectInput<string> | undefined;
+    return input?.select.options ?? [];
+  }
+
+  test("offers OFF and the three block thresholds", async () => {
+    expect(await selectOptions()).toEqual([
+      { label: "Off (No filtering)", value: "OFF" },
+      {
+        label: "Low strictness (Block only high severity content)",
+        value: "BLOCK_ONLY_HIGH",
+      },
+      {
+        label: "Medium strictness (Block medium and high severity content)",
+        value: "BLOCK_MEDIUM_AND_ABOVE",
+      },
+      {
+        label: "High strictness (Block low, medium, and high severity content)",
+        value: "BLOCK_LOW_AND_ABOVE",
+      },
+    ]);
+  });
+
+  test("every option resolves, and OFF disables filtering", async () => {
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+    for (const { value } of await selectOptions()) {
+      const resolved = resolveResizeImagesConfig({
+        ...baseConfig,
+        contentFilterLevel: value as ContentFilterLevel,
+      });
+      if (value === "OFF") {
+        expect(resolved.contentFilterLevel).toBeNull();
+      } else {
+        expect(resolved.contentFilterLevel).toBe(value);
+      }
+    }
+  });
+
+  test('the retired "False" option value is rejected', async () => {
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+    expect(() =>
+      resolveResizeImagesConfig({
+        ...baseConfig,
+        contentFilterLevel: "False" as never,
+      })
+    ).toThrow("Invalid HarmBlockThreshold: False");
+  });
+});
+
+/**
+ * The same audit for IMAGE_TYPE: every multiSelect value must be one the
+ * resize path accepts - `"false"` for keeping the original format, or a key
+ * of `SUPPORTED_IMAGE_CONTENT_TYPE_MAP` so the output content type resolves.
+ */
+describe("IMAGE_TYPE multiSelect", () => {
+  async function multiSelectOptions() {
+    await import("../src/config");
+    const { declaredParams } = await import("firebase-functions/params");
+    const param = declaredParams.find(
+      (declared) => declared.name === "IMAGE_TYPE"
+    ) as ListParam | undefined;
+    const input = param?.options.input as MultiSelectInput | undefined;
+    return input?.multiSelect.options ?? [];
+  }
+
+  test('offers the six conversion formats and "false" for the original type', async () => {
+    expect(await multiSelectOptions()).toEqual([
+      { label: "jpeg", value: "jpeg" },
+      { label: "webp", value: "webp" },
+      { label: "png", value: "png" },
+      { label: "tiff", value: "tiff" },
+      { label: "gif", value: "gif" },
+      { label: "avif", value: "avif" },
+      { label: "original", value: "false" },
+    ]);
+  });
+
+  test("every conversion value maps to an output content type", async () => {
+    const { SUPPORTED_IMAGE_CONTENT_TYPE_MAP } = await import("../src/global");
+    for (const { value } of await multiSelectOptions()) {
+      if (value !== "false") {
+        expect(SUPPORTED_IMAGE_CONTENT_TYPE_MAP).toHaveProperty(value);
+      }
+    }
   });
 });
 
