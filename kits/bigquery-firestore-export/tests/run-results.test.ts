@@ -33,6 +33,7 @@ vi.mock("../src/logs", () => ({
   handlingNonSuccessRun: mocks.handlingNonSuccessRun,
   latestDocUpdateSkipped: mocks.latestDocUpdateSkipped,
   runResultsWrittenToFirestore: vi.fn(),
+  writeRunResultsToFirestore: vi.fn(),
 }));
 
 import {

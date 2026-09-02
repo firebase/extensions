@@ -23,6 +23,7 @@ import {
   createTransferConfig,
   type DataTransferClient,
   getTransferConfig,
+  notificationTopicName,
   PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX,
   updateTransferConfig,
 } from "./dts";
@@ -117,6 +118,16 @@ export async function handleUpsertTransferConfig(
       // so retrying the task cannot help.
       logs.linkedTransferConfigMissing(ctx.config.transferConfigName);
       return;
+    }
+    // A linked config is adopted as-is, so a topic mismatch is the user's to
+    // resolve: rewriting it would repoint a config this deployment did not create.
+    const expectedTopic = notificationTopicName(ctx.config);
+    if (linked.notificationPubsubTopic !== expectedTopic) {
+      logs.linkedTopicMismatch(
+        ctx.config.transferConfigName,
+        linked.notificationPubsubTopic,
+        expectedTopic
+      );
     }
     await storeTransferConfig(ctx, linked);
     return;

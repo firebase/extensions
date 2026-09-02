@@ -224,6 +224,24 @@ describe("constructUpdateTransferConfigRequest change detection", () => {
     );
   });
 
+  test("leaves an extension-named topic alone when PUB_SUB_TOPIC matches it", async () => {
+    const extensionTopic =
+      "projects/test-project/topics/ext-users-export-processMessages";
+    const stored = unchangedTransferConfig();
+    stored.notificationPubsubTopic = extensionTopic;
+
+    const request = await constructUpdateTransferConfigRequest(
+      clientReturning(stored),
+      TRANSFER_CONFIG_NAME,
+      { ...config, pubSubTopic: "ext-users-export-processMessages" }
+    );
+
+    expect(request.updateMask?.paths).toEqual([]);
+    expect(request.transferConfig?.notificationPubsubTopic).toBe(
+      extensionTopic
+    );
+  });
+
   test("masks the destination dataset when it changed", async () => {
     const request = await constructUpdateTransferConfigRequest(
       clientReturning(unchangedTransferConfig()),
