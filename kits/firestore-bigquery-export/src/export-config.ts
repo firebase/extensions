@@ -34,7 +34,7 @@ export type ViewType =
  * The export configuration. The main entry point builds it from deploy-time
  * params; handler consumers can construct it directly.
  *
- * `collectionPath`, `datasetId`, `tableId`, `location`, and `projectId` are
+ * `collectionPath`, `datasetId`, `tableId`, and `projectId` are
  * required; everything else has a sensible default.
  */
 export interface ExportConfig {
@@ -46,8 +46,6 @@ export interface ExportConfig {
   /** BigQuery changelog table id. */
   tableId: ConfigValue<string>;
 
-  /** Region for the trigger and task queue. */
-  location: ConfigValue<string>;
   /** BigQuery dataset location, e.g. `us`, `eu`. Defaults to `us`. */
   datasetLocation?: ConfigValue<string>;
   /** Project that owns the BigQuery dataset, if different from the function's
@@ -92,7 +90,6 @@ export interface ResolvedExportConfig {
   collectionPath: string;
   datasetId: string;
   tableId: string;
-  location: string;
   datasetLocation: string;
   bqProjectId?: string;
   projectId: string;
@@ -146,7 +143,6 @@ export function resolveExportConfig(
     collectionPath: resolveConfigValue(config.collectionPath),
     datasetId: resolveConfigValue(config.datasetId),
     tableId: resolveConfigValue(config.tableId),
-    location: resolveConfigValue(config.location),
     datasetLocation: resolveOptionalConfigValue(config.datasetLocation) ?? "us",
     bqProjectId: resolveOptionalConfigValue(config.bqProjectId),
     projectId,

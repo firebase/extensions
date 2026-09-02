@@ -116,9 +116,13 @@ function getHandlerContext(): HandlerContext {
   return ctx;
 }
 
-const functionOptions = {
-  region: CONFIG_EXPRESSIONS.location,
-};
+/*
+ * None of the exported functions set `region`. Firestore locations such as
+ * `nam5` are not Cloud Run regions, so the database location must never become
+ * a function region. The Firebase CLI resolves each function's deploy region
+ * itself and pins the Firestore trigger to the database's own region via the
+ * `database` option.
+ */
 
 /**
  * Firestore trigger: streams document writes on the watched collection into the
@@ -127,7 +131,6 @@ const functionOptions = {
  */
 export const fsexportbigquery = onDocumentWritten(
   {
-    ...functionOptions,
     document: expr`${CONFIG_EXPRESSIONS.collectionPath}/{documentId}`,
     database: CONFIG_EXPRESSIONS.database,
     retry: true,
@@ -155,7 +158,6 @@ async function handleBigQuerySyncInitialization(): Promise<void> {
  */
 export const initBigQuerySync = onTaskDispatched(
   {
-    ...functionOptions,
     retryConfig: LIFECYCLE_RETRY_CONFIG,
   },
   handleBigQuerySyncInitialization
@@ -167,7 +169,6 @@ export const initBigQuerySync = onTaskDispatched(
  */
 export const setupBigQuerySync = onTaskDispatched(
   {
-    ...functionOptions,
     retryConfig: LIFECYCLE_RETRY_CONFIG,
   },
   handleBigQuerySyncInitialization
