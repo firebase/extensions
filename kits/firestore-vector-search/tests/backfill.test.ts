@@ -381,6 +381,31 @@ describe("enqueueTaskThread", () => {
     expect(writes[0].merge).toBe(true);
   });
 
+  test("records every chunk before dispatching the first task", async () => {
+    const { firestore, writes } = makeFirestore();
+    const ids = Array.from({ length: 120 }, (_, i) => `doc-${i}`);
+    const dispatchedAfter: number[] = [];
+    enqueue.mockImplementation(async () => {
+      dispatchedAfter.push(
+        writes.filter((write) =>
+          write.path.startsWith(`${METADATA_PATH}/enqueues/`)
+        ).length
+      );
+    });
+
+    await enqueueTaskThread({
+      firestore: firestore as never,
+      tasksDoc: METADATA_PATH,
+      queue: { enqueue } as never,
+      taskParams: ids,
+      instanceId: config.instanceId,
+    });
+
+    // All three enqueue documents exist by the time task-1 runs, so it can
+    // always find its successor.
+    expect(dispatchedAfter).toEqual([3]);
+  });
+
   test("commits the trailing chunks when there are more than 50 of them", async () => {
     const { firestore, writes } = makeFirestore();
     const ids = Array.from({ length: 2600 }, (_, i) => `doc-${i}`);
