@@ -44,6 +44,7 @@ import { resolveExportConfig, toTrackerConfig } from "./export-config";
 import { type HandlerContext, handleDocumentWrite } from "./handlers";
 import { createEnsureInitialized } from "./init";
 import * as logs from "./logs";
+import { firestoreLocationToFunctionRegion } from "./region";
 
 // Re-export the side-effect-free library surface (handlers and config types).
 export * from "./lib";
@@ -117,12 +118,16 @@ function getHandlerContext(): HandlerContext {
 }
 
 /*
- * None of the exported functions set `region`. Firestore locations such as
- * `nam5` are not Cloud Run regions, so the database location must never become
- * a function region. The Firebase CLI resolves each function's deploy region
- * itself and pins the Firestore trigger to the database's own region via the
- * `database` option.
+ * Read at module load: the CLI populates `.env` values into the discovery
+ * process env (firebase-tools >= 15.28.0), and the region option cannot be a
+ * param expression. When unset, no function declares a region and the CLI
+ * falls back to its default. The Eventarc trigger region needs no handling:
+ * the CLI pins it to the database's own region regardless of where the
+ * function runs.
  */
+const functionRegion = firestoreLocationToFunctionRegion(
+  process.env.DATABASE_REGION
+);
 
 /**
  * Firestore trigger: streams document writes on the watched collection into the
@@ -131,6 +136,7 @@ function getHandlerContext(): HandlerContext {
  */
 export const fsexportbigquery = onDocumentWritten(
   {
+    ...(functionRegion ? { region: functionRegion } : {}),
     document: expr`${CONFIG_EXPRESSIONS.collectionPath}/{documentId}`,
     database: CONFIG_EXPRESSIONS.database,
     retry: true,
@@ -158,6 +164,7 @@ async function handleBigQuerySyncInitialization(): Promise<void> {
  */
 export const initBigQuerySync = onTaskDispatched(
   {
+    ...(functionRegion ? { region: functionRegion } : {}),
     retryConfig: LIFECYCLE_RETRY_CONFIG,
   },
   handleBigQuerySyncInitialization
@@ -169,6 +176,7 @@ export const initBigQuerySync = onTaskDispatched(
  */
 export const setupBigQuerySync = onTaskDispatched(
   {
+    ...(functionRegion ? { region: functionRegion } : {}),
     retryConfig: LIFECYCLE_RETRY_CONFIG,
   },
   handleBigQuerySyncInitialization
