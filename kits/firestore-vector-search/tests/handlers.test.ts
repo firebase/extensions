@@ -284,4 +284,29 @@ describe("handleQueryOnWrite prefilters validation", () => {
     expect(chain.where).not.toHaveBeenCalled();
     expect(set).toHaveBeenCalledWith({ result: { ids: IDS } }, { merge: true });
   });
+
+  test("treats an explicit null prefilters as no prefilters", async () => {
+    const { ctx, chain } = makeCtx();
+    const { event, set } = queryDocEvent({
+      query: "test query",
+      prefilters: null,
+    });
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(chain.where).not.toHaveBeenCalled();
+    expect(set).toHaveBeenCalledWith({ result: { ids: IDS } }, { merge: true });
+  });
+
+  test("names the offending entry's index in the error", async () => {
+    const { ctx } = makeCtx();
+    const { event } = queryDocEvent({
+      query: "test query",
+      prefilters: [{ field: "category", operator: "==", value: "test" }, 42],
+    });
+
+    await expect(handleQueryOnWrite(event, ctx)).rejects.toThrow(
+      "Invalid prefilters: 1: Expected object, received number"
+    );
+  });
 });

@@ -26,10 +26,16 @@ const prefiltersSchema = z.array(prefilterSchema);
 
 /** Validates raw prefilters from a watched query document. */
 export function parsePrefilters(data: unknown): Prefilter[] {
-  if (data === undefined) return [];
+  if (data == null) return [];
   const parsed = prefiltersSchema.safeParse(data);
   if (!parsed.success) {
-    const issues = parsed.error.issues.map((issue) => issue.message).join("; ");
+    const issues = parsed.error.issues
+      .map((issue) =>
+        issue.path.length
+          ? `${issue.path.join(".")}: ${issue.message}`
+          : issue.message
+      )
+      .join("; ");
     throw new Error(`Invalid prefilters: ${issues}`);
   }
   return parsed.data;
