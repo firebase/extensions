@@ -31,7 +31,7 @@
     "serve": "firebase emulators:start --only functions"
   },
   "dependencies": {
-    "@firebaseextensions/firestore-bigquery-change-tracker": "^2.0.4",
+    "@firebaseextensions/firestore-bigquery-change-tracker": "^2.1.0",
     "@google-cloud/bigquery": "^7.6.0",
     "firebase-admin": "^13.6.0",
     "firebase-functions": "^7.3.2",

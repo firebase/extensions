@@ -22,13 +22,16 @@ jobs:
       - name: Compute changed kit list
         id: kits
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
-          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          git fetch --no-tags origin "$BASE_REF"
+          # Three-dot diff against the live base ref: the event's base.sha goes
+          # stale when the base advances after the PR's last push, which pulled
+          # base-side kits into the matrix.
           # A kit is a kits/<name> directory with a package.json; files directly
           # under kits/ (e.g. kits/README.md) belong to no kit. A kit deleted by
           # the PR has no package.json on the merge ref and is skipped.
-          KITS=$(git diff --name-only "$BASE_SHA" HEAD -- 'kits/' \
+          KITS=$(git diff --name-only "origin/$BASE_REF...HEAD" -- 'kits/' \
             | awk -F/ 'NF >= 3 { print $1 "/" $2 }' \
             | sort -u)
           MATRIX=$(for kit in $KITS; do
@@ -69,3 +72,15 @@ jobs:
       - name: Test
         working-directory: ${{ matrix.kit }}
         run: npm test
+
+      # firebase-tools 15 requires Java 21+ for the emulator; the runner's
+      # default JAVA_HOME is 17, with 21 preinstalled alongside.
+      - name: Use Java 21 for the emulator
+        run: echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@15
+
+      - name: Emulator tests
+        working-directory: ${{ matrix.kit }}
+        run: npm run test:emulator --if-present

@@ -1,6 +1,6 @@
 {
   "name": "@firebase-function-kits/firestore-counter",
-  "version": "0.0.2-rc.1",
+  "version": "0.0.2-rc.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/firebase/extensions.git",
@@ -27,6 +27,7 @@
     "build": "tsc -b",
     "clean": "tsc -b --clean",
     "test": "vitest run",
+    "test:emulator": "firebase emulators:exec --only firestore --project demo-test --config tests/integration/firebase.json \"vitest run tests/integration\"",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
