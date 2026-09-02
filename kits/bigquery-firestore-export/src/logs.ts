@@ -70,6 +70,10 @@ export function bigqueryQueryFailed(
   });
 }
 
+export function writeRunResultsToFirestore(runId: string): void {
+  logger.debug("Writing BigQuery results to Firestore", { runId });
+}
+
 export function runResultsWrittenToFirestore(
   runId: string,
   successCount: number,
