@@ -251,22 +251,13 @@ longer written, only `COMPLETED` and `ERROR`. Anything reading
 `status.<instance id>.state`, or a security rule or index keyed to it, needs
 updating. The field name is still `STATUS_FIELD_NAME`, defaulting to `status`.
 
+`embedOnWrite` still reads the same four states the extension treated as final —
+`PROCESSING`, `COMPLETED`, `ERROR` and `BACKFILLED` — so documents an installed
+instance already embedded are still skipped once you flatten their status field.
+
 Query documents no longer get a status field at all. They previously carried
 `status.textQuery`, so if you were waiting on that to know a query had finished,
 wait for `result` instead.
-
-### Editing a document's input re-embeds it
-
-The extension embedded each document once. Its skip rule was "this document's
-status is already in a final state", so once a document reached `COMPLETED` (or
-`ERROR`), changing its input field never produced a new embedding and a failure
-was never retried.
-
-The kit compares the input instead: it re-embeds when the input field changes, and
-skips only when the input is unchanged and an embedding is already present. This
-is usually what you wanted, but it means editing inputs in bulk now costs
-embedding calls, and a document that previously sat stale will be brought up to
-date on its next write.
 
 ### The lifecycle hooks and the function region
 
