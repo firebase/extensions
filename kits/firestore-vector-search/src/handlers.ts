@@ -20,6 +20,17 @@ import type { Change, FirestoreEvent } from "firebase-functions/v2/firestore";
 import type { CallableRequest } from "firebase-functions/v2/https";
 import { HttpsError } from "firebase-functions/v2/https";
 import type { Request } from "firebase-functions/v2/tasks";
+import { logger } from "firebase-functions";
+import {
+  type BackfillMetadata,
+  type BackfillProcess,
+  type BackfillTaskData,
+  DEFAULT_BATCH_SIZE,
+  type DocumentData,
+  enqueueTaskThread,
+  runBackfillTask,
+  updateOrCreateMetadataDoc,
+} from "./backfill";
 import { createEmbedClient } from "./embeddings";
 import * as events from "./events";
 import type { ResolvedVectorSearchConfig } from "./export-config";
@@ -38,9 +49,7 @@ export interface HandlerContext {
   config: ResolvedVectorSearchConfig;
 }
 
-export interface VectorTaskData {
-  path: string;
-}
+export type VectorTaskData = BackfillTaskData;
 
 export type VectorWriteEvent = FirestoreEvent<
   Change<DocumentSnapshot> | undefined,
@@ -184,67 +193,168 @@ export async function handleBackfillTrigger(
   _request: Request<unknown>,
   ctx: HandlerContext
 ): Promise<void> {
-  const snapshot = await ctx.firestore
-    .collection(ctx.config.collectionPath)
-    .get();
-  const queue = getFunctions().taskQueue(
-    queuePath(ctx.config, ctx.config.queueNames.backfillTask)
-  );
-  await Promise.all(
-    snapshot.docs.map((doc) => queue.enqueue({ path: doc.ref.path }))
-  );
+  await runTrigger(ctx, ctx.config.queueNames.backfillTask);
 }
 
 export async function handleUpdateTrigger(
   _request: Request<unknown>,
   ctx: HandlerContext
 ): Promise<void> {
-  const snapshot = await ctx.firestore
-    .collection(ctx.config.collectionPath)
-    .get();
-  const queue = getFunctions().taskQueue(
-    queuePath(ctx.config, ctx.config.queueNames.updateTask)
-  );
-  await Promise.all(
-    snapshot.docs.map((doc) => queue.enqueue({ path: doc.ref.path }))
-  );
+  await runTrigger(ctx, ctx.config.queueNames.updateTask);
 }
 
 export async function handleBackfillTask(
   request: Request<VectorTaskData>,
   ctx: HandlerContext
 ): Promise<void> {
-  await embedPath(request.data.path, ctx, false);
+  await runBackfillTask({
+    data: request.data,
+    process: embedProcess(ctx),
+    options: backfillOptions(ctx),
+    queue: taskQueue(ctx, ctx.config.queueNames.backfillTask),
+    instanceId: ctx.config.instanceId,
+  });
 }
 
 export async function handleUpdateTask(
   request: Request<VectorTaskData>,
   ctx: HandlerContext
 ): Promise<void> {
-  await embedPath(request.data.path, ctx, true);
+  await runBackfillTask({
+    data: request.data,
+    process: updateEmbedProcess(ctx),
+    options: backfillOptions(ctx),
+    queue: taskQueue(ctx, ctx.config.queueNames.updateTask),
+    instanceId: ctx.config.instanceId,
+  });
 }
 
-async function embedPath(
-  path: string,
+/**
+ * Gates the pass on the index metadata document, enumerates the collection by
+ * reference, and hands the document ids to the task thread.
+ */
+async function runTrigger(
   ctx: HandlerContext,
-  requireExistingEmbedding: boolean
+  taskQueueName: string
 ): Promise<void> {
-  const ref = ctx.firestore.doc(path);
-  const snapshot = await ref.get();
-  if (!snapshot.exists) return;
-  const input = snapshot.get(ctx.config.inputFieldName);
-  if (typeof input !== "string") return;
-  if (requireExistingEmbedding && !snapshot.get(ctx.config.outputFieldName)) {
+  const { path, shouldBackfill } = await updateOrCreateMetadataDoc(
+    ctx.firestore,
+    ctx.config.indexMetadataDocumentPath,
+    metadataFor(ctx)
+  );
+
+  if (!shouldBackfill) {
+    logger.info(
+      `Embedding configuration is unchanged for ${ctx.config.collectionPath}, no pass required.`
+    );
     return;
   }
-  const embedding = await embedClient(ctx).getSingleEmbedding(input);
-  await ref.set(
-    {
-      [ctx.config.outputFieldName]: FieldValue.vector(embedding),
-      [ctx.config.statusFieldName]: { state: "COMPLETED" },
-    },
-    { merge: true }
+
+  try {
+    const refs = await ctx.firestore
+      .collection(ctx.config.collectionPath)
+      .listDocuments();
+
+    if (refs.length === 0) {
+      logger.info(
+        `No documents found in the collection ${ctx.config.collectionPath} 📚`
+      );
+      return;
+    }
+
+    logger.info(
+      `Found ${refs.length} documents in the collection ${ctx.config.collectionPath} 📚`
+    );
+    logger.info("Enqueuing backfill tasks 🚀");
+
+    await enqueueTaskThread({
+      firestore: ctx.firestore,
+      tasksDoc: path,
+      queue: taskQueue(ctx, taskQueueName),
+      taskParams: refs.map((ref) => ref.id),
+      instanceId: ctx.config.instanceId,
+    });
+  } catch (err) {
+    logger.error("Error with backfill trigger");
+    logger.error(err);
+  }
+}
+
+function taskQueue(ctx: HandlerContext, queueName: string) {
+  return getFunctions().taskQueue<BackfillTaskData>(
+    queuePath(ctx.config, queueName)
   );
+}
+
+function backfillOptions(ctx: HandlerContext) {
+  return {
+    firestore: ctx.firestore,
+    collectionName: ctx.config.collectionPath,
+    statusField: ctx.config.statusFieldName,
+  };
+}
+
+function metadataFor(ctx: HandlerContext): BackfillMetadata {
+  return {
+    collectionName: ctx.config.collectionPath,
+    instanceId: ctx.config.instanceId,
+    embeddingProvider: ctx.config.embeddingProvider,
+    dimension: ctx.config.dimension,
+    inputField: ctx.config.inputFieldName,
+    outputField: ctx.config.outputFieldName,
+  };
+}
+
+function hasStringInput(data: DocumentData, field: string): boolean {
+  const value = data[field];
+  return !!value && typeof value === "string";
+}
+
+/** The backfill pass: embeds a whole batch of documents in one call. */
+function embedProcess(ctx: HandlerContext): BackfillProcess {
+  const client = embedClient(ctx);
+  const { inputFieldName, outputFieldName } = ctx.config;
+  const embedOne = async (data: DocumentData): Promise<DocumentData> => ({
+    [outputFieldName]: FieldValue.vector(
+      await client.getSingleEmbedding(data[inputFieldName] as string)
+    ),
+  });
+
+  return {
+    id: ctx.config.instanceId,
+    batchSize: client.batchSize,
+    shouldBackfill: (data) => hasStringInput(data, inputFieldName),
+    processFn: embedOne,
+    batchFn: async (docs) => {
+      const embeddings = await client.getEmbeddings(
+        docs.map((doc) => doc[inputFieldName] as string)
+      );
+      return embeddings.map((embedding) => ({
+        [outputFieldName]: FieldValue.vector(embedding),
+      }));
+    },
+  };
+}
+
+/**
+ * The update pass: only documents that already carry an embedding, and one
+ * embedding call per document, as the extension's update process did.
+ */
+function updateEmbedProcess(ctx: HandlerContext): BackfillProcess {
+  const client = embedClient(ctx);
+  const { inputFieldName, outputFieldName } = ctx.config;
+
+  return {
+    id: ctx.config.instanceId,
+    batchSize: DEFAULT_BATCH_SIZE,
+    shouldBackfill: (data) =>
+      hasStringInput(data, inputFieldName) && !!data[outputFieldName],
+    processFn: async (data) => ({
+      [outputFieldName]: FieldValue.vector(
+        await client.getSingleEmbedding(data[inputFieldName] as string)
+      ),
+    }),
+  };
 }
 
 async function enqueueBackfillTrigger(ctx: HandlerContext): Promise<void> {

@@ -156,9 +156,9 @@ This kit is version 0.1.3 of the extension repackaged as an npm package, and it 
 the least literal of the ports. The seven functions, the Firestore vector index,
 the query document collection and the callable all survive with their names and
 settings intact, so a `.env` copied from your installed instance needs no value
-changes. The embedding providers, the backfill, and the shape of the status field
-written onto your documents all changed, so read this before you point the kit at
-a collection an installed instance has already embedded.
+changes. The embedding providers and the shape of the status field written onto
+your documents both changed, so read this before you point the kit at a
+collection an installed instance has already embedded.
 
 ### `EMBEDDING_PROVIDER: multimodal` is not implemented
 
@@ -201,35 +201,31 @@ whatever `EMBEDDING_PROVIDER` is set to. If either does not exist, `firebase
 deploy` prompts you for a value and fails outright when running
 non-interactively (CI). Create the one you do not need with a placeholder value.
 
-### `UPDATE_ON_CONFIGURE` now re-embeds on every deploy
+### `UPDATE_ON_CONFIGURE` is read, and the backfill gate is stricter than the extension's
 
-This setting was declared by the extension but never read. Reconfiguring an
-installed instance re-embedded documents only when the provider, the vector
-dimension or the input/output field names had actually changed, which the
-extension tracked in its index metadata document.
+This setting was declared by the extension but never read: its update pass was
+gated on `DO_BACKFILL` instead. The kit reads `UPDATE_ON_CONFIGURE`, so the two
+passes are controlled independently — `DO_BACKFILL` after the first deploy,
+`UPDATE_ON_CONFIGURE` after every redeploy.
 
-The kit keeps no such metadata and does no comparison. `UPDATE_ON_CONFIGURE: true`
-enqueues a full re-embed of every document that already has an embedding after
-*every* `firebase deploy`, whether anything relevant changed or not, and
-`DO_BACKFILL: true` embeds the whole collection after the first deploy. On a large
-collection that is a large Vertex AI or OpenAI bill per deploy. Set
-`UPDATE_ON_CONFIGURE: false` and re-embed deliberately when you change providers.
+Both passes are then gated on the index metadata document at
+`_<instance id>/index`, as the extension's were: a pass runs only when the
+embedding provider, the vector dimension or the input/output field names differ
+from what the last pass recorded there. Redeploying without changing any of them
+enqueues nothing and costs nothing.
 
-### Backfill is one task per document, and reads the collection in one go
+The extension's gate did not survive its own first pass, because the progress
+counters it wrote to the same document replaced the recorded configuration. The
+kit merges instead, so the comparison fields persist and the gate holds on every
+later deploy. Delete `_<instance id>/index` to force a full re-embed.
 
-The extension chunked the collection into batches sized to the provider (16
-documents per OpenAI call), embedded each batch in a single API call, and tracked
-progress in its metadata document. The kit reads the entire collection with one
-`get()` and enqueues one Cloud Task per document, each of which embeds one
-document with one API call.
+### There is no install-time progress reporting
 
-Two consequences. A collection large enough that a single `get()` does not fit in
-the trigger's 512 MiB will fail the backfill outright, and there is no
-resume-from-progress. Backfilling *n* documents now costs *n* task invocations and
-*n* embedding calls rather than *n*/batch size.
-
-There is also no install-time progress reporting, since there is no extension
-install UI to report into. Watch the function logs instead.
+The extension reported backfill progress and failures through the extension
+install UI (`setProcessingState`). There is no such surface for a kit, so
+progress is visible in the function logs and in the progress fields on
+`_<instance id>/index` (`backfillJobsTotal`, `backfillJobsProcessed`,
+`backfillJobsSkipped`, `backfillJobsFailed`, `backfillStatus`) instead.
 
 ### The `status` field on your documents is a different shape
 
@@ -246,10 +242,12 @@ status: { state: "COMPLETED" }
 status: { state: "ERROR", message: "<error message>" }
 ```
 
-The states themselves are narrower too: `PROCESSING` and `BACKFILLED` are no
-longer written, only `COMPLETED` and `ERROR`. Anything reading
-`status.<instance id>.state`, or a security rule or index keyed to it, needs
-updating. The field name is still `STATUS_FIELD_NAME`, defaulting to `status`.
+The states themselves are narrower too: `PROCESSING` is no longer written. The
+write triggers write `COMPLETED` or `ERROR`, and the backfill and update passes
+write `BACKFILLED` or `FAILED_BACKFILL` alongside a `completeTime`, as the
+extension did. Anything reading `status.<instance id>.state`, or a security rule
+or index keyed to it, needs updating. The field name is still
+`STATUS_FIELD_NAME`, defaulting to `status`.
 
 Query documents no longer get a status field at all. They previously carried
 `status.textQuery`, so if you were waiting on that to know a query had finished,
@@ -302,6 +300,13 @@ for; the Firebase CLI grants these for you.
 
 ### Unchanged
 
+- The backfill and update passes still enumerate the collection by document
+  reference, chunk it into 50 document ids per Cloud Task, run one task at a
+  time, and embed each chunk in provider-sized batches with a single API call per
+  batch (16 documents per OpenAI call). A document whose input is not a string is
+  skipped, as is one whose status is already set to anything other than
+  `BACKFILLED`. A failed batch marks its documents `FAILED_BACKFILL` and the task
+  still succeeds.
 - The indexed collection is still `COLLECTION_NAME` (default `products`), the
   input, output and status fields still default to `input`, `embedding` and
   `status`, and embeddings are still written as native Firestore vectors.

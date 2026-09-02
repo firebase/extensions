@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+export {
+  type BackfillMetadata,
+  type BackfillProcess,
+  type BackfillTaskData,
+  type ChunkResult,
+} from "./backfill";
 export { configFromEnv, geminiApiKey, openAiApiKey } from "./config";
 export { createEmbedClient, type EmbedClient } from "./embeddings";
 export {
