@@ -59,18 +59,23 @@ export async function handleDocumentWrite(
   event: TranslateWriteEvent,
   ctx: HandlerContext
 ): Promise<void> {
-  if (!event.data) {
-    return;
-  }
-
   const config: ResolvedTranslateConfig = {
     ...ctx.config,
     googleAiApiKey: ctx.googleAiApiKey ?? ctx.config.googleAiApiKey,
   };
-  const service = createTranslationService(config, ctx.firestore);
 
   logs.start(config);
   await events.recordStartEvent({ data: event.data, params: event.params });
+
+  // The extension emitted onStart and onCompletion for every invocation. Only
+  // v2 makes the change data optional, so a write without it still has to
+  // close out the pair rather than returning silently.
+  if (!event.data) {
+    await events.recordCompletionEvent({ params: event.params });
+    return;
+  }
+
+  const service = createTranslationService(config, ctx.firestore);
 
   const { languages, inputFieldName, outputFieldName } = config;
 

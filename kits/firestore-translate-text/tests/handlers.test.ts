@@ -76,14 +76,17 @@ describe("handleDocumentWrite", () => {
     });
   });
 
-  test("skips events without change data", async () => {
+  test("still records the event pair when there is no change data", async () => {
+    // Parity with the extension, which emitted onStart and onCompletion on
+    // every invocation; no translation work happens either way.
     await expect(
       handleDocumentWrite(makeEvent(undefined, undefined), context())
     ).resolves.toBeUndefined();
 
     expect(translateClassMethod).not.toHaveBeenCalled();
     expect(firestore.update).not.toHaveBeenCalled();
-    expect(events.recordStartEvent).not.toHaveBeenCalled();
+    expect(events.recordStartEvent).toHaveBeenCalledTimes(1);
+    expect(events.recordCompletionEvent).toHaveBeenCalledTimes(1);
   });
 
   test("records start and completion events", async () => {
