@@ -129,6 +129,7 @@ describe("SMTP_CONNECTION_URI validationRegex", () => {
     expect(connectionUriRegex().test("smtp://smtp.gmail.com")).toBe(false);
   });
 
+  // Inherited from the legacy extension.yaml regex; anchoring is tracked in #3067.
   test("accepts trailing garbage after a valid prefix because the first alternative is unanchored", () => {
     for (const uri of [
       "smtp://fakeemail@gmail.com:4,h?dhuNTbv9zMrP4&7&7%*3:smtp.gmail.com:465?pool=true&service=gmail",
