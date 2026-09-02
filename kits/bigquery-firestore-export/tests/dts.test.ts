@@ -21,6 +21,7 @@ import {
   type DataTransferClient,
   PARTITIONING_FIELD_REMOVAL_ERROR,
 } from "../src/dts";
+import { PermanentConfigurationError } from "../src/errors";
 import { resolveConfig } from "../src/export-config";
 
 const config = resolveConfig({
@@ -116,5 +117,65 @@ describe("constructUpdateTransferConfigRequest", () => {
         { ...config, partitioningField: undefined }
       )
     ).rejects.toThrow(PARTITIONING_FIELD_REMOVAL_ERROR);
+
+    await expect(
+      constructUpdateTransferConfigRequest(
+        client,
+        "projects/p/locations/us/transferConfigs/c",
+        { ...config, partitioningField: undefined }
+      )
+    ).rejects.toBeInstanceOf(PermanentConfigurationError);
+  });
+
+  test.for([
+    ["missing params.fields", {}],
+    [
+      "missing params.fields.query",
+      { params: { fields: { destination_table_name_template: {} } } },
+    ],
+    [
+      "missing params.fields.destination_table_name_template",
+      { params: { fields: { query: { stringValue: "SELECT 1" } } } },
+    ],
+  ] as const)(
+    "reports a config the kit cannot update as permanent: %s",
+    async ([expectedMessage, shape]) => {
+      const client = clientWithTransferConfig({
+        name: "projects/p/locations/us/transferConfigs/c",
+        ...shape,
+      });
+
+      const rejects = expect(
+        constructUpdateTransferConfigRequest(
+          client,
+          "projects/p/locations/us/transferConfigs/c",
+          config
+        )
+      ).rejects;
+
+      await rejects.toBeInstanceOf(PermanentConfigurationError);
+      await rejects.toThrow(
+        `Transfer config has invalid structure: ${expectedMessage}`
+      );
+      await rejects.toThrow("Only scheduled queries are supported");
+      await rejects.toThrow(
+        "Delete this deployment's document from the configs collection"
+      );
+    }
+  );
+
+  test("reports a vanished transfer config as permanent", async () => {
+    const notFound = Object.assign(new Error("5 NOT_FOUND"), { code: 5 });
+    const client = {
+      getTransferConfig: vi.fn().mockRejectedValue(notFound),
+    } as unknown as DataTransferClient;
+
+    await expect(
+      constructUpdateTransferConfigRequest(
+        client,
+        "projects/p/locations/us/transferConfigs/gone",
+        config
+      )
+    ).rejects.toThrow(PermanentConfigurationError);
   });
 });

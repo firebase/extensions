@@ -140,6 +140,13 @@ export function partitioningFieldRemovalAttempted(
   });
 }
 
+export function upsertTransferConfigAborted(err: Error): void {
+  logger.error(
+    "Could not set up the scheduled query. This is a configuration problem that a retry cannot fix, so the deployment task has stopped. Fix the configuration and deploy again.",
+    { reason: err.message }
+  );
+}
+
 export function topicCreated(name: string): void {
   logger.info("Created Pub/Sub topic for transfer notifications", { name });
 }

@@ -15,6 +15,7 @@
  */
 
 import { describe, expect, test } from "vitest";
+import { PermanentConfigurationError } from "../src/errors";
 import {
   type BigqueryFirestoreExportConfig,
   resolveConfig,
@@ -58,7 +59,7 @@ describe("resolveConfig", () => {
     "rejects an empty %s",
     (field) => {
       expect(() => resolveConfig({ ...minimal, [field]: " " })).toThrow(
-        `${field} must be a non-empty string.`
+        `${field} must be a non-empty string. Set it in the deployment configuration, then redeploy.`
       );
     }
   );
@@ -70,5 +71,17 @@ describe("resolveConfig", () => {
         logLevel: "verbose" as BigqueryFirestoreExportConfig["logLevel"],
       })
     ).toThrow("Unsupported logLevel: verbose");
+  });
+
+  test("reports validation failures as permanent", () => {
+    expect(() => resolveConfig({ ...minimal, datasetId: " " })).toThrow(
+      PermanentConfigurationError
+    );
+    expect(() =>
+      resolveConfig({
+        ...minimal,
+        logLevel: "verbose" as BigqueryFirestoreExportConfig["logLevel"],
+      })
+    ).toThrow(PermanentConfigurationError);
   });
 });

@@ -122,5 +122,5 @@ export const upsertTransferConfig = onTaskDispatched(
     memory: "1GiB",
     retryConfig: { maxAttempts: 5, minBackoffSeconds: 30 },
   },
-  () => handleUpsertTransferConfig(getContext())
+  () => handleUpsertTransferConfig(getContext)
 );
