@@ -223,7 +223,9 @@ eligibility rule plus "and already has an embedding").
 The extension's gate did not survive its own first pass, because the progress
 counters it wrote to the same document replaced the recorded configuration. The
 kit merges instead, so the comparison fields persist and the gate holds on every
-later deploy. Delete `_<instance id>/index` to force a full re-embed.
+later deploy. To force a full re-embed without changing any setting, delete the
+`_<instance id>/index` document; its `queries` subcollection is untouched, so
+the query documents your clients write to survive.
 
 ### There is no install-time progress reporting
 

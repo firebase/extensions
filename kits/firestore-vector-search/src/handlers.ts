@@ -26,7 +26,7 @@ import {
   type BackfillProcess,
   type BackfillTaskData,
   DEFAULT_BATCH_SIZE,
-  type DocumentData,
+  type BackfillDocumentData,
   enqueueTaskThread,
   runBackfillTask,
   updateOrCreateMetadataDoc,
@@ -309,7 +309,7 @@ function metadataFor(ctx: HandlerContext): BackfillMetadata {
   };
 }
 
-function hasStringInput(data: DocumentData, field: string): boolean {
+function hasStringInput(data: BackfillDocumentData, field: string): boolean {
   const value = data[field];
   return !!value && typeof value === "string";
 }
@@ -318,7 +318,9 @@ function hasStringInput(data: DocumentData, field: string): boolean {
 function embedProcess(ctx: HandlerContext): BackfillProcess {
   const client = embedClient(ctx);
   const { inputFieldName, outputFieldName } = ctx.config;
-  const embedOne = async (data: DocumentData): Promise<DocumentData> => ({
+  const embedOne = async (
+    data: BackfillDocumentData
+  ): Promise<BackfillDocumentData> => ({
     [outputFieldName]: FieldValue.vector(
       await client.getSingleEmbedding(data[inputFieldName] as string)
     ),
