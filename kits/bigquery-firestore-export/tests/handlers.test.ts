@@ -23,13 +23,23 @@ const mocks = vi.hoisted(() => ({
   getTransferConfig: vi.fn(),
   updateTransferConfig: vi.fn(),
   handleTransferRunMessage: vi.fn(),
+  linkedTransferConfigMissing: vi.fn(),
+  partitioningFieldRemovalAborted: vi.fn(),
 }));
 
-vi.mock("../src/dts", () => ({
-  createTransferConfig: mocks.createTransferConfig,
-  getTransferConfig: mocks.getTransferConfig,
-  updateTransferConfig: mocks.updateTransferConfig,
-}));
+// The error constants come from the real module so the handler's prefix match
+// is tested against the message the guard actually throws.
+vi.mock("../src/dts", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/dts")>();
+  return {
+    createTransferConfig: mocks.createTransferConfig,
+    getTransferConfig: mocks.getTransferConfig,
+    updateTransferConfig: mocks.updateTransferConfig,
+    PARTITIONING_FIELD_REMOVAL_ERROR: actual.PARTITIONING_FIELD_REMOVAL_ERROR,
+    PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX:
+      actual.PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX,
+  };
+});
 
 vi.mock("../src/helper", () => ({
   handleTransferRunMessage: mocks.handleTransferRunMessage,
@@ -41,10 +51,13 @@ vi.mock("../src/helper", () => ({
 vi.mock("../src/logs", () => ({
   complete: vi.fn(),
   error: vi.fn(),
+  linkedTransferConfigMissing: mocks.linkedTransferConfigMissing,
+  partitioningFieldRemovalAborted: mocks.partitioningFieldRemovalAborted,
   start: vi.fn(),
   topicCreated: vi.fn(),
 }));
 
+import { PARTITIONING_FIELD_REMOVAL_ERROR } from "../src/dts";
 import { handleUpsertTransferConfig } from "../src/handlers";
 
 const config = resolveConfig({
@@ -166,5 +179,71 @@ describe("handleUpsertTransferConfig", () => {
       extInstanceId: "users-export",
       ...linked,
     });
+  });
+
+  test("reports a missing linked transfer config without retrying", async () => {
+    mocks.getTransferConfig.mockResolvedValue(null);
+    const { ctx, set } = makeContext({
+      transferConfigName: "projects/p/locations/us/transferConfigs/gone",
+    });
+
+    await expect(handleUpsertTransferConfig(ctx)).resolves.toBeUndefined();
+
+    expect(mocks.linkedTransferConfigMissing).toHaveBeenCalledWith(
+      "projects/p/locations/us/transferConfigs/gone"
+    );
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("reports a rejected partitioning-field removal without retrying", async () => {
+    mocks.updateTransferConfig.mockRejectedValue(
+      new Error(PARTITIONING_FIELD_REMOVAL_ERROR)
+    );
+    const { ctx, set } = makeContext({
+      existing: {
+        empty: false,
+        docs: [
+          {
+            data: () => ({
+              name: "projects/p/locations/us/transferConfigs/config-1",
+            }),
+          },
+        ],
+      },
+    });
+
+    await expect(handleUpsertTransferConfig(ctx)).resolves.toBeUndefined();
+
+    expect(mocks.partitioningFieldRemovalAborted).toHaveBeenCalledWith(
+      PARTITIONING_FIELD_REMOVAL_ERROR
+    );
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("rethrows any other update failure so the task retries", async () => {
+    mocks.updateTransferConfig.mockRejectedValue(
+      new Error(
+        "bigquerydatatransfer.googleapis.com is temporarily unavailable"
+      )
+    );
+    const { ctx, set } = makeContext({
+      existing: {
+        empty: false,
+        docs: [
+          {
+            data: () => ({
+              name: "projects/p/locations/us/transferConfigs/config-1",
+            }),
+          },
+        ],
+      },
+    });
+
+    await expect(handleUpsertTransferConfig(ctx)).rejects.toThrow(
+      "temporarily unavailable"
+    );
+
+    expect(mocks.partitioningFieldRemovalAborted).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
   });
 });
