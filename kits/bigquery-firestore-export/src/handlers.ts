@@ -23,6 +23,7 @@ import {
   createTransferConfig,
   type DataTransferClient,
   getTransferConfig,
+  updateNotificationTopic,
   updateTransferConfig,
 } from "./dts";
 import type { ResolvedBigqueryFirestoreExportConfig } from "./export-config";
@@ -109,7 +110,12 @@ export async function handleUpsertTransferConfig(
         `Transfer config not found: ${ctx.config.transferConfigName}`
       );
     }
-    await storeTransferConfig(ctx, linked);
+    const notifying = await updateNotificationTopic(
+      ctx.dataTransfer,
+      linked,
+      ctx.config
+    );
+    await storeTransferConfig(ctx, notifying);
     return;
   }
 

@@ -28,6 +28,7 @@ export {
   PARTITIONING_FIELD_REMOVAL_ERROR,
   PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX,
   type TransferConfig,
+  updateNotificationTopic,
   updateTransferConfig,
 } from "./dts";
 export {

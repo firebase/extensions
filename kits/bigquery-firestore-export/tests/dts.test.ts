@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { logger } from "firebase-functions";
 import {
   constructUpdateTransferConfigRequest,
   createTransferConfigRequest,
   type DataTransferClient,
   PARTITIONING_FIELD_REMOVAL_ERROR,
+  updateNotificationTopic,
 } from "../src/dts";
 import { resolveConfig } from "../src/export-config";
 
@@ -116,5 +118,95 @@ describe("constructUpdateTransferConfigRequest", () => {
         { ...config, partitioningField: undefined }
       )
     ).rejects.toThrow(PARTITIONING_FIELD_REMOVAL_ERROR);
+  });
+});
+
+describe("updateNotificationTopic", () => {
+  const linked = {
+    name: "projects/p/locations/us/transferConfigs/c",
+    destinationDatasetId: "adopted_dataset",
+    schedule: "every 6 hours",
+    params: {
+      fields: {
+        query: { stringValue: "SELECT * FROM adopted.rows" },
+        destination_table_name_template: {
+          stringValue: 'adopted_{run_time|"%H%M%S"}',
+        },
+      },
+    },
+  };
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("updates only the notification topic when it differs", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    const updateTransferConfig = vi
+      .fn()
+      .mockResolvedValue([{ ...linked, notificationPubsubTopic: "updated" }]);
+    const client = {
+      updateTransferConfig,
+    } as unknown as DataTransferClient;
+
+    const updated = await updateNotificationTopic(
+      client,
+      { ...linked, notificationPubsubTopic: "projects/p/topics/ext-old-topic" },
+      config
+    );
+
+    expect(warn).toHaveBeenCalledWith(expect.any(String), {
+      name: linked.name,
+      previousTopic: "projects/p/topics/ext-old-topic",
+      topic: "projects/test-project/topics/kit-users-export-processMessages",
+    });
+    const request = updateTransferConfig.mock.calls[0][0];
+    expect(request.updateMask.paths).toEqual(["notification_pubsub_topic"]);
+    expect(request.transferConfig.notificationPubsubTopic).toBe(
+      "projects/test-project/topics/kit-users-export-processMessages"
+    );
+    expect(request.transferConfig.name).toBe(linked.name);
+    expect(request.transferConfig.destinationDatasetId).toBeFalsy();
+    expect(request.transferConfig.schedule).toBeFalsy();
+    expect(request.transferConfig.params).toBeFalsy();
+    expect(updated.notificationPubsubTopic).toBe("updated");
+  });
+
+  test("leaves a config already notifying this instance untouched", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    const updateTransferConfig = vi.fn();
+    const client = {
+      updateTransferConfig,
+    } as unknown as DataTransferClient;
+    const alreadyLinked = {
+      ...linked,
+      notificationPubsubTopic:
+        "projects/test-project/topics/kit-users-export-processMessages",
+    };
+
+    const returned = await updateNotificationTopic(
+      client,
+      alreadyLinked,
+      config
+    );
+
+    expect(updateTransferConfig).not.toHaveBeenCalled();
+    expect(returned).toBe(alreadyLinked);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  test("does not warn about a takeover when the config had no topic", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    const updateTransferConfig = vi
+      .fn()
+      .mockResolvedValue([{ ...linked, notificationPubsubTopic: "updated" }]);
+    const client = {
+      updateTransferConfig,
+    } as unknown as DataTransferClient;
+
+    await updateNotificationTopic(client, linked, config);
+
+    expect(updateTransferConfig).toHaveBeenCalledTimes(1);
+    expect(warn).not.toHaveBeenCalled();
   });
 });

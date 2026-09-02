@@ -152,11 +152,40 @@ query on first deploy, then reconciles supported query, table, schedule,
 dataset, partitioning, and topic changes on later deploys. It retries transient
 failures up to five times with at least 30 seconds of backoff.
 
-Set `TRANSFER_CONFIG_NAME` to link an existing scheduled-query config without
-changing it. Otherwise the kit stores `extInstanceId` on the Firestore config
-document and uses that value to find the config on later deploys. BigQuery DTS
-does not support clearing a partitioning field once set; create a new transfer
-config to remove partitioning.
+Without `TRANSFER_CONFIG_NAME` the kit stores `extInstanceId` on the Firestore
+config document and uses that value to find its own config on later deploys.
+BigQuery DTS does not support clearing a partitioning field once set; create a
+new transfer config to remove partitioning.
+
+### Linking an existing scheduled query
+
+Set `TRANSFER_CONFIG_NAME` to link an existing scheduled-query config. The kit
+needs that config's completion notifications to read its run output, so it
+repoints them at this instance's topic. The update is masked to
+`notification_pubsub_topic` alone, so the query, schedule, destination, and
+display name stay exactly as the config's owner set them.
+
+Repointing the topic is a takeover, though. A config notifies one topic, so
+whatever consumed the previous one stops receiving runs: no error on either
+side, and nothing in the config's run history looks different. Removing this
+instance does not put the old topic back either. The deploy that changes it logs
+the previous value at warn, which is the only record of what to restore. Two
+instances linking the same config fail the same way, with the last deploy
+winning and the earlier instance going quiet.
+
+Linking also assumes the config is shaped the way the kit builds its own:
+
+- Its destination table template is `<name>_{run_time|"%H%M%S"}`. `processMessages`
+  substitutes that exact placeholder to work out which table a finished run
+  wrote to.
+- It lives in this project. The results query is built from `PROJECT_ID`, not
+  from the run notification.
+- Its destination dataset is in `BIGQUERY_DATASET_LOCATION`.
+
+A config outside that shape surfaces as a BigQuery table-not-found inside
+`processMessages` rather than as anything naming the mismatch, and
+`processMessages` retries, so it repeats instead of failing once. That shape is
+the only supported one.
 
 ## Firestore layout
 

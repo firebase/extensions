@@ -122,6 +122,33 @@ export function transferConfigUpdated(name: string): void {
   logger.info("Updated BigQuery Data Transfer config", { name });
 }
 
+export function notificationTopicTakeover(
+  name: string,
+  previousTopic: string,
+  topic: string
+): void {
+  logger.warn(
+    "Taking over the notification topic of a linked transfer config. A config " +
+      "notifies one topic, so anything consuming the previous topic stops " +
+      "receiving runs, and removing this instance does not restore it.",
+    { name, previousTopic, topic }
+  );
+}
+
+export function updateNotificationTopic(name: string, topic: string): void {
+  logger.info("Pointing a linked transfer config at this instance's topic", {
+    name,
+    topic,
+  });
+}
+
+export function notificationTopicUpdated(name: string, topic: string): void {
+  logger.info("Updated the notification topic of a linked transfer config", {
+    name,
+    topic,
+  });
+}
+
 export function transferConfigNotFound(name: string): void {
   logger.error("BigQuery Data Transfer config not found", { name });
 }

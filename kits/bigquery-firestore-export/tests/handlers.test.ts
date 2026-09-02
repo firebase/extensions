@@ -21,6 +21,7 @@ import { resolveConfig } from "../src/export-config";
 const mocks = vi.hoisted(() => ({
   createTransferConfig: vi.fn(),
   getTransferConfig: vi.fn(),
+  updateNotificationTopic: vi.fn(),
   updateTransferConfig: vi.fn(),
   handleTransferRunMessage: vi.fn(),
 }));
@@ -28,6 +29,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../src/dts", () => ({
   createTransferConfig: mocks.createTransferConfig,
   getTransferConfig: mocks.getTransferConfig,
+  updateNotificationTopic: mocks.updateNotificationTopic,
   updateTransferConfig: mocks.updateTransferConfig,
 }));
 
@@ -146,11 +148,18 @@ describe("handleUpsertTransferConfig", () => {
     });
   });
 
-  test("links an explicitly named transfer config without updating it", async () => {
+  test("links an explicitly named transfer config and repoints its topic", async () => {
     const linked = {
       name: "projects/p/locations/us/transferConfigs/config-2",
+      notificationPubsubTopic: "projects/p/topics/ext-old-topic",
+    };
+    const notifying = {
+      ...linked,
+      notificationPubsubTopic:
+        "projects/test-project/topics/kit-users-export-processMessages",
     };
     mocks.getTransferConfig.mockResolvedValue(linked);
+    mocks.updateNotificationTopic.mockResolvedValue(notifying);
     const { ctx, set } = makeContext({
       transferConfigName: linked.name,
     });
@@ -161,10 +170,15 @@ describe("handleUpsertTransferConfig", () => {
       ctx.dataTransfer,
       linked.name
     );
+    expect(mocks.updateNotificationTopic).toHaveBeenCalledWith(
+      ctx.dataTransfer,
+      linked,
+      ctx.config
+    );
     expect(mocks.updateTransferConfig).not.toHaveBeenCalled();
     expect(set).toHaveBeenCalledWith({
       extInstanceId: "users-export",
-      ...linked,
+      ...notifying,
     });
   });
 });
