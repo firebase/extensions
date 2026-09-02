@@ -28,7 +28,12 @@
 
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
-import type { SelectInput, StringParam } from "firebase-functions/params";
+import type {
+  ListParam,
+  MultiSelectInput,
+  SelectInput,
+  StringParam,
+} from "firebase-functions/params";
 import type { ContentFilterLevel } from "../src/export-config";
 
 const ENV_KEYS = [
@@ -278,6 +283,44 @@ describe("CONTENT_FILTER_LEVEL select", () => {
         contentFilterLevel: "False" as never,
       })
     ).toThrow("Invalid HarmBlockThreshold: False");
+  });
+});
+
+/**
+ * The same audit for IMAGE_TYPE: every multiSelect value must be one the
+ * resize path accepts - `"false"` for keeping the original format, or a key
+ * of `SUPPORTED_IMAGE_CONTENT_TYPE_MAP` so the output content type resolves.
+ */
+describe("IMAGE_TYPE multiSelect", () => {
+  async function multiSelectOptions() {
+    await import("../src/config");
+    const { declaredParams } = await import("firebase-functions/params");
+    const param = declaredParams.find(
+      (declared) => declared.name === "IMAGE_TYPE"
+    ) as ListParam | undefined;
+    const input = param?.options.input as MultiSelectInput | undefined;
+    return input?.multiSelect.options ?? [];
+  }
+
+  test('offers the six conversion formats and "false" for the original type', async () => {
+    expect(await multiSelectOptions()).toEqual([
+      { label: "jpeg", value: "jpeg" },
+      { label: "webp", value: "webp" },
+      { label: "png", value: "png" },
+      { label: "tiff", value: "tiff" },
+      { label: "gif", value: "gif" },
+      { label: "avif", value: "avif" },
+      { label: "original", value: "false" },
+    ]);
+  });
+
+  test("every conversion value maps to an output content type", async () => {
+    const { SUPPORTED_IMAGE_CONTENT_TYPE_MAP } = await import("../src/global");
+    for (const { value } of await multiSelectOptions()) {
+      if (value !== "false") {
+        expect(SUPPORTED_IMAGE_CONTENT_TYPE_MAP).toHaveProperty(value);
+      }
+    }
   });
 });
 
