@@ -259,9 +259,19 @@ status: { state: "COMPLETED", request: { query, limit, prefilters } }
 ```
 
 They previously carried `status.textQuery`, so anything reading that path needs
-updating; waiting on `result` also works. The `request` record is what the kit
-compares against the document's current inputs to decide whether a write needs a
-new query run, so it must not be edited by hand.
+updating. Do not treat the presence of `result` alone as completion: while a
+changed query re-runs, the document still holds the previous result, so a
+consumer waiting only on `result` can read the old query's result. A query is
+complete when `status.state` is `COMPLETED` and `status.request` matches the
+document's current `query`, `limit`, and `prefilters`. The `request` record is
+what the kit compares against those inputs to decide whether a write needs a new
+query run, so it must not be edited by hand.
+
+The extension always wrote query-document status to the literal `status` field,
+ignoring `STATUS_FIELD_NAME` there; the kit honors the param on query documents
+too, so a non-default value moves this field. The kit rejects `query`, `limit`,
+`prefilters`, and `result` as values, since a status field with one of those
+names would overwrite the query-document field of the same name.
 
 Unlike the extension, a completed query document re-runs when its `query`,
 `limit`, or `prefilters` change (the extension never re-ran a completed query
