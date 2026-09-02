@@ -76,6 +76,13 @@ const params = {
     }),
   }),
   transferConfigName: defineString("TRANSFER_CONFIG_NAME", { default: "" }),
+  pubSubTopic: defineString("PUB_SUB_TOPIC", {
+    label: "Pub/Sub Topic",
+    description:
+      "Which Pub/Sub topic should receive BigQuery Data Transfer completion notifications? Leave the default unless you are migrating from the bigquery-firestore-export extension, whose topic is named ext-<instance id>-processMessages. Pointing this at the extension's topic keeps the existing scheduled query's notification settings untouched.",
+
+    default: expr`kit-${instanceId}-processMessages`,
+  }),
   datasetId: defineString("DATASET_ID", {
     label: "Dataset ID",
     description:
@@ -168,7 +175,7 @@ const params = {
 };
 
 export const CONFIG_EXPRESSIONS: DeployTimeOptions = {
-  pubSubTopic: expr`kit-${instanceId}-processMessages`,
+  pubSubTopic: params.pubSubTopic,
 };
 
 function optional(value: string): string | undefined {
@@ -198,7 +205,7 @@ export function configFromEnv(): BigqueryFirestoreExportConfig {
     displayName: params.displayName.value(),
     partitioningField: optional(params.partitioningField.value()),
     schedule: params.schedule.value(),
-    pubSubTopic: `kit-${resolvedInstanceId}-processMessages`,
+    pubSubTopic: params.pubSubTopic.value(),
     firestoreCollection: params.firestoreCollection.value(),
     logLevel: normalizeLogLevel(params.logLevel.value()),
   };

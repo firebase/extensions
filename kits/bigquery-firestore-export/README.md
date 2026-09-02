@@ -114,6 +114,7 @@ loads them at deploy time and prompts for required values that are missing.
 | `displayName`             | `DISPLAY_NAME`              | yes      | —                 | Human-readable scheduled-query name                          |
 | `partitioningField`       | `PARTITIONING_FIELD`        | no       | (empty)           | Destination-table partitioning field                         |
 | `schedule`                | `SCHEDULE`                  | yes      | —                 | DTS schedule, such as `every 24 hours`                       |
+| `pubSubTopic`             | `PUB_SUB_TOPIC`             | no       | `kit-<INSTANCE_ID>-processMessages` | Pub/Sub topic receiving DTS completion notifications        |
 | `firestoreCollection`     | `COLLECTION_PATH`           | no       | `transferConfigs` | Root Firestore collection for configs and output             |
 | `logLevel`                | `LOG_LEVEL`                 | no       | `info`            | `debug`, `info`, `warn`, `error`, or `silent`                |
 
@@ -192,16 +193,29 @@ config document with `extInstanceId`. Here `INSTANCE_ID` is a setting you
 provide, and it must match this instance's key in the `instances` map in
 `firebase.json`.
 
-The topic becomes `kit-<INSTANCE_ID>-processMessages`, and the kit creates it on
-first run if it does not already exist. Set `INSTANCE_ID` to your installed
+The topic defaults to `kit-<INSTANCE_ID>-processMessages`, and the kit creates it
+on first run if it does not already exist. Set `INSTANCE_ID` to your installed
 instance's id if you want the kit to adopt the scheduled query that instance
 created, because the lookup is by `extInstanceId` on the documents in
 `COLLECTION_PATH`. With a different id the kit finds nothing, creates a second
 scheduled query, and you end up with two writing into the same collection.
 
-The existing transfer config still points its notifications at the old `ext-`
-topic; the kit's update path rewrites `notification_pubsub_topic` to the new one
-on the first deploy, so the old topic can be deleted afterwards.
+An adopted transfer config still notifies the extension's `ext-` topic, and the
+kit reconciles `notification_pubsub_topic` to whatever `PUB_SUB_TOPIC` names. So
+there are two ways to migrate:
+
+- Keep the extension's topic. Set
+  `PUB_SUB_TOPIC=ext-<instance id>-processMessages`, and the transfer config is
+  left untouched: anything else subscribed to that topic, including an extension
+  instance still installed, keeps receiving run notifications.
+- Take the default. The first deploy repoints the transfer config at
+  `kit-<INSTANCE_ID>-processMessages`, which stops notifications reaching the
+  extension and any other subscriber on the old topic. Do this once the extension
+  is uninstalled, and the old topic can then be deleted.
+
+`TRANSFER_CONFIG_NAME` is the exception. A linked config is adopted as-is and is
+never repointed, so if it notifies a topic other than `PUB_SUB_TOPIC` the kit
+logs a warning and its runs never reach the kit's `processMessages` function.
 
 ### Repeated BigQuery columns are now written as arrays
 

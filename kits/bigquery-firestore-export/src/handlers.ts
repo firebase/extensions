@@ -23,6 +23,7 @@ import {
   createTransferConfig,
   type DataTransferClient,
   getTransferConfig,
+  notificationTopicName,
   updateTransferConfig,
 } from "./dts";
 import type { ResolvedBigqueryFirestoreExportConfig } from "./export-config";
@@ -107,6 +108,16 @@ export async function handleUpsertTransferConfig(
     if (!linked) {
       throw new Error(
         `Transfer config not found: ${ctx.config.transferConfigName}`
+      );
+    }
+    // A linked config is adopted as-is, so a topic mismatch is the user's to
+    // resolve: rewriting it would repoint a config this deployment did not create.
+    const expectedTopic = notificationTopicName(ctx.config);
+    if (linked.notificationPubsubTopic !== expectedTopic) {
+      logs.linkedTopicMismatch(
+        ctx.config.transferConfigName,
+        linked.notificationPubsubTopic,
+        expectedTopic
       );
     }
     await storeTransferConfig(ctx, linked);

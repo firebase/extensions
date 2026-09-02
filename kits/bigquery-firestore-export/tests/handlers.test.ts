@@ -23,13 +23,18 @@ const mocks = vi.hoisted(() => ({
   getTransferConfig: vi.fn(),
   updateTransferConfig: vi.fn(),
   handleTransferRunMessage: vi.fn(),
+  linkedTopicMismatch: vi.fn(),
 }));
 
-vi.mock("../src/dts", () => ({
-  createTransferConfig: mocks.createTransferConfig,
-  getTransferConfig: mocks.getTransferConfig,
-  updateTransferConfig: mocks.updateTransferConfig,
-}));
+vi.mock("../src/dts", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/dts")>();
+  return {
+    notificationTopicName: actual.notificationTopicName,
+    createTransferConfig: mocks.createTransferConfig,
+    getTransferConfig: mocks.getTransferConfig,
+    updateTransferConfig: mocks.updateTransferConfig,
+  };
+});
 
 vi.mock("../src/helper", () => ({
   handleTransferRunMessage: mocks.handleTransferRunMessage,
@@ -43,6 +48,7 @@ vi.mock("../src/logs", () => ({
   error: vi.fn(),
   start: vi.fn(),
   topicCreated: vi.fn(),
+  linkedTopicMismatch: mocks.linkedTopicMismatch,
 }));
 
 import { handleUpsertTransferConfig } from "../src/handlers";
@@ -149,6 +155,8 @@ describe("handleUpsertTransferConfig", () => {
   test("links an explicitly named transfer config without updating it", async () => {
     const linked = {
       name: "projects/p/locations/us/transferConfigs/config-2",
+      notificationPubsubTopic:
+        "projects/test-project/topics/kit-users-export-processMessages",
     };
     mocks.getTransferConfig.mockResolvedValue(linked);
     const { ctx, set } = makeContext({
@@ -160,6 +168,30 @@ describe("handleUpsertTransferConfig", () => {
     expect(mocks.getTransferConfig).toHaveBeenCalledWith(
       ctx.dataTransfer,
       linked.name
+    );
+    expect(mocks.updateTransferConfig).not.toHaveBeenCalled();
+    expect(mocks.linkedTopicMismatch).not.toHaveBeenCalled();
+    expect(set).toHaveBeenCalledWith({
+      extInstanceId: "users-export",
+      ...linked,
+    });
+  });
+
+  test("warns instead of repointing a linked config on another topic", async () => {
+    const linked = {
+      name: "projects/p/locations/us/transferConfigs/config-3",
+      notificationPubsubTopic:
+        "projects/test-project/topics/ext-users-export-processMessages",
+    };
+    mocks.getTransferConfig.mockResolvedValue(linked);
+    const { ctx, set } = makeContext({ transferConfigName: linked.name });
+
+    await handleUpsertTransferConfig(ctx);
+
+    expect(mocks.linkedTopicMismatch).toHaveBeenCalledWith(
+      linked.name,
+      linked.notificationPubsubTopic,
+      "projects/test-project/topics/kit-users-export-processMessages"
     );
     expect(mocks.updateTransferConfig).not.toHaveBeenCalled();
     expect(set).toHaveBeenCalledWith({

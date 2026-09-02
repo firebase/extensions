@@ -70,10 +70,6 @@ export function bigqueryQueryFailed(
   });
 }
 
-export function writeRunResultsToFirestore(runId: string): void {
-  logger.debug("Writing BigQuery results to Firestore", { runId });
-}
-
 export function runResultsWrittenToFirestore(
   runId: string,
   successCount: number,
@@ -146,4 +142,15 @@ export function partitioningFieldRemovalAttempted(
 
 export function topicCreated(name: string): void {
   logger.info("Created Pub/Sub topic for transfer notifications", { name });
+}
+
+export function linkedTopicMismatch(
+  name: string,
+  linkedTopic: string | null | undefined,
+  expectedTopic: string
+): void {
+  logger.warn(
+    "Linked transfer config notifies a different Pub/Sub topic, so its runs will not reach this kit. Set PUB_SUB_TOPIC to the linked topic, or point the transfer config at the configured one.",
+    { name, linkedTopic: linkedTopic ?? "", expectedTopic }
+  );
 }
