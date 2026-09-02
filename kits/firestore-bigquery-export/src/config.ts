@@ -171,6 +171,7 @@ const params = {
       "Delhi (asia-south2)": "asia-south2",
       "Singapore (asia-southeast1)": "asia-southeast1",
       "Jakarta (asia-southeast2)": "asia-southeast2",
+      "Kuala Lumpur (asia-southeast3)": "asia-southeast3",
       "Taiwan (asia-east1)": "asia-east1",
       "Hong Kong (asia-east2)": "asia-east2",
       "Tokyo (asia-northeast1)": "asia-northeast1",
