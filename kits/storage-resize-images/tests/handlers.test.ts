@@ -415,6 +415,26 @@ describe("generateResizedImageHandler", () => {
     expect(deleteRemoteFile).toHaveBeenCalledTimes(1);
   });
 
+  test("an omitted deleteOriginal deletes a filter-blocked original once its placeholder resizes", async () => {
+    // Matches the extension: the blocked original is replaced and then removed
+    // under on_success, unless failedImagesPath stored a copy first.
+    const remoteFile = { delete: vi.fn() };
+    mock(downloadOriginalFile).mockResolvedValue(["/tmp/test.jpg", remoteFile]);
+    mock(checkImageContent).mockResolvedValue(false);
+    const ctx = makeCtx(
+      {},
+      { bucket: "demo-bucket", sizes: "200x200", region: "us-central1" }
+    );
+
+    await generateResizedImageHandler(mockObject, ctx, false);
+
+    expect(deleteRemoteFile).toHaveBeenCalledWith(
+      remoteFile,
+      "images/test.jpg"
+    );
+    expect(deleteRemoteFile).toHaveBeenCalledTimes(1);
+  });
+
   test("an omitted deleteOriginal keeps the original on a failed run", async () => {
     mock(downloadOriginalFile).mockResolvedValue([
       "/tmp/test.jpg",
