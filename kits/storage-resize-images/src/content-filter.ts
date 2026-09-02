@@ -78,16 +78,12 @@ export async function checkImageContent(
   if (filterLevel === null && prompt === null) {
     return true;
   }
-  if (!location) {
-    throw new Error("FUNCTION_REGION is required for Vertex AI filtering.");
-  }
-
   const imageBuffer = fs.readFileSync(localOriginalFile);
   const dataUrl = createImageDataUrl(imageBuffer, contentType);
   const ai = genkit({
     plugins: [
       vertexAI({
-        location,
+        location: location ?? "us-central1",
         models: ["gemini-2.5-flash"],
       }),
     ],
