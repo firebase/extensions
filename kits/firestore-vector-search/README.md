@@ -251,9 +251,10 @@ longer written, only `COMPLETED` and `ERROR`. Anything reading
 `status.<instance id>.state`, or a security rule or index keyed to it, needs
 updating. The field name is still `STATUS_FIELD_NAME`, defaulting to `status`.
 
-Query documents no longer get a status field at all. They previously carried
-`status.textQuery`, so if you were waiting on that to know a query had finished,
-wait for `result` instead.
+This applies to the documents in your indexed collection only. Query documents
+keep the extension's nested shape, `status.textQuery`, with the same states and
+timestamps, so anything waiting on that path still works. As in the extension,
+that path is always literally `status`, whatever `STATUS_FIELD_NAME` is set to.
 
 ### Editing a document's input re-embeds it
 
@@ -307,7 +308,11 @@ for; the Firebase CLI grants these for you.
   `status`, and embeddings are still written as native Firestore vectors.
 - Querying by writing a document to `_<instance id>/index/queries` still works
   the same way, with `query`, an optional `limit` and optional `prefilters`, and
-  the matching document ids written back to the document under `result`.
+  the matching document ids written back to the document under `result`. A query
+  document is still run once: writes that leave `query` and `limit` untouched are
+  ignored, as is any write to a document whose `status.textQuery.state` is
+  already set, so editing a completed query document does not re-run it and a
+  failed one is not retried. Write a new document for a new query.
 - `queryCallable` still requires an authenticated caller, still validates its
   argument with the same schema, still rejects a `limit` that is not an integer
   above zero, and still returns `{ ids: [...] }`.

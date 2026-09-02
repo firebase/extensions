@@ -36,7 +36,12 @@ vi.mock("../src/embeddings", () => ({
 // handler never needs it.
 vi.mock("../src/queries/setup", () => ({ createIndex: vi.fn() }));
 
-import { type HandlerContext, handleQueryCall } from "../src/handlers";
+import {
+  type HandlerContext,
+  type VectorWriteEvent,
+  handleQueryCall,
+  handleQueryOnWrite,
+} from "../src/handlers";
 import { resolveVectorSearchConfig } from "../src/export-config";
 
 const config = resolveVectorSearchConfig({
@@ -203,5 +208,231 @@ describe("handleQueryCall", () => {
 
     expect((err as { code: string }).code).toBe("unknown");
     expect((err as Error).message).toBe("Query failed");
+  });
+});
+
+/**
+ * A DocumentSnapshot stand-in. `undefined` data means the snapshot does not
+ * exist, matching a create's `before` or a delete's `after`.
+ */
+function snapshot(
+  data: Record<string, unknown> | undefined,
+  createTime: unknown = "doc-create-time"
+) {
+  const update = vi.fn().mockResolvedValue(undefined);
+  return {
+    exists: data !== undefined,
+    createTime,
+    data: () => data,
+    get: (path: string) =>
+      path
+        .split(".")
+        .reduce<unknown>(
+          (acc, key) =>
+            acc == null ? undefined : (acc as Record<string, unknown>)[key],
+          data
+        ),
+    ref: { path: "queries/query-1", update },
+    update,
+  };
+}
+
+function writeEvent(
+  before: ReturnType<typeof snapshot>,
+  after: ReturnType<typeof snapshot>
+) {
+  return {
+    data: { before, after },
+    params: { queryId: "query-1" },
+  } as unknown as VectorWriteEvent;
+}
+
+const COMPLETED_STATUS = {
+  status: { textQuery: { state: "COMPLETED" } },
+};
+
+describe("handleQueryOnWrite", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getSingleEmbedding.mockResolvedValue(EMBEDDING);
+  });
+
+  test("runs the query on create and writes the result with a status", async () => {
+    const { ctx, chain } = makeCtx();
+    const after = snapshot({ query: "test query" });
+
+    await handleQueryOnWrite(writeEvent(snapshot(undefined), after), ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("test query");
+    expect(chain.findNearest).toHaveBeenCalledWith(
+      config.outputFieldName,
+      EMBEDDING,
+      {
+        limit: config.defaultQueryLimit,
+        distanceMeasure: config.distanceMeasure,
+      }
+    );
+    expect(after.update).toHaveBeenCalledTimes(2);
+
+    const start = after.update.mock.calls[0][0];
+    expect(start["status.textQuery"]).toMatchObject({
+      state: "PROCESSING",
+      createTime: "doc-create-time",
+    });
+    expect(start["status.textQuery"].startTime).toBeDefined();
+    expect(start["status.textQuery"].updateTime).toBeDefined();
+
+    const complete = after.update.mock.calls[1][0];
+    expect(complete.result).toEqual({ ids: IDS });
+    expect(complete["status.textQuery.state"]).toBe("COMPLETED");
+    expect(complete["status.textQuery.updateTime"]).toBeDefined();
+    expect(complete["status.textQuery.completeTime"]).toBeDefined();
+  });
+
+  test("keeps an existing status order field across a re-run", async () => {
+    const { ctx } = makeCtx();
+    const after = snapshot({
+      query: "second query",
+      status: { textQuery: { createTime: "first-run-create-time" } },
+    });
+
+    await handleQueryOnWrite(
+      writeEvent(snapshot({ query: "first query" }), after),
+      ctx
+    );
+
+    expect(after.update.mock.calls[0][0]["status.textQuery"].createTime).toBe(
+      "first-run-create-time"
+    );
+  });
+
+  test("ignores the result write it makes itself", async () => {
+    const { ctx } = makeCtx();
+    const after = snapshot({
+      query: "test query",
+      result: { ids: IDS },
+      ...COMPLETED_STATUS,
+    });
+
+    await handleQueryOnWrite(
+      writeEvent(snapshot({ query: "test query" }), after),
+      ctx
+    );
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(after.update).not.toHaveBeenCalled();
+  });
+
+  test.each(["PROCESSING", "COMPLETED", "ERROR", "BACKFILLED"])(
+    "never re-runs a document whose status is %s, even when the query changes",
+    async (state) => {
+      const { ctx } = makeCtx();
+      const after = snapshot({
+        query: "changed query",
+        status: { textQuery: { state } },
+      });
+
+      await handleQueryOnWrite(
+        writeEvent(snapshot({ query: "original query" }), after),
+        ctx
+      );
+
+      expect(getSingleEmbedding).not.toHaveBeenCalled();
+      expect(after.update).not.toHaveBeenCalled();
+    }
+  );
+
+  test("ignores a write that changes neither the query nor the limit", async () => {
+    const { ctx } = makeCtx();
+    const after = snapshot({ query: "test query", unrelated: "b" });
+
+    await handleQueryOnWrite(
+      writeEvent(snapshot({ query: "test query", unrelated: "a" }), after),
+      ctx
+    );
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(after.update).not.toHaveBeenCalled();
+  });
+
+  test("runs when the limit changes on a document with no status", async () => {
+    const { ctx, chain } = makeCtx();
+    const after = snapshot({ query: "test query", limit: "5" });
+
+    await handleQueryOnWrite(
+      writeEvent(snapshot({ query: "test query", limit: "3" }), after),
+      ctx
+    );
+
+    expect(chain.findNearest).toHaveBeenCalledWith(
+      config.outputFieldName,
+      EMBEDDING,
+      { limit: 5, distanceMeasure: config.distanceMeasure }
+    );
+  });
+
+  test("applies the document prefilters", async () => {
+    const { ctx, chain } = makeCtx();
+    const after = snapshot({
+      query: "test query",
+      prefilters: [{ field: "category", operator: "==", value: "test" }],
+    });
+
+    await handleQueryOnWrite(writeEvent(snapshot(undefined), after), ctx);
+
+    expect(chain.where).toHaveBeenCalledWith("category", "==", "test");
+  });
+
+  test("marks the document ERROR and succeeds when the query fails", async () => {
+    const { ctx } = makeCtx();
+    getSingleEmbedding.mockRejectedValue(new Error("Embedding failed"));
+    const after = snapshot({ query: "test query" });
+
+    await expect(
+      handleQueryOnWrite(writeEvent(snapshot(undefined), after), ctx)
+    ).resolves.toBeUndefined();
+
+    expect(after.update).toHaveBeenCalledTimes(2);
+    const failure = after.update.mock.calls[1][0];
+    expect(failure["status.textQuery.state"]).toBe("ERROR");
+    expect(failure["status.textQuery.updateTime"]).toBeDefined();
+    expect(failure.result).toBeUndefined();
+  });
+
+  test("propagates a failed result write instead of marking it ERROR", async () => {
+    const { ctx } = makeCtx();
+    const after = snapshot({ query: "test query" });
+    after.update
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error("Document does not exist"));
+
+    await expect(
+      handleQueryOnWrite(writeEvent(snapshot(undefined), after), ctx)
+    ).rejects.toThrow("Document does not exist");
+
+    expect(after.update).toHaveBeenCalledTimes(2);
+  });
+
+  test("ignores a document without a string query", async () => {
+    const { ctx } = makeCtx();
+    const after = snapshot({ query: 42 });
+
+    await handleQueryOnWrite(writeEvent(snapshot(undefined), after), ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(after.update).not.toHaveBeenCalled();
+  });
+
+  test("ignores a delete", async () => {
+    const { ctx } = makeCtx();
+    const after = snapshot(undefined);
+
+    await handleQueryOnWrite(
+      writeEvent(snapshot({ query: "test query" }), after),
+      ctx
+    );
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(after.update).not.toHaveBeenCalled();
   });
 });
