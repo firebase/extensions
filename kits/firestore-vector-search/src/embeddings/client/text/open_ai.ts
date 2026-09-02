@@ -22,7 +22,8 @@ export class OpenAiEmbedClient extends BaseEmbedClient {
   private readonly client: OpenAI;
 
   constructor(config: ResolvedVectorSearchConfig) {
-    super(1);
+    // The extension's OpenAI client batched 16 inputs per request.
+    super(16);
     if (!config.openAiApiKey) {
       throw new Error("OpenAI embeddings require OPENAI_API_KEY");
     }

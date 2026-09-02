@@ -170,21 +170,18 @@ export async function enqueueTaskThread(params: {
   );
 
   const chunks = chunkArray(taskParams, TASK_CHUNK_SIZE);
+  if (chunks.length === 0) {
+    return;
+  }
+
+  // Record every chunk before dispatching anything. The first task enqueues its
+  // successor as soon as it finishes, so a successor that has not been written
+  // yet costs the thread a retry.
   let writer = firestore.batch();
   let pendingWrites = 0;
-  let counter = 1;
 
-  for (const chunk of chunks) {
-    const taskId = taskIdFor(instanceId, counter);
-
-    if (counter === 1) {
-      logger.info(`Enqueuing the first task ${taskId} 🚀`);
-      await queue.enqueue({ taskId, chunk, tasksDoc });
-      await firestore.doc(tasksDoc).update({
-        backfillStatus: "RUNNING" satisfies BackfillJobStatus,
-      });
-    }
-
+  for (const [index, chunk] of chunks.entries()) {
+    const taskId = taskIdFor(instanceId, index + 1);
     writer.set(firestore.doc(`${tasksDoc}/enqueues/${taskId}`), {
       taskId,
       status: "PENDING" satisfies BackfillJobStatus,
@@ -192,23 +189,29 @@ export async function enqueueTaskThread(params: {
     });
     pendingWrites++;
 
-    // Commit in batches, and always commit the remainder below: an uncommitted
-    // enqueue document stalls the thread, because the task before it cannot
-    // find its successor.
     if (pendingWrites === TASK_CHUNK_SIZE) {
       logger.info("Committing the batch...");
       await writer.commit();
       writer = firestore.batch();
       pendingWrites = 0;
     }
-
-    counter++;
   }
 
   if (pendingWrites > 0) {
     logger.info("Committing the batch...");
     await writer.commit();
   }
+
+  const firstTaskId = taskIdFor(instanceId, 1);
+  logger.info(`Enqueuing the first task ${firstTaskId} 🚀`);
+  await queue.enqueue({
+    taskId: firstTaskId,
+    chunk: chunks[0],
+    tasksDoc,
+  });
+  await firestore.doc(tasksDoc).update({
+    backfillStatus: "RUNNING" satisfies BackfillJobStatus,
+  });
 
   logger.info(`${chunks.length} tasks enqueued successfully 🚀`);
 }

@@ -182,8 +182,9 @@ delete the old vector index first if it was created with a different dimension.
 ### You set `INSTANCE_ID` yourself, and it names the query collection
 
 The extension derived its instance id at install and used it for the query
-collection (`_<instance id>/index/queries`), the index metadata document
-(`_<instance id>/index`) and its task queues. Here `INSTANCE_ID` is a setting you
+collection (`_<instance id>/index/queries`), the index metadata and backfill
+progress document (`_<instance id>/index`, with its `enqueues` subcollection)
+and its task queues. Here `INSTANCE_ID` is a setting you
 provide, and it must match this instance's key in the `instances` map in
 `firebase.json`. To keep serving the query documents your clients already write
 to, set it to your installed instance's id. The four task queue names can also be
@@ -225,7 +226,9 @@ The extension reported backfill progress and failures through the extension
 install UI (`setProcessingState`). There is no such surface for a kit, so
 progress is visible in the function logs and in the progress fields on
 `_<instance id>/index` (`backfillJobsTotal`, `backfillJobsProcessed`,
-`backfillJobsSkipped`, `backfillJobsFailed`, `backfillStatus`) instead.
+`backfillJobsSkipped`, `backfillJobsFailed`, `backfillStatus`) instead. One
+document per chunk is written under `_<instance id>/index/enqueues`, as the
+extension did, each carrying its chunk of document ids and its own status.
 
 ### The `status` field on your documents is a different shape
 
