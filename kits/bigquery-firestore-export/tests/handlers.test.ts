@@ -23,18 +23,9 @@ const mocks = vi.hoisted(() => ({
   getTransferConfig: vi.fn(),
   updateTransferConfig: vi.fn(),
   handleTransferRunMessage: vi.fn(),
-  linkedTopicMismatch: vi.fn(),
-}));
-
-vi.mock("../src/dts", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../src/dts")>();
-  return {
-    notificationTopicName: actual.notificationTopicName,
-    createTransferConfig: mocks.createTransferConfig,
-    getTransferConfig: mocks.getTransferConfig,
-    updateTransferConfig: mocks.updateTransferConfig,
   linkedTransferConfigMissing: vi.fn(),
   partitioningFieldRemovalAborted: vi.fn(),
+  linkedTopicMismatch: vi.fn(),
 }));
 
 // The error constants come from the real module so the handler's prefix match
@@ -45,6 +36,7 @@ vi.mock("../src/dts", async (importOriginal) => {
     createTransferConfig: mocks.createTransferConfig,
     getTransferConfig: mocks.getTransferConfig,
     updateTransferConfig: mocks.updateTransferConfig,
+    notificationTopicName: actual.notificationTopicName,
     PARTITIONING_FIELD_REMOVAL_ERROR: actual.PARTITIONING_FIELD_REMOVAL_ERROR,
     PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX:
       actual.PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX,
