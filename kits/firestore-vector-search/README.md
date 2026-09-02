@@ -251,9 +251,22 @@ longer written, only `COMPLETED` and `ERROR`. Anything reading
 `status.<instance id>.state`, or a security rule or index keyed to it, needs
 updating. The field name is still `STATUS_FIELD_NAME`, defaulting to `status`.
 
-Query documents no longer get a status field at all. They previously carried
-`status.textQuery`, so if you were waiting on that to know a query had finished,
-wait for `result` instead.
+Query documents carry the flat shape too, with a `request` record alongside the
+state:
+
+```
+status: { state: "COMPLETED", request: { query, limit, prefilters } }
+```
+
+They previously carried `status.textQuery`, so anything reading that path needs
+updating; waiting on `result` also works. The `request` record is what the kit
+compares against the document's current inputs to decide whether a write needs a
+new query run, so it must not be edited by hand.
+
+Unlike the extension, a completed query document re-runs when its `query`,
+`limit`, or `prefilters` change (the extension never re-ran a completed query
+document). This matches the kit's embed-path rule below: editing inputs
+re-processes the document.
 
 ### Editing a document's input re-embeds it
 
