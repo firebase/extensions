@@ -52,7 +52,7 @@ function flush(): Promise<void> {
 }
 
 function sentMessage(): any {
-  return send.mock.calls[0][0] as any;
+  return send.mock.calls[0]?.[0];
 }
 
 const successInfo = {
