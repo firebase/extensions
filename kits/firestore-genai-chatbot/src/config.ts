@@ -329,15 +329,20 @@ function num(value: string): number | undefined {
 }
 
 function buildSafetySettings(): SafetySetting[] {
-  const entries: Array<[string, string]> = [
+  const entries: Array<[SafetySetting["category"], string]> = [
     ["HARM_CATEGORY_HATE_SPEECH", params.harmHateSpeech.value()],
     ["HARM_CATEGORY_DANGEROUS_CONTENT", params.harmDangerous.value()],
     ["HARM_CATEGORY_HARASSMENT", params.harmHarassment.value()],
     ["HARM_CATEGORY_SEXUALLY_EXPLICIT", params.harmSexual.value()],
   ];
+  // select() constrains only the CLI prompt; the runtime env value is an
+  // unchecked string, forwarded to the model backend as-is.
   return entries
     .filter(([, threshold]) => threshold.length > 0)
-    .map(([category, threshold]) => ({ category, threshold }));
+    .map(([category, threshold]) => ({
+      category,
+      threshold: threshold as SafetySetting["threshold"],
+    }));
 }
 
 /**

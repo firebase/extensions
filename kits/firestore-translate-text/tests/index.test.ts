@@ -208,6 +208,22 @@ describe("index", () => {
     );
   });
 
+  test("redacts the Google AI API key from the init log", async () => {
+    await importIndex({ ...baseConfig, googleAiApiKey: "super-secret" });
+    const [, handler] = onDocumentWritten.mock.calls[0];
+
+    await handler(makeEvent(makeSnapshot(), makeSnapshot({ input: "hello" })));
+
+    expect(logger.log).toHaveBeenCalledWith(
+      "Initializing extension with the parameter values",
+      expect.objectContaining({
+        collectionPath: baseConfig.collectionPath,
+        googleAiApiKey: "<omitted>",
+      })
+    );
+    expect(JSON.stringify(logger.log.mock.calls)).not.toContain("super-secret");
+  });
+
   test("does not read the secret for the Google Translate provider", async () => {
     await importIndex({ ...baseConfig, provider: "translate" });
     const [, handler] = onDocumentWritten.mock.calls[0];
