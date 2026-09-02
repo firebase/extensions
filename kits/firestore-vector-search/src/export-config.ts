@@ -80,6 +80,21 @@ export interface ResolvedVectorSearchConfig {
 const DEFAULT_COLLECTION_PATH = "products";
 const DEFAULT_QUERY_LIMIT = 3;
 
+// Query documents carry these fields; a status field named after one would
+// overwrite it on the result write.
+const QUERY_DOCUMENT_FIELDS = ["query", "limit", "prefilters", "result"];
+
+function resolveStatusFieldName(statusFieldName: string | undefined): string {
+  const resolved = statusFieldName ?? "status";
+  if (QUERY_DOCUMENT_FIELDS.includes(resolved)) {
+    throw new Error(
+      `statusFieldName "${resolved}" would overwrite a query document field; ` +
+        `use a name other than ${QUERY_DOCUMENT_FIELDS.join(", ")}`
+    );
+  }
+  return resolved;
+}
+
 function dimensionFor(config: VectorSearchConfig): number {
   switch (config.embeddingProvider ?? "gemini") {
     case "gemini":
@@ -130,7 +145,7 @@ export function resolveVectorSearchConfig(
     distanceMeasure: config.distanceMeasure ?? "COSINE",
     inputFieldName: config.inputFieldName ?? "input",
     outputFieldName: config.outputFieldName ?? "embedding",
-    statusFieldName: config.statusFieldName ?? "status",
+    statusFieldName: resolveStatusFieldName(config.statusFieldName),
     doBackfill: config.doBackfill ?? false,
     updateOnConfigure: config.updateOnConfigure ?? false,
     region: config.region ?? process.env.FUNCTION_REGION,
