@@ -22,7 +22,7 @@ export class OpenAiEmbedClient extends BaseEmbedClient {
   private readonly client: OpenAI;
 
   constructor(config: ResolvedVectorSearchConfig) {
-    super(1);
+    super(16);
     if (!config.openAiApiKey) {
       throw new Error("OpenAI embeddings require OPENAI_API_KEY");
     }
@@ -31,9 +31,8 @@ export class OpenAiEmbedClient extends BaseEmbedClient {
 
   async getEmbeddings(inputs: ReadonlyArray<string>): Promise<number[][]> {
     const results = await this.client.embeddings.create({
-      model: "text-embedding-3-small",
+      model: "text-embedding-ada-002",
       input: [...inputs],
-      dimensions: 512,
     });
     return results.data.map((result) => result.embedding);
   }

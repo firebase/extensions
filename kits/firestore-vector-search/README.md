@@ -167,18 +167,6 @@ Selecting `multimodal` deploys, and then every embedding attempt throws
 multimodal image embedding, including reading images out of Cloud Storage, has no
 equivalent here. If you use it, stay on the extension.
 
-### OpenAI embeddings are a different model and a different size
-
-`EMBEDDING_PROVIDER: openai` used `text-embedding-ada-002` and stored the full
-1536-dimension vector, while the Firestore index it created was declared with 512
-dimensions. The kit uses `text-embedding-3-small` at 512 dimensions, which matches
-the index.
-
-Vectors from the two models are not comparable, and the existing index is reused
-as-is because the "does this index already exist" check only looks at the field
-path, not the dimension. Re-embed the whole collection after you switch, and
-delete the old vector index first if it was created with a different dimension.
-
 ### You set `INSTANCE_ID` yourself, and it names the query collection
 
 The extension derived its instance id at install and used it for the query
@@ -315,6 +303,15 @@ for; the Firebase CLI grants these for you.
   `EUCLIDEAN`, `DOT_PRODUCT`, default `COSINE`) behave as before.
 - Gemini and Vertex AI embeddings are still `gemini-embedding-001` at 768
   dimensions.
+- OpenAI embeddings are still `text-embedding-ada-002` at its native 1536
+  dimensions, so vectors already written by an installed instance stay
+  comparable with the ones the kit writes. The vector index the kit creates for
+  `EMBEDDING_PROVIDER: openai` is still declared with 512 dimensions, as the
+  extension declared it, so it does not cover those 1536-dimension vectors and
+  `findNearest` fails against it. That mismatch is the extension's, and it is
+  tracked in [firebase/extensions#3029](https://github.com/firebase/extensions/issues/3029);
+  until it is resolved, create the 1536-dimension index yourself if you query an
+  OpenAI-embedded collection.
 - A custom endpoint still receives `{ batch: [...] }` and must return
   `{ embeddings: [[...]] }`, and still requires all three of
   `CUSTOM_EMBEDDINGS_ENDPOINT`, `CUSTOM_EMBEDDINGS_BATCH_SIZE` and
