@@ -1,1 +1,3 @@
+- The "Off (No filtering)" content-filter option now stores `OFF` instead of `False`, which the resolver rejected, so every storage event threw `Invalid HarmBlockThreshold: False`. A `.env` written by an earlier deploy keeps the stored value on upgrade: if it carries `CONTENT_FILTER_LEVEL=False`, edit it to `OFF` (or re-select the option).
+- The "original" image-type option now stores `false` instead of `False`, which the resize path treated as a target format named `False`, failing every resize for that option. A stored `IMAGE_TYPE=["False"]` likewise needs editing to `["false"]`.
 - Initial release of kit, see README for differences between the legacy extension and this kit

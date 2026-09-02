@@ -31,16 +31,6 @@ import {
   type ResizeImagesConfig,
 } from "./export-config";
 
-const IMAGE_TYPE_OPTIONS = [
-  "jpeg",
-  "webp",
-  "png",
-  "tiff",
-  "gif",
-  "avif",
-  "false",
-] as const;
-const MEMORY_OPTIONS = [512, 1024, 2048, 4096, 8192] as const;
 const ABSOLUTE_PATH_LIST_VALIDATION = {
   validationRegex: /^(?:(\/[^\s\/\,]+)+(\,(\/[^\s\/\,]+)+)*|)$/,
   validationErrorMessage:
@@ -160,7 +150,7 @@ const params = {
       tiff: "tiff",
       gif: "gif",
       avif: "avif",
-      original: "False",
+      original: "false",
     }),
   }),
   outputOptions: defineString("OUTPUT_OPTIONS", {
