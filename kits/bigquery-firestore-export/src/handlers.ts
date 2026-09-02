@@ -151,7 +151,7 @@ export async function handleUpsertTransferConfig(
   } catch (err) {
     if (!isPartitioningFieldRemovalError(err)) throw err;
     // The guard rejects the update while building the request, so nothing was
-    // sent, and no retry can clear a partitioning field once it is set.
+    // sent and a retry hits the same guard.
     logs.partitioningFieldRemovalAborted(err.message);
   }
 }

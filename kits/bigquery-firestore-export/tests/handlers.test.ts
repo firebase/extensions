@@ -27,13 +27,19 @@ const mocks = vi.hoisted(() => ({
   partitioningFieldRemovalAborted: vi.fn(),
 }));
 
-vi.mock("../src/dts", () => ({
-  createTransferConfig: mocks.createTransferConfig,
-  getTransferConfig: mocks.getTransferConfig,
-  updateTransferConfig: mocks.updateTransferConfig,
-  PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX:
-    "Cannot remove partitioning_field from an existing transfer config",
-}));
+// The error constants come from the real module so the handler's prefix match
+// is tested against the message the guard actually throws.
+vi.mock("../src/dts", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/dts")>();
+  return {
+    createTransferConfig: mocks.createTransferConfig,
+    getTransferConfig: mocks.getTransferConfig,
+    updateTransferConfig: mocks.updateTransferConfig,
+    PARTITIONING_FIELD_REMOVAL_ERROR: actual.PARTITIONING_FIELD_REMOVAL_ERROR,
+    PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX:
+      actual.PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX,
+  };
+});
 
 vi.mock("../src/helper", () => ({
   handleTransferRunMessage: mocks.handleTransferRunMessage,
@@ -51,6 +57,7 @@ vi.mock("../src/logs", () => ({
   topicCreated: vi.fn(),
 }));
 
+import { PARTITIONING_FIELD_REMOVAL_ERROR } from "../src/dts";
 import { handleUpsertTransferConfig } from "../src/handlers";
 
 const config = resolveConfig({
@@ -190,9 +197,7 @@ describe("handleUpsertTransferConfig", () => {
 
   test("reports a rejected partitioning-field removal without retrying", async () => {
     mocks.updateTransferConfig.mockRejectedValue(
-      new Error(
-        "Cannot remove partitioning_field from an existing transfer config. The BigQuery Data Transfer API does not support clearing this parameter once it has been set."
-      )
+      new Error(PARTITIONING_FIELD_REMOVAL_ERROR)
     );
     const { ctx, set } = makeContext({
       existing: {
@@ -210,7 +215,7 @@ describe("handleUpsertTransferConfig", () => {
     await expect(handleUpsertTransferConfig(ctx)).resolves.toBeUndefined();
 
     expect(mocks.partitioningFieldRemovalAborted).toHaveBeenCalledWith(
-      expect.stringContaining("Cannot remove partitioning_field")
+      PARTITIONING_FIELD_REMOVAL_ERROR
     );
     expect(set).not.toHaveBeenCalled();
   });
