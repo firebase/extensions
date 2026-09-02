@@ -312,6 +312,7 @@ describe("handleSyncBigQueryTask", () => {
       data: change.data,
     });
     expect(events.recordSuccessEvent).toHaveBeenCalledTimes(1);
+    expect(ctx.enqueue).not.toHaveBeenCalled();
   });
 
   test("rethrows a failed write so Cloud Tasks retries", async () => {
@@ -324,6 +325,9 @@ describe("handleSyncBigQueryTask", () => {
       handleSyncBigQueryTask(taskRequest(serializedChange(), 2), ctx)
     ).rejects.toThrow("still down");
     expect(events.recordSuccessEvent).not.toHaveBeenCalled();
+    // Re-enqueueing from the task would seed a trigger-queue loop; retries
+    // belong to Cloud Tasks alone.
+    expect(ctx.enqueue).not.toHaveBeenCalled();
   });
 
   test("rethrows a failed self-heal without attempting the write", async () => {

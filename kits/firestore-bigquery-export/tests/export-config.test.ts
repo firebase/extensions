@@ -107,4 +107,14 @@ describe("toTrackerConfig", () => {
     );
     expect(tracker.bqProjectId).toBe("analytics-project");
   });
+
+  test("wires the backup collection into the tracker (queue exhaustion durability)", () => {
+    const tracker = toTrackerConfig(
+      resolveExportConfig({ ...base, backupCollectionId: "bq_failures" })
+    );
+    expect(tracker.backupTableId).toBe("bq_failures");
+
+    const withoutBackup = toTrackerConfig(resolveExportConfig(base));
+    expect(withoutBackup.backupTableId).toBeUndefined();
+  });
 });
