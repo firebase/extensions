@@ -23,13 +23,13 @@ below, enables the listed APIs, and attaches the account to every function in
 this kit. Do not set a custom runtime service account for this codebase — it
 conflicts with that automatic setup.
 
-| Role / API | Why |
-|---|---|
-| `roles/storage.admin` | read originals and write resized objects |
-| `roles/aiplatform.user` | optional content filtering via Vertex AI |
-| `roles/eventarc.eventReceiver` | receive Gen2 Storage trigger events |
-| `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
-| `storage-component.googleapis.com` | use Cloud Storage |
+| Role / API                         | Why                                                 |
+| ---------------------------------- | --------------------------------------------------- |
+| `roles/storage.admin`              | read originals and write resized objects            |
+| `roles/aiplatform.user`            | optional content filtering via Vertex AI            |
+| `roles/eventarc.eventReceiver`     | receive Gen2 Storage trigger events                 |
+| `roles/run.invoker`                | allow Eventarc to invoke the Gen2 Cloud Run service |
+| `storage-component.googleapis.com` | use Cloud Storage                                   |
 
 ## Usage
 
@@ -81,26 +81,26 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
 loads them at deploy time and prompts for any required values that are missing.
 
-| Field | Env var | Required | Default | Description |
-|---|---|---|---|---|
-| `bucket` | `IMG_BUCKET` | no | default Storage bucket | Bucket to watch |
-| `sizes` | `IMG_SIZES` | no | `200x200` | Comma-separated resize sizes |
-| `deleteOriginal` | `DELETE_ORIGINAL_FILE` | no | `false` | Delete original after resize |
-| `makePublic` | `MAKE_PUBLIC` | no | `false` | Make resized objects public |
-| `resizedImagesPath` | `RESIZED_IMAGES_PATH` | no | (empty) | Output path prefix |
-| `includePathList` | `INCLUDE_PATH_LIST` | no | (empty) | Comma-separated absolute paths to include (for example, `/users/avatars,/design/pictures`) |
-| `excludePathList` | `EXCLUDE_PATH_LIST` | no | (empty) | Comma-separated absolute paths to exclude (for example, `/users/avatars/thumbs`) |
-| `failedImagesPath` | `FAILED_IMAGES_PATH` | no | (empty) | Failed-image output path |
-| `cacheControlHeader` | `CACHE_CONTROL_HEADER` | no | (empty) | Cache-Control for outputs |
-| `imageTypes` | `IMAGE_TYPE` | no | `["false"]` | Output image types list |
-| `outputOptions` | `OUTPUT_OPTIONS` | no | (empty) | JSON output options |
-| `sharpOptions` | `SHARP_OPTIONS` | no | `{}` | JSON Sharp options |
-| `isAnimated` | `IS_ANIMATED` | no | `true` | Preserve animation |
-| `memory` | `FUNCTION_MEMORY` | no | `1024` | Function memory (MiB) |
-| `regenerateToken` | `REGENERATE_TOKEN` | no | `true` | Regenerate download tokens |
-| `contentFilterLevel` | `CONTENT_FILTER_LEVEL` | no | `OFF` | Content filter level |
-| `customFilterPrompt` | `CUSTOM_FILTER_PROMPT` | no | (empty) | Custom filter prompt |
-| `placeholderImagePath` | `PLACEHOLDER_IMAGE_PATH` | no | (empty) | Placeholder for filtered images |
+| Field                  | Env var                  | Required | Default                | Description                                                                                |
+| ---------------------- | ------------------------ | -------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+| `bucket`               | `IMG_BUCKET`             | no       | default Storage bucket | Bucket to watch                                                                            |
+| `sizes`                | `IMG_SIZES`              | no       | `200x200`              | Comma-separated resize sizes                                                               |
+| `deleteOriginal`       | `DELETE_ORIGINAL_FILE`   | no       | `false`                | Delete original after resize                                                               |
+| `makePublic`           | `MAKE_PUBLIC`            | no       | `false`                | Make resized objects public                                                                |
+| `resizedImagesPath`    | `RESIZED_IMAGES_PATH`    | no       | (empty)                | Output path prefix                                                                         |
+| `includePathList`      | `INCLUDE_PATH_LIST`      | no       | (empty)                | Comma-separated absolute paths to include (for example, `/users/avatars,/design/pictures`) |
+| `excludePathList`      | `EXCLUDE_PATH_LIST`      | no       | (empty)                | Comma-separated absolute paths to exclude (for example, `/users/avatars/thumbs`)           |
+| `failedImagesPath`     | `FAILED_IMAGES_PATH`     | no       | (empty)                | Failed-image output path                                                                   |
+| `cacheControlHeader`   | `CACHE_CONTROL_HEADER`   | no       | (empty)                | Cache-Control for outputs                                                                  |
+| `imageTypes`           | `IMAGE_TYPE`             | no       | `["false"]`            | Output image types list                                                                    |
+| `outputOptions`        | `OUTPUT_OPTIONS`         | no       | (empty)                | JSON output options                                                                        |
+| `sharpOptions`         | `SHARP_OPTIONS`          | no       | `{}`                   | JSON Sharp options                                                                         |
+| `isAnimated`           | `IS_ANIMATED`            | no       | `true`                 | Preserve animation                                                                         |
+| `memory`               | `FUNCTION_MEMORY`        | no       | `1024`                 | Function memory (MiB)                                                                      |
+| `regenerateToken`      | `REGENERATE_TOKEN`       | no       | `true`                 | Regenerate download tokens                                                                 |
+| `contentFilterLevel`   | `CONTENT_FILTER_LEVEL`   | no       | `OFF`                  | Content filter level                                                                       |
+| `customFilterPrompt`   | `CUSTOM_FILTER_PROMPT`   | no       | (empty)                | Custom filter prompt                                                                       |
+| `placeholderImagePath` | `PLACEHOLDER_IMAGE_PATH` | no       | (empty)                | Placeholder for filtered images                                                            |
 
 ## Multiple instances
 
@@ -144,9 +144,11 @@ below are worth knowing before you deploy.
 ### Content filtering runs in the function's region
 
 When `CONTENT_FILTER_LEVEL` is set (or you supply a `CUSTOM_FILTER_PROMPT`),
-the Vertex AI call now uses the region the function is deployed to. The
-extension used the region you picked at install time, falling back to
-`us-central1`.
+the Vertex AI call now uses the region the function is deployed to, falling
+back to `us-central1` when that region is unknown - for example when calling
+`checkImageContent` from the library or running outside a normal CLI deploy,
+where `FUNCTION_REGION` is not set. The extension behaved the same way with
+the region you picked at install time.
 
 Gemini is not available in every region. If you deploy to a region it does not
 serve, filtering fails and the image is treated as a filter error: it is not

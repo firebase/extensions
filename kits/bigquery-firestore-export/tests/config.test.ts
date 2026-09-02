@@ -23,11 +23,40 @@ afterEach(() => {
 });
 
 describe("CONFIG_EXPRESSIONS", () => {
-  test("namespaces the Pub/Sub topic with the required instance id", () => {
+  test("binds the trigger to the Pub/Sub topic parameter", () => {
     expect(CONFIG_EXPRESSIONS.pubSubTopic).toBeInstanceOf(Expression);
     expect((CONFIG_EXPRESSIONS.pubSubTopic as Expression<string>).toCEL()).toBe(
-      "kit-{{ params.INSTANCE_ID }}-processMessages"
+      "{{ params.PUB_SUB_TOPIC }}"
     );
+  });
+
+  test("defaults the topic parameter to the instance-namespaced kit topic", () => {
+    const spec = (
+      CONFIG_EXPRESSIONS.pubSubTopic as unknown as {
+        toSpec: () => { default?: string };
+      }
+    ).toSpec();
+    expect(spec.default).toBe("kit-{{ params.INSTANCE_ID }}-processMessages");
+  });
+
+  test("accepts a topic ID but rejects a full resource name", () => {
+    const spec = (
+      CONFIG_EXPRESSIONS.pubSubTopic as unknown as {
+        toSpec: () => { input?: { text?: { validationRegex?: string } } };
+      }
+    ).toSpec();
+    const pattern = spec.input?.text?.validationRegex;
+    expect(pattern).toBeTypeOf("string");
+    const validate = (value: string) =>
+      new RegExp(pattern as string).test(value);
+
+    expect(validate("ext-users-export-processMessages")).toBe(true);
+    expect(validate("kit-users-export-processMessages")).toBe(true);
+    expect(
+      validate("projects/test-project/topics/ext-users-export-processMessages")
+    ).toBe(false);
+    expect(validate("")).toBe(false);
+    expect(validate("goog-reserved-prefix")).toBe(false);
   });
 });
 
@@ -47,6 +76,8 @@ describe("configFromEnv", () => {
     vi.stubEnv("COLLECTION_PATH", "transferConfigs");
     vi.stubEnv("LOG_LEVEL", "info");
 
+    vi.stubEnv("PUB_SUB_TOPIC", "kit-users-export-processMessages");
+
     expect(configFromEnv()).toMatchObject({
       projectId: "test-project",
       instanceId: "users-export",
@@ -57,5 +88,26 @@ describe("configFromEnv", () => {
       firestoreCollection: "transferConfigs",
       logLevel: "info",
     });
+  });
+
+  test("passes through a topic pointing at the extension's own topic", () => {
+    vi.stubEnv(
+      "FIREBASE_CONFIG",
+      JSON.stringify({ projectId: "test-project" })
+    );
+    vi.stubEnv("INSTANCE_ID", "users-export");
+    vi.stubEnv("BIGQUERY_DATASET_LOCATION", "EU");
+    vi.stubEnv("DATASET_ID", "analytics");
+    vi.stubEnv("TABLE_NAME", "users");
+    vi.stubEnv("QUERY_STRING", "SELECT * FROM source.users");
+    vi.stubEnv("DISPLAY_NAME", "Users export");
+    vi.stubEnv("SCHEDULE", "every 24 hours");
+    vi.stubEnv("COLLECTION_PATH", "transferConfigs");
+    vi.stubEnv("LOG_LEVEL", "info");
+    vi.stubEnv("PUB_SUB_TOPIC", "ext-users-export-processMessages");
+
+    expect(configFromEnv().pubSubTopic).toBe(
+      "ext-users-export-processMessages"
+    );
   });
 });

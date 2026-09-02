@@ -153,10 +153,12 @@ export async function generateResizedImageHandler(
         },
       });
 
-      resizeFailed = resizeResults.some(
-        (result) =>
-          result.status === "rejected" || result.value.success === false
-      );
+      resizeFailed =
+        resizeResults.length === 0 ||
+        resizeResults.some(
+          (result) =>
+            result.status === "rejected" || result.value.success === false
+        );
     }
 
     const failed = filterErrored || resizeFailed;

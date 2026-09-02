@@ -162,21 +162,20 @@ describe("buildPartitioningConfig", () => {
 });
 
 describe("configFromEnv", () => {
-  test("maps params without inventing a region default", () => {
+  test("maps params", () => {
     const config = configFromEnv();
     expect(config.projectId).toBe("test-project");
     expect(config.bqProjectId).toBe("test-project");
     expect(config.databaseId).toBe("(default)");
-    expect(resolveExportConfig(config).location).toBe("");
     expect(config.viewType).toBe("view");
+    expect(resolveExportConfig(config)).not.toHaveProperty("location");
   });
 
   test("exposes deploy-time expressions for trigger metadata", () => {
     expect(CONFIG_EXPRESSIONS.collectionPath.toString()).toBe(
       "params.COLLECTION_PATH"
     );
-    expect(CONFIG_EXPRESSIONS.location.toString()).toBe(
-      "params.DATABASE_REGION"
-    );
+    expect(CONFIG_EXPRESSIONS.database.toString()).toBe("params.DATABASE");
+    expect(CONFIG_EXPRESSIONS).not.toHaveProperty("location");
   });
 });

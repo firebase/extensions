@@ -27,6 +27,7 @@
     "build": "tsc -b",
     "clean": "tsc -b --clean",
     "test": "vitest run",
+    "test:emulator": "firebase emulators:exec --only firestore --project demo-test --config tests/integration/firebase.json \"vitest run tests/integration\"",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
   },
@@ -42,6 +43,7 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   }
 }

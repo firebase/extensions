@@ -26,6 +26,7 @@ vi.mock("../src/events");
 import * as events from "../src/events";
 import { handleDocumentWrite } from "../src/handlers";
 import { messages } from "../src/logs/messages";
+import { createTranslationService } from "../src/translate";
 import {
   defaultEnvironment,
   defaultLanguages,
@@ -36,6 +37,7 @@ import {
   testTranslations,
 } from "./helpers";
 import { logger, resetLoggerMocks } from "./mocks/firebase-functions";
+import { resetGoogleGenaiMocks } from "./mocks/google-genai";
 import {
   resetTranslateMocks,
   translateClass,
@@ -52,15 +54,19 @@ import {
 describe("handleDocumentWrite", () => {
   let firestore: ReturnType<typeof makeFirestore>;
 
-  const context = (overrides: Parameters<typeof makeConfig>[0] = {}) => ({
-    firestore: firestore.firestore,
-    config: makeConfig(overrides),
-  });
+  const context = (overrides: Parameters<typeof makeConfig>[0] = {}) => {
+    const config = makeConfig(overrides);
+    return {
+      config,
+      service: createTranslationService(config, firestore.firestore),
+    };
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
     resetLoggerMocks();
     resetTranslateMocks();
+    resetGoogleGenaiMocks();
     firestore = makeFirestore();
   });
 
@@ -365,24 +371,24 @@ describe("handleDocumentWrite", () => {
       ctx
     );
 
-    expect(logger.log).toHaveBeenCalledWith(
-      ...messages.start({ ...ctx.config, googleAiApiKey: undefined })
-    );
+    expect(logger.log).toHaveBeenCalledWith(...messages.start(ctx.config));
   });
 
-  test("prefers the injected Google AI API key over the config value", async () => {
+  test("redacts the Google AI API key from the start log", async () => {
+    const ctx = context({ googleAiApiKey: "super-secret" });
+
     await handleDocumentWrite(
       makeEvent(makeSnapshot(), makeSnapshot({ input: "hello" })),
-      {
-        firestore: firestore.firestore,
-        config: makeConfig({ googleAiApiKey: "from-config" }),
-        googleAiApiKey: "from-secret",
-      }
+      ctx
     );
 
     expect(logger.log).toHaveBeenCalledWith(
       "Started execution of extension with configuration",
-      expect.objectContaining({ googleAiApiKey: "from-secret" })
+      expect.objectContaining({
+        collectionPath: ctx.config.collectionPath,
+        googleAiApiKey: "<omitted>",
+      })
     );
+    expect(JSON.stringify(logger.log.mock.calls)).not.toContain("super-secret");
   });
 });

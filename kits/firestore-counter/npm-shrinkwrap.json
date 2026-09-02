@@ -1,12 +1,12 @@
 {
   "name": "@firebase-function-kits/firestore-counter",
-  "version": "0.0.2-rc.1",
+  "version": "0.0.2-rc.2",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@firebase-function-kits/firestore-counter",
-      "version": "0.0.2-rc.1",
+      "version": "0.0.2-rc.2",
       "license": "Apache-2.0",
       "dependencies": {
         "deep-equal": "^1.0.1",
@@ -16,6 +16,7 @@
       },
       "devDependencies": {
         "@types/deep-equal": "^1.0.1",
+        "typescript": "^5.9.3",
         "vitest": "^4.1.10"
       },
       "engines": {
@@ -4465,6 +4466,20 @@
       "funding": {
         "type": "opencollective",
         "url": "https://opencollective.com/express"
+      }
+    },
+    "node_modules/typescript": {
+      "version": "5.9.3",
+      "resolved": "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz",
+      "integrity": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==",
+      "dev": true,
+      "license": "Apache-2.0",
+      "bin": {
+        "tsc": "bin/tsc",
+        "tsserver": "bin/tsserver"
+      },
+      "engines": {
+        "node": ">=14.17"
       }
     },
     "node_modules/undici-types": {

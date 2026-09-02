@@ -56,7 +56,9 @@ describe("createGenerateChatResponse", () => {
       topK: 9,
       candidateCount: 2,
       maxOutputTokens: 50,
-      safetySettings: [{ category: "category", threshold: "threshold" }],
+      safetySettings: [
+        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+      ],
     });
     const generate = createGenerateChatResponse(config);
 
@@ -70,7 +72,9 @@ describe("createGenerateChatResponse", () => {
       topK: 9,
       candidateCount: 2,
       maxOutputTokens: 50,
-      safetySettings: [{ category: "category", threshold: "threshold" }],
+      safetySettings: [
+        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+      ],
     });
     expect(result).toEqual({
       response: "first",

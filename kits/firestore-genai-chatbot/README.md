@@ -184,17 +184,22 @@ platform default of 60 seconds applies. Prompts with a long history or a high
 ERROR`. There is no config value for this; raise it on your own trigger from
 `./lib` if you need the old headroom.
 
-### CANDIDATE_COUNT above 1 now really requests that many candidates
+### Generation options now reach the model
 
-With `CANDIDATE_COUNT` above 1, the extension never forwarded the count (nor
-`TEMPERATURE`, `TOP_P` or `TOP_K`) to the model, so it wrote a `candidates` array
-holding the single response it got back. The kit forwards all four, so you get
-the number of candidates you asked for, your sampling settings take effect, and
-the request costs more. Two smaller consequences: with per-discussion overrides
-enabled, a `candidateCount` set on a discussion document now decides whether the
-`candidates` field is written for that message (the extension decided once, from
-the deploy-time value), and a discussion that overrides `candidateCount` above 1
-gets a `candidates` field containing one entry.
+This is a deliberate divergence from the extension. `TEMPERATURE`, `TOP_P`,
+`TOP_K` and `CANDIDATE_COUNT` were accepted as config but never forwarded on the
+generation request, so they had no effect on output: sampling ran at the model
+defaults, and `CANDIDATE_COUNT` above 1 produced a `candidates` array holding
+the single response that came back. The kit forwards all four, so your sampling
+settings take effect, you get the number of candidates you asked for, and a
+request with `CANDIDATE_COUNT` above 1 costs more.
+
+Whether the `candidates` field is written is now decided per request from the
+count actually sent, rather than once from the deploy-time value. With
+per-discussion overrides enabled, a `candidateCount` set on a discussion
+document therefore decides the field for that message, and a discussion that
+overrides `candidateCount` to 1 gets no `candidates` field even when
+`CANDIDATE_COUNT` is higher.
 
 ### Bad numbers are no longer rejected up front
 

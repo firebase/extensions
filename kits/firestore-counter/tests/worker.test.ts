@@ -15,6 +15,7 @@
  */
 
 import type { DocumentSnapshot } from "firebase-admin/firestore";
+import { logger } from "firebase-functions";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("../src/events");
@@ -264,6 +265,94 @@ describe("run", () => {
     expect(db.snapshot("test/worker").data().timestamp).toBe(
       SERVER_TIMESTAMP_MS
     );
+  });
+
+  test("treats loosely-equal metadata values as a change", async () => {
+    db.seed("test/worker", { slice: { start: "", end: "" }, timestamp: 0 });
+    const metadoc = db.snapshot("test/worker");
+    db.seed("test/counter1", { counter: 0 });
+    db.seed(`test/counter1/${SHARDS_COLLECTION_ID}/012345678`, { counter: 1 });
+
+    const worker = new ShardedCounterWorker(
+      metadoc,
+      SHARDS_COLLECTION_ID,
+      true
+    );
+    const logSpy = vi.spyOn(logger, "log");
+
+    // `0 == false`, so a non-strict comparison misses this reassignment.
+    db.seed("test/worker", {
+      slice: { start: "", end: "" },
+      timestamp: false,
+    });
+
+    await runWorker(worker);
+
+    // The metadoc listener must catch it; the in-transaction ownership check
+    // bailing out later would leave the same state behind.
+    expect(logSpy).toHaveBeenCalledWith(
+      "Shutting down because metadoc changed."
+    );
+    expect(db.snapshot("test/counter1").data()).toEqual({ counter: 0 });
+    expect(
+      db.snapshot(`test/counter1/${SHARDS_COLLECTION_ID}/012345678`).exists
+    ).toBe(true);
+    expect(db.snapshot("test/worker").data().stats).toBeUndefined();
+  });
+
+  test("bails out of the aggregation transaction on loosely-equal metadata", async () => {
+    db.seed("test/worker", { slice: { start: "", end: "" }, timestamp: 0 });
+    const metadoc = db.snapshot("test/worker");
+    db.seed("test/counter1", { counter: 0 });
+    db.seed(`test/counter1/${SHARDS_COLLECTION_ID}/012345678`, { counter: 1 });
+
+    const worker = new ShardedCounterWorker(
+      metadoc,
+      SHARDS_COLLECTION_ID,
+      true
+    );
+    const logSpy = vi.spyOn(logger, "log");
+
+    const run = worker.run();
+    // Flush the listeners' initial snapshots of the unchanged metadata.
+    await vi.advanceTimersByTimeAsync(0);
+    // seed() bypasses snapshot listeners, so only the in-transaction
+    // ownership read can observe this `0` -> `false` reassignment.
+    db.seed("test/worker", { slice: { start: "", end: "" }, timestamp: false });
+    await vi.advanceTimersByTimeAsync(46_000);
+    await run;
+
+    expect(logSpy).toHaveBeenCalledWith("Metadata has changed, bailing out...");
+    expect(db.snapshot("test/counter1").data()).toEqual({ counter: 0 });
+    expect(
+      db.snapshot(`test/counter1/${SHARDS_COLLECTION_ID}/012345678`).exists
+    ).toBe(true);
+  });
+
+  test("skips the stats write on loosely-equal metadata", async () => {
+    db.seed("test/worker", { slice: { start: "", end: "" }, timestamp: 0 });
+    const metadoc = db.snapshot("test/worker");
+    db.seed("test/counter1", { counter: 0 });
+    db.seed(`test/counter1/${SHARDS_COLLECTION_ID}/012345678`, { counter: 1 });
+
+    const worker = new ShardedCounterWorker(
+      metadoc,
+      SHARDS_COLLECTION_ID,
+      false
+    );
+
+    const run = worker.run();
+    // Let the first aggregation round complete against unchanged metadata.
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(db.snapshot("test/counter1").data()).toEqual({ counter: 1 });
+    // seed() bypasses snapshot listeners and aggregation is already done, so
+    // only the stats-write guard can observe this `0` -> `false` reassignment.
+    db.seed("test/worker", { slice: { start: "", end: "" }, timestamp: false });
+    await vi.advanceTimersByTimeAsync(44_001);
+    await run;
+
+    expect(db.snapshot("test/worker").data().stats).toBeUndefined();
+    expect(db.snapshot("test/worker").data().timestamp).toBe(false);
   });
 
   test("shuts down without aggregating when its metadata changes", async () => {

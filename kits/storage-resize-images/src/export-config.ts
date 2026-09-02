@@ -22,7 +22,7 @@ export type SafetyThreshold =
   | "BLOCK_ONLY_HIGH"
   | "BLOCK_NONE";
 
-export type ContentFilterLevel = SafetyThreshold | "OFF";
+export type ContentFilterLevel = Exclude<SafetyThreshold, "BLOCK_NONE"> | "OFF";
 export type DeleteOriginalFile = "true" | "false" | "on_success";
 
 export const DELETE_IMAGE = {
@@ -93,7 +93,6 @@ const HARM_BLOCK_THRESHOLD_MAP = {
   BLOCK_LOW_AND_ABOVE: "BLOCK_LOW_AND_ABOVE",
   BLOCK_MEDIUM_AND_ABOVE: "BLOCK_MEDIUM_AND_ABOVE",
   BLOCK_ONLY_HIGH: "BLOCK_ONLY_HIGH",
-  BLOCK_NONE: "BLOCK_NONE",
   OFF: null,
 } as const satisfies Record<ContentFilterLevel, SafetyThreshold | null>;
 

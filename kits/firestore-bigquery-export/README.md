@@ -55,7 +55,6 @@ and configure them with a `.env` (or `.env.<projectId>`):
 COLLECTION_PATH=users
 DATASET_ID=analytics
 TABLE_ID=users
-DATABASE_REGION=europe-west2
 ```
 
 - `fsexportbigquery` is the Firestore trigger.
@@ -103,30 +102,29 @@ Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
 loads them at deploy time and prompts for any required values that are missing.
 `PROJECT_ID` is supplied by the Firebase CLI.
 
-| Field | Env var | Required | Default | Description |
-|---|---|---|---|---|
-| `collectionPath` | `COLLECTION_PATH` | no | `posts` | Collection or collection-group path |
-| `datasetId` | `DATASET_ID` | no | `firestore_export` | BigQuery dataset |
-| `tableId` | `TABLE_ID` | no | `posts` | BigQuery changelog table |
-| `databaseRegion` | `DATABASE_REGION` | yes | — | Region for the trigger and queues |
-| `datasetLocation` | `DATASET_LOCATION` | no | `us` | BigQuery dataset location |
-| `database` | `DATABASE` | no | `(default)` | Firestore database id |
-| `bigqueryProjectId` | `BIGQUERY_PROJECT_ID` | no | project id | Dataset project, if different |
-| `backupCollection` | `BACKUP_COLLECTION` | no | (empty) | Firestore collection for failed rows |
-| `transformFunction` | `TRANSFORM_FUNCTION` | no | (empty) | Optional transform Cloud Function |
-| `tablePartitioning` | `TABLE_PARTITIONING` | no | `NONE` | Table partitioning strategy |
-| `timePartitioningField` | `TIME_PARTITIONING_FIELD` | no | (empty) | Time-partitioning column name |
-| `timePartitioningFieldType` | `TIME_PARTITIONING_FIELD_TYPE` | no | `omit` | Time-partitioning field type |
-| `timePartitioningFirestoreField` | `TIME_PARTITIONING_FIRESTORE_FIELD` | no | (empty) | Firestore field for partitioning |
-| `clustering` | `CLUSTERING` | no | (empty) | Clustering columns (max 4) |
-| `wildcardIds` | `WILDCARD_IDS` | no | `false` | Store path-param values as columns |
-| `useNewSnapshotQuerySyntax` | `USE_NEW_SNAPSHOT_QUERY_SYNTAX` | no | `false` | Use newer snapshot query syntax |
-| `excludeOldData` | `EXCLUDE_OLD_DATA` | no | `false` | Skip previous document state on updates |
-| `viewType` | `VIEW_TYPE` | no | `view` | `view`, `materialized_incremental`, `materialized_non_incremental` |
-| `maxStaleness` | `MAX_STALENESS` | no | (empty) | Materialized view max staleness |
-| `refreshIntervalMinutes` | `REFRESH_INTERVAL_MINUTES` | no | (empty) | Materialized view refresh interval |
-| `kmsKeyName` | `KMS_KEY_NAME` | no | (empty) | CMEK key for the dataset |
-| `logLevel` | `LOG_LEVEL` | no | `info` | `debug`, `info`, `warn`, `error`, `silent` |
+| Field                            | Env var                             | Required | Default            | Description                                                        |
+| -------------------------------- | ----------------------------------- | -------- | ------------------ | ------------------------------------------------------------------ |
+| `collectionPath`                 | `COLLECTION_PATH`                   | no       | `posts`            | Collection or collection-group path                                |
+| `datasetId`                      | `DATASET_ID`                        | no       | `firestore_export` | BigQuery dataset                                                   |
+| `tableId`                        | `TABLE_ID`                          | no       | `posts`            | BigQuery changelog table                                           |
+| `datasetLocation`                | `DATASET_LOCATION`                  | no       | `us`               | BigQuery dataset location                                          |
+| `database`                       | `DATABASE`                          | no       | `(default)`        | Firestore database id                                              |
+| `bigqueryProjectId`              | `BIGQUERY_PROJECT_ID`               | no       | project id         | Dataset project, if different                                      |
+| `backupCollection`               | `BACKUP_COLLECTION`                 | no       | (empty)            | Firestore collection for failed rows                               |
+| `transformFunction`              | `TRANSFORM_FUNCTION`                | no       | (empty)            | Optional transform Cloud Function                                  |
+| `tablePartitioning`              | `TABLE_PARTITIONING`                | no       | `NONE`             | Table partitioning strategy                                        |
+| `timePartitioningField`          | `TIME_PARTITIONING_FIELD`           | no       | (empty)            | Time-partitioning column name                                      |
+| `timePartitioningFieldType`      | `TIME_PARTITIONING_FIELD_TYPE`      | no       | `omit`             | Time-partitioning field type                                       |
+| `timePartitioningFirestoreField` | `TIME_PARTITIONING_FIRESTORE_FIELD` | no       | (empty)            | Firestore field for partitioning                                   |
+| `clustering`                     | `CLUSTERING`                        | no       | (empty)            | Clustering columns (max 4)                                         |
+| `wildcardIds`                    | `WILDCARD_IDS`                      | no       | `false`            | Store path-param values as columns                                 |
+| `useNewSnapshotQuerySyntax`      | `USE_NEW_SNAPSHOT_QUERY_SYNTAX`     | no       | `false`            | Use newer snapshot query syntax                                    |
+| `excludeOldData`                 | `EXCLUDE_OLD_DATA`                  | no       | `false`            | Skip previous document state on updates                            |
+| `viewType`                       | `VIEW_TYPE`                         | no       | `view`             | `view`, `materialized_incremental`, `materialized_non_incremental` |
+| `maxStaleness`                   | `MAX_STALENESS`                     | no       | (empty)            | Materialized view max staleness                                    |
+| `refreshIntervalMinutes`         | `REFRESH_INTERVAL_MINUTES`          | no       | (empty)            | Materialized view refresh interval                                 |
+| `kmsKeyName`                     | `KMS_KEY_NAME`                      | no       | (empty)            | CMEK key for the dataset                                           |
+| `logLevel`                       | `LOG_LEVEL`                         | no       | `info`             | `debug`, `info`, `warn`, `error`, `silent`                         |
 
 ## Multiple instances
 
@@ -154,9 +152,11 @@ the instances cannot collide.
 
 ## Events
 
-When `EVENTARC_CHANNEL` is configured, the function publishes lifecycle events
-such as `onStart`, `onError`, `onSuccess`, and `onCompletion` under
-`firebase.extensions.firestore-bigquery-export.v1.*`.
+When `EVENTARC_CHANNEL` is configured, the function publishes `onStart` and
+`onError` lifecycle events under
+`firebase.extensions.firestore-bigquery-export.v1.*`. The extension's
+`onSuccess` event is not published; see the events entry under
+"Differences from the Stream Firestore to BigQuery extension" below.
 
 ## Provisioning
 
@@ -176,7 +176,9 @@ queues, matching the extension's install vs update/configure split.
 
 If automatic post-deploy enqueue did not run, enqueue a task yourself. The
 snippets below use the `default` instance; substitute your instance id in the
-`kit-<instance id>-` prefix if you named yours differently. Prefer
+`kit-<instance id>-` prefix if you named yours differently, and set
+`FUNCTION_REGION` to the task functions' region (`us-central1` unless you
+overrode the deploy region). Prefer
 `initBigQuerySync` after a first deploy and `setupBigQuerySync` after a
 redeploy or schema-related config change (`TABLE_PARTITIONING`, `CLUSTERING`,
 `WILDCARD_IDS`, `VIEW_TYPE`, and related fields).
@@ -187,7 +189,7 @@ const { initializeApp } = require("firebase-admin/app");
 const { getFunctions } = require("firebase-admin/functions");
 initializeApp();
 getFunctions()
-  .taskQueue("locations/'"$DATABASE_REGION"'/functions/kit-default-initBigQuerySync")
+  .taskQueue("locations/'"$FUNCTION_REGION"'/functions/kit-default-initBigQuerySync")
   .enqueue({})
   .then(() => console.log("init task enqueued"));
 '
@@ -203,7 +205,7 @@ failure is not retried:
 
 ```sh
 URL=$(gcloud functions describe kit-default-initBigQuerySync \
-  --region "$DATABASE_REGION" --gen2 --format='value(url)')
+  --region "$FUNCTION_REGION" --gen2 --format='value(url)')
 
 curl -fsS -X POST -H "Content-Type: application/json" -d '{"data":{}}' \
   -H "Authorization: Bearer $(gcloud auth print-identity-token --audiences="$URL")" "$URL"
@@ -258,11 +260,21 @@ With `WILDCARD_IDS=true`, the wildcard column now contains a `documentId` key
 alongside the path parameters from your collection path. The extension wrote
 the path parameters only.
 
-### Functions deploy to your Firestore region
+### No function location parameter
 
-The extension let you pick a function location separately from the Firestore
-database location. Here, `DATABASE_REGION` sets both: the trigger, the
-lifecycle tasks, and the database being watched.
+The extension's `LOCATION` parameter is gone: the functions in this kit declare
+no region, and the Firebase CLI resolves one at deploy time. A function keeps
+the region it is already deployed in; on a first deploy all functions land in
+`us-central1`. The Firestore trigger itself always fires in the database's own
+region, whatever region the function runs in. To deploy the functions
+elsewhere, set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable
+when running `firebase deploy`. Careful with that variable: it applies to
+every no-region function in the deploy, not just this kit, and changing it on
+an existing install deletes and recreates the functions in the new region -
+new URLs, a recreated task queue, and any in-flight tasks are lost.
+
+If you copied `DATABASE_REGION` into your `.env` from an extension install, it
+is now ignored; delete the line or leave it.
 
 ### Defaults
 
