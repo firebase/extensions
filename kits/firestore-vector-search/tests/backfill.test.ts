@@ -55,10 +55,12 @@ vi.mock("firebase-functions", () => ({
 }));
 
 import {
+  type BackfillProcess,
   type BackfillTaskData,
   chunkArray,
   enqueueTaskThread,
   getNextTaskId,
+  getValidDocs,
   updateOrCreateMetadataDoc,
 } from "../src/backfill";
 import { resolveVectorSearchConfig } from "../src/export-config";
@@ -253,6 +255,12 @@ describe("getNextTaskId", () => {
     );
     expect(getNextTaskId("kit-test-instance-task-49", "test-instance")).toBe(
       "kit-test-instance-task-50"
+    );
+  });
+
+  test('reads the counter when the instance id itself contains "task-"', () => {
+    expect(getNextTaskId("kit-my-task-force-task-3", "my-task-force")).toBe(
+      "kit-my-task-force-task-4"
     );
   });
 
@@ -847,5 +855,60 @@ describe("handleInit", () => {
     await handleInit(ctxWith({ doBackfill: false, updateOnConfigure: false }));
 
     expect(enqueue).not.toHaveBeenCalled();
+  });
+});
+
+describe("getValidDocs", () => {
+  const process = {
+    id: "test-instance",
+    batchSize: 2,
+    shouldBackfill: (data: Record<string, unknown>) =>
+      typeof data.input === "string" && data.input.length > 0,
+    processFn: async () => ({}),
+  } satisfies BackfillProcess;
+
+  /** A Firestore whose transaction callback runs twice, as a retry would. */
+  function retryingFirestore(seed: Record<string, Record<string, unknown>>) {
+    let attempts = 0;
+    const snapshot = (path: string) => ({
+      exists: seed[path] !== undefined,
+      data: () => seed[path],
+      ref: { path, id: path.split("/").pop() as string },
+    });
+    return {
+      attempts: () => attempts,
+      firestore: {
+        collection: (name: string) => ({
+          doc: (id: string) => ({ path: `${name}/${id}` }),
+        }),
+        runTransaction: async (fn: (tx: unknown) => Promise<unknown>) => {
+          const tx = {
+            getAll: async (...refs: { path: string }[]) =>
+              refs.map((r) => snapshot(r.path)),
+          };
+          attempts++;
+          await fn(tx);
+          attempts++;
+          return fn(tx);
+        },
+      },
+    };
+  }
+
+  test("does not double-count documents when the transaction retries", async () => {
+    const { firestore, attempts } = retryingFirestore({
+      [`${COLLECTION}/doc-1`]: { input: "one" },
+      [`${COLLECTION}/doc-2`]: { input: "" },
+    });
+
+    const result = await getValidDocs(process, ["doc-1", "doc-2"], {
+      firestore: firestore as never,
+      collectionName: COLLECTION,
+      statusField: config.statusFieldName,
+    });
+
+    expect(attempts()).toBe(2);
+    expect(result.validDocuments.map((d) => d.ref.id)).toEqual(["doc-1"]);
+    expect(result.skippedDocuments.map((d) => d.ref.id)).toEqual(["doc-2"]);
   });
 });

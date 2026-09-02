@@ -226,12 +226,13 @@ function taskIdFor(instanceId: string, counter: number): string {
 }
 
 export function getNextTaskId(prevId: string, instanceId: string): string {
-  const pattern = new RegExp(`^kit-${instanceId}-task-\\d+$`);
-  if (!pattern.test(prevId)) {
+  // Captured rather than split on "task-", because an instance id may contain
+  // that substring itself.
+  const match = prevId.match(new RegExp(`^kit-${instanceId}-task-([0-9]+)$`));
+  if (!match) {
     throw new Error(`Invalid task ID format: ${prevId}`);
   }
-  const taskNum = prevId.split("task-")[1];
-  return taskIdFor(instanceId, Number.parseInt(taskNum, 10) + 1);
+  return taskIdFor(instanceId, Number.parseInt(match[1], 10) + 1);
 }
 
 /**
@@ -445,11 +446,13 @@ export async function getValidDocs(
   validDocuments: DocumentSnapshot[];
   skippedDocuments: DocumentSnapshot[];
 }> {
-  const validDocuments: DocumentSnapshot[] = [];
-  const skippedDocuments: DocumentSnapshot[] = [];
   const collection = options.firestore.collection(options.collectionName);
 
-  await options.firestore.runTransaction(async (transaction) => {
+  // Collected inside the transaction: Firestore may run the callback more than
+  // once, and arrays held outside it would accumulate duplicates on a retry.
+  return options.firestore.runTransaction(async (transaction) => {
+    const validDocuments: DocumentSnapshot[] = [];
+    const skippedDocuments: DocumentSnapshot[] = [];
     const refs = documentIds.map((id) => collection.doc(id));
     const docs = await transaction.getAll(...refs);
 
@@ -476,9 +479,9 @@ export async function getValidDocs(
 
       validDocuments.push(doc);
     }
-  });
 
-  return { validDocuments, skippedDocuments };
+    return { validDocuments, skippedDocuments };
+  });
 }
 
 async function handleSingleDocument(
