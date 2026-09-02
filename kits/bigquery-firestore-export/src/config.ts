@@ -82,6 +82,15 @@ const params = {
       "Which Pub/Sub topic should receive BigQuery Data Transfer completion notifications? Leave the default unless you are migrating from the bigquery-firestore-export extension, whose topic is named ext-<instance id>-processMessages. Pointing this at the extension's topic keeps the existing scheduled query's notification settings untouched.",
 
     default: expr`kit-${instanceId}-processMessages`,
+    input: {
+      text: {
+        nonEmpty: true,
+        example: "ext-my-instance-processMessages",
+        validationRegex: /^(?!goog)[a-zA-Z][a-zA-Z0-9\-_.~+%]{2,254}$/,
+        validationErrorMessage:
+          "Must be a Pub/Sub topic ID, not a full projects/<project>/topics/<topic> resource name. IDs are 3 to 255 characters, start with a letter, may contain letters, numbers and - _ . ~ + %, and cannot start with goog.",
+      },
+    },
   }),
   datasetId: defineString("DATASET_ID", {
     label: "Dataset ID",

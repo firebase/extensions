@@ -114,7 +114,7 @@ loads them at deploy time and prompts for required values that are missing.
 | `displayName`             | `DISPLAY_NAME`              | yes      | —                 | Human-readable scheduled-query name                          |
 | `partitioningField`       | `PARTITIONING_FIELD`        | no       | (empty)           | Destination-table partitioning field                         |
 | `schedule`                | `SCHEDULE`                  | yes      | —                 | DTS schedule, such as `every 24 hours`                       |
-| `pubSubTopic`             | `PUB_SUB_TOPIC`             | no       | `kit-<INSTANCE_ID>-processMessages` | Pub/Sub topic receiving DTS completion notifications        |
+| `pubSubTopic`             | `PUB_SUB_TOPIC`             | no       | `kit-<INSTANCE_ID>-processMessages` | Pub/Sub topic ID, not a full resource name, receiving DTS completion notifications |
 | `firestoreCollection`     | `COLLECTION_PATH`           | no       | `transferConfigs` | Root Firestore collection for configs and output             |
 | `logLevel`                | `LOG_LEVEL`                 | no       | `info`            | `debug`, `info`, `warn`, `error`, or `silent`                |
 

@@ -38,6 +38,26 @@ describe("CONFIG_EXPRESSIONS", () => {
     ).toSpec();
     expect(spec.default).toBe("kit-{{ params.INSTANCE_ID }}-processMessages");
   });
+
+  test("accepts a topic ID but rejects a full resource name", () => {
+    const spec = (
+      CONFIG_EXPRESSIONS.pubSubTopic as unknown as {
+        toSpec: () => { input?: { text?: { validationRegex?: string } } };
+      }
+    ).toSpec();
+    const pattern = spec.input?.text?.validationRegex;
+    expect(pattern).toBeTypeOf("string");
+    const validate = (value: string) =>
+      new RegExp(pattern as string).test(value);
+
+    expect(validate("ext-users-export-processMessages")).toBe(true);
+    expect(validate("kit-users-export-processMessages")).toBe(true);
+    expect(
+      validate("projects/test-project/topics/ext-users-export-processMessages")
+    ).toBe(false);
+    expect(validate("")).toBe(false);
+    expect(validate("goog-reserved-prefix")).toBe(false);
+  });
 });
 
 describe("configFromEnv", () => {

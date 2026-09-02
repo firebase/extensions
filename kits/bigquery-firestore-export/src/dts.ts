@@ -61,11 +61,19 @@ function transferConfigFields(config: TransferConfig) {
   return fields;
 }
 
-/** Full resource name of the topic DTS publishes run notifications to. */
+/**
+ * Full resource name of the topic DTS publishes run notifications to.
+ *
+ * PUB_SUB_TOPIC is validated as a bare topic ID when prompted, but values from
+ * a dotenv file reach us unvalidated, and both the Pub/Sub client and the
+ * trigger accept a full resource name, so accept one here too.
+ */
 export function notificationTopicName(
   config: ResolvedBigqueryFirestoreExportConfig
 ): string {
-  return `projects/${config.projectId}/topics/${config.pubSubTopic}`;
+  return config.pubSubTopic.startsWith("projects/")
+    ? config.pubSubTopic
+    : `projects/${config.projectId}/topics/${config.pubSubTopic}`;
 }
 
 function stringField(value: string | undefined): { stringValue: string } {
