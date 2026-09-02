@@ -35,6 +35,7 @@ type FunctionOptions = Record<string, unknown>;
 
 interface ExportedOptions {
   trigger: FunctionOptions;
+  /** Options of syncBigQuery, initBigQuerySync, setupBigQuerySync, in order. */
   tasks: FunctionOptions[];
 }
 
@@ -66,10 +67,10 @@ async function loadExportedOptions(
   const taskCalls = vi.mocked(onTaskDispatched).mock.calls;
   const trigger = triggerCalls[triggerCalls.length - 1][0] as FunctionOptions;
   const tasks = taskCalls
-    .slice(-2)
+    .slice(-3)
     .map((call) => call[0] as unknown as FunctionOptions);
 
-  expect(tasks).toHaveLength(2);
+  expect(tasks).toHaveLength(3);
   return { trigger, tasks };
 }
 
@@ -122,5 +123,37 @@ describe("exported function options", () => {
     const { trigger } = await loadExportedOptions();
     const document = trigger.document as { toCEL(): string };
     expect(document.toCEL()).toContain("params.COLLECTION_PATH");
+  });
+
+  test("the trigger keeps retry enabled so a rethrown enqueue failure is redelivered", async () => {
+    const { trigger } = await loadExportedOptions();
+    expect(trigger.retry).toBe(true);
+  });
+
+  test("syncBigQuery pins the extension's queue shape", async () => {
+    const { tasks } = await loadExportedOptions();
+    const [syncTask] = tasks;
+
+    expect(syncTask.retryConfig).toEqual({
+      maxAttempts: 5,
+      minBackoffSeconds: 60,
+    });
+
+    const rateLimits = syncTask.rateLimits as Record<string, unknown>;
+    expect(rateLimits.maxConcurrentDispatches).toBe(500);
+    expect(String(rateLimits.maxDispatchesPerSecond)).toBe(
+      "params.MAX_DISPATCHES_PER_SECOND"
+    );
+  });
+
+  test("the lifecycle tasks keep their own retry config", async () => {
+    const { tasks } = await loadExportedOptions();
+    for (const opts of tasks.slice(1)) {
+      expect(opts.retryConfig).toEqual({
+        maxAttempts: 15,
+        minBackoffSeconds: 60,
+      });
+      expect(opts).not.toHaveProperty("rateLimits");
+    }
   });
 });
