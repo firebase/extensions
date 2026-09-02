@@ -537,3 +537,95 @@ describe("handleQueryOnWrite", () => {
     expect(echo.set).not.toHaveBeenCalled();
   });
 });
+
+describe("handleQueryOnWrite prefilters validation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getSingleEmbedding.mockResolvedValue(EMBEDDING);
+  });
+
+  test("runs the query and applies valid prefilters", async () => {
+    const { ctx, chain } = makeCtx();
+    const { event, set } = writeEvent(undefined, {
+      query: "test query",
+      prefilters: [{ field: "category", operator: "==", value: "test" }],
+    });
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(chain.where).toHaveBeenCalledWith("category", "==", "test");
+    expect(set).toHaveBeenCalledWith(
+      expect.objectContaining({ result: { ids: IDS } }),
+      { merge: true }
+    );
+  });
+
+  test("rejects a non-array prefilters value before embedding", async () => {
+    const { ctx } = makeCtx();
+    const { event, set } = writeEvent(undefined, {
+      query: "test query",
+      prefilters: "not an array",
+    });
+
+    await expect(handleQueryOnWrite(event, ctx)).rejects.toThrow(
+      /Invalid prefilters/
+    );
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("rejects a prefilter entry that is not an object", async () => {
+    const { ctx } = makeCtx();
+    const { event, set } = writeEvent(undefined, {
+      query: "test query",
+      prefilters: ["category == test"],
+    });
+
+    await expect(handleQueryOnWrite(event, ctx)).rejects.toThrow(
+      /Invalid prefilters/
+    );
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("treats missing prefilters as no prefilters", async () => {
+    const { ctx, chain } = makeCtx();
+    const { event, set } = writeEvent(undefined, { query: "test query" });
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(chain.where).not.toHaveBeenCalled();
+    expect(set).toHaveBeenCalledWith(
+      expect.objectContaining({ result: { ids: IDS } }),
+      { merge: true }
+    );
+  });
+
+  test("treats an explicit null prefilters as no prefilters", async () => {
+    const { ctx, chain } = makeCtx();
+    const { event, set } = writeEvent(undefined, {
+      query: "test query",
+      prefilters: null,
+    });
+
+    await handleQueryOnWrite(event, ctx);
+
+    expect(chain.where).not.toHaveBeenCalled();
+    expect(set).toHaveBeenCalledWith(
+      expect.objectContaining({ result: { ids: IDS } }),
+      { merge: true }
+    );
+  });
+
+  test("names the offending entry's index in the error", async () => {
+    const { ctx } = makeCtx();
+    const { event } = writeEvent(undefined, {
+      query: "test query",
+      prefilters: [{ field: "category", operator: "==", value: "test" }, 42],
+    });
+
+    await expect(handleQueryOnWrite(event, ctx)).rejects.toThrow(
+      "Invalid prefilters: 1: Expected object, received number"
+    );
+  });
+});

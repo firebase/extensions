@@ -23,6 +23,7 @@ import {
   createTransferConfig,
   type DataTransferClient,
   getTransferConfig,
+  PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX,
   updateTransferConfig,
 } from "./dts";
 import type { ResolvedBigqueryFirestoreExportConfig } from "./export-config";
@@ -62,6 +63,13 @@ async function ensureNotificationTopic(ctx: HandlerContext): Promise<void> {
       throw err;
     }
   }
+}
+
+function isPartitioningFieldRemovalError(err: unknown): err is Error {
+  return (
+    err instanceof Error &&
+    err.message.includes(PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX)
+  );
 }
 
 async function storeTransferConfig(
@@ -105,9 +113,10 @@ export async function handleUpsertTransferConfig(
       ctx.config.transferConfigName
     );
     if (!linked) {
-      throw new Error(
-        `Transfer config not found: ${ctx.config.transferConfigName}`
-      );
+      // Only a redeploy with a corrected TRANSFER_CONFIG_NAME can resolve this,
+      // so retrying the task cannot help.
+      logs.linkedTransferConfigMissing(ctx.config.transferConfigName);
+      return;
     }
     await storeTransferConfig(ctx, linked);
     return;
@@ -128,14 +137,21 @@ export async function handleUpsertTransferConfig(
   const transferConfigName = existing.docs[0].data().name;
   if (typeof transferConfigName !== "string" || !transferConfigName) {
     throw new Error(
-      `Existing transfer config document in ${ctx.config.firestoreCollection} is missing required 'name' field.`
+      `Existing transfer config document in ${ctx.config.firestoreCollection} is missing required 'name' field. Delete the document so a new scheduled query is created, then redeploy.`
     );
   }
 
-  const updated = await updateTransferConfig(
-    ctx.dataTransfer,
-    transferConfigName,
-    ctx.config
-  );
-  await storeTransferConfig(ctx, updated);
+  try {
+    const updated = await updateTransferConfig(
+      ctx.dataTransfer,
+      transferConfigName,
+      ctx.config
+    );
+    await storeTransferConfig(ctx, updated);
+  } catch (err) {
+    if (!isPartitioningFieldRemovalError(err)) throw err;
+    // The guard rejects the update while building the request, so nothing was
+    // sent and a retry hits the same guard.
+    logs.partitioningFieldRemovalAborted(err.message);
+  }
 }

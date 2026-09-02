@@ -27,8 +27,8 @@ import type { ResolvedVectorSearchConfig } from "./export-config";
 import * as logs from "./logs";
 import {
   FirestoreVectorStoreClient,
-  type Prefilter,
   parseLimit,
+  parsePrefilters,
   parseQuerySchema,
   performTextQuery,
 } from "./queries";
@@ -149,7 +149,7 @@ export async function handleQueryOnWrite(
   const result = await performTextQuery({
     query,
     limit: data.limit ? parseLimit(data.limit) : ctx.config.defaultQueryLimit,
-    prefilters: (data.prefilters as Prefilter[] | undefined) ?? [],
+    prefilters: parsePrefilters(data.prefilters),
     embedClient: embedClient(ctx),
     vectorStore: vectorStore(ctx),
     config: ctx.config,
