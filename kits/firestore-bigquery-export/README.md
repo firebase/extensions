@@ -152,9 +152,11 @@ the instances cannot collide.
 
 ## Events
 
-When `EVENTARC_CHANNEL` is configured, the function publishes lifecycle events
-such as `onStart`, `onError`, `onSuccess`, and `onCompletion` under
-`firebase.extensions.firestore-bigquery-export.v1.*`.
+When `EVENTARC_CHANNEL` is configured, the function publishes `onStart` and
+`onError` lifecycle events under
+`firebase.extensions.firestore-bigquery-export.v1.*`. The extension's
+`onSuccess` event is not published; see the events entry under
+"Differences from the Stream Firestore to BigQuery extension" below.
 
 ## Provisioning
 
