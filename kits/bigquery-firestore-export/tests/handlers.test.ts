@@ -23,12 +23,16 @@ const mocks = vi.hoisted(() => ({
   getTransferConfig: vi.fn(),
   updateTransferConfig: vi.fn(),
   handleTransferRunMessage: vi.fn(),
+  linkedTransferConfigMissing: vi.fn(),
+  partitioningFieldRemovalAborted: vi.fn(),
 }));
 
 vi.mock("../src/dts", () => ({
   createTransferConfig: mocks.createTransferConfig,
   getTransferConfig: mocks.getTransferConfig,
   updateTransferConfig: mocks.updateTransferConfig,
+  PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX:
+    "Cannot remove partitioning_field from an existing transfer config",
 }));
 
 vi.mock("../src/helper", () => ({
@@ -41,6 +45,8 @@ vi.mock("../src/helper", () => ({
 vi.mock("../src/logs", () => ({
   complete: vi.fn(),
   error: vi.fn(),
+  linkedTransferConfigMissing: mocks.linkedTransferConfigMissing,
+  partitioningFieldRemovalAborted: mocks.partitioningFieldRemovalAborted,
   start: vi.fn(),
   topicCreated: vi.fn(),
 }));
@@ -166,5 +172,73 @@ describe("handleUpsertTransferConfig", () => {
       extInstanceId: "users-export",
       ...linked,
     });
+  });
+
+  test("reports a missing linked transfer config without retrying", async () => {
+    mocks.getTransferConfig.mockResolvedValue(null);
+    const { ctx, set } = makeContext({
+      transferConfigName: "projects/p/locations/us/transferConfigs/gone",
+    });
+
+    await expect(handleUpsertTransferConfig(ctx)).resolves.toBeUndefined();
+
+    expect(mocks.linkedTransferConfigMissing).toHaveBeenCalledWith(
+      "projects/p/locations/us/transferConfigs/gone"
+    );
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("reports a rejected partitioning-field removal without retrying", async () => {
+    mocks.updateTransferConfig.mockRejectedValue(
+      new Error(
+        "Cannot remove partitioning_field from an existing transfer config. The BigQuery Data Transfer API does not support clearing this parameter once it has been set."
+      )
+    );
+    const { ctx, set } = makeContext({
+      existing: {
+        empty: false,
+        docs: [
+          {
+            data: () => ({
+              name: "projects/p/locations/us/transferConfigs/config-1",
+            }),
+          },
+        ],
+      },
+    });
+
+    await expect(handleUpsertTransferConfig(ctx)).resolves.toBeUndefined();
+
+    expect(mocks.partitioningFieldRemovalAborted).toHaveBeenCalledWith(
+      expect.stringContaining("Cannot remove partitioning_field")
+    );
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("rethrows any other update failure so the task retries", async () => {
+    mocks.updateTransferConfig.mockRejectedValue(
+      new Error(
+        "bigquerydatatransfer.googleapis.com is temporarily unavailable"
+      )
+    );
+    const { ctx, set } = makeContext({
+      existing: {
+        empty: false,
+        docs: [
+          {
+            data: () => ({
+              name: "projects/p/locations/us/transferConfigs/config-1",
+            }),
+          },
+        ],
+      },
+    });
+
+    await expect(handleUpsertTransferConfig(ctx)).rejects.toThrow(
+      "temporarily unavailable"
+    );
+
+    expect(mocks.partitioningFieldRemovalAborted).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
   });
 });
