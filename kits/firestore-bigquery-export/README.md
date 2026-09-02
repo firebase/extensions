@@ -23,14 +23,14 @@ below, enables the listed APIs, and attaches the account to every function in
 this kit. Do not set a custom runtime service account for this codebase — it
 conflicts with that automatic setup.
 
-| Role / API | Why |
-|---|---|
-| `roles/bigquery.dataEditor` | create dataset/table/views; insert rows |
-| `roles/bigquery.user` | run BigQuery jobs and materialized views |
-| `roles/datastore.user` | write failed-row records back to Firestore (only if you configure a backup collection) |
-| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
-| `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
-| `bigquery.googleapis.com` | mirror Firestore collection changes in BigQuery |
+| Role / API                     | Why                                                                                    |
+| ------------------------------ | -------------------------------------------------------------------------------------- |
+| `roles/bigquery.dataEditor`    | create dataset/table/views; insert rows                                                |
+| `roles/bigquery.user`          | run BigQuery jobs and materialized views                                               |
+| `roles/datastore.user`         | write failed-row records back to Firestore (only if you configure a backup collection) |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events                                                  |
+| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service                                    |
+| `bigquery.googleapis.com`      | mirror Firestore collection changes in BigQuery                                        |
 
 If the dataset lives in a different project (`BIGQUERY_PROJECT_ID`), grant the
 managed runtime service account the `bigquery.*` roles on that project. For a
@@ -55,6 +55,7 @@ and configure them with a `.env` (or `.env.<projectId>`):
 COLLECTION_PATH=users
 DATASET_ID=analytics
 TABLE_ID=users
+DATABASE_REGION=europe-west2
 ```
 
 - `fsexportbigquery` is the Firestore trigger.
@@ -107,6 +108,7 @@ loads them at deploy time and prompts for any required values that are missing.
 | `collectionPath`                 | `COLLECTION_PATH`                   | no       | `posts`            | Collection or collection-group path                                |
 | `datasetId`                      | `DATASET_ID`                        | no       | `firestore_export` | BigQuery dataset                                                   |
 | `tableId`                        | `TABLE_ID`                          | no       | `posts`            | BigQuery changelog table                                           |
+| `databaseRegion`                 | `DATABASE_REGION`                   | yes      | (prompted)         | Firestore database location; also places the functions             |
 | `datasetLocation`                | `DATASET_LOCATION`                  | no       | `us`               | BigQuery dataset location                                          |
 | `database`                       | `DATABASE`                          | no       | `(default)`        | Firestore database id                                              |
 | `bigqueryProjectId`              | `BIGQUERY_PROJECT_ID`               | no       | project id         | Dataset project, if different                                      |
@@ -177,8 +179,10 @@ queues, matching the extension's install vs update/configure split.
 If automatic post-deploy enqueue did not run, enqueue a task yourself. The
 snippets below use the `default` instance; substitute your instance id in the
 `kit-<instance id>-` prefix if you named yours differently, and set
-`FUNCTION_REGION` to the task functions' region (`us-central1` unless you
-overrode the deploy region). Prefer
+`FUNCTION_REGION` to the task functions' region: your `DATABASE_REGION`, with
+`nam5`/`nam7` mapped to `us-central1` and `eur3` to `europe-west1`, or
+`us-central1` if `DATABASE_REGION` is unset and you did not override the
+deploy region. Prefer
 `initBigQuerySync` after a first deploy and `setupBigQuerySync` after a
 redeploy or schema-related config change (`TABLE_PARTITIONING`, `CLUSTERING`,
 `WILDCARD_IDS`, `VIEW_TYPE`, and related fields).
@@ -260,21 +264,39 @@ With `WILDCARD_IDS=true`, the wildcard column now contains a `documentId` key
 alongside the path parameters from your collection path. The extension wrote
 the path parameters only.
 
-### No function location parameter
+### DATABASE_REGION places the functions
 
-The extension's `LOCATION` parameter is gone: the functions in this kit declare
-no region, and the Firebase CLI resolves one at deploy time. A function keeps
-the region it is already deployed in; on a first deploy all functions land in
-`us-central1`. The Firestore trigger itself always fires in the database's own
-region, whatever region the function runs in. To deploy the functions
-elsewhere, set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable
-when running `firebase deploy`. Careful with that variable: it applies to
-every no-region function in the deploy, not just this kit, and changing it on
-an existing install deletes and recreates the functions in the new region -
-new URLs, a recreated task queue, and any in-flight tasks are lost.
+The extension's `LOCATION` parameter is gone. Instead, the kit deploys its
+functions to the region derived from `DATABASE_REGION`: regional Firestore
+locations (`europe-west2`, `us-east1`, ...) are used as-is, and the
+multi-region locations map to a Cloud Run region inside them - `nam5` and
+`nam7` to `us-central1`, `eur3` to `europe-west1`. Multi-region values are
+never used directly: they are not Cloud Run regions and would fail the deploy.
+The Firestore trigger itself always fires in the database's own region,
+whatever region the function runs in.
 
-If you copied `DATABASE_REGION` into your `.env` from an extension install, it
-is now ignored; delete the line or leave it.
+If you copied `DATABASE_REGION` into your `.env` from an extension install,
+it is honored: the functions deploy near your database.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
+`.env` values during deploy discovery, so the functions silently fall back to
+the no-region behavior below. Two consequences worth knowing before you
+deploy. Upgrading the CLI (or this kit, if your `.env` already carried
+`DATABASE_REGION`) can itself trigger the region move described below on your
+next deploy. And on a fresh interactive install the value you enter at the
+prompt only takes effect from the second deploy: the first deploy computes
+regions before the prompt runs, so it lands in `us-central1` and the next
+deploy moves the functions.
+
+With `DATABASE_REGION` unset or empty, the functions declare no region and the
+Firebase CLI resolves one at deploy time: a function keeps the region it is
+already deployed in, and on a first deploy lands in `us-central1` unless you
+set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+`firebase deploy`. Careful with that variable: it applies to every no-region
+function in the deploy, not just this kit. Note that changing an existing
+install's function region (via this variable or `DATABASE_REGION`) deletes and
+recreates the functions in the new region - new URLs, a recreated task queue,
+and any in-flight tasks are lost.
 
 ### Defaults
 
