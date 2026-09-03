@@ -15,6 +15,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { toEventContext } from "../src/event-context";
 
 const publish = vi.fn().mockResolvedValue(undefined);
 const channel = vi.fn(() => ({ publish }));
@@ -25,6 +26,16 @@ vi.mock("firebase-admin/eventarc", () => ({
 
 const CHANNEL = "projects/p/locations/l/channels/firebase";
 const EVENT_PREFIX = "firebase.extensions.firestore-translate-text.v1";
+
+/** A write on the `COLLECTION_PATH/{messageId}` trigger. */
+const DOCUMENT_WRITE = {
+  id: "event-1",
+  time: "2026-01-01T00:00:00.000Z",
+  project: "demo-project",
+  database: "(default)",
+  document: "translations/id1",
+  params: { messageId: "id1" },
+} as any;
 
 async function importEvents(channelName?: string) {
   if (channelName) {
@@ -72,11 +83,16 @@ describe("events", () => {
   test("publishes the start event", async () => {
     const events = await importEvents(CHANNEL);
 
-    await events.recordStartEvent({ params: { messageId: "id1" } });
+    const context = toEventContext(DOCUMENT_WRITE);
+
+    await events.recordStartEvent({
+      change: { before: {}, after: {} },
+      context,
+    });
 
     expect(publish).toHaveBeenCalledWith({
       type: `${EVENT_PREFIX}.onStart`,
-      data: { params: { messageId: "id1" } },
+      data: { change: { before: {}, after: {} }, context },
     });
   });
 
@@ -109,12 +125,41 @@ describe("events", () => {
   test("publishes the completion event", async () => {
     const events = await importEvents(CHANNEL);
 
-    await events.recordCompletionEvent({ params: { messageId: "id1" } });
+    const context = toEventContext(DOCUMENT_WRITE);
+
+    await events.recordCompletionEvent({ context });
 
     expect(publish).toHaveBeenCalledWith({
       type: `${EVENT_PREFIX}.onCompletion`,
-      data: { params: { messageId: "id1" } },
+      data: { context },
     });
+  });
+
+  test("puts the whole 1st gen context on the wire", async () => {
+    const events = await importEvents(CHANNEL);
+    const context = toEventContext(DOCUMENT_WRITE);
+
+    await events.recordStartEvent({
+      change: { before: {}, after: {} },
+      context,
+    });
+    await events.recordCompletionEvent({ context });
+
+    // `firebase-admin` sends the payload as `JSON.stringify(data)`, so this is
+    // what a subscriber of the extension's events actually reads.
+    expect(publish.mock.calls.length).toBe(2);
+    for (const [event] of publish.mock.calls) {
+      expect(JSON.parse(JSON.stringify(event.data)).context).toEqual({
+        eventId: "event-1",
+        timestamp: "2026-01-01T00:00:00.000Z",
+        eventType: "google.firestore.document.write",
+        resource: {
+          service: "firestore.googleapis.com",
+          name: "projects/demo-project/databases/(default)/documents/translations/id1",
+        },
+        params: { messageId: "id1" },
+      });
+    }
   });
 
   test("is a no-op when no channel is configured", async () => {

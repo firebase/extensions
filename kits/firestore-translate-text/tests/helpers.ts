@@ -93,15 +93,45 @@ export function makeSnapshot(
   } as unknown as DocumentSnapshot;
 }
 
+export const EVENT_ID = "event-1";
+export const EVENT_TIME = "2026-01-01T00:00:00.000Z";
+export const EVENT_PROJECT = "demo-project";
+export const EVENT_DATABASE = "(default)";
+export const EVENT_DOCUMENT = "translations/id1";
+
 export function makeEvent(
   before: DocumentSnapshot | undefined,
   after: DocumentSnapshot | undefined,
   params: Record<string, string> = { messageId: "id1" }
 ): TranslateWriteEvent {
   return {
+    id: EVENT_ID,
+    time: EVENT_TIME,
+    project: EVENT_PROJECT,
+    database: EVENT_DATABASE,
+    document: EVENT_DOCUMENT,
     data: before || after ? { before, after } : undefined,
     params,
   } as unknown as TranslateWriteEvent;
+}
+
+/**
+ * The 1st gen `EventContext` the extension published inside its `onStart` and
+ * `onCompletion` payloads, as rebuilt from the event `makeEvent` produces.
+ */
+export function expectedEventContext(
+  params: Record<string, string> = { messageId: "id1" }
+) {
+  return {
+    eventId: EVENT_ID,
+    timestamp: EVENT_TIME,
+    eventType: "google.firestore.document.write",
+    resource: {
+      service: "firestore.googleapis.com",
+      name: `projects/${EVENT_PROJECT}/databases/${EVENT_DATABASE}/documents/${EVENT_DOCUMENT}`,
+    },
+    params,
+  };
 }
 
 /**

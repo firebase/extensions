@@ -194,14 +194,6 @@ published. Per-event selection is gone in practice, because the CLI rejects any
 event types are published. With `EVENTARC_CHANNEL` unset, nothing is published and
 the function is otherwise unaffected.
 
-### `fail` events for unexpected errors now say what went wrong
-
-Typed pipeline failures (a zero-stream file, an ffmpeg error, a null
-transcription) carry the same payload as before. Unexpected errors did not: the
-extension published the caught `Error` directly, and because an `Error`'s
-`message` and `stack` are not serialised to JSON, subscribers received
-`{"error":{}}`. The kit publishes `{ error: { message, stack } }` instead.
-
 ### The trigger is 2nd gen
 
 `transcribeAudio` is a 2nd gen Cloud Storage function where the extension was 1st
@@ -225,6 +217,11 @@ gen. Its service account needs `roles/eventarc.eventReceiver` and
 - Multi-channel audio still produces a transcript per channel tag, and a file
   with more than one stream still produces a warning rather than a failure.
 - There is no backfill for audio already in the bucket, as before.
+- The `complete` and `fail` payloads. Typed pipeline failures still carry the
+  failure and the object name, and an unexpected error is still published as
+  `{ error }`. An `Error`'s `message` and `stack` are not enumerable, so
+  subscribers still receive `{"error":{}}` for those and have to read the
+  function logs; a thrown non-error still arrives with its `name` and `message`.
 
 ## API surface
 

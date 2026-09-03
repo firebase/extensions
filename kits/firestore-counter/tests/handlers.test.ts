@@ -113,24 +113,40 @@ describe("handleSchedule", () => {
 describe("handleShardWrite", () => {
   test("aggregates continuously and records lifecycle events", async () => {
     const event = {
+      id: "event-1",
+      time: "2026-01-01T00:00:00.000Z",
+      project: "demo-project",
+      database: "(default)",
+      document: "pages/home/_counter_shards_/0000",
       data: { after: { exists: true } },
-      params: { shardId: "0000" },
+      params: { collection: "pages", counter: "home", shardId: "0000" },
     } as any;
 
     await handleShardWrite(event, makeCtx());
 
+    // The extension published the 1st gen `{change, context}` payload, so the
+    // kit rebuilds the same shape rather than exposing the 2nd gen event.
+    const context = {
+      eventId: "event-1",
+      timestamp: "2026-01-01T00:00:00.000Z",
+      eventType: "google.firestore.document.write",
+      resource: {
+        service: "firestore.googleapis.com",
+        name: "projects/demo-project/databases/(default)/documents/pages/home/_counter_shards_/0000",
+      },
+      params: { collection: "pages", counter: "home", shardId: "0000" },
+    };
+
     expect(events.recordStartEvent).toHaveBeenCalledWith({
-      data: event.data,
-      params: event.params,
+      change: event.data,
+      context,
     });
     expect(aggregateContinuously).toHaveBeenCalledWith(
       { start: "", end: "" },
       200,
       60000
     );
-    expect(events.recordCompletionEvent).toHaveBeenCalledWith({
-      params: event.params,
-    });
+    expect(events.recordCompletionEvent).toHaveBeenCalledWith({ context });
   });
 });
 

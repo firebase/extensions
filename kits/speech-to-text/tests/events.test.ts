@@ -73,7 +73,7 @@ describe("events", () => {
     });
   });
 
-  test("serializes the error message and stack into the fail payload", async () => {
+  test("publishes the error itself in the fail payload", async () => {
     process.env.EVENTARC_CHANNEL = "projects/p/locations/l/channels/c";
     const events = await import("../src/events");
     events.setupEventChannel();
@@ -83,17 +83,26 @@ describe("events", () => {
 
     expect(publish).toHaveBeenCalledWith({
       type: "firebase.extensions.storage-transcribe-audio.v1.fail",
-      data: {
-        error: { message: "kaboom", stack: err.stack },
-      },
+      data: { error: err },
     });
-    // Guard against the original bug: a raw Error serializes to `{}`.
-    const payload = publish.mock.calls[0][0] as {
-      data: { error: { message: string } };
-    };
-    expect(JSON.parse(JSON.stringify(payload)).data.error.message).toBe(
-      "kaboom"
-    );
+    // Parity with the extension: `message` and `stack` are not enumerable, so
+    // subscribers receive `{"error":{}}` for a genuine `Error`.
+    const payload = publish.mock.calls[0][0];
+    expect(JSON.parse(JSON.stringify(payload)).data).toEqual({ error: {} });
+  });
+
+  test("keeps the name and message of a thrown non-error in the fail payload", async () => {
+    process.env.EVENTARC_CHANNEL = "projects/p/locations/l/channels/c";
+    const events = await import("../src/events");
+    const { errorFromAny } = await import("../src/util");
+    events.setupEventChannel();
+
+    await events.recordErrorEvent(errorFromAny("not an error"));
+
+    const payload = publish.mock.calls[0][0];
+    expect(JSON.parse(JSON.stringify(payload)).data).toEqual({
+      error: { name: "Thrown non-error object", message: "not an error" },
+    });
   });
 
   test("is a no-op when no channel is configured", async () => {
