@@ -344,6 +344,9 @@ export function configFromEnv(): SendEmailConfig {
     defaultReplyTo: params.defaultReplyTo.value(),
     usersCollection: params.usersCollection.value(),
     templatesCollection: params.templatesCollection.value(),
+    // Read straight from the environment, not declared as a param: the
+    // extension never surfaced TESTING in extension.yaml either.
+    testing: process.env.TESTING === "true",
     ttlExpireType:
       params.ttlExpireType.value() as SendEmailConfig["ttlExpireType"],
     ttlExpireValue: params.ttlExpireValue.value(),

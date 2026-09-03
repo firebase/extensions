@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 interface StringParamOpts {
   default?: string;
@@ -67,6 +67,34 @@ describe("configFromEnv", () => {
     expect(config.defaultReplyTo).toBe("");
     expect(typeof config.smtpPassword).toBe("object");
     expect(config.clientId).toBeUndefined();
+  });
+});
+
+describe("configFromEnv TESTING", () => {
+  const original = process.env.TESTING;
+
+  afterEach(() => {
+    if (original === undefined) delete process.env.TESTING;
+    else process.env.TESTING = original;
+  });
+
+  test('enables testing mode when TESTING is "true"', () => {
+    process.env.TESTING = "true";
+    expect(configFromEnv().testing).toBe(true);
+    expect(resolveConfig(configFromEnv()).testing).toBe(true);
+  });
+
+  test("leaves testing mode off when TESTING is unset", () => {
+    delete process.env.TESTING;
+    expect(configFromEnv().testing).toBe(false);
+    expect(resolveConfig(configFromEnv()).testing).toBe(false);
+  });
+
+  test('only the exact string "true" enables testing mode', () => {
+    for (const value of ["TRUE", "1", "yes", ""]) {
+      process.env.TESTING = value;
+      expect(configFromEnv().testing).toBe(false);
+    }
   });
 });
 
