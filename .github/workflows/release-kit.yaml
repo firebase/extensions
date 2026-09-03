@@ -100,7 +100,7 @@ jobs:
         run: |
           npm ci
           if [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ]; then
-            npm install --save firebase-functions@next
+            npm install --save --registry=https://registry.npmjs.org firebase-functions@next
           fi
           npm test
 
@@ -251,7 +251,7 @@ jobs:
         run: |
           npm ci --registry=https://registry.npmjs.org
           if [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ]; then
-            npm install --save firebase-functions@next
+            npm install --save --registry=https://registry.npmjs.org firebase-functions@next
           fi
           npm run build
 
