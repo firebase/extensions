@@ -1,3 +1,19 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { BigQuery, Dataset, Table } from "@google-cloud/bigquery";
 const { logger } = require("firebase-functions");
 import waitForExpect from "wait-for-expect";
@@ -798,8 +814,15 @@ describe("e2e", () => {
     test("successfully adds old data field if it does not yet exist", async () => {
       const event: FirestoreDocumentChangeEvent = changeTrackerEvent({});
 
-      /** Create a table without an old_data column */
-      let schema = [{ name: "Name", type: "STRING" }];
+      /**
+       * A valid changelog in every respect except that it predates `old_data`,
+       * which is the case this test is about. The base columns are never added
+       * to a table that already exists, so a table missing those as well would
+       * fail the insert outright rather than exercise the lag retry.
+       */
+      let schema = RawChangelogSchema.fields.filter(
+        (field) => field.name !== "old_data"
+      );
 
       let [originalRawTable] = await dataset.createTable(table_raw_changelog, {
         schema,

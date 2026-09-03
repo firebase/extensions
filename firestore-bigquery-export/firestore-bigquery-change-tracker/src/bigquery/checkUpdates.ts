@@ -1,3 +1,19 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { Table, TableMetadata } from "@google-cloud/bigquery/build/src/table";
 import { Partitioning } from "./partitioning";
 import { PartitioningConfig } from "./partitioning/config";
@@ -23,7 +39,7 @@ export async function tableRequiresUpdate({
   const { metadata } = table;
 
   /** Check clustering */
-  const configCluster = JSON.stringify(config.clustering);
+  const configCluster = JSON.stringify(config.clustering || []);
   const tableCluster = JSON.stringify(metadata.clustering?.fields || []);
   if (configCluster !== tableCluster) return true;
 
@@ -39,6 +55,14 @@ export async function tableRequiresUpdate({
   /** Check partitioning */
   const partitioningConfig = new PartitioningConfig(config.partitioning);
   const partitioning = new Partitioning(partitioningConfig, table);
+
+  /** Check the configured partition column exists in the schema */
+  const partitionFieldMissing =
+    partitioning.customPartitionFieldMissingFromSchema(
+      metadata.schema?.fields || []
+    );
+  if (partitionFieldMissing) return true;
+
   const isValidPartition =
     await partitioning.isValidPartitionForExistingTable();
   if (isValidPartition) return true;
