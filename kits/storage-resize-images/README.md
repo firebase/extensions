@@ -102,6 +102,12 @@ loads them at deploy time and prompts for any required values that are missing.
 | `customFilterPrompt`   | `CUSTOM_FILTER_PROMPT`   | no       | (empty)                | Custom filter prompt                                                                       |
 | `placeholderImagePath` | `PLACEHOLDER_IMAGE_PATH` | no       | (empty)                | Placeholder for filtered images                                                            |
 
+The `deleteOriginal` default above is what the CLI writes into `.env` at deploy
+time. Omitting `deleteOriginal` when calling `resolveResizeImagesConfig`
+directly deletes the original on a successful resize, matching how the
+extension treated an unset `DELETE_ORIGINAL_FILE`; pass `"false"` to keep
+originals.
+
 ## Multiple instances
 
 To resize images from several buckets or pipelines, add one entry per instance
@@ -179,6 +185,16 @@ absolute paths, but the check now runs when the function loads rather than when
 the extension is installed. A malformed value fails the deploy with
 `Invalid includePathList: must be a comma-separated list of absolute path
 values.` rather than being rejected by an install prompt.
+
+### An omitted `isAnimated` keeps animation
+
+The extension's config parser had a bug: `overrideIsAnimated === "true" ||
+undefined` never evaluated the intended unset check, so an unset `IS_ANIMATED`
+produced first-frame-only output even though the parameter's declared default
+was `true`. The kit deliberately fixes this rather than reproducing it: an
+omitted `isAnimated` resolves to `true`, the default the extension intended.
+Deploys are unaffected either way, since the CLI writes `IS_ANIMATED=true`
+into `.env`; pass `isAnimated: false` for first-frame-only output.
 
 ### No backfill
 
