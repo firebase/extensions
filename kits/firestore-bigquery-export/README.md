@@ -155,10 +155,12 @@ the instances cannot collide.
 ## Events
 
 When `EVENTARC_CHANNEL` is configured, the function publishes `onStart` and
-`onError` lifecycle events under
-`firebase.extensions.firestore-bigquery-export.v1.*`. The extension's
-`onSuccess` event is not published; see the events entry under
-"Differences from the Stream Firestore to BigQuery extension" below.
+`onError` lifecycle events. Each one is published twice, under
+`firebase.extensions.firestore-bigquery-export.v1.*` and under the legacy
+`firebase.extensions.firestore-counter.v1.*` type the extension also used, so
+triggers written against either type keep firing. The extension's `onSuccess`
+event is not published; see the events entry under "Differences from the Stream
+Firestore to BigQuery extension" below.
 
 ## Provisioning
 
@@ -252,11 +254,12 @@ queue in the console, and the two knobs that tuned that queue,
 queue handler, which is gone, so the kit publishes `onStart` and `onError`
 only.
 
-Events are published under `firebase.extensions.firestore-bigquery-export.v1.*`
-only. The extension also published a duplicate copy of every event under
-`firebase.extensions.firestore-counter.v1.*`, a historical naming mistake kept
-for backwards compatibility. If you have Eventarc triggers listening on those
-`firestore-counter` types, point them at the `firestore-bigquery-export` types.
+Every event is still published twice, once under
+`firebase.extensions.firestore-bigquery-export.v1.*` and once under
+`firebase.extensions.firestore-counter.v1.*`. The `firestore-counter` type is a
+historical naming mistake the extension kept for backwards compatibility, and
+the kit keeps it for the same reason: triggers listening on it survive the
+migration. Write new triggers against the `firestore-bigquery-export` types.
 
 ### Wildcard columns include the document ID
 
