@@ -1,6 +1,6 @@
 {
   "name": "@firebase-function-kits/storage-resize-images",
-  "version": "0.0.2-rc.1",
+  "version": "0.0.2-rc.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/firebase/extensions.git",
@@ -34,7 +34,7 @@
     "@genkit-ai/vertexai": "^1.2.0",
     "@google-cloud/storage": "^7.21.0",
     "firebase-admin": "^13.2.0",
-    "firebase-functions": "^7.3.2",
+    "firebase-functions": "^7.3.3-rc.0",
     "genkit": "^1.2.0",
     "mkdirp": "^3.0.1",
     "p-queue": "^6.6.2",
