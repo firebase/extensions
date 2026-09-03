@@ -15,12 +15,15 @@
  */
 
 import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import type { Request } from "firebase-functions/tasks";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { resolveExportConfig } from "../src/export-config";
 import {
   type DocumentWriteEvent,
   type HandlerContext,
+  type SerializedDocumentChange,
   handleDocumentWrite,
+  handleSyncBigQueryTask,
 } from "../src/handlers";
 
 vi.mock("../src/events");
@@ -70,6 +73,33 @@ function makeCtx(
     tracker: tracker as unknown as HandlerContext["tracker"],
     config: config as HandlerContext["config"],
     ensureInitialized: vi.fn().mockResolvedValue(undefined),
+    enqueue: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
+/** Fake dispatched task request carrying a serialized change. */
+function taskRequest(
+  change: SerializedDocumentChange,
+  retryCount = 0
+): Request<SerializedDocumentChange> {
+  return { data: change, retryCount } as Request<SerializedDocumentChange>;
+}
+
+/** A serialized change as it would arrive in a task payload. */
+function serializedChange(
+  overrides: Partial<SerializedDocumentChange> = {}
+): SerializedDocumentChange {
+  return {
+    timestamp: "2026-01-01T00:00:00Z",
+    eventId: "evt-1",
+    fullResourceName:
+      "projects/test-project/databases/(default)/documents/users/doc1",
+    changeType: ChangeType.CREATE,
+    documentId: "doc1",
+    params: null,
+    data: { a: 1 },
+    oldData: undefined,
+    ...overrides,
   };
 }
 
@@ -170,7 +200,7 @@ describe("handleDocumentWrite", () => {
     expect(recordedWithout[0].pathParams).toBeNull();
   });
 
-  test("self-heals and retries the write when the inline write fails", async () => {
+  test("a failed inline write buffers through the queue and the execution succeeds", async () => {
     const ctx = makeCtx();
     (ctx.tracker.record as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
       new Error("bq down")
@@ -181,23 +211,65 @@ describe("handleDocumentWrite", () => {
       ctx
     );
 
-    expect(ctx.ensureInitialized).toHaveBeenCalledTimes(1);
-    expect(ctx.tracker.record).toHaveBeenCalledTimes(2);
+    expect(ctx.tracker.record).toHaveBeenCalledTimes(1);
+    expect(ctx.enqueue).toHaveBeenCalledTimes(1);
+    expect(ctx.ensureInitialized).not.toHaveBeenCalled();
   });
 
-  test("rethrows when self-heal retry fails so runtime retry can replay", async () => {
+  test("a successful inline write enqueues nothing", async () => {
     const ctx = makeCtx();
-    (ctx.tracker.record as ReturnType<typeof vi.fn>)
-      .mockRejectedValueOnce(new Error("bq down"))
-      .mockRejectedValueOnce(new Error("still down"));
+
+    await handleDocumentWrite(
+      writeEvent(snap(false, "doc1"), snap(true, "doc1", { a: 1 })),
+      ctx
+    );
+
+    expect(ctx.enqueue).not.toHaveBeenCalled();
+  });
+
+  test("the enqueued change equals what the inline path tried to write", async () => {
+    const ctx = makeCtx();
+    (ctx.tracker.record as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("bq down")
+    );
+
+    await handleDocumentWrite(
+      writeEvent(snap(true, "doc1", { a: 1 }), snap(true, "doc1", { a: 2 })),
+      ctx
+    );
+
+    const [[recorded]] = (ctx.tracker.record as ReturnType<typeof vi.fn>).mock
+      .calls;
+    const [[enqueued]] = (ctx.enqueue as ReturnType<typeof vi.fn>).mock.calls;
+    expect(enqueued).toMatchObject({
+      timestamp: recorded[0].timestamp,
+      eventId: recorded[0].eventId,
+      fullResourceName: recorded[0].documentName,
+      changeType: recorded[0].operation,
+      documentId: recorded[0].documentId,
+      params: recorded[0].pathParams,
+      data: recorded[0].data,
+      oldData: recorded[0].oldData,
+    });
+    // The payload must survive the JSON round trip through Cloud Tasks.
+    expect(JSON.parse(JSON.stringify(enqueued))).toEqual(enqueued);
+  });
+
+  test("a failed enqueue is recorded and rethrown, never swallowed", async () => {
+    const ctx = makeCtx();
+    (ctx.tracker.record as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("bq down")
+    );
+    (ctx.enqueue as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("tasks down")
+    );
 
     await expect(
       handleDocumentWrite(
         writeEvent(snap(false, "doc1"), snap(true, "doc1", { a: 1 })),
         ctx
       )
-    ).rejects.toThrow("still down");
-    expect(ctx.ensureInitialized).toHaveBeenCalledTimes(1);
+    ).rejects.toThrow("tasks down");
     expect(events.recordErrorEvent).toHaveBeenCalled();
   });
 
@@ -215,6 +287,58 @@ describe("handleDocumentWrite", () => {
         ctx
       )
     ).rejects.toThrow("bad data");
+    expect(ctx.tracker.record).not.toHaveBeenCalled();
+  });
+});
+
+describe("handleSyncBigQueryTask", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  test("self-heals, records the buffered change, and emits a success event", async () => {
+    const ctx = makeCtx();
+    const change = serializedChange();
+
+    await handleSyncBigQueryTask(taskRequest(change), ctx);
+
+    expect(ctx.ensureInitialized).toHaveBeenCalledTimes(1);
+    const [[recorded]] = (ctx.tracker.record as ReturnType<typeof vi.fn>).mock
+      .calls;
+    expect(recorded[0]).toMatchObject({
+      timestamp: change.timestamp,
+      operation: change.changeType,
+      documentName: change.fullResourceName,
+      documentId: change.documentId,
+      eventId: change.eventId,
+      data: change.data,
+    });
+    expect(events.recordSuccessEvent).toHaveBeenCalledTimes(1);
+    expect(ctx.enqueue).not.toHaveBeenCalled();
+  });
+
+  test("rethrows a failed write so Cloud Tasks retries", async () => {
+    const ctx = makeCtx();
+    (ctx.tracker.record as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("still down")
+    );
+
+    await expect(
+      handleSyncBigQueryTask(taskRequest(serializedChange(), 2), ctx)
+    ).rejects.toThrow("still down");
+    expect(events.recordSuccessEvent).not.toHaveBeenCalled();
+    // Re-enqueueing from the task would seed a trigger-queue loop; retries
+    // belong to Cloud Tasks alone.
+    expect(ctx.enqueue).not.toHaveBeenCalled();
+  });
+
+  test("rethrows a failed self-heal without attempting the write", async () => {
+    const ctx = makeCtx();
+    (ctx.ensureInitialized as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("no dataset")
+    );
+
+    await expect(
+      handleSyncBigQueryTask(taskRequest(serializedChange()), ctx)
+    ).rejects.toThrow("no dataset");
     expect(ctx.tracker.record).not.toHaveBeenCalled();
   });
 });

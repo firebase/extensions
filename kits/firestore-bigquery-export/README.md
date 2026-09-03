@@ -5,9 +5,10 @@ BigQuery Firebase Extension as an npm package you add to your own Firebase
 Functions codebase and deploy.
 
 It listens for document writes on a collection, serializes each change, and
-writes it to a BigQuery changelog table. Failed writes are retried through a
-Firebase Functions runtime retry policy. The functions run in your own Firebase
-project; there is no hosted version, so you deploy them yourself.
+writes it to a BigQuery changelog table. Failed writes buffer through a Cloud
+Tasks queue (`syncBigQuery`), which retries them on its own throttled schedule.
+The functions run in your own Firebase project; there is no hosted version, so
+you deploy them yourself.
 
 ## Install
 
@@ -30,6 +31,7 @@ conflicts with that automatic setup.
 | `roles/datastore.user`         | write failed-row records back to Firestore (only if you configure a backup collection) |
 | `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events                                                  |
 | `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service                                    |
+| `roles/cloudtasks.enqueuer`    | enqueue failed writes onto the kit's own `syncBigQuery` task queue                     |
 | `bigquery.googleapis.com`      | mirror Firestore collection changes in BigQuery                                        |
 
 If the dataset lives in a different project (`BIGQUERY_PROJECT_ID`), grant the
@@ -38,12 +40,13 @@ CMEK dataset, also grant the BigQuery service account access to your KMS key.
 
 ## Usage
 
-Export the three functions from your functions codebase entry:
+Export the four functions from your functions codebase entry:
 
 ```ts
 // functions/src/index.ts
 export {
   fsexportbigquery,
+  syncBigQuery,
   initBigQuerySync,
   setupBigQuerySync,
 } from "@firebase-function-kits/firestore-bigquery-export";
@@ -59,6 +62,7 @@ DATABASE_REGION=europe-west2
 ```
 
 - `fsexportbigquery` is the Firestore trigger.
+- `syncBigQuery` is the write-buffer task queue that retries failed writes.
 - `initBigQuerySync` is the first-deploy provisioning lifecycle task.
 - `setupBigQuerySync` is the reconfigure provisioning lifecycle task.
 
@@ -87,8 +91,14 @@ later, behind the `kits` experiment):
 `instances` maps each instance id to the directory (relative to
 `firebase.json`) holding that instance's `.env`. The CLI prefixes every
 function and task queue name with `kit-<instance id>-`, so the functions above
-deploy as `kit-default-fsexportbigquery`, `kit-default-initBigQuerySync`, and
-`kit-default-setupBigQuerySync`.
+deploy as `kit-default-fsexportbigquery`, `kit-default-syncBigQuery`,
+`kit-default-initBigQuerySync`, and `kit-default-setupBigQuerySync`.
+
+Deploy with Firebase CLI 15.28.0 or later: it sets the
+`FIREBASE_KIT_INSTANCE_ID` env var on the deployed functions, which the trigger
+needs to address its own `syncBigQuery` queue. On functions deployed with an
+older CLI, enqueues fail (loudly - the event is redelivered, not lost) until
+you redeploy with a newer CLI.
 
 ```sh
 firebase experiments:enable kits
@@ -112,7 +122,9 @@ loads them at deploy time and prompts for any required values that are missing.
 | `datasetLocation`                | `DATASET_LOCATION`                  | no       | `us`               | BigQuery dataset location                                          |
 | `database`                       | `DATABASE`                          | no       | `(default)`        | Firestore database id                                              |
 | `bigqueryProjectId`              | `BIGQUERY_PROJECT_ID`               | no       | project id         | Dataset project, if different                                      |
-| `backupCollection`               | `BACKUP_COLLECTION`                 | no       | (empty)            | Firestore collection for failed rows                               |
+| `backupCollection`               | `BACKUP_COLLECTION`                 | no       | (empty)            | Strongly recommended: collection for rows the queue gave up on     |
+| `maxDispatchesPerSecond`         | `MAX_DISPATCHES_PER_SECOND`         | no       | `100`              | `syncBigQuery` queue dispatch rate (1-500)                         |
+| `maxEnqueueAttempts`             | `MAX_ENQUEUE_ATTEMPTS`              | no       | `3`                | In-process enqueue attempts before rethrowing (1-10)               |
 | `transformFunction`              | `TRANSFORM_FUNCTION`                | no       | (empty)            | Optional transform Cloud Function                                  |
 | `tablePartitioning`              | `TABLE_PARTITIONING`                | no       | `NONE`             | Table partitioning strategy                                        |
 | `timePartitioningField`          | `TIME_PARTITIONING_FIELD`           | no       | (empty)            | Time-partitioning column name                                      |
@@ -154,11 +166,11 @@ the instances cannot collide.
 
 ## Events
 
-When `EVENTARC_CHANNEL` is configured, the function publishes `onStart` and
-`onError` lifecycle events under
-`firebase.extensions.firestore-bigquery-export.v1.*`. The extension's
-`onSuccess` event is not published; see the events entry under
-"Differences from the Stream Firestore to BigQuery extension" below.
+When `EVENTARC_CHANNEL` is configured, the functions publish lifecycle events
+under `firebase.extensions.firestore-bigquery-export.v1.*`: `onStart` and
+`onError` from the write path, and `onSuccess` from the `syncBigQuery` task
+when a buffered write lands (matching the extension, which only emitted
+`onSuccess` from its queue handler).
 
 ## Provisioning
 
@@ -216,10 +228,51 @@ curl -fsS -X POST -H "Content-Type: application/json" -d '{"data":{}}' \
 ```
 
 The Firestore write path never provisions on the hot path. If resources are
-missing when a write arrives, the inline write fails, the handler calls
-`ensureInitialized()` once as a self-heal and retries the write, and a remaining
-failure is surfaced to the function runtime retry policy (`retry: true` on
-`fsexportbigquery`).
+missing when a write arrives, the inline write fails and the change buffers
+through the `syncBigQuery` queue, whose handler calls `ensureInitialized()` as
+a self-heal before re-attempting the write.
+
+## Failure handling
+
+The write path mirrors the extension's Cloud Tasks buffer:
+
+1. The trigger attempts the BigQuery insert inline. On success, done.
+2. On failure, it enqueues the serialized change onto the `syncBigQuery` queue
+   (up to `MAX_ENQUEUE_ATTEMPTS` in-process attempts with backoff) and the
+   execution succeeds - the Firestore event is not redelivered.
+3. `syncBigQuery` re-attempts the write on the queue's schedule: 5 attempts,
+   60 seconds minimum backoff, throttled to `MAX_DISPATCHES_PER_SECOND`
+   dispatches per second (500 concurrent max).
+4. On every terminal insert failure the tracker writes the row to
+   `BACKUP_COLLECTION` (when configured), keyed by the event id, before the
+   task fails. After the fifth attempt the task is dropped. **Without a backup
+   collection, the row is dropped with it** - configure `BACKUP_COLLECTION`.
+5. If the enqueue itself fails (BigQuery AND Cloud Tasks both failing), the
+   trigger logs at error level and rethrows, so the Firestore event is
+   redelivered by the runtime retry policy (`retry: true`) instead of being
+   lost. The extension silently dropped the event in this window; this kit
+   does not.
+
+### Recovering parked rows
+
+Rows in `BACKUP_COLLECTION` are changelog-shaped documents, not plain document
+snapshots, so `fs-bq-import-collection` cannot consume them. Treat them as
+"possibly failed": a transient failure that later succeeded on retry also
+leaves one behind, and nothing cleans them up. To recover after an outage,
+load the backup docs' fields into a temp table and `MERGE` them into the
+changelog table with a `WHEN NOT MATCHED` condition on `event_id` (the
+anti-join is mandatory because of those stale rows). See
+[firebase/extensions#3031](https://github.com/firebase/extensions/issues/3031)
+for the full recipe.
+
+### Known limits
+
+- A task queue is a project-level resource created for each task function.
+  Deleting the functions (or moving them to another region) can leave the old
+  queue behind; delete it in the Cloud Tasks console if it lingers.
+- Rows that exhaust the queue with no `BACKUP_COLLECTION` configured are gone.
+  This matches the extension; it is the reason the backup collection is
+  strongly recommended.
 
 ## Differences from the Stream Firestore to BigQuery extension
 
@@ -234,23 +287,27 @@ boolean params, and only the literal string `true` enables them. The extension
 used `yes` / `no` for the last two, so copying an old config across leaves them
 silently disabled. Change any `yes` to `true` in your `.env`.
 
-### Failed writes retry differently
+### Failed writes: same buffer, one fix
 
-The extension pushed a failed BigQuery write onto a Cloud Tasks queue
-(`syncBigQuery`) and retried it from there. This kit has no task queue on the
-write path. A failed write is retried once in place, and anything still failing
-is handed to the Cloud Functions runtime retry policy, which redelivers the
-Firestore event.
+The kit keeps the extension's write-path architecture: a failed BigQuery write
+buffers through the `syncBigQuery` Cloud Tasks queue, with the same shape (5
+attempts, 60s minimum backoff, `MAX_DISPATCHES_PER_SECOND` throttling) and the
+same knobs (`MAX_DISPATCHES_PER_SECOND`, `MAX_ENQUEUE_ATTEMPTS`) - your
+migrated `.env` values carry over unchanged.
 
-The practical effects: retries no longer show up as a separate function or
-queue in the console, and the two knobs that tuned that queue,
-`MAX_DISPATCHES_PER_SECOND` and `MAX_ENQUEUE_ATTEMPTS`, no longer exist.
+One deliberate fix: when the enqueue itself failed, the extension swallowed the
+error and dropped the event with no trace. The kit logs it at error level and
+rethrows so the Firestore event is redelivered (`retry: true` on the trigger).
+You only pay that redelivery cost in the window where BigQuery and Cloud Tasks
+are failing at the same time.
+
+Earlier release candidates of this kit had no queue: they retried every failed
+write through Eventarc redelivery for up to 24 hours and never lost a row
+inside that window. That property is gone by design - a row that exhausts the
+queue without a configured `BACKUP_COLLECTION` is dropped, exactly as in the
+extension. Set `BACKUP_COLLECTION`.
 
 ### Events
-
-`onSuccess` is no longer published. The extension emitted it from the task
-queue handler, which is gone, so the kit publishes `onStart` and `onError`
-only.
 
 Events are published under `firebase.extensions.firestore-bigquery-export.v1.*`
 only. The extension also published a duplicate copy of every event under
@@ -321,14 +378,16 @@ BigQuery changelog table, so they still work against data this kit writes.
 ## API surface
 
 - **Main entry** (`@firebase-function-kits/firestore-bigquery-export`): exports
-  `fsexportbigquery`, `initBigQuerySync`, and `setupBigQuerySync`, and
-  registers the first-deploy / redeploy provisioning hooks. Runtime config is
-  resolved lazily on first invocation. Use this entry from Firebase
-  deploy/emulator/runtime. For your own triggers, import from `./lib` instead.
-- **Library entry** (`./lib`): `handleDocumentWrite`, the raw handler for owning
-  trigger registration yourself, plus the config types and helpers
-  (`ExportConfig`, `resolveExportConfig`, `toTrackerConfig`) for building its
-  injected `HandlerContext`. Safe to import anywhere.
+  `fsexportbigquery`, `syncBigQuery`, `initBigQuerySync`, and
+  `setupBigQuerySync`, and registers the first-deploy / redeploy provisioning
+  hooks. Runtime config is resolved lazily on first invocation. Use this entry
+  from Firebase deploy/emulator/runtime. For your own triggers, import from
+  `./lib` instead.
+- **Library entry** (`./lib`): `handleDocumentWrite` and
+  `handleSyncBigQueryTask`, the raw handlers for owning trigger registration
+  yourself, plus the config types and helpers (`ExportConfig`,
+  `resolveExportConfig`, `toTrackerConfig`, `SerializedDocumentChange`) for
+  building their injected `HandlerContext`. Safe to import anywhere.
 
 The change-tracker engine is an internal dependency and is not exported.
 
