@@ -78,7 +78,7 @@ describe("translateDocument", () => {
     });
   });
 
-  test("coerces a non-string, non-object input to a string", async () => {
+  test("passes a non-string, non-object input through uncoerced", async () => {
     const snapshot = makeSnapshot({ input: 42 });
 
     await translateDocument(
@@ -87,10 +87,24 @@ describe("translateDocument", () => {
       makeConfig()
     );
 
-    expect(translateString).toHaveBeenCalledWith("42", "en");
+    expect(translateString).toHaveBeenCalledWith(42, "en");
   });
 
-  test("treats a null input as a single string translation", async () => {
+  test("logs a non-string input without coercing it", async () => {
+    const snapshot = makeSnapshot({ input: 42 });
+
+    await translateDocument(
+      snapshot,
+      makeService({ extractLanguages: vi.fn(() => ["en"]) }),
+      makeConfig()
+    );
+
+    expect(logger.log).toHaveBeenCalledWith(
+      messages.translateInputStringToAllLanguages(42 as never, ["en"])
+    );
+  });
+
+  test("treats a null input as a single translation, uncoerced", async () => {
     const snapshot = makeSnapshot({ input: null });
 
     await translateDocument(
@@ -99,7 +113,7 @@ describe("translateDocument", () => {
       makeConfig()
     );
 
-    expect(translateString).toHaveBeenCalledWith("null", "en");
+    expect(translateString).toHaveBeenCalledWith(null, "en");
   });
 
   test("exits early when the input field is a translation output path", async () => {
