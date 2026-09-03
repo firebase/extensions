@@ -17,8 +17,15 @@
 import { logger } from "firebase-functions";
 import Mail from "nodemailer/lib/mailer";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+
+vi.mock("@sendgrid/mail", () => ({
+  setApiKey: vi.fn(),
+  send: vi.fn(),
+}));
+
+import * as sgMail from "@sendgrid/mail";
 import type { ResolvedSendEmailConfig } from "../src/export-config";
-import { isSendGrid, setSmtpCredentials } from "../src/helpers";
+import { isSendGrid, setSmtpCredentials, transportLayer } from "../src/helpers";
 import { AuthenticatonType } from "../src/types";
 
 const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
@@ -251,5 +258,20 @@ describe("isSendGrid", () => {
 
   test("returns false when no URI is configured", () => {
     expect(isSendGrid(makeConfig({}))).toBe(false);
+  });
+});
+
+describe("transportLayer", () => {
+  test("passes the SMTP password to SendGrid as the API key when AUTH_TYPE is OAuth2", async () => {
+    const transport = await transportLayer(
+      makeConfig({
+        smtpConnectionUri: "smtps://apikey@smtp.sendgrid.net:465",
+        smtpPassword: "SG.test-key",
+        authType: AuthenticatonType.OAuth2,
+      })
+    );
+
+    expect(vi.mocked(sgMail.setApiKey)).toHaveBeenCalledWith("SG.test-key");
+    expect(transport).toBeDefined();
   });
 });
