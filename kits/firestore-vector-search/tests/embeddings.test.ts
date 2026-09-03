@@ -31,11 +31,26 @@ vi.mock("@genkit-ai/google-genai", () => ({
   }),
 }));
 
+const { embeddingsCreate, openAiConstructor } = vi.hoisted(() => ({
+  embeddingsCreate: vi.fn(),
+  openAiConstructor: vi.fn(),
+}));
+
+vi.mock("openai", () => ({
+  default: class {
+    embeddings = { create: embeddingsCreate };
+    constructor(options: unknown) {
+      openAiConstructor(options);
+    }
+  },
+}));
+
 import { googleAI, vertexAI } from "@genkit-ai/google-genai";
 import { genkit } from "genkit";
 
 import { GenkitEmbedClient } from "../src/embeddings/client/genkit";
 import { CustomEndpointClient } from "../src/embeddings/client/text/custom_function";
+import { OpenAiEmbedClient } from "../src/embeddings/client/text/open_ai";
 import {
   type ResolvedVectorSearchConfig,
   resolveVectorSearchConfig,
@@ -118,6 +133,8 @@ describe("GenkitEmbedClient", () => {
       ]);
     });
 
+    // gemini-embedding-001 ignores the embedder's outputDimensionality and
+    // returns its full 3072-dimension vector, which Firestore rejects outright.
     test("truncates embeddings longer than the configured dimension", async () => {
       const client = new GenkitEmbedClient(
         config({
@@ -174,6 +191,85 @@ describe("GenkitEmbedClient", () => {
       await expect(client.getSingleEmbedding("input")).rejects.toThrow(
         "Embedding failed"
       );
+    });
+  });
+});
+
+describe("OpenAiEmbedClient", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function openAiConfig(): ResolvedVectorSearchConfig {
+    return config({
+      embeddingProvider: "openai",
+      openAiApiKey: "test-openai-key",
+    });
+  }
+
+  describe("constructor", () => {
+    test("builds the client with the configured API key", () => {
+      new OpenAiEmbedClient(openAiConfig());
+
+      expect(openAiConstructor).toHaveBeenCalledWith({
+        apiKey: "test-openai-key",
+      });
+    });
+
+    test("throws when no API key is configured", () => {
+      expect(
+        () => new OpenAiEmbedClient(config({ embeddingProvider: "openai" }))
+      ).toThrow("OpenAI embeddings require OPENAI_API_KEY");
+    });
+
+    test("embeds sixteen inputs per batch", () => {
+      expect(new OpenAiEmbedClient(openAiConfig()).batchSize).toBe(16);
+    });
+  });
+
+  describe("getEmbeddings", () => {
+    test("requests text-embedding-ada-002 at its native dimension", async () => {
+      const client = new OpenAiEmbedClient(openAiConfig());
+      embeddingsCreate.mockResolvedValueOnce({
+        data: [{ embedding: [1, 2, 3] }, { embedding: [4, 5, 6] }],
+      });
+
+      const inputs = ["input1", "input2"];
+
+      await expect(client.getEmbeddings(inputs)).resolves.toEqual([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      expect(embeddingsCreate).toHaveBeenCalledWith({
+        model: "text-embedding-ada-002",
+        input: inputs,
+      });
+    });
+
+    test("throws when embedding fails", async () => {
+      const client = new OpenAiEmbedClient(openAiConfig());
+      embeddingsCreate.mockRejectedValueOnce(new Error("Embedding failed"));
+
+      await expect(client.getEmbeddings(["input"])).rejects.toThrow(
+        "Embedding failed"
+      );
+    });
+  });
+
+  describe("getSingleEmbedding", () => {
+    test("returns a single embedding for an input", async () => {
+      const client = new OpenAiEmbedClient(openAiConfig());
+      embeddingsCreate.mockResolvedValueOnce({
+        data: [{ embedding: [7, 8, 9] }],
+      });
+
+      await expect(client.getSingleEmbedding("input1")).resolves.toEqual([
+        7, 8, 9,
+      ]);
+      expect(embeddingsCreate).toHaveBeenCalledWith({
+        model: "text-embedding-ada-002",
+        input: ["input1"],
+      });
     });
   });
 });

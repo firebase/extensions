@@ -150,7 +150,7 @@ This kit is version 0.1.3 of the extension repackaged as an npm package, and it 
 the least literal of the ports. The seven functions, the Firestore vector index,
 the query document collection and the callable all survive with their names and
 settings intact, so a `.env` copied from your installed instance needs no value
-changes. The embedding providers, the backfill, and the shape of the status field
+changes. Multimodal embedding, the backfill, and the shape of the status field
 written onto your documents all changed, so read this before you point the kit at
 a collection an installed instance has already embedded.
 
@@ -161,17 +161,19 @@ Selecting `multimodal` deploys, and then every embedding attempt throws
 multimodal image embedding, including reading images out of Cloud Storage, has no
 equivalent here. If you use it, stay on the extension.
 
-### OpenAI embeddings are a different model and a different size
+### Gemini and Vertex AI embeddings are truncated to 768 dimensions
 
-`EMBEDDING_PROVIDER: openai` used `text-embedding-ada-002` and stored the full
-1536-dimension vector, while the Firestore index it created was declared with 512
-dimensions. The kit uses `text-embedding-3-small` at 512 dimensions, which matches
-the index.
+Both the extension and the kit ask for `gemini-embedding-001` with
+`outputDimensionality: 768`, set on the embedder reference. Genkit does not apply
+it there, so the model returns its full 3072-dimension vector. Firestore refuses
+any vector above 2048 dimensions, so on the extension every gemini and vertex
+embed fails with `Vectors must be at most 2048 dimensions` and the document is
+marked `ERROR`.
 
-Vectors from the two models are not comparable, and the existing index is reused
-as-is because the "does this index already exist" check only looks at the field
-path, not the dimension. Re-embed the whole collection after you switch, and
-delete the old vector index first if it was created with a different dimension.
+The kit truncates each returned embedding to 768 before writing it, which is the
+dimension both the extension and the kit declare their vector index with, so the
+default provider works. This is the one place the kit deliberately does not match
+the extension's behaviour, because matching it means writing nothing at all.
 
 ### You set `INSTANCE_ID` yourself, and it names the query collection
 
@@ -325,7 +327,15 @@ for; the Firebase CLI grants these for you.
 - `DEFAULT_QUERY_LIMIT` (default 3) and `DISTANCE_MEASURE` (`COSINE`,
   `EUCLIDEAN`, `DOT_PRODUCT`, default `COSINE`) behave as before.
 - Gemini and Vertex AI embeddings are still `gemini-embedding-001` at 768
-  dimensions.
+  dimensions, though the kit has to truncate the model's response to get there.
+  See *Gemini and Vertex AI embeddings are truncated to 768 dimensions* above.
+- OpenAI embeddings are still `text-embedding-ada-002` at its native 1536
+  dimensions, so vectors already written by an installed instance stay
+  comparable with the ones the kit writes. The vector index the kit creates for
+  `EMBEDDING_PROVIDER: openai` is still declared with 512 dimensions, exactly as
+  the extension declared it, so it does not cover those 1536-dimension vectors
+  and `findNearest` fails against it. Create the 1536-dimension index yourself if
+  you query an OpenAI-embedded collection.
 - A custom endpoint still receives `{ batch: [...] }` and must return
   `{ embeddings: [[...]] }`, and still requires all three of
   `CUSTOM_EMBEDDINGS_ENDPOINT`, `CUSTOM_EMBEDDINGS_BATCH_SIZE` and
