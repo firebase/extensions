@@ -16,6 +16,7 @@
 
 import * as sqlFormatter from "sql-formatter";
 import { timestampField } from "./schema";
+import { resolveGcpProjectIdForBigQuery } from "./gcpProject";
 
 const excludeFields: string[] = ["document_name", "document_id"];
 const nonGroupFields = ["event_id", "data", "old_data"];
@@ -65,7 +66,12 @@ export function buildLatestSnapshotViewQuery({
 }: BuildLatestSnapshotViewQueryOptions): string {
   validateInputs({ datasetId, tableName, timestampColumnName, groupByColumns });
 
-  const projectId = bqProjectId || process.env.PROJECT_ID;
+  const projectId = resolveGcpProjectIdForBigQuery(bqProjectId);
+  if (!projectId) {
+    throw new Error(
+      "Could not determine BigQuery project ID. Provide it via the bqProjectId config option or set the GOOGLE_CLOUD_PROJECT / PROJECT_ID environment variable."
+    );
+  }
 
   return useLegacyQuery
     ? buildLegacyQuery(
