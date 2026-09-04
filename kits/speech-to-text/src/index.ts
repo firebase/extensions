@@ -40,6 +40,10 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
 ];
 const REQUIRED_APIS = [
   {
+    api: "firestore.googleapis.com",
+    reason: "Writes transcription results to Cloud Firestore.",
+  },
+  {
     api: "speech.googleapis.com",
     reason: "Used for transcribing audio files with Cloud Speech-to-Text.",
   },
