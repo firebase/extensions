@@ -59,14 +59,13 @@ describe("channel configured", () => {
     setupEventChannel();
   });
 
-  test("publishes the firestore-bigquery-export event type only", async () => {
+  test("publishes both the legacy and the current event type", async () => {
     await recordStartEvent({ a: 1 });
-    expect(publish).toHaveBeenCalledTimes(1);
-    expect(publish).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: "firebase.extensions.firestore-bigquery-export.v1.onStart",
-      })
-    );
+    expect(publish).toHaveBeenCalledTimes(2);
+    expect(publish.mock.calls.map((c) => c[0].type)).toEqual([
+      "firebase.extensions.firestore-counter.v1.onStart",
+      "firebase.extensions.firestore-bigquery-export.v1.onStart",
+    ]);
   });
 
   test("error / success / completion map to their event types", async () => {
@@ -76,9 +75,24 @@ describe("channel configured", () => {
 
     const types = publish.mock.calls.map((c) => c[0].type);
     expect(types).toEqual([
+      "firebase.extensions.firestore-counter.v1.onError",
       "firebase.extensions.firestore-bigquery-export.v1.onError",
+      "firebase.extensions.firestore-counter.v1.onSuccess",
       "firebase.extensions.firestore-bigquery-export.v1.onSuccess",
+      "firebase.extensions.firestore-counter.v1.onCompletion",
       "firebase.extensions.firestore-bigquery-export.v1.onCompletion",
     ]);
+  });
+
+  test("the legacy copy carries the same payload as the current one", async () => {
+    await recordErrorEvent(new Error("boom"), "doc1");
+
+    const [legacy, current] = publish.mock.calls.map((c) => c[0]);
+    expect(legacy.data).toEqual({ message: "boom" });
+    expect(legacy.subject).toBe("doc1");
+    expect({ ...legacy, type: undefined }).toEqual({
+      ...current,
+      type: undefined,
+    });
   });
 });

@@ -18,13 +18,17 @@ import * as eventArc from "firebase-admin/eventarc";
 const { getEventarc } = eventArc;
 
 /**
- * Builds the Eventarc event type for this extension.
+ * Generates both the OLD and NEW event types to maintain backward compatibility.
+ *
+ * Old Event Type: firebase.extensions.firestore-counter.v1.{eventName}
+ * New Event Type: firebase.extensions.firestore-bigquery-export.v1.{eventName}
  *
  * @param eventName The name of the event (e.g., "onStart", "onError", etc.)
- * @returns The event type string.
+ * @returns An array containing both the old and new event types
  */
 const getEventTypes = (eventName: string) => [
-  `firebase.extensions.firestore-bigquery-export.v1.${eventName}`,
+  `firebase.extensions.firestore-counter.v1.${eventName}`, // OLD Event Type for backward compatibility
+  `firebase.extensions.firestore-bigquery-export.v1.${eventName}`, // NEW Event Type following the updated convention
 ];
 
 let eventChannel: eventArc.Channel | undefined;
