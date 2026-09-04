@@ -1,1 +1,2 @@
+- fix: map `DATABASE_REGION` to a valid Cloud Run region before using it as the function region. Firestore multi-region locations (`nam5`, `nam7`) now deploy the function to `us-central1` and `eur3` to `europe-west1` instead of failing the deploy; regional locations pass through unchanged. With the parameter unset or empty the function declares no region and the Firebase CLI resolves one at deploy time.
 - Initial release of kit, see README for differences between the legacy extension and this kit

@@ -81,7 +81,7 @@ function ensureInitialized(): Promise<HandlerContext> {
 
 export const processQueue = onDocumentWritten(
   {
-    region: deploy.region,
+    ...(deploy.region ? { region: deploy.region } : {}),
     document: deploy.document,
     database: deploy.database,
     timeoutSeconds: 120,

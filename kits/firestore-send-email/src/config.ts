@@ -27,6 +27,7 @@ import type {
   SecretValue,
   SendEmailConfig,
 } from "./export-config";
+import { firestoreLocationToFunctionRegion } from "./region";
 import { AuthenticatonType } from "./types";
 
 const DATABASE_REGION_OPTIONS = [
@@ -96,7 +97,7 @@ const params = {
   databaseRegion: defineString("DATABASE_REGION", {
     label: "Firestore Instance Location",
     description:
-      "Where is the Firestore database located? You can check your current database location at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).",
+      "Where is the Firestore database located? You can check your current database location at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases). The function in this kit deploys to the Cloud Run region closest to this location.",
 
     input: select({
       "Multi-region (Europe - Belgium and Netherlands)": "eur3",
@@ -372,9 +373,14 @@ export function configFromEnv(): SendEmailConfig {
 }
 
 export function envDeployOptions(): DeployTimeOptions {
+  // The region option cannot be a param expression, so the value is read from
+  // `process.env` (populated from `.env` during CLI discovery) instead of via
+  // the param declared above.
+  const region = firestoreLocationToFunctionRegion(process.env.DATABASE_REGION);
+
   return {
     document: expr`${params.mailCollection}/{documentId}`,
     database: params.databaseId,
-    region: params.databaseRegion,
+    ...(region ? { region } : {}),
   };
 }
