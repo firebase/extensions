@@ -43,9 +43,19 @@ beforeAll(async () => {
   process.env.FIREBASE_KIT_INSTANCE_ID = INSTANCE_ID;
 
   const { initializeApp } = await import("firebase-admin/app");
+  // An explicit credential, never used: the emulator path sends an "owner"
+  // token. Under the default one the SDK reaches for application default
+  // credentials while building the task payload and throws where there are
+  // none, which is any machine that has not run `gcloud auth`.
   initializeApp({
     projectId: "test-project",
     serviceAccountId: "tasks@test-project.iam.gserviceaccount.com",
+    credential: {
+      getAccessToken: async () => ({
+        access_token: "owner",
+        expires_in: 3600,
+      }),
+    },
   });
 });
 
