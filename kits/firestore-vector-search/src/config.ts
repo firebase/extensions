@@ -168,17 +168,20 @@ const params = {
     description:
       "Should existing documents in the Firestore collection be updated with new embeddings on reconfiguring the extensions?",
   }),
+  // These name the deployed function, not the fully-qualified queue: the Admin
+  // SDK prefixes the name with `kit-<instance id>-` from
+  // FIREBASE_KIT_INSTANCE_ID when it resolves the queue.
   updateTriggerQueueName: defineString("UPDATE_TRIGGER_QUEUE_NAME", {
-    default: expr`kit-${instanceId}-updateTrigger`,
+    default: "updateTrigger",
   }),
   updateTaskQueueName: defineString("UPDATE_TASK_QUEUE_NAME", {
-    default: expr`kit-${instanceId}-updateTask`,
+    default: "updateTask",
   }),
   backfillTriggerQueueName: defineString("BACKFILL_TRIGGER_QUEUE_NAME", {
-    default: expr`kit-${instanceId}-backfillTrigger`,
+    default: "backfillTrigger",
   }),
   backfillTaskQueueName: defineString("BACKFILL_TASK_QUEUE_NAME", {
-    default: expr`kit-${instanceId}-backfillTask`,
+    default: "backfillTask",
   }),
 };
 

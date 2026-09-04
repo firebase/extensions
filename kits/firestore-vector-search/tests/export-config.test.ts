@@ -42,4 +42,23 @@ describe("resolveVectorSearchConfig", () => {
   test("defaults statusFieldName to status", () => {
     expect(resolveVectorSearchConfig(base).statusFieldName).toBe("status");
   });
+
+  test("defaults the queue names to the unprefixed export names", () => {
+    expect(resolveVectorSearchConfig(base).queueNames).toEqual({
+      updateTrigger: "updateTrigger",
+      updateTask: "updateTask",
+      backfillTrigger: "backfillTrigger",
+      backfillTask: "backfillTask",
+    });
+  });
+
+  test("keeps an explicitly configured queue name verbatim", () => {
+    const config = resolveVectorSearchConfig({
+      ...base,
+      queueNames: { updateTask: "customUpdateTask" },
+    });
+
+    expect(config.queueNames.updateTask).toBe("customUpdateTask");
+    expect(config.queueNames.backfillTask).toBe("backfillTask");
+  });
 });

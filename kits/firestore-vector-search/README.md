@@ -111,10 +111,10 @@ the CLI connects them to the function at deploy time.
 | `statusFieldName` | `STATUS_FIELD_NAME` | no | `status` | Status field |
 | `doBackfill` | `DO_BACKFILL` | yes | — | Run backfill on setup |
 | `updateOnConfigure` | `UPDATE_ON_CONFIGURE` | yes | — | Update index on configure |
-| `updateTriggerQueueName` | `UPDATE_TRIGGER_QUEUE_NAME` | no | `kit-<INSTANCE_ID>-updateTrigger` | Update trigger queue |
-| `updateTaskQueueName` | `UPDATE_TASK_QUEUE_NAME` | no | `kit-<INSTANCE_ID>-updateTask` | Update task queue |
-| `backfillTriggerQueueName` | `BACKFILL_TRIGGER_QUEUE_NAME` | no | `kit-<INSTANCE_ID>-backfillTrigger` | Backfill trigger queue |
-| `backfillTaskQueueName` | `BACKFILL_TASK_QUEUE_NAME` | no | `kit-<INSTANCE_ID>-backfillTask` | Backfill task queue |
+| `updateTriggerQueueName` | `UPDATE_TRIGGER_QUEUE_NAME` | no | `updateTrigger` | Update trigger queue |
+| `updateTaskQueueName` | `UPDATE_TASK_QUEUE_NAME` | no | `updateTask` | Update task queue |
+| `backfillTriggerQueueName` | `BACKFILL_TRIGGER_QUEUE_NAME` | no | `backfillTrigger` | Backfill trigger queue |
+| `backfillTaskQueueName` | `BACKFILL_TASK_QUEUE_NAME` | no | `backfillTask` | Backfill task queue |
 | `geminiApiKey` | `GEMINI_API_KEY` | secret | — | Gemini API key |
 | `openAiApiKey` | `OPENAI_API_KEY` | secret | — | OpenAI API key |
 
@@ -185,7 +185,8 @@ provide, and it must match this instance's key in the `instances` map in
 to, set it to your installed instance's id. The four task queue names can also be
 overridden individually with `UPDATE_TRIGGER_QUEUE_NAME`, `UPDATE_TASK_QUEUE_NAME`,
 `BACKFILL_TRIGGER_QUEUE_NAME` and `BACKFILL_TASK_QUEUE_NAME`, which the extension
-did not allow.
+did not allow. Each names the deployed function, without the
+`kit-<instance id>-` prefix: the Admin SDK adds that when it resolves the queue.
 
 ### Create the `GEMINI_API_KEY` and `OPENAI_API_KEY` secrets, both of them
 
