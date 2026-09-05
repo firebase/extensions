@@ -125,6 +125,15 @@ describe("index", () => {
     ]);
   });
 
+  test("declares the Cloud Firestore API requirement", async () => {
+    await importIndex();
+
+    expect(requiresAPI).toHaveBeenCalledWith(
+      "firestore.googleapis.com",
+      "Reads source strings and writes translations back to Cloud Firestore."
+    );
+  });
+
   test("declares the Cloud Translation API requirement", async () => {
     await importIndex();
 

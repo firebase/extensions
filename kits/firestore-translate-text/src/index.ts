@@ -39,6 +39,11 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
 ];
 const REQUIRED_APIS = [
   {
+    api: "firestore.googleapis.com",
+    reason:
+      "Reads source strings and writes translations back to Cloud Firestore.",
+  },
+  {
     api: "translate.googleapis.com",
     reason:
       "To use Google Translate to translate strings into the specified target languages.",

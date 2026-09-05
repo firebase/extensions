@@ -18,7 +18,7 @@ import { PubSub } from "@google-cloud/pubsub";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import type { Role } from "firebase-functions/v2";
-import { requiresRole } from "firebase-functions/v2";
+import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onUserDeleted } from "firebase-functions/v2/identity";
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
 import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
@@ -43,9 +43,19 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/eventarc.eventReceiver",
   "roles/run.invoker",
 ];
+const REQUIRED_APIS = [
+  {
+    api: "firestore.googleapis.com",
+    reason: "Deletes user data from Cloud Firestore.",
+  },
+] as const;
 
 for (const role of REQUIRED_ROLES) {
   requiresRole(role);
+}
+
+for (const { api, reason } of REQUIRED_APIS) {
+  requiresAPI(api, reason);
 }
 
 let ctx: HandlerContext | undefined;

@@ -37,11 +37,8 @@ import { onDocumentWritten } from "firebase-functions/firestore";
 import { onRequest } from "firebase-functions/https";
 import { expr } from "firebase-functions/params";
 import { onTaskDispatched } from "firebase-functions/tasks";
-// Imported from the narrow subpath, not the `firebase-functions/v2` barrel: the
-// barrel pulls in the RTDB provider, whose firebase-admin dependency fails to
-// load without @firebase/app installed.
-import type { Role } from "firebase-functions/v2/options";
-import { requiresRole } from "firebase-functions/v2/options";
+import type { Role } from "firebase-functions/v2";
+import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import {
   afterFirstDeploy,
   afterRedeploy,
@@ -95,9 +92,20 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   // Reads the staged flex template spec from Cloud Storage.
   "roles/storage.objectViewer",
 ];
+const REQUIRED_APIS = [
+  {
+    api: "firestore.googleapis.com",
+    reason:
+      "Receives document change events and writes restoration run status to Cloud Firestore.",
+  },
+] as const;
 
 for (const role of REQUIRED_ROLES) {
   requiresRole(role);
+}
+
+for (const { api, reason } of REQUIRED_APIS) {
+  requiresAPI(api, reason);
 }
 
 // The empty data envelope is required: the CLI enqueues the hook body
