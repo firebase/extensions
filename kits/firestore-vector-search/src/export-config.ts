@@ -114,17 +114,12 @@ function dimensionFor(config: VectorSearchConfig): number {
   }
 }
 
-function resolveQueueNames(
-  instanceId: string,
-  queueNames: Partial<QueueNames> = {}
-): QueueNames {
+function resolveQueueNames(queueNames: Partial<QueueNames> = {}): QueueNames {
   return {
-    updateTrigger:
-      queueNames.updateTrigger ?? `kit-${instanceId}-updateTrigger`,
-    updateTask: queueNames.updateTask ?? `kit-${instanceId}-updateTask`,
-    backfillTrigger:
-      queueNames.backfillTrigger ?? `kit-${instanceId}-backfillTrigger`,
-    backfillTask: queueNames.backfillTask ?? `kit-${instanceId}-backfillTask`,
+    updateTrigger: queueNames.updateTrigger ?? "updateTrigger",
+    updateTask: queueNames.updateTask ?? "updateTask",
+    backfillTrigger: queueNames.backfillTrigger ?? "backfillTrigger",
+    backfillTask: queueNames.backfillTask ?? "backfillTask",
   };
 }
 
@@ -152,7 +147,7 @@ export function resolveVectorSearchConfig(
     projectId,
     bucketName: config.bucketName ?? `${projectId}.appspot.com`,
     instanceId,
-    queueNames: resolveQueueNames(instanceId, config.queueNames),
+    queueNames: resolveQueueNames(config.queueNames),
     dimension: dimensionFor(config),
     indexMetadataDocumentPath: `_${instanceId}/index`,
     queryCollectionPath: `_${instanceId}/index/queries`,
