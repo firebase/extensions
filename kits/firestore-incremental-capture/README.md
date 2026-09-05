@@ -205,8 +205,8 @@ map, each pointing at its own config directory with its own `.env`:
 Instance ids must be unique across all kit stanzas in the project, and every
 instance's function names are namespaced by its `kit-<instance id>-` prefix, so
 the instances cannot collide. Set `INSTANCE_ID` in each config directory to that
-instance's key - the kit uses it to address its own task queues, and a mismatch
-enqueues onto a queue that does not exist.
+instance's key - it namespaces the Dataflow jobs and run-status documents, and a
+mismatch makes two instances share them.
 
 Give each instance its own `SYNC_DATASET`/`SYNC_TABLE` or its own
 `BACKUP_INSTANCE_ID`. Two instances sharing a changelog table would replay each

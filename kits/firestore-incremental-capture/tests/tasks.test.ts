@@ -41,26 +41,24 @@ function config(overrides: Partial<CaptureConfig> = {}) {
 }
 
 describe("queueName", () => {
-  test("carries the kit-<instanceId>- prefix the CLI deploys under", () => {
-    // A kit stanza renames every export to kit-<instance id>-<export name>.
-    // Without the prefix the enqueue targets a queue that does not exist.
+  test("leaves the kit-<instanceId>- prefix to the Admin SDK", () => {
     expect(queueName(config(), CHANGELOG_TASK_FUNCTION)).toBe(
-      "locations/us-central1/functions/kit-default-syncChangelogTask"
+      "locations/us-central1/functions/syncChangelogTask"
     );
     expect(queueName(config(), RESTORATION_TASK_FUNCTION)).toBe(
-      "locations/us-central1/functions/kit-default-runRestorationTask"
+      "locations/us-central1/functions/runRestorationTask"
     );
   });
 
-  test("namespaces the queue by instance id", () => {
+  test("does not vary with the instance id", () => {
     expect(
       queueName(config({ instanceId: "orders" }), "syncChangelogTask")
-    ).toBe("locations/us-central1/functions/kit-orders-syncChangelogTask");
+    ).toBe("locations/us-central1/functions/syncChangelogTask");
   });
 
   test("uses the configured region", () => {
     expect(
       queueName(config({ location: "europe-west1" }), "syncChangelogTask")
-    ).toBe("locations/europe-west1/functions/kit-default-syncChangelogTask");
+    ).toBe("locations/europe-west1/functions/syncChangelogTask");
   });
 });
