@@ -147,16 +147,15 @@ const functionRegion = firestoreLocationToFunctionRegion(
 /**
  * Firestore trigger: streams document writes on the watched collection into the
  * BigQuery changelog table. A failed inline write buffers through the
- * `syncBigQuery` queue and the execution still succeeds; `retry: true` stays on
- * so an event whose enqueue ALSO failed (rethrown by the handler) is
- * redelivered instead of dropped.
+ * `syncBigQuery` queue and the execution still succeeds. No runtime retry
+ * policy, as in the extension: a failure before the write is attempted fails
+ * the execution once, and a failed enqueue is logged and dropped.
  */
 export const fsexportbigquery = onDocumentWritten(
   {
     ...(functionRegion ? { region: functionRegion } : {}),
     document: expr`${CONFIG_EXPRESSIONS.collectionPath}/{documentId}`,
     database: CONFIG_EXPRESSIONS.database,
-    retry: true,
   },
   (event) => handleDocumentWrite(event, getHandlerContext())
 );

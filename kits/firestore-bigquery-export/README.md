@@ -97,8 +97,9 @@ deploy as `kit-default-fsexportbigquery`, `kit-default-syncBigQuery`,
 Deploy with Firebase CLI 15.28.0 or later: it sets the
 `FIREBASE_KIT_INSTANCE_ID` env var on the deployed functions, which the trigger
 needs to address its own `syncBigQuery` queue. On functions deployed with an
-older CLI, enqueues fail (loudly - the event is redelivered, not lost) until
-you redeploy with a newer CLI.
+older CLI, enqueues fail (logged at error level and published as an `onError`
+event; the event is dropped, as in the extension) until you redeploy with a
+newer CLI.
 
 ```sh
 firebase experiments:enable kits
@@ -124,7 +125,7 @@ loads them at deploy time and prompts for any required values that are missing.
 | `bigqueryProjectId`              | `BIGQUERY_PROJECT_ID`               | no       | project id         | Dataset project, if different                                      |
 | `backupCollection`               | `BACKUP_COLLECTION`                 | no       | (empty)            | Strongly recommended: collection for rows the queue gave up on     |
 | `maxDispatchesPerSecond`         | `MAX_DISPATCHES_PER_SECOND`         | no       | `100`              | `syncBigQuery` queue dispatch rate (1-500)                         |
-| `maxEnqueueAttempts`             | `MAX_ENQUEUE_ATTEMPTS`              | no       | `3`                | In-process enqueue attempts before rethrowing (1-10)               |
+| `maxEnqueueAttempts`             | `MAX_ENQUEUE_ATTEMPTS`              | no       | `3`                | In-process enqueue attempts before giving up (1-10)                |
 | `transformFunction`              | `TRANSFORM_FUNCTION`                | no       | (empty)            | Optional transform Cloud Function                                  |
 | `tablePartitioning`              | `TABLE_PARTITIONING`                | no       | `NONE`             | Table partitioning strategy                                        |
 | `timePartitioningField`          | `TIME_PARTITIONING_FIELD`           | no       | (empty)            | Time-partitioning column name                                      |
@@ -242,10 +243,10 @@ The write path mirrors the extension's Cloud Tasks buffer:
 2. On failure, it enqueues the serialized change onto the `syncBigQuery` queue
    (up to `MAX_ENQUEUE_ATTEMPTS` in-process attempts with backoff, keyed by
    event id so a retried enqueue cannot buffer the same event twice) and the
-   execution succeeds. A failed inline write on its own does not redeliver the
-   Firestore event. Failures _before_ the write is attempted (serializing the
-   change, publishing the `onStart` event) do rethrow, and `retry: true` means
-   those are redelivered by the runtime.
+   execution succeeds. The trigger declares no retry policy, as in the
+   extension: a failure _before_ the write is attempted (serializing the
+   change, publishing the `onStart` event) fails the execution once and the
+   event is not redelivered.
 3. `syncBigQuery` re-attempts the write on the queue's schedule: 5 attempts,
    60 seconds minimum backoff, throttled to `MAX_DISPATCHES_PER_SECOND`
    dispatches per second (500 concurrent max).
@@ -256,10 +257,9 @@ The write path mirrors the extension's Cloud Tasks buffer:
    dropped. **Without a backup collection, the row is dropped with it** -
    configure `BACKUP_COLLECTION`.
 5. If the enqueue itself fails (BigQuery AND Cloud Tasks both failing), the
-   trigger logs at error level and rethrows, so the Firestore event is
-   redelivered by the runtime retry policy (`retry: true`) instead of being
-   lost. The extension silently dropped the event in this window; this kit
-   does not.
+   trigger logs at error level, publishes an `onError` event, and the
+   execution succeeds: the event is dropped, exactly as the extension did in
+   this window.
 
 ### Recovering parked rows
 
@@ -295,7 +295,7 @@ boolean params, and only the literal string `true` enables them. The extension
 used `yes` / `no` for the last two, so copying an old config across leaves them
 silently disabled. Change any `yes` to `true` in your `.env`.
 
-### Failed writes: same buffer, one fix
+### Failed writes: same buffer
 
 The kit keeps the extension's write-path architecture: a failed BigQuery write
 buffers through the `syncBigQuery` Cloud Tasks queue, with the same shape (5
@@ -303,11 +303,9 @@ attempts, 60s minimum backoff, `MAX_DISPATCHES_PER_SECOND` throttling) and the
 same knobs (`MAX_DISPATCHES_PER_SECOND`, `MAX_ENQUEUE_ATTEMPTS`) - your
 migrated `.env` values carry over unchanged.
 
-One deliberate fix: when the enqueue itself failed, the extension swallowed the
-error and dropped the event with no trace. The kit logs it at error level and
-rethrows so the Firestore event is redelivered (`retry: true` on the trigger).
-You only pay that redelivery cost in the window where BigQuery and Cloud Tasks
-are failing at the same time.
+When the enqueue itself fails, the kit does what the extension does: logs at
+error level, publishes an `onError` event, and drops the event. The trigger
+declares no retry policy, so nothing is redelivered through Eventarc.
 
 Earlier release candidates of this kit had no queue: they retried every failed
 write through Eventarc redelivery for up to 24 hours and never lost a row

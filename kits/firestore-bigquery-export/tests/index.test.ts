@@ -125,9 +125,9 @@ describe("exported function options", () => {
     expect(document.toCEL()).toContain("params.COLLECTION_PATH");
   });
 
-  test("the trigger keeps retry enabled so a rethrown enqueue failure is redelivered", async () => {
+  test("the trigger declares no retry policy, matching the extension", async () => {
     const { trigger } = await loadExportedOptions();
-    expect(trigger.retry).toBe(true);
+    expect(trigger.retry).toBeUndefined();
   });
 
   test("syncBigQuery pins the extension's queue shape", async () => {

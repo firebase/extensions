@@ -99,9 +99,9 @@ async function recordEventToBigQuery(
 
 /**
  * Buffers a failed inline write through the `syncBigQuery` task queue. A
- * terminal enqueue failure is logged, recorded, and rethrown so the trigger
- * retry policy covers the window where both BigQuery and Cloud Tasks fail;
- * swallowing it here would drop the event with no durable copy.
+ * terminal enqueue failure is logged and published as an `onError` event, then
+ * dropped, exactly as the extension did: with no retry policy on the trigger a
+ * rethrow would only fail the execution once and drop it anyway.
  *
  * @param change - The serialized change to enqueue.
  * @param ctx - The handler context.
@@ -122,15 +122,13 @@ async function enqueueForSync(
       change.changeType,
       enqueueErr as Error
     );
-
-    throw enqueueErr;
   }
 }
 
 /**
  * Handles a Firestore document write: serializes the change and writes it to
  * BigQuery. A failed inline write is buffered through the `syncBigQuery` task
- * queue; only a failed enqueue surfaces to the trigger retry policy.
+ * queue; a failed enqueue is logged and dropped.
  *
  * @param event - The Firestore document-write event.
  * @param ctx - The handler context.

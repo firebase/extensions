@@ -255,7 +255,9 @@ describe("handleDocumentWrite", () => {
     expect(JSON.parse(JSON.stringify(enqueued))).toEqual(enqueued);
   });
 
-  test("a failed enqueue is recorded and rethrown, never swallowed", async () => {
+  test("a failed enqueue is recorded and logged, then the execution succeeds", async () => {
+    // Extension parity: no retry policy on the trigger, so a rethrow would
+    // only fail the execution once and drop the event anyway.
     const ctx = makeCtx();
     (ctx.tracker.record as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
       new Error("bq down")
@@ -269,8 +271,8 @@ describe("handleDocumentWrite", () => {
         writeEvent(snap(false, "doc1"), snap(true, "doc1", { a: 1 })),
         ctx
       )
-    ).rejects.toThrow("tasks down");
-    expect(events.recordErrorEvent).toHaveBeenCalled();
+    ).resolves.toBeUndefined();
+    expect(events.recordErrorEvent).toHaveBeenCalledTimes(1);
   });
 
   test("rethrows when serialization fails", async () => {

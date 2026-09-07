@@ -94,7 +94,7 @@ export interface ExportConfig {
   maxDispatchesPerSecond?: ConfigValue<number>;
   /**
    * How many times the trigger tries to enqueue a failed write onto the
-   * `syncBigQuery` queue before giving up and rethrowing. Defaults to `3`.
+   * `syncBigQuery` queue before giving up. Defaults to `3`.
    */
   maxEnqueueAttempts?: ConfigValue<number>;
 }
