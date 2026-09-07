@@ -39,8 +39,12 @@ function taskIdFor(change: SerializedDocumentChange): string {
  * deployed `kit-<instance id>-` prefix itself from the
  * `FIREBASE_KIT_INSTANCE_ID` env var, which the CLI sets on every deployed kit
  * function. All functions of a kit instance deploy to one region, so the
- * enqueuing function's own `DATABASE_REGION`-derived region is also the
- * queue's region.
+ * enqueuing function's own region is the queue's region.
+ *
+ * The CLI-set `FUNCTION_REGION` wins because it is the region the function
+ * was actually deployed to; a `DATABASE_REGION`-derived region can disagree
+ * with it on a first deploy or when the variable is unset, and is only the
+ * fallback for local runs where the CLI has not populated the environment.
  *
  * @param functionName - The export name of the task function.
  * @returns The queue resource path, `locations/<region>/functions/<name>`.
@@ -49,12 +53,14 @@ function taskIdFor(change: SerializedDocumentChange): string {
 export function syncQueuePath(
   functionName: string = SYNC_BIGQUERY_FUNCTION
 ): string {
-  const region = firestoreLocationToFunctionRegion(process.env.DATABASE_REGION);
+  const region =
+    process.env.FUNCTION_REGION ||
+    firestoreLocationToFunctionRegion(process.env.DATABASE_REGION);
 
   if (!region) {
     throw new Error(
       "A region is required to resolve the syncBigQuery task queue. " +
-        "Set DATABASE_REGION."
+        "Deploy with the Firebase CLI (which sets FUNCTION_REGION) or set DATABASE_REGION."
     );
   }
 
@@ -87,7 +93,9 @@ export async function enqueueSyncTask(
   const queue = getFunctions().taskQueue(syncQueuePath());
   const id = taskIdFor(payload);
 
-  const attemptBudget = Math.max(1, maxAttempts);
+  // Math.max(1, NaN) is NaN and would skip the loop entirely.
+  const attemptBudget =
+    Number.isInteger(maxAttempts) && maxAttempts >= 1 ? maxAttempts : 1;
   const jitter = Math.random() * JITTER_MS;
   let attempts = 0;
 

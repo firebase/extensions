@@ -40,7 +40,7 @@ function makeChange(
   } as SerializedDocumentChange;
 }
 
-const ENV_KEYS = ["DATABASE_REGION"] as const;
+const ENV_KEYS = ["DATABASE_REGION", "FUNCTION_REGION"] as const;
 const originalEnv: Record<string, string | undefined> = {};
 
 beforeEach(() => {
@@ -77,12 +77,31 @@ describe("syncQueuePath", () => {
     );
   });
 
-  test("throws when DATABASE_REGION is unset", () => {
+  test("prefers the CLI-set FUNCTION_REGION, the region the function is deployed in", () => {
+    // On a first interactive deploy the functions land in us-central1 while
+    // DATABASE_REGION already names the target region; the queue is where
+    // the functions are.
+    process.env.FUNCTION_REGION = "us-central1";
+    process.env.DATABASE_REGION = "europe-west2";
+    expect(syncQueuePath()).toBe(
+      "locations/us-central1/functions/syncBigQuery"
+    );
+  });
+
+  test("falls back to DATABASE_REGION when FUNCTION_REGION is unset", () => {
+    process.env.DATABASE_REGION = "europe-west2";
+    expect(syncQueuePath()).toBe(
+      "locations/europe-west2/functions/syncBigQuery"
+    );
+  });
+
+  test("throws when neither region variable is set", () => {
     expect(() => syncQueuePath()).toThrow(/region/i);
   });
 
-  test("throws when DATABASE_REGION is an empty string", () => {
+  test("throws when both region variables are empty strings", () => {
     process.env.DATABASE_REGION = "";
+    process.env.FUNCTION_REGION = "";
     expect(() => syncQueuePath()).toThrow(/region/i);
   });
 });
@@ -145,6 +164,16 @@ describe("enqueueSyncTask", () => {
     await enqueueSyncTask(makeChange(), 0);
 
     expect(enqueue).toHaveBeenCalledTimes(1);
+  });
+
+  test("a NaN or non-integer attempt budget still enqueues once", async () => {
+    const enqueue = vi.fn().mockResolvedValue(undefined);
+    mockQueue(enqueue);
+
+    await enqueueSyncTask(makeChange(), NaN);
+    await enqueueSyncTask(makeChange(), Infinity);
+
+    expect(enqueue).toHaveBeenCalledTimes(2);
   });
 
   test("retries a failed enqueue after a backoff and then succeeds", async () => {
