@@ -148,15 +148,15 @@ This kit is version 0.1.3 of the extension repackaged as an npm package, and it 
 the least literal of the ports. The seven functions, the Firestore vector index,
 the query document collection and the callable all survive with their names and
 settings intact, so a `.env` copied from your installed instance needs no value
-changes. Multimodal embedding, the backfill, and the shape of the status field
-written onto your documents all changed, so read this before you point the kit at
-a collection an installed instance has already embedded.
+changes. Multimodal embedding is gone, and the backfill and the shape of the
+status field written onto your documents changed, so read this before you point
+the kit at a collection an installed instance has already embedded.
 
 ### `EMBEDDING_PROVIDER: multimodal` is not available
 
 The extension's multimodal image embedding, including reading images out of Cloud
 Storage, has no equivalent here. The kit does not offer the `multimodal` value,
-and config resolution rejects it with `Unsupported embedding provider
+and config resolution rejects it with `Unsupported EMBEDDING_PROVIDER
 "multimodal"`. If you use it, stay on the extension.
 
 ### Gemini and Vertex AI embeddings are truncated to 768 dimensions

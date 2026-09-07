@@ -129,8 +129,8 @@ export function resolveVectorSearchConfig(
   const embeddingProvider = config.embeddingProvider ?? "gemini";
   if (!EMBEDDING_PROVIDERS.includes(embeddingProvider)) {
     throw new Error(
-      `Unsupported embedding provider "${embeddingProvider}". ` +
-        `Supported providers: ${EMBEDDING_PROVIDERS.join(", ")}.`
+      `Unsupported EMBEDDING_PROVIDER "${embeddingProvider}". ` +
+        `Set it to one of: ${EMBEDDING_PROVIDERS.join(", ")}.`
     );
   }
   return {

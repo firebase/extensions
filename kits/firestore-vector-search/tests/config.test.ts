@@ -45,7 +45,7 @@ describe("EMBEDDING_PROVIDER", () => {
         embeddingProvider: "multimodal" as unknown as EmbeddingProvider,
       })
     ).toThrow(
-      'Unsupported embedding provider "multimodal". Supported providers: gemini, openai, vertex, custom.'
+      'Unsupported EMBEDDING_PROVIDER "multimodal". Set it to one of: gemini, openai, vertex, custom.'
     );
   });
 
