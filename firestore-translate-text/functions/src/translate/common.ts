@@ -81,6 +81,17 @@ export class GoogleTranslator implements ITranslator {
 }
 
 /**
+ * Vertex AI location used for Gemini translations.
+ *
+ * Gemini 3.x is served from the `global`, `us` and `eu` endpoints only, so the
+ * Cloud Functions location is not a usable default: a single region such as
+ * `us-central1` returns a 404 for `gemini-3.6-flash`.
+ *
+ * @see https://cloud.google.com/vertex-ai/generative-ai/docs/learn/locations
+ */
+const VERTEX_LOCATION = "global";
+
+/**
  * Implementation of ITranslator using Genkit with either Vertex AI or Google AI
  */
 export class GenkitTranslator implements ITranslator {
@@ -114,7 +125,7 @@ export class GenkitTranslator implements ITranslator {
 
     const plugins =
       plugin === "vertexai"
-        ? [vertexAI({ location: process.env.LOCATION! })]
+        ? [vertexAI({ location: VERTEX_LOCATION })]
         : [googleAI({ apiKey: config.googleAIAPIKey })];
 
     this.client = genkit({
