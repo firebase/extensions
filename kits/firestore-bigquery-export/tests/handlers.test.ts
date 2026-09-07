@@ -296,13 +296,14 @@ describe("handleDocumentWrite", () => {
 describe("handleSyncBigQueryTask", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  test("self-heals, records the buffered change, and emits a success event", async () => {
+  test("records the buffered change and emits a success event", async () => {
     const ctx = makeCtx();
     const change = serializedChange();
 
     await handleSyncBigQueryTask(taskRequest(change), ctx);
 
-    expect(ctx.ensureInitialized).toHaveBeenCalledTimes(1);
+    // Extension parity: no provisioning on the write path.
+    expect(ctx.ensureInitialized).not.toHaveBeenCalled();
     const [[recorded]] = (ctx.tracker.record as ReturnType<typeof vi.fn>).mock
       .calls;
     expect(recorded[0]).toMatchObject({
@@ -330,33 +331,6 @@ describe("handleSyncBigQueryTask", () => {
     // Re-enqueueing from the task would seed a trigger-queue loop; retries
     // belong to Cloud Tasks alone.
     expect(ctx.enqueue).not.toHaveBeenCalled();
-  });
-
-  test("attempts the write even when the self-heal fails", async () => {
-    // The tracker only parks a row in BACKUP_COLLECTION from its insert
-    // failure path, so skipping the write would drop the row instead.
-    const ctx = makeCtx();
-    (ctx.ensureInitialized as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
-      new Error("no dataset")
-    );
-
-    await handleSyncBigQueryTask(taskRequest(serializedChange()), ctx);
-
-    expect(ctx.tracker.record).toHaveBeenCalledTimes(1);
-  });
-
-  test("surfaces the write error when the self-heal also failed", async () => {
-    const ctx = makeCtx();
-    (ctx.ensureInitialized as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
-      new Error("no dataset")
-    );
-    (ctx.tracker.record as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
-      new Error("no table")
-    );
-
-    await expect(
-      handleSyncBigQueryTask(taskRequest(serializedChange()), ctx)
-    ).rejects.toThrow("no table");
   });
 
   test("does not rethrow when the success event fails after the row lands", async () => {

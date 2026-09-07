@@ -141,6 +141,8 @@ describe("exported function options", () => {
 
     const rateLimits = syncTask.rateLimits as Record<string, unknown>;
     expect(rateLimits.maxConcurrentDispatches).toBe(500);
+    // gen2 defaults to 100 instances; the queue must be able to use its ceiling.
+    expect(syncTask.maxInstances).toBe(500);
     expect(String(rateLimits.maxDispatchesPerSecond)).toBe(
       "params.MAX_DISPATCHES_PER_SECOND"
     );

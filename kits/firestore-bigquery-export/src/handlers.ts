@@ -60,10 +60,8 @@ export interface HandlerContext {
   tracker: FirestoreBigQueryEventHistoryTracker;
   config: ResolvedExportConfig;
   /**
-   * Provisions the BigQuery dataset/table/views once per instance. Called by
-   * the `syncBigQuery` task as a self-heal before re-attempting a write; the
-   * hot path relies on out-of-band provisioning
-   * (`initBigQuerySync` / `setupBigQuerySync`).
+   * Provisions the BigQuery resources. Used by the lifecycle tasks only; the
+   * write paths never call it.
    */
   ensureInitialized: () => Promise<void>;
   /**
@@ -145,7 +143,7 @@ export async function handleDocumentWrite(
   // No provisioning on the hot path: BigQuery resources are provisioned
   // out-of-band (afterFirstDeploy / afterRedeploy tasks). If they are missing,
   // the inline write fails and the change buffers through the syncBigQuery
-  // queue, whose handler self-heals before re-attempting.
+  // queue, whose handler re-attempts the write on Cloud Tasks' schedule.
   const { config, tracker } = ctx;
   const changeType = getChangeType(data);
   const documentId = getDocumentId(data);
@@ -221,13 +219,12 @@ export async function handleDocumentWrite(
 }
 
 /**
- * Handles a `syncBigQuery` task: re-attempts a buffered write. Provisioning
- * runs first as a self-heal (memoized, a no-op after the first success), so a
- * write that failed only because the BigQuery resources were missing succeeds
- * on the first task attempt. A failed provision is logged and the write is
- * attempted anyway, so the tracker still parks the row in the backup
- * collection. A failed write rethrows so Cloud Tasks retries on the queue's
- * schedule.
+ * Handles a `syncBigQuery` task: re-attempts a buffered write. No provisioning
+ * runs here, as in the extension: that stays in the lifecycle tasks, so a
+ * recovery burst does not fan `initialize()` out across every cold instance.
+ * A failed write rethrows so Cloud Tasks retries on the queue's schedule; the
+ * tracker parks the row in the backup collection before each terminal
+ * rethrow.
  *
  * @param req - The dispatched task request carrying the serialized change.
  * @param ctx - The handler context.
@@ -246,19 +243,6 @@ export async function handleSyncBigQueryTask(
   );
 
   try {
-    try {
-      await ctx.ensureInitialized();
-    } catch (initErr) {
-      // Fall through to the write regardless: the tracker only parks a row in
-      // BACKUP_COLLECTION from its insert failure path, so throwing here would
-      // drop the row instead of backing it up.
-      logs.error(
-        false,
-        "Failed to provision BigQuery resources before a buffered write",
-        initErr as Error
-      );
-    }
-
     await recordEventToBigQuery(change, ctx.tracker);
   } catch (err) {
     logs.logFailedEventAction(

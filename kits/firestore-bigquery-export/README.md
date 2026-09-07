@@ -230,10 +230,10 @@ curl -fsS -X POST -H "Content-Type: application/json" -d '{"data":{}}' \
 
 The Firestore write path never provisions on the hot path. If resources are
 missing when a write arrives, the inline write fails and the change buffers
-through the `syncBigQuery` queue, whose handler calls `ensureInitialized()` as
-a self-heal before re-attempting the write. Provisioning is memoized once it
-succeeds, so the self-heal covers resources that were never created, not
-resources deleted out from under a warm instance.
+through the `syncBigQuery` queue, which re-attempts the write on Cloud Tasks'
+schedule. The queue handler does not provision, as in the extension: if the
+resources are still missing the retries fail and the row lands in
+`BACKUP_COLLECTION`; run the lifecycle task (redeploy) to recreate them.
 
 ## Failure handling
 
@@ -249,12 +249,11 @@ The write path mirrors the extension's Cloud Tasks buffer:
    event is not redelivered.
 3. `syncBigQuery` re-attempts the write on the queue's schedule: 5 attempts,
    60 seconds minimum backoff, throttled to `MAX_DISPATCHES_PER_SECOND`
-   dispatches per second (500 concurrent max).
+   dispatches per second (500 concurrent max, and the function allows 500
+   instances so that ceiling is reachable; gen2 would otherwise cap at 100).
 4. On every terminal insert failure the tracker writes the row to
    `BACKUP_COLLECTION` (when configured), keyed by the event id, before the
-   task fails. A failed provisioning attempt is logged and the write is tried
-   anyway, so it still reaches that path. After the fifth attempt the task is
-   dropped. **Without a backup collection, the row is dropped with it** -
+   task fails. After the fifth attempt the task is dropped. **Without a backup collection, the row is dropped with it** -
    configure `BACKUP_COLLECTION`.
 5. If the enqueue itself fails (BigQuery AND Cloud Tasks both failing), the
    trigger logs at error level, publishes an `onError` event, and the

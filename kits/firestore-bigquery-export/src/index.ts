@@ -171,6 +171,9 @@ export const syncBigQuery = onTaskDispatched<SerializedDocumentChange>(
   {
     ...(functionRegion ? { region: functionRegion } : {}),
     retryConfig: SYNC_RETRY_CONFIG,
+    // The extension's queue handler is gen1 with no instance cap; gen2 defaults
+    // to 100, which would 429 dispatches beyond it and burn queue attempts.
+    maxInstances: SYNC_MAX_CONCURRENT_DISPATCHES,
     rateLimits: {
       maxConcurrentDispatches: SYNC_MAX_CONCURRENT_DISPATCHES,
       maxDispatchesPerSecond: CONFIG_EXPRESSIONS.maxDispatchesPerSecond,
