@@ -2,7 +2,7 @@
 
 ## 2.2.1
 
-- Updating an existing `_raw_latest` view now builds the snapshot query with the configured BigQuery project. That path dropped `bqProjectId`, so the query fell back to `process.env.PROJECT_ID`, which is only set for extensions. On a kit or any other plain Cloud Function the view was written as `undefined.<dataset>.<table>` and the update failed.
+- Updating an existing `_raw_latest` view now builds the snapshot query with the configured BigQuery project. That path dropped `bqProjectId`, so the query fell back to `process.env.PROJECT_ID`, which is only set for extensions. On a kit, or any caller that passes `bqProjectId` but does not set `PROJECT_ID`, the query referenced `undefined.<dataset>.<table>` and BigQuery rejected the update. For an extension whose `BIGQUERY_PROJECT_ID` differs from `PROJECT_ID`, the update previously built the view against the functions project instead of the BigQuery project.
 
 ## 2.2.0
 
