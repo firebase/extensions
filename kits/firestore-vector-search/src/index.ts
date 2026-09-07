@@ -68,6 +68,11 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
 ];
 const REQUIRED_APIS = [
   {
+    api: "firestore.googleapis.com",
+    reason:
+      "Reads document data and writes embeddings back to Cloud Firestore.",
+  },
+  {
     api: "aiplatform.googleapis.com",
     reason:
       "This extension uses Vertex AI for embedding and vector search when configured.",

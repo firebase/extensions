@@ -65,6 +65,10 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
 ];
 const REQUIRED_APIS = [
   {
+    api: "firestore.googleapis.com",
+    reason: "Receives document change events from Cloud Firestore.",
+  },
+  {
     api: "bigquery.googleapis.com",
     reason: "Mirrors data from your Cloud Firestore collection in BigQuery.",
   },
