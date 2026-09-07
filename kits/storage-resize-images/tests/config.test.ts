@@ -116,6 +116,16 @@ describe("configFromEnv", () => {
     expect(resolveResizeImagesConfig(config).imageTypes).toEqual(["false"]);
   });
 
+  test("accepts the extension-style IMAGE_TYPE=false default", async () => {
+    process.env.IMAGE_TYPE = "false";
+    const { configFromEnv } = await import("../src/config");
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+
+    const config = configFromEnv();
+    expect(config.imageTypes).toBe("false");
+    expect(resolveResizeImagesConfig(config).imageTypes).toEqual(["false"]);
+  });
+
   test("accepts an extension-style comma-separated IMAGE_TYPE", async () => {
     process.env.IMAGE_TYPE = "jpeg,webp";
     const { configFromEnv } = await import("../src/config");

@@ -286,10 +286,11 @@ function optional(value: string): string | undefined {
 }
 
 /**
- * `ListParam.value()` JSON-parses the raw env var, so an unset IMAGE_TYPE (or
- * an extension-style comma-separated list) throws at cold start. The extension
- * read `process.env.IMAGE_TYPE` directly and degraded gracefully; do the same,
- * handing non-JSON input to the resolver's comma-splitting `toArray`.
+ * `ListParam.value()` JSON-parses the raw env var. Extension-style values may
+ * either throw (for example, `jpeg,webp`) or parse to a non-list and collapse
+ * to `[]` (notably the extension default, `false`). The extension read the raw
+ * value directly, so preserve it whenever the params layer cannot return a
+ * non-empty list and let the resolver's `toArray` apply legacy semantics.
  */
 function imageTypesFromEnv(): ReadonlyArray<string> | string | undefined {
   const raw = process.env.IMAGE_TYPE;
@@ -297,7 +298,8 @@ function imageTypesFromEnv(): ReadonlyArray<string> | string | undefined {
     return undefined;
   }
   try {
-    return params.imageTypes.value();
+    const parsed = params.imageTypes.value();
+    return parsed.length > 0 ? parsed : raw;
   } catch {
     return raw;
   }
