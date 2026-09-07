@@ -47,6 +47,12 @@ export type VectorWriteEvent = FirestoreEvent<
   Record<string, string>
 >;
 
+/**
+ * `queueName` is the deployed function's export name. The Admin SDK prefixes it
+ * with `kit-<instance id>-` from FIREBASE_KIT_INSTANCE_ID when it resolves the
+ * queue, so a name that already carries the prefix resolves to a queue that
+ * does not exist.
+ */
 function queuePath(
   config: ResolvedVectorSearchConfig,
   queueName: string
