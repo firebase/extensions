@@ -63,12 +63,11 @@ export interface CaptureConfig {
    */
   bucketName?: string;
   /**
-   * This instance's key in the `instances` map of the kit stanza. Required, and
-   * must match exactly: the CLI deploys every function as
-   * `kit-<instanceId>-<export name>`, so a mismatch makes the kit enqueue onto
-   * task queues that do not exist. It also namespaces the flex template object,
-   * the Dataflow job names and the run-status documents, which is what keeps two
-   * instances in one project from colliding.
+   * This instance's key in the `instances` map of the kit stanza. Required: it
+   * namespaces the flex template object, the Dataflow job names and the
+   * run-status documents, which is what keeps two instances in one project from
+   * colliding. Task queue names come from `FIREBASE_KIT_INSTANCE_ID` instead,
+   * which the Admin SDK reads directly.
    */
   instanceId: string;
   /** Defaults to `info`. */
@@ -114,9 +113,10 @@ const DEFAULT_DATASET_LOCATION = "us";
  * throwing here would take the capture path down with it on a project that has
  * no Storage bucket - which the extension captured on quite happily.
  *
- * @throws If `instanceId` is empty, which would misname every task queue, or if
- *   `backupInstanceId` is empty or is the captured database, either of which
- *   would make a restoration write over the source it restores from.
+ * @throws If `instanceId` is empty, which would collide the Dataflow and
+ *   run-status names of two instances, or if `backupInstanceId` is empty or is
+ *   the captured database, either of which would make a restoration write over
+ *   the source it restores from.
  */
 export function resolveCaptureConfig(
   config: CaptureConfig
