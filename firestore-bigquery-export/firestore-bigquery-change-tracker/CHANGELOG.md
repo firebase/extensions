@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.1
+
+- Updating an existing `_raw_latest` view now builds the snapshot query with the configured BigQuery project. That path dropped `bqProjectId`, so the query fell back to `process.env.PROJECT_ID`, which is only set for extensions. On a kit or any other plain Cloud Function the view was written as `undefined.<dataset>.<table>` and the update failed.
+
 ## 2.2.0
 
 - Works on `firebase-admin` 14. 2.1.1 widened the range but the package still used the namespaced API (`admin.apps`, `admin.firestore.Timestamp`), which firebase-admin 14 removes, so it threw at import wherever it was resolved against admin 14. Every use is now the modular API from `firebase-admin/app` and `firebase-admin/firestore`, which works on 13 and 14 alike.
