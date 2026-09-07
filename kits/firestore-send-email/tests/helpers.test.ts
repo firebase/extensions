@@ -264,6 +264,10 @@ describe("isSendGrid", () => {
 });
 
 describe("transportLayer", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   test("passes the SMTP password to SendGrid as the API key when AUTH_TYPE is OAuth2", async () => {
     const transport = await transportLayer(
       makeConfig({
