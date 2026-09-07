@@ -30,7 +30,7 @@ import * as logs from "./logs";
 import { getChangeType, getDocumentId } from "./util";
 
 /** Serialized Firestore change ready to write to BigQuery. */
-interface SerializedDocumentChange {
+export interface SerializedDocumentChange {
   timestamp: string;
   eventId: string;
   fullResourceName: string;
