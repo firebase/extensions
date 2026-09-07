@@ -281,6 +281,10 @@ for the full recipe.
 - Rows that exhaust the queue with no `BACKUP_COLLECTION` configured are gone.
   This matches the extension; it is the reason the backup collection is
   strongly recommended.
+- `BACKUP_COLLECTION` captures rows whose BigQuery insert fails. A failure
+  earlier in the tracker, such as a `TRANSFORM_FUNCTION` endpoint that is down
+  or returns malformed JSON, throws before the insert and is not backed up.
+  Same as the extension.
 
 ## Differences from the Stream Firestore to BigQuery extension
 
