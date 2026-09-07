@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1
+
+- `firebase-admin` 14 is accepted alongside 13. With the previous `^13.2.0` range a consumer on 14 installed a second copy of the SDK under this package, and that copy never sees the consumer's `initializeApp()`, so every backup write to `backupTableId` failed with "The default Firebase app does not exist" and the rows were lost.
+
 ## 2.1.0
 
 Insert-failure semantics changed. Since 2020, the retry guard in `insertData` was broken (an un-awaited async check that was always truthy), so every failed insert was retried with `ignoreUnknownValues: true` and reported success while silently dropping any field BigQuery did not recognise.
