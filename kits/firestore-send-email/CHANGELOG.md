@@ -1,2 +1,3 @@
 - Initial release of kit, see README for differences between the legacy extension and this kit
 - SendGrid sends now work with `AUTH_TYPE=OAuth2`: the `SMTP_PASSWORD` secret is no longer dropped from the config under OAuth2, so the SendGrid transport receives its API key
+- SendGrid delivery no longer fails with `sgMail.setApiKey is not a function`: the transport imports `@sendgrid/mail` in a form that survives the compiled output
