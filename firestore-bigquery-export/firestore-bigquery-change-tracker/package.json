@@ -5,7 +5,10 @@
     "url": "git+https://github.com/firebase/extensions.git",
     "directory": "firestore-bigquery-export/firestore-bigquery-change-tracker"
   },
-  "version": "2.1.2",
+  "version": "2.2.0",
+  "engines": {
+    "node": ">=18"
+  },
   "description": "Core change-tracker library for Cloud Firestore Collection BigQuery Exports",
   "main": "./lib/index.js",
   "scripts": {
