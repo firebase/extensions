@@ -126,11 +126,12 @@ describe("enqueueSyncTask", () => {
   });
 
   test("treats an already-enqueued task as success", async () => {
-    const enqueue = vi
-      .fn()
-      .mockRejectedValue(
-        Object.assign(new Error("exists"), { code: "task-already-exists" })
-      );
+    const enqueue = vi.fn().mockRejectedValue(
+      // Shaped like firebase-admin's PrefixedFirebaseError: `<prefix>/<code>`.
+      Object.assign(new Error("exists"), {
+        code: "functions/task-already-exists",
+      })
+    );
     mockQueue(enqueue);
 
     await expect(enqueueSyncTask(makeChange(), 3)).resolves.toBeUndefined();

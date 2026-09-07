@@ -104,7 +104,11 @@ export async function enqueueSyncTask(
       return;
     } catch (enqueueErr) {
       // The event is already buffered; a second task would double-write the row.
-      if ((enqueueErr as { code?: string })?.code === "task-already-exists") {
+      // firebase-admin prefixes its codes: `functions/task-already-exists`.
+      if (
+        (enqueueErr as { code?: string })?.code ===
+        "functions/task-already-exists"
+      ) {
         return;
       }
 
