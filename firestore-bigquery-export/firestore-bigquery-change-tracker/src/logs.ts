@@ -15,7 +15,7 @@
  */
 
 import { Table } from "@google-cloud/bigquery";
-import { firestore } from "firebase-admin";
+import type { Timestamp } from "firebase-admin/firestore";
 import { logger } from "./logger";
 
 export const arrayFieldInvalid = (fieldName: string) => {
@@ -207,7 +207,7 @@ export const firestoreTimePartitioningParametersWarning = (
   fieldName: string | undefined,
   fieldType: string | undefined,
   firestoreFieldName: string | undefined,
-  dataFirestoreField: firestore.Timestamp | string | undefined
+  dataFirestoreField: Timestamp | string | undefined
 ) => {
   logger.warn(
     "All TimePartitioning option parameters need to be available to create new custom schema field"

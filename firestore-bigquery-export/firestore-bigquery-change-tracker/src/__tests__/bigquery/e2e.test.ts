@@ -28,7 +28,7 @@ import { latestConsistentSnapshotView } from "../../bigquery/snapshot";
 import { deleteTable } from "../fixtures/clearTables";
 import { changeTracker, changeTrackerEvent } from "../fixtures/changeTracker";
 import { getBigQueryTableData } from "../fixtures/queries";
-import { firestore } from "firebase-admin";
+import { Timestamp } from "firebase-admin/firestore";
 
 process.env.PROJECT_ID = "dev-extensions-testing";
 
@@ -167,7 +167,7 @@ describe("e2e", () => {
       });
 
       test("successfully partitions with a valid DateTime Timestamp", async () => {
-        const created = firestore.Timestamp.now();
+        const created = Timestamp.now();
 
         const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
           data: { created },
@@ -206,7 +206,7 @@ describe("e2e", () => {
       });
 
       test("successfully partitions with a valid DateTime Timestamp Date", async () => {
-        const created = firestore.Timestamp.now().toDate();
+        const created = Timestamp.now().toDate();
 
         const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
           data: { created },
@@ -243,7 +243,7 @@ describe("e2e", () => {
       });
 
       test("successfully partitions with a valid Firebase Timestamp value with a Timestamp partitioning type", async () => {
-        const created = firestore.Timestamp.now();
+        const created = Timestamp.now();
 
         const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
           data: { created },
@@ -280,7 +280,7 @@ describe("e2e", () => {
       });
 
       test("successfully partitions with a valid Firebase Timestamp value with a Date partitioning type", async () => {
-        const created = firestore.Timestamp.now();
+        const created = Timestamp.now();
         const expectedDate = created.toDate().toISOString().substring(0, 10);
 
         const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
@@ -316,7 +316,7 @@ describe("e2e", () => {
       });
 
       test("successfully partitions with a valid Firebase Timestamp value with a DateTime partitioning type", async () => {
-        const created = firestore.Timestamp.now();
+        const created = Timestamp.now();
         const expectedDate = created.toDate().toISOString().substring(0, 22);
 
         const event: FirestoreDocumentChangeEvent = changeTrackerEvent({
@@ -354,7 +354,7 @@ describe("e2e", () => {
       });
 
       test("successfully partitions with a valid Firebase Timestamp value with `timestamp` as field name and Timestamp type", async () => {
-        const created = firestore.Timestamp.now();
+        const created = Timestamp.now();
         const expectedDate = created.toDate().toISOString().substring(0, 22);
 
         const event: FirestoreDocumentChangeEvent = changeTrackerEvent({

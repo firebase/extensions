@@ -15,7 +15,7 @@
  */
 
 import { BigQuery, Dataset, TableMetadata } from "@google-cloud/bigquery";
-import { firestore } from "firebase-admin";
+import { Timestamp } from "firebase-admin/firestore";
 import { RawChangelogViewSchema } from "../../../bigquery/schema";
 import {
   buildMaterializedViewQuery,
@@ -102,7 +102,7 @@ describe("Materialized View Recreation", () => {
   test("should not recreate incremental materialized view when unchanged", async () => {
     // Create initial event
     const event = changeTrackerEvent({
-      data: { end_date: firestore.Timestamp.now() },
+      data: { end_date: Timestamp.now() },
       eventId: "testing2",
     });
 
@@ -162,7 +162,7 @@ describe("Materialized View Recreation", () => {
   test("should not recreate non-incremental materialized view when unchanged", async () => {
     // Create initial event
     const event = changeTrackerEvent({
-      data: { end_date: firestore.Timestamp.now() },
+      data: { end_date: Timestamp.now() },
       eventId: "testing2",
     });
 
@@ -224,7 +224,7 @@ describe("Materialized View Recreation", () => {
   test("should recreate materialized view when inc -> non-inc ", async () => {
     // Create initial event
     const event = changeTrackerEvent({
-      data: { end_date: firestore.Timestamp.now() },
+      data: { end_date: Timestamp.now() },
       eventId: "testing2",
     });
 
@@ -285,7 +285,7 @@ describe("Materialized View Recreation", () => {
   test("should recreate materialized view when non-inc -> inc ", async () => {
     // Create initial event
     const event = changeTrackerEvent({
-      data: { end_date: firestore.Timestamp.now() },
+      data: { end_date: Timestamp.now() },
       eventId: "testing2",
     });
 

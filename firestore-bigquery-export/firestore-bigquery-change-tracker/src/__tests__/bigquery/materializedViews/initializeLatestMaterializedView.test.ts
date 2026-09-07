@@ -20,7 +20,7 @@ import {
   TableMetadata,
   Table,
 } from "@google-cloud/bigquery";
-import { firestore } from "firebase-admin";
+import { Timestamp } from "firebase-admin/firestore";
 import { RawChangelogViewSchema } from "../../../bigquery/schema";
 import { initializeLatestMaterializedView } from "../../../bigquery/initializeLatestMaterializedView";
 import {
@@ -143,7 +143,7 @@ describe("initializeLatestMaterializedView", () => {
 
   test("does not recreate view if configuration matches", async () => {
     const event = changeTrackerEvent({
-      data: { end_date: firestore.Timestamp.now() },
+      data: { end_date: Timestamp.now() },
       eventId: "testing2",
     });
 
@@ -185,7 +185,7 @@ describe("initializeLatestMaterializedView", () => {
 
   test("recreates view when switching from incremental to non-incremental", async () => {
     const event = changeTrackerEvent({
-      data: { end_date: firestore.Timestamp.now() },
+      data: { end_date: Timestamp.now() },
       eventId: "testing3",
     });
 
