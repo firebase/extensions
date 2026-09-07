@@ -98,6 +98,16 @@ const REQUIRED_APIS = [
     reason:
       "Receives document change events and writes restoration run status to Cloud Firestore.",
   },
+  {
+    api: "bigquery.googleapis.com",
+    reason:
+      "Stores the changelog of captured Firestore document changes in BigQuery.",
+  },
+  {
+    api: "dataflow.googleapis.com",
+    reason:
+      "Runs the restoration flex template that replays the changelog into the target database.",
+  },
 ] as const;
 
 for (const role of REQUIRED_ROLES) {
