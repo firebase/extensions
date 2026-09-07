@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { firestore } from "firebase-admin";
+import { Timestamp } from "firebase-admin/firestore";
 import {
   ChangeType,
   FirestoreBigQueryEventHistoryTracker,
@@ -66,7 +66,7 @@ export const changeTrackerEvent = ({
   eventId = "testing",
   documentId = "testing",
   pathParams = { documentId: "12345" },
-  data = { end_date: firestore.Timestamp.now() },
+  data = { end_date: Timestamp.now() },
   oldData = null,
   useNewSnapshotQuerySyntax = false,
 }: any): FirestoreDocumentChangeEvent => {

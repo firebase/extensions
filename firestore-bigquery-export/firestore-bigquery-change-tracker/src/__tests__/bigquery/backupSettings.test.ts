@@ -23,8 +23,10 @@ const settings = jest.fn();
 const batch = jest.fn(() => ({ set, commit }));
 const collection = jest.fn(() => ({ doc: (id: string) => ({ id }) }));
 
-jest.mock("firebase-admin", () => ({ apps: [{}] }));
-jest.mock("firebase-admin/app", () => ({ initializeApp: jest.fn() }));
+jest.mock("firebase-admin/app", () => ({
+  getApps: jest.fn(() => [{}]),
+  initializeApp: jest.fn(),
+}));
 jest.mock("firebase-admin/firestore", () => ({
   // A fresh object per call, deliberately: the guard must key on the database id
   // rather than on instance identity.

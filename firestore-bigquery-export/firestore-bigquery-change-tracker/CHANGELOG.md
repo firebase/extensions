@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.2.0
+
+- Works on `firebase-admin` 14. 2.1.1 widened the range but the package still used the namespaced API (`admin.apps`, `admin.firestore.Timestamp`), which firebase-admin 14 removes, so it threw at import wherever it was resolved against admin 14. Every use is now the modular API from `firebase-admin/app` and `firebase-admin/firestore`, which works on 13 and 14 alike.
+- `firebase-functions` 7.3 and later is accepted alongside 6. This package only uses its `logger`, but the firebase-functions 6 peer range for `firebase-admin` stops at 13, as does the range of firebase-functions 7.0 through 7.2, so on a consumer running firebase-admin 14 npm nested a second admin copy under this package however wide this package's own range was, and that nested copy has no default app.
+- Declares `engines.node >=18`, the floor firebase-admin 13 already imposed, so an unsupported Node is reported at install rather than at runtime.
+- Consumers that pin neither `firebase-admin` nor `firebase-functions` themselves and resolve fresh now get firebase-admin 14 and firebase-functions 7, which need Node 22 and Node 18 respectively. Pin firebase-admin `^13` to stay on Node 18 or 20.
+
 ## 2.1.1
 
 - `firebase-admin` 14 is accepted alongside 13. With the previous `^13.2.0` range a consumer on 14 installed a second copy of the SDK under this package, and that copy never sees the consumer's `initializeApp()`, so every backup write to `backupTableId` failed with "The default Firebase app does not exist" and the rows were lost.

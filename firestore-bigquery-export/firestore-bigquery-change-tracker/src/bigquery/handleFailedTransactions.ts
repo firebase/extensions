@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import * as admin from "firebase-admin";
-import { initializeApp } from "firebase-admin/app";
+import { getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { ChangeTrackerConfig } from ".";
 
-if (!admin.apps.length) {
+if (!getApps().length) {
   initializeApp();
 }
 
