@@ -226,9 +226,10 @@ export async function handleDocumentWrite(
  * Handles a `syncBigQuery` task: re-attempts a buffered write. Provisioning
  * runs first as a self-heal (memoized, a no-op after the first success), so a
  * write that failed only because the BigQuery resources were missing succeeds
- * on the first task attempt. A failed write rethrows so Cloud Tasks retries
- * on the queue's schedule; the tracker has already written the row to the
- * backup collection (when one is configured) before each terminal rethrow.
+ * on the first task attempt. A failed provision is logged and the write is
+ * attempted anyway, so the tracker still parks the row in the backup
+ * collection. A failed write rethrows so Cloud Tasks retries on the queue's
+ * schedule.
  *
  * @param req - The dispatched task request carrying the serialized change.
  * @param ctx - The handler context.
@@ -247,9 +248,34 @@ export async function handleSyncBigQueryTask(
   );
 
   try {
-    await ctx.ensureInitialized();
-    await recordEventToBigQuery(change, ctx.tracker);
+    try {
+      await ctx.ensureInitialized();
+    } catch (initErr) {
+      // Fall through to the write regardless: the tracker only parks a row in
+      // BACKUP_COLLECTION from its insert failure path, so throwing here would
+      // drop the row instead of backing it up.
+      logs.error(
+        false,
+        "Failed to provision BigQuery resources before a buffered write",
+        initErr as Error
+      );
+    }
 
+    await recordEventToBigQuery(change, ctx.tracker);
+  } catch (err) {
+    logs.logFailedEventAction(
+      "Failed to write event to BigQuery from onDispatch handler",
+      change.fullResourceName,
+      change.eventId,
+      change.changeType,
+      err as Error,
+      req.retryCount
+    );
+
+    throw err;
+  }
+
+  try {
     await events.recordSuccessEvent({
       subject: change.documentId,
       data: {
@@ -263,18 +289,11 @@ export async function handleSyncBigQueryTask(
         oldData: change.oldData,
       },
     });
-
-    logs.complete();
   } catch (err) {
-    logs.logFailedEventAction(
-      "Failed to write event to BigQuery from onDispatch handler",
-      change.fullResourceName,
-      change.eventId,
-      change.changeType,
-      err as Error,
-      req.retryCount
-    );
-
-    throw err;
+    // The row is already in BigQuery. Rethrowing would have Cloud Tasks retry
+    // the insert past the dedupe window and duplicate it.
+    logs.error(false, "Failed to record success event", err as Error);
   }
+
+  logs.complete();
 }

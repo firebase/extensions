@@ -21,9 +21,26 @@ vi.mock("firebase-admin/functions", () => ({
 }));
 
 import { getFunctions } from "firebase-admin/functions";
+import type { SerializedDocumentChange } from "../src/handlers";
 import { enqueueSyncTask, syncQueuePath } from "../src/tasks";
 
-const ENV_KEYS = ["DATABASE_REGION", "FUNCTION_REGION"] as const;
+function makeChange(
+  overrides: Partial<SerializedDocumentChange> = {}
+): SerializedDocumentChange {
+  return {
+    timestamp: "2026-01-01T00:00:00.000Z",
+    eventId: "evt-1",
+    fullResourceName: "projects/p/databases/(default)/documents/c/d",
+    changeType: "CREATE",
+    documentId: "d",
+    params: null,
+    data: { a: 1 },
+    oldData: undefined,
+    ...overrides,
+  } as SerializedDocumentChange;
+}
+
+const ENV_KEYS = ["DATABASE_REGION"] as const;
 const originalEnv: Record<string, string | undefined> = {};
 
 beforeEach(() => {
@@ -60,22 +77,12 @@ describe("syncQueuePath", () => {
     );
   });
 
-  test("falls back to FUNCTION_REGION when DATABASE_REGION is unset", () => {
-    process.env.FUNCTION_REGION = "us-central1";
-    expect(syncQueuePath()).toBe(
-      "locations/us-central1/functions/syncBigQuery"
-    );
+  test("throws when DATABASE_REGION is unset", () => {
+    expect(() => syncQueuePath()).toThrow(/region/i);
   });
 
-  test("prefers DATABASE_REGION over FUNCTION_REGION", () => {
-    process.env.DATABASE_REGION = "eur3";
-    process.env.FUNCTION_REGION = "us-central1";
-    expect(syncQueuePath()).toBe(
-      "locations/europe-west1/functions/syncBigQuery"
-    );
-  });
-
-  test("throws when no region is resolvable", () => {
+  test("throws when DATABASE_REGION is an empty string", () => {
+    process.env.DATABASE_REGION = "";
     expect(() => syncQueuePath()).toThrow(/region/i);
   });
 });
@@ -90,27 +97,51 @@ describe("enqueueSyncTask", () => {
   }
 
   beforeEach(() => {
-    process.env.FUNCTION_REGION = "us-central1";
+    process.env.DATABASE_REGION = "us-central1";
   });
 
   test("targets the bare function name; the admin SDK adds the kit prefix", async () => {
     const enqueue = vi.fn().mockResolvedValue(undefined);
     const taskQueue = mockQueue(enqueue);
 
-    await enqueueSyncTask({ eventId: "evt-1" }, 3);
+    const change = makeChange();
+    await enqueueSyncTask(change, 3);
 
     expect(taskQueue).toHaveBeenCalledWith(
       "locations/us-central1/functions/syncBigQuery"
     );
     expect(enqueue).toHaveBeenCalledTimes(1);
-    expect(enqueue).toHaveBeenCalledWith({ eventId: "evt-1" });
+    expect(enqueue).toHaveBeenCalledWith(change, { id: "evt-1" });
+  });
+
+  test("derives the task id from the event id so a retry cannot double-buffer", async () => {
+    const enqueue = vi.fn().mockResolvedValue(undefined);
+    mockQueue(enqueue);
+
+    await enqueueSyncTask(makeChange({ eventId: "a/b:c d" }), 3);
+
+    expect(enqueue).toHaveBeenCalledWith(expect.anything(), {
+      id: "a-b-c-d",
+    });
+  });
+
+  test("treats an already-enqueued task as success", async () => {
+    const enqueue = vi
+      .fn()
+      .mockRejectedValue(
+        Object.assign(new Error("exists"), { code: "task-already-exists" })
+      );
+    mockQueue(enqueue);
+
+    await expect(enqueueSyncTask(makeChange(), 3)).resolves.toBeUndefined();
+    expect(enqueue).toHaveBeenCalledTimes(1);
   });
 
   test("a non-positive attempt budget still enqueues once", async () => {
     const enqueue = vi.fn().mockResolvedValue(undefined);
     mockQueue(enqueue);
 
-    await enqueueSyncTask({ eventId: "evt-1" }, 0);
+    await enqueueSyncTask(makeChange(), 0);
 
     expect(enqueue).toHaveBeenCalledTimes(1);
   });
@@ -123,7 +154,7 @@ describe("enqueueSyncTask", () => {
       .mockResolvedValueOnce(undefined);
     mockQueue(enqueue);
 
-    const pending = enqueueSyncTask({}, 3);
+    const pending = enqueueSyncTask(makeChange(), 3);
     await vi.runAllTimersAsync();
     await pending;
 
@@ -139,7 +170,7 @@ describe("enqueueSyncTask", () => {
       .mockRejectedValue(new Error("last"));
     mockQueue(enqueue);
 
-    const pending = enqueueSyncTask({}, 3);
+    const pending = enqueueSyncTask(makeChange(), 3);
     // Attach the rejection expectation before advancing timers so the
     // rejection is never unhandled.
     const assertion = expect(pending).rejects.toThrow("last");

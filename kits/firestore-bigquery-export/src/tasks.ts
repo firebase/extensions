@@ -15,6 +15,7 @@
  */
 
 import { getFunctions } from "firebase-admin/functions";
+import type { SerializedDocumentChange } from "./handlers";
 import { firestoreLocationToFunctionRegion } from "./region";
 
 /** Export name of the write-buffer task function. */
@@ -24,6 +25,13 @@ const MAX_BACKOFF_MS = 5000;
 const BACKOFF_BASE_MS = 100;
 const JITTER_MS = 100;
 
+/** Cloud Tasks accepts `[A-Za-z0-9_-]{1,500}` as a task id. */
+const TASK_ID_DISALLOWED = /[^A-Za-z0-9_-]/g;
+
+function taskIdFor(change: SerializedDocumentChange): string {
+  return change.eventId.replace(TASK_ID_DISALLOWED, "-").slice(0, 500);
+}
+
 /**
  * Resolves the queue resource path for a task function of this kit instance.
  *
@@ -31,8 +39,8 @@ const JITTER_MS = 100;
  * deployed `kit-<instance id>-` prefix itself from the
  * `FIREBASE_KIT_INSTANCE_ID` env var, which the CLI sets on every deployed kit
  * function. All functions of a kit instance deploy to one region, so the
- * enqueuing function's own region (`DATABASE_REGION`-derived, with the
- * CLI-set `FUNCTION_REGION` as fallback) is also the queue's region.
+ * enqueuing function's own `DATABASE_REGION`-derived region is also the
+ * queue's region.
  *
  * @param functionName - The export name of the task function.
  * @returns The queue resource path, `locations/<region>/functions/<name>`.
@@ -41,14 +49,12 @@ const JITTER_MS = 100;
 export function syncQueuePath(
   functionName: string = SYNC_BIGQUERY_FUNCTION
 ): string {
-  const region =
-    firestoreLocationToFunctionRegion(process.env.DATABASE_REGION) ??
-    process.env.FUNCTION_REGION;
+  const region = firestoreLocationToFunctionRegion(process.env.DATABASE_REGION);
 
   if (!region) {
     throw new Error(
       "A region is required to resolve the syncBigQuery task queue. " +
-        "Set DATABASE_REGION, or deploy with the Firebase CLI so FUNCTION_REGION is set."
+        "Set DATABASE_REGION."
     );
   }
 
@@ -65,17 +71,21 @@ function backoffMs(attempt: number, jitter: number): number {
  * Enqueues a payload onto the `syncBigQuery` queue, retrying transient enqueue
  * failures in-process with exponential backoff and jitter.
  *
- * @param payload - The task payload.
+ * The task id is derived from the event id, so a retried enqueue of an event
+ * that already reached Cloud Tasks is rejected rather than buffered twice.
+ *
+ * @param payload - The serialized change to enqueue.
  * @param maxAttempts - How many enqueue attempts to make before giving up.
  *   Clamped to at least 1: resolving without an enqueue would report success
  *   for an event that was never buffered anywhere.
  * @throws The last enqueue error, once every attempt has failed.
  */
 export async function enqueueSyncTask(
-  payload: object,
+  payload: SerializedDocumentChange,
   maxAttempts: number
 ): Promise<void> {
   const queue = getFunctions().taskQueue(syncQueuePath());
+  const id = taskIdFor(payload);
 
   const attemptBudget = Math.max(1, maxAttempts);
   const jitter = Math.random() * JITTER_MS;
@@ -90,9 +100,14 @@ export async function enqueueSyncTask(
 
     attempts++;
     try {
-      await queue.enqueue(payload);
+      await queue.enqueue(payload, { id });
       return;
     } catch (enqueueErr) {
+      // The event is already buffered; a second task would double-write the row.
+      if ((enqueueErr as { code?: string })?.code === "task-already-exists") {
+        return;
+      }
+
       if (attempts >= attemptBudget) {
         throw enqueueErr;
       }

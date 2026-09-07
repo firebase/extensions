@@ -330,15 +330,44 @@ describe("handleSyncBigQueryTask", () => {
     expect(ctx.enqueue).not.toHaveBeenCalled();
   });
 
-  test("rethrows a failed self-heal without attempting the write", async () => {
+  test("attempts the write even when the self-heal fails", async () => {
+    // The tracker only parks a row in BACKUP_COLLECTION from its insert
+    // failure path, so skipping the write would drop the row instead.
     const ctx = makeCtx();
     (ctx.ensureInitialized as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
       new Error("no dataset")
     );
 
+    await handleSyncBigQueryTask(taskRequest(serializedChange()), ctx);
+
+    expect(ctx.tracker.record).toHaveBeenCalledTimes(1);
+  });
+
+  test("surfaces the write error when the self-heal also failed", async () => {
+    const ctx = makeCtx();
+    (ctx.ensureInitialized as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("no dataset")
+    );
+    (ctx.tracker.record as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("no table")
+    );
+
     await expect(
       handleSyncBigQueryTask(taskRequest(serializedChange()), ctx)
-    ).rejects.toThrow("no dataset");
-    expect(ctx.tracker.record).not.toHaveBeenCalled();
+    ).rejects.toThrow("no table");
+  });
+
+  test("does not rethrow when the success event fails after the row lands", async () => {
+    // The row is already in BigQuery; a Cloud Tasks retry would land past the
+    // insertId dedupe window and duplicate it.
+    const ctx = makeCtx();
+    (
+      events.recordSuccessEvent as ReturnType<typeof vi.fn>
+    ).mockRejectedValueOnce(new Error("channel down"));
+
+    await expect(
+      handleSyncBigQueryTask(taskRequest(serializedChange()), ctx)
+    ).resolves.toBeUndefined();
+    expect(ctx.tracker.record).toHaveBeenCalledTimes(1);
   });
 });

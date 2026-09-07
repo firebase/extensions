@@ -230,7 +230,9 @@ curl -fsS -X POST -H "Content-Type: application/json" -d '{"data":{}}' \
 The Firestore write path never provisions on the hot path. If resources are
 missing when a write arrives, the inline write fails and the change buffers
 through the `syncBigQuery` queue, whose handler calls `ensureInitialized()` as
-a self-heal before re-attempting the write.
+a self-heal before re-attempting the write. Provisioning is memoized once it
+succeeds, so the self-heal covers resources that were never created, not
+resources deleted out from under a warm instance.
 
 ## Failure handling
 
@@ -238,15 +240,21 @@ The write path mirrors the extension's Cloud Tasks buffer:
 
 1. The trigger attempts the BigQuery insert inline. On success, done.
 2. On failure, it enqueues the serialized change onto the `syncBigQuery` queue
-   (up to `MAX_ENQUEUE_ATTEMPTS` in-process attempts with backoff) and the
-   execution succeeds - the Firestore event is not redelivered.
+   (up to `MAX_ENQUEUE_ATTEMPTS` in-process attempts with backoff, keyed by
+   event id so a retried enqueue cannot buffer the same event twice) and the
+   execution succeeds. A failed inline write on its own does not redeliver the
+   Firestore event. Failures _before_ the write is attempted (serializing the
+   change, publishing the `onStart` event) do rethrow, and `retry: true` means
+   those are redelivered by the runtime.
 3. `syncBigQuery` re-attempts the write on the queue's schedule: 5 attempts,
    60 seconds minimum backoff, throttled to `MAX_DISPATCHES_PER_SECOND`
    dispatches per second (500 concurrent max).
 4. On every terminal insert failure the tracker writes the row to
    `BACKUP_COLLECTION` (when configured), keyed by the event id, before the
-   task fails. After the fifth attempt the task is dropped. **Without a backup
-   collection, the row is dropped with it** - configure `BACKUP_COLLECTION`.
+   task fails. A failed provisioning attempt is logged and the write is tried
+   anyway, so it still reaches that path. After the fifth attempt the task is
+   dropped. **Without a backup collection, the row is dropped with it** -
+   configure `BACKUP_COLLECTION`.
 5. If the enqueue itself fails (BigQuery AND Cloud Tasks both failing), the
    trigger logs at error level and rethrows, so the Firestore event is
    redelivered by the runtime retry policy (`retry: true`) instead of being

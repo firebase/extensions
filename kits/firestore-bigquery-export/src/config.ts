@@ -20,7 +20,7 @@ import type {
   TimePartitioningGranularity,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import { LogLevel } from "@firebaseextensions/firestore-bigquery-change-tracker";
-import type { Expression } from "firebase-functions/params";
+import type { Expression, IntParam } from "firebase-functions/params";
 import {
   defineBoolean,
   defineInt,
@@ -638,6 +638,19 @@ function optional(value: string): string | undefined {
 }
 
 /**
+ * Reads an int param, reporting a missing or blank env var as `undefined`.
+ *
+ * `IntParam.value()` is `parseInt(env || "0", 10) || 0` and never consults the
+ * declared default, so an unset param has to reach `resolveExportConfig` as
+ * `undefined` for the documented default to apply. An explicit `0` is a real
+ * setting and is preserved.
+ */
+function optionalInt(param: IntParam): number | undefined {
+  const raw = process.env[param.name]?.trim();
+  return raw === undefined || raw === "" ? undefined : param.value();
+}
+
+/**
  * Resolves all deploy-time params into an {@link ExportConfig}.
  *
  * Param values are read when this is called. During the Firebase deploy-time
@@ -679,7 +692,7 @@ export function configFromEnv(): ExportConfig {
     transformFunction: optional(params.transformFunction.value()),
     kmsKeyName: optional(params.kmsKeyName.value()),
     logLevel: normalizeLogLevel(params.logLevel.value()),
-    maxDispatchesPerSecond: params.maxDispatchesPerSecond.value(),
-    maxEnqueueAttempts: params.maxEnqueueAttempts.value(),
+    maxDispatchesPerSecond: optionalInt(params.maxDispatchesPerSecond),
+    maxEnqueueAttempts: optionalInt(params.maxEnqueueAttempts),
   };
 }
