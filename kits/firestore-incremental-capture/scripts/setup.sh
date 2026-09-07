@@ -35,9 +35,10 @@
 #   BUCKET_NAME          Bucket holding the flex template. Defaults to the
 #                        project's default bucket.
 #   INSTANCE_ID          This instance's key in the `instances` map of the kit
-#                        stanza, and the kit's INSTANCE_ID param. Must match
-#                        both: it names the flex template object the deployed
-#                        function launches. Default "default".
+#                        stanza in firebase.json, which the Firebase CLI
+#                        provides to the functions as FIREBASE_KIT_INSTANCE_ID.
+#                        Must match: it names the flex template object the
+#                        deployed function launches. Default "default".
 #   WORKER_SERVICE_ACCOUNT  Service account the Dataflow workers run as.
 #                        Defaults to the Compute Engine default service account.
 #
@@ -288,9 +289,11 @@ main() {
   echo
   echo "Set these in .env before deploying:"
   echo "  BACKUP_INSTANCE_ID=${BACKUP_INSTANCE_ID}"
-  echo "  INSTANCE_ID=${INSTANCE_ID}"
   echo "  LOCATION=${LOCATION}"
   echo "  BUCKET_NAME=${bucket}"
+  echo
+  echo "Deploy this instance under the key \"${INSTANCE_ID}\" in the kit stanza's"
+  echo "\"instances\" map in firebase.json; the CLI passes that key to the functions."
   echo
   echo "The functions' own roles are granted by the Firebase CLI on first deploy."
 }

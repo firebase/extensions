@@ -44,7 +44,26 @@ export interface ConfigExpressions {
   queryCollectionDocument: ConfigExpression<string>;
 }
 
-const instanceId = defineString("INSTANCE_ID");
+// firebase-tools injects this for kit instances (set to the instance's key in
+// firebase.json) during discovery, in the emulator, and on deployed functions.
+// The FIREBASE_ prefix is reserved in .env files and the params machinery never
+// sees injected values, so it must be a plain env read, not a defineString.
+function instanceIdFromEnv(): string {
+  const instanceId = process.env.FIREBASE_KIT_INSTANCE_ID;
+  if (!instanceId) {
+    throw new Error(
+      "FIREBASE_KIT_INSTANCE_ID is not set. It is provided automatically to " +
+        "kit instances by firebase-tools >= 15.27.0; deploy or emulate this " +
+        "kit with a supported CLI version."
+    );
+  }
+  return instanceId;
+}
+
+// Resolved at import so the query trigger path is a concrete document path at
+// discovery. An unsupported CLI fails the discovery pass here rather than
+// freezing "_undefined/index/queries/{queryId}" into the manifest.
+const instanceId = instanceIdFromEnv();
 
 const EMBEDDING_PROVIDER_OPTIONS = [
   "gemini",
@@ -187,7 +206,7 @@ const params = {
 
 export const CONFIG_EXPRESSIONS = {
   collectionDocument: expr`${params.collectionPath}/{docId}`,
-  queryCollectionDocument: expr`_${instanceId}/index/queries/{queryId}`,
+  queryCollectionDocument: `_${instanceId}/index/queries/{queryId}`,
 } as const satisfies ConfigExpressions;
 
 function optionalString(value: string): string | undefined {
@@ -223,7 +242,7 @@ export function configFromEnv(): VectorSearchConfig {
     updateOnConfigure: params.updateOnConfigure.value(),
     region: process.env.FUNCTION_REGION,
     projectId: projectID.value(),
-    instanceId: params.instanceId.value(),
+    instanceId: instanceIdFromEnv(),
     geminiApiKey: optionalString(geminiApiKey.value()),
     openAiApiKey: optionalString(openAiApiKey.value()),
     bucketName: optionalString(storageBucket.value()),

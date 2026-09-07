@@ -108,9 +108,6 @@ const params = {
   }),
   dataflowRegion: defineString("DATAFLOW_REGION", { default: "" }),
   bucketName: defineString("BUCKET_NAME", { default: "" }),
-  // No default: it has to match this instance's key in the `instances` map, and
-  // a wrong value silently misnames the task queues.
-  instanceId: defineString("INSTANCE_ID"),
   logLevel: defineString("LOG_LEVEL", {
     default: "info",
     input: select([...LOG_LEVEL_OPTIONS]),
@@ -121,6 +118,22 @@ export const CONFIG_EXPRESSIONS: ConfigExpressions = {
   syncCollectionPath: params.syncCollectionPath,
   location: params.location,
 };
+
+// firebase-tools injects this for kit instances (set to the instance's key in
+// firebase.json) during discovery, in the emulator, and on deployed functions.
+// The FIREBASE_ prefix is reserved in .env files and the params machinery never
+// sees injected values, so it must be a plain env read, not a defineString.
+function instanceIdFromEnv(): string {
+  const instanceId = process.env.FIREBASE_KIT_INSTANCE_ID;
+  if (!instanceId) {
+    throw new Error(
+      "FIREBASE_KIT_INSTANCE_ID is not set. It is provided automatically to " +
+        "kit instances by firebase-tools >= 15.27.0; deploy or emulate this " +
+        "kit with a supported CLI version."
+    );
+  }
+  return instanceId;
+}
 
 /** Coerce an empty-string param value to `undefined`. */
 function optional(value: string): string | undefined {
@@ -163,7 +176,7 @@ export function configFromEnv(defaultBucketName?: string): CaptureConfig {
     location: optional(params.location.value()),
     dataflowRegion: optional(params.dataflowRegion.value()),
     bucketName: optional(params.bucketName.value()) || defaultBucketName || "",
-    instanceId: params.instanceId.value(),
+    instanceId: instanceIdFromEnv(),
     logLevel: normalizeLogLevel(params.logLevel.value()),
   };
 }
