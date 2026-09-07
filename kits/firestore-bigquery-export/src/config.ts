@@ -103,7 +103,8 @@ export interface ConfigExpressions {
   datasetId: ConfigExpression<string>;
   tableId: ConfigExpression<string>;
   database: ConfigExpression<string>;
-  maxDispatchesPerSecond: ConfigExpression<number>;
+  /** An `IntParam`, not a bare expression: the queue's `rateLimits` guards it with a CEL comparison. */
+  maxDispatchesPerSecond: IntParam;
 }
 
 /**
@@ -289,7 +290,7 @@ const params = {
   backupCollection: defineString("BACKUP_COLLECTION", {
     label: "Backup Collection Name",
     description:
-      "This (optional) parameter will allow you to specify a collection for which failed BigQuery updates will be written to.",
+      "Strongly recommended. The Firestore collection where rows whose BigQuery insert is rejected are written, on the inline attempt and on each queue attempt; without it, those rows are dropped once the queue gives up. A change that cannot be enqueued at all is not backed up. See the README for how to reconcile backed-up rows into BigQuery.",
     default: "",
   }),
   maxDispatchesPerSecond: defineInt("MAX_DISPATCHES_PER_SECOND", {
