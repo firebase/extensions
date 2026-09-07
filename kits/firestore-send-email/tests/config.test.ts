@@ -21,20 +21,19 @@ interface StringParamOpts {
   input?: { text?: { validationRegex?: RegExp } };
 }
 
-const { stringParamOpts } = vi.hoisted(() => ({
+const { stringParamOpts, paramEnv } = vi.hoisted(() => ({
   stringParamOpts: new Map<string, StringParamOpts | undefined>(),
+  paramEnv: new Map<string, string>(),
 }));
 
 vi.mock("firebase-functions/params", () => ({
-  // Only stubbed names may read the env: ambient shell vars (USER, HOST)
-  // collide with real param names and would make results machine-dependent.
+  // Values come from paramEnv rather than process.env: AUTH_TYPE, USER and
+  // HOST are all real param names that collide with ambient shell vars, which
+  // would otherwise make results machine-dependent.
   defineString: (name: string, opts?: StringParamOpts) => {
     stringParamOpts.set(name, opts);
     return {
-      value: () =>
-        (name === "AUTH_TYPE" ? process.env[name] : undefined) ??
-        opts?.default ??
-        "",
+      value: () => paramEnv.get(name) ?? opts?.default ?? "",
     };
   },
   defineInt: (_name: string, opts?: { default?: number }) => ({
@@ -66,7 +65,7 @@ import { AuthenticatonType } from "../src/types";
 
 describe("configFromEnv", () => {
   afterEach(() => {
-    vi.unstubAllEnvs();
+    paramEnv.clear();
   });
 
   test("maps params and keeps secret-backed values deferred", () => {
@@ -79,7 +78,7 @@ describe("configFromEnv", () => {
   });
 
   test("keeps the SMTP password for OAuth2 so SendGrid can use it as API key", () => {
-    vi.stubEnv("AUTH_TYPE", AuthenticatonType.OAuth2);
+    paramEnv.set("AUTH_TYPE", AuthenticatonType.OAuth2);
     const config = configFromEnv();
     expect(config.authType).toBe(AuthenticatonType.OAuth2);
     expect(typeof config.smtpPassword).toBe("object");
