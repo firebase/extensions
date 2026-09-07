@@ -30,6 +30,7 @@ conflicts with that automatic setup.
 | `roles/datastore.user` | write failed-row records back to Firestore (only if you configure a backup collection) |
 | `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
 | `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
+| `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
 | `bigquery.googleapis.com` | mirror Firestore collection changes in BigQuery |
 
 If the dataset lives in a different project (`BIGQUERY_PROJECT_ID`), grant the

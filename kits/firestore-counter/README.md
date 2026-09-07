@@ -27,6 +27,7 @@ service account for this codebase — it conflicts with that automatic setup.
 | `roles/cloudscheduler.admin` | schedule the controller that flushes shards |
 | `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
 | `roles/run.invoker` | allow Eventarc/Scheduler to invoke the Gen2 Cloud Run service |
+| `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
 
 ## Usage
 

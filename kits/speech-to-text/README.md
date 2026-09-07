@@ -29,6 +29,7 @@ conflicts with that automatic setup.
 | `roles/datastore.user` | write transcript documents to Firestore |
 | `roles/eventarc.eventReceiver` | receive Gen2 Storage trigger events |
 | `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
+| `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
 | `speech.googleapis.com` | transcribe audio |
 
 ## Usage

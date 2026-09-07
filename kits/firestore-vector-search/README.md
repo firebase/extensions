@@ -31,6 +31,7 @@ conflicts with that automatic setup.
 | `roles/datastore.indexAdmin` | manage vector indexes |
 | `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
 | `roles/run.invoker` | allow Eventarc/Tasks to invoke the Gen2 Cloud Run service |
+| `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
 | `aiplatform.googleapis.com` | Vertex AI embedding/search |
 | `storage-component.googleapis.com` | read image data from Cloud Storage |
 
