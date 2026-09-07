@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Expression } from "firebase-functions/params";
+import { declaredParams, Expression } from "firebase-functions/params";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 const INSTANCE_ID = "users-export";
@@ -92,14 +92,12 @@ describe("instance id", () => {
   // it (or INSTANCE_ID) as a param makes the CLI prompt for a value it cannot
   // accept and abort loading the kit.
   test("is not declared as a param", async () => {
-    const { CONFIG_EXPRESSIONS } = await importConfig(INSTANCE_ID);
+    await importConfig(INSTANCE_ID);
 
-    const spec = (
-      CONFIG_EXPRESSIONS.pubSubTopic as unknown as {
-        toSpec: () => { default?: string };
-      }
-    ).toSpec();
-    expect(JSON.stringify(spec)).not.toContain("INSTANCE_ID");
+    const declared = declaredParams.map((param) => param.name);
+    expect(declared).toContain("PUB_SUB_TOPIC");
+    expect(declared).not.toContain("INSTANCE_ID");
+    expect(declared).not.toContain("FIREBASE_KIT_INSTANCE_ID");
   });
 
   test("fails discovery when FIREBASE_KIT_INSTANCE_ID is missing", async () => {

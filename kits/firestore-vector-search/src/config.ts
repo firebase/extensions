@@ -41,14 +41,19 @@ type ConfigExpression<T extends string | number | boolean> = T | Expression<T>;
 
 export interface ConfigExpressions {
   collectionDocument: ConfigExpression<string>;
-  queryCollectionDocument: ConfigExpression<string>;
 }
 
-// firebase-tools injects this for kit instances (set to the instance's key in
-// firebase.json) during discovery, in the emulator, and on deployed functions.
-// The FIREBASE_ prefix is reserved in .env files and the params machinery never
-// sees injected values, so it must be a plain env read, not a defineString.
-function instanceIdFromEnv(): string {
+/**
+ * Reads the instance id firebase-tools injects for kit instances (set to the
+ * instance's key in firebase.json) during discovery, in the emulator, and on
+ * deployed functions. The FIREBASE_ prefix is reserved in .env files and the
+ * params machinery never sees injected values, so it is a plain env read, not
+ * a defineString. Not evaluated at import: the `./lib` entry re-exports from
+ * this module and must load without the variable.
+ *
+ * @throws If the variable is missing, naming the CLI version that provides it.
+ */
+export function instanceIdFromEnv(): string {
   const instanceId = process.env.FIREBASE_KIT_INSTANCE_ID;
   if (!instanceId) {
     throw new Error(
@@ -59,11 +64,6 @@ function instanceIdFromEnv(): string {
   }
   return instanceId;
 }
-
-// Resolved at import so the query trigger path is a concrete document path at
-// discovery. An unsupported CLI fails the discovery pass here rather than
-// freezing "_undefined/index/queries/{queryId}" into the manifest.
-const instanceId = instanceIdFromEnv();
 
 const EMBEDDING_PROVIDER_OPTIONS = [
   "gemini",
@@ -78,7 +78,6 @@ const DISTANCE_MEASURE_OPTIONS = [
   "DOT_PRODUCT",
 ] as const;
 const params = {
-  instanceId,
   embeddingProvider: defineString("EMBEDDING_PROVIDER", {
     label: "LLM",
     description:
@@ -206,7 +205,6 @@ const params = {
 
 export const CONFIG_EXPRESSIONS = {
   collectionDocument: expr`${params.collectionPath}/{docId}`,
-  queryCollectionDocument: `_${instanceId}/index/queries/{queryId}`,
 } as const satisfies ConfigExpressions;
 
 function optionalString(value: string): string | undefined {

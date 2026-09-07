@@ -38,8 +38,8 @@ functions it exports.
 
 Kits need Firebase CLI 15.27.0 or later with the `kits` experiment enabled.
 The CLI provides each instance its id as the `FIREBASE_KIT_INSTANCE_ID`
-environment variable; earlier versions do not set it, and the kits refuse to
-load without it.
+environment variable; earlier versions do not set it, and kits that use the
+instance id will not deploy or run without it.
 
 ```sh
 firebase experiments:enable kits

@@ -189,11 +189,12 @@ collection (`_<instance id>/index/queries`), the index metadata document
 instance's key in the `instances` map in `firebase.json` and provides it to the
 functions as `FIREBASE_KIT_INSTANCE_ID`. There is no `INSTANCE_ID` setting to
 configure. To keep serving the query documents your clients already write to,
-use your installed instance's id as the `instances` key. The four task queue names can also be
-overridden individually with `UPDATE_TRIGGER_QUEUE_NAME`, `UPDATE_TASK_QUEUE_NAME`,
-`BACKFILL_TRIGGER_QUEUE_NAME` and `BACKFILL_TASK_QUEUE_NAME`, which the extension
-did not allow. Each names the deployed function, without the
-`kit-<instance id>-` prefix: the Admin SDK adds that when it resolves the queue.
+use your installed instance's id as the `instances` key. The four task queue
+names can also be overridden individually with `UPDATE_TRIGGER_QUEUE_NAME`,
+`UPDATE_TASK_QUEUE_NAME`, `BACKFILL_TRIGGER_QUEUE_NAME` and
+`BACKFILL_TASK_QUEUE_NAME`, which the extension did not allow. Each names the
+deployed function, without the `kit-<instance id>-` prefix: the Admin SDK adds
+that when it resolves the queue.
 
 ### Create the `GEMINI_API_KEY` and `OPENAI_API_KEY` secrets, both of them
 
