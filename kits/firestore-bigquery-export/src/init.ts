@@ -18,7 +18,7 @@ import type { FirestoreBigQueryEventHistoryTracker } from "@firebaseextensions/f
 
 /**
  * Builds the provisioning guard used by the `initBigQuerySync` endpoint and the
- * retry-path self-heal. The hot write path never calls it.
+ * lifecycle tasks. The write paths never call it.
  *
  * The returned function runs `tracker.initialize()` at most once per instance:
  * concurrent invocations on a cold instance share a single in-flight promise. A
