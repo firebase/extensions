@@ -116,7 +116,6 @@ describe("configFromEnv", () => {
     await import("../src/config");
 
     for (const [name, defaultValue] of [
-      ["MAKE_PUBLIC", false],
       ["IS_ANIMATED", true],
       ["REGENERATE_TOKEN", true],
     ] as const) {
@@ -136,6 +135,37 @@ describe("configFromEnv", () => {
         },
       });
     }
+  });
+
+  // MAKE_PUBLIC is the one select in this kit whose extension default is not
+  // the first option, so it is the one that exposes the CLI's non-string
+  // default handling: `promptSelect` passes the declared default straight to
+  // inquirer while stringifying every option value, so a boolean `false`
+  // default matched nothing and "Yes" was preselected. A deploy that accepted
+  // the prompt therefore stored MAKE_PUBLIC=true and published every resized
+  // image, where the extension stored `false`.
+  test("declares MAKE_PUBLIC so the CLI preselects the extension default", async () => {
+    await import("../src/config");
+    const declared = declaration("MAKE_PUBLIC");
+
+    expect(declared.type).toBe("string");
+    expect(declared.default).toBe("false");
+    expect(declared.input).toEqual({
+      select: {
+        options: [
+          { label: "Yes", value: "true" },
+          { label: "No", value: "false" },
+        ],
+      },
+    });
+
+    // The comparison the CLI actually makes: `default` against
+    // `option.value.toString()`.
+    const options = (declared.input as SelectInput<string>).select.options;
+    const preselected = options.filter(
+      (option) => String(option.value) === declared.default
+    );
+    expect(preselected).toEqual([{ label: "No", value: "false" }]);
   });
 
   test("reads the same environment variables as the extension", async () => {
@@ -232,6 +262,7 @@ describe("configFromEnv", () => {
     // undefined so the resolver can apply its default.)
     delete process.env.IS_ANIMATED;
     delete process.env.REGENERATE_TOKEN;
+    delete process.env.MAKE_PUBLIC;
     delete process.env.FUNCTION_MEMORY;
     delete process.env.SHARP_OPTIONS;
 
@@ -240,6 +271,9 @@ describe("configFromEnv", () => {
 
     expect(config.isAnimated).toBe(false);
     expect(config.regenerateToken).toBe(false);
+    // The extension read `process.env.MAKE_PUBLIC === "true"`, so an unset
+    // variable was `false` there too.
+    expect(config.makePublic).toBe(false);
     expect(config.memory).toBeUndefined();
     expect(config.sharpOptions).toBe("");
   });

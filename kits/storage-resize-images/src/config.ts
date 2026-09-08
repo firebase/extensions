@@ -83,13 +83,22 @@ const params = {
       "Delete only on successful resize attempts": "on_success",
     }),
   }),
-  makePublic: defineBoolean("MAKE_PUBLIC", {
+  // A string param, unlike the sibling `IS_ANIMATED` / `REGENERATE_TOKEN`
+  // booleans: the CLI's select prompt compares its `default` against
+  // `option.value.toString()` (firebase-tools `promptSelect`), so a non-string
+  // default never matches an option and the first option is highlighted
+  // instead. The extension's default is `false` ("No"), but a `defineBoolean`
+  // here left "Yes" preselected, so pressing Enter stored `MAKE_PUBLIC=true`
+  // and made every resized image public. Declaring the default as the string
+  // `"false"` preselects "No" as the extension did. Stored values stay
+  // `true`/`false`, so no existing `.env` needs editing.
+  makePublic: defineString("MAKE_PUBLIC", {
     label: "Make resized images public",
     description:
       "Do you want to make the resized images public automatically? So you can access them by URL. For example: https://storage.googleapis.com/{bucket}/{path}",
 
-    default: false,
-    input: select({ Yes: true, No: false }),
+    default: "false",
+    input: select({ Yes: "true", No: "false" }),
   }),
   resizedImagesPath: defineString("RESIZED_IMAGES_PATH", {
     label: "Cloud Storage path for resized images",
@@ -296,7 +305,8 @@ export function configFromEnv(): ResizeImagesConfig {
     bucket: params.bucket.value(),
     sizes: params.sizes.value(),
     deleteOriginal: params.deleteOriginal.value() as DeleteOriginalFile,
-    makePublic: params.makePublic.value(),
+    // Matches the extension's `process.env.MAKE_PUBLIC === "true"`.
+    makePublic: params.makePublic.value() === "true",
     resizedImagesPath: optional(params.resizedImagesPath.value()),
     includePathList: optional(params.includePathList.value()),
     excludePathList: optional(params.excludePathList.value()),
