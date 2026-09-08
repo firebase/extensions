@@ -134,27 +134,27 @@ ffmpeg transcode to LINEAR16, the same long-running recognition request, the sam
 per-channel transcript map, the same Firestore progress document and the same two
 Eventarc events. Every setting keeps its extension environment variable name and
 default, so a `.env` copied from your installed instance needs no value changes.
-What changes is where the intermediate audio file is written, how long the
-function may run, and what is no longer checked for you.
+What changes is how long the function may run and what is no longer checked
+for you.
 
-### The transcoded copy no longer lands under `tmp/`
+### Where the transcoded copy is written
 
-The extension named the transcoded WAV after the local temporary file it had just
-written, so with no `OUTPUT_STORAGE_PATH` the copy appeared in your bucket as
-`tmp/<original path>.wav`, and with `OUTPUT_STORAGE_PATH: transcriptions` as
-`transcriptions/tmp/<original path>.wav`. The kit names it after the original
-object instead: `<original path>.wav`, or
-`transcriptions/<original path>.wav`.
+The transcoded WAV is written to `tmp/<original path>.wav`, or
+`<OUTPUT_STORAGE_PATH>/tmp/<original path>.wav` when `OUTPUT_STORAGE_PATH` is
+set. The `tmp/` segment is an artefact of the extension naming the copy after
+its local temporary file; the kit keeps it so lifecycle rules, cleanup jobs and
+client code written against the extension keep finding the file. The prefix is
+joined with a single `/` and is not normalised, so a trailing slash on
+`OUTPUT_STORAGE_PATH` produces a double slash (`transcriptions//tmp/a.mp3.wav`),
+exactly as the extension did.
 
-The transcript itself is written to the same place as before
-(`<original path>.wav_transcription.txt`, under `OUTPUT_STORAGE_PATH` when set),
-so only the intermediate audio moves. If you have lifecycle rules, cleanup jobs
-or client code that expect the WAV under a `tmp/` prefix, point them at the new
-path. The transcoded `.wav` still carries the `isTranscodeOutput` metadata flag
-that stops the function from processing its own output. The transcript `.txt` is
-written directly by the Speech-to-Text API and carries no metadata, so its
-finalize event runs the function again; that run creates a transcript document
-for the `.txt` object and marks it `FAILED` with "Invalid content type.".
+The transcript is written next to the WAV as
+`<transcoded object>_transcription.txt`. The transcoded `.wav` carries the
+`isTranscodeOutput` metadata flag that stops the function from processing its
+own output. The transcript `.txt` is written directly by the Speech-to-Text API
+and carries no metadata, so its finalize event runs the function again; that run
+creates a transcript document for the `.txt` object and marks it `FAILED` with
+"Invalid content type.".
 
 ### The function may now run for nine minutes
 

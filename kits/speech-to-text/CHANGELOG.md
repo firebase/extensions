@@ -1,3 +1,4 @@
+- fix: the transcoded `.wav` is written to `tmp/<original path>.wav` again (under `OUTPUT_STORAGE_PATH` when set, joined with a single `/` and no trailing-slash normalisation), matching the legacy extension so existing consumers keep finding it ([#3140](https://github.com/firebase/extensions/issues/3140))
 - fix: restore the extension's `Enabled` / `Disabled` option labels on the `ENABLE_AUTOMATIC_PUNCTUATION` deploy-time prompt. The stored values are unchanged (`true`/`false`), so this is a label-only fix and no `.env` from an earlier deploy needs editing.
 - Initial release of kit, see README for differences between the legacy extension and this kit
 - The `.txt` transcription output no longer has `tmp/` stripped from its path, a remnant of the legacy extension's temp-file handling; it lands at `<transcoded object>_transcription.txt` exactly ([#3026](https://github.com/firebase/extensions/issues/3026))

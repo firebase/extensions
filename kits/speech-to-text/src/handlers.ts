@@ -148,18 +148,11 @@ export async function handleObjectFinalized(
       message: "Transcoding audio file.",
     });
 
-    /**
-     * Bucket-relative object name for the transcoded file, derived from the
-     * input object's path/name (not the local `/tmp` path).
-     */
-    const transcodedObjectName = `${filePath}.wav`;
+    const transcodedObjectName = `tmp/${filePath}.wav`;
     const transcodedUploadResult = await ctx.fns.uploadTranscodedFile({
       localPath: localTranscodedPath,
       storagePath: config.outputStoragePath
-        ? `${config.outputStoragePath.replace(
-            /\/$/,
-            ""
-          )}/${transcodedObjectName}`
+        ? `${config.outputStoragePath}/${transcodedObjectName}`
         : transcodedObjectName,
       bucket,
     });
