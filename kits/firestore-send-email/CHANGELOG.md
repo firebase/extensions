@@ -1,3 +1,4 @@
+- chore: run on firebase-functions ^7.3.3-rc.0, the same release candidate as the other kits
 - fix: map `DATABASE_REGION` to a valid Cloud Run region before using it as the function region. Firestore multi-region locations (`nam5`, `nam7`) now deploy the function to `us-central1` and `eur3` to `europe-west1` instead of failing the deploy; regional locations pass through unchanged. The value is matched case-insensitively. With the parameter unset or empty the function declares no region and the Firebase CLI resolves one at deploy time.
 - Initial release of kit, see README for differences between the legacy extension and this kit
 - SendGrid sends now work with `AUTH_TYPE=OAuth2`: the `SMTP_PASSWORD` secret is no longer dropped from the config under OAuth2, so the SendGrid transport receives its API key
