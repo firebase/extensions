@@ -41,4 +41,22 @@ describe("firestoreLocationToFunctionRegion", () => {
   test("returns undefined for an empty location", () => {
     expect(firestoreLocationToFunctionRegion("")).toBeUndefined();
   });
+
+  test("returns undefined for a whitespace-only location", () => {
+    expect(firestoreLocationToFunctionRegion("   ")).toBeUndefined();
+  });
+
+  test.each([
+    ["NAM5", "us-central1"],
+    ["Eur3", "europe-west1"],
+    [" nam7 ", "us-central1"],
+  ])("normalizes %s before the multi-region lookup", (location, region) => {
+    expect(firestoreLocationToFunctionRegion(location)).toBe(region);
+  });
+
+  test("lowercases and trims a regional location", () => {
+    expect(firestoreLocationToFunctionRegion(" Europe-West2 ")).toBe(
+      "europe-west2"
+    );
+  });
 });
