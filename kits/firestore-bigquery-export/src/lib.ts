@@ -51,5 +51,6 @@ export {
 export {
   type DocumentWriteEvent,
   type HandlerContext,
+  type SerializedDocumentChange,
   handleDocumentWrite,
 } from "./handlers";
