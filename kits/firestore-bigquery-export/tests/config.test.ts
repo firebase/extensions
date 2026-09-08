@@ -33,15 +33,10 @@ vi.mock("firebase-functions/params", () => ({
     toJSON(): string {
       return this.toString();
     }
-  },
-  defineString: (
-    _name: string,
-    opts?: { default?: string | { value(): string } }
-  ) => ({
-    value: () =>
-      typeof opts?.default === "string"
-        ? opts.default
-        : opts?.default?.value() ?? "",
+  }, // Mirrors the real StringParam: the env var or "", never the declared
+  // default, which only the CLI prompt consults.
+  defineString: (_name: string) => ({
+    value: () => process.env[_name] || "",
     toString: () => `params.${_name}`,
   }),
   // Mirrors the real IntParam: a missing or blank env var resolves to 0, and
@@ -166,12 +161,15 @@ describe("buildPartitioningConfig", () => {
 
 describe("configFromEnv", () => {
   test("maps params", () => {
+    // The CLI resolves the param's default into the env at deploy.
+    vi.stubEnv("BIGQUERY_PROJECT_ID", "test-project");
     const config = configFromEnv();
     expect(config.projectId).toBe("test-project");
     expect(config.bqProjectId).toBe("test-project");
     expect(config.databaseId).toBe("(default)");
     expect(config.viewType).toBe("view");
     expect(resolveExportConfig(config)).not.toHaveProperty("location");
+    vi.unstubAllEnvs();
   });
 
   test("reports unset queue params as undefined so the documented defaults apply", () => {
@@ -198,6 +196,37 @@ describe("configFromEnv", () => {
     const config = configFromEnv();
     expect(config.maxEnqueueAttempts).toBe(7);
     expect(config.maxDispatchesPerSecond).toBe(250);
+    vi.unstubAllEnvs();
+  });
+
+  test("yes/no selects default to off", () => {
+    const config = configFromEnv();
+    expect(config.useNewSnapshotQuerySyntax).toBe(false);
+    expect(config.excludeOldData).toBe(false);
+  });
+
+  test("yes/no selects enable on the extension's literal yes", () => {
+    vi.stubEnv("USE_NEW_SNAPSHOT_QUERY_SYNTAX", "yes");
+    vi.stubEnv("EXCLUDE_OLD_DATA", "yes");
+    const config = configFromEnv();
+    expect(config.useNewSnapshotQuerySyntax).toBe(true);
+    expect(config.excludeOldData).toBe(true);
+    vi.unstubAllEnvs();
+  });
+  test("yes/no selects forgive the label's case and surrounding whitespace", () => {
+    vi.stubEnv("USE_NEW_SNAPSHOT_QUERY_SYNTAX", "Yes");
+    vi.stubEnv("EXCLUDE_OLD_DATA", " yes ");
+    const config = configFromEnv();
+    expect(config.useNewSnapshotQuerySyntax).toBe(true);
+    expect(config.excludeOldData).toBe(true);
+    vi.unstubAllEnvs();
+  });
+
+  test("yes/no selects treat no and anything else as off", () => {
+    vi.stubEnv("USE_NEW_SNAPSHOT_QUERY_SYNTAX", "no");
+    vi.stubEnv("EXCLUDE_OLD_DATA", "true");
+    expect(configFromEnv().useNewSnapshotQuerySyntax).toBe(false);
+    expect(configFromEnv().excludeOldData).toBe(false);
     vi.unstubAllEnvs();
   });
 
