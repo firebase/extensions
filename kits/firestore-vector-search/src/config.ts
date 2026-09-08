@@ -180,11 +180,13 @@ const params = {
     label: "Embed existing documents?",
     description:
       "Should existing documents in the Firestore collection be embedded as well?",
+    input: select({ Yes: true, No: false }),
   }),
   updateOnConfigure: defineBoolean("UPDATE_ON_CONFIGURE", {
     label: "Update existing embeddings?",
     description:
       "Should existing documents in the Firestore collection be updated with new embeddings on reconfiguring the extensions?",
+    input: select({ Yes: true, No: false }),
   }),
   // These name the deployed function, not the fully-qualified queue: the Admin
   // SDK prefixes the name with `kit-<instance id>-` from

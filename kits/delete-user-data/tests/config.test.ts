@@ -33,6 +33,9 @@ class FakeStringParam extends FakeExpression<string> {
   }
 
   value(): string {
+    if (process.env[this.name] !== undefined) {
+      return process.env[this.name];
+    }
     if (this.defaultValue instanceof FakeStringParam) {
       return this.defaultValue.value();
     }
@@ -54,8 +57,13 @@ const defineInt = vi.fn((name: string, opts?: { default?: number }) => ({
   value: () => opts?.default ?? 0,
 }));
 
-const defineBoolean = vi.fn((_name: string, opts?: { default?: boolean }) => ({
-  value: () => opts?.default ?? false,
+const select = vi.fn((options: Record<string, string>) => ({
+  select: {
+    options: Object.entries(options).map(([label, value]) => ({
+      label,
+      value,
+    })),
+  },
 }));
 
 function cel(value: unknown): string {
@@ -64,11 +72,10 @@ function cel(value: unknown): string {
 
 vi.mock("firebase-functions/params", () => ({
   Expression: FakeExpression,
-  defineBoolean,
   defineInt,
   defineString,
   projectID: { value: () => "demo-test" },
-  select: vi.fn((options: string[]) => ({ options })),
+  select,
   storageBucket: new FakeStringParam("STORAGE_BUCKET", "demo-test.appspot.com"),
 }));
 
@@ -76,7 +83,7 @@ async function importConfig() {
   vi.resetModules();
   defineString.mockClear();
   defineInt.mockClear();
-  defineBoolean.mockClear();
+  select.mockClear();
   vi.stubEnv("FIREBASE_KIT_INSTANCE_ID", "test-instance");
 
   return import("../src/config");
@@ -112,6 +119,16 @@ describe("configFromEnv", () => {
     expect(config.searchDepth).toBeUndefined();
   });
 
+  test("parses the predecessor's yes/no values", async () => {
+    const { configFromEnv } = await importConfig();
+
+    vi.stubEnv("ENABLE_AUTO_DISCOVERY", "yes");
+    expect(configFromEnv().enableAutoDiscovery).toBe(true);
+
+    vi.stubEnv("ENABLE_AUTO_DISCOVERY", "no");
+    expect(configFromEnv().enableAutoDiscovery).toBe(false);
+  });
+
   test("declares the params the extension exposes", async () => {
     await importConfig();
 
@@ -136,9 +153,19 @@ describe("configFromEnv", () => {
       "AUTO_DISCOVERY_SEARCH_DEPTH",
       expect.objectContaining({ default: 3 }),
     ]);
-    expect(defineBoolean.mock.calls).toContainEqual([
+    expect(defineString.mock.calls).toContainEqual([
       "ENABLE_AUTO_DISCOVERY",
-      expect.objectContaining({ default: false }),
+      expect.objectContaining({
+        default: "no",
+        input: {
+          select: {
+            options: [
+              { label: "Yes", value: "yes" },
+              { label: "No", value: "no" },
+            ],
+          },
+        },
+      }),
     ]);
   });
 
