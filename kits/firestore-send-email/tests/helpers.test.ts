@@ -18,14 +18,16 @@ import { logger } from "firebase-functions";
 import Mail from "nodemailer/lib/mailer";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-// @sendgrid/mail exports a MailService instance alongside the class, and the
-// transport constructs its own. Every construction hands back the same spies.
+// @sendgrid/mail exports a MailService singleton whose methods are also the
+// module's own exports, plus the MailService class. Constructing the class
+// hands back the same spies as the singleton, so the module-level ones see
+// whatever the transport's own client was configured with.
 vi.mock("@sendgrid/mail", () => {
   const mail = { setApiKey: vi.fn(), send: vi.fn() };
   const MailService = vi.fn(function () {
     return mail;
   });
-  return { ...mail, MailService, default: mail };
+  return { ...mail, MailService };
 });
 
 import * as sgMail from "@sendgrid/mail";
