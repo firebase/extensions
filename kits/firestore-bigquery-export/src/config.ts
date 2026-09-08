@@ -398,19 +398,21 @@ const params = {
 
     default: false,
   }),
-  useNewSnapshotQuerySyntax: defineBoolean("USE_NEW_SNAPSHOT_QUERY_SYNTAX", {
+  useNewSnapshotQuerySyntax: defineString("USE_NEW_SNAPSHOT_QUERY_SYNTAX", {
     label: "Use new query syntax for snapshots",
     description:
       "If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential resource limitations.",
 
-    default: false,
+    default: "no",
+    input: select({ Yes: "yes", No: "no" }),
   }),
-  excludeOldData: defineBoolean("EXCLUDE_OLD_DATA", {
+  excludeOldData: defineString("EXCLUDE_OLD_DATA", {
     label: "Exclude old data payloads",
     description:
       "If enabled, table rows will never contain old data (document snapshot before the Firestore onDocumentUpdate event: `change.before.data()`). The reduction in data should be more performant, and avoid potential resource limitations.",
 
-    default: false,
+    default: "no",
+    input: select({ Yes: "yes", No: "no" }),
   }),
   viewType: defineString("VIEW_TYPE", {
     label: "View Type",
@@ -633,6 +635,12 @@ function normalizePositiveInt(value: string): number | undefined {
   return normalized > 0 ? normalized : undefined;
 }
 
+// The extension's select emits `yes` / `no`; its label is `Yes`, and the CLI
+// copies .env values verbatim, so case and whitespace are forgiven.
+function yesNo(value: string): boolean {
+  return value.trim().toLowerCase() === "yes";
+}
+
 /** Coerce an empty-string param value to `undefined`. */
 function optional(value: string): string | undefined {
   return value.length > 0 ? value : undefined;
@@ -674,8 +682,8 @@ export function configFromEnv(): ExportConfig {
     projectId: projectID.value(),
     databaseId: optional(params.database.value()) || "(default)",
     wildcardIds: params.wildcardIds.value(),
-    excludeOldData: params.excludeOldData.value(),
-    useNewSnapshotQuerySyntax: params.useNewSnapshotQuerySyntax.value(),
+    excludeOldData: yesNo(params.excludeOldData.value()),
+    useNewSnapshotQuerySyntax: yesNo(params.useNewSnapshotQuerySyntax.value()),
     viewType: (optional(params.viewType.value()) || "view") as ViewType,
     partitioning: buildPartitioningConfig({
       timePartitioning: timePartitioning(tablePartitioning),
