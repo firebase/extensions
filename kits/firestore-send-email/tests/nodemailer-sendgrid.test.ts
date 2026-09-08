@@ -16,16 +16,21 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-vi.mock("@sendgrid/mail", () => ({
-  setApiKey: vi.fn(),
-  send: vi.fn().mockResolvedValue([
-    {
-      headers: { "x-message-id": "test-message-id" },
-      statusCode: 202,
-    },
-    {},
-  ]),
-}));
+// @sendgrid/mail exports a single MailService instance, so the mock has to be
+// reachable as both the default and the named exports.
+vi.mock("@sendgrid/mail", () => {
+  const mail = {
+    setApiKey: vi.fn(),
+    send: vi.fn().mockResolvedValue([
+      {
+        headers: { "x-message-id": "test-message-id" },
+        statusCode: 202,
+      },
+      {},
+    ]),
+  };
+  return { ...mail, default: mail };
+});
 
 import * as sgMail from "@sendgrid/mail";
 import { SendGridTransport } from "../src/nodemailer-sendgrid";

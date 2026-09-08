@@ -21,15 +21,19 @@ interface StringParamOpts {
   input?: { text?: { validationRegex?: RegExp } };
 }
 
-const { stringParamOpts } = vi.hoisted(() => ({
+const { stringParamOpts, paramEnv } = vi.hoisted(() => ({
   stringParamOpts: new Map<string, StringParamOpts | undefined>(),
+  paramEnv: new Map<string, string>(),
 }));
 
 vi.mock("firebase-functions/params", () => ({
+  // Values come from paramEnv rather than process.env: AUTH_TYPE, USER and
+  // HOST are all real param names that collide with ambient shell vars, which
+  // would otherwise make results machine-dependent.
   defineString: (name: string, opts?: StringParamOpts) => {
     stringParamOpts.set(name, opts);
     return {
-      value: () => opts?.default ?? "",
+      value: () => paramEnv.get(name) ?? opts?.default ?? "",
     };
   },
   defineInt: (_name: string, opts?: { default?: number }) => ({
@@ -60,6 +64,10 @@ import { resolveConfig } from "../src/export-config";
 import { AuthenticatonType } from "../src/types";
 
 describe("configFromEnv", () => {
+  afterEach(() => {
+    paramEnv.clear();
+  });
+
   test("maps params and keeps secret-backed values deferred", () => {
     const config = configFromEnv();
     expect(config.mailCollection).toBe("mail");
@@ -67,6 +75,16 @@ describe("configFromEnv", () => {
     expect(config.defaultReplyTo).toBe("");
     expect(typeof config.smtpPassword).toBe("object");
     expect(config.clientId).toBeUndefined();
+  });
+
+  test("keeps the SMTP password for OAuth2 so SendGrid can use it as API key", () => {
+    paramEnv.set("AUTH_TYPE", AuthenticatonType.OAuth2);
+    const config = configFromEnv();
+    expect(config.authType).toBe(AuthenticatonType.OAuth2);
+    expect(typeof config.smtpPassword).toBe("object");
+    expect(typeof config.clientId).toBe("object");
+    expect(typeof config.clientSecret).toBe("object");
+    expect(typeof config.refreshToken).toBe("object");
   });
 });
 
@@ -107,12 +125,12 @@ describe("secretParamsForAuthType", () => {
     ).toEqual(["SMTP_PASSWORD"]);
   });
 
-  test("binds only OAuth secrets for OAuth2 auth", () => {
+  test("keeps the SMTP password bound alongside OAuth secrets for OAuth2 auth", () => {
     expect(
       secretParamsForAuthType(AuthenticatonType.OAuth2).map(
         (secret) => (secret as { name: string }).name
       )
-    ).toEqual(["CLIENT_ID", "CLIENT_SECRET", "REFRESH_TOKEN"]);
+    ).toEqual(["SMTP_PASSWORD", "CLIENT_ID", "CLIENT_SECRET", "REFRESH_TOKEN"]);
   });
 
   test("uses username/password secret binding by default", () => {
