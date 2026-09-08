@@ -1,3 +1,4 @@
+- chore: run on firebase-functions ^7.3.3-rc.0, the same release candidate as the other kits
 - The instance id now comes from `FIREBASE_KIT_INSTANCE_ID`, which the Firebase CLI (15.27.0 or later) provides to each kit instance; `INSTANCE_ID` is no longer a configuration parameter
 - Fixed task dispatch failing with "Queue does not exist": the kit prefixed queue names with `kit-<instance id>-` itself, which the Admin SDK then prefixed again from `FIREBASE_KIT_INSTANCE_ID`. Changelog rows never reached BigQuery and restorations never started
 - Full implementation, replacing the skeleton package: Firestore capture to a BigQuery changelog, Dataflow-based point-in-time restoration, and first-deploy provisioning. See the README for differences between the legacy extension and this kit.
