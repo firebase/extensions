@@ -16,8 +16,9 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-// @sendgrid/mail exports a single MailService instance, so the mock has to be
-// reachable as both the default and the named exports.
+// @sendgrid/mail exports a single MailService instance alongside the class.
+// Every construction hands back the same spies so assertions do not need a
+// handle on the instance the transport built.
 vi.mock("@sendgrid/mail", () => {
   const mail = {
     setApiKey: vi.fn(),
@@ -29,7 +30,10 @@ vi.mock("@sendgrid/mail", () => {
       {},
     ]),
   };
-  return { ...mail, default: mail };
+  const MailService = vi.fn(function () {
+    return mail;
+  });
+  return { ...mail, MailService, default: mail };
 });
 
 import * as sgMail from "@sendgrid/mail";

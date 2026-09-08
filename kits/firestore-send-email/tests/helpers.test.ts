@@ -18,11 +18,14 @@ import { logger } from "firebase-functions";
 import Mail from "nodemailer/lib/mailer";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-// @sendgrid/mail exports a single MailService instance, so the mock has to be
-// reachable as both the default and the named exports.
+// @sendgrid/mail exports a MailService instance alongside the class, and the
+// transport constructs its own. Every construction hands back the same spies.
 vi.mock("@sendgrid/mail", () => {
   const mail = { setApiKey: vi.fn(), send: vi.fn() };
-  return { ...mail, default: mail };
+  const MailService = vi.fn(function () {
+    return mail;
+  });
+  return { ...mail, MailService, default: mail };
 });
 
 import * as sgMail from "@sendgrid/mail";
