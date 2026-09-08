@@ -66,8 +66,8 @@ export interface CaptureConfig {
    * This instance's key in the `instances` map of the kit stanza. Required: it
    * namespaces the flex template object, the Dataflow job names and the
    * run-status documents, which is what keeps two instances in one project from
-   * colliding. Task queue names come from `FIREBASE_KIT_INSTANCE_ID` instead,
-   * which the Admin SDK reads directly.
+   * colliding. The Admin SDK reads the same id from `FIREBASE_KIT_INSTANCE_ID`
+   * to prefix the task queues.
    */
   instanceId: string;
   /** Defaults to `info`. */
@@ -131,8 +131,8 @@ export function resolveCaptureConfig(
 
   if (!config.instanceId) {
     invalid(
-      "INSTANCE_ID is required. It must match this instance's key in the " +
-        "`instances` map of the kit stanza in firebase.json."
+      "instanceId is required. The Firebase CLI (15.27.0 or later) provides " +
+        "it to each kit instance as FIREBASE_KIT_INSTANCE_ID."
     );
   }
 

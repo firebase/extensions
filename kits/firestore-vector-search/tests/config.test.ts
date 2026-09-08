@@ -14,36 +14,84 @@
  * limitations under the License.
  */
 
+import { declaredParams, type Expression } from "firebase-functions/params";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { CONFIG_EXPRESSIONS, configFromEnv } from "../src/config";
+
+beforeEach(() => {
+  vi.stubEnv("FIREBASE_CONFIG", JSON.stringify({ projectId: "test-project" }));
+  vi.stubEnv("FIREBASE_KIT_INSTANCE_ID", "test-instance");
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+describe("CONFIG_EXPRESSIONS", () => {
+  test("binds the embed trigger to the collection name parameter", () => {
+    expect(
+      (CONFIG_EXPRESSIONS.collectionDocument as Expression<string>).toCEL()
+    ).toBe("{{ params.COLLECTION_NAME }}/{docId}");
+  });
+});
+
+describe("instance id", () => {
+  // The CLI injects FIREBASE_KIT_INSTANCE_ID as a reserved env var; declaring
+  // it (or INSTANCE_ID) as a param makes the CLI prompt for a value it cannot
+  // accept and abort loading the kit.
+  test("is not declared as a param", () => {
+    const declared = declaredParams.map((param) => param.name);
+
+    expect(declared).toContain("COLLECTION_NAME");
+    expect(declared).not.toContain("INSTANCE_ID");
+    expect(declared).not.toContain("FIREBASE_KIT_INSTANCE_ID");
+  });
+
+  test("is read from the injected environment", () => {
+    expect(configFromEnv()).toMatchObject({
+      projectId: "test-project",
+      instanceId: "test-instance",
+    });
+  });
+
+  test("throws at runtime when FIREBASE_KIT_INSTANCE_ID is missing", () => {
+    vi.stubEnv("FIREBASE_KIT_INSTANCE_ID", undefined);
+
+    expect(() => configFromEnv()).toThrow(
+      /FIREBASE_KIT_INSTANCE_ID is not set/
+    );
+  });
+});
+
 /**
  * Compatibility requirement, not aspiration: the extension declared both
  * backfill toggles as required `true` / `false` selects, so a deployed `.env`
  * carries those literal values.
  */
-
-import { declaredParams } from "firebase-functions/params";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { configFromEnv } from "../src/config";
-
-function declaration(name: string) {
-  const param = declaredParams.find((candidate) => candidate.name === name);
-  if (!param || !("options" in param)) {
-    throw new Error(`Missing declaration for ${name}`);
-  }
-  const options = param.options as { default?: unknown; input?: unknown };
-  return {
-    type: (param.constructor as unknown as { type: string }).type,
-    default: options.default,
-    input: options.input,
-  };
-}
-
-const KEYS = ["DO_BACKFILL", "UPDATE_ON_CONFIGURE"] as const;
-
 describe("select values inherited from the extension", () => {
-  const saved = new Map<string, string | undefined>();
+  const KEYS = ["DO_BACKFILL", "UPDATE_ON_CONFIGURE"] as const;
+
+  function declaration(name: string) {
+    const param = declaredParams.find((candidate) => candidate.name === name);
+    if (!param || !("options" in param)) {
+      throw new Error(`Missing declaration for ${name}`);
+    }
+    const options = param.options as { default?: unknown; input?: unknown };
+    return {
+      type: (param.constructor as unknown as { type: string }).type,
+      default: options.default,
+      input: options.input,
+    };
+  }
+
+  beforeEach(() => {
+    for (const key of KEYS) {
+      vi.stubEnv(key, undefined);
+    }
+  });
 
   test("declares the predecessor's required labeled boolean selects", () => {
-    for (const name of ["DO_BACKFILL", "UPDATE_ON_CONFIGURE"]) {
+    for (const name of KEYS) {
       expect(declaration(name)).toEqual({
         type: "boolean",
         default: undefined,
@@ -59,37 +107,19 @@ describe("select values inherited from the extension", () => {
     }
   });
 
-  beforeEach(() => {
-    for (const key of KEYS) {
-      saved.set(key, process.env[key]);
-      delete process.env[key];
-    }
-  });
-
-  afterEach(() => {
-    for (const [key, value] of saved) {
-      if (value === undefined) {
-        delete process.env[key];
-      } else {
-        process.env[key] = value;
-      }
-    }
-    saved.clear();
-  });
-
   test("reads DO_BACKFILL as true/false", () => {
-    process.env.DO_BACKFILL = "true";
+    vi.stubEnv("DO_BACKFILL", "true");
     expect(configFromEnv().doBackfill).toBe(true);
 
-    process.env.DO_BACKFILL = "false";
+    vi.stubEnv("DO_BACKFILL", "false");
     expect(configFromEnv().doBackfill).toBe(false);
   });
 
   test("reads UPDATE_ON_CONFIGURE as true/false", () => {
-    process.env.UPDATE_ON_CONFIGURE = "true";
+    vi.stubEnv("UPDATE_ON_CONFIGURE", "true");
     expect(configFromEnv().updateOnConfigure).toBe(true);
 
-    process.env.UPDATE_ON_CONFIGURE = "false";
+    vi.stubEnv("UPDATE_ON_CONFIGURE", "false");
     expect(configFromEnv().updateOnConfigure).toBe(false);
   });
 

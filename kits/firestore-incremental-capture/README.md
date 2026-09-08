@@ -105,8 +105,9 @@ the config values to use below.
 PITR only covers writes made after it is enabled, so a restoration can only
 target a point in time after setup ran.
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
-later, behind the `kits` experiment):
+The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.27.0 or
+later, behind the `kits` experiment - earlier CLIs do not provide the
+`FIREBASE_KIT_INSTANCE_ID` variable this kit reads its instance id from):
 
 ```json
 {
@@ -149,9 +150,13 @@ Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
 loads them at deploy time and prompts for any required values that are missing.
 `PROJECT_ID` is supplied by the Firebase CLI.
 
+The instance id is not a setting: the CLI provides it to each instance as
+`FIREBASE_KIT_INSTANCE_ID`, set to that instance's key in the `instances` map.
+`FIREBASE_` is a reserved prefix in `.env` files, so it cannot be set or
+overridden there.
+
 | Field                | Env var                | Required | Default          | Description                                                 |
 | -------------------- | ---------------------- | -------- | ---------------- | ----------------------------------------------------------- |
-| `instanceId`         | `INSTANCE_ID`          | yes      | -                | Must match this instance's key in the `instances` map        |
 | `backupInstanceId`   | `BACKUP_INSTANCE_ID`   | yes      | -                | Firestore database to restore into; must not be `(default)`  |
 | `syncCollectionPath` | `SYNC_COLLECTION_PATH` | no       | `posts`          | Collection to capture                                       |
 | `datasetId`          | `SYNC_DATASET`         | no       | `backup_dataset` | BigQuery dataset for the changelog                          |
@@ -204,9 +209,10 @@ map, each pointing at its own config directory with its own `.env`:
 
 Instance ids must be unique across all kit stanzas in the project, and every
 instance's function names are namespaced by its `kit-<instance id>-` prefix, so
-the instances cannot collide. Set `INSTANCE_ID` in each config directory to that
-instance's key - it namespaces the Dataflow jobs and run-status documents, and a
-mismatch makes two instances share them.
+the instances cannot collide. Each instance learns its own id from the
+`FIREBASE_KIT_INSTANCE_ID` variable the CLI provides; it namespaces the task
+queues, the Dataflow jobs and the run-status documents, and there is nothing to
+keep in sync by hand.
 
 Give each instance its own `SYNC_DATASET`/`SYNC_TABLE` or its own
 `BACKUP_INSTANCE_ID`. Two instances sharing a changelog table would replay each
@@ -315,8 +321,10 @@ correctly. Everything around the format moved:
   `gs://<bucket>/<instance id>-dataflow-restore`, not the extension's
   `gs://<bucket>/<instance id>/templates/myTemplate`, so an extension-staged
   template is not reused - run `scripts/setup.sh` before the first restoration.
-- **Configuration.** `INSTANCE_ID` is new and required (the extension injected
-  `EXT_INSTANCE_ID` itself). `LOCATION` is free-form and mutable instead of an
+- **Configuration.** The instance id comes from this instance's key in the
+  `instances` map in `firebase.json`, which the CLI provides to the functions
+  as `FIREBASE_KIT_INSTANCE_ID` (the extension injected `EXT_INSTANCE_ID`
+  itself). `LOCATION` is free-form and mutable instead of an
   immutable install-time select. `SYNC_COLLECTION_PATH` is optional with a
   default, and no longer advertises `{document=**}` whole-database capture -
   that pattern never produced a deployable trigger (see Configuration).

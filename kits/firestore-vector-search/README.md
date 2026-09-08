@@ -59,8 +59,9 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
-later, behind the `kits` experiment):
+The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.27.0 or
+later, behind the `kits` experiment - earlier CLIs do not provide the
+`FIREBASE_KIT_INSTANCE_ID` variable this kit reads its instance id from):
 
 ```json
 {
@@ -96,9 +97,13 @@ loads them at deploy time and prompts for any required values that are missing.
 Rows marked `secret` live in Secret Manager. You can reuse existing secrets;
 the CLI connects them to the function at deploy time.
 
+The instance id is not a setting: the CLI provides it to each instance as
+`FIREBASE_KIT_INSTANCE_ID`, set to that instance's key in the `instances` map.
+`FIREBASE_` is a reserved prefix in `.env` files, so it cannot be set or
+overridden there.
+
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
-| `instanceId` | `INSTANCE_ID` | yes | — | Must match this instance's key in the `instances` map |
 | `embeddingProvider` | `EMBEDDING_PROVIDER` | no | `gemini` | Embedding provider |
 | `customEmbeddingsEndpoint` | `CUSTOM_EMBEDDINGS_ENDPOINT` | no | (empty) | Custom embeddings endpoint |
 | `customEmbeddingsBatchSize` | `CUSTOM_EMBEDDINGS_BATCH_SIZE` | no | (empty) | Custom batch size |
@@ -140,9 +145,10 @@ To run several vector-search indexes, add one entry per instance to the
 
 Instance ids must be unique across all kit stanzas in the project, and every
 instance's function names are namespaced by its `kit-<instance id>-` prefix, so
-the instances cannot collide. Set `INSTANCE_ID` in each config directory to the
-same value as that directory's key in the `instances` map; it also namespaces
-the internal Firestore metadata/query paths and task queue references.
+the instances cannot collide. Each instance learns its own id from the
+`FIREBASE_KIT_INSTANCE_ID` variable the CLI provides; there is nothing to keep
+in sync by hand. The id also namespaces the internal Firestore metadata/query
+paths and task queue references.
 
 ## Differences from the Vector Search with Firestore extension
 
@@ -175,18 +181,20 @@ dimension both the extension and the kit declare their vector index with, so the
 default provider works. This is the one place the kit deliberately does not match
 the extension's behaviour, because matching it means writing nothing at all.
 
-### You set `INSTANCE_ID` yourself, and it names the query collection
+### The instance id comes from `firebase.json`, and it names the query collection
 
 The extension derived its instance id at install and used it for the query
 collection (`_<instance id>/index/queries`), the index metadata document
-(`_<instance id>/index`) and its task queues. Here `INSTANCE_ID` is a setting you
-provide, and it must match this instance's key in the `instances` map in
-`firebase.json`. To keep serving the query documents your clients already write
-to, set it to your installed instance's id. The four task queue names can also be
-overridden individually with `UPDATE_TRIGGER_QUEUE_NAME`, `UPDATE_TASK_QUEUE_NAME`,
-`BACKFILL_TRIGGER_QUEUE_NAME` and `BACKFILL_TASK_QUEUE_NAME`, which the extension
-did not allow. Each names the deployed function, without the
-`kit-<instance id>-` prefix: the Admin SDK adds that when it resolves the queue.
+(`_<instance id>/index`) and its task queues. Here the CLI derives it from this
+instance's key in the `instances` map in `firebase.json` and provides it to the
+functions as `FIREBASE_KIT_INSTANCE_ID`. There is no `INSTANCE_ID` setting to
+configure. To keep serving the query documents your clients already write to,
+use your installed instance's id as the `instances` key. The four task queue
+names can also be overridden individually with `UPDATE_TRIGGER_QUEUE_NAME`,
+`UPDATE_TASK_QUEUE_NAME`, `BACKFILL_TRIGGER_QUEUE_NAME` and
+`BACKFILL_TASK_QUEUE_NAME`, which the extension did not allow. Each names the
+deployed function, without the `kit-<instance id>-` prefix: the Admin SDK adds
+that when it resolves the queue.
 
 ### Create the `GEMINI_API_KEY` and `OPENAI_API_KEY` secrets, both of them
 
