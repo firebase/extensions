@@ -20,8 +20,14 @@ import type {
   TimePartitioningGranularity,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import { LogLevel } from "@firebaseextensions/firestore-bigquery-change-tracker";
-import type { Expression } from "firebase-functions/params";
-import { defineString, projectID, select } from "firebase-functions/params";
+import type { Expression, IntParam } from "firebase-functions/params";
+import {
+  defineBoolean,
+  defineInt,
+  defineString,
+  projectID,
+  select,
+} from "firebase-functions/params";
 import type { ExportConfig, ViewType } from "./export-config";
 
 type TrackerLogLevel = "debug" | "info" | "warn" | "error" | "silent";
@@ -97,6 +103,8 @@ export interface ConfigExpressions {
   datasetId: ConfigExpression<string>;
   tableId: ConfigExpression<string>;
   database: ConfigExpression<string>;
+  /** An `IntParam`, not a bare expression: the queue's `rateLimits` guards it with a CEL comparison. */
+  maxDispatchesPerSecond: IntParam;
 }
 
 /**
@@ -282,8 +290,38 @@ const params = {
   backupCollection: defineString("BACKUP_COLLECTION", {
     label: "Backup Collection Name",
     description:
-      "This (optional) parameter will allow you to specify a collection for which failed BigQuery updates will be written to.",
+      "Strongly recommended. The Firestore collection where rows whose BigQuery insert is rejected are written, on the inline attempt and on each queue attempt; without it, those rows are dropped once the queue gives up. A change that cannot be enqueued at all is not backed up. See the README for how to reconcile backed-up rows into BigQuery.",
     default: "",
+  }),
+  maxDispatchesPerSecond: defineInt("MAX_DISPATCHES_PER_SECOND", {
+    label: "Maximum number of synced documents per second",
+    description:
+      "This parameter will set the maximum number of synchronized documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota. Ensure that you have set a low enough number to compensate. Defaults to 100.",
+
+    default: 100,
+    input: {
+      text: {
+        example: "100",
+
+        validationRegex: /^([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)$/,
+        validationErrorMessage: "Please select a number between 1 and 500",
+      },
+    },
+  }),
+  maxEnqueueAttempts: defineInt("MAX_ENQUEUE_ATTEMPTS", {
+    label: "Maximum number of enqueue attempts",
+    description:
+      "This parameter will set the maximum number of attempts to enqueue a document to cloud tasks for export to BigQuery.",
+
+    default: 3,
+    input: {
+      text: {
+        example: "3",
+
+        validationRegex: /^(10|[1-9])$/,
+        validationErrorMessage: "Please select an integer between 1 and 10",
+      },
+    },
   }),
   transformFunction: defineString("TRANSFORM_FUNCTION", {
     label: "Transform function URL",
@@ -353,13 +391,12 @@ const params = {
       },
     },
   }),
-  wildcardIds: defineString("WILDCARD_IDS", {
+  wildcardIds: defineBoolean("WILDCARD_IDS", {
     label: "Enable Wildcard Column field with Parent Firestore Document IDs",
     description:
       "If enabled, creates a column containing a JSON object of all wildcard ids from a documents path.",
 
-    default: "false",
-    input: select({ No: "false", Yes: "true" }),
+    default: false,
   }),
   useNewSnapshotQuerySyntax: defineString("USE_NEW_SNAPSHOT_QUERY_SYNTAX", {
     label: "Use new query syntax for snapshots",
@@ -450,6 +487,7 @@ export const CONFIG_EXPRESSIONS: ConfigExpressions = {
   datasetId: params.datasetId,
   tableId: params.tableId,
   database: params.database,
+  maxDispatchesPerSecond: params.maxDispatchesPerSecond,
 };
 
 function timePartitioning(
@@ -597,9 +635,28 @@ function normalizePositiveInt(value: string): number | undefined {
   return normalized > 0 ? normalized : undefined;
 }
 
+// The extension's select emits `yes` / `no`; its label is `Yes`, and the CLI
+// copies .env values verbatim, so case and whitespace are forgiven.
+function yesNo(value: string): boolean {
+  return value.trim().toLowerCase() === "yes";
+}
+
 /** Coerce an empty-string param value to `undefined`. */
 function optional(value: string): string | undefined {
   return value.length > 0 ? value : undefined;
+}
+
+/**
+ * Reads an int param, reporting a missing or blank env var as `undefined`.
+ *
+ * `IntParam.value()` is `parseInt(env || "0", 10) || 0` and never consults the
+ * declared default, so an unset param has to reach `resolveExportConfig` as
+ * `undefined` for the documented default to apply. An explicit `0` is a real
+ * setting and is preserved.
+ */
+function optionalInt(param: IntParam): number | undefined {
+  const raw = process.env[param.name]?.trim();
+  return raw === undefined || raw === "" ? undefined : param.value();
 }
 
 /**
@@ -624,10 +681,9 @@ export function configFromEnv(): ExportConfig {
     bqProjectId: optional(params.bigqueryProjectId.value()),
     projectId: projectID.value(),
     databaseId: optional(params.database.value()) || "(default)",
-    wildcardIds: params.wildcardIds.value() === "true",
-    excludeOldData: params.excludeOldData.value() === "yes",
-    useNewSnapshotQuerySyntax:
-      params.useNewSnapshotQuerySyntax.value() === "yes",
+    wildcardIds: params.wildcardIds.value(),
+    excludeOldData: yesNo(params.excludeOldData.value()),
+    useNewSnapshotQuerySyntax: yesNo(params.useNewSnapshotQuerySyntax.value()),
     viewType: (optional(params.viewType.value()) || "view") as ViewType,
     partitioning: buildPartitioningConfig({
       timePartitioning: timePartitioning(tablePartitioning),
@@ -645,5 +701,7 @@ export function configFromEnv(): ExportConfig {
     transformFunction: optional(params.transformFunction.value()),
     kmsKeyName: optional(params.kmsKeyName.value()),
     logLevel: normalizeLogLevel(params.logLevel.value()),
+    maxDispatchesPerSecond: optionalInt(params.maxDispatchesPerSecond),
+    maxEnqueueAttempts: optionalInt(params.maxEnqueueAttempts),
   };
 }

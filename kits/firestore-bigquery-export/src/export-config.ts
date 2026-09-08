@@ -19,6 +19,9 @@ import type {
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import type { Expression } from "firebase-functions/params";
 
+/** Dispatch rate of the `syncBigQuery` queue when `MAX_DISPATCHES_PER_SECOND` is unset. */
+export const DEFAULT_MAX_DISPATCHES_PER_SECOND = 100;
+
 type TrackerLogLevel = "debug" | "info" | "warn" | "error" | "silent";
 type ConfigValue<T extends string | number | boolean | string[]> =
   | T
@@ -86,6 +89,17 @@ export interface ExportConfig {
 
   /** Log verbosity. Defaults to `info`. */
   logLevel?: ConfigValue<TrackerLogLevel | LogLevel>;
+
+  /**
+   * Cloud Tasks dispatch rate for the `syncBigQuery` queue, in tasks per
+   * second. Defaults to `100`.
+   */
+  maxDispatchesPerSecond?: ConfigValue<number>;
+  /**
+   * How many times the trigger tries to enqueue a failed write onto the
+   * `syncBigQuery` queue before giving up. Defaults to `3`.
+   */
+  maxEnqueueAttempts?: ConfigValue<number>;
 }
 
 /** {@link ExportConfig} with all defaults applied. */
@@ -109,6 +123,8 @@ export interface ResolvedExportConfig {
   transformFunction?: string;
   kmsKeyName?: string;
   logLevel: TrackerLogLevel;
+  maxDispatchesPerSecond: number;
+  maxEnqueueAttempts: number;
 }
 
 function isExpression<T extends string | number | boolean | string[]>(
@@ -165,6 +181,11 @@ export function resolveExportConfig(
     transformFunction: resolveOptionalConfigValue(config.transformFunction),
     kmsKeyName: resolveOptionalConfigValue(config.kmsKeyName),
     logLevel: (logLevel as TrackerLogLevel) ?? "info",
+    maxDispatchesPerSecond:
+      resolveOptionalConfigValue(config.maxDispatchesPerSecond) ??
+      DEFAULT_MAX_DISPATCHES_PER_SECOND,
+    maxEnqueueAttempts:
+      resolveOptionalConfigValue(config.maxEnqueueAttempts) ?? 3,
   };
 }
 
