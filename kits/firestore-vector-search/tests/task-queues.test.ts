@@ -79,13 +79,25 @@ function queueUrl(name: string): string {
   return `/projects/test-project/locations/us-central1/queues/${name}/tasks`;
 }
 
-/** A Firestore whose collection get() returns a single document. */
+/**
+ * A Firestore with one document in the collection and no metadata document,
+ * so every trigger pass runs and enqueues exactly one task.
+ */
 function firestoreWithOneDoc() {
+  const doc = (path: string) => ({
+    path,
+    get: vi.fn(async () => ({ exists: false, data: () => undefined })),
+    set: vi.fn(async () => undefined),
+    update: vi.fn(async () => undefined),
+  });
   return {
+    doc: vi.fn(doc),
     collection: vi.fn(() => ({
-      get: vi.fn(async () => ({
-        docs: [{ ref: { path: "documents/doc-1" } }],
-      })),
+      listDocuments: vi.fn(async () => [{ id: "doc-1" }]),
+    })),
+    batch: vi.fn(() => ({
+      set: vi.fn(),
+      commit: vi.fn(async () => undefined),
     })),
   } as unknown as FirebaseFirestore.Firestore;
 }
@@ -120,16 +132,23 @@ describe("task queue targets", () => {
     expect(paths).toEqual([queueUrl("kit-test-instance-updateTask")]);
   });
 
-  test("init enqueues onto the two trigger queues", async () => {
+  test("init enqueues only the backfill trigger when both passes are on", async () => {
     const { handleInit } = await import("../src/handlers");
 
     await handleInit(
       await context({ doBackfill: true, updateOnConfigure: true })
     );
 
-    expect(paths).toEqual([
-      queueUrl("kit-test-instance-backfillTrigger"),
-      queueUrl("kit-test-instance-updateTrigger"),
-    ]);
+    expect(paths).toEqual([queueUrl("kit-test-instance-backfillTrigger")]);
+  });
+
+  test("init enqueues onto the update trigger queue on its own", async () => {
+    const { handleInit } = await import("../src/handlers");
+
+    await handleInit(
+      await context({ doBackfill: false, updateOnConfigure: true })
+    );
+
+    expect(paths).toEqual([queueUrl("kit-test-instance-updateTrigger")]);
   });
 });
