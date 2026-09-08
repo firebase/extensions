@@ -16,6 +16,7 @@
 
 import {
   BUCKET_PICKER,
+  defineBoolean,
   defineInt,
   defineList,
   defineString,
@@ -82,13 +83,13 @@ const params = {
       "Delete only on successful resize attempts": "on_success",
     }),
   }),
-  makePublic: defineString("MAKE_PUBLIC", {
+  makePublic: defineBoolean("MAKE_PUBLIC", {
     label: "Make resized images public",
     description:
       "Do you want to make the resized images public automatically? So you can access them by URL. For example: https://storage.googleapis.com/{bucket}/{path}",
 
-    default: "false",
-    input: select({ Yes: "true", No: "false" }),
+    default: false,
+    input: select({ Yes: true, No: false }),
   }),
   resizedImagesPath: defineString("RESIZED_IMAGES_PATH", {
     label: "Cloud Storage path for resized images",
@@ -181,12 +182,12 @@ const params = {
       },
     },
   }),
-  isAnimated: defineString("IS_ANIMATED", {
+  isAnimated: defineBoolean("IS_ANIMATED", {
     label: "GIF and WEBP animated option",
     description: "Keep animation of GIF and WEBP formats.",
 
-    default: "true",
-    input: select({ Yes: "true", "No (1st frame only)": "false" }),
+    default: true,
+    input: select({ Yes: true, "No (1st frame only)": false }),
   }),
   memory: defineInt("FUNCTION_MEMORY", {
     label: "Cloud Function memory",
@@ -202,13 +203,13 @@ const params = {
       "8 GB": 8192,
     }),
   }),
-  regenerateToken: defineString("REGENERATE_TOKEN", {
+  regenerateToken: defineBoolean("REGENERATE_TOKEN", {
     label: "Assign new access token",
     description:
       "Should resized images have a new access token assigned to them,  different from the original image?",
 
-    default: "true",
-    input: select({ Yes: "true", No: "false" }),
+    default: true,
+    input: select({ Yes: true, No: false }),
   }),
   contentFilterLevel: defineString("CONTENT_FILTER_LEVEL", {
     label: "Content filter level",
@@ -275,7 +276,7 @@ export function configFromEnv(): ResizeImagesConfig {
     bucket: params.bucket.value(),
     sizes: params.sizes.value(),
     deleteOriginal: params.deleteOriginal.value() as DeleteOriginalFile,
-    makePublic: params.makePublic.value() === "true",
+    makePublic: params.makePublic.value(),
     resizedImagesPath: optional(params.resizedImagesPath.value()),
     includePathList: optional(params.includePathList.value()),
     excludePathList: optional(params.excludePathList.value()),
@@ -284,9 +285,9 @@ export function configFromEnv(): ResizeImagesConfig {
     imageTypes: params.imageTypes.value(),
     outputOptions: optional(params.outputOptions.value()),
     sharpOptions: params.sharpOptions.value(),
-    isAnimated: params.isAnimated.value() === "true",
+    isAnimated: params.isAnimated.value(),
     memory: params.memory.value(),
-    regenerateToken: params.regenerateToken.value() === "true",
+    regenerateToken: params.regenerateToken.value(),
     contentFilterLevel:
       params.contentFilterLevel.value() as ResizeImagesConfig["contentFilterLevel"],
     customFilterPrompt: optional(params.customFilterPrompt.value()),

@@ -19,7 +19,10 @@
  * `ENABLE_AUTOMATIC_PUNCTUATION` as an Enabled / Disabled select carrying the
  * literal values `true` / `false`, and read it as
  * `process.env.ENABLE_AUTOMATIC_PUNCTUATION === "true"`, so an unset variable
- * meant disabled despite the declared default of `true`.
+ * meant disabled despite the declared default of `true`. `BooleanParam`
+ * resolves identically (`runtimeValue()` is `env === "true"`, the default only
+ * drives the deploy-time prompt), so the kit keeps the boolean param and
+ * carries the extension's labels through a `select<boolean>`.
  */
 
 import { declaredParams } from "firebase-functions/params";
@@ -42,15 +45,15 @@ function declaration(name: string) {
 describe("ENABLE_AUTOMATIC_PUNCTUATION values inherited from the extension", () => {
   let saved: string | undefined;
 
-  test("declares the predecessor's labeled string select", () => {
+  test("declares the predecessor's labeled boolean select", () => {
     expect(declaration("ENABLE_AUTOMATIC_PUNCTUATION")).toEqual({
-      type: "string",
-      default: "true",
+      type: "boolean",
+      default: true,
       input: {
         select: {
           options: [
-            { label: "Enabled", value: "true" },
-            { label: "Disabled", value: "false" },
+            { label: "Enabled", value: true },
+            { label: "Disabled", value: false },
           ],
         },
       },

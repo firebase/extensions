@@ -15,6 +15,7 @@
  */
 
 import {
+  defineBoolean,
   defineInt,
   defineSecret,
   defineString,
@@ -157,17 +158,17 @@ const params = {
     default: "status",
     input: { text: { example: "status" } },
   }),
-  doBackfill: defineString("DO_BACKFILL", {
+  doBackfill: defineBoolean("DO_BACKFILL", {
     label: "Embed existing documents?",
     description:
       "Should existing documents in the Firestore collection be embedded as well?",
-    input: select({ Yes: "true", No: "false" }),
+    input: select({ Yes: true, No: false }),
   }),
-  updateOnConfigure: defineString("UPDATE_ON_CONFIGURE", {
+  updateOnConfigure: defineBoolean("UPDATE_ON_CONFIGURE", {
     label: "Update existing embeddings?",
     description:
       "Should existing documents in the Firestore collection be updated with new embeddings on reconfiguring the extensions?",
-    input: select({ Yes: "true", No: "false" }),
+    input: select({ Yes: true, No: false }),
   }),
   // These name the deployed function, not the fully-qualified queue: the Admin
   // SDK prefixes the name with `kit-<instance id>-` from
@@ -220,8 +221,8 @@ export function configFromEnv(): VectorSearchConfig {
     inputFieldName: params.inputFieldName.value(),
     outputFieldName: params.outputFieldName.value(),
     statusFieldName: params.statusFieldName.value(),
-    doBackfill: params.doBackfill.value() === "true",
-    updateOnConfigure: params.updateOnConfigure.value() === "true",
+    doBackfill: params.doBackfill.value(),
+    updateOnConfigure: params.updateOnConfigure.value(),
     region: process.env.FUNCTION_REGION,
     projectId: projectID.value(),
     instanceId: params.instanceId.value(),

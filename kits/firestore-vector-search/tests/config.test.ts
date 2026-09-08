@@ -42,16 +42,16 @@ const KEYS = ["DO_BACKFILL", "UPDATE_ON_CONFIGURE"] as const;
 describe("select values inherited from the extension", () => {
   const saved = new Map<string, string | undefined>();
 
-  test("declares the predecessor's required labeled string selects", () => {
+  test("declares the predecessor's required labeled boolean selects", () => {
     for (const name of ["DO_BACKFILL", "UPDATE_ON_CONFIGURE"]) {
       expect(declaration(name)).toEqual({
-        type: "string",
+        type: "boolean",
         default: undefined,
         input: {
           select: {
             options: [
-              { label: "Yes", value: "true" },
-              { label: "No", value: "false" },
+              { label: "Yes", value: true },
+              { label: "No", value: false },
             ],
           },
         },

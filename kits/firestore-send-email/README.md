@@ -217,7 +217,8 @@ a `TypeError` about reading `attachments` into `delivery.error`. It now writes
   path pattern so nested collections such as `users/{uid}/mail` keep working, and
   `MAIL_COLLECTION` still defaults to `mail`.
 - Every environment variable keeps its name, type and default, including
-  `OAUTH_SECURE`, which is still a `true`/`false` dropdown.
+  `OAUTH_SECURE`, which is still a `true`/`false` dropdown, and keeps the
+  extension's `Yes` / `No` option labels.
 - Document fields and their meanings are identical: `to`, `cc`, `bcc`, the
   `*Uids` variants, `message`, `template`, `sendGrid`, `headers`, `categories`,
   `from` and `replyTo`, along with the validation error messages written to

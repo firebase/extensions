@@ -112,24 +112,24 @@ describe("configFromEnv", () => {
     saved.clear();
   });
 
-  test("declares the predecessor's labeled string selects", async () => {
+  test("declares the predecessor's labeled boolean selects", async () => {
     await import("../src/config");
 
     for (const [name, defaultValue] of [
-      ["MAKE_PUBLIC", "false"],
-      ["IS_ANIMATED", "true"],
-      ["REGENERATE_TOKEN", "true"],
+      ["MAKE_PUBLIC", false],
+      ["IS_ANIMATED", true],
+      ["REGENERATE_TOKEN", true],
     ] as const) {
       expect(declaration(name)).toEqual({
-        type: "string",
+        type: "boolean",
         default: defaultValue,
         input: {
           select: {
             options: [
-              { label: "Yes", value: "true" },
+              { label: "Yes", value: true },
               {
                 label: name === "IS_ANIMATED" ? "No (1st frame only)" : "No",
-                value: "false",
+                value: false,
               },
             ],
           },

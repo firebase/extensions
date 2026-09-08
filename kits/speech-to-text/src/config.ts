@@ -15,6 +15,7 @@
  */
 import {
   BUCKET_PICKER,
+  defineBoolean,
   defineString,
   select,
   storageBucket,
@@ -87,13 +88,13 @@ const params = {
       },
     },
   }),
-  enableAutomaticPunctuation: defineString("ENABLE_AUTOMATIC_PUNCTUATION", {
+  enableAutomaticPunctuation: defineBoolean("ENABLE_AUTOMATIC_PUNCTUATION", {
     label: "Enable automatic punctuation",
     description:
       "Should the transcription algorithm attempt to add punctuation to the transcription? For details, see [the documentation](https://cloud.google.com/speech-to-text/docs/automatic-punctuation)",
 
-    default: "true",
-    input: select({ Enabled: "true", Disabled: "false" }),
+    default: true,
+    input: select({ Enabled: true, Disabled: false }),
   }),
 };
 
@@ -114,8 +115,7 @@ export function configFromEnv(): SpeechToTextConfig {
     model: optional(params.model.value()),
     outputStoragePath: optional(params.outputStoragePath.value()),
     collectionPath: optional(params.collectionPath.value()),
-    enableAutomaticPunctuation:
-      params.enableAutomaticPunctuation.value() === "true",
+    enableAutomaticPunctuation: params.enableAutomaticPunctuation.value(),
   };
 }
 

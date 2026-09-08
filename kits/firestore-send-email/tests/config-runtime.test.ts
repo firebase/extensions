@@ -18,7 +18,10 @@
  * Compatibility requirement, not aspiration: the extension declared
  * `OAUTH_SECURE` as a `true` / `false` select and read it as
  * `process.env.OAUTH_SECURE === "true"`, so an unset variable meant an
- * insecure connection despite the declared default of `true`.
+ * insecure connection despite the declared default of `true`. `BooleanParam`
+ * resolves identically (`runtimeValue()` is `env === "true"`, the default only
+ * drives the deploy-time prompt), so the kit keeps the boolean param and
+ * carries the extension's labels through a `select<boolean>`.
  * `config.test.ts` fakes `firebase-functions/params`, so this runs against the
  * real params.
  */
@@ -43,15 +46,15 @@ function declaration(name: string) {
 describe("OAUTH_SECURE values inherited from the extension", () => {
   let saved: string | undefined;
 
-  test("declares the predecessor's labeled string select", () => {
+  test("declares the predecessor's labeled boolean select", () => {
     expect(declaration("OAUTH_SECURE")).toEqual({
-      type: "string",
-      default: "true",
+      type: "boolean",
+      default: true,
       input: {
         select: {
           options: [
-            { label: "Yes", value: "true" },
-            { label: "No", value: "false" },
+            { label: "Yes", value: true },
+            { label: "No", value: false },
           ],
         },
       },
