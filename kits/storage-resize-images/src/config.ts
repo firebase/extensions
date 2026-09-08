@@ -269,6 +269,26 @@ function optional(value: string): string | undefined {
   return value.length > 0 ? value : undefined;
 }
 
+/**
+ * `ListParam.value()` JSON-parses the raw env var. Extension-style values may
+ * either throw (for example, `jpeg,webp`) or parse to a non-list and collapse
+ * to `[]` (notably the extension default, `false`). The extension read the raw
+ * value directly, so preserve it whenever the params layer cannot return a
+ * non-empty list and let the resolver's `toArray` apply legacy semantics.
+ */
+function imageTypesFromEnv(): ReadonlyArray<string> | string | undefined {
+  const raw = process.env.IMAGE_TYPE;
+  if (raw === undefined) {
+    return undefined;
+  }
+  try {
+    const parsed = params.imageTypes.value();
+    return parsed.length > 0 ? parsed : raw;
+  } catch {
+    return raw;
+  }
+}
+
 export function configFromEnv(): ResizeImagesConfig {
   return {
     bucket: params.bucket.value(),
@@ -280,11 +300,14 @@ export function configFromEnv(): ResizeImagesConfig {
     excludePathList: optional(params.excludePathList.value()),
     failedImagesPath: optional(params.failedImagesPath.value()),
     cacheControlHeader: optional(params.cacheControlHeader.value()),
-    imageTypes: params.imageTypes.value(),
+    imageTypes: imageTypesFromEnv(),
     outputOptions: optional(params.outputOptions.value()),
     sharpOptions: params.sharpOptions.value(),
     isAnimated: params.isAnimated.value(),
-    memory: params.memory.value(),
+    // IntParam yields 0 when FUNCTION_MEMORY is unset or non-numeric; the
+    // extension always supplied a value, so treat that as unset and let the
+    // resolver fall back to the default memory.
+    memory: params.memory.value() || undefined,
     regenerateToken: params.regenerateToken.value(),
     contentFilterLevel:
       params.contentFilterLevel.value() as ResizeImagesConfig["contentFilterLevel"],
