@@ -18,7 +18,7 @@ import { getApp, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { onDocumentWritten } from "firebase-functions/firestore";
 import type { Role } from "firebase-functions/v2";
-import { requiresRole } from "firebase-functions/v2";
+import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { configFromEnv, envDeployOptions, secretParams } from "./config";
 import * as events from "./events";
 import { resolveConfig } from "./export-config";
@@ -40,9 +40,20 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   // PERMISSION_DENIED and no custom event is ever delivered.
   "roles/eventarc.publisher",
 ];
+const REQUIRED_APIS = [
+  {
+    api: "firestore.googleapis.com",
+    reason:
+      "Reads the mail queue and writes delivery state in Cloud Firestore.",
+  },
+] as const;
 
 for (const role of REQUIRED_ROLES) {
   requiresRole(role);
+}
+
+for (const { api, reason } of REQUIRED_APIS) {
+  requiresAPI(api, reason);
 }
 
 const deploy = envDeployOptions();
@@ -86,7 +97,7 @@ function ensureInitialized(): Promise<HandlerContext> {
 
 export const processQueue = onDocumentWritten(
   {
-    region: deploy.region,
+    ...(deploy.region ? { region: deploy.region } : {}),
     document: deploy.document,
     database: deploy.database,
     timeoutSeconds: 120,

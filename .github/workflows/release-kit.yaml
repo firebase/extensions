@@ -35,6 +35,11 @@ on:
         required: true
         default: true
         type: boolean
+      use_firebase_functions_rc:
+        description: "Use firebase-functions RC"
+        required: true
+        default: false
+        type: boolean
       dry_run:
         description: "Dry run (validate without pushing/publishing)"
         required: true
@@ -72,10 +77,25 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Validate Inputs
+        env:
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          USE_FIREBASE_FUNCTIONS_RC: ${{ inputs.use_firebase_functions_rc }}
+        run: |
+          if [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ] && [ "$IS_PRERELEASE" != "true" ]; then
+            echo "::error::'Use firebase-functions RC' can only be checked when creating a kit RC (Publish as Release Candidate must be true)."
+            exit 1
+          fi
+
       - name: Install Dependencies & Run Tests
         working-directory: ${{ inputs.target_kit }}
+        env:
+          USE_FIREBASE_FUNCTIONS_RC: ${{ inputs.use_firebase_functions_rc }}
         run: |
           npm ci
+          if [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ]; then
+            npm install --save firebase-functions@next
+          fi
           npm test
 
   # =========================================================
@@ -98,6 +118,16 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "24"
+
+      - name: Validate Inputs
+        env:
+          IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          USE_FIREBASE_FUNCTIONS_RC: ${{ inputs.use_firebase_functions_rc }}
+        run: |
+          if [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ] && [ "$IS_PRERELEASE" != "true" ]; then
+            echo "::error::'Use firebase-functions RC' can only be checked when creating a kit RC (Publish as Release Candidate must be true)."
+            exit 1
+          fi
 
       - name: Configure Git User
         if: ${{ !inputs.dry_run }}
@@ -210,8 +240,13 @@ jobs:
 
       - name: Install Dependencies & Build
         working-directory: ${{ inputs.target_kit }}
+        env:
+          USE_FIREBASE_FUNCTIONS_RC: ${{ inputs.use_firebase_functions_rc }}
         run: |
           npm ci --registry=https://registry.npmjs.org
+          if [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ]; then
+            npm install --save firebase-functions@next
+          fi
           npm run build
 
       - name: Apply Version Bump (Clear CHANGELOG on Stable Release Only)
@@ -259,6 +294,7 @@ jobs:
           BUMP_TYPE: ${{ steps.config.outputs.bump_type }}
           TARGET_TAG: ${{ steps.config.outputs.target_tag }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
+          USE_FIREBASE_FUNCTIONS_RC: ${{ inputs.use_firebase_functions_rc }}
           TAG_NAME: ${{ steps.config.outputs.tag_name }}
           NOTES: ${{ steps.changelog.outputs.notes }}
         run: |
@@ -274,12 +310,46 @@ jobs:
           echo " Version Bump:     $BUMP_TYPE"
           echo " NPM Dist-Tag:     $TARGET_TAG"
           echo " Release Type:     $( [ "$IS_PRERELEASE" = "true" ] && echo "Release Candidate (RC)" || echo "Stable Release" )"
+          echo " Functions RC:     $( [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ] && echo "Yes (firebase-functions@next)" || echo "No" )"
           echo " Git Tag Name:     $TAG_NAME"
           echo " CHANGELOG State:  $( [ "$IS_PRERELEASE" = "true" ] && echo "Preserved" || echo "Will be cleared on publish" )"
           echo "----------------------------------------------------------"
           echo " Release Notes from CHANGELOG.md:"
           echo "$NOTES"
           echo "=========================================================="
+
+      # npm expands a dependency's npm-shrinkwrap.json verbatim into the
+      # consumer's install, so dev-only entries (the esbuild platform binaries
+      # among them) fail consumer `npm ci` under npm 10 with EBADPLATFORM -
+      # which is what the Cloud Functions buildpack runs. The committed
+      # shrinkwrap keeps its dev pins for local `npm ci`; only the published
+      # copy is pruned, keeping the exact prod versions the tests ran against.
+      # Runs after Commit & Tag so the release commit stays unpruned.
+      - name: Prune dev entries from the published package
+        working-directory: ${{ inputs.target_kit }}
+        run: |
+          node - <<'EOF'
+          const fs = require("fs");
+          if (!fs.existsSync("npm-shrinkwrap.json")) {
+            console.log("No npm-shrinkwrap.json; nothing to prune.");
+            process.exit(0);
+          }
+          const lock = JSON.parse(fs.readFileSync("npm-shrinkwrap.json", "utf8"));
+          for (const [path, entry] of Object.entries(lock.packages)) {
+            if (entry.dev) delete lock.packages[path];
+          }
+          delete lock.packages[""].devDependencies;
+          fs.writeFileSync("npm-shrinkwrap.json", JSON.stringify(lock, null, 2) + "\n");
+          const written = JSON.parse(fs.readFileSync("npm-shrinkwrap.json", "utf8"));
+          const leftovers = Object.keys(written.packages).filter(
+            (path) => written.packages[path].dev || path.includes("node_modules/@esbuild/")
+          );
+          if (leftovers.length > 0) {
+            throw new Error(`dev entries survived the prune: ${leftovers.join(", ")}`);
+          }
+          console.log(`Pruned shrinkwrap to ${Object.keys(written.packages).length} entries`);
+          EOF
+          npm pkg delete devDependencies
 
       - name: Publish to NPM
         working-directory: ${{ inputs.target_kit }}

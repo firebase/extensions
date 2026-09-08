@@ -134,7 +134,13 @@ const payloadSchema = z
       "Email configuration must include either a 'message', 'template', or 'sendGrid' object",
   });
 
-function formatZodError(
+/**
+ * Formats a Zod validation error into the extension's human-readable message.
+ * @param error - The Zod error to format
+ * @param context - The context or field name where the error occurred
+ * @returns A formatted error message string
+ */
+export function formatZodError(
   error: z.ZodError,
   context = "email configuration"
 ): string {
@@ -148,6 +154,10 @@ function formatZodError(
           return `Field '${path}' must be an array`;
         if (issue.expected === "object") return `Field '${path}' must be a map`;
         return `Field '${path}' must be ${issue.expected}`;
+      case "invalid_string":
+        if (issue.validation === "email")
+          return `Field '${path}' must be a valid email address`;
+        return `Field '${path}' is invalid`;
       case "too_small":
         return issue.minimum === 1
           ? `Field '${path}' cannot be empty`

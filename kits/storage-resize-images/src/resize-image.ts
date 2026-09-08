@@ -198,7 +198,7 @@ export const constructMetadata = (
   const customMetadata = metadata.metadata as Record<string, string>;
   customMetadata.resizedImage = "true";
   metadata.cacheControl =
-    config.cacheControlHeader ?? objectMetadata.cacheControl;
+    config.cacheControlHeader || objectMetadata.cacheControl;
 
   if (config.regenerateToken && customMetadata.firebaseStorageDownloadTokens) {
     customMetadata.firebaseStorageDownloadTokens = uuidv4();

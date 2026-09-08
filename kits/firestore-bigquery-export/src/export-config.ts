@@ -19,6 +19,9 @@ import type {
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import type { Expression } from "firebase-functions/params";
 
+/** Dispatch rate of the `syncBigQuery` queue when `MAX_DISPATCHES_PER_SECOND` is unset. */
+export const DEFAULT_MAX_DISPATCHES_PER_SECOND = 100;
+
 type TrackerLogLevel = "debug" | "info" | "warn" | "error" | "silent";
 type ConfigValue<T extends string | number | boolean | string[]> =
   | T
@@ -34,7 +37,7 @@ export type ViewType =
  * The export configuration. The main entry point builds it from deploy-time
  * params; handler consumers can construct it directly.
  *
- * `collectionPath`, `datasetId`, `tableId`, `location`, and `projectId` are
+ * `collectionPath`, `datasetId`, `tableId`, and `projectId` are
  * required; everything else has a sensible default.
  */
 export interface ExportConfig {
@@ -46,8 +49,6 @@ export interface ExportConfig {
   /** BigQuery changelog table id. */
   tableId: ConfigValue<string>;
 
-  /** Region for the trigger and task queue. */
-  location: ConfigValue<string>;
   /** BigQuery dataset location, e.g. `us`, `eu`. Defaults to `us`. */
   datasetLocation?: ConfigValue<string>;
   /** Project that owns the BigQuery dataset, if different from the function's
@@ -71,7 +72,10 @@ export interface ExportConfig {
   partitioning?: ChangeTrackerConfig["partitioning"];
   /** Clustering columns (max 4). */
   clustering?: string[] | null;
-  /** Materialized-view max staleness interval, e.g. `0-0 0 4:0:0`. */
+  /**
+   * Materialized-view max staleness interval, e.g.
+   * `INTERVAL "8:0:0" HOUR TO SECOND`.
+   */
   maxStaleness?: ConfigValue<string>;
   /** Incremental materialized-view refresh interval in minutes. */
   refreshIntervalMinutes?: ConfigValue<number>;
@@ -85,6 +89,17 @@ export interface ExportConfig {
 
   /** Log verbosity. Defaults to `info`. */
   logLevel?: ConfigValue<TrackerLogLevel | LogLevel>;
+
+  /**
+   * Cloud Tasks dispatch rate for the `syncBigQuery` queue, in tasks per
+   * second. Defaults to `100`.
+   */
+  maxDispatchesPerSecond?: ConfigValue<number>;
+  /**
+   * How many times the trigger tries to enqueue a failed write onto the
+   * `syncBigQuery` queue before giving up. Defaults to `3`.
+   */
+  maxEnqueueAttempts?: ConfigValue<number>;
 }
 
 /** {@link ExportConfig} with all defaults applied. */
@@ -92,7 +107,6 @@ export interface ResolvedExportConfig {
   collectionPath: string;
   datasetId: string;
   tableId: string;
-  location: string;
   datasetLocation: string;
   bqProjectId?: string;
   projectId: string;
@@ -109,6 +123,8 @@ export interface ResolvedExportConfig {
   transformFunction?: string;
   kmsKeyName?: string;
   logLevel: TrackerLogLevel;
+  maxDispatchesPerSecond: number;
+  maxEnqueueAttempts: number;
 }
 
 function isExpression<T extends string | number | boolean | string[]>(
@@ -146,7 +162,6 @@ export function resolveExportConfig(
     collectionPath: resolveConfigValue(config.collectionPath),
     datasetId: resolveConfigValue(config.datasetId),
     tableId: resolveConfigValue(config.tableId),
-    location: resolveConfigValue(config.location),
     datasetLocation: resolveOptionalConfigValue(config.datasetLocation) ?? "us",
     bqProjectId: resolveOptionalConfigValue(config.bqProjectId),
     projectId,
@@ -166,6 +181,11 @@ export function resolveExportConfig(
     transformFunction: resolveOptionalConfigValue(config.transformFunction),
     kmsKeyName: resolveOptionalConfigValue(config.kmsKeyName),
     logLevel: (logLevel as TrackerLogLevel) ?? "info",
+    maxDispatchesPerSecond:
+      resolveOptionalConfigValue(config.maxDispatchesPerSecond) ??
+      DEFAULT_MAX_DISPATCHES_PER_SECOND,
+    maxEnqueueAttempts:
+      resolveOptionalConfigValue(config.maxEnqueueAttempts) ?? 3,
   };
 }
 

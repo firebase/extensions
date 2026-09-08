@@ -20,7 +20,7 @@ import { onDocumentWritten } from "firebase-functions/firestore";
 import { expr } from "firebase-functions/params";
 import { onSchedule } from "firebase-functions/scheduler";
 import type { Role } from "firebase-functions/v2";
-import { requiresRole } from "firebase-functions/v2";
+import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
 import * as events from "./events";
 import { resolveCounterConfig } from "./export-config";
@@ -45,9 +45,19 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   // PERMISSION_DENIED and no custom event is ever delivered.
   "roles/eventarc.publisher",
 ];
+const REQUIRED_APIS = [
+  {
+    api: "firestore.googleapis.com",
+    reason: "Reads and writes counter shards in Cloud Firestore.",
+  },
+] as const;
 
 for (const role of REQUIRED_ROLES) {
   requiresRole(role);
+}
+
+for (const { api, reason } of REQUIRED_APIS) {
+  requiresAPI(api, reason);
 }
 
 let ctx: HandlerContext | undefined;

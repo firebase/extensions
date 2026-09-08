@@ -34,11 +34,12 @@
   "dependencies": {
     "@google-cloud/bigquery": "^7.6.0",
     "@google-cloud/dataflow": "^3.2.0",
-    "firebase-admin": "^14.1.0",
+    "firebase-admin": "^14.2.0",
     "firebase-functions": "7.3.2"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
+    "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }
 }

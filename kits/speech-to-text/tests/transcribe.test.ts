@@ -47,8 +47,10 @@ vi.mock("fluent-ffmpeg", () => {
   return { default: ffmpeg };
 });
 
-import { transcodeToLinear16 } from "../src/transcribe";
+import { transcodeToLinear16, transcribeAndUpload } from "../src/transcribe";
 import { Status } from "../src/types";
+import type { SpeechClient } from "@google-cloud/speech";
+import type { Bucket } from "@google-cloud/storage";
 
 describe("transcodeToLinear16", () => {
   beforeEach(() => {
@@ -68,5 +70,51 @@ describe("transcodeToLinear16", () => {
       expect(result.sampleRateHertz).toBe(44100);
       expect(typeof result.sampleRateHertz).toBe("number");
     }
+  });
+});
+
+describe("transcribeAndUpload", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("writes the .txt next to the uploaded object, even when its path contains tmp/", async () => {
+    const longRunningRecognize = vi.fn().mockResolvedValue([
+      {
+        promise: vi.fn().mockResolvedValue([
+          {
+            results: [
+              { channelTag: 1, alternatives: [{ transcript: "hello" }] },
+            ],
+          },
+        ]),
+      },
+    ]);
+    const client = { longRunningRecognize } as unknown as SpeechClient;
+
+    const result = await transcribeAndUpload({
+      client,
+      file: {
+        bucket: { name: "my-bucket" } as Bucket,
+        name: "audio/tmp/clip.mp3.wav",
+      },
+      sampleRateHertz: 44100,
+      audioChannelCount: 1,
+      options: {
+        languageCode: "en-US",
+        model: "default",
+        enableAutomaticPunctuation: true,
+      },
+    });
+
+    expect(result.status).toBe(Status.SUCCESS);
+    expect(longRunningRecognize).toHaveBeenCalledWith(
+      expect.objectContaining({
+        audio: { uri: "gs://my-bucket/audio/tmp/clip.mp3.wav" },
+        outputConfig: {
+          gcsUri: "gs://my-bucket/audio/tmp/clip.mp3.wav_transcription.txt",
+        },
+      })
+    );
   });
 });

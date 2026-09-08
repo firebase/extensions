@@ -19,6 +19,7 @@ import {
   constructUpdateTransferConfigRequest,
   createTransferConfigRequest,
   type DataTransferClient,
+  notificationTopicName,
   PARTITIONING_FIELD_REMOVAL_ERROR,
 } from "../src/dts";
 import { resolveConfig } from "../src/export-config";
@@ -60,6 +61,22 @@ describe("createTransferConfigRequest", () => {
       request.transferConfig?.params?.fields?.destination_table_name_template
         ?.stringValue
     ).toBe('users_{run_time|"%H%M%S"}');
+  });
+});
+
+describe("notificationTopicName", () => {
+  test("qualifies a bare topic ID with the project", () => {
+    expect(notificationTopicName(config)).toBe(
+      "projects/test-project/topics/kit-users-export-processMessages"
+    );
+  });
+
+  test("passes through a topic already given as a resource name", () => {
+    const qualified = "projects/other-project/topics/ext-users-processMessages";
+
+    expect(notificationTopicName({ ...config, pubSubTopic: qualified })).toBe(
+      qualified
+    );
   });
 });
 

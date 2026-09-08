@@ -61,6 +61,21 @@ function transferConfigFields(config: TransferConfig) {
   return fields;
 }
 
+/**
+ * Full resource name of the topic DTS publishes run notifications to.
+ *
+ * PUB_SUB_TOPIC is validated as a bare topic ID when prompted, but values from
+ * a dotenv file reach us unvalidated, and both the Pub/Sub client and the
+ * trigger accept a full resource name, so accept one here too.
+ */
+export function notificationTopicName(
+  config: ResolvedBigqueryFirestoreExportConfig
+): string {
+  return config.pubSubTopic.startsWith("projects/")
+    ? config.pubSubTopic
+    : `projects/${config.projectId}/topics/${config.pubSubTopic}`;
+}
+
 function stringField(value: string | undefined): { stringValue: string } {
   return { stringValue: value ?? "" };
 }
@@ -93,7 +108,7 @@ export function createTransferConfigRequest(
         },
       },
       schedule: config.schedule,
-      notificationPubsubTopic: `projects/${config.projectId}/topics/${config.pubSubTopic}`,
+      notificationPubsubTopic: notificationTopicName(config),
     },
   };
 }
@@ -184,7 +199,7 @@ export async function constructUpdateTransferConfigRequest(
     updatedConfig.schedule = config.schedule;
   }
 
-  const expectedTopic = `projects/${config.projectId}/topics/${config.pubSubTopic}`;
+  const expectedTopic = notificationTopicName(config);
   if (expectedTopic !== transferConfig.notificationPubsubTopic) {
     updateMask.push("notification_pubsub_topic");
     updatedConfig.notificationPubsubTopic = expectedTopic;

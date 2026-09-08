@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-import {
-  type DocumentSnapshot,
-  FieldValue,
-  type Firestore,
-} from "firebase-admin/firestore";
+import { type DocumentSnapshot, FieldValue } from "firebase-admin/firestore";
 import type { Change, FirestoreEvent } from "firebase-functions/v2/firestore";
 import { toEventContext } from "./event-context";
 import * as events from "./events";
 import type { ResolvedTranslateConfig } from "./export-config";
 import * as logs from "./logs";
-import { createTranslationService, translateDocument } from "./translate";
+import { type TranslationService, translateDocument } from "./translate";
 import * as validators from "./validators";
 
 const CHANGE_TYPE = {
@@ -36,9 +32,8 @@ const CHANGE_TYPE = {
 type ChangeType = (typeof CHANGE_TYPE)[keyof typeof CHANGE_TYPE];
 
 export interface HandlerContext {
-  firestore: Firestore;
   config: ResolvedTranslateConfig;
-  googleAiApiKey?: string;
+  service: TranslationService;
 }
 
 export type TranslateWriteEvent = FirestoreEvent<
@@ -64,11 +59,7 @@ export async function handleDocumentWrite(
     return;
   }
 
-  const config: ResolvedTranslateConfig = {
-    ...ctx.config,
-    googleAiApiKey: ctx.googleAiApiKey ?? ctx.config.googleAiApiKey,
-  };
-  const service = createTranslationService(config, ctx.firestore);
+  const { config, service } = ctx;
 
   logs.start(config);
   const context = toEventContext(event);
@@ -120,7 +111,7 @@ export async function handleDocumentWrite(
 
 async function handleCreateDocument(
   snapshot: DocumentSnapshot,
-  service: ReturnType<typeof createTranslationService>,
+  service: TranslationService,
   config: ResolvedTranslateConfig
 ): Promise<void> {
   const input = service.extractInput(snapshot);
@@ -139,7 +130,7 @@ function handleDeleteDocument(): void {
 async function handleUpdateDocument(
   before: DocumentSnapshot,
   after: DocumentSnapshot,
-  service: ReturnType<typeof createTranslationService>,
+  service: TranslationService,
   config: ResolvedTranslateConfig
 ): Promise<void> {
   const inputBefore = service.extractInput(before);

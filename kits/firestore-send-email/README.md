@@ -22,12 +22,12 @@ Firebase CLI 15.23.0 or later creates that account, grants the roles below,
 and attaches it to every function in this kit. Do not set a custom runtime
 service account for this codebase — it conflicts with that automatic setup.
 
-| Role | Why |
-|---|---|
-| `roles/datastore.user` | read mail documents and write delivery status |
-| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
-| `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
-| `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
+| Role                           | Why                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------ |
+| `roles/datastore.user`         | read mail documents and write delivery status                                              |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events                                                      |
+| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service                                        |
+| `roles/eventarc.publisher`     | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
 
 ## Usage
 
@@ -81,28 +81,28 @@ loads them at deploy time and prompts for any required values that are missing.
 Rows marked `secret` live in Secret Manager. You can reuse existing secrets;
 the CLI connects them to the function at deploy time.
 
-| Field | Env var | Required | Default | Description |
-|---|---|---|---|---|
-| `mailCollection` | `MAIL_COLLECTION` | no | `mail` | Firestore collection of outbound mail docs |
-| `defaultFrom` | `DEFAULT_FROM` | yes | — | Default From address |
-| `defaultReplyTo` | `DEFAULT_REPLY_TO` | no | (empty) | Default Reply-To address |
-| `databaseRegion` | `DATABASE_REGION` | yes | — | Region for the trigger |
-| `databaseId` | `DATABASE` | no | `(default)` | Firestore database id |
-| `authType` | `AUTH_TYPE` | no | `UsernamePassword` | `UsernamePassword` or `OAuth2` |
-| `smtpConnectionUri` | `SMTP_CONNECTION_URI` | no | (empty) | SMTP connection URI (username/password auth) |
-| `smtpPassword` | `SMTP_PASSWORD` | secret | — | SMTP password |
-| `host` | `HOST` | no | (empty) | SMTP host (OAuth2) |
-| `oauthPort` | `OAUTH_PORT` | no | `465` | SMTP port (OAuth2) |
-| `oauthSecure` | `OAUTH_SECURE` | no | `true` | Use TLS (OAuth2) |
-| `user` | `USER` | no | (empty) | SMTP username (OAuth2) |
-| `clientId` | `CLIENT_ID` | secret | — | OAuth2 client id |
-| `clientSecret` | `CLIENT_SECRET` | secret | — | OAuth2 client secret |
-| `refreshToken` | `REFRESH_TOKEN` | secret | — | OAuth2 refresh token |
-| `templatesCollection` | `TEMPLATES_COLLECTION` | no | (empty) | Optional Handlebars templates collection |
-| `usersCollection` | `USERS_COLLECTION` | no | (empty) | Optional users collection for recipient lookup |
-| `ttlExpireType` | `TTL_EXPIRE_TYPE` | no | `never` | TTL policy for processed docs |
-| `ttlExpireValue` | `TTL_EXPIRE_VALUE` | no | `1` | TTL amount when expire type is set |
-| `tlsOptions` | `TLS_OPTIONS` | no | `{}` | JSON TLS options for the SMTP transport |
+| Field                 | Env var                | Required | Default            | Description                                           |
+| --------------------- | ---------------------- | -------- | ------------------ | ----------------------------------------------------- |
+| `mailCollection`      | `MAIL_COLLECTION`      | no       | `mail`             | Firestore collection of outbound mail docs            |
+| `defaultFrom`         | `DEFAULT_FROM`         | yes      | —                  | Default From address                                  |
+| `defaultReplyTo`      | `DEFAULT_REPLY_TO`     | no       | (empty)            | Default Reply-To address                              |
+| `databaseRegion`      | `DATABASE_REGION`      | yes      | (prompted)         | Firestore database location; also places the function |
+| `databaseId`          | `DATABASE`             | no       | `(default)`        | Firestore database id                                 |
+| `authType`            | `AUTH_TYPE`            | no       | `UsernamePassword` | `UsernamePassword` or `OAuth2`                        |
+| `smtpConnectionUri`   | `SMTP_CONNECTION_URI`  | no       | (empty)            | SMTP connection URI (username/password auth)          |
+| `smtpPassword`        | `SMTP_PASSWORD`        | secret   | —                  | SMTP password                                         |
+| `host`                | `HOST`                 | no       | (empty)            | SMTP host (OAuth2)                                    |
+| `oauthPort`           | `OAUTH_PORT`           | no       | `465`              | SMTP port (OAuth2)                                    |
+| `oauthSecure`         | `OAUTH_SECURE`         | no       | `true`             | Use TLS (OAuth2)                                      |
+| `user`                | `USER`                 | no       | (empty)            | SMTP username (OAuth2)                                |
+| `clientId`            | `CLIENT_ID`            | secret   | —                  | OAuth2 client id                                      |
+| `clientSecret`        | `CLIENT_SECRET`        | secret   | —                  | OAuth2 client secret                                  |
+| `refreshToken`        | `REFRESH_TOKEN`        | secret   | —                  | OAuth2 refresh token                                  |
+| `templatesCollection` | `TEMPLATES_COLLECTION` | no       | (empty)            | Optional Handlebars templates collection              |
+| `usersCollection`     | `USERS_COLLECTION`     | no       | (empty)            | Optional users collection for recipient lookup        |
+| `ttlExpireType`       | `TTL_EXPIRE_TYPE`      | no       | `never`            | TTL policy for processed docs                         |
+| `ttlExpireValue`      | `TTL_EXPIRE_VALUE`     | no       | `1`                | TTL amount when expire type is set                    |
+| `tlsOptions`          | `TLS_OPTIONS`          | no       | `{}`               | JSON TLS options for the SMTP transport               |
 
 ## Multiple instances
 
@@ -155,19 +155,48 @@ picked up. All four are attached to the function whatever `AUTH_TYPE` is set to,
 and were optional in the extension. If a secret does not exist, `firebase deploy`
 prompts you for a value, and fails outright when running non-interactively (CI).
 On username/password auth create the three OAuth2 secrets with a placeholder
-value, and on OAuth2 auth do the same for `SMTP_PASSWORD`.
+value. On OAuth2 auth do the same for `SMTP_PASSWORD`, unless you send through
+SendGrid: the SendGrid transport reads `SMTP_PASSWORD` as its API key whatever
+`AUTH_TYPE` is set to, so a connection URI pointing at `smtp.sendgrid.net` needs
+your real API key there and a placeholder fails every send with a 401.
 
 ### DATABASE_REGION now decides where the function runs
 
-In the extension it only told the trigger where your database lived; the function
-itself ran in the Cloud Functions location you picked at install. The kit passes
-`DATABASE_REGION` straight through as the function's region, so the function
-moves to your database's region and the install-time location setting has no
-replacement. If your Firestore is multi-region or dual-region (`nam5`, `nam7`,
-`eur3`), that value is not a Cloud Functions region and the deploy fails; deploy
-the trigger yourself from the package's `./lib` entry point with a real region
-such as `us-central1` or `europe-west1`. This was not exercised against a live
-deploy.
+In the extension it only told the trigger where your database lived; the
+function itself always ran in `us-central1`, as the extension offered no
+location setting. The kit deploys the function to the region derived from
+`DATABASE_REGION`, so the function moves next to your database. Regional
+Firestore locations (`europe-west2`, `us-east1`, ...) are used as-is; the
+multi-region locations map to a Cloud Run region inside them - `nam5` and
+`nam7` to `us-central1`, `eur3` to `europe-west1` - because they are not Cloud
+Run regions themselves and would fail the deploy. The value is matched
+case-insensitively. The Firestore trigger always fires in the database's own
+region, whatever region the function runs in.
+
+If you copied `DATABASE_REGION` into your `.env` from an extension install, it
+is honored: the function deploys near your database.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
+`.env` values during deploy discovery, so the function silently falls back to
+the no-region behavior below. Two consequences worth knowing before you
+deploy. Upgrading the CLI (or this kit, if your `.env` already carried
+`DATABASE_REGION`) can itself trigger the region move described below on your
+next deploy. And on a fresh interactive install the value you enter at the
+prompt only takes effect from the second deploy: the first deploy computes the
+region before the prompt runs, so it lands in `us-central1` and the next deploy
+moves the function.
+
+With `DATABASE_REGION` unset or empty, the function declares no region and the
+Firebase CLI resolves one at deploy time: it keeps the region it is already
+deployed in, and on a first deploy lands in `us-central1` unless you set the
+`FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+`firebase deploy`. Careful with that variable: it applies to every no-region
+function in the deploy, not just this kit. Note that changing an existing
+install's function region deletes and recreates the function in the new
+region. `processQueue` is the kit's only function and nothing reconciles the
+mail collection afterwards, so any document written while the function is gone
+is never delivered. Stop writers and let the collection drain before a deploy
+that moves the region.
 
 ### Create the Eventarc channel yourself for events
 
