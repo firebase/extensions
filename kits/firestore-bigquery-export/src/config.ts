@@ -20,9 +20,10 @@ import type {
   TimePartitioningGranularity,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import { LogLevel } from "@firebaseextensions/firestore-bigquery-change-tracker";
-import type { Expression } from "firebase-functions/params";
+import type { Expression, IntParam } from "firebase-functions/params";
 import {
   defineBoolean,
+  defineInt,
   defineString,
   projectID,
   select,
@@ -102,6 +103,8 @@ export interface ConfigExpressions {
   datasetId: ConfigExpression<string>;
   tableId: ConfigExpression<string>;
   database: ConfigExpression<string>;
+  /** An `IntParam`, not a bare expression: the queue's `rateLimits` guards it with a CEL comparison. */
+  maxDispatchesPerSecond: IntParam;
 }
 
 /**
@@ -124,6 +127,63 @@ const params = {
       'The Firestore database to use. Use "(default)" for the default database. You can view your available Firestore databases at https://console.cloud.google.com/firestore/databases.',
     default: "(default)",
     input: { text: { example: "(default)" } },
+  }),
+  // Declared so the CLI prompts for the value and persists it to `.env`; the
+  // function region option cannot be a param expression, so the entry point
+  // reads the same variable from `process.env` at module load instead.
+  databaseRegion: defineString("DATABASE_REGION", {
+    label: "Firestore Instance Location",
+    description:
+      "Where is the Firestore database located? You can check your current database location at https://console.cloud.google.com/firestore/databases. The functions in this kit deploy to the Cloud Run region closest to this location.",
+
+    input: select({
+      "Multi-region (Europe - Belgium and Netherlands)": "eur3",
+      "Multi-region (United States)": "nam5",
+      "Multi-region (Iowa, North Virginia, and Oklahoma)": "nam7",
+      "Iowa (us-central1)": "us-central1",
+      "Oregon (us-west1)": "us-west1",
+      "Los Angeles (us-west2)": "us-west2",
+      "Salt Lake City (us-west3)": "us-west3",
+      "Las Vegas (us-west4)": "us-west4",
+      "South Carolina (us-east1)": "us-east1",
+      "Northern Virginia (us-east4)": "us-east4",
+      "Columbus (us-east5)": "us-east5",
+      "Dallas (us-south1)": "us-south1",
+      "Montreal (northamerica-northeast1)": "northamerica-northeast1",
+      "Toronto (northamerica-northeast2)": "northamerica-northeast2",
+      "Queretaro (northamerica-south1)": "northamerica-south1",
+      "Sao Paulo (southamerica-east1)": "southamerica-east1",
+      "Santiago (southamerica-west1)": "southamerica-west1",
+      "Belgium (europe-west1)": "europe-west1",
+      "London (europe-west2)": "europe-west2",
+      "Frankfurt (europe-west3)": "europe-west3",
+      "Netherlands (europe-west4)": "europe-west4",
+      "Zurich (europe-west6)": "europe-west6",
+      "Milan (europe-west8)": "europe-west8",
+      "Paris (europe-west9)": "europe-west9",
+      "Berlin (europe-west10)": "europe-west10",
+      "Turin (europe-west12)": "europe-west12",
+      "Madrid (europe-southwest1)": "europe-southwest1",
+      "Finland (europe-north1)": "europe-north1",
+      "Stockholm (europe-north2)": "europe-north2",
+      "Warsaw (europe-central2)": "europe-central2",
+      "Doha (me-central1)": "me-central1",
+      "Dammam (me-central2)": "me-central2",
+      "Tel Aviv (me-west1)": "me-west1",
+      "Mumbai (asia-south1)": "asia-south1",
+      "Delhi (asia-south2)": "asia-south2",
+      "Singapore (asia-southeast1)": "asia-southeast1",
+      "Jakarta (asia-southeast2)": "asia-southeast2",
+      "Kuala Lumpur (asia-southeast3)": "asia-southeast3",
+      "Taiwan (asia-east1)": "asia-east1",
+      "Hong Kong (asia-east2)": "asia-east2",
+      "Tokyo (asia-northeast1)": "asia-northeast1",
+      "Osaka (asia-northeast2)": "asia-northeast2",
+      "Seoul (asia-northeast3)": "asia-northeast3",
+      "Sydney (australia-southeast1)": "australia-southeast1",
+      "Melbourne (australia-southeast2)": "australia-southeast2",
+      "Johannesburg (africa-south1)": "africa-south1",
+    }),
   }),
   collectionPath: defineString("COLLECTION_PATH", {
     label: "Collection path",
@@ -230,8 +290,38 @@ const params = {
   backupCollection: defineString("BACKUP_COLLECTION", {
     label: "Backup Collection Name",
     description:
-      "This (optional) parameter will allow you to specify a collection for which failed BigQuery updates will be written to.",
+      "Strongly recommended. The Firestore collection where rows whose BigQuery insert is rejected are written, on the inline attempt and on each queue attempt; without it, those rows are dropped once the queue gives up. A change that cannot be enqueued at all is not backed up. See the README for how to reconcile backed-up rows into BigQuery.",
     default: "",
+  }),
+  maxDispatchesPerSecond: defineInt("MAX_DISPATCHES_PER_SECOND", {
+    label: "Maximum number of synced documents per second",
+    description:
+      "This parameter will set the maximum number of synchronized documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota. Ensure that you have set a low enough number to compensate. Defaults to 100.",
+
+    default: 100,
+    input: {
+      text: {
+        example: "100",
+
+        validationRegex: /^([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)$/,
+        validationErrorMessage: "Please select a number between 1 and 500",
+      },
+    },
+  }),
+  maxEnqueueAttempts: defineInt("MAX_ENQUEUE_ATTEMPTS", {
+    label: "Maximum number of enqueue attempts",
+    description:
+      "This parameter will set the maximum number of attempts to enqueue a document to cloud tasks for export to BigQuery.",
+
+    default: 3,
+    input: {
+      text: {
+        example: "3",
+
+        validationRegex: /^(10|[1-9])$/,
+        validationErrorMessage: "Please select an integer between 1 and 10",
+      },
+    },
   }),
   transformFunction: defineString("TRANSFORM_FUNCTION", {
     label: "Transform function URL",
@@ -308,19 +398,21 @@ const params = {
 
     default: false,
   }),
-  useNewSnapshotQuerySyntax: defineBoolean("USE_NEW_SNAPSHOT_QUERY_SYNTAX", {
+  useNewSnapshotQuerySyntax: defineString("USE_NEW_SNAPSHOT_QUERY_SYNTAX", {
     label: "Use new query syntax for snapshots",
     description:
       "If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential resource limitations.",
 
-    default: false,
+    default: "no",
+    input: select({ Yes: "yes", No: "no" }),
   }),
-  excludeOldData: defineBoolean("EXCLUDE_OLD_DATA", {
+  excludeOldData: defineString("EXCLUDE_OLD_DATA", {
     label: "Exclude old data payloads",
     description:
       "If enabled, table rows will never contain old data (document snapshot before the Firestore onDocumentUpdate event: `change.before.data()`). The reduction in data should be more performant, and avoid potential resource limitations.",
 
-    default: false,
+    default: "no",
+    input: select({ Yes: "yes", No: "no" }),
   }),
   viewType: defineString("VIEW_TYPE", {
     label: "View Type",
@@ -395,6 +487,7 @@ export const CONFIG_EXPRESSIONS: ConfigExpressions = {
   datasetId: params.datasetId,
   tableId: params.tableId,
   database: params.database,
+  maxDispatchesPerSecond: params.maxDispatchesPerSecond,
 };
 
 function timePartitioning(
@@ -542,9 +635,28 @@ function normalizePositiveInt(value: string): number | undefined {
   return normalized > 0 ? normalized : undefined;
 }
 
+// The extension's select emits `yes` / `no`; its label is `Yes`, and the CLI
+// copies .env values verbatim, so case and whitespace are forgiven.
+function yesNo(value: string): boolean {
+  return value.trim().toLowerCase() === "yes";
+}
+
 /** Coerce an empty-string param value to `undefined`. */
 function optional(value: string): string | undefined {
   return value.length > 0 ? value : undefined;
+}
+
+/**
+ * Reads an int param, reporting a missing or blank env var as `undefined`.
+ *
+ * `IntParam.value()` is `parseInt(env || "0", 10) || 0` and never consults the
+ * declared default, so an unset param has to reach `resolveExportConfig` as
+ * `undefined` for the documented default to apply. An explicit `0` is a real
+ * setting and is preserved.
+ */
+function optionalInt(param: IntParam): number | undefined {
+  const raw = process.env[param.name]?.trim();
+  return raw === undefined || raw === "" ? undefined : param.value();
 }
 
 /**
@@ -570,8 +682,8 @@ export function configFromEnv(): ExportConfig {
     projectId: projectID.value(),
     databaseId: optional(params.database.value()) || "(default)",
     wildcardIds: params.wildcardIds.value(),
-    excludeOldData: params.excludeOldData.value(),
-    useNewSnapshotQuerySyntax: params.useNewSnapshotQuerySyntax.value(),
+    excludeOldData: yesNo(params.excludeOldData.value()),
+    useNewSnapshotQuerySyntax: yesNo(params.useNewSnapshotQuerySyntax.value()),
     viewType: (optional(params.viewType.value()) || "view") as ViewType,
     partitioning: buildPartitioningConfig({
       timePartitioning: timePartitioning(tablePartitioning),
@@ -589,5 +701,7 @@ export function configFromEnv(): ExportConfig {
     transformFunction: optional(params.transformFunction.value()),
     kmsKeyName: optional(params.kmsKeyName.value()),
     logLevel: normalizeLogLevel(params.logLevel.value()),
+    maxDispatchesPerSecond: optionalInt(params.maxDispatchesPerSecond),
+    maxEnqueueAttempts: optionalInt(params.maxEnqueueAttempts),
   };
 }

@@ -1,1 +1,3 @@
 - Initial release of kit, see README for differences between the legacy extension and this kit
+- The instance id now comes from `FIREBASE_KIT_INSTANCE_ID`, which the Firebase CLI (15.27.0 or later) provides to each kit instance; `INSTANCE_ID` is no longer a configuration parameter
+- A BigQuery `TIME` column no longer crashes a run: its value is written to Firestore as the string BigQuery returned (`"10:30:00"`) rather than passed to `Timestamp.fromDate`, which threw and lost the whole run. This is a deliberate divergence from the legacy extension, which throws on the same line

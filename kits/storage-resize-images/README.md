@@ -29,6 +29,7 @@ conflicts with that automatic setup.
 | `roles/aiplatform.user`            | optional content filtering via Vertex AI            |
 | `roles/eventarc.eventReceiver`     | receive Gen2 Storage trigger events                 |
 | `roles/run.invoker`                | allow Eventarc to invoke the Gen2 Cloud Run service |
+| `aiplatform.googleapis.com`        | Vertex AI content filtering, if enabled             |
 | `storage-component.googleapis.com` | use Cloud Storage                                   |
 
 ## Usage

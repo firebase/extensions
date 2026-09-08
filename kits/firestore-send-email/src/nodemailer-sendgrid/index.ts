@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as sgMail from "@sendgrid/mail";
+import sgMail from "@sendgrid/mail";
 import type {
   Address,
   MailSource,

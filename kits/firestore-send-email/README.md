@@ -154,7 +154,10 @@ picked up. All four are attached to the function whatever `AUTH_TYPE` is set to,
 and were optional in the extension. If a secret does not exist, `firebase deploy`
 prompts you for a value, and fails outright when running non-interactively (CI).
 On username/password auth create the three OAuth2 secrets with a placeholder
-value, and on OAuth2 auth do the same for `SMTP_PASSWORD`.
+value. On OAuth2 auth do the same for `SMTP_PASSWORD`, unless you send through
+SendGrid: the SendGrid transport reads `SMTP_PASSWORD` as its API key whatever
+`AUTH_TYPE` is set to, so a connection URI pointing at `smtp.sendgrid.net` needs
+your real API key there and a placeholder fails every send with a 401.
 
 ### DATABASE_REGION now decides where the function runs
 

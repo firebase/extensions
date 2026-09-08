@@ -312,7 +312,14 @@ export const secretParams = [
 export function secretParamsForAuthType(authType?: string) {
   switch (authType || AuthenticatonType.UsernamePassword) {
     case AuthenticatonType.OAuth2:
-      return [params.clientId, params.clientSecret, params.refreshToken];
+      // The SendGrid transport reads SMTP_PASSWORD as its API key regardless
+      // of auth type, so it must stay bound under OAuth2.
+      return [
+        params.smtpPassword,
+        params.clientId,
+        params.clientSecret,
+        params.refreshToken,
+      ];
     case AuthenticatonType.UsernamePassword:
     case AuthenticatonType.ApiKey:
       return [params.smtpPassword];
@@ -337,14 +344,16 @@ export function configFromEnv(): SendEmailConfig {
     databaseRegion: params.databaseRegion.value(),
     mailCollection: params.mailCollection.value(),
     smtpConnectionUri: params.smtpConnectionUri.value(),
-    smtpPassword:
-      authType === AuthenticatonType.OAuth2
-        ? undefined
-        : optionalSecret(params.smtpPassword),
+    // Not gated on auth type: the SendGrid transport reads it as its API key
+    // even when AUTH_TYPE is OAuth2.
+    smtpPassword: optionalSecret(params.smtpPassword),
     defaultFrom: params.defaultFrom.value(),
     defaultReplyTo: params.defaultReplyTo.value(),
     usersCollection: params.usersCollection.value(),
     templatesCollection: params.templatesCollection.value(),
+    // Read straight from the environment, not declared as a param: the
+    // extension never surfaced TESTING in extension.yaml either.
+    testing: process.env.TESTING === "true",
     ttlExpireType:
       params.ttlExpireType.value() as SendEmailConfig["ttlExpireType"],
     ttlExpireValue: params.ttlExpireValue.value(),

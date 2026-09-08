@@ -22,7 +22,6 @@ import type { CallableRequest } from "firebase-functions/v2/https";
 import { HttpsError } from "firebase-functions/v2/https";
 import type { Request } from "firebase-functions/v2/tasks";
 import { createEmbedClient } from "./embeddings";
-import * as events from "./events";
 import type { ResolvedVectorSearchConfig } from "./export-config";
 import * as logs from "./logs";
 import {
@@ -48,6 +47,12 @@ export type VectorWriteEvent = FirestoreEvent<
   Record<string, string>
 >;
 
+/**
+ * `queueName` is the deployed function's export name. The Admin SDK prefixes it
+ * with `kit-<instance id>-` from FIREBASE_KIT_INSTANCE_ID when it resolves the
+ * queue, so a name that already carries the prefix resolves to a queue that
+ * does not exist.
+ */
 function queuePath(
   config: ResolvedVectorSearchConfig,
   queueName: string
@@ -75,7 +80,6 @@ export async function handleEmbedOnWrite(
   ctx: HandlerContext
 ): Promise<void> {
   if (!event.data?.after.exists) return;
-  await events.recordStartEvent({ params: event.params });
   logs.start("embedOnWrite");
 
   const data = event.data.after.data() ?? {};
@@ -95,10 +99,6 @@ export async function handleEmbedOnWrite(
       },
       { merge: true }
     );
-    await events.recordSuccessEvent({
-      subject: event.data.after.ref.path,
-      data: { outputFieldName: ctx.config.outputFieldName },
-    });
     logs.complete("embedOnWrite");
   } catch (err) {
     await event.data.after.ref.set(
@@ -110,11 +110,8 @@ export async function handleEmbedOnWrite(
       },
       { merge: true }
     );
-    await events.recordErrorEvent(err as Error);
     logs.error("embedOnWrite", err);
     throw err;
-  } finally {
-    await events.recordCompletionEvent({ params: event.params });
   }
 }
 

@@ -15,6 +15,7 @@
  */
 
 import type { Firestore } from "firebase-admin/firestore";
+import { FirebaseFirestoreError } from "firebase-admin/firestore";
 import { https } from "firebase-functions/v1";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -45,6 +46,11 @@ function fakeFirestore(
     collection,
     chain,
   };
+}
+
+/** A real `FirebaseFirestoreError`, whose code is prefixed with `firestore/`. */
+function firestoreError(code: string, message: string) {
+  return new FirebaseFirestoreError({ code, message });
 }
 
 describe("FirestoreVectorStoreClient", () => {
@@ -188,6 +194,139 @@ describe("FirestoreVectorStoreClient", () => {
       .catch((e: unknown) => e);
 
     expect(err).toBeInstanceOf(https.HttpsError);
-    expect((err as https.HttpsError).message).toBe("Vector query failed");
+    expect((err as https.HttpsError).message).toBe(
+      "An unexpected error occurred performing your query"
+    );
+  });
+
+  test.each([
+    "cancelled",
+    "unknown",
+    "invalid-argument",
+    "deadline-exceeded",
+    "not-found",
+    "already-exists",
+    "permission-denied",
+    "resource-exhausted",
+    "aborted",
+    "out-of-range",
+    "unimplemented",
+    "internal",
+    "unavailable",
+    "data-loss",
+    "unauthenticated",
+  ])(
+    "maps the Firestore code %s onto the matching HttpsError code",
+    async (code) => {
+      const { firestore } = fakeFirestore();
+      (
+        firestore.collection as unknown as ReturnType<typeof vi.fn>
+      ).mockImplementation(() => {
+        throw firestoreError(code, "Firestore said no.");
+      });
+      const client = new FirestoreVectorStoreClient(firestore, "COSINE");
+
+      const err = await client
+        .query(query, "test-collection", [], limit, outputField)
+        .catch((e: unknown) => e);
+
+      expect(err).toBeInstanceOf(https.HttpsError);
+      expect((err as https.HttpsError).code).toBe(code);
+      expect((err as https.HttpsError).message).toBe("Firestore said no.");
+    }
+  );
+
+  test("reports an unmapped Firestore code as unknown with details", async () => {
+    const { firestore } = fakeFirestore();
+    (
+      firestore.collection as unknown as ReturnType<typeof vi.fn>
+    ).mockImplementation(() => {
+      throw firestoreError("failed-precondition", "Index missing.");
+    });
+    const client = new FirestoreVectorStoreClient(firestore, "COSINE");
+
+    const err = await client
+      .query(query, "test-collection", [], limit, outputField)
+      .catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(https.HttpsError);
+    expect((err as https.HttpsError).code).toBe("unknown");
+    expect((err as https.HttpsError).message).toBe("Index missing.");
+    expect((err as https.HttpsError).details).toEqual({
+      firestoreCode: "firestore/failed-precondition",
+    });
+  });
+
+  test("reports a non-firestore error prefix as unknown", async () => {
+    const { firestore } = fakeFirestore();
+    const error = firestoreError("not-found", "Nope.");
+    (error as { code: string }).code = "auth/user-not-found";
+    (
+      firestore.collection as unknown as ReturnType<typeof vi.fn>
+    ).mockImplementation(() => {
+      throw error;
+    });
+    const client = new FirestoreVectorStoreClient(firestore, "COSINE");
+
+    const err = await client
+      .query(query, "test-collection", [], limit, outputField)
+      .catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(https.HttpsError);
+    expect((err as https.HttpsError).code).toBe("unknown");
+    expect((err as https.HttpsError).message).toBe("Nope.");
+    expect((err as https.HttpsError).details).toBeUndefined();
+  });
+
+  test("uses the prefilter as context for a Firestore error from where()", async () => {
+    const { firestore, chain } = fakeFirestore();
+    chain.where.mockImplementation(() => {
+      throw firestoreError("invalid-argument", "Bad filter.");
+    });
+    const client = new FirestoreVectorStoreClient(firestore, "COSINE");
+
+    const err = await client
+      .query(query, "test-collection", prefilters, limit, outputField)
+      .catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(https.HttpsError);
+    expect((err as https.HttpsError).code).toBe("invalid-argument");
+    expect((err as https.HttpsError).message).toBe("== for category");
+  });
+
+  test("maps an opStr failure from where() to invalid-argument with context", async () => {
+    const { firestore, chain } = fakeFirestore();
+    chain.where.mockImplementation(() => {
+      throw new Error('Value for argument "opStr" is invalid.');
+    });
+    const client = new FirestoreVectorStoreClient(firestore, "COSINE");
+
+    const err = await client
+      .query(query, "test-collection", prefilters, limit, outputField)
+      .catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(https.HttpsError);
+    expect((err as https.HttpsError).code).toBe("invalid-argument");
+    expect((err as https.HttpsError).message).toBe(
+      "Invalid operator in query: == for category"
+    );
+  });
+
+  test("maps an opStr failure without context to a generic invalid-argument", async () => {
+    const { firestore, chain } = fakeFirestore();
+    chain.findNearest.mockImplementation(() => {
+      throw new Error('Value for argument "opStr" is invalid.');
+    });
+    const client = new FirestoreVectorStoreClient(firestore, "COSINE");
+
+    const err = await client
+      .query(query, "test-collection", [], limit, outputField)
+      .catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(https.HttpsError);
+    expect((err as https.HttpsError).code).toBe("invalid-argument");
+    expect((err as https.HttpsError).message).toBe(
+      "Invalid operator in Firestore query"
+    );
   });
 });
