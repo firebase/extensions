@@ -15,7 +15,6 @@
  */
 
 import {
-  defineBoolean,
   defineInt,
   defineString,
   type IntParam,
@@ -116,12 +115,13 @@ const params = {
       },
     },
   }),
-  enableAutoDiscovery: defineBoolean("ENABLE_AUTO_DISCOVERY", {
+  enableAutoDiscovery: defineString("ENABLE_AUTO_DISCOVERY", {
     label: "Enable auto discovery",
     description:
       "Enable the extension to automatically discover Firestore collections and documents to delete.",
 
-    default: false,
+    default: "no",
+    input: select({ Yes: "yes", No: "no" }),
   }),
   searchDepth: defineInt("AUTO_DISCOVERY_SEARCH_DEPTH", {
     label: "Auto discovery search depth",
@@ -197,7 +197,7 @@ export function configFromEnv(): DeleteUserDataConfig {
     storageBucket:
       optional(params.storageBucket.value()) ?? process.env.STORAGE_BUCKET,
     storagePaths: optional(params.storagePaths.value()),
-    enableAutoDiscovery: params.enableAutoDiscovery.value(),
+    enableAutoDiscovery: params.enableAutoDiscovery.value() === "yes",
     searchDepth: optionalInt(params.searchDepth),
     searchFields: params.searchFields.value(),
     searchFunction: optional(params.searchFunction.value()),

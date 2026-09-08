@@ -21,12 +21,7 @@ import type {
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import { LogLevel } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import type { Expression } from "firebase-functions/params";
-import {
-  defineBoolean,
-  defineString,
-  projectID,
-  select,
-} from "firebase-functions/params";
+import { defineString, projectID, select } from "firebase-functions/params";
 import type { ExportConfig, ViewType } from "./export-config";
 
 type TrackerLogLevel = "debug" | "info" | "warn" | "error" | "silent";
@@ -358,26 +353,29 @@ const params = {
       },
     },
   }),
-  wildcardIds: defineBoolean("WILDCARD_IDS", {
+  wildcardIds: defineString("WILDCARD_IDS", {
     label: "Enable Wildcard Column field with Parent Firestore Document IDs",
     description:
       "If enabled, creates a column containing a JSON object of all wildcard ids from a documents path.",
 
-    default: false,
+    default: "false",
+    input: select({ No: "false", Yes: "true" }),
   }),
-  useNewSnapshotQuerySyntax: defineBoolean("USE_NEW_SNAPSHOT_QUERY_SYNTAX", {
+  useNewSnapshotQuerySyntax: defineString("USE_NEW_SNAPSHOT_QUERY_SYNTAX", {
     label: "Use new query syntax for snapshots",
     description:
       "If enabled, snapshots will be generated with the new query syntax, which should be more performant, and avoid potential resource limitations.",
 
-    default: false,
+    default: "no",
+    input: select({ Yes: "yes", No: "no" }),
   }),
-  excludeOldData: defineBoolean("EXCLUDE_OLD_DATA", {
+  excludeOldData: defineString("EXCLUDE_OLD_DATA", {
     label: "Exclude old data payloads",
     description:
       "If enabled, table rows will never contain old data (document snapshot before the Firestore onDocumentUpdate event: `change.before.data()`). The reduction in data should be more performant, and avoid potential resource limitations.",
 
-    default: false,
+    default: "no",
+    input: select({ Yes: "yes", No: "no" }),
   }),
   viewType: defineString("VIEW_TYPE", {
     label: "View Type",
@@ -626,9 +624,10 @@ export function configFromEnv(): ExportConfig {
     bqProjectId: optional(params.bigqueryProjectId.value()),
     projectId: projectID.value(),
     databaseId: optional(params.database.value()) || "(default)",
-    wildcardIds: params.wildcardIds.value(),
-    excludeOldData: params.excludeOldData.value(),
-    useNewSnapshotQuerySyntax: params.useNewSnapshotQuerySyntax.value(),
+    wildcardIds: params.wildcardIds.value() === "true",
+    excludeOldData: params.excludeOldData.value() === "yes",
+    useNewSnapshotQuerySyntax:
+      params.useNewSnapshotQuerySyntax.value() === "yes",
     viewType: (optional(params.viewType.value()) || "view") as ViewType,
     partitioning: buildPartitioningConfig({
       timePartitioning: timePartitioning(tablePartitioning),

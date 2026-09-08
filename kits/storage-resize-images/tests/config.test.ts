@@ -26,7 +26,21 @@
  * same variable as a comma-separated string).
  */
 
+import { declaredParams } from "firebase-functions/params";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+
+function declaration(name: string) {
+  const param = declaredParams.find((candidate) => candidate.name === name);
+  if (!param || !("options" in param)) {
+    throw new Error(`Missing declaration for ${name}`);
+  }
+  const options = param.options as { default?: unknown; input?: unknown };
+  return {
+    type: (param.constructor as unknown as { type: string }).type,
+    default: options.default,
+    input: options.input,
+  };
+}
 
 const ENV_KEYS = [
   "IMG_BUCKET",
@@ -88,6 +102,32 @@ describe("configFromEnv", () => {
       }
     }
     saved.clear();
+  });
+
+  test("declares the predecessor's labeled string selects", async () => {
+    await import("../src/config");
+
+    for (const [name, defaultValue] of [
+      ["MAKE_PUBLIC", "false"],
+      ["IS_ANIMATED", "true"],
+      ["REGENERATE_TOKEN", "true"],
+    ] as const) {
+      expect(declaration(name)).toEqual({
+        type: "string",
+        default: defaultValue,
+        input: {
+          select: {
+            options: [
+              { label: "Yes", value: "true" },
+              {
+                label: name === "IS_ANIMATED" ? "No (1st frame only)" : "No",
+                value: "false",
+              },
+            ],
+          },
+        },
+      });
+    }
   });
 
   test("reads the same environment variables as the extension", async () => {

@@ -120,8 +120,8 @@ loads them at deploy time and prompts for any required values that are missing.
 | `timePartitioningFirestoreField` | `TIME_PARTITIONING_FIRESTORE_FIELD` | no       | (empty)            | Firestore field for partitioning                                   |
 | `clustering`                     | `CLUSTERING`                        | no       | (empty)            | Clustering columns (max 4)                                         |
 | `wildcardIds`                    | `WILDCARD_IDS`                      | no       | `false`            | Store path-param values as columns                                 |
-| `useNewSnapshotQuerySyntax`      | `USE_NEW_SNAPSHOT_QUERY_SYNTAX`     | no       | `false`            | Use newer snapshot query syntax                                    |
-| `excludeOldData`                 | `EXCLUDE_OLD_DATA`                  | no       | `false`            | Skip previous document state on updates                            |
+| `useNewSnapshotQuerySyntax`      | `USE_NEW_SNAPSHOT_QUERY_SYNTAX`     | no       | `no`               | Use newer snapshot query syntax (`yes` or `no`)                    |
+| `excludeOldData`                 | `EXCLUDE_OLD_DATA`                  | no       | `no`               | Skip previous document state on updates (`yes` or `no`)            |
 | `viewType`                       | `VIEW_TYPE`                         | no       | `view`             | `view`, `materialized_incremental`, `materialized_non_incremental` |
 | `maxStaleness`                   | `MAX_STALENESS`                     | no       | (empty)            | Materialized view max staleness                                    |
 | `refreshIntervalMinutes`         | `REFRESH_INTERVAL_MINUTES`          | no       | (empty)            | Materialized view refresh interval                                 |
@@ -226,13 +226,6 @@ failure is surfaced to the function runtime retry policy (`retry: true` on
 This kit is the extension repackaged as an npm package, but a few things behave
 differently. If you are moving from an installed extension instance, read this
 section before you deploy.
-
-### Boolean settings use `true` / `false`
-
-`WILDCARD_IDS`, `USE_NEW_SNAPSHOT_QUERY_SYNTAX` and `EXCLUDE_OLD_DATA` are
-boolean params, and only the literal string `true` enables them. The extension
-used `yes` / `no` for the last two, so copying an old config across leaves them
-silently disabled. Change any `yes` to `true` in your `.env`.
 
 ### Failed writes retry differently
 

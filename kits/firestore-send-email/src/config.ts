@@ -15,7 +15,6 @@
  */
 
 import {
-  defineBoolean,
   defineInt,
   defineSecret,
   defineString,
@@ -190,12 +189,13 @@ const params = {
       "The OAuth2 port number for the SMTP server (e.g., 465 for SMTPS, 587 for STARTTLS).",
     default: 465,
   }),
-  oauthSecure: defineBoolean("OAUTH_SECURE", {
+  oauthSecure: defineString("OAUTH_SECURE", {
     label: "Use secure OAuth2 connection?",
     description:
       "Set to true to enable a secure connection (TLS/SSL) when using OAuth2 authentication for the SMTP server.",
 
-    default: true,
+    default: "true",
+    input: select({ Yes: "true", No: "false" }),
   }),
   clientId: defineSecret("CLIENT_ID", {
     label: "OAuth2 Client ID",
@@ -353,7 +353,7 @@ export function configFromEnv(): SendEmailConfig {
     tlsOptions: params.tlsOptions.value(),
     host: params.host.value(),
     oauthPort: params.oauthPort.value(),
-    oauthSecure: params.oauthSecure.value(),
+    oauthSecure: params.oauthSecure.value() === "true",
     user: params.user.value(),
     clientId:
       authType === AuthenticatonType.OAuth2

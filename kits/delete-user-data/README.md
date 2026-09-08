@@ -102,7 +102,7 @@ overridden there.
 | `rtdbPaths` | `RTDB_PATHS` | no | (empty) | Comma-separated RTDB paths with `{UID}` |
 | `storageBucket` | `CLOUD_STORAGE_BUCKET` | no | default Storage bucket | Bucket to clear |
 | `storagePaths` | `STORAGE_PATHS` | no | (empty) | Comma-separated Storage paths with `{UID}` |
-| `enableAutoDiscovery` | `ENABLE_AUTO_DISCOVERY` | no | `false` | Auto-discover user-linked docs |
+| `enableAutoDiscovery` | `ENABLE_AUTO_DISCOVERY` | no | `no` | Auto-discover user-linked docs (`yes` or `no`) |
 | `searchDepth` | `AUTO_DISCOVERY_SEARCH_DEPTH` | no | `3` | Discovery depth |
 | `searchFields` | `AUTO_DISCOVERY_SEARCH_FIELDS` | no | `id,uid,userId` | Fields treated as user ids |
 | `searchFunction` | `SEARCH_FUNCTION` | no | (empty) | Optional custom search function |
@@ -146,13 +146,6 @@ for each backend under `firebase.extensions.delete-user-data.v1.*`
 This kit is the extension repackaged as an npm package, but a few things behave
 differently. If you are moving from an installed extension instance, read this
 section before you deploy.
-
-### Auto-discovery uses `true` / `false`
-
-`ENABLE_AUTO_DISCOVERY` is a boolean param, and only the literal string `true`
-enables it. The extension used `yes` / `no`, so copying an old config across
-leaves auto-discovery silently switched off. Change `yes` to `true` in your
-`.env`.
 
 ### The instance id comes from `firebase.json`
 
