@@ -133,7 +133,9 @@ describe("index", () => {
   test("declares the Eventarc publisher role the custom events need", async () => {
     await importIndex();
 
-    expect(requiresRole.mock.calls.flat()).toContain("roles/eventarc.publisher");
+    expect(requiresRole.mock.calls.flat()).toContain(
+      "roles/eventarc.publisher"
+    );
   });
 
   test("declares the Cloud Firestore API requirement", async () => {
