@@ -20,6 +20,7 @@ vi.mock("firebase-functions/firestore", () => ({
   onDocumentWritten: vi.fn(() => ({})),
 }));
 vi.mock("firebase-functions/v2", () => ({
+  requiresAPI: vi.fn(),
   requiresRole: vi.fn(),
 }));
 
