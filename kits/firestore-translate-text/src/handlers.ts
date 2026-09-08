@@ -54,14 +54,15 @@ export async function handleDocumentWrite(
   event: TranslateWriteEvent,
   ctx: HandlerContext
 ): Promise<void> {
-  if (!event.data) {
-    return;
-  }
-
   const { config, service } = ctx;
 
   logs.start(config);
   await events.recordStartEvent({ data: event.data, params: event.params });
+
+  if (!event.data) {
+    await events.recordCompletionEvent({ params: event.params });
+    return;
+  }
 
   const { languages, inputFieldName, outputFieldName } = config;
 

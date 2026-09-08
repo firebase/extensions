@@ -1,3 +1,4 @@
+- fix: `onStart` and `onCompletion` are now published on every invocation, including a write event that arrives without change data; that path used to return before either event was recorded, so subscribers missed a lifecycle pair the extension always emitted.
 - Construct the translation client once per process instead of on every invocation, matching the legacy extension. This changes the exported `HandlerContext` type from `{ firestore, config, googleAiApiKey? }` to `{ config, service }`: `handleDocumentWrite` no longer builds the `TranslationService` itself and instead expects it on the context (build one with `createTranslationService`)
 - Initial release of kit, see README for differences between the legacy extension and this kit
 - The Google AI API key (and any other secret-shaped config value) is now masked as `<omitted>` in the config logged at startup and on each invocation; the legacy extension logs it in cleartext
