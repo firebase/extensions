@@ -24,14 +24,17 @@ const MULTI_REGION_TO_FUNCTION_REGION: Record<string, string> = {
 
 /**
  * Maps a Firestore database location to the Cloud Run region the functions
- * should deploy to. Regional locations pass through unchanged; an unset or
- * empty location returns `undefined`, meaning the functions declare no region.
+ * should deploy to. The lookup is case-insensitive and ignores surrounding
+ * whitespace, as the CLI's own region handling is. Regional locations pass
+ * through lowercased; an unset or blank location returns `undefined`, meaning
+ * the functions declare no region.
  */
 export function firestoreLocationToFunctionRegion(
   location: string | undefined
 ): string | undefined {
-  if (!location) {
+  const normalized = location?.trim().toLowerCase();
+  if (!normalized) {
     return undefined;
   }
-  return MULTI_REGION_TO_FUNCTION_REGION[location] ?? location;
+  return MULTI_REGION_TO_FUNCTION_REGION[normalized] ?? normalized;
 }

@@ -159,15 +159,28 @@ value, and on OAuth2 auth do the same for `SMTP_PASSWORD`.
 ### DATABASE_REGION now decides where the function runs
 
 In the extension it only told the trigger where your database lived; the
-function itself ran in the Cloud Functions location you picked at install. The
-kit deploys the function to the region derived from `DATABASE_REGION`, so the
-function moves next to your database and the install-time location setting has
-no replacement. Regional Firestore locations (`europe-west2`, `us-east1`, ...)
-are used as-is; the multi-region locations map to a Cloud Run region inside
-them - `nam5` and `nam7` to `us-central1`, `eur3` to `europe-west1` - because
-they are not Cloud Run regions themselves and would fail the deploy. The
-Firestore trigger always fires in the database's own region, whatever region
-the function runs in.
+function itself always ran in `us-central1`, as the extension offered no
+location setting. The kit deploys the function to the region derived from
+`DATABASE_REGION`, so the function moves next to your database. Regional
+Firestore locations (`europe-west2`, `us-east1`, ...) are used as-is; the
+multi-region locations map to a Cloud Run region inside them - `nam5` and
+`nam7` to `us-central1`, `eur3` to `europe-west1` - because they are not Cloud
+Run regions themselves and would fail the deploy. The value is matched
+case-insensitively. The Firestore trigger always fires in the database's own
+region, whatever region the function runs in.
+
+If you copied `DATABASE_REGION` into your `.env` from an extension install, it
+is honored: the function deploys near your database.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
+`.env` values during deploy discovery, so the function silently falls back to
+the no-region behavior below. Two consequences worth knowing before you
+deploy. Upgrading the CLI (or this kit, if your `.env` already carried
+`DATABASE_REGION`) can itself trigger the region move described below on your
+next deploy. And on a fresh interactive install the value you enter at the
+prompt only takes effect from the second deploy: the first deploy computes the
+region before the prompt runs, so it lands in `us-central1` and the next deploy
+moves the function.
 
 With `DATABASE_REGION` unset or empty, the function declares no region and the
 Firebase CLI resolves one at deploy time: it keeps the region it is already
@@ -176,7 +189,10 @@ deployed in, and on a first deploy lands in `us-central1` unless you set the
 `firebase deploy`. Careful with that variable: it applies to every no-region
 function in the deploy, not just this kit. Note that changing an existing
 install's function region deletes and recreates the function in the new
-region.
+region. `processQueue` is the kit's only function and nothing reconciles the
+mail collection afterwards, so any document written while the function is gone
+is never delivered. Stop writers and let the collection drain before a deploy
+that moves the region.
 
 ### Create the Eventarc channel yourself for events
 

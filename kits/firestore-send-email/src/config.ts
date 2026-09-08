@@ -370,9 +370,9 @@ export function configFromEnv(): SendEmailConfig {
 }
 
 export function envDeployOptions(): DeployTimeOptions {
-  // The region option cannot be a param expression, so the value is read from
-  // `process.env` (populated from `.env` during CLI discovery) instead of via
-  // the param declared above.
+  // The multi-region to Cloud Run region lookup cannot be expressed in CEL, so
+  // the value is read from `process.env` (populated from `.env` during CLI
+  // discovery) instead of via the param expression.
   const region = firestoreLocationToFunctionRegion(process.env.DATABASE_REGION);
 
   return {
