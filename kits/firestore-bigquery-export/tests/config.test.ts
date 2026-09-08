@@ -44,8 +44,11 @@ vi.mock("firebase-functions/params", () => ({
         : opts?.default?.value() ?? "",
     toString: () => `params.${_name}`,
   }),
+  // Mirrors the real IntParam: a missing or blank env var resolves to 0, and
+  // the declared default never reaches runtime.
   defineInt: (_name: string, opts?: { default?: number }) => ({
-    value: () => opts?.default ?? 0,
+    name: _name,
+    value: () => Number.parseInt(process.env[_name] || "0", 10) || 0,
     toString: () => `params.${_name}`,
   }),
   defineBoolean: (_name: string, opts?: { default?: boolean }) => ({
@@ -171,11 +174,67 @@ describe("configFromEnv", () => {
     expect(resolveExportConfig(config)).not.toHaveProperty("location");
   });
 
+  test("reports unset queue params as undefined so the documented defaults apply", () => {
+    // IntParam.value() resolves an unset var to 0, which would defeat the
+    // `?? 100` / `?? 3` fallbacks in resolveExportConfig.
+    const config = configFromEnv();
+    expect(config.maxDispatchesPerSecond).toBeUndefined();
+    expect(config.maxEnqueueAttempts).toBeUndefined();
+
+    const resolved = resolveExportConfig(config);
+    expect(resolved.maxDispatchesPerSecond).toBe(100);
+    expect(resolved.maxEnqueueAttempts).toBe(3);
+  });
+
+  test("reports a blank queue param as undefined", () => {
+    vi.stubEnv("MAX_ENQUEUE_ATTEMPTS", "  ");
+    expect(configFromEnv().maxEnqueueAttempts).toBeUndefined();
+    vi.unstubAllEnvs();
+  });
+
+  test("passes an explicit queue param through", () => {
+    vi.stubEnv("MAX_ENQUEUE_ATTEMPTS", "7");
+    vi.stubEnv("MAX_DISPATCHES_PER_SECOND", "250");
+    const config = configFromEnv();
+    expect(config.maxEnqueueAttempts).toBe(7);
+    expect(config.maxDispatchesPerSecond).toBe(250);
+    vi.unstubAllEnvs();
+  });
+
   test("exposes deploy-time expressions for trigger metadata", () => {
     expect(CONFIG_EXPRESSIONS.collectionPath.toString()).toBe(
       "params.COLLECTION_PATH"
     );
     expect(CONFIG_EXPRESSIONS.database.toString()).toBe("params.DATABASE");
+    expect(CONFIG_EXPRESSIONS.maxDispatchesPerSecond.toString()).toBe(
+      "params.MAX_DISPATCHES_PER_SECOND"
+    );
     expect(CONFIG_EXPRESSIONS).not.toHaveProperty("location");
+  });
+});
+
+describe("resolveExportConfig queue defaults", () => {
+  test("applies the extension's queue defaults when unset", () => {
+    const resolved = resolveExportConfig({
+      collectionPath: "users",
+      datasetId: "ds",
+      tableId: "tbl",
+      projectId: "p",
+    });
+    expect(resolved.maxDispatchesPerSecond).toBe(100);
+    expect(resolved.maxEnqueueAttempts).toBe(3);
+  });
+
+  test("passes explicit queue values through", () => {
+    const resolved = resolveExportConfig({
+      collectionPath: "users",
+      datasetId: "ds",
+      tableId: "tbl",
+      projectId: "p",
+      maxDispatchesPerSecond: 250,
+      maxEnqueueAttempts: 5,
+    });
+    expect(resolved.maxDispatchesPerSecond).toBe(250);
+    expect(resolved.maxEnqueueAttempts).toBe(5);
   });
 });

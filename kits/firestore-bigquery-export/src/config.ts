@@ -20,9 +20,10 @@ import type {
   TimePartitioningGranularity,
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import { LogLevel } from "@firebaseextensions/firestore-bigquery-change-tracker";
-import type { Expression } from "firebase-functions/params";
+import type { Expression, IntParam } from "firebase-functions/params";
 import {
   defineBoolean,
+  defineInt,
   defineString,
   projectID,
   select,
@@ -102,6 +103,7 @@ export interface ConfigExpressions {
   datasetId: ConfigExpression<string>;
   tableId: ConfigExpression<string>;
   database: ConfigExpression<string>;
+  maxDispatchesPerSecond: ConfigExpression<number>;
 }
 
 /**
@@ -290,6 +292,36 @@ const params = {
       "This (optional) parameter will allow you to specify a collection for which failed BigQuery updates will be written to.",
     default: "",
   }),
+  maxDispatchesPerSecond: defineInt("MAX_DISPATCHES_PER_SECOND", {
+    label: "Maximum number of synced documents per second",
+    description:
+      "This parameter will set the maximum number of synchronized documents per second with BQ. Please note, any other external updates to a Big Query table will be included within this quota. Ensure that you have set a low enough number to compensate. Defaults to 100.",
+
+    default: 100,
+    input: {
+      text: {
+        example: "100",
+
+        validationRegex: /^([1-9]|[1-9][0-9]|[1-4][0-9]{2}|500)$/,
+        validationErrorMessage: "Please select a number between 1 and 500",
+      },
+    },
+  }),
+  maxEnqueueAttempts: defineInt("MAX_ENQUEUE_ATTEMPTS", {
+    label: "Maximum number of enqueue attempts",
+    description:
+      "This parameter will set the maximum number of attempts to enqueue a document to cloud tasks for export to BigQuery.",
+
+    default: 3,
+    input: {
+      text: {
+        example: "3",
+
+        validationRegex: /^(10|[1-9])$/,
+        validationErrorMessage: "Please select an integer between 1 and 10",
+      },
+    },
+  }),
   transformFunction: defineString("TRANSFORM_FUNCTION", {
     label: "Transform function URL",
     description:
@@ -452,6 +484,7 @@ export const CONFIG_EXPRESSIONS: ConfigExpressions = {
   datasetId: params.datasetId,
   tableId: params.tableId,
   database: params.database,
+  maxDispatchesPerSecond: params.maxDispatchesPerSecond,
 };
 
 function timePartitioning(
@@ -605,6 +638,19 @@ function optional(value: string): string | undefined {
 }
 
 /**
+ * Reads an int param, reporting a missing or blank env var as `undefined`.
+ *
+ * `IntParam.value()` is `parseInt(env || "0", 10) || 0` and never consults the
+ * declared default, so an unset param has to reach `resolveExportConfig` as
+ * `undefined` for the documented default to apply. An explicit `0` is a real
+ * setting and is preserved.
+ */
+function optionalInt(param: IntParam): number | undefined {
+  const raw = process.env[param.name]?.trim();
+  return raw === undefined || raw === "" ? undefined : param.value();
+}
+
+/**
  * Resolves all deploy-time params into an {@link ExportConfig}.
  *
  * Param values are read when this is called. During the Firebase deploy-time
@@ -646,5 +692,7 @@ export function configFromEnv(): ExportConfig {
     transformFunction: optional(params.transformFunction.value()),
     kmsKeyName: optional(params.kmsKeyName.value()),
     logLevel: normalizeLogLevel(params.logLevel.value()),
+    maxDispatchesPerSecond: optionalInt(params.maxDispatchesPerSecond),
+    maxEnqueueAttempts: optionalInt(params.maxEnqueueAttempts),
   };
 }
