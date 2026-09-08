@@ -29,6 +29,7 @@ import {
   CONFIG_EXPRESSIONS,
   configFromEnv,
   geminiApiKey,
+  instanceIdFromEnv,
   openAiApiKey,
 } from "./config";
 import {
@@ -106,6 +107,12 @@ const CALLABLE_FUNCTION_OPTIONS = {
   memory: "512MiB",
   secrets: FUNCTION_SECRETS,
 } as const;
+
+// Resolved at import so the query trigger path is a concrete document path at
+// discovery. An unsupported CLI fails the discovery pass here, before anything
+// is registered, rather than freezing "_undefined/index/queries/{queryId}"
+// into the manifest.
+const QUERY_COLLECTION_DOCUMENT = `_${instanceIdFromEnv()}/index/queries/{queryId}`;
 
 for (const role of REQUIRED_ROLES) {
   requiresRole(role);
@@ -188,7 +195,7 @@ export const embedOnWrite = onDocumentWritten(
 export const queryOnWrite = onDocumentWritten(
   {
     ...FIRESTORE_FUNCTION_OPTIONS,
-    document: CONFIG_EXPRESSIONS.queryCollectionDocument,
+    document: QUERY_COLLECTION_DOCUMENT,
   },
   (event) => handleQueryOnWrite(event, getContext())
 );
