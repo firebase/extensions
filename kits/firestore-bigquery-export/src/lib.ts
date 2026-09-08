@@ -53,4 +53,5 @@ export {
   type HandlerContext,
   type SerializedDocumentChange,
   handleDocumentWrite,
+  handleSyncBigQueryTask,
 } from "./handlers";

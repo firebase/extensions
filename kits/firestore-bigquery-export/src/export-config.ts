@@ -19,6 +19,9 @@ import type {
 } from "@firebaseextensions/firestore-bigquery-change-tracker";
 import type { Expression } from "firebase-functions/params";
 
+/** Dispatch rate of the `syncBigQuery` queue when `MAX_DISPATCHES_PER_SECOND` is unset. */
+export const DEFAULT_MAX_DISPATCHES_PER_SECOND = 100;
+
 type TrackerLogLevel = "debug" | "info" | "warn" | "error" | "silent";
 type ConfigValue<T extends string | number | boolean | string[]> =
   | T
@@ -179,7 +182,8 @@ export function resolveExportConfig(
     kmsKeyName: resolveOptionalConfigValue(config.kmsKeyName),
     logLevel: (logLevel as TrackerLogLevel) ?? "info",
     maxDispatchesPerSecond:
-      resolveOptionalConfigValue(config.maxDispatchesPerSecond) ?? 100,
+      resolveOptionalConfigValue(config.maxDispatchesPerSecond) ??
+      DEFAULT_MAX_DISPATCHES_PER_SECOND,
     maxEnqueueAttempts:
       resolveOptionalConfigValue(config.maxEnqueueAttempts) ?? 3,
   };
