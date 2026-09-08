@@ -224,7 +224,21 @@ position, `{ "0": ..., "1": ... }`, because the conversion treated every
 non-scalar value as an object. The kit writes a real Firestore array instead.
 Anything reading those fields by numeric string key needs updating, and rows
 written before and after the change are not the same shape. Scalars, timestamps,
-dates, times, datetimes, bytes and geography values convert exactly as before.
+dates, datetimes, bytes and geography values convert exactly as before.
+
+### A TIME column is written as a string
+
+A `TIME` value arrives from BigQuery as `"10:30:00"`, and the extension passed it
+to `Timestamp.fromDate(new Date(...))`, which throws `Value for argument "seconds"
+is not a valid integer.` A run whose results included a `TIME` column therefore
+wrote nothing at all: no rows, no run document, no `latest`. The kit stores the
+string BigQuery returned instead, so the run completes.
+
+Firestore has no time-of-day type, and any `Timestamp` would have to invent a date
+to attach the time to. The string also keeps the microsecond precision a
+`Timestamp` cannot hold. This is the one type whose value differs from the
+extension, and no installed instance can have stored one, because the run crashed
+before the write.
 
 ### The scheduled query runs as a different service account
 
