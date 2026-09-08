@@ -202,7 +202,7 @@ const params = {
     description: "Keep animation of GIF and WEBP formats.",
 
     default: true,
-    input: select({ True: true, "No (1st frame only)": false }),
+    input: select({ Yes: true, "No (1st frame only)": false }),
   }),
   memory: defineInt("FUNCTION_MEMORY", {
     label: "Cloud Function memory",

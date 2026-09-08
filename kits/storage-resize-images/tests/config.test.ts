@@ -267,3 +267,25 @@ describe("validatePathListsFromEnv", () => {
     expect(() => validatePathListsFromEnv()).toThrow(/Invalid excludePathList/);
   });
 });
+
+/**
+ * The kit builds its select options from a label-to-value map, so a label
+ * typo is invisible to the value-only assertions above and only shows up in
+ * the CLI's deploy-time prompt. This pins the labels against
+ * `extension.yaml`'s `IS_ANIMATED` options.
+ */
+describe("IS_ANIMATED select", () => {
+  test("declares the same option labels and values as the extension", async () => {
+    await import("../src/config");
+    const { declaredParams } = await import("firebase-functions/params");
+
+    const param = declaredParams.find((p) => p.name === "IS_ANIMATED") as
+      | { options: { input?: { select?: { options: unknown[] } } } }
+      | undefined;
+
+    expect(param?.options.input?.select?.options).toEqual([
+      { label: "Yes", value: true },
+      { label: "No (1st frame only)", value: false },
+    ]);
+  });
+});
