@@ -236,9 +236,9 @@ string BigQuery returned instead, so the run completes.
 
 Firestore has no time-of-day type, and any `Timestamp` would have to invent a date
 to attach the time to. The string also keeps the microsecond precision a
-`Timestamp` cannot hold. This is the one type whose value differs from the
-extension, and no installed instance can have stored one, because the run crashed
-before the write.
+`Timestamp` cannot hold. This is the only scalar type whose value differs from
+the extension, and no installed instance can have stored one, because the run
+crashed before the write.
 
 ### The scheduled query runs as a different service account
 
