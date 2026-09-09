@@ -26,6 +26,8 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
+    "//pretest": "Only this kit has a test that requires lib/. The release workflow's test job runs npm test without building, so the hook has to live here rather than in CI.",
+    "pretest": "npm run build",
     "test": "vitest run",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
