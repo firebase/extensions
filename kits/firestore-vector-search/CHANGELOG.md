@@ -1,4 +1,4 @@
-- chore: run on firebase-functions ^7.3.3-rc.0, the same release candidate as the other kits
+- chore: run on firebase-functions ^7.3.3-rc.1, the same release candidate as the other kits
 - The instance id now comes from `FIREBASE_KIT_INSTANCE_ID`, which the Firebase CLI (15.27.0 or later) provides to each kit instance; `INSTANCE_ID` is no longer a configuration parameter
 - fix: restore the extension's `Yes` / `No` option labels on the `DO_BACKFILL` and `UPDATE_ON_CONFIGURE` deploy-time prompts. The stored values are unchanged (`true`/`false`), so this is a label-only fix and no `.env` from an earlier deploy needs editing.
 - Fixed the backfill and update task dispatch failing with "Queue does not exist": the kit prefixed queue names with `kit-<instance id>-` itself, which the Admin SDK then prefixed again from `FIREBASE_KIT_INSTANCE_ID`. The four `*_QUEUE_NAME` settings now take the deployed function name without that prefix
