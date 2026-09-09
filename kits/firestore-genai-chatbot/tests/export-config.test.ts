@@ -63,6 +63,14 @@ describe("resolveConfig", () => {
       expect(resolveConfig(base).vertex.modelLocation).toBe("us-central1");
     });
 
+    test('treats the extension\'s "null" sentinel as unset', () => {
+      process.env.FUNCTION_REGION = "europe-west4";
+      expect(
+        resolveConfig({ ...base, vertexModelLocation: "null" }).vertex
+          .modelLocation
+      ).toBe("europe-west4");
+    });
+
     test("an explicit location wins over the function region", () => {
       process.env.FUNCTION_REGION = "europe-west4";
       expect(

@@ -191,9 +191,13 @@ const DEFAULT_VERTEX_LOCATION = "us-central1";
  * `FUNCTION_REGION` is injected by the Firebase CLI on every deployed function
  * and is a reserved key, so it cannot be set by hand; it is absent in the
  * emulator and when the package is used as a library.
+ *
+ * `"null"` is the extension's sentinel for "same as the function", and reaches
+ * here from a config assembled by hand out of a copied `.env`.
  */
 function resolveVertexLocation(configured: string | undefined): string {
-  return configured || process.env.FUNCTION_REGION || DEFAULT_VERTEX_LOCATION;
+  const explicit = configured === "null" ? undefined : configured;
+  return explicit || process.env.FUNCTION_REGION || DEFAULT_VERTEX_LOCATION;
 }
 
 /**
