@@ -1,3 +1,4 @@
+- fix: with `EMBEDDING_PROVIDER: vertex`, the Vertex AI embedding call goes to the function's own region, and to `us-central1` where the region cannot be read (the emulator, or library use outside a deployed function) rather than to whichever region the SDK picked.
 - chore: run on firebase-functions ^7.3.3-rc.0, the same release candidate as the other kits
 - The instance id now comes from `FIREBASE_KIT_INSTANCE_ID`, which the Firebase CLI (15.27.0 or later) provides to each kit instance; `INSTANCE_ID` is no longer a configuration parameter
 - fix: restore the extension's `Yes` / `No` option labels on the `DO_BACKFILL` and `UPDATE_ON_CONFIGURE` deploy-time prompts. The stored values are unchanged (`true`/`false`), so this is a label-only fix and no `.env` from an earlier deploy needs editing.

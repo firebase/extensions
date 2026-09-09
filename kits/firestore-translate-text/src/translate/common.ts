@@ -22,6 +22,13 @@ import * as events from "../events";
 import type { ResolvedTranslateConfig } from "../export-config";
 import * as logs from "../logs";
 
+/**
+ * Vertex AI location when neither an explicit setting nor `FUNCTION_REGION`
+ * is available. `FUNCTION_REGION` is injected by the Firebase CLI on every
+ * deployed function, so this only applies to the emulator and library use.
+ */
+const DEFAULT_VERTEX_LOCATION = "us-central1";
+
 export type Translation = {
   language: string;
   output: string;
@@ -72,7 +79,7 @@ export class GenkitTranslator implements Translator {
 
     const plugins =
       config.geminiProvider === "vertexai"
-        ? [vertexAI(config.region ? { location: config.region } : {})]
+        ? [vertexAI({ location: config.region || DEFAULT_VERTEX_LOCATION })]
         : [googleAI({ apiKey: config.googleAiApiKey })];
 
     this.client = genkit({ plugins });

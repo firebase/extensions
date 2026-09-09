@@ -120,6 +120,21 @@ describe("task queue targets", () => {
     expect(paths).toEqual([queueUrl("kit-test-instance-updateTask")]);
   });
 
+  test("an unknown region fails rather than guessing one", async () => {
+    vi.stubEnv("FUNCTION_REGION", "");
+    const { handleBackfillTrigger } = await import("../src/handlers");
+
+    await expect(
+      handleBackfillTrigger(
+        { data: undefined } as never,
+        await context({ region: undefined })
+      )
+    ).rejects.toThrow("FUNCTION_REGION is required to resolve task queues.");
+
+    expect(paths).toEqual([]);
+    vi.unstubAllEnvs();
+  });
+
   test("init enqueues onto the two trigger queues", async () => {
     const { handleInit } = await import("../src/handlers");
 

@@ -23,6 +23,7 @@
 import { declaredParams } from "firebase-functions/params";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { configFromEnv } from "../src/config";
+import { resolveConfig } from "../src/export-config";
 
 function declaration(name: string) {
   const param = declaredParams.find((candidate) => candidate.name === name);
@@ -41,6 +42,8 @@ const KEYS = [
   "ENABLE_DISCUSSION_OPTION_OVERRIDES",
   "ENABLE_GENKIT_MONITORING",
   "FIREBASE_CONFIG",
+  "VERTEX_AI_MODEL_LOCATION",
+  "FUNCTION_REGION",
 ] as const;
 
 describe("select values inherited from the extension", () => {
@@ -107,5 +110,26 @@ describe("select values inherited from the extension", () => {
 
     expect(config.enableOverrides).toBe(false);
     expect(config.enableGenkitMonitoring).toBe(false);
+  });
+
+  /**
+   * The extension stored the string "null" for "Same as Cloud Functions
+   * Location", so a copied `.env` carries that literal value.
+   */
+  test("reads VERTEX_AI_MODEL_LOCATION=null as the function region", () => {
+    process.env.VERTEX_AI_MODEL_LOCATION = "null";
+    process.env.FUNCTION_REGION = "europe-west4";
+
+    expect(configFromEnv().vertexModelLocation).toBeUndefined();
+    expect(resolveConfig(configFromEnv()).vertex.modelLocation).toBe(
+      "europe-west4"
+    );
+  });
+
+  test("reads an explicit VERTEX_AI_MODEL_LOCATION over the function region", () => {
+    process.env.VERTEX_AI_MODEL_LOCATION = "global";
+    process.env.FUNCTION_REGION = "europe-west4";
+
+    expect(resolveConfig(configFromEnv()).vertex.modelLocation).toBe("global");
   });
 });

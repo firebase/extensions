@@ -19,6 +19,13 @@ import { type EmbedderReference, type Genkit, genkit } from "genkit";
 import type { ResolvedVectorSearchConfig } from "../../export-config";
 import { BaseEmbedClient } from "./base_class";
 
+/**
+ * Vertex AI location when neither an explicit setting nor `FUNCTION_REGION`
+ * is available. `FUNCTION_REGION` is injected by the Firebase CLI on every
+ * deployed function, so this only applies to the emulator and library use.
+ */
+const DEFAULT_VERTEX_LOCATION = "us-central1";
+
 export class GenkitEmbedClient extends BaseEmbedClient {
   private readonly client: Genkit;
   private readonly embedder: EmbedderReference;
@@ -38,7 +45,7 @@ export class GenkitEmbedClient extends BaseEmbedClient {
     this.client = genkit({
       plugins: [
         isVertex
-          ? vertexAI(config.region ? { location: config.region } : {})
+          ? vertexAI({ location: config.region || DEFAULT_VERTEX_LOCATION })
           : googleAI({ apiKey: config.geminiApiKey }),
       ],
     });

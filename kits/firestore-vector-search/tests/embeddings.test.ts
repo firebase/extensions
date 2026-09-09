@@ -86,12 +86,27 @@ describe("GenkitEmbedClient", () => {
       expect(genkit).toHaveBeenCalledWith({ plugins: [undefined] });
     });
 
-    test("omits the location when no region is configured", () => {
+    test("falls back to us-central1 when no region is configured", () => {
+      vi.stubEnv("FUNCTION_REGION", "");
+
       new GenkitEmbedClient(
         config({ embeddingProvider: "vertex", region: undefined })
       );
 
-      expect(vertexAI).toHaveBeenCalledWith({});
+      expect(vertexAI).toHaveBeenCalledWith({ location: "us-central1" });
+      vi.unstubAllEnvs();
+    });
+
+    test("uses the function region when no region is configured", () => {
+      // resolveVectorSearchConfig reads FUNCTION_REGION when region is unset.
+      vi.stubEnv("FUNCTION_REGION", "europe-west4");
+
+      new GenkitEmbedClient(
+        config({ embeddingProvider: "vertex", region: undefined })
+      );
+
+      expect(vertexAI).toHaveBeenCalledWith({ location: "europe-west4" });
+      vi.unstubAllEnvs();
     });
 
     test("initializes with the Google AI provider", () => {

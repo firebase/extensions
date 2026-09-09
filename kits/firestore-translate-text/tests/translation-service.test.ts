@@ -125,12 +125,24 @@ describe("GenkitTranslator", () => {
     expect(vertexAI.model).toHaveBeenCalledWith("gemini-2.5-pro");
   });
 
-  test("registers the vertexai plugin without a location when no region is set", () => {
+  test("falls back to us-central1 when no region is set", () => {
     new GenkitTranslator(
       makeConfig({ provider: "gemini-vertexai", region: "" })
     );
 
-    expect(vertexAI).toHaveBeenCalledWith({});
+    expect(vertexAI).toHaveBeenCalledWith({ location: "us-central1" });
+  });
+
+  test("registers the vertexai plugin against the function region", () => {
+    // resolveTranslateConfig reads FUNCTION_REGION when no region is supplied.
+    vi.stubEnv("FUNCTION_REGION", "europe-west4");
+
+    new GenkitTranslator(
+      makeConfig({ provider: "gemini-vertexai", region: undefined })
+    );
+
+    expect(vertexAI).toHaveBeenCalledWith({ location: "europe-west4" });
+    vi.unstubAllEnvs();
   });
 
   test("returns the structured translation and logs completion", async () => {
