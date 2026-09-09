@@ -181,6 +181,55 @@ dimension both the extension and the kit declare their vector index with, so the
 default provider works. This is the one place the kit deliberately does not match
 the extension's behaviour, because matching it means writing nothing at all.
 
+### The OpenAI vector index is now 1536 dimensions, so delete the old one
+
+The extension declared its vector index with 512 dimensions for
+`EMBEDDING_PROVIDER: openai`, but its OpenAI client was built with
+`dimension: 1536` and `text-embedding-ada-002` returns 1536. The two never
+agreed, so the index the extension created did not cover the vectors it wrote.
+The embeddings stored fine, Firestore's limit is 2048, but every query failed:
+
+```
+9 FAILED_PRECONDITION: Missing vector index configuration.
+```
+
+That applied to `queryCallable`, `queryOnWrite` and any direct `findNearest`.
+The kit declares 1536 instead, so the index matches the vectors and the provider
+works end to end. This is a deliberate divergence: the extension's 512 never
+matched its own client, so there was no working behaviour to preserve. The
+vectors themselves are unchanged, still `text-embedding-ada-002` at 1536
+dimensions, so embeddings an installed instance already wrote stay comparable
+with the ones the kit writes.
+
+**Migration.** If an extension instance already created the 512-dimension index
+on your collection, delete it before you deploy the kit. `createIndex` decides
+an index already exists by matching the collection name and the field path only,
+it never compares the dimension, so it will find the old 512-dimension index,
+log `Index already exists, skipping index creation` and leave your queries
+broken.
+
+```sh
+# List the vector indexes on the collection and find the 512-dimension one.
+gcloud firestore indexes composite list --project=<project>
+
+# Delete it by name, then deploy the kit and let it create the 1536 index.
+gcloud firestore indexes composite delete <index-id> --project=<project>
+```
+
+If you would rather not wait for the deploy, create it yourself:
+
+```sh
+gcloud firestore indexes composite create \
+  --project=<project> \
+  --collection-group=<collection> \
+  --query-scope=COLLECTION \
+  --field-config=vector-config='{"dimension":"1536","flat": "{}"}',field-path=embedding
+```
+
+Use your configured `OUTPUT_FIELD_NAME` in place of `embedding` if you changed
+it. Only `EMBEDDING_PROVIDER: openai` is affected. The gemini, vertex,
+multimodal and custom dimensions are unchanged.
+
 ### The instance id comes from `firebase.json`, and it names the query collection
 
 The extension derived its instance id at install and used it for the query
@@ -340,11 +389,9 @@ for; the Firebase CLI grants these for you.
   See *Gemini and Vertex AI embeddings are truncated to 768 dimensions* above.
 - OpenAI embeddings are still `text-embedding-ada-002` at its native 1536
   dimensions, so vectors already written by an installed instance stay
-  comparable with the ones the kit writes. The vector index the kit creates for
-  `EMBEDDING_PROVIDER: openai` is still declared with 512 dimensions, exactly as
-  the extension declared it, so it does not cover those 1536-dimension vectors
-  and `findNearest` fails against it. Create the 1536-dimension index yourself if
-  you query an OpenAI-embedded collection.
+  comparable with the ones the kit writes. The vector index declared for them is
+  not: it is now 1536 rather than the extension's 512. See *The OpenAI vector
+  index is now 1536 dimensions, so delete the old one* above.
 - A custom endpoint still receives `{ batch: [...] }` and must return
   `{ embeddings: [[...]] }`, and still requires all three of
   `CUSTOM_EMBEDDINGS_ENDPOINT`, `CUSTOM_EMBEDDINGS_BATCH_SIZE` and

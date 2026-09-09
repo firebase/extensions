@@ -97,6 +97,33 @@ describe("createIndex", () => {
     );
   });
 
+  // Inherited from the extension, and the reason the OpenAI dimension fix in
+  // #3105 needs a migration note: an instance that already created a
+  // 512-dimension index keeps it, because the check only looks at the
+  // collection name and the field path. Documented, not endorsed.
+  test("skips creation when the existing index has a different dimension", async () => {
+    listIndexes.mockResolvedValue([
+      [
+        {
+          name: `${parent}/indexes/123`,
+          fields: [
+            {
+              fieldPath: options.fieldPath,
+              vectorConfig: { dimension: 512, flat: {} },
+            },
+          ],
+        },
+      ],
+    ]);
+
+    await createIndex({ ...options, dimension: 1536 });
+
+    expect(createIndexRpc).not.toHaveBeenCalled();
+    expect(loggerInfo).toHaveBeenCalledWith(
+      "Index already exists, skipping index creation"
+    );
+  });
+
   test("creates the index when an existing one covers a different field", async () => {
     listIndexes.mockResolvedValue([
       [

@@ -62,3 +62,46 @@ describe("resolveVectorSearchConfig", () => {
     expect(config.queueNames.backfillTask).toBe("backfillTask");
   });
 });
+
+describe("resolveVectorSearchConfig dimension", () => {
+  // `dimension` is what `createIndex` declares the vector index with, so it has
+  // to match the vector each provider's client actually writes.
+  test("defaults to 768 when no provider is configured", () => {
+    expect(resolveVectorSearchConfig(base).dimension).toBe(768);
+  });
+
+  test.each([
+    ["gemini", 768],
+    ["vertex", 768],
+    ["multimodal", 1408],
+  ] as const)("%s uses %i dimensions", (embeddingProvider, dimension) => {
+    expect(
+      resolveVectorSearchConfig({ ...base, embeddingProvider }).dimension
+    ).toBe(dimension);
+  });
+
+  // #3105: the extension declared 512 while writing 1536-dimension
+  // `text-embedding-ada-002` vectors, so its index never covered them.
+  test("uses 1536 dimensions for openai, matching text-embedding-ada-002", () => {
+    expect(
+      resolveVectorSearchConfig({ ...base, embeddingProvider: "openai" })
+        .dimension
+    ).toBe(1536);
+  });
+
+  test("uses the configured dimension for custom embeddings", () => {
+    expect(
+      resolveVectorSearchConfig({
+        ...base,
+        embeddingProvider: "custom",
+        customEmbeddingsDimension: 384,
+      }).dimension
+    ).toBe(384);
+  });
+
+  test("rejects custom embeddings with no dimension", () => {
+    expect(() =>
+      resolveVectorSearchConfig({ ...base, embeddingProvider: "custom" })
+    ).toThrow("Custom embeddings require customEmbeddingsDimension to be set");
+  });
+});

@@ -103,7 +103,12 @@ function dimensionFor(config: VectorSearchConfig): number {
     case "multimodal":
       return 1408;
     case "openai":
-      return 512;
+      // The extension declared 512 here while its OpenAI client was built with
+      // `dimension: 1536`, and `text-embedding-ada-002` returns 1536, so the
+      // index it created never covered the vectors it wrote and `findNearest`
+      // failed against it. 1536 matches the vectors, so the provider works end
+      // to end. Deliberate divergence, see #3105.
+      return 1536;
     case "custom":
       if (!config.customEmbeddingsDimension) {
         throw new Error(
