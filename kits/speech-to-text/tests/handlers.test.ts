@@ -319,7 +319,7 @@ describe("handleObjectFinalized", () => {
     );
   });
 
-  test("keeps a trailing slash on outputStoragePath, producing a double slash", async () => {
+  test("strips a trailing slash on outputStoragePath rather than doubling it", async () => {
     const ctx = makeCtx({ config: { outputStoragePath: "transcriptions/" } });
 
     await handleObjectFinalized(
@@ -328,7 +328,7 @@ describe("handleObjectFinalized", () => {
     );
 
     expect(ctx.fns.uploadTranscodedFile).toHaveBeenCalledWith(
-      expect.objectContaining({ storagePath: "transcriptions//tmp/a.mp3.wav" })
+      expect.objectContaining({ storagePath: "transcriptions/tmp/a.mp3.wav" })
     );
   });
 
@@ -376,7 +376,7 @@ describe("handleObjectFinalized", () => {
     );
   });
 
-  test("keeps a trailing slash on outputStoragePath for the transcript too", async () => {
+  test("strips a trailing slash on outputStoragePath for the transcript too", async () => {
     const ctx = makeCtx({ config: { outputStoragePath: "transcriptions/" } });
 
     await handleObjectFinalized(
@@ -386,7 +386,7 @@ describe("handleObjectFinalized", () => {
 
     expect(ctx.fns.transcribeAndUpload).toHaveBeenCalledWith(
       expect.objectContaining({
-        transcriptObjectName: "transcriptions//a.mp3.wav_transcription.txt",
+        transcriptObjectName: "transcriptions/a.mp3.wav_transcription.txt",
       })
     );
   });

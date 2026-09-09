@@ -140,21 +140,27 @@ for you.
 ### Where the outputs land
 
 Both outputs keep the paths the extension used, so migrated consumers find them
-unchanged. For an input object `a.mp3`:
+unchanged, with one deliberate exception noted below. For an input object
+`a.mp3`:
 
 | `OUTPUT_STORAGE_PATH` | Transcoded audio | Transcript |
 | --- | --- | --- |
 | unset | `tmp/a.mp3.wav` | `a.mp3.wav_transcription.txt` |
 | `transcriptions` | `transcriptions/tmp/a.mp3.wav` | `transcriptions/a.mp3.wav_transcription.txt` |
-| `transcriptions/` | `transcriptions//tmp/a.mp3.wav` | `transcriptions//a.mp3.wav_transcription.txt` |
+| `transcriptions/` | `transcriptions/tmp/a.mp3.wav` | `transcriptions/a.mp3.wav_transcription.txt` |
 
 The `tmp/` segment on the audio is an artefact of the extension naming the copy
 after its local temporary file, and is kept so lifecycle rules, cleanup jobs and
 client code written against the extension keep finding it. The transcript is
 named after the same object with that segment removed, again as the extension
 did, so it sits beside your input rather than under `tmp/`.
-`OUTPUT_STORAGE_PATH` is not normalised, so a trailing slash produces a double
-slash in both paths.
+A trailing slash on `OUTPUT_STORAGE_PATH` is stripped. The extension
+concatenated the prefix raw, so `transcriptions/` gave
+`transcriptions//tmp/a.mp3.wav`, but the Speech-to-Text API rejects a `gs://`
+URI containing a double slash, so that configuration uploaded the audio and
+then failed without ever writing a transcript. The kit strips the slash instead,
+which is the only difference from the extension's paths and only affects a
+configuration that never worked.
 
 The transcoded `.wav` carries the
 `isTranscodeOutput` metadata flag that stops the function from processing its

@@ -158,12 +158,15 @@ export async function handleObjectFinalized(
     const transcodedObjectName = path.posix.join("tmp", `${filePath}.wav`);
 
     /**
-     * `OUTPUT_STORAGE_PATH` is concatenated without normalising, so a trailing
-     * slash still yields the extension's double slash.
+     * A trailing slash on `OUTPUT_STORAGE_PATH` is stripped. The extension
+     * concatenated the prefix raw, producing a double slash, but the Speech API
+     * rejects a `gs://` URI containing one ("is an invalid GCS path"), so that
+     * configuration never produced a transcript. Parity here would only
+     * reproduce the failure.
      */
     const withOutputPrefix = (objectName: string) =>
       config.outputStoragePath
-        ? `${config.outputStoragePath}/${objectName}`
+        ? `${config.outputStoragePath.replace(/\/$/, "")}/${objectName}`
         : objectName;
 
     const transcodedUploadResult = await ctx.fns.uploadTranscodedFile({
