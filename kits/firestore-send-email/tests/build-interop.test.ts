@@ -17,10 +17,11 @@
 import { createRequire } from "node:module";
 import { describe, expect, test } from "vitest";
 
-// The subject is the compiled output, not src: only tsc's esModuleInterop
-// helper drops the prototype methods off the instance @sendgrid/mail exports,
-// and vitest's own transform does not reproduce that. Needs `npm run build`,
-// which CI runs before `npm test`.
+// The subject is the compiled output, not src: tsc's esModuleInterop helper
+// strips the prototype methods off the instance @sendgrid/mail exports, and
+// vitest's own transform does not reproduce that. The named import in
+// nodemailer-sendgrid emits no helper; this guards a revert to a default one.
+// The pretest hook builds lib/ before this runs.
 const requireBuilt = createRequire(import.meta.url);
 
 describe("built SendGridTransport", () => {
