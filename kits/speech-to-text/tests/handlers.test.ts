@@ -332,6 +332,83 @@ describe("handleObjectFinalized", () => {
     );
   });
 
+  test("normalises redundant separators in the input object path", async () => {
+    const ctx = makeCtx();
+
+    await handleObjectFinalized(
+      storageEvent({ ...audioObject, name: "audio//clip.mp3" }),
+      ctx
+    );
+
+    expect(ctx.fns.uploadTranscodedFile).toHaveBeenCalledWith(
+      expect.objectContaining({ storagePath: "tmp/audio/clip.mp3.wav" })
+    );
+  });
+
+  test("names the transcript without the tmp/ segment when outputStoragePath is unset", async () => {
+    const ctx = makeCtx();
+
+    await handleObjectFinalized(
+      storageEvent({ ...audioObject, name: "a.mp3" }),
+      ctx
+    );
+
+    expect(ctx.fns.transcribeAndUpload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        transcriptObjectName: "a.mp3.wav_transcription.txt",
+      })
+    );
+  });
+
+  test("names the transcript under outputStoragePath, outside tmp/", async () => {
+    const ctx = makeCtx({ config: { outputStoragePath: "transcriptions" } });
+
+    await handleObjectFinalized(
+      storageEvent({ ...audioObject, name: "nested/clip.mp3" }),
+      ctx
+    );
+
+    expect(ctx.fns.transcribeAndUpload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        transcriptObjectName:
+          "transcriptions/nested/clip.mp3.wav_transcription.txt",
+      })
+    );
+  });
+
+  test("keeps a trailing slash on outputStoragePath for the transcript too", async () => {
+    const ctx = makeCtx({ config: { outputStoragePath: "transcriptions/" } });
+
+    await handleObjectFinalized(
+      storageEvent({ ...audioObject, name: "a.mp3" }),
+      ctx
+    );
+
+    expect(ctx.fns.transcribeAndUpload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        transcriptObjectName: "transcriptions//a.mp3.wav_transcription.txt",
+      })
+    );
+  });
+
+  test("strips only the tmp/ segment it added, not one in the input object name", async () => {
+    const ctx = makeCtx();
+
+    await handleObjectFinalized(
+      storageEvent({ ...audioObject, name: "tmp/a.mp3" }),
+      ctx
+    );
+
+    expect(ctx.fns.uploadTranscodedFile).toHaveBeenCalledWith(
+      expect.objectContaining({ storagePath: "tmp/tmp/a.mp3.wav" })
+    );
+    expect(ctx.fns.transcribeAndUpload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        transcriptObjectName: "tmp/a.mp3.wav_transcription.txt",
+      })
+    );
+  });
+
   test("cleans up both temp files after a successful run", async () => {
     const ctx = makeCtx();
 

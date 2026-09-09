@@ -148,12 +148,27 @@ export async function handleObjectFinalized(
       message: "Transcoding audio file.",
     });
 
-    const transcodedObjectName = `tmp/${filePath}.wav`;
+    /**
+     * The extension named the transcoded upload after its local temp file, so
+     * the object carries a leading `tmp/` segment. The segment is deliberate
+     * parity: lifecycle rules and client code written against the extension
+     * look for the file there. `path.posix.join` supplies the normalisation the
+     * extension got for free from `path.join(os.tmpdir(), filePath)`.
+     */
+    const transcodedObjectName = path.posix.join("tmp", `${filePath}.wav`);
+
+    /**
+     * `OUTPUT_STORAGE_PATH` is concatenated without normalising, so a trailing
+     * slash still yields the extension's double slash.
+     */
+    const withOutputPrefix = (objectName: string) =>
+      config.outputStoragePath
+        ? `${config.outputStoragePath}/${objectName}`
+        : objectName;
+
     const transcodedUploadResult = await ctx.fns.uploadTranscodedFile({
       localPath: localTranscodedPath,
-      storagePath: config.outputStoragePath
-        ? `${config.outputStoragePath}/${transcodedObjectName}`
-        : transcodedObjectName,
+      storagePath: withOutputPrefix(transcodedObjectName),
       bucket,
     });
 
@@ -167,9 +182,22 @@ export async function handleObjectFinalized(
     const { sampleRateHertz, audioChannelCount } = transcodeResult;
     const [file] = transcodedUploadResult.uploadResponse;
 
+    /**
+     * The extension stripped the `tmp/` segment back off before naming the
+     * Speech API's output, so the transcript sits beside the input object
+     * rather than under `tmp/`. Only the segment added above is removed, so a
+     * `tmp/` inside the user's own object name survives; the extension used a
+     * first-substring replace and would also have stripped one occurring in
+     * `OUTPUT_STORAGE_PATH`.
+     */
+    const transcriptObjectName = `${withOutputPrefix(
+      transcodedObjectName.replace(/^tmp\//, "")
+    )}_transcription.txt`;
+
     const transcriptionResult = await ctx.fns.transcribeAndUpload({
       client,
       file,
+      transcriptObjectName,
       sampleRateHertz,
       audioChannelCount,
       options: speechOptions,

@@ -137,19 +137,26 @@ default, so a `.env` copied from your installed instance needs no value changes.
 What changes is how long the function may run and what is no longer checked
 for you.
 
-### Where the transcoded copy is written
+### Where the outputs land
 
-The transcoded WAV is written to `tmp/<original path>.wav`, or
-`<OUTPUT_STORAGE_PATH>/tmp/<original path>.wav` when `OUTPUT_STORAGE_PATH` is
-set. The `tmp/` segment is an artefact of the extension naming the copy after
-its local temporary file; the kit keeps it so lifecycle rules, cleanup jobs and
-client code written against the extension keep finding the file. The prefix is
-joined with a single `/` and is not normalised, so a trailing slash on
-`OUTPUT_STORAGE_PATH` produces a double slash (`transcriptions//tmp/a.mp3.wav`),
-exactly as the extension did.
+Both outputs keep the paths the extension used, so migrated consumers find them
+unchanged. For an input object `a.mp3`:
 
-The transcript is written next to the WAV as
-`<transcoded object>_transcription.txt`. The transcoded `.wav` carries the
+| `OUTPUT_STORAGE_PATH` | Transcoded audio | Transcript |
+| --- | --- | --- |
+| unset | `tmp/a.mp3.wav` | `a.mp3.wav_transcription.txt` |
+| `transcriptions` | `transcriptions/tmp/a.mp3.wav` | `transcriptions/a.mp3.wav_transcription.txt` |
+| `transcriptions/` | `transcriptions//tmp/a.mp3.wav` | `transcriptions//a.mp3.wav_transcription.txt` |
+
+The `tmp/` segment on the audio is an artefact of the extension naming the copy
+after its local temporary file, and is kept so lifecycle rules, cleanup jobs and
+client code written against the extension keep finding it. The transcript is
+named after the same object with that segment removed, again as the extension
+did, so it sits beside your input rather than under `tmp/`.
+`OUTPUT_STORAGE_PATH` is not normalised, so a trailing slash produces a double
+slash in both paths.
+
+The transcoded `.wav` carries the
 `isTranscodeOutput` metadata flag that stops the function from processing its
 own output. The transcript `.txt` is written directly by the Speech-to-Text API
 and carries no metadata, so its finalize event runs the function again; that run
