@@ -191,13 +191,10 @@ describe("configFromEnv", () => {
       { label: "8 GB", value: 8192 },
     ]);
 
-    // The comparison the CLI actually makes: `default` against
-    // `option.value.toString()`. An int default matches nothing, so the first
-    // option is highlighted and has to be the extension's default.
-    const preselected = options.filter(
-      (option) => String(option.value) === declared.default
-    );
-    expect(preselected).toEqual([]);
+    // The CLI stringifies every option value but passes `default` through as
+    // declared, so a non-string default matches no option and the first one is
+    // highlighted. It therefore has to be the extension's default.
+    expect(typeof declared.default).not.toBe("string");
     expect(options[0]).toEqual({ label: "1 GB", value: 1024 });
   });
 
