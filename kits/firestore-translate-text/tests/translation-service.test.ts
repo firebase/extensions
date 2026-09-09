@@ -125,12 +125,14 @@ describe("GenkitTranslator", () => {
     expect(vertexAI.model).toHaveBeenCalledWith("gemini-2.5-pro");
   });
 
-  test("falls back to us-central1 when no region is set", () => {
+  // Off a deployed function there is no region to pass. Leaving the plugin's
+  // location unset keeps its own `GCLOUD_LOCATION` handling in play.
+  test("passes no location when no region is set", () => {
     new GenkitTranslator(
       makeConfig({ provider: "gemini-vertexai", region: "" })
     );
 
-    expect(vertexAI).toHaveBeenCalledWith({ location: "us-central1" });
+    expect(vertexAI).toHaveBeenCalledWith({});
   });
 
   test("registers the vertexai plugin against the function region", () => {

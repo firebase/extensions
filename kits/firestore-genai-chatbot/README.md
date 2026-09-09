@@ -216,7 +216,7 @@ model call rather than being caught at deploy time.
 - `VERTEX_AI_MODEL_LOCATION` left at `null` still calls Vertex AI in the
   function's own region, read from `FUNCTION_REGION`. Outside a deployed
   function, where that is unset (the emulator, or library use), the call goes
-  to `us-central1`.
+  to `us-central1`; set `VERTEX_AI_MODEL_LOCATION` to call somewhere else.
 
 ## API surface
 

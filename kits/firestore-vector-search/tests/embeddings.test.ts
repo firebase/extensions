@@ -86,14 +86,16 @@ describe("GenkitEmbedClient", () => {
       expect(genkit).toHaveBeenCalledWith({ plugins: [undefined] });
     });
 
-    test("falls back to us-central1 when no region is configured", () => {
+    // Off a deployed function there is no region to pass. Leaving the plugin's
+    // location unset keeps its own `GCLOUD_LOCATION` handling in play.
+    test("passes no location when no region is configured", () => {
       vi.stubEnv("FUNCTION_REGION", "");
 
       new GenkitEmbedClient(
         config({ embeddingProvider: "vertex", region: undefined })
       );
 
-      expect(vertexAI).toHaveBeenCalledWith({ location: "us-central1" });
+      expect(vertexAI).toHaveBeenCalledWith({});
       vi.unstubAllEnvs();
     });
 
