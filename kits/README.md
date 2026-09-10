@@ -86,8 +86,8 @@ kit, and are accepted: there is no kit equivalent to restore.
 
 **Resource names use a `kit-` prefix.** The CLI names every function, task
 queue and Pub/Sub topic `kit-<instance id>-<name>`, where an extension
-instance used `ext-<instance id>-<name>`. Nothing an extension instance
-created is reused, so an installed extension keeps running on its own
+instance used `ext-<instance id>-<name>`. No resources created by an extension
+instance are reused, so an installed extension keeps running on its own
 resources until you uninstall it, and its old resources can be deleted once
 you have migrated.
 
