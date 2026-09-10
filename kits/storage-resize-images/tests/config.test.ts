@@ -168,6 +168,36 @@ describe("configFromEnv", () => {
     expect(preselected).toEqual([{ label: "No", value: "false" }]);
   });
 
+  // Same bug as MAKE_PUBLIC: the prompt highlighted 512 MB where the
+  // extension preselected 1 GB, halving the deployed memory. It cannot be
+  // fixed with a string param, because FUNCTION_MEMORY also feeds
+  // `availableMemoryMb` and the CLI resolves that as a number only for an int
+  // param, so the extension's default is listed first instead.
+  test("declares FUNCTION_MEMORY so the CLI preselects the extension default", async () => {
+    await import("../src/config");
+    const declared = declaration("FUNCTION_MEMORY");
+
+    // Must stay an int, or `availableMemoryMb` stops resolving at deploy.
+    expect(declared.type).toBe("int");
+    expect(declared.default).toBe(1024);
+
+    // Every option the extension offered, with its label and stored value.
+    const options = (declared.input as SelectInput<number>).select.options;
+    expect([...options].sort((a, b) => a.value - b.value)).toEqual([
+      { label: "512 MB", value: 512 },
+      { label: "1 GB", value: 1024 },
+      { label: "2 GB", value: 2048 },
+      { label: "4 GB", value: 4096 },
+      { label: "8 GB", value: 8192 },
+    ]);
+
+    // The CLI stringifies every option value but passes `default` through as
+    // declared, so a non-string default matches no option and the first one is
+    // highlighted. It therefore has to be the extension's default.
+    expect(typeof declared.default).not.toBe("string");
+    expect(options[0]).toEqual({ label: "1 GB", value: 1024 });
+  });
+
   test("reads the same environment variables as the extension", async () => {
     const { configFromEnv } = await import("../src/config");
     const config = configFromEnv();
