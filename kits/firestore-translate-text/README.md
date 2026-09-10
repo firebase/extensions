@@ -216,9 +216,8 @@ Cloud Translation API is still required whichever provider you choose.
   still carries the output field name and the translations.
 - The event payloads: `onStart` still carries `{change, context}` and
   `onCompletion` still carries `{context}`, with `context.eventId`,
-  `context.timestamp`, `context.eventType`, `context.resource` and an empty
-  `context.params`, as in the extension: its trigger path had no wildcards, so
-  1st gen never populated `params`.
+  `context.timestamp`, `context.eventType`, `context.resource` and the
+  `messageId` wildcard under `context.params`.
 
 ## API surface
 

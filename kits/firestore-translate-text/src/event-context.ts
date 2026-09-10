@@ -48,23 +48,28 @@ const FIRESTORE_SERVICE = "firestore.googleapis.com";
  * so the published payload keeps its original shape instead of following the
  * 2nd gen handler signature.
  *
- * `params` stays empty on purpose. 1st gen filled `context.params` from the
- * trigger path registered in code (`_makeParams` in `firebase-functions`
- * matches wildcards against that path), and the extension registered
- * `.document(process.env.COLLECTION_PATH)`, which has no `{wildcard}` segment.
- * Subscribers therefore always saw `{}`, never the yaml wildcards.
+ * `params` carries the trigger wildcards. `_makeParams` in `firebase-functions`
+ * (`src/v1/cloud-functions.ts:434`) only runs as a fallback, `context.params =
+ * context.params || _makeParams(...)`, and on a live 1st gen trigger the
+ * backend has already filled `params` from the wildcards declared in
+ * `extension.yaml`. A real side-by-side deploy confirmed the extension
+ * published `{messageId}`, so the kit publishes the same.
+ *
+ * `timestamp` falls back to the current time. `event.time` is a required field
+ * on a 2nd gen `CloudEvent`, but 1st gen `context.timestamp` was always a
+ * string, and an absent key would drop out of `JSON.stringify` entirely.
  */
 export function toEventContext(
   event: FirestoreEvent<unknown, Record<string, string>>
 ): EventContext {
   return {
     eventId: event.id,
-    timestamp: event.time,
+    timestamp: event.time ?? new Date().toISOString(),
     eventType: FIRESTORE_WRITE_EVENT_TYPE,
     resource: {
       service: FIRESTORE_SERVICE,
       name: `projects/${event.project}/databases/${event.database}/documents/${event.document}`,
     },
-    params: {},
+    params: event.params,
   };
 }

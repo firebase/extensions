@@ -134,9 +134,7 @@ describe("handleShardWrite", () => {
         service: "firestore.googleapis.com",
         name: "projects/demo-project/databases/(default)/documents/pages/home/_counter_shards_/0000",
       },
-      // The extension's trigger path had no wildcards, so 1st gen `params` was
-      // always `{}`.
-      params: {},
+      params: { collection: "pages", counter: "home", shardId: "0000" },
     };
 
     expect(events.recordStartEvent).toHaveBeenCalledWith({

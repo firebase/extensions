@@ -35,7 +35,7 @@ describe("toEventContext", () => {
         service: "firestore.googleapis.com",
         name: "projects/demo-project/databases/(default)/documents/translations/id1",
       },
-      params: {},
+      params: { messageId: "id1" },
     });
   });
 
@@ -47,42 +47,46 @@ describe("toEventContext", () => {
     );
   });
 
-  // 1st gen read `context.params` off the trigger path registered in code, and
-  // the extension registered `.document(process.env.COLLECTION_PATH)` with no
-  // `{wildcard}` segment, so subscribers always saw `{}`. The 2nd gen event
-  // does carry the yaml wildcards, and they must not leak onto the wire.
-  test("drops the 2nd gen event params the extension never published", () => {
+  test("passes the trigger wildcards through unchanged", () => {
     const params = { messageId: "id2" };
 
-    expect(toEventContext({ ...event, params }).params).toEqual({});
+    expect(toEventContext({ ...event, params }).params).toEqual(params);
   });
 
   // `time` is a required string on the 2nd gen `CloudEvent`, so a missing time
-  // is unreachable in production and making this throw would add a failure mode
-  // the extension never had. This pins what happens instead: `timestamp` is
-  // undefined and `JSON.stringify` drops the key, so a subscriber that reads
-  // `context.timestamp` would see nothing at all rather than a wrong value.
-  test("drops the timestamp key when the event carries no time", () => {
+  // is unreachable in production. 1st gen `context.timestamp` was always a
+  // string though, and an `undefined` would be dropped by `JSON.stringify`, so
+  // the key must survive the round trip rather than disappear.
+  test("still publishes a timestamp when the event carries no time", () => {
     const context = toEventContext({ ...event, time: undefined as any });
 
-    expect(context.timestamp).toBeUndefined();
-    expect(JSON.parse(JSON.stringify(context))).not.toHaveProperty("timestamp");
+    expect(context.timestamp).toEqual(expect.any(String));
+    expect(JSON.parse(JSON.stringify(context))).toHaveProperty("timestamp");
   });
 });
 
 /**
- * The behavioural oracle for the empty `params` above: run the extension's own
- * 1st gen registration through the real `firebase-functions` v1 code path and
- * read the `context` it built.
+ * The behavioural oracle for `params`: run the extension's own 1st gen
+ * registration through the real `firebase-functions` v1 code path and read the
+ * `context` it built.
+ *
+ * `_makeParams` (matching wildcards against the code-side trigger path) is only
+ * the fallback in `context.params = context.params || _makeParams(...)`. A live
+ * 1st gen trigger arrives with `params` already filled in by the backend from
+ * the wildcards in `extension.yaml`, and a real side-by-side deploy confirmed
+ * the extension published them. So this feeds the raw event body the backend
+ * actually sends.
  */
 describe("the 1st gen context the extension actually published", () => {
-  test("leaves params empty for the extension's wildcard-free trigger path", async () => {
+  test("keeps the params the backend filled in from the yaml wildcards", async () => {
     vi.stubEnv("GCLOUD_PROJECT", "demo-project");
     // The extension registered
     // `functions.firestore.document(process.env.COLLECTION_PATH).onWrite(...)`
-    // (firestore-translate-text/functions/src/index.ts:46-47) and this is the
-    // parameter's default value.
+    // (firestore-translate-text/functions/src/index.ts:46-47), while the
+    // trigger resource in firestore-translate-text/extension.yaml declares
+    // `${param:COLLECTION_PATH}/{messageId}`.
     const triggerPath = "translations";
+    const backendParams = { messageId: "id1" };
     let published: unknown;
 
     const cloudFunction = firestoreV1
@@ -97,13 +101,14 @@ describe("the 1st gen context the extension actually published", () => {
         eventId: "event-1",
         timestamp: "2026-01-01T00:00:00.000Z",
         eventType: "google.firestore.document.write",
+        params: backendParams,
         resource: {
           service: "firestore.googleapis.com",
-          name: `projects/demo-project/databases/(default)/documents/${triggerPath}`,
+          name: `projects/demo-project/databases/(default)/documents/${triggerPath}/id1`,
         },
       }
     );
 
-    expect(published).toEqual({});
+    expect(published).toEqual(backendParams);
   });
 });

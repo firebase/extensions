@@ -195,8 +195,7 @@ carry on getting them from the extension repo.
 - The three functions, the event types they publish and their payloads:
   `onStart` still carries `{change, context}` and `onCompletion` still carries
   `{context}`, with `context.eventId`, `context.timestamp`, `context.eventType`,
-  `context.resource` and an empty `context.params`, as in the extension: its
-  trigger path had no wildcards, so 1st gen never populated `params`. Aside
+  `context.resource` and the trigger wildcards under `context.params`. Aside
   from the worker point above.
 
 ## API surface
