@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Expression } from "firebase-functions/params";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 
 import { envDeployOptions } from "../src/config";
 
@@ -47,5 +47,48 @@ describe("envDeployOptions", () => {
 
   test("no trigger-binding deploy option freezes to undefined", () => {
     expect(cel(options.bucket)).not.toContain("undefined");
+  });
+});
+
+describe("envDeployOptions function region", () => {
+  const original = process.env.BUCKET_REGION;
+
+  function setBucketRegion(value?: string): void {
+    if (value === undefined) {
+      delete process.env.BUCKET_REGION;
+    } else {
+      process.env.BUCKET_REGION = value;
+    }
+  }
+
+  afterEach(() => {
+    setBucketRegion(original);
+  });
+
+  test.each([
+    ["us", "us-east1"],
+    ["eu", "europe-west1"],
+    ["asia", "asia-east1"],
+  ])(
+    "multi-region BUCKET_REGION %s places the function in %s",
+    (location, expectedRegion) => {
+      setBucketRegion(location);
+      expect(envDeployOptions().region).toBe(expectedRegion);
+    }
+  );
+
+  test("a regional BUCKET_REGION places the function in that region", () => {
+    setBucketRegion("europe-west4");
+    expect(envDeployOptions().region).toBe("europe-west4");
+  });
+
+  test("unset BUCKET_REGION omits the region option", () => {
+    setBucketRegion(undefined);
+    expect(envDeployOptions()).not.toHaveProperty("region");
+  });
+
+  test("empty BUCKET_REGION omits the region option", () => {
+    setBucketRegion("");
+    expect(envDeployOptions()).not.toHaveProperty("region");
   });
 });

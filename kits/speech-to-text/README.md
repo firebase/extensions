@@ -83,6 +83,7 @@ loads them at deploy time and prompts for any required values that are missing.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
+| `bucketRegion` | `BUCKET_REGION` | yes | (prompted) | Cloud Storage bucket location; also places the function |
 | `bucket` | `EXTENSION_BUCKET` | no | default Storage bucket | Storage bucket to watch |
 | `languageCode` | `LANGUAGE_CODE` | yes | — | BCP-47 language code |
 | `model` | `MODEL` | no | `default` | Speech model |
@@ -208,6 +209,34 @@ extension published the caught `Error` directly, and because an `Error`'s
 gen. Its service account needs `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of `roles/storage.objectAdmin` and
 `roles/datastore.user`; the Firebase CLI grants these for you.
+
+### BUCKET_REGION decides where the function runs
+
+`BUCKET_REGION` tells the kit where your Cloud Storage bucket lives, and the
+function is deployed to the Cloud Run region derived from it. A 2nd gen storage
+trigger only fires for a function in a region that matches its bucket, so this
+has to agree with the bucket you set. Regional locations (`europe-west4`,
+`us-east1`, ...) are used as-is; the multi-region locations map to a region
+inside them - `us` to `us-east1`, `eu` to `europe-west1`, `asia` to
+`asia-east1` - because they are not Cloud Run regions themselves and would fail
+the deploy. The value is matched case-insensitively.
+
+Dual-region buckets (`nam4`, `eur4`, `asia1`, ...) are not in the list and are
+not mapped. Leave `BUCKET_REGION` empty for those and choose the region
+yourself, as described below.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load `.env`
+values during deploy discovery, so the function silently falls back to the
+no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already
+carried `BUCKET_REGION`) can itself move the function on your next deploy.
+
+With `BUCKET_REGION` unset or empty, the function declares no region and the
+Firebase CLI resolves one at deploy time: it keeps the region it is already
+deployed in, and on a first deploy lands in `us-central1` unless you set the
+`FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+`firebase deploy`. Careful with that variable: it applies to every no-region
+function in the deploy, not just this kit. Note that changing an existing
+instance's region deletes and recreates the function.
 
 ### Unchanged
 
