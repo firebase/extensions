@@ -1,3 +1,4 @@
+- docs: `LOCATION` now explains that it places the functions and has to match your Firestore database's location, which a 2nd gen Firestore trigger requires. No behaviour change; the functions were already deployed to this region.
 - chore: run on firebase-functions ^7.3.3-rc.1, the same release candidate as the other kits
 - The instance id now comes from `FIREBASE_KIT_INSTANCE_ID`, which the Firebase CLI (15.27.0 or later) provides to each kit instance; `INSTANCE_ID` is no longer a configuration parameter
 - Fixed task dispatch failing with "Queue does not exist": the kit prefixed queue names with `kit-<instance id>-` itself, which the Admin SDK then prefixed again from `FIREBASE_KIT_INSTANCE_ID`. Changelog rows never reached BigQuery and restorations never started

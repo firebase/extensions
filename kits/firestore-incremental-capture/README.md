@@ -349,6 +349,19 @@ then uninstall the extension. A brief overlap writes duplicate changelog rows
 for the same writes; replay ranks one row per document, so restores are
 unaffected.
 
+### LOCATION has to match your database
+
+The functions in this kit are deployed to `LOCATION`, and a 2nd gen Firestore
+trigger only fires for a function in the same region as its database, so
+`LOCATION` has to match your Firestore database's location. It defaults to
+`us-central1`, which is wrong for any database provisioned elsewhere and fails
+the deploy rather than firing nothing.
+
+Multi-region databases (`nam5`, `nam7`, `eur3`) are not Cloud Run regions and
+are not offered: pick a region inside them instead, `us-central1` for `nam5` and
+`nam7`, `europe-west1` for `eur3`. Changing `LOCATION` on an existing instance
+deletes and recreates the functions.
+
 ## API surface
 
 - **Main entry** (`@firebase-function-kits/firestore-incremental-capture`):

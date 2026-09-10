@@ -93,6 +93,9 @@ export interface ConfigExpressions {
  */
 const params = {
   location: defineString("LOCATION", {
+    label: "Cloud Functions location",
+    description:
+      "Where should the functions in this kit be deployed? A 2nd gen Firestore trigger only fires for a function in the same region as its database, so this must match your Firestore database location. You can check it at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases). Multi-region databases (`nam5`, `nam7`, `eur3`) are not Cloud Run regions: pick a region inside them (`us-central1` for `nam5` and `nam7`, `europe-west1` for `eur3`).",
     default: "us-central1",
     input: select([...LOCATION_OPTIONS]),
   }),
