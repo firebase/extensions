@@ -28,17 +28,14 @@
 import { Expression } from "firebase-functions/params";
 import { describe, expect, test, vi } from "vitest";
 
-vi.mock("firebase-admin", async () => {
-  const actual = await vi.importActual<typeof import("firebase-admin")>(
-    "firebase-admin"
-  );
-  return {
-    ...actual,
-    apps: [],
-    initializeApp: vi.fn(),
-    storage: vi.fn(() => ({ bucket: vi.fn(() => ({})) })),
-  };
-});
+vi.mock("firebase-admin/app", () => ({
+  getApps: vi.fn(() => []),
+  initializeApp: vi.fn(),
+}));
+
+vi.mock("firebase-admin/storage", () => ({
+  getStorage: vi.fn(() => ({ bucket: vi.fn(() => ({})) })),
+}));
 
 import { CONFIG_EXPRESSIONS } from "../src/config";
 import { generateResizedImage } from "../src/index";
