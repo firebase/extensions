@@ -202,6 +202,11 @@ collection. The extension carried the same limitation (its backfill task queue
 was disabled and never deployed), so this is not a regression, but the code is
 gone rather than dormant: only documents written after you deploy are translated.
 
+The status reporting went with it. That backfill ended by writing its translated
+and error counts to the instance's processing state, which the Firebase console
+displayed. Kits have no deploy-time status surface at all, so nothing here
+reports into one.
+
 ### The trigger is 2nd gen
 
 `fstranslate` is a 2nd gen Firestore function where the extension was 1st gen.
