@@ -189,6 +189,12 @@ deploy unless you set `FIREBASE_FUNCTIONS_DEFAULT_REGION` when running
 `firebase deploy`. Placement needs firebase-tools 15.28.0 or later. Note that
 changing an existing instance's region deletes and recreates the function.
 
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the function correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
 ### Unchanged
 
 - The trigger fires on creates of direct children of the watched path, and the

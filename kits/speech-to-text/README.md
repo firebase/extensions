@@ -230,6 +230,12 @@ values during deploy discovery, so the function silently falls back to the
 no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already
 carried `BUCKET_REGION`) can itself move the function on your next deploy.
 
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the function correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
 With `BUCKET_REGION` unset or empty, the function declares no region and the
 Firebase CLI resolves one at deploy time: it keeps the region it is already
 deployed in, and on a first deploy lands in `us-central1` unless you set the

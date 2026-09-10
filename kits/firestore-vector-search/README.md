@@ -335,13 +335,14 @@ is honored.
 
 Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
 `.env` values during deploy discovery, so the functions silently fall back to
-the no-region behavior below. Two consequences worth knowing before you
-deploy. Upgrading the CLI (or this kit, if your `.env` already carried
-`DATABASE_REGION`) can itself trigger a region move on your next deploy. And on
-a fresh interactive install the value you enter at the prompt only takes effect
-from the second deploy: the first deploy computes the region before the prompt
-runs, so it lands in `us-central1` and the next deploy moves the
-functions.
+the no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already carried
+`DATABASE_REGION`) can itself trigger a region move on your next deploy.
+
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the functions correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
 
 With `DATABASE_REGION` unset or empty, the functions declare no region and the
 Firebase CLI resolves one at deploy time: it keeps the region they are
