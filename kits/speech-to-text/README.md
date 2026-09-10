@@ -220,9 +220,12 @@ gen. Its service account needs `roles/eventarc.eventReceiver` and
 - There is no backfill for audio already in the bucket, as before.
 - The `complete` and `fail` payloads. Typed pipeline failures still carry the
   failure and the object name, and an unexpected error is still published as
-  `{ error }`. An `Error`'s `message` and `stack` are not enumerable, so
-  subscribers still receive `{"error":{}}` for those and have to read the
-  function logs; a thrown non-error still arrives with its `name` and `message`.
+  `{ error }`. The error is serialised as-is, so subscribers receive whatever
+  enumerable fields it has: a plain `Error` gives `{"error":{}}` (`message` and
+  `stack` are not enumerable) and you have to read the function logs, while a
+  Cloud Storage `ApiError` gives `code`, `errors`, `response` and `message`
+  because it assigns those as own properties. A thrown non-error still arrives
+  with its `name` and `message`.
 
 ## API surface
 

@@ -85,10 +85,41 @@ describe("events", () => {
       type: "firebase.extensions.storage-transcribe-audio.v1.fail",
       data: { error: err },
     });
-    // Parity with the extension: `message` and `stack` are not enumerable, so
-    // subscribers receive `{"error":{}}` for a genuine `Error`.
+    // Parity with the extension: for a plain `Error`, `message` and `stack` are
+    // not enumerable, so subscribers receive `{"error":{}}`. Richer errors keep
+    // whatever own properties they set (see the `ApiError` case below).
     const payload = publish.mock.calls[0][0];
     expect(JSON.parse(JSON.stringify(payload)).data).toEqual({ error: {} });
+  });
+
+  test("keeps the enumerable fields of a Storage ApiError in the fail payload", async () => {
+    process.env.EVENTARC_CHANNEL = "projects/p/locations/l/channels/c";
+    const events = await import("../src/events");
+    events.setupEventChannel();
+
+    // Shaped like @google-cloud/common's `ApiError`, which assigns `code`,
+    // `errors`, `response` and `message` as own (enumerable) properties.
+    const apiError = new Error() as Error & {
+      code: number;
+      errors: { message: string }[];
+      response: { statusCode: number };
+    };
+    apiError.code = 404;
+    apiError.errors = [{ message: "Not Found" }];
+    apiError.response = { statusCode: 404 };
+    apiError.message = "Not Found";
+
+    await events.recordErrorEvent(apiError);
+
+    const payload = publish.mock.calls[0][0];
+    expect(JSON.parse(JSON.stringify(payload)).data).toEqual({
+      error: {
+        code: 404,
+        errors: [{ message: "Not Found" }],
+        response: { statusCode: 404 },
+        message: "Not Found",
+      },
+    });
   });
 
   test("keeps the name and message of a thrown non-error in the fail payload", async () => {

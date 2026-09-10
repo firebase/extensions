@@ -83,11 +83,14 @@ export const recordFailureEvent = async (
 /**
  * Publishes the `fail` event for an unexpected error thrown by the pipeline.
  *
- * The error is published as-is to keep the payload identical to the extension's.
- * An `Error`'s `message` and `stack` are not enumerable, so a genuine `Error`
- * serialises to `{"error":{}}`, while the plain object `errorFromAny` builds for
- * a thrown non-error keeps its `name` and `message`. Anything richer would be a
- * payload change for existing subscribers.
+ * The error is published as-is to keep the payload identical to the extension's,
+ * so subscribers receive whatever enumerable fields the thrown error has. A
+ * plain `Error` serialises to `{"error":{}}` because `message` and `stack` are
+ * not enumerable; a Cloud Storage `ApiError` assigns `code`, `errors`,
+ * `response` and `message` as own properties and keeps them; and the plain
+ * object `errorFromAny` builds for a thrown non-error keeps its `name` and
+ * `message`. Normalising any of this would be a payload change for existing
+ * subscribers.
  *
  * @param error - The error that aborted processing.
  */
