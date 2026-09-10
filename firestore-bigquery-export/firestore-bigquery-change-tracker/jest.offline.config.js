@@ -51,7 +51,7 @@ const toIgnorePattern = (suite) =>
 module.exports = {
   ...baseConfig,
   testPathIgnorePatterns: [
-    "/node_modules/",
+    ...(baseConfig.testPathIgnorePatterns || ["/node_modules/"]),
     ...liveProjectSuites.map(toIgnorePattern),
   ],
 };
