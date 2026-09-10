@@ -15,7 +15,7 @@
  */
 
 import { Expression } from "firebase-functions/params";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { envDeployOptions } from "../src/config";
 
@@ -91,5 +91,35 @@ describe("envDeployOptions function region", () => {
   test("empty DATABASE_REGION omits the region option", () => {
     setDatabaseRegion("");
     expect(envDeployOptions()).not.toHaveProperty("region");
+  });
+});
+
+describe("generateMessage deploy region", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  async function importRegion(
+    databaseRegion: string | undefined
+  ): Promise<string[] | undefined> {
+    vi.resetModules();
+    vi.stubEnv("DATABASE_REGION", databaseRegion);
+    const { generateMessage } = await import("../src/index");
+
+    return (generateMessage as unknown as { __endpoint: { region?: string[] } })
+      .__endpoint.region;
+  }
+
+  test("a multi-region database location places the function in a Cloud Run region", async () => {
+    expect(await importRegion("nam5")).toEqual(["us-central1"]);
+  });
+
+  test("a regional database location places the function in that region", async () => {
+    expect(await importRegion("europe-west2")).toEqual(["europe-west2"]);
+  });
+
+  test("no database location leaves the function without a region", async () => {
+    expect(await importRegion(undefined)).toBeUndefined();
   });
 });

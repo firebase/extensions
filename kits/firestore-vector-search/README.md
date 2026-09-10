@@ -344,6 +344,15 @@ places the functions correctly. If you instead run `firebase deploy` with the
 value still missing from `.env`, the prompt comes after discovery has already
 chosen a region, so your answer only takes effect on the following deploy.
 
+One interaction to know about if you use the Vertex AI embedding provider. The
+functions call Vertex AI in whatever region they run in, so pinning them to your
+database's location also moves the Vertex AI call there. `EMBEDDING_PROVIDER`'s
+own description says the Vertex AI provider is supported only in `us-central1`,
+so with `EMBEDDING_PROVIDER=vertex` and a database outside `us-central1` you may
+need `GCLOUD_LOCATION` to send the embedding calls elsewhere. Before this
+parameter existed the embedding functions were unplaced and ran in
+`us-central1`, so this is new.
+
 With `DATABASE_REGION` unset or empty, the functions declare no region and the
 Firebase CLI resolves one at deploy time: it keeps the region they are
 already deployed in, and on a first deploy lands in `us-central1` unless you

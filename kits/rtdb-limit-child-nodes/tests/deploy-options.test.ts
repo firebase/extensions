@@ -101,3 +101,29 @@ describe("envDeployOptions function region", () => {
     expect(envDeployOptions()).not.toHaveProperty("region");
   });
 });
+
+describe("rtdblimit deploy region", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  async function importRegion(
+    databaseRegion: string | undefined
+  ): Promise<string[] | undefined> {
+    vi.resetModules();
+    vi.stubEnv("DATABASE_REGION", databaseRegion);
+    const { rtdblimit } = await import("../src/index");
+
+    return (rtdblimit as unknown as { __endpoint: { region?: string[] } })
+      .__endpoint.region;
+  }
+
+  test("the database location places the function in that region", async () => {
+    expect(await importRegion("europe-west1")).toEqual(["europe-west1"]);
+  });
+
+  test("no database location leaves the function without a region", async () => {
+    expect(await importRegion(undefined)).toBeUndefined();
+  });
+});

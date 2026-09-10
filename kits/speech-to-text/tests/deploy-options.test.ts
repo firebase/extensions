@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Expression } from "firebase-functions/params";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { envDeployOptions } from "../src/config";
 
@@ -90,5 +90,35 @@ describe("envDeployOptions function region", () => {
   test("empty BUCKET_REGION omits the region option", () => {
     setBucketRegion("");
     expect(envDeployOptions()).not.toHaveProperty("region");
+  });
+});
+
+describe("transcribeAudio deploy region", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  async function importRegion(
+    bucketRegion: string | undefined
+  ): Promise<string[] | undefined> {
+    vi.resetModules();
+    vi.stubEnv("BUCKET_REGION", bucketRegion);
+    const { transcribeAudio } = await import("../src/index");
+
+    return (transcribeAudio as unknown as { __endpoint: { region?: string[] } })
+      .__endpoint.region;
+  }
+
+  test("a multi-region bucket location places the function in a Cloud Run region", async () => {
+    expect(await importRegion("eu")).toEqual(["europe-west1"]);
+  });
+
+  test("a regional bucket location places the function in that region", async () => {
+    expect(await importRegion("asia-northeast1")).toEqual(["asia-northeast1"]);
+  });
+
+  test("no bucket location leaves the function without a region", async () => {
+    expect(await importRegion(undefined)).toBeUndefined();
   });
 });
