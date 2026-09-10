@@ -158,8 +158,11 @@ is unavailable, translation fails and the error is written to your function logs
 Deploy to a region with Vertex AI support, or use `gemini-googleai` or
 `translate` instead. This was not exercised against a live deploy.
 
-The function itself has no location setting any more. It deploys to your
-codebase's default region (`us-central1` unless you have changed it).
+Because the function is deployed to the region derived from `DATABASE_REGION`,
+that setting also decides where the Vertex AI call goes. The extension had its
+own install-time location for this; the kit does not, so a database in a region
+without Gemini support needs `GCLOUD_LOCATION` to send the translation calls
+elsewhere.
 
 ### Nothing checks your settings at deploy time
 

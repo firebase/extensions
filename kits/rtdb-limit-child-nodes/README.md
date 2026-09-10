@@ -163,9 +163,10 @@ read from `FIREBASE_CONFIG` rather than injected by the install flow. If your
 `FIREBASE_CONFIG` has no `databaseURL`, there is no default and the CLI prompts
 for the instance at deploy time.
 
-The function itself no longer has a location setting. It deploys to your
-codebase's default region (`us-central1` unless you have changed it) rather than
-the location you picked at install.
+The extension's install-time location is replaced by `DATABASE_REGION`, which
+describes where your database instance lives rather than where you want the
+function, because a 2nd gen database trigger only fires for a function in the
+same region as its instance.
 
 ### The trigger is 2nd gen
 

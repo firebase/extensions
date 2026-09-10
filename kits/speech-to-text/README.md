@@ -178,11 +178,13 @@ it if it is missing, but any string is accepted and a bad value surfaces as a
 Speech-to-Text error per file, with the failure recorded on the Firestore
 document and in the `fail` event.
 
-### The function has no location setting
+### `LOCATION` is replaced by `BUCKET_REGION`
 
-`LOCATION` is gone. The function deploys to your codebase's default region
-(`us-central1` unless you have changed it) rather than the immutable location you
-picked at install.
+The extension's immutable `LOCATION` is gone. The function is placed by
+`BUCKET_REGION` instead, which describes where your bucket lives rather than
+where you want the function, because a 2nd gen storage trigger only fires for a
+function in a region its bucket accepts. See
+[BUCKET_REGION decides where the function runs](#bucket_region-decides-where-the-function-runs).
 
 ### Create the Eventarc channel yourself for events
 
