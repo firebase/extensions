@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
+import * as firestoreV1 from "firebase-functions/v1/firestore";
 import { toEventContext } from "../src/event-context";
 
 /**
@@ -40,7 +41,7 @@ describe("toEventContext", () => {
         service: "firestore.googleapis.com",
         name: "projects/demo-project/databases/(default)/documents/translations/id1",
       },
-      params: { messageId: "id1" },
+      params: {},
     });
   });
 
@@ -52,9 +53,51 @@ describe("toEventContext", () => {
     );
   });
 
-  test("passes the trigger wildcards through unchanged", () => {
+  // 1st gen read `context.params` off the trigger path registered in code, and
+  // the extension registered `.document(process.env.COLLECTION_PATH)` with no
+  // `{wildcard}` segment, so subscribers always saw `{}`. The 2nd gen event
+  // does carry the yaml wildcards, and they must not leak onto the wire.
+  test("drops the 2nd gen event params the extension never published", () => {
     const params = { messageId: "id2" };
 
-    expect(toEventContext({ ...event, params }).params).toEqual(params);
+    expect(toEventContext({ ...event, params }).params).toEqual({});
+  });
+});
+
+/**
+ * The behavioural oracle for the empty `params` above: run the extension's own
+ * 1st gen registration through the real `firebase-functions` v1 code path and
+ * read the `context` it built.
+ */
+describe("the 1st gen context the extension actually published", () => {
+  test("leaves params empty for the extension's wildcard-free trigger path", async () => {
+    vi.stubEnv("GCLOUD_PROJECT", "demo-project");
+    // The extension registered
+    // `functions.firestore.document(process.env.COLLECTION_PATH).onWrite(...)`
+    // (firestore-translate-text/functions/src/index.ts:46-47) and this is the
+    // parameter's default value.
+    const triggerPath = "translations";
+    let published: unknown;
+
+    const cloudFunction = firestoreV1
+      .document(triggerPath)
+      .onWrite(async (_change, context) => {
+        published = context.params;
+      });
+
+    await (cloudFunction as any)(
+      { oldValue: {}, value: {} },
+      {
+        eventId: "event-1",
+        timestamp: "2026-01-01T00:00:00.000Z",
+        eventType: "google.firestore.document.write",
+        resource: {
+          service: "firestore.googleapis.com",
+          name: `projects/demo-project/databases/(default)/documents/${triggerPath}`,
+        },
+      }
+    );
+
+    expect(published).toEqual({});
   });
 });

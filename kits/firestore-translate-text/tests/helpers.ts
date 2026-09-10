@@ -118,10 +118,11 @@ export function makeEvent(
 /**
  * The 1st gen `EventContext` the extension published inside its `onStart` and
  * `onCompletion` payloads, as rebuilt from the event `makeEvent` produces.
+ *
+ * `params` is empty because the extension's code-side trigger path carried no
+ * wildcards, so 1st gen `context.params` was always `{}`.
  */
-export function expectedEventContext(
-  params: Record<string, string> = { messageId: "id1" }
-) {
+export function expectedEventContext() {
   return {
     eventId: EVENT_ID,
     timestamp: EVENT_TIME,
@@ -130,7 +131,7 @@ export function expectedEventContext(
       service: "firestore.googleapis.com",
       name: `projects/${EVENT_PROJECT}/databases/${EVENT_DATABASE}/documents/${EVENT_DOCUMENT}`,
     },
-    params,
+    params: {},
   };
 }
 

@@ -157,7 +157,7 @@ describe("events", () => {
           service: "firestore.googleapis.com",
           name: "projects/demo-project/databases/(default)/documents/translations/id1",
         },
-        params: { messageId: "id1" },
+        params: {},
       });
     }
   });

@@ -47,6 +47,12 @@ const FIRESTORE_SERVICE = "firestore.googleapis.com";
  * off it. `FirestoreEvent` carries the same information under different names,
  * so the published payload keeps its original shape instead of following the
  * 2nd gen handler signature.
+ *
+ * `params` stays empty on purpose. 1st gen filled `context.params` from the
+ * trigger path registered in code (`_makeParams` in `firebase-functions`
+ * matches wildcards against that path), and the extension registered
+ * `.document(process.env.COLLECTION_PATH)`, which has no `{wildcard}` segment.
+ * Subscribers therefore always saw `{}`, never the yaml wildcards.
  */
 export function toEventContext(
   event: FirestoreEvent<unknown, Record<string, string>>
@@ -59,6 +65,6 @@ export function toEventContext(
       service: FIRESTORE_SERVICE,
       name: `projects/${event.project}/databases/${event.database}/documents/${event.document}`,
     },
-    params: event.params,
+    params: {},
   };
 }
