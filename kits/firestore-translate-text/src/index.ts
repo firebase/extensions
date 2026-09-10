@@ -19,7 +19,12 @@ import { getFirestore } from "firebase-admin/firestore";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
-import { CONFIG_EXPRESSIONS, configFromEnv, googleAiApiKey } from "./config";
+import {
+  CONFIG_EXPRESSIONS,
+  configFromEnv,
+  envFunctionRegion,
+  googleAiApiKey,
+} from "./config";
 import * as events from "./events";
 import {
   type ResolvedTranslateConfig,
@@ -105,8 +110,11 @@ function getContext(): HandlerContext {
   return context;
 }
 
+const functionRegion = envFunctionRegion();
+
 export const fstranslate = onDocumentWritten(
   {
+    ...(functionRegion ? { region: functionRegion } : {}),
     document: CONFIG_EXPRESSIONS.document,
     secrets: [googleAiApiKey],
   },
