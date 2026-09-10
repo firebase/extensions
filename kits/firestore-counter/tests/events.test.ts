@@ -16,16 +16,9 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { toEventContext } from "../src/event-context";
+import { makeEvent } from "./helpers";
 
-/** A shard write on the `{collection}/{counter=**}/_counter_shards_/{shardId}` trigger. */
-const SHARD_WRITE = {
-  id: "event-1",
-  time: "2026-01-01T00:00:00.000Z",
-  project: "demo-project",
-  database: "(default)",
-  document: "pages/home/_counter_shards_/0000",
-  params: { collection: "pages", counter: "home", shardId: "0000" },
-} as any;
+const SHARD_WRITE = makeEvent();
 
 const publish = vi.fn();
 const channel = vi.fn(() => ({ publish }));
@@ -155,8 +148,9 @@ describe("event publishing", () => {
     });
     await events.recordCompletionEvent({ context });
 
-    // `firebase-admin` sends the payload as `JSON.stringify(data)`, so this is
-    // what a subscriber of the extension's events actually reads.
+    // A JSON round-trip of the built context: `firebase-admin/eventarc` is
+    // mocked here, so this checks the payload survives serialisation, not the
+    // real publisher.
     expect(publish.mock.calls.length).toBe(2);
     for (const [event] of publish.mock.calls) {
       expect(JSON.parse(JSON.stringify(event.data)).context).toEqual({

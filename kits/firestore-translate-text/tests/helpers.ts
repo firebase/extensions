@@ -121,6 +121,9 @@ export function makeEvent(
  *
  * `params` is empty because the extension's code-side trigger path carried no
  * wildcards, so 1st gen `context.params` was always `{}`.
+ *
+ * The resource name is spelled out literally so the assertion cannot repeat a
+ * mistake made by the code under test.
  */
 export function expectedEventContext() {
   return {
@@ -129,7 +132,7 @@ export function expectedEventContext() {
     eventType: "google.firestore.document.write",
     resource: {
       service: "firestore.googleapis.com",
-      name: `projects/${EVENT_PROJECT}/databases/${EVENT_DATABASE}/documents/${EVENT_DOCUMENT}`,
+      name: "projects/demo-project/databases/(default)/documents/translations/id1",
     },
     params: {},
   };

@@ -17,23 +17,15 @@
 import { describe, expect, test, vi } from "vitest";
 import * as firestoreV1 from "firebase-functions/v1/firestore";
 import { toEventContext } from "../src/event-context";
+import { makeEvent } from "./helpers";
 
 /**
  * The extension published its 1st gen handler's `context` verbatim, so these
  * assertions pin the fields subscribers read off it.
  */
 describe("toEventContext", () => {
-  const event = {
-    id: "event-1",
-    time: "2026-01-01T00:00:00.000Z",
-    project: "demo-project",
-    database: "(default)",
-    document: "pages/home/_counter_shards_/0000",
-    params: { collection: "pages", counter: "home", shardId: "0000" },
-  } as any;
-
   test("rebuilds the 1st gen event context from a 2nd gen event", () => {
-    expect(toEventContext(event)).toEqual({
+    expect(toEventContext(makeEvent())).toEqual({
       eventId: "event-1",
       timestamp: "2026-01-01T00:00:00.000Z",
       eventType: "google.firestore.document.write",
@@ -46,7 +38,7 @@ describe("toEventContext", () => {
   });
 
   test("names the resource under the event's own database", () => {
-    const context = toEventContext({ ...event, database: "counters" });
+    const context = toEventContext(makeEvent({ database: "counters" }));
 
     expect(context.resource.name).toBe(
       "projects/demo-project/databases/counters/documents/pages/home/_counter_shards_/0000"
@@ -60,7 +52,19 @@ describe("toEventContext", () => {
   test("drops the 2nd gen event params the extension never published", () => {
     const params = { collection: "docs", counter: "a/b/c", shardId: "0001" };
 
-    expect(toEventContext({ ...event, params }).params).toEqual({});
+    expect(toEventContext(makeEvent({ params })).params).toEqual({});
+  });
+
+  // `time` is a required string on the 2nd gen `CloudEvent`, so a missing time
+  // is unreachable in production and making this throw would add a failure mode
+  // the extension never had. This pins what happens instead: `timestamp` is
+  // undefined and `JSON.stringify` drops the key, so a subscriber that reads
+  // `context.timestamp` would see nothing at all rather than a wrong value.
+  test("drops the timestamp key when the event carries no time", () => {
+    const context = toEventContext(makeEvent({ time: undefined }));
+
+    expect(context.timestamp).toBeUndefined();
+    expect(JSON.parse(JSON.stringify(context))).not.toHaveProperty("timestamp");
   });
 });
 

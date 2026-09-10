@@ -214,7 +214,7 @@ Cloud Translation API is still required whichever provider you choose.
   behave as before.
 - Translations are still written in a transaction, and each `onSuccess` event
   still carries the output field name and the translations.
-- The four event payloads: `onStart` still carries `{change, context}` and
+- The event payloads: `onStart` still carries `{change, context}` and
   `onCompletion` still carries `{context}`, with `context.eventId`,
   `context.timestamp`, `context.eventType`, `context.resource` and an empty
   `context.params`, as in the extension: its trigger path had no wildcards, so
