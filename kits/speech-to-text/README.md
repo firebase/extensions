@@ -134,27 +134,40 @@ ffmpeg transcode to LINEAR16, the same long-running recognition request, the sam
 per-channel transcript map, the same Firestore progress document and the same two
 Eventarc events. Every setting keeps its extension environment variable name and
 default, so a `.env` copied from your installed instance needs no value changes.
-What changes is where the intermediate audio file is written, how long the
-function may run, and what is no longer checked for you.
+What changes is how long the function may run and what is no longer checked
+for you.
 
-### The transcoded copy no longer lands under `tmp/`
+### Where the outputs land
 
-The extension named the transcoded WAV after the local temporary file it had just
-written, so with no `OUTPUT_STORAGE_PATH` the copy appeared in your bucket as
-`tmp/<original path>.wav`, and with `OUTPUT_STORAGE_PATH: transcriptions` as
-`transcriptions/tmp/<original path>.wav`. The kit names it after the original
-object instead: `<original path>.wav`, or
-`transcriptions/<original path>.wav`.
+Both outputs keep the paths the extension used, so migrated consumers find them
+unchanged, with one deliberate exception noted below. For an input object
+`a.mp3`:
 
-The transcript itself is written to the same place as before
-(`<original path>.wav_transcription.txt`, under `OUTPUT_STORAGE_PATH` when set),
-so only the intermediate audio moves. If you have lifecycle rules, cleanup jobs
-or client code that expect the WAV under a `tmp/` prefix, point them at the new
-path. The transcoded `.wav` still carries the `isTranscodeOutput` metadata flag
-that stops the function from processing its own output. The transcript `.txt` is
-written directly by the Speech-to-Text API and carries no metadata, so its
-finalize event runs the function again; that run creates a transcript document
-for the `.txt` object and marks it `FAILED` with "Invalid content type.".
+| `OUTPUT_STORAGE_PATH` | Transcoded audio | Transcript |
+| --- | --- | --- |
+| unset | `tmp/a.mp3.wav` | `a.mp3.wav_transcription.txt` |
+| `transcriptions` | `transcriptions/tmp/a.mp3.wav` | `transcriptions/a.mp3.wav_transcription.txt` |
+| `transcriptions/` | `transcriptions/tmp/a.mp3.wav` | `transcriptions/a.mp3.wav_transcription.txt` |
+
+The `tmp/` segment on the audio is an artefact of the extension naming the copy
+after its local temporary file, and is kept so lifecycle rules, cleanup jobs and
+client code written against the extension keep finding it. The transcript is
+named after the same object with that segment removed, again as the extension
+did, so it sits beside your input rather than under `tmp/`.
+A trailing slash on `OUTPUT_STORAGE_PATH` is stripped. The extension
+concatenated the prefix raw, so `transcriptions/` gave
+`transcriptions//tmp/a.mp3.wav`, but the Speech-to-Text API rejects a `gs://`
+URI containing a double slash, so that configuration uploaded the audio and
+then failed without ever writing a transcript. The kit strips the slash instead,
+which is the only difference from the extension's paths and only affects a
+configuration that never worked.
+
+The transcoded `.wav` carries the
+`isTranscodeOutput` metadata flag that stops the function from processing its
+own output. The transcript `.txt` is written directly by the Speech-to-Text API
+and carries no metadata, so its finalize event runs the function again; that run
+creates a transcript document for the `.txt` object and marks it `FAILED` with
+"Invalid content type.".
 
 ### The function may now run for nine minutes
 
