@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { defineInt, defineString } from "firebase-functions/params";
+import { defineInt, defineString, select } from "firebase-functions/params";
 import type { DeployTimeOptions, RtdbLimitConfig } from "./export-config";
 import { toTriggerRef } from "./export-config";
+import { normalizeRegion } from "./region";
 
 function defaultDatabaseInstance(): string | undefined {
   try {
@@ -42,6 +43,17 @@ const DATABASE_INSTANCE_VALIDATION = {
 };
 
 const params = {
+  databaseRegion: defineString("DATABASE_REGION", {
+    label: "Realtime Database Instance Location",
+    description:
+      "Where is the Realtime Database instance located? You can check your instance's location at [https://console.firebase.google.com/project/_/database](https://console.firebase.google.com/project/_/database). The function in this kit deploys to this region, which a 2nd gen database trigger requires.",
+
+    input: select({
+      "Iowa (us-central1)": "us-central1",
+      "Belgium (europe-west1)": "europe-west1",
+      "Singapore (asia-southeast1)": "asia-southeast1",
+    }),
+  }),
   // Do not use NODE_PATH: Node.js reserves it for module resolution and will
   // overwrite the param at runtime (and can freeze a bad ref at deploy).
   nodePath: defineString("RTDB_NODE_PATH", {
@@ -117,7 +129,13 @@ export function envDeployOptions(): DeployTimeOptions {
       ? params.nodePath.toCEL()
       : params.nodePath.value();
 
+  // The region option does not accept a param expression, so the value is read
+  // from `process.env` (populated from `.env` during CLI discovery). Realtime
+  // Database locations are Cloud Run regions already, so no mapping is needed.
+  const region = normalizeRegion(process.env.DATABASE_REGION);
+
   return {
+    ...(region ? { region } : {}),
     ref: toTriggerRef(nodePath),
     instance: params.databaseInstance,
   };

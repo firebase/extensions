@@ -1,1 +1,2 @@
+- feat: add the `DATABASE_REGION` parameter, which places the function in your Realtime Database instance's region, as a 2nd gen database trigger requires. Requires firebase-tools >= 15.28.0; with the parameter unset the function declares no region and the Firebase CLI resolves one at deploy time, as before. Changing the value on an existing instance deletes and recreates the function.
 - Initial release of kit, see README for differences between the legacy extension and this kit

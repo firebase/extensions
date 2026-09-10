@@ -70,3 +70,34 @@ describe("envDeployOptions", () => {
     expect(cel(options.instance)).not.toContain("undefined");
   });
 });
+
+describe("envDeployOptions function region", () => {
+  const original = process.env.DATABASE_REGION;
+
+  function setDatabaseRegion(value?: string): void {
+    if (value === undefined) {
+      delete process.env.DATABASE_REGION;
+    } else {
+      process.env.DATABASE_REGION = value;
+    }
+  }
+
+  afterEach(() => {
+    setDatabaseRegion(original);
+  });
+
+  test("the database location places the function in that region", () => {
+    setDatabaseRegion("europe-west1");
+    expect(envDeployOptions().region).toBe("europe-west1");
+  });
+
+  test("unset DATABASE_REGION omits the region option", () => {
+    setDatabaseRegion(undefined);
+    expect(envDeployOptions()).not.toHaveProperty("region");
+  });
+
+  test("empty DATABASE_REGION omits the region option", () => {
+    setDatabaseRegion("");
+    expect(envDeployOptions()).not.toHaveProperty("region");
+  });
+});

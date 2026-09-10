@@ -84,6 +84,7 @@ Realtime Database instance.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
+| `databaseRegion` | `DATABASE_REGION` | yes | (prompted) | Realtime Database instance location; also places the function |
 | `nodePath` | `RTDB_NODE_PATH` | no | `messages` | Parent path whose children are limited |
 | `maxCount` | `MAX_COUNT` | no | `100` | Maximum child nodes to retain |
 | `databaseInstance` | `SELECTED_DATABASE_INSTANCE` | yes* | from `FIREBASE_CONFIG` when present | RTDB instance id |
@@ -173,6 +174,20 @@ gen. Its service account needs `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of `roles/firebasedatabase.admin`; the Firebase CLI
 grants these for you. This otherwise only matters if you have alerting keyed to
 function generation.
+
+### DATABASE_REGION decides where the function runs
+
+`DATABASE_REGION` tells the kit where your Realtime Database instance lives, and
+the function is deployed to that region. A 2nd gen database trigger only fires
+for a function in the same region as its instance, so this has to agree with the
+instance you set. Database locations are Cloud Run regions already, so there is
+nothing to map; the value is matched case-insensitively.
+
+With `DATABASE_REGION` unset or empty, the function declares no region and the
+Firebase CLI resolves one at deploy time, landing in `us-central1` on a first
+deploy unless you set `FIREBASE_FUNCTIONS_DEFAULT_REGION` when running
+`firebase deploy`. Placement needs firebase-tools 15.28.0 or later. Note that
+changing an existing instance's region deletes and recreates the function.
 
 ### Unchanged
 

@@ -31,6 +31,8 @@ export interface ResolvedRtdbLimitConfig {
 export interface DeployTimeOptions {
   ref: string | Expression<string>;
   instance: string | Expression<string>;
+  /** Cloud Run region for the function; omitted when `DATABASE_REGION` is unset. */
+  region?: string;
 }
 
 function trimDatabasePath(path: string): string {
