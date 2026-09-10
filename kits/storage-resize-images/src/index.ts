@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { getApps, initializeApp } from "firebase-admin/app";
-import { getStorage } from "firebase-admin/storage";
+import * as admin from "firebase-admin";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onObjectFinalized } from "firebase-functions/v2/storage";
@@ -70,8 +69,8 @@ function getContext(): HandlerContext {
   }
 
   const resolved = resolveResizeImagesConfig(configFromEnv());
-  if (getApps().length === 0) {
-    initializeApp();
+  if (admin.apps.length === 0) {
+    admin.initializeApp();
   }
 
   events.setupEventChannel();
@@ -79,7 +78,7 @@ function getContext(): HandlerContext {
 
   ctx = {
     config: resolved,
-    storage: getStorage(),
+    storage: admin.storage(),
   };
   return ctx;
 }
