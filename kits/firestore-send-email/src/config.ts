@@ -197,6 +197,7 @@ const params = {
       "Set to true to enable a secure connection (TLS/SSL) when using OAuth2 authentication for the SMTP server.",
 
     default: true,
+    input: select({ Yes: true, No: false }),
   }),
   clientId: defineSecret("CLIENT_ID", {
     label: "OAuth2 Client ID",

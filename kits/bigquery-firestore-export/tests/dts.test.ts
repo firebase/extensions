@@ -85,6 +85,7 @@ describe("constructUpdateTransferConfigRequest", () => {
     const client = clientWithTransferConfig({
       name: "projects/p/locations/us/transferConfigs/c",
       destinationDatasetId: "analytics",
+      displayName: "Users export",
       schedule: "every 24 hours",
       notificationPubsubTopic:
         "projects/test-project/topics/kit-users-export-processMessages",
@@ -106,6 +107,63 @@ describe("constructUpdateTransferConfigRequest", () => {
     );
 
     expect(request.updateMask?.paths).toEqual(["params"]);
+  });
+
+  test("updates the display name when it changed", async () => {
+    const client = clientWithTransferConfig({
+      name: "projects/p/locations/us/transferConfigs/c",
+      destinationDatasetId: "analytics",
+      displayName: "Old export name",
+      schedule: "every 24 hours",
+      notificationPubsubTopic:
+        "projects/test-project/topics/kit-users-export-processMessages",
+      params: {
+        fields: {
+          query: { stringValue: config.queryString },
+          destination_table_name_template: {
+            stringValue: 'users_{run_time|"%H%M%S"}',
+          },
+          partitioning_field: { stringValue: "created_at" },
+        },
+      },
+    });
+
+    const request = await constructUpdateTransferConfigRequest(
+      client,
+      "projects/p/locations/us/transferConfigs/c",
+      config
+    );
+
+    expect(request.updateMask?.paths).toEqual(["display_name"]);
+    expect(request.transferConfig?.displayName).toBe("Users export");
+  });
+
+  test("leaves the display name out of the mask when unchanged", async () => {
+    const client = clientWithTransferConfig({
+      name: "projects/p/locations/us/transferConfigs/c",
+      destinationDatasetId: "analytics",
+      displayName: "Users export",
+      schedule: "every 12 hours",
+      notificationPubsubTopic:
+        "projects/test-project/topics/kit-users-export-processMessages",
+      params: {
+        fields: {
+          query: { stringValue: config.queryString },
+          destination_table_name_template: {
+            stringValue: 'users_{run_time|"%H%M%S"}',
+          },
+          partitioning_field: { stringValue: "created_at" },
+        },
+      },
+    });
+
+    const request = await constructUpdateTransferConfigRequest(
+      client,
+      "projects/p/locations/us/transferConfigs/c",
+      config
+    );
+
+    expect(request.updateMask?.paths).toEqual(["schedule"]);
   });
 
   test("rejects clearing an existing partitioning field", async () => {

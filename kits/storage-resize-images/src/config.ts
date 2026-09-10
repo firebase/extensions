@@ -83,12 +83,22 @@ const params = {
       "Delete only on successful resize attempts": "on_success",
     }),
   }),
-  makePublic: defineBoolean("MAKE_PUBLIC", {
+  // A string param, unlike the sibling `IS_ANIMATED` / `REGENERATE_TOKEN`
+  // booleans: the CLI's select prompt compares its `default` against
+  // `option.value.toString()` (firebase-tools `promptSelect`), so a non-string
+  // default never matches an option and the first option is highlighted
+  // instead. The extension's default is `false` ("No"), but a `defineBoolean`
+  // here left "Yes" preselected, so pressing Enter stored `MAKE_PUBLIC=true`
+  // and made every resized image public. Declaring the default as the string
+  // `"false"` preselects "No" as the extension did. Stored values stay
+  // `true`/`false`, so no existing `.env` needs editing.
+  makePublic: defineString("MAKE_PUBLIC", {
     label: "Make resized images public",
     description:
       "Do you want to make the resized images public automatically? So you can access them by URL. For example: https://storage.googleapis.com/{bucket}/{path}",
 
-    default: false,
+    default: "false",
+    input: select({ Yes: "true", No: "false" }),
   }),
   resizedImagesPath: defineString("RESIZED_IMAGES_PATH", {
     label: "Cloud Storage path for resized images",
@@ -186,8 +196,16 @@ const params = {
     description: "Keep animation of GIF and WEBP formats.",
 
     default: true,
-    input: select({ True: true, "No (1st frame only)": false }),
+    input: select({ Yes: true, "No (1st frame only)": false }),
   }),
+  // The extension preselected 1 GB; the CLI highlighted 512 MB, because
+  // `promptSelect` compares its `default` against `option.value.toString()`,
+  // so the int `1024` matches nothing and the first option wins
+  // (firebase/firebase-tools#11053). Unlike `MAKE_PUBLIC` this cannot be
+  // declared as a string: it also feeds `availableMemoryMb` as
+  // `{{ params.FUNCTION_MEMORY }}`, which the CLI resolves as a number only
+  // for an int param. So it stays an int and 1 GB is listed first. Labels,
+  // stored values and the default are unchanged; only the order differs.
   memory: defineInt("FUNCTION_MEMORY", {
     label: "Cloud Function memory",
     description:
@@ -195,8 +213,8 @@ const params = {
 
     default: 1024,
     input: select({
-      "512 MB": 512,
       "1 GB": 1024,
+      "512 MB": 512,
       "2 GB": 2048,
       "4 GB": 4096,
       "8 GB": 8192,
@@ -208,6 +226,7 @@ const params = {
       "Should resized images have a new access token assigned to them,  different from the original image?",
 
     default: true,
+    input: select({ Yes: true, No: false }),
   }),
   contentFilterLevel: defineString("CONTENT_FILTER_LEVEL", {
     label: "Content filter level",
@@ -294,7 +313,8 @@ export function configFromEnv(): ResizeImagesConfig {
     bucket: params.bucket.value(),
     sizes: params.sizes.value(),
     deleteOriginal: params.deleteOriginal.value() as DeleteOriginalFile,
-    makePublic: params.makePublic.value(),
+    // Matches the extension's `process.env.MAKE_PUBLIC === "true"`.
+    makePublic: params.makePublic.value() === "true",
     resizedImagesPath: optional(params.resizedImagesPath.value()),
     includePathList: optional(params.includePathList.value()),
     excludePathList: optional(params.excludePathList.value()),

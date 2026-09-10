@@ -103,8 +103,8 @@ the CLI connects them to the function at deploy time.
 | `topK` | `TOP_K` | no | (empty) | Top-k |
 | `candidateCount` | `CANDIDATE_COUNT` | no | `1` | Candidate count |
 | `maxOutputTokens` | `MAX_OUTPUT_TOKENS` | no | (empty) | Max output tokens |
-| `enableOverrides` | `ENABLE_DISCUSSION_OPTION_OVERRIDES` | no | `false` | Per-discussion option overrides |
-| `enableGenkitMonitoring` | `ENABLE_GENKIT_MONITORING` | no | `false` | Enable Genkit monitoring |
+| `enableOverrides` | `ENABLE_DISCUSSION_OPTION_OVERRIDES` | no | `no` | Per-discussion option overrides (`yes` or `no`) |
+| `enableGenkitMonitoring` | `ENABLE_GENKIT_MONITORING` | no | `no` | Enable Genkit monitoring (`yes` or `no`) |
 | `harmHateSpeech` | `HARM_CATEGORY_HATE_SPEECH` | no | `HARM_BLOCK_THRESHOLD_UNSPECIFIED` | Harm threshold |
 | `harmDangerous` | `HARM_CATEGORY_DANGEROUS_CONTENT` | no | `HARM_BLOCK_THRESHOLD_UNSPECIFIED` | Harm threshold |
 | `harmHarassment` | `HARM_CATEGORY_HARASSMENT` | no | `HARM_BLOCK_THRESHOLD_UNSPECIFIED` | Harm threshold |
@@ -141,16 +141,9 @@ to your own functions codebase. The generation logic, the Firestore trigger, the
 `status` state machine, the per-discussion overrides and the safety settings are
 all ported verbatim. Config keeps the same environment variable names, so a
 `.env` copied from your installed instance is close to a lift-and-shift, with
-four exceptions below: the boolean toggles, the two region settings, and the API
-key secret.
-
-### Change `yes` and `no` to `true` and `false`
-
-`ENABLE_DISCUSSION_OPTION_OVERRIDES` and `ENABLE_GENKIT_MONITORING` were
-`yes`/`no` dropdowns. They are now booleans that count as enabled only for the
-exact value `true`. A copied `.env` carrying `yes` deploys without complaint and
-silently leaves the feature off, so per-discussion overrides stop being read and
-Genkit monitoring stops reporting.
+the exceptions below: the two region settings and the API key secret.
+`ENABLE_DISCUSSION_OPTION_OVERRIDES` and `ENABLE_GENKIT_MONITORING` keep the
+extension's `yes` / `no` values.
 
 ### Pick your Cloud Functions region, or you get us-central1
 
