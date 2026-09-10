@@ -216,8 +216,9 @@ Cloud Translation API is still required whichever provider you choose.
   still carries the output field name and the translations.
 - The event payloads: `onStart` still carries `{change, context}` and
   `onCompletion` still carries `{context}`, with `context.eventId`,
-  `context.timestamp`, `context.eventType`, `context.resource` and the
-  `messageId` wildcard under `context.params`.
+  `context.timestamp`, `context.eventType`, `context.resource`, the
+  `messageId` wildcard under `context.params`, and the empty
+  `context.notSupported` object the 1st gen backend always sent.
 
 ## API surface
 

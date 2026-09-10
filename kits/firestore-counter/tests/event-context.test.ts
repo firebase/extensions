@@ -34,7 +34,19 @@ describe("toEventContext", () => {
         name: "projects/demo-project/databases/(default)/documents/pages/home/_counter_shards_/0000",
       },
       params: { collection: "pages", counter: "home", shardId: "0000" },
+      notSupported: {},
     });
+  });
+
+  // The 1st gen backend put an empty `notSupported` object in every Firestore
+  // event body, and the extension published the context verbatim, so the key
+  // was part of the payload subscribers received. It has no 2nd gen source, so
+  // the kit writes the same literal.
+  test("keeps the empty notSupported object the 1st gen context carried", () => {
+    const context = toEventContext(makeEvent());
+
+    expect(context.notSupported).toEqual({});
+    expect(JSON.parse(JSON.stringify(context))).toHaveProperty("notSupported");
   });
 
   test("names the resource under the event's own database", () => {

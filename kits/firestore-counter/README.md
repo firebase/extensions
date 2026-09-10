@@ -195,7 +195,8 @@ carry on getting them from the extension repo.
 - The three functions, the event types they publish and their payloads:
   `onStart` still carries `{change, context}` and `onCompletion` still carries
   `{context}`, with `context.eventId`, `context.timestamp`, `context.eventType`,
-  `context.resource` and the trigger wildcards under `context.params`. Aside
+  `context.resource`, the trigger wildcards under `context.params`, and the
+  empty `context.notSupported` object the 1st gen backend always sent. Aside
   from the worker point above.
 
 ## API surface

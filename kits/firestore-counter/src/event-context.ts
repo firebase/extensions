@@ -29,6 +29,7 @@ export interface EventContext {
     name: string;
   };
   params: Record<string, string>;
+  notSupported: Record<string, never>;
 }
 
 /**
@@ -58,6 +59,12 @@ const FIRESTORE_SERVICE = "firestore.googleapis.com";
  * `timestamp` falls back to the current time. `event.time` is a required field
  * on a 2nd gen `CloudEvent`, but 1st gen `context.timestamp` was always a
  * string, and an absent key would drop out of `JSON.stringify` entirely.
+ *
+ * `notSupported` is an empty object the 1st gen backend put in every Firestore
+ * event body. `firebase-functions` never reads it, but the extension handed the
+ * whole `context` to Eventarc, so subscribers saw the key. It carries no
+ * information and has no 2nd gen source, so the kit publishes the same empty
+ * object as a literal to keep the published shape identical.
  */
 export function toEventContext(
   event: FirestoreEvent<unknown, Record<string, string>>
@@ -71,5 +78,6 @@ export function toEventContext(
       name: `projects/${event.project}/databases/${event.database}/documents/${event.document}`,
     },
     params: event.params,
+    notSupported: {},
   };
 }

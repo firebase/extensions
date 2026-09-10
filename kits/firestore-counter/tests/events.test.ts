@@ -162,6 +162,7 @@ describe("event publishing", () => {
           name: "projects/demo-project/databases/(default)/documents/pages/home/_counter_shards_/0000",
         },
         params: { collection: "pages", counter: "home", shardId: "0000" },
+        notSupported: {},
       });
     }
   });

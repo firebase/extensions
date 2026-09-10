@@ -134,6 +134,7 @@ export function expectedEventContext(
       name: "projects/demo-project/databases/(default)/documents/translations/id1",
     },
     params,
+    notSupported: {},
   };
 }
 
