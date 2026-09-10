@@ -250,6 +250,10 @@ params:
         value: false
     default: false
     required: true
+    validationRegex: "^((false|jpg|jpeg|png|tif|tiff|webp|gif|avif|jfif)(,(false|jpg|jpeg|png|tif|tiff|webp|gif|avif|jfif))*)?$"
+    validationErrorMessage: >
+      Invalid image type. Supported values are: jpeg, webp, png, tiff, gif,
+      avif, or "original" (false) to keep the original file type.
 
   - param: OUTPUT_OPTIONS
     label: Output options for selected formats
