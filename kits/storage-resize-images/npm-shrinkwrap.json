@@ -1,12 +1,12 @@
 {
   "name": "@firebase-function-kits/storage-resize-images",
-  "version": "0.0.2-rc.5",
+  "version": "0.0.2-rc.6",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@firebase-function-kits/storage-resize-images",
-      "version": "0.0.2-rc.5",
+      "version": "0.0.2-rc.6",
       "license": "Apache-2.0",
       "dependencies": {
         "@genkit-ai/vertexai": "^1.2.0",
