@@ -92,12 +92,14 @@ describe("handleDocumentWrite", () => {
 
     expect(translateClassMethod).not.toHaveBeenCalled();
     expect(firestore.update).not.toHaveBeenCalled();
+    // #3149 made this branch publish the pair; the payload is the extension's
+    // 1st gen `{change, context}` shape, with no change to carry.
     expect(events.recordStartEvent).toHaveBeenCalledWith({
-      data: undefined,
-      params: event.params,
+      change: undefined,
+      context: expectedEventContext(),
     });
     expect(events.recordCompletionEvent).toHaveBeenCalledWith({
-      params: event.params,
+      context: expectedEventContext(),
     });
   });
 

@@ -62,7 +62,7 @@ export async function handleDocumentWrite(
   await events.recordStartEvent({ change: event.data, context });
 
   if (!event.data) {
-    await events.recordCompletionEvent({ params: event.params });
+    await events.recordCompletionEvent({ context });
     return;
   }
 
