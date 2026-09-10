@@ -88,6 +88,7 @@ the CLI connects them to the function at deploy time.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
+| `databaseRegion` | `DATABASE_REGION` | yes | (prompted) | Firestore database location; also places the function |
 | `provider` | `GENERATIVE_AI_PROVIDER` | no | `google-ai` | `google-ai` or `vertex-ai` |
 | `apiKey` | `API_KEY` | secret | — | Google AI API key |
 | `model` | `MODEL` | no | `gemini-2.5-flash` | Model id |
@@ -200,6 +201,38 @@ overrides `candidateCount` to 1 gets no `candidates` field even when
 `COLLECTION_NAME` were validated when you installed the extension. Nothing
 validates them now: a non-numeric value is parsed to `NaN` and passed to the
 model call rather than being caught at deploy time.
+
+### DATABASE_REGION decides where the function runs
+
+`DATABASE_REGION` tells the kit where your Firestore database lives, and the
+function is deployed to the Cloud Run region derived from it, next to the
+database. Regional Firestore locations (`europe-west2`, `us-east1`, ...) are
+used as-is; the multi-region locations map to a Cloud Run region inside them -
+`nam5` and `nam7` to `us-central1`, `eur3` to `europe-west1` - because they are
+not Cloud Run regions themselves and would fail the deploy. The value is
+matched case-insensitively. The Firestore trigger always fires in the
+database's own region, whatever region the function run in.
+
+If you copied `DATABASE_REGION` into your `.env` from an extension install, it
+is honored.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
+`.env` values during deploy discovery, so the function silently fall back to
+the no-region behavior below. Two consequences worth knowing before you
+deploy. Upgrading the CLI (or this kit, if your `.env` already carried
+`DATABASE_REGION`) can itself trigger a region move on your next deploy. And on
+a fresh interactive install the value you enter at the prompt only takes effect
+from the second deploy: the first deploy computes the region before the prompt
+runs, so it lands in `us-central1` and the next deploy moves the
+function.
+
+With `DATABASE_REGION` unset or empty, the function declares no region and the
+Firebase CLI resolves one at deploy time: it keeps the region it is
+already deployed in, and on a first deploy lands in `us-central1` unless you
+set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+`firebase deploy`. Careful with that variable: it applies to every no-region
+function in the deploy, not just this kit. Note that changing an existing
+instance's region deletes and recreates the function.
 
 ### Unchanged
 
