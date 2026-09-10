@@ -44,8 +44,9 @@ const liveProjectSuites = [
 
 // Jest matches these against absolute paths, which use "\" on Windows, so
 // anchor on the separator rather than on rootDir.
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const toIgnorePattern = (suite) =>
-  "[/\\\\]" + suite.replace(/\./g, "\\.").replace(/\//g, "[/\\\\]") + "$";
+  "[/\\\\]" + escapeRegExp(suite).replace(/\//g, "[/\\\\]") + "$";
 
 module.exports = {
   ...baseConfig,
