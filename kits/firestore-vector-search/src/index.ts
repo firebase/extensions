@@ -28,6 +28,7 @@ import {
 import {
   CONFIG_EXPRESSIONS,
   configFromEnv,
+  envFunctionRegion,
   geminiApiKey,
   instanceIdFromEnv,
   openAiApiKey,
@@ -87,23 +88,37 @@ const FUNCTION_SECRETS = [geminiApiKey, openAiApiKey];
 // Only the task functions reach getSingleEmbedding, but every function here
 // resolves the same config (which reads the provider keys), and the extension
 // bound its secrets to all functions in the instance -- so bind them uniformly.
+/*
+ * All functions of a kit instance deploy to one region: the task queues are
+ * resolved from the enqueuing function's own region at runtime, so a function
+ * placed elsewhere would enqueue against a queue that does not exist.
+ */
+const REGION_OPTION = (() => {
+  const region = envFunctionRegion();
+
+  return region ? ({ region } as const) : ({} as const);
+})();
 const DEFAULT_TASK_OPTIONS = {
+  ...REGION_OPTION,
   memory: "512MiB",
   timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
   secrets: FUNCTION_SECRETS,
 } as const;
 const EMBEDDING_TASK_OPTIONS = {
+  ...REGION_OPTION,
   memory: "1GiB",
   timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
   retryConfig: { maxAttempts: TASK_MAX_ATTEMPTS },
   secrets: FUNCTION_SECRETS,
 } as const;
 const FIRESTORE_FUNCTION_OPTIONS = {
+  ...REGION_OPTION,
   memory: "512MiB",
   timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
   secrets: FUNCTION_SECRETS,
 } as const;
 const CALLABLE_FUNCTION_OPTIONS = {
+  ...REGION_OPTION,
   memory: "512MiB",
   secrets: FUNCTION_SECRETS,
 } as const;
