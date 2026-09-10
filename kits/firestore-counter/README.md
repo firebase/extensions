@@ -81,6 +81,7 @@ loads them at deploy time and prompts for any required values that are missing.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
+| `databaseRegion` | `DATABASE_REGION` | yes | (prompted) | Firestore database location; also places the functions |
 | `internalStatePath` | `INTERNAL_STATE_PATH` | no | `_firebase_ext_/sharded_counter` | Firestore path for controller state |
 | `scheduleFrequencyMinutes` | `SCHEDULE_FREQUENCY` | no | `1` | Controller schedule frequency (minutes) |
 
@@ -191,6 +192,38 @@ The extension repo shipped counter clients for Web, Node, Android, iOS and Dart
 plus a stress test app. The npm package contains only the functions. Nothing
 about the shard layout changed, so the clients you already use keep working;
 carry on getting them from the extension repo.
+
+### DATABASE_REGION decides where the functions run
+
+`DATABASE_REGION` tells the kit where your Firestore database lives, and the
+functions are deployed to the Cloud Run region derived from it, next to the
+database. Regional Firestore locations (`europe-west2`, `us-east1`, ...) are
+used as-is; the multi-region locations map to a Cloud Run region inside them -
+`nam5` and `nam7` to `us-central1`, `eur3` to `europe-west1` - because they are
+not Cloud Run regions themselves and would fail the deploy. The value is
+matched case-insensitively. The Firestore trigger always fires in the
+database's own region, whatever region the functions run in.
+
+If you copied `DATABASE_REGION` into your `.env` from an extension install, it
+is honored.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
+`.env` values during deploy discovery, so the functions silently fall back to
+the no-region behavior below. Two consequences worth knowing before you
+deploy. Upgrading the CLI (or this kit, if your `.env` already carried
+`DATABASE_REGION`) can itself trigger a region move on your next deploy. And on
+a fresh interactive install the value you enter at the prompt only takes effect
+from the second deploy: the first deploy computes the region before the prompt
+runs, so it lands in `us-central1` and the next deploy moves the
+functions.
+
+With `DATABASE_REGION` unset or empty, the functions declare no region and the
+Firebase CLI resolves one at deploy time: it keeps the region they are
+already deployed in, and on a first deploy lands in `us-central1` unless you
+set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+`firebase deploy`. Careful with that variable: it applies to every no-region
+function in the deploy, not just this kit. Note that changing an existing
+instance's region deletes and recreates the functions.
 
 ### Unchanged
 
