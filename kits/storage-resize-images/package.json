@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@genkit-ai/vertexai": "^1.2.0",
-    "@google-cloud/storage": "^7.21.0",
+    "@google-cloud/storage": "^8.1.0",
     "genkit": "^1.2.0",
     "mkdirp": "^3.0.1",
     "p-queue": "^6.6.2",
@@ -40,7 +40,7 @@
     "uuid": "^11.0.5"
   },
   "devDependencies": {
-    "firebase-admin": "^14.1.0",
+    "firebase-admin": "^14.4.0",
     "firebase-functions": "^7.3.3-rc.2",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
