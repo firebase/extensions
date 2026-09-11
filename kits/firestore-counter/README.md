@@ -208,14 +208,16 @@ chosen a region, so your answer only takes effect on the following deploy.
 
 With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
 no region and the Firebase CLI resolves one at deploy time: it keeps the region
-they are already deployed in, and on a first deploy lands in `us-central1`
-unless you set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when
-running `firebase deploy`. Careful with that variable: it applies to every
-no-region function in the deploy, not just this kit. Omitting the line is not
-the same as an empty one: a non-interactive deploy fails with `In
-non-interactive mode but have no value for the following environment variables:
-DATABASE_REGION`. Note that changing an existing instance's region deletes and
-recreates the functions.
+they are already deployed in, and on a first deploy it resolves each function
+separately, so `onWrite` and `worker` land next to the database and
+`controllerCore` lands in `us-central1`, splitting the instance across two
+regions. Setting the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable
+when running `firebase deploy` puts all of them in that region instead. Careful
+with that variable: it applies to every no-region function in the deploy, not
+just this kit. Omitting the line is not the same as an empty one: a
+non-interactive deploy fails with `In non-interactive mode but have no value
+for the following environment variables: DATABASE_REGION`. Note that changing
+an existing instance's region deletes and recreates the functions.
 
 ### Unchanged
 

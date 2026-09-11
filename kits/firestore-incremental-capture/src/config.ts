@@ -95,7 +95,7 @@ const params = {
   location: defineString("LOCATION", {
     label: "Cloud Functions location",
     description:
-      "Where should the functions in this kit be deployed? A 2nd gen Firestore trigger only fires for a function in the same region as its database, so this must match your Firestore database location. You can check it at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases). Multi-region databases (`nam5`, `nam7`, `eur3`) are not Cloud Run regions: pick a region inside them (`us-central1` for `nam5` and `nam7`, `europe-west1` for `eur3`).",
+      "Where should the functions in this kit be deployed? Pick the region matching your Firestore database location so the functions sit next to the data, and note that this is also the Dataflow restore job's region unless you set DATAFLOW_REGION. You can check your database location at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases). Multi-region databases (`nam5`, `nam7`, `eur3`) are not Cloud Run regions: pick a region inside them (`us-central1` for `nam5` and `nam7`, `europe-west1` for `eur3`). A database in a region not listed here is not supported.",
     default: "us-central1",
     input: select([...LOCATION_OPTIONS]),
   }),

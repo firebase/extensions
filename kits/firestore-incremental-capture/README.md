@@ -349,13 +349,17 @@ then uninstall the extension. A brief overlap writes duplicate changelog rows
 for the same writes; replay ranks one row per document, so restores are
 unaffected.
 
-### LOCATION has to match your database
+### Setting LOCATION
 
-The functions in this kit are deployed to `LOCATION`, and a 2nd gen Firestore
-trigger only fires for a function in the same region as its database, so
-`LOCATION` has to match your Firestore database's location. It defaults to
-`us-central1`, which is wrong for any database provisioned elsewhere and fails
-the deploy rather than firing nothing.
+The functions in this kit are deployed to `LOCATION`, which defaults to
+`us-central1`. Set it to your Firestore database's location so the functions sit
+next to the data they read and write. The Firestore trigger fires either way: it
+is created in the database's own region and delivers across regions, so a
+`LOCATION` that does not match costs latency, not events.
+
+`LOCATION` is also the fallback region for the Dataflow restore job when
+`DATAFLOW_REGION` is empty, which is why the offered regions are limited to the
+ones Dataflow flex templates support.
 
 Multi-region databases (`nam5`, `nam7`, `eur3`) are not Cloud Run regions and
 are not offered: pick a region inside them instead, `us-central1` for `nam5` and

@@ -408,16 +408,19 @@ value still missing from `.env`, the prompt comes after discovery has already
 chosen a region, so your answer only takes effect on the following deploy.
 
 With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
-no region and the Firebase CLI resolves one at deploy time: a function keeps the
-region it is already deployed in, and on a first deploy lands in `us-central1`
-unless you set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when
-running `firebase deploy`. Careful with that variable: it applies to every
-no-region function in the deploy, not just this kit. Omitting the line is not
-the same as an empty one: a non-interactive deploy fails with `In
-non-interactive mode but have no value for the following environment variables:
-DATABASE_REGION`. Note that changing an existing install's function region (via
-this variable or `DATABASE_REGION`) deletes and recreates the functions in the
-new region - new URLs, a recreated task queue, and any in-flight tasks are lost.
+no region and the Firebase CLI resolves one at deploy time: a function keeps
+the region it is already deployed in, and on a first deploy the CLI resolves
+each function separately, so `fsexportbigquery` lands next to the database and
+the task functions land in `us-central1`, splitting the instance across two
+regions. Setting the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable
+when running `firebase deploy` puts all of them in that region instead. Careful
+with that variable: it applies to every no-region function in the deploy, not
+just this kit. Omitting the line is not the same as an empty one: a
+non-interactive deploy fails with `In non-interactive mode but have no value
+for the following environment variables: DATABASE_REGION`. Note that changing
+an existing install's function region (via this variable or `DATABASE_REGION`)
+deletes and recreates the functions in the new region - new URLs, a recreated
+task queue, and any in-flight tasks are lost.
 
 ### Defaults
 

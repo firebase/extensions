@@ -135,7 +135,7 @@ const params = {
   embeddingProvider: defineString("EMBEDDING_PROVIDER", {
     label: "LLM",
     description:
-      "Which embedding API do you want to use? Note: **Vertex AI provider** is supported only with the **us-central1** location.",
+      "Which embedding API do you want to use? Note: the **Vertex AI provider** embeds in whatever region the functions run in, which is derived from the Firestore database location. A few regions have no Vertex AI embedding endpoint: `africa-south1`, `europe-north2`, `europe-west10`, `europe-west12` and `northamerica-south1`.",
 
     default: "gemini",
     input: select({

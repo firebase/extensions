@@ -344,24 +344,28 @@ value still missing from `.env`, the prompt comes after discovery has already
 chosen a region, so your answer only takes effect on the following deploy.
 
 One interaction to know about if you use the Vertex AI embedding provider. The
-functions call Vertex AI in whatever region they run in, so pinning them to your
-database's location also moves the Vertex AI call there. `EMBEDDING_PROVIDER`'s
-own description says the Vertex AI provider is supported only in `us-central1`,
-so with `EMBEDDING_PROVIDER=vertex` and a database outside `us-central1` the
-embedding calls go to a region that provider may not serve, and there is no
-separate override to send them elsewhere. Before this parameter existed the
+functions call Vertex AI in whatever region they run in, so pinning them to
+your database's location also moves the Vertex AI call there, and there is no
+separate override to send it elsewhere. Vertex AI serves `gemini-embedding-001`
+in most regions but not all: `africa-south1`, `europe-north2` and
+`europe-west12` report the publisher model as not found, and `europe-west10`
+and `northamerica-south1` have no Vertex AI endpoint at all. With a database in
+one of those and `EMBEDDING_PROVIDER=vertex`, embedding fails and the error is
+written to the document's status field. Before this parameter existed the
 embedding functions were unplaced and ran in `us-central1`, so this is new.
 
 With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
 no region and the Firebase CLI resolves one at deploy time: it keeps the region
-they are already deployed in, and on a first deploy lands in `us-central1`
-unless you set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when
-running `firebase deploy`. Careful with that variable: it applies to every
-no-region function in the deploy, not just this kit. Omitting the line is not
-the same as an empty one: a non-interactive deploy fails with `In
-non-interactive mode but have no value for the following environment variables:
-DATABASE_REGION`. Note that changing an existing instance's region deletes and
-recreates the functions.
+they are already deployed in, and on a first deploy it resolves each function
+separately, so `embedOnWrite` and `queryOnWrite` land next to the database and
+the task and callable functions land in `us-central1`, splitting the instance
+across two regions. Setting the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment
+variable when running `firebase deploy` puts all of them in that region
+instead. Careful with that variable: it applies to every no-region function in
+the deploy, not just this kit. Omitting the line is not the same as an empty
+one: a non-interactive deploy fails with `In non-interactive mode but have no
+value for the following environment variables: DATABASE_REGION`. Note that
+changing an existing instance's region deletes and recreates the functions.
 
 ### Unchanged
 
