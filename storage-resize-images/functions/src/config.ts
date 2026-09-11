@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { supportedImageContentTypeMap } from "./global";
+
 export type SafetyThreshold =
   | "BLOCK_LOW_AND_ABOVE"
   | "BLOCK_MEDIUM_AND_ABOVE"
@@ -38,6 +40,47 @@ function deleteOriginalFile(deleteType) {
 
 function paramToArray(param) {
   return typeof param === "string" ? param.split(",") : undefined;
+}
+
+/**
+ * IMAGE_TYPE value that keeps the original file type instead of converting
+ * to a preferred type. See extension.yaml for the declared options.
+ */
+const KEEP_ORIGINAL_IMAGE_TYPE = "false";
+
+const supportedImageTypes = new Set([
+  ...Object.keys(supportedImageContentTypeMap),
+  KEEP_ORIGINAL_IMAGE_TYPE,
+]);
+
+/**
+ * Parses the IMAGE_TYPE parameter and rejects values that are not a
+ * supported image type. Without this check, an out-of-band value (for
+ * example from a hand-edited .env file) silently produces an unconverted
+ * file with a bogus extension instead of failing fast.
+ *
+ * Empty entries are ignored: they are what a deployed function receives
+ * when the multiSelect parameter has nothing selected.
+ */
+function paramToImageTypes(param) {
+  const imageTypes = paramToArray(param)?.filter(
+    (imageType) => imageType !== ""
+  );
+  if (imageTypes) {
+    const invalidTypes = imageTypes.filter(
+      (imageType) => !supportedImageTypes.has(imageType)
+    );
+    if (invalidTypes.length > 0) {
+      throw new Error(
+        `Invalid IMAGE_TYPE value(s): ${invalidTypes.join(
+          ", "
+        )}. Supported values are: ${Array.from(supportedImageTypes).join(
+          ", "
+        )}.`
+      );
+    }
+  }
+  return imageTypes;
 }
 
 function allowAnimated(sharpOptions = "{}", overrideIsAnimated) {
@@ -82,7 +125,7 @@ export const config = {
   excludePathList: paramToArray(process.env.EXCLUDE_PATH_LIST),
   failedImagesPath: process.env.FAILED_IMAGES_PATH,
   deleteOriginalFile: deleteOriginalFile(process.env.DELETE_ORIGINAL_FILE),
-  imageTypes: paramToArray(process.env.IMAGE_TYPE),
+  imageTypes: paramToImageTypes(process.env.IMAGE_TYPE),
   sharpOptions: process.env.SHARP_OPTIONS || "{}",
   outputOptions: process.env.OUTPUT_OPTIONS,
   animated: allowAnimated(process.env.SHARP_OPTIONS, process.env.IS_ANIMATED),
