@@ -104,16 +104,19 @@ describe("translateDocument", () => {
     );
   });
 
-  test("treats a null input as a single translation, uncoerced", async () => {
+  test("routes a null input through translateMultiple, as the extension does", async () => {
     const snapshot = makeSnapshot({ input: null });
 
-    await translateDocument(
-      snapshot,
-      makeService({ extractLanguages: vi.fn(() => ["en"]) }),
-      makeConfig()
-    );
+    await expect(
+      translateDocument(
+        snapshot,
+        makeService({ extractLanguages: vi.fn(() => ["en"]) }),
+        makeConfig()
+      )
+    ).rejects.toThrow(TypeError);
 
-    expect(translateString).toHaveBeenCalledWith(null, "en");
+    expect(translateString).not.toHaveBeenCalled();
+    expect(updateTranslations).not.toHaveBeenCalled();
   });
 
   test("exits early when the input field is a translation output path", async () => {
