@@ -436,7 +436,7 @@ resolves the location itself, so a mismatched `.env` keeps working.
 To export to a different location, point the kit at a new dataset: set a new
 `DATASET_ID` together with the new `DATASET_LOCATION` and redeploy. The
 redeploy lifecycle task creates the new dataset in the new location; the old
-dataset is left behind with its tables and view, as in the extension when the
+dataset is left behind with its table and view, as in the extension when the
 dataset id changes. Existing documents do not follow. Backfill them with
 `fs-bq-import-collection` from the extension repository (see "Tooling that is
 not included" below).
