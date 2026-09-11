@@ -15,7 +15,11 @@
  */
 
 import { isDeepStrictEqual } from "node:util";
-import { type DocumentSnapshot, FieldValue } from "firebase-admin/firestore";
+import {
+  type DocumentSnapshot,
+  FieldPath,
+  FieldValue,
+} from "firebase-admin/firestore";
 import { getFunctions } from "firebase-admin/functions";
 import type { Change, FirestoreEvent } from "firebase-functions/v2/firestore";
 import type { CallableRequest } from "firebase-functions/v2/https";
@@ -52,10 +56,9 @@ export type VectorWriteEvent = FirestoreEvent<
  * document that has reached one of these is never processed again, so each
  * document is embedded once and a failure is never retried.
  *
- * The kit itself writes only `COMPLETED` and `ERROR`. `PROCESSING` (which the
- * extension's `writeStartEvent` wrote before each embed, as an in-flight
- * marker) and `BACKFILLED` reach this guard only on documents an installed
- * extension instance left behind, and are listed so those are still skipped.
+ * `FAILED_BACKFILL`, which the extension's backfill handler wrote, is
+ * deliberately absent: the extension left such a document to `embedOnWrite`,
+ * which embedded it on the next write to its input field.
  */
 const TERMINAL_STATES = new Set([
   "PROCESSING",
@@ -64,13 +67,42 @@ const TERMINAL_STATES = new Set([
   "BACKFILLED",
 ]);
 
+/**
+ * The extension keyed each document's status by the id of the process that
+ * wrote it, which for the embedding process was the extension instance id:
+ *
+ * ```
+ * status: { <instance id>: { state, startTime, updateTime, completeTime, createTime } }
+ * ```
+ *
+ * The kit writes the same path, using the kit instance id, so a collection an
+ * installed extension embedded needs no migration when the kit instance keeps
+ * the extension's instance name.
+ */
+function statusPath(
+  config: ResolvedVectorSearchConfig,
+  ...rest: string[]
+): FieldPath {
+  return new FieldPath(config.statusFieldName, config.instanceId, ...rest);
+}
+
+function statusState(
+  data: FirebaseFirestore.DocumentData,
+  config: ResolvedVectorSearchConfig
+): string | undefined {
+  const status = data[config.statusFieldName] as
+    | Record<string, { state?: unknown } | undefined>
+    | undefined;
+  const state = status?.[config.instanceId]?.state;
+  return typeof state === "string" ? state : undefined;
+}
+
 function isInTerminalState(
   data: FirebaseFirestore.DocumentData,
-  statusFieldName: string
+  config: ResolvedVectorSearchConfig
 ): boolean {
-  const status = data[statusFieldName] as { state?: unknown } | undefined;
-  const state = status?.state;
-  return typeof state === "string" && TERMINAL_STATES.has(state);
+  const state = statusState(data, config);
+  return state !== undefined && TERMINAL_STATES.has(state);
 }
 
 /**
@@ -108,37 +140,65 @@ export async function handleEmbedOnWrite(
   if (!event.data?.after.exists) return;
   logs.start("embedOnWrite");
 
-  const data = event.data.after.data() ?? {};
-  if (isInTerminalState(data, ctx.config.statusFieldName)) return;
+  const after = event.data.after;
+  const data = after.data() ?? {};
+  if (isInTerminalState(data, ctx.config)) return;
   const input = data[ctx.config.inputFieldName];
   // The extension's `shouldProcess` required a truthy string, so an empty input
   // was skipped and the document was left with no status at all. Embedding it
   // here would write a terminal status that the guard above never releases, and
   // filling the input in later would no longer embed the document.
   if (typeof input !== "string" || input === "") return;
+  // The extension declared `fieldDependencyArray: [inputField]`, and its
+  // `Process.shouldProcess` ran only when one of those fields changed. A write
+  // that leaves the input untouched is therefore not embedded, which is also
+  // what stops the status writes below from re-entering this handler.
+  const before = event.data.before.exists
+    ? event.data.before.data()
+    : undefined;
+  if (before && before[ctx.config.inputFieldName] === input) return;
+
+  // The extension's `writeStartEvent` marked the document in flight before
+  // embedding it, and the guard above treats `PROCESSING` as final, so a
+  // crashed embed leaves the document parked in that state.
+  const startTime = FieldValue.serverTimestamp();
+  const existingCreateTime = (
+    data[ctx.config.statusFieldName] as
+      | Record<string, { createTime?: unknown } | undefined>
+      | undefined
+  )?.[ctx.config.instanceId]?.createTime;
+  await after.ref.update(statusPath(ctx.config), {
+    state: "PROCESSING",
+    startTime,
+    createTime: existingCreateTime ?? after.createTime,
+    updateTime: startTime,
+  });
 
   try {
     const embedding = await embedClient(ctx).getSingleEmbedding(input);
-    await event.data.after.ref.set(
-      {
-        [ctx.config.outputFieldName]: FieldValue.vector(embedding),
-        [ctx.config.statusFieldName]: { state: "COMPLETED" },
-      },
-      { merge: true }
+    const updateTime = FieldValue.serverTimestamp();
+    await after.ref.update(
+      ctx.config.outputFieldName,
+      FieldValue.vector(embedding),
+      statusPath(ctx.config, "state"),
+      "COMPLETED",
+      statusPath(ctx.config, "updateTime"),
+      updateTime,
+      statusPath(ctx.config, "completeTime"),
+      updateTime
     );
     logs.complete("embedOnWrite");
   } catch (err) {
-    await event.data.after.ref.set(
-      {
-        [ctx.config.statusFieldName]: {
-          state: "ERROR",
-          message: err instanceof Error ? err.message : String(err),
-        },
-      },
-      { merge: true }
+    // The extension recorded the failure on the document and returned, leaving
+    // the error itself only in the logs. Rethrowing would mark the invocation
+    // failed and, with retries enabled, re-embed from the same stale event.
+    await after.ref.update(
+      statusPath(ctx.config, "state"),
+      "ERROR",
+      statusPath(ctx.config, "updateTime"),
+      FieldValue.serverTimestamp()
     );
     logs.error("embedOnWrite", err);
-    throw err;
   }
 }
 
@@ -282,22 +342,42 @@ async function embedPath(
   const ref = ctx.firestore.doc(path);
   const snapshot = await ref.get();
   if (!snapshot.exists) return;
-  const input = snapshot.get(ctx.config.inputFieldName);
+  const data = snapshot.data() ?? {};
+  const input = data[ctx.config.inputFieldName];
   // Matches the extension's `shouldBackfill` and `shouldUpdate`, which both
   // required a truthy string, and keeps an empty document out of the terminal
   // status that `handleEmbedOnWrite` would then skip forever.
   if (typeof input !== "string" || input === "") return;
-  if (requireExistingEmbedding && !snapshot.get(ctx.config.outputFieldName)) {
+  if (requireExistingEmbedding && !data[ctx.config.outputFieldName]) {
     return;
   }
-  const embedding = await embedClient(ctx).getSingleEmbedding(input);
-  await ref.set(
-    {
-      [ctx.config.outputFieldName]: FieldValue.vector(embedding),
-      [ctx.config.statusFieldName]: { state: "COMPLETED" },
-    },
-    { merge: true }
-  );
+  // The extension's `getValidDocs` skipped any document that already carried a
+  // status other than `BACKFILLED`, so a backfill or an update pass never
+  // re-embedded a document `embedOnWrite` had completed or failed.
+  const state = statusState(data, ctx.config);
+  if (state !== undefined && state !== "BACKFILLED") return;
+
+  try {
+    const embedding = await embedClient(ctx).getSingleEmbedding(input);
+    await ref.update(
+      ctx.config.outputFieldName,
+      FieldValue.vector(embedding),
+      statusPath(ctx.config, "state"),
+      "BACKFILLED",
+      statusPath(ctx.config, "completeTime"),
+      FieldValue.serverTimestamp()
+    );
+  } catch (err) {
+    // The extension marked the document and reported the failure in its task
+    // result rather than throwing, so a failed document was not retried.
+    await ref.update(
+      statusPath(ctx.config, "state"),
+      "FAILED_BACKFILL",
+      statusPath(ctx.config, "completeTime"),
+      FieldValue.serverTimestamp()
+    );
+    logs.error("backfillTask", err);
+  }
 }
 
 async function enqueueBackfillTrigger(ctx: HandlerContext): Promise<void> {
