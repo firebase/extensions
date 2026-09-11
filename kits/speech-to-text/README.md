@@ -229,9 +229,11 @@ inside them - `us` to `us-east1`, `eu` to `europe-west1`, `asia` to
 `asia-east1` - because they are not Cloud Run regions themselves and would fail
 the deploy. The value is matched case-insensitively.
 
-Dual-region buckets (`nam4`, `eur4`, `asia1`, ...) are not in the list and are
-not mapped. Leave `BUCKET_REGION` empty for those and choose the region
-yourself, as described below.
+Dual-region buckets (`nam4`, `eur4`, `asia1`) are not offered as such and are
+not mapped. Pick one of the regions the pair is made of instead, all of which
+are in the list: `us-central1` or `us-east1` for `nam4`, `europe-north1` or
+`europe-west4` for `eur4`, `asia-northeast1` or `asia-northeast2` for `asia1`. A
+trigger in either half of the pair fires for the bucket.
 
 Placement needs firebase-tools 15.28.0 or later - older CLIs do not load `.env`
 values during deploy discovery, so the function silently falls back to the
@@ -244,13 +246,15 @@ places the function correctly. If you instead run `firebase deploy` with the
 value still missing from `.env`, the prompt comes after discovery has already
 chosen a region, so your answer only takes effect on the following deploy.
 
-With `BUCKET_REGION` unset or empty, the function declares no region and the
-Firebase CLI resolves one at deploy time: it keeps the region it is already
-deployed in, and on a first deploy lands in `us-central1` unless you set the
-`FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+With an explicit empty `BUCKET_REGION=` line in `.env`, the function declares no
+region and the Firebase CLI resolves one at deploy time: it keeps the region it
+is already deployed in, and on a first deploy lands in `us-central1` unless you
+set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
 `firebase deploy`. Careful with that variable: it applies to every no-region
-function in the deploy, not just this kit. Note that changing an existing
-instance's region deletes and recreates the function.
+function in the deploy, not just this kit. Omitting the line is not the same as
+an empty one: a non-interactive deploy fails with `In non-interactive mode but
+have no value for the following environment variables: BUCKET_REGION`. Note that
+changing an existing instance's region deletes and recreates the function.
 
 ### Unchanged
 

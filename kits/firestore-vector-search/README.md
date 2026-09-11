@@ -353,13 +353,16 @@ embedding calls go to a region that provider may not serve, and there is no
 separate override to send them elsewhere. Before this parameter existed the
 embedding functions were unplaced and ran in `us-central1`, so this is new.
 
-With `DATABASE_REGION` unset or empty, the functions declare no region and the
-Firebase CLI resolves one at deploy time: it keeps the region they are
-already deployed in, and on a first deploy lands in `us-central1` unless you
-set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
-`firebase deploy`. Careful with that variable: it applies to every no-region
-function in the deploy, not just this kit. Note that changing an existing
-instance's region deletes and recreates the functions.
+With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
+no region and the Firebase CLI resolves one at deploy time: it keeps the region
+they are already deployed in, and on a first deploy lands in `us-central1`
+unless you set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when
+running `firebase deploy`. Careful with that variable: it applies to every
+no-region function in the deploy, not just this kit. Omitting the line is not
+the same as an empty one: a non-interactive deploy fails with `In
+non-interactive mode but have no value for the following environment variables:
+DATABASE_REGION`. Note that changing an existing instance's region deletes and
+recreates the functions.
 
 ### Unchanged
 

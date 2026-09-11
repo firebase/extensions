@@ -184,10 +184,13 @@ for a function in the same region as its instance, so this has to agree with the
 instance you set. Database locations are Cloud Run regions already, so there is
 nothing to map; the value is matched case-insensitively.
 
-With `DATABASE_REGION` unset or empty, the function declares no region and the
-Firebase CLI resolves one at deploy time, landing in `us-central1` on a first
-deploy unless you set `FIREBASE_FUNCTIONS_DEFAULT_REGION` when running
-`firebase deploy`. Placement needs firebase-tools 15.28.0 or later. Note that
+With an explicit empty `DATABASE_REGION=` line in `.env`, the function declares
+no region and the Firebase CLI resolves one at deploy time, landing in
+`us-central1` on a first deploy unless you set
+`FIREBASE_FUNCTIONS_DEFAULT_REGION` when running `firebase deploy`. Omitting the
+line is not the same as an empty one: a non-interactive deploy fails with `In
+non-interactive mode but have no value for the following environment variables:
+DATABASE_REGION`. Placement needs firebase-tools 15.28.0 or later. Note that
 changing an existing instance's region deletes and recreates the function.
 
 `firebase functions:kits:install` and `firebase ext:migrate` prompt for this

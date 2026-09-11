@@ -188,17 +188,19 @@ places the function correctly. If you instead run `firebase deploy` with the
 value still missing from `.env`, the prompt comes after discovery has already
 chosen a region, so your answer only takes effect on the following deploy.
 
-With `DATABASE_REGION` unset or empty, the function declares no region and the
-Firebase CLI resolves one at deploy time: it keeps the region it is already
-deployed in, and on a first deploy lands in `us-central1` unless you set the
-`FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
-`firebase deploy`. Careful with that variable: it applies to every no-region
-function in the deploy, not just this kit. Note that changing an existing
-install's function region deletes and recreates the function in the new
-region. `processQueue` is the kit's only function and nothing reconciles the
-mail collection afterwards, so any document written while the function is gone
-is never delivered. Stop writers and let the collection drain before a deploy
-that moves the region.
+With an explicit empty `DATABASE_REGION=` line in `.env`, the function declares
+no region and the Firebase CLI resolves one at deploy time: it keeps the region
+it is already deployed in, and on a first deploy lands in `us-central1` unless
+you set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when
+running `firebase deploy`. Careful with that variable: it applies to every
+no-region function in the deploy, not just this kit. Omitting the line is not
+the same as an empty one: a non-interactive deploy fails with `In
+non-interactive mode but have no value for the following environment variables:
+DATABASE_REGION`. Note that changing an existing install's function region
+deletes and recreates the function in the new region. `processQueue` is the
+kit's only function and nothing reconciles the mail collection afterwards, so
+any document written while the function is gone is never delivered. Stop writers
+and let the collection drain before a deploy that moves the region.
 
 ### Create the Eventarc channel yourself for events
 
