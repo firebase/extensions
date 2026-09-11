@@ -121,7 +121,7 @@ loads them at deploy time and prompts for any required values that are missing.
 | `datasetId`                      | `DATASET_ID`                        | no       | `firestore_export` | BigQuery dataset                                                   |
 | `tableId`                        | `TABLE_ID`                          | no       | `posts`            | BigQuery changelog table                                           |
 | `databaseRegion`                 | `DATABASE_REGION`                   | yes      | (prompted)         | Firestore database location; also places the functions             |
-| `datasetLocation`                | `DATASET_LOCATION`                  | no       | `us`               | BigQuery dataset location                                          |
+| `datasetLocation`                | `DATASET_LOCATION`                  | no       | `us`               | BigQuery dataset location, used only when the dataset is created   |
 | `database`                       | `DATABASE`                          | no       | `(default)`        | Firestore database id                                              |
 | `bigqueryProjectId`              | `BIGQUERY_PROJECT_ID`               | no       | project id         | Dataset project, if different                                      |
 | `backupCollection`               | `BACKUP_COLLECTION`                 | no       | (empty)            | Strongly recommended: collection for rows whose BigQuery insert failed |
@@ -420,6 +420,26 @@ and any in-flight tasks are lost.
 Two settings now have defaults rather than being passed through empty:
 `DATASET_LOCATION` defaults to `us`, and `BIGQUERY_PROJECT_ID` defaults to the
 project the functions are deployed to.
+
+### DATASET_LOCATION is not immutable
+
+The extension declared `DATASET_LOCATION` as immutable, so a reconfigure could
+not change it; moving the dataset meant uninstalling and reinstalling. The kit
+cannot enforce that: `firebase-functions/params` has no immutability, so a
+redeploy accepts any new value. The value only reaches BigQuery when the
+lifecycle task creates the dataset. On a redeploy the task finds the existing
+dataset by id and skips creation, so the dataset stays where it is and the new
+value is ignored, with no error and no warning. Nothing else reads it: writes,
+views, and the `syncBigQuery` queue address the dataset by id and BigQuery
+resolves the location itself, so a mismatched `.env` keeps working.
+
+To export to a different location, point the kit at a new dataset: set a new
+`DATASET_ID` together with the new `DATASET_LOCATION` and redeploy. The
+redeploy lifecycle task creates the new dataset in the new location; the old
+dataset is left behind with its table and view, as in the extension when the
+dataset id changes. Existing documents do not follow. Backfill them with
+`fs-bq-import-collection` from the extension repository (see "Tooling that is
+not included" below).
 
 ### Tooling that is not included
 
