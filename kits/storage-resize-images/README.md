@@ -23,14 +23,15 @@ below, enables the listed APIs, and attaches the account to every function in
 this kit. Do not set a custom runtime service account for this codebase — it
 conflicts with that automatic setup.
 
-| Role / API                         | Why                                                 |
-| ---------------------------------- | --------------------------------------------------- |
-| `roles/storage.admin`              | read originals and write resized objects            |
-| `roles/aiplatform.user`            | optional content filtering via Vertex AI            |
-| `roles/eventarc.eventReceiver`     | receive Gen2 Storage trigger events                 |
-| `roles/run.invoker`                | allow Eventarc to invoke the Gen2 Cloud Run service |
-| `aiplatform.googleapis.com`        | Vertex AI content filtering, if enabled             |
-| `storage-component.googleapis.com` | use Cloud Storage                                   |
+| Role / API                         | Why                                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------ |
+| `roles/storage.admin`              | read originals and write resized objects                                                   |
+| `roles/aiplatform.user`            | optional content filtering via Vertex AI                                                   |
+| `roles/eventarc.eventReceiver`     | receive Gen2 Storage trigger events                                                        |
+| `roles/run.invoker`                | allow Eventarc to invoke the Gen2 Cloud Run service                                        |
+| `roles/eventarc.publisher`         | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
+| `aiplatform.googleapis.com`        | Vertex AI content filtering, if enabled                                                    |
+| `storage-component.googleapis.com` | use Cloud Storage                                                                          |
 
 ## Usage
 

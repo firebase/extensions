@@ -18,6 +18,7 @@ import type { DocumentSnapshot, Firestore } from "firebase-admin/firestore";
 import type { Change, FirestoreEvent } from "firebase-functions/v2/firestore";
 import type { ScheduledEvent } from "firebase-functions/v2/scheduler";
 import { ControllerStatus, ShardedCounterController } from "./controller";
+import { toEventContext } from "./event-context";
 import * as events from "./events";
 import type { ResolvedCounterConfig } from "./export-config";
 import { ShardedCounterWorker } from "./worker";
@@ -62,7 +63,8 @@ export async function handleShardWrite(
   event: CounterWriteEvent,
   ctx: HandlerContext
 ): Promise<void> {
-  await events.recordStartEvent({ data: event.data, params: event.params });
+  const context = toEventContext(event);
+  await events.recordStartEvent({ change: event.data, context });
   const metadocRef = ctx.firestore.doc(ctx.config.internalStatePath);
   const controller = new ShardedCounterController(
     metadocRef,
@@ -73,7 +75,7 @@ export async function handleShardWrite(
     INLINE_AGGREGATION_LIMIT,
     INLINE_AGGREGATION_TIMEOUT_MS
   );
-  await events.recordCompletionEvent({ params: event.params });
+  await events.recordCompletionEvent({ context });
 }
 
 export async function handleWorker(event: CounterWriteEvent): Promise<void> {

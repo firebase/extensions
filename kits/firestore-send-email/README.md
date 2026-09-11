@@ -22,11 +22,12 @@ Firebase CLI 15.23.0 or later creates that account, grants the roles below,
 and attaches it to every function in this kit. Do not set a custom runtime
 service account for this codebase — it conflicts with that automatic setup.
 
-| Role                           | Why                                                 |
-| ------------------------------ | --------------------------------------------------- |
-| `roles/datastore.user`         | read mail documents and write delivery status       |
-| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events               |
-| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service |
+| Role                           | Why                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------ |
+| `roles/datastore.user`         | read mail documents and write delivery status                                              |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events                                                      |
+| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service                                        |
+| `roles/eventarc.publisher`     | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
 
 ## Usage
 

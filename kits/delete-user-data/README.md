@@ -30,6 +30,7 @@ service account for this codebase — it conflicts with that automatic setup.
 | `roles/pubsub.admin` | publish/subscribe discovery and deletion topics |
 | `roles/eventarc.eventReceiver` | receive Gen2 event triggers |
 | `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
+| `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
 
 ## Usage
 
