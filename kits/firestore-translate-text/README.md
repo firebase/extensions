@@ -160,9 +160,9 @@ Deploy to a region with Vertex AI support, or use `gemini-googleai` or
 
 Because the function is deployed to the region derived from `DATABASE_REGION`,
 that setting also decides where the Vertex AI call goes. The extension had its
-own install-time location for this; the kit does not, so a database in a region
-without Gemini support needs `GCLOUD_LOCATION` to send the translation calls
-elsewhere.
+own install-time location for this; the kit has no separate override, so a
+database in a region where Gemini is unavailable means choosing one of the other
+translation providers.
 
 ### Nothing checks your settings at deploy time
 
@@ -222,10 +222,7 @@ used as-is; the multi-region locations map to a Cloud Run region inside them -
 `nam5` and `nam7` to `us-central1`, `eur3` to `europe-west1` - because they are
 not Cloud Run regions themselves and would fail the deploy. The value is
 matched case-insensitively. The Firestore trigger always fires in the
-database's own region, whatever region the function run in.
-
-If you copied `DATABASE_REGION` into your `.env` from an extension install, it
-is honored.
+database's own region, whatever region the function runs in.
 
 Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
 `.env` values during deploy discovery, so the function silently falls back to

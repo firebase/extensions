@@ -39,7 +39,7 @@ const params = {
   bucketRegion: defineString("BUCKET_REGION", {
     label: "Cloud Storage Bucket Location",
     description:
-      "Where is the Cloud Storage bucket located? You can check your bucket's location at [https://console.cloud.google.com/storage/browser](https://console.cloud.google.com/storage/browser). The function in this kit deploy to the Cloud Run region closest to this location.",
+      "Where is the Cloud Storage bucket located? You can check your bucket's location at [https://console.cloud.google.com/storage/browser](https://console.cloud.google.com/storage/browser). The function in this kit deploys to the Cloud Run region closest to this location.",
 
     input: select({
       "Multi-region (United States)": "us",

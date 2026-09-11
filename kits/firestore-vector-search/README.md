@@ -330,9 +330,6 @@ not Cloud Run regions themselves and would fail the deploy. The value is
 matched case-insensitively. The Firestore trigger always fires in the
 database's own region, whatever region the functions run in.
 
-If you copied `DATABASE_REGION` into your `.env` from an extension install, it
-is honored.
-
 Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
 `.env` values during deploy discovery, so the functions silently fall back to
 the no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already carried
@@ -348,10 +345,10 @@ One interaction to know about if you use the Vertex AI embedding provider. The
 functions call Vertex AI in whatever region they run in, so pinning them to your
 database's location also moves the Vertex AI call there. `EMBEDDING_PROVIDER`'s
 own description says the Vertex AI provider is supported only in `us-central1`,
-so with `EMBEDDING_PROVIDER=vertex` and a database outside `us-central1` you may
-need `GCLOUD_LOCATION` to send the embedding calls elsewhere. Before this
-parameter existed the embedding functions were unplaced and ran in
-`us-central1`, so this is new.
+so with `EMBEDDING_PROVIDER=vertex` and a database outside `us-central1` the
+embedding calls go to a region that provider may not serve, and there is no
+separate override to send them elsewhere. Before this parameter existed the
+embedding functions were unplaced and ran in `us-central1`, so this is new.
 
 With `DATABASE_REGION` unset or empty, the functions declare no region and the
 Firebase CLI resolves one at deploy time: it keeps the region they are

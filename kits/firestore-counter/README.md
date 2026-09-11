@@ -204,9 +204,6 @@ not Cloud Run regions themselves and would fail the deploy. The value is
 matched case-insensitively. The Firestore trigger always fires in the
 database's own region, whatever region the functions run in.
 
-If you copied `DATABASE_REGION` into your `.env` from an extension install, it
-is honored.
-
 Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
 `.env` values during deploy discovery, so the functions silently fall back to
 the no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already carried
