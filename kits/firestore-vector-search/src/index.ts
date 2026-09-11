@@ -66,6 +66,8 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   // Gen2 Firestore triggers need Eventarc receive and run.invoker on the function SA.
   "roles/eventarc.eventReceiver",
   "roles/run.invoker",
+  // No roles/eventarc.publisher here: the extension declares `events:` but never
+  // publishes any of them, so the kit publishes nothing either (see #3094).
 ];
 const REQUIRED_APIS = [
   {
