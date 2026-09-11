@@ -6,9 +6,9 @@
 
 
 
-**Details**: <!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/delete-user-data" package="@firebase/delete-user-data" -->
+**Details**: <!-- FIREBASE_EXTENSION_REPLACEMENT: extension="firebase/delete-user-data" package="@firebase-function-kits/delete-user-data" -->
 
-> **Deprecation Notice:** The Firebase Extension `firebase/delete-user-data` is deprecated. Please migrate to the [`@firebase/delete-user-data`](https://www.npmjs.com/package/@firebase/delete-user-data) package.
+> **Deprecation Notice:** The Firebase Extension `firebase/delete-user-data` is deprecated. Please migrate to the [`@firebase-function-kits/delete-user-data`](https://www.npmjs.com/package/@firebase-function-kits/delete-user-data) package.
 
 Use this extension to automatically delete certain data keyed on a user ID when the user is deleted from Firebase Authentication.
 

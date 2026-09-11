@@ -17,9 +17,9 @@
 import { PubSub } from "@google-cloud/pubsub";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
-import * as functionsV1 from "firebase-functions/v1";
 import type { Role } from "firebase-functions/v2";
-import { requiresRole } from "firebase-functions/v2";
+import { requiresAPI, requiresRole } from "firebase-functions/v2";
+import { onUserDeleted } from "firebase-functions/v2/identity";
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
 import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
 import * as events from "./events";
@@ -43,9 +43,19 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   "roles/eventarc.eventReceiver",
   "roles/run.invoker",
 ];
+const REQUIRED_APIS = [
+  {
+    api: "firestore.googleapis.com",
+    reason: "Deletes user data from Cloud Firestore.",
+  },
+] as const;
 
 for (const role of REQUIRED_ROLES) {
   requiresRole(role);
+}
+
+for (const { api, reason } of REQUIRED_APIS) {
+  requiresAPI(api, reason);
 }
 
 let ctx: HandlerContext | undefined;
@@ -74,15 +84,26 @@ function getContext(): HandlerContext {
   ctx = {
     firestore: getFirestore(resolved.firestoreDatabaseId),
     storage: admin.storage(),
-    database: admin.database(),
+    // Resolved on first use. Without a configured RTDB instance there is no
+    // databaseURL to initialize the app with, and admin.database() throws.
+    get database() {
+      return admin.database();
+    },
     pubsub: new PubSub({ projectId: resolved.projectId }),
     config: resolved,
   };
   return ctx;
 }
 
-export const clearData = functionsV1.auth.user().onDelete((user) => {
-  return handleClear(user.uid, getContext());
+export const clearData = onUserDeleted((event) => {
+  // The Auth event delivers no user record when the payload envelope is empty,
+  // so bail before getContext() rather than initialising the SDKs for nothing.
+  const uid = event.data?.uid;
+  if (!uid) {
+    logs.deletionEventMissingUid(event.id);
+    return;
+  }
+  return handleClear(uid, getContext());
 });
 
 export const handleSearch = onMessagePublished(

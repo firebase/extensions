@@ -14,16 +14,29 @@
  * limitations under the License.
  */
 
+const SECRET_KEY_PATTERN = /api[-_]?key|secret|password|token|credential/i;
+
+/**
+ * Returns a copy of the config with every non-empty, secret-shaped value
+ * replaced by `"<omitted>"`, so config logging never writes a credential to
+ * Cloud Logging. Empty values pass through untouched: they carry no secret,
+ * and masking them would misreport an unconfigured secret as set.
+ */
+export function redactSecrets(config: object): Record<string, unknown> {
+  const redacted: Record<string, unknown> = { ...config };
+  for (const key of Object.keys(redacted)) {
+    if (SECRET_KEY_PATTERN.test(key) && redacted[key]) {
+      redacted[key] = "<omitted>";
+    }
+  }
+  return redacted;
+}
+
 export const messages = {
-  backfillComplete: (successCount: number, errorCount: number) =>
-    `Finshed backfilling translations. ${successCount} translations succeeded, ${errorCount} errors.`,
   complete: () => "Completed execution of extension",
   documentCreatedNoInput: () =>
     "Document was created without an input string, no processing is required",
   documentCreatedWithInput: () => "Document was created with an input string",
-  documentFoundWithInput: () => "Backfill found document with an input string",
-  documentFoundNoInput: () =>
-    "Backfill found document without an input string, no processing is required",
   documentDeleted: () => "Document was deleted, no processing is required",
   documentUpdatedChangedInput: () =>
     "Document was updated, input string has changed",
@@ -34,30 +47,18 @@ export const messages = {
   documentUpdatedUnchangedInput: () =>
     "Document was updated, input string has not changed, no processing is required",
   error: (err: Error) => ["Failed execution of extension", err],
-  enqueueNext: (offset: number) =>
-    `About to enqueue next task, starting at offset ${offset}`,
   fieldNamesNotDifferent: () =>
     "The `Input` and `Output` field names must be different for this extension to function correctly",
-  init: (config = {}) => [
+  init: (config: object = {}) => [
     "Initializing extension with the parameter values",
-    config,
+    redactSecrets(config),
   ],
   inputFieldNameIsOutputPath: () =>
     "The `Input` field name must not be the same as an `Output` path for this extension to function correctly",
-  partialTranslateError: (input: string, reasons: string[], numLanguages) =>
-    `Failed to translate ${input} to ${
-      reasons.length
-    } languages of the requested ${numLanguages}. Reasons: ${reasons.join(
-      "\n"
-    )}`,
-  skippingLanguage: (lang: string) =>
-    `Found existing translation to ${lang}, skipping.`,
-  start: (config = {}) => [
+  start: (config: object = {}) => [
     "Started execution of extension with configuration",
-    config,
+    redactSecrets(config),
   ],
-  translateInputString: (string: string, language: string) =>
-    `Translating string: '${string}' into language(s): '${language}'`,
   translateStringComplete: (
     string: string,
     language: string,

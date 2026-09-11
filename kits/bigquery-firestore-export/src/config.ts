@@ -14,12 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  defineString,
-  expr,
-  projectID,
-  select,
-} from "firebase-functions/params";
+import { defineString, projectID, select } from "firebase-functions/params";
 import type {
   BigqueryFirestoreExportConfig,
   DeployTimeOptions,
@@ -27,31 +22,183 @@ import type {
 } from "./export-config";
 
 const LOG_LEVEL_OPTIONS = ["debug", "info", "warn", "error", "silent"] as const;
-const instanceId = defineString("INSTANCE_ID");
+
+// firebase-tools injects this for kit instances (set to the instance's key in
+// firebase.json) during discovery, in the emulator, and on deployed functions.
+// The FIREBASE_ prefix is reserved in .env files and the params machinery never
+// sees injected values, so it must be a plain env read, not a defineString.
+function instanceIdFromEnv(): string {
+  const instanceId = process.env.FIREBASE_KIT_INSTANCE_ID;
+  if (!instanceId) {
+    throw new Error(
+      "FIREBASE_KIT_INSTANCE_ID is not set. It is provided automatically to " +
+        "kit instances by firebase-tools >= 15.27.0; deploy or emulate this " +
+        "kit with a supported CLI version."
+    );
+  }
+  return instanceId;
+}
+
+// Resolved at import so the topic default is a concrete name at discovery. An
+// unsupported CLI fails the discovery pass here rather than freezing
+// "kit-undefined-processMessages" into the manifest.
+const instanceId = instanceIdFromEnv();
 
 const params = {
-  instanceId,
   bigqueryDatasetLocation: defineString("BIGQUERY_DATASET_LOCATION", {
+    label: "BigQuery Dataset Location",
+    description:
+      "What is the location of the BigQuery dataset referenced in the query?",
+
     default: "US",
+    input: select({
+      "Columbus, Ohio (us-east5)": "us-east5",
+      "Iowa (us-central1)": "us-central1",
+      "Las Vegas (us-west4)": "us-west4",
+      "Los Angeles (us-west2)": "us-west2",
+      "Montréal (northamerica-northeast1)": "northamerica-northeast1",
+      "Northern Virginia (us-east4)": "us-east4",
+      "Oregon (us-west1)": "us-west1",
+      "Salt Lake City (us-west3)": "us-west3",
+      "São Paulo (southamerica-east1)": "southamerica-east1",
+      "Santiago (southamerica-west1)": "southamerica-west1",
+      "South Carolina (us-east1)": "us-east1",
+      "Toronto (northamerica-northeast2)": "northamerica-northeast2",
+      "Delhi (asia-south2)": "asia-south2",
+      "Hong Kong (asia-east2)": "asia-east2",
+      "Jakarta (asia-southeast2)": "asia-southeast2",
+      "Melbourne (australia-southeast2)": "australia-southeast2",
+      "Mumbai (asia-south1)": "asia-south1",
+      "Osaka (asia-northeast2)": "asia-northeast2",
+      "Seoul (asia-northeast3)": "asia-northeast3",
+      "Singapore (asia-southeast1)": "asia-southeast1",
+      "Sydney (australia-southeast1)": "australia-southeast1",
+      "Taiwan (asia-east1)": "asia-east1",
+      "Tokyo (asia-northeast1)": "asia-northeast1",
+      "Belgium (europe-west1)": "europe-west1",
+      "Finland (europe-north1)": "europe-north1",
+      "Frankfurt (europe-west3)": "europe-west3",
+      "London (europe-west2)": "europe-west2",
+      "Madrid (europe-southwest1)": "europe-southwest1",
+      "Milan (europe-west8)": "europe-west8",
+      "Netherlands (europe-west4)": "europe-west4",
+      "Paris (europe-west9)": "europe-west9",
+      "Warsaw (europe-central2)": "europe-central2",
+      "Zürich (europe-west6)": "europe-west6",
+      "US Multi-Region (US)": "US",
+      "EU Mutli-Region (EU)": "EU",
+    }),
   }),
   transferConfigName: defineString("TRANSFER_CONFIG_NAME", { default: "" }),
-  datasetId: defineString("DATASET_ID"),
-  tableName: defineString("TABLE_NAME"),
-  queryString: defineString("QUERY_STRING"),
-  displayName: defineString("DISPLAY_NAME"),
-  partitioningField: defineString("PARTITIONING_FIELD", { default: "" }),
-  schedule: defineString("SCHEDULE"),
+  pubSubTopic: defineString("PUB_SUB_TOPIC", {
+    label: "Pub/Sub Topic",
+    description:
+      "Which Pub/Sub topic should receive BigQuery Data Transfer completion notifications? Leave the default unless you are migrating from the bigquery-firestore-export extension, whose topic is named ext-<instance id>-processMessages. Pointing this at the extension's topic keeps the existing scheduled query's notification settings untouched.",
+
+    default: `kit-${instanceId}-processMessages`,
+    input: {
+      text: {
+        nonEmpty: true,
+        example: "ext-my-instance-processMessages",
+        validationRegex: /^(?!goog)[a-zA-Z][a-zA-Z0-9\-_.~+%]{2,254}$/,
+        validationErrorMessage:
+          "Must be a Pub/Sub topic ID, not a full projects/<project>/topics/<topic> resource name. IDs are 3 to 255 characters, start with a letter, may contain letters, numbers and - _ . ~ + %, and cannot start with goog.",
+      },
+    },
+  }),
+  datasetId: defineString("DATASET_ID", {
+    label: "Dataset ID",
+    description:
+      "What's the BigQuery destination dataset you'd like to use? Each transfer run will write to a table in this destination dataset.",
+    input: {
+      text: {
+        nonEmpty: true,
+        example: "customer_data",
+      },
+    },
+  }),
+  tableName: defineString("TABLE_NAME", {
+    label: "Destination Table Name",
+    description:
+      "What's the destination table name prefix you'd like to use? Each transfer run will write to the table with this name, postfixed with the runtime.",
+    input: {
+      text: {
+        nonEmpty: true,
+        example: "transactions",
+      },
+    },
+  }),
+  queryString: defineString("QUERY_STRING", {
+    label: "Query String",
+    description: "What's the BQ query you'd like to execute?",
+    input: {
+      text: {
+        nonEmpty: true,
+
+        example: "SELECT * from <PROJECT_ID>.customer_data.transactions",
+      },
+    },
+  }),
+  displayName: defineString("DISPLAY_NAME", {
+    label: "Display Name",
+    description: "What display name would you like to use?",
+    input: {
+      text: {
+        nonEmpty: true,
+        example: "Daily Rollup - Customer Transactions",
+      },
+    },
+  }),
+  partitioningField: defineString("PARTITIONING_FIELD", {
+    label: "Partitioning Field",
+    description:
+      "What's the partitioning field on the destination table ID? Leave empty if not using a partitioning field.",
+    default: "",
+    input: { text: { example: "timestamp" } },
+  }),
+  schedule: defineString("SCHEDULE", {
+    label: "Schedule",
+    description:
+      "What's the execution schedule you'd like to use for this query?",
+    input: {
+      text: {
+        nonEmpty: true,
+        example: "every 15 minutes",
+      },
+    },
+  }),
   firestoreCollection: defineString("COLLECTION_PATH", {
+    label: "Firestore Collection",
+    description:
+      "What's the top-level Firestore Collection to store transfer configs, run metadata, and query output?",
+
     default: "transferConfigs",
+    input: {
+      text: {
+        example: "transferConfigs",
+
+        validationRegex: /^[^\/]+(\/[^\/]+\/[^\/]+)*$/,
+        validationErrorMessage: "Must be a valid Cloud Firestore Collection",
+      },
+    },
   }),
   logLevel: defineString("LOG_LEVEL", {
+    label: "Log Level",
+    description: "What's the log level you'd like to use for this extension?",
+
     default: "info",
-    input: select([...LOG_LEVEL_OPTIONS]),
+    input: select({
+      DEBUG: "debug",
+      INFO: "info",
+      WARN: "warn",
+      ERROR: "error",
+      SILENT: "silent",
+    }),
   }),
 };
 
 export const CONFIG_EXPRESSIONS: DeployTimeOptions = {
-  pubSubTopic: expr`kit-${instanceId}-processMessages`,
+  pubSubTopic: params.pubSubTopic,
 };
 
 function optional(value: string): string | undefined {
@@ -68,12 +215,10 @@ function normalizeLogLevel(value: string): LogLevel {
 
 /** Reads runtime values from Firebase deploy-time parameters. */
 export function configFromEnv(): BigqueryFirestoreExportConfig {
-  const resolvedInstanceId = params.instanceId.value();
-
   return {
     bigqueryDatasetLocation: params.bigqueryDatasetLocation.value(),
     projectId: projectID.value(),
-    instanceId: resolvedInstanceId,
+    instanceId: instanceIdFromEnv(),
     transferConfigName: optional(params.transferConfigName.value()),
     datasetId: params.datasetId.value(),
     tableName: params.tableName.value(),
@@ -81,7 +226,7 @@ export function configFromEnv(): BigqueryFirestoreExportConfig {
     displayName: params.displayName.value(),
     partitioningField: optional(params.partitioningField.value()),
     schedule: params.schedule.value(),
-    pubSubTopic: `kit-${resolvedInstanceId}-processMessages`,
+    pubSubTopic: params.pubSubTopic.value(),
     firestoreCollection: params.firestoreCollection.value(),
     logLevel: normalizeLogLevel(params.logLevel.value()),
   };

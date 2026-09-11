@@ -38,13 +38,15 @@ class FakeStringParam extends FakeExpression<string> {
 }
 
 const defineString = vi.fn(
-  (name: string, opts?: { default?: string }) =>
+  (name: string, opts?: { default?: string; input?: unknown }) =>
     new FakeStringParam(name, opts?.default)
 );
 
-const defineInt = vi.fn((_name: string, opts?: { default?: number }) => ({
-  value: () => opts?.default ?? 10,
-}));
+const defineInt = vi.fn(
+  (_name: string, opts?: { default?: number; input?: unknown }) => ({
+    value: () => opts?.default ?? 10,
+  })
+);
 
 const expr = vi.fn(
   (strings: TemplateStringsArray, ...values: unknown[]) =>
@@ -86,16 +88,39 @@ describe("configFromEnv", () => {
     const { configFromEnv } = await importConfig();
 
     expect(configFromEnv()).toMatchObject({
-      nodePath: "messages",
-      maxCount: 100,
+      nodePath: "rtdb_node_path-value",
+      maxCount: 10,
       databaseInstance: "selected_database_instance-value",
     });
-    expect(defineString.mock.calls).toContainEqual([
-      "RTDB_NODE_PATH",
-      { default: "messages" },
-    ]);
-    expect(defineString.mock.calls).toContainEqual([
-      "SELECTED_DATABASE_INSTANCE",
-    ]);
+    const instanceOptions = defineString.mock.calls.find(
+      ([name]) => name === "SELECTED_DATABASE_INSTANCE"
+    )?.[1];
+    expect(instanceOptions).not.toHaveProperty("default");
+    expect(instanceOptions).toMatchObject({
+      input: { text: { validationRegex: /^([0-9a-z_.-]*)$/ } },
+    });
+  });
+
+  // The extension declared NODE_PATH and MAX_COUNT as required with no default,
+  // so the CLI prompted for both at install. Declaring a default here would let
+  // a deploy that omits MAX_COUNT silently prune every node down to that value.
+  test("declares no default for RTDB_NODE_PATH or MAX_COUNT", async () => {
+    await importConfig();
+
+    const nodePathOptions = defineString.mock.calls.find(
+      ([name]) => name === "RTDB_NODE_PATH"
+    )?.[1];
+    const maxCountOptions = defineInt.mock.calls.find(
+      ([name]) => name === "MAX_COUNT"
+    )?.[1];
+
+    expect(nodePathOptions).not.toHaveProperty("default");
+    expect(maxCountOptions).not.toHaveProperty("default");
+    expect(nodePathOptions).toMatchObject({
+      input: { text: { validationRegex: /^\S+$/ } },
+    });
+    expect(maxCountOptions).toMatchObject({
+      input: { text: { validationRegex: /^\d+$/ } },
+    });
   });
 });

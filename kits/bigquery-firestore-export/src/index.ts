@@ -56,6 +56,10 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
 ];
 const REQUIRED_APIS = [
   {
+    api: "firestore.googleapis.com",
+    reason: "Writes BigQuery export run state to Cloud Firestore.",
+  },
+  {
     api: "bigquery.googleapis.com",
     reason: "Runs scheduled queries and reads their destination tables.",
   },
@@ -111,7 +115,7 @@ function getContext(): HandlerContext {
 export const processMessages = onMessagePublished<TransferRunPayload>(
   {
     topic: CONFIG_EXPRESSIONS.pubSubTopic,
-    retry: true,
+    retry: false,
   },
   (event) => handleMessagePublished(event, getContext())
 );

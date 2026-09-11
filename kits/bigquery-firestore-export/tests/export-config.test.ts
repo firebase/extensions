@@ -46,16 +46,12 @@ describe("resolveConfig", () => {
       ...minimal,
       transferConfigName: "  projects/p/locations/us/transferConfigs/c  ",
       partitioningField: "  created_at  ",
-      serviceAccount: "  runtime@test-project.iam.gserviceaccount.com  ",
     });
 
     expect(resolved.transferConfigName).toBe(
       "projects/p/locations/us/transferConfigs/c"
     );
     expect(resolved.partitioningField).toBe("created_at");
-    expect(resolved.serviceAccount).toBe(
-      "runtime@test-project.iam.gserviceaccount.com"
-    );
   });
 
   test.each(["instanceId", "datasetId", "tableName", "queryString"] as const)(

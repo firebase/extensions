@@ -180,8 +180,8 @@ export const init = (config?: unknown) => {
   logger.info("Initializing with configuration", config);
 };
 
-export const start = (config?: unknown) => {
-  logger.info("Started execution with configuration", config);
+export const start = () => {
+  logger.info("Started execution of extension");
 };
 
 export const timestampMissingValue = (fieldName: string) => {
@@ -208,7 +208,8 @@ export const logFailedEventAction = (
   document_name: string,
   event_id: string,
   operation: ChangeType,
-  error: Error
+  error: Error,
+  retry_count?: number
 ) => {
   const changeTypeMap = {
     0: "CREATE",
@@ -222,6 +223,7 @@ export const logFailedEventAction = (
     event_id,
     operation: changeTypeMap[operation],
     error,
+    ...(retry_count === undefined ? {} : { retry_count }),
   });
 };
 

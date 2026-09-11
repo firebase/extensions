@@ -1,4 +1,4 @@
-# @firebase/delete-user-data
+# @firebase-function-kits/delete-user-data
 
 Delete user data across Firestore, RTDB, and Storage on account deletion. This
 is the Delete User Data Firebase Extension as an npm package you add to your own
@@ -12,7 +12,7 @@ Firebase project; there is no hosted version, so you deploy them yourself.
 ## Install
 
 ```sh
-npm install @firebase/delete-user-data
+npm install @firebase-function-kits/delete-user-data
 ```
 
 ## Required IAM
@@ -41,7 +41,7 @@ export {
   clearData,
   handleSearch,
   handleDeletion,
-} from "@firebase/delete-user-data";
+} from "@firebase-function-kits/delete-user-data";
 ```
 
 and configure with a `.env` (or `.env.<projectId>`).
@@ -51,8 +51,9 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
-later, behind the `kits` experiment):
+The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.27.0 or
+later, behind the `kits` experiment — earlier CLIs do not provide the
+`FIREBASE_KIT_INSTANCE_ID` variable this kit reads its instance id from):
 
 ```json
 {
@@ -86,23 +87,27 @@ Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
 loads them at deploy time and prompts for any required values that are missing.
 
+The instance id is not a setting: the CLI provides it to each instance as
+`FIREBASE_KIT_INSTANCE_ID`, set to that instance's key in the `instances` map.
+`FIREBASE_` is a reserved prefix in `.env` files, so it cannot be set or
+overridden there.
+
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
-| `instanceId` | `INSTANCE_ID` | yes | — | Must match this instance's key in the `instances` map |
 | `firestorePaths` | `FIRESTORE_PATHS` | no | (empty) | Comma-separated Firestore paths with `{UID}` |
 | `firestoreDatabaseId` | `FIRESTORE_DATABASE_ID` | no | `(default)` | Firestore database id |
 | `firestoreDeleteMode` | `FIRESTORE_DELETE_MODE` | no | `shallow` | `shallow` or `recursive` |
-| `rtdbInstance` | `SELECTED_DATABASE_INSTANCE` | no | (empty) | RTDB instance id |
+| `rtdbInstance` | `SELECTED_DATABASE_INSTANCE` | no | (empty) | RTDB instance id; required for RTDB deletion — without it `rtdbPaths` are skipped |
 | `rtdbLocation` | `SELECTED_DATABASE_LOCATION` | no | `us-central1` | RTDB location |
 | `rtdbPaths` | `RTDB_PATHS` | no | (empty) | Comma-separated RTDB paths with `{UID}` |
 | `storageBucket` | `CLOUD_STORAGE_BUCKET` | no | default Storage bucket | Bucket to clear |
 | `storagePaths` | `STORAGE_PATHS` | no | (empty) | Comma-separated Storage paths with `{UID}` |
-| `enableAutoDiscovery` | `ENABLE_AUTO_DISCOVERY` | no | `false` | Auto-discover user-linked docs |
+| `enableAutoDiscovery` | `ENABLE_AUTO_DISCOVERY` | no | `no` | Auto-discover user-linked docs (`yes` or `no`) |
 | `searchDepth` | `AUTO_DISCOVERY_SEARCH_DEPTH` | no | `3` | Discovery depth |
 | `searchFields` | `AUTO_DISCOVERY_SEARCH_FIELDS` | no | `id,uid,userId` | Fields treated as user ids |
 | `searchFunction` | `SEARCH_FUNCTION` | no | (empty) | Optional custom search function |
-| `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | no | `kit-<INSTANCE_ID>-discovery` | Pub/Sub discovery topic |
-| `deletionTopicName` | `DELETION_TOPIC_NAME` | no | `kit-<INSTANCE_ID>-deletion` | Pub/Sub deletion topic |
+| `discoveryTopicName` | `DISCOVERY_TOPIC_NAME` | no | `kit-<instance id>-discovery` | Pub/Sub discovery topic |
+| `deletionTopicName` | `DELETION_TOPIC_NAME` | no | `kit-<instance id>-deletion` | Pub/Sub deletion topic |
 
 ## Multiple instances
 
@@ -126,8 +131,9 @@ map, each pointing at its own config directory with its own `.env`:
 
 Instance ids must be unique across all kit stanzas in the project, and every
 instance's function names are namespaced by its `kit-<instance id>-` prefix, so
-the instances cannot collide. Set `INSTANCE_ID` in each config directory to the
-same value as that directory's key in the `instances` map.
+the instances cannot collide. Each instance learns its own id from the
+`FIREBASE_KIT_INSTANCE_ID` variable the CLI provides; there is nothing to keep
+in sync by hand.
 
 ## Events
 
@@ -135,9 +141,68 @@ When `EVENTARC_CHANNEL` is configured, the functions publish deletion events
 for each backend under `firebase.extensions.delete-user-data.v1.*`
 (`firestore`, `database`, and `storage`).
 
+## Differences from the Delete User Data extension
+
+This kit is the extension repackaged as an npm package, but a few things behave
+differently. If you are moving from an installed extension instance, read this
+section before you deploy.
+
+### The instance id comes from `firebase.json`
+
+The extension derived an instance id at install time and used it to name the
+Pub/Sub topics. Here the CLI derives it from this instance's key in the
+`instances` map in `firebase.json` and provides it to the functions as
+`FIREBASE_KIT_INSTANCE_ID`. There is no `INSTANCE_ID` setting to configure.
+
+### Pub/Sub topics are named differently
+
+Discovery and deletion topics are now `kit-<instance id>-discovery` and
+`kit-<instance id>-deletion`, where the extension used an `ext-` prefix. The
+Firebase CLI creates them for you on deploy, so there is no manual setup step,
+but the old topics from an extension install are not reused and can be deleted
+once you have migrated.
+
+You can also override both names with `DISCOVERY_TOPIC_NAME` and
+`DELETION_TOPIC_NAME`, which the extension did not allow. Change them together,
+since one function publishes to a topic the other is triggered by.
+
+### Functions deploy to your default region
+
+The extension deployed to the location you picked at install time. This kit
+sets no region, so its functions deploy to your codebase's default
+(`us-central1` unless you have changed it).
+
+### All functions are 2nd gen
+
+`clearData`, `handleSearch` and `handleDeletion` are all 2nd gen functions. Kits
+do not support 1st gen endpoints, so `clearData` listens on the 2nd gen Firebase
+Auth event `google.firebase.auth.user.v2.deleted` instead of the 1st gen
+`user.delete` trigger. That event type is still beta in `firebase-functions`.
+This mainly matters if you have infrastructure or alerting keyed to function
+generation.
+
+### Empty search fields no longer error
+
+Setting `AUTO_DISCOVERY_SEARCH_FIELDS` to an empty value used to raise an
+invalid field path error during discovery. It is now treated as "match on the
+document path only". The default is unchanged (`id,uid,userId`).
+
+### Unchanged
+
+Events are the same. When `EVENTARC_CHANNEL` is configured, the functions still
+publish `firebase.extensions.delete-user-data.v1.firestore`, `.database` and
+`.storage` with the same payloads. Path syntax (`{UID}` substitution, comma
+separated lists, `{DEFAULT}` for the default Storage bucket), the shallow and
+recursive Firestore delete modes, the search depth and field matching rules,
+and the custom `SEARCH_FUNCTION` contract all behave as they did. RTDB
+deletion also keeps the extension's gate: paths are only cleared when a
+database URL can be derived from `SELECTED_DATABASE_INSTANCE` and
+`SELECTED_DATABASE_LOCATION`; otherwise they are skipped with a
+`Realtime Database paths are not configured, skipping` log.
+
 ## API surface
 
-- **Main entry** (`@firebase/delete-user-data`): exports `clearData`,
+- **Main entry** (`@firebase-function-kits/delete-user-data`): exports `clearData`,
   `handleSearch`, and `handleDeletion`. The main entry reads environment
   variables when the module loads, so use it from Firebase deploy/emulator/runtime.
   For your own triggers, import from `./lib` instead.

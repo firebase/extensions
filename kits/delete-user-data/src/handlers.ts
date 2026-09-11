@@ -19,6 +19,7 @@ import type { DocumentReference } from "firebase-admin/firestore";
 import { FieldPath } from "firebase-admin/firestore";
 import chunk from "lodash.chunk";
 import * as events from "./events";
+import { getDatabaseUrl } from "./export-config";
 import { extractUserPaths, hasValidUserPath } from "./helpers";
 import * as logs from "./logs";
 import { recursiveDelete } from "./recursiveDelete";
@@ -156,7 +157,10 @@ export async function handleClear(
   } else {
     logs.firestoreNotConfigured();
   }
-  if (ctx.config.rtdbPaths) {
+  if (
+    ctx.config.rtdbPaths &&
+    getDatabaseUrl(ctx.config.rtdbInstance, ctx.config.rtdbLocation)
+  ) {
     promises.push(clearDatabaseData(ctx.config.rtdbPaths, uid, ctx));
   } else {
     logs.rtdbNotConfigured();

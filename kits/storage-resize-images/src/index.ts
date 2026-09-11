@@ -40,6 +40,11 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
 ];
 const REQUIRED_APIS = [
   {
+    api: "aiplatform.googleapis.com",
+    reason:
+      "Needed for Vertex AI content filtering when CONTENT_FILTER_LEVEL is set.",
+  },
+  {
     api: "storage-component.googleapis.com",
     reason: "Needed to use Cloud Storage.",
   },
