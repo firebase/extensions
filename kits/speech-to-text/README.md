@@ -222,8 +222,9 @@ gen. Its service account needs `roles/eventarc.eventReceiver` and
 
 `BUCKET_REGION` tells the kit where your Cloud Storage bucket lives, and the
 function is deployed to the Cloud Run region derived from it. A 2nd gen storage
-trigger only fires for a function in a region that matches its bucket, so this
-has to agree with the bucket you set. Regional locations (`europe-west4`,
+trigger cannot cross regions, so this has to agree with the bucket you set: a
+mismatch fails the deploy with `A function in region <region> cannot listen to
+a bucket in region <region>`. Regional locations (`europe-west4`,
 `us-east1`, ...) are used as-is; the multi-region locations map to a region
 inside them - `us` to `us-east1`, `eu` to `europe-west1`, `asia` to
 `asia-east1` - because they are not Cloud Run regions themselves and would fail

@@ -91,9 +91,9 @@ const FUNCTION_SECRETS = [geminiApiKey, openAiApiKey];
 // resolves the same config (which reads the provider keys), and the extension
 // bound its secrets to all functions in the instance -- so bind them uniformly.
 /*
- * All functions of a kit instance deploy to one region: the task queues are
- * resolved from the enqueuing function's own region at runtime, so a function
- * placed elsewhere would enqueue against a queue that does not exist.
+ * All functions of a kit instance deploy to one region: a task queue is
+ * addressed by the enqueuing function's own region at runtime, so an enqueuer
+ * separated from its queues would target a queue that does not exist.
  */
 const REGION_OPTION = (() => {
   const region = envFunctionRegion();

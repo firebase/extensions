@@ -165,8 +165,9 @@ for the instance at deploy time.
 
 The extension's install-time location is replaced by `DATABASE_REGION`, which
 describes where your database instance lives rather than where you want the
-function, because a 2nd gen database trigger only fires for a function in the
-same region as its instance.
+function. A 2nd gen database trigger cannot cross regions, and the mismatch is
+caught at deploy time: creating the function fails with `cannot register
+cross-region trigger`.
 
 ### The trigger is 2nd gen
 
