@@ -315,6 +315,12 @@ for; the Firebase CLI grants these for you.
   `onSuccess`, `onError` and `onCompletion` under
   `firebase.extensions.firestore-vector-search.v1.*` but never published any of
   them, and the kit publishes none either. `EVENTARC_CHANNEL` is not read.
+- A document is still embedded once. When its status reaches `PROCESSING`,
+  `COMPLETED`, `ERROR` or `BACKFILLED`, editing the input field does not produce
+  a new embedding and a failed embed is not retried. To re-embed a document,
+  delete its `status` field and write the document again. A document whose input
+  is an empty string is still skipped and gets no status, so it embeds normally
+  once you fill the input in.
 - The indexed collection is still `COLLECTION_NAME` (default `products`), the
   input, output and status fields still default to `input`, `embedding` and
   `status`, and embeddings are still written as native Firestore vectors.

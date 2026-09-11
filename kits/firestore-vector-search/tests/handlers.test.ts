@@ -17,6 +17,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 import type { CallableRequest } from "firebase-functions/v2/https";
 import { HttpsError } from "firebase-functions/v2/https";
+import type { Request } from "firebase-functions/v2/tasks";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 
@@ -39,7 +40,9 @@ vi.mock("../src/queries/setup", () => ({ createIndex: vi.fn() }));
 
 import {
   type HandlerContext,
+  type VectorTaskData,
   type VectorWriteEvent,
+  handleBackfillTask,
   handleEmbedOnWrite,
   handleQueryCall,
   handleQueryOnWrite,
@@ -705,6 +708,46 @@ describe("handleEmbedOnWrite", () => {
     expect(set).not.toHaveBeenCalled();
   });
 
+  // Parity with the extension's `shouldProcess`, which required a truthy
+  // string. An empty input must leave the document without a status, or the
+  // terminal-state guard would skip it once the input is filled in.
+  test("skips a document whose input is an empty string", async () => {
+    const { ctx } = makeCtx();
+    const { event, set } = writeEvent(undefined, { input: "" });
+
+    await handleEmbedOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  test("embeds a document whose empty input is filled in later", async () => {
+    const { ctx } = makeCtx();
+    const { event: created, set: createdSet } = writeEvent(undefined, {
+      input: "",
+    });
+
+    await handleEmbedOnWrite(created, ctx);
+
+    expect(createdSet).not.toHaveBeenCalled();
+
+    const { event: filled, set } = writeEvent(
+      { input: "" },
+      { input: "hello" }
+    );
+
+    await handleEmbedOnWrite(filled, ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
+    expect(set).toHaveBeenCalledWith(
+      {
+        [config.outputFieldName]: FieldValue.vector(EMBEDDING),
+        [config.statusFieldName]: { state: "COMPLETED" },
+      },
+      { merge: true }
+    );
+  });
+
   // Parity with the extension: `FirestoreOnWriteProcessor` skipped any document
   // already in a final state, so an edited input never produced a new embedding
   // and a failure was never retried.
@@ -782,5 +825,54 @@ describe("handleEmbedOnWrite", () => {
 
       expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
     });
+  });
+});
+
+describe("handleBackfillTask", () => {
+  const PATH = "test-collection/doc-1";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getSingleEmbedding.mockResolvedValue(EMBEDDING);
+  });
+
+  /** A HandlerContext whose Firestore returns `data` at any document path. */
+  function backfillCtx(data: Record<string, unknown> | undefined) {
+    const set = vi.fn();
+    const ref = { set, get: vi.fn(async () => snapshot(data, set)) };
+    const doc = vi.fn(() => ref);
+    const ctx = { firestore: { doc }, config } as unknown as HandlerContext;
+    return { ctx, set };
+  }
+
+  function task(path: string) {
+    return { data: { path } } as unknown as Request<VectorTaskData>;
+  }
+
+  test("embeds the document at the task's path", async () => {
+    const { ctx, set } = backfillCtx({ input: "hello" });
+
+    await handleBackfillTask(task(PATH), ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
+    expect(set).toHaveBeenCalledWith(
+      {
+        [config.outputFieldName]: FieldValue.vector(EMBEDDING),
+        [config.statusFieldName]: { state: "COMPLETED" },
+      },
+      { merge: true }
+    );
+  });
+
+  // Parity with the extension's `shouldBackfill`, which required a truthy
+  // string. Writing a terminal status here would stop `embedOnWrite` embedding
+  // the document once its input is filled in.
+  test("skips a document whose input is an empty string", async () => {
+    const { ctx, set } = backfillCtx({ input: "" });
+
+    await handleBackfillTask(task(PATH), ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
   });
 });
