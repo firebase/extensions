@@ -120,7 +120,7 @@ export const processMessages = onMessagePublished<TransferRunPayload>(
   (event) => handleMessagePublished(event, getContext())
 );
 
-/** Creates, links, or reconciles this deployment's scheduled query. */
+/** Creates or reconciles this deployment's scheduled query. */
 export const upsertTransferConfig = onTaskDispatched(
   {
     memory: "1GiB",

@@ -117,6 +117,15 @@ describe("instance id", () => {
   });
 });
 
+describe("declared params", () => {
+  test("does not declare a transfer config name param", async () => {
+    await importConfig(INSTANCE_ID);
+
+    const declared = declaredParams.map((param) => param.name);
+    expect(declared).not.toContain("TRANSFER_CONFIG_NAME");
+  });
+});
+
 describe("configFromEnv", () => {
   test("reads runtime parameters and derives the same topic", async () => {
     const { configFromEnv } = await importConfig(INSTANCE_ID);

@@ -44,13 +44,9 @@ describe("resolveConfig", () => {
   test("normalizes optional strings", () => {
     const resolved = resolveConfig({
       ...minimal,
-      transferConfigName: "  projects/p/locations/us/transferConfigs/c  ",
       partitioningField: "  created_at  ",
     });
 
-    expect(resolved.transferConfigName).toBe(
-      "projects/p/locations/us/transferConfigs/c"
-    );
     expect(resolved.partitioningField).toBe("created_at");
   });
 
