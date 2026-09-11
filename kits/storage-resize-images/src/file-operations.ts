@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
+import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { Bucket, File } from "@google-cloud/storage";
-import { mkdirp } from "mkdirp";
-import { v4 as uuidv4 } from "uuid";
 import type { ResolvedResizeImagesConfig } from "./export-config";
 import * as logs from "./logs";
 import { countNegativeTraversals, type StorageObjectMetadata } from "./util";
@@ -29,11 +28,11 @@ export async function downloadOriginalFile(
   filePath: string,
   verbose: boolean
 ): Promise<[string, File]> {
-  const localFile = path.join(os.tmpdir(), uuidv4());
+  const localFile = path.join(os.tmpdir(), crypto.randomUUID());
   const tempLocalDir = path.dirname(localFile);
 
   if (verbose) logs.tempDirectoryCreating(tempLocalDir);
-  await mkdirp(tempLocalDir);
+  await fs.promises.mkdir(tempLocalDir, { recursive: true });
   if (verbose) logs.tempDirectoryCreated(tempLocalDir);
 
   const remoteFile = bucket.file(filePath);
