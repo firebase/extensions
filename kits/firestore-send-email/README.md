@@ -190,9 +190,14 @@ chosen a region, so your answer only takes effect on the following deploy.
 
 With an explicit empty `DATABASE_REGION=` line in `.env`, the function declares
 no region and the Firebase CLI resolves one at deploy time: it keeps the region
-it is already deployed in, and on a first deploy the CLI places it next to the
-database, unless you set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment
-variable when running `firebase deploy`. Careful with that variable: it applies
+it is already deployed in, and on a first deploy it lands in `us-central1`. The
+CLI would otherwise place it next to the database, but it resolves the default
+region before it resolves params, so the `DATABASE` param this kit passes to the
+trigger is still an unresolved expression when the database is looked up, and
+the lookup falls back
+([firebase/firebase-tools#11020](https://github.com/firebase/firebase-tools/issues/11020)).
+Set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+`firebase deploy` to land somewhere else. Careful with that variable: it applies
 to every no-region function in the deploy, not just this kit. Omitting the line
 is not the same as an empty one: a non-interactive deploy fails with `In
 non-interactive mode but have no value for the following environment variables:

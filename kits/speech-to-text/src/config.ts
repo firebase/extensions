@@ -189,9 +189,10 @@ export function envDeployOptions(): DeployTimeOptions {
   // timeout/memory defaults; bucket below comes straight from the params.
   const defaults = resolveConfig({ bucket: "", languageCode: "" });
 
-  // The multi-region to Cloud Run region lookup cannot be expressed in CEL, and
-  // the region option does not accept a param expression, so the value is read
-  // from `process.env` (populated from `.env` during CLI discovery).
+  // The location to Cloud Run region lookup needs a nested ternary, which the
+  // CLI's CEL subset cannot express, so the value is read from `process.env`
+  // (populated from `.env` during CLI discovery) rather than passed as a param
+  // expression.
   const region = bucketLocationToFunctionRegion(process.env.BUCKET_REGION);
 
   return {

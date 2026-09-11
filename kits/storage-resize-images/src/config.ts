@@ -336,10 +336,10 @@ export const CONFIG_EXPRESSIONS = {
 /**
  * Cloud Run region for this kit's function, derived from the bucket location.
  *
- * The multi-region to Cloud Run region lookup cannot be expressed in CEL, and
- * the region option does not accept a param expression, so the value is read
- * from `process.env` (populated from `.env` during CLI discovery) rather than
- * from the param. `undefined` means the function declares no region and the
+ * The location to Cloud Run region lookup needs a nested ternary, which the
+ * CLI's CEL subset cannot express, so the value is read from `process.env`
+ * (populated from `.env` during CLI discovery) rather than passed as a param
+ * expression. `undefined` means the function declares no region and the
  * CLI falls back to its own default.
  */
 export function envFunctionRegion(): string | undefined {

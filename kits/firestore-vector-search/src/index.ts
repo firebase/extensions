@@ -87,9 +87,6 @@ const REQUIRED_APIS = [
   },
 ] as const;
 const FUNCTION_SECRETS = [geminiApiKey, openAiApiKey];
-// Only the task functions reach getSingleEmbedding, but every function here
-// resolves the same config (which reads the provider keys), and the extension
-// bound its secrets to all functions in the instance -- so bind them uniformly.
 /*
  * All functions of a kit instance deploy to one region: a task queue is
  * addressed by the enqueuing function's own region at runtime, so an enqueuer
@@ -100,6 +97,10 @@ const REGION_OPTION = (() => {
 
   return region ? ({ region } as const) : ({} as const);
 })();
+
+// Only the task functions reach getSingleEmbedding, but every function here
+// resolves the same config (which reads the provider keys), and the extension
+// bound its secrets to all functions in the instance -- so bind them uniformly.
 const DEFAULT_TASK_OPTIONS = {
   ...REGION_OPTION,
   memory: "512MiB",

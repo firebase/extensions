@@ -147,8 +147,9 @@ function getHandlerContext(): HandlerContext {
 
 /*
  * Read at module load: the CLI populates `.env` values into the discovery
- * process env (firebase-tools >= 15.28.0), and the region option cannot be a
- * param expression. When unset, no function declares a region and the CLI
+ * process env (firebase-tools >= 15.28.0), and the location to Cloud Run region
+ * lookup needs a nested ternary the CLI's CEL subset cannot express. When
+ * unset, no function declares a region and the CLI
  * falls back to its default. The Eventarc trigger region needs no handling:
  * the CLI pins it to the database's own region regardless of where the
  * function runs.
