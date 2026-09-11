@@ -305,15 +305,14 @@ Firestore vector index (skipping creation when a matching index exists, as
 before) and then enqueues the backfill or update triggers according to the two
 settings above.
 
-`LOCATION` is gone. The functions deploy to your codebase's default region
-(`us-central1` unless you have changed it), and with
-`EMBEDDING_PROVIDER: vertex` the Vertex AI embedding call uses that same region,
-read from `FUNCTION_REGION`, rather than the install-time location. Where the
-region cannot be read (the emulator, or library use outside a deployed function)
-the Genkit Vertex AI plugin chooses: `GCLOUD_LOCATION` if you set it, otherwise
-`us-central1`. Gemini embedding is not served in every region;
-if you deploy somewhere it is unavailable, embedding fails and the error is
-written to the document's status field.
+`LOCATION` is gone. `DATABASE_REGION` decides where the functions deploy, as
+described below, and with `EMBEDDING_PROVIDER: vertex` the Vertex AI embedding
+call uses that same region, read from `FUNCTION_REGION`, rather than the
+install-time location. Where the region cannot be read (the emulator, or library
+use outside a deployed function) the Genkit Vertex AI plugin chooses:
+`GCLOUD_LOCATION` if you set it, otherwise `us-central1`. Gemini embedding is
+not served in every region; if you deploy somewhere it is unavailable, embedding
+fails and the error is written to the document's status field.
 
 ### The triggers are 2nd gen
 

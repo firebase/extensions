@@ -171,9 +171,9 @@ CLI grants these for you.
 
 ### Region
 
-The function deploys to your codebase's default region (`us-central1` unless
-you have changed it), rather than a region chosen at install time. See the
-content filtering note above, since the two are now linked.
+`BUCKET_REGION` decides where the function deploys, as described below, rather
+than the extension's install-time `LOCATION`. See the content filtering note
+above, since the two are linked.
 
 ### Path lists are validated at deploy time
 
