@@ -367,6 +367,14 @@ inside that window. That property is gone by design - a row that exhausts the
 queue without a configured `BACKUP_COLLECTION` is dropped, exactly as in the
 extension. Set `BACKUP_COLLECTION`.
 
+### The lifecycle tasks report only to your logs
+
+`initBigQuerySync` and `setupBigQuerySync` are ordinary task functions. The
+extension's install and update hooks finished by setting the instance's
+processing state, so `Sync setup completed`, or a provisioning failure, showed
+on the instance in the Firebase console. Kits have no equivalent surface. Read
+the task function's logs to confirm the dataset, table and views were created.
+
 ### Events
 
 Events are published under `firebase.extensions.firestore-bigquery-export.v1.*`

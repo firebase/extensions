@@ -194,6 +194,21 @@ document therefore decides the field for that message, and a discussion that
 overrides `candidateCount` to 1 gets no `candidates` field even when
 `CANDIDATE_COUNT` is higher.
 
+### Missing settings no longer stop the module loading
+
+The extension's config module threw
+`Missing required environment variables: ...` as it loaded if `MODEL`,
+`LOCATION`, `PROJECT_ID` or `EXT_INSTANCE_ID` was unset. That check is gone,
+and for three of those four there is nothing left to check: `MODEL` has a
+default, `LOCATION` no longer exists, and this kit does not use the instance
+id. The project id is still read from `FIREBASE_CONFIG` and still throws
+`Missing required environment variables: PROJECT_ID` when it is absent.
+
+The rest of that checking moved to deploy time. The Firebase CLI prompts for a
+setting that has no value and no default, and refuses to deploy until the
+`API_KEY` secret exists, so an incomplete config is caught before the function
+is deployed rather than on its first run.
+
 ### Bad numbers are no longer rejected up front
 
 `TEMPERATURE`, `TOP_P`, `TOP_K`, `CANDIDATE_COUNT`, `MAX_OUTPUT_TOKENS` and

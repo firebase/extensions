@@ -334,6 +334,11 @@ correctly. Everything around the format moved:
   default bucket rather than guessing `<projectId>.appspot.com`.
   `BACKUP_INSTANCE_ID=(default)` is rejected at startup instead of letting a
   restoration write over its own source.
+- **Setup status.** The extension's `runInitialSetup` and
+  `onFirestoreBackupInit` handlers reported their progress and their failures
+  on the instance in the Firebase console, through the extensions runtime.
+  Kits have no equivalent surface, so the outcome of `initIncrementalCapture`
+  is only visible in its function logs.
 - **Serializer.** BigInt field values are stringified instead of throwing.
 - **Status documents.** Restoration run status lives at
   `_<instance id>/runs/restorations`, not the extension's `_ext-<instance id>`
