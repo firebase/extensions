@@ -73,6 +73,10 @@ describe("GenkitEmbedClient", () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   describe("constructor", () => {
     test("initializes with the Vertex AI provider", () => {
       new GenkitEmbedClient(config({ embeddingProvider: "vertex" }));
@@ -95,8 +99,9 @@ describe("GenkitEmbedClient", () => {
         config({ embeddingProvider: "vertex", region: undefined })
       );
 
-      expect(vertexAI).toHaveBeenCalledWith({});
-      vi.unstubAllEnvs();
+      // toHaveBeenCalledWith treats `{ location: undefined }` as `{}`, so the
+      // omission has to be asserted on the call itself.
+      expect(vi.mocked(vertexAI).mock.lastCall?.[0]).toStrictEqual({});
     });
 
     test("uses the function region when no region is configured", () => {
@@ -108,7 +113,6 @@ describe("GenkitEmbedClient", () => {
       );
 
       expect(vertexAI).toHaveBeenCalledWith({ location: "europe-west4" });
-      vi.unstubAllEnvs();
     });
 
     test("initializes with the Google AI provider", () => {

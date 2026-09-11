@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("firebase-functions", () => import("./mocks/firebase-functions"));
 vi.mock("@google-cloud/translate", () => import("./mocks/translate"));
@@ -96,6 +96,10 @@ describe("GoogleTranslator", () => {
 });
 
 describe("GenkitTranslator", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   test("requires a Google AI API key for the googleai provider", () => {
     expect(
       () => new GenkitTranslator(makeConfig({ provider: "gemini-googleai" }))
@@ -132,7 +136,9 @@ describe("GenkitTranslator", () => {
       makeConfig({ provider: "gemini-vertexai", region: "" })
     );
 
-    expect(vertexAI).toHaveBeenCalledWith({});
+    // toHaveBeenCalledWith treats `{ location: undefined }` as `{}`, so the
+    // omission has to be asserted on the call itself.
+    expect(vertexAI.mock.lastCall?.[0]).toStrictEqual({});
   });
 
   test("registers the vertexai plugin against the function region", () => {
@@ -144,7 +150,6 @@ describe("GenkitTranslator", () => {
     );
 
     expect(vertexAI).toHaveBeenCalledWith({ location: "europe-west4" });
-    vi.unstubAllEnvs();
   });
 
   test("returns the structured translation and logs completion", async () => {

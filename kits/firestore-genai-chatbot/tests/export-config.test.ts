@@ -58,9 +58,9 @@ describe("resolveConfig", () => {
       expect(resolveConfig(base).vertex.modelLocation).toBe("europe-west4");
     });
 
-    test("falls back to us-central1 with no function region", () => {
+    test("stays unset with no function region", () => {
       delete process.env.FUNCTION_REGION;
-      expect(resolveConfig(base).vertex.modelLocation).toBe("us-central1");
+      expect(resolveConfig(base).vertex.modelLocation).toBeUndefined();
     });
 
     test('treats the extension\'s "null" sentinel as unset', () => {

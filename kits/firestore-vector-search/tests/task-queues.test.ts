@@ -18,6 +18,7 @@ import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import {
   afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -104,6 +105,10 @@ async function context(overrides: Record<string, unknown> = {}) {
 }
 
 describe("task queue targets", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   test("the backfill trigger enqueues onto kit-<instance>-backfillTask", async () => {
     const { handleBackfillTrigger } = await import("../src/handlers");
 
@@ -132,7 +137,6 @@ describe("task queue targets", () => {
     ).rejects.toThrow("FUNCTION_REGION is required to resolve task queues.");
 
     expect(paths).toEqual([]);
-    vi.unstubAllEnvs();
   });
 
   test("init enqueues onto the two trigger queues", async () => {

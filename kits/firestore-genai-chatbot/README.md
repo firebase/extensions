@@ -166,14 +166,6 @@ Manager, `firebase deploy` prompts you for a value, and fails outright when
 running non-interactively (CI). Create the secret with any placeholder value if
 your provider is `vertex-ai`.
 
-### Long generations now time out after 60 seconds
-
-The extension ran with a 540 second timeout. The kit does not set one, so the
-platform default of 60 seconds applies. Prompts with a long history or a high
-`MAX_OUTPUT_TOKENS` that used to finish will now fail and write `status.state:
-ERROR`. There is no config value for this; raise it on your own trigger from
-`./lib` if you need the old headroom.
-
 ### Generation options now reach the model
 
 This is a deliberate divergence from the extension. `TEMPERATURE`, `TOP_P`,
@@ -216,7 +208,9 @@ model call rather than being caught at deploy time.
 - `VERTEX_AI_MODEL_LOCATION` left at `null` still calls Vertex AI in the
   function's own region, read from `FUNCTION_REGION`. Outside a deployed
   function, where that is unset (the emulator, or library use), the call goes
-  to `us-central1`; set `VERTEX_AI_MODEL_LOCATION` to call somewhere else.
+  to `us-central1`, or to `GCLOUD_LOCATION` if your environment sets one; set
+  `VERTEX_AI_MODEL_LOCATION` to pin it either way.
+- The trigger keeps the extension's 540 second timeout.
 
 ## API surface
 

@@ -121,7 +121,7 @@ export interface GenaiChatbotConfig {
 /** {@link GenaiChatbotConfig} with all defaults applied. */
 export interface ResolvedGenaiChatbotConfig {
   provider: GenerativeAIProvider;
-  vertex: { model: string; modelLocation: string };
+  vertex: { model: string; modelLocation?: string };
   googleAi: { model: string; apiKey?: string };
   model: string;
   context?: string;
@@ -182,11 +182,10 @@ export function getProjectId(): string {
 
 const DEFAULT_COLLECTION = "generate";
 
-const DEFAULT_VERTEX_LOCATION = "us-central1";
-
 /**
  * Resolves the Vertex AI location: an explicit setting wins, otherwise the
- * function's own region, otherwise `us-central1`.
+ * function's own region. With neither, the location is left unset for each
+ * client to default in its own way.
  *
  * `FUNCTION_REGION` is injected by the Firebase CLI on every deployed function
  * and is a reserved key, so it cannot be set by hand; it is absent in the
@@ -195,9 +194,11 @@ const DEFAULT_VERTEX_LOCATION = "us-central1";
  * `"null"` is the extension's sentinel for "same as the function", and reaches
  * here from a config assembled by hand out of a copied `.env`.
  */
-function resolveVertexLocation(configured: string | undefined): string {
+function resolveVertexLocation(
+  configured: string | undefined
+): string | undefined {
   const explicit = configured === "null" ? undefined : configured;
-  return explicit || process.env.FUNCTION_REGION || DEFAULT_VERTEX_LOCATION;
+  return explicit || process.env.FUNCTION_REGION || undefined;
 }
 
 /**
