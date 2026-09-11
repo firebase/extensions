@@ -42,6 +42,8 @@ type ApiMessage = {
   parts: Part[];
 };
 
+const DEFAULT_VERTEX_LOCATION = "us-central1";
+
 enum Role {
   USER = "user",
   GEMINI = "model",
@@ -68,7 +70,9 @@ export class VertexDiscussionClient extends DiscussionClient<
     this.client = new GoogleGenAI({
       vertexai: true,
       project: projectId,
-      location: modelLocation,
+      // Unset, the SDK reads `GOOGLE_CLOUD_LOCATION`, which the extension never
+      // honoured, so the extension's own default stands in instead.
+      location: modelLocation ?? DEFAULT_VERTEX_LOCATION,
     });
     if (!modelName) {
       throw new Error("Model name required.");

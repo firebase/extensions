@@ -91,7 +91,7 @@ the CLI connects them to the function at deploy time.
 | `provider` | `GENERATIVE_AI_PROVIDER` | no | `google-ai` | `google-ai` or `vertex-ai` |
 | `apiKey` | `API_KEY` | secret | — | Google AI API key |
 | `model` | `MODEL` | no | `gemini-2.5-flash` | Model id |
-| `vertexModelLocation` | `VERTEX_AI_MODEL_LOCATION` | no | `null` | Vertex model region |
+| `vertexModelLocation` | `VERTEX_AI_MODEL_LOCATION` | no | `null` | Vertex model region; `null` uses the function's region |
 | `collectionName` | `COLLECTION_NAME` | no | `generate` | Discussion collection |
 | `promptField` | `PROMPT_FIELD` | no | `prompt` | Prompt field name |
 | `responseField` | `RESPONSE_FIELD` | no | `response` | Response field name |
@@ -141,7 +141,7 @@ to your own functions codebase. The generation logic, the Firestore trigger, the
 `status` state machine, the per-discussion overrides and the safety settings are
 all ported verbatim. Config keeps the same environment variable names, so a
 `.env` copied from your installed instance is close to a lift-and-shift, with
-the exceptions below: the two region settings and the API key secret.
+the exceptions below: the function region and the API key secret.
 `ENABLE_DISCUSSION_OPTION_OVERRIDES` and `ENABLE_GENKIT_MONITORING` keep the
 extension's `yes` / `no` values.
 
@@ -153,13 +153,10 @@ Functions default region, `us-central1`, wherever your extension instance used
 to run. If you need another region, register the trigger yourself from the
 package's `./lib` entry point and set `region` on it.
 
-### Set `VERTEX_AI_MODEL_LOCATION` explicitly if you use Vertex AI
-
-The default value `null` used to mean "call Vertex AI in the same region as the
-function". It now means "let the SDK choose": `us-central1` for a normal
-single-candidate request, and `global` when `CANDIDATE_COUNT` is above 1. If you
-relied on the default to keep model calls in your function's region, set the
-region by name instead of leaving it at `null`.
+That region also decides where Vertex AI is called when
+`VERTEX_AI_MODEL_LOCATION` is left at `null`. Gemini is not served in every
+Cloud Functions region, so a function in a region without it needs an explicit
+location, and preview models still require `global`.
 
 ### An API_KEY secret is required even on Vertex AI
 
@@ -168,14 +165,6 @@ It is now always bound to the function. If no `API_KEY` secret exists in Secret
 Manager, `firebase deploy` prompts you for a value, and fails outright when
 running non-interactively (CI). Create the secret with any placeholder value if
 your provider is `vertex-ai`.
-
-### Long generations now time out after 60 seconds
-
-The extension ran with a 540 second timeout. The kit does not set one, so the
-platform default of 60 seconds applies. Prompts with a long history or a high
-`MAX_OUTPUT_TOKENS` that used to finish will now fail and write `status.state:
-ERROR`. There is no config value for this; raise it on your own trigger from
-`./lib` if you need the old headroom.
 
 ### Generation options now reach the model
 
@@ -216,6 +205,12 @@ model call rather than being caught at deploy time.
   leading system turn) and the user-facing error messages are unchanged.
 - `MODEL` still defaults to `gemini-2.5-flash`, and the same list of supported
   Gemini models is accepted.
+- `VERTEX_AI_MODEL_LOCATION` left at `null` still calls Vertex AI in the
+  function's own region, read from `FUNCTION_REGION`. Outside a deployed
+  function, where that is unset (the emulator, or library use), the call goes
+  to `us-central1`, or to `GCLOUD_LOCATION` if your environment sets one; set
+  `VERTEX_AI_MODEL_LOCATION` to pin it either way.
+- The trigger keeps the extension's 540 second timeout.
 
 ## API surface
 
