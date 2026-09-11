@@ -1,6 +1,6 @@
 {
   "name": "@firebase-function-kits/firestore-send-email",
-  "version": "0.0.1",
+  "version": "0.0.2-rc.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/firebase/extensions.git",
@@ -26,6 +26,8 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
+    "//pretest": "Only this kit has a test that requires lib/. The release workflow's test job runs npm test without building, so the hook has to live here rather than in CI.",
+    "pretest": "npm run build",
     "test": "vitest run",
     "deploy": "pnpm build && firebase deploy --only functions",
     "serve": "firebase emulators:start --only functions"
@@ -33,7 +35,7 @@
   "dependencies": {
     "@sendgrid/mail": "^8.1.4",
     "firebase-admin": "^14.1.0",
-    "firebase-functions": "^7.3.3-rc.0",
+    "firebase-functions": "^7.3.3-rc.2",
     "handlebars": "^4.7.8",
     "nodemailer": "^7.0.5",
     "zod": "^3.25.76"

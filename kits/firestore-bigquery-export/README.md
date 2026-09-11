@@ -24,15 +24,16 @@ below, enables the listed APIs, and attaches the account to every function in
 this kit. Do not set a custom runtime service account for this codebase — it
 conflicts with that automatic setup.
 
-| Role / API                     | Why                                                                                    |
-| ------------------------------ | -------------------------------------------------------------------------------------- |
-| `roles/bigquery.dataEditor`    | create dataset/table/views; insert rows                                                |
-| `roles/bigquery.user`          | run BigQuery jobs and materialized views                                               |
-| `roles/datastore.user`         | write failed-row records back to Firestore (only if you configure a backup collection) |
-| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events                                                  |
-| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service                                    |
-| `roles/cloudtasks.enqueuer`    | enqueue failed writes onto the kit's own `syncBigQuery` task queue                     |
-| `bigquery.googleapis.com`      | mirror Firestore collection changes in BigQuery                                        |
+| Role / API                     | Why                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------ |
+| `roles/bigquery.dataEditor`    | create dataset/table/views; insert rows                                                    |
+| `roles/bigquery.user`          | run BigQuery jobs and materialized views                                                   |
+| `roles/datastore.user`         | write failed-row records back to Firestore (only if you configure a backup collection)     |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events                                                      |
+| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service                                        |
+| `roles/eventarc.publisher`     | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
+| `roles/cloudtasks.enqueuer`    | enqueue failed writes onto the kit's own `syncBigQuery` task queue                         |
+| `bigquery.googleapis.com`      | mirror Firestore collection changes in BigQuery                                            |
 
 If the dataset lives in a different project (`BIGQUERY_PROJECT_ID`), grant the
 managed runtime service account the `bigquery.*` roles on that project. For a
@@ -169,19 +170,27 @@ the instances cannot collide.
 
 ## Events
 
-When `EVENTARC_CHANNEL` is configured, the functions publish lifecycle events
-under `firebase.extensions.firestore-bigquery-export.v1.*`: `onStart` and
-`onError` from the write path, and `onSuccess` from the `syncBigQuery` task
-when a buffered write lands (matching the extension, which only emitted
-`onSuccess` from its queue handler).
+When `EVENTARC_CHANNEL` is configured, the functions publish lifecycle events:
+`onStart` and `onError` from the write path, and `onSuccess` from the
+`syncBigQuery` task when a buffered write lands (matching the extension, which
+only emitted `onSuccess` from its queue handler).
+
+Each event is published twice, exactly as the extension published it: once
+under `firebase.extensions.firestore-bigquery-export.v1.*` and once under
+`firebase.extensions.firestore-counter.v1.*`. The `firestore-counter` type is a
+historical naming mistake the extension kept for backwards compatibility, and
+the kit keeps it for the same reason: triggers listening on it survive the
+migration. The two copies carry the same `data` and `subject`, and only differ
+by `type`. Write new triggers against the `firestore-bigquery-export` types.
 
 Publishing is filtered by `EXT_SELECTED_EVENTS`: the value is split on commas
 and only exactly matching event types are published, silently. An empty value
 suppresses every event, and a value carrying only another product's types
 (the extension offered more than one namespace to tick) publishes nothing. A
 config exported from the extension brings its `EXT_SELECTED_EVENTS` along, so
-check it lists the `firebase.extensions.firestore-bigquery-export.v1.*` types
-you expect, `onSuccess` included.
+check it lists the types you expect, `onSuccess` included. It gates the legacy
+`firestore-counter` copies too, so a trigger on a legacy type only fires when
+that legacy type is listed.
 
 ## Provisioning
 
@@ -365,14 +374,6 @@ write through Eventarc redelivery for up to 24 hours and never lost a row
 inside that window. That property is gone by design - a row that exhausts the
 queue without a configured `BACKUP_COLLECTION` is dropped, exactly as in the
 extension. Set `BACKUP_COLLECTION`.
-
-### Events
-
-Events are published under `firebase.extensions.firestore-bigquery-export.v1.*`
-only. The extension also published a duplicate copy of every event under
-`firebase.extensions.firestore-counter.v1.*`, a historical naming mistake kept
-for backwards compatibility. If you have Eventarc triggers listening on those
-`firestore-counter` types, point them at the `firestore-bigquery-export` types.
 
 ### Wildcard columns include the document ID
 
