@@ -103,8 +103,8 @@ the CLI connects them to the function at deploy time.
 | `topK` | `TOP_K` | no | (empty) | Top-k |
 | `candidateCount` | `CANDIDATE_COUNT` | no | `1` | Candidate count |
 | `maxOutputTokens` | `MAX_OUTPUT_TOKENS` | no | (empty) | Max output tokens |
-| `enableOverrides` | `ENABLE_DISCUSSION_OPTION_OVERRIDES` | no | `false` | Per-discussion option overrides |
-| `enableGenkitMonitoring` | `ENABLE_GENKIT_MONITORING` | no | `false` | Enable Genkit monitoring |
+| `enableOverrides` | `ENABLE_DISCUSSION_OPTION_OVERRIDES` | no | `no` | Per-discussion option overrides (`yes` or `no`) |
+| `enableGenkitMonitoring` | `ENABLE_GENKIT_MONITORING` | no | `no` | Enable Genkit monitoring (`yes` or `no`) |
 | `harmHateSpeech` | `HARM_CATEGORY_HATE_SPEECH` | no | `HARM_BLOCK_THRESHOLD_UNSPECIFIED` | Harm threshold |
 | `harmDangerous` | `HARM_CATEGORY_DANGEROUS_CONTENT` | no | `HARM_BLOCK_THRESHOLD_UNSPECIFIED` | Harm threshold |
 | `harmHarassment` | `HARM_CATEGORY_HARASSMENT` | no | `HARM_BLOCK_THRESHOLD_UNSPECIFIED` | Harm threshold |
@@ -141,16 +141,9 @@ to your own functions codebase. The generation logic, the Firestore trigger, the
 `status` state machine, the per-discussion overrides and the safety settings are
 all ported verbatim. Config keeps the same environment variable names, so a
 `.env` copied from your installed instance is close to a lift-and-shift, with
-four exceptions below: the boolean toggles, the two region settings, and the API
-key secret.
-
-### Change `yes` and `no` to `true` and `false`
-
-`ENABLE_DISCUSSION_OPTION_OVERRIDES` and `ENABLE_GENKIT_MONITORING` were
-`yes`/`no` dropdowns. They are now booleans that count as enabled only for the
-exact value `true`. A copied `.env` carrying `yes` deploys without complaint and
-silently leaves the feature off, so per-discussion overrides stop being read and
-Genkit monitoring stops reporting.
+the exceptions below: the two region settings and the API key secret.
+`ENABLE_DISCUSSION_OPTION_OVERRIDES` and `ENABLE_GENKIT_MONITORING` keep the
+extension's `yes` / `no` values.
 
 ### Pick your Cloud Functions region, or you get us-central1
 
@@ -184,17 +177,22 @@ platform default of 60 seconds applies. Prompts with a long history or a high
 ERROR`. There is no config value for this; raise it on your own trigger from
 `./lib` if you need the old headroom.
 
-### CANDIDATE_COUNT above 1 now really requests that many candidates
+### Generation options now reach the model
 
-With `CANDIDATE_COUNT` above 1, the extension never forwarded the count (nor
-`TEMPERATURE`, `TOP_P` or `TOP_K`) to the model, so it wrote a `candidates` array
-holding the single response it got back. The kit forwards all four, so you get
-the number of candidates you asked for, your sampling settings take effect, and
-the request costs more. Two smaller consequences: with per-discussion overrides
-enabled, a `candidateCount` set on a discussion document now decides whether the
-`candidates` field is written for that message (the extension decided once, from
-the deploy-time value), and a discussion that overrides `candidateCount` above 1
-gets a `candidates` field containing one entry.
+This is a deliberate divergence from the extension. `TEMPERATURE`, `TOP_P`,
+`TOP_K` and `CANDIDATE_COUNT` were accepted as config but never forwarded on the
+generation request, so they had no effect on output: sampling ran at the model
+defaults, and `CANDIDATE_COUNT` above 1 produced a `candidates` array holding
+the single response that came back. The kit forwards all four, so your sampling
+settings take effect, you get the number of candidates you asked for, and a
+request with `CANDIDATE_COUNT` above 1 costs more.
+
+Whether the `candidates` field is written is now decided per request from the
+count actually sent, rather than once from the deploy-time value. With
+per-discussion overrides enabled, a `candidateCount` set on a discussion
+document therefore decides the field for that message, and a discussion that
+overrides `candidateCount` to 1 gets no `candidates` field even when
+`CANDIDATE_COUNT` is higher.
 
 ### Bad numbers are no longer rejected up front
 

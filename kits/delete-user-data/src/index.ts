@@ -18,7 +18,7 @@ import { PubSub } from "@google-cloud/pubsub";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import type { Role } from "firebase-functions/v2";
-import { requiresRole } from "firebase-functions/v2";
+import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onUserDeleted } from "firebase-functions/v2/identity";
 import { onMessagePublished } from "firebase-functions/v2/pubsub";
 import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
@@ -42,10 +42,25 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   // Gen2 event triggers need Eventarc receive and run.invoker on the function SA.
   "roles/eventarc.eventReceiver",
   "roles/run.invoker",
+  // The Extensions platform granted publish rights on the extension's Eventarc
+  // channel implicitly from `events:` in extension.yaml. Kits get no implicit
+  // grant, so without this the `channel.publish()` calls in ./events fail with
+  // PERMISSION_DENIED and no custom event is ever delivered.
+  "roles/eventarc.publisher",
 ];
+const REQUIRED_APIS = [
+  {
+    api: "firestore.googleapis.com",
+    reason: "Deletes user data from Cloud Firestore.",
+  },
+] as const;
 
 for (const role of REQUIRED_ROLES) {
   requiresRole(role);
+}
+
+for (const { api, reason } of REQUIRED_APIS) {
+  requiresAPI(api, reason);
 }
 
 let ctx: HandlerContext | undefined;
@@ -74,7 +89,11 @@ function getContext(): HandlerContext {
   ctx = {
     firestore: getFirestore(resolved.firestoreDatabaseId),
     storage: admin.storage(),
-    database: admin.database(),
+    // Resolved on first use. Without a configured RTDB instance there is no
+    // databaseURL to initialize the app with, and admin.database() throws.
+    get database() {
+      return admin.database();
+    },
     pubsub: new PubSub({ projectId: resolved.projectId }),
     config: resolved,
   };

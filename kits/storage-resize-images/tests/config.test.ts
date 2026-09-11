@@ -26,7 +26,29 @@
  * same variable as a comma-separated string).
  */
 
+import { declaredParams } from "firebase-functions/params";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+
+import type {
+  ListParam,
+  MultiSelectInput,
+  SelectInput,
+  StringParam,
+} from "firebase-functions/params";
+import type { ContentFilterLevel } from "../src/export-config";
+
+function declaration(name: string) {
+  const param = declaredParams.find((candidate) => candidate.name === name);
+  if (!param || !("options" in param)) {
+    throw new Error(`Missing declaration for ${name}`);
+  }
+  const options = param.options as { default?: unknown; input?: unknown };
+  return {
+    type: (param.constructor as unknown as { type: string }).type,
+    default: options.default,
+    input: options.input,
+  };
+}
 
 const ENV_KEYS = [
   "IMG_BUCKET",
@@ -90,6 +112,92 @@ describe("configFromEnv", () => {
     saved.clear();
   });
 
+  test("declares the predecessor's labeled boolean selects", async () => {
+    await import("../src/config");
+
+    for (const [name, defaultValue] of [
+      ["IS_ANIMATED", true],
+      ["REGENERATE_TOKEN", true],
+    ] as const) {
+      expect(declaration(name)).toEqual({
+        type: "boolean",
+        default: defaultValue,
+        input: {
+          select: {
+            options: [
+              { label: "Yes", value: true },
+              {
+                label: name === "IS_ANIMATED" ? "No (1st frame only)" : "No",
+                value: false,
+              },
+            ],
+          },
+        },
+      });
+    }
+  });
+
+  // MAKE_PUBLIC is the one select in this kit whose extension default is not
+  // the first option, so it is the one that exposes the CLI's non-string
+  // default handling: `promptSelect` passes the declared default straight to
+  // inquirer while stringifying every option value, so a boolean `false`
+  // default matched nothing and "Yes" was preselected. A deploy that accepted
+  // the prompt therefore stored MAKE_PUBLIC=true and published every resized
+  // image, where the extension stored `false`.
+  test("declares MAKE_PUBLIC so the CLI preselects the extension default", async () => {
+    await import("../src/config");
+    const declared = declaration("MAKE_PUBLIC");
+
+    expect(declared.type).toBe("string");
+    expect(declared.default).toBe("false");
+    expect(declared.input).toEqual({
+      select: {
+        options: [
+          { label: "Yes", value: "true" },
+          { label: "No", value: "false" },
+        ],
+      },
+    });
+
+    // The comparison the CLI actually makes: `default` against
+    // `option.value.toString()`.
+    const options = (declared.input as SelectInput<string>).select.options;
+    const preselected = options.filter(
+      (option) => String(option.value) === declared.default
+    );
+    expect(preselected).toEqual([{ label: "No", value: "false" }]);
+  });
+
+  // Same bug as MAKE_PUBLIC: the prompt highlighted 512 MB where the
+  // extension preselected 1 GB, halving the deployed memory. It cannot be
+  // fixed with a string param, because FUNCTION_MEMORY also feeds
+  // `availableMemoryMb` and the CLI resolves that as a number only for an int
+  // param, so the extension's default is listed first instead.
+  test("declares FUNCTION_MEMORY so the CLI preselects the extension default", async () => {
+    await import("../src/config");
+    const declared = declaration("FUNCTION_MEMORY");
+
+    // Must stay an int, or `availableMemoryMb` stops resolving at deploy.
+    expect(declared.type).toBe("int");
+    expect(declared.default).toBe(1024);
+
+    // Every option the extension offered, with its label and stored value.
+    const options = (declared.input as SelectInput<number>).select.options;
+    expect([...options].sort((a, b) => a.value - b.value)).toEqual([
+      { label: "512 MB", value: 512 },
+      { label: "1 GB", value: 1024 },
+      { label: "2 GB", value: 2048 },
+      { label: "4 GB", value: 4096 },
+      { label: "8 GB", value: 8192 },
+    ]);
+
+    // The CLI stringifies every option value but passes `default` through as
+    // declared, so a non-string default matches no option and the first one is
+    // highlighted. It therefore has to be the extension's default.
+    expect(typeof declared.default).not.toBe("string");
+    expect(options[0]).toEqual({ label: "1 GB", value: 1024 });
+  });
+
   test("reads the same environment variables as the extension", async () => {
     const { configFromEnv } = await import("../src/config");
     const config = configFromEnv();
@@ -100,6 +208,53 @@ describe("configFromEnv", () => {
     expect(config.contentFilterLevel).toBe("OFF");
     expect(config.region).toBe("us-central1");
     expect(config.projectId).toBe("extensions-testing");
+  });
+
+  // The extension read process.env directly and degraded gracefully against a
+  // partial environment; the params layer must not turn that into a cold-start
+  // crash (ListParam JSON-parses IMAGE_TYPE, IntParam yields 0 for
+  // FUNCTION_MEMORY).
+  test("survives an unset IMAGE_TYPE", async () => {
+    delete process.env.IMAGE_TYPE;
+    const { configFromEnv } = await import("../src/config");
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+
+    const config = configFromEnv();
+    expect(config.imageTypes).toBeUndefined();
+    expect(resolveResizeImagesConfig(config).imageTypes).toEqual(["false"]);
+  });
+
+  test("accepts the extension-style IMAGE_TYPE=false default", async () => {
+    process.env.IMAGE_TYPE = "false";
+    const { configFromEnv } = await import("../src/config");
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+
+    const config = configFromEnv();
+    expect(config.imageTypes).toBe("false");
+    expect(resolveResizeImagesConfig(config).imageTypes).toEqual(["false"]);
+  });
+
+  test("accepts an extension-style comma-separated IMAGE_TYPE", async () => {
+    process.env.IMAGE_TYPE = "jpeg,webp";
+    const { configFromEnv } = await import("../src/config");
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+
+    const config = configFromEnv();
+    expect(config.imageTypes).toBe("jpeg,webp");
+    expect(resolveResizeImagesConfig(config).imageTypes).toEqual([
+      "jpeg",
+      "webp",
+    ]);
+  });
+
+  test("falls back to the default memory when FUNCTION_MEMORY is unset", async () => {
+    delete process.env.FUNCTION_MEMORY;
+    const { configFromEnv } = await import("../src/config");
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+
+    const config = configFromEnv();
+    expect(config.memory).toBeUndefined();
+    expect(resolveResizeImagesConfig(config).memory).toBe("1GiB");
   });
 
   test("collapses unset optional strings to undefined", async () => {
@@ -133,8 +288,11 @@ describe("configFromEnv", () => {
     // runtime contract. `.value()` reads only `process.env`; the declared
     // `default:` is written into the deployed `.env` by the CLI. A hand-rolled
     // or partial `.env` therefore yields these values, not the declared ones.
+    // (memory is the exception: configFromEnv maps IntParam's 0 sentinel to
+    // undefined so the resolver can apply its default.)
     delete process.env.IS_ANIMATED;
     delete process.env.REGENERATE_TOKEN;
+    delete process.env.MAKE_PUBLIC;
     delete process.env.FUNCTION_MEMORY;
     delete process.env.SHARP_OPTIONS;
 
@@ -143,29 +301,11 @@ describe("configFromEnv", () => {
 
     expect(config.isAnimated).toBe(false);
     expect(config.regenerateToken).toBe(false);
-    expect(config.memory).toBe(0);
+    // The extension read `process.env.MAKE_PUBLIC === "true"`, so an unset
+    // variable was `false` there too.
+    expect(config.makePublic).toBe(false);
+    expect(config.memory).toBeUndefined();
     expect(config.sharpOptions).toBe("");
-  });
-
-  test("a missing IMAGE_TYPE throws instead of falling back to its default", async () => {
-    // The list param JSON-parses the raw env var, so an absent IMAGE_TYPE is
-    // a cold-start crash — the kit's counterpart to the extension's
-    // `IMG_SIZES.split(",")` TypeError on a missing variable.
-    delete process.env.IMAGE_TYPE;
-
-    const { configFromEnv } = await import("../src/config");
-    expect(() => configFromEnv()).toThrow(SyntaxError);
-  });
-
-  test("IMAGE_TYPE is read as a JSON array, not a comma-separated string", async () => {
-    // The extension reads the same variable with `.split(",")`, so an
-    // extension-style value does not carry over.
-    process.env.IMAGE_TYPE = "jpeg,webp";
-    const { configFromEnv } = await import("../src/config");
-    expect(() => configFromEnv()).toThrow(SyntaxError);
-
-    process.env.IMAGE_TYPE = '["jpeg","webp"]';
-    expect(configFromEnv().imageTypes).toEqual(["jpeg", "webp"]);
   });
 
   test("reads explicit values for every param", async () => {
@@ -211,6 +351,108 @@ describe("configFromEnv", () => {
       customFilterPrompt: "Is this image appropriate?",
       placeholderImagePath: "placeholder.png",
     });
+  });
+});
+
+/**
+ * The select is the only source of CONTENT_FILTER_LEVEL values at deploy
+ * time, so every option it offers must be a value the resolver accepts.
+ */
+describe("CONTENT_FILTER_LEVEL select", () => {
+  const baseConfig = {
+    bucket: "extensions-testing.appspot.com",
+    sizes: "200x200",
+  } as const;
+
+  async function selectOptions() {
+    await import("../src/config");
+    const { declaredParams } = await import("firebase-functions/params");
+    const param = declaredParams.find(
+      (declared) => declared.name === "CONTENT_FILTER_LEVEL"
+    ) as StringParam | undefined;
+    const input = param?.options.input as SelectInput<string> | undefined;
+    return input?.select.options ?? [];
+  }
+
+  test("offers OFF and the three block thresholds", async () => {
+    expect(await selectOptions()).toEqual([
+      { label: "Off (No filtering)", value: "OFF" },
+      {
+        label: "Low strictness (Block only high severity content)",
+        value: "BLOCK_ONLY_HIGH",
+      },
+      {
+        label: "Medium strictness (Block medium and high severity content)",
+        value: "BLOCK_MEDIUM_AND_ABOVE",
+      },
+      {
+        label: "High strictness (Block low, medium, and high severity content)",
+        value: "BLOCK_LOW_AND_ABOVE",
+      },
+    ]);
+  });
+
+  test("every option resolves, and OFF disables filtering", async () => {
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+    for (const { value } of await selectOptions()) {
+      const resolved = resolveResizeImagesConfig({
+        ...baseConfig,
+        contentFilterLevel: value as ContentFilterLevel,
+      });
+      if (value === "OFF") {
+        expect(resolved.contentFilterLevel).toBeNull();
+      } else {
+        expect(resolved.contentFilterLevel).toBe(value);
+      }
+    }
+  });
+
+  test('the retired "False" option value is rejected', async () => {
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+    expect(() =>
+      resolveResizeImagesConfig({
+        ...baseConfig,
+        contentFilterLevel: "False" as never,
+      })
+    ).toThrow("Invalid HarmBlockThreshold: False");
+  });
+});
+
+/**
+ * The same audit for IMAGE_TYPE: every multiSelect value must be one the
+ * resize path accepts - `"false"` for keeping the original format, or a key
+ * of `SUPPORTED_IMAGE_CONTENT_TYPE_MAP` so the output content type resolves.
+ */
+describe("IMAGE_TYPE multiSelect", () => {
+  async function multiSelectOptions() {
+    await import("../src/config");
+    const { declaredParams } = await import("firebase-functions/params");
+    const param = declaredParams.find(
+      (declared) => declared.name === "IMAGE_TYPE"
+    ) as ListParam | undefined;
+    const input = param?.options.input as MultiSelectInput | undefined;
+    return input?.multiSelect.options ?? [];
+  }
+
+  test('offers the six conversion formats and "false" for the original type', async () => {
+    expect(await multiSelectOptions()).toEqual([
+      { label: "jpeg", value: "jpeg" },
+      { label: "webp", value: "webp" },
+      { label: "png", value: "png" },
+      { label: "tiff", value: "tiff" },
+      { label: "gif", value: "gif" },
+      { label: "avif", value: "avif" },
+      { label: "original", value: "false" },
+    ]);
+  });
+
+  test("every conversion value maps to an output content type", async () => {
+    const { SUPPORTED_IMAGE_CONTENT_TYPE_MAP } = await import("../src/global");
+    for (const { value } of await multiSelectOptions()) {
+      if (value !== "false") {
+        expect(SUPPORTED_IMAGE_CONTENT_TYPE_MAP).toHaveProperty(value);
+      }
+    }
   });
 });
 

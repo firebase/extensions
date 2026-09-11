@@ -15,7 +15,6 @@
  */
 
 import {
-  defineBoolean,
   defineSecret,
   defineString,
   expr,
@@ -243,19 +242,21 @@ const params = {
     default: "",
     input: POSITIVE_INT_VALIDATION,
   }),
-  enableOverrides: defineBoolean("ENABLE_DISCUSSION_OPTION_OVERRIDES", {
+  enableOverrides: defineString("ENABLE_DISCUSSION_OPTION_OVERRIDES", {
     label: "Enable per document overrides.",
     description:
       'If set to "Yes", discussion parameters may be overwritten by fields in the discussion collection.',
 
-    default: false,
+    default: "no",
+    input: select({ Yes: "yes", No: "no" }),
   }),
-  enableGenkitMonitoring: defineBoolean("ENABLE_GENKIT_MONITORING", {
+  enableGenkitMonitoring: defineString("ENABLE_GENKIT_MONITORING", {
     label: "Enable Genkit Monitoring",
     description:
       'If set to "Yes", enables Genkit Monitoring for collecting and viewing real-time telemetry data. This requires the Cloud Logging API, Cloud Trace API, and Cloud Monitoring API to be enabled, and appropriate IAM roles to be configured. See the documentation for more details.',
 
-    default: false,
+    default: "no",
+    input: select({ Yes: "yes", No: "no" }),
   }),
   harmHateSpeech: defineString("HARM_CATEGORY_HATE_SPEECH", {
     label: "Hate Speech Threshold",
@@ -329,15 +330,20 @@ function num(value: string): number | undefined {
 }
 
 function buildSafetySettings(): SafetySetting[] {
-  const entries: Array<[string, string]> = [
+  const entries: Array<[SafetySetting["category"], string]> = [
     ["HARM_CATEGORY_HATE_SPEECH", params.harmHateSpeech.value()],
     ["HARM_CATEGORY_DANGEROUS_CONTENT", params.harmDangerous.value()],
     ["HARM_CATEGORY_HARASSMENT", params.harmHarassment.value()],
     ["HARM_CATEGORY_SEXUALLY_EXPLICIT", params.harmSexual.value()],
   ];
+  // select() constrains only the CLI prompt; the runtime env value is an
+  // unchecked string, forwarded to the model backend as-is.
   return entries
     .filter(([, threshold]) => threshold.length > 0)
-    .map(([category, threshold]) => ({ category, threshold }));
+    .map(([category, threshold]) => ({
+      category,
+      threshold: threshold as SafetySetting["threshold"],
+    }));
 }
 
 /**
@@ -368,8 +374,8 @@ export function configFromEnv(): GenaiChatbotConfig {
     topK: num(params.topK.value()),
     candidateCount: num(params.candidateCount.value()),
     maxOutputTokens: num(params.maxOutputTokens.value()),
-    enableOverrides: params.enableOverrides.value(),
-    enableGenkitMonitoring: params.enableGenkitMonitoring.value(),
+    enableOverrides: params.enableOverrides.value() === "yes",
+    enableGenkitMonitoring: params.enableGenkitMonitoring.value() === "yes",
     safetySettings: buildSafetySettings(),
     secrets: [apiKeySecret],
   };

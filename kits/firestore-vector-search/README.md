@@ -59,8 +59,9 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
-later, behind the `kits` experiment):
+The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.27.0 or
+later, behind the `kits` experiment - earlier CLIs do not provide the
+`FIREBASE_KIT_INSTANCE_ID` variable this kit reads its instance id from):
 
 ```json
 {
@@ -96,9 +97,13 @@ loads them at deploy time and prompts for any required values that are missing.
 Rows marked `secret` live in Secret Manager. You can reuse existing secrets;
 the CLI connects them to the function at deploy time.
 
+The instance id is not a setting: the CLI provides it to each instance as
+`FIREBASE_KIT_INSTANCE_ID`, set to that instance's key in the `instances` map.
+`FIREBASE_` is a reserved prefix in `.env` files, so it cannot be set or
+overridden there.
+
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
-| `instanceId` | `INSTANCE_ID` | yes | — | Must match this instance's key in the `instances` map |
 | `embeddingProvider` | `EMBEDDING_PROVIDER` | no | `gemini` | Embedding provider |
 | `customEmbeddingsEndpoint` | `CUSTOM_EMBEDDINGS_ENDPOINT` | no | (empty) | Custom embeddings endpoint |
 | `customEmbeddingsBatchSize` | `CUSTOM_EMBEDDINGS_BATCH_SIZE` | no | (empty) | Custom batch size |
@@ -111,10 +116,10 @@ the CLI connects them to the function at deploy time.
 | `statusFieldName` | `STATUS_FIELD_NAME` | no | `status` | Status field |
 | `doBackfill` | `DO_BACKFILL` | yes | — | Run backfill on setup |
 | `updateOnConfigure` | `UPDATE_ON_CONFIGURE` | yes | — | Update index on configure |
-| `updateTriggerQueueName` | `UPDATE_TRIGGER_QUEUE_NAME` | no | `kit-<INSTANCE_ID>-updateTrigger` | Update trigger queue |
-| `updateTaskQueueName` | `UPDATE_TASK_QUEUE_NAME` | no | `kit-<INSTANCE_ID>-updateTask` | Update task queue |
-| `backfillTriggerQueueName` | `BACKFILL_TRIGGER_QUEUE_NAME` | no | `kit-<INSTANCE_ID>-backfillTrigger` | Backfill trigger queue |
-| `backfillTaskQueueName` | `BACKFILL_TASK_QUEUE_NAME` | no | `kit-<INSTANCE_ID>-backfillTask` | Backfill task queue |
+| `updateTriggerQueueName` | `UPDATE_TRIGGER_QUEUE_NAME` | no | `updateTrigger` | Update trigger queue |
+| `updateTaskQueueName` | `UPDATE_TASK_QUEUE_NAME` | no | `updateTask` | Update task queue |
+| `backfillTriggerQueueName` | `BACKFILL_TRIGGER_QUEUE_NAME` | no | `backfillTrigger` | Backfill trigger queue |
+| `backfillTaskQueueName` | `BACKFILL_TASK_QUEUE_NAME` | no | `backfillTask` | Backfill task queue |
 | `geminiApiKey` | `GEMINI_API_KEY` | secret | — | Gemini API key |
 | `openAiApiKey` | `OPENAI_API_KEY` | secret | — | OpenAI API key |
 
@@ -140,15 +145,10 @@ To run several vector-search indexes, add one entry per instance to the
 
 Instance ids must be unique across all kit stanzas in the project, and every
 instance's function names are namespaced by its `kit-<instance id>-` prefix, so
-the instances cannot collide. Set `INSTANCE_ID` in each config directory to the
-same value as that directory's key in the `instances` map; it also namespaces
-the internal Firestore metadata/query paths and task queue references.
-
-## Events
-
-When `EVENTARC_CHANNEL` is configured, the functions publish lifecycle events
-such as `onStart`, `onError`, `onSuccess`, and `onCompletion` under
-`firebase.extensions.firestore-vector-search.v1.*`.
+the instances cannot collide. Each instance learns its own id from the
+`FIREBASE_KIT_INSTANCE_ID` variable the CLI provides; there is nothing to keep
+in sync by hand. The id also namespaces the internal Firestore metadata/query
+paths and task queue references.
 
 ## Differences from the Vector Search with Firestore extension
 
@@ -156,7 +156,7 @@ This kit is version 0.1.3 of the extension repackaged as an npm package, and it 
 the least literal of the ports. The seven functions, the Firestore vector index,
 the query document collection and the callable all survive with their names and
 settings intact, so a `.env` copied from your installed instance needs no value
-changes. The embedding providers, the backfill, and the shape of the status field
+changes. Multimodal embedding, the backfill, and the shape of the status field
 written onto your documents all changed, so read this before you point the kit at
 a collection an installed instance has already embedded.
 
@@ -167,29 +167,34 @@ Selecting `multimodal` deploys, and then every embedding attempt throws
 multimodal image embedding, including reading images out of Cloud Storage, has no
 equivalent here. If you use it, stay on the extension.
 
-### OpenAI embeddings are a different model and a different size
+### Gemini and Vertex AI embeddings are truncated to 768 dimensions
 
-`EMBEDDING_PROVIDER: openai` used `text-embedding-ada-002` and stored the full
-1536-dimension vector, while the Firestore index it created was declared with 512
-dimensions. The kit uses `text-embedding-3-small` at 512 dimensions, which matches
-the index.
+Both the extension and the kit ask for `gemini-embedding-001` with
+`outputDimensionality: 768`, set on the embedder reference. Genkit does not apply
+it there, so the model returns its full 3072-dimension vector. Firestore refuses
+any vector above 2048 dimensions, so on the extension every gemini and vertex
+embed fails with `Vectors must be at most 2048 dimensions` and the document is
+marked `ERROR`.
 
-Vectors from the two models are not comparable, and the existing index is reused
-as-is because the "does this index already exist" check only looks at the field
-path, not the dimension. Re-embed the whole collection after you switch, and
-delete the old vector index first if it was created with a different dimension.
+The kit truncates each returned embedding to 768 before writing it, which is the
+dimension both the extension and the kit declare their vector index with, so the
+default provider works. This is the one place the kit deliberately does not match
+the extension's behaviour, because matching it means writing nothing at all.
 
-### You set `INSTANCE_ID` yourself, and it names the query collection
+### The instance id comes from `firebase.json`, and it names the query collection
 
 The extension derived its instance id at install and used it for the query
 collection (`_<instance id>/index/queries`), the index metadata document
-(`_<instance id>/index`) and its task queues. Here `INSTANCE_ID` is a setting you
-provide, and it must match this instance's key in the `instances` map in
-`firebase.json`. To keep serving the query documents your clients already write
-to, set it to your installed instance's id. The four task queue names can also be
-overridden individually with `UPDATE_TRIGGER_QUEUE_NAME`, `UPDATE_TASK_QUEUE_NAME`,
-`BACKFILL_TRIGGER_QUEUE_NAME` and `BACKFILL_TASK_QUEUE_NAME`, which the extension
-did not allow.
+(`_<instance id>/index`) and its task queues. Here the CLI derives it from this
+instance's key in the `instances` map in `firebase.json` and provides it to the
+functions as `FIREBASE_KIT_INSTANCE_ID`. There is no `INSTANCE_ID` setting to
+configure. To keep serving the query documents your clients already write to,
+use your installed instance's id as the `instances` key. The four task queue
+names can also be overridden individually with `UPDATE_TRIGGER_QUEUE_NAME`,
+`UPDATE_TASK_QUEUE_NAME`, `BACKFILL_TRIGGER_QUEUE_NAME` and
+`BACKFILL_TASK_QUEUE_NAME`, which the extension did not allow. Each names the
+deployed function, without the `kit-<instance id>-` prefix: the Admin SDK adds
+that when it resolves the queue.
 
 ### Create the `GEMINI_API_KEY` and `OPENAI_API_KEY` secrets, both of them
 
@@ -251,13 +256,36 @@ longer written, only `COMPLETED` and `ERROR`. Anything reading
 `status.<instance id>.state`, or a security rule or index keyed to it, needs
 updating. The field name is still `STATUS_FIELD_NAME`, defaulting to `status`.
 
-`embedOnWrite` still reads the same four states the extension treated as final —
-`PROCESSING`, `COMPLETED`, `ERROR` and `BACKFILLED` — so documents an installed
+`embedOnWrite` still reads the same four states the extension treated as final
+(`PROCESSING`, `COMPLETED`, `ERROR` and `BACKFILLED`), so documents an installed
 instance already embedded are still skipped once you flatten their status field.
 
-Query documents no longer get a status field at all. They previously carried
-`status.textQuery`, so if you were waiting on that to know a query had finished,
-wait for `result` instead.
+Query documents carry the flat shape too, with a `request` record alongside the
+state:
+
+```
+status: { state: "COMPLETED", request: { query, limit, prefilters } }
+```
+
+They previously carried `status.textQuery`, so anything reading that path needs
+updating. Do not treat the presence of `result` alone as completion: while a
+changed query re-runs, the document still holds the previous result, so a
+consumer waiting only on `result` can read the old query's result. A query is
+complete when `status.state` is `COMPLETED` and `status.request` matches the
+document's current `query`, `limit`, and `prefilters`. The `request` record is
+what the kit compares against those inputs to decide whether a write needs a new
+query run, so it must not be edited by hand.
+
+The extension always wrote query-document status to the literal `status` field,
+ignoring `STATUS_FIELD_NAME` there; the kit honors the param on query documents
+too, so a non-default value moves this field. The kit rejects `query`, `limit`,
+`prefilters`, and `result` as values, since a status field with one of those
+names would overwrite the query-document field of the same name.
+
+Unlike the extension, a completed query document re-runs when its `query`,
+`limit`, or `prefilters` change (the extension never re-ran a completed query
+document). The embed path is the opposite: like the extension, it never
+re-embeds a document whose status has reached one of the four states above.
 
 ### The lifecycle hooks and the function region
 
@@ -274,16 +302,6 @@ rather than the install-time location. Gemini embedding is not served in every
 region; if you deploy somewhere it is unavailable, embedding fails and the error
 is written to the document's status field.
 
-### Events are actually published now
-
-The extension declared four event types but never published any. The kit
-publishes `onStart`, `onSuccess`, `onError` and `onCompletion` under
-`firebase.extensions.firestore-vector-search.v1.*` from `embedOnWrite`, once you
-set `EVENTARC_CHANNEL` in your `.env` to a channel you have created. Per-event
-selection is not available, because the CLI rejects any `.env` key beginning with
-`EXT_`, so `EXT_SELECTED_EVENTS` cannot be set and every event type is published.
-With `EVENTARC_CHANNEL` unset, nothing is published.
-
 ### The triggers are 2nd gen
 
 All seven functions are 2nd gen. Their service accounts need
@@ -293,6 +311,10 @@ for; the Firebase CLI grants these for you.
 
 ### Unchanged
 
+- No Eventarc events are published. The extension declared `onStart`,
+  `onSuccess`, `onError` and `onCompletion` under
+  `firebase.extensions.firestore-vector-search.v1.*` but never published any of
+  them, and the kit publishes none either. `EVENTARC_CHANNEL` is not read.
 - The indexed collection is still `COLLECTION_NAME` (default `products`), the
   input, output and status fields still default to `input`, `embedding` and
   `status`, and embeddings are still written as native Firestore vectors.
@@ -305,7 +327,15 @@ for; the Firebase CLI grants these for you.
 - `DEFAULT_QUERY_LIMIT` (default 3) and `DISTANCE_MEASURE` (`COSINE`,
   `EUCLIDEAN`, `DOT_PRODUCT`, default `COSINE`) behave as before.
 - Gemini and Vertex AI embeddings are still `gemini-embedding-001` at 768
-  dimensions.
+  dimensions, though the kit has to truncate the model's response to get there.
+  See *Gemini and Vertex AI embeddings are truncated to 768 dimensions* above.
+- OpenAI embeddings are still `text-embedding-ada-002` at its native 1536
+  dimensions, so vectors already written by an installed instance stay
+  comparable with the ones the kit writes. The vector index the kit creates for
+  `EMBEDDING_PROVIDER: openai` is still declared with 512 dimensions, exactly as
+  the extension declared it, so it does not cover those 1536-dimension vectors
+  and `findNearest` fails against it. Create the 1536-dimension index yourself if
+  you query an OpenAI-embedded collection.
 - A custom endpoint still receives `{ batch: [...] }` and must return
   `{ embeddings: [[...]] }`, and still requires all three of
   `CUSTOM_EMBEDDINGS_ENDPOINT`, `CUSTOM_EMBEDDINGS_BATCH_SIZE` and

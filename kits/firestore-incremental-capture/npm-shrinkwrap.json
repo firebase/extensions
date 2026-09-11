@@ -1,25 +1,26 @@
 {
   "name": "@firebase-function-kits/firestore-incremental-capture",
-  "version": "0.0.2-rc.2",
+  "version": "0.0.2-rc.3",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@firebase-function-kits/firestore-incremental-capture",
-      "version": "0.0.2-rc.2",
+      "version": "0.0.2-rc.3",
       "license": "Apache-2.0",
       "dependencies": {
         "@google-cloud/bigquery": "^7.6.0",
         "@google-cloud/dataflow": "^3.2.0",
-        "firebase-admin": "^14.1.0",
-        "firebase-functions": "7.3.2"
+        "firebase-admin": "^14.2.0",
+        "firebase-functions": "^7.3.3-rc.2"
       },
       "devDependencies": {
         "@types/node": "^26.2.0",
+        "typescript": "^5.9.3",
         "vitest": "^3.2.4"
       },
       "engines": {
-        "node": "22"
+        "node": ">=22"
       }
     },
     "node_modules/@esbuild/aix-ppc64": {
@@ -2827,9 +2828,9 @@
       }
     },
     "node_modules/firebase-functions": {
-      "version": "7.3.2",
-      "resolved": "https://registry.npmjs.org/firebase-functions/-/firebase-functions-7.3.2.tgz",
-      "integrity": "sha512-DTa5CtCNxFE1gPjkjlhl5uh8AcNWXLKORAMRenfkecP8zGstbje+r2TaNh4Ehdxp0qTPvTUe/sS23VESW32Gbg==",
+      "version": "7.3.3-rc.2",
+      "resolved": "https://registry.npmjs.org/firebase-functions/-/firebase-functions-7.3.3-rc.2.tgz",
+      "integrity": "sha512-I58U7y7vIjY+ac7mpyWnM57PWzEDfHwJPG7HwQDrjCoJwtvMYXYnDNp46i0XZh0VJWcm8EG/w8X7+1V5yoyd7w==",
       "license": "MIT",
       "dependencies": {
         "@types/cors": "^2.8.5",
@@ -4681,6 +4682,20 @@
       "funding": {
         "type": "opencollective",
         "url": "https://opencollective.com/express"
+      }
+    },
+    "node_modules/typescript": {
+      "version": "5.9.3",
+      "resolved": "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz",
+      "integrity": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==",
+      "dev": true,
+      "license": "Apache-2.0",
+      "bin": {
+        "tsc": "bin/tsc",
+        "tsserver": "bin/tsserver"
+      },
+      "engines": {
+        "node": ">=14.17"
       }
     },
     "node_modules/undici-types": {

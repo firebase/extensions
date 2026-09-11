@@ -22,6 +22,25 @@ import type { FirestoreVectorStoreClient } from "../vector-store";
 export const prefilterSchema = z.record(z.any());
 export type Prefilter = z.infer<typeof prefilterSchema>;
 
+const prefiltersSchema = z.array(prefilterSchema);
+
+/** Validates raw prefilters from a watched query document. */
+export function parsePrefilters(data: unknown): Prefilter[] {
+  if (data == null) return [];
+  const parsed = prefiltersSchema.safeParse(data);
+  if (!parsed.success) {
+    const issues = parsed.error.issues
+      .map((issue) =>
+        issue.path.length
+          ? `${issue.path.join(".")}: ${issue.message}`
+          : issue.message
+      )
+      .join("; ");
+    throw new Error(`Invalid prefilters: ${issues}`);
+  }
+  return parsed.data;
+}
+
 export interface ParsedQueryRequest {
   query: string;
   limit?: string | number;

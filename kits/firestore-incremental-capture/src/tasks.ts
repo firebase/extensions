@@ -25,12 +25,12 @@ export const CHANGELOG_TASK_FUNCTION = "syncChangelogTask";
 export const RESTORATION_TASK_FUNCTION = "runRestorationTask";
 
 /**
- * Builds the fully-qualified task queue name for a deployed function.
+ * Builds the task queue name for a deployed function.
  *
  * A kit stanza deploys every function under `kit-<instance id>-<export name>`,
- * so the queue to enqueue onto is not named after the export. `instanceId` must
- * match this instance's key in the `instances` map for the name to resolve;
- * a mismatch enqueues onto a queue that does not exist.
+ * but the name must not carry that prefix: the Admin SDK adds it from
+ * `FIREBASE_KIT_INSTANCE_ID` when resolving the queue, and a name that already
+ * has it resolves to `kit-<instance id>-kit-<instance id>-<export name>`.
  *
  * @param config - The resolved capture configuration.
  * @param functionName - The name the function is exported under.
@@ -46,7 +46,7 @@ export function queueName(
     throw new Error("A region is required to resolve task queues.");
   }
 
-  return `locations/${region}/functions/kit-${config.instanceId}-${functionName}`;
+  return `locations/${region}/functions/${functionName}`;
 }
 
 /**

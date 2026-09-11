@@ -310,6 +310,29 @@ describe("generateResizedImageHandler", () => {
     expect(handleFailedImage).toHaveBeenCalledTimes(1);
   });
 
+  test("treats zero resize outputs as a failure", async () => {
+    const ctx = makeCtx();
+    mock(resizeImages).mockResolvedValue([]);
+
+    await generateResizedImageHandler(mockObject, ctx, false);
+
+    expect(logs.failed).toHaveBeenCalled();
+    expect(handleFailedImage).toHaveBeenCalledTimes(1);
+  });
+
+  test("keeps the original under on_success when no resize was produced", async () => {
+    mock(downloadOriginalFile).mockResolvedValue([
+      "/tmp/test.jpg",
+      { delete: vi.fn() },
+    ]);
+    mock(resizeImages).mockResolvedValue([]);
+    const ctx = makeCtx({ deleteOriginalFile: DELETE_IMAGE.onSuccess });
+
+    await generateResizedImageHandler(mockObject, ctx, false);
+
+    expect(deleteRemoteFile).not.toHaveBeenCalled();
+  });
+
   test("deletes the original only after a successful run under on_success", async () => {
     const remoteFile = { delete: vi.fn() };
     mock(downloadOriginalFile).mockResolvedValue(["/tmp/test.jpg", remoteFile]);

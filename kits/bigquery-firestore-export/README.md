@@ -49,7 +49,6 @@ export {
 and configure them with a `.env` (or `.env.<projectId>`):
 
 ```sh
-INSTANCE_ID=analytics-export
 BIGQUERY_DATASET_LOCATION=US
 DATASET_ID=analytics
 TABLE_NAME=users
@@ -67,8 +66,9 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
-later, behind the `kits` experiment):
+The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.27.0 or
+later, behind the `kits` experiment - earlier CLIs do not provide the
+`FIREBASE_KIT_INSTANCE_ID` variable this kit reads its instance id from):
 
 ```json
 {
@@ -103,9 +103,13 @@ Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
 loads them at deploy time and prompts for required values that are missing.
 `PROJECT_ID` is supplied by the Firebase CLI.
 
+The instance id is not a setting: the CLI provides it to each instance as
+`FIREBASE_KIT_INSTANCE_ID`, set to that instance's key in the `instances` map.
+`FIREBASE_` is a reserved prefix in `.env` files, so it cannot be set or
+overridden there.
+
 | Field                     | Env var                     | Required | Default           | Description                                                  |
 | ------------------------- | --------------------------- | -------- | ----------------- | ------------------------------------------------------------ |
-| `instanceId`              | `INSTANCE_ID`               | yes      | —                 | Must match this instance's key in the `instances` map        |
 | `bigqueryDatasetLocation` | `BIGQUERY_DATASET_LOCATION` | no       | `US`              | BigQuery destination dataset location                        |
 | `transferConfigName`      | `TRANSFER_CONFIG_NAME`      | no       | (empty)           | Existing DTS config resource to link instead of creating one |
 | `datasetId`               | `DATASET_ID`                | yes      | —                 | BigQuery destination dataset id                              |
@@ -114,6 +118,7 @@ loads them at deploy time and prompts for required values that are missing.
 | `displayName`             | `DISPLAY_NAME`              | yes      | —                 | Human-readable scheduled-query name                          |
 | `partitioningField`       | `PARTITIONING_FIELD`        | no       | (empty)           | Destination-table partitioning field                         |
 | `schedule`                | `SCHEDULE`                  | yes      | —                 | DTS schedule, such as `every 24 hours`                       |
+| `pubSubTopic`             | `PUB_SUB_TOPIC`             | no       | `kit-<instance id>-processMessages` | Pub/Sub topic ID, not a full resource name, receiving DTS completion notifications |
 | `firestoreCollection`     | `COLLECTION_PATH`           | no       | `transferConfigs` | Root Firestore collection for configs and output             |
 | `logLevel`                | `LOG_LEVEL`                 | no       | `info`            | `debug`, `info`, `warn`, `error`, or `silent`                |
 
@@ -139,10 +144,10 @@ To run several reverse-sync instances, add one entry per instance to the
 
 Instance ids must be unique across all kit stanzas in the project, and every
 instance's function names are namespaced by its `kit-<instance id>-` prefix, so
-the instances cannot collide. Set `INSTANCE_ID` in each config directory to the
-same value as that directory's key in the `instances` map; it also namespaces
-the Pub/Sub notification topic and associates the deployment with its transfer
-config.
+the instances cannot collide. Each instance learns its own id from the
+`FIREBASE_KIT_INSTANCE_ID` variable the CLI provides; there is nothing to keep
+in sync by hand. The id also namespaces the Pub/Sub notification topic and
+associates the deployment with its transfer config.
 
 ## Provisioning
 
@@ -184,24 +189,38 @@ variable name and default, so a `.env` copied from your installed instance needs
 no value changes. What changes is the instance id, the Pub/Sub topic, the identity
 the scheduled query runs as, and how repeated BigQuery columns land in Firestore.
 
-### You set `INSTANCE_ID` yourself, and the Pub/Sub topic is renamed
+### The instance id comes from `firebase.json`, and the Pub/Sub topic is renamed
 
 The extension derived an instance id at install and used it to name its
 notification topic (`ext-<instance id>-processMessages`) and to tag its transfer
-config document with `extInstanceId`. Here `INSTANCE_ID` is a setting you
-provide, and it must match this instance's key in the `instances` map in
-`firebase.json`.
+config document with `extInstanceId`. Here the CLI derives it from this
+instance's key in the `instances` map in `firebase.json` and provides it to the
+functions as `FIREBASE_KIT_INSTANCE_ID`. There is no `INSTANCE_ID` setting to
+configure.
 
-The topic becomes `kit-<INSTANCE_ID>-processMessages`, and the kit creates it on
-first run if it does not already exist. Set `INSTANCE_ID` to your installed
-instance's id if you want the kit to adopt the scheduled query that instance
-created, because the lookup is by `extInstanceId` on the documents in
+The topic defaults to `kit-<instance id>-processMessages`, and the kit creates it
+on first run if it does not already exist. Use your installed instance's id as
+the `instances` key if you want the kit to adopt the scheduled query that
+instance created, because the lookup is by `extInstanceId` on the documents in
 `COLLECTION_PATH`. With a different id the kit finds nothing, creates a second
 scheduled query, and you end up with two writing into the same collection.
 
-The existing transfer config still points its notifications at the old `ext-`
-topic; the kit's update path rewrites `notification_pubsub_topic` to the new one
-on the first deploy, so the old topic can be deleted afterwards.
+An adopted transfer config still notifies the extension's `ext-` topic, and the
+kit reconciles `notification_pubsub_topic` to whatever `PUB_SUB_TOPIC` names. So
+there are two ways to migrate:
+
+- Keep the extension's topic. Set
+  `PUB_SUB_TOPIC=ext-<instance id>-processMessages`, and the transfer config is
+  left untouched: anything else subscribed to that topic, including an extension
+  instance still installed, keeps receiving run notifications.
+- Take the default. The first deploy repoints the transfer config at
+  `kit-<instance id>-processMessages`, which stops notifications reaching the
+  extension and any other subscriber on the old topic. Do this once the extension
+  is uninstalled, and the old topic can then be deleted.
+
+`TRANSFER_CONFIG_NAME` is the exception. A linked config is adopted as-is and is
+never repointed, so if it notifies a topic other than `PUB_SUB_TOPIC` the kit
+logs a warning and its runs never reach the kit's `processMessages` function.
 
 ### Repeated BigQuery columns are now written as arrays
 
@@ -210,7 +229,21 @@ position, `{ "0": ..., "1": ... }`, because the conversion treated every
 non-scalar value as an object. The kit writes a real Firestore array instead.
 Anything reading those fields by numeric string key needs updating, and rows
 written before and after the change are not the same shape. Scalars, timestamps,
-dates, times, datetimes, bytes and geography values convert exactly as before.
+dates, datetimes, bytes and geography values convert exactly as before.
+
+### A TIME column is written as a string
+
+A `TIME` value arrives from BigQuery as `"10:30:00"`, and the extension passed it
+to `Timestamp.fromDate(new Date(...))`, which throws `Value for argument "seconds"
+is not a valid integer.` A run whose results included a `TIME` column therefore
+wrote nothing at all: no rows, no run document, no `latest`. The kit stores the
+string BigQuery returned instead, so the run completes.
+
+Firestore has no time-of-day type, and any `Timestamp` would have to invent a date
+to attach the time to. The string also keeps the microsecond precision a
+`Timestamp` cannot hold. This is the only scalar type whose value differs from
+the extension, and no installed instance can have stored one, because the run
+crashed before the write.
 
 ### The scheduled query runs as a different service account
 
@@ -271,7 +304,7 @@ result query where your dataset lives.
 extension's 1st gen trigger did not retry. A run whose results fail to copy, for
 example because BigQuery or Firestore is briefly unavailable, is now retried
 rather than dropped. A notification that keeps failing, such as one for a transfer
-config not tagged with this `INSTANCE_ID`, is also retried until Pub/Sub gives up.
+config not tagged with this instance id, is also retried until Pub/Sub gives up.
 
 Both functions' service accounts need `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of the three roles the extension asked for, and the

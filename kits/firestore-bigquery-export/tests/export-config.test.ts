@@ -22,7 +22,6 @@ describe("resolveExportConfig", () => {
     collectionPath: "users",
     datasetId: "analytics",
     tableId: "users",
-    location: "us-central1",
     projectId: "test-project",
   };
 
@@ -42,12 +41,10 @@ describe("resolveExportConfig", () => {
   test("keeps caller-supplied values", () => {
     const resolved = resolveExportConfig({
       ...minimal,
-      location: "europe-west2",
       databaseId: "secondary",
       wildcardIds: true,
     });
 
-    expect(resolved.location).toBe("europe-west2");
     expect(resolved.databaseId).toBe("secondary");
     expect(resolved.wildcardIds).toBe(true);
   });
@@ -65,7 +62,6 @@ describe("toTrackerConfig", () => {
     collectionPath: "users",
     datasetId: "analytics",
     tableId: "users",
-    location: "us-central1",
     projectId: "test-project",
   };
 
@@ -110,5 +106,15 @@ describe("toTrackerConfig", () => {
       resolveExportConfig({ ...base, bqProjectId: "analytics-project" })
     );
     expect(tracker.bqProjectId).toBe("analytics-project");
+  });
+
+  test("wires the backup collection into the tracker (queue exhaustion durability)", () => {
+    const tracker = toTrackerConfig(
+      resolveExportConfig({ ...base, backupCollectionId: "bq_failures" })
+    );
+    expect(tracker.backupTableId).toBe("bq_failures");
+
+    const withoutBackup = toTrackerConfig(resolveExportConfig(base));
+    expect(withoutBackup.backupTableId).toBeUndefined();
   });
 });

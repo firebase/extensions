@@ -41,10 +41,29 @@ type ConfigExpression<T extends string | number | boolean> = T | Expression<T>;
 
 export interface ConfigExpressions {
   collectionDocument: ConfigExpression<string>;
-  queryCollectionDocument: ConfigExpression<string>;
 }
 
-const instanceId = defineString("INSTANCE_ID");
+/**
+ * Reads the instance id firebase-tools injects for kit instances (set to the
+ * instance's key in firebase.json) during discovery, in the emulator, and on
+ * deployed functions. The FIREBASE_ prefix is reserved in .env files and the
+ * params machinery never sees injected values, so it is a plain env read, not
+ * a defineString. Not evaluated at import: the `./lib` entry re-exports from
+ * this module and must load without the variable.
+ *
+ * @throws If the variable is missing, naming the CLI version that provides it.
+ */
+export function instanceIdFromEnv(): string {
+  const instanceId = process.env.FIREBASE_KIT_INSTANCE_ID;
+  if (!instanceId) {
+    throw new Error(
+      "FIREBASE_KIT_INSTANCE_ID is not set. It is provided automatically to " +
+        "kit instances by firebase-tools >= 15.27.0; deploy or emulate this " +
+        "kit with a supported CLI version."
+    );
+  }
+  return instanceId;
+}
 
 const EMBEDDING_PROVIDER_OPTIONS = [
   "gemini",
@@ -59,7 +78,6 @@ const DISTANCE_MEASURE_OPTIONS = [
   "DOT_PRODUCT",
 ] as const;
 const params = {
-  instanceId,
   embeddingProvider: defineString("EMBEDDING_PROVIDER", {
     label: "LLM",
     description:
@@ -162,29 +180,33 @@ const params = {
     label: "Embed existing documents?",
     description:
       "Should existing documents in the Firestore collection be embedded as well?",
+    input: select({ Yes: true, No: false }),
   }),
   updateOnConfigure: defineBoolean("UPDATE_ON_CONFIGURE", {
     label: "Update existing embeddings?",
     description:
       "Should existing documents in the Firestore collection be updated with new embeddings on reconfiguring the extensions?",
+    input: select({ Yes: true, No: false }),
   }),
+  // These name the deployed function, not the fully-qualified queue: the Admin
+  // SDK prefixes the name with `kit-<instance id>-` from
+  // FIREBASE_KIT_INSTANCE_ID when it resolves the queue.
   updateTriggerQueueName: defineString("UPDATE_TRIGGER_QUEUE_NAME", {
-    default: expr`kit-${instanceId}-updateTrigger`,
+    default: "updateTrigger",
   }),
   updateTaskQueueName: defineString("UPDATE_TASK_QUEUE_NAME", {
-    default: expr`kit-${instanceId}-updateTask`,
+    default: "updateTask",
   }),
   backfillTriggerQueueName: defineString("BACKFILL_TRIGGER_QUEUE_NAME", {
-    default: expr`kit-${instanceId}-backfillTrigger`,
+    default: "backfillTrigger",
   }),
   backfillTaskQueueName: defineString("BACKFILL_TASK_QUEUE_NAME", {
-    default: expr`kit-${instanceId}-backfillTask`,
+    default: "backfillTask",
   }),
 };
 
 export const CONFIG_EXPRESSIONS = {
   collectionDocument: expr`${params.collectionPath}/{docId}`,
-  queryCollectionDocument: expr`_${instanceId}/index/queries/{queryId}`,
 } as const satisfies ConfigExpressions;
 
 function optionalString(value: string): string | undefined {
@@ -220,7 +242,7 @@ export function configFromEnv(): VectorSearchConfig {
     updateOnConfigure: params.updateOnConfigure.value(),
     region: process.env.FUNCTION_REGION,
     projectId: projectID.value(),
-    instanceId: params.instanceId.value(),
+    instanceId: instanceIdFromEnv(),
     geminiApiKey: optionalString(geminiApiKey.value()),
     openAiApiKey: optionalString(openAiApiKey.value()),
     bucketName: optionalString(storageBucket.value()),

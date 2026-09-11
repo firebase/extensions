@@ -28,6 +28,7 @@ conflicts with that automatic setup.
 | `roles/datastore.user` | read input docs and write translations |
 | `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
 | `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
+| `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
 | `translate.googleapis.com` | Google Translate provider |
 
 ## Usage
@@ -185,16 +186,6 @@ beginning with `EXT_`, so `EXT_SELECTED_EVENTS` cannot be set and every event
 type is published. With `EVENTARC_CHANNEL` unset, nothing is published and the
 function is otherwise unaffected.
 
-### Event payloads have a different shape
-
-The event types are unchanged, but what `onStart` and `onCompletion` carry is
-not. `onStart` used to carry `{change, context}` and now carries `{data, params}`:
-the write is under `data` instead of `change`, and the 1st gen `context` is gone.
-`onCompletion` used to carry `{context}` and now carries `{params}` only. Anything
-reading `context.eventId`, `context.timestamp`, `context.eventType` or
-`context.resource` needs updating; the `messageId` trigger wildcard survives as
-`params`. `onSuccess` and `onError` payloads are unchanged.
-
 ### No backfill
 
 There is no function to translate documents that already exist in the
@@ -223,6 +214,11 @@ Cloud Translation API is still required whichever provider you choose.
   behave as before.
 - Translations are still written in a transaction, and each `onSuccess` event
   still carries the output field name and the translations.
+- The event payloads: `onStart` still carries `{change, context}` and
+  `onCompletion` still carries `{context}`, with `context.eventId`,
+  `context.timestamp`, `context.eventType`, `context.resource`, the
+  `messageId` wildcard under `context.params`, and the empty
+  `context.notSupported` object the 1st gen backend always sent.
 
 ## API surface
 

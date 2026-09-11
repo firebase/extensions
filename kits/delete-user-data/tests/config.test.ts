@@ -33,6 +33,9 @@ class FakeStringParam extends FakeExpression<string> {
   }
 
   value(): string {
+    if (process.env[this.name] !== undefined) {
+      return process.env[this.name];
+    }
     if (this.defaultValue instanceof FakeStringParam) {
       return this.defaultValue.value();
     }
@@ -48,24 +51,20 @@ const defineString = vi.fn(
     new FakeStringParam(name, opts?.default)
 );
 
-const defineInt = vi.fn((_name: string, opts?: { default?: number }) => ({
+// Carries name so configFromEnv can look the variable up, as the real one does.
+const defineInt = vi.fn((name: string, opts?: { default?: number }) => ({
+  name,
   value: () => opts?.default ?? 0,
 }));
 
-const defineBoolean = vi.fn((_name: string, opts?: { default?: boolean }) => ({
-  value: () => opts?.default ?? false,
+const select = vi.fn((options: Record<string, string>) => ({
+  select: {
+    options: Object.entries(options).map(([label, value]) => ({
+      label,
+      value,
+    })),
+  },
 }));
-
-const expr = vi.fn(
-  (strings: TemplateStringsArray, ...values: unknown[]) =>
-    new FakeExpression(
-      strings.reduce(
-        (result, part, index) =>
-          result + part + (index < values.length ? cel(values[index]) : ""),
-        ""
-      )
-    )
-);
 
 function cel(value: unknown): string {
   return value instanceof FakeExpression ? value.toCEL() : String(value);
@@ -73,12 +72,10 @@ function cel(value: unknown): string {
 
 vi.mock("firebase-functions/params", () => ({
   Expression: FakeExpression,
-  defineBoolean,
   defineInt,
   defineString,
-  expr,
   projectID: { value: () => "demo-test" },
-  select: vi.fn((options: string[]) => ({ options })),
+  select,
   storageBucket: new FakeStringParam("STORAGE_BUCKET", "demo-test.appspot.com"),
 }));
 
@@ -86,8 +83,8 @@ async function importConfig() {
   vi.resetModules();
   defineString.mockClear();
   defineInt.mockClear();
-  defineBoolean.mockClear();
-  expr.mockClear();
+  select.mockClear();
+  vi.stubEnv("FIREBASE_KIT_INSTANCE_ID", "test-instance");
 
   return import("../src/config");
 }
@@ -105,7 +102,6 @@ describe("configFromEnv", () => {
       firestoreDeleteMode: "shallow",
       rtdbLocation: "us-central1",
       enableAutoDiscovery: false,
-      searchDepth: 3,
       searchFields: "id,uid,userId",
       projectId: "demo-test",
     });
@@ -120,6 +116,17 @@ describe("configFromEnv", () => {
     expect(config.storagePaths).toBeUndefined();
     expect(config.searchFunction).toBeUndefined();
     expect(config.rtdbInstance).toBeUndefined();
+    expect(config.searchDepth).toBeUndefined();
+  });
+
+  test("parses the predecessor's yes/no values", async () => {
+    const { configFromEnv } = await importConfig();
+
+    vi.stubEnv("ENABLE_AUTO_DISCOVERY", "yes");
+    expect(configFromEnv().enableAutoDiscovery).toBe(true);
+
+    vi.stubEnv("ENABLE_AUTO_DISCOVERY", "no");
+    expect(configFromEnv().enableAutoDiscovery).toBe(false);
   });
 
   test("declares the params the extension exposes", async () => {
@@ -128,7 +135,6 @@ describe("configFromEnv", () => {
     const declared = defineString.mock.calls.map(([name]) => name);
     expect(declared).toEqual(
       expect.arrayContaining([
-        "INSTANCE_ID",
         "FIRESTORE_PATHS",
         "FIRESTORE_DATABASE_ID",
         "FIRESTORE_DELETE_MODE",
@@ -147,13 +153,49 @@ describe("configFromEnv", () => {
       "AUTO_DISCOVERY_SEARCH_DEPTH",
       expect.objectContaining({ default: 3 }),
     ]);
-    expect(defineBoolean.mock.calls).toContainEqual([
+    expect(defineString.mock.calls).toContainEqual([
       "ENABLE_AUTO_DISCOVERY",
-      expect.objectContaining({ default: false }),
+      expect.objectContaining({
+        default: "no",
+        input: {
+          select: {
+            options: [
+              { label: "Yes", value: "yes" },
+              { label: "No", value: "no" },
+            ],
+          },
+        },
+      }),
     ]);
   });
 
-  test("defaults the topic names to kit-{instanceId}-* expressions", async () => {
+  // The CLI injects FIREBASE_KIT_INSTANCE_ID as a reserved env var; declaring
+  // it (or INSTANCE_ID) as a param makes the CLI prompt for a value it cannot
+  // accept and abort loading the kit.
+  test("does not declare an instance-id param", async () => {
+    await importConfig();
+
+    const declared = defineString.mock.calls.map(([name]) => name);
+    expect(declared).not.toContain("INSTANCE_ID");
+    expect(declared).not.toContain("FIREBASE_KIT_INSTANCE_ID");
+  });
+
+  test("reads the instance id from the injected environment", async () => {
+    const { configFromEnv } = await importConfig();
+
+    expect(configFromEnv().instanceId).toBe("test-instance");
+  });
+
+  test("throws when FIREBASE_KIT_INSTANCE_ID is missing", async () => {
+    const { configFromEnv } = await importConfig();
+    vi.stubEnv("FIREBASE_KIT_INSTANCE_ID", undefined);
+
+    expect(() => configFromEnv()).toThrow(
+      /FIREBASE_KIT_INSTANCE_ID is not set/
+    );
+  });
+
+  test("defaults the topic names to kit-{instanceId}-*", async () => {
     const { CONFIG_EXPRESSIONS } = await importConfig();
 
     expect(cel(CONFIG_EXPRESSIONS.discoveryTopicName)).toBe(
@@ -162,13 +204,13 @@ describe("configFromEnv", () => {
     expect(cel(CONFIG_EXPRESSIONS.deletionTopicName)).toBe(
       "{{ params.DELETION_TOPIC_NAME }}"
     );
-    expect(expr.mock.results.map((result) => cel(result.value))).toEqual([
-      "kit-{{ params.INSTANCE_ID }}-discovery",
-      "kit-{{ params.INSTANCE_ID }}-deletion",
-    ]);
     expect(defineString.mock.calls).toContainEqual([
       "DISCOVERY_TOPIC_NAME",
-      { default: expect.anything() },
+      { default: "kit-test-instance-discovery" },
+    ]);
+    expect(defineString.mock.calls).toContainEqual([
+      "DELETION_TOPIC_NAME",
+      { default: "kit-test-instance-deletion" },
     ]);
   });
 

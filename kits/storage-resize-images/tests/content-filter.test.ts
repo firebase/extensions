@@ -49,6 +49,7 @@ vi.mock("../src/logs", () => ({
   retryScheduled: vi.fn(),
 }));
 
+import vertexAI from "@genkit-ai/vertexai";
 import { checkImageContent } from "../src/content-filter";
 import * as log from "../src/logs";
 
@@ -77,11 +78,32 @@ describe("checkImageContent with mocks", () => {
     expect(result).toBe(true);
   });
 
-  it("should throw when no region is available", async () => {
-    // The extension falls back to "us-central1"; the kit refuses to guess.
-    await expect(
-      checkImageContent(imagePath, "BLOCK_ONLY_HIGH", null, "image/png")
-    ).rejects.toThrow("FUNCTION_REGION is required for Vertex AI filtering.");
+  it("should fall back to us-central1 when no region is available", async () => {
+    const result = await checkImageContent(
+      imagePath,
+      "BLOCK_ONLY_HIGH",
+      null,
+      "image/png"
+    );
+
+    expect(result).toBe(true);
+    expect(vi.mocked(vertexAI)).toHaveBeenCalledWith(
+      expect.objectContaining({ location: "us-central1" })
+    );
+  });
+
+  it("should pass an explicit region through to the Vertex AI plugin", async () => {
+    await checkImageContent(
+      imagePath,
+      "BLOCK_ONLY_HIGH",
+      null,
+      "image/png",
+      "europe-west1"
+    );
+
+    expect(vi.mocked(vertexAI)).toHaveBeenCalledWith(
+      expect.objectContaining({ location: "europe-west1" })
+    );
   });
 
   it("should return true when the API response is positive", async () => {

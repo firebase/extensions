@@ -1,1 +1,2 @@
+- fix: `ENABLE_DISCUSSION_OPTION_OVERRIDES` and `ENABLE_GENKIT_MONITORING` accept the extension's `yes` / `no` values again. The kit had declared them as boolean params, which only count the literal `true` as enabled, so a `.env` copied from an installed extension instance carried `yes` and silently left per-discussion overrides and Genkit monitoring off. Both are now the extension's labeled `Yes` / `No` selects and are read the same way the extension read them.
 - Initial release of kit, see README for differences between the legacy extension and this kit

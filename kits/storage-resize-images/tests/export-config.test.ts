@@ -205,11 +205,21 @@ describe("convertHarmBlockThreshold", () => {
       "BLOCK_LOW_AND_ABOVE",
       "BLOCK_MEDIUM_AND_ABOVE",
       "BLOCK_ONLY_HIGH",
-      // The extension has no BLOCK_NONE entry and throws for it.
-      "BLOCK_NONE",
     ] as const) {
       expect(convertHarmBlockThreshold(level)).toBe(level);
     }
+  });
+
+  test("rejects BLOCK_NONE like the extension", () => {
+    expect(() => convertHarmBlockThreshold("BLOCK_NONE" as never)).toThrow(
+      "Invalid HarmBlockThreshold: BLOCK_NONE"
+    );
+    expect(() =>
+      resolveResizeImagesConfig({
+        ...baseConfig,
+        contentFilterLevel: "BLOCK_NONE" as never,
+      })
+    ).toThrow("Invalid HarmBlockThreshold: BLOCK_NONE");
   });
 
   test("an unset level disables filtering", () => {

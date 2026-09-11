@@ -44,9 +44,9 @@ describe("resolveCaptureConfig", () => {
     expect(resolved.logLevel).toBe("info");
   });
 
-  test("requires an instance id, which must match the instances map key", () => {
+  test("requires an instance id, which namespaces the Dataflow jobs, flex template and run-status documents", () => {
     expect(() => resolveCaptureConfig(config({ instanceId: "" }))).toThrow(
-      /INSTANCE_ID is required/
+      /instanceId is required/
     );
   });
 

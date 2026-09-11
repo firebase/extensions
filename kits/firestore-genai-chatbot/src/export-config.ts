@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
+import type {
+  HarmBlockThreshold as VertexAIHarmBlockThreshold,
+  HarmCategory as VertexAIHarmCategory,
+} from "@google/genai";
+import type {
+  HarmBlockThreshold as GoogleAIHarmBlockThreshold,
+  HarmCategory as GoogleAIHarmCategory,
+} from "@google/generative-ai";
 import type { Expression } from "firebase-functions/params";
 
 /** The type returned by `defineSecret` (not exported by name from the module). */
@@ -27,10 +35,33 @@ export enum GenerativeAIProvider {
   VERTEX_AI = "vertex-ai",
 }
 
-/** A model safety setting (`{ category, threshold }`), accepted by both SDKs. */
+/**
+ * A model safety setting. Category and threshold are typed against both pinned
+ * SDKs' enums as string-literal unions, so enum members and plain string
+ * literals both compile.
+ */
 export interface SafetySetting {
-  category: string;
-  threshold: string;
+  category: `${GoogleAIHarmCategory}` | `${VertexAIHarmCategory}`;
+  threshold: `${GoogleAIHarmBlockThreshold}` | `${VertexAIHarmBlockThreshold}`;
+}
+
+// Structural only: the SDK enums lag the live API's accepted values, so
+// membership is left to the model backend.
+function validateSafetySettings(settings: SafetySetting[]): void {
+  for (const setting of settings) {
+    if (
+      typeof setting !== "object" ||
+      setting === null ||
+      typeof setting.category !== "string" ||
+      typeof setting.threshold !== "string"
+    ) {
+      throw new Error(
+        `Invalid safety setting: ${JSON.stringify(
+          setting
+        )}. Expected an object with string category and threshold.`
+      );
+    }
+  }
 }
 
 /**
@@ -140,12 +171,13 @@ export interface DeployTimeOptions {
  */
 export function getProjectId(): string {
   const config = process.env.FIREBASE_CONFIG;
+  const projectId = config ? JSON.parse(config).projectId : undefined;
 
-  if (!config) {
-    throw new Error("FIREBASE_CONFIG is not set");
+  if (!projectId) {
+    throw new Error("Missing required environment variables: PROJECT_ID");
   }
 
-  return JSON.parse(config).projectId;
+  return projectId;
 }
 
 const DEFAULT_COLLECTION = "generate";
@@ -162,6 +194,11 @@ export function resolveConfig(
 ): ResolvedGenaiChatbotConfig {
   const provider =
     (config.provider as GenerativeAIProvider) ?? GenerativeAIProvider.GOOGLE_AI;
+  if (!Object.values(GenerativeAIProvider).includes(provider)) {
+    throw new Error(`Invalid Provider: ${provider}`);
+  }
+  const safetySettings = config.safetySettings ?? [];
+  validateSafetySettings(safetySettings);
   return {
     provider,
     vertex: {
@@ -187,7 +224,7 @@ export function resolveConfig(
     topK: config.topK,
     candidateCount: config.candidateCount ?? 1,
     maxOutputTokens: config.maxOutputTokens,
-    safetySettings: config.safetySettings ?? [],
+    safetySettings,
     secrets: config.secrets,
   };
 }

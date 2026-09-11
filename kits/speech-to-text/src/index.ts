@@ -37,8 +37,17 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   // Gen2 Storage triggers need Eventarc receive and run.invoker on the function SA.
   "roles/eventarc.eventReceiver",
   "roles/run.invoker",
+  // The Extensions platform granted publish rights on the extension's Eventarc
+  // channel implicitly from `events:` in extension.yaml. Kits get no implicit
+  // grant, so without this the `channel.publish()` calls in ./events fail with
+  // PERMISSION_DENIED and no custom event is ever delivered.
+  "roles/eventarc.publisher",
 ];
 const REQUIRED_APIS = [
+  {
+    api: "firestore.googleapis.com",
+    reason: "Writes transcription results to Cloud Firestore.",
+  },
   {
     api: "speech.googleapis.com",
     reason: "Used for transcribing audio files with Cloud Speech-to-Text.",

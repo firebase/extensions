@@ -42,6 +42,11 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
 ];
 const REQUIRED_APIS = [
   {
+    api: "firestore.googleapis.com",
+    reason:
+      "Receives document change events from Cloud Firestore and writes generated responses back.",
+  },
+  {
     api: "aiplatform.googleapis.com",
     reason:
       "For access to the Vertex AI Gemini API if this provider is chosen.",
