@@ -1,5 +1,21 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { BigQuery, Dataset, TableMetadata } from "@google-cloud/bigquery";
-import { firestore } from "firebase-admin";
+import { Timestamp } from "firebase-admin/firestore";
 import { RawChangelogViewSchema } from "../../../bigquery/schema";
 import {
   buildMaterializedViewQuery,
@@ -86,7 +102,7 @@ describe("Materialized View Recreation", () => {
   test("should not recreate incremental materialized view when unchanged", async () => {
     // Create initial event
     const event = changeTrackerEvent({
-      data: { end_date: firestore.Timestamp.now() },
+      data: { end_date: Timestamp.now() },
       eventId: "testing2",
     });
 
@@ -146,7 +162,7 @@ describe("Materialized View Recreation", () => {
   test("should not recreate non-incremental materialized view when unchanged", async () => {
     // Create initial event
     const event = changeTrackerEvent({
-      data: { end_date: firestore.Timestamp.now() },
+      data: { end_date: Timestamp.now() },
       eventId: "testing2",
     });
 
@@ -208,7 +224,7 @@ describe("Materialized View Recreation", () => {
   test("should recreate materialized view when inc -> non-inc ", async () => {
     // Create initial event
     const event = changeTrackerEvent({
-      data: { end_date: firestore.Timestamp.now() },
+      data: { end_date: Timestamp.now() },
       eventId: "testing2",
     });
 
@@ -269,7 +285,7 @@ describe("Materialized View Recreation", () => {
   test("should recreate materialized view when non-inc -> inc ", async () => {
     // Create initial event
     const event = changeTrackerEvent({
-      data: { end_date: firestore.Timestamp.now() },
+      data: { end_date: Timestamp.now() },
       eventId: "testing2",
     });
 
