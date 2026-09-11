@@ -342,6 +342,32 @@ describe("handleDocumentWrite", () => {
     expect(translateClassMethod).not.toHaveBeenCalled();
   });
 
+  test("fails without writing when an update sets the input to null", async () => {
+    const after = makeSnapshot({ input: null });
+
+    await expect(
+      handleDocumentWrite(
+        makeEvent(makeSnapshot({ input: "hello" }), after),
+        context()
+      )
+    ).resolves.toBeUndefined();
+
+    expect(logger.error).toHaveBeenCalledWith(
+      ...messages.error(expect.any(TypeError))
+    );
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(events.recordErrorEvent).toHaveBeenCalledWith(expect.any(TypeError));
+    expect(events.recordErrorEvent).toHaveBeenCalledTimes(1);
+    expect(logger.log).not.toHaveBeenCalledWith(
+      messages.translateInputStringToAllLanguages(
+        null as never,
+        defaultLanguages
+      )
+    );
+    expect(translateClassMethod).not.toHaveBeenCalled();
+    expect(firestore.update).not.toHaveBeenCalled();
+  });
+
   test("skips processing if there is no input on the before and after snapshots", async () => {
     const snapshot = makeSnapshot({ notTheInput: "hello" });
 
