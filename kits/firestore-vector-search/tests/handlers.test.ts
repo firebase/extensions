@@ -733,6 +733,25 @@ describe("handleEmbedOnWrite", () => {
     });
   });
 
+  // `writeStartEvent` used `startData || change.after.createTime`, so a stored
+  // createTime that is falsy but present was replaced, not carried forward.
+  test("replaces a falsy stored createTime with the document's", async () => {
+    const { ctx } = makeCtx();
+    const { event, update } = writeEvent(
+      { input: "hello" },
+      { input: "goodbye", ...status("FAILED_BACKFILL", { createTime: 0 }) }
+    );
+
+    await handleEmbedOnWrite(event, ctx);
+
+    expect(update).toHaveBeenNthCalledWith(1, statusFieldPath(), {
+      state: "PROCESSING",
+      startTime: FieldValue.serverTimestamp(),
+      createTime: CREATE_TIME,
+      updateTime: FieldValue.serverTimestamp(),
+    });
+  });
+
   test("embeds a document that already has an embedding but no status", async () => {
     const { ctx } = makeCtx();
     const { event } = writeEvent(undefined, {
@@ -1017,8 +1036,38 @@ describe("handleBackfillTask", () => {
     });
   }
 
+  // `getValidDocs` tested the raw state for truthiness, so a non-string state
+  // still skipped the document.
+  for (const [label, state] of [
+    ["a number", 1],
+    ["a boolean", true],
+    ["an object", { nested: "value" }],
+  ] as const) {
+    test(`skips a document whose state is ${label}`, async () => {
+      const { ctx, update } = backfillCtx({
+        input: "hello",
+        ...status(state as unknown as string),
+      });
+
+      await handleBackfillTask(task(PATH), ctx);
+
+      expect(getSingleEmbedding).not.toHaveBeenCalled();
+      expect(update).not.toHaveBeenCalled();
+    });
+  }
+
   test("re-embeds a document that was already backfilled", async () => {
     const { ctx } = backfillCtx({ input: "hello", ...status("BACKFILLED") });
+
+    await handleBackfillTask(task(PATH), ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
+  });
+
+  // The same truthiness test: an empty state was falsy, so the extension
+  // backfilled the document rather than skipping it.
+  test("embeds a document whose state is an empty string", async () => {
+    const { ctx } = backfillCtx({ input: "hello", ...status("") });
 
     await handleBackfillTask(task(PATH), ctx);
 
