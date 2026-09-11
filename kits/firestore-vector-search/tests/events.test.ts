@@ -72,18 +72,19 @@ function writeEvent(
   after: Record<string, unknown> | null,
   before: Record<string, unknown> | null = null
 ) {
-  const set = vi.fn().mockResolvedValue(undefined);
+  const update = vi.fn().mockResolvedValue(undefined);
   const snapshot = (data: Record<string, unknown> | null) => ({
     exists: data !== null,
+    createTime: undefined,
     data: () => data ?? undefined,
     get: (field: string) => (data ? data[field] : undefined),
-    ref: { path: `${config.collectionPath}/doc-1`, set },
+    ref: { path: `${config.collectionPath}/doc-1`, update },
   });
   const event = {
     data: { after: snapshot(after), before: snapshot(before) },
     params: { docId: "doc-1" },
   } as unknown as VectorWriteEvent;
-  return { event, set };
+  return { event, update };
 }
 
 describe("event publishing", () => {
@@ -114,24 +115,23 @@ describe("event publishing", () => {
   });
 
   test("does not reach Eventarc when an embedding succeeds", async () => {
-    const { event, set } = writeEvent({ [config.inputFieldName]: "hello" });
+    const { event, update } = writeEvent({ [config.inputFieldName]: "hello" });
 
     await handleEmbedOnWrite(event, makeCtx());
 
-    expect(set).toHaveBeenCalledTimes(1);
+    // The start event and the completion event.
+    expect(update).toHaveBeenCalledTimes(2);
     expect(eventarc.imported).toBe(false);
     expect(eventarc.publish).not.toHaveBeenCalled();
   });
 
   test("does not reach Eventarc when an embedding fails", async () => {
-    const { event, set } = writeEvent({ [config.inputFieldName]: "hello" });
+    const { event, update } = writeEvent({ [config.inputFieldName]: "hello" });
     getSingleEmbedding.mockRejectedValue(new Error("Error with embedding"));
 
-    await expect(handleEmbedOnWrite(event, makeCtx())).rejects.toThrow(
-      "Error with embedding"
-    );
+    await expect(handleEmbedOnWrite(event, makeCtx())).resolves.toBeUndefined();
 
-    expect(set).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledTimes(2);
     expect(eventarc.imported).toBe(false);
     expect(eventarc.publish).not.toHaveBeenCalled();
   });
@@ -142,7 +142,9 @@ describe("event publishing", () => {
       writeEvent({ [config.inputFieldName]: 42 }),
       writeEvent({
         [config.inputFieldName]: "hello",
-        [config.statusFieldName]: { state: "COMPLETED" },
+        [config.statusFieldName]: {
+          [config.instanceId]: { state: "COMPLETED" },
+        },
       }),
     ];
 
