@@ -1,28 +1,32 @@
 {
   "name": "@firebase-function-kits/firestore-bigquery-export",
-  "version": "0.0.2-rc.11",
+  "version": "0.0.2-rc.12",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@firebase-function-kits/firestore-bigquery-export",
-      "version": "0.0.2-rc.11",
+      "version": "0.0.2-rc.12",
       "license": "Apache-2.0",
       "dependencies": {
         "@firebaseextensions/firestore-bigquery-change-tracker": "^2.2.1",
         "@google-cloud/bigquery": "^7.6.0",
-        "firebase-admin": "^14.2.0",
-        "firebase-functions": "^7.3.3-rc.2",
         "generate-schema": "^2.6.0",
         "lodash": "^4.17.14"
       },
       "devDependencies": {
         "@types/lodash": "^4.17.0",
+        "firebase-admin": "^14.4.0",
+        "firebase-functions": "^7.3.3-rc.3",
         "typescript": "^5.9.3",
         "vitest": "^3.2.4"
       },
       "engines": {
         "node": ">=22"
+      },
+      "peerDependencies": {
+        "firebase-admin": "^14.3.0",
+        "firebase-functions": "^7.3.3-rc.3"
       }
     },
     "node_modules/@esbuild/aix-ppc64": {
@@ -649,17 +653,238 @@
       }
     },
     "node_modules/@google-cloud/firestore": {
-      "version": "8.7.1",
-      "resolved": "https://registry.npmjs.org/@google-cloud/firestore/-/firestore-8.7.1.tgz",
-      "integrity": "sha512-Hp/WI8sH569ANitsko6RNvCUkzTCYudHoINOkQjiJq2FBG6kKnofBAW7PtS823cu6RMxHqK2RxRcspdjrRpUFA==",
+      "version": "9.1.0",
+      "resolved": "https://registry.npmjs.org/@google-cloud/firestore/-/firestore-9.1.0.tgz",
+      "integrity": "sha512-MYh566cRZY/6/UyRIvpYynRwBBK+UFykw4EojSMt/9P74jr7FSWmupplvxPtiNA3NutyEhcEngZqdAoHgENgxA==",
       "license": "Apache-2.0",
       "optional": true,
       "dependencies": {
+        "@google-cloud/firestore-api": "^0.2.0",
         "@opentelemetry/api": "^1.9.0",
         "fast-deep-equal": "^3.1.3",
         "functional-red-black-tree": "^1.0.1",
-        "google-gax": "^5.0.1",
+        "google-gax": "^6.0.1",
         "protobufjs": "^7.5.3"
+      },
+      "engines": {
+        "node": ">=22"
+      }
+    },
+    "node_modules/@google-cloud/firestore-api": {
+      "version": "0.2.0",
+      "resolved": "https://registry.npmjs.org/@google-cloud/firestore-api/-/firestore-api-0.2.0.tgz",
+      "integrity": "sha512-wfHJPZmLqzpy6FN6U+7HkkP/AKhGsbHSpEy/qL2TyI3/pKRAvpamQxZ2qvps5hMRgAjfuHCim+oeJj9RveCaqg==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "dependencies": {
+        "google-gax": "^5.0.0"
+      },
+      "engines": {
+        "node": ">=18"
+      }
+    },
+    "node_modules/@google-cloud/firestore-api/node_modules/@grpc/proto-loader": {
+      "version": "0.8.1",
+      "resolved": "https://registry.npmjs.org/@grpc/proto-loader/-/proto-loader-0.8.1.tgz",
+      "integrity": "sha512-wtF6h+DY6M3YaDBPAmvuuA6jV8Sif9MjtOI5euKFWRgCDl5PeDpPsHR9u2l6St5ceY8AZgoNDww5+HvEsXFsGg==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "dependencies": {
+        "lodash.camelcase": "^4.3.0",
+        "long": "^5.0.0",
+        "protobufjs": "^7.5.5",
+        "yargs": "^17.7.2"
+      },
+      "bin": {
+        "proto-loader-gen-types": "build/bin/proto-loader-gen-types.js"
+      },
+      "engines": {
+        "node": ">=6"
+      }
+    },
+    "node_modules/@google-cloud/firestore-api/node_modules/gaxios": {
+      "version": "7.3.1",
+      "resolved": "https://registry.npmjs.org/gaxios/-/gaxios-7.3.1.tgz",
+      "integrity": "sha512-kB3rzJV7d9juLZh8/56QTXCwQfxyhdOMdyYk1HdQKFtF8TJTDTZQJtixWIwXdE9Jji91mC41DUNpjleo4L4eAQ==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "dependencies": {
+        "extend": "^3.0.2",
+        "https-proxy-agent": "^7.0.1",
+        "node-fetch": "^3.3.2"
+      },
+      "engines": {
+        "node": ">=18"
+      }
+    },
+    "node_modules/@google-cloud/firestore-api/node_modules/gcp-metadata": {
+      "version": "8.1.4",
+      "resolved": "https://registry.npmjs.org/gcp-metadata/-/gcp-metadata-8.1.4.tgz",
+      "integrity": "sha512-iJ9KMsiu+xKtNRX0PmGLSaIU3bUBAyzWTyqKemKPzNPsmmsBCQYmlNg+brEbES7IHSXtdVwzBPzx1vz3FAaipw==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "dependencies": {
+        "gaxios": "7.1.3",
+        "google-logging-utils": "1.1.3",
+        "json-bigint": "^1.0.0"
+      },
+      "engines": {
+        "node": ">=18"
+      }
+    },
+    "node_modules/@google-cloud/firestore-api/node_modules/gcp-metadata/node_modules/gaxios": {
+      "version": "7.1.3",
+      "resolved": "https://registry.npmjs.org/gaxios/-/gaxios-7.1.3.tgz",
+      "integrity": "sha512-YGGyuEdVIjqxkxVH1pUTMY/XtmmsApXrCVv5EU25iX6inEPbV+VakJfLealkBtJN69AQmh1eGOdCl9Sm1UP6XQ==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "dependencies": {
+        "extend": "^3.0.2",
+        "https-proxy-agent": "^7.0.1",
+        "node-fetch": "^3.3.2",
+        "rimraf": "^5.0.1"
+      },
+      "engines": {
+        "node": ">=18"
+      }
+    },
+    "node_modules/@google-cloud/firestore-api/node_modules/google-auth-library": {
+      "version": "10.5.0",
+      "resolved": "https://registry.npmjs.org/google-auth-library/-/google-auth-library-10.5.0.tgz",
+      "integrity": "sha512-7ABviyMOlX5hIVD60YOfHw4/CxOfBhyduaYB+wbFWCWoni4N7SLcV46hrVRktuBbZjFC9ONyqamZITN7q3n32w==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "dependencies": {
+        "base64-js": "^1.3.0",
+        "ecdsa-sig-formatter": "^1.0.11",
+        "gaxios": "^7.0.0",
+        "gcp-metadata": "^8.0.0",
+        "google-logging-utils": "^1.0.0",
+        "gtoken": "^8.0.0",
+        "jws": "^4.0.0"
+      },
+      "engines": {
+        "node": ">=18"
+      }
+    },
+    "node_modules/@google-cloud/firestore-api/node_modules/google-gax": {
+      "version": "5.0.8",
+      "resolved": "https://registry.npmjs.org/google-gax/-/google-gax-5.0.8.tgz",
+      "integrity": "sha512-M4vpZcXQIC1gqIVGQ7eaU3jXQA6zecStyTXu514TYfThlgSurYJOxHZo9fzU6hAgwPWvuEynAVHWyaIk80VeEA==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "dependencies": {
+        "@grpc/grpc-js": "^1.12.6",
+        "@grpc/proto-loader": "^0.8.0",
+        "duplexify": "^4.1.3",
+        "google-auth-library": "10.5.0",
+        "google-logging-utils": "1.1.3",
+        "node-fetch": "^3.3.2",
+        "object-hash": "^3.0.0",
+        "proto3-json-serializer": "3.0.4",
+        "protobufjs": "^7.5.4",
+        "retry-request": "^8.0.2",
+        "rimraf": "^5.0.1"
+      },
+      "engines": {
+        "node": ">=18"
+      }
+    },
+    "node_modules/@google-cloud/firestore-api/node_modules/google-logging-utils": {
+      "version": "1.1.3",
+      "resolved": "https://registry.npmjs.org/google-logging-utils/-/google-logging-utils-1.1.3.tgz",
+      "integrity": "sha512-eAmLkjDjAFCVXg7A1unxHsLf961m6y17QFqXqAXGj/gVkKFrEICfStRfwUlGNfeCEjNRa32JEWOUTlYXPyyKvA==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "engines": {
+        "node": ">=14"
+      }
+    },
+    "node_modules/@google-cloud/firestore-api/node_modules/gtoken": {
+      "version": "8.0.0",
+      "resolved": "https://registry.npmjs.org/gtoken/-/gtoken-8.0.0.tgz",
+      "integrity": "sha512-+CqsMbHPiSTdtSO14O51eMNlrp9N79gmeqmXeouJOhfucAedHw9noVe/n5uJk3tbKE6a+6ZCQg3RPhVhHByAIw==",
+      "license": "MIT",
+      "optional": true,
+      "dependencies": {
+        "gaxios": "^7.0.0",
+        "jws": "^4.0.0"
+      },
+      "engines": {
+        "node": ">=18"
+      }
+    },
+    "node_modules/@google-cloud/firestore-api/node_modules/http-proxy-agent": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/http-proxy-agent/-/http-proxy-agent-7.0.2.tgz",
+      "integrity": "sha512-T1gkAiYYDWYx3V5Bmyu7HcfcvL7mUrTWiM6yOfa3PIphViJ/gFPbvidQ+veqSOHci/PxBcDabeUNCzpOODJZig==",
+      "license": "MIT",
+      "optional": true,
+      "dependencies": {
+        "agent-base": "^7.1.0",
+        "debug": "^4.3.4"
+      },
+      "engines": {
+        "node": ">= 14"
+      }
+    },
+    "node_modules/@google-cloud/firestore-api/node_modules/node-fetch": {
+      "version": "3.3.2",
+      "resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-3.3.2.tgz",
+      "integrity": "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==",
+      "license": "MIT",
+      "optional": true,
+      "dependencies": {
+        "data-uri-to-buffer": "^4.0.0",
+        "fetch-blob": "^3.1.4",
+        "formdata-polyfill": "^4.0.10"
+      },
+      "engines": {
+        "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+      },
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/node-fetch"
+      }
+    },
+    "node_modules/@google-cloud/firestore-api/node_modules/proto3-json-serializer": {
+      "version": "3.0.4",
+      "resolved": "https://registry.npmjs.org/proto3-json-serializer/-/proto3-json-serializer-3.0.4.tgz",
+      "integrity": "sha512-E1sbAYg3aEbXrq0n1ojJkRHQJGE1kaE/O6GLA94y8rnJBfgvOPTOd1b9hOceQK1FFZI9qMh1vBERCyO2ifubcw==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "dependencies": {
+        "protobufjs": "^7.4.0"
+      },
+      "engines": {
+        "node": ">=18"
+      }
+    },
+    "node_modules/@google-cloud/firestore-api/node_modules/retry-request": {
+      "version": "8.0.4",
+      "resolved": "https://registry.npmjs.org/retry-request/-/retry-request-8.0.4.tgz",
+      "integrity": "sha512-pI6/7eabUYkZxamkOq0g0uMxKLLGnjzhefY+vL8bVXag5rto4OU2YBTPytWLuHH7aEKD6fn7kJycQfid0Mwnkw==",
+      "license": "MIT",
+      "optional": true,
+      "dependencies": {
+        "extend": "^3.0.2",
+        "teeny-request": "^10.0.0"
+      },
+      "engines": {
+        "node": ">=18"
+      }
+    },
+    "node_modules/@google-cloud/firestore-api/node_modules/teeny-request": {
+      "version": "10.1.4",
+      "resolved": "https://registry.npmjs.org/teeny-request/-/teeny-request-10.1.4.tgz",
+      "integrity": "sha512-R1Cg4Vu0UULeDfHL/kjABLaTW++9yD/B6n2g48y5dJ04hsEaxcfmAqbNDzNsbqAYJyIpZafjklLG9YxRu9uzOg==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "dependencies": {
+        "http-proxy-agent": "^7.0.0",
+        "https-proxy-agent": "^7.0.1",
+        "node-fetch": "^3.3.2",
+        "stream-events": "^1.0.5"
       },
       "engines": {
         "node": ">=18"
@@ -685,100 +910,84 @@
       }
     },
     "node_modules/@google-cloud/firestore/node_modules/gaxios": {
-      "version": "7.1.3",
-      "resolved": "https://registry.npmjs.org/gaxios/-/gaxios-7.1.3.tgz",
-      "integrity": "sha512-YGGyuEdVIjqxkxVH1pUTMY/XtmmsApXrCVv5EU25iX6inEPbV+VakJfLealkBtJN69AQmh1eGOdCl9Sm1UP6XQ==",
+      "version": "7.3.1",
+      "resolved": "https://registry.npmjs.org/gaxios/-/gaxios-7.3.1.tgz",
+      "integrity": "sha512-kB3rzJV7d9juLZh8/56QTXCwQfxyhdOMdyYk1HdQKFtF8TJTDTZQJtixWIwXdE9Jji91mC41DUNpjleo4L4eAQ==",
       "license": "Apache-2.0",
       "optional": true,
       "dependencies": {
         "extend": "^3.0.2",
         "https-proxy-agent": "^7.0.1",
-        "node-fetch": "^3.3.2",
-        "rimraf": "^5.0.1"
+        "node-fetch": "^3.3.2"
       },
       "engines": {
         "node": ">=18"
       }
     },
     "node_modules/@google-cloud/firestore/node_modules/gcp-metadata": {
-      "version": "8.1.4",
-      "resolved": "https://registry.npmjs.org/gcp-metadata/-/gcp-metadata-8.1.4.tgz",
-      "integrity": "sha512-iJ9KMsiu+xKtNRX0PmGLSaIU3bUBAyzWTyqKemKPzNPsmmsBCQYmlNg+brEbES7IHSXtdVwzBPzx1vz3FAaipw==",
+      "version": "9.0.3",
+      "resolved": "https://registry.npmjs.org/gcp-metadata/-/gcp-metadata-9.0.3.tgz",
+      "integrity": "sha512-2YYnIlHaKBGT2IPg3G2M57hia9Galz15zsEOvw9T3oRf0lSn6KN6VcHQLqby7x8ksYKnjXvp3rp2KJyLCN6zfQ==",
       "license": "Apache-2.0",
       "optional": true,
       "dependencies": {
-        "gaxios": "7.1.3",
-        "google-logging-utils": "1.1.3",
+        "gaxios": "^7.1.3",
+        "google-logging-utils": "^2.0.0",
         "json-bigint": "^1.0.0"
       },
       "engines": {
-        "node": ">=18"
+        "node": ">=22"
       }
     },
     "node_modules/@google-cloud/firestore/node_modules/google-auth-library": {
-      "version": "10.5.0",
-      "resolved": "https://registry.npmjs.org/google-auth-library/-/google-auth-library-10.5.0.tgz",
-      "integrity": "sha512-7ABviyMOlX5hIVD60YOfHw4/CxOfBhyduaYB+wbFWCWoni4N7SLcV46hrVRktuBbZjFC9ONyqamZITN7q3n32w==",
+      "version": "11.0.2",
+      "resolved": "https://registry.npmjs.org/google-auth-library/-/google-auth-library-11.0.2.tgz",
+      "integrity": "sha512-vzpgPutxrghPsnjrjpzLX2bdv8IOL719Rh0oEjGnQu8YCIbnbMuTTQ5zU9LcKvLdOPgCxBwppbvnhgW90Qna5Q==",
       "license": "Apache-2.0",
       "optional": true,
       "dependencies": {
         "base64-js": "^1.3.0",
         "ecdsa-sig-formatter": "^1.0.11",
-        "gaxios": "^7.0.0",
-        "gcp-metadata": "^8.0.0",
-        "google-logging-utils": "^1.0.0",
-        "gtoken": "^8.0.0",
+        "gaxios": "^7.1.4",
+        "gcp-metadata": "^9.0.0",
+        "google-logging-utils": "^2.0.0",
         "jws": "^4.0.0"
       },
       "engines": {
-        "node": ">=18"
+        "node": ">=22"
       }
     },
     "node_modules/@google-cloud/firestore/node_modules/google-gax": {
-      "version": "5.0.8",
-      "resolved": "https://registry.npmjs.org/google-gax/-/google-gax-5.0.8.tgz",
-      "integrity": "sha512-M4vpZcXQIC1gqIVGQ7eaU3jXQA6zecStyTXu514TYfThlgSurYJOxHZo9fzU6hAgwPWvuEynAVHWyaIk80VeEA==",
+      "version": "6.3.0",
+      "resolved": "https://registry.npmjs.org/google-gax/-/google-gax-6.3.0.tgz",
+      "integrity": "sha512-9/kD2yhNJJDAoxZMw+v/d53W6bibgHXr0uU2RRfkC2/r5uH1sBo1nzuaSUq1lKgipZ3O4HvksA7/rRBvkFHFkA==",
       "license": "Apache-2.0",
       "optional": true,
       "dependencies": {
         "@grpc/grpc-js": "^1.12.6",
         "@grpc/proto-loader": "^0.8.0",
+        "@opentelemetry/api": "^1.9.0",
         "duplexify": "^4.1.3",
-        "google-auth-library": "10.5.0",
-        "google-logging-utils": "1.1.3",
+        "google-auth-library": "^11.0.0",
+        "google-logging-utils": "^2.0.0",
         "node-fetch": "^3.3.2",
         "object-hash": "^3.0.0",
-        "proto3-json-serializer": "3.0.4",
+        "proto3-json-serializer": "^4.0.0",
         "protobufjs": "^7.5.4",
-        "retry-request": "^8.0.2",
-        "rimraf": "^5.0.1"
+        "retry-request": "^9.0.0"
       },
       "engines": {
-        "node": ">=18"
+        "node": ">=22"
       }
     },
     "node_modules/@google-cloud/firestore/node_modules/google-logging-utils": {
-      "version": "1.1.3",
-      "resolved": "https://registry.npmjs.org/google-logging-utils/-/google-logging-utils-1.1.3.tgz",
-      "integrity": "sha512-eAmLkjDjAFCVXg7A1unxHsLf961m6y17QFqXqAXGj/gVkKFrEICfStRfwUlGNfeCEjNRa32JEWOUTlYXPyyKvA==",
+      "version": "2.0.1",
+      "resolved": "https://registry.npmjs.org/google-logging-utils/-/google-logging-utils-2.0.1.tgz",
+      "integrity": "sha512-HMhaQghlOTvbcb3c4T5jmmOMtG3JUF1iOQMezaJXL86CDS+Tm2vHd0IeLFRAx3+ewd+bo9E1HFHoy17X5aJa9A==",
       "license": "Apache-2.0",
       "optional": true,
       "engines": {
-        "node": ">=14"
-      }
-    },
-    "node_modules/@google-cloud/firestore/node_modules/gtoken": {
-      "version": "8.0.0",
-      "resolved": "https://registry.npmjs.org/gtoken/-/gtoken-8.0.0.tgz",
-      "integrity": "sha512-+CqsMbHPiSTdtSO14O51eMNlrp9N79gmeqmXeouJOhfucAedHw9noVe/n5uJk3tbKE6a+6ZCQg3RPhVhHByAIw==",
-      "license": "MIT",
-      "optional": true,
-      "dependencies": {
-        "gaxios": "^7.0.0",
-        "jws": "^4.0.0"
-      },
-      "engines": {
-        "node": ">=18"
+        "node": ">=22"
       }
     },
     "node_modules/@google-cloud/firestore/node_modules/http-proxy-agent": {
@@ -815,36 +1024,36 @@
       }
     },
     "node_modules/@google-cloud/firestore/node_modules/proto3-json-serializer": {
-      "version": "3.0.4",
-      "resolved": "https://registry.npmjs.org/proto3-json-serializer/-/proto3-json-serializer-3.0.4.tgz",
-      "integrity": "sha512-E1sbAYg3aEbXrq0n1ojJkRHQJGE1kaE/O6GLA94y8rnJBfgvOPTOd1b9hOceQK1FFZI9qMh1vBERCyO2ifubcw==",
+      "version": "4.0.2",
+      "resolved": "https://registry.npmjs.org/proto3-json-serializer/-/proto3-json-serializer-4.0.2.tgz",
+      "integrity": "sha512-VUQlb/J2WjOG8BKhdLwJUz+MKxSMtBGYh+TaNmRtiYVhlIzXjzeAGIx7gtc3lXlA2iURzfF2+cXaQvC2ofwzpg==",
       "license": "Apache-2.0",
       "optional": true,
       "dependencies": {
-        "protobufjs": "^7.4.0"
+        "protobufjs": "^7.5.4"
       },
       "engines": {
-        "node": ">=18"
+        "node": ">=22"
       }
     },
     "node_modules/@google-cloud/firestore/node_modules/retry-request": {
-      "version": "8.0.4",
-      "resolved": "https://registry.npmjs.org/retry-request/-/retry-request-8.0.4.tgz",
-      "integrity": "sha512-pI6/7eabUYkZxamkOq0g0uMxKLLGnjzhefY+vL8bVXag5rto4OU2YBTPytWLuHH7aEKD6fn7kJycQfid0Mwnkw==",
+      "version": "9.0.1",
+      "resolved": "https://registry.npmjs.org/retry-request/-/retry-request-9.0.1.tgz",
+      "integrity": "sha512-4kGHEBl0ME6gR+8QB1sPMyg58jUxLUcCZNeqLDrfqzk0eWQN8XJFmeu7fmZCjlZCRW0S2u64Ik1HkO/0sWgCYQ==",
       "license": "MIT",
       "optional": true,
       "dependencies": {
         "extend": "^3.0.2",
-        "teeny-request": "^10.0.0"
+        "teeny-request": "^11.0.0"
       },
       "engines": {
-        "node": ">=18"
+        "node": ">=22"
       }
     },
     "node_modules/@google-cloud/firestore/node_modules/teeny-request": {
-      "version": "10.1.4",
-      "resolved": "https://registry.npmjs.org/teeny-request/-/teeny-request-10.1.4.tgz",
-      "integrity": "sha512-R1Cg4Vu0UULeDfHL/kjABLaTW++9yD/B6n2g48y5dJ04hsEaxcfmAqbNDzNsbqAYJyIpZafjklLG9YxRu9uzOg==",
+      "version": "11.0.1",
+      "resolved": "https://registry.npmjs.org/teeny-request/-/teeny-request-11.0.1.tgz",
+      "integrity": "sha512-bNr5j2YjSdajgCVsp+8JVjRf1uHIbpNISLeKp/7V1NnVMX3Gh6H/kECNGlm2Q3I68ACODQ0iv6aZ3Rvm8WgLGA==",
       "license": "Apache-2.0",
       "optional": true,
       "dependencies": {
@@ -854,7 +1063,7 @@
         "stream-events": "^1.0.5"
       },
       "engines": {
-        "node": ">=18"
+        "node": ">=22"
       }
     },
     "node_modules/@google-cloud/paginator": {
@@ -910,15 +1119,15 @@
       }
     },
     "node_modules/@google-cloud/storage": {
-      "version": "7.22.0",
-      "resolved": "https://registry.npmjs.org/@google-cloud/storage/-/storage-7.22.0.tgz",
-      "integrity": "sha512-W98gTQOAntEeEQ7/pZxSQXxfUO5CiQcXJRsxBpUa6UU25n8YN/VtogPBi0H+MAmUrn/6bY/sBhFansoWEsr2/g==",
+      "version": "8.1.0",
+      "resolved": "https://registry.npmjs.org/@google-cloud/storage/-/storage-8.1.0.tgz",
+      "integrity": "sha512-iFDlOGBzmzTelslzcf0yTpoqloyfTUi448PxJXvjtbvGqtc2ftT8HUSl5+sKQPRz70y64ha5FqojDhABP103EA==",
       "license": "Apache-2.0",
       "optional": true,
       "dependencies": {
-        "@google-cloud/paginator": "^5.0.0",
-        "@google-cloud/projectify": "^4.0.0",
-        "@google-cloud/promisify": "<4.1.0",
+        "@google-cloud/paginator": "^7.0.1",
+        "@google-cloud/projectify": "^6.0.1",
+        "@google-cloud/promisify": "^6.0.1",
         "abort-controller": "^3.0.0",
         "async-retry": "^1.3.3",
         "duplexify": "^4.1.3",
@@ -928,11 +1137,107 @@
         "html-entities": "^2.5.2",
         "mime": "^3.0.0",
         "p-limit": "^3.0.1",
-        "retry-request": "^7.0.0",
-        "teeny-request": "^9.0.0"
+        "retry-request": "^9.0.1",
+        "teeny-request": "^11.0.1"
       },
       "engines": {
-        "node": ">=18"
+        "node": ">=22"
+      }
+    },
+    "node_modules/@google-cloud/storage/node_modules/@google-cloud/paginator": {
+      "version": "7.0.1",
+      "resolved": "https://registry.npmjs.org/@google-cloud/paginator/-/paginator-7.0.1.tgz",
+      "integrity": "sha512-k32cWlHAF8yTgg8rciLI8mPMI6UzuJdKp53YRxISRwMFxUl2FYplvs+Mr2UHxKn0W7rXsqZnUZy73AOJFDP8iA==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "dependencies": {
+        "extend": "^3.0.2"
+      },
+      "engines": {
+        "node": ">=22"
+      }
+    },
+    "node_modules/@google-cloud/storage/node_modules/@google-cloud/projectify": {
+      "version": "6.0.1",
+      "resolved": "https://registry.npmjs.org/@google-cloud/projectify/-/projectify-6.0.1.tgz",
+      "integrity": "sha512-zA3o4l87UJ56odT/e9PcT4n2bqVnrp6dg9vI75DoGGbl0/YJemX8Fta7454htECt07eALxxc4iaAbrX3T+QulA==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "engines": {
+        "node": ">=22"
+      }
+    },
+    "node_modules/@google-cloud/storage/node_modules/@google-cloud/promisify": {
+      "version": "6.0.1",
+      "resolved": "https://registry.npmjs.org/@google-cloud/promisify/-/promisify-6.0.1.tgz",
+      "integrity": "sha512-lpN2AtoQ/iimp7jjm5zJFWbpW7OJc5qWmQdt59CI4ENeoIRIx+yf2ShSR2kanQfjFOshA74eSbimXXuRaSCUVg==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "engines": {
+        "node": ">=22"
+      }
+    },
+    "node_modules/@google-cloud/storage/node_modules/http-proxy-agent": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/http-proxy-agent/-/http-proxy-agent-7.0.2.tgz",
+      "integrity": "sha512-T1gkAiYYDWYx3V5Bmyu7HcfcvL7mUrTWiM6yOfa3PIphViJ/gFPbvidQ+veqSOHci/PxBcDabeUNCzpOODJZig==",
+      "license": "MIT",
+      "optional": true,
+      "dependencies": {
+        "agent-base": "^7.1.0",
+        "debug": "^4.3.4"
+      },
+      "engines": {
+        "node": ">= 14"
+      }
+    },
+    "node_modules/@google-cloud/storage/node_modules/node-fetch": {
+      "version": "3.3.2",
+      "resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-3.3.2.tgz",
+      "integrity": "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==",
+      "license": "MIT",
+      "optional": true,
+      "dependencies": {
+        "data-uri-to-buffer": "^4.0.0",
+        "fetch-blob": "^3.1.4",
+        "formdata-polyfill": "^4.0.10"
+      },
+      "engines": {
+        "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+      },
+      "funding": {
+        "type": "opencollective",
+        "url": "https://opencollective.com/node-fetch"
+      }
+    },
+    "node_modules/@google-cloud/storage/node_modules/retry-request": {
+      "version": "9.0.1",
+      "resolved": "https://registry.npmjs.org/retry-request/-/retry-request-9.0.1.tgz",
+      "integrity": "sha512-4kGHEBl0ME6gR+8QB1sPMyg58jUxLUcCZNeqLDrfqzk0eWQN8XJFmeu7fmZCjlZCRW0S2u64Ik1HkO/0sWgCYQ==",
+      "license": "MIT",
+      "optional": true,
+      "dependencies": {
+        "extend": "^3.0.2",
+        "teeny-request": "^11.0.0"
+      },
+      "engines": {
+        "node": ">=22"
+      }
+    },
+    "node_modules/@google-cloud/storage/node_modules/teeny-request": {
+      "version": "11.0.1",
+      "resolved": "https://registry.npmjs.org/teeny-request/-/teeny-request-11.0.1.tgz",
+      "integrity": "sha512-bNr5j2YjSdajgCVsp+8JVjRf1uHIbpNISLeKp/7V1NnVMX3Gh6H/kECNGlm2Q3I68ACODQ0iv6aZ3Rvm8WgLGA==",
+      "license": "Apache-2.0",
+      "optional": true,
+      "dependencies": {
+        "http-proxy-agent": "^7.0.0",
+        "https-proxy-agent": "^7.0.1",
+        "node-fetch": "^3.3.2",
+        "stream-events": "^1.0.5"
+      },
+      "engines": {
+        "node": ">=22"
       }
     },
     "node_modules/@grpc/grpc-js": {
@@ -3021,9 +3326,9 @@
       }
     },
     "node_modules/firebase-admin": {
-      "version": "14.3.0",
-      "resolved": "https://registry.npmjs.org/firebase-admin/-/firebase-admin-14.3.0.tgz",
-      "integrity": "sha512-FUxr5HI9C0RNJW3B+CKyJOnIt5uXn/XHheyCECVTLQGSJ/MaE1Zcwf+dCaaG+xx0+VX1A4sZ1t+hc35bu73dVw==",
+      "version": "14.4.0",
+      "resolved": "https://registry.npmjs.org/firebase-admin/-/firebase-admin-14.4.0.tgz",
+      "integrity": "sha512-yEx+GCsHvjH2svh4j1ATW57o8tlfjRQ0klTxvn7XCKUPXWiUQaRTHSzPSqhXtsLYSe4IwTqR7qqrh2sA45A0HA==",
       "license": "Apache-2.0",
       "dependencies": {
         "@fastify/busboy": "^3.0.0",
@@ -3038,8 +3343,8 @@
         "node": ">=22"
       },
       "optionalDependencies": {
-        "@google-cloud/firestore": "^8.7.1",
-        "@google-cloud/storage": "^7.22.0"
+        "@google-cloud/firestore": "^9.1.0",
+        "@google-cloud/storage": "^8.1.0"
       }
     },
     "node_modules/firebase-admin/node_modules/gaxios": {
@@ -3115,9 +3420,9 @@
       }
     },
     "node_modules/firebase-functions": {
-      "version": "7.3.3-rc.2",
-      "resolved": "https://registry.npmjs.org/firebase-functions/-/firebase-functions-7.3.3-rc.2.tgz",
-      "integrity": "sha512-I58U7y7vIjY+ac7mpyWnM57PWzEDfHwJPG7HwQDrjCoJwtvMYXYnDNp46i0XZh0VJWcm8EG/w8X7+1V5yoyd7w==",
+      "version": "7.3.3-rc.3",
+      "resolved": "https://registry.npmjs.org/firebase-functions/-/firebase-functions-7.3.3-rc.3.tgz",
+      "integrity": "sha512-ZSk85ExZSIgRaKZiTD2Z8Q4dU6KIeIVfwYT75PWC4KlaEgnoAyH6l4fmbP2IeAV3K8WQpLP9A5uTJIKMzeqL8A==",
       "license": "MIT",
       "dependencies": {
         "@types/cors": "^2.8.5",
