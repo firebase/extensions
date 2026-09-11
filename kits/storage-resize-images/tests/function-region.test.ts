@@ -28,10 +28,8 @@ function setBucketRegion(value?: string): void {
   }
 }
 
-const setLocation = setBucketRegion;
-
 afterEach(() => {
-  setLocation(original);
+  setBucketRegion(original);
 });
 
 describe("envFunctionRegion function region", () => {
@@ -42,23 +40,23 @@ describe("envFunctionRegion function region", () => {
   ])(
     "multi-region BUCKET_REGION %s places the function in %s",
     (loc, region) => {
-      setLocation(loc);
+      setBucketRegion(loc);
       expect(envFunctionRegion()).toBe(region);
     }
   );
 
   test("a regional BUCKET_REGION places the function in that region", () => {
-    setLocation("europe-west4");
+    setBucketRegion("europe-west4");
     expect(envFunctionRegion()).toBe("europe-west4");
   });
 
   test("an unset location yields no region", () => {
-    setLocation(undefined);
+    setBucketRegion(undefined);
     expect(envFunctionRegion()).toBeUndefined();
   });
 
   test("an empty location yields no region", () => {
-    setLocation("");
+    setBucketRegion("");
     expect(envFunctionRegion()).toBeUndefined();
   });
 });
