@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldPath, FieldValue, Timestamp } from "firebase-admin/firestore";
 import type { CallableRequest } from "firebase-functions/v2/https";
 import { HttpsError } from "firebase-functions/v2/https";
 import type { Request } from "firebase-functions/v2/tasks";
@@ -46,6 +46,7 @@ import {
   handleEmbedOnWrite,
   handleQueryCall,
   handleQueryOnWrite,
+  handleUpdateTask,
 } from "../src/handlers";
 import { resolveVectorSearchConfig } from "../src/export-config";
 
@@ -56,6 +57,40 @@ const config = resolveVectorSearchConfig({
 
 const EMBEDDING = [0.1, 0.2, 0.3];
 const IDS = ["doc-1", "doc-2"];
+/** Stands in for the Firestore create time the start event copies forward. */
+const CREATE_TIME = Timestamp.fromMillis(1_700_000_000_000);
+
+/**
+ * The status the extension wrote, keyed by the process id (the instance id).
+ * `resolveVectorSearchConfig` is called with `instanceId: "test-instance"`.
+ */
+function status(
+  state: string,
+  rest: Record<string, unknown> = {},
+  statusFieldName = config.statusFieldName,
+  instanceId = config.instanceId
+) {
+  return { [statusFieldName]: { [instanceId]: { state, ...rest } } };
+}
+
+/** The nested field path the handlers write each status leaf at. */
+function statusFieldPath(leaf?: string, ctxConfig = config) {
+  const segments = [ctxConfig.statusFieldName, ctxConfig.instanceId];
+  return new FieldPath(...(leaf ? [...segments, leaf] : segments));
+}
+
+/** The `PROCESSING` start event the extension wrote before every embed. */
+function startEvent(ctxConfig = config) {
+  return [
+    statusFieldPath(undefined, ctxConfig),
+    {
+      state: "PROCESSING",
+      startTime: FieldValue.serverTimestamp(),
+      createTime: CREATE_TIME,
+      updateTime: FieldValue.serverTimestamp(),
+    },
+  ];
+}
 
 /** A HandlerContext whose Firestore returns `IDS` from any vector query. */
 function makeCtx(ctxConfig = config) {
@@ -80,30 +115,40 @@ function request(data: unknown, auth: unknown = { uid: "test-user" }) {
   return { data, auth } as unknown as CallableRequest<unknown>;
 }
 
-function snapshot(data: Record<string, unknown> | undefined, set: unknown) {
+function snapshot(
+  data: Record<string, unknown> | undefined,
+  ref: Record<string, unknown>
+) {
   return {
     exists: data !== undefined,
+    createTime: CREATE_TIME,
     data: () => data,
     get: (field: string) => data?.[field],
-    ref: { set, path: "test-collection/doc-1" },
+    ref: { path: "test-collection/doc-1", ...ref },
   };
 }
 
 /**
- * A write event over the same document. Each snapshot gets its own set spy so
- * a write routed through `before.ref` cannot pass as one through `after.ref`.
+ * A write event over the same document. Each snapshot gets its own write spies
+ * so a write routed through `before.ref` cannot pass as one through
+ * `after.ref`.
  */
 function writeEvent(
   before: Record<string, unknown> | undefined,
   after: Record<string, unknown> | undefined
 ) {
   const set = vi.fn();
+  const update = vi.fn();
   const beforeSet = vi.fn();
+  const beforeUpdate = vi.fn();
   const event = {
-    data: { before: snapshot(before, beforeSet), after: snapshot(after, set) },
+    data: {
+      before: snapshot(before, { set: beforeSet, update: beforeUpdate }),
+      after: snapshot(after, { set, update }),
+    },
     params: {},
   } as unknown as VectorWriteEvent;
-  return { event, set, beforeSet };
+  return { event, set, update, beforeSet, beforeUpdate };
 }
 
 describe("handleQueryCall", () => {
@@ -641,20 +686,51 @@ describe("handleEmbedOnWrite", () => {
     getSingleEmbedding.mockResolvedValue(EMBEDDING);
   });
 
-  test("embeds a new document and marks it COMPLETED", async () => {
+  // Parity with the extension's `writeStartEvent`/`writeCompletionEvent`: the
+  // document is marked `PROCESSING` before the embed and `COMPLETED` after it,
+  // both under the process id, and both writes touch only those fields.
+  test("embeds a new document and marks it PROCESSING then COMPLETED", async () => {
     const { ctx } = makeCtx();
-    const { event, set } = writeEvent(undefined, { input: "hello" });
+    const { event, update } = writeEvent(undefined, { input: "hello" });
 
     await handleEmbedOnWrite(event, ctx);
 
     expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
-    expect(set).toHaveBeenCalledWith(
-      {
-        [config.outputFieldName]: FieldValue.vector(EMBEDDING),
-        [config.statusFieldName]: { state: "COMPLETED" },
-      },
-      { merge: true }
+    expect(update).toHaveBeenNthCalledWith(1, ...startEvent());
+    expect(update).toHaveBeenNthCalledWith(
+      2,
+      config.outputFieldName,
+      FieldValue.vector(EMBEDDING),
+      statusFieldPath("state"),
+      "COMPLETED",
+      statusFieldPath("updateTime"),
+      FieldValue.serverTimestamp(),
+      statusFieldPath("completeTime"),
+      FieldValue.serverTimestamp()
     );
+  });
+
+  // The extension carried `createTime` forward from the previous status so the
+  // backfill's order field survived a re-embed.
+  test("keeps an existing createTime in the start event", async () => {
+    const { ctx } = makeCtx();
+    const earlier = Timestamp.fromMillis(1_600_000_000_000);
+    const { event, update } = writeEvent(
+      { input: "hello" },
+      {
+        input: "goodbye",
+        ...status("FAILED_BACKFILL", { createTime: earlier }),
+      }
+    );
+
+    await handleEmbedOnWrite(event, ctx);
+
+    expect(update).toHaveBeenNthCalledWith(1, statusFieldPath(), {
+      state: "PROCESSING",
+      startTime: FieldValue.serverTimestamp(),
+      createTime: earlier,
+      updateTime: FieldValue.serverTimestamp(),
+    });
   });
 
   test("embeds a document that already has an embedding but no status", async () => {
@@ -669,43 +745,43 @@ describe("handleEmbedOnWrite", () => {
     expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
   });
 
-  test("marks the document ERROR and rethrows when embedding fails", async () => {
+  // Parity with the extension, which recorded the failure on the document and
+  // returned: the error reached the logs, not the caller, and the state carried
+  // no message.
+  test("marks the document ERROR without rethrowing when embedding fails", async () => {
     const { ctx } = makeCtx();
-    const { event, set } = writeEvent(undefined, { input: "hello" });
+    const { event, update } = writeEvent(undefined, { input: "hello" });
     getSingleEmbedding.mockRejectedValue(new Error("Embedding failed"));
 
-    await expect(handleEmbedOnWrite(event, ctx)).rejects.toThrow(
-      "Embedding failed"
-    );
-    expect(set).toHaveBeenCalledWith(
-      {
-        [config.statusFieldName]: {
-          state: "ERROR",
-          message: "Embedding failed",
-        },
-      },
-      { merge: true }
+    await expect(handleEmbedOnWrite(event, ctx)).resolves.toBeUndefined();
+
+    expect(update).toHaveBeenNthCalledWith(
+      2,
+      statusFieldPath("state"),
+      "ERROR",
+      statusFieldPath("updateTime"),
+      FieldValue.serverTimestamp()
     );
   });
 
   test("skips a deleted document", async () => {
     const { ctx } = makeCtx();
-    const { event, set } = writeEvent({ input: "hello" }, undefined);
+    const { event, update } = writeEvent({ input: "hello" }, undefined);
 
     await handleEmbedOnWrite(event, ctx);
 
     expect(getSingleEmbedding).not.toHaveBeenCalled();
-    expect(set).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 
   test("skips a document whose input is not a string", async () => {
     const { ctx } = makeCtx();
-    const { event, set } = writeEvent(undefined, { input: 42 });
+    const { event, update } = writeEvent(undefined, { input: 42 });
 
     await handleEmbedOnWrite(event, ctx);
 
     expect(getSingleEmbedding).not.toHaveBeenCalled();
-    expect(set).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 
   // Parity with the extension's `shouldProcess`, which required a truthy
@@ -713,25 +789,25 @@ describe("handleEmbedOnWrite", () => {
   // terminal-state guard would skip it once the input is filled in.
   test("skips a document whose input is an empty string", async () => {
     const { ctx } = makeCtx();
-    const { event, set } = writeEvent(undefined, { input: "" });
+    const { event, update } = writeEvent(undefined, { input: "" });
 
     await handleEmbedOnWrite(event, ctx);
 
     expect(getSingleEmbedding).not.toHaveBeenCalled();
-    expect(set).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 
   test("embeds a document whose empty input is filled in later", async () => {
     const { ctx } = makeCtx();
-    const { event: created, set: createdSet } = writeEvent(undefined, {
+    const { event: created, update: createdUpdate } = writeEvent(undefined, {
       input: "",
     });
 
     await handleEmbedOnWrite(created, ctx);
 
-    expect(createdSet).not.toHaveBeenCalled();
+    expect(createdUpdate).not.toHaveBeenCalled();
 
-    const { event: filled, set } = writeEvent(
+    const { event: filled, update } = writeEvent(
       { input: "" },
       { input: "hello" }
     );
@@ -739,12 +815,16 @@ describe("handleEmbedOnWrite", () => {
     await handleEmbedOnWrite(filled, ctx);
 
     expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
-    expect(set).toHaveBeenCalledWith(
-      {
-        [config.outputFieldName]: FieldValue.vector(EMBEDDING),
-        [config.statusFieldName]: { state: "COMPLETED" },
-      },
-      { merge: true }
+    expect(update).toHaveBeenNthCalledWith(
+      2,
+      config.outputFieldName,
+      FieldValue.vector(EMBEDDING),
+      statusFieldPath("state"),
+      "COMPLETED",
+      statusFieldPath("updateTime"),
+      FieldValue.serverTimestamp(),
+      statusFieldPath("completeTime"),
+      FieldValue.serverTimestamp()
     );
   });
 
@@ -754,23 +834,25 @@ describe("handleEmbedOnWrite", () => {
   for (const state of ["PROCESSING", "COMPLETED", "ERROR", "BACKFILLED"]) {
     test(`does not re-embed a document in the ${state} state`, async () => {
       const { ctx } = makeCtx();
-      const { event, set } = writeEvent(
-        { input: "hello", [config.statusFieldName]: { state } },
-        { input: "goodbye", [config.statusFieldName]: { state } }
+      const { event, update } = writeEvent(
+        { input: "hello", ...status(state) },
+        { input: "goodbye", ...status(state) }
       );
 
       await handleEmbedOnWrite(event, ctx);
 
       expect(getSingleEmbedding).not.toHaveBeenCalled();
-      expect(set).not.toHaveBeenCalled();
+      expect(update).not.toHaveBeenCalled();
     });
   }
 
+  // The extension's backfill handler wrote `FAILED_BACKFILL`, which its
+  // `FirestoreOnWriteProcessor` did not treat as final.
   test("embeds a document in an unrecognised state", async () => {
     const { ctx } = makeCtx();
     const { event } = writeEvent(undefined, {
       input: "hello",
-      [config.statusFieldName]: { state: "SOMETHING_ELSE" },
+      ...status("FAILED_BACKFILL"),
     });
 
     await handleEmbedOnWrite(event, ctx);
@@ -778,16 +860,42 @@ describe("handleEmbedOnWrite", () => {
     expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
   });
 
-  // The extension's skip rule was the status state alone, with no comparison
-  // against the previous input, so an unchanged document with an embedding but
-  // no status was still processed.
-  test("embeds an unchanged document that has an embedding but no status", async () => {
+  // A status written by the extension is keyed by the process id, so a flat
+  // `status.state` is not a state this handler recognises.
+  test("ignores a state that is not under the instance id", async () => {
+    const { ctx } = makeCtx();
+    const { event } = writeEvent(undefined, {
+      input: "hello",
+      [config.statusFieldName]: { state: "COMPLETED" },
+    });
+
+    await handleEmbedOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
+  });
+
+  // Parity with the extension's `fieldDependencyArray: [inputField]`: a write
+  // that leaves the input untouched was not processed, whatever else changed.
+  test("skips an unchanged input", async () => {
     const { ctx } = makeCtx();
     const doc = {
       input: "hello",
       [config.outputFieldName]: FieldValue.vector(EMBEDDING),
     };
-    const { event } = writeEvent({ ...doc }, { ...doc });
+    const { event, update } = writeEvent(
+      { ...doc },
+      { ...doc, unrelated: "changed" }
+    );
+
+    await handleEmbedOnWrite(event, ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  test("embeds a document whose input changed type", async () => {
+    const { ctx } = makeCtx();
+    const { event } = writeEvent({ input: 42 }, { input: "hello" });
 
     await handleEmbedOnWrite(event, ctx);
 
@@ -803,22 +911,31 @@ describe("handleEmbedOnWrite", () => {
 
     test("skips on the configured field", async () => {
       const { ctx } = makeCtx(customConfig);
-      const { event, set } = writeEvent(undefined, {
+      const { event, update } = writeEvent(undefined, {
         input: "hello",
-        embedStatus: { state: "COMPLETED" },
+        ...status("COMPLETED", {}, "embedStatus"),
       });
 
       await handleEmbedOnWrite(event, ctx);
 
       expect(getSingleEmbedding).not.toHaveBeenCalled();
-      expect(set).not.toHaveBeenCalled();
+      expect(update).not.toHaveBeenCalled();
+    });
+
+    test("writes the status on the configured field", async () => {
+      const { ctx } = makeCtx(customConfig);
+      const { event, update } = writeEvent(undefined, { input: "hello" });
+
+      await handleEmbedOnWrite(event, ctx);
+
+      expect(update).toHaveBeenNthCalledWith(1, ...startEvent(customConfig));
     });
 
     test("ignores a terminal state on the default field", async () => {
       const { ctx } = makeCtx(customConfig);
       const { event } = writeEvent(undefined, {
         input: "hello",
-        status: { state: "COMPLETED" },
+        ...status("COMPLETED", {}, "status"),
       });
 
       await handleEmbedOnWrite(event, ctx);
@@ -839,28 +956,36 @@ describe("handleBackfillTask", () => {
   /** A HandlerContext whose Firestore returns `data` at any document path. */
   function backfillCtx(data: Record<string, unknown> | undefined) {
     const set = vi.fn();
-    const ref = { set, get: vi.fn(async () => snapshot(data, set)) };
+    const update = vi.fn();
+    const ref = {
+      set,
+      update,
+      get: vi.fn(async () => snapshot(data, { set, update })),
+    };
     const doc = vi.fn(() => ref);
     const ctx = { firestore: { doc }, config } as unknown as HandlerContext;
-    return { ctx, set };
+    return { ctx, set, update };
   }
 
-  function task(path: string) {
-    return { data: { path } } as unknown as Request<VectorTaskData>;
+  function task(docPath: string) {
+    return { data: { path: docPath } } as unknown as Request<VectorTaskData>;
   }
 
+  // Parity with the extension's backfill handler, which wrote `BACKFILLED` and
+  // a `completeTime`, and no start event.
   test("embeds the document at the task's path", async () => {
-    const { ctx, set } = backfillCtx({ input: "hello" });
+    const { ctx, update } = backfillCtx({ input: "hello" });
 
     await handleBackfillTask(task(PATH), ctx);
 
     expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
-    expect(set).toHaveBeenCalledWith(
-      {
-        [config.outputFieldName]: FieldValue.vector(EMBEDDING),
-        [config.statusFieldName]: { state: "COMPLETED" },
-      },
-      { merge: true }
+    expect(update).toHaveBeenCalledWith(
+      config.outputFieldName,
+      FieldValue.vector(EMBEDDING),
+      statusFieldPath("state"),
+      "BACKFILLED",
+      statusFieldPath("completeTime"),
+      FieldValue.serverTimestamp()
     );
   });
 
@@ -868,11 +993,123 @@ describe("handleBackfillTask", () => {
   // string. Writing a terminal status here would stop `embedOnWrite` embedding
   // the document once its input is filled in.
   test("skips a document whose input is an empty string", async () => {
-    const { ctx, set } = backfillCtx({ input: "" });
+    const { ctx, update } = backfillCtx({ input: "" });
 
     await handleBackfillTask(task(PATH), ctx);
 
     expect(getSingleEmbedding).not.toHaveBeenCalled();
-    expect(set).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  // Parity with the extension's `getValidDocs`: a document already carrying a
+  // status was skipped unless that status was `BACKFILLED`.
+  for (const state of ["PROCESSING", "COMPLETED", "ERROR", "FAILED_BACKFILL"]) {
+    test(`skips a document in the ${state} state`, async () => {
+      const { ctx, update } = backfillCtx({
+        input: "hello",
+        ...status(state),
+      });
+
+      await handleBackfillTask(task(PATH), ctx);
+
+      expect(getSingleEmbedding).not.toHaveBeenCalled();
+      expect(update).not.toHaveBeenCalled();
+    });
+  }
+
+  test("re-embeds a document that was already backfilled", async () => {
+    const { ctx } = backfillCtx({ input: "hello", ...status("BACKFILLED") });
+
+    await handleBackfillTask(task(PATH), ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
+  });
+
+  // Parity with the extension, which recorded the failure and returned rather
+  // than throwing, so the task was not retried.
+  test("marks the document FAILED_BACKFILL when embedding fails", async () => {
+    const { ctx, update } = backfillCtx({ input: "hello" });
+    getSingleEmbedding.mockRejectedValue(new Error("Embedding failed"));
+
+    await expect(handleBackfillTask(task(PATH), ctx)).resolves.toBeUndefined();
+
+    expect(update).toHaveBeenCalledWith(
+      statusFieldPath("state"),
+      "FAILED_BACKFILL",
+      statusFieldPath("completeTime"),
+      FieldValue.serverTimestamp()
+    );
+  });
+});
+
+describe("handleUpdateTask", () => {
+  const PATH = "test-collection/doc-1";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getSingleEmbedding.mockResolvedValue(EMBEDDING);
+  });
+
+  function updateCtx(data: Record<string, unknown> | undefined) {
+    const set = vi.fn();
+    const update = vi.fn();
+    const ref = {
+      set,
+      update,
+      get: vi.fn(async () => snapshot(data, { set, update })),
+    };
+    const doc = vi.fn(() => ref);
+    const ctx = { firestore: { doc }, config } as unknown as HandlerContext;
+    return { ctx, update };
+  }
+
+  function task(docPath: string) {
+    return { data: { path: docPath } } as unknown as Request<VectorTaskData>;
+  }
+
+  // Parity with the extension's `shouldUpdate`, which required both a truthy
+  // string input and an existing embedding.
+  test("skips a document with no existing embedding", async () => {
+    const { ctx, update } = updateCtx({ input: "hello" });
+
+    await handleUpdateTask(task(PATH), ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  // The update pass shared the extension's backfill handler, so it skipped the
+  // same documents and wrote the same state.
+  test("skips a document embedOnWrite already completed", async () => {
+    const { ctx, update } = updateCtx({
+      input: "hello",
+      [config.outputFieldName]: FieldValue.vector(EMBEDDING),
+      ...status("COMPLETED"),
+    });
+
+    await handleUpdateTask(task(PATH), ctx);
+
+    expect(getSingleEmbedding).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  test("re-embeds a backfilled document and marks it BACKFILLED", async () => {
+    const { ctx, update } = updateCtx({
+      input: "hello",
+      [config.outputFieldName]: FieldValue.vector(EMBEDDING),
+      ...status("BACKFILLED"),
+    });
+
+    await handleUpdateTask(task(PATH), ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
+    expect(update).toHaveBeenCalledWith(
+      config.outputFieldName,
+      FieldValue.vector(EMBEDDING),
+      statusFieldPath("state"),
+      "BACKFILLED",
+      statusFieldPath("completeTime"),
+      FieldValue.serverTimestamp()
+    );
   });
 });

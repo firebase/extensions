@@ -156,9 +156,8 @@ This kit is version 0.1.3 of the extension repackaged as an npm package, and it 
 the least literal of the ports. The seven functions, the Firestore vector index,
 the query document collection and the callable all survive with their names and
 settings intact, so a `.env` copied from your installed instance needs no value
-changes. Multimodal embedding, the backfill, and the shape of the status field
-written onto your documents all changed, so read this before you point the kit at
-a collection an installed instance has already embedded.
+changes. Multimodal embedding and the backfill changed, so read this before you
+point the kit at a collection an installed instance has already embedded.
 
 ### `EMBEDDING_PROVIDER: multimodal` is not implemented
 
@@ -214,10 +213,12 @@ dimension or the input/output field names had actually changed, which the
 extension tracked in its index metadata document.
 
 The kit keeps no such metadata and does no comparison. `UPDATE_ON_CONFIGURE: true`
-enqueues a full re-embed of every document that already has an embedding after
-*every* `firebase deploy`, whether anything relevant changed or not, and
-`DO_BACKFILL: true` embeds the whole collection after the first deploy. On a large
-collection that is a large Vertex AI or OpenAI bill per deploy. Set
+enqueues an update pass after *every* `firebase deploy`, whether anything
+relevant changed or not, and `DO_BACKFILL: true` embeds the whole collection
+after the first deploy. The pass itself skips the documents the extension skipped
+(it re-embeds a document that already has an embedding and whose status is absent
+or `BACKFILLED`, so a backfilled collection is re-embedded in full), which on a
+large collection is a large Vertex AI or OpenAI bill per deploy. Set
 `UPDATE_ON_CONFIGURE: false` and re-embed deliberately when you change providers.
 
 ### Backfill is one task per document, and reads the collection in one go
@@ -236,39 +237,32 @@ resume-from-progress. Backfilling *n* documents now costs *n* task invocations a
 There is also no install-time progress reporting, since there is no extension
 install UI to report into. Watch the function logs instead.
 
-### The `status` field on your documents is a different shape
+### The status field on query documents is a different shape
 
-The extension wrote status nested under the process id, with timestamps:
-
-```
-status: { <instance id>: { state: "COMPLETED", startTime, updateTime, completeTime, createTime } }
-```
-
-The kit writes it flat, with no timestamps:
+The status the embed path writes onto your collection is unchanged, including
+the nesting under the instance id and the timestamps:
 
 ```
-status: { state: "COMPLETED" }
-status: { state: "ERROR", message: "<error message>" }
+status: { <instance id>: { state, startTime, updateTime, completeTime, createTime } }
 ```
 
-The states themselves are narrower too: `PROCESSING` and `BACKFILLED` are no
-longer written, only `COMPLETED` and `ERROR`. Anything reading
-`status.<instance id>.state`, or a security rule or index keyed to it, needs
-updating. The field name is still `STATUS_FIELD_NAME`, defaulting to `status`.
+Documents an installed instance embedded therefore need no migration, as long as
+the kit instance keeps the extension instance's id (see *The instance id comes
+from `firebase.json`* above). `embedOnWrite` writes `PROCESSING` before the embed
+and `COMPLETED` or `ERROR` after it, the backfill and update passes write
+`BACKFILLED` or `FAILED_BACKFILL`, and an `ERROR` records no message: the error
+itself is in the function logs, as before.
 
-`embedOnWrite` still reads the same four states the extension treated as final
-(`PROCESSING`, `COMPLETED`, `ERROR` and `BACKFILLED`), so documents an installed
-instance already embedded are still skipped once you flatten their status field.
-
-Query documents carry the flat shape too, with a `request` record alongside the
-state:
+Query documents are the exception. They carry a flat status, with no timestamps
+and a `request` record alongside the state, where the extension nested theirs
+under `textQuery`:
 
 ```
 status: { state: "COMPLETED", request: { query, limit, prefilters } }
 ```
 
-They previously carried `status.textQuery`, so anything reading that path needs
-updating. Do not treat the presence of `result` alone as completion: while a
+Anything reading `status.textQuery.state` on a query document needs updating. Do
+not treat the presence of `result` alone as completion: while a
 changed query re-runs, the document still holds the previous result, so a
 consumer waiting only on `result` can read the old query's result. A query is
 complete when `status.state` is `COMPLETED` and `status.request` matches the
@@ -285,7 +279,8 @@ names would overwrite the query-document field of the same name.
 Unlike the extension, a completed query document re-runs when its `query`,
 `limit`, or `prefilters` change (the extension never re-ran a completed query
 document). The embed path is the opposite: like the extension, it never
-re-embeds a document whose status has reached one of the four states above.
+re-embeds a document whose status has reached `PROCESSING`, `COMPLETED`, `ERROR`
+or `BACKFILLED`.
 
 ### The lifecycle hooks and the function region
 
@@ -299,8 +294,8 @@ settings above.
 (`us-central1` unless you have changed it), and with
 `EMBEDDING_PROVIDER: vertex` the Vertex AI embedding call uses that same region
 rather than the install-time location. Gemini embedding is not served in every
-region; if you deploy somewhere it is unavailable, embedding fails and the error
-is written to the document's status field.
+region; if you deploy somewhere it is unavailable, the embed fails, the document
+is marked `ERROR` and the error is logged.
 
 ### The triggers are 2nd gen
 
@@ -318,9 +313,10 @@ for; the Firebase CLI grants these for you.
 - A document is still embedded once. When its status reaches `PROCESSING`,
   `COMPLETED`, `ERROR` or `BACKFILLED`, editing the input field does not produce
   a new embedding and a failed embed is not retried. To re-embed a document,
-  delete its `status` field and write the document again. A document whose input
-  is an empty string is still skipped and gets no status, so it embeds normally
-  once you fill the input in.
+  delete its `status` field and write a new value to its input field. A document
+  whose input is an empty string is still skipped and gets no status, so it
+  embeds normally once you fill the input in, and a write that leaves the input
+  field untouched is still not embedded.
 - The indexed collection is still `COLLECTION_NAME` (default `products`), the
   input, output and status fields still default to `input`, `embedding` and
   `status`, and embeddings are still written as native Firestore vectors.
