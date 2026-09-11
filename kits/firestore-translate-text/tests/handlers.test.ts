@@ -355,7 +355,15 @@ describe("handleDocumentWrite", () => {
     expect(logger.error).toHaveBeenCalledWith(
       ...messages.error(expect.any(TypeError))
     );
+    expect(logger.error).toHaveBeenCalledTimes(1);
     expect(events.recordErrorEvent).toHaveBeenCalledWith(expect.any(TypeError));
+    expect(events.recordErrorEvent).toHaveBeenCalledTimes(1);
+    expect(logger.log).not.toHaveBeenCalledWith(
+      messages.translateInputStringToAllLanguages(
+        null as never,
+        defaultLanguages
+      )
+    );
     expect(translateClassMethod).not.toHaveBeenCalled();
     expect(firestore.update).not.toHaveBeenCalled();
   });
