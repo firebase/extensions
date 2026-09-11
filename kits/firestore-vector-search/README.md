@@ -307,10 +307,13 @@ settings above.
 
 `LOCATION` is gone. The functions deploy to your codebase's default region
 (`us-central1` unless you have changed it), and with
-`EMBEDDING_PROVIDER: vertex` the Vertex AI embedding call uses that same region
-rather than the install-time location. Gemini embedding is not served in every
-region; if you deploy somewhere it is unavailable, embedding fails and the error
-is written to the document's status field.
+`EMBEDDING_PROVIDER: vertex` the Vertex AI embedding call uses that same region,
+read from `FUNCTION_REGION`, rather than the install-time location. Where the
+region cannot be read (the emulator, or library use outside a deployed function)
+the Genkit Vertex AI plugin chooses: `GCLOUD_LOCATION` if you set it, otherwise
+`us-central1`. Gemini embedding is not served in every region;
+if you deploy somewhere it is unavailable, embedding fails and the error is
+written to the document's status field.
 
 ### The triggers are 2nd gen
 

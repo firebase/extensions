@@ -152,12 +152,15 @@ AI translations` when the value is empty.
 
 ### Vertex AI is called in the function's region
 
-With `TRANSLATION_PROVIDER: gemini-vertexai`, the Vertex AI call now uses the
-region the function is deployed to. The extension used the location you picked at
-install time. Gemini is not served in every region, so if you deploy somewhere it
-is unavailable, translation fails and the error is written to your function logs.
-Deploy to a region with Vertex AI support, or use `gemini-googleai` or
-`translate` instead. This was not exercised against a live deploy.
+With `TRANSLATION_PROVIDER: gemini-vertexai`, the Vertex AI call uses the region
+the function is deployed to, read from `FUNCTION_REGION`. The extension used the
+location you picked at install time. Where the region cannot be read (the
+emulator, or library use outside a deployed function) the Genkit Vertex AI
+plugin chooses: `GCLOUD_LOCATION` if you set it, otherwise `us-central1`.
+Gemini is not served in every region, so if you deploy somewhere
+it is unavailable, translation fails and the error is written to your function
+logs. Deploy to a region with Vertex AI support, or use `gemini-googleai` or
+`translate` instead.
 
 Because the function is deployed to the region derived from `DATABASE_REGION`,
 that setting also decides where the Vertex AI call goes. The extension had its
