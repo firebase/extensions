@@ -61,14 +61,35 @@ function transferConfigFields(config: TransferConfig) {
   return fields;
 }
 
+/**
+ * Full resource name of the topic DTS publishes run notifications to.
+ *
+ * PUB_SUB_TOPIC is validated as a bare topic ID when prompted, but values from
+ * a dotenv file reach us unvalidated, and both the Pub/Sub client and the
+ * trigger accept a full resource name, so accept one here too.
+ */
+export function notificationTopicName(
+  config: ResolvedBigqueryFirestoreExportConfig
+): string {
+  return config.pubSubTopic.startsWith("projects/")
+    ? config.pubSubTopic
+    : `projects/${config.projectId}/topics/${config.pubSubTopic}`;
+}
+
 function stringField(value: string | undefined): { stringValue: string } {
   return { stringValue: value ?? "" };
 }
 
-/** Creates the protobuf-shaped request used for a scheduled query. */
+/**
+ * Creates the protobuf-shaped request used for a scheduled query.
+ *
+ * The query runs as whichever identity creates it, which is this function. To
+ * name a different account, `serviceAccountName` goes on the request rather
+ * than on the transfer config, and the caller needs `actAs` on the account it
+ * names, including its own.
+ */
 export function createTransferConfigRequest(
-  config: ResolvedBigqueryFirestoreExportConfig,
-  serviceAccountEmail?: string
+  config: ResolvedBigqueryFirestoreExportConfig
 ): bigqueryDataTransfer.protos.google.cloud.bigquery.datatransfer.v1.ICreateTransferConfigRequest {
   return {
     parent: `projects/${config.projectId}`,
@@ -87,10 +108,7 @@ export function createTransferConfigRequest(
         },
       },
       schedule: config.schedule,
-      notificationPubsubTopic: `projects/${config.projectId}/topics/${config.pubSubTopic}`,
-      ...(serviceAccountEmail
-        ? { serviceAccountName: serviceAccountEmail }
-        : {}),
+      notificationPubsubTopic: notificationTopicName(config),
     },
   };
 }
@@ -120,7 +138,7 @@ export async function createTransferConfig(
 ): Promise<TransferConfig> {
   logs.createTransferConfig();
   const [created] = await client.createTransferConfig(
-    createTransferConfigRequest(config, config.serviceAccount)
+    createTransferConfigRequest(config)
   );
   if (!created.name) {
     throw new Error("BigQuery API returned a transfer config without a name");
@@ -176,12 +194,17 @@ export async function constructUpdateTransferConfigRequest(
     updatedFields.partitioning_field.stringValue = newPartitioningField;
   }
 
+  if (config.displayName !== transferConfig.displayName) {
+    updateMask.push("display_name");
+    updatedConfig.displayName = config.displayName;
+  }
+
   if (config.schedule !== transferConfig.schedule) {
     updateMask.push("schedule");
     updatedConfig.schedule = config.schedule;
   }
 
-  const expectedTopic = `projects/${config.projectId}/topics/${config.pubSubTopic}`;
+  const expectedTopic = notificationTopicName(config);
   if (expectedTopic !== transferConfig.notificationPubsubTopic) {
     updateMask.push("notification_pubsub_topic");
     updatedConfig.notificationPubsubTopic = expectedTopic;

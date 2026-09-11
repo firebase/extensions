@@ -27,12 +27,16 @@
 
 // Config types + helpers
 export {
+  type DeployTimeOptions,
   type GenaiChatbotConfig,
   GenerativeAIProvider,
   type ResolvedGenaiChatbotConfig,
   resolveConfig,
   type SafetySetting,
 } from "./export-config";
+// Deploy-time trigger options (document CEL + the extension's 540s timeout)
+// for consumers wiring their own trigger from the params-driven config.
+export { envDeployOptions } from "./config";
 // Generative client (for custom pipelines)
 export { getGenerativeClient } from "./generative-client";
 // Handlers

@@ -29,9 +29,9 @@ import {
   CONFIG_EXPRESSIONS,
   configFromEnv,
   geminiApiKey,
+  instanceIdFromEnv,
   openAiApiKey,
 } from "./config";
-import * as events from "./events";
 import {
   type ResolvedVectorSearchConfig,
   resolveVectorSearchConfig,
@@ -69,6 +69,11 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
 ];
 const REQUIRED_APIS = [
   {
+    api: "firestore.googleapis.com",
+    reason:
+      "Reads document data and writes embeddings back to Cloud Firestore.",
+  },
+  {
     api: "aiplatform.googleapis.com",
     reason:
       "This extension uses Vertex AI for embedding and vector search when configured.",
@@ -79,14 +84,19 @@ const REQUIRED_APIS = [
   },
 ] as const;
 const FUNCTION_SECRETS = [geminiApiKey, openAiApiKey];
+// Only the task functions reach getSingleEmbedding, but every function here
+// resolves the same config (which reads the provider keys), and the extension
+// bound its secrets to all functions in the instance -- so bind them uniformly.
 const DEFAULT_TASK_OPTIONS = {
   memory: "512MiB",
   timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
+  secrets: FUNCTION_SECRETS,
 } as const;
 const EMBEDDING_TASK_OPTIONS = {
   memory: "1GiB",
   timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
   retryConfig: { maxAttempts: TASK_MAX_ATTEMPTS },
+  secrets: FUNCTION_SECRETS,
 } as const;
 const FIRESTORE_FUNCTION_OPTIONS = {
   memory: "512MiB",
@@ -97,6 +107,12 @@ const CALLABLE_FUNCTION_OPTIONS = {
   memory: "512MiB",
   secrets: FUNCTION_SECRETS,
 } as const;
+
+// Resolved at import so the query trigger path is a concrete document path at
+// discovery. An unsupported CLI fails the discovery pass here, before anything
+// is registered, rather than freezing "_undefined/index/queries/{queryId}"
+// into the manifest.
+const QUERY_COLLECTION_DOCUMENT = `_${instanceIdFromEnv()}/index/queries/{queryId}`;
 
 for (const role of REQUIRED_ROLES) {
   requiresRole(role);
@@ -141,8 +157,6 @@ function getContext(): HandlerContext {
 
   ensureDefaultApp();
 
-  events.setupEventChannel();
-
   ctx = {
     firestore: getFirestore(),
     config: getConfig(),
@@ -181,7 +195,7 @@ export const embedOnWrite = onDocumentWritten(
 export const queryOnWrite = onDocumentWritten(
   {
     ...FIRESTORE_FUNCTION_OPTIONS,
-    document: CONFIG_EXPRESSIONS.queryCollectionDocument,
+    document: QUERY_COLLECTION_DOCUMENT,
   },
   (event) => handleQueryOnWrite(event, getContext())
 );
@@ -191,10 +205,7 @@ export const queryCallable = onCall(CALLABLE_FUNCTION_OPTIONS, (request) =>
 );
 
 export const initVectorSearch = onTaskDispatched(
-  {
-    ...DEFAULT_TASK_OPTIONS,
-    secrets: FUNCTION_SECRETS,
-  },
+  DEFAULT_TASK_OPTIONS,
   async () => {
     await handleInit(getContext());
   }

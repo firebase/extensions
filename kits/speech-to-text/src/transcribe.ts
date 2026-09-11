@@ -47,28 +47,31 @@ export interface SpeechOptions {
  * The operation is polled to completion in-process, so the host function must
  * allow a long timeout for lengthy audio.
  *
- * @param args - The Speech client, the uploaded file, probed audio params and
- *   recognition options.
+ * @param args - The Speech client, the uploaded file, the object name to write
+ *   the transcript to, probed audio params and recognition options.
  * @returns The transcription result, success or failure.
  */
 export async function transcribeAndUpload({
   client,
   file: { bucket, name },
+  transcriptObjectName,
   sampleRateHertz,
   audioChannelCount,
   options,
 }: {
   client: SpeechClient;
   file: { bucket: Bucket; name: string };
+  /**
+   * Complete bucket-relative object name for the transcript. The caller owns
+   * this path so the extension's naming rules live in one place.
+   */
+  transcriptObjectName: string;
   sampleRateHertz: number;
   audioChannelCount: number;
   options: SpeechOptions;
 }): Promise<TranscribeAudioResult> {
   const inputUri = `gs://${bucket.name}/${name}`;
-  const outputUri = `gs://${bucket.name}/${name.replace(
-    "tmp/",
-    ""
-  )}_transcription.txt`;
+  const outputUri = `gs://${bucket.name}/${transcriptObjectName}`;
   const warnings: WarningType[] = [];
   const request: google.cloud.speech.v1.ILongRunningRecognizeRequest = {
     config: {

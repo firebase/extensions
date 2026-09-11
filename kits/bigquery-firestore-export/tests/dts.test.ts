@@ -19,6 +19,7 @@ import {
   constructUpdateTransferConfigRequest,
   createTransferConfigRequest,
   type DataTransferClient,
+  notificationTopicName,
   PARTITIONING_FIELD_REMOVAL_ERROR,
 } from "../src/dts";
 import { resolveConfig } from "../src/export-config";
@@ -43,10 +44,7 @@ function clientWithTransferConfig(transferConfig: object): DataTransferClient {
 
 describe("createTransferConfigRequest", () => {
   test("creates the scheduled-query request", () => {
-    const request = createTransferConfigRequest(
-      config,
-      "runtime@test-project.iam.gserviceaccount.com"
-    );
+    const request = createTransferConfigRequest(config);
 
     expect(request).toMatchObject({
       parent: "projects/test-project",
@@ -57,7 +55,6 @@ describe("createTransferConfigRequest", () => {
         schedule: "every 24 hours",
         notificationPubsubTopic:
           "projects/test-project/topics/kit-users-export-processMessages",
-        serviceAccountName: "runtime@test-project.iam.gserviceaccount.com",
       },
     });
     expect(
@@ -67,11 +64,28 @@ describe("createTransferConfigRequest", () => {
   });
 });
 
+describe("notificationTopicName", () => {
+  test("qualifies a bare topic ID with the project", () => {
+    expect(notificationTopicName(config)).toBe(
+      "projects/test-project/topics/kit-users-export-processMessages"
+    );
+  });
+
+  test("passes through a topic already given as a resource name", () => {
+    const qualified = "projects/other-project/topics/ext-users-processMessages";
+
+    expect(notificationTopicName({ ...config, pubSubTopic: qualified })).toBe(
+      qualified
+    );
+  });
+});
+
 describe("constructUpdateTransferConfigRequest", () => {
   test("deduplicates the params update mask", async () => {
     const client = clientWithTransferConfig({
       name: "projects/p/locations/us/transferConfigs/c",
       destinationDatasetId: "analytics",
+      displayName: "Users export",
       schedule: "every 24 hours",
       notificationPubsubTopic:
         "projects/test-project/topics/kit-users-export-processMessages",
@@ -93,6 +107,63 @@ describe("constructUpdateTransferConfigRequest", () => {
     );
 
     expect(request.updateMask?.paths).toEqual(["params"]);
+  });
+
+  test("updates the display name when it changed", async () => {
+    const client = clientWithTransferConfig({
+      name: "projects/p/locations/us/transferConfigs/c",
+      destinationDatasetId: "analytics",
+      displayName: "Old export name",
+      schedule: "every 24 hours",
+      notificationPubsubTopic:
+        "projects/test-project/topics/kit-users-export-processMessages",
+      params: {
+        fields: {
+          query: { stringValue: config.queryString },
+          destination_table_name_template: {
+            stringValue: 'users_{run_time|"%H%M%S"}',
+          },
+          partitioning_field: { stringValue: "created_at" },
+        },
+      },
+    });
+
+    const request = await constructUpdateTransferConfigRequest(
+      client,
+      "projects/p/locations/us/transferConfigs/c",
+      config
+    );
+
+    expect(request.updateMask?.paths).toEqual(["display_name"]);
+    expect(request.transferConfig?.displayName).toBe("Users export");
+  });
+
+  test("leaves the display name out of the mask when unchanged", async () => {
+    const client = clientWithTransferConfig({
+      name: "projects/p/locations/us/transferConfigs/c",
+      destinationDatasetId: "analytics",
+      displayName: "Users export",
+      schedule: "every 12 hours",
+      notificationPubsubTopic:
+        "projects/test-project/topics/kit-users-export-processMessages",
+      params: {
+        fields: {
+          query: { stringValue: config.queryString },
+          destination_table_name_template: {
+            stringValue: 'users_{run_time|"%H%M%S"}',
+          },
+          partitioning_field: { stringValue: "created_at" },
+        },
+      },
+    });
+
+    const request = await constructUpdateTransferConfigRequest(
+      client,
+      "projects/p/locations/us/transferConfigs/c",
+      config
+    );
+
+    expect(request.updateMask?.paths).toEqual(["schedule"]);
   });
 
   test("rejects clearing an existing partitioning field", async () => {

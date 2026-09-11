@@ -1,1 +1,3 @@
-- Initial release
+- fix: the transcoded `.wav` and the `.txt` transcript are written where the legacy extension wrote them, `tmp/<original path>.wav` and `<original path>.wav_transcription.txt`, both under `OUTPUT_STORAGE_PATH` when set, so existing consumers keep finding them. A trailing slash on `OUTPUT_STORAGE_PATH` is stripped rather than doubled: the extension's double slash made the Speech-to-Text API reject the audio URI, so that configuration never produced a transcript ([#3140](https://github.com/firebase/extensions/issues/3140), [#3026](https://github.com/firebase/extensions/issues/3026))
+- fix: restore the extension's `Enabled` / `Disabled` option labels on the `ENABLE_AUTOMATIC_PUNCTUATION` deploy-time prompt. The stored values are unchanged (`true`/`false`), so this is a label-only fix and no `.env` from an earlier deploy needs editing.
+- Initial release of kit, see README for differences between the legacy extension and this kit

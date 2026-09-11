@@ -115,7 +115,10 @@ export class ShardedCounterWorker {
           await this.db.runTransaction(async (t) => {
             try {
               const snap = await t.get(this.metadoc.ref);
-              if (snap.exists && deepEqual(snap.data(), this.metadata)) {
+              if (
+                snap.exists &&
+                deepEqual(snap.data(), this.metadata, { strict: true })
+              ) {
                 t.update(snap.ref, {
                   timestamp: FieldValue.serverTimestamp(),
                   stats: stats,
@@ -149,7 +152,10 @@ export class ShardedCounterWorker {
 
       unsubscribeMetadataListener = this.metadoc.ref.onSnapshot((snap) => {
         // if something's changed in the worker metadata since we were called, abort.
-        if (!snap.exists || !deepEqual(snap.data(), this.metadata)) {
+        if (
+          !snap.exists ||
+          !deepEqual(snap.data(), this.metadata, { strict: true })
+        ) {
           logger.log("Shutting down because metadoc changed.");
           shutdown().then(resolve).catch(reject);
         }
@@ -243,7 +249,10 @@ export class ShardedCounterWorker {
           }
 
           // Check that we still own the slice.
-          if (!metadoc.exists || !deepEqual(metadoc.data(), this.metadata)) {
+          if (
+            !metadoc.exists ||
+            !deepEqual(metadoc.data(), this.metadata, { strict: true })
+          ) {
             logger.log("Metadata has changed, bailing out...");
             return [];
           }

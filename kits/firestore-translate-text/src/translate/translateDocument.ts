@@ -50,5 +50,7 @@ export const translateDocument = async (
     );
   }
 
-  await translateSingle(String(input), languages, snapshot, service);
+  // Passed through uncoerced: the extension hands the raw field value to the
+  // translation API, so a numeric input arrives as a number, not "42".
+  await translateSingle(input as string, languages, snapshot, service);
 };
