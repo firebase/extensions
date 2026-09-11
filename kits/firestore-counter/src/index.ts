@@ -21,7 +21,7 @@ import { expr } from "firebase-functions/params";
 import { onSchedule } from "firebase-functions/scheduler";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
-import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
+import { CONFIG_EXPRESSIONS, configFromEnv, envFunctionRegion } from "./config";
 import * as events from "./events";
 import { resolveCounterConfig } from "./export-config";
 import {
@@ -91,8 +91,15 @@ function getHandlerContext(): HandlerContext {
   return ctx;
 }
 
+/*
+ * All functions of a kit instance deploy to one region, so the region is
+ * resolved once here and applied to every function.
+ */
+const functionRegion = envFunctionRegion();
+
 export const controllerCore = onSchedule(
   {
+    ...(functionRegion ? { region: functionRegion } : {}),
     schedule: CONFIG_EXPRESSIONS.schedule as unknown as string,
     maxInstances: 1,
   },
@@ -101,6 +108,7 @@ export const controllerCore = onSchedule(
 
 export const onWrite = onDocumentWritten(
   {
+    ...(functionRegion ? { region: functionRegion } : {}),
     document: "{collection}/{counter=**}/_counter_shards_/{shardId}",
     maxInstances: 1,
     timeoutSeconds: 120,
@@ -110,6 +118,7 @@ export const onWrite = onDocumentWritten(
 
 export const worker = onDocumentWritten(
   {
+    ...(functionRegion ? { region: functionRegion } : {}),
     document: expr`${CONFIG_EXPRESSIONS.internalStatePath}/workers/{workerId}`,
   },
   handleWorker

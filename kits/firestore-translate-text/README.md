@@ -85,6 +85,7 @@ the CLI connects them to the function at deploy time.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
+| `databaseRegion` | `DATABASE_REGION` | yes | (prompted) | Firestore database location; also places the function |
 | `collectionPath` | `COLLECTION_PATH` | no | `translations` | Watched collection |
 | `inputFieldName` | `INPUT_FIELD_NAME` | no | `input` | Source text field |
 | `outputFieldName` | `OUTPUT_FIELD_NAME` | no | `translated` | Output map field |
@@ -161,8 +162,11 @@ it is unavailable, translation fails and the error is written to your function
 logs. Deploy to a region with Vertex AI support, or use `gemini-googleai` or
 `translate` instead.
 
-The function itself has no location setting any more. It deploys to your
-codebase's default region (`us-central1` unless you have changed it).
+Because the function is deployed to the region derived from `DATABASE_REGION`,
+that setting also decides where the Vertex AI call goes. The extension had its
+own install-time location for this; the kit has no separate override, so a
+database in a region where Gemini is unavailable means choosing one of the other
+translation providers.
 
 ### Nothing checks your settings at deploy time
 
@@ -202,6 +206,39 @@ gone rather than dormant: only documents written after you deploy are translated
 Its service account needs `roles/eventarc.eventReceiver` and `roles/run.invoker`
 on top of `roles/datastore.user`; the Firebase CLI grants these for you. The
 Cloud Translation API is still required whichever provider you choose.
+
+### DATABASE_REGION decides where the function runs
+
+`DATABASE_REGION` tells the kit where your Firestore database lives, and the
+function is deployed to the Cloud Run region derived from it, next to the
+database. Regional Firestore locations (`europe-west2`, `us-east1`, ...) are
+used as-is; the multi-region locations map to a Cloud Run region inside them -
+`nam5` and `nam7` to `us-central1`, `eur3` to `europe-west1` - because they are
+not Cloud Run regions themselves and would fail the deploy. The value is
+matched case-insensitively. The Firestore trigger always fires in the
+database's own region, whatever region the function runs in.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
+`.env` values during deploy discovery, so the function silently falls back to
+the no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already carried
+`DATABASE_REGION`) can itself trigger a region move on your next deploy.
+
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the function correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+With an explicit empty `DATABASE_REGION=` line in `.env`, the function declares
+no region and the Firebase CLI resolves one at deploy time: it keeps the region
+it is already deployed in, and on a first deploy the CLI places it next to the
+database, unless you set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment
+variable when running `firebase deploy`. Careful with that variable: it applies
+to every no-region function in the deploy, not just this kit. Omitting the line
+is not the same as an empty one: a non-interactive deploy fails with `In
+non-interactive mode but have no value for the following environment variables:
+DATABASE_REGION`. Note that changing an existing instance's region deletes and
+recreates the function.
 
 ### Unchanged
 

@@ -57,10 +57,15 @@ function cel(value: unknown): string {
   return value instanceof FakeExpression ? value.toCEL() : String(value);
 }
 
+const select = vi.fn((options: Record<string, string>) => ({
+  select: options,
+}));
+
 vi.mock("firebase-functions/params", () => ({
   Expression: FakeExpression,
   defineString,
   expr,
+  select,
 }));
 
 async function importConfig() {

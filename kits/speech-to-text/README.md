@@ -84,6 +84,7 @@ loads them at deploy time and prompts for any required values that are missing.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
+| `bucketRegion` | `BUCKET_REGION` | yes | (prompted) | Cloud Storage bucket location; also places the function |
 | `bucket` | `EXTENSION_BUCKET` | no | default Storage bucket | Storage bucket to watch |
 | `languageCode` | `LANGUAGE_CODE` | yes | — | BCP-47 language code |
 | `model` | `MODEL` | no | `default` | Speech model |
@@ -191,11 +192,13 @@ it if it is missing, but any string is accepted and a bad value surfaces as a
 Speech-to-Text error per file, with the failure recorded on the Firestore
 document and in the `fail` event.
 
-### The function has no location setting
+### `LOCATION` is replaced by `BUCKET_REGION`
 
-`LOCATION` is gone. The function deploys to your codebase's default region
-(`us-central1` unless you have changed it) rather than the immutable location you
-picked at install.
+The extension's immutable `LOCATION` is gone. The function is placed by
+`BUCKET_REGION` instead, which describes where your bucket lives rather than
+where you want the function, because a 2nd gen storage trigger only fires for a
+function in a region its bucket accepts. See
+[BUCKET_REGION decides where the function runs](#bucket_region-decides-where-the-function-runs).
 
 ### Create the Eventarc channel yourself for events
 
@@ -214,6 +217,45 @@ the function is otherwise unaffected.
 gen. Its service account needs `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of `roles/storage.objectAdmin` and
 `roles/datastore.user`; the Firebase CLI grants these for you.
+
+### BUCKET_REGION decides where the function runs
+
+`BUCKET_REGION` tells the kit where your Cloud Storage bucket lives, and the
+function is deployed to the Cloud Run region derived from it. A 2nd gen storage
+trigger cannot cross regions, so this has to agree with the bucket you set: a
+mismatch fails the deploy with `A function in region <region> cannot listen to
+a bucket in region <region>`. Regional locations (`europe-west4`,
+`us-east1`, ...) are used as-is; the multi-region locations map to a region
+inside them - `us` to `us-east1`, `eu` to `europe-west1`, `asia` to
+`asia-east1` - because they are not Cloud Run regions themselves and would fail
+the deploy. The value is matched case-insensitively.
+
+Dual-region buckets (`nam4`, `eur4`, `asia1`) are not offered as such and are
+not mapped. Pick one of the regions the pair is made of instead, all of which
+are in the list: `us-central1` or `us-east1` for `nam4`, `europe-north1` or
+`europe-west4` for `eur4`, `asia-northeast1` or `asia-northeast2` for `asia1`. A
+trigger in either half of the pair fires for the bucket.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load `.env`
+values during deploy discovery, so the function silently falls back to the
+no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already
+carried `BUCKET_REGION`) can itself move the function on your next deploy.
+
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the function correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+With an explicit empty `BUCKET_REGION=` line in `.env`, the function declares no
+region and the Firebase CLI resolves one at deploy time: it keeps the region it
+is already deployed in, and on a first deploy lands in `us-central1` unless you
+set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+`firebase deploy`. Careful with that variable: it applies to every no-region
+function in the deploy, not just this kit. Omitting the line is not the same as
+an empty one: a non-interactive deploy fails with `In non-interactive mode but
+have no value for the following environment variables: BUCKET_REGION`. Note that
+changing an existing instance's region deletes and recreates the function.
 
 ### Unchanged
 

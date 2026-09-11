@@ -26,16 +26,20 @@ vi.mock("genkit", () => import("./mocks/genkit"));
 vi.mock("@genkit-ai/google-genai", () => import("./mocks/google-genai"));
 vi.mock("../src/events");
 
-const { configFromEnv, onDocumentWritten } = vi.hoisted(() => ({
-  configFromEnv: vi.fn(),
-  onDocumentWritten: vi.fn(
-    (_options: unknown, handler: (event: unknown) => Promise<void>) => handler
-  ),
-}));
+const { configFromEnv, envFunctionRegion, onDocumentWritten } = vi.hoisted(
+  () => ({
+    configFromEnv: vi.fn(),
+    envFunctionRegion: vi.fn<() => string | undefined>(() => undefined),
+    onDocumentWritten: vi.fn(
+      (_options: unknown, handler: (event: unknown) => Promise<void>) => handler
+    ),
+  })
+);
 
 vi.mock("../src/config", () => ({
   CONFIG_EXPRESSIONS: { document: "translations/{messageId}" },
   configFromEnv,
+  envFunctionRegion,
   googleAiApiKey: { name: "GOOGLE_AI_API_KEY", value: vi.fn(() => "api-key") },
 }));
 

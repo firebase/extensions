@@ -158,6 +158,8 @@ export interface ResolvedGenaiChatbotConfig {
 export interface DeployTimeOptions {
   /** Watched Firestore document/collection path for the trigger. */
   document: string | Expression<string>;
+  /** Cloud Run region for the function; omitted when `DATABASE_REGION` is unset. */
+  region?: string;
   /** Function timeout in seconds; extension.yaml sets `timeout: 540s`. */
   timeoutSeconds: number;
 }

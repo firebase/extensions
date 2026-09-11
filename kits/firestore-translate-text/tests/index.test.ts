@@ -49,10 +49,12 @@ const googleAiApiKey = {
   value: vi.fn(() => "api-key"),
 };
 const CONFIG_EXPRESSIONS = { document: "translations/{messageId}" };
+const envFunctionRegion = vi.fn<() => string | undefined>(() => undefined);
 
 vi.mock("../src/config", () => ({
   CONFIG_EXPRESSIONS,
   configFromEnv,
+  envFunctionRegion,
   googleAiApiKey,
 }));
 
@@ -124,6 +126,22 @@ describe("index", () => {
       "roles/run.invoker",
       "roles/eventarc.publisher",
     ]);
+  });
+
+  test("pins the function to the region derived from the database location", async () => {
+    envFunctionRegion.mockReturnValue("europe-west1");
+    await importIndex();
+
+    expect(onDocumentWritten.mock.calls[0][0]).toMatchObject({
+      region: "europe-west1",
+    });
+  });
+
+  test("declares no region when the database location is unset", async () => {
+    envFunctionRegion.mockReturnValue(undefined);
+    await importIndex();
+
+    expect(onDocumentWritten.mock.calls[0][0]).not.toHaveProperty("region");
   });
 
   // The extension published custom events with only `datastore.user` declared:

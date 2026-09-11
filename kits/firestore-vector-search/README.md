@@ -104,6 +104,7 @@ overridden there.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
+| `databaseRegion` | `DATABASE_REGION` | yes | (prompted) | Firestore database location; also places the functions |
 | `embeddingProvider` | `EMBEDDING_PROVIDER` | no | `gemini` | Embedding provider |
 | `customEmbeddingsEndpoint` | `CUSTOM_EMBEDDINGS_ENDPOINT` | no | (empty) | Custom embeddings endpoint |
 | `customEmbeddingsBatchSize` | `CUSTOM_EMBEDDINGS_BATCH_SIZE` | no | (empty) | Custom batch size |
@@ -295,15 +296,14 @@ Firestore vector index (skipping creation when a matching index exists, as
 before) and then enqueues the backfill or update triggers according to the two
 settings above.
 
-`LOCATION` is gone. The functions deploy to your codebase's default region
-(`us-central1` unless you have changed it), and with
-`EMBEDDING_PROVIDER: vertex` the Vertex AI embedding call uses that same region,
-read from `FUNCTION_REGION`, rather than the install-time location. Where the
-region cannot be read (the emulator, or library use outside a deployed function)
-the Genkit Vertex AI plugin chooses: `GCLOUD_LOCATION` if you set it, otherwise
-`us-central1`. Gemini embedding is not served in every region;
-if you deploy somewhere it is unavailable, embedding fails and the error is
-written to the document's status field.
+`LOCATION` is gone. `DATABASE_REGION` decides where the functions deploy, as
+described below, and with `EMBEDDING_PROVIDER: vertex` the Vertex AI embedding
+call uses that same region, read from `FUNCTION_REGION`, rather than the
+install-time location. Where the region cannot be read (the emulator, or library
+use outside a deployed function) the Genkit Vertex AI plugin chooses:
+`GCLOUD_LOCATION` if you set it, otherwise `us-central1`. Gemini embedding is
+not served in every region; if you deploy somewhere it is unavailable, embedding
+fails and the error is written to the document's status field.
 
 ### The triggers are 2nd gen
 
@@ -311,6 +311,52 @@ All seven functions are 2nd gen. Their service accounts need
 `roles/eventarc.eventReceiver`, `roles/run.invoker`, `roles/cloudtasks.enqueuer`
 and `roles/iam.serviceAccountUser` on top of the four roles the extension asked
 for; the Firebase CLI grants these for you.
+
+### DATABASE_REGION decides where the functions run
+
+`DATABASE_REGION` tells the kit where your Firestore database lives, and the
+functions are deployed to the Cloud Run region derived from it, next to the
+database. Regional Firestore locations (`europe-west2`, `us-east1`, ...) are
+used as-is; the multi-region locations map to a Cloud Run region inside them -
+`nam5` and `nam7` to `us-central1`, `eur3` to `europe-west1` - because they are
+not Cloud Run regions themselves and would fail the deploy. The value is
+matched case-insensitively. The Firestore trigger always fires in the
+database's own region, whatever region the functions run in.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
+`.env` values during deploy discovery, so the functions silently fall back to
+the no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already carried
+`DATABASE_REGION`) can itself trigger a region move on your next deploy.
+
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the functions correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+One interaction to know about if you use the Vertex AI embedding provider. The
+functions call Vertex AI in whatever region they run in, so pinning them to
+your database's location also moves the Vertex AI call there, and there is no
+separate override to send it elsewhere. Vertex AI serves `gemini-embedding-001`
+in most regions but not all: `africa-south1`, `europe-north2` and
+`europe-west12` report the publisher model as not found, and `europe-west10`
+and `northamerica-south1` have no Vertex AI endpoint at all. With a database in
+one of those and `EMBEDDING_PROVIDER=vertex`, embedding fails and the error is
+written to the document's status field. Before this parameter existed the
+embedding functions were unplaced and ran in `us-central1`, so this is new.
+
+With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
+no region and the Firebase CLI resolves one at deploy time: it keeps the region
+they are already deployed in, and on a first deploy it resolves each function
+separately, so `embedOnWrite` and `queryOnWrite` land next to the database and
+the task and callable functions land in `us-central1`, splitting the instance
+across two regions. Setting the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment
+variable when running `firebase deploy` puts all of them in that region
+instead. Careful with that variable: it applies to every no-region function in
+the deploy, not just this kit. Omitting the line is not the same as an empty
+one: a non-interactive deploy fails with `In non-interactive mode but have no
+value for the following environment variables: DATABASE_REGION`. Note that
+changing an existing instance's region deletes and recreates the functions.
 
 ### Unchanged
 

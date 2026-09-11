@@ -84,6 +84,7 @@ Realtime Database instance.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
+| `databaseRegion` | `DATABASE_REGION` | yes | (prompted) | Realtime Database instance location; also places the function |
 | `nodePath` | `RTDB_NODE_PATH` | no | `messages` | Parent path whose children are limited |
 | `maxCount` | `MAX_COUNT` | no | `100` | Maximum child nodes to retain |
 | `databaseInstance` | `SELECTED_DATABASE_INSTANCE` | yes* | from `FIREBASE_CONFIG` when present | RTDB instance id |
@@ -162,9 +163,11 @@ read from `FIREBASE_CONFIG` rather than injected by the install flow. If your
 `FIREBASE_CONFIG` has no `databaseURL`, there is no default and the CLI prompts
 for the instance at deploy time.
 
-The function itself no longer has a location setting. It deploys to your
-codebase's default region (`us-central1` unless you have changed it) rather than
-the location you picked at install.
+The extension's install-time location is replaced by `DATABASE_REGION`, which
+describes where your database instance lives rather than where you want the
+function. A 2nd gen database trigger cannot cross regions, and the mismatch is
+caught at deploy time: creating the function fails with `cannot register
+cross-region trigger`.
 
 ### The trigger is 2nd gen
 
@@ -173,6 +176,23 @@ gen. Its service account needs `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of `roles/firebasedatabase.admin`; the Firebase CLI
 grants these for you. This otherwise only matters if you have alerting keyed to
 function generation.
+
+### DATABASE_REGION decides where the function runs
+
+`DATABASE_REGION` tells the kit where your Realtime Database instance lives, and
+the function is deployed to that region. A 2nd gen database trigger only fires
+for a function in the same region as its instance, so this has to agree with the
+instance you set. Database locations are Cloud Run regions already, so there is
+nothing to map: the function declares the parameter itself and the Firebase CLI
+substitutes your value, whether you answer the prompt or write `.env` yourself.
+
+The value is required, and it applies to the deploy that sets it. A
+non-interactive deploy with the key missing from `.env` fails with `In
+non-interactive mode but have no value for the following environment variables:
+DATABASE_REGION`. Give it one of the offered regions exactly as listed: it
+reaches Cloud Run as written, so a blank or misspelled value fails the deploy.
+Note that changing the region on an existing instance deletes and recreates the
+function.
 
 ### Unchanged
 

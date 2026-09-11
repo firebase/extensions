@@ -397,23 +397,33 @@ it is honored: the functions deploy near your database.
 
 Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
 `.env` values during deploy discovery, so the functions silently fall back to
-the no-region behavior below. Two consequences worth knowing before you
-deploy. Upgrading the CLI (or this kit, if your `.env` already carried
+the no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already carried
 `DATABASE_REGION`) can itself trigger the region move described below on your
-next deploy. And on a fresh interactive install the value you enter at the
-prompt only takes effect from the second deploy: the first deploy computes
-regions before the prompt runs, so it lands in `us-central1` and the next
-deploy moves the functions.
+next deploy.
 
-With `DATABASE_REGION` unset or empty, the functions declare no region and the
-Firebase CLI resolves one at deploy time: a function keeps the region it is
-already deployed in, and on a first deploy lands in `us-central1` unless you
-set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
-`firebase deploy`. Careful with that variable: it applies to every no-region
-function in the deploy, not just this kit. Note that changing an existing
-install's function region (via this variable or `DATABASE_REGION`) deletes and
-recreates the functions in the new region - new URLs, a recreated task queue,
-and any in-flight tasks are lost.
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the functions correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
+no region and the Firebase CLI resolves one at deploy time: a function keeps
+the region it is already deployed in, and on a first deploy all three land in
+`us-central1`. The CLI would otherwise place `fsexportbigquery` next to the
+database, but it resolves the default region before it resolves params, so the
+`DATABASE` param this kit passes to the trigger is still an unresolved
+expression when the database is looked up, and the lookup falls back
+([firebase/firebase-tools#11020](https://github.com/firebase/firebase-tools/issues/11020)).
+Setting the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when
+running `firebase deploy` puts all of them in that region instead. Careful
+with that variable: it applies to every no-region function in the deploy, not
+just this kit. Omitting the line is not the same as an empty one: a
+non-interactive deploy fails with `In non-interactive mode but have no value
+for the following environment variables: DATABASE_REGION`. Note that changing
+an existing install's function region (via this variable or `DATABASE_REGION`)
+deletes and recreates the functions in the new region - new URLs, a recreated
+task queue, and any in-flight tasks are lost.
 
 ### Defaults
 

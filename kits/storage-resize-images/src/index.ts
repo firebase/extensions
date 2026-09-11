@@ -21,6 +21,7 @@ import { onObjectFinalized } from "firebase-functions/v2/storage";
 import sharp from "sharp";
 import {
   CONFIG_EXPRESSIONS,
+  envFunctionRegion,
   configFromEnv,
   validatePathListsFromEnv,
 } from "./config";
@@ -88,8 +89,11 @@ function getContext(): HandlerContext {
   return ctx;
 }
 
+const functionRegion = envFunctionRegion();
+
 export const generateResizedImage = onObjectFinalized(
   {
+    ...(functionRegion ? { region: functionRegion } : {}),
     bucket: CONFIG_EXPRESSIONS.bucket,
     memory: CONFIG_EXPRESSIONS.memory,
   },

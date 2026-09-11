@@ -16,46 +16,46 @@
 
 import { describe, expect, test } from "vitest";
 
-import { firestoreLocationToFunctionRegion } from "../src/region";
+import { bucketLocationToFunctionRegion } from "../src/region";
 
-describe("firestoreLocationToFunctionRegion", () => {
+describe("bucketLocationToFunctionRegion", () => {
   test.each([
-    ["nam5", "us-central1"],
-    ["nam7", "us-central1"],
-    ["eur3", "europe-west1"],
+    ["us", "us-east1"],
+    ["eu", "europe-west1"],
+    ["asia", "asia-east1"],
   ])("maps the multi-region location %s to %s", (location, region) => {
-    expect(firestoreLocationToFunctionRegion(location)).toBe(region);
+    expect(bucketLocationToFunctionRegion(location)).toBe(region);
   });
 
   test.each(["us-central1", "europe-west1", "asia-northeast1", "us-east1"])(
     "passes the regional location %s through unchanged",
     (location) => {
-      expect(firestoreLocationToFunctionRegion(location)).toBe(location);
+      expect(bucketLocationToFunctionRegion(location)).toBe(location);
     }
   );
 
   test("returns undefined for an unset location", () => {
-    expect(firestoreLocationToFunctionRegion(undefined)).toBeUndefined();
+    expect(bucketLocationToFunctionRegion(undefined)).toBeUndefined();
   });
 
   test("returns undefined for an empty location", () => {
-    expect(firestoreLocationToFunctionRegion("")).toBeUndefined();
+    expect(bucketLocationToFunctionRegion("")).toBeUndefined();
   });
 
   test("returns undefined for a whitespace-only location", () => {
-    expect(firestoreLocationToFunctionRegion("   ")).toBeUndefined();
+    expect(bucketLocationToFunctionRegion("   ")).toBeUndefined();
   });
 
   test.each([
-    ["NAM5", "us-central1"],
-    ["Eur3", "europe-west1"],
-    [" nam7 ", "us-central1"],
+    ["US", "us-east1"],
+    ["Eu", "europe-west1"],
+    [" asia ", "asia-east1"],
   ])("normalizes %s before the multi-region lookup", (location, region) => {
-    expect(firestoreLocationToFunctionRegion(location)).toBe(region);
+    expect(bucketLocationToFunctionRegion(location)).toBe(region);
   });
 
   test("lowercases and trims a regional location", () => {
-    expect(firestoreLocationToFunctionRegion(" Europe-West2 ")).toBe(
+    expect(bucketLocationToFunctionRegion(" Europe-West2 ")).toBe(
       "europe-west2"
     );
   });
