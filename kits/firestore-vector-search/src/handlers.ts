@@ -86,23 +86,24 @@ function statusPath(
   return new FieldPath(config.statusFieldName, config.instanceId, ...rest);
 }
 
-function statusState(
+function rawStatusState(
   data: FirebaseFirestore.DocumentData,
   config: ResolvedVectorSearchConfig
-): string | undefined {
+): unknown {
   const status = data[config.statusFieldName] as
     | Record<string, { state?: unknown } | undefined>
     | undefined;
-  const state = status?.[config.instanceId]?.state;
-  return typeof state === "string" ? state : undefined;
+  return status?.[config.instanceId]?.state;
 }
 
 function isInTerminalState(
   data: FirebaseFirestore.DocumentData,
   config: ResolvedVectorSearchConfig
 ): boolean {
-  const state = statusState(data, config);
-  return state !== undefined && TERMINAL_STATES.has(state);
+  // The extension tested `[...].includes(state)` on the raw value, so anything
+  // that is not one of the four strings falls through to the input checks.
+  const state = rawStatusState(data, config);
+  return typeof state === "string" && TERMINAL_STATES.has(state);
 }
 
 /**
@@ -170,7 +171,9 @@ export async function handleEmbedOnWrite(
   await after.ref.update(statusPath(ctx.config), {
     state: "PROCESSING",
     startTime,
-    createTime: existingCreateTime ?? after.createTime,
+    // `writeStartEvent` used `startData || change.after.createTime`, so a stored
+    // value that is falsy but present is replaced rather than carried forward.
+    createTime: existingCreateTime || after.createTime,
     updateTime: startTime,
   });
 
@@ -353,9 +356,11 @@ async function embedPath(
   }
   // The extension's `getValidDocs` skipped any document that already carried a
   // status other than `BACKFILLED`, so a backfill or an update pass never
-  // re-embedded a document `embedOnWrite` had completed or failed.
-  const state = statusState(data, ctx.config);
-  if (state !== undefined && state !== "BACKFILLED") return;
+  // re-embedded a document `embedOnWrite` had completed or failed. It tested
+  // the raw value for truthiness, so an empty or missing state is backfilled
+  // and any other non-`BACKFILLED` value is skipped.
+  const state = rawStatusState(data, ctx.config);
+  if (state && state !== "BACKFILLED") return;
 
   try {
     const embedding = await embedClient(ctx).getSingleEmbedding(input);
