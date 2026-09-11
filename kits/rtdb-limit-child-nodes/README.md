@@ -183,22 +183,16 @@ function generation.
 the function is deployed to that region. A 2nd gen database trigger only fires
 for a function in the same region as its instance, so this has to agree with the
 instance you set. Database locations are Cloud Run regions already, so there is
-nothing to map; the value is matched case-insensitively.
+nothing to map: the function declares the parameter itself and the Firebase CLI
+substitutes your value, whether you answer the prompt or write `.env` yourself.
 
-With an explicit empty `DATABASE_REGION=` line in `.env`, the function declares
-no region and the Firebase CLI resolves one at deploy time, landing in
-`us-central1` on a first deploy unless you set
-`FIREBASE_FUNCTIONS_DEFAULT_REGION` when running `firebase deploy`. Omitting the
-line is not the same as an empty one: a non-interactive deploy fails with `In
+The value is required, and it applies to the deploy that sets it. A
+non-interactive deploy with the key missing from `.env` fails with `In
 non-interactive mode but have no value for the following environment variables:
-DATABASE_REGION`. Placement needs firebase-tools 15.28.0 or later. Note that
-changing an existing instance's region deletes and recreates the function.
-
-`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
-value and write it to `.env` before anything is deployed, so a single deploy
-places the function correctly. If you instead run `firebase deploy` with the
-value still missing from `.env`, the prompt comes after discovery has already
-chosen a region, so your answer only takes effect on the following deploy.
+DATABASE_REGION`. Give it one of the offered regions exactly as listed: it
+reaches Cloud Run as written, so a blank or misspelled value fails the deploy.
+Note that changing the region on an existing instance deletes and recreates the
+function.
 
 ### Unchanged
 

@@ -17,7 +17,6 @@
 import { defineInt, defineString, select } from "firebase-functions/params";
 import type { DeployTimeOptions, RtdbLimitConfig } from "./export-config";
 import { toTriggerRef } from "./export-config";
-import { normalizeRegion } from "./region";
 
 function defaultDatabaseInstance(): string | undefined {
   try {
@@ -129,15 +128,11 @@ export function envDeployOptions(): DeployTimeOptions {
       ? params.nodePath.toCEL()
       : params.nodePath.value();
 
-  // Realtime Database locations are Cloud Run regions already, so this value
-  // could be passed as a param expression. It is read from `process.env`
-  // (populated from `.env` during CLI discovery) so that it can be trimmed and
-  // lowercased, and so that an empty value omits the option rather than
-  // resolving to an empty region.
-  const region = normalizeRegion(process.env.DATABASE_REGION);
-
   return {
-    ...(region ? { region } : {}),
+    // Realtime Database locations are Cloud Run regions already, so the param
+    // needs no mapping and passes through as a CEL expression. The CLI resolves
+    // it after prompting, so the value applies on the deploy that sets it.
+    region: params.databaseRegion,
     ref: toTriggerRef(nodePath),
     instance: params.databaseInstance,
   };

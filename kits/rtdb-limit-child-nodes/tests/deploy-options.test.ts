@@ -54,11 +54,12 @@ describe("envDeployOptions", () => {
     );
   });
 
-  test("does not set a function region", () => {
+  test("region is a param expression", () => {
     vi.stubEnv("FUNCTIONS_CONTROL_API", "true");
     const options = envDeployOptions();
 
-    expect(options).not.toHaveProperty("region");
+    expect(options.region).toBeInstanceOf(Expression);
+    expect(cel(options.region)).toBe("{{ params.DATABASE_REGION }}");
   });
 
   test("no deploy-time option is a frozen undefined/empty literal", () => {
@@ -71,59 +72,34 @@ describe("envDeployOptions", () => {
   });
 });
 
-describe("envDeployOptions function region", () => {
-  const original = process.env.DATABASE_REGION;
-
-  function setDatabaseRegion(value?: string): void {
-    if (value === undefined) {
-      delete process.env.DATABASE_REGION;
-    } else {
-      process.env.DATABASE_REGION = value;
-    }
-  }
-
-  afterEach(() => {
-    setDatabaseRegion(original);
-  });
-
-  test("the database location places the function in that region", () => {
-    setDatabaseRegion("europe-west1");
-    expect(envDeployOptions().region).toBe("europe-west1");
-  });
-
-  test("unset DATABASE_REGION omits the region option", () => {
-    setDatabaseRegion(undefined);
-    expect(envDeployOptions()).not.toHaveProperty("region");
-  });
-
-  test("empty DATABASE_REGION omits the region option", () => {
-    setDatabaseRegion("");
-    expect(envDeployOptions()).not.toHaveProperty("region");
-  });
-});
-
 describe("rtdblimit deploy region", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.resetModules();
   });
 
+  // The manifest carries the unresolved expression, whatever the discovery
+  // environment holds; the CLI substitutes the param value after prompting.
   async function importRegion(
     databaseRegion: string | undefined
-  ): Promise<string[] | undefined> {
+  ): Promise<string> {
     vi.resetModules();
     vi.stubEnv("DATABASE_REGION", databaseRegion);
     const { rtdblimit } = await import("../src/index");
+    const { region } = (
+      rtdblimit as unknown as { __endpoint: { region: unknown } }
+    ).__endpoint;
 
-    return (rtdblimit as unknown as { __endpoint: { region?: string[] } })
-      .__endpoint.region;
+    return cel(region);
   }
 
-  test("the database location places the function in that region", async () => {
-    expect(await importRegion("europe-west1")).toEqual(["europe-west1"]);
+  test("the database location resolves through the param at deploy time", async () => {
+    expect(await importRegion("europe-west1")).toBe(
+      "{{ params.DATABASE_REGION }}"
+    );
   });
 
-  test("no database location leaves the function without a region", async () => {
-    expect(await importRegion(undefined)).toBeUndefined();
+  test("no value in the discovery environment changes nothing", async () => {
+    expect(await importRegion(undefined)).toBe("{{ params.DATABASE_REGION }}");
   });
 });
