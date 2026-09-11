@@ -17,7 +17,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { File } from "@google-cloud/storage";
-import type { Storage } from "firebase-admin/storage";
+import type * as admin from "firebase-admin";
 import type { StorageEvent } from "firebase-functions/v2/storage";
 import { checkImageContent } from "./content-filter";
 import * as events from "./events";
@@ -36,7 +36,7 @@ import type { StorageObjectMetadata } from "./util";
 
 export interface HandlerContext {
   config: ResolvedResizeImagesConfig;
-  storage: Storage;
+  storage: ReturnType<typeof admin.storage>;
 }
 
 export async function handleObjectFinalized(
