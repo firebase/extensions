@@ -48,6 +48,32 @@ export type VectorWriteEvent = FirestoreEvent<
 >;
 
 /**
+ * States the extension's `FirestoreOnWriteProcessor` treated as final. A
+ * document that has reached one of these is never processed again, so each
+ * document is embedded once and a failure is never retried.
+ *
+ * The kit itself writes only `COMPLETED` and `ERROR`. `PROCESSING` (which the
+ * extension's `writeStartEvent` wrote before each embed, as an in-flight
+ * marker) and `BACKFILLED` reach this guard only on documents an installed
+ * extension instance left behind, and are listed so those are still skipped.
+ */
+const TERMINAL_STATES = new Set([
+  "PROCESSING",
+  "COMPLETED",
+  "ERROR",
+  "BACKFILLED",
+]);
+
+function isInTerminalState(
+  data: FirebaseFirestore.DocumentData,
+  statusFieldName: string
+): boolean {
+  const status = data[statusFieldName] as { state?: unknown } | undefined;
+  const state = status?.state;
+  return typeof state === "string" && TERMINAL_STATES.has(state);
+}
+
+/**
  * `queueName` is the deployed function's export name. The Admin SDK prefixes it
  * with `kit-<instance id>-` from FIREBASE_KIT_INSTANCE_ID when it resolves the
  * queue, so a name that already carries the prefix resolves to a queue that
@@ -83,12 +109,13 @@ export async function handleEmbedOnWrite(
   logs.start("embedOnWrite");
 
   const data = event.data.after.data() ?? {};
+  if (isInTerminalState(data, ctx.config.statusFieldName)) return;
   const input = data[ctx.config.inputFieldName];
-  if (typeof input !== "string") return;
-  const beforeInput = event.data.before.exists
-    ? event.data.before.get(ctx.config.inputFieldName)
-    : undefined;
-  if (beforeInput === input && data[ctx.config.outputFieldName]) return;
+  // The extension's `shouldProcess` required a truthy string, so an empty input
+  // was skipped and the document was left with no status at all. Embedding it
+  // here would write a terminal status that the guard above never releases, and
+  // filling the input in later would no longer embed the document.
+  if (typeof input !== "string" || input === "") return;
 
   try {
     const embedding = await embedClient(ctx).getSingleEmbedding(input);
@@ -256,7 +283,10 @@ async function embedPath(
   const snapshot = await ref.get();
   if (!snapshot.exists) return;
   const input = snapshot.get(ctx.config.inputFieldName);
-  if (typeof input !== "string") return;
+  // Matches the extension's `shouldBackfill` and `shouldUpdate`, which both
+  // required a truthy string, and keeps an empty document out of the terminal
+  // status that `handleEmbedOnWrite` would then skip forever.
+  if (typeof input !== "string" || input === "") return;
   if (requireExistingEmbedding && !snapshot.get(ctx.config.outputFieldName)) {
     return;
   }

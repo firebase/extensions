@@ -256,6 +256,10 @@ longer written, only `COMPLETED` and `ERROR`. Anything reading
 `status.<instance id>.state`, or a security rule or index keyed to it, needs
 updating. The field name is still `STATUS_FIELD_NAME`, defaulting to `status`.
 
+`embedOnWrite` still reads the same four states the extension treated as final
+(`PROCESSING`, `COMPLETED`, `ERROR` and `BACKFILLED`), so documents an installed
+instance already embedded are still skipped once you flatten their status field.
+
 Query documents carry the flat shape too, with a `request` record alongside the
 state:
 
@@ -280,21 +284,8 @@ names would overwrite the query-document field of the same name.
 
 Unlike the extension, a completed query document re-runs when its `query`,
 `limit`, or `prefilters` change (the extension never re-ran a completed query
-document). This matches the kit's embed-path rule below: editing inputs
-re-processes the document.
-
-### Editing a document's input re-embeds it
-
-The extension embedded each document once. Its skip rule was "this document's
-status is already in a final state", so once a document reached `COMPLETED` (or
-`ERROR`), changing its input field never produced a new embedding and a failure
-was never retried.
-
-The kit compares the input instead: it re-embeds when the input field changes, and
-skips only when the input is unchanged and an embedding is already present. This
-is usually what you wanted, but it means editing inputs in bulk now costs
-embedding calls, and a document that previously sat stale will be brought up to
-date on its next write.
+document). The embed path is the opposite: like the extension, it never
+re-embeds a document whose status has reached one of the four states above.
 
 ### The lifecycle hooks and the function region
 
@@ -327,6 +318,12 @@ for; the Firebase CLI grants these for you.
   `onSuccess`, `onError` and `onCompletion` under
   `firebase.extensions.firestore-vector-search.v1.*` but never published any of
   them, and the kit publishes none either. `EVENTARC_CHANNEL` is not read.
+- A document is still embedded once. When its status reaches `PROCESSING`,
+  `COMPLETED`, `ERROR` or `BACKFILLED`, editing the input field does not produce
+  a new embedding and a failed embed is not retried. To re-embed a document,
+  delete its `status` field and write the document again. A document whose input
+  is an empty string is still skipped and gets no status, so it embeds normally
+  once you fill the input in.
 - The indexed collection is still `COLLECTION_NAME` (default `products`), the
   input, output and status fields still default to `input`, `embedding` and
   `status`, and embeddings are still written as native Firestore vectors.

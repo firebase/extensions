@@ -137,14 +137,13 @@ describe("event publishing", () => {
   });
 
   test("does not reach Eventarc when the write is skipped", async () => {
-    const unchanged = {
-      [config.inputFieldName]: "hello",
-      [config.outputFieldName]: [0.1],
-    };
     const skipped = [
       writeEvent(null),
       writeEvent({ [config.inputFieldName]: 42 }),
-      writeEvent(unchanged, { [config.inputFieldName]: "hello" }),
+      writeEvent({
+        [config.inputFieldName]: "hello",
+        [config.statusFieldName]: { state: "COMPLETED" },
+      }),
     ];
 
     for (const { event } of skipped) {
