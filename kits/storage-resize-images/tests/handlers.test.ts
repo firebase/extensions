@@ -73,6 +73,7 @@ import { checkImageContent } from "../src/content-filter";
 import * as events from "../src/events";
 import {
   DELETE_IMAGE,
+  type ResizeImagesConfig,
   type ResolvedResizeImagesConfig,
   resolveResizeImagesConfig,
 } from "../src/export-config";
@@ -97,16 +98,22 @@ const mock = <T>(fn: T) => fn as unknown as ReturnType<typeof vi.fn>;
 
 const bucketStub = {};
 
+// deleteOriginal is pinned: an omitted value resolves to on_success, and
+// these tests exercise handler logic, not the resolver's defaults.
+const baseInput: ResizeImagesConfig = {
+  bucket: "demo-bucket",
+  sizes: "200x200",
+  region: "us-central1",
+  deleteOriginal: "false",
+};
+
 function makeCtx(
-  overrides: Partial<ResolvedResizeImagesConfig> = {}
+  overrides: Partial<ResolvedResizeImagesConfig> = {},
+  input: ResizeImagesConfig = baseInput
 ): HandlerContext {
   return {
     config: {
-      ...resolveResizeImagesConfig({
-        bucket: "demo-bucket",
-        sizes: "200x200",
-        region: "us-central1",
-      }),
+      ...resolveResizeImagesConfig(input),
       ...overrides,
     },
     storage: {
@@ -388,6 +395,44 @@ describe("generateResizedImageHandler", () => {
     await generateResizedImageHandler(mockObject, ctx, false);
 
     expect(deleteRemoteFile).not.toHaveBeenCalled();
+  });
+
+  test("an omitted deleteOriginal deletes the original after a successful run", async () => {
+    // The extension resolved an unset DELETE_ORIGINAL_FILE to on_success.
+    const remoteFile = { delete: vi.fn() };
+    mock(downloadOriginalFile).mockResolvedValue(["/tmp/test.jpg", remoteFile]);
+    const ctx = makeCtx(
+      {},
+      { bucket: "demo-bucket", sizes: "200x200", region: "us-central1" }
+    );
+
+    await generateResizedImageHandler(mockObject, ctx, false);
+
+    expect(deleteRemoteFile).toHaveBeenCalledWith(
+      remoteFile,
+      "images/test.jpg"
+    );
+    expect(deleteRemoteFile).toHaveBeenCalledTimes(1);
+  });
+
+  test("an omitted deleteOriginal deletes a filter-blocked original once its placeholder resizes", async () => {
+    // Matches the extension: under on_success the blocked original is
+    // replaced by the placeholder and then removed.
+    const remoteFile = { delete: vi.fn() };
+    mock(downloadOriginalFile).mockResolvedValue(["/tmp/test.jpg", remoteFile]);
+    mock(checkImageContent).mockResolvedValue(false);
+    const ctx = makeCtx(
+      {},
+      { bucket: "demo-bucket", sizes: "200x200", region: "us-central1" }
+    );
+
+    await generateResizedImageHandler(mockObject, ctx, false);
+
+    expect(deleteRemoteFile).toHaveBeenCalledWith(
+      remoteFile,
+      "images/test.jpg"
+    );
+    expect(deleteRemoteFile).toHaveBeenCalledTimes(1);
   });
 
   test("cleans up the temp files it created", async () => {
