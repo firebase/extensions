@@ -199,23 +199,38 @@ whatever `EMBEDDING_PROVIDER` is set to. If either does not exist, `firebase
 deploy` prompts you for a value and fails outright when running
 non-interactively (CI). Create the one you do not need with a placeholder value.
 
-### `UPDATE_ON_CONFIGURE` is read, and the backfill gate is stricter than the extension's
+### `UPDATE_ON_CONFIGURE` is read, and both settings act on every deploy
 
 This setting was declared by the extension but never read: its update pass was
-gated on `DO_BACKFILL` instead. The kit reads `UPDATE_ON_CONFIGURE`, so the two
-passes are controlled independently — `DO_BACKFILL` after the first deploy,
-`UPDATE_ON_CONFIGURE` after every redeploy.
+gated on `DO_BACKFILL` instead. The kit reads both. `initVectorSearch` runs
+after your first deploy and after every redeploy, so either pass can be enqueued
+on any deploy. The two passes share the index metadata document as their task
+thread, so only one of them runs: with both settings on, the backfill pass runs
+and the update pass never does. The backfill pass covers every document the
+update pass would have, because the update pass is the same eligibility rule
+plus "and already has an embedding".
 
-Both passes are then gated on the index metadata document at
-`_<instance id>/index`, as the extension's were: a pass runs only when the
-embedding provider, the vector dimension or the input/output field names differ
-from what the last pass recorded there. Redeploying without changing any of them
-enqueues nothing and costs nothing.
+The extension mapped its passes to install and reconfigure instead: install ran
+the backfill trigger, reconfigure ran the update trigger. Since the update pass
+skips documents that have no embedding yet, changing `INPUT_FIELD_NAME` on an
+installed instance left those documents alone. The same change here with
+`DO_BACKFILL=true` embeds them too, so a redeploy writes to more documents than
+a reconfigure did.
 
-The two passes share that document as their task thread, so only one of them
-runs per deploy: with both settings on, the backfill pass runs, which covers
-every document the update pass would have (the update pass is the same
-eligibility rule plus "and already has an embedding").
+With both settings off nothing is enqueued, so the metadata document is never
+written and turning `DO_BACKFILL` on later runs a full pass. The extension wrote
+that document on install whatever `DO_BACKFILL` was set to, so the same flip
+found a matching document and did nothing. With `UPDATE_ON_CONFIGURE=true` the
+update pass writes the document on your first deploy and the flip is gated out
+exactly as it was on the extension.
+
+### The backfill gate, and the first deploy over an installed instance
+
+Both passes are gated on the index metadata document at `_<instance id>/index`,
+as the extension's were: a pass runs only when the embedding provider, the
+vector dimension or the input/output field names differ from what the last pass
+recorded there. Redeploying without changing any of them enqueues nothing and
+costs nothing.
 
 The extension's gate did not survive its own first pass, because the progress
 counters it wrote to the same document replaced the recorded configuration. The
@@ -223,6 +238,46 @@ kit merges instead, so the comparison fields persist and the gate holds on every
 later deploy. To force a full re-embed without changing any setting, delete the
 `_<instance id>/index` document; its `queries` subcollection is untouched, so
 the query documents your clients write to survive.
+
+Expect the first kit deploy over an installed instance to re-embed the whole
+collection, whatever your settings say. Any extension pass that enqueued tasks
+replaced that document with its progress counters, so the comparison fields are
+gone and the gate opens. The pass then treats every document the extension
+embedded as unprocessed, because it reads `status.state` where the extension
+wrote `status.<instance id>.state` (see *The `status` field on your documents is
+a different shape* below). The extension's own reconfigure was cheaper: it
+skipped documents its write trigger had marked `COMPLETED` and re-embedded only
+the ones its backfill had marked `BACKFILLED`. With `DO_BACKFILL=true` the bill
+lands on your first deploy. From the second kit deploy on, redeploying without
+changing anything enqueues nothing.
+
+### Where the backfill pass deliberately does not match the extension
+
+Matching the extension on each of these would reproduce a bug, so the kit does
+not:
+
+- Every chunk is written before the first task is dispatched, and the final
+  partial batch of chunk documents is always committed. The extension dispatched
+  task 1 before writing that task's own chunk document, and committed only at
+  each 50th chunk, so a run of 51 to 99 chunks lost its tail and the thread
+  stalled on the missing document.
+- A failed embedding stays on the document that failed. When it embedded one
+  document at a time, as its update pass did, the extension dropped rejected
+  results and closed the gap, so a document could receive another document's
+  embedding.
+- When a batch returns fewer embeddings than it was given, the trailing
+  documents are marked `FAILED_BACKFILL`. The extension marked them `BACKFILLED`
+  with no vector written. This follows from the fix above, but it is visible in
+  the status field.
+- A document id that resolves to nothing, such as a subcollection's phantom
+  parent, is skipped. The extension's eligibility check threw on it and the task
+  retried until the queue gave up.
+- The update pass records all four comparison fields on the metadata document.
+  The extension recorded only the embedding provider for that pass, so the other
+  three read back as unset and its gate opened on every reconfigure.
+- Eligible documents are collected inside the transaction that reads them. The
+  extension collected them outside it, so a transaction retry counted the same
+  documents twice.
 
 ### There is no install-time progress reporting
 
