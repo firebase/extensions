@@ -35,13 +35,25 @@ vi.mock("../src/embeddings", () => ({ createEmbedClient: vi.fn() }));
 const INSTANCE_ID = "test-instance";
 
 let server: Server;
-let paths: string[] = [];
+
+// Requests carry the test that made them. A test that times out mid-enqueue
+// still delivers its request, and an array cleared between tests would hand it
+// to the next one; tagging keeps every test reading only its own.
+let currentTest = 0;
+const requests: { test: number; url: string }[] = [];
+
+/** The queue paths this test enqueued onto, in order. */
+function enqueued(): string[] {
+  return requests
+    .filter((request) => request.test === currentTest)
+    .map((request) => request.url);
+}
 
 // The Admin SDK reads CLOUD_TASKS_EMULATOR_HOST when the functions client is
 // constructed, so it is set before firebase-admin is imported.
 beforeAll(async () => {
   server = createServer((request, response) => {
-    paths.push(request.url ?? "");
+    requests.push({ test: currentTest, url: request.url ?? "" });
     response.writeHead(200, { "content-type": "application/json" });
     response.end("{}");
   });
@@ -73,7 +85,7 @@ afterAll(async () => {
 });
 
 beforeEach(() => {
-  paths = [];
+  currentTest += 1;
 });
 
 function queueUrl(name: string): string {
@@ -116,7 +128,9 @@ async function context(overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe("task queue targets", () => {
+// The first enqueue pays for building the Admin SDK's task client, which has
+// run past the 5 second default on a cold file system.
+describe("task queue targets", { timeout: 30_000 }, () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });
@@ -126,7 +140,7 @@ describe("task queue targets", () => {
 
     await handleBackfillTrigger({ data: undefined } as never, await context());
 
-    expect(paths).toEqual([queueUrl("kit-test-instance-backfillTask")]);
+    expect(enqueued()).toEqual([queueUrl("kit-test-instance-backfillTask")]);
   });
 
   test("the update trigger enqueues onto kit-<instance>-updateTask", async () => {
@@ -134,7 +148,7 @@ describe("task queue targets", () => {
 
     await handleUpdateTrigger({ data: undefined } as never, await context());
 
-    expect(paths).toEqual([queueUrl("kit-test-instance-updateTask")]);
+    expect(enqueued()).toEqual([queueUrl("kit-test-instance-updateTask")]);
   });
 
   test("an unknown region fails rather than guessing one", async () => {
@@ -148,7 +162,7 @@ describe("task queue targets", () => {
       )
     ).rejects.toThrow("FUNCTION_REGION is required to resolve task queues.");
 
-    expect(paths).toEqual([]);
+    expect(enqueued()).toEqual([]);
   });
 
   test("init enqueues only the backfill trigger when both passes are on", async () => {
@@ -158,7 +172,7 @@ describe("task queue targets", () => {
       await context({ doBackfill: true, updateOnConfigure: true })
     );
 
-    expect(paths).toEqual([queueUrl("kit-test-instance-backfillTrigger")]);
+    expect(enqueued()).toEqual([queueUrl("kit-test-instance-backfillTrigger")]);
   });
 
   test("init enqueues onto the update trigger queue on its own", async () => {
@@ -168,6 +182,6 @@ describe("task queue targets", () => {
       await context({ doBackfill: false, updateOnConfigure: true })
     );
 
-    expect(paths).toEqual([queueUrl("kit-test-instance-updateTrigger")]);
+    expect(enqueued()).toEqual([queueUrl("kit-test-instance-updateTrigger")]);
   });
 });

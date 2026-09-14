@@ -720,6 +720,30 @@ describe("handleBackfillTask", () => {
     );
   });
 
+  test("marks the trailing documents of a short batch result FAILED_BACKFILL", async () => {
+    const { ctx, writes } = makeCtx({
+      [METADATA_PATH]: progress({ backfillJobsTotal: 2 }),
+      [`${METADATA_PATH}/enqueues/${TASK.taskId}`]: { chunk: TASK.chunk },
+      [`${COLLECTION}/doc-1`]: { input: "one" },
+      [`${COLLECTION}/doc-2`]: { input: "two" },
+    });
+    // One embedding for two inputs. The extension spread the short array over
+    // the batch, so the trailing document was marked BACKFILLED with no vector;
+    // the kit reports it as a failure instead.
+    getEmbeddings.mockResolvedValue([EMBEDDING]);
+
+    await handleBackfillTask(taskRequest(TASK), ctx);
+
+    expect(stateOf(writes, "doc-1")).toBe("BACKFILLED");
+    expect(docWrites(writes, "doc-1")[0].data).toHaveProperty(
+      config.outputFieldName
+    );
+    expect(stateOf(writes, "doc-2")).toBe("FAILED_BACKFILL");
+    expect(docWrites(writes, "doc-2")[0].data).not.toHaveProperty(
+      config.outputFieldName
+    );
+  });
+
   test("marks a failed single document as FAILED_BACKFILL without failing the task", async () => {
     const { ctx, writes } = makeCtx({
       [METADATA_PATH]: progress({ backfillJobsTotal: 1 }),
