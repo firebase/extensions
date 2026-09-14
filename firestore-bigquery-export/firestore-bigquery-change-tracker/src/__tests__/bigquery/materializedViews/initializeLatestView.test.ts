@@ -1,3 +1,19 @@
+/**
+ * Copyright 2026 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { initializeLatestView } from "../../../bigquery/initializeLatestView";
 import { initializeLatestMaterializedView } from "../../../bigquery/initializeLatestMaterializedView";
 import { ChangeTrackerConfig } from "../../../bigquery/types";
@@ -63,6 +79,45 @@ describe("initializeLatestView", () => {
       await initializeLatestView(mockOptions);
 
       expect(initializeLatestMaterializedView).not.toHaveBeenCalled();
+    });
+
+    it("uses the BigQuery project when updating an existing view", async () => {
+      const originalProjectId = process.env.PROJECT_ID;
+      process.env.PROJECT_ID = "function-project";
+      const metadata = {
+        schema: {
+          fields: [{ name: "document_id" }, { name: "old_data" }],
+        },
+        view: { query: "SELECT FIRST_VALUE(data)" },
+      };
+      mockView.getMetadata.mockResolvedValueOnce([metadata]);
+
+      try {
+        await initializeLatestView({
+          bq: { projectId: "bigquery-project" } as any,
+          dataset: { id: "test_dataset" } as any,
+          view: mockView as any,
+          viewExists: true,
+          rawChangeLogTableName: "test_raw_table",
+          rawLatestViewName: "test_raw_view",
+          changeTrackerConfig: {
+            ...mockConfig,
+            useNewSnapshotQuerySyntax: true,
+          },
+        });
+
+        expect(mockView.setMetadata).toHaveBeenCalledWith(metadata);
+        expect(metadata.view.query).toContain(
+          "`bigquery-project.test_dataset.test_raw_table`"
+        );
+        expect(metadata.view.query).not.toContain("function-project");
+      } finally {
+        if (originalProjectId === undefined) {
+          delete process.env.PROJECT_ID;
+        } else {
+          process.env.PROJECT_ID = originalProjectId;
+        }
+      }
     });
   });
 });
