@@ -40,11 +40,6 @@ on:
         required: true
         default: false
         type: boolean
-      use_peer_dependencies_only:
-        description: "Use peer dependencies only"
-        required: true
-        default: false
-        type: boolean
       dry_run:
         description: "Dry run (validate without pushing/publishing)"
         required: true
@@ -102,20 +97,10 @@ jobs:
         working-directory: ${{ inputs.target_kit }}
         env:
           USE_FIREBASE_FUNCTIONS_RC: ${{ inputs.use_firebase_functions_rc }}
-          USE_PEER_DEPENDENCIES_ONLY: ${{ inputs.use_peer_dependencies_only }}
         run: |
           npm ci
           if [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ]; then
             npm install --save --registry=https://registry.npmjs.org firebase-functions@next
-          fi
-          if [ "$USE_PEER_DEPENDENCIES_ONLY" = "true" ]; then
-            for pkg in firebase-functions firebase-admin; do
-              spec=$(npm pkg get "dependencies.$pkg" | tr -d '"')
-              if [ -n "$spec" ] && [ "$spec" != "{}" ]; then
-                npm install --save-peer --registry=https://registry.npmjs.org "$pkg@$spec"
-                npm install --save-dev --registry=https://registry.npmjs.org "$pkg@$spec"
-              fi
-            done
           fi
           npm test
 
@@ -263,20 +248,10 @@ jobs:
         working-directory: ${{ inputs.target_kit }}
         env:
           USE_FIREBASE_FUNCTIONS_RC: ${{ inputs.use_firebase_functions_rc }}
-          USE_PEER_DEPENDENCIES_ONLY: ${{ inputs.use_peer_dependencies_only }}
         run: |
           npm ci --registry=https://registry.npmjs.org
           if [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ]; then
             npm install --save --registry=https://registry.npmjs.org firebase-functions@next
-          fi
-          if [ "$USE_PEER_DEPENDENCIES_ONLY" = "true" ]; then
-            for pkg in firebase-functions firebase-admin; do
-              spec=$(npm pkg get "dependencies.$pkg" | tr -d '"')
-              if [ -n "$spec" ] && [ "$spec" != "{}" ]; then
-                npm install --save-peer --registry=https://registry.npmjs.org "$pkg@$spec"
-                npm install --save-dev --registry=https://registry.npmjs.org "$pkg@$spec"
-              fi
-            done
           fi
           npm run build
 
@@ -326,7 +301,6 @@ jobs:
           TARGET_TAG: ${{ steps.config.outputs.target_tag }}
           IS_PRERELEASE: ${{ inputs.is_prerelease }}
           USE_FIREBASE_FUNCTIONS_RC: ${{ inputs.use_firebase_functions_rc }}
-          USE_PEER_DEPENDENCIES_ONLY: ${{ inputs.use_peer_dependencies_only }}
           TAG_NAME: ${{ steps.config.outputs.tag_name }}
           NOTES: ${{ steps.changelog.outputs.notes }}
         run: |
@@ -343,7 +317,6 @@ jobs:
           echo " NPM Dist-Tag:     $TARGET_TAG"
           echo " Release Type:     $( [ "$IS_PRERELEASE" = "true" ] && echo "Release Candidate (RC)" || echo "Stable Release" )"
           echo " Functions RC:     $( [ "$USE_FIREBASE_FUNCTIONS_RC" = "true" ] && echo "Yes (firebase-functions@next)" || echo "No" )"
-          echo " Peer Deps Only:   $( [ "$USE_PEER_DEPENDENCIES_ONLY" = "true" ] && echo "Yes" || echo "No" )"
           echo " Git Tag Name:     $TAG_NAME"
           echo " CHANGELOG State:  $( [ "$IS_PRERELEASE" = "true" ] && echo "Preserved" || echo "Will be cleared on publish" )"
           echo "----------------------------------------------------------"
