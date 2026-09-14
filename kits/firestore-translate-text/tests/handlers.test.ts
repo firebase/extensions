@@ -30,6 +30,7 @@ import { createTranslationService } from "../src/translate";
 import {
   defaultEnvironment,
   defaultLanguages,
+  expectedEventContext,
   makeConfig,
   makeEvent,
   makeFirestore,
@@ -83,13 +84,23 @@ describe("handleDocumentWrite", () => {
   });
 
   test("skips events without change data", async () => {
+    const event = makeEvent(undefined, undefined);
+
     await expect(
-      handleDocumentWrite(makeEvent(undefined, undefined), context())
+      handleDocumentWrite(event, context())
     ).resolves.toBeUndefined();
 
     expect(translateClassMethod).not.toHaveBeenCalled();
     expect(firestore.update).not.toHaveBeenCalled();
-    expect(events.recordStartEvent).not.toHaveBeenCalled();
+    // #3149 made this branch publish the pair; the payload is the extension's
+    // 1st gen `{change, context}` shape, with no change to carry.
+    expect(events.recordStartEvent).toHaveBeenCalledWith({
+      change: undefined,
+      context: expectedEventContext(),
+    });
+    expect(events.recordCompletionEvent).toHaveBeenCalledWith({
+      context: expectedEventContext(),
+    });
   });
 
   test("records start and completion events", async () => {
@@ -97,12 +108,14 @@ describe("handleDocumentWrite", () => {
 
     await handleDocumentWrite(event, context());
 
+    // The extension published the 1st gen `{change, context}` payload, so the
+    // kit rebuilds the same shape rather than exposing the 2nd gen event.
     expect(events.recordStartEvent).toHaveBeenCalledWith({
-      data: event.data,
-      params: event.params,
+      change: event.data,
+      context: expectedEventContext(),
     });
     expect(events.recordCompletionEvent).toHaveBeenCalledWith({
-      params: event.params,
+      context: expectedEventContext(),
     });
   });
 
@@ -329,6 +342,32 @@ describe("handleDocumentWrite", () => {
     expect(translateClassMethod).not.toHaveBeenCalled();
   });
 
+  test("fails without writing when an update sets the input to null", async () => {
+    const after = makeSnapshot({ input: null });
+
+    await expect(
+      handleDocumentWrite(
+        makeEvent(makeSnapshot({ input: "hello" }), after),
+        context()
+      )
+    ).resolves.toBeUndefined();
+
+    expect(logger.error).toHaveBeenCalledWith(
+      ...messages.error(expect.any(TypeError))
+    );
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(events.recordErrorEvent).toHaveBeenCalledWith(expect.any(TypeError));
+    expect(events.recordErrorEvent).toHaveBeenCalledTimes(1);
+    expect(logger.log).not.toHaveBeenCalledWith(
+      messages.translateInputStringToAllLanguages(
+        null as never,
+        defaultLanguages
+      )
+    );
+    expect(translateClassMethod).not.toHaveBeenCalled();
+    expect(firestore.update).not.toHaveBeenCalled();
+  });
+
   test("skips processing if there is no input on the before and after snapshots", async () => {
     const snapshot = makeSnapshot({ notTheInput: "hello" });
 
@@ -359,7 +398,7 @@ describe("handleDocumentWrite", () => {
     expect(firestore.update).not.toHaveBeenCalled();
     // the handler still completes so the extension lifecycle event fires
     expect(events.recordCompletionEvent).toHaveBeenCalledWith({
-      params: { messageId: "id1" },
+      context: expectedEventContext(),
     });
   });
 
@@ -390,5 +429,184 @@ describe("handleDocumentWrite", () => {
       })
     );
     expect(JSON.stringify(logger.log.mock.calls)).not.toContain("super-secret");
+  });
+
+  /**
+   * Every invocation of the extension's `fstranslate` publishes `onStart`
+   * first and `onCompletion` last, whichever branch it takes in between; the
+   * early returns are not exempt. Each test here pins the full event sequence
+   * for one branch.
+   */
+  describe("lifecycle events", () => {
+    const EVENT_SPIES = {
+      start: events.recordStartEvent,
+      success: events.recordSuccessEvent,
+      error: events.recordErrorEvent,
+      completion: events.recordCompletionEvent,
+    } as const;
+
+    function publishedEvents(): Array<keyof typeof EVENT_SPIES> {
+      return Object.entries(EVENT_SPIES)
+        .flatMap(([name, spy]) =>
+          vi
+            .mocked(spy)
+            .mock.invocationCallOrder.map(
+              (order) => [name as keyof typeof EVENT_SPIES, order] as const
+            )
+        )
+        .sort(([, a], [, b]) => a - b)
+        .map(([name]) => name);
+    }
+
+    test("start then completion when the event carries no change", async () => {
+      await handleDocumentWrite(makeEvent(undefined, undefined), context());
+
+      expect(publishedEvents()).toEqual(["start", "completion"]);
+    });
+
+    test("start then completion when the input and output fields match", async () => {
+      await handleDocumentWrite(
+        makeEvent(makeSnapshot(), makeSnapshot({ input: "hello" })),
+        context({ inputFieldName: "input", outputFieldName: "input" })
+      );
+
+      expect(publishedEvents()).toEqual(["start", "completion"]);
+    });
+
+    test("start then completion when the input field is a configured translation path", async () => {
+      await handleDocumentWrite(
+        makeEvent(makeSnapshot(), makeSnapshot({ input: "hello" })),
+        context({
+          inputFieldName: "translated.en",
+          outputFieldName: "translated",
+        })
+      );
+
+      expect(publishedEvents()).toEqual(["start", "completion"]);
+    });
+
+    test("start then completion when the document's languages make the input field a translation path", async () => {
+      await handleDocumentWrite(
+        makeEvent(
+          makeSnapshot(),
+          makeSnapshot({ translated: { fr: "hello" }, langs: ["fr"] })
+        ),
+        context({
+          inputFieldName: "translated.fr",
+          outputFieldName: "translated",
+          languages: "en",
+        })
+      );
+
+      expect(publishedEvents()).toEqual(["start", "completion"]);
+      expect(firestore.update).not.toHaveBeenCalled();
+    });
+
+    test("start, success, completion when a document is created with input", async () => {
+      await handleDocumentWrite(
+        makeEvent(makeSnapshot(), makeSnapshot({ input: "hello" })),
+        context()
+      );
+
+      expect(publishedEvents()).toEqual(["start", "success", "completion"]);
+    });
+
+    test("start then completion when a document is created without input", async () => {
+      await handleDocumentWrite(
+        makeEvent(makeSnapshot(), makeSnapshot({ changed: 123 })),
+        context()
+      );
+
+      expect(publishedEvents()).toEqual(["start", "completion"]);
+    });
+
+    test("start then completion when a document is deleted", async () => {
+      await handleDocumentWrite(
+        makeEvent(
+          makeSnapshot({ input: "hello" }),
+          makeSnapshot({ input: "hello" }, { exists: false })
+        ),
+        context()
+      );
+
+      expect(publishedEvents()).toEqual(["start", "completion"]);
+    });
+
+    test("start then completion when neither snapshot has input", async () => {
+      const snapshot = makeSnapshot({ notTheInput: "hello" });
+
+      await handleDocumentWrite(makeEvent(snapshot, snapshot), context());
+
+      expect(publishedEvents()).toEqual(["start", "completion"]);
+    });
+
+    test("start, success, completion when the input field is removed", async () => {
+      await handleDocumentWrite(
+        makeEvent(
+          makeSnapshot({ input: "hello" }),
+          makeSnapshot({}, { exists: true })
+        ),
+        context()
+      );
+
+      expect(publishedEvents()).toEqual(["start", "success", "completion"]);
+    });
+
+    test("start then completion when the input is unchanged", async () => {
+      await handleDocumentWrite(
+        makeEvent(
+          makeSnapshot({ input: "hello" }),
+          makeSnapshot({ input: "hello", changed: 123 })
+        ),
+        context()
+      );
+
+      expect(publishedEvents()).toEqual(["start", "completion"]);
+    });
+
+    test("start, success, completion when the input changes", async () => {
+      await handleDocumentWrite(
+        makeEvent(
+          makeSnapshot({ input: "goodbye" }),
+          makeSnapshot({ input: "hello" })
+        ),
+        context()
+      );
+
+      expect(publishedEvents()).toEqual(["start", "success", "completion"]);
+    });
+
+    test("start, one error per layer, completion when a string translation fails", async () => {
+      translateClassMethod.mockRejectedValueOnce(new Error("boom"));
+
+      await handleDocumentWrite(
+        makeEvent(makeSnapshot(), makeSnapshot({ input: "hello" })),
+        context()
+      );
+
+      expect(publishedEvents()).toEqual([
+        "start",
+        "error",
+        "error",
+        "error",
+        "completion",
+      ]);
+    });
+
+    test("start, one error per layer, completion when a map translation fails", async () => {
+      translateClassMethod.mockRejectedValueOnce(new Error("boom"));
+
+      await handleDocumentWrite(
+        makeEvent(makeSnapshot(), makeSnapshot({ input: { one: "hello" } })),
+        context()
+      );
+
+      expect(publishedEvents()).toEqual([
+        "start",
+        "error",
+        "error",
+        "completion",
+      ]);
+    });
   });
 });

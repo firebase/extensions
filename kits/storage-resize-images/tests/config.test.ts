@@ -26,6 +26,7 @@
  * same variable as a comma-separated string).
  */
 
+import { declaredParams } from "firebase-functions/params";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
 import type {
@@ -35,6 +36,19 @@ import type {
   StringParam,
 } from "firebase-functions/params";
 import type { ContentFilterLevel } from "../src/export-config";
+
+function declaration(name: string) {
+  const param = declaredParams.find((candidate) => candidate.name === name);
+  if (!param || !("options" in param)) {
+    throw new Error(`Missing declaration for ${name}`);
+  }
+  const options = param.options as { default?: unknown; input?: unknown };
+  return {
+    type: (param.constructor as unknown as { type: string }).type,
+    default: options.default,
+    input: options.input,
+  };
+}
 
 const ENV_KEYS = [
   "IMG_BUCKET",
@@ -98,6 +112,92 @@ describe("configFromEnv", () => {
     saved.clear();
   });
 
+  test("declares the predecessor's labeled boolean selects", async () => {
+    await import("../src/config");
+
+    for (const [name, defaultValue] of [
+      ["IS_ANIMATED", true],
+      ["REGENERATE_TOKEN", true],
+    ] as const) {
+      expect(declaration(name)).toEqual({
+        type: "boolean",
+        default: defaultValue,
+        input: {
+          select: {
+            options: [
+              { label: "Yes", value: true },
+              {
+                label: name === "IS_ANIMATED" ? "No (1st frame only)" : "No",
+                value: false,
+              },
+            ],
+          },
+        },
+      });
+    }
+  });
+
+  // MAKE_PUBLIC is the one select in this kit whose extension default is not
+  // the first option, so it is the one that exposes the CLI's non-string
+  // default handling: `promptSelect` passes the declared default straight to
+  // inquirer while stringifying every option value, so a boolean `false`
+  // default matched nothing and "Yes" was preselected. A deploy that accepted
+  // the prompt therefore stored MAKE_PUBLIC=true and published every resized
+  // image, where the extension stored `false`.
+  test("declares MAKE_PUBLIC so the CLI preselects the extension default", async () => {
+    await import("../src/config");
+    const declared = declaration("MAKE_PUBLIC");
+
+    expect(declared.type).toBe("string");
+    expect(declared.default).toBe("false");
+    expect(declared.input).toEqual({
+      select: {
+        options: [
+          { label: "Yes", value: "true" },
+          { label: "No", value: "false" },
+        ],
+      },
+    });
+
+    // The comparison the CLI actually makes: `default` against
+    // `option.value.toString()`.
+    const options = (declared.input as SelectInput<string>).select.options;
+    const preselected = options.filter(
+      (option) => String(option.value) === declared.default
+    );
+    expect(preselected).toEqual([{ label: "No", value: "false" }]);
+  });
+
+  // Same bug as MAKE_PUBLIC: the prompt highlighted 512 MB where the
+  // extension preselected 1 GB, halving the deployed memory. It cannot be
+  // fixed with a string param, because FUNCTION_MEMORY also feeds
+  // `availableMemoryMb` and the CLI resolves that as a number only for an int
+  // param, so the extension's default is listed first instead.
+  test("declares FUNCTION_MEMORY so the CLI preselects the extension default", async () => {
+    await import("../src/config");
+    const declared = declaration("FUNCTION_MEMORY");
+
+    // Must stay an int, or `availableMemoryMb` stops resolving at deploy.
+    expect(declared.type).toBe("int");
+    expect(declared.default).toBe(1024);
+
+    // Every option the extension offered, with its label and stored value.
+    const options = (declared.input as SelectInput<number>).select.options;
+    expect([...options].sort((a, b) => a.value - b.value)).toEqual([
+      { label: "512 MB", value: 512 },
+      { label: "1 GB", value: 1024 },
+      { label: "2 GB", value: 2048 },
+      { label: "4 GB", value: 4096 },
+      { label: "8 GB", value: 8192 },
+    ]);
+
+    // The CLI stringifies every option value but passes `default` through as
+    // declared, so a non-string default matches no option and the first one is
+    // highlighted. It therefore has to be the extension's default.
+    expect(typeof declared.default).not.toBe("string");
+    expect(options[0]).toEqual({ label: "1 GB", value: 1024 });
+  });
+
   test("reads the same environment variables as the extension", async () => {
     const { configFromEnv } = await import("../src/config");
     const config = configFromEnv();
@@ -108,6 +208,53 @@ describe("configFromEnv", () => {
     expect(config.contentFilterLevel).toBe("OFF");
     expect(config.region).toBe("us-central1");
     expect(config.projectId).toBe("extensions-testing");
+  });
+
+  // The extension read process.env directly and degraded gracefully against a
+  // partial environment; the params layer must not turn that into a cold-start
+  // crash (ListParam JSON-parses IMAGE_TYPE, IntParam yields 0 for
+  // FUNCTION_MEMORY).
+  test("survives an unset IMAGE_TYPE", async () => {
+    delete process.env.IMAGE_TYPE;
+    const { configFromEnv } = await import("../src/config");
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+
+    const config = configFromEnv();
+    expect(config.imageTypes).toBeUndefined();
+    expect(resolveResizeImagesConfig(config).imageTypes).toEqual(["false"]);
+  });
+
+  test("accepts the extension-style IMAGE_TYPE=false default", async () => {
+    process.env.IMAGE_TYPE = "false";
+    const { configFromEnv } = await import("../src/config");
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+
+    const config = configFromEnv();
+    expect(config.imageTypes).toBe("false");
+    expect(resolveResizeImagesConfig(config).imageTypes).toEqual(["false"]);
+  });
+
+  test("accepts an extension-style comma-separated IMAGE_TYPE", async () => {
+    process.env.IMAGE_TYPE = "jpeg,webp";
+    const { configFromEnv } = await import("../src/config");
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+
+    const config = configFromEnv();
+    expect(config.imageTypes).toBe("jpeg,webp");
+    expect(resolveResizeImagesConfig(config).imageTypes).toEqual([
+      "jpeg",
+      "webp",
+    ]);
+  });
+
+  test("falls back to the default memory when FUNCTION_MEMORY is unset", async () => {
+    delete process.env.FUNCTION_MEMORY;
+    const { configFromEnv } = await import("../src/config");
+    const { resolveResizeImagesConfig } = await import("../src/export-config");
+
+    const config = configFromEnv();
+    expect(config.memory).toBeUndefined();
+    expect(resolveResizeImagesConfig(config).memory).toBe("1GiB");
   });
 
   test("collapses unset optional strings to undefined", async () => {
@@ -141,8 +288,11 @@ describe("configFromEnv", () => {
     // runtime contract. `.value()` reads only `process.env`; the declared
     // `default:` is written into the deployed `.env` by the CLI. A hand-rolled
     // or partial `.env` therefore yields these values, not the declared ones.
+    // (memory is the exception: configFromEnv maps IntParam's 0 sentinel to
+    // undefined so the resolver can apply its default.)
     delete process.env.IS_ANIMATED;
     delete process.env.REGENERATE_TOKEN;
+    delete process.env.MAKE_PUBLIC;
     delete process.env.FUNCTION_MEMORY;
     delete process.env.SHARP_OPTIONS;
 
@@ -151,29 +301,11 @@ describe("configFromEnv", () => {
 
     expect(config.isAnimated).toBe(false);
     expect(config.regenerateToken).toBe(false);
-    expect(config.memory).toBe(0);
+    // The extension read `process.env.MAKE_PUBLIC === "true"`, so an unset
+    // variable was `false` there too.
+    expect(config.makePublic).toBe(false);
+    expect(config.memory).toBeUndefined();
     expect(config.sharpOptions).toBe("");
-  });
-
-  test("a missing IMAGE_TYPE throws instead of falling back to its default", async () => {
-    // The list param JSON-parses the raw env var, so an absent IMAGE_TYPE is
-    // a cold-start crash — the kit's counterpart to the extension's
-    // `IMG_SIZES.split(",")` TypeError on a missing variable.
-    delete process.env.IMAGE_TYPE;
-
-    const { configFromEnv } = await import("../src/config");
-    expect(() => configFromEnv()).toThrow(SyntaxError);
-  });
-
-  test("IMAGE_TYPE is read as a JSON array, not a comma-separated string", async () => {
-    // The extension reads the same variable with `.split(",")`, so an
-    // extension-style value does not carry over.
-    process.env.IMAGE_TYPE = "jpeg,webp";
-    const { configFromEnv } = await import("../src/config");
-    expect(() => configFromEnv()).toThrow(SyntaxError);
-
-    process.env.IMAGE_TYPE = '["jpeg","webp"]';
-    expect(configFromEnv().imageTypes).toEqual(["jpeg", "webp"]);
   });
 
   test("reads explicit values for every param", async () => {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import sgMail from "@sendgrid/mail";
+import { MailService } from "@sendgrid/mail";
 import type {
   Address,
   MailSource,
@@ -29,9 +29,13 @@ export class SendGridTransport {
   public readonly name = "firebase-extensions-nodemailer-sendgrid";
   public readonly version = "0.0.1";
 
+  // @sendgrid/mail's default export is a shared MailService singleton, so
+  // setApiKey on it would reconfigure every other transport in the process.
+  private readonly client = new MailService();
+
   constructor(options: SendGridTransportOptions = {}) {
     if (options.apiKey) {
-      sgMail.setApiKey(options.apiKey);
+      this.client.setApiKey(options.apiKey);
     }
   }
 
@@ -164,8 +168,8 @@ export class SendGridTransport {
         }
       }
 
-      sgMail
-        .send(msg as Parameters<typeof sgMail.send>[0])
+      this.client
+        .send(msg as Parameters<MailService["send"]>[0])
         .then(([response]) => {
           const rawQueueId = (response.headers["x-message-id"] ||
             response.headers["X-Message-Id"]) as string | undefined;

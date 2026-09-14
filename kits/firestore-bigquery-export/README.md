@@ -24,15 +24,16 @@ below, enables the listed APIs, and attaches the account to every function in
 this kit. Do not set a custom runtime service account for this codebase — it
 conflicts with that automatic setup.
 
-| Role / API                     | Why                                                                                    |
-| ------------------------------ | -------------------------------------------------------------------------------------- |
-| `roles/bigquery.dataEditor`    | create dataset/table/views; insert rows                                                |
-| `roles/bigquery.user`          | run BigQuery jobs and materialized views                                               |
-| `roles/datastore.user`         | write failed-row records back to Firestore (only if you configure a backup collection) |
-| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events                                                  |
-| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service                                    |
-| `roles/cloudtasks.enqueuer`    | enqueue failed writes onto the kit's own `syncBigQuery` task queue                     |
-| `bigquery.googleapis.com`      | mirror Firestore collection changes in BigQuery                                        |
+| Role / API                     | Why                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------ |
+| `roles/bigquery.dataEditor`    | create dataset/table/views; insert rows                                                    |
+| `roles/bigquery.user`          | run BigQuery jobs and materialized views                                                   |
+| `roles/datastore.user`         | write failed-row records back to Firestore (only if you configure a backup collection)     |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events                                                      |
+| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service                                        |
+| `roles/eventarc.publisher`     | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
+| `roles/cloudtasks.enqueuer`    | enqueue failed writes onto the kit's own `syncBigQuery` task queue                         |
+| `bigquery.googleapis.com`      | mirror Firestore collection changes in BigQuery                                            |
 
 If the dataset lives in a different project (`BIGQUERY_PROJECT_ID`), grant the
 managed runtime service account the `bigquery.*` roles on that project. For a
@@ -120,7 +121,7 @@ loads them at deploy time and prompts for any required values that are missing.
 | `datasetId`                      | `DATASET_ID`                        | no       | `firestore_export` | BigQuery dataset                                                   |
 | `tableId`                        | `TABLE_ID`                          | no       | `posts`            | BigQuery changelog table                                           |
 | `databaseRegion`                 | `DATABASE_REGION`                   | yes      | (prompted)         | Firestore database location; also places the functions             |
-| `datasetLocation`                | `DATASET_LOCATION`                  | no       | `us`               | BigQuery dataset location                                          |
+| `datasetLocation`                | `DATASET_LOCATION`                  | no       | `us`               | BigQuery dataset location, used only when the dataset is created   |
 | `database`                       | `DATABASE`                          | no       | `(default)`        | Firestore database id                                              |
 | `bigqueryProjectId`              | `BIGQUERY_PROJECT_ID`               | no       | project id         | Dataset project, if different                                      |
 | `backupCollection`               | `BACKUP_COLLECTION`                 | no       | (empty)            | Strongly recommended: collection for rows whose BigQuery insert failed |
@@ -169,19 +170,27 @@ the instances cannot collide.
 
 ## Events
 
-When `EVENTARC_CHANNEL` is configured, the functions publish lifecycle events
-under `firebase.extensions.firestore-bigquery-export.v1.*`: `onStart` and
-`onError` from the write path, and `onSuccess` from the `syncBigQuery` task
-when a buffered write lands (matching the extension, which only emitted
-`onSuccess` from its queue handler).
+When `EVENTARC_CHANNEL` is configured, the functions publish lifecycle events:
+`onStart` and `onError` from the write path, and `onSuccess` from the
+`syncBigQuery` task when a buffered write lands (matching the extension, which
+only emitted `onSuccess` from its queue handler).
+
+Each event is published twice, exactly as the extension published it: once
+under `firebase.extensions.firestore-bigquery-export.v1.*` and once under
+`firebase.extensions.firestore-counter.v1.*`. The `firestore-counter` type is a
+historical naming mistake the extension kept for backwards compatibility, and
+the kit keeps it for the same reason: triggers listening on it survive the
+migration. The two copies carry the same `data` and `subject`, and only differ
+by `type`. Write new triggers against the `firestore-bigquery-export` types.
 
 Publishing is filtered by `EXT_SELECTED_EVENTS`: the value is split on commas
 and only exactly matching event types are published, silently. An empty value
 suppresses every event, and a value carrying only another product's types
 (the extension offered more than one namespace to tick) publishes nothing. A
 config exported from the extension brings its `EXT_SELECTED_EVENTS` along, so
-check it lists the `firebase.extensions.firestore-bigquery-export.v1.*` types
-you expect, `onSuccess` included.
+check it lists the types you expect, `onSuccess` included. It gates the legacy
+`firestore-counter` copies too, so a trigger on a legacy type only fires when
+that legacy type is listed.
 
 ## Provisioning
 
@@ -366,14 +375,6 @@ inside that window. That property is gone by design - a row that exhausts the
 queue without a configured `BACKUP_COLLECTION` is dropped, exactly as in the
 extension. Set `BACKUP_COLLECTION`.
 
-### Events
-
-Events are published under `firebase.extensions.firestore-bigquery-export.v1.*`
-only. The extension also published a duplicate copy of every event under
-`firebase.extensions.firestore-counter.v1.*`, a historical naming mistake kept
-for backwards compatibility. If you have Eventarc triggers listening on those
-`firestore-counter` types, point them at the `firestore-bigquery-export` types.
-
 ### Wildcard columns include the document ID
 
 With `WILDCARD_IDS=true`, the wildcard column now contains a `documentId` key
@@ -419,6 +420,26 @@ and any in-flight tasks are lost.
 Two settings now have defaults rather than being passed through empty:
 `DATASET_LOCATION` defaults to `us`, and `BIGQUERY_PROJECT_ID` defaults to the
 project the functions are deployed to.
+
+### DATASET_LOCATION is not immutable
+
+The extension declared `DATASET_LOCATION` as immutable, so a reconfigure could
+not change it; moving the dataset meant uninstalling and reinstalling. The kit
+cannot enforce that: `firebase-functions/params` has no immutability, so a
+redeploy accepts any new value. The value only reaches BigQuery when the
+lifecycle task creates the dataset. On a redeploy the task finds the existing
+dataset by id and skips creation, so the dataset stays where it is and the new
+value is ignored, with no error and no warning. Nothing else reads it: writes,
+views, and the `syncBigQuery` queue address the dataset by id and BigQuery
+resolves the location itself, so a mismatched `.env` keeps working.
+
+To export to a different location, point the kit at a new dataset: set a new
+`DATASET_ID` together with the new `DATASET_LOCATION` and redeploy. The
+redeploy lifecycle task creates the new dataset in the new location; the old
+dataset is left behind with its table and view, as in the extension when the
+dataset id changes. Existing documents do not follow. Backfill them with
+`fs-bq-import-collection` from the extension repository (see "Tooling that is
+not included" below).
 
 ### Tooling that is not included
 

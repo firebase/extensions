@@ -67,6 +67,31 @@ describe("GenkitDiscussionClient.shouldUseGenkitClient", () => {
 });
 
 describe("VertexDiscussionClient", () => {
+  test("calls Vertex AI in the resolved location", () => {
+    const client = new VertexDiscussionClient({
+      modelName: "gemini-2.5-flash",
+      projectId: "project",
+      modelLocation: "europe-west4",
+    });
+
+    expect((client.client as { location?: string }).location).toBe(
+      "europe-west4"
+    );
+  });
+
+  // Unset, the SDK would read GOOGLE_CLOUD_LOCATION, which the extension never
+  // honoured.
+  test("falls back to us-central1 with no resolved location", () => {
+    const client = new VertexDiscussionClient({
+      modelName: "gemini-2.5-flash",
+      projectId: "project",
+    });
+
+    expect((client.client as { location?: string }).location).toBe(
+      "us-central1"
+    );
+  });
+
   test("maps request generation options to the Google Gen AI SDK", async () => {
     const generateContent = vi.fn().mockResolvedValue({
       candidates: [

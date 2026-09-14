@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("firebase-functions", () => import("./mocks/firebase-functions"));
 vi.mock("@google-cloud/translate", () => import("./mocks/translate"));
@@ -96,6 +96,10 @@ describe("GoogleTranslator", () => {
 });
 
 describe("GenkitTranslator", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   test("requires a Google AI API key for the googleai provider", () => {
     expect(
       () => new GenkitTranslator(makeConfig({ provider: "gemini-googleai" }))
@@ -125,12 +129,27 @@ describe("GenkitTranslator", () => {
     expect(vertexAI.model).toHaveBeenCalledWith("gemini-2.5-pro");
   });
 
-  test("registers the vertexai plugin without a location when no region is set", () => {
+  // Off a deployed function there is no region to pass. Leaving the plugin's
+  // location unset keeps its own `GCLOUD_LOCATION` handling in play.
+  test("passes no location when no region is set", () => {
     new GenkitTranslator(
       makeConfig({ provider: "gemini-vertexai", region: "" })
     );
 
-    expect(vertexAI).toHaveBeenCalledWith({});
+    // toHaveBeenCalledWith treats `{ location: undefined }` as `{}`, so the
+    // omission has to be asserted on the call itself.
+    expect(vertexAI.mock.lastCall?.[0]).toStrictEqual({});
+  });
+
+  test("registers the vertexai plugin against the function region", () => {
+    // resolveTranslateConfig reads FUNCTION_REGION when no region is supplied.
+    vi.stubEnv("FUNCTION_REGION", "europe-west4");
+
+    new GenkitTranslator(
+      makeConfig({ provider: "gemini-vertexai", region: undefined })
+    );
+
+    expect(vertexAI).toHaveBeenCalledWith({ location: "europe-west4" });
   });
 
   test("returns the structured translation and logs completion", async () => {

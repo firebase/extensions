@@ -16,6 +16,7 @@
 
 import { type DocumentSnapshot, FieldValue } from "firebase-admin/firestore";
 import type { Change, FirestoreEvent } from "firebase-functions/v2/firestore";
+import { toEventContext } from "./event-context";
 import * as events from "./events";
 import type { ResolvedTranslateConfig } from "./export-config";
 import * as logs from "./logs";
@@ -54,20 +55,22 @@ export async function handleDocumentWrite(
   event: TranslateWriteEvent,
   ctx: HandlerContext
 ): Promise<void> {
-  if (!event.data) {
-    return;
-  }
-
   const { config, service } = ctx;
 
   logs.start(config);
-  await events.recordStartEvent({ data: event.data, params: event.params });
+  const context = toEventContext(event);
+  await events.recordStartEvent({ change: event.data, context });
+
+  if (!event.data) {
+    await events.recordCompletionEvent({ context });
+    return;
+  }
 
   const { languages, inputFieldName, outputFieldName } = config;
 
   if (validators.fieldNamesMatch(inputFieldName, outputFieldName)) {
     logs.fieldNamesNotDifferent();
-    await events.recordCompletionEvent({ params: event.params });
+    await events.recordCompletionEvent({ context });
     return;
   }
 
@@ -77,7 +80,7 @@ export async function handleDocumentWrite(
     ])
   ) {
     logs.inputFieldNameIsOutputPath();
-    await events.recordCompletionEvent({ params: event.params });
+    await events.recordCompletionEvent({ context });
     return;
   }
 
@@ -104,7 +107,7 @@ export async function handleDocumentWrite(
     logs.error(err as Error);
     await events.recordErrorEvent(err as Error);
   }
-  await events.recordCompletionEvent({ params: event.params });
+  await events.recordCompletionEvent({ context });
 }
 
 async function handleCreateDocument(

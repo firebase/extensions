@@ -15,32 +15,75 @@
  */
 
 import { Expression } from "firebase-functions/params";
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 
 import { envDeployOptions } from "../src/config";
 
 const cel = (value: unknown): string =>
   value instanceof Expression ? value.toCEL() : String(value);
 
-describe("envDeployOptions", () => {
-  const options = envDeployOptions();
+const originalDatabaseRegion = process.env.DATABASE_REGION;
 
-  test("emits CEL for document, database, and region", () => {
+function setDatabaseRegion(value?: string): void {
+  if (value === undefined) {
+    delete process.env.DATABASE_REGION;
+  } else {
+    process.env.DATABASE_REGION = value;
+  }
+}
+
+afterEach(() => {
+  setDatabaseRegion(originalDatabaseRegion);
+});
+
+describe("envDeployOptions", () => {
+  test("emits CEL for document and database", () => {
+    const options = envDeployOptions();
+
     expect(options.document).toBeInstanceOf(Expression);
     expect(options.database).toBeInstanceOf(Expression);
-    expect(options.region).toBeInstanceOf(Expression);
 
     expect(cel(options.document)).toBe(
       "{{ params.MAIL_COLLECTION }}/{documentId}"
     );
     expect(cel(options.database)).toBe("{{ params.DATABASE }}");
-    expect(cel(options.region)).toBe("{{ params.DATABASE_REGION }}");
+  });
+
+  test.each([
+    ["nam5", "us-central1"],
+    ["nam7", "us-central1"],
+    ["eur3", "europe-west1"],
+  ])(
+    "multi-region DATABASE_REGION %s maps the function region to %s",
+    (databaseRegion, expectedRegion) => {
+      setDatabaseRegion(databaseRegion);
+      expect(envDeployOptions().region).toBe(expectedRegion);
+    }
+  );
+
+  test("regional DATABASE_REGION passes through as the function region", () => {
+    setDatabaseRegion("europe-west1");
+    expect(envDeployOptions().region).toBe("europe-west1");
+  });
+
+  test("unset DATABASE_REGION omits the region option", () => {
+    setDatabaseRegion(undefined);
+    expect(envDeployOptions()).not.toHaveProperty("region");
+  });
+
+  test("empty DATABASE_REGION omits the region option", () => {
+    setDatabaseRegion("");
+    expect(envDeployOptions()).not.toHaveProperty("region");
   });
 
   test("serialized deploy-time options do not contain undefined", () => {
+    setDatabaseRegion(undefined);
     const serialized = JSON.stringify(
       Object.fromEntries(
-        Object.entries(options).map(([key, value]) => [key, cel(value)])
+        Object.entries(envDeployOptions()).map(([key, value]) => [
+          key,
+          cel(value),
+        ])
       )
     );
 

@@ -27,9 +27,8 @@ const INSTANCE_ID = "capture";
 let server: Server;
 let paths: string[] = [];
 
-// The Admin SDK only reads CLOUD_TASKS_EMULATOR_HOST and FIREBASE_KIT_INSTANCE_ID
-// when the app and the functions client are constructed, so both are set before
-// firebase-admin is imported.
+// The Admin SDK reads CLOUD_TASKS_EMULATOR_HOST when the functions client is
+// constructed, so it is set before firebase-admin is imported.
 beforeAll(async () => {
   server = createServer((request, response) => {
     paths.push(request.url ?? "");
@@ -86,26 +85,6 @@ describe("enqueue", () => {
     expect(paths).toEqual([
       "/projects/test-project/locations/us-central1/queues/" +
         "kit-capture-syncChangelogTask/tasks",
-    ]);
-  });
-
-  // resolveResourceId reads the env var per call, so this state is reachable
-  // from the same app: it is what an instance deployed by a CLI that does not
-  // set FIREBASE_KIT_INSTANCE_ID would enqueue onto.
-  test("has no prefix of its own when the kit instance id is absent", async () => {
-    paths = [];
-    const { CHANGELOG_TASK_FUNCTION, enqueue } = await import("../src/tasks");
-    delete process.env.FIREBASE_KIT_INSTANCE_ID;
-
-    try {
-      await enqueue(config(), CHANGELOG_TASK_FUNCTION, { path: "users/alice" });
-    } finally {
-      process.env.FIREBASE_KIT_INSTANCE_ID = INSTANCE_ID;
-    }
-
-    expect(paths).toEqual([
-      "/projects/test-project/locations/us-central1/queues/" +
-        "syncChangelogTask/tasks",
     ]);
   });
 

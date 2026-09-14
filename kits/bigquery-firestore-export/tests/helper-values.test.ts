@@ -110,10 +110,46 @@ describe("convertUnsupportedDataTypes", () => {
     );
   });
 
-  test("throws on a TIME value, which no Date can represent", () => {
-    expect(() =>
-      convertUnsupportedDataTypes({ time: new BigQueryTime("10:30:00") })
-    ).toThrow('Value for argument "seconds" is not a valid integer.');
+  // The strings here are the values a live query returns for
+  // TIME "10:30:00", TIME "10:30:00.123456" and TIME "00:00:00".
+  test("keeps a TIME value as the string BigQuery returned", () => {
+    expect(
+      convertUnsupportedDataTypes({
+        plain: new BigQueryTime("10:30:00"),
+        micros: new BigQueryTime("10:30:00.123456"),
+        midnight: new BigQueryTime("00:00:00"),
+      })
+    ).toEqual({
+      plain: "10:30:00",
+      micros: "10:30:00.123456",
+      midnight: "00:00:00",
+    });
+  });
+
+  test("keeps TIME values nested in arrays and structs", () => {
+    expect(
+      convertUnsupportedDataTypes({
+        times: [new BigQueryTime("01:02:03"), new BigQueryTime("04:05:06")],
+        outer: { inner: new BigQueryTime("07:08:09") },
+      })
+    ).toEqual({
+      times: ["01:02:03", "04:05:06"],
+      outer: { inner: "07:08:09" },
+    });
+  });
+
+  test("still converts the other temporal types alongside a TIME", () => {
+    const converted = convertUnsupportedDataTypes({
+      time: new BigQueryTime("10:30:00"),
+      timestamp: new BigQueryTimestamp("2023-01-15T10:30:00.000Z"),
+      date: new BigQueryDate("2023-01-15"),
+      datetime: new BigQueryDatetime("2023-01-15T10:30:00"),
+    });
+
+    expect(converted.time).toBe("10:30:00");
+    expect(converted.timestamp).toBeInstanceOf(Timestamp);
+    expect(converted.date).toBeInstanceOf(Timestamp);
+    expect(converted.datetime).toBeInstanceOf(Timestamp);
   });
 
   test("converts a plain Date to a Firestore Timestamp", () => {

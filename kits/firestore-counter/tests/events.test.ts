@@ -15,6 +15,10 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { toEventContext } from "../src/event-context";
+import { makeEvent } from "./helpers";
+
+const SHARD_WRITE = makeEvent();
 
 const publish = vi.fn();
 const channel = vi.fn(() => ({ publish }));
@@ -81,11 +85,16 @@ describe("event publishing", () => {
   test("publishes start events", async () => {
     const events = await setupEnabledEvents();
 
-    await events.recordStartEvent({ params: { shardId: "0000" } });
+    const context = toEventContext(SHARD_WRITE);
+
+    await events.recordStartEvent({
+      change: { before: {}, after: {} },
+      context,
+    });
 
     expect(publish).toHaveBeenCalledWith({
       type: "firebase.extensions.firestore-counter.v1.onStart",
-      data: { params: { shardId: "0000" } },
+      data: { change: { before: {}, after: {} }, context },
     });
   });
 
@@ -119,12 +128,43 @@ describe("event publishing", () => {
   test("publishes completion events", async () => {
     const events = await setupEnabledEvents();
 
-    await events.recordCompletionEvent({ params: { shardId: "0000" } });
+    const context = toEventContext(SHARD_WRITE);
+
+    await events.recordCompletionEvent({ context });
 
     expect(publish).toHaveBeenCalledWith({
       type: "firebase.extensions.firestore-counter.v1.onCompletion",
-      data: { params: { shardId: "0000" } },
+      data: { context },
     });
+  });
+
+  test("puts the whole 1st gen context on the wire", async () => {
+    const events = await setupEnabledEvents();
+    const context = toEventContext(SHARD_WRITE);
+
+    await events.recordStartEvent({
+      change: { before: {}, after: {} },
+      context,
+    });
+    await events.recordCompletionEvent({ context });
+
+    // A JSON round-trip of the built context: `firebase-admin/eventarc` is
+    // mocked here, so this checks the payload survives serialisation, not the
+    // real publisher.
+    expect(publish.mock.calls.length).toBe(2);
+    for (const [event] of publish.mock.calls) {
+      expect(JSON.parse(JSON.stringify(event.data)).context).toEqual({
+        eventId: "event-1",
+        timestamp: "2026-01-01T00:00:00.000Z",
+        eventType: "google.firestore.document.write",
+        resource: {
+          service: "firestore.googleapis.com",
+          name: "projects/demo-project/databases/(default)/documents/pages/home/_counter_shards_/0000",
+        },
+        params: { collection: "pages", counter: "home", shardId: "0000" },
+        notSupported: {},
+      });
+    }
   });
 
   test("does nothing before the channel is set up", async () => {

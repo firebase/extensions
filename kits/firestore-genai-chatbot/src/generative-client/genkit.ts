@@ -72,9 +72,12 @@ export class GenkitDiscussionClient extends DiscussionClient<
       };
       return pluginConfig;
     }
-    const pluginConfig: VertexPluginOptions = {
-      location: config.vertex.modelLocation,
-    };
+    // Off a deployed function there is no region to pass. Leaving the plugin's
+    // location unset keeps its own `GCLOUD_LOCATION` handling in play, and it
+    // falls back to the same `us-central1` this would otherwise pin.
+    const pluginConfig: VertexPluginOptions = config.vertex.modelLocation
+      ? { location: config.vertex.modelLocation }
+      : {};
     return pluginConfig;
   }
 

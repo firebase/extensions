@@ -57,7 +57,8 @@ export interface SendEmailConfig {
 export interface DeployTimeOptions {
   document: string | Expression<string>;
   database: string | Expression<string>;
-  region: string | Expression<string>;
+  /** Cloud Run region for the function; omitted when `DATABASE_REGION` is unset. */
+  region?: string;
 }
 
 export interface ResolvedSendEmailConfig {

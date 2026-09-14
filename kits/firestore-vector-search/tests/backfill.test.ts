@@ -221,9 +221,14 @@ function docWrites(writes: Write[], id: string) {
   return writes.filter((write) => write.path === `${COLLECTION}/${id}`);
 }
 
+/** A status the extension, or this kit instance, wrote onto a document. */
+function ownStatus(state: string) {
+  return { [config.instanceId]: { state } };
+}
+
 function stateOf(writes: Write[], id: string) {
   const last = docWrites(writes, id).at(-1);
-  return last?.data[`${config.statusFieldName}.state`];
+  return last?.data[`${config.statusFieldName}.${config.instanceId}.state`];
 }
 
 beforeEach(() => {
@@ -598,8 +603,8 @@ describe("handleBackfillTask", () => {
     const { ctx, writes } = makeCtx({
       [METADATA_PATH]: progress({ backfillJobsTotal: 2 }),
       [`${METADATA_PATH}/enqueues/${TASK.taskId}`]: { chunk: TASK.chunk },
-      [`${COLLECTION}/doc-1`]: { input: "one", status: { state: "COMPLETED" } },
-      [`${COLLECTION}/doc-2`]: { input: "two", status: { state: "ERROR" } },
+      [`${COLLECTION}/doc-1`]: { input: "one", status: ownStatus("COMPLETED") },
+      [`${COLLECTION}/doc-2`]: { input: "two", status: ownStatus("ERROR") },
     });
 
     await handleBackfillTask(taskRequest(TASK), ctx);
@@ -609,13 +614,83 @@ describe("handleBackfillTask", () => {
     expect(docWrites(writes, "doc-1")).toHaveLength(0);
   });
 
+  test("reads only this instance's status, like the extension", async () => {
+    // The extension keyed status by process id. A state written by another
+    // instance, or a flat `status.state`, is not this instance's and does not
+    // block the pass.
+    const { ctx, writes } = makeCtx({
+      [METADATA_PATH]: progress({ backfillJobsTotal: 2 }),
+      [`${METADATA_PATH}/enqueues/${TASK.taskId}`]: { chunk: TASK.chunk },
+      [`${COLLECTION}/doc-1`]: {
+        input: "one",
+        status: { "other-instance": { state: "COMPLETED" } },
+      },
+      [`${COLLECTION}/doc-2`]: { input: "two", status: { state: "ERROR" } },
+    });
+
+    await handleBackfillTask(taskRequest(TASK), ctx);
+
+    expect(getEmbeddings).toHaveBeenCalledWith(["one", "two"]);
+    expect(stateOf(writes, "doc-1")).toBe("BACKFILLED");
+    expect(stateOf(writes, "doc-2")).toBe("BACKFILLED");
+    const write = docWrites(writes, "doc-1").at(-1);
+    expect(Object.keys(write?.data ?? {})).toEqual([
+      config.outputFieldName,
+      `${config.statusFieldName}.${config.instanceId}.state`,
+      `${config.statusFieldName}.${config.instanceId}.completeTime`,
+    ]);
+  });
+
+  // Parity with the extension's `getValidDocs`, which tested the raw state for
+  // truthiness: any truthy state other than `BACKFILLED` skipped the document,
+  // whatever its type.
+  for (const [label, state] of [
+    ["PROCESSING", "PROCESSING"],
+    ["FAILED_BACKFILL", "FAILED_BACKFILL"],
+    ["a number", 1],
+    ["a boolean", true],
+    ["an object", { nested: "value" }],
+  ] as const) {
+    test(`skips a document whose state is ${label}`, async () => {
+      const { ctx, writes } = makeCtx({
+        [METADATA_PATH]: progress({ backfillJobsTotal: 1 }),
+        [`${METADATA_PATH}/enqueues/${TASK.taskId}`]: { chunk: ["doc-1"] },
+        [`${COLLECTION}/doc-1`]: {
+          input: "one",
+          status: ownStatus(state as unknown as string),
+        },
+      });
+
+      await handleBackfillTask(taskRequest({ ...TASK, chunk: ["doc-1"] }), ctx);
+
+      expect(getEmbeddings).not.toHaveBeenCalled();
+      expect(getSingleEmbedding).not.toHaveBeenCalled();
+      expect(docWrites(writes, "doc-1")).toHaveLength(0);
+    });
+  }
+
+  // The same truthiness test: an empty state was falsy, so the extension
+  // backfilled the document rather than skipping it.
+  test("embeds a document whose state is an empty string", async () => {
+    const { ctx, writes } = makeCtx({
+      [METADATA_PATH]: progress({ backfillJobsTotal: 1 }),
+      [`${METADATA_PATH}/enqueues/${TASK.taskId}`]: { chunk: ["doc-1"] },
+      [`${COLLECTION}/doc-1`]: { input: "one", status: ownStatus("") },
+    });
+
+    await handleBackfillTask(taskRequest({ ...TASK, chunk: ["doc-1"] }), ctx);
+
+    expect(getSingleEmbedding).toHaveBeenCalledWith("one");
+    expect(stateOf(writes, "doc-1")).toBe("BACKFILLED");
+  });
+
   test("re-embeds a document that was previously backfilled", async () => {
     const { ctx, writes } = makeCtx({
       [METADATA_PATH]: progress({ backfillJobsTotal: 1 }),
       [`${METADATA_PATH}/enqueues/${TASK.taskId}`]: { chunk: ["doc-1"] },
       [`${COLLECTION}/doc-1`]: {
         input: "one",
-        status: { state: "BACKFILLED" },
+        status: ownStatus("BACKFILLED"),
       },
     });
 

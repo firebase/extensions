@@ -178,10 +178,12 @@ export function convertUnsupportedDataTypes(
     return row as FirestoreRowValue;
   }
 
+  // A TIME is a time of day with no date, so no Timestamp can hold it without
+  // inventing one. BigQuery's own "HH:MM:SS[.ffffff]" string is kept instead.
+  if (row instanceof BigQueryTime) return row.value;
   if (
     row instanceof BigQueryTimestamp ||
     row instanceof BigQueryDate ||
-    row instanceof BigQueryTime ||
     row instanceof BigQueryDatetime
   ) {
     return Timestamp.fromDate(new Date(row.value));

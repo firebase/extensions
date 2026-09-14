@@ -41,7 +41,7 @@ export const translateDocument = async (
     return;
   }
 
-  if (typeof input === "object" && input !== null) {
+  if (typeof input === "object") {
     return translateMultiple(
       input as Record<string, unknown>,
       languages,

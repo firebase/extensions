@@ -384,7 +384,7 @@ async function runChunk(
       failedDocumentsCount += batch.length;
       logger.error(`Batch ${index + 1} failed`, result.reason);
       for (const doc of batch) {
-        writer.update(doc.ref, failedPayload(options));
+        writer.update(doc.ref, failedPayload(process, options));
       }
       return;
     }
@@ -393,12 +393,12 @@ async function runChunk(
       const fields = result.value[i];
       if (!fields) {
         failedDocumentsCount++;
-        writer.update(doc.ref, failedPayload(options));
+        writer.update(doc.ref, failedPayload(process, options));
         return;
       }
       writer.update(doc.ref, {
         ...fields,
-        ...backfilledPayload(options),
+        ...backfilledPayload(process, options),
       });
     });
   });
@@ -467,8 +467,7 @@ export async function getValidDocs(
         continue;
       }
 
-      const status = data[options.statusField];
-      const state = isRecord(status) ? status.state : undefined;
+      const state = statusState(process, data, options);
       if (state && state !== BACKFILLED_STATE) {
         skippedDocuments.push(doc);
         logger.warn(
@@ -496,26 +495,57 @@ async function handleSingleDocument(
     );
     await document.ref.update({
       ...result,
-      ...backfilledPayload(options),
+      ...backfilledPayload(process, options),
     });
     return { success: 1, failed: 0, skipped };
   } catch (err) {
     logger.error(err);
-    await document.ref.update(failedPayload(options));
+    await document.ref.update(failedPayload(process, options));
     return { success: 0, failed: 1, skipped };
   }
 }
 
-function backfilledPayload(options: BackfillOptions): BackfillDocumentData {
+/**
+ * The extension keyed each document's status by the id of the process that
+ * wrote it (`<status field>.<process id>.state`), and `process.id` is the
+ * instance id, so this is the same path `embedOnWrite` reads and writes.
+ */
+function statusFieldPath(
+  process: BackfillProcess,
+  options: BackfillOptions,
+  field: string
+): string {
+  return `${options.statusField}.${process.id}.${field}`;
+}
+
+function statusState(
+  process: BackfillProcess,
+  data: BackfillDocumentData,
+  options: BackfillOptions
+): unknown {
+  const status = data[options.statusField];
+  const own = isRecord(status) ? status[process.id] : undefined;
+  return isRecord(own) ? own.state : undefined;
+}
+
+function backfilledPayload(
+  process: BackfillProcess,
+  options: BackfillOptions
+): BackfillDocumentData {
   return {
-    [`${options.statusField}.state`]: BACKFILLED_STATE,
-    [`${options.statusField}.completeTime`]: FieldValue.serverTimestamp(),
+    [statusFieldPath(process, options, "state")]: BACKFILLED_STATE,
+    [statusFieldPath(process, options, "completeTime")]:
+      FieldValue.serverTimestamp(),
   };
 }
 
-function failedPayload(options: BackfillOptions): BackfillDocumentData {
+function failedPayload(
+  process: BackfillProcess,
+  options: BackfillOptions
+): BackfillDocumentData {
   return {
-    [`${options.statusField}.state`]: FAILED_BACKFILL_STATE,
-    [`${options.statusField}.completeTime`]: FieldValue.serverTimestamp(),
+    [statusFieldPath(process, options, "state")]: FAILED_BACKFILL_STATE,
+    [statusFieldPath(process, options, "completeTime")]:
+      FieldValue.serverTimestamp(),
   };
 }

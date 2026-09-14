@@ -40,12 +40,48 @@ describe("resolveConfig", () => {
     expect(c.safetySettings).toEqual([]);
   });
 
-  test("keeps the vertex model location optional", () => {
-    expect(resolveConfig(base).vertex.modelLocation).toBeUndefined();
-    expect(
-      resolveConfig({ ...base, vertexModelLocation: "europe-west2" }).vertex
-        .modelLocation
-    ).toBe("europe-west2");
+  describe("vertex model location", () => {
+    // FUNCTION_REGION is set by the Firebase CLI on deployed functions only,
+    // so both the set and unset cases are reachable in practice.
+    const originalRegion = process.env.FUNCTION_REGION;
+
+    afterEach(() => {
+      if (originalRegion === undefined) {
+        delete process.env.FUNCTION_REGION;
+      } else {
+        process.env.FUNCTION_REGION = originalRegion;
+      }
+    });
+
+    test("falls back to the function region", () => {
+      process.env.FUNCTION_REGION = "europe-west4";
+      expect(resolveConfig(base).vertex.modelLocation).toBe("europe-west4");
+    });
+
+    test("stays unset with no function region", () => {
+      delete process.env.FUNCTION_REGION;
+      expect(resolveConfig(base).vertex.modelLocation).toBeUndefined();
+    });
+
+    test('treats the extension\'s "null" sentinel as unset', () => {
+      process.env.FUNCTION_REGION = "europe-west4";
+      expect(
+        resolveConfig({ ...base, vertexModelLocation: "null" }).vertex
+          .modelLocation
+      ).toBe("europe-west4");
+    });
+
+    test("an explicit location wins over the function region", () => {
+      process.env.FUNCTION_REGION = "europe-west4";
+      expect(
+        resolveConfig({ ...base, vertexModelLocation: "europe-west2" }).vertex
+          .modelLocation
+      ).toBe("europe-west2");
+      expect(
+        resolveConfig({ ...base, vertexModelLocation: "global" }).vertex
+          .modelLocation
+      ).toBe("global");
+    });
   });
 
   test("nests model and apiKey under provider buckets", () => {

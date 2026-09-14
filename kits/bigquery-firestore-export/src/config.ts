@@ -14,12 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  defineString,
-  expr,
-  projectID,
-  select,
-} from "firebase-functions/params";
+import { defineString, projectID, select } from "firebase-functions/params";
 import type {
   BigqueryFirestoreExportConfig,
   DeployTimeOptions,
@@ -27,10 +22,29 @@ import type {
 } from "./export-config";
 
 const LOG_LEVEL_OPTIONS = ["debug", "info", "warn", "error", "silent"] as const;
-const instanceId = defineString("INSTANCE_ID");
+
+// firebase-tools injects this for kit instances (set to the instance's key in
+// firebase.json) during discovery, in the emulator, and on deployed functions.
+// The FIREBASE_ prefix is reserved in .env files and the params machinery never
+// sees injected values, so it must be a plain env read, not a defineString.
+function instanceIdFromEnv(): string {
+  const instanceId = process.env.FIREBASE_KIT_INSTANCE_ID;
+  if (!instanceId) {
+    throw new Error(
+      "FIREBASE_KIT_INSTANCE_ID is not set. It is provided automatically to " +
+        "kit instances by firebase-tools >= 15.27.0; deploy or emulate this " +
+        "kit with a supported CLI version."
+    );
+  }
+  return instanceId;
+}
+
+// Resolved at import so the topic default is a concrete name at discovery. An
+// unsupported CLI fails the discovery pass here rather than freezing
+// "kit-undefined-processMessages" into the manifest.
+const instanceId = instanceIdFromEnv();
 
 const params = {
-  instanceId,
   bigqueryDatasetLocation: defineString("BIGQUERY_DATASET_LOCATION", {
     label: "BigQuery Dataset Location",
     description:
@@ -81,7 +95,7 @@ const params = {
     description:
       "Which Pub/Sub topic should receive BigQuery Data Transfer completion notifications? Leave the default unless you are migrating from the bigquery-firestore-export extension, whose topic is named ext-<instance id>-processMessages. Pointing this at the extension's topic keeps the existing scheduled query's notification settings untouched.",
 
-    default: expr`kit-${instanceId}-processMessages`,
+    default: `kit-${instanceId}-processMessages`,
     input: {
       text: {
         nonEmpty: true,
@@ -201,12 +215,10 @@ function normalizeLogLevel(value: string): LogLevel {
 
 /** Reads runtime values from Firebase deploy-time parameters. */
 export function configFromEnv(): BigqueryFirestoreExportConfig {
-  const resolvedInstanceId = params.instanceId.value();
-
   return {
     bigqueryDatasetLocation: params.bigqueryDatasetLocation.value(),
     projectId: projectID.value(),
-    instanceId: resolvedInstanceId,
+    instanceId: instanceIdFromEnv(),
     transferConfigName: optional(params.transferConfigName.value()),
     datasetId: params.datasetId.value(),
     tableName: params.tableName.value(),

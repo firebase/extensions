@@ -1,2 +1,3 @@
+- fix: `ENABLE_AUTO_DISCOVERY` accepts the extension's `yes` / `no` values again. The kit had declared it as a boolean param, which only counts the literal `true` as enabled, so a `.env` copied from an installed extension instance carried `yes` and silently left auto-discovery switched off. The param is now the extension's labeled `Yes` / `No` select and is read the same way the extension read it.
 - Initial release of kit, see README for differences between the legacy extension and this kit
 - The instance id now comes from `FIREBASE_KIT_INSTANCE_ID`, which the Firebase CLI (15.27.0 or later) provides to each kit instance; `INSTANCE_ID` is no longer a configuration parameter

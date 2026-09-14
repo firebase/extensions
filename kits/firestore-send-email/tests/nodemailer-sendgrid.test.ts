@@ -16,8 +16,11 @@
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-// @sendgrid/mail exports a single MailService instance, so the mock has to be
-// reachable as both the default and the named exports.
+// @sendgrid/mail exports a MailService singleton whose methods are also the
+// module's own exports, plus the MailService class. Constructing the class
+// hands back the same spies as the singleton, so most tests can assert against
+// the module-level ones; the isolation tests override the implementation to
+// tell the two apart.
 vi.mock("@sendgrid/mail", () => {
   const mail = {
     setApiKey: vi.fn(),
@@ -29,7 +32,10 @@ vi.mock("@sendgrid/mail", () => {
       {},
     ]),
   };
-  return { ...mail, default: mail };
+  const MailService = vi.fn(function () {
+    return mail;
+  });
+  return { ...mail, MailService };
 });
 
 import * as sgMail from "@sendgrid/mail";
@@ -43,6 +49,7 @@ import type {
 
 const setApiKey = vi.mocked(sgMail.setApiKey);
 const send = vi.mocked(sgMail.send);
+const MailServiceMock = vi.mocked(sgMail.MailService);
 
 /** Wraps a normalized mail source in the minimal MailSource shape the transport consumes. */
 function mailFrom(source: Partial<MailSource>): MailSource {
@@ -81,6 +88,29 @@ describe("SendGridTransport", () => {
 
   test("does not set an API key when the option is absent", () => {
     new SendGridTransport({});
+    expect(setApiKey).not.toHaveBeenCalled();
+  });
+
+  test("builds its own MailService rather than using the module singleton", () => {
+    new SendGridTransport({ apiKey: "API-KEY-123" });
+    expect(MailServiceMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("keeps API keys separate across transports", () => {
+    const first = { setApiKey: vi.fn(), send: vi.fn() };
+    const second = { setApiKey: vi.fn(), send: vi.fn() };
+    MailServiceMock.mockImplementationOnce(function () {
+      return first as never;
+    }).mockImplementationOnce(function () {
+      return second as never;
+    });
+
+    new SendGridTransport({ apiKey: "FIRST" });
+    new SendGridTransport({ apiKey: "SECOND" });
+
+    expect(first.setApiKey.mock.calls).toEqual([["FIRST"]]);
+    expect(second.setApiKey.mock.calls).toEqual([["SECOND"]]);
+    // The shared singleton the module exports is never reconfigured.
     expect(setApiKey).not.toHaveBeenCalled();
   });
 
