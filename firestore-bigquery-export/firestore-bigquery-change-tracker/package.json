@@ -16,6 +16,7 @@
     "clean": "node -e \"require('fs').rmSync('lib', { recursive: true, force: true })\"",
     "compile": "tsc",
     "test:local": "jest",
+    "test:offline": "jest --config jest.offline.config.js",
     "prepare": "npm run build",
     "generate-stresstest-table": "bq query --project_id=extensions-testing  --use_legacy_sql=false < ./src/__tests__/fixtures/sql/generateSnapshotStresstestTable.sql"
   },
