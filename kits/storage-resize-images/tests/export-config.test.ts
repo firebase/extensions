@@ -94,12 +94,22 @@ describe("resolveResizeImagesConfig", () => {
     ).toEqual(DELETE_IMAGE.never);
   });
 
-  test("an unset deleteOriginal never deletes", () => {
+  test("an unset deleteOriginal deletes on success, matching the extension", () => {
+    // The extension mapped every DELETE_ORIGINAL_FILE value other than
+    // "true"/"false" (unset included) to onSuccess.
     const resolved = resolveResizeImagesConfig({
       ...baseConfig,
       deleteOriginal: undefined,
     });
-    expect(resolved.deleteOriginalFile).toEqual(DELETE_IMAGE.never);
+    expect(resolved.deleteOriginalFile).toEqual(DELETE_IMAGE.onSuccess);
+  });
+
+  test("an empty-string deleteOriginal (partial env) deletes on success", () => {
+    const resolved = resolveResizeImagesConfig({
+      ...baseConfig,
+      deleteOriginal: "" as ResizeImagesConfig["deleteOriginal"],
+    });
+    expect(resolved.deleteOriginalFile).toEqual(DELETE_IMAGE.onSuccess);
   });
 
   test("splits a comma-separated sizes string", () => {

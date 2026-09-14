@@ -87,7 +87,7 @@ loads them at deploy time and prompts for any required values that are missing.
 | ---------------------- | ------------------------ | -------- | ---------------------- | ------------------------------------------------------------------------------------------ |
 | `bucket`               | `IMG_BUCKET`             | no       | default Storage bucket | Bucket to watch                                                                            |
 | `sizes`                | `IMG_SIZES`              | no       | `200x200`              | Comma-separated resize sizes                                                               |
-| `deleteOriginal`       | `DELETE_ORIGINAL_FILE`   | no       | `false`                | Delete original after resize                                                               |
+| `deleteOriginal`       | `DELETE_ORIGINAL_FILE`   | no       | `false`                | Delete original after resize; omitted in code means `on_success` (see note below)          |
 | `makePublic`           | `MAKE_PUBLIC`            | no       | `false`                | Make resized objects public                                                                |
 | `resizedImagesPath`    | `RESIZED_IMAGES_PATH`    | no       | (empty)                | Output path prefix                                                                         |
 | `includePathList`      | `INCLUDE_PATH_LIST`      | no       | (empty)                | Comma-separated absolute paths to include (for example, `/users/avatars,/design/pictures`) |
@@ -103,6 +103,13 @@ loads them at deploy time and prompts for any required values that are missing.
 | `contentFilterLevel`   | `CONTENT_FILTER_LEVEL`   | no       | `OFF`                  | Content filter level                                                                       |
 | `customFilterPrompt`   | `CUSTOM_FILTER_PROMPT`   | no       | (empty)                | Custom filter prompt                                                                       |
 | `placeholderImagePath` | `PLACEHOLDER_IMAGE_PATH` | no       | (empty)                | Placeholder for filtered images                                                            |
+
+The `deleteOriginal` default above is what the CLI proposes at the deploy
+prompt and writes to `.env.<projectId>` when the variable is missing (a
+non-interactive deploy fails instead). Omitting `deleteOriginal` in a direct
+call to `resolveResizeImagesConfig` deletes the original on a successful
+resize, as the extension did for an unset `DELETE_ORIGINAL_FILE`; pass
+`"false"` to keep originals.
 
 ## Multiple instances
 
@@ -181,6 +188,19 @@ absolute paths, but the check now runs when the function loads rather than when
 the extension is installed. A malformed value fails the deploy with
 `Invalid includePathList: must be a comma-separated list of absolute path
 values.` rather than being rejected by an install prompt.
+
+### An omitted `isAnimated` keeps animation for library callers
+
+The extension's config parser had a bug: `overrideIsAnimated === "true" ||
+undefined` never evaluated the intended unset check, so an unset `IS_ANIMATED`
+produced first-frame-only output even though the parameter's declared default
+was `true`. The kit fixes this for library callers: omitting `isAnimated` in a
+direct call to `resolveResizeImagesConfig` resolves to `true`, the default the
+extension intended. The deployed function is unchanged: it reads `IS_ANIMATED`
+through `defineBoolean`, which yields `false` when the variable is absent from
+the runtime environment, as the extension did. Deploys are unaffected either
+way, since the CLI prompts with `true` and writes the accepted value to
+`.env.<projectId>`; pass `isAnimated: false` for first-frame-only output.
 
 ### No backfill
 
