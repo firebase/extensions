@@ -169,7 +169,7 @@ const params = {
         example: "smtps://username@smtp.hostname.com:465",
 
         validationRegex:
-          /^(smtp[s]*:\/\/(.*?(:[^:@]*)?@)?[^:@]+:[0-9]+(\?[^ ]*)?)|^$/,
+          /^(smtp[s]*:\/\/(.*?(:[^:@]*)?@)?[^:@]+:[0-9]+(\?[^ ]*)?)$|^$/,
         validationErrorMessage:
           "Invalid SMTP connection URI. Must be in the form `smtp(s)://username:password@hostname:port` or `smtp(s)://username@hostname:port` or to be left blank.",
       },

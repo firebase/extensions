@@ -1,3 +1,7 @@
+## Version 0.2.11
+
+fixed - anchor the `SMTP_CONNECTION_URI` validation regex so a valid prefix followed by trailing text is rejected
+
 ## Version 0.2.10
 
 chore: bump nodemailer to v9 and remove unused rimraf dependency
