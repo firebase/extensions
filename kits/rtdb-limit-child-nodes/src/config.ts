@@ -36,8 +36,11 @@ const databaseInstanceDefault = defaultDatabaseInstance();
 const DATABASE_INSTANCE_VALIDATION = {
   text: {
     example: "my-instance",
+    // The extension's regex also matches "", and a project without a Realtime
+    // Database gives the param no default to fall back on.
     validationRegex: /^([0-9a-z_.-]*)$/,
     validationErrorMessage: "Invalid database instance",
+    nonEmpty: true,
   },
 };
 

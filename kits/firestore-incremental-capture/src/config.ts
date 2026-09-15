@@ -101,7 +101,11 @@ const params = {
   }),
   syncDataset: defineString("SYNC_DATASET", { default: "backup_dataset" }),
   syncTable: defineString("SYNC_TABLE", { default: "backup_table" }),
-  backupInstanceId: defineString("BACKUP_INSTANCE_ID"),
+  backupInstanceId: defineString("BACKUP_INSTANCE_ID", {
+    // Required with no default, so the prompt has to reject an empty answer:
+    // whatever it resolves to is written straight into .env.
+    input: { text: { nonEmpty: true } },
+  }),
   datasetLocation: defineString("DATASET_LOCATION", {
     default: "us",
     input: select([...DATASET_LOCATION_OPTIONS]),

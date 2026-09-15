@@ -15,6 +15,7 @@
  */
 
 import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
+import { declaredParams } from "firebase-functions/params";
 
 const REQUIRED = [
   "EMBEDDING_PROVIDER",
@@ -80,5 +81,57 @@ describe("assertRequiredParams", () => {
     }
 
     expect(() => assertRequiredParams()).not.toThrow();
+  });
+});
+
+type Declaration = {
+  name: string;
+  options?: {
+    default?: unknown;
+    input?: {
+      text?: { nonEmpty?: boolean; validationRegex?: string | RegExp };
+      multiSelect?: { nonEmpty?: boolean };
+    };
+  };
+};
+
+// The CLI writes whatever a prompt resolves to into .env, an empty answer
+// included, so a required param the prompt accepts empty reaches
+// assertRequiredParams as a blank entry the user never typed.
+function promptAcceptsEmpty({ options }: Declaration): boolean {
+  const fallback = options?.default;
+  if (fallback !== undefined && String(fallback).trim() !== "") {
+    return false;
+  }
+
+  const input = options?.input;
+  if (!input) {
+    return true;
+  }
+  if (input.multiSelect) {
+    return input.multiSelect.nonEmpty !== true;
+  }
+  if (!input.text) {
+    return false;
+  }
+  if (input.text.nonEmpty) {
+    return false;
+  }
+  if (input.text.validationRegex) {
+    return new RegExp(input.text.validationRegex).test("");
+  }
+  return true;
+}
+
+describe("required param declarations", () => {
+  test("the CLI prompt cannot resolve any of them to an empty value", () => {
+    const declarations = declaredParams as unknown as Declaration[];
+
+    for (const name of REQUIRED) {
+      const declaration = declarations.find((param) => param.name === name);
+
+      expect(declaration, name).toBeDefined();
+      expect(promptAcceptsEmpty(declaration as Declaration), name).toBe(false);
+    }
   });
 });
