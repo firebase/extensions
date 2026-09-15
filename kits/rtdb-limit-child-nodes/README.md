@@ -41,8 +41,9 @@ and configure it with a `.env` (or `.env.<projectId>`).
 Importing the package without exporting its functions deploys nothing — the CLI
 only deploys what your entry file exports.
 
-Put `RTDB_NODE_PATH` and `SELECTED_DATABASE_INSTANCE` in `.env` so
-the trigger binds to the right database path and instance.
+Put `RTDB_NODE_PATH`, `MAX_COUNT` and `SELECTED_DATABASE_INSTANCE` in `.env` so
+the trigger binds to the right database path and instance. `RTDB_NODE_PATH` and
+`MAX_COUNT` have no default, so the CLI prompts for either one you leave out.
 
 ## Deploy
 
@@ -84,8 +85,8 @@ Realtime Database instance.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
-| `nodePath` | `RTDB_NODE_PATH` | no | `messages` | Parent path whose children are limited |
-| `maxCount` | `MAX_COUNT` | no | `100` | Maximum child nodes to retain |
+| `nodePath` | `RTDB_NODE_PATH` | yes | none | Parent path whose children are limited |
+| `maxCount` | `MAX_COUNT` | yes | none | Maximum child nodes to retain |
 | `databaseInstance` | `SELECTED_DATABASE_INSTANCE` | yes* | from `FIREBASE_CONFIG` when present | RTDB instance id |
 
 \* Required when `FIREBASE_CONFIG` does not already imply a database instance.
@@ -126,20 +127,21 @@ bad values are caught, and where the function runs.
 
 Node.js reserves `NODE_PATH` for its own module resolution and overwrites it in
 the function runtime, so the setting had to be renamed. Copying `NODE_PATH` from
-an installed instance's config has no effect: the kit ignores it and falls back
-to its default of `messages`, so it watches the wrong path and silently trims
-nothing you care about. Rename the key to `RTDB_NODE_PATH` in your `.env`.
+an installed instance's config has no effect: the kit ignores it, which leaves
+`RTDB_NODE_PATH` unset, and a param with no default is prompted for, so the CLI
+asks you for the path at deploy time. Rename the key to `RTDB_NODE_PATH` in your
+`.env`.
 
 Leading and trailing slashes are now trimmed, so `/rooms/messages/` and
 `rooms/messages` are equivalent.
 
-### `MAX_COUNT` now defaults to 100, and 0 is rejected
+### `MAX_COUNT` is now an integer setting, and `0` is rejected at runtime
 
-Both settings were required at install; both now have defaults
-(`RTDB_NODE_PATH: messages`, `MAX_COUNT: 100`), so an incomplete config deploys
-instead of stopping to ask you. `MAX_COUNT` is also a proper integer setting now.
-The extension accepted `0`, which meant "delete every child on every write"; the
-kit rejects it along with negative and non-integer values.
+`MAX_COUNT` is a proper integer setting now, but the extension's `^\d+$`
+validation regex is kept verbatim, so `0` still passes validation. The extension
+took a `MAX_COUNT` of `0` to mean "delete every child on every write"; the kit
+rejects it, along with negative and non-integer values, with
+`maxCount must be a positive integer.` on the first write to the watched path.
 
 ### Bad settings surface on the first write, not at install
 
