@@ -20,6 +20,7 @@ import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onObjectFinalized } from "firebase-functions/v2/storage";
 import sharp from "sharp";
 import {
+  assertRequiredParams,
   CONFIG_EXPRESSIONS,
   configFromEnv,
   validatePathListsFromEnv,
@@ -29,6 +30,7 @@ import { resolveResizeImagesConfig } from "./export-config";
 import { type HandlerContext, handleObjectFinalized } from "./handlers";
 import * as logs from "./logs";
 
+assertRequiredParams();
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [

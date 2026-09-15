@@ -26,6 +26,7 @@ import {
   afterRedeploy,
 } from "firebase-functions/v2/lifecycle";
 import {
+  assertRequiredParams,
   CONFIG_EXPRESSIONS,
   configFromEnv,
   geminiApiKey,
@@ -50,6 +51,7 @@ import {
 } from "./handlers";
 import * as logs from "./logs";
 
+assertRequiredParams();
 export * from "./lib";
 
 const INIT_VECTOR_SEARCH_FUNCTION = "initVectorSearch";
