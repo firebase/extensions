@@ -1,17 +1,17 @@
 {
   "name": "@firebase-function-kits/firestore-counter",
-  "version": "0.0.2-rc.6",
+  "version": "0.0.2-rc.7",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@firebase-function-kits/firestore-counter",
-      "version": "0.0.2-rc.6",
+      "version": "0.0.2-rc.7",
       "license": "Apache-2.0",
       "dependencies": {
         "deep-equal": "^1.0.1",
         "firebase-admin": "^14.4.0",
-        "firebase-functions": "^7.3.3-rc.3",
+        "firebase-functions": "^7.3.3-rc.4",
         "uuid": "^11.0.5"
       },
       "devDependencies": {
@@ -2032,9 +2032,9 @@
       }
     },
     "node_modules/firebase-functions": {
-      "version": "7.3.3-rc.3",
-      "resolved": "https://registry.npmjs.org/firebase-functions/-/firebase-functions-7.3.3-rc.3.tgz",
-      "integrity": "sha512-ZSk85ExZSIgRaKZiTD2Z8Q4dU6KIeIVfwYT75PWC4KlaEgnoAyH6l4fmbP2IeAV3K8WQpLP9A5uTJIKMzeqL8A==",
+      "version": "7.3.3-rc.4",
+      "resolved": "https://registry.npmjs.org/firebase-functions/-/firebase-functions-7.3.3-rc.4.tgz",
+      "integrity": "sha512-zUCWBKl3wzj9oJceCUbACpz7p+seeQAx4ZCNg28BVzNGGprre/T88Cgv1ADLGsGBMddlZf0tRDLKgoh0Ccb+iw==",
       "license": "MIT",
       "dependencies": {
         "@types/cors": "^2.8.5",
