@@ -112,15 +112,12 @@ function metadataChanged(
 }
 
 /**
- * Reads the index metadata document, decides whether the embedding
- * configuration has changed since the last pass, and records the current
- * configuration when it has.
- *
- * The metadata document doubles as the task-thread progress document, so every
- * write merges rather than replaces. The extension replaced it, which wiped the
- * comparison fields on the first pass and made the gate a no-op from then on.
+ * Reads the index metadata document and decides whether the embedding
+ * configuration has changed since the last pass. It writes nothing: the
+ * comparison fields are recorded by `recordMetadataDoc` once the pass is under
+ * way, so a failed enqueue leaves the gate open for the next deploy.
  */
-export async function updateOrCreateMetadataDoc(
+export async function readMetadataDoc(
   firestore: Firestore,
   metadataDocumentPath: string,
   metadata: BackfillMetadata
@@ -130,23 +127,39 @@ export async function updateOrCreateMetadataDoc(
   );
   const ref = firestore.doc(metadataDocumentPath);
   const snapshot = await ref.get();
-  const record = { ...metadata, createdAt: Timestamp.now() };
 
   if (!snapshot.exists) {
     logger.info(
       `No existing metadata doc found for ${metadata.collectionName} 📝`
     );
-    logger.info("Creating a new metadata doc");
-    await ref.set(record, { merge: true });
     return { path: ref.path, shouldBackfill: true };
   }
 
-  const shouldBackfill = metadataChanged(snapshot.data() ?? {}, metadata);
-  if (shouldBackfill) {
-    logger.info("Updating existing metadata doc");
-    await ref.set(record, { merge: true });
-  }
-  return { path: ref.path, shouldBackfill };
+  return {
+    path: ref.path,
+    shouldBackfill: metadataChanged(snapshot.data() ?? {}, metadata),
+  };
+}
+
+/**
+ * Records the configuration the pass ran against, closing the gate until one of
+ * the compared settings changes.
+ *
+ * The metadata document doubles as the task-thread progress document, so every
+ * write merges rather than replaces. The extension replaced it, which wiped the
+ * comparison fields on the first pass and made the gate a no-op from then on.
+ */
+export async function recordMetadataDoc(
+  firestore: Firestore,
+  metadataDocumentPath: string,
+  metadata: BackfillMetadata
+): Promise<void> {
+  logger.info(
+    `Recording the embedding configuration for ${metadata.collectionName} 📝`
+  );
+  await firestore
+    .doc(metadataDocumentPath)
+    .set({ ...metadata, createdAt: Timestamp.now() }, { merge: true });
 }
 
 /**

@@ -247,6 +247,11 @@ later deploy. To force a full re-embed without changing any setting, delete the
 `_<instance id>/index` document; its `queries` subcollection is untouched, so
 the query documents your clients write to survive.
 
+Because the fields persist, the kit records them only once the task thread has
+been dispatched. A deploy that fails to enqueue, on a queue that does not exist
+yet or before the task-queue permissions have propagated, leaves the gate open
+and the next deploy runs the pass.
+
 Expect the first kit deploy over an installed instance to run a pass, whatever
 your settings say. Any extension pass that enqueued tasks replaced that document
 with its progress counters, so the comparison fields are gone and the gate

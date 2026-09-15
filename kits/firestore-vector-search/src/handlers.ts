@@ -34,7 +34,8 @@ import {
   type BackfillDocumentData,
   enqueueTaskThread,
   runBackfillTask,
-  updateOrCreateMetadataDoc,
+  readMetadataDoc,
+  recordMetadataDoc,
 } from "./backfill";
 import { createEmbedClient } from "./embeddings";
 import type { ResolvedVectorSearchConfig } from "./export-config";
@@ -357,7 +358,7 @@ async function runTrigger(
   // Resolved first so a missing region fails the trigger rather than being
   // logged and swallowed below.
   const queue = taskQueue(ctx, taskQueueName);
-  const { path, shouldBackfill } = await updateOrCreateMetadataDoc(
+  const { path, shouldBackfill } = await readMetadataDoc(
     ctx.firestore,
     ctx.config.indexMetadataDocumentPath,
     metadataFor(ctx)
@@ -379,6 +380,9 @@ async function runTrigger(
       logger.info(
         `No documents found in the collection ${ctx.config.collectionPath} 📚`
       );
+      // Nothing to embed, so the configuration counts as covered. The extension
+      // recorded it here too.
+      await recordMetadataDoc(ctx.firestore, path, metadataFor(ctx));
       return;
     }
 
@@ -394,6 +398,11 @@ async function runTrigger(
       taskParams: refs.map((ref) => ref.id),
       instanceId: ctx.config.instanceId,
     });
+
+    // Only once the thread is dispatched. Recording it earlier would close the
+    // gate on a pass that never started, and the error below is swallowed, so
+    // no later deploy would reopen it.
+    await recordMetadataDoc(ctx.firestore, path, metadataFor(ctx));
   } catch (err) {
     logger.error("Error with backfill trigger");
     logger.error(err);

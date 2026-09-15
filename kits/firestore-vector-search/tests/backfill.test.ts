@@ -61,7 +61,8 @@ import {
   enqueueTaskThread,
   getNextTaskId,
   getValidDocs,
-  updateOrCreateMetadataDoc,
+  readMetadataDoc,
+  recordMetadataDoc,
 } from "../src/backfill";
 import { resolveVectorSearchConfig } from "../src/export-config";
 import {
@@ -279,26 +280,25 @@ describe("getNextTaskId", () => {
   });
 });
 
-describe("updateOrCreateMetadataDoc", () => {
-  test("creates the metadata document and requires a pass", async () => {
+describe("readMetadataDoc", () => {
+  test("requires a pass when the metadata document is missing, and writes nothing", async () => {
     const { firestore, writes } = makeFirestore();
 
-    const result = await updateOrCreateMetadataDoc(
+    const result = await readMetadataDoc(
       firestore as never,
       METADATA_PATH,
       METADATA
     );
 
     expect(result).toEqual({ path: METADATA_PATH, shouldBackfill: true });
-    expect(writes).toHaveLength(1);
-    expect(writes[0].merge).toBe(true);
-    expect(writes[0].data).toMatchObject(METADATA);
+    // The comparison fields are recorded only once the pass is dispatched.
+    expect(writes).toHaveLength(0);
   });
 
   test("skips the pass when the embedding configuration is unchanged", async () => {
     const { firestore, writes } = makeFirestore({ [METADATA_PATH]: METADATA });
 
-    const result = await updateOrCreateMetadataDoc(
+    const result = await readMetadataDoc(
       firestore as never,
       METADATA_PATH,
       METADATA
@@ -318,25 +318,21 @@ describe("updateOrCreateMetadataDoc", () => {
       [METADATA_PATH]: { ...METADATA, ...previous },
     });
 
-    const result = await updateOrCreateMetadataDoc(
+    const result = await readMetadataDoc(
       firestore as never,
       METADATA_PATH,
       METADATA
     );
 
     expect(result.shouldBackfill).toBe(true);
-    expect(writes).toHaveLength(1);
-    expect(writes[0].data).toMatchObject(METADATA);
+    expect(writes).toHaveLength(0);
   });
+});
 
+describe("recordMetadataDoc", () => {
   test("merges so the progress counters do not replace the comparison fields", async () => {
-    const { firestore, store } = makeFirestore();
+    const { firestore, store, writes } = makeFirestore();
 
-    await updateOrCreateMetadataDoc(
-      firestore as never,
-      METADATA_PATH,
-      METADATA
-    );
     await enqueueTaskThread({
       firestore: firestore as never,
       tasksDoc: METADATA_PATH,
@@ -344,12 +340,18 @@ describe("updateOrCreateMetadataDoc", () => {
       taskParams: ["doc-1"],
       instanceId: config.instanceId,
     });
+    await recordMetadataDoc(firestore as never, METADATA_PATH, METADATA);
 
-    // The extension replaced the document here, which lost these fields and
-    // made every later deploy re-embed the whole collection.
-    expect(store.get(METADATA_PATH)).toMatchObject(METADATA);
+    // The extension replaced the document in the task thread, which lost these
+    // fields and made every later deploy re-embed the whole collection.
+    expect(writes.at(-1)?.merge).toBe(true);
+    expect(store.get(METADATA_PATH)).toMatchObject({
+      ...METADATA,
+      backfillJobsTotal: 1,
+      backfillStatus: "RUNNING",
+    });
 
-    const second = await updateOrCreateMetadataDoc(
+    const second = await readMetadataDoc(
       firestore as never,
       METADATA_PATH,
       METADATA
@@ -869,7 +871,7 @@ describe.each([
   const request = {} as Request<unknown>;
 
   test("enumerates the collection by reference and enqueues the first task", async () => {
-    const { ctx, writes } = makeCtx({
+    const { ctx, store } = makeCtx({
       [`${COLLECTION}/doc-1`]: { input: "one" },
       [`${COLLECTION}/doc-2`]: { input: "two" },
     });
@@ -882,7 +884,7 @@ describe.each([
       chunk: ["doc-1", "doc-2"],
       tasksDoc: METADATA_PATH,
     });
-    expect(writes[0].data).toMatchObject(METADATA);
+    expect(store.get(METADATA_PATH)).toMatchObject(METADATA);
   });
 
   test("skips the pass when the embedding configuration is unchanged", async () => {
@@ -897,12 +899,15 @@ describe.each([
     expect(writes).toEqual([]);
   });
 
-  test("enqueues nothing for an empty collection", async () => {
-    const { ctx } = makeCtx();
+  test("enqueues nothing for an empty collection, and records the configuration", async () => {
+    const { ctx, store } = makeCtx();
 
     await handler(request, ctx);
 
     expect(enqueue).not.toHaveBeenCalled();
+    // The extension recorded the configuration on this path too, so an empty
+    // collection does not leave the gate open for every later deploy.
+    expect(store.get(METADATA_PATH)).toMatchObject(METADATA);
   });
 
   test("swallows an enqueue failure so the trigger task is not retried", async () => {
@@ -910,6 +915,28 @@ describe.each([
     enqueue.mockRejectedValue(new Error("queue not found"));
 
     await expect(handler(request, ctx)).resolves.toBeUndefined();
+  });
+
+  test("leaves the gate open when the enqueue fails, so the next deploy retries", async () => {
+    const { ctx, store } = makeCtx({
+      [`${COLLECTION}/doc-1`]: { input: "one" },
+    });
+    enqueue.mockRejectedValueOnce(new Error("queue not found"));
+
+    await handler(request, ctx);
+
+    // The progress document exists by now, but without the comparison fields:
+    // recording them would gate every later deploy on a pass that never ran.
+    const afterFailure = store.get(METADATA_PATH) ?? {};
+    expect(afterFailure).not.toHaveProperty("embeddingProvider");
+    expect(afterFailure).not.toHaveProperty("dimension");
+    expect(afterFailure).not.toHaveProperty("inputField");
+    expect(afterFailure).not.toHaveProperty("outputField");
+
+    await handler(request, ctx);
+
+    expect(enqueue).toHaveBeenCalledTimes(2);
+    expect(store.get(METADATA_PATH)).toMatchObject(METADATA);
   });
 });
 
