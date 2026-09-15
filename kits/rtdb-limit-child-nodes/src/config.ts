@@ -36,8 +36,11 @@ const databaseInstanceDefault = defaultDatabaseInstance();
 const DATABASE_INSTANCE_VALIDATION = {
   text: {
     example: "my-instance",
+    // The extension's regex also matches "", and a project without a Realtime
+    // Database gives the param no default to fall back on.
     validationRegex: /^([0-9a-z_.-]*)$/,
     validationErrorMessage: "Invalid database instance",
+    nonEmpty: true,
   },
 };
 
@@ -136,4 +139,38 @@ export function envDeployOptions(): DeployTimeOptions {
     ref: toTriggerRef(nodePath),
     instance: params.databaseInstance,
   };
+}
+
+// Params the published extension marks `required: true`. A value the user never
+// supplied is absent from process.env; one they deliberately blanked is present
+// and empty. Only the second is a misconfiguration, so the guard below reads
+// process.env rather than `.value()`, which reports both as "".
+const REQUIRED_PARAMS = [
+  "RTDB_NODE_PATH",
+  "SELECTED_DATABASE_INSTANCE",
+  "MAX_COUNT",
+] as const;
+
+/**
+ * Rejects required params that were explicitly set to an empty value.
+ *
+ * `.env` values bypass the CLI's prompt-time validation and take precedence
+ * over a param's declared default, so an empty entry otherwise reaches the
+ * handlers silently. Called at module scope so deploy-time discovery fails
+ * before the function ships, rather than on the first event.
+ */
+export function assertRequiredParams(
+  names: ReadonlyArray<string> = REQUIRED_PARAMS
+): void {
+  const blank = names.filter((name) => {
+    const raw = process.env[name];
+    return raw !== undefined && raw.trim() === "";
+  });
+
+  if (blank.length > 0) {
+    throw new Error(
+      `Required parameters are set to an empty value: ${blank.join(", ")}. ` +
+        "Set them in your .env file, or remove the entries to use their defaults."
+    );
+  }
 }

@@ -46,7 +46,11 @@ import {
 import { ChangelogTable } from "./bigquery";
 import { resolveCaptureConfig } from "./capture-config";
 import type { ChangelogRow } from "./changelog";
-import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
+import {
+  assertRequiredParams,
+  CONFIG_EXPRESSIONS,
+  configFromEnv,
+} from "./config";
 import { RestorationLauncher } from "./dataflow";
 import {
   handleChangelogTask,
@@ -63,6 +67,7 @@ import {
   RESTORATION_TASK_FUNCTION,
 } from "./tasks";
 
+assertRequiredParams();
 // Re-export the side-effect-free library surface.
 export * from "./lib";
 

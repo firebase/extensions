@@ -21,7 +21,11 @@ import { getStorage } from "firebase-admin/storage";
 import { onObjectFinalized } from "firebase-functions/storage";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
-import { configFromEnv, envDeployOptions } from "./config";
+import {
+  assertRequiredParams,
+  configFromEnv,
+  envDeployOptions,
+} from "./config";
 import * as events from "./events";
 import type { ResolvedSpeechToTextConfig } from "./export-config";
 import { resolveConfig } from "./export-config";
@@ -29,6 +33,7 @@ import { type HandlerContext, handleObjectFinalized } from "./handlers";
 import * as logs from "./logs";
 import { transcribeFns } from "./transcribe-fns";
 
+assertRequiredParams();
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [

@@ -21,7 +21,12 @@ import { expr } from "firebase-functions/params";
 import { onSchedule } from "firebase-functions/scheduler";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
-import { CONFIG_EXPRESSIONS, configFromEnv, envFunctionRegion } from "./config";
+import {
+  assertRequiredParams,
+  CONFIG_EXPRESSIONS,
+  configFromEnv,
+  envFunctionRegion,
+} from "./config";
 import * as events from "./events";
 import { resolveCounterConfig } from "./export-config";
 import {
@@ -31,6 +36,7 @@ import {
   handleWorker,
 } from "./handlers";
 
+assertRequiredParams();
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [

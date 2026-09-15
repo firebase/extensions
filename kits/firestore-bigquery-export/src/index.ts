@@ -38,7 +38,11 @@ import {
   afterFirstDeploy,
   afterRedeploy,
 } from "firebase-functions/v2/lifecycle";
-import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
+import {
+  assertRequiredParams,
+  CONFIG_EXPRESSIONS,
+  configFromEnv,
+} from "./config";
 import * as events from "./events";
 import {
   DEFAULT_MAX_DISPATCHES_PER_SECOND,
@@ -56,6 +60,7 @@ import * as logs from "./logs";
 import { firestoreLocationToFunctionRegion } from "./region";
 import { enqueueSyncTask } from "./tasks";
 
+assertRequiredParams();
 // Re-export the side-effect-free library surface (handlers and config types).
 export * from "./lib";
 

@@ -33,7 +33,11 @@ import {
   afterFirstDeploy,
   afterRedeploy,
 } from "firebase-functions/v2/lifecycle";
-import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
+import {
+  assertRequiredParams,
+  CONFIG_EXPRESSIONS,
+  configFromEnv,
+} from "./config";
 import type { ResolvedBigqueryFirestoreExportConfig } from "./export-config";
 import { resolveConfig } from "./export-config";
 import {
@@ -44,6 +48,7 @@ import {
 import * as logs from "./logs";
 import type { TransferRunPayload } from "./types";
 
+assertRequiredParams();
 export * from "./lib";
 
 const UPSERT_FUNCTION = "upsertTransferConfig";

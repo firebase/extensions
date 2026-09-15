@@ -51,6 +51,7 @@ const googleAiApiKey = {
 const CONFIG_EXPRESSIONS = { document: "translations/{messageId}" };
 
 vi.mock("../src/config", () => ({
+  assertRequiredParams: vi.fn(),
   CONFIG_EXPRESSIONS,
   configFromEnv,
   googleAiApiKey,
