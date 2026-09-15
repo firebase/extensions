@@ -27,9 +27,20 @@ import type { BundleBuilderConfig } from "./export-config";
 const params = {
   bundleSpecCollection: defineString("BUNDLESPEC_COLLECTION", {
     default: "bundles",
+    // `required: true` in the extension, which refuses an empty answer.
+    input: { text: { example: "bundles", nonEmpty: true } },
   }),
   bundleStorageBucket: defineString("BUNDLE_STORAGE_BUCKET", {
     default: storageBucket,
+    // Extension regex, kept verbatim. The param is optional there and the
+    // regex already matches the empty string, so no empty branch is needed.
+    input: {
+      text: {
+        example: "my-project-12345.appspot.com",
+        validationRegex: /^([0-9a-z_.-]*)$/,
+        validationErrorMessage: "Invalid storage bucket",
+      },
+    },
   }),
   storagePrefix: defineString("STORAGE_PREFIX", { default: "bundles" }),
 };

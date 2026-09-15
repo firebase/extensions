@@ -133,3 +133,35 @@ describe("select values inherited from the extension", () => {
     expect(resolveConfig(configFromEnv()).vertex.modelLocation).toBe("global");
   });
 });
+
+/**
+ * Compatibility requirement: extension.yaml marks these `required: true`, so
+ * the extension's installer refuses an empty answer and re-prompts, and it
+ * validates `MODEL` against a regex the kit had dropped. The CLI enforces
+ * either one for a kit only when the declaration carries it.
+ */
+describe("params the extension marks required", () => {
+  function text(name: string): Record<string, unknown> {
+    return (declaration(name).input as { text?: Record<string, unknown> })
+      .text as Record<string, unknown>;
+  }
+
+  test.each(["MODEL", "PROMPT_FIELD", "RESPONSE_FIELD"])(
+    "%s refuses an empty value at the prompt",
+    (name) => {
+      expect(text(name).nonEmpty).toBe(true);
+    }
+  );
+
+  test("MODEL keeps the extension's model-id validation", () => {
+    // `Param.toSpec()` rewrites a declared RegExp to its source string in
+    // place, so a declaration read after discovery can hold either form.
+    const declared = text("MODEL").validationRegex as RegExp | string;
+    const regex =
+      typeof declared === "string" ? new RegExp(declared) : declared;
+
+    expect(regex.source).toBe(/^[a-zA-Z0-9][a-zA-Z0-9.\-_/]*$/.source);
+    expect(regex.test("gemini-2.5-flash")).toBe(true);
+    expect(regex.test("gemini 2.5 flash")).toBe(false);
+  });
+});

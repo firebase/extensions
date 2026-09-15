@@ -56,3 +56,57 @@ describe("configFromEnv", () => {
     );
   });
 });
+
+/**
+ * Compatibility requirement: extension.yaml marks every param below
+ * `required: true`, so the extension's installer refuses an empty answer and
+ * re-prompts, and it validates three of them against regexes the kit had
+ * dropped. The CLI enforces either one for a kit only when the declaration
+ * carries it.
+ */
+describe("params the extension marks required", () => {
+  function text(name: string): Record<string, unknown> {
+    const param = declaredParams.find(
+      (candidate) => candidate.name === name
+    ) as { options?: { input?: { text?: Record<string, unknown> } } };
+
+    return param?.options?.input?.text ?? {};
+  }
+
+  // `Param.toSpec()` rewrites a declared RegExp to its source string in place,
+  // so a declaration read after discovery can hold either form.
+  function validationRegex(name: string): RegExp {
+    const declared = text(name).validationRegex as RegExp | string;
+
+    return typeof declared === "string" ? new RegExp(declared) : declared;
+  }
+
+  test.each([
+    "SYNC_COLLECTION_PATH",
+    "SYNC_DATASET",
+    "SYNC_TABLE",
+    "BACKUP_INSTANCE_ID",
+  ])("%s refuses an empty value at the prompt", (name) => {
+    expect(text(name).nonEmpty).toBe(true);
+  });
+
+  test.each([
+    ["SYNC_COLLECTION_PATH", /^[^\/]+(\/[^\/]+\/[^\/]+)*$/, "posts", "posts/"],
+    ["SYNC_DATASET", /^[a-zA-Z0-9_]+$/, "backup_dataset", "backup dataset"],
+    [
+      "BACKUP_INSTANCE_ID",
+      /^[a-zA-Z][a-zA-Z0-9-]{2,61}[a-zA-Z0-9]$/,
+      "backup-db",
+      "-backup",
+    ],
+  ])(
+    "%s keeps the extension's validation",
+    (name, expected, valid, invalid) => {
+      const regex = validationRegex(name as string);
+
+      expect(regex.source).toBe((expected as RegExp).source);
+      expect(regex.test(valid as string)).toBe(true);
+      expect(regex.test(invalid as string)).toBe(false);
+    }
+  );
+});

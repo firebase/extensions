@@ -130,3 +130,23 @@ describe("select values inherited from the extension", () => {
     expect(config.updateOnConfigure).toBe(false);
   });
 });
+
+/**
+ * Compatibility requirement: extension.yaml marks these `required: true`, so
+ * the extension's installer refuses an empty answer and re-prompts. The CLI
+ * enforces that for a kit only when the declaration says `nonEmpty`.
+ */
+describe("params the extension marks required", () => {
+  test.each(["INPUT_FIELD_NAME", "OUTPUT_FIELD_NAME", "STATUS_FIELD_NAME"])(
+    "%s refuses an empty value at the prompt",
+    (name) => {
+      const param = declaredParams.find(
+        (candidate) => candidate.name === name
+      ) as { options?: { input?: unknown } } | undefined;
+
+      expect(param?.options?.input).toMatchObject({
+        text: { nonEmpty: true },
+      });
+    }
+  );
+});

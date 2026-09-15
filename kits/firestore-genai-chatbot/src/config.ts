@@ -115,6 +115,16 @@ const params = {
     description:
       "Input the name of the Gemini model you would like to use. To view available models for each provider, see: [Vertex AI Gemini models](https://cloud.google.com/vertex-ai/docs/generative-ai/learn/models), [Google AI Gemini models](https://ai.google.dev/models/gemini). Note: Any models in preview on Vertex AI will require Vertex AI Model Location to be set to 'global'.",
     default: "gemini-2.5-flash",
+    // `required: true` in the extension, plus its validation, kept verbatim.
+    input: {
+      text: {
+        example: "gemini-2.5-flash",
+        nonEmpty: true,
+        validationRegex: /^[a-zA-Z0-9][a-zA-Z0-9.\-_/]*$/,
+        validationErrorMessage:
+          "Please specify a model id with no spaces, for example 'gemini-3.6-flash'. Model ids are not validated against the provider at install time - an id the provider does not serve will fail at request time.",
+      },
+    },
   }),
   vertexModelLocation: defineString("VERTEX_AI_MODEL_LOCATION", {
     label: "Vertex AI Model Location",
@@ -173,14 +183,16 @@ const params = {
     label: "Prompt Field",
     description: "The field in the message document that contains the prompt.",
     default: "prompt",
-    input: { text: { example: "prompt" } },
+    // `required: true` in the extension, which refuses an empty answer.
+    input: { text: { example: "prompt", nonEmpty: true } },
   }),
   responseField: defineString("RESPONSE_FIELD", {
     label: "Response Field",
     description:
       "The field in the message document into which to put the response.",
     default: "response",
-    input: { text: { example: "response" } },
+    // `required: true` in the extension, which refuses an empty answer.
+    input: { text: { example: "response", nonEmpty: true } },
   }),
   orderField: defineString("ORDER_FIELD", {
     label: "Order Field",

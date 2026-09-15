@@ -92,7 +92,8 @@ const params = {
     description:
       'The Firestore database to use. Use "(default)" for the default database. You can find your available Firestore databases at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases).',
     default: "(default)",
-    input: { text: { example: "(default)" } },
+    // `required: true` in the extension, which refuses an empty answer.
+    input: { text: { example: "(default)", nonEmpty: true } },
   }),
   databaseRegion: defineString("DATABASE_REGION", {
     label: "Firestore Instance Location",
