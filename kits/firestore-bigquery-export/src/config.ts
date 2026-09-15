@@ -397,6 +397,7 @@ const params = {
       "If enabled, creates a column containing a JSON object of all wildcard ids from a documents path.",
 
     default: false,
+    input: select({ No: false, Yes: true }),
   }),
   useNewSnapshotQuerySyntax: defineString("USE_NEW_SNAPSHOT_QUERY_SYNTAX", {
     label: "Use new query syntax for snapshots",
