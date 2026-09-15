@@ -407,6 +407,11 @@ places the functions correctly. If you instead run `firebase deploy` with the
 value still missing from `.env`, the prompt comes after discovery has already
 chosen a region, so your answer only takes effect on the following deploy.
 
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's functions ran. Nothing reads it: placement
+comes from `DATABASE_REGION` alone, so if the two disagree your next deploy
+moves the functions.
+
 With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
 no region and the Firebase CLI resolves one at deploy time: a function keeps
 the region it is already deployed in, and on a first deploy all three land in

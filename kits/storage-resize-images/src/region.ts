@@ -34,7 +34,8 @@ const MULTI_REGION_TO_FUNCTION_REGION: Record<string, string> = {
  *
  * Dual-region locations (`nam4`, `eur4`, `asia1`, ...) are not mapped and pass
  * through, which fails the deploy. firebase-tools has the same gap, so a
- * dual-region bucket needs the region chosen by hand.
+ * dual-region bucket needs the region chosen by hand. Picking one half of the
+ * pair is what the README recommends and is not deploy-verified.
  */
 export function bucketLocationToFunctionRegion(
   location: string | undefined

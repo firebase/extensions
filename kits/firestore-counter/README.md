@@ -206,6 +206,11 @@ places the functions correctly. If you instead run `firebase deploy` with the
 value still missing from `.env`, the prompt comes after discovery has already
 chosen a region, so your answer only takes effect on the following deploy.
 
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's functions ran. Nothing reads it: placement
+comes from `DATABASE_REGION` alone, so if the two disagree your next deploy
+moves the functions.
+
 With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
 no region and the Firebase CLI resolves one at deploy time: it keeps the region
 they are already deployed in, and on a first deploy it resolves each function
@@ -218,6 +223,22 @@ just this kit. Omitting the line is not the same as an empty one: a
 non-interactive deploy fails with `In non-interactive mode but have no value
 for the following environment variables: DATABASE_REGION`. Note that changing
 an existing instance's region deletes and recreates the functions.
+
+### Twelve database locations have no Cloud Scheduler
+
+`controllerCore` runs on a schedule, and the Firebase CLI creates its Cloud
+Scheduler job in the function's own region, so a region without Cloud Scheduler
+fails the deploy. Twelve of the locations `DATABASE_REGION` offers resolve to
+one: `us-east5`, `northamerica-northeast2`, `northamerica-south1`,
+`southamerica-west1`, `europe-north1`, `europe-north2`, `europe-southwest1`,
+`europe-west10`, `europe-west12`, `asia-south2`, `australia-southeast2` and
+`africa-south1`. If your database is in one of those, give `DATABASE_REGION`
+the nearest location that does have Cloud Scheduler instead. The trigger still
+fires for a function outside the database's region, so the kit works; the
+writes just pay a cross-region hop.
+
+This is read from the published Cloud Scheduler region list and `gcloud
+scheduler locations list`, not from a failed deploy.
 
 ### Unchanged
 

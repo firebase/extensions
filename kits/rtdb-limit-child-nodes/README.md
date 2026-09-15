@@ -194,6 +194,11 @@ reaches Cloud Run as written, so a blank or misspelled value fails the deploy.
 Note that changing the region on an existing instance deletes and recreates the
 function.
 
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's function ran. Nothing reads it: placement comes
+from `DATABASE_REGION` alone, so if the two disagree your next deploy moves the
+function.
+
 ### Unchanged
 
 - The trigger fires on creates of direct children of the watched path, and the

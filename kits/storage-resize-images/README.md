@@ -226,7 +226,8 @@ Dual-region buckets (`nam4`, `eur4`, `asia1`) are not offered as such and are
 not mapped. Pick one of the regions the pair is made of instead, all of which
 are in the list: `us-central1` or `us-east1` for `nam4`, `europe-north1` or
 `europe-west4` for `eur4`, `asia-northeast1` or `asia-northeast2` for `asia1`. A
-trigger in either half of the pair fires for the bucket.
+trigger in either half of the pair fires for the bucket. That last part is not
+deploy-verified: no dual-region bucket was tested.
 
 Placement needs firebase-tools 15.28.0 or later - older CLIs do not load `.env`
 values during deploy discovery, so the function silently falls back to the
@@ -238,6 +239,11 @@ value and write it to `.env` before anything is deployed, so a single deploy
 places the function correctly. If you instead run `firebase deploy` with the
 value still missing from `.env`, the prompt comes after discovery has already
 chosen a region, so your answer only takes effect on the following deploy.
+
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's function ran. Nothing reads it: placement comes
+from `BUCKET_REGION` alone, so if the two disagree your next deploy moves the
+function.
 
 With an explicit empty `BUCKET_REGION=` line in `.env`, the function declares no
 region and the Firebase CLI resolves one at deploy time: it keeps the region it

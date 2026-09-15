@@ -329,6 +329,11 @@ places the functions correctly. If you instead run `firebase deploy` with the
 value still missing from `.env`, the prompt comes after discovery has already
 chosen a region, so your answer only takes effect on the following deploy.
 
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's functions ran. Nothing reads it: placement
+comes from `DATABASE_REGION` alone, so if the two disagree your next deploy
+moves the functions.
+
 One interaction to know about if you use the Vertex AI embedding provider. The
 functions call Vertex AI in whatever region they run in, so pinning them to
 your database's location also moves the Vertex AI call there, and there is no
