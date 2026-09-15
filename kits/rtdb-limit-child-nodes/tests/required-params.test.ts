@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 
-import { afterEach, describe, expect, test, vi } from "vitest";
-import { assertRequiredParams } from "../src/config";
+import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 
 const REQUIRED = ["RTDB_NODE_PATH", "SELECTED_DATABASE_INSTANCE", "MAX_COUNT"];
+
+let assertRequiredParams: (names?: ReadonlyArray<string>) => void;
+
+beforeAll(async () => {
+  // Some kits resolve the instance id at import; the CLI injects it for real
+  // instances, so supply one before loading the module under test.
+  process.env.FIREBASE_KIT_INSTANCE_ID ??= "test-instance";
+  ({ assertRequiredParams } = await import("../src/config"));
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();
