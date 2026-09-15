@@ -89,7 +89,6 @@ const params = {
       "EU Mutli-Region (EU)": "EU",
     }),
   }),
-  transferConfigName: defineString("TRANSFER_CONFIG_NAME", { default: "" }),
   pubSubTopic: defineString("PUB_SUB_TOPIC", {
     label: "Pub/Sub Topic",
     description:
@@ -219,7 +218,6 @@ export function configFromEnv(): BigqueryFirestoreExportConfig {
     bigqueryDatasetLocation: params.bigqueryDatasetLocation.value(),
     projectId: projectID.value(),
     instanceId: instanceIdFromEnv(),
-    transferConfigName: optional(params.transferConfigName.value()),
     datasetId: params.datasetId.value(),
     tableName: params.tableName.value(),
     queryString: params.queryString.value(),

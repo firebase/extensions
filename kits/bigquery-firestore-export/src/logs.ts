@@ -144,13 +144,6 @@ export function partitioningFieldRemovalAttempted(
   });
 }
 
-export function linkedTransferConfigMissing(name: string): void {
-  logger.error(
-    "The scheduled query named by TRANSFER_CONFIG_NAME does not exist, so nothing was linked. Set it to a scheduled query that exists in this project and redeploy, or clear it to have this deployment create its own.",
-    { name }
-  );
-}
-
 // The reason carries the remediation, and an Error passed as structured data
 // serialises to {}, so it goes in the message.
 export function partitioningFieldRemovalAborted(reason: string): void {
@@ -159,15 +152,4 @@ export function partitioningFieldRemovalAborted(reason: string): void {
 
 export function topicCreated(name: string): void {
   logger.info("Created Pub/Sub topic for transfer notifications", { name });
-}
-
-export function linkedTopicMismatch(
-  name: string,
-  linkedTopic: string | null | undefined,
-  expectedTopic: string
-): void {
-  logger.warn(
-    "Linked transfer config notifies a different Pub/Sub topic, so its runs will not reach this kit. Set PUB_SUB_TOPIC to the linked topic, or point the transfer config at the configured one.",
-    { name, linkedTopic: linkedTopic ?? "", expectedTopic }
-  );
 }

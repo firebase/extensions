@@ -18,11 +18,18 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("firebase-functions", () => import("./mocks/firebase-functions"));
 vi.mock("../src/events");
+vi.mock("../src/translate/translateMultiple", async (importOriginal) => {
+  const mod = await importOriginal<
+    typeof import("../src/translate/translateMultiple")
+  >();
+  return { ...mod, translateMultiple: vi.fn(mod.translateMultiple) };
+});
 
 import * as events from "../src/events";
 import { messages } from "../src/logs/messages";
 import type { TranslationService } from "../src/translate";
 import { translateDocument } from "../src/translate/translateDocument";
+import { translateMultiple } from "../src/translate/translateMultiple";
 import { translateSingle } from "../src/translate/translateSingle";
 import {
   defaultLanguages,
@@ -104,16 +111,22 @@ describe("translateDocument", () => {
     );
   });
 
-  test("treats a null input as a single translation, uncoerced", async () => {
+  test("routes a null input through translateMultiple, as the extension does", async () => {
     const snapshot = makeSnapshot({ input: null });
+    const service = makeService({ extractLanguages: vi.fn(() => ["en"]) });
 
-    await translateDocument(
+    await expect(
+      translateDocument(snapshot, service, makeConfig())
+    ).rejects.toThrow(TypeError);
+
+    expect(translateMultiple).toHaveBeenCalledWith(
+      null,
+      ["en"],
       snapshot,
-      makeService({ extractLanguages: vi.fn(() => ["en"]) }),
-      makeConfig()
+      service
     );
-
-    expect(translateString).toHaveBeenCalledWith(null, "en");
+    expect(translateString).not.toHaveBeenCalled();
+    expect(updateTranslations).not.toHaveBeenCalled();
   });
 
   test("exits early when the input field is a translation output path", async () => {

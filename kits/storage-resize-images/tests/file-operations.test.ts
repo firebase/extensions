@@ -27,8 +27,6 @@ import * as path from "node:path";
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-vi.mock("mkdirp", () => ({ mkdirp: vi.fn().mockResolvedValue(undefined) }));
-
 vi.mock("node:fs", async () => {
   const actual = await vi.importActual<typeof import("node:fs")>("node:fs");
   return { ...actual, unlinkSync: vi.fn() };
