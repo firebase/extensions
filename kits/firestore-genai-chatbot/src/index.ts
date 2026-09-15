@@ -89,7 +89,6 @@ function getContext(): HandlerContext {
 
 export const generateMessage = onDocumentWritten(
   {
-    ...(deployOptions.region ? { region: deployOptions.region } : {}),
     document: deployOptions.document,
     secrets: [apiKeySecret],
     timeoutSeconds: deployOptions.timeoutSeconds,
