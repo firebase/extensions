@@ -129,8 +129,9 @@ Node.js reserves `NODE_PATH` for its own module resolution and overwrites it in
 the function runtime, so the setting had to be renamed. Copying `NODE_PATH` from
 an installed instance's config has no effect: the kit ignores it, which leaves
 `RTDB_NODE_PATH` unset, and a param with no default is prompted for, so the CLI
-asks you for the path at deploy time. Rename the key to `RTDB_NODE_PATH` in your
-`.env`.
+asks you for the path at deploy time. A deploy that cannot prompt, such as one
+from CI, fails on the missing value instead. Rename the key to `RTDB_NODE_PATH`
+in your `.env`.
 
 Leading and trailing slashes are now trimmed, so `/rooms/messages/` and
 `rooms/messages` are equivalent.
