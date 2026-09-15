@@ -22,10 +22,9 @@ const REQUIRED = [
   "INPUT_FIELD_NAME",
   "OUTPUT_FIELD_NAME",
   "TRANSLATION_PROVIDER",
-  "GOOGLE_AI_API_KEY",
 ];
 
-const OPTIONAL = ["LANGUAGES_FIELD_NAME", "GEMINI_MODEL"];
+const OPTIONAL = ["LANGUAGES_FIELD_NAME", "GEMINI_MODEL", "GOOGLE_AI_API_KEY"];
 
 let assertRequiredParams: (names?: ReadonlyArray<string>) => void;
 
