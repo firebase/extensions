@@ -145,12 +145,16 @@ took a `MAX_COUNT` of `0` to mean "delete every child on every write"; the kit
 rejects it, along with negative and non-integer values, with
 `maxCount must be a positive integer.` on the first write to the watched path.
 
-### Bad settings surface on the first write, not at install
+### Bad settings in `.env` surface on the first write
 
-The install prompts used to reject a path containing spaces, a non-numeric
-`MAX_COUNT` and an invalid database instance id before anything was deployed.
-Those checks now run when the function handles its first event, so a bad value
-deploys cleanly and then throws on every write to the watched path:
+The install prompts reject a path containing spaces, a non-numeric `MAX_COUNT`
+and an invalid database instance id before anything is deployed, the same as the
+extension did. Those checks only run when the CLI prompts you, though: a value
+you write into `.env` is used as-is, and only a required param left empty is
+caught at deploy, by `assertRequiredParams`.
+
+`MAX_COUNT` of `0` reaches the handler either way, since the extension's `^\d+$`
+regex accepts it, and throws on every write to the watched path:
 
 ```
 maxCount must be a positive integer.
