@@ -41,8 +41,10 @@ and configure it with a `.env` (or `.env.<projectId>`).
 Importing the package without exporting its functions deploys nothing — the CLI
 only deploys what your entry file exports.
 
-Put `RTDB_NODE_PATH` and `SELECTED_DATABASE_INSTANCE` in `.env` so
-the trigger binds to the right database path and instance.
+Put `RTDB_NODE_PATH`, `MAX_COUNT` and `SELECTED_DATABASE_INSTANCE` in `.env` so
+the trigger binds to the right database path and instance, and the kit knows how
+many children to keep. `RTDB_NODE_PATH` and `MAX_COUNT` have no default, so the
+CLI prompts for either one you leave out.
 
 ## Deploy
 
@@ -84,8 +86,8 @@ Realtime Database instance.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
-| `nodePath` | `RTDB_NODE_PATH` | no | `messages` | Parent path whose children are limited |
-| `maxCount` | `MAX_COUNT` | no | `100` | Maximum child nodes to retain |
+| `nodePath` | `RTDB_NODE_PATH` | yes | none | Parent path whose children are limited |
+| `maxCount` | `MAX_COUNT` | yes | none | Maximum child nodes to retain |
 | `databaseInstance` | `SELECTED_DATABASE_INSTANCE` | yes* | from `FIREBASE_CONFIG` when present | RTDB instance id |
 
 \* Required when `FIREBASE_CONFIG` does not already imply a database instance.
@@ -126,27 +128,34 @@ bad values are caught, and where the function runs.
 
 Node.js reserves `NODE_PATH` for its own module resolution and overwrites it in
 the function runtime, so the setting had to be renamed. Copying `NODE_PATH` from
-an installed instance's config has no effect: the kit ignores it and falls back
-to its default of `messages`, so it watches the wrong path and silently trims
-nothing you care about. Rename the key to `RTDB_NODE_PATH` in your `.env`.
+an installed instance's config has no effect: the kit ignores it, which leaves
+`RTDB_NODE_PATH` unset, and a param with no default is prompted for, so the CLI
+asks you for the path at deploy time. A deploy that cannot prompt, such as one
+from CI, fails on the missing value instead. Rename the key to `RTDB_NODE_PATH`
+in your `.env`.
 
 Leading and trailing slashes are now trimmed, so `/rooms/messages/` and
 `rooms/messages` are equivalent.
 
-### `MAX_COUNT` now defaults to 100, and 0 is rejected
+### `MAX_COUNT` is now an integer setting, and `0` is rejected at runtime
 
-Both settings were required at install; both now have defaults
-(`RTDB_NODE_PATH: messages`, `MAX_COUNT: 100`), so an incomplete config deploys
-instead of stopping to ask you. `MAX_COUNT` is also a proper integer setting now.
-The extension accepted `0`, which meant "delete every child on every write"; the
-kit rejects it along with negative and non-integer values.
+`MAX_COUNT` is a proper integer setting now, but the extension's `^\d+$`
+validation regex is kept verbatim, so `0` still passes validation. The extension
+took a `MAX_COUNT` of `0` to mean "delete every child on every write"; the kit
+rejects it, along with negative and non-numeric values, with
+`maxCount must be a positive integer.` on the first write to the watched path. A
+fractional value is truncated rather than rejected, so `10.7` keeps 10.
 
-### Bad settings surface on the first write, not at install
+### Values set in `.env` skip the install prompt's validation
 
-The install prompts used to reject a path containing spaces, a non-numeric
-`MAX_COUNT` and an invalid database instance id before anything was deployed.
-Those checks now run when the function handles its first event, so a bad value
-deploys cleanly and then throws on every write to the watched path:
+The install prompts reject a path containing spaces, a non-numeric `MAX_COUNT`
+and an invalid database instance id before anything is deployed, the same as the
+extension did. Those checks only run when the CLI prompts you, though: a value
+you write into `.env` is used as-is, and only a required param left empty is
+caught at deploy, by `assertRequiredParams`.
+
+`MAX_COUNT` of `0` reaches the handler either way, since the extension's `^\d+$`
+regex accepts it, and throws on every write to the watched path:
 
 ```
 maxCount must be a positive integer.
