@@ -42,8 +42,9 @@ Importing the package without exporting its functions deploys nothing — the CL
 only deploys what your entry file exports.
 
 Put `RTDB_NODE_PATH`, `MAX_COUNT` and `SELECTED_DATABASE_INSTANCE` in `.env` so
-the trigger binds to the right database path and instance. `RTDB_NODE_PATH` and
-`MAX_COUNT` have no default, so the CLI prompts for either one you leave out.
+the trigger binds to the right database path and instance, and the kit knows how
+many children to keep. `RTDB_NODE_PATH` and `MAX_COUNT` have no default, so the
+CLI prompts for either one you leave out.
 
 ## Deploy
 
