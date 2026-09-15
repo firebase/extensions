@@ -19,7 +19,12 @@ import { getFirestore } from "firebase-admin/firestore";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
-import { CONFIG_EXPRESSIONS, configFromEnv, googleAiApiKey } from "./config";
+import {
+  assertRequiredParams,
+  CONFIG_EXPRESSIONS,
+  configFromEnv,
+  googleAiApiKey,
+} from "./config";
 import * as events from "./events";
 import {
   type ResolvedTranslateConfig,
@@ -29,6 +34,7 @@ import { type HandlerContext, handleDocumentWrite } from "./handlers";
 import * as logs from "./logs";
 import { createTranslationService } from "./translate";
 
+assertRequiredParams();
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
