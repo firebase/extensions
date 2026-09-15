@@ -142,10 +142,11 @@ Leading and trailing slashes are now trimmed, so `/rooms/messages/` and
 `MAX_COUNT` is a proper integer setting now, but the extension's `^\d+$`
 validation regex is kept verbatim, so `0` still passes validation. The extension
 took a `MAX_COUNT` of `0` to mean "delete every child on every write"; the kit
-rejects it, along with negative and non-integer values, with
-`maxCount must be a positive integer.` on the first write to the watched path.
+rejects it, along with negative and non-numeric values, with
+`maxCount must be a positive integer.` on the first write to the watched path. A
+fractional value is truncated rather than rejected, so `10.7` keeps 10.
 
-### Bad settings in `.env` surface on the first write
+### Values set in `.env` skip the install prompt's validation
 
 The install prompts reject a path containing spaces, a non-numeric `MAX_COUNT`
 and an invalid database instance id before anything is deployed, the same as the
