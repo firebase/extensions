@@ -17,7 +17,6 @@
 import { FieldPath, FieldValue, Timestamp } from "firebase-admin/firestore";
 import type { CallableRequest } from "firebase-functions/v2/https";
 import { HttpsError } from "firebase-functions/v2/https";
-import type { Request } from "firebase-functions/v2/tasks";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 
@@ -40,13 +39,10 @@ vi.mock("../src/queries/setup", () => ({ createIndex: vi.fn() }));
 
 import {
   type HandlerContext,
-  type VectorTaskData,
   type VectorWriteEvent,
-  handleBackfillTask,
   handleEmbedOnWrite,
   handleQueryCall,
   handleQueryOnWrite,
-  handleUpdateTask,
 } from "../src/handlers";
 import { resolveVectorSearchConfig } from "../src/export-config";
 
@@ -961,204 +957,5 @@ describe("handleEmbedOnWrite", () => {
 
       expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
     });
-  });
-});
-
-describe("handleBackfillTask", () => {
-  const PATH = "test-collection/doc-1";
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    getSingleEmbedding.mockResolvedValue(EMBEDDING);
-  });
-
-  /** A HandlerContext whose Firestore returns `data` at any document path. */
-  function backfillCtx(data: Record<string, unknown> | undefined) {
-    const set = vi.fn();
-    const update = vi.fn();
-    const ref = {
-      set,
-      update,
-      get: vi.fn(async () => snapshot(data, { set, update })),
-    };
-    const doc = vi.fn(() => ref);
-    const ctx = { firestore: { doc }, config } as unknown as HandlerContext;
-    return { ctx, set, update };
-  }
-
-  function task(docPath: string) {
-    return { data: { path: docPath } } as unknown as Request<VectorTaskData>;
-  }
-
-  // Parity with the extension's backfill handler, which wrote `BACKFILLED` and
-  // a `completeTime`, and no start event.
-  test("embeds the document at the task's path", async () => {
-    const { ctx, update } = backfillCtx({ input: "hello" });
-
-    await handleBackfillTask(task(PATH), ctx);
-
-    expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
-    expect(update).toHaveBeenCalledWith(
-      config.outputFieldName,
-      FieldValue.vector(EMBEDDING),
-      statusFieldPath("state"),
-      "BACKFILLED",
-      statusFieldPath("completeTime"),
-      FieldValue.serverTimestamp()
-    );
-  });
-
-  // Parity with the extension's `shouldBackfill`, which required a truthy
-  // string. Writing a terminal status here would stop `embedOnWrite` embedding
-  // the document once its input is filled in.
-  test("skips a document whose input is an empty string", async () => {
-    const { ctx, update } = backfillCtx({ input: "" });
-
-    await handleBackfillTask(task(PATH), ctx);
-
-    expect(getSingleEmbedding).not.toHaveBeenCalled();
-    expect(update).not.toHaveBeenCalled();
-  });
-
-  // Parity with the extension's `getValidDocs`: a document already carrying a
-  // status was skipped unless that status was `BACKFILLED`.
-  for (const state of ["PROCESSING", "COMPLETED", "ERROR", "FAILED_BACKFILL"]) {
-    test(`skips a document in the ${state} state`, async () => {
-      const { ctx, update } = backfillCtx({
-        input: "hello",
-        ...status(state),
-      });
-
-      await handleBackfillTask(task(PATH), ctx);
-
-      expect(getSingleEmbedding).not.toHaveBeenCalled();
-      expect(update).not.toHaveBeenCalled();
-    });
-  }
-
-  // `getValidDocs` tested the raw state for truthiness, so a non-string state
-  // still skipped the document.
-  for (const [label, state] of [
-    ["a number", 1],
-    ["a boolean", true],
-    ["an object", { nested: "value" }],
-  ] as const) {
-    test(`skips a document whose state is ${label}`, async () => {
-      const { ctx, update } = backfillCtx({
-        input: "hello",
-        ...status(state as unknown as string),
-      });
-
-      await handleBackfillTask(task(PATH), ctx);
-
-      expect(getSingleEmbedding).not.toHaveBeenCalled();
-      expect(update).not.toHaveBeenCalled();
-    });
-  }
-
-  test("re-embeds a document that was already backfilled", async () => {
-    const { ctx } = backfillCtx({ input: "hello", ...status("BACKFILLED") });
-
-    await handleBackfillTask(task(PATH), ctx);
-
-    expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
-  });
-
-  // The same truthiness test: an empty state was falsy, so the extension
-  // backfilled the document rather than skipping it.
-  test("embeds a document whose state is an empty string", async () => {
-    const { ctx } = backfillCtx({ input: "hello", ...status("") });
-
-    await handleBackfillTask(task(PATH), ctx);
-
-    expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
-  });
-
-  // Parity with the extension, which recorded the failure and returned rather
-  // than throwing, so the task was not retried.
-  test("marks the document FAILED_BACKFILL when embedding fails", async () => {
-    const { ctx, update } = backfillCtx({ input: "hello" });
-    getSingleEmbedding.mockRejectedValue(new Error("Embedding failed"));
-
-    await expect(handleBackfillTask(task(PATH), ctx)).resolves.toBeUndefined();
-
-    expect(update).toHaveBeenCalledWith(
-      statusFieldPath("state"),
-      "FAILED_BACKFILL",
-      statusFieldPath("completeTime"),
-      FieldValue.serverTimestamp()
-    );
-  });
-});
-
-describe("handleUpdateTask", () => {
-  const PATH = "test-collection/doc-1";
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    getSingleEmbedding.mockResolvedValue(EMBEDDING);
-  });
-
-  function updateCtx(data: Record<string, unknown> | undefined) {
-    const set = vi.fn();
-    const update = vi.fn();
-    const ref = {
-      set,
-      update,
-      get: vi.fn(async () => snapshot(data, { set, update })),
-    };
-    const doc = vi.fn(() => ref);
-    const ctx = { firestore: { doc }, config } as unknown as HandlerContext;
-    return { ctx, update };
-  }
-
-  function task(docPath: string) {
-    return { data: { path: docPath } } as unknown as Request<VectorTaskData>;
-  }
-
-  // Parity with the extension's `shouldUpdate`, which required both a truthy
-  // string input and an existing embedding.
-  test("skips a document with no existing embedding", async () => {
-    const { ctx, update } = updateCtx({ input: "hello" });
-
-    await handleUpdateTask(task(PATH), ctx);
-
-    expect(getSingleEmbedding).not.toHaveBeenCalled();
-    expect(update).not.toHaveBeenCalled();
-  });
-
-  // The update pass shared the extension's backfill handler, so it skipped the
-  // same documents and wrote the same state.
-  test("skips a document embedOnWrite already completed", async () => {
-    const { ctx, update } = updateCtx({
-      input: "hello",
-      [config.outputFieldName]: FieldValue.vector(EMBEDDING),
-      ...status("COMPLETED"),
-    });
-
-    await handleUpdateTask(task(PATH), ctx);
-
-    expect(getSingleEmbedding).not.toHaveBeenCalled();
-    expect(update).not.toHaveBeenCalled();
-  });
-
-  test("re-embeds a backfilled document and marks it BACKFILLED", async () => {
-    const { ctx, update } = updateCtx({
-      input: "hello",
-      [config.outputFieldName]: FieldValue.vector(EMBEDDING),
-      ...status("BACKFILLED"),
-    });
-
-    await handleUpdateTask(task(PATH), ctx);
-
-    expect(getSingleEmbedding).toHaveBeenCalledWith("hello");
-    expect(update).toHaveBeenCalledWith(
-      config.outputFieldName,
-      FieldValue.vector(EMBEDDING),
-      statusFieldPath("state"),
-      "BACKFILLED",
-      statusFieldPath("completeTime"),
-      FieldValue.serverTimestamp()
-    );
   });
 });
