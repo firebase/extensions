@@ -233,9 +233,13 @@ the deploy. The value is matched case-insensitively.
 Dual-region buckets (`nam4`, `eur4`, `asia1`) are not offered as such and are
 not mapped. Pick one of the regions the pair is made of instead, all of which
 are in the list: `us-central1` or `us-east1` for `nam4`, `europe-north1` or
-`europe-west4` for `eur4`, `asia-northeast1` or `asia-northeast2` for `asia1`. A
-trigger in either half of the pair fires for the bucket. That last part is not
-deploy-verified: no dual-region bucket was tested.
+`europe-west4` for `eur4`, `asia-northeast1` or `asia-northeast2` for `asia1`.
+The function still receives the bucket's events. Deployed against a `nam4`
+bucket with the region set to `us-central1`, Eventarc created the trigger in
+`nam4` pointing at the `us-central1` function and delivered the upload. Naming
+the dual-region location itself fails the deploy with `Location nam4 is not
+found or access is unauthorized`. That was run on `storage-resize-images`, which
+shares this kit's region helper and trigger shape.
 
 Placement needs firebase-tools 15.28.0 or later - older CLIs do not load `.env`
 values during deploy discovery, so the function silently falls back to the
