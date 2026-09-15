@@ -54,7 +54,10 @@ const configFromEnv = vi.fn<() => BundleBuilderConfig>(() => ({
   storagePrefix: "bundles",
 }));
 
-vi.mock("../src/config", () => ({ configFromEnv }));
+vi.mock("../src/config", () => ({
+  configFromEnv,
+  assertRequiredParams: vi.fn(),
+}));
 
 async function importIndex() {
   vi.resetModules();

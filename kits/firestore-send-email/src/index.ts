@@ -19,7 +19,12 @@ import { getFirestore } from "firebase-admin/firestore";
 import { onDocumentWritten } from "firebase-functions/firestore";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
-import { configFromEnv, envDeployOptions, secretParams } from "./config";
+import {
+  assertRequiredParams,
+  configFromEnv,
+  envDeployOptions,
+  secretParams,
+} from "./config";
 import * as events from "./events";
 import { resolveConfig } from "./export-config";
 import { type HandlerContext, handleQueueDoc } from "./handlers";
@@ -27,6 +32,7 @@ import { transportLayer } from "./helpers";
 import * as logs from "./logs";
 import { Templates } from "./templates";
 
+assertRequiredParams();
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
