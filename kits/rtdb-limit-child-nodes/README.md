@@ -175,9 +175,11 @@ for the instance at deploy time.
 
 The extension's install-time location is replaced by `DATABASE_REGION`, which
 describes where your database instance lives rather than where you want the
-function. A 2nd gen database trigger cannot cross regions, and the mismatch is
-caught at deploy time: creating the function fails with `cannot register
-cross-region trigger`.
+function. A 2nd gen database trigger cannot cross regions. The Firebase CLI
+does not check this itself, it copies the function's region onto the trigger, so
+a value that disagrees with the instance is rejected when the backend creates
+the function. That rejection is read from the CLI's trigger handling rather than
+reproduced against a live deploy.
 
 ### The trigger is 2nd gen
 
@@ -199,8 +201,9 @@ substitutes your value, whether you answer the prompt or write `.env` yourself.
 The value is required, and it applies to the deploy that sets it. A
 non-interactive deploy with the key missing from `.env` fails with `In
 non-interactive mode but have no value for the following environment variables:
-DATABASE_REGION`. Give it one of the offered regions exactly as listed: it
-reaches Cloud Run as written, so a blank or misspelled value fails the deploy.
+DATABASE_REGION`. Give it one of the offered regions exactly as listed: a
+misspelled value reaches Cloud Run as written and fails the deploy, and a blank
+one is rejected at discovery before anything ships.
 Note that changing the region on an existing instance deletes and recreates the
 function.
 

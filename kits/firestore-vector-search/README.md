@@ -401,9 +401,9 @@ One interaction to know about if you use the Vertex AI embedding provider. The
 functions call Vertex AI in whatever region they run in, so pinning them to
 your database's location also moves the Vertex AI call there, and there is no
 separate override to send it elsewhere. Vertex AI serves `gemini-embedding-001`
-in most regions but not all: `africa-south1`, `europe-north2` and
-`europe-west12` report the publisher model as not found, and `europe-west10`
-and `northamerica-south1` have no Vertex AI endpoint at all. With a database in
+in most regions but not all: `africa-south1`, `europe-north2`, `europe-west10`
+and `europe-west12` report the publisher model as not found, and
+`northamerica-south1` has no Vertex AI endpoint at all. With a database in
 one of those and `EMBEDDING_PROVIDER=vertex`, embedding fails and the error is
 written to the document's status field. Before this parameter existed the
 embedding functions were unplaced and ran in `us-central1`, so this is new.

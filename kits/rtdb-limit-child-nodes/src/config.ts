@@ -141,11 +141,14 @@ export function envDeployOptions(): DeployTimeOptions {
   };
 }
 
-// Params the published extension marks `required: true`. A value the user never
-// supplied is absent from process.env; one they deliberately blanked is present
-// and empty. Only the second is a misconfiguration, so the guard below reads
-// process.env rather than `.value()`, which reports both as "".
+// Params that must hold a value: those the published extension marks
+// `required: true`, plus DATABASE_REGION, which the function's region is
+// substituted from and which reaches Cloud Run as written. A value the user
+// never supplied is absent from process.env; one they deliberately blanked is
+// present and empty. Only the second is a misconfiguration, so the guard below
+// reads process.env rather than `.value()`, which reports both as "".
 const REQUIRED_PARAMS = [
+  "DATABASE_REGION",
   "RTDB_NODE_PATH",
   "SELECTED_DATABASE_INSTANCE",
   "MAX_COUNT",
