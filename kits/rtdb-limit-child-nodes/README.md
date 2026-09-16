@@ -41,10 +41,11 @@ and configure it with a `.env` (or `.env.<projectId>`).
 Importing the package without exporting its functions deploys nothing — the CLI
 only deploys what your entry file exports.
 
-Put `RTDB_NODE_PATH`, `MAX_COUNT` and `SELECTED_DATABASE_INSTANCE` in `.env` so
-the trigger binds to the right database path and instance, and the kit knows how
-many children to keep. `RTDB_NODE_PATH` and `MAX_COUNT` have no default, so the
-CLI prompts for either one you leave out.
+Put `DATABASE_REGION`, `RTDB_NODE_PATH`, `MAX_COUNT` and
+`SELECTED_DATABASE_INSTANCE` in `.env` so the function lands in the same region
+as the database, the trigger binds to the right database path and instance, and
+the kit knows how many children to keep. `DATABASE_REGION`, `RTDB_NODE_PATH` and
+`MAX_COUNT` have no default, so the CLI prompts for any you leave out.
 
 ## Deploy
 
@@ -86,6 +87,7 @@ Realtime Database instance.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
+| `databaseRegion` | `DATABASE_REGION` | yes | none | Realtime Database instance location; also places the function |
 | `nodePath` | `RTDB_NODE_PATH` | yes | none | Parent path whose children are limited |
 | `maxCount` | `MAX_COUNT` | yes | none | Maximum child nodes to retain |
 | `databaseInstance` | `SELECTED_DATABASE_INSTANCE` | yes* | from `FIREBASE_CONFIG` when present | RTDB instance id |
@@ -171,9 +173,13 @@ read from `FIREBASE_CONFIG` rather than injected by the install flow. If your
 `FIREBASE_CONFIG` has no `databaseURL`, there is no default and the CLI prompts
 for the instance at deploy time.
 
-The function itself no longer has a location setting. It deploys to your
-codebase's default region (`us-central1` unless you have changed it) rather than
-the location you picked at install.
+The extension's install-time location is replaced by `DATABASE_REGION`, which
+describes where your database instance lives rather than where you want the
+function. A 2nd gen database trigger cannot cross regions. The Firebase CLI
+does not check this itself, it copies the function's region onto the trigger, so
+a value that disagrees with the instance is rejected when the backend creates
+the function. That rejection is read from the CLI's trigger handling rather than
+reproduced against a live deploy.
 
 ### The trigger is 2nd gen
 
@@ -182,6 +188,29 @@ gen. Its service account needs `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of `roles/firebasedatabase.admin`; the Firebase CLI
 grants these for you. This otherwise only matters if you have alerting keyed to
 function generation.
+
+### DATABASE_REGION decides where the function runs
+
+`DATABASE_REGION` tells the kit where your Realtime Database instance lives, and
+the function is deployed to that region. A 2nd gen database trigger only fires
+for a function in the same region as its instance, so this has to agree with the
+instance you set. Database locations are Cloud Run regions already, so there is
+nothing to map: the function declares the parameter itself and the Firebase CLI
+substitutes your value, whether you answer the prompt or write `.env` yourself.
+
+The value is required, and it applies to the deploy that sets it. A
+non-interactive deploy with the key missing from `.env` fails with `In
+non-interactive mode but have no value for the following environment variables:
+DATABASE_REGION`. Give it one of the offered regions exactly as listed: a
+misspelled value reaches Cloud Run as written and fails the deploy, and a blank
+one is rejected at discovery before anything ships.
+Note that changing the region on an existing instance deletes and recreates the
+function.
+
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's function ran. Nothing reads it: placement comes
+from `DATABASE_REGION` alone, so if the two disagree your next deploy moves the
+function.
 
 ### Unchanged
 

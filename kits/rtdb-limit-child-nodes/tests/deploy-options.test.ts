@@ -54,11 +54,12 @@ describe("envDeployOptions", () => {
     );
   });
 
-  test("does not set a function region", () => {
+  test("region is a param expression", () => {
     vi.stubEnv("FUNCTIONS_CONTROL_API", "true");
     const options = envDeployOptions();
 
-    expect(options).not.toHaveProperty("region");
+    expect(options.region).toBeInstanceOf(Expression);
+    expect(cel(options.region)).toBe("{{ params.DATABASE_REGION }}");
   });
 
   test("no deploy-time option is a frozen undefined/empty literal", () => {
@@ -68,5 +69,37 @@ describe("envDeployOptions", () => {
     expect(options.ref).not.toBe("");
     expect(cel(options.instance)).not.toBe("");
     expect(cel(options.instance)).not.toContain("undefined");
+  });
+});
+
+describe("rtdblimit deploy region", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  // The manifest carries the unresolved expression, whatever the discovery
+  // environment holds; the CLI substitutes the param value after prompting.
+  async function importRegion(
+    databaseRegion: string | undefined
+  ): Promise<string> {
+    vi.resetModules();
+    vi.stubEnv("DATABASE_REGION", databaseRegion);
+    const { rtdblimit } = await import("../src/index");
+    const { region } = (
+      rtdblimit as unknown as { __endpoint: { region: unknown } }
+    ).__endpoint;
+
+    return cel(region);
+  }
+
+  test("the database location resolves through the param at deploy time", async () => {
+    expect(await importRegion("europe-west1")).toBe(
+      "{{ params.DATABASE_REGION }}"
+    );
+  });
+
+  test("no value in the discovery environment changes nothing", async () => {
+    expect(await importRegion(undefined)).toBe("{{ params.DATABASE_REGION }}");
   });
 });

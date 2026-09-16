@@ -85,6 +85,8 @@ export interface ResolvedSpeechToTextConfig {
 export interface DeployTimeOptions {
   /** Cloud Storage bucket the `onObjectFinalized` trigger listens to. */
   bucket: string | Expression<string>;
+  /** Cloud Run region for the function; omitted when `BUCKET_REGION` is unset. */
+  region?: string;
   /** Function timeout in seconds. */
   timeoutSeconds: number;
   /** Function memory. */

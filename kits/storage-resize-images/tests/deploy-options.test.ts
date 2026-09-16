@@ -26,7 +26,7 @@
  */
 
 import { Expression } from "firebase-functions/params";
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("firebase-admin", async () => {
   const actual = await vi.importActual<typeof import("firebase-admin")>(
@@ -73,5 +73,35 @@ describe("CONFIG_EXPRESSIONS", () => {
   test("no trigger-binding deploy option freezes to undefined", () => {
     expect(cel(CONFIG_EXPRESSIONS.bucket)).not.toContain("undefined");
     expect(cel(CONFIG_EXPRESSIONS.memory)).not.toContain("undefined");
+  });
+});
+
+describe("generateResizedImage deploy region", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  async function importRegion(
+    bucketRegion: string | undefined
+  ): Promise<string[] | undefined> {
+    vi.resetModules();
+    vi.stubEnv("BUCKET_REGION", bucketRegion);
+    const { generateResizedImage: fn } = await import("../src/index");
+
+    return (fn as unknown as { __endpoint: { region?: string[] } }).__endpoint
+      .region;
+  }
+
+  test("a multi-region bucket location places the function in a Cloud Run region", async () => {
+    expect(await importRegion("us")).toEqual(["us-east1"]);
+  });
+
+  test("a regional bucket location places the function in that region", async () => {
+    expect(await importRegion("europe-west4")).toEqual(["europe-west4"]);
+  });
+
+  test("no bucket location leaves the function without a region", async () => {
+    expect(await importRegion(undefined)).toBeUndefined();
   });
 });

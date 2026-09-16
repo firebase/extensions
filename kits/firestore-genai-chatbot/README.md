@@ -145,13 +145,17 @@ the exceptions below: the function region and the API key secret.
 `ENABLE_DISCUSSION_OPTION_OVERRIDES` and `ENABLE_GENKIT_MONITORING` keep the
 extension's `yes` / `no` values.
 
-### Pick your Cloud Functions region, or you get us-central1
+### The function has no location setting
 
 The extension's `LOCATION` setting is gone. There is no replacement value, and
-`LOCATION` left in a `.env` file is ignored. The function deploys to the Cloud
-Functions default region, `us-central1`, wherever your extension instance used
-to run. If you need another region, register the trigger yourself from the
-package's `./lib` entry point and set `region` on it.
+neither the `LOCATION` nor the `FUNCTION_DEFAULT_REGION` that `firebase
+ext:migrate` writes to your `.env` is read. When the function does not exist
+yet, the Firebase CLI places it next to the Firestore database its trigger
+watches; a redeploy keeps whatever region it is already in. To choose the region
+yourself, set `FIREBASE_FUNCTIONS_DEFAULT_REGION` when running `firebase deploy`
+(it applies to every function in the deploy that declares no region), or register
+the trigger yourself from the package's `./lib` entry point and set `region` on
+it.
 
 That region also decides where Vertex AI is called when
 `VERTEX_AI_MODEL_LOCATION` is left at `null`. Gemini is not served in every

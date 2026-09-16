@@ -17,7 +17,12 @@
 import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 import { declaredParams } from "firebase-functions/params";
 
-const REQUIRED = ["RTDB_NODE_PATH", "SELECTED_DATABASE_INSTANCE", "MAX_COUNT"];
+const REQUIRED = [
+  "DATABASE_REGION",
+  "RTDB_NODE_PATH",
+  "SELECTED_DATABASE_INSTANCE",
+  "MAX_COUNT",
+];
 
 let assertRequiredParams: (names?: ReadonlyArray<string>) => void;
 

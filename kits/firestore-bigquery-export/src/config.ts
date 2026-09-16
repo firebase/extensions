@@ -129,8 +129,9 @@ const params = {
     input: { text: { example: "(default)" } },
   }),
   // Declared so the CLI prompts for the value and persists it to `.env`; the
-  // function region option cannot be a param expression, so the entry point
-  // reads the same variable from `process.env` at module load instead.
+  // location to Cloud Run region lookup needs a nested ternary the CLI's CEL
+  // subset cannot express, so the entry point reads the same variable from
+  // `process.env` at module load instead.
   databaseRegion: defineString("DATABASE_REGION", {
     label: "Firestore Instance Location",
     description:

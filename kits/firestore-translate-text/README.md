@@ -161,8 +161,14 @@ it is unavailable, translation fails and the error is written to your function
 logs. Deploy to a region with Vertex AI support, or use `gemini-googleai` or
 `translate` instead.
 
-The function itself has no location setting any more. It deploys to your
-codebase's default region (`us-central1` unless you have changed it).
+The function has no location setting. When it does not exist yet, the Firebase
+CLI places it next to the Firestore database its trigger watches, so that is
+where the Vertex AI call goes; a redeploy keeps whatever region the function is
+already in. Set `FIREBASE_FUNCTIONS_DEFAULT_REGION` when running `firebase
+deploy` to choose the region yourself, remembering that it applies to every
+function in the deploy that declares no region. The `FUNCTION_DEFAULT_REGION`
+that `firebase ext:migrate` writes to your `.env` is not read, so a migrated
+instance does not keep the region the extension ran in.
 
 ### Nothing checks your settings at deploy time
 
