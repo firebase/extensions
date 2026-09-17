@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { logger } from "firebase-functions";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const { publish, channel } = vi.hoisted(() => {
@@ -94,5 +95,32 @@ describe("channel configured", () => {
       ...current,
       type: undefined,
     });
+  });
+});
+
+describe("publish failures", () => {
+  afterEach(() => {
+    publish.mockReset();
+    publish.mockResolvedValue(undefined);
+  });
+
+  test("a rejected publish is logged and never reaches the caller", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    publish.mockRejectedValue(
+      Object.assign(new Error("Permission denied"), { code: 403 })
+    );
+    process.env.EVENTARC_CHANNEL = "projects/p/locations/l/channels/c";
+    setupEventChannel();
+
+    await expect(recordStartEvent({ a: 1 })).resolves.toBeUndefined();
+    await expect(recordErrorEvent(new Error("boom"))).resolves.toBeUndefined();
+    await expect(
+      recordSuccessEvent({ subject: "s", data: {} })
+    ).resolves.toBeUndefined();
+    await expect(recordCompletionEvent({ a: 1 })).resolves.toBeUndefined();
+
+    // Two event types per call: the old and the new.
+    expect(warn).toHaveBeenCalledTimes(8);
+    warn.mockRestore();
   });
 });

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { logger } from "firebase-functions";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const publish = vi.fn().mockResolvedValue(undefined);
@@ -144,5 +145,47 @@ describe("events", () => {
     await events.recordErrorEvent(new Error("boom"));
 
     expect(publish).not.toHaveBeenCalled();
+  });
+});
+
+describe("publish failures", () => {
+  const ORIGINAL_ENV = process.env.EVENTARC_CHANNEL;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    publish.mockReset();
+    publish.mockResolvedValue(undefined);
+    if (ORIGINAL_ENV === undefined) {
+      delete process.env.EVENTARC_CHANNEL;
+    } else {
+      process.env.EVENTARC_CHANNEL = ORIGINAL_ENV;
+    }
+  });
+
+  test("a rejected publish is logged and never reaches the caller", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    publish.mockRejectedValue(
+      Object.assign(new Error("Permission denied"), { code: 403 })
+    );
+    process.env.EVENTARC_CHANNEL = "projects/p/locations/l/channels/c";
+    const events = await import("../src/events");
+    events.setupEventChannel();
+
+    await expect(
+      events.recordCompleteEvent(
+        { status: Status.SUCCESS, warnings: [], transcription: { 1: ["hi"] } },
+        "audio.mp3"
+      )
+    ).resolves.toBeUndefined();
+    await expect(
+      events.recordErrorEvent(new Error("boom"))
+    ).resolves.toBeUndefined();
+
+    expect(warn).toHaveBeenCalledTimes(2);
+    warn.mockRestore();
   });
 });

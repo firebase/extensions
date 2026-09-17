@@ -1,3 +1,5 @@
+- fix: an Eventarc publish failure no longer fails the function. A channel that was deleted or is unreachable answers `PERMISSION_DENIED`, and the publish was awaited before the work the function exists to do, so the mail was never sent. The publish failure is now logged as a warning and the invocation continues. Deploys also declare `eventarcpublishing.googleapis.com`, so the API is enabled on your project whether or not you use events.
+
 - docs: the no-region fallback needs an explicit empty `DATABASE_REGION=` line in `.env`. Omitting the key entirely fails a non-interactive deploy, because the CLI resolves parameters before it reads their defaults. Corrects the note on the `DATABASE_REGION` mapping fix below; no behavior change.
 - fix: restore the extension's `Yes` / `No` option labels on the `OAUTH_SECURE` deploy-time prompt. The stored values are unchanged (`true`/`false`), so this is a label-only fix and no `.env` from an earlier deploy needs editing.
 - chore: run on firebase-functions ^7.3.3-rc.1, the same release candidate as the other kits

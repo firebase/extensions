@@ -111,8 +111,6 @@ async function enqueueForSync(
   try {
     await ctx.enqueue(change);
   } catch (enqueueErr) {
-    // Log before publishing: the log line is the only trace of the dropped
-    // row, and the event publish can itself reject.
     logs.logFailedEventAction(
       "Failed to enqueue event to Cloud Tasks from onWrite handler",
       change.fullResourceName,
@@ -183,18 +181,13 @@ export async function handleDocumentWrite(
     throw err;
   }
 
-  try {
-    await events.recordStartEvent({
-      documentId,
-      changeType,
-      before: { data: data.before.data() },
-      after: { data: data.after.data() },
-      context,
-    });
-  } catch (err) {
-    logs.error(false, "Failed to record start event", err);
-    throw err;
-  }
+  await events.recordStartEvent({
+    documentId,
+    changeType,
+    before: { data: data.before.data() },
+    after: { data: data.after.data() },
+    context,
+  });
 
   const change: SerializedDocumentChange = {
     timestamp: context.time,
@@ -256,25 +249,19 @@ export async function handleSyncBigQueryTask(
     throw err;
   }
 
-  try {
-    await events.recordSuccessEvent({
-      subject: change.documentId,
-      data: {
-        timestamp: change.timestamp,
-        operation: change.changeType,
-        documentName: change.fullResourceName,
-        documentId: change.documentId,
-        pathParams: change.params,
-        eventId: change.eventId,
-        data: change.data,
-        oldData: change.oldData,
-      },
-    });
-  } catch (err) {
-    // The row is already in BigQuery. Rethrowing would have Cloud Tasks retry
-    // the insert past the dedupe window and duplicate it.
-    logs.error(false, "Failed to record success event", err as Error);
-  }
+  await events.recordSuccessEvent({
+    subject: change.documentId,
+    data: {
+      timestamp: change.timestamp,
+      operation: change.changeType,
+      documentName: change.fullResourceName,
+      documentId: change.documentId,
+      pathParams: change.params,
+      eventId: change.eventId,
+      data: change.data,
+      oldData: change.oldData,
+    },
+  });
 
   logs.complete();
 }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { logger } from "firebase-functions";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { toEventContext } from "../src/event-context";
 import { makeEvent } from "./helpers";
@@ -175,5 +176,40 @@ describe("event publishing", () => {
     await events.recordCompletionEvent({});
 
     expect(publish).not.toHaveBeenCalled();
+  });
+});
+
+describe("publish failures", () => {
+  async function setupEnabledEvents() {
+    vi.stubEnv("EVENTARC_CHANNEL", "channel");
+    const events = await importEvents();
+    events.setupEventChannel();
+    return events;
+  }
+
+  afterEach(() => {
+    publish.mockReset();
+  });
+
+  test("a rejected publish never reaches the caller", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    publish.mockRejectedValue(
+      Object.assign(new Error("Permission denied"), { code: 403 })
+    );
+    const events = await setupEnabledEvents();
+
+    await expect(
+      events.recordStartEvent({ foo: "bar" })
+    ).resolves.toBeUndefined();
+    await expect(
+      events.recordErrorEvent(new Error("boom"))
+    ).resolves.toBeUndefined();
+    await expect(
+      events.recordSuccessEvent({ subject: "s", data: {} })
+    ).resolves.toBeUndefined();
+    await expect(events.recordCompletionEvent({})).resolves.toBeUndefined();
+
+    expect(warn).toHaveBeenCalledTimes(4);
+    warn.mockRestore();
   });
 });

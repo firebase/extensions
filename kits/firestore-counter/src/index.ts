@@ -56,6 +56,10 @@ const REQUIRED_APIS = [
     api: "firestore.googleapis.com",
     reason: "Reads and writes counter shards in Cloud Firestore.",
   },
+  {
+    api: "eventarcpublishing.googleapis.com",
+    reason: "Publishes the extension's custom events to its Eventarc channel.",
+  },
 ] as const;
 
 for (const role of REQUIRED_ROLES) {

@@ -15,6 +15,7 @@
  */
 
 import * as eventArc from "firebase-admin/eventarc";
+import { logger } from "firebase-functions";
 
 let eventChannel: eventArc.Channel | undefined;
 
@@ -26,12 +27,27 @@ export const setupEventChannel = (): void => {
     : undefined;
 };
 
+/**
+ * Publishes an event, logging and swallowing any failure.
+ *
+ * A deleted or unreachable Eventarc channel must not fail the invocation:
+ * deleting the user's data is the contract, event delivery is best effort.
+ */
+const publish = async (event: eventArc.CloudEvent): Promise<void> => {
+  if (!eventChannel) return;
+
+  try {
+    await eventChannel.publish(event);
+  } catch (err) {
+    logger.warn(`Failed to publish Eventarc event ${event.type}`, err);
+  }
+};
+
 export async function publishDeletionEvent(
   target: "firestore" | "database" | "storage",
   data: object
-): Promise<unknown> {
-  if (!eventChannel) return Promise.resolve();
-  return eventChannel.publish({
+): Promise<void> {
+  return publish({
     type: `firebase.extensions.delete-user-data.v1.${target}`,
     data,
   });

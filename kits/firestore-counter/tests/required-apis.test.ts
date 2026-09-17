@@ -21,16 +21,19 @@ const { requiresAPI } = vi.hoisted(() => ({ requiresAPI: vi.fn() }));
 vi.mock("firebase-functions/firestore", () => ({
   onDocumentWritten: vi.fn(() => ({})),
 }));
-vi.mock("firebase-functions/tasks", () => ({
-  onTaskDispatched: vi.fn(() => ({})),
+vi.mock("firebase-functions/scheduler", () => ({
+  onSchedule: vi.fn(() => ({})),
 }));
 vi.mock("firebase-functions/v2", () => ({
   requiresAPI,
   requiresRole: vi.fn(),
 }));
-vi.mock("firebase-functions/v2/lifecycle", () => ({
-  afterFirstDeploy: vi.fn(),
-  afterRedeploy: vi.fn(),
+vi.mock("firebase-admin/app", () => ({
+  getApp: vi.fn(() => ({ name: "[DEFAULT]" })),
+  initializeApp: vi.fn(),
+}));
+vi.mock("firebase-admin/firestore", () => ({
+  getFirestore: vi.fn(() => ({})),
 }));
 
 beforeAll(async () => {
@@ -40,11 +43,7 @@ beforeAll(async () => {
 test.each([
   [
     "firestore.googleapis.com",
-    "Receives document change events from Cloud Firestore.",
-  ],
-  [
-    "bigquery.googleapis.com",
-    "Mirrors data from your Cloud Firestore collection in BigQuery.",
+    "Reads and writes counter shards in Cloud Firestore.",
   ],
   [
     "eventarcpublishing.googleapis.com",
@@ -54,6 +53,6 @@ test.each([
   expect(requiresAPI).toHaveBeenCalledWith(api, reason);
 });
 
-test("declares exactly the 3 APIs the kit needs", () => {
-  expect(requiresAPI).toHaveBeenCalledTimes(3);
+test("declares exactly the 2 APIs the kit needs", () => {
+  expect(requiresAPI).toHaveBeenCalledTimes(2);
 });

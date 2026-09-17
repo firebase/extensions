@@ -57,6 +57,10 @@ const REQUIRED_APIS = [
     api: "speech.googleapis.com",
     reason: "Used for transcribing audio files with Cloud Speech-to-Text.",
   },
+  {
+    api: "eventarcpublishing.googleapis.com",
+    reason: "Publishes the extension's custom events to its Eventarc channel.",
+  },
 ] as const;
 
 for (const role of REQUIRED_ROLES) {
