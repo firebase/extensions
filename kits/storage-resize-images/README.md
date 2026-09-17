@@ -172,6 +172,12 @@ region with Vertex AI support if you use content filtering, or leave
 was 1st gen. `FUNCTION_MEMORY` still accepts the same values (512 through 8192)
 and maps onto the equivalent 2nd gen memory setting.
 
+The kit explicitly sets `concurrency: 1` and
+`ingressSettings: "ALLOW_INTERNAL_ONLY"` to match the extension. Each instance
+handles one invocation at a time, and ingress is restricted to internal
+traffic. These settings override the 2nd gen defaults of concurrency `80`
+and ingress `ALLOW_ALL`.
+
 The function's service account needs `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of the roles the extension asked for. The Firebase
 CLI grants these for you.
