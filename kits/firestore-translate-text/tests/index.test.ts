@@ -157,6 +157,15 @@ describe("index", () => {
     );
   });
 
+  test("declares the Eventarc publishing API the custom events need", async () => {
+    await importIndex();
+
+    expect(requiresAPI).toHaveBeenCalledWith(
+      "eventarcpublishing.googleapis.com",
+      "Publishes the extension's custom events to its Eventarc channel."
+    );
+  });
+
   test("registers the document trigger against the collection path param", async () => {
     const { fstranslate } = await importIndex();
 

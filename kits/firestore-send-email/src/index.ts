@@ -52,6 +52,10 @@ const REQUIRED_APIS = [
     reason:
       "Reads the mail queue and writes delivery state in Cloud Firestore.",
   },
+  {
+    api: "eventarcpublishing.googleapis.com",
+    reason: "Publishes the extension's custom events to its Eventarc channel.",
+  },
 ] as const;
 
 for (const role of REQUIRED_ROLES) {

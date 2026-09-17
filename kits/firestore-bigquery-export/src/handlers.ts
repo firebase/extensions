@@ -183,18 +183,13 @@ export async function handleDocumentWrite(
     throw err;
   }
 
-  try {
-    await events.recordStartEvent({
-      documentId,
-      changeType,
-      before: { data: data.before.data() },
-      after: { data: data.after.data() },
-      context,
-    });
-  } catch (err) {
-    logs.error(false, "Failed to record start event", err);
-    throw err;
-  }
+  await events.recordStartEvent({
+    documentId,
+    changeType,
+    before: { data: data.before.data() },
+    after: { data: data.after.data() },
+    context,
+  });
 
   const change: SerializedDocumentChange = {
     timestamp: context.time,

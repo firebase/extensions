@@ -15,6 +15,7 @@
  */
 
 import * as eventArc from "firebase-admin/eventarc";
+import { logger } from "firebase-functions";
 
 const EXTENSION_NAME = "storage-resize-images";
 
@@ -31,19 +32,33 @@ export const setupEventChannel = (): void => {
     : undefined;
 };
 
+/**
+ * Publishes an event, logging and swallowing any failure.
+ *
+ * A deleted or unreachable Eventarc channel must not fail the invocation: the resize work
+ * is the contract, event delivery is best effort.
+ */
+const publish = async (event: eventArc.CloudEvent): Promise<void> => {
+  if (!eventChannel) return;
+
+  try {
+    await eventChannel.publish(event);
+  } catch (err) {
+    logger.warn("Failed to publish Eventarc event", err);
+  }
+};
+
 export const recordStartEvent = async (
   data: string | object
-): Promise<unknown> => {
-  if (!eventChannel) return Promise.resolve();
-  return eventChannel.publish({
+): Promise<void> => {
+  return publish({
     type: getEventType("onStart"),
     data,
   });
 };
 
-export const recordErrorEvent = async (err: Error): Promise<unknown> => {
-  if (!eventChannel) return Promise.resolve();
-  return eventChannel.publish({
+export const recordErrorEvent = async (err: Error): Promise<void> => {
+  return publish({
     type: getEventType("onError"),
     data: { message: err.message },
   });
@@ -55,9 +70,8 @@ export const recordSuccessEvent = async ({
 }: {
   subject: string;
   data: string | object;
-}): Promise<unknown> => {
-  if (!eventChannel) return Promise.resolve();
-  return eventChannel.publish({
+}): Promise<void> => {
+  return publish({
     type: getEventType("onSuccess"),
     subject,
     data,
@@ -66,9 +80,8 @@ export const recordSuccessEvent = async ({
 
 export const recordCompletionEvent = async (
   data: string | object
-): Promise<unknown> => {
-  if (!eventChannel) return Promise.resolve();
-  return eventChannel.publish({
+): Promise<void> => {
+  return publish({
     type: getEventType("onCompletion"),
     data,
   });
@@ -80,9 +93,8 @@ export const recordStartResizeEvent = async ({
 }: {
   subject: string;
   data: string | object;
-}): Promise<unknown> => {
-  if (!eventChannel) return Promise.resolve();
-  return eventChannel.publish({
+}): Promise<void> => {
+  return publish({
     type: getEventType("onStartResize"),
     subject,
     data,

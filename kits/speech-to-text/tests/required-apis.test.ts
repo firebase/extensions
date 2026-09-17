@@ -18,19 +18,13 @@ import { beforeAll, expect, test, vi } from "vitest";
 
 const { requiresAPI } = vi.hoisted(() => ({ requiresAPI: vi.fn() }));
 
-vi.mock("firebase-functions/firestore", () => ({
-  onDocumentWritten: vi.fn(() => ({})),
-}));
-vi.mock("firebase-functions/tasks", () => ({
-  onTaskDispatched: vi.fn(() => ({})),
+vi.mock("@google-cloud/speech", () => ({ SpeechClient: vi.fn(() => ({})) }));
+vi.mock("firebase-functions/storage", () => ({
+  onObjectFinalized: vi.fn(() => ({})),
 }));
 vi.mock("firebase-functions/v2", () => ({
   requiresAPI,
   requiresRole: vi.fn(),
-}));
-vi.mock("firebase-functions/v2/lifecycle", () => ({
-  afterFirstDeploy: vi.fn(),
-  afterRedeploy: vi.fn(),
 }));
 
 beforeAll(async () => {
@@ -40,11 +34,11 @@ beforeAll(async () => {
 test.each([
   [
     "firestore.googleapis.com",
-    "Receives document change events from Cloud Firestore.",
+    "Writes transcription results to Cloud Firestore.",
   ],
   [
-    "bigquery.googleapis.com",
-    "Mirrors data from your Cloud Firestore collection in BigQuery.",
+    "speech.googleapis.com",
+    "Used for transcribing audio files with Cloud Speech-to-Text.",
   ],
   [
     "eventarcpublishing.googleapis.com",

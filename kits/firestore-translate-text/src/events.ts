@@ -15,6 +15,7 @@
  */
 
 import * as eventArc from "firebase-admin/eventarc";
+import { logger } from "firebase-functions";
 
 const { getEventarc } = eventArc;
 
@@ -34,19 +35,31 @@ export const setupEventChannel = () => {
     : undefined;
 };
 
-export const recordStartEvent = async (data: string | object) => {
+/**
+ * Publishes an event, logging and swallowing any failure.
+ *
+ * A deleted or unreachable Eventarc channel must not fail the invocation: the
+ * translation is the contract, event delivery is best effort.
+ */
+const publish = async (event: eventArc.CloudEvent): Promise<void> => {
   if (!eventChannel) return;
 
-  return eventChannel.publish({
+  try {
+    await eventChannel.publish(event);
+  } catch (err) {
+    logger.warn("Failed to publish Eventarc event", err);
+  }
+};
+
+export const recordStartEvent = async (data: string | object) => {
+  return publish({
     type: getEventType("onStart"),
     data,
   });
 };
 
 export const recordErrorEvent = async (err: Error) => {
-  if (!eventChannel) return;
-
-  return eventChannel.publish({
+  return publish({
     type: getEventType("onError"),
     data: { message: err.message },
   });
@@ -59,9 +72,7 @@ export const recordSuccessEvent = async ({
   subject: string;
   data: string | object;
 }) => {
-  if (!eventChannel) return;
-
-  return eventChannel.publish({
+  return publish({
     type: getEventType("onSuccess"),
     subject,
     data,
@@ -69,9 +80,7 @@ export const recordSuccessEvent = async ({
 };
 
 export const recordCompletionEvent = async (data: string | object) => {
-  if (!eventChannel) return;
-
-  return eventChannel.publish({
+  return publish({
     type: getEventType("onCompletion"),
     data,
   });

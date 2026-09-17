@@ -56,6 +56,10 @@ const REQUIRED_APIS = [
     api: "storage-component.googleapis.com",
     reason: "Needed to use Cloud Storage.",
   },
+  {
+    api: "eventarcpublishing.googleapis.com",
+    reason: "Publishes the extension's custom events to its Eventarc channel.",
+  },
 ] as const;
 
 for (const role of REQUIRED_ROLES) {

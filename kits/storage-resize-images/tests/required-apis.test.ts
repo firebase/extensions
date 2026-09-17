@@ -18,19 +18,12 @@ import { beforeAll, expect, test, vi } from "vitest";
 
 const { requiresAPI } = vi.hoisted(() => ({ requiresAPI: vi.fn() }));
 
-vi.mock("firebase-functions/firestore", () => ({
-  onDocumentWritten: vi.fn(() => ({})),
-}));
-vi.mock("firebase-functions/tasks", () => ({
-  onTaskDispatched: vi.fn(() => ({})),
+vi.mock("firebase-functions/v2/storage", () => ({
+  onObjectFinalized: vi.fn(() => ({})),
 }));
 vi.mock("firebase-functions/v2", () => ({
   requiresAPI,
   requiresRole: vi.fn(),
-}));
-vi.mock("firebase-functions/v2/lifecycle", () => ({
-  afterFirstDeploy: vi.fn(),
-  afterRedeploy: vi.fn(),
 }));
 
 beforeAll(async () => {
@@ -39,13 +32,10 @@ beforeAll(async () => {
 
 test.each([
   [
-    "firestore.googleapis.com",
-    "Receives document change events from Cloud Firestore.",
+    "aiplatform.googleapis.com",
+    "Needed for Vertex AI content filtering when CONTENT_FILTER_LEVEL is set.",
   ],
-  [
-    "bigquery.googleapis.com",
-    "Mirrors data from your Cloud Firestore collection in BigQuery.",
-  ],
+  ["storage-component.googleapis.com", "Needed to use Cloud Storage."],
   [
     "eventarcpublishing.googleapis.com",
     "Publishes the extension's custom events to its Eventarc channel.",

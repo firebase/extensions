@@ -99,6 +99,10 @@ const REQUIRED_APIS = [
     api: "bigquery.googleapis.com",
     reason: "Mirrors data from your Cloud Firestore collection in BigQuery.",
   },
+  {
+    api: "eventarcpublishing.googleapis.com",
+    reason: "Publishes the extension's custom events to its Eventarc channel.",
+  },
 ] as const;
 
 for (const role of REQUIRED_ROLES) {

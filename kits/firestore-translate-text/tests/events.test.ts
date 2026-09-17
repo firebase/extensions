@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { logger } from "firebase-functions";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { toEventContext } from "../src/event-context";
 
@@ -172,5 +173,32 @@ describe("events", () => {
     await events.recordCompletionEvent({});
 
     expect(publish).not.toHaveBeenCalled();
+  });
+});
+
+describe("publish failures", () => {
+  afterEach(() => {
+    publish.mockReset();
+    publish.mockResolvedValue(undefined);
+  });
+
+  test("a rejected publish is logged and never reaches the caller", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    publish.mockRejectedValue(
+      Object.assign(new Error("Permission denied"), { code: 403 })
+    );
+    const events = await importEvents(CHANNEL);
+
+    await expect(events.recordStartEvent({})).resolves.toBeUndefined();
+    await expect(
+      events.recordErrorEvent(new Error("boom"))
+    ).resolves.toBeUndefined();
+    await expect(
+      events.recordSuccessEvent({ subject: "s", data: {} })
+    ).resolves.toBeUndefined();
+    await expect(events.recordCompletionEvent({})).resolves.toBeUndefined();
+
+    expect(warn).toHaveBeenCalledTimes(4);
+    warn.mockRestore();
   });
 });

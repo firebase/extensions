@@ -59,6 +59,10 @@ const REQUIRED_APIS = [
     reason:
       "To use Google Translate to translate strings into the specified target languages.",
   },
+  {
+    api: "eventarcpublishing.googleapis.com",
+    reason: "Publishes the extension's custom events to its Eventarc channel.",
+  },
 ] as const;
 
 for (const role of REQUIRED_ROLES) {
