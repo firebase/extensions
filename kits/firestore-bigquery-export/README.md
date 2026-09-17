@@ -375,12 +375,6 @@ inside that window. That property is gone by design - a row that exhausts the
 queue without a configured `BACKUP_COLLECTION` is dropped, exactly as in the
 extension. Set `BACKUP_COLLECTION`.
 
-### Wildcard columns include the document ID
-
-With `WILDCARD_IDS=true`, the wildcard column now contains a `documentId` key
-alongside the path parameters from your collection path. The extension wrote
-the path parameters only.
-
 ### DATABASE_REGION places the functions
 
 The extension's `LOCATION` parameter is gone. Instead, the kit deploys its
@@ -414,7 +408,7 @@ moves the functions.
 
 With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
 no region and the Firebase CLI resolves one at deploy time: a function keeps
-the region it is already deployed in, and on a first deploy all three land in
+the region it is already deployed in, and on a first deploy all four land in
 `us-central1`. The CLI would otherwise place `fsexportbigquery` next to the
 database, but it resolves the default region before it resolves params, so the
 `DATABASE` param this kit passes to the trigger is still an unresolved
