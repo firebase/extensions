@@ -53,7 +53,7 @@ const publish = async (event: eventArc.CloudEvent): Promise<void> => {
   try {
     await eventChannel.publish(event);
   } catch (err) {
-    logger.warn("Failed to publish Eventarc event", err);
+    logger.warn(`Failed to publish Eventarc event ${event.type}`, err);
   }
 };
 
