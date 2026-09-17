@@ -30,16 +30,52 @@ const publish = vi
     Object.assign(new Error("Permission denied"), { code: 403 })
   );
 
+const mocks = vi.hoisted(() => {
+  const remoteFile = { delete: vi.fn().mockResolvedValue(undefined) };
+  return {
+    remoteFile,
+    checkImageContent: vi.fn().mockResolvedValue(true),
+    resizeImages: vi.fn().mockResolvedValue([
+      {
+        status: "fulfilled",
+        value: {
+          size: "200x200",
+          outputFilePath: "img_200x200.png",
+          success: true,
+        },
+      },
+    ]),
+    downloadOriginalFile: vi
+      .fn()
+      .mockResolvedValue(["/tmp/original.png", remoteFile]),
+    handleFailedImage: vi.fn().mockResolvedValue(undefined),
+    deleteTempFile: vi.fn().mockResolvedValue(undefined),
+    deleteRemoteFile: vi.fn().mockResolvedValue(undefined),
+  };
+});
+
 vi.mock("firebase-admin/eventarc", () => ({
   getEventarc: () => ({ channel: () => ({ publish }) }),
 }));
 vi.mock("../src/logs");
-vi.mock("../src/filters", () => ({ shouldResize: vi.fn(() => false) }));
+vi.mock("../src/filters", () => ({ shouldResize: vi.fn(() => true) }));
+vi.mock("../src/content-filter", () => ({
+  checkImageContent: mocks.checkImageContent,
+}));
+vi.mock("../src/resize-image", () => ({ resizeImages: mocks.resizeImages }));
+vi.mock("../src/file-operations", () => ({
+  downloadOriginalFile: mocks.downloadOriginalFile,
+  handleFailedImage: mocks.handleFailedImage,
+  deleteTempFile: mocks.deleteTempFile,
+  deleteRemoteFile: mocks.deleteRemoteFile,
+}));
 
 import * as events from "../src/events";
 import { resolveResizeImagesConfig } from "../src/export-config";
-import { shouldResize } from "../src/filters";
 import { type HandlerContext, handleObjectFinalized } from "../src/handlers";
+
+const eventType = (name: string) =>
+  `firebase.extensions.storage-resize-images.v1.${name}`;
 
 function makeCtx(): HandlerContext {
   return {
@@ -47,33 +83,95 @@ function makeCtx(): HandlerContext {
       bucket: "demo-bucket",
       sizes: "200x200",
       region: "us-central1",
-      deleteOriginal: "false",
+      deleteOriginal: "on_success",
     }),
     storage: { bucket: vi.fn(() => ({})) },
   } as unknown as HandlerContext;
 }
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  vi.spyOn(logger, "warn").mockImplementation(() => {});
-  process.env.EVENTARC_CHANNEL = "projects/p/locations/l/channels/firebase";
-  events.setupEventChannel();
-});
-
-test("an upload still reaches the resize path when every Eventarc publish is denied", async () => {
-  const event = {
+function makeEvent(): StorageEvent {
+  return {
     id: "evt-1",
     type: "google.cloud.storage.object.v1.finalized",
     source: "//storage.googleapis.com/projects/_/buckets/demo-bucket",
     time: "2026-01-01T00:00:00Z",
     data: { name: "img.png", bucket: "demo-bucket", contentType: "image/png" },
   } as unknown as StorageEvent;
+}
 
+const publishedTypes = () =>
+  publish.mock.calls.map((call) => (call[0] as { type: string }).type);
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  mocks.checkImageContent.mockResolvedValue(true);
+  mocks.resizeImages.mockResolvedValue([
+    {
+      status: "fulfilled",
+      value: {
+        size: "200x200",
+        outputFilePath: "img_200x200.png",
+        success: true,
+      },
+    },
+  ]);
+  mocks.downloadOriginalFile.mockResolvedValue([
+    "/tmp/original.png",
+    mocks.remoteFile,
+  ]);
+  vi.spyOn(logger, "warn").mockImplementation(() => {});
+  process.env.EVENTARC_CHANNEL = "projects/p/locations/l/channels/firebase";
+  events.setupEventChannel();
+});
+
+test("an upload is still resized when every Eventarc publish is denied", async () => {
   await expect(
-    handleObjectFinalized(event, makeCtx())
+    handleObjectFinalized(makeEvent(), makeCtx())
   ).resolves.toBeUndefined();
 
-  expect(publish).toHaveBeenCalled();
-  expect(logger.warn).toHaveBeenCalled();
-  expect(shouldResize).toHaveBeenCalled();
+  expect(mocks.resizeImages).toHaveBeenCalled();
+  expect(mocks.deleteRemoteFile).toHaveBeenCalledWith(
+    mocks.remoteFile,
+    "img.png"
+  );
+  expect(mocks.deleteTempFile).toHaveBeenCalled();
+  expect(publishedTypes()).toEqual([
+    eventType("onStart"),
+    eventType("onStartResize"),
+    eventType("onSuccess"),
+    eventType("onCompletion"),
+  ]);
+  expect(logger.warn).toHaveBeenCalledTimes(4);
+});
+
+test("a resize that throws still reports through a denied onError publish", async () => {
+  mocks.resizeImages.mockRejectedValue(new Error("sharp exploded"));
+
+  await expect(
+    handleObjectFinalized(makeEvent(), makeCtx())
+  ).resolves.toBeUndefined();
+
+  expect(publishedTypes()).toContain(eventType("onError"));
+  expect(mocks.deleteTempFile).toHaveBeenCalled();
+});
+
+test("a failed resize still stores the original when every publish is denied", async () => {
+  mocks.resizeImages.mockResolvedValue([
+    {
+      status: "fulfilled",
+      value: {
+        size: "200x200",
+        outputFilePath: "img_200x200.png",
+        success: false,
+      },
+    },
+  ]);
+
+  await expect(
+    handleObjectFinalized(makeEvent(), makeCtx())
+  ).resolves.toBeUndefined();
+
+  expect(mocks.handleFailedImage).toHaveBeenCalled();
+  expect(mocks.deleteRemoteFile).not.toHaveBeenCalled();
+  expect(publishedTypes()).toContain(eventType("onSuccess"));
 });
