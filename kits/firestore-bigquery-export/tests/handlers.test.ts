@@ -332,18 +332,4 @@ describe("handleSyncBigQueryTask", () => {
     // belong to Cloud Tasks alone.
     expect(ctx.enqueue).not.toHaveBeenCalled();
   });
-
-  test("does not rethrow when the success event fails after the row lands", async () => {
-    // The row is already in BigQuery; a Cloud Tasks retry would land past the
-    // insertId dedupe window and duplicate it.
-    const ctx = makeCtx();
-    (
-      events.recordSuccessEvent as ReturnType<typeof vi.fn>
-    ).mockRejectedValueOnce(new Error("channel down"));
-
-    await expect(
-      handleSyncBigQueryTask(taskRequest(serializedChange()), ctx)
-    ).resolves.toBeUndefined();
-    expect(ctx.tracker.record).toHaveBeenCalledTimes(1);
-  });
 });

@@ -21,6 +21,7 @@
  */
 
 import { ChangeType } from "@firebaseextensions/firestore-bigquery-change-tracker";
+import type { Request } from "firebase-functions/tasks";
 import { logger } from "firebase-functions";
 import { beforeEach, expect, test, vi } from "vitest";
 
@@ -40,7 +41,9 @@ import { resolveExportConfig } from "../src/export-config";
 import {
   type DocumentWriteEvent,
   type HandlerContext,
+  type SerializedDocumentChange,
   handleDocumentWrite,
+  handleSyncBigQueryTask,
 } from "../src/handlers";
 
 function snap(exists: boolean, id: string, data: unknown = {}) {
@@ -86,4 +89,31 @@ test("a document write still exports when every Eventarc publish is denied", asy
   const record = vi.mocked(ctx.tracker.record);
   expect(record).toHaveBeenCalledTimes(1);
   expect(record.mock.calls[0][0][0].operation).toBe(ChangeType.CREATE);
+});
+
+test("a dispatched task does not retry when the onSuccess publish is denied", async () => {
+  const ctx = makeCtx();
+  const change: SerializedDocumentChange = {
+    timestamp: "2026-01-01T00:00:00Z",
+    eventId: "evt-1",
+    fullResourceName:
+      "projects/test-project/databases/(default)/documents/users/doc1",
+    changeType: ChangeType.CREATE,
+    documentId: "doc1",
+    params: null,
+    data: { a: 1 },
+    oldData: undefined,
+  };
+  const req = {
+    data: change,
+    retryCount: 0,
+  } as Request<SerializedDocumentChange>;
+
+  // A rethrow here would have Cloud Tasks retry the insert past the insertId
+  // dedupe window and duplicate the row.
+  await expect(handleSyncBigQueryTask(req, ctx)).resolves.toBeUndefined();
+
+  expect(publish).toHaveBeenCalled();
+  expect(logger.warn).toHaveBeenCalled();
+  expect(vi.mocked(ctx.tracker.record)).toHaveBeenCalledTimes(1);
 });
