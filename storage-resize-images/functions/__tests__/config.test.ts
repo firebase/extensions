@@ -70,3 +70,58 @@ describe("extension", () => {
     expect(config.deleteOriginalFile).toEqual(deleteImage.onSuccess);
   });
 });
+
+describe("IMAGE_TYPE validation", () => {
+  let restoreImageTypeEnv;
+
+  beforeEach(() => {
+    jest.resetModules();
+    delete process.env.IMAGE_TYPE;
+  });
+
+  afterEach(() => {
+    if (restoreImageTypeEnv) {
+      restoreImageTypeEnv();
+      restoreImageTypeEnv = undefined;
+    }
+    delete process.env.IMAGE_TYPE;
+  });
+
+  test("accepts supported image types", () => {
+    restoreImageTypeEnv = mockedEnv({
+      ...environment,
+      IMAGE_TYPE: "jpeg,webp,false",
+    });
+    const { config: imageTypeConfig } = jest.requireActual("../src/config");
+    expect(imageTypeConfig.imageTypes).toEqual(["jpeg", "webp", "false"]);
+  });
+
+  test("leaves imageTypes undefined when IMAGE_TYPE is not set", () => {
+    restoreImageTypeEnv = mockedEnv(environment);
+    const { config: imageTypeConfig } = jest.requireActual("../src/config");
+    expect(imageTypeConfig.imageTypes).toBeUndefined();
+  });
+
+  test("ignores empty entries from an unselected multiSelect", () => {
+    restoreImageTypeEnv = mockedEnv({ ...environment, IMAGE_TYPE: "" });
+    const { config: imageTypeConfig } = jest.requireActual("../src/config");
+    expect(imageTypeConfig.imageTypes).toEqual([]);
+  });
+
+  test("rejects an unsupported image type", () => {
+    restoreImageTypeEnv = mockedEnv({ ...environment, IMAGE_TYPE: "bogus" });
+    expect(() => jest.requireActual("../src/config")).toThrow(
+      /Invalid IMAGE_TYPE value\(s\): bogus/
+    );
+  });
+
+  test("rejects a list containing an unsupported image type", () => {
+    restoreImageTypeEnv = mockedEnv({
+      ...environment,
+      IMAGE_TYPE: "jpeg,bogus",
+    });
+    expect(() => jest.requireActual("../src/config")).toThrow(
+      /Invalid IMAGE_TYPE value\(s\): bogus/
+    );
+  });
+});
