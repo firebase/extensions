@@ -209,7 +209,7 @@ functions. If nothing changed since the last deploy, the CLI skips the codebase
 (`No resources modified for codebase: <id>. Skipping afterRedeploy lifecycle
 hook.`) and `setupBigQuerySync` does not run. To force it, either change any
 value in the instance's `.env` file and redeploy, or enqueue the task manually
-as shown below.
+as shown below, substituting `setupBigQuerySync` into the snippet.
 
 `initBigQuerySync` and `setupBigQuerySync` call the same handler; they exist as
 separate task functions so first-deploy and redeploy can target different
