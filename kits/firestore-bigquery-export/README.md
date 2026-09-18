@@ -430,11 +430,12 @@ Before importing, note what it does and does not restore:
   reflects the last real operation. (The extension's import guide describes
   these rows as carrying an epoch timestamp; version 0.1.27 uses the import
   time.)
-- Deletes cannot be recovered, because the import reflects what Firestore holds
-  when it runs. A document deleted during the gap stays absent from the
-  changelog, and one whose delete was missed stays visible in the latest view.
-  An update that a later write superseded is likewise unavailable, since only
-  the current value is imported.
+- Deletes cannot be recovered, because the import reflects only what Firestore
+  holds when it runs. A document deleted during the gap is no longer there to
+  import, so the delete never reaches the changelog and the document stays
+  visible in the latest view with its last exported value. An update that a
+  later write superseded is likewise unavailable, since only the current value
+  is imported.
 
 ## Differences from the Stream Firestore to BigQuery extension
 
