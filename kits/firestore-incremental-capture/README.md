@@ -366,6 +366,16 @@ are not offered: pick a region inside them instead, `us-central1` for `nam5` and
 `nam7`, `europe-west1` for `eur3`. Changing `LOCATION` on an existing instance
 deletes and recreates the functions.
 
+### Concurrency and ingress match the extension
+
+Every function sets `concurrency: 1`, and the event and task-queue functions
+also set `ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen
+defaults of concurrency `80` and `ALLOW_ALL`. The extension ran on 1st gen,
+where an instance handled one invocation at a time and only internal traffic
+reached the function. `onHttpRunRestoration` keeps open ingress, because you
+call it from outside the project; it stays gated by its private invoker.
+Existing kit deployments adopt the restrictions on their next deploy.
+
 ## API surface
 
 - **Main entry** (`@firebase-function-kits/firestore-incremental-capture`):

@@ -100,6 +100,13 @@ function getContext(): HandlerContext {
   return ctx;
 }
 
-export const serve = onRequest({ region: "us-central1" }, (req, res) =>
-  handleServe(req, res, getContext())
+/**
+ * The extension ran on 1st gen, which serves one request per instance. 2nd gen
+ * defaults to concurrency 80, so the restriction is declared explicitly.
+ * Ingress stays `ALLOW_ALL`: the extension published this function as a public
+ * HTTPS endpoint, and restricting ingress would cut off browser clients.
+ */
+export const serve = onRequest(
+  { region: "us-central1", concurrency: 1 },
+  (req, res) => handleServe(req, res, getContext())
 );

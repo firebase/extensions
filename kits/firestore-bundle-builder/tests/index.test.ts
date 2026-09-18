@@ -85,7 +85,7 @@ describe("index", () => {
     const { serve } = await importIndex();
 
     expect(onRequest).toHaveBeenCalledWith(
-      { region: "us-central1" },
+      { region: "us-central1", concurrency: 1 },
       expect.any(Function)
     );
     expect(serve).toBeDefined();

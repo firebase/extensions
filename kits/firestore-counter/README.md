@@ -240,6 +240,16 @@ writes just pay a cross-region hop.
 This is read from the published Cloud Scheduler region list and `gcloud
 scheduler locations list`, not from a failed deploy.
 
+### Concurrency and ingress match the extension
+
+`controllerCore`, `onWrite` and `worker` set `concurrency: 1` and
+`ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
+concurrency `80` and `ALLOW_ALL`. The extension ran on 1st gen, where an
+instance handled one invocation at a time and only internal traffic reached the
+function. This is separate from the `maxInstances: 1` limit the controller and
+shard-write functions carry. Existing kit deployments adopt the restrictions on
+their next deploy.
+
 ### Unchanged
 
 - Both settings, with the same names and the same defaults

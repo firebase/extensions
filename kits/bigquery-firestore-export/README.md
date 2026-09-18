@@ -295,6 +295,14 @@ Both functions' service accounts need `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of the three roles the extension asked for, and the
 Pub/Sub API is now requested explicitly. The Firebase CLI handles all of this.
 
+### Concurrency and ingress match the extension
+
+`processMessages` and `upsertTransferConfig` set `concurrency: 1` and
+`ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
+concurrency `80` and `ALLOW_ALL`. The extension ran on 1st gen, where an
+instance handled one invocation at a time and only internal traffic reached the
+function. Existing kit deployments adopt the restrictions on their next deploy.
+
 ### Unchanged
 
 - `COLLECTION_PATH` still defaults to `transferConfigs`, and the document layout

@@ -212,6 +212,14 @@ recording where the extension's function ran. Nothing reads it: placement comes
 from `DATABASE_REGION` alone, so if the two disagree your next deploy moves the
 function.
 
+### Concurrency and ingress match the extension
+
+`rtdblimit` sets `concurrency: 1` and `ingressSettings: "ALLOW_INTERNAL_ONLY"`,
+overriding the 2nd gen defaults of concurrency `80` and `ALLOW_ALL`. The
+extension ran on 1st gen, where an instance handled one event at a time and only
+internal traffic reached the function. Existing kit deployments adopt the
+restrictions on their next deploy.
+
 ### Unchanged
 
 - The trigger fires on creates of direct children of the watched path, and the

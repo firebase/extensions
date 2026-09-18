@@ -211,6 +211,14 @@ The functions run on Node 22 with 2nd gen Cloud Functions, where the extension
 was on Node 14 with 1st gen. Bundle format and the client-side APIs for loading
 bundles are unaffected.
 
+### Concurrency matches the extension
+
+`serve` sets `concurrency: 1`, overriding the 2nd gen default of `80`, because
+the extension ran on 1st gen and served one request per instance. Ingress stays
+`ALLOW_ALL`: the extension published `serve` as a public endpoint, and clients
+fetch bundles from outside your project. Existing kit deployments adopt the
+concurrency limit on their next deploy.
+
 ## API surface
 
 - **Main entry** (`@firebase-function-kits/firestore-bundle-builder`): exports `serve`. The

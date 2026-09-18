@@ -1,3 +1,5 @@
+- fix: set `processMessages` and `upsertTransferConfig` concurrency to `1` and ingress to `ALLOW_INTERNAL_ONLY`, matching the extension. Previously, the kit inherited the Gen2 defaults of concurrency `80` and ingress `ALLOW_ALL`. Existing kit deployments adopt these restrictions on their next deploy.
+
 - **Breaking:** `TRANSFER_CONFIG_NAME` and the link-an-existing-transfer-config path are removed for parity with the extension, which never exposed them. Re-adding adoption is tracked in #3185
 - Initial release of kit, see README for differences between the legacy extension and this kit
 - The instance id now comes from `FIREBASE_KIT_INSTANCE_ID`, which the Firebase CLI (15.27.0 or later) provides to each kit instance; `INSTANCE_ID` is no longer a configuration parameter

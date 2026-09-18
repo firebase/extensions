@@ -168,6 +168,18 @@ const functionRegion = firestoreLocationToFunctionRegion(
 );
 
 /**
+ * The extension deployed the task functions on 1st gen, which serves one
+ * invocation per instance and accepts internal traffic only. 2nd gen defaults
+ * to concurrency 80 and `ALLOW_ALL` ingress, so both restrictions are declared
+ * explicitly. `fsexportbigquery` is exempt: the extension already deployed it
+ * as a 2nd gen function, so it inherited the same defaults the kit does.
+ */
+const EXTENSION_RUNTIME_OPTIONS = {
+  concurrency: 1,
+  ingressSettings: "ALLOW_INTERNAL_ONLY",
+} as const;
+
+/**
  * Firestore trigger: streams document writes on the watched collection into the
  * BigQuery changelog table. A failed inline write buffers through the
  * `syncBigQuery` queue and the execution still succeeds. No runtime retry
@@ -193,6 +205,7 @@ export const fsexportbigquery = onDocumentWritten(
 export const syncBigQuery = onTaskDispatched<SerializedDocumentChange>(
   {
     ...(functionRegion ? { region: functionRegion } : {}),
+    ...EXTENSION_RUNTIME_OPTIONS,
     retryConfig: SYNC_RETRY_CONFIG,
     rateLimits: {
       maxConcurrentDispatches: SYNC_MAX_CONCURRENT_DISPATCHES, // A blank .env value reaches this deploy-time expression as 0, which
@@ -229,6 +242,7 @@ async function handleBigQuerySyncInitialization(): Promise<void> {
 export const initBigQuerySync = onTaskDispatched(
   {
     ...(functionRegion ? { region: functionRegion } : {}),
+    ...EXTENSION_RUNTIME_OPTIONS,
     retryConfig: LIFECYCLE_RETRY_CONFIG,
   },
   handleBigQuerySyncInitialization
@@ -241,6 +255,7 @@ export const initBigQuerySync = onTaskDispatched(
 export const setupBigQuerySync = onTaskDispatched(
   {
     ...(functionRegion ? { region: functionRegion } : {}),
+    ...EXTENSION_RUNTIME_OPTIONS,
     retryConfig: LIFECYCLE_RETRY_CONFIG,
   },
   handleBigQuerySyncInitialization

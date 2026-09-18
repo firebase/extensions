@@ -107,9 +107,20 @@ function getHandlerContext(): HandlerContext {
  */
 const functionRegion = envFunctionRegion();
 
+/**
+ * The extension ran on 1st gen, which serves one invocation per instance and
+ * accepts internal traffic only. 2nd gen defaults to concurrency 80 and
+ * `ALLOW_ALL` ingress, so both restrictions are declared explicitly.
+ */
+const EXTENSION_RUNTIME_OPTIONS = {
+  concurrency: 1,
+  ingressSettings: "ALLOW_INTERNAL_ONLY",
+} as const;
+
 export const controllerCore = onSchedule(
   {
     ...(functionRegion ? { region: functionRegion } : {}),
+    ...EXTENSION_RUNTIME_OPTIONS,
     schedule: CONFIG_EXPRESSIONS.schedule as unknown as string,
     maxInstances: 1,
   },
@@ -119,6 +130,7 @@ export const controllerCore = onSchedule(
 export const onWrite = onDocumentWritten(
   {
     ...(functionRegion ? { region: functionRegion } : {}),
+    ...EXTENSION_RUNTIME_OPTIONS,
     document: "{collection}/{counter=**}/_counter_shards_/{shardId}",
     maxInstances: 1,
     timeoutSeconds: 120,
@@ -129,6 +141,7 @@ export const onWrite = onDocumentWritten(
 export const worker = onDocumentWritten(
   {
     ...(functionRegion ? { region: functionRegion } : {}),
+    ...EXTENSION_RUNTIME_OPTIONS,
     document: expr`${CONFIG_EXPRESSIONS.internalStatePath}/workers/{workerId}`,
   },
   handleWorker
