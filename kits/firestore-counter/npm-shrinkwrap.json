@@ -11,7 +11,7 @@
       "dependencies": {
         "deep-equal": "^1.0.1",
         "firebase-admin": "^14.4.0",
-        "firebase-functions": "^7.3.3-rc.4",
+        "firebase-functions": "^7.4.0",
         "uuid": "^11.0.5"
       },
       "devDependencies": {
@@ -775,9 +775,6 @@
         "arm64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -795,9 +792,6 @@
         "arm64"
       ],
       "dev": true,
-      "libc": [
-        "musl"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -815,9 +809,6 @@
         "ppc64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -835,9 +826,6 @@
         "s390x"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -855,9 +843,6 @@
         "x64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -875,9 +860,6 @@
         "x64"
       ],
       "dev": true,
-      "libc": [
-        "musl"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -2032,10 +2014,9 @@
       }
     },
     "node_modules/firebase-functions": {
-      "version": "7.3.3-rc.4",
-      "resolved": "https://registry.npmjs.org/firebase-functions/-/firebase-functions-7.3.3-rc.4.tgz",
-      "integrity": "sha512-zUCWBKl3wzj9oJceCUbACpz7p+seeQAx4ZCNg28BVzNGGprre/T88Cgv1ADLGsGBMddlZf0tRDLKgoh0Ccb+iw==",
-      "license": "MIT",
+      "version": "7.4.0",
+      "resolved": "https://registry.npmjs.org/firebase-functions/-/firebase-functions-7.4.0.tgz",
+      "integrity": "sha512-jR+c16q1E07dPVqU/sdbIEVEQJYSxjY6BFI+QR5/AvrnII8C6UkJv6fR8LJ+GKmcGUBe7SjO/MnEWLAeOiHWMw==",
       "dependencies": {
         "@types/cors": "^2.8.5",
         "@types/express": "^5.0.0",
@@ -3007,9 +2988,6 @@
         "arm64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MPL-2.0",
       "optional": true,
       "os": [
@@ -3031,9 +3009,6 @@
         "arm64"
       ],
       "dev": true,
-      "libc": [
-        "musl"
-      ],
       "license": "MPL-2.0",
       "optional": true,
       "os": [
@@ -3055,9 +3030,6 @@
         "x64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MPL-2.0",
       "optional": true,
       "os": [
@@ -3079,9 +3051,6 @@
         "x64"
       ],
       "dev": true,
-      "libc": [
-        "musl"
-      ],
       "license": "MPL-2.0",
       "optional": true,
       "os": [
