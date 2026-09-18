@@ -421,7 +421,9 @@ document changes again.
 Before importing, note what it does and does not restore:
 
 - The script imports the entire collection; it cannot target a subset. Every
-  document receives one `IMPORT` row holding its current value.
+  document receives one `IMPORT` row holding its current value. Import rows
+  carry no event id, so running the import again adds a further row per
+  document rather than replacing the earlier one.
 - Rows are stamped with the time the import runs, so afterwards every document
   reports operation `IMPORT` in the latest view. Current values remain correct
   and the preceding rows remain in the changelog, but the latest view no longer
