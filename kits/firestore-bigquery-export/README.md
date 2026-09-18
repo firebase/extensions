@@ -335,11 +335,15 @@ newly created and not yet delivering reliably. Writes made in that window are
 never seen by a function, so they reach neither the changelog nor
 `BACKUP_COLLECTION`.
 
-To avoid the window, run `ext:migrate` without `--force` and answer no to the
-uninstall prompt. Both exporters are live at that point, and each logs under
-its own function name: the extension's is `ext-<instance-id>-fsexportbigquery`
-and the kit's is `kit-<instance-id>-fsexportbigquery`, so the logs tell you
-which one handled a write. Watch the kit's:
+To avoid the window, run `ext:migrate` without `--force` and answer no when it
+asks whether to uninstall the extension. That question comes last, after the
+kit has deployed; the prompts before it are about installing the kit, and
+answering no to those cancels the migration instead.
+
+Both exporters are live at that point, and each logs under its own function
+name: the extension's is `ext-<instance-id>-fsexportbigquery` and the kit's is
+`kit-<instance-id>-fsexportbigquery`, so the logs tell you which one handled a
+write. Watch the kit's:
 
 ```shell
 firebase functions:log --only kit-<instance-id>-fsexportbigquery --project <project-id>
@@ -347,16 +351,20 @@ firebase functions:log --only kit-<instance-id>-fsexportbigquery --project <proj
 
 Every delivered write logs `Firestore event received by onDocumentWritten
 trigger` with the document name. Write to the collection and wait until the kit
-logs each one, not just some: a new trigger often delivers sporadically for a
-minute or two before it settles. Then uninstall the extension yourself:
+logs every write, not just some. Allow several minutes: in a measured run the
+kit's first delivery came about two minutes after its functions were created,
+and it kept missing writes for two to three minutes after that before it
+delivered all of them. Then uninstall the extension yourself:
 
 ```shell
 firebase ext:uninstall <instance-id> --project <project-id> --immediate
 ```
 
-Overlapping the two exporters is safe: the latest view keys on
-`document_name` and takes the newest row, so a document exported twice does
-not change what you read.
+Overlapping the two exporters is safe, and it does not duplicate rows. Both
+triggers receive the same event with the same event id, and the changelog row
+is written with that id as its BigQuery insert id, so BigQuery keeps one copy.
+A run migrated this way exported 1244 writes with none lost and none
+duplicated, including 76 documents both functions processed.
 
 If the window has already passed, re-import the collection with
 `fs-bq-import-collection` from the extension repository. Point it at the same
