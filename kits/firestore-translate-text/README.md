@@ -209,6 +209,14 @@ Its service account needs `roles/eventarc.eventReceiver` and `roles/run.invoker`
 on top of `roles/datastore.user`; the Firebase CLI grants these for you. The
 Cloud Translation API is still required whichever provider you choose.
 
+### Concurrency and ingress match the extension
+
+`fstranslate` sets `concurrency: 1` and
+`ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
+concurrency `80` and `ALLOW_ALL`. The extension ran on 1st gen, where an
+instance handled one document at a time and only internal traffic reached the
+function. Existing kit deployments adopt the restrictions on their next deploy.
+
 ### Unchanged
 
 - The watched path is still `COLLECTION_PATH/{messageId}` on your default

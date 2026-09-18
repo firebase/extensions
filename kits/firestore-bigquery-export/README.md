@@ -561,6 +561,16 @@ BigQuery changelog table, so they still work against data this kit writes. See
 "Migrating from the extension" for using `fs-bq-import-collection` to recover
 documents missed during a migration.
 
+### Concurrency and ingress match the extension
+
+`syncBigQuery`, `initBigQuerySync` and `setupBigQuerySync` set `concurrency: 1`
+and `ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
+concurrency `80` and `ALLOW_ALL`. The extension deployed those three on 1st gen,
+where an instance handled one invocation at a time and only internal traffic
+reached the function. `fsexportbigquery` keeps the 2nd gen defaults, because the
+extension already deployed it as a 2nd gen function. Existing kit deployments
+adopt the restrictions on their next deploy.
+
 ## API surface
 
 - **Main entry** (`@firebase-function-kits/firestore-bigquery-export`): exports

@@ -109,7 +109,17 @@ function getContext(): HandlerContext {
   return ctx;
 }
 
-export const clearData = onUserDeleted((event) => {
+/**
+ * The extension ran on 1st gen, which serves one invocation per instance and
+ * accepts internal traffic only. 2nd gen defaults to concurrency 80 and
+ * `ALLOW_ALL` ingress, so both restrictions are declared explicitly.
+ */
+const EXTENSION_RUNTIME_OPTIONS = {
+  concurrency: 1,
+  ingressSettings: "ALLOW_INTERNAL_ONLY",
+} as const;
+
+export const clearData = onUserDeleted(EXTENSION_RUNTIME_OPTIONS, (event) => {
   // The Auth event delivers no user record when the payload envelope is empty,
   // so bail before getContext() rather than initialising the SDKs for nothing.
   const uid = event.data?.uid;
@@ -122,6 +132,7 @@ export const clearData = onUserDeleted((event) => {
 
 export const handleSearch = onMessagePublished(
   {
+    ...EXTENSION_RUNTIME_OPTIONS,
     topic: CONFIG_EXPRESSIONS.discoveryTopicName,
   },
   (event) => runSearch(event.data.message.json, getContext())
@@ -129,6 +140,7 @@ export const handleSearch = onMessagePublished(
 
 export const handleDeletion = onMessagePublished(
   {
+    ...EXTENSION_RUNTIME_OPTIONS,
     topic: CONFIG_EXPRESSIONS.deletionTopicName,
   },
   (event) => runDeletion(event.data.message.json, getContext())

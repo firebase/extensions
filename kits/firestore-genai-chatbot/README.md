@@ -194,6 +194,14 @@ overrides `candidateCount` to 1 gets no `candidates` field even when
 validates them now: a non-numeric value is parsed to `NaN` and passed to the
 model call rather than being caught at deploy time.
 
+### Concurrency and ingress match the extension
+
+`generateMessage` sets `concurrency: 1` and
+`ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
+concurrency `80` and `ALLOW_ALL`. The extension ran on 1st gen, where an
+instance handled one invocation at a time and only internal traffic reached the
+function. Existing kit deployments adopt the restrictions on their next deploy.
+
 ### Unchanged
 
 - The watched path is still `COLLECTION_NAME/{messageId}` on the default

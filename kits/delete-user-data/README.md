@@ -188,6 +188,14 @@ Setting `AUTO_DISCOVERY_SEARCH_FIELDS` to an empty value used to raise an
 invalid field path error during discovery. It is now treated as "match on the
 document path only". The default is unchanged (`id,uid,userId`).
 
+### Concurrency and ingress match the extension
+
+`clearData`, `handleSearch` and `handleDeletion` set `concurrency: 1` and
+`ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
+concurrency `80` and `ALLOW_ALL`. The extension ran on 1st gen, where an
+instance handled one invocation at a time and only internal traffic reached the
+function. Existing kit deployments adopt the restrictions on their next deploy.
+
 ### Unchanged
 
 Events are the same. When `EVENTARC_CHANNEL` is configured, the functions still
