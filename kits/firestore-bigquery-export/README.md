@@ -335,9 +335,20 @@ newly created and not yet delivering reliably. Writes made in that window are
 never seen by a function, so they reach neither the changelog nor
 `BACKUP_COLLECTION`.
 
-To avoid the window, run `ext:migrate` without `--force`, answer no to the
-uninstall prompt, wait until the kit's function logs show it processing writes
-without gaps, then uninstall the extension yourself:
+To avoid the window, run `ext:migrate` without `--force` and answer no to the
+uninstall prompt. Both exporters are live at that point, and each logs under
+its own function name: the extension's is `ext-<instance-id>-fsexportbigquery`
+and the kit's is `kit-<instance-id>-fsexportbigquery`, so the logs tell you
+which one handled a write. Watch the kit's:
+
+```shell
+firebase functions:log --only kit-<instance-id>-fsexportbigquery --project <project-id>
+```
+
+Every delivered write logs `Firestore event received by onDocumentWritten
+trigger` with the document name. Write to the collection and wait until the kit
+logs each one, not just some: a new trigger often delivers sporadically for a
+minute or two before it settles. Then uninstall the extension yourself:
 
 ```shell
 firebase ext:uninstall <instance-id> --project <project-id> --immediate
