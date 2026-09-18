@@ -326,91 +326,6 @@ WHEN NOT MATCHED THEN
 Add `path_params` and any partition column to both lists if your table has
 them.
 
-### Recovering documents missed during migration
-
-Migrating from the extension with `firebase ext:migrate` can leave a window of
-a few minutes in which neither exporter receives events:
-the extension's trigger stops as it is uninstalled, and the kit's trigger is
-newly created and not yet delivering reliably. Writes made in that window are
-never seen by a function, so they reach neither the changelog nor
-`BACKUP_COLLECTION`.
-
-To avoid the window, run `ext:migrate` without `--force` and answer no when it
-asks whether to uninstall the extension. That question comes last, after the
-kit has deployed; the earlier prompts cover the migration itself and installing
-the kit, and answering no to one of those aborts the migration instead.
-
-Both exporters are live at that point, and each logs under its own function
-name: the extension's is `ext-<instance-id>-fsexportbigquery` and the kit's is
-`kit-<instance-id>-fsexportbigquery`, so the logs tell you which one handled a
-write. Watch the kit's:
-
-```shell
-firebase functions:log --only kit-<instance-id>-fsexportbigquery --project <project-id>
-```
-
-Every delivered write logs `Firestore event received by onDocumentWritten
-trigger` with the document name, at the default `LOG_LEVEL` of `info`; `warn`
-or higher suppresses that line. Write to the collection and wait until the kit
-logs every write, not just some. Allow several minutes: in a measured run the
-kit's first delivery came about two minutes after its functions were created,
-and it kept missing writes for two to three minutes after that before it
-delivered all of them. Then uninstall the extension yourself:
-
-```shell
-firebase ext:uninstall <instance-id> --project <project-id> --immediate
-```
-
-Overlapping the two exporters is safe. Both triggers receive the same event
-with the same event id, and the changelog row carries that id as its BigQuery
-insert id, so BigQuery collapses the two copies. That dedup is best effort, so
-a duplicate row is not impossible; a run migrated this way exported 1244 writes
-with none lost and none duplicated, including 76 documents that both functions
-processed. A duplicate would in any case not change what the latest view
-reports, since it keeps one row per document.
-
-If the window has already passed, re-import the collection with
-`fs-bq-import-collection` from the extension repository. Point it at the same
-dataset and table prefix the kit writes to. In non-interactive mode the
-script requires the project, collection path, dataset, table prefix,
-`--query-collection-group` and `--dataset-location`:
-
-```shell
-npx @firebaseextensions/fs-bq-import-collection \
-  --non-interactive \
-  --project <project-id> \
-  --source-collection-path <COLLECTION_PATH> \
-  --dataset <DATASET_ID> \
-  --table-name-prefix <TABLE_ID> \
-  --query-collection-group false \
-  --dataset-location <DATASET_LOCATION> \
-  --firestore-instance-id <DATABASE>
-```
-
-Run this only once the kit is confirmed to be exporting, and pause writes to
-the collection while it runs. The script reads each document and writes its
-row a moment later, so a write that streams mid-import can end up older than
-the import row and be hidden by it until the document changes again.
-
-What this recovers, and what it costs:
-
-- The script has no way to import a subset of documents, so it re-imports the
-  whole collection: one `IMPORT` row per document, carrying the document's
-  current value.
-- Each row is stamped with the time the import ran, not with the original
-  write time. Since the latest view takes the newest row per document, after
-  an import every document reads as operation `IMPORT`. Current values stay
-  correct, because they are Firestore's current values, but the real last
-  operation is no longer what the view reports. The original rows remain in
-  the changelog. (The extension's import guide says these rows use an epoch
-  timestamp and therefore never supersede real rows. That is not what version
-  0.1.27 does.)
-- Deletes are not recoverable. The import reads what Firestore holds now, so
-  a document deleted during the window stays missing from the changelog, and
-  a document whose delete was missed stays visible in the latest view. An
-  update that a later write superseded is equally gone: only the current value
-  is imported.
-
 ### Known limits
 
 - A task queue is a project-level resource created for each task function.
@@ -435,6 +350,89 @@ What this recovers, and what it costs:
   `BACKUP_COLLECTION`. An update carries both `data` and `old_data`, so large
   documents get there first; `EXCLUDE_OLD_DATA=yes` halves the payload. Same as
   the extension.
+
+## Migrating from the extension
+
+### Avoiding the cutover gap
+
+`firebase ext:migrate` deploys the kit and then uninstalls the extension. The
+extension's trigger stops delivering as it is uninstalled, while the kit's
+trigger is newly created and takes a few minutes to deliver reliably, so writes
+made in between can reach neither exporter. Those writes are never seen by a
+function, so they appear in neither the changelog nor `BACKUP_COLLECTION`, and
+the command reports no error.
+
+To migrate without that gap, keep both exporters running until the kit is
+confirmed to be working.
+
+Run `ext:migrate` without `--force` and answer no when it asks whether to
+uninstall the extension. That question comes last, after the kit has deployed.
+The prompts before it cover the migration and the kit installation, so
+declining one of those aborts the migration instead.
+
+Both exporters are now live, each logging under its own function name:
+`ext-<instance-id>-fsexportbigquery` for the extension and
+`kit-<instance-id>-fsexportbigquery` for the kit. Follow the kit's:
+
+```shell
+firebase functions:log --only kit-<instance-id>-fsexportbigquery --project <project-id>
+```
+
+At the default `LOG_LEVEL` of `info`, each delivered write logs `Firestore
+event received by onDocumentWritten trigger` with the document name; `warn` and
+above suppress that line. Write to the collection and confirm the kit records
+every write rather than an intermittent few. A newly created trigger commonly
+needs several minutes to reach that point. Then uninstall the extension:
+
+```shell
+firebase ext:uninstall <instance-id> --project <project-id> --immediate
+```
+
+Running both exporters together is safe. Both triggers receive the same event
+id, and the changelog row carries it as its BigQuery insert id, so BigQuery
+collapses the second copy. Deduplication is best effort, but a duplicate row
+would not change the latest view, which reports one row per document.
+
+### Recovering documents missed during the gap
+
+If the cutover gap has already occurred, re-import the collection with
+`fs-bq-import-collection` from the extension repository, pointed at the dataset
+and table prefix the kit writes to. In non-interactive mode the script requires
+the project, collection path, dataset, table prefix,
+`--query-collection-group` and `--dataset-location`:
+
+```shell
+npx @firebaseextensions/fs-bq-import-collection \
+  --non-interactive \
+  --project <project-id> \
+  --source-collection-path <COLLECTION_PATH> \
+  --dataset <DATASET_ID> \
+  --table-name-prefix <TABLE_ID> \
+  --query-collection-group false \
+  --dataset-location <DATASET_LOCATION> \
+  --firestore-instance-id <DATABASE>
+```
+
+Import only once the kit is exporting, and pause writes to the collection while
+it runs: the script reads each document and writes its row shortly afterwards,
+so a write streamed mid-import can be superseded by the import row until that
+document changes again.
+
+Before importing, note what it does and does not restore:
+
+- The script imports the entire collection; it cannot target a subset. Every
+  document receives one `IMPORT` row holding its current value.
+- Rows are stamped with the time the import runs, so afterwards every document
+  reports operation `IMPORT` in the latest view. Current values remain correct
+  and the preceding rows remain in the changelog, but the latest view no longer
+  reflects the last real operation. (The extension's import guide describes
+  these rows as carrying an epoch timestamp; version 0.1.27 uses the import
+  time.)
+- Deletes cannot be recovered, because the import reflects what Firestore holds
+  when it runs. A document deleted during the gap stays absent from the
+  changelog, and one whose delete was missed stays visible in the latest view.
+  An update that a later write superseded is likewise unavailable, since only
+  the current value is imported.
 
 ## Differences from the Stream Firestore to BigQuery extension
 
@@ -547,7 +545,9 @@ The extension shipped companion scripts that this package does not:
 
 `IMPORT_COLLECTION_PATH` is not a setting here. If you rely on any of these,
 keep using the versions from the extension repository. They operate on the same
-BigQuery changelog table, so they still work against data this kit writes.
+BigQuery changelog table, so they still work against data this kit writes. See
+"Migrating from the extension" for using `fs-bq-import-collection` to recover
+documents missed during a migration.
 
 ## API surface
 
