@@ -326,6 +326,69 @@ WHEN NOT MATCHED THEN
 Add `path_params` and any partition column to both lists if your table has
 them.
 
+### Recovering documents missed during migration
+
+Migrating from the extension with `firebase ext:migrate` can leave a short
+window, up to a couple of minutes, in which neither exporter receives events:
+the extension's trigger stops as it is uninstalled, and the kit's trigger is
+newly created and not yet delivering reliably. Writes made in that window are
+never seen by a function, so they reach neither the changelog nor
+`BACKUP_COLLECTION`.
+
+To avoid the window, run `ext:migrate` without `--force`, answer no to the
+uninstall prompt, wait until the kit's function logs show it processing writes
+without gaps, then uninstall the extension yourself:
+
+```shell
+firebase ext:uninstall <instance-id> --project <project-id> --immediate
+```
+
+Overlapping the two exporters is safe: the latest view keys on
+`document_name` and takes the newest row, so a document exported twice does
+not change what you read.
+
+If the window has already passed, re-import the collection with
+`fs-bq-import-collection` from the extension repository. Point it at the same
+dataset and table prefix the kit writes to. In non-interactive mode the
+script requires the project, collection path, dataset, table prefix,
+`--query-collection-group` and `--dataset-location`:
+
+```shell
+npx @firebaseextensions/fs-bq-import-collection \
+  --non-interactive \
+  --project <project-id> \
+  --source-collection-path <COLLECTION_PATH> \
+  --dataset <DATASET_ID> \
+  --table-name-prefix <TABLE_ID> \
+  --query-collection-group false \
+  --dataset-location <DATASET_LOCATION> \
+  --firestore-instance-id <DATABASE>
+```
+
+Run this only once the kit is confirmed to be exporting, and pause writes to
+the collection while it runs. The script reads each document and writes its
+row a moment later, so a write that streams mid-import can end up older than
+the import row and be hidden by it until the document changes again.
+
+What this recovers, and what it costs:
+
+- The script has no way to import a subset of documents, so it re-imports the
+  whole collection: one `IMPORT` row per document, carrying the document's
+  current value.
+- Each row is stamped with the time the import ran, not with the original
+  write time. Since the latest view takes the newest row per document, after
+  an import every document reads as operation `IMPORT`. Current values stay
+  correct, because they are Firestore's current values, but the real last
+  operation is no longer what the view reports. The original rows remain in
+  the changelog. (The extension's import guide says these rows use an epoch
+  timestamp and therefore never supersede real rows. That is not what version
+  0.1.27 does.)
+- Deletes are not recoverable. The import reads what Firestore holds now, so
+  a document deleted during the window stays missing from the changelog, and
+  a document whose delete was missed stays visible in the latest view. An
+  update that a later write superseded is equally gone: only the current value
+  is imported.
+
 ### Known limits
 
 - A task queue is a project-level resource created for each task function.
