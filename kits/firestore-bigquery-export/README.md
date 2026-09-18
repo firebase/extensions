@@ -204,6 +204,13 @@ Deploy wiring (declared in the package):
 - First deploy runs `initBigQuerySync` automatically (`afterFirstDeploy`).
 - Later deploys run `setupBigQuerySync` automatically (`afterRedeploy`).
 
+The `afterRedeploy` hook only runs when the deploy actually updates the
+functions. If nothing changed since the last deploy, the CLI skips the codebase
+(`No resources modified for codebase: <id>. Skipping afterRedeploy lifecycle
+hook.`) and `setupBigQuerySync` does not run. To force it, either change any
+value in the instance's `.env` file and redeploy, or enqueue the task manually
+as shown below, substituting `setupBigQuerySync` into the snippet.
+
 `initBigQuerySync` and `setupBigQuerySync` call the same handler; they exist as
 separate task functions so first-deploy and redeploy can target different
 queues, matching the extension's install vs update/configure split.
@@ -252,7 +259,9 @@ missing when a write arrives, the inline write fails and the change buffers
 through the `syncBigQuery` queue, which re-attempts the write on Cloud Tasks'
 schedule. The queue handler does not provision, as in the extension: if the
 resources are still missing the retries fail and the row lands in
-`BACKUP_COLLECTION`; run the lifecycle task (redeploy) to recreate them.
+`BACKUP_COLLECTION`; run the lifecycle task to recreate them, either by
+enqueueing `setupBigQuerySync` manually (see above) or by redeploying with a
+config change so the deploy is not skipped.
 
 ## Failure handling
 
