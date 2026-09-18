@@ -172,6 +172,19 @@ region with Vertex AI support if you use content filtering, or leave
 was 1st gen. `FUNCTION_MEMORY` still accepts the same values (512 through 8192)
 and maps onto the equivalent 2nd gen memory setting.
 
+The kit leaves concurrency and ingress settings unset, so it inherits the
+platform defaults:
+
+- **Concurrency:** with the default CPU allocation, each kit instance can handle
+  up to **80 concurrent invocations**, compared with **1** for the 1st gen
+  extension. Concurrent image resizes share the instance's CPU and memory. See
+  [Firebase's concurrency documentation](https://firebase.google.com/docs/functions/manage-functions#allow_concurrent_requests)
+  for configuration options and the requirement for at least one full CPU.
+- **Ingress:** the kit defaults to **`ALLOW_ALL`**, whereas the extension deploys
+  with **`ALLOW_INTERNAL_ONLY`**. `ALLOW_ALL` permits traffic from public and
+  private sources; IAM permissions still control who can invoke the function.
+  See the [Cloud Functions ingress settings](https://cloud.google.com/functions/docs/reference/rest/v2/projects.locations.functions#IngressSettings).
+
 The function's service account needs `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of the roles the extension asked for. The Firebase
 CLI grants these for you.
