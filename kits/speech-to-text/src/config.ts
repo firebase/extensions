@@ -117,7 +117,8 @@ const params = {
     description:
       "Which kind of use-case should the speech-to-text transcription algorithm be honed for? For details, see [the model field in the documentation](https://cloud.google.com/speech-to-text/docs/reference/rest/v1/RecognitionConfig)\nIf you're not sure, just use the default.",
     default: "default",
-    input: { text: { example: "default" } },
+    // `required: true` in the extension, which refuses an empty answer.
+    input: { text: { example: "default", nonEmpty: true } },
   }),
   outputStoragePath: defineString("OUTPUT_STORAGE_PATH", {
     label: "Storage path for transcriptions",

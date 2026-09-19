@@ -85,3 +85,16 @@ describe("ENABLE_AUTOMATIC_PUNCTUATION values inherited from the extension", () 
     expect(configFromEnv().enableAutomaticPunctuation).toBe(false);
   });
 });
+
+/**
+ * Compatibility requirement: `MODEL` is `required: true` in extension.yaml, so
+ * the extension's installer refuses an empty answer and re-prompts. The CLI
+ * enforces that for a kit only when the declaration says `nonEmpty`.
+ */
+describe("MODEL", () => {
+  test("refuses an empty value at the prompt", () => {
+    expect(declaration("MODEL").input).toMatchObject({
+      text: { nonEmpty: true },
+    });
+  });
+});

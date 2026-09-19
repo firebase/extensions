@@ -106,6 +106,21 @@ describe("configFromEnv", () => {
     });
   });
 
+  // Compatibility requirement: the param is `required: true` in extension.yaml
+  // and its regex matches the empty string, so only nonEmpty reproduces the
+  // extension installer's refusal to accept a blank instance.
+  test("refuses an empty SELECTED_DATABASE_INSTANCE", async () => {
+    await importConfig();
+
+    const instanceOptions = defineString.mock.calls.find(
+      ([name]) => name === "SELECTED_DATABASE_INSTANCE"
+    )?.[1];
+
+    expect(instanceOptions).toMatchObject({
+      input: { text: { nonEmpty: true } },
+    });
+  });
+
   // The extension declared NODE_PATH and MAX_COUNT as required with no default,
   // so the CLI prompted for both at install. Declaring a default here would let
   // a deploy that omits MAX_COUNT silently prune every node down to that value.

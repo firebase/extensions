@@ -52,10 +52,12 @@ const defineString = vi.fn(
 );
 
 // Carries name so configFromEnv can look the variable up, as the real one does.
-const defineInt = vi.fn((name: string, opts?: { default?: number }) => ({
-  name,
-  value: () => opts?.default ?? 0,
-}));
+const defineInt = vi.fn(
+  (name: string, opts?: { default?: number; input?: unknown }) => ({
+    name,
+    value: () => opts?.default ?? 0,
+  })
+);
 
 const select = vi.fn((options: Record<string, string>) => ({
   select: {
@@ -218,5 +220,41 @@ describe("configFromEnv", () => {
     const { configFromEnv } = await importConfig();
 
     expect(configFromEnv().storageBucket).toBe("demo-test.appspot.com");
+  });
+});
+
+// Compatibility requirement: these are `required: true` in extension.yaml, so
+// the extension's installer refuses an empty answer and re-prompts. Without
+// the declarations below the CLI accepts an empty value and deploys it.
+describe("params the extension marks required", () => {
+  test("refuse an empty value at the prompt", async () => {
+    await importConfig();
+
+    const options = new Map(
+      defineString.mock.calls.map(([name, opts]) => [name, opts])
+    );
+    for (const name of ["FIRESTORE_DATABASE_ID", "CLOUD_STORAGE_BUCKET"]) {
+      expect(options.get(name)).toMatchObject({
+        input: { text: { nonEmpty: true } },
+      });
+    }
+  });
+
+  // `nonEmpty` is typed for string params only, so the int param uses the
+  // regex it is sugar for. An empty answer would otherwise resolve to 0.
+  test("refuse an empty AUTO_DISCOVERY_SEARCH_DEPTH", async () => {
+    await importConfig();
+
+    const options = new Map(
+      defineInt.mock.calls.map(([name, opts]) => [name, opts])
+    );
+    const regex = (
+      options.get("AUTO_DISCOVERY_SEARCH_DEPTH") as {
+        input?: { text?: { validationRegex?: RegExp } };
+      }
+    )?.input?.text?.validationRegex;
+
+    expect(regex?.test("")).toBe(false);
+    expect(regex?.test("3")).toBe(true);
   });
 });

@@ -214,21 +214,24 @@ const params = {
     description:
       "What is the name of the field that contains the string that you want to embed?",
     default: "input",
-    input: { text: { example: "input" } },
+    // `required: true` in the extension, which refuses an empty answer.
+    input: { text: { example: "input", nonEmpty: true } },
   }),
   outputFieldName: defineString("OUTPUT_FIELD_NAME", {
     label: "Output field name",
     description:
       "What is the name of the field where you want to store your embeddings?",
     default: "embedding",
-    input: { text: { example: "embedding" } },
+    // `required: true` in the extension, which refuses an empty answer.
+    input: { text: { example: "embedding", nonEmpty: true } },
   }),
   statusFieldName: defineString("STATUS_FIELD_NAME", {
     label: "Status field name",
     description:
       "What is the name of the field where you want to track the state of a document being embedded?",
     default: "status",
-    input: { text: { example: "status" } },
+    // `required: true` in the extension, which refuses an empty answer.
+    input: { text: { example: "status", nonEmpty: true } },
   }),
   doBackfill: defineBoolean("DO_BACKFILL", {
     label: "Embed existing documents?",
