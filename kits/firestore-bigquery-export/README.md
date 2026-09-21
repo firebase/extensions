@@ -561,6 +561,40 @@ BigQuery changelog table, so they still work against data this kit writes. See
 "Migrating from the extension" for using `fs-bq-import-collection` to recover
 documents missed during a migration.
 
+### Concurrency and ingress match the extension
+
+Every function sets `concurrency: 1`, and `fsexportbigquery` also sets
+`ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
+concurrency `80` and `ALLOW_ALL`. The extension deployed its functions with an
+instance handling one invocation at a time, and only internal traffic reached
+the Firestore trigger. The task-queue functions `syncBigQuery`,
+`initBigQuerySync` and `setupBigQuerySync` keep `ALLOW_ALL`, because the
+deployed extension's task-queue functions run with open ingress.
+`initBigQuerySync` stays callable as an authenticated HTTP POST, as described
+under [Provisioning](#provisioning).
+
+At concurrency `1`, a function serves as many requests at once as it has
+instances. `fsexportbigquery`, `initBigQuerySync` and `setupBigQuerySync` run
+on the Cloud Run default of 100 instances unless your codebase sets
+`setGlobalOptions({ maxInstances })`; the two lifecycle tasks receive one task
+per deploy, so no cap is declared on them. `syncBigQuery` sets
+`maxInstances: 500` to match its `maxConcurrentDispatches` limit, and a global
+`maxInstances` does not override it: Cloud Tasks may dispatch 500 tasks at
+once, and 100 instances would take only 100 of them. A dispatch that exceeds
+the instance ceiling gets a Cloud Run 429 that Cloud Tasks retries on the
+queue's schedule (5 attempts, 60 seconds minimum backoff). The handler never
+ran for such a dispatch, so a task that exhausts its attempts that way writes
+no `BACKUP_COLLECTION` row.
+
+`maxInstances: 500` needs at least 500 vCPU of Cloud Run quota in the
+function's region. Cloud Run limits a service's max instances to the smaller of
+the regional CPU quota divided by the CPU per instance and the regional memory
+quota divided by the memory per instance, and `syncBigQuery` runs at 1 vCPU. A
+project below that quota fails to create `syncBigQuery` at deploy, with the
+Cloud Run quota error relayed by firebase-tools. Request more Cloud Run quota
+for the region, or lower the `maxInstances` value in the kit source
+(`src/index.ts`) and deploy from your copy.
+
 ## API surface
 
 - **Main entry** (`@firebase-function-kits/firestore-bigquery-export`): exports

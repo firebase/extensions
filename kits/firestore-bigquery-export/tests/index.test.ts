@@ -17,10 +17,10 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("firebase-functions/firestore", () => ({
-  onDocumentWritten: vi.fn(() => ({})),
+  onDocumentWritten: vi.fn((options: unknown) => ({ deployOptions: options })),
 }));
 vi.mock("firebase-functions/tasks", () => ({
-  onTaskDispatched: vi.fn(() => ({})),
+  onTaskDispatched: vi.fn((options: unknown) => ({ deployOptions: options })),
 }));
 vi.mock("firebase-functions/v2", () => ({
   requiresAPI: vi.fn(),
@@ -39,6 +39,22 @@ interface ExportedOptions {
   tasks: FunctionOptions[];
 }
 
+const TASK_FUNCTIONS = [
+  "syncBigQuery",
+  "initBigQuerySync",
+  "setupBigQuerySync",
+] as const;
+
+/** Expected `ingressSettings` per deployed function; `undefined` means the declaration sets none. */
+const INGRESS_BY_FUNCTION: ReadonlyArray<
+  [name: string, ingress: "ALLOW_INTERNAL_ONLY" | undefined]
+> = [
+  ["fsexportbigquery", "ALLOW_INTERNAL_ONLY"],
+  ["syncBigQuery", undefined],
+  ["initBigQuerySync", undefined],
+  ["setupBigQuerySync", undefined],
+];
+
 const originalDatabaseRegion = process.env.DATABASE_REGION;
 
 afterEach(() => {
@@ -49,9 +65,18 @@ afterEach(() => {
   }
 });
 
-async function loadExportedOptions(
+function isDeployed(
+  value: unknown
+): value is { deployOptions: FunctionOptions } {
+  return (
+    typeof value === "object" && value !== null && "deployOptions" in value
+  );
+}
+
+/** The entry's exported functions by name, each with the options it was declared with. */
+async function loadDeployedOptions(
   databaseRegion?: string
-): Promise<ExportedOptions> {
+): Promise<Record<string, FunctionOptions>> {
   vi.resetModules();
   if (databaseRegion === undefined) {
     delete process.env.DATABASE_REGION;
@@ -59,19 +84,23 @@ async function loadExportedOptions(
     process.env.DATABASE_REGION = databaseRegion;
   }
 
-  await import("../src/index");
-  const { onDocumentWritten } = await import("firebase-functions/firestore");
-  const { onTaskDispatched } = await import("firebase-functions/tasks");
+  const index: Record<string, unknown> = await import("../src/index");
+  const deployed: Record<string, FunctionOptions> = {};
+  for (const [name, value] of Object.entries(index)) {
+    if (isDeployed(value)) {
+      deployed[name] = value.deployOptions;
+    }
+  }
+  return deployed;
+}
 
-  const triggerCalls = vi.mocked(onDocumentWritten).mock.calls;
-  const taskCalls = vi.mocked(onTaskDispatched).mock.calls;
-  const trigger = triggerCalls[triggerCalls.length - 1][0] as FunctionOptions;
-  const tasks = taskCalls
-    .slice(-3)
-    .map((call) => call[0] as unknown as FunctionOptions);
-
+async function loadExportedOptions(
+  databaseRegion?: string
+): Promise<ExportedOptions> {
+  const deployed = await loadDeployedOptions(databaseRegion);
+  const tasks = TASK_FUNCTIONS.map((name) => deployed[name]);
   expect(tasks).toHaveLength(3);
-  return { trigger, tasks };
+  return { trigger: deployed.fsexportbigquery, tasks };
 }
 
 function allOptions({ trigger, tasks }: ExportedOptions): FunctionOptions[] {
@@ -140,9 +169,8 @@ describe("exported function options", () => {
     });
 
     const rateLimits = syncTask.rateLimits as Record<string, unknown>;
-    expect(rateLimits.maxConcurrentDispatches).toBe(500); // Concurrency comes from the gen2 defaults (80 per instance), so no
-    // instance cap is declared.
-    expect(syncTask.maxInstances).toBeUndefined();
+    expect(rateLimits.maxConcurrentDispatches).toBe(500);
+    expect(syncTask.maxInstances).toBe(500);
     // A blank .env value is 0 at deploy; the ternary restores the default.
     expect(String(rateLimits.maxDispatchesPerSecond)).toBe(
       "params.MAX_DISPATCHES_PER_SECOND < 1 ? 100 : params.MAX_DISPATCHES_PER_SECOND"
@@ -158,5 +186,26 @@ describe("exported function options", () => {
       });
       expect(opts).not.toHaveProperty("rateLimits");
     }
+  });
+
+  test.each(INGRESS_BY_FUNCTION)(
+    "%s handles one request per instance with ingress %s",
+    async (name, ingress) => {
+      const deployed = await loadDeployedOptions();
+      const opts = deployed[name];
+      expect(opts.concurrency).toBe(1);
+      if (ingress === undefined) {
+        expect(opts).not.toHaveProperty("ingressSettings");
+      } else {
+        expect(opts.ingressSettings).toBe(ingress);
+      }
+    }
+  );
+
+  test("the ingress table names every exported function", async () => {
+    const deployed = await loadDeployedOptions();
+    expect(Object.keys(deployed).sort()).toEqual(
+      INGRESS_BY_FUNCTION.map(([name]) => name).sort()
+    );
   });
 });
