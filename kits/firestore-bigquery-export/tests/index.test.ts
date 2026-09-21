@@ -39,21 +39,30 @@ interface ExportedOptions {
   tasks: FunctionOptions[];
 }
 
-const TASK_FUNCTIONS = [
-  "syncBigQuery",
-  "initBigQuerySync",
-  "setupBigQuerySync",
-] as const;
+type Ingress = "ALLOW_INTERNAL_ONLY" | undefined;
 
-/** Expected `ingressSettings` per deployed function; `undefined` means the declaration sets none. */
-const INGRESS_BY_FUNCTION: ReadonlyArray<
-  [name: string, ingress: "ALLOW_INTERNAL_ONLY" | undefined]
+/**
+ * Expected per-function runtime options; `undefined` means the declaration
+ * sets none, so the codebase's global options apply.
+ */
+const RUNTIME_OPTIONS_BY_FUNCTION: ReadonlyArray<
+  [
+    name: string,
+    ingress: Ingress,
+    maxInstances: number | undefined,
+    timeoutSeconds: number | undefined
+  ]
 > = [
-  ["fsexportbigquery", "ALLOW_INTERNAL_ONLY"],
-  ["syncBigQuery", undefined],
-  ["initBigQuerySync", undefined],
-  ["setupBigQuerySync", undefined],
+  ["fsexportbigquery", "ALLOW_INTERNAL_ONLY", undefined, undefined],
+  ["syncBigQuery", undefined, 500, 540],
+  ["initBigQuerySync", undefined, undefined, 540],
+  ["setupBigQuerySync", undefined, undefined, 540],
 ];
+
+/** Task-queue functions in the table's order: syncBigQuery first, then the two lifecycle tasks. */
+const TASK_FUNCTIONS = RUNTIME_OPTIONS_BY_FUNCTION.map(([name]) => name).filter(
+  (name) => name !== "fsexportbigquery"
+);
 
 const originalDatabaseRegion = process.env.DATABASE_REGION;
 
@@ -98,13 +107,28 @@ async function loadExportedOptions(
   databaseRegion?: string
 ): Promise<ExportedOptions> {
   const deployed = await loadDeployedOptions(databaseRegion);
-  const tasks = TASK_FUNCTIONS.map((name) => deployed[name]);
-  expect(tasks).toHaveLength(3);
+  const tasks = TASK_FUNCTIONS.map((name) => {
+    expect(deployed[name], name).toBeDefined();
+    return deployed[name];
+  });
   return { trigger: deployed.fsexportbigquery, tasks };
 }
 
 function allOptions({ trigger, tasks }: ExportedOptions): FunctionOptions[] {
   return [trigger, ...tasks];
+}
+
+/** Asserts `key` holds `expected`, or is absent from the declaration when `expected` is undefined. */
+function expectOptional(
+  opts: FunctionOptions,
+  key: string,
+  expected: unknown
+): void {
+  if (expected === undefined) {
+    expect(opts).not.toHaveProperty(key);
+  } else {
+    expect(opts[key]).toBe(expected);
+  }
 }
 
 describe("exported function options", () => {
@@ -188,24 +212,23 @@ describe("exported function options", () => {
     }
   });
 
-  test.each(INGRESS_BY_FUNCTION)(
-    "%s handles one request per instance with ingress %s",
-    async (name, ingress) => {
+  test.each(RUNTIME_OPTIONS_BY_FUNCTION)(
+    "%s runs one request per 0.1666 vCPU instance with ingress %s, maxInstances %s, timeout %s",
+    async (name, ingress, maxInstances, timeoutSeconds) => {
       const deployed = await loadDeployedOptions();
       const opts = deployed[name];
       expect(opts.concurrency).toBe(1);
-      if (ingress === undefined) {
-        expect(opts).not.toHaveProperty("ingressSettings");
-      } else {
-        expect(opts.ingressSettings).toBe(ingress);
-      }
+      expect(opts.cpu).toBe("gcf_gen1");
+      expectOptional(opts, "ingressSettings", ingress);
+      expectOptional(opts, "maxInstances", maxInstances);
+      expectOptional(opts, "timeoutSeconds", timeoutSeconds);
     }
   );
 
-  test("the ingress table names every exported function", async () => {
+  test("the runtime options table names every exported function", async () => {
     const deployed = await loadDeployedOptions();
     expect(Object.keys(deployed).sort()).toEqual(
-      INGRESS_BY_FUNCTION.map(([name]) => name).sort()
+      RUNTIME_OPTIONS_BY_FUNCTION.map(([name]) => name).sort()
     );
   });
 });

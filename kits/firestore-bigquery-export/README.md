@@ -30,7 +30,7 @@ conflicts with that automatic setup.
 | `roles/bigquery.user`          | run BigQuery jobs and materialized views                                                   |
 | `roles/datastore.user`         | write failed-row records back to Firestore (only if you configure a backup collection)     |
 | `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events                                                      |
-| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service                                        |
+| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service, and Cloud Tasks to dispatch to the three task-queue functions, which have no function-level invoker binding |
 | `roles/eventarc.publisher`     | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
 | `roles/cloudtasks.enqueuer`    | enqueue failed writes onto the kit's own `syncBigQuery` task queue                         |
 | `bigquery.googleapis.com`      | mirror Firestore collection changes in BigQuery                                            |
@@ -281,7 +281,10 @@ The write path mirrors the extension's Cloud Tasks buffer:
 4. On every terminal insert failure the tracker writes the row to
    `BACKUP_COLLECTION` (when configured), keyed by the event id, before the
    task fails. After the fifth attempt the task is dropped. **Without a backup collection, the row is dropped with the task** -
-   configure `BACKUP_COLLECTION`.
+   configure `BACKUP_COLLECTION`. A task refused with a Cloud Run 429 at the
+   instance ceiling on every attempt never ran the handler, so it is dropped
+   with no backup row either way (see
+   [Concurrency, CPU and timeouts](#concurrency-cpu-and-timeouts-match-the-extension)).
 5. If the enqueue itself fails (BigQuery AND Cloud Tasks both failing), the
    trigger logs at error level, publishes an `onError` event, and the
    execution succeeds: the event is dropped, exactly as the extension did in
@@ -561,39 +564,64 @@ BigQuery changelog table, so they still work against data this kit writes. See
 "Migrating from the extension" for using `fs-bq-import-collection` to recover
 documents missed during a migration.
 
-### Concurrency and ingress match the extension
+### Concurrency, CPU and timeouts match the extension
 
-Every function sets `concurrency: 1`, and `fsexportbigquery` also sets
-`ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
-concurrency `80` and `ALLOW_ALL`. The extension deployed its functions with an
-instance handling one invocation at a time, and only internal traffic reached
-the Firestore trigger. The task-queue functions `syncBigQuery`,
-`initBigQuerySync` and `setupBigQuerySync` keep `ALLOW_ALL`, because the
-deployed extension's task-queue functions run with open ingress.
-`initBigQuerySync` stays callable as an authenticated HTTP POST, as described
-under [Provisioning](#provisioning).
+Every function sets `concurrency: 1` and `cpu: "gcf_gen1"`, and
+`fsexportbigquery` also sets `ingressSettings: "ALLOW_INTERNAL_ONLY"`. The 2nd
+gen defaults would be concurrency `80`, `ALLOW_ALL`, and 1 vCPU at 256MiB. The
+extension deployed every function at 0.1666 vCPU with an instance handling one
+invocation at a time, and only internal traffic reached the Firestore trigger.
+The task-queue functions `syncBigQuery`, `initBigQuerySync` and
+`setupBigQuerySync` set `timeoutSeconds: 540`, the extension's 1st gen task
+timeout; `fsexportbigquery` keeps the 60 second default, which the deployed
+trigger ran at.
+
+The task-queue functions declare no `ingressSettings`, so they inherit the
+default `ALLOW_ALL`, or whatever your codebase sets with
+`setGlobalOptions({ ingressSettings })`. The deployed extension's task-queue
+functions ran with open ingress, and the `curl` into `initBigQuerySync` under
+[Provisioning](#provisioning) relies on it: setting `ALLOW_INTERNAL_ONLY`
+globally makes that request fail.
 
 At concurrency `1`, a function serves as many requests at once as it has
 instances. `fsexportbigquery`, `initBigQuerySync` and `setupBigQuerySync` run
 on the Cloud Run default of 100 instances unless your codebase sets
 `setGlobalOptions({ maxInstances })`; the two lifecycle tasks receive one task
-per deploy, so no cap is declared on them. `syncBigQuery` sets
-`maxInstances: 500` to match its `maxConcurrentDispatches` limit, and a global
-`maxInstances` does not override it: Cloud Tasks may dispatch 500 tasks at
-once, and 100 instances would take only 100 of them. A dispatch that exceeds
-the instance ceiling gets a Cloud Run 429 that Cloud Tasks retries on the
-queue's schedule (5 attempts, 60 seconds minimum backoff). The handler never
-ran for such a dispatch, so a task that exhausts its attempts that way writes
-no `BACKUP_COLLECTION` row.
+per deploy, so no cap is declared on them. The trigger therefore handles 100
+events at once, the same as the deployed extension trigger (100 instances,
+concurrency `1`, no retry policy). An event above that ceiling waits up to
+about 10 seconds for a free instance and is then refused before the handler
+runs: no error log, no `onError` event, no enqueue and no backup row. Whether
+Eventarc redelivers a refused push under the trigger's
+`RETRY_POLICY_DO_NOT_RETRY` is not verified. Raise
+`setGlobalOptions({ maxInstances })` to lift the ceiling.
 
-`maxInstances: 500` needs at least 500 vCPU of Cloud Run quota in the
-function's region. Cloud Run limits a service's max instances to the smaller of
-the regional CPU quota divided by the CPU per instance and the regional memory
-quota divided by the memory per instance, and `syncBigQuery` runs at 1 vCPU. A
-project below that quota fails to create `syncBigQuery` at deploy, with the
-Cloud Run quota error relayed by firebase-tools. Request more Cloud Run quota
-for the region, or lower the `maxInstances` value in the kit source
-(`src/index.ts`) and deploy from your copy.
+`syncBigQuery` sets `maxInstances: 500` to match its `maxConcurrentDispatches`
+limit, and a global `maxInstances` does not override it: Cloud Tasks may
+dispatch 500 tasks at once, and 100 instances would take only 100 of them. A
+dispatch above the instance ceiling waits for a free instance for up to about
+10 seconds, then gets a Cloud Run 429. Cloud Tasks counts that as a failed
+attempt, retries it on the queue's schedule (5 attempts, 60 seconds minimum
+backoff), and slows the queue while 429s continue. The handler never ran for
+such a dispatch, so a task that exhausts its attempts that way writes no
+`BACKUP_COLLECTION` row.
+
+At 0.1666 vCPU, `maxInstances: 500` needs about 84 vCPU of Cloud Run CPU quota
+in the function's region (Cloud Run caps a service's instances at the regional
+CPU quota divided by the CPU per instance). Default quotas captured at the time
+of writing were 500 vCPU in most regions and 343 in `europe-west10` and
+`europe-west12`, so the default suffices everywhere captured. On a project
+whose quota is lower, `firebase deploy` creates the other functions, exits with
+an error on `syncBigQuery`, and skips the `afterFirstDeploy` lifecycle hook;
+after raising the quota, run
+`firebase functions:lifecycle:run afterFirstDeploy <codebase>` or redeploy. To
+lower the cap instead, change `SYNC_MAX_CONCURRENT_DISPATCHES` in
+`src/index.ts`, which sets both `maxInstances` and `maxConcurrentDispatches`,
+and deploy from your modified copy: the kit exposes no parameter for it, and
+lowering only `maxInstances` recreates the 429 loss above. The separate Cloud
+Run Instances quota (100 per project per region in some regions, unlimited in
+`us-central1` and `europe-west1`) also caps the instances running across all
+services in the region.
 
 ## API surface
 
