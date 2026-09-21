@@ -141,7 +141,7 @@ describe("exported function options", () => {
 
     const rateLimits = syncTask.rateLimits as Record<string, unknown>;
     expect(rateLimits.maxConcurrentDispatches).toBe(500);
-    expect(syncTask.maxInstances).toBeUndefined();
+    expect(syncTask.maxInstances).toBe(500);
     // A blank .env value is 0 at deploy; the ternary restores the default.
     expect(String(rateLimits.maxDispatchesPerSecond)).toBe(
       "params.MAX_DISPATCHES_PER_SECOND < 1 ? 100 : params.MAX_DISPATCHES_PER_SECOND"

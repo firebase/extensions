@@ -178,8 +178,8 @@ const EVENT_RUNTIME_OPTIONS = {
 } as const;
 
 /**
- * Task queues keep open ingress: the extension deployed them at `ALLOW_ALL`,
- * and Cloud Tasks dispatches to the function's public URL.
+ * Task queues keep open ingress: the deployed extension's task-queue functions
+ * run at `ALLOW_ALL`.
  */
 const TASK_RUNTIME_OPTIONS = { concurrency: 1 } as const;
 
@@ -212,6 +212,7 @@ export const syncBigQuery = onTaskDispatched<SerializedDocumentChange>(
     ...(functionRegion ? { region: functionRegion } : {}),
     ...TASK_RUNTIME_OPTIONS,
     retryConfig: SYNC_RETRY_CONFIG,
+    maxInstances: SYNC_MAX_CONCURRENT_DISPATCHES,
     rateLimits: {
       maxConcurrentDispatches: SYNC_MAX_CONCURRENT_DISPATCHES, // A blank .env value reaches this deploy-time expression as 0, which
       // Cloud Tasks would not accept; runtime falls back to the same default.

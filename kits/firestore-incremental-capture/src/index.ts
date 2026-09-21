@@ -199,10 +199,9 @@ const functionOptions = {
 
 /**
  * 1st gen also accepted internal traffic only, where 2nd gen defaults to
- * `ALLOW_ALL`. Applied to the Firestore trigger only: the extension deployed
- * its task queues at `ALLOW_ALL` and Cloud Tasks dispatches to their public
- * URL, and the HTTPS restoration endpoint is called from outside the project
- * and gated by IAM instead.
+ * `ALLOW_ALL`. Applied to the Firestore trigger only: the deployed extension's
+ * task-queue functions run at `ALLOW_ALL`, and the HTTPS restoration endpoint
+ * is called from outside the project and gated by IAM instead.
  */
 const INTERNAL_INGRESS_OPTION = {
   ingressSettings: "ALLOW_INTERNAL_ONLY",

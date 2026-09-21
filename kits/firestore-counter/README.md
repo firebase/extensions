@@ -246,9 +246,10 @@ scheduler locations list`, not from a failed deploy.
 `ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
 concurrency `80` and `ALLOW_ALL`. The extension ran on 1st gen, where an
 instance handled one invocation at a time and only internal traffic reached the
-function. This is separate from the `maxInstances: 1` limit the controller and
-shard-write functions carry. Existing kit deployments adopt the restrictions on
-their next deploy.
+function. These settings are inferred from captures of the same function
+classes, not captured on this extension's functions. This is separate from the
+`maxInstances: 1` limit the controller and shard-write functions carry. Existing
+kit deployments adopt the restrictions on their next deploy.
 
 ### Unchanged
 

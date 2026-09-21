@@ -427,11 +427,10 @@ Every function sets `concurrency: 1`, and `embedOnWrite` and `queryOnWrite` also
 set `ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
 concurrency `80` and `ALLOW_ALL`. The extension ran on 1st gen, where an
 instance handled one invocation at a time and only internal traffic reached the
-Firestore triggers. The task-queue functions keep `ALLOW_ALL`, as the
-extension's did: Cloud Tasks dispatches to the function's public URL.
-`queryCallable` keeps open ingress, because your clients call it from outside
-the project. Existing kit deployments adopt the restrictions on their next
-deploy.
+Firestore triggers. The task-queue functions keep `ALLOW_ALL`, because the
+deployed extension's task-queue functions run with open ingress. `queryCallable`
+keeps open ingress, because your clients call it from outside the project.
+Existing kit deployments adopt the restrictions on their next deploy.
 
 ### Unchanged
 

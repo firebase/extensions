@@ -127,8 +127,8 @@ const EVENT_RUNTIME_OPTIONS = {
 } as const;
 
 /**
- * Task queues keep open ingress: the extension deployed them at `ALLOW_ALL`,
- * and Cloud Tasks dispatches to the function's public URL.
+ * Task queues keep open ingress: the deployed extension's task-queue functions
+ * run at `ALLOW_ALL`.
  */
 const TASK_RUNTIME_OPTIONS = { concurrency: 1 } as const;
 

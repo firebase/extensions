@@ -258,7 +258,9 @@ a `TypeError` about reading `attachments` into `delivery.error`. It now writes
 `ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
 concurrency `80` and `ALLOW_ALL`. The extension deployed the function with an
 instance handling one document at a time and only internal traffic reaching it.
-Existing kit deployments adopt the restrictions on their next deploy.
+These settings are inferred from captures of the same function class, not
+captured on the extension's `processQueue`. Existing kit deployments adopt the
+restrictions on their next deploy.
 
 ### Unchanged
 

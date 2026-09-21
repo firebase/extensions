@@ -471,11 +471,14 @@ Every function sets `concurrency: 1`, and `fsexportbigquery` also sets
 concurrency `80` and `ALLOW_ALL`. The extension deployed its functions with an
 instance handling one invocation at a time, and only internal traffic reached
 the Firestore trigger. The task-queue functions `syncBigQuery`,
-`initBigQuerySync` and `setupBigQuerySync` keep `ALLOW_ALL`, as the extension's
-did: Cloud Tasks dispatches to the function's public URL, and `initBigQuerySync`
-stays callable as an authenticated HTTP POST, as described under
-[Provisioning](#provisioning). Existing kit deployments adopt
-the restrictions on their next deploy.
+`initBigQuerySync` and `setupBigQuerySync` keep `ALLOW_ALL`, because the
+deployed extension's task-queue functions run with open ingress.
+`initBigQuerySync` stays callable as an authenticated HTTP POST, as described
+under [Provisioning](#provisioning). `syncBigQuery` also sets
+`maxInstances: 500` to match its `maxConcurrentDispatches` limit: at
+concurrency `1`, the Gen2 default of 100 instances would serve only 100 of the
+500 dispatches. Existing kit deployments adopt the restrictions on their next
+deploy.
 
 ## API surface
 
