@@ -187,9 +187,25 @@ function getHandlerContext(): HandlerContext {
   return ctx;
 }
 
+/**
+ * The extension ran on 1st gen, which serves one invocation per instance. 2nd
+ * gen defaults to concurrency 80, so the restriction is declared explicitly on
+ * every function.
+ */
 const functionOptions = {
   region: CONFIG_EXPRESSIONS.location,
-};
+  concurrency: 1,
+} as const;
+
+/**
+ * 1st gen also accepted internal traffic only, where 2nd gen defaults to
+ * `ALLOW_ALL`. Applied to the Firestore trigger only: the deployed extension's
+ * task-queue functions run at `ALLOW_ALL`, and the HTTPS restoration endpoint
+ * is called from outside the project and gated by IAM instead.
+ */
+const INTERNAL_INGRESS_OPTION = {
+  ingressSettings: "ALLOW_INTERNAL_ONLY",
+} as const;
 
 /**
  * Firestore trigger: serializes each document write on the watched collection
@@ -200,6 +216,7 @@ const functionOptions = {
 export const syncData = onDocumentWritten(
   {
     ...functionOptions,
+    ...INTERNAL_INGRESS_OPTION,
     document: expr`${CONFIG_EXPRESSIONS.syncCollectionPath}/{documentId}`,
     retry: true,
   },

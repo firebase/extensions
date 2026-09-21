@@ -140,9 +140,8 @@ describe("exported function options", () => {
     });
 
     const rateLimits = syncTask.rateLimits as Record<string, unknown>;
-    expect(rateLimits.maxConcurrentDispatches).toBe(500); // Concurrency comes from the gen2 defaults (80 per instance), so no
-    // instance cap is declared.
-    expect(syncTask.maxInstances).toBeUndefined();
+    expect(rateLimits.maxConcurrentDispatches).toBe(500);
+    expect(syncTask.maxInstances).toBe(500);
     // A blank .env value is 0 at deploy; the ternary restores the default.
     expect(String(rateLimits.maxDispatchesPerSecond)).toBe(
       "params.MAX_DISPATCHES_PER_SECOND < 1 ? 100 : params.MAX_DISPATCHES_PER_SECOND"
@@ -157,6 +156,25 @@ describe("exported function options", () => {
         minBackoffSeconds: 60,
       });
       expect(opts).not.toHaveProperty("rateLimits");
+    }
+  });
+
+  test("every function serves one invocation per instance", async () => {
+    const options = await loadExportedOptions();
+    for (const opts of allOptions(options)) {
+      expect(opts.concurrency).toBe(1);
+    }
+  });
+
+  test("the trigger takes internal traffic only", async () => {
+    const { trigger } = await loadExportedOptions();
+    expect(trigger.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+  });
+
+  test("the task queues keep open ingress for Cloud Tasks", async () => {
+    const { tasks } = await loadExportedOptions();
+    for (const opts of tasks) {
+      expect(opts).not.toHaveProperty("ingressSettings");
     }
   });
 });

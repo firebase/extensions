@@ -421,6 +421,17 @@ one: a non-interactive deploy fails with `In non-interactive mode but have no
 value for the following environment variables: DATABASE_REGION`. Note that
 changing an existing instance's region deletes and recreates the functions.
 
+### Concurrency and ingress match the extension
+
+Every function sets `concurrency: 1`, and `embedOnWrite` and `queryOnWrite` also
+set `ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
+concurrency `80` and `ALLOW_ALL`. The extension ran on 1st gen, where an
+instance handled one invocation at a time and only internal traffic reached the
+Firestore triggers. The task-queue functions keep `ALLOW_ALL`, because the
+deployed extension's task-queue functions run with open ingress. `queryCallable`
+keeps open ingress, because your clients call it from outside the project.
+Existing kit deployments adopt the restrictions on their next deploy.
+
 ### Unchanged
 
 - No Eventarc events are published. The extension declared `onStart`,

@@ -108,6 +108,10 @@ function ensureInitialized(): Promise<HandlerContext> {
 export const processQueue = onDocumentWritten(
   {
     ...(deploy.region ? { region: deploy.region } : {}),
+    // The extension deployed this function with one invocation per instance
+    // and internal-only ingress; 2nd gen defaults to 80 and `ALLOW_ALL`.
+    concurrency: 1,
+    ingressSettings: "ALLOW_INTERNAL_ONLY",
     document: deploy.document,
     database: deploy.database,
     timeoutSeconds: 120,

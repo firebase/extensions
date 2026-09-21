@@ -64,6 +64,11 @@ function getConfig(): ResolvedRtdbLimitConfig {
 
 export const rtdblimit = onValueCreated(
   {
+    // The extension ran on 1st gen, which serves one invocation per instance
+    // and accepts internal traffic only. 2nd gen defaults to concurrency 80
+    // and `ALLOW_ALL` ingress, so both restrictions are declared explicitly.
+    concurrency: 1,
+    ingressSettings: "ALLOW_INTERNAL_ONLY",
     region: deploy.region,
     ref: deploy.ref,
     instance: deploy.instance,

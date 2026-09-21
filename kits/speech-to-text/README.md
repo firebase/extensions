@@ -267,6 +267,14 @@ an empty one: a non-interactive deploy fails with `In non-interactive mode but
 have no value for the following environment variables: BUCKET_REGION`. Note that
 changing an existing instance's region deletes and recreates the function.
 
+### Concurrency and ingress match the extension
+
+`transcribeAudio` sets `concurrency: 1` and
+`ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
+concurrency `80` and `ALLOW_ALL`. The extension ran on 1st gen, where an
+instance handled one file at a time and only internal traffic reached the
+function. Existing kit deployments adopt the restrictions on their next deploy.
+
 ### Unchanged
 
 - `EXTENSION_BUCKET` still selects the bucket that is both watched and written

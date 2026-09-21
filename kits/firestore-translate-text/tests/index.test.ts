@@ -170,7 +170,12 @@ describe("index", () => {
     const { fstranslate } = await importIndex();
 
     expect(onDocumentWritten).toHaveBeenCalledWith(
-      { document: CONFIG_EXPRESSIONS.document, secrets: [googleAiApiKey] },
+      {
+        concurrency: 1,
+        ingressSettings: "ALLOW_INTERNAL_ONLY",
+        document: CONFIG_EXPRESSIONS.document,
+        secrets: [googleAiApiKey],
+      },
       expect.any(Function)
     );
     expect(fstranslate).toBeDefined();

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { RESET_VALUE } from "firebase-functions/v2/options";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 // `queries/setup` builds a FirestoreAdminClient at module scope and
@@ -81,6 +82,45 @@ describe("deploy entry", () => {
     const { embedOnWrite } = await importIndex("test-instance");
 
     expect(embedOnWrite.__endpoint.region).toBeUndefined();
+  });
+
+  test("every function serves one invocation per instance", async () => {
+    const entry = await importIndex("test-instance");
+
+    for (const fn of [
+      entry.updateTrigger,
+      entry.updateTask,
+      entry.backfillTrigger,
+      entry.backfillTask,
+      entry.embedOnWrite,
+      entry.queryOnWrite,
+      entry.queryCallable,
+      entry.initVectorSearch,
+    ]) {
+      expect(fn.__endpoint.concurrency).toBe(1);
+    }
+  });
+
+  test("the Firestore triggers take internal traffic only", async () => {
+    const { embedOnWrite, queryOnWrite } = await importIndex("test-instance");
+
+    expect(embedOnWrite.__endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+    expect(queryOnWrite.__endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+  });
+
+  test("the task queues and the callable keep the default open ingress", async () => {
+    const entry = await importIndex("test-instance");
+
+    for (const fn of [
+      entry.updateTrigger,
+      entry.updateTask,
+      entry.backfillTrigger,
+      entry.backfillTask,
+      entry.queryCallable,
+      entry.initVectorSearch,
+    ]) {
+      expect(fn.__endpoint.ingressSettings).toBe(RESET_VALUE);
+    }
   });
 
   test("fails discovery when FIREBASE_KIT_INSTANCE_ID is missing", async () => {

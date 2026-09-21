@@ -122,3 +122,19 @@ describe("transcribeAudio deploy region", () => {
     expect(await importRegion(undefined)).toBeUndefined();
   });
 });
+
+describe("transcribeAudio deploy options", () => {
+  afterEach(() => {
+    vi.resetModules();
+  });
+
+  test("serves one file per instance and takes internal traffic only", async () => {
+    vi.resetModules();
+    const { transcribeAudio } = await import("../src/index");
+
+    expect(transcribeAudio.__endpoint.concurrency).toBe(1);
+    expect(transcribeAudio.__endpoint.ingressSettings).toBe(
+      "ALLOW_INTERNAL_ONLY"
+    );
+  });
+});

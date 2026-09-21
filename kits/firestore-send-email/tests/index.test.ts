@@ -89,4 +89,10 @@ describe("processQueue options", () => {
     const document = options.document as { toCEL(): string };
     expect(document.toCEL()).toContain("params.MAIL_COLLECTION");
   });
+
+  test("the function serves one invocation per instance and takes internal traffic only", async () => {
+    const options = await loadTriggerOptions();
+    expect(options.concurrency).toBe(1);
+    expect(options.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+  });
 });

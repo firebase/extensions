@@ -1,3 +1,5 @@
+- fix: set every function's concurrency to `1`, and `syncData` ingress to `ALLOW_INTERNAL_ONLY`, matching the extension. Previously, the kit inherited the Gen2 defaults of concurrency `80` and ingress `ALLOW_ALL`. The task-queue functions keep `ALLOW_ALL`, because the deployed extension's task-queue functions run with open ingress. `onHttpRunRestoration` also keeps open ingress, because it is called from outside the project, and stays gated by its private invoker. Existing kit deployments adopt these restrictions on their next deploy.
+
 - docs: `LOCATION` now explains that it places the functions, that matching your Firestore database's location keeps them next to the data, and that it is also the Dataflow restore job's region unless `DATAFLOW_REGION` is set. No behaviour change; the functions were already deployed to this region.
 - chore: run on firebase-functions ^7.3.3-rc.1, the same release candidate as the other kits
 - The instance id now comes from `FIREBASE_KIT_INSTANCE_ID`, which the Firebase CLI (15.27.0 or later) provides to each kit instance; `INSTANCE_ID` is no longer a configuration parameter

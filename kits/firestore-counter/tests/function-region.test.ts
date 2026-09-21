@@ -97,3 +97,15 @@ describe("function region", () => {
     }
   });
 });
+
+describe("deploy options", () => {
+  test("every function serves one invocation per instance and takes internal traffic only", async () => {
+    const options = await importIndex();
+
+    expect(options).toHaveLength(3);
+    for (const option of options) {
+      expect(option.concurrency).toBe(1);
+      expect(option.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+    }
+  });
+});

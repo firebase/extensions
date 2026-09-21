@@ -54,3 +54,14 @@ describe("envDeployOptions", () => {
     expect(cel(options.document)).not.toContain("undefined");
   });
 });
+
+describe("generateMessage deploy options", () => {
+  test("serves one invocation per instance and takes internal traffic only", async () => {
+    const { generateMessage } = await import("../src/index");
+
+    expect(generateMessage.__endpoint.concurrency).toBe(1);
+    expect(generateMessage.__endpoint.ingressSettings).toBe(
+      "ALLOW_INTERNAL_ONLY"
+    );
+  });
+});

@@ -168,6 +168,22 @@ const functionRegion = firestoreLocationToFunctionRegion(
 );
 
 /**
+ * The extension deployed the Firestore trigger with one invocation per
+ * instance and internal-only ingress. 2nd gen defaults to concurrency 80 and
+ * `ALLOW_ALL` ingress, so both restrictions are declared explicitly.
+ */
+const EVENT_RUNTIME_OPTIONS = {
+  concurrency: 1,
+  ingressSettings: "ALLOW_INTERNAL_ONLY",
+} as const;
+
+/**
+ * Task queues keep open ingress: the deployed extension's task-queue functions
+ * run at `ALLOW_ALL`.
+ */
+const TASK_RUNTIME_OPTIONS = { concurrency: 1 } as const;
+
+/**
  * Firestore trigger: streams document writes on the watched collection into the
  * BigQuery changelog table. A failed inline write buffers through the
  * `syncBigQuery` queue and the execution still succeeds. No runtime retry
@@ -177,6 +193,7 @@ const functionRegion = firestoreLocationToFunctionRegion(
 export const fsexportbigquery = onDocumentWritten(
   {
     ...(functionRegion ? { region: functionRegion } : {}),
+    ...EVENT_RUNTIME_OPTIONS,
     document: expr`${CONFIG_EXPRESSIONS.collectionPath}/{documentId}`,
     database: CONFIG_EXPRESSIONS.database,
   },
@@ -193,7 +210,9 @@ export const fsexportbigquery = onDocumentWritten(
 export const syncBigQuery = onTaskDispatched<SerializedDocumentChange>(
   {
     ...(functionRegion ? { region: functionRegion } : {}),
+    ...TASK_RUNTIME_OPTIONS,
     retryConfig: SYNC_RETRY_CONFIG,
+    maxInstances: SYNC_MAX_CONCURRENT_DISPATCHES,
     rateLimits: {
       maxConcurrentDispatches: SYNC_MAX_CONCURRENT_DISPATCHES, // A blank .env value reaches this deploy-time expression as 0, which
       // Cloud Tasks would not accept; runtime falls back to the same default.
@@ -229,6 +248,7 @@ async function handleBigQuerySyncInitialization(): Promise<void> {
 export const initBigQuerySync = onTaskDispatched(
   {
     ...(functionRegion ? { region: functionRegion } : {}),
+    ...TASK_RUNTIME_OPTIONS,
     retryConfig: LIFECYCLE_RETRY_CONFIG,
   },
   handleBigQuerySyncInitialization
@@ -241,6 +261,7 @@ export const initBigQuerySync = onTaskDispatched(
 export const setupBigQuerySync = onTaskDispatched(
   {
     ...(functionRegion ? { region: functionRegion } : {}),
+    ...TASK_RUNTIME_OPTIONS,
     retryConfig: LIFECYCLE_RETRY_CONFIG,
   },
   handleBigQuerySyncInitialization
