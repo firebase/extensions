@@ -121,15 +121,21 @@ function getContext(): HandlerContext {
  * accepts internal traffic only. 2nd gen defaults to concurrency 80 and
  * `ALLOW_ALL` ingress, so both restrictions are declared explicitly.
  */
-const EXTENSION_RUNTIME_OPTIONS = {
+const EVENT_RUNTIME_OPTIONS = {
   concurrency: 1,
   ingressSettings: "ALLOW_INTERNAL_ONLY",
 } as const;
 
+/**
+ * Task queues keep open ingress: the extension deployed them at `ALLOW_ALL`,
+ * and Cloud Tasks dispatches to the function's public URL.
+ */
+const TASK_RUNTIME_OPTIONS = { concurrency: 1 } as const;
+
 /** Consumes BigQuery Data Transfer completion notifications. */
 export const processMessages = onMessagePublished<TransferRunPayload>(
   {
-    ...EXTENSION_RUNTIME_OPTIONS,
+    ...EVENT_RUNTIME_OPTIONS,
     topic: CONFIG_EXPRESSIONS.pubSubTopic,
     retry: false,
   },
@@ -139,7 +145,7 @@ export const processMessages = onMessagePublished<TransferRunPayload>(
 /** Creates or reconciles this deployment's scheduled query. */
 export const upsertTransferConfig = onTaskDispatched(
   {
-    ...EXTENSION_RUNTIME_OPTIONS,
+    ...TASK_RUNTIME_OPTIONS,
     memory: "1GiB",
     retryConfig: { maxAttempts: 5, minBackoffSeconds: 30 },
   },

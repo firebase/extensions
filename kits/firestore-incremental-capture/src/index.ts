@@ -199,9 +199,10 @@ const functionOptions = {
 
 /**
  * 1st gen also accepted internal traffic only, where 2nd gen defaults to
- * `ALLOW_ALL`. Applied to the event and task-queue functions; the HTTPS
- * restoration endpoint stays reachable from outside the project and is gated
- * by IAM instead.
+ * `ALLOW_ALL`. Applied to the Firestore trigger only: the extension deployed
+ * its task queues at `ALLOW_ALL` and Cloud Tasks dispatches to their public
+ * URL, and the HTTPS restoration endpoint is called from outside the project
+ * and gated by IAM instead.
  */
 const INTERNAL_INGRESS_OPTION = {
   ingressSettings: "ALLOW_INTERNAL_ONLY",
@@ -230,7 +231,6 @@ export const syncData = onDocumentWritten(
 export const syncChangelogTask = onTaskDispatched<ChangelogRow>(
   {
     ...functionOptions,
-    ...INTERNAL_INGRESS_OPTION,
     // Matches the extension's allowance for this function; the v2 defaults
     // (256MiB/60s) would be a silent downgrade.
     memory: "512MiB",
@@ -268,7 +268,6 @@ export const onHttpRunRestoration = onRequest(
 export const runRestorationTask = onTaskDispatched<RestorationRequest>(
   {
     ...functionOptions,
-    ...INTERNAL_INGRESS_OPTION,
     memory: "1GiB",
   },
   async (request) => {
@@ -290,7 +289,6 @@ export const runRestorationTask = onTaskDispatched<RestorationRequest>(
 export const initIncrementalCapture = onTaskDispatched(
   {
     ...functionOptions,
-    ...INTERNAL_INGRESS_OPTION,
     // As the extension's runInitialSetup: creating a dataset and table can be
     // slow, and the v2 default 60s timeout would cut it short.
     memory: "512MiB",

@@ -88,6 +88,9 @@ const REQUIRED_APIS = [
     reason: "Needed to read image data from Cloud Storage.",
   },
 ] as const;
+// Only the task functions reach getSingleEmbedding, but every function here
+// resolves the same config (which reads the provider keys), and the extension
+// bound its secrets to all functions in the instance -- so bind them uniformly.
 const FUNCTION_SECRETS = [geminiApiKey, openAiApiKey];
 /*
  * All functions of a kit instance deploy to one region: a task queue is
@@ -100,30 +103,30 @@ const REGION_OPTION = (() => {
   return region ? ({ region } as const) : ({} as const);
 })();
 
-// Only the task functions reach getSingleEmbedding, but every function here
-// resolves the same config (which reads the provider keys), and the extension
-// bound its secrets to all functions in the instance -- so bind them uniformly.
 /**
  * The extension ran on 1st gen, which serves one invocation per instance and
  * accepts internal traffic only. 2nd gen defaults to concurrency 80 and
- * `ALLOW_ALL` ingress, so both restrictions are declared explicitly. The
- * callable keeps `ALLOW_ALL`: clients call it from outside the project, and it
- * is gated by the callable's own auth checks.
+ * `ALLOW_ALL` ingress, so both restrictions are declared explicitly.
  */
-const EXTENSION_RUNTIME_OPTIONS = {
+const EVENT_RUNTIME_OPTIONS = {
   concurrency: 1,
   ingressSettings: "ALLOW_INTERNAL_ONLY",
 } as const;
+/**
+ * Task queues keep open ingress: the extension deployed them at `ALLOW_ALL`,
+ * and Cloud Tasks dispatches to the function's public URL.
+ */
+const TASK_RUNTIME_OPTIONS = { concurrency: 1 } as const;
 const DEFAULT_TASK_OPTIONS = {
   ...REGION_OPTION,
-  ...EXTENSION_RUNTIME_OPTIONS,
+  ...TASK_RUNTIME_OPTIONS,
   memory: "512MiB",
   timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
   secrets: FUNCTION_SECRETS,
 } as const;
 const EMBEDDING_TASK_OPTIONS = {
   ...REGION_OPTION,
-  ...EXTENSION_RUNTIME_OPTIONS,
+  ...TASK_RUNTIME_OPTIONS,
   memory: "1GiB",
   timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
   retryConfig: { maxAttempts: TASK_MAX_ATTEMPTS },
@@ -131,11 +134,13 @@ const EMBEDDING_TASK_OPTIONS = {
 } as const;
 const FIRESTORE_FUNCTION_OPTIONS = {
   ...REGION_OPTION,
-  ...EXTENSION_RUNTIME_OPTIONS,
+  ...EVENT_RUNTIME_OPTIONS,
   memory: "512MiB",
   timeoutSeconds: FUNCTION_TIMEOUT_SECONDS,
   secrets: FUNCTION_SECRETS,
 } as const;
+// Open ingress: clients call it from outside the project, and its own auth
+// checks gate it.
 const CALLABLE_FUNCTION_OPTIONS = {
   ...REGION_OPTION,
   concurrency: 1,

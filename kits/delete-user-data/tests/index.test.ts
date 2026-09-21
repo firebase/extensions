@@ -23,7 +23,7 @@ vi.mock("../src/handlers", async (importOriginal) => ({
 }));
 
 import { handleClear } from "../src/handlers";
-import { clearData } from "../src/index";
+import { clearData, handleDeletion, handleSearch } from "../src/index";
 import * as logs from "../src/logs";
 
 function deletionEvent(data: unknown) {
@@ -66,5 +66,14 @@ describe("clearData", () => {
 
     expect(handleClear).not.toHaveBeenCalled();
     expect(logs.deletionEventMissingUid).toHaveBeenCalledWith("event-id");
+  });
+});
+
+describe("deploy options", () => {
+  test("every function serves one invocation per instance and takes internal traffic only", () => {
+    for (const fn of [clearData, handleSearch, handleDeletion]) {
+      expect(fn.__endpoint.concurrency).toBe(1);
+      expect(fn.__endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+    }
   });
 });

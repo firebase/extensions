@@ -252,6 +252,14 @@ Rendering a template whose name does not exist in your templates collection wrot
 a `TypeError` about reading `attachments` into `delivery.error`. It now writes
 `Tried to render non-existent template '<name>'`.
 
+### Concurrency and ingress match the extension
+
+`processQueue` sets `concurrency: 1` and
+`ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
+concurrency `80` and `ALLOW_ALL`. The extension deployed the function with an
+instance handling one document at a time and only internal traffic reaching it.
+Existing kit deployments adopt the restrictions on their next deploy.
+
 ### Unchanged
 
 - The watched path is still `MAIL_COLLECTION/{documentId}`, still matched as a

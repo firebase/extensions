@@ -103,3 +103,17 @@ describe("rtdblimit deploy region", () => {
     expect(await importRegion(undefined)).toBe("{{ params.DATABASE_REGION }}");
   });
 });
+
+describe("rtdblimit deploy options", () => {
+  afterEach(() => {
+    vi.resetModules();
+  });
+
+  test("serves one event per instance and takes internal traffic only", async () => {
+    vi.resetModules();
+    const { rtdblimit } = await import("../src/index");
+
+    expect(rtdblimit.__endpoint.concurrency).toBe(1);
+    expect(rtdblimit.__endpoint.ingressSettings).toBe("ALLOW_INTERNAL_ONLY");
+  });
+});

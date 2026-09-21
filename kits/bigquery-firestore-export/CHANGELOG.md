@@ -1,4 +1,4 @@
-- fix: set `processMessages` and `upsertTransferConfig` concurrency to `1` and ingress to `ALLOW_INTERNAL_ONLY`, matching the extension. Previously, the kit inherited the Gen2 defaults of concurrency `80` and ingress `ALLOW_ALL`. Existing kit deployments adopt these restrictions on their next deploy.
+- fix: set `processMessages` and `upsertTransferConfig` concurrency to `1`, and `processMessages` ingress to `ALLOW_INTERNAL_ONLY`, matching the extension. Previously, the kit inherited the Gen2 defaults of concurrency `80` and ingress `ALLOW_ALL`. `upsertTransferConfig` keeps `ALLOW_ALL`, as the extension's task queue did: Cloud Tasks dispatches to the function's public URL. Existing kit deployments adopt these restrictions on their next deploy.
 
 - **Breaking:** `TRANSFER_CONFIG_NAME` and the link-an-existing-transfer-config path are removed for parity with the extension, which never exposed them. Re-adding adoption is tracked in #3185
 - Initial release of kit, see README for differences between the legacy extension and this kit

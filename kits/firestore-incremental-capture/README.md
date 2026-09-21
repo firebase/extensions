@@ -368,13 +368,15 @@ deletes and recreates the functions.
 
 ### Concurrency and ingress match the extension
 
-Every function sets `concurrency: 1`, and the event and task-queue functions
-also set `ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen
-defaults of concurrency `80` and `ALLOW_ALL`. The extension ran on 1st gen,
-where an instance handled one invocation at a time and only internal traffic
-reached the function. `onHttpRunRestoration` keeps open ingress, because you
-call it from outside the project; it stays gated by its private invoker.
-Existing kit deployments adopt the restrictions on their next deploy.
+Every function sets `concurrency: 1`, and `syncData` also sets
+`ingressSettings: "ALLOW_INTERNAL_ONLY"`, overriding the 2nd gen defaults of
+concurrency `80` and `ALLOW_ALL`. The extension ran on 1st gen, where an
+instance handled one invocation at a time and only internal traffic reached the
+Firestore trigger. The task-queue functions keep `ALLOW_ALL`, as the extension's
+did: Cloud Tasks dispatches to the function's public URL. `onHttpRunRestoration`
+keeps open ingress, because you call it from outside the project; it stays
+gated by its private invoker. Existing kit deployments adopt the restrictions on
+their next deploy.
 
 ## API surface
 
