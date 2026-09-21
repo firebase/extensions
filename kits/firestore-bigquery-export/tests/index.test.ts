@@ -17,10 +17,10 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("firebase-functions/firestore", () => ({
-  onDocumentWritten: vi.fn(() => ({})),
+  onDocumentWritten: vi.fn((options: unknown) => ({ deployOptions: options })),
 }));
 vi.mock("firebase-functions/tasks", () => ({
-  onTaskDispatched: vi.fn(() => ({})),
+  onTaskDispatched: vi.fn((options: unknown) => ({ deployOptions: options })),
 }));
 vi.mock("firebase-functions/v2", () => ({
   requiresAPI: vi.fn(),
@@ -39,6 +39,31 @@ interface ExportedOptions {
   tasks: FunctionOptions[];
 }
 
+type Ingress = "ALLOW_INTERNAL_ONLY" | undefined;
+
+/**
+ * Expected per-function runtime options; `undefined` means the declaration
+ * sets none, so the codebase's global options apply.
+ */
+const RUNTIME_OPTIONS_BY_FUNCTION: ReadonlyArray<
+  [
+    name: string,
+    ingress: Ingress,
+    maxInstances: number | undefined,
+    timeoutSeconds: number | undefined
+  ]
+> = [
+  ["fsexportbigquery", "ALLOW_INTERNAL_ONLY", undefined, undefined],
+  ["syncBigQuery", undefined, 500, 540],
+  ["initBigQuerySync", undefined, undefined, 540],
+  ["setupBigQuerySync", undefined, undefined, 540],
+];
+
+/** Task-queue functions in the table's order: syncBigQuery first, then the two lifecycle tasks. */
+const TASK_FUNCTIONS = RUNTIME_OPTIONS_BY_FUNCTION.map(([name]) => name).filter(
+  (name) => name !== "fsexportbigquery"
+);
+
 const originalDatabaseRegion = process.env.DATABASE_REGION;
 
 afterEach(() => {
@@ -49,9 +74,18 @@ afterEach(() => {
   }
 });
 
-async function loadExportedOptions(
+function isDeployed(
+  value: unknown
+): value is { deployOptions: FunctionOptions } {
+  return (
+    typeof value === "object" && value !== null && "deployOptions" in value
+  );
+}
+
+/** The entry's exported functions by name, each with the options it was declared with. */
+async function loadDeployedOptions(
   databaseRegion?: string
-): Promise<ExportedOptions> {
+): Promise<Record<string, FunctionOptions>> {
   vi.resetModules();
   if (databaseRegion === undefined) {
     delete process.env.DATABASE_REGION;
@@ -59,23 +93,42 @@ async function loadExportedOptions(
     process.env.DATABASE_REGION = databaseRegion;
   }
 
-  await import("../src/index");
-  const { onDocumentWritten } = await import("firebase-functions/firestore");
-  const { onTaskDispatched } = await import("firebase-functions/tasks");
+  const index: Record<string, unknown> = await import("../src/index");
+  const deployed: Record<string, FunctionOptions> = {};
+  for (const [name, value] of Object.entries(index)) {
+    if (isDeployed(value)) {
+      deployed[name] = value.deployOptions;
+    }
+  }
+  return deployed;
+}
 
-  const triggerCalls = vi.mocked(onDocumentWritten).mock.calls;
-  const taskCalls = vi.mocked(onTaskDispatched).mock.calls;
-  const trigger = triggerCalls[triggerCalls.length - 1][0] as FunctionOptions;
-  const tasks = taskCalls
-    .slice(-3)
-    .map((call) => call[0] as unknown as FunctionOptions);
-
-  expect(tasks).toHaveLength(3);
-  return { trigger, tasks };
+async function loadExportedOptions(
+  databaseRegion?: string
+): Promise<ExportedOptions> {
+  const deployed = await loadDeployedOptions(databaseRegion);
+  const tasks = TASK_FUNCTIONS.map((name) => {
+    expect(deployed[name], name).toBeDefined();
+    return deployed[name];
+  });
+  return { trigger: deployed.fsexportbigquery, tasks };
 }
 
 function allOptions({ trigger, tasks }: ExportedOptions): FunctionOptions[] {
   return [trigger, ...tasks];
+}
+
+/** Asserts `key` holds `expected`, or is absent from the declaration when `expected` is undefined. */
+function expectOptional(
+  opts: FunctionOptions,
+  key: string,
+  expected: unknown
+): void {
+  if (expected === undefined) {
+    expect(opts).not.toHaveProperty(key);
+  } else {
+    expect(opts[key]).toBe(expected);
+  }
 }
 
 describe("exported function options", () => {
@@ -140,9 +193,8 @@ describe("exported function options", () => {
     });
 
     const rateLimits = syncTask.rateLimits as Record<string, unknown>;
-    expect(rateLimits.maxConcurrentDispatches).toBe(500); // Concurrency comes from the gen2 defaults (80 per instance), so no
-    // instance cap is declared.
-    expect(syncTask.maxInstances).toBeUndefined();
+    expect(rateLimits.maxConcurrentDispatches).toBe(500);
+    expect(syncTask.maxInstances).toBe(500);
     // A blank .env value is 0 at deploy; the ternary restores the default.
     expect(String(rateLimits.maxDispatchesPerSecond)).toBe(
       "params.MAX_DISPATCHES_PER_SECOND < 1 ? 100 : params.MAX_DISPATCHES_PER_SECOND"
@@ -158,5 +210,25 @@ describe("exported function options", () => {
       });
       expect(opts).not.toHaveProperty("rateLimits");
     }
+  });
+
+  test.each(RUNTIME_OPTIONS_BY_FUNCTION)(
+    "%s runs one request per 0.1666 vCPU instance with ingress %s, maxInstances %s, timeout %s",
+    async (name, ingress, maxInstances, timeoutSeconds) => {
+      const deployed = await loadDeployedOptions();
+      const opts = deployed[name];
+      expect(opts.concurrency).toBe(1);
+      expect(opts.cpu).toBe("gcf_gen1");
+      expectOptional(opts, "ingressSettings", ingress);
+      expectOptional(opts, "maxInstances", maxInstances);
+      expectOptional(opts, "timeoutSeconds", timeoutSeconds);
+    }
+  );
+
+  test("the runtime options table names every exported function", async () => {
+    const deployed = await loadDeployedOptions();
+    expect(Object.keys(deployed).sort()).toEqual(
+      RUNTIME_OPTIONS_BY_FUNCTION.map(([name]) => name).sort()
+    );
   });
 });

@@ -167,6 +167,33 @@ const functionRegion = firestoreLocationToFunctionRegion(
   process.env.DATABASE_REGION
 );
 
+/** Region placement shared by every function; empty when `DATABASE_REGION` is unset. */
+const REGION_OPTION = functionRegion
+  ? ({ region: functionRegion } as const)
+  : {};
+
+/** Options of the Firestore trigger, matching the extension's deployed trigger. */
+const EVENT_FUNCTION_OPTIONS = {
+  ...REGION_OPTION,
+  concurrency: 1,
+  cpu: "gcf_gen1",
+  ingressSettings: "ALLOW_INTERNAL_ONLY",
+} as const;
+
+/** Options shared by the task-queue functions, matching the extension's 1st gen task functions. */
+const TASK_FUNCTION_OPTIONS = {
+  ...REGION_OPTION,
+  concurrency: 1,
+  cpu: "gcf_gen1",
+  timeoutSeconds: 540,
+} as const;
+
+/** Options of the two lifecycle tasks, which share one retry config. */
+const LIFECYCLE_TASK_OPTIONS = {
+  ...TASK_FUNCTION_OPTIONS,
+  retryConfig: LIFECYCLE_RETRY_CONFIG,
+} as const;
+
 /**
  * Firestore trigger: streams document writes on the watched collection into the
  * BigQuery changelog table. A failed inline write buffers through the
@@ -176,7 +203,7 @@ const functionRegion = firestoreLocationToFunctionRegion(
  */
 export const fsexportbigquery = onDocumentWritten(
   {
-    ...(functionRegion ? { region: functionRegion } : {}),
+    ...EVENT_FUNCTION_OPTIONS,
     document: expr`${CONFIG_EXPRESSIONS.collectionPath}/{documentId}`,
     database: CONFIG_EXPRESSIONS.database,
   },
@@ -188,12 +215,15 @@ export const fsexportbigquery = onDocumentWritten(
  * Tasks' schedule (5 attempts, 60s minimum backoff, dispatch-throttled by
  * `MAX_DISPATCHES_PER_SECOND`). After the last attempt the task is dropped;
  * by then the tracker has written the row to `BACKUP_COLLECTION` on every
- * terminal insert failure, when that collection is configured.
+ * terminal insert failure, when that collection is configured. A task refused
+ * with 429s at the instance ceiling never runs the handler, so no backup row
+ * is written for it.
  */
 export const syncBigQuery = onTaskDispatched<SerializedDocumentChange>(
   {
-    ...(functionRegion ? { region: functionRegion } : {}),
+    ...TASK_FUNCTION_OPTIONS,
     retryConfig: SYNC_RETRY_CONFIG,
+    maxInstances: SYNC_MAX_CONCURRENT_DISPATCHES,
     rateLimits: {
       maxConcurrentDispatches: SYNC_MAX_CONCURRENT_DISPATCHES, // A blank .env value reaches this deploy-time expression as 0, which
       // Cloud Tasks would not accept; runtime falls back to the same default.
@@ -227,10 +257,7 @@ async function handleBigQuerySyncInitialization(): Promise<void> {
  * authenticated HTTP POST, without queue retries.
  */
 export const initBigQuerySync = onTaskDispatched(
-  {
-    ...(functionRegion ? { region: functionRegion } : {}),
-    retryConfig: LIFECYCLE_RETRY_CONFIG,
-  },
+  LIFECYCLE_TASK_OPTIONS,
   handleBigQuerySyncInitialization
 );
 
@@ -239,9 +266,6 @@ export const initBigQuerySync = onTaskDispatched(
  * so BigQuery resources are reconciled after parameter changes.
  */
 export const setupBigQuerySync = onTaskDispatched(
-  {
-    ...(functionRegion ? { region: functionRegion } : {}),
-    retryConfig: LIFECYCLE_RETRY_CONFIG,
-  },
+  LIFECYCLE_TASK_OPTIONS,
   handleBigQuerySyncInitialization
 );
