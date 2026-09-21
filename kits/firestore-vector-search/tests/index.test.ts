@@ -52,6 +52,37 @@ describe("deploy entry", () => {
     });
   });
 
+  test("pins every function in the instance to the database's region", async () => {
+    vi.stubEnv("DATABASE_REGION", "europe-west4");
+    const entry = await importIndex("test-instance");
+
+    const endpoints = Object.values(entry).filter(
+      (value): value is { __endpoint: { region?: string[] } } =>
+        typeof value === "function" && "__endpoint" in value
+    );
+
+    // Task queues are resolved from the enqueuing function's own region, so a
+    // single function left unpinned would enqueue against a missing queue.
+    expect(endpoints).toHaveLength(8);
+    for (const endpoint of endpoints) {
+      expect(endpoint.__endpoint.region).toEqual(["europe-west4"]);
+    }
+  });
+
+  test("maps a multi-region database location to a Cloud Run region", async () => {
+    vi.stubEnv("DATABASE_REGION", "eur3");
+    const { embedOnWrite } = await importIndex("test-instance");
+
+    expect(embedOnWrite.__endpoint.region).toEqual(["europe-west1"]);
+  });
+
+  test("declares no region when DATABASE_REGION is unset", async () => {
+    vi.stubEnv("DATABASE_REGION", undefined);
+    const { embedOnWrite } = await importIndex("test-instance");
+
+    expect(embedOnWrite.__endpoint.region).toBeUndefined();
+  });
+
   test("fails discovery when FIREBASE_KIT_INSTANCE_ID is missing", async () => {
     await expect(importIndex(undefined)).rejects.toThrow(
       /FIREBASE_KIT_INSTANCE_ID is not set/

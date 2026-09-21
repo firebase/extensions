@@ -18,6 +18,7 @@ import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import {
   afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -34,13 +35,25 @@ vi.mock("../src/embeddings", () => ({ createEmbedClient: vi.fn() }));
 const INSTANCE_ID = "test-instance";
 
 let server: Server;
-let paths: string[] = [];
+
+// Requests carry the test that made them. A test that times out mid-enqueue
+// still delivers its request, and an array cleared between tests would hand it
+// to the next one; tagging keeps every test reading only its own.
+let currentTest = 0;
+const requests: { test: number; url: string }[] = [];
+
+/** The queue paths this test enqueued onto, in order. */
+function enqueued(): string[] {
+  return requests
+    .filter((request) => request.test === currentTest)
+    .map((request) => request.url);
+}
 
 // The Admin SDK reads CLOUD_TASKS_EMULATOR_HOST when the functions client is
 // constructed, so it is set before firebase-admin is imported.
 beforeAll(async () => {
   server = createServer((request, response) => {
-    paths.push(request.url ?? "");
+    requests.push({ test: currentTest, url: request.url ?? "" });
     response.writeHead(200, { "content-type": "application/json" });
     response.end("{}");
   });
@@ -72,20 +85,32 @@ afterAll(async () => {
 });
 
 beforeEach(() => {
-  paths = [];
+  currentTest += 1;
 });
 
 function queueUrl(name: string): string {
   return `/projects/test-project/locations/us-central1/queues/${name}/tasks`;
 }
 
-/** A Firestore whose collection get() returns a single document. */
+/**
+ * A Firestore with one document in the collection and no metadata document,
+ * so every trigger pass runs and enqueues exactly one task.
+ */
 function firestoreWithOneDoc() {
+  const doc = (path: string) => ({
+    path,
+    get: vi.fn(async () => ({ exists: false, data: () => undefined })),
+    set: vi.fn(async () => undefined),
+    update: vi.fn(async () => undefined),
+  });
   return {
+    doc: vi.fn(doc),
     collection: vi.fn(() => ({
-      get: vi.fn(async () => ({
-        docs: [{ ref: { path: "documents/doc-1" } }],
-      })),
+      listDocuments: vi.fn(async () => [{ id: "doc-1" }]),
+    })),
+    batch: vi.fn(() => ({
+      set: vi.fn(),
+      commit: vi.fn(async () => undefined),
     })),
   } as unknown as FirebaseFirestore.Firestore;
 }
@@ -103,13 +128,19 @@ async function context(overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe("task queue targets", () => {
+// The first enqueue pays for building the Admin SDK's task client, which has
+// run past the 5 second default on a cold file system.
+describe("task queue targets", { timeout: 30_000 }, () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   test("the backfill trigger enqueues onto kit-<instance>-backfillTask", async () => {
     const { handleBackfillTrigger } = await import("../src/handlers");
 
     await handleBackfillTrigger({ data: undefined } as never, await context());
 
-    expect(paths).toEqual([queueUrl("kit-test-instance-backfillTask")]);
+    expect(enqueued()).toEqual([queueUrl("kit-test-instance-backfillTask")]);
   });
 
   test("the update trigger enqueues onto kit-<instance>-updateTask", async () => {
@@ -117,19 +148,40 @@ describe("task queue targets", () => {
 
     await handleUpdateTrigger({ data: undefined } as never, await context());
 
-    expect(paths).toEqual([queueUrl("kit-test-instance-updateTask")]);
+    expect(enqueued()).toEqual([queueUrl("kit-test-instance-updateTask")]);
   });
 
-  test("init enqueues onto the two trigger queues", async () => {
+  test("an unknown region fails rather than guessing one", async () => {
+    vi.stubEnv("FUNCTION_REGION", "");
+    const { handleBackfillTrigger } = await import("../src/handlers");
+
+    await expect(
+      handleBackfillTrigger(
+        { data: undefined } as never,
+        await context({ region: undefined })
+      )
+    ).rejects.toThrow("FUNCTION_REGION is required to resolve task queues.");
+
+    expect(enqueued()).toEqual([]);
+  });
+
+  test("init enqueues only the backfill trigger when both passes are on", async () => {
     const { handleInit } = await import("../src/handlers");
 
     await handleInit(
       await context({ doBackfill: true, updateOnConfigure: true })
     );
 
-    expect(paths).toEqual([
-      queueUrl("kit-test-instance-backfillTrigger"),
-      queueUrl("kit-test-instance-updateTrigger"),
-    ]);
+    expect(enqueued()).toEqual([queueUrl("kit-test-instance-backfillTrigger")]);
+  });
+
+  test("init enqueues onto the update trigger queue on its own", async () => {
+    const { handleInit } = await import("../src/handlers");
+
+    await handleInit(
+      await context({ doBackfill: false, updateOnConfigure: true })
+    );
+
+    expect(enqueued()).toEqual([queueUrl("kit-test-instance-updateTrigger")]);
   });
 });

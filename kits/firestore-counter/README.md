@@ -27,6 +27,7 @@ service account for this codebase — it conflicts with that automatic setup.
 | `roles/cloudscheduler.admin` | schedule the controller that flushes shards |
 | `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
 | `roles/run.invoker` | allow Eventarc/Scheduler to invoke the Gen2 Cloud Run service |
+| `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
 
 ## Usage
 
@@ -81,6 +82,7 @@ loads them at deploy time and prompts for any required values that are missing.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
+| `databaseRegion` | `DATABASE_REGION` | yes | (prompted) | Firestore database location; also places the functions |
 | `internalStatePath` | `INTERNAL_STATE_PATH` | no | `_firebase_ext_/sharded_counter` | Firestore path for controller state |
 | `scheduleFrequencyMinutes` | `SCHEDULE_FREQUENCY` | no | `1` | Controller schedule frequency (minutes) |
 
@@ -161,16 +163,6 @@ for them, so no events are published until you create a channel and put both
 values in your `.env`. If you set `EVENTARC_CHANNEL` and leave
 `EXT_SELECTED_EVENTS` unset, every event type is published.
 
-### Event payloads have a different shape
-
-The event types are unchanged, but what they carry is not. `onStart` used to
-carry `{change, context}` and now carries `{data, params}`: the write is under
-`data` instead of `change`, and the 1st gen `context` is gone. `onCompletion`
-used to carry `{context}` and now carries `{params}` only. Anything reading
-`context.eventId`, `context.timestamp`, `context.eventType` or
-`context.resource` from these events needs updating; the trigger wildcards
-(`collection`, `counter`, `shardId`) survive as `params`.
-
 ### Your codebase's global options apply to these functions
 
 The functions are exported from your own functions codebase, so a
@@ -192,6 +184,62 @@ plus a stress test app. The npm package contains only the functions. Nothing
 about the shard layout changed, so the clients you already use keep working;
 carry on getting them from the extension repo.
 
+### DATABASE_REGION decides where the functions run
+
+`DATABASE_REGION` tells the kit where your Firestore database lives, and the
+functions are deployed to the Cloud Run region derived from it, next to the
+database. Regional Firestore locations (`europe-west2`, `us-east1`, ...) are
+used as-is; the multi-region locations map to a Cloud Run region inside them -
+`nam5` and `nam7` to `us-central1`, `eur3` to `europe-west1` - because they are
+not Cloud Run regions themselves and would fail the deploy. The value is
+matched case-insensitively. The Firestore trigger always fires in the
+database's own region, whatever region the functions run in.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
+`.env` values during deploy discovery, so the functions silently fall back to
+the no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already carried
+`DATABASE_REGION`) can itself trigger a region move on your next deploy.
+
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the functions correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's functions ran. Nothing reads it: placement
+comes from `DATABASE_REGION` alone, so if the two disagree your next deploy
+moves the functions.
+
+With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
+no region and the Firebase CLI resolves one at deploy time: it keeps the region
+they are already deployed in, and on a first deploy it resolves each function
+separately, so `onWrite` and `worker` land next to the database and
+`controllerCore` lands in `us-central1`, splitting the instance across two
+regions. Setting the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable
+when running `firebase deploy` puts all of them in that region instead. Careful
+with that variable: it applies to every no-region function in the deploy, not
+just this kit. Omitting the line is not the same as an empty one: a
+non-interactive deploy fails with `In non-interactive mode but have no value
+for the following environment variables: DATABASE_REGION`. Note that changing
+an existing instance's region deletes and recreates the functions.
+
+### Twelve database locations have no Cloud Scheduler
+
+`controllerCore` runs on a schedule, and the Firebase CLI creates its Cloud
+Scheduler job in the function's own region, so a region without Cloud Scheduler
+fails the deploy. Twelve of the locations `DATABASE_REGION` offers resolve to
+one: `us-east5`, `northamerica-northeast2`, `northamerica-south1`,
+`southamerica-west1`, `europe-north1`, `europe-north2`, `europe-southwest1`,
+`europe-west10`, `europe-west12`, `asia-south2`, `australia-southeast2` and
+`africa-south1`. If your database is in one of those, give `DATABASE_REGION`
+the nearest location that does have Cloud Scheduler instead. The trigger still
+fires for a function outside the database's region, so the kit works; the
+writes just pay a cross-region hop.
+
+This is read from the published Cloud Scheduler region list and `gcloud
+scheduler locations list`, not from a failed deploy.
+
 ### Unchanged
 
 - Both settings, with the same names and the same defaults
@@ -201,8 +249,12 @@ carry on getting them from the extension repo.
 - The aggregation behaviour: inline aggregation up to 200 shards, workers above
   that, 45 second self-scheduling worker runs, partial shard cleanup, and
   deletion of shards once they are summed into the counter field.
-- The three functions and the event types they publish, aside from the worker
-  and payload points above.
+- The three functions, the event types they publish and their payloads:
+  `onStart` still carries `{change, context}` and `onCompletion` still carries
+  `{context}`, with `context.eventId`, `context.timestamp`, `context.eventType`,
+  `context.resource`, the trigger wildcards under `context.params`, and the
+  empty `context.notSupported` object the 1st gen backend always sent. Aside
+  from the worker point above.
 
 ## API surface
 

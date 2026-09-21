@@ -30,6 +30,7 @@ import {
   type DeleteOriginalFile,
   type ResizeImagesConfig,
 } from "./export-config";
+import { bucketLocationToFunctionRegion } from "./region";
 
 const ABSOLUTE_PATH_LIST_VALIDATION = {
   validationRegex: /^(?:(\/[^\s\/\,]+)+(\,(\/[^\s\/\,]+)+)*|)$/,
@@ -47,6 +48,59 @@ function absolutePathListInput(example: string) {
 }
 
 const params = {
+  bucketRegion: defineString("BUCKET_REGION", {
+    label: "Cloud Storage Bucket Location",
+    description:
+      "Where is the Cloud Storage bucket located? You can check your bucket's location at [https://console.cloud.google.com/storage/browser](https://console.cloud.google.com/storage/browser). The function in this kit deploys to the Cloud Run region closest to this location.",
+
+    input: select({
+      "Multi-region (United States)": "us",
+      "Multi-region (Europe)": "eu",
+      "Multi-region (Asia)": "asia",
+      "Iowa (us-central1)": "us-central1",
+      "Oregon (us-west1)": "us-west1",
+      "Los Angeles (us-west2)": "us-west2",
+      "Salt Lake City (us-west3)": "us-west3",
+      "Las Vegas (us-west4)": "us-west4",
+      "South Carolina (us-east1)": "us-east1",
+      "Northern Virginia (us-east4)": "us-east4",
+      "Columbus (us-east5)": "us-east5",
+      "Dallas (us-south1)": "us-south1",
+      "Montreal (northamerica-northeast1)": "northamerica-northeast1",
+      "Toronto (northamerica-northeast2)": "northamerica-northeast2",
+      "Queretaro (northamerica-south1)": "northamerica-south1",
+      "Sao Paulo (southamerica-east1)": "southamerica-east1",
+      "Santiago (southamerica-west1)": "southamerica-west1",
+      "Belgium (europe-west1)": "europe-west1",
+      "London (europe-west2)": "europe-west2",
+      "Frankfurt (europe-west3)": "europe-west3",
+      "Netherlands (europe-west4)": "europe-west4",
+      "Zurich (europe-west6)": "europe-west6",
+      "Milan (europe-west8)": "europe-west8",
+      "Paris (europe-west9)": "europe-west9",
+      "Berlin (europe-west10)": "europe-west10",
+      "Turin (europe-west12)": "europe-west12",
+      "Madrid (europe-southwest1)": "europe-southwest1",
+      "Finland (europe-north1)": "europe-north1",
+      "Stockholm (europe-north2)": "europe-north2",
+      "Warsaw (europe-central2)": "europe-central2",
+      "Doha (me-central1)": "me-central1",
+      "Dammam (me-central2)": "me-central2",
+      "Tel Aviv (me-west1)": "me-west1",
+      "Mumbai (asia-south1)": "asia-south1",
+      "Delhi (asia-south2)": "asia-south2",
+      "Singapore (asia-southeast1)": "asia-southeast1",
+      "Jakarta (asia-southeast2)": "asia-southeast2",
+      "Taiwan (asia-east1)": "asia-east1",
+      "Hong Kong (asia-east2)": "asia-east2",
+      "Tokyo (asia-northeast1)": "asia-northeast1",
+      "Osaka (asia-northeast2)": "asia-northeast2",
+      "Seoul (asia-northeast3)": "asia-northeast3",
+      "Sydney (australia-southeast1)": "australia-southeast1",
+      "Melbourne (australia-southeast2)": "australia-southeast2",
+      "Johannesburg (africa-south1)": "africa-south1",
+    }),
+  }),
   bucket: defineString("IMG_BUCKET", {
     label: "Cloud Storage bucket for images",
     description:
@@ -83,12 +137,22 @@ const params = {
       "Delete only on successful resize attempts": "on_success",
     }),
   }),
-  makePublic: defineBoolean("MAKE_PUBLIC", {
+  // A string param, unlike the sibling `IS_ANIMATED` / `REGENERATE_TOKEN`
+  // booleans: the CLI's select prompt compares its `default` against
+  // `option.value.toString()` (firebase-tools `promptSelect`), so a non-string
+  // default never matches an option and the first option is highlighted
+  // instead. The extension's default is `false` ("No"), but a `defineBoolean`
+  // here left "Yes" preselected, so pressing Enter stored `MAKE_PUBLIC=true`
+  // and made every resized image public. Declaring the default as the string
+  // `"false"` preselects "No" as the extension did. Stored values stay
+  // `true`/`false`, so no existing `.env` needs editing.
+  makePublic: defineString("MAKE_PUBLIC", {
     label: "Make resized images public",
     description:
       "Do you want to make the resized images public automatically? So you can access them by URL. For example: https://storage.googleapis.com/{bucket}/{path}",
 
-    default: false,
+    default: "false",
+    input: select({ Yes: "true", No: "false" }),
   }),
   resizedImagesPath: defineString("RESIZED_IMAGES_PATH", {
     label: "Cloud Storage path for resized images",
@@ -186,8 +250,16 @@ const params = {
     description: "Keep animation of GIF and WEBP formats.",
 
     default: true,
-    input: select({ True: true, "No (1st frame only)": false }),
+    input: select({ Yes: true, "No (1st frame only)": false }),
   }),
+  // The extension preselected 1 GB; the CLI highlighted 512 MB, because
+  // `promptSelect` compares its `default` against `option.value.toString()`,
+  // so the int `1024` matches nothing and the first option wins
+  // (firebase/firebase-tools#11053). Unlike `MAKE_PUBLIC` this cannot be
+  // declared as a string: it also feeds `availableMemoryMb` as
+  // `{{ params.FUNCTION_MEMORY }}`, which the CLI resolves as a number only
+  // for an int param. So it stays an int and 1 GB is listed first. Labels,
+  // stored values and the default are unchanged; only the order differs.
   memory: defineInt("FUNCTION_MEMORY", {
     label: "Cloud Function memory",
     description:
@@ -195,8 +267,8 @@ const params = {
 
     default: 1024,
     input: select({
-      "512 MB": 512,
       "1 GB": 1024,
+      "512 MB": 512,
       "2 GB": 2048,
       "4 GB": 4096,
       "8 GB": 8192,
@@ -208,6 +280,7 @@ const params = {
       "Should resized images have a new access token assigned to them,  different from the original image?",
 
     default: true,
+    input: select({ Yes: true, No: false }),
   }),
   contentFilterLevel: defineString("CONTENT_FILTER_LEVEL", {
     label: "Content filter level",
@@ -260,6 +333,19 @@ export const CONFIG_EXPRESSIONS = {
   memory: params.memory,
 } as const;
 
+/**
+ * Cloud Run region for this kit's function, derived from the bucket location.
+ *
+ * The location to Cloud Run region lookup needs a nested ternary, which the
+ * CLI's CEL subset cannot express, so the value is read from `process.env`
+ * (populated from `.env` during CLI discovery) rather than passed as a param
+ * expression. `undefined` means the function declares no region and the
+ * CLI falls back to its own default.
+ */
+export function envFunctionRegion(): string | undefined {
+  return bucketLocationToFunctionRegion(process.env.BUCKET_REGION);
+}
+
 export function validatePathListsFromEnv(): void {
   validateAbsolutePathList(process.env.INCLUDE_PATH_LIST, "includePathList");
   validateAbsolutePathList(process.env.EXCLUDE_PATH_LIST, "excludePathList");
@@ -294,7 +380,8 @@ export function configFromEnv(): ResizeImagesConfig {
     bucket: params.bucket.value(),
     sizes: params.sizes.value(),
     deleteOriginal: params.deleteOriginal.value() as DeleteOriginalFile,
-    makePublic: params.makePublic.value(),
+    // Matches the extension's `process.env.MAKE_PUBLIC === "true"`.
+    makePublic: params.makePublic.value() === "true",
     resizedImagesPath: optional(params.resizedImagesPath.value()),
     includePathList: optional(params.includePathList.value()),
     excludePathList: optional(params.excludePathList.value()),
@@ -316,4 +403,41 @@ export function configFromEnv(): ResizeImagesConfig {
     region: process.env.FUNCTION_REGION,
     projectId: projectID.value(),
   };
+}
+
+// Params the published extension marks `required: true`. A value the user never
+// supplied is absent from process.env; one they deliberately blanked is present
+// and empty. Only the second is a misconfiguration, so the guard below reads
+// process.env rather than `.value()`, which reports both as "".
+const REQUIRED_PARAMS = [
+  "IMG_BUCKET",
+  "IMG_SIZES",
+  "DELETE_ORIGINAL_FILE",
+  "IMAGE_TYPE",
+  "FUNCTION_MEMORY",
+  "CONTENT_FILTER_LEVEL",
+] as const;
+
+/**
+ * Rejects required params that were explicitly set to an empty value.
+ *
+ * `.env` values bypass the CLI's prompt-time validation and take precedence
+ * over a param's declared default, so an empty entry otherwise reaches the
+ * handlers silently. Called at module scope so deploy-time discovery fails
+ * before the function ships, rather than on the first event.
+ */
+export function assertRequiredParams(
+  names: ReadonlyArray<string> = REQUIRED_PARAMS
+): void {
+  const blank = names.filter((name) => {
+    const raw = process.env[name];
+    return raw !== undefined && raw.trim() === "";
+  });
+
+  if (blank.length > 0) {
+    throw new Error(
+      `Required parameters are set to an empty value: ${blank.join(", ")}. ` +
+        "Set them in your .env file, or remove the entries to use their defaults."
+    );
+  }
 }

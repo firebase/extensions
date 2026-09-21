@@ -46,10 +46,14 @@ test.each([
     "bigquery.googleapis.com",
     "Mirrors data from your Cloud Firestore collection in BigQuery.",
   ],
+  [
+    "eventarcpublishing.googleapis.com",
+    "Publishes the extension's custom events to its Eventarc channel.",
+  ],
 ])("declares %s", (api, reason) => {
   expect(requiresAPI).toHaveBeenCalledWith(api, reason);
 });
 
-test("declares exactly the two APIs", () => {
-  expect(requiresAPI).toHaveBeenCalledTimes(2);
+test("declares exactly the 3 APIs the kit needs", () => {
+  expect(requiresAPI).toHaveBeenCalledTimes(3);
 });

@@ -34,6 +34,7 @@ const { configFromEnv, onDocumentWritten } = vi.hoisted(() => ({
 }));
 
 vi.mock("../src/config", () => ({
+  assertRequiredParams: vi.fn(),
   CONFIG_EXPRESSIONS: { document: "translations/{messageId}" },
   configFromEnv,
   googleAiApiKey: { name: "GOOGLE_AI_API_KEY", value: vi.fn(() => "api-key") },

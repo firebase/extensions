@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 import * as eventArc from "firebase-admin/eventarc";
+import { logger } from "firebase-functions";
 
 const { getEventarc } = eventArc;
 
 /**
- * Builds the Eventarc event type for this extension.
+ * Generates both the OLD and NEW event types to maintain backward compatibility.
+ *
+ * Old Event Type: firebase.extensions.firestore-counter.v1.{eventName}
+ * New Event Type: firebase.extensions.firestore-bigquery-export.v1.{eventName}
  *
  * @param eventName The name of the event (e.g., "onStart", "onError", etc.)
- * @returns The event type string.
+ * @returns An array containing both the old and new event types
  */
 const getEventTypes = (eventName: string) => [
-  `firebase.extensions.firestore-bigquery-export.v1.${eventName}`,
+  `firebase.extensions.firestore-counter.v1.${eventName}`, // OLD Event Type for backward compatibility
+  `firebase.extensions.firestore-bigquery-export.v1.${eventName}`, // NEW Event Type following the updated convention
 ];
 
 let eventChannel: eventArc.Channel | undefined;
@@ -47,20 +52,34 @@ export const setupEventChannel = () => {
 };
 
 /**
+ * Publishes an event, logging and swallowing any failure.
+ *
+ * A deleted or unreachable Eventarc channel must not fail the invocation: the
+ * BigQuery export is the contract, event delivery is best effort.
+ */
+const publish = async (event: eventArc.CloudEvent): Promise<void> => {
+  if (!eventChannel) return;
+
+  try {
+    await eventChannel.publish(event);
+  } catch (err) {
+    logger.warn(`Failed to publish Eventarc event ${event.type}`, err);
+  }
+};
+
+/**
  * Publishes a "start" event using both OLD and NEW event types.
  *
  * @param data The payload to send with the event. Can be a string or an object.
- * @returns A Promise resolving when both events are published.
+ * @returns A Promise resolving once both publishes have been attempted.
  */
 export const recordStartEvent = async (data: string | object) => {
-  if (!eventChannel) return Promise.resolve();
-
   const eventTypes = getEventTypes("onStart");
 
   // Publish events for both OLD and NEW event types
-  return Promise.all(
+  await Promise.all(
     eventTypes.map((type) =>
-      eventChannel.publish({
+      publish({
         type,
         data,
       })
@@ -73,17 +92,15 @@ export const recordStartEvent = async (data: string | object) => {
  *
  * @param err The Error object containing the error message.
  * @param subject (Optional) Subject identifier related to the error event.
- * @returns A Promise resolving when both events are published.
+ * @returns A Promise resolving once both publishes have been attempted.
  */
 export const recordErrorEvent = async (err: Error, subject?: string) => {
-  if (!eventChannel) return Promise.resolve();
-
   const eventTypes = getEventTypes("onError");
 
   // Publish events for both OLD and NEW event types
-  return Promise.all(
+  await Promise.all(
     eventTypes.map((type) =>
-      eventChannel.publish({
+      publish({
         type,
         data: { message: err.message },
         subject,
@@ -98,7 +115,7 @@ export const recordErrorEvent = async (err: Error, subject?: string) => {
  * @param params An object containing the subject and the event data.
  * @param params.subject A string representing the subject of the event.
  * @param params.data The payload to send with the event.
- * @returns A Promise resolving when both events are published.
+ * @returns A Promise resolving once both publishes have been attempted.
  */
 export const recordSuccessEvent = async ({
   subject,
@@ -107,14 +124,12 @@ export const recordSuccessEvent = async ({
   subject: string;
   data: string | object;
 }) => {
-  if (!eventChannel) return Promise.resolve();
-
   const eventTypes = getEventTypes("onSuccess");
 
   // Publish events for both OLD and NEW event types
-  return Promise.all(
+  await Promise.all(
     eventTypes.map((type) =>
-      eventChannel.publish({
+      publish({
         type,
         subject,
         data,
@@ -127,17 +142,15 @@ export const recordSuccessEvent = async ({
  * Publishes a "completion" event using both OLD and NEW event types.
  *
  * @param data The payload to send with the event. Can be a string or an object.
- * @returns A Promise resolving when both events are published.
+ * @returns A Promise resolving once both publishes have been attempted.
  */
 export const recordCompletionEvent = async (data: string | object) => {
-  if (!eventChannel) return Promise.resolve();
-
   const eventTypes = getEventTypes("onCompletion");
 
   // Publish events for both OLD and NEW event types
-  return Promise.all(
+  await Promise.all(
     eventTypes.map((type) =>
-      eventChannel.publish({
+      publish({
         type,
         data,
       })

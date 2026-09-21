@@ -78,7 +78,7 @@ describe("transcribeAndUpload", () => {
     vi.clearAllMocks();
   });
 
-  test("writes the .txt next to the uploaded object, even when its path contains tmp/", async () => {
+  test("writes the .txt to the transcript object name it is given", async () => {
     const longRunningRecognize = vi.fn().mockResolvedValue([
       {
         promise: vi.fn().mockResolvedValue([
@@ -98,6 +98,7 @@ describe("transcribeAndUpload", () => {
         bucket: { name: "my-bucket" } as Bucket,
         name: "audio/tmp/clip.mp3.wav",
       },
+      transcriptObjectName: "audio/clip.mp3.wav_transcription.txt",
       sampleRateHertz: 44100,
       audioChannelCount: 1,
       options: {
@@ -112,7 +113,7 @@ describe("transcribeAndUpload", () => {
       expect.objectContaining({
         audio: { uri: "gs://my-bucket/audio/tmp/clip.mp3.wav" },
         outputConfig: {
-          gcsUri: "gs://my-bucket/audio/tmp/clip.mp3.wav_transcription.txt",
+          gcsUri: "gs://my-bucket/audio/clip.mp3.wav_transcription.txt",
         },
       })
     );

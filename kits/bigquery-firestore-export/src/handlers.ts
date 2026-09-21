@@ -22,9 +22,8 @@ import type { MessagePublishedData } from "firebase-functions/v2/pubsub";
 import {
   createTransferConfig,
   type DataTransferClient,
-  getTransferConfig,
-  notificationTopicName,
   PARTITIONING_FIELD_REMOVAL_ERROR_PREFIX,
+  type TransferConfig,
   updateTransferConfig,
 } from "./dts";
 import type { ResolvedBigqueryFirestoreExportConfig } from "./export-config";
@@ -75,9 +74,9 @@ function isPartitioningFieldRemovalError(err: unknown): err is Error {
 
 async function storeTransferConfig(
   ctx: HandlerContext,
-  transferConfig: Awaited<ReturnType<typeof getTransferConfig>>
+  transferConfig: TransferConfig
 ): Promise<void> {
-  if (!transferConfig?.name) {
+  if (!transferConfig.name) {
     throw new Error("BigQuery transfer config is missing its resource name");
   }
   const { transferConfigId } = parseTransferConfigName(transferConfig.name);
@@ -102,36 +101,11 @@ export async function handleMessagePublished(
   }
 }
 
-/** Idempotently creates, links, or updates this deployment's DTS config. */
+/** Idempotently creates or updates this deployment's DTS config. */
 export async function handleUpsertTransferConfig(
   ctx: HandlerContext
 ): Promise<void> {
   await ensureNotificationTopic(ctx);
-
-  if (ctx.config.transferConfigName) {
-    const linked = await getTransferConfig(
-      ctx.dataTransfer,
-      ctx.config.transferConfigName
-    );
-    if (!linked) {
-      // Only a redeploy with a corrected TRANSFER_CONFIG_NAME can resolve this,
-      // so retrying the task cannot help.
-      logs.linkedTransferConfigMissing(ctx.config.transferConfigName);
-      return;
-    }
-    // A linked config is adopted as-is, so a topic mismatch is the user's to
-    // resolve: rewriting it would repoint a config this deployment did not create.
-    const expectedTopic = notificationTopicName(ctx.config);
-    if (linked.notificationPubsubTopic !== expectedTopic) {
-      logs.linkedTopicMismatch(
-        ctx.config.transferConfigName,
-        linked.notificationPubsubTopic,
-        expectedTopic
-      );
-    }
-    await storeTransferConfig(ctx, linked);
-    return;
-  }
 
   const existing = await ctx.db
     .collection(ctx.config.firestoreCollection)

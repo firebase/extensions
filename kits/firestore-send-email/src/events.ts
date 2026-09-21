@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import type { Channel } from "firebase-admin/eventarc";
+import type { Channel, CloudEvent } from "firebase-admin/eventarc";
 import { getEventarc } from "firebase-admin/eventarc";
+import { logger } from "firebase-functions";
 
 let eventChannel: Channel | undefined;
 
@@ -27,9 +28,24 @@ export const setupEventChannel = () => {
     });
 };
 
-export const recordStartEvent = async (change: any) => {
+/**
+ * Publishes an event, logging and swallowing any failure.
+ *
+ * A deleted or unreachable Eventarc channel must not fail the invocation:
+ * sending the mail is the contract, event delivery is best effort.
+ */
+const publish = async (event: CloudEvent): Promise<void> => {
   if (!eventChannel) return;
-  return eventChannel.publish({
+
+  try {
+    await eventChannel.publish(event);
+  } catch (err) {
+    logger.warn(`Failed to publish Eventarc event ${event.type}`, err);
+  }
+};
+
+export const recordStartEvent = async (change: any) => {
+  return publish({
     type: "firebase.extensions.firestore-send-email.v1.onStart",
     subject: change.after.id,
     data: { doc: change.after },
@@ -37,8 +53,7 @@ export const recordStartEvent = async (change: any) => {
 };
 
 export const recordProcessingEvent = async (change: any) => {
-  if (!eventChannel) return;
-  return eventChannel.publish({
+  return publish({
     type: "firebase.extensions.firestore-send-email.v1.onProcessing",
     subject: change.after.id,
     data: { doc: change.after },
@@ -46,8 +61,7 @@ export const recordProcessingEvent = async (change: any) => {
 };
 
 export const recordErrorEvent = async (change: any, doc: any, err: string) => {
-  if (!eventChannel) return;
-  return eventChannel.publish({
+  return publish({
     type: "firebase.extensions.firestore-send-email.v1.onError",
     subject: change.after.id,
     data: { doc, err },
@@ -55,8 +69,7 @@ export const recordErrorEvent = async (change: any, doc: any, err: string) => {
 };
 
 export const recordSuccessEvent = async (change: any) => {
-  if (!eventChannel) return;
-  return eventChannel.publish({
+  return publish({
     type: "firebase.extensions.firestore-send-email.v1.onSuccess",
     subject: change.after.id,
     data: { doc: change.after },
@@ -64,8 +77,7 @@ export const recordSuccessEvent = async (change: any) => {
 };
 
 export const recordCompleteEvent = async (change: any) => {
-  if (!eventChannel) return;
-  return eventChannel.publish({
+  return publish({
     type: "firebase.extensions.firestore-send-email.v1.onComplete",
     subject: change.after.id,
     data: { doc: change.after },
@@ -73,8 +85,7 @@ export const recordCompleteEvent = async (change: any) => {
 };
 
 export const recordPendingEvent = async (change: any, doc: any) => {
-  if (!eventChannel) return;
-  return eventChannel.publish({
+  return publish({
     type: "firebase.extensions.firestore-send-email.v1.onPending",
     subject: change.after.id,
     data: { doc },
@@ -82,8 +93,7 @@ export const recordPendingEvent = async (change: any, doc: any) => {
 };
 
 export const recordRetryEvent = async (change: any, doc: any) => {
-  if (!eventChannel) return;
-  return eventChannel.publish({
+  return publish({
     type: "firebase.extensions.firestore-send-email.v1.onRetry",
     subject: change.after.id,
     data: { doc },

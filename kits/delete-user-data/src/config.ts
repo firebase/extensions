@@ -15,7 +15,6 @@
  */
 
 import {
-  defineBoolean,
   defineInt,
   defineString,
   type IntParam,
@@ -116,12 +115,13 @@ const params = {
       },
     },
   }),
-  enableAutoDiscovery: defineBoolean("ENABLE_AUTO_DISCOVERY", {
+  enableAutoDiscovery: defineString("ENABLE_AUTO_DISCOVERY", {
     label: "Enable auto discovery",
     description:
       "Enable the extension to automatically discover Firestore collections and documents to delete.",
 
-    default: false,
+    default: "no",
+    input: select({ Yes: "yes", No: "no" }),
   }),
   searchDepth: defineInt("AUTO_DISCOVERY_SEARCH_DEPTH", {
     label: "Auto discovery search depth",
@@ -197,7 +197,7 @@ export function configFromEnv(): DeleteUserDataConfig {
     storageBucket:
       optional(params.storageBucket.value()) ?? process.env.STORAGE_BUCKET,
     storagePaths: optional(params.storagePaths.value()),
-    enableAutoDiscovery: params.enableAutoDiscovery.value(),
+    enableAutoDiscovery: params.enableAutoDiscovery.value() === "yes",
     searchDepth: optionalInt(params.searchDepth),
     searchFields: params.searchFields.value(),
     searchFunction: optional(params.searchFunction.value()),
@@ -206,4 +206,40 @@ export function configFromEnv(): DeleteUserDataConfig {
     deletionTopicName: optional(params.deletionTopicName.value()),
     projectId: projectID.value(),
   };
+}
+
+// Params the published extension marks `required: true`. A value the user never
+// supplied is absent from process.env; one they deliberately blanked is present
+// and empty. Only the second is a misconfiguration, so the guard below reads
+// process.env rather than `.value()`, which reports both as "".
+const REQUIRED_PARAMS = [
+  "FIRESTORE_DATABASE_ID",
+  "FIRESTORE_DELETE_MODE",
+  "CLOUD_STORAGE_BUCKET",
+  "ENABLE_AUTO_DISCOVERY",
+  "AUTO_DISCOVERY_SEARCH_DEPTH",
+] as const;
+
+/**
+ * Rejects required params that were explicitly set to an empty value.
+ *
+ * `.env` values bypass the CLI's prompt-time validation and take precedence
+ * over a param's declared default, so an empty entry otherwise reaches the
+ * handlers silently. Called at module scope so deploy-time discovery fails
+ * before the function ships, rather than on the first event.
+ */
+export function assertRequiredParams(
+  names: ReadonlyArray<string> = REQUIRED_PARAMS
+): void {
+  const blank = names.filter((name) => {
+    const raw = process.env[name];
+    return raw !== undefined && raw.trim() === "";
+  });
+
+  if (blank.length > 0) {
+    throw new Error(
+      `Required parameters are set to an empty value: ${blank.join(", ")}. ` +
+        "Set them in your .env file, or remove the entries to use their defaults."
+    );
+  }
 }

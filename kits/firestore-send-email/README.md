@@ -22,11 +22,12 @@ Firebase CLI 15.23.0 or later creates that account, grants the roles below,
 and attaches it to every function in this kit. Do not set a custom runtime
 service account for this codebase — it conflicts with that automatic setup.
 
-| Role                           | Why                                                 |
-| ------------------------------ | --------------------------------------------------- |
-| `roles/datastore.user`         | read mail documents and write delivery status       |
-| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events               |
-| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service |
+| Role                           | Why                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------ |
+| `roles/datastore.user`         | read mail documents and write delivery status                                              |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events                                                      |
+| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service                                        |
+| `roles/eventarc.publisher`     | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
 
 ## Usage
 
@@ -177,25 +178,39 @@ is honored: the function deploys near your database.
 
 Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
 `.env` values during deploy discovery, so the function silently falls back to
-the no-region behavior below. Two consequences worth knowing before you
-deploy. Upgrading the CLI (or this kit, if your `.env` already carried
-`DATABASE_REGION`) can itself trigger the region move described below on your
-next deploy. And on a fresh interactive install the value you enter at the
-prompt only takes effect from the second deploy: the first deploy computes the
-region before the prompt runs, so it lands in `us-central1` and the next deploy
-moves the function.
+the no-region behavior below. Upgrading the CLI (or this kit, if your `.env`
+already carried `DATABASE_REGION`) can itself trigger the region move described
+below on your next deploy.
 
-With `DATABASE_REGION` unset or empty, the function declares no region and the
-Firebase CLI resolves one at deploy time: it keeps the region it is already
-deployed in, and on a first deploy lands in `us-central1` unless you set the
-`FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
-`firebase deploy`. Careful with that variable: it applies to every no-region
-function in the deploy, not just this kit. Note that changing an existing
-install's function region deletes and recreates the function in the new
-region. `processQueue` is the kit's only function and nothing reconciles the
-mail collection afterwards, so any document written while the function is gone
-is never delivered. Stop writers and let the collection drain before a deploy
-that moves the region.
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the function correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's function ran. Nothing reads it: placement comes
+from `DATABASE_REGION` alone, so if the two disagree your next deploy moves the
+function.
+
+With an explicit empty `DATABASE_REGION=` line in `.env`, the function declares
+no region and the Firebase CLI resolves one at deploy time: it keeps the region
+it is already deployed in, and on a first deploy it lands in `us-central1`. The
+CLI would otherwise place it next to the database, but it resolves the default
+region before it resolves params, so the `DATABASE` param this kit passes to the
+trigger is still an unresolved expression when the database is looked up, and
+the lookup falls back
+([firebase/firebase-tools#11020](https://github.com/firebase/firebase-tools/issues/11020)).
+Set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+`firebase deploy` to land somewhere else. Careful with that variable: it applies
+to every no-region function in the deploy, not just this kit. Omitting the line
+is not the same as an empty one: a non-interactive deploy fails with `In
+non-interactive mode but have no value for the following environment variables:
+DATABASE_REGION`. Note that changing an existing install's function region
+deletes and recreates the function in the new region. `processQueue` is the
+kit's only function and nothing reconciles the mail collection afterwards, so
+any document written while the function is gone is never delivered. Stop
+writers and let the collection drain before a deploy that moves the region.
 
 ### Create the Eventarc channel yourself for events
 
@@ -243,8 +258,8 @@ a `TypeError` about reading `attachments` into `delivery.error`. It now writes
   path pattern so nested collections such as `users/{uid}/mail` keep working, and
   `MAIL_COLLECTION` still defaults to `mail`.
 - Every environment variable keeps its name, type and default, including
-  `OAUTH_SECURE`, which was a `true`/`false` dropdown and is now a boolean that
-  reads those same two values.
+  `OAUTH_SECURE`, which is still a `true`/`false` dropdown, and keeps the
+  extension's `Yes` / `No` option labels.
 - Document fields and their meanings are identical: `to`, `cc`, `bcc`, the
   `*Uids` variants, `message`, `template`, `sendGrid`, `headers`, `categories`,
   `from` and `replyTo`, along with the validation error messages written to

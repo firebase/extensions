@@ -89,7 +89,6 @@ const params = {
       "EU Mutli-Region (EU)": "EU",
     }),
   }),
-  transferConfigName: defineString("TRANSFER_CONFIG_NAME", { default: "" }),
   pubSubTopic: defineString("PUB_SUB_TOPIC", {
     label: "Pub/Sub Topic",
     description:
@@ -219,7 +218,6 @@ export function configFromEnv(): BigqueryFirestoreExportConfig {
     bigqueryDatasetLocation: params.bigqueryDatasetLocation.value(),
     projectId: projectID.value(),
     instanceId: instanceIdFromEnv(),
-    transferConfigName: optional(params.transferConfigName.value()),
     datasetId: params.datasetId.value(),
     tableName: params.tableName.value(),
     queryString: params.queryString.value(),
@@ -230,4 +228,42 @@ export function configFromEnv(): BigqueryFirestoreExportConfig {
     firestoreCollection: params.firestoreCollection.value(),
     logLevel: normalizeLogLevel(params.logLevel.value()),
   };
+}
+
+// Params the published extension marks `required: true`. A value the user never
+// supplied is absent from process.env; one they deliberately blanked is present
+// and empty. Only the second is a misconfiguration, so the guard below reads
+// process.env rather than `.value()`, which reports both as "".
+const REQUIRED_PARAMS = [
+  "BIGQUERY_DATASET_LOCATION",
+  "DISPLAY_NAME",
+  "DATASET_ID",
+  "TABLE_NAME",
+  "QUERY_STRING",
+  "SCHEDULE",
+  "COLLECTION_PATH",
+] as const;
+
+/**
+ * Rejects required params that were explicitly set to an empty value.
+ *
+ * `.env` values bypass the CLI's prompt-time validation and take precedence
+ * over a param's declared default, so an empty entry otherwise reaches the
+ * handlers silently. Called at module scope so deploy-time discovery fails
+ * before the function ships, rather than on the first event.
+ */
+export function assertRequiredParams(
+  names: ReadonlyArray<string> = REQUIRED_PARAMS
+): void {
+  const blank = names.filter((name) => {
+    const raw = process.env[name];
+    return raw !== undefined && raw.trim() === "";
+  });
+
+  if (blank.length > 0) {
+    throw new Error(
+      `Required parameters are set to an empty value: ${blank.join(", ")}. ` +
+        "Set them in your .env file, or remove the entries to use their defaults."
+    );
+  }
 }

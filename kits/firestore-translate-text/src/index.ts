@@ -19,7 +19,12 @@ import { getFirestore } from "firebase-admin/firestore";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
-import { CONFIG_EXPRESSIONS, configFromEnv, googleAiApiKey } from "./config";
+import {
+  assertRequiredParams,
+  CONFIG_EXPRESSIONS,
+  configFromEnv,
+  googleAiApiKey,
+} from "./config";
 import * as events from "./events";
 import {
   type ResolvedTranslateConfig,
@@ -29,6 +34,7 @@ import { type HandlerContext, handleDocumentWrite } from "./handlers";
 import * as logs from "./logs";
 import { createTranslationService } from "./translate";
 
+assertRequiredParams();
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
@@ -36,6 +42,11 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   // Gen2 Firestore triggers need Eventarc receive and run.invoker on the function SA.
   "roles/eventarc.eventReceiver",
   "roles/run.invoker",
+  // The Extensions platform granted publish rights on the extension's Eventarc
+  // channel implicitly from `events:` in extension.yaml. Kits get no implicit
+  // grant, so without this the `channel.publish()` calls in ./events fail with
+  // PERMISSION_DENIED and no custom event is ever delivered.
+  "roles/eventarc.publisher",
 ];
 const REQUIRED_APIS = [
   {
@@ -47,6 +58,10 @@ const REQUIRED_APIS = [
     api: "translate.googleapis.com",
     reason:
       "To use Google Translate to translate strings into the specified target languages.",
+  },
+  {
+    api: "eventarcpublishing.googleapis.com",
+    reason: "Publishes the extension's custom events to its Eventarc channel.",
   },
 ] as const;
 

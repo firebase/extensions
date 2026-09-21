@@ -21,7 +21,12 @@ import { expr } from "firebase-functions/params";
 import { onSchedule } from "firebase-functions/scheduler";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
-import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
+import {
+  assertRequiredParams,
+  CONFIG_EXPRESSIONS,
+  configFromEnv,
+  envFunctionRegion,
+} from "./config";
 import * as events from "./events";
 import { resolveCounterConfig } from "./export-config";
 import {
@@ -31,6 +36,7 @@ import {
   handleWorker,
 } from "./handlers";
 
+assertRequiredParams();
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
@@ -39,11 +45,20 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   // Gen2 Firestore triggers need Eventarc receive and run.invoker on the function SA.
   "roles/eventarc.eventReceiver",
   "roles/run.invoker",
+  // The Extensions platform granted publish rights on the extension's Eventarc
+  // channel implicitly from `events:` in extension.yaml. Kits get no implicit
+  // grant, so without this the `channel.publish()` calls in ./events fail with
+  // PERMISSION_DENIED and no custom event is ever delivered.
+  "roles/eventarc.publisher",
 ];
 const REQUIRED_APIS = [
   {
     api: "firestore.googleapis.com",
     reason: "Reads and writes counter shards in Cloud Firestore.",
+  },
+  {
+    api: "eventarcpublishing.googleapis.com",
+    reason: "Publishes the extension's custom events to its Eventarc channel.",
   },
 ] as const;
 
@@ -86,8 +101,15 @@ function getHandlerContext(): HandlerContext {
   return ctx;
 }
 
+/*
+ * All functions of a kit instance deploy to one region, so the region is
+ * resolved once here and applied to every function.
+ */
+const functionRegion = envFunctionRegion();
+
 export const controllerCore = onSchedule(
   {
+    ...(functionRegion ? { region: functionRegion } : {}),
     schedule: CONFIG_EXPRESSIONS.schedule as unknown as string,
     maxInstances: 1,
   },
@@ -96,6 +118,7 @@ export const controllerCore = onSchedule(
 
 export const onWrite = onDocumentWritten(
   {
+    ...(functionRegion ? { region: functionRegion } : {}),
     document: "{collection}/{counter=**}/_counter_shards_/{shardId}",
     maxInstances: 1,
     timeoutSeconds: 120,
@@ -105,6 +128,7 @@ export const onWrite = onDocumentWritten(
 
 export const worker = onDocumentWritten(
   {
+    ...(functionRegion ? { region: functionRegion } : {}),
     document: expr`${CONFIG_EXPRESSIONS.internalStatePath}/workers/{workerId}`,
   },
   handleWorker

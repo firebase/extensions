@@ -1,18 +1,18 @@
 {
   "name": "@firebase-function-kits/firestore-translate-text",
-  "version": "0.0.2-rc.3",
+  "version": "0.0.2-rc.4",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@firebase-function-kits/firestore-translate-text",
-      "version": "0.0.2-rc.3",
+      "version": "0.0.2-rc.4",
       "license": "Apache-2.0",
       "dependencies": {
         "@genkit-ai/google-genai": "^1.31.0",
         "@google-cloud/translate": "^8.2.0",
         "firebase-admin": "^14.1.0",
-        "firebase-functions": "^7.3.3-rc.0",
+        "firebase-functions": "^7.4.0",
         "genkit": "^1.31.0"
       },
       "devDependencies": {
@@ -3503,9 +3503,6 @@
         "arm64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -3523,9 +3520,6 @@
         "arm64"
       ],
       "dev": true,
-      "libc": [
-        "musl"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -3543,9 +3537,6 @@
         "ppc64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -3563,9 +3554,6 @@
         "s390x"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -3583,9 +3571,6 @@
         "x64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -3603,9 +3588,6 @@
         "x64"
       ],
       "dev": true,
-      "libc": [
-        "musl"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -5145,10 +5127,9 @@
       }
     },
     "node_modules/firebase-functions": {
-      "version": "7.3.3-rc.0",
-      "resolved": "https://registry.npmjs.org/firebase-functions/-/firebase-functions-7.3.3-rc.0.tgz",
-      "integrity": "sha512-yMVax5196sPp150ySihdXrhWtepeQ0yRmSBl3GoIogzy6DFoEi5CQbvMuFjTPz65MacRrNiJ55HS3oIlHUO/wg==",
-      "license": "MIT",
+      "version": "7.4.0",
+      "resolved": "https://registry.npmjs.org/firebase-functions/-/firebase-functions-7.4.0.tgz",
+      "integrity": "sha512-jR+c16q1E07dPVqU/sdbIEVEQJYSxjY6BFI+QR5/AvrnII8C6UkJv6fR8LJ+GKmcGUBe7SjO/MnEWLAeOiHWMw==",
       "dependencies": {
         "@types/cors": "^2.8.5",
         "@types/express": "^5.0.0",
@@ -6137,9 +6118,6 @@
         "arm64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MPL-2.0",
       "optional": true,
       "os": [
@@ -6161,9 +6139,6 @@
         "arm64"
       ],
       "dev": true,
-      "libc": [
-        "musl"
-      ],
       "license": "MPL-2.0",
       "optional": true,
       "os": [
@@ -6185,9 +6160,6 @@
         "x64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MPL-2.0",
       "optional": true,
       "os": [
@@ -6209,9 +6181,6 @@
         "x64"
       ],
       "dev": true,
-      "libc": [
-        "musl"
-      ],
       "license": "MPL-2.0",
       "optional": true,
       "os": [

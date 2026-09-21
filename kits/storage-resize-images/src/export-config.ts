@@ -127,7 +127,6 @@ function deleteOriginalFile(
       return DELETE_IMAGE.always;
     case false:
     case "false":
-    case undefined:
       return DELETE_IMAGE.never;
     default:
       return DELETE_IMAGE.onSuccess;

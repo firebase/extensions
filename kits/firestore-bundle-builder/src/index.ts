@@ -31,10 +31,11 @@ import { onRequest } from "firebase-functions/https";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
 import type { BundleSpec } from "./build-bundle";
-import { configFromEnv } from "./config";
+import { assertRequiredParams, configFromEnv } from "./config";
 import { resolveConfig } from "./export-config";
 import { type HandlerContext, handleServe } from "./handlers";
 
+assertRequiredParams();
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import * as eventArc from "firebase-admin/eventarc";
+import { logger } from "firebase-functions";
 
 import type { Failure, TranscribeAudioSuccess } from "./types";
 
@@ -41,6 +42,22 @@ export const setupEventChannel = () => {
 };
 
 /**
+ * Publishes an event, logging and swallowing any failure.
+ *
+ * A deleted or unreachable Eventarc channel must not fail the invocation:
+ * the transcription is the contract, event delivery is best effort.
+ */
+const publish = async (event: eventArc.CloudEvent): Promise<void> => {
+  if (!eventChannel) return;
+
+  try {
+    await eventChannel.publish(event);
+  } catch (err) {
+    logger.warn(`Failed to publish Eventarc event ${event.type}`, err);
+  }
+};
+
+/**
  * Publishes the `complete` event for a successful transcription.
  *
  * @param contents - The successful transcription result.
@@ -50,8 +67,7 @@ export const recordCompleteEvent = async (
   contents: TranscribeAudioSuccess,
   objectName: string
 ): Promise<void> => {
-  if (!eventChannel) return;
-  await eventChannel.publish({
+  await publish({
     type: COMPLETE_EVENT_TYPE,
     data: {
       ...contents,
@@ -70,8 +86,7 @@ export const recordFailureEvent = async (
   contents: Failure,
   objectName: string
 ): Promise<void> => {
-  if (!eventChannel) return;
-  await eventChannel.publish({
+  await publish({
     type: FAIL_EVENT_TYPE,
     data: {
       ...contents,
@@ -83,17 +98,22 @@ export const recordFailureEvent = async (
 /**
  * Publishes the `fail` event for an unexpected error thrown by the pipeline.
  *
+ * The error is published as-is to keep the payload identical to the extension's,
+ * so subscribers receive whatever enumerable fields the thrown error has. A
+ * plain `Error` serialises to `{"error":{}}` because `message` and `stack` are
+ * not enumerable; a Cloud Storage `ApiError` assigns `code`, `errors`,
+ * `response` and `message` as own properties and keeps them; and the plain
+ * object `errorFromAny` builds for a thrown non-error keeps its `name` and
+ * `message`. Normalising any of this would be a payload change for existing
+ * subscribers.
+ *
  * @param error - The error that aborted processing.
  */
 export const recordErrorEvent = async (error: Error): Promise<void> => {
-  if (!eventChannel) return;
-  await eventChannel.publish({
+  await publish({
     type: FAIL_EVENT_TYPE,
     data: {
-      error: {
-        message: error.message,
-        stack: error.stack,
-      },
+      error,
     },
   });
 };

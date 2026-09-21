@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
+import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import type { Bucket } from "@google-cloud/storage";
 import sharp from "sharp";
-import { v4 as uuidv4 } from "uuid";
 import type { ResolvedResizeImagesConfig } from "./export-config";
 import {
   SUPPORTED_EXTENSIONS,
@@ -61,7 +61,10 @@ export function resize(
   }
 
   const ops = {
-    failOnError: false,
+    // sharp 0.35 dropped `failOnError`; unknown constructor keys are ignored,
+    // so the old spelling would silently restore the default of failing on a
+    // libvips warning and reject partially decodable images.
+    failOn: "none" as const,
     ...(sharpOptions || {}),
     animated: config.animated,
   };
@@ -121,7 +124,7 @@ export const modifyImage = async ({
   let modifiedFile: string | undefined;
 
   try {
-    modifiedFile = path.join(os.tmpdir(), uuidv4());
+    modifiedFile = path.join(os.tmpdir(), crypto.randomUUID());
     const metadata = constructMetadata(
       modifiedFileName,
       imageContentType,
@@ -201,7 +204,7 @@ export const constructMetadata = (
     config.cacheControlHeader || objectMetadata.cacheControl;
 
   if (config.regenerateToken && customMetadata.firebaseStorageDownloadTokens) {
-    customMetadata.firebaseStorageDownloadTokens = uuidv4();
+    customMetadata.firebaseStorageDownloadTokens = crypto.randomUUID();
   }
   return metadata;
 };

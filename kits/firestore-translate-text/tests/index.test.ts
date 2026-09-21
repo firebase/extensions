@@ -51,6 +51,7 @@ const googleAiApiKey = {
 const CONFIG_EXPRESSIONS = { document: "translations/{messageId}" };
 
 vi.mock("../src/config", () => ({
+  assertRequiredParams: vi.fn(),
   CONFIG_EXPRESSIONS,
   configFromEnv,
   googleAiApiKey,
@@ -122,7 +123,20 @@ describe("index", () => {
       "roles/datastore.user",
       "roles/eventarc.eventReceiver",
       "roles/run.invoker",
+      "roles/eventarc.publisher",
     ]);
+  });
+
+  // The extension published custom events with only `datastore.user` declared:
+  // the Extensions platform granted publish on the channel implicitly from the
+  // `events:` block in extension.yaml. Kits get no implicit grant, so the role
+  // has to be declared or every `channel.publish()` 403s at runtime.
+  test("declares the Eventarc publisher role the custom events need", async () => {
+    await importIndex();
+
+    expect(requiresRole.mock.calls.flat()).toContain(
+      "roles/eventarc.publisher"
+    );
   });
 
   test("declares the Cloud Firestore API requirement", async () => {
@@ -140,6 +154,15 @@ describe("index", () => {
     expect(requiresAPI).toHaveBeenCalledWith(
       "translate.googleapis.com",
       "To use Google Translate to translate strings into the specified target languages."
+    );
+  });
+
+  test("declares the Eventarc publishing API the custom events need", async () => {
+    await importIndex();
+
+    expect(requiresAPI).toHaveBeenCalledWith(
+      "eventarcpublishing.googleapis.com",
+      "Publishes the extension's custom events to its Eventarc channel."
     );
   });
 

@@ -129,8 +129,9 @@ const params = {
     input: { text: { example: "(default)" } },
   }),
   // Declared so the CLI prompts for the value and persists it to `.env`; the
-  // function region option cannot be a param expression, so the entry point
-  // reads the same variable from `process.env` at module load instead.
+  // location to Cloud Run region lookup needs a nested ternary the CLI's CEL
+  // subset cannot express, so the entry point reads the same variable from
+  // `process.env` at module load instead.
   databaseRegion: defineString("DATABASE_REGION", {
     label: "Firestore Instance Location",
     description:
@@ -704,4 +705,47 @@ export function configFromEnv(): ExportConfig {
     maxDispatchesPerSecond: optionalInt(params.maxDispatchesPerSecond),
     maxEnqueueAttempts: optionalInt(params.maxEnqueueAttempts),
   };
+}
+
+// Params the published extension marks `required: true`. A value the user never
+// supplied is absent from process.env; one they deliberately blanked is present
+// and empty. Only the second is a misconfiguration, so the guard below reads
+// process.env rather than `.value()`, which reports both as "".
+// DATABASE_REGION is `required: true` upstream but deliberately omitted here:
+// an explicit empty value is a supported setting that leaves the function
+// without a declared region, so the CLI resolves one at deploy time.
+const REQUIRED_PARAMS = [
+  "DATASET_LOCATION",
+  "BIGQUERY_PROJECT_ID",
+  "DATABASE",
+  "COLLECTION_PATH",
+  "DATASET_ID",
+  "TABLE_ID",
+  "VIEW_TYPE",
+  "USE_NEW_SNAPSHOT_QUERY_SYNTAX",
+  "LOG_LEVEL",
+] as const;
+
+/**
+ * Rejects required params that were explicitly set to an empty value.
+ *
+ * `.env` values bypass the CLI's prompt-time validation and take precedence
+ * over a param's declared default, so an empty entry otherwise reaches the
+ * handlers silently. Called at module scope so deploy-time discovery fails
+ * before the function ships, rather than on the first event.
+ */
+export function assertRequiredParams(
+  names: ReadonlyArray<string> = REQUIRED_PARAMS
+): void {
+  const blank = names.filter((name) => {
+    const raw = process.env[name];
+    return raw !== undefined && raw.trim() === "";
+  });
+
+  if (blank.length > 0) {
+    throw new Error(
+      `Required parameters are set to an empty value: ${blank.join(", ")}. ` +
+        "Set them in your .env file, or remove the entries to use their defaults."
+    );
+  }
 }

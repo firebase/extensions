@@ -27,8 +27,6 @@ export interface BigqueryFirestoreExportConfig {
   projectId: string;
   /** Stable id used to associate a DTS config with this deployment. */
   instanceId: string;
-  /** Link this existing DTS config instead of creating one. */
-  transferConfigName?: string;
   /** BigQuery destination dataset id. */
   datasetId: string;
   /** Prefix for per-run destination tables. */
@@ -54,7 +52,6 @@ export interface ResolvedBigqueryFirestoreExportConfig {
   bigqueryDatasetLocation: string;
   projectId: string;
   instanceId: string;
-  transferConfigName?: string;
   datasetId: string;
   tableName: string;
   queryString: string;
@@ -103,7 +100,6 @@ export function resolveConfig(
     ),
     projectId: required(config.projectId, "projectId"),
     instanceId,
-    transferConfigName: optional(config.transferConfigName),
     datasetId: required(config.datasetId, "datasetId"),
     tableName: required(config.tableName, "tableName"),
     queryString: required(config.queryString, "queryString"),

@@ -41,8 +41,11 @@ and configure it with a `.env` (or `.env.<projectId>`).
 Importing the package without exporting its functions deploys nothing — the CLI
 only deploys what your entry file exports.
 
-Put `RTDB_NODE_PATH` and `SELECTED_DATABASE_INSTANCE` in `.env` so
-the trigger binds to the right database path and instance.
+Put `DATABASE_REGION`, `RTDB_NODE_PATH`, `MAX_COUNT` and
+`SELECTED_DATABASE_INSTANCE` in `.env` so the function lands in the same region
+as the database, the trigger binds to the right database path and instance, and
+the kit knows how many children to keep. `DATABASE_REGION`, `RTDB_NODE_PATH` and
+`MAX_COUNT` have no default, so the CLI prompts for any you leave out.
 
 ## Deploy
 
@@ -84,8 +87,9 @@ Realtime Database instance.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
-| `nodePath` | `RTDB_NODE_PATH` | no | `messages` | Parent path whose children are limited |
-| `maxCount` | `MAX_COUNT` | no | `100` | Maximum child nodes to retain |
+| `databaseRegion` | `DATABASE_REGION` | yes | none | Realtime Database instance location; also places the function |
+| `nodePath` | `RTDB_NODE_PATH` | yes | none | Parent path whose children are limited |
+| `maxCount` | `MAX_COUNT` | yes | none | Maximum child nodes to retain |
 | `databaseInstance` | `SELECTED_DATABASE_INSTANCE` | yes* | from `FIREBASE_CONFIG` when present | RTDB instance id |
 
 \* Required when `FIREBASE_CONFIG` does not already imply a database instance.
@@ -126,27 +130,34 @@ bad values are caught, and where the function runs.
 
 Node.js reserves `NODE_PATH` for its own module resolution and overwrites it in
 the function runtime, so the setting had to be renamed. Copying `NODE_PATH` from
-an installed instance's config has no effect: the kit ignores it and falls back
-to its default of `messages`, so it watches the wrong path and silently trims
-nothing you care about. Rename the key to `RTDB_NODE_PATH` in your `.env`.
+an installed instance's config has no effect: the kit ignores it, which leaves
+`RTDB_NODE_PATH` unset, and a param with no default is prompted for, so the CLI
+asks you for the path at deploy time. A deploy that cannot prompt, such as one
+from CI, fails on the missing value instead. Rename the key to `RTDB_NODE_PATH`
+in your `.env`.
 
 Leading and trailing slashes are now trimmed, so `/rooms/messages/` and
 `rooms/messages` are equivalent.
 
-### `MAX_COUNT` now defaults to 100, and 0 is rejected
+### `MAX_COUNT` is now an integer setting, and `0` is rejected at runtime
 
-Both settings were required at install; both now have defaults
-(`RTDB_NODE_PATH: messages`, `MAX_COUNT: 100`), so an incomplete config deploys
-instead of stopping to ask you. `MAX_COUNT` is also a proper integer setting now.
-The extension accepted `0`, which meant "delete every child on every write"; the
-kit rejects it along with negative and non-integer values.
+`MAX_COUNT` is a proper integer setting now, but the extension's `^\d+$`
+validation regex is kept verbatim, so `0` still passes validation. The extension
+took a `MAX_COUNT` of `0` to mean "delete every child on every write"; the kit
+rejects it, along with negative and non-numeric values, with
+`maxCount must be a positive integer.` on the first write to the watched path. A
+fractional value is truncated rather than rejected, so `10.7` keeps 10.
 
-### Bad settings surface on the first write, not at install
+### Values set in `.env` skip the install prompt's validation
 
-The install prompts used to reject a path containing spaces, a non-numeric
-`MAX_COUNT` and an invalid database instance id before anything was deployed.
-Those checks now run when the function handles its first event, so a bad value
-deploys cleanly and then throws on every write to the watched path:
+The install prompts reject a path containing spaces, a non-numeric `MAX_COUNT`
+and an invalid database instance id before anything is deployed, the same as the
+extension did. Those checks only run when the CLI prompts you, though: a value
+you write into `.env` is used as-is, and only a required param left empty is
+caught at deploy, by `assertRequiredParams`.
+
+`MAX_COUNT` of `0` reaches the handler either way, since the extension's `^\d+$`
+regex accepts it, and throws on every write to the watched path:
 
 ```
 maxCount must be a positive integer.
@@ -162,9 +173,13 @@ read from `FIREBASE_CONFIG` rather than injected by the install flow. If your
 `FIREBASE_CONFIG` has no `databaseURL`, there is no default and the CLI prompts
 for the instance at deploy time.
 
-The function itself no longer has a location setting. It deploys to your
-codebase's default region (`us-central1` unless you have changed it) rather than
-the location you picked at install.
+The extension's install-time location is replaced by `DATABASE_REGION`, which
+describes where your database instance lives rather than where you want the
+function. A 2nd gen database trigger cannot cross regions. The Firebase CLI
+does not check this itself, it copies the function's region onto the trigger, so
+a value that disagrees with the instance is rejected when the backend creates
+the function. That rejection is read from the CLI's trigger handling rather than
+reproduced against a live deploy.
 
 ### The trigger is 2nd gen
 
@@ -173,6 +188,29 @@ gen. Its service account needs `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of `roles/firebasedatabase.admin`; the Firebase CLI
 grants these for you. This otherwise only matters if you have alerting keyed to
 function generation.
+
+### DATABASE_REGION decides where the function runs
+
+`DATABASE_REGION` tells the kit where your Realtime Database instance lives, and
+the function is deployed to that region. A 2nd gen database trigger only fires
+for a function in the same region as its instance, so this has to agree with the
+instance you set. Database locations are Cloud Run regions already, so there is
+nothing to map: the function declares the parameter itself and the Firebase CLI
+substitutes your value, whether you answer the prompt or write `.env` yourself.
+
+The value is required, and it applies to the deploy that sets it. A
+non-interactive deploy with the key missing from `.env` fails with `In
+non-interactive mode but have no value for the following environment variables:
+DATABASE_REGION`. Give it one of the offered regions exactly as listed: a
+misspelled value reaches Cloud Run as written and fails the deploy, and a blank
+one is rejected at discovery before anything ships.
+Note that changing the region on an existing instance deletes and recreates the
+function.
+
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's function ran. Nothing reads it: placement comes
+from `DATABASE_REGION` alone, so if the two disagree your next deploy moves the
+function.
 
 ### Unchanged
 

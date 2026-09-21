@@ -23,14 +23,15 @@ below, enables the listed APIs, and attaches the account to every function in
 this kit. Do not set a custom runtime service account for this codebase — it
 conflicts with that automatic setup.
 
-| Role / API                         | Why                                                 |
-| ---------------------------------- | --------------------------------------------------- |
-| `roles/storage.admin`              | read originals and write resized objects            |
-| `roles/aiplatform.user`            | optional content filtering via Vertex AI            |
-| `roles/eventarc.eventReceiver`     | receive Gen2 Storage trigger events                 |
-| `roles/run.invoker`                | allow Eventarc to invoke the Gen2 Cloud Run service |
-| `aiplatform.googleapis.com`        | Vertex AI content filtering, if enabled             |
-| `storage-component.googleapis.com` | use Cloud Storage                                   |
+| Role / API                         | Why                                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------ |
+| `roles/storage.admin`              | read originals and write resized objects                                                   |
+| `roles/aiplatform.user`            | optional content filtering via Vertex AI                                                   |
+| `roles/eventarc.eventReceiver`     | receive Gen2 Storage trigger events                                                        |
+| `roles/run.invoker`                | allow Eventarc to invoke the Gen2 Cloud Run service                                        |
+| `roles/eventarc.publisher`         | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
+| `aiplatform.googleapis.com`        | Vertex AI content filtering, if enabled                                                    |
+| `storage-component.googleapis.com` | use Cloud Storage                                                                          |
 
 ## Usage
 
@@ -84,9 +85,10 @@ loads them at deploy time and prompts for any required values that are missing.
 
 | Field                  | Env var                  | Required | Default                | Description                                                                                |
 | ---------------------- | ------------------------ | -------- | ---------------------- | ------------------------------------------------------------------------------------------ |
+| `bucketRegion` | `BUCKET_REGION` | yes | (prompted) | Cloud Storage bucket location; also places the function |
 | `bucket`               | `IMG_BUCKET`             | no       | default Storage bucket | Bucket to watch                                                                            |
 | `sizes`                | `IMG_SIZES`              | no       | `200x200`              | Comma-separated resize sizes                                                               |
-| `deleteOriginal`       | `DELETE_ORIGINAL_FILE`   | no       | `false`                | Delete original after resize                                                               |
+| `deleteOriginal`       | `DELETE_ORIGINAL_FILE`   | no       | `false`                | Delete original after resize; omitted in code means `on_success` (see note below)          |
 | `makePublic`           | `MAKE_PUBLIC`            | no       | `false`                | Make resized objects public                                                                |
 | `resizedImagesPath`    | `RESIZED_IMAGES_PATH`    | no       | (empty)                | Output path prefix                                                                         |
 | `includePathList`      | `INCLUDE_PATH_LIST`      | no       | (empty)                | Comma-separated absolute paths to include (for example, `/users/avatars,/design/pictures`) |
@@ -102,6 +104,13 @@ loads them at deploy time and prompts for any required values that are missing.
 | `contentFilterLevel`   | `CONTENT_FILTER_LEVEL`   | no       | `OFF`                  | Content filter level                                                                       |
 | `customFilterPrompt`   | `CUSTOM_FILTER_PROMPT`   | no       | (empty)                | Custom filter prompt                                                                       |
 | `placeholderImagePath` | `PLACEHOLDER_IMAGE_PATH` | no       | (empty)                | Placeholder for filtered images                                                            |
+
+The `deleteOriginal` default above is what the CLI proposes at the deploy
+prompt and writes to `.env.<projectId>` when the variable is missing (a
+non-interactive deploy fails instead). Omitting `deleteOriginal` in a direct
+call to `resolveResizeImagesConfig` deletes the original on a successful
+resize, as the extension did for an unset `DELETE_ORIGINAL_FILE`; pass
+`"false"` to keep originals.
 
 ## Multiple instances
 
@@ -169,9 +178,9 @@ CLI grants these for you.
 
 ### Region
 
-The function deploys to your codebase's default region (`us-central1` unless
-you have changed it), rather than a region chosen at install time. See the
-content filtering note above, since the two are now linked.
+`BUCKET_REGION` decides where the function deploys, as described below, rather
+than the extension's install-time `LOCATION`. See the content filtering note
+above, since the two are linked.
 
 ### Path lists are validated at deploy time
 
@@ -181,12 +190,73 @@ the extension is installed. A malformed value fails the deploy with
 `Invalid includePathList: must be a comma-separated list of absolute path
 values.` rather than being rejected by an install prompt.
 
+### An omitted `isAnimated` keeps animation for library callers
+
+The extension's config parser had a bug: `overrideIsAnimated === "true" ||
+undefined` never evaluated the intended unset check, so an unset `IS_ANIMATED`
+produced first-frame-only output even though the parameter's declared default
+was `true`. The kit fixes this for library callers: omitting `isAnimated` in a
+direct call to `resolveResizeImagesConfig` resolves to `true`, the default the
+extension intended. The deployed function is unchanged: it reads `IS_ANIMATED`
+through `defineBoolean`, which yields `false` when the variable is absent from
+the runtime environment, as the extension did. Deploys are unaffected either
+way, since the CLI prompts with `true` and writes the accepted value to
+`.env.<projectId>`; pass `isAnimated: false` for first-frame-only output.
+
 ### No backfill
 
 There is no function to resize images that already exist in the bucket. The
 extension carried the same limitation (its backfill function was disabled), so
 this is not a regression, but it is worth stating: only objects uploaded after
 you deploy are resized.
+
+### BUCKET_REGION decides where the function runs
+
+`BUCKET_REGION` tells the kit where your Cloud Storage bucket lives, and the
+function is deployed to the Cloud Run region derived from it. A 2nd gen storage
+trigger cannot cross regions, so this has to agree with the bucket you set: a
+mismatch fails the deploy with `A function in region <region> cannot listen to
+a bucket in region <region>`. Regional locations (`europe-west4`,
+`us-east1`, ...) are used as-is; the multi-region locations map to a region
+inside them - `us` to `us-east1`, `eu` to `europe-west1`, `asia` to
+`asia-east1` - because they are not Cloud Run regions themselves and would fail
+the deploy. The value is matched case-insensitively.
+
+Dual-region buckets (`nam4`, `eur4`, `asia1`) are not offered as such and are
+not mapped. Pick one of the regions the pair is made of instead, all of which
+are in the list: `us-central1` or `us-east1` for `nam4`, `europe-north1` or
+`europe-west4` for `eur4`, `asia-northeast1` or `asia-northeast2` for `asia1`.
+The function still receives the bucket's events. Deployed against a `nam4`
+bucket with `BUCKET_REGION=us-central1`, Eventarc created the trigger in `nam4`
+pointing at the `us-central1` function, and an upload produced the resized
+image. Naming the dual-region location itself fails the deploy with `Location
+nam4 is not found or access is unauthorized`.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load `.env`
+values during deploy discovery, so the function silently falls back to the
+no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already
+carried `BUCKET_REGION`) can itself move the function on your next deploy.
+
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the function correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's function ran. Nothing reads it: placement comes
+from `BUCKET_REGION` alone, so if the two disagree your next deploy moves the
+function.
+
+With an explicit empty `BUCKET_REGION=` line in `.env`, the function declares no
+region and the Firebase CLI resolves one at deploy time: it keeps the region it
+is already deployed in, and on a first deploy lands in `us-central1` unless you
+set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+`firebase deploy`. Careful with that variable: it applies to every no-region
+function in the deploy, not just this kit. Omitting the line is not the same as
+an empty one: a non-interactive deploy fails with `In non-interactive mode but
+have no value for the following environment variables: BUCKET_REGION`. Note that
+changing an existing instance's region deletes and recreates the function.
 
 ## API surface
 

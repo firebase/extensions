@@ -104,6 +104,7 @@ overridden there.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
+| `databaseRegion` | `DATABASE_REGION` | yes | (prompted) | Firestore database location; also places the functions |
 | `embeddingProvider` | `EMBEDDING_PROVIDER` | no | `gemini` | Embedding provider |
 | `customEmbeddingsEndpoint` | `CUSTOM_EMBEDDINGS_ENDPOINT` | no | (empty) | Custom embeddings endpoint |
 | `customEmbeddingsBatchSize` | `CUSTOM_EMBEDDINGS_BATCH_SIZE` | no | (empty) | Custom batch size |
@@ -156,9 +157,9 @@ This kit is version 0.1.3 of the extension repackaged as an npm package, and it 
 the least literal of the ports. The seven functions, the Firestore vector index,
 the query document collection and the callable all survive with their names and
 settings intact, so a `.env` copied from your installed instance needs no value
-changes. Multimodal embedding, the backfill, and the shape of the status field
-written onto your documents all changed, so read this before you point the kit at
-a collection an installed instance has already embedded.
+changes. Multimodal embedding is gone, and the first kit deploy runs a backfill
+pass over an installed instance's collection, so read this before you point
+the kit at a collection an installed instance has already embedded.
 
 ### `EMBEDDING_PROVIDER: multimodal` is not implemented
 
@@ -184,8 +185,9 @@ the extension's behaviour, because matching it means writing nothing at all.
 ### The instance id comes from `firebase.json`, and it names the query collection
 
 The extension derived its instance id at install and used it for the query
-collection (`_<instance id>/index/queries`), the index metadata document
-(`_<instance id>/index`) and its task queues. Here the CLI derives it from this
+collection (`_<instance id>/index/queries`), the index metadata and backfill
+progress document (`_<instance id>/index`, with its `enqueues` subcollection)
+and its task queues. Here the CLI derives it from this
 instance's key in the `instances` map in `firebase.json` and provides it to the
 functions as `FIREBASE_KIT_INSTANCE_ID`. There is no `INSTANCE_ID` setting to
 configure. To keep serving the query documents your clients already write to,
@@ -206,65 +208,125 @@ whatever `EMBEDDING_PROVIDER` is set to. If either does not exist, `firebase
 deploy` prompts you for a value and fails outright when running
 non-interactively (CI). Create the one you do not need with a placeholder value.
 
-### `UPDATE_ON_CONFIGURE` now re-embeds on every deploy
+### `UPDATE_ON_CONFIGURE` is read, and both settings act on every deploy
 
-This setting was declared by the extension but never read. Reconfiguring an
-installed instance re-embedded documents only when the provider, the vector
-dimension or the input/output field names had actually changed, which the
-extension tracked in its index metadata document.
+This setting was declared by the extension but never read: its update pass was
+gated on `DO_BACKFILL` instead. The kit reads both. `initVectorSearch` runs
+after your first deploy and after every redeploy, so either pass can be enqueued
+on any deploy. The two passes share the index metadata document as their task
+thread, so only one of them runs: with both settings on, the backfill pass runs
+and the update pass never does. The backfill pass covers every document the
+update pass would have, because the update pass is the same eligibility rule
+plus "and already has an embedding".
 
-The kit keeps no such metadata and does no comparison. `UPDATE_ON_CONFIGURE: true`
-enqueues a full re-embed of every document that already has an embedding after
-*every* `firebase deploy`, whether anything relevant changed or not, and
-`DO_BACKFILL: true` embeds the whole collection after the first deploy. On a large
-collection that is a large Vertex AI or OpenAI bill per deploy. Set
-`UPDATE_ON_CONFIGURE: false` and re-embed deliberately when you change providers.
+The extension mapped its passes to install and reconfigure instead: install ran
+the backfill trigger, reconfigure ran the update trigger. Since the update pass
+skips documents that have no embedding yet, changing `INPUT_FIELD_NAME` on an
+installed instance left those documents alone. The same change here with
+`DO_BACKFILL=true` embeds them too, so a redeploy writes to more documents than
+a reconfigure did.
 
-### Backfill is one task per document, and reads the collection in one go
+With both settings off nothing is enqueued, so the metadata document is never
+written and turning `DO_BACKFILL` on later runs a full pass. The extension wrote
+that document on install whatever `DO_BACKFILL` was set to, so the same flip
+found a matching document and did nothing. With `UPDATE_ON_CONFIGURE=true` the
+update pass writes the document on your first deploy and the flip is gated out
+exactly as it was on the extension.
 
-The extension chunked the collection into batches sized to the provider (16
-documents per OpenAI call), embedded each batch in a single API call, and tracked
-progress in its metadata document. The kit reads the entire collection with one
-`get()` and enqueues one Cloud Task per document, each of which embeds one
-document with one API call.
+### The backfill gate, and the first deploy over an installed instance
 
-Two consequences. A collection large enough that a single `get()` does not fit in
-the trigger's 512 MiB will fail the backfill outright, and there is no
-resume-from-progress. Backfilling *n* documents now costs *n* task invocations and
-*n* embedding calls rather than *n*/batch size.
+Both passes are gated on the index metadata document at `_<instance id>/index`,
+as the extension's were: a pass runs only when the embedding provider, the
+vector dimension or the input/output field names differ from what the last pass
+recorded there. Redeploying without changing any of them enqueues nothing and
+costs nothing.
 
-There is also no install-time progress reporting, since there is no extension
-install UI to report into. Watch the function logs instead.
+The extension's gate did not survive its own first pass, because the progress
+counters it wrote to the same document replaced the recorded configuration. The
+kit merges instead, so the comparison fields persist and the gate holds on every
+later deploy. To force a full re-embed without changing any setting, delete the
+`_<instance id>/index` document; its `queries` subcollection is untouched, so
+the query documents your clients write to survive.
 
-### The `status` field on your documents is a different shape
+Because the fields persist, the kit records them only once the task thread has
+been dispatched. A deploy that fails to enqueue, on a queue that does not exist
+yet or before the task-queue permissions have propagated, leaves the gate open
+and the next deploy runs the pass.
 
-The extension wrote status nested under the process id, with timestamps:
+Expect the first kit deploy over an installed instance to run a pass, whatever
+your settings say. Any extension pass that enqueued tasks replaced that document
+with its progress counters, so the comparison fields are gone and the gate
+opens. The pass then applies the extension's own rules to the extension's own
+status field: it skips documents the write trigger marked `COMPLETED` or
+`ERROR`, and re-embeds the ones the extension's backfill marked `BACKFILLED`
+or that carry no status. That is what a reconfigure of the extension cost;
+with `DO_BACKFILL=true` the bill lands on your first deploy instead. From the
+second kit deploy on, redeploying without changing anything enqueues nothing.
+
+### Where the backfill pass deliberately does not match the extension
+
+Matching the extension on each of these would reproduce a bug, so the kit does
+not:
+
+- Every chunk is written before the first task is dispatched, and the final
+  partial batch of chunk documents is always committed. The extension dispatched
+  task 1 before writing that task's own chunk document, and committed only at
+  each 50th chunk, so a run of 51 to 99 chunks lost its tail and the thread
+  stalled on the missing document.
+- A failed embedding stays on the document that failed. When it embedded one
+  document at a time, as its update pass did, the extension dropped rejected
+  results and closed the gap, so a document could receive another document's
+  embedding.
+- When a batch returns fewer embeddings than it was given, the trailing
+  documents are marked `FAILED_BACKFILL`. The extension marked them `BACKFILLED`
+  with no vector written. This follows from the fix above, but it is visible in
+  the status field.
+- A document id that resolves to nothing, such as a subcollection's phantom
+  parent, is skipped. The extension's eligibility check threw on it and the task
+  retried until the queue gave up.
+- The update pass records all four comparison fields on the metadata document.
+  The extension recorded only the embedding provider for that pass, so the other
+  three read back as unset and its gate opened on every reconfigure.
+- Eligible documents are collected inside the transaction that reads them. The
+  extension collected them outside it, so a transaction retry counted the same
+  documents twice.
+
+### There is no install-time progress reporting
+
+The extension reported backfill progress and failures through the extension
+install UI (`setProcessingState`). There is no such surface for a kit, so
+progress is visible in the function logs and in the progress fields on
+`_<instance id>/index` (`backfillJobsTotal`, `backfillJobsProcessed`,
+`backfillJobsSkipped`, `backfillJobsFailed`, `backfillStatus`) instead. One
+document per chunk is written under `_<instance id>/index/enqueues`, as the
+extension did, each carrying its chunk of document ids and its own status.
+
+### The status field on query documents is a different shape
+
+The status the embed path writes onto your collection is unchanged, including
+the nesting under the instance id and the timestamps:
 
 ```
-status: { <instance id>: { state: "COMPLETED", startTime, updateTime, completeTime, createTime } }
+status: { <instance id>: { state, startTime, updateTime, completeTime, createTime } }
 ```
 
-The kit writes it flat, with no timestamps:
+Documents an installed instance embedded therefore need no migration, as long as
+the kit instance keeps the extension instance's id (see *The instance id comes
+from `firebase.json`* above). `embedOnWrite` writes `PROCESSING` before the embed
+and `COMPLETED` or `ERROR` after it, the backfill and update passes write
+`BACKFILLED` or `FAILED_BACKFILL` with a `completeTime`, and an `ERROR` records no message: the error
+itself is in the function logs, as before.
 
-```
-status: { state: "COMPLETED" }
-status: { state: "ERROR", message: "<error message>" }
-```
-
-The states themselves are narrower too: `PROCESSING` and `BACKFILLED` are no
-longer written, only `COMPLETED` and `ERROR`. Anything reading
-`status.<instance id>.state`, or a security rule or index keyed to it, needs
-updating. The field name is still `STATUS_FIELD_NAME`, defaulting to `status`.
-
-Query documents carry the flat shape too, with a `request` record alongside the
-state:
+Query documents are the exception. They carry a flat status, with no timestamps
+and a `request` record alongside the state, where the extension nested theirs
+under `textQuery`:
 
 ```
 status: { state: "COMPLETED", request: { query, limit, prefilters } }
 ```
 
-They previously carried `status.textQuery`, so anything reading that path needs
-updating. Do not treat the presence of `result` alone as completion: while a
+Anything reading `status.textQuery.state` on a query document needs updating. Do
+not treat the presence of `result` alone as completion: while a
 changed query re-runs, the document still holds the previous result, so a
 consumer waiting only on `result` can read the old query's result. A query is
 complete when `status.state` is `COMPLETED` and `status.request` matches the
@@ -280,21 +342,9 @@ names would overwrite the query-document field of the same name.
 
 Unlike the extension, a completed query document re-runs when its `query`,
 `limit`, or `prefilters` change (the extension never re-ran a completed query
-document). This matches the kit's embed-path rule below: editing inputs
-re-processes the document.
-
-### Editing a document's input re-embeds it
-
-The extension embedded each document once. Its skip rule was "this document's
-status is already in a final state", so once a document reached `COMPLETED` (or
-`ERROR`), changing its input field never produced a new embedding and a failure
-was never retried.
-
-The kit compares the input instead: it re-embeds when the input field changes, and
-skips only when the input is unchanged and an embedding is already present. This
-is usually what you wanted, but it means editing inputs in bulk now costs
-embedding calls, and a document that previously sat stale will be brought up to
-date on its next write.
+document). The embed path is the opposite: like the extension, it never
+re-embeds a document whose status has reached `PROCESSING`, `COMPLETED`, `ERROR`
+or `BACKFILLED`.
 
 ### The lifecycle hooks and the function region
 
@@ -304,12 +354,14 @@ Firestore vector index (skipping creation when a matching index exists, as
 before) and then enqueues the backfill or update triggers according to the two
 settings above.
 
-`LOCATION` is gone. The functions deploy to your codebase's default region
-(`us-central1` unless you have changed it), and with
-`EMBEDDING_PROVIDER: vertex` the Vertex AI embedding call uses that same region
-rather than the install-time location. Gemini embedding is not served in every
-region; if you deploy somewhere it is unavailable, embedding fails and the error
-is written to the document's status field.
+`LOCATION` is gone. `DATABASE_REGION` decides where the functions deploy, as
+described below, and with `EMBEDDING_PROVIDER: vertex` the Vertex AI embedding
+call uses that same region, read from `FUNCTION_REGION`, rather than the
+install-time location. Where the region cannot be read (the emulator, or library
+use outside a deployed function) the Genkit Vertex AI plugin chooses:
+`GCLOUD_LOCATION` if you set it, otherwise `us-central1`. Gemini embedding is
+not served in every region; if you deploy somewhere it is unavailable, the embed
+fails, the document is marked `ERROR` and the error is logged.
 
 ### The triggers are 2nd gen
 
@@ -318,12 +370,77 @@ All seven functions are 2nd gen. Their service accounts need
 and `roles/iam.serviceAccountUser` on top of the four roles the extension asked
 for; the Firebase CLI grants these for you.
 
+### DATABASE_REGION decides where the functions run
+
+`DATABASE_REGION` tells the kit where your Firestore database lives, and the
+functions are deployed to the Cloud Run region derived from it, next to the
+database. Regional Firestore locations (`europe-west2`, `us-east1`, ...) are
+used as-is; the multi-region locations map to a Cloud Run region inside them -
+`nam5` and `nam7` to `us-central1`, `eur3` to `europe-west1` - because they are
+not Cloud Run regions themselves and would fail the deploy. The value is
+matched case-insensitively. The Firestore trigger always fires in the
+database's own region, whatever region the functions run in.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
+`.env` values during deploy discovery, so the functions silently fall back to
+the no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already carried
+`DATABASE_REGION`) can itself trigger a region move on your next deploy.
+
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the functions correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's functions ran. Nothing reads it: placement
+comes from `DATABASE_REGION` alone, so if the two disagree your next deploy
+moves the functions.
+
+One interaction to know about if you use the Vertex AI embedding provider. The
+functions call Vertex AI in whatever region they run in, so pinning them to
+your database's location also moves the Vertex AI call there, and there is no
+separate override to send it elsewhere. Vertex AI serves `gemini-embedding-001`
+in most regions but not all: `africa-south1`, `europe-north2`, `europe-west10`
+and `europe-west12` report the publisher model as not found, and
+`northamerica-south1` has no Vertex AI endpoint at all. With a database in
+one of those and `EMBEDDING_PROVIDER=vertex`, embedding fails and the error is
+written to the document's status field. Before this parameter existed the
+embedding functions were unplaced and ran in `us-central1`, so this is new.
+
+With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
+no region and the Firebase CLI resolves one at deploy time: it keeps the region
+they are already deployed in, and on a first deploy it resolves each function
+separately, so `embedOnWrite` and `queryOnWrite` land next to the database and
+the task and callable functions land in `us-central1`, splitting the instance
+across two regions. Setting the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment
+variable when running `firebase deploy` puts all of them in that region
+instead. Careful with that variable: it applies to every no-region function in
+the deploy, not just this kit. Omitting the line is not the same as an empty
+one: a non-interactive deploy fails with `In non-interactive mode but have no
+value for the following environment variables: DATABASE_REGION`. Note that
+changing an existing instance's region deletes and recreates the functions.
+
 ### Unchanged
 
 - No Eventarc events are published. The extension declared `onStart`,
   `onSuccess`, `onError` and `onCompletion` under
   `firebase.extensions.firestore-vector-search.v1.*` but never published any of
   them, and the kit publishes none either. `EVENTARC_CHANNEL` is not read.
+- The backfill and update passes still enumerate the collection by document
+  reference, chunk it into 50 document ids per Cloud Task, run one task at a
+  time, and embed each chunk in provider-sized batches with a single API call per
+  batch (16 documents per OpenAI call). A document whose input is not a string is
+  skipped, as is one whose status is already set to anything other than
+  `BACKFILLED`. A failed batch marks its documents `FAILED_BACKFILL` and the task
+  still succeeds.
+- A document is still embedded once. When its status reaches `PROCESSING`,
+  `COMPLETED`, `ERROR` or `BACKFILLED`, editing the input field does not produce
+  a new embedding and a failed embed is not retried. To re-embed a document,
+  delete its `status` field and write a new value to its input field. A document
+  whose input is an empty string is still skipped and gets no status, so it
+  embeds normally once you fill the input in, and a write that leaves the input
+  field untouched is still not embedded.
 - The indexed collection is still `COLLECTION_NAME` (default `products`), the
   input, output and status fields still default to `input`, `embedding` and
   `status`, and embeddings are still written as native Firestore vectors.

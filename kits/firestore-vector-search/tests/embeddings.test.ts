@@ -73,6 +73,10 @@ describe("GenkitEmbedClient", () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   describe("constructor", () => {
     test("initializes with the Vertex AI provider", () => {
       new GenkitEmbedClient(config({ embeddingProvider: "vertex" }));
@@ -86,12 +90,29 @@ describe("GenkitEmbedClient", () => {
       expect(genkit).toHaveBeenCalledWith({ plugins: [undefined] });
     });
 
-    test("omits the location when no region is configured", () => {
+    // Off a deployed function there is no region to pass. Leaving the plugin's
+    // location unset keeps its own `GCLOUD_LOCATION` handling in play.
+    test("passes no location when no region is configured", () => {
+      vi.stubEnv("FUNCTION_REGION", "");
+
       new GenkitEmbedClient(
         config({ embeddingProvider: "vertex", region: undefined })
       );
 
-      expect(vertexAI).toHaveBeenCalledWith({});
+      // toHaveBeenCalledWith treats `{ location: undefined }` as `{}`, so the
+      // omission has to be asserted on the call itself.
+      expect(vi.mocked(vertexAI).mock.lastCall?.[0]).toStrictEqual({});
+    });
+
+    test("uses the function region when no region is configured", () => {
+      // resolveVectorSearchConfig reads FUNCTION_REGION when region is unset.
+      vi.stubEnv("FUNCTION_REGION", "europe-west4");
+
+      new GenkitEmbedClient(
+        config({ embeddingProvider: "vertex", region: undefined })
+      );
+
+      expect(vertexAI).toHaveBeenCalledWith({ location: "europe-west4" });
     });
 
     test("initializes with the Google AI provider", () => {

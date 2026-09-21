@@ -93,6 +93,9 @@ export interface ConfigExpressions {
  */
 const params = {
   location: defineString("LOCATION", {
+    label: "Cloud Functions location",
+    description:
+      "Where should the functions in this kit be deployed? Pick the region matching your Firestore database location so the functions sit next to the data, and note that this is also the Dataflow restore job's region unless you set DATAFLOW_REGION. You can check your database location at [https://console.cloud.google.com/firestore/databases](https://console.cloud.google.com/firestore/databases). Multi-region databases (`nam5`, `nam7`, `eur3`) are not Cloud Run regions: pick a region inside them (`us-central1` for `nam5` and `nam7`, `europe-west1` for `eur3`). If your database is in a region this list does not offer, pick the nearest one it does: the trigger is created in the database's own region and delivers across regions, so a mismatch costs latency, not events.",
     default: "us-central1",
     input: select([...LOCATION_OPTIONS]),
   }),
@@ -101,7 +104,11 @@ const params = {
   }),
   syncDataset: defineString("SYNC_DATASET", { default: "backup_dataset" }),
   syncTable: defineString("SYNC_TABLE", { default: "backup_table" }),
-  backupInstanceId: defineString("BACKUP_INSTANCE_ID"),
+  backupInstanceId: defineString("BACKUP_INSTANCE_ID", {
+    // Required with no default, so the prompt has to reject an empty answer:
+    // whatever it resolves to is written straight into .env.
+    input: { text: { nonEmpty: true } },
+  }),
   datasetLocation: defineString("DATASET_LOCATION", {
     default: "us",
     input: select([...DATASET_LOCATION_OPTIONS]),
@@ -179,4 +186,40 @@ export function configFromEnv(defaultBucketName?: string): CaptureConfig {
     instanceId: instanceIdFromEnv(),
     logLevel: normalizeLogLevel(params.logLevel.value()),
   };
+}
+
+// Params the published extension marks `required: true`. A value the user never
+// supplied is absent from process.env; one they deliberately blanked is present
+// and empty. Only the second is a misconfiguration, so the guard below reads
+// process.env rather than `.value()`, which reports both as "".
+const REQUIRED_PARAMS = [
+  "LOCATION",
+  "SYNC_COLLECTION_PATH",
+  "SYNC_DATASET",
+  "SYNC_TABLE",
+  "BACKUP_INSTANCE_ID",
+] as const;
+
+/**
+ * Rejects required params that were explicitly set to an empty value.
+ *
+ * `.env` values bypass the CLI's prompt-time validation and take precedence
+ * over a param's declared default, so an empty entry otherwise reaches the
+ * handlers silently. Called at module scope so deploy-time discovery fails
+ * before the function ships, rather than on the first event.
+ */
+export function assertRequiredParams(
+  names: ReadonlyArray<string> = REQUIRED_PARAMS
+): void {
+  const blank = names.filter((name) => {
+    const raw = process.env[name];
+    return raw !== undefined && raw.trim() === "";
+  });
+
+  if (blank.length > 0) {
+    throw new Error(
+      `Required parameters are set to an empty value: ${blank.join(", ")}. ` +
+        "Set them in your .env file, or remove the entries to use their defaults."
+    );
+  }
 }

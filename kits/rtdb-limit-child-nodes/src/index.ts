@@ -21,12 +21,17 @@ import {
 } from "firebase-functions/database";
 import type { Role } from "firebase-functions/v2";
 import { requiresRole } from "firebase-functions/v2";
-import { configFromEnv, envDeployOptions } from "./config";
+import {
+  assertRequiredParams,
+  configFromEnv,
+  envDeployOptions,
+} from "./config";
 import type { ResolvedRtdbLimitConfig } from "./export-config";
 import { resolveRtdbLimitConfig } from "./export-config";
 import { handleChildCreated } from "./handlers";
 import * as logs from "./logs";
 
+assertRequiredParams();
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
@@ -59,6 +64,7 @@ function getConfig(): ResolvedRtdbLimitConfig {
 
 export const rtdblimit = onValueCreated(
   {
+    region: deploy.region,
     ref: deploy.ref,
     instance: deploy.instance,
   } as ReferenceOptions,

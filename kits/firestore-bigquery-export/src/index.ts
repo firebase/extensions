@@ -38,7 +38,11 @@ import {
   afterFirstDeploy,
   afterRedeploy,
 } from "firebase-functions/v2/lifecycle";
-import { CONFIG_EXPRESSIONS, configFromEnv } from "./config";
+import {
+  assertRequiredParams,
+  CONFIG_EXPRESSIONS,
+  configFromEnv,
+} from "./config";
 import * as events from "./events";
 import {
   DEFAULT_MAX_DISPATCHES_PER_SECOND,
@@ -56,6 +60,7 @@ import * as logs from "./logs";
 import { firestoreLocationToFunctionRegion } from "./region";
 import { enqueueSyncTask } from "./tasks";
 
+assertRequiredParams();
 // Re-export the side-effect-free library surface (handlers and config types).
 export * from "./lib";
 
@@ -77,6 +82,11 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   // Gen2 Firestore triggers need Eventarc receive and run.invoker on the function SA.
   "roles/eventarc.eventReceiver",
   "roles/run.invoker",
+  // The Extensions platform granted publish rights on the extension's Eventarc
+  // channel implicitly from `events:` in extension.yaml. Kits get no implicit
+  // grant, so without this the `channel.publish()` calls in ./events fail with
+  // PERMISSION_DENIED and no custom event is ever delivered.
+  "roles/eventarc.publisher",
   // The trigger enqueues failed writes onto its own syncBigQuery task queue.
   "roles/cloudtasks.enqueuer",
 ];
@@ -88,6 +98,10 @@ const REQUIRED_APIS = [
   {
     api: "bigquery.googleapis.com",
     reason: "Mirrors data from your Cloud Firestore collection in BigQuery.",
+  },
+  {
+    api: "eventarcpublishing.googleapis.com",
+    reason: "Publishes the extension's custom events to its Eventarc channel.",
   },
 ] as const;
 
@@ -142,8 +156,9 @@ function getHandlerContext(): HandlerContext {
 
 /*
  * Read at module load: the CLI populates `.env` values into the discovery
- * process env (firebase-tools >= 15.28.0), and the region option cannot be a
- * param expression. When unset, no function declares a region and the CLI
+ * process env (firebase-tools >= 15.28.0), and the location to Cloud Run region
+ * lookup needs a nested ternary the CLI's CEL subset cannot express. When
+ * unset, no function declares a region and the CLI
  * falls back to its default. The Eventarc trigger region needs no handling:
  * the CLI pins it to the database's own region regardless of where the
  * function runs.

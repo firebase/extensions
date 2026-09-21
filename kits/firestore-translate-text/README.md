@@ -28,6 +28,7 @@ conflicts with that automatic setup.
 | `roles/datastore.user` | read input docs and write translations |
 | `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events |
 | `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
+| `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
 | `translate.googleapis.com` | Google Translate provider |
 
 ## Usage
@@ -150,15 +151,24 @@ AI translations` when the value is empty.
 
 ### Vertex AI is called in the function's region
 
-With `TRANSLATION_PROVIDER: gemini-vertexai`, the Vertex AI call now uses the
-region the function is deployed to. The extension used the location you picked at
-install time. Gemini is not served in every region, so if you deploy somewhere it
-is unavailable, translation fails and the error is written to your function logs.
-Deploy to a region with Vertex AI support, or use `gemini-googleai` or
-`translate` instead. This was not exercised against a live deploy.
+With `TRANSLATION_PROVIDER: gemini-vertexai`, the Vertex AI call uses the region
+the function is deployed to, read from `FUNCTION_REGION`. The extension used the
+location you picked at install time. Where the region cannot be read (the
+emulator, or library use outside a deployed function) the Genkit Vertex AI
+plugin chooses: `GCLOUD_LOCATION` if you set it, otherwise `us-central1`.
+Gemini is not served in every region, so if you deploy somewhere
+it is unavailable, translation fails and the error is written to your function
+logs. Deploy to a region with Vertex AI support, or use `gemini-googleai` or
+`translate` instead.
 
-The function itself has no location setting any more. It deploys to your
-codebase's default region (`us-central1` unless you have changed it).
+The function has no location setting. When it does not exist yet, the Firebase
+CLI places it next to the Firestore database its trigger watches, so that is
+where the Vertex AI call goes; a redeploy keeps whatever region the function is
+already in. Set `FIREBASE_FUNCTIONS_DEFAULT_REGION` when running `firebase
+deploy` to choose the region yourself, remembering that it applies to every
+function in the deploy that declares no region. The `FUNCTION_DEFAULT_REGION`
+that `firebase ext:migrate` writes to your `.env` is not read, so a migrated
+instance does not keep the region the extension ran in.
 
 ### Nothing checks your settings at deploy time
 
@@ -184,16 +194,6 @@ Per-event selection is gone in practice, because the CLI rejects any `.env` key
 beginning with `EXT_`, so `EXT_SELECTED_EVENTS` cannot be set and every event
 type is published. With `EVENTARC_CHANNEL` unset, nothing is published and the
 function is otherwise unaffected.
-
-### Event payloads have a different shape
-
-The event types are unchanged, but what `onStart` and `onCompletion` carry is
-not. `onStart` used to carry `{change, context}` and now carries `{data, params}`:
-the write is under `data` instead of `change`, and the 1st gen `context` is gone.
-`onCompletion` used to carry `{context}` and now carries `{params}` only. Anything
-reading `context.eventId`, `context.timestamp`, `context.eventType` or
-`context.resource` needs updating; the `messageId` trigger wildcard survives as
-`params`. `onSuccess` and `onError` payloads are unchanged.
 
 ### No backfill
 
@@ -223,6 +223,11 @@ Cloud Translation API is still required whichever provider you choose.
   behave as before.
 - Translations are still written in a transaction, and each `onSuccess` event
   still carries the output field name and the translations.
+- The event payloads: `onStart` still carries `{change, context}` and
+  `onCompletion` still carries `{context}`, with `context.eventId`,
+  `context.timestamp`, `context.eventType`, `context.resource`, the
+  `messageId` wildcard under `context.params`, and the empty
+  `context.notSupported` object the 1st gen backend always sent.
 
 ## API surface
 

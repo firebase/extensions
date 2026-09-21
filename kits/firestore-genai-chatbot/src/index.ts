@@ -18,7 +18,12 @@ import { getApps, initializeApp } from "firebase-admin/app";
 import { onDocumentWritten } from "firebase-functions/firestore";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
-import { apiKeySecret, configFromEnv, envDeployOptions } from "./config";
+import {
+  assertRequiredParams,
+  apiKeySecret,
+  configFromEnv,
+  envDeployOptions,
+} from "./config";
 import type { ResolvedGenaiChatbotConfig } from "./export-config";
 import { resolveConfig } from "./export-config";
 import {
@@ -27,6 +32,7 @@ import {
   handleDocumentWrite,
 } from "./handlers";
 
+assertRequiredParams();
 // Re-export the full library surface for consumers of this package.
 export * from "./lib";
 

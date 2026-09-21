@@ -29,6 +29,7 @@ conflicts with that automatic setup.
 | `roles/datastore.user` | write transcript documents to Firestore |
 | `roles/eventarc.eventReceiver` | receive Gen2 Storage trigger events |
 | `roles/run.invoker` | allow Eventarc to invoke the Gen2 Cloud Run service |
+| `roles/eventarc.publisher` | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
 | `speech.googleapis.com` | transcribe audio |
 
 ## Usage
@@ -83,6 +84,7 @@ loads them at deploy time and prompts for any required values that are missing.
 
 | Field | Env var | Required | Default | Description |
 |---|---|---|---|---|
+| `bucketRegion` | `BUCKET_REGION` | yes | (prompted) | Cloud Storage bucket location; also places the function |
 | `bucket` | `EXTENSION_BUCKET` | no | default Storage bucket | Storage bucket to watch |
 | `languageCode` | `LANGUAGE_CODE` | yes | — | BCP-47 language code |
 | `model` | `MODEL` | no | `default` | Speech model |
@@ -134,27 +136,40 @@ ffmpeg transcode to LINEAR16, the same long-running recognition request, the sam
 per-channel transcript map, the same Firestore progress document and the same two
 Eventarc events. Every setting keeps its extension environment variable name and
 default, so a `.env` copied from your installed instance needs no value changes.
-What changes is where the intermediate audio file is written, how long the
-function may run, and what is no longer checked for you.
+What changes is how long the function may run and what is no longer checked
+for you.
 
-### The transcoded copy no longer lands under `tmp/`
+### Where the outputs land
 
-The extension named the transcoded WAV after the local temporary file it had just
-written, so with no `OUTPUT_STORAGE_PATH` the copy appeared in your bucket as
-`tmp/<original path>.wav`, and with `OUTPUT_STORAGE_PATH: transcriptions` as
-`transcriptions/tmp/<original path>.wav`. The kit names it after the original
-object instead: `<original path>.wav`, or
-`transcriptions/<original path>.wav`.
+Both outputs keep the paths the extension used, so migrated consumers find them
+unchanged, with one deliberate exception noted below. For an input object
+`a.mp3`:
 
-The transcript itself is written to the same place as before
-(`<original path>.wav_transcription.txt`, under `OUTPUT_STORAGE_PATH` when set),
-so only the intermediate audio moves. If you have lifecycle rules, cleanup jobs
-or client code that expect the WAV under a `tmp/` prefix, point them at the new
-path. The transcoded `.wav` still carries the `isTranscodeOutput` metadata flag
-that stops the function from processing its own output. The transcript `.txt` is
-written directly by the Speech-to-Text API and carries no metadata, so its
-finalize event runs the function again; that run creates a transcript document
-for the `.txt` object and marks it `FAILED` with "Invalid content type.".
+| `OUTPUT_STORAGE_PATH` | Transcoded audio | Transcript |
+| --- | --- | --- |
+| unset | `tmp/a.mp3.wav` | `a.mp3.wav_transcription.txt` |
+| `transcriptions` | `transcriptions/tmp/a.mp3.wav` | `transcriptions/a.mp3.wav_transcription.txt` |
+| `transcriptions/` | `transcriptions/tmp/a.mp3.wav` | `transcriptions/a.mp3.wav_transcription.txt` |
+
+The `tmp/` segment on the audio is an artefact of the extension naming the copy
+after its local temporary file, and is kept so lifecycle rules, cleanup jobs and
+client code written against the extension keep finding it. The transcript is
+named after the same object with that segment removed, again as the extension
+did, so it sits beside your input rather than under `tmp/`.
+A trailing slash on `OUTPUT_STORAGE_PATH` is stripped. The extension
+concatenated the prefix raw, so `transcriptions/` gave
+`transcriptions//tmp/a.mp3.wav`, but the Speech-to-Text API rejects a `gs://`
+URI containing a double slash, so that configuration uploaded the audio and
+then failed without ever writing a transcript. The kit strips the slash instead,
+which is the only difference from the extension's paths and only affects a
+configuration that never worked.
+
+The transcoded `.wav` carries the
+`isTranscodeOutput` metadata flag that stops the function from processing its
+own output. The transcript `.txt` is written directly by the Speech-to-Text API
+and carries no metadata, so its finalize event runs the function again; that run
+creates a transcript document for the `.txt` object and marks it `FAILED` with
+"Invalid content type.".
 
 ### The function may now run for nine minutes
 
@@ -177,11 +192,13 @@ it if it is missing, but any string is accepted and a bad value surfaces as a
 Speech-to-Text error per file, with the failure recorded on the Firestore
 document and in the `fail` event.
 
-### The function has no location setting
+### `LOCATION` is replaced by `BUCKET_REGION`
 
-`LOCATION` is gone. The function deploys to your codebase's default region
-(`us-central1` unless you have changed it) rather than the immutable location you
-picked at install.
+The extension's immutable `LOCATION` is gone. The function is placed by
+`BUCKET_REGION` instead, which describes where your bucket lives rather than
+where you want the function, because a 2nd gen storage trigger only fires for a
+function in a region its bucket accepts. See
+[BUCKET_REGION decides where the function runs](#bucket_region-decides-where-the-function-runs).
 
 ### Create the Eventarc channel yourself for events
 
@@ -194,20 +211,61 @@ published. Per-event selection is gone in practice, because the CLI rejects any
 event types are published. With `EVENTARC_CHANNEL` unset, nothing is published and
 the function is otherwise unaffected.
 
-### `fail` events for unexpected errors now say what went wrong
-
-Typed pipeline failures (a zero-stream file, an ffmpeg error, a null
-transcription) carry the same payload as before. Unexpected errors did not: the
-extension published the caught `Error` directly, and because an `Error`'s
-`message` and `stack` are not serialised to JSON, subscribers received
-`{"error":{}}`. The kit publishes `{ error: { message, stack } }` instead.
-
 ### The trigger is 2nd gen
 
 `transcribeAudio` is a 2nd gen Cloud Storage function where the extension was 1st
 gen. Its service account needs `roles/eventarc.eventReceiver` and
 `roles/run.invoker` on top of `roles/storage.objectAdmin` and
 `roles/datastore.user`; the Firebase CLI grants these for you.
+
+### BUCKET_REGION decides where the function runs
+
+`BUCKET_REGION` tells the kit where your Cloud Storage bucket lives, and the
+function is deployed to the Cloud Run region derived from it. A 2nd gen storage
+trigger cannot cross regions, so this has to agree with the bucket you set: a
+mismatch fails the deploy with `A function in region <region> cannot listen to
+a bucket in region <region>`. Regional locations (`europe-west4`,
+`us-east1`, ...) are used as-is; the multi-region locations map to a region
+inside them - `us` to `us-east1`, `eu` to `europe-west1`, `asia` to
+`asia-east1` - because they are not Cloud Run regions themselves and would fail
+the deploy. The value is matched case-insensitively.
+
+Dual-region buckets (`nam4`, `eur4`, `asia1`) are not offered as such and are
+not mapped. Pick one of the regions the pair is made of instead, all of which
+are in the list: `us-central1` or `us-east1` for `nam4`, `europe-north1` or
+`europe-west4` for `eur4`, `asia-northeast1` or `asia-northeast2` for `asia1`.
+The function still receives the bucket's events. Deployed against a `nam4`
+bucket with the region set to `us-central1`, Eventarc created the trigger in
+`nam4` pointing at the `us-central1` function and delivered the upload. Naming
+the dual-region location itself fails the deploy with `Location nam4 is not
+found or access is unauthorized`. That was run on `storage-resize-images`, which
+shares this kit's region helper and trigger shape.
+
+Placement needs firebase-tools 15.28.0 or later - older CLIs do not load `.env`
+values during deploy discovery, so the function silently falls back to the
+no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already
+carried `BUCKET_REGION`) can itself move the function on your next deploy.
+
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the function correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's function ran. Nothing reads it: placement comes
+from `BUCKET_REGION` alone, so if the two disagree your next deploy moves the
+function.
+
+With an explicit empty `BUCKET_REGION=` line in `.env`, the function declares no
+region and the Firebase CLI resolves one at deploy time: it keeps the region it
+is already deployed in, and on a first deploy lands in `us-central1` unless you
+set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
+`firebase deploy`. Careful with that variable: it applies to every no-region
+function in the deploy, not just this kit. Omitting the line is not the same as
+an empty one: a non-interactive deploy fails with `In non-interactive mode but
+have no value for the following environment variables: BUCKET_REGION`. Note that
+changing an existing instance's region deletes and recreates the function.
 
 ### Unchanged
 
@@ -225,6 +283,14 @@ gen. Its service account needs `roles/eventarc.eventReceiver` and
 - Multi-channel audio still produces a transcript per channel tag, and a file
   with more than one stream still produces a warning rather than a failure.
 - There is no backfill for audio already in the bucket, as before.
+- The `complete` and `fail` payloads. Typed pipeline failures still carry the
+  failure and the object name, and an unexpected error is still published as
+  `{ error }`. The error is serialised as-is, so subscribers receive whatever
+  enumerable fields it has: a plain `Error` gives `{"error":{}}` (`message` and
+  `stack` are not enumerable) and you have to read the function logs, while a
+  Cloud Storage `ApiError` gives `code`, `errors`, `response` and `message`
+  because it assigns those as own properties. A thrown non-error still arrives
+  with its `name` and `message`.
 
 ## API surface
 

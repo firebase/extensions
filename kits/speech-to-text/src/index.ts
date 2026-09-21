@@ -21,7 +21,11 @@ import { getStorage } from "firebase-admin/storage";
 import { onObjectFinalized } from "firebase-functions/storage";
 import type { Role } from "firebase-functions/v2";
 import { requiresAPI, requiresRole } from "firebase-functions/v2";
-import { configFromEnv, envDeployOptions } from "./config";
+import {
+  assertRequiredParams,
+  configFromEnv,
+  envDeployOptions,
+} from "./config";
 import * as events from "./events";
 import type { ResolvedSpeechToTextConfig } from "./export-config";
 import { resolveConfig } from "./export-config";
@@ -29,6 +33,7 @@ import { type HandlerContext, handleObjectFinalized } from "./handlers";
 import * as logs from "./logs";
 import { transcribeFns } from "./transcribe-fns";
 
+assertRequiredParams();
 export * from "./lib";
 
 const REQUIRED_ROLES: ReadonlyArray<Role> = [
@@ -37,6 +42,11 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   // Gen2 Storage triggers need Eventarc receive and run.invoker on the function SA.
   "roles/eventarc.eventReceiver",
   "roles/run.invoker",
+  // The Extensions platform granted publish rights on the extension's Eventarc
+  // channel implicitly from `events:` in extension.yaml. Kits get no implicit
+  // grant, so without this the `channel.publish()` calls in ./events fail with
+  // PERMISSION_DENIED and no custom event is ever delivered.
+  "roles/eventarc.publisher",
 ];
 const REQUIRED_APIS = [
   {
@@ -46,6 +56,10 @@ const REQUIRED_APIS = [
   {
     api: "speech.googleapis.com",
     reason: "Used for transcribing audio files with Cloud Speech-to-Text.",
+  },
+  {
+    api: "eventarcpublishing.googleapis.com",
+    reason: "Publishes the extension's custom events to its Eventarc channel.",
   },
 ] as const;
 
@@ -102,6 +116,7 @@ function getContext(): HandlerContext {
 
 export const transcribeAudio = onObjectFinalized(
   {
+    ...(deploy.region ? { region: deploy.region } : {}),
     bucket: deploy.bucket,
     timeoutSeconds: deploy.timeoutSeconds,
     memory: deploy.memory,

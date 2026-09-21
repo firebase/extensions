@@ -15,7 +15,6 @@
  */
 
 import {
-  defineBoolean,
   defineSecret,
   defineString,
   expr,
@@ -243,19 +242,21 @@ const params = {
     default: "",
     input: POSITIVE_INT_VALIDATION,
   }),
-  enableOverrides: defineBoolean("ENABLE_DISCUSSION_OPTION_OVERRIDES", {
+  enableOverrides: defineString("ENABLE_DISCUSSION_OPTION_OVERRIDES", {
     label: "Enable per document overrides.",
     description:
       'If set to "Yes", discussion parameters may be overwritten by fields in the discussion collection.',
 
-    default: false,
+    default: "no",
+    input: select({ Yes: "yes", No: "no" }),
   }),
-  enableGenkitMonitoring: defineBoolean("ENABLE_GENKIT_MONITORING", {
+  enableGenkitMonitoring: defineString("ENABLE_GENKIT_MONITORING", {
     label: "Enable Genkit Monitoring",
     description:
       'If set to "Yes", enables Genkit Monitoring for collecting and viewing real-time telemetry data. This requires the Cloud Logging API, Cloud Trace API, and Cloud Monitoring API to be enabled, and appropriate IAM roles to be configured. See the documentation for more details.',
 
-    default: false,
+    default: "no",
+    input: select({ Yes: "yes", No: "no" }),
   }),
   harmHateSpeech: defineString("HARM_CATEGORY_HATE_SPEECH", {
     label: "Hate Speech Threshold",
@@ -373,8 +374,8 @@ export function configFromEnv(): GenaiChatbotConfig {
     topK: num(params.topK.value()),
     candidateCount: num(params.candidateCount.value()),
     maxOutputTokens: num(params.maxOutputTokens.value()),
-    enableOverrides: params.enableOverrides.value(),
-    enableGenkitMonitoring: params.enableGenkitMonitoring.value(),
+    enableOverrides: params.enableOverrides.value() === "yes",
+    enableGenkitMonitoring: params.enableGenkitMonitoring.value() === "yes",
     safetySettings: buildSafetySettings(),
     secrets: [apiKeySecret],
   };
@@ -398,4 +399,42 @@ export function envDeployOptions(): DeployTimeOptions {
     // the 60s default and long generations time out.
     timeoutSeconds: 540,
   };
+}
+
+// Params the published extension marks `required: true`. A value the user never
+// supplied is absent from process.env; one they deliberately blanked is present
+// and empty. Only the second is a misconfiguration, so the guard below reads
+// process.env rather than `.value()`, which reports both as "".
+const REQUIRED_PARAMS = [
+  "GENERATIVE_AI_PROVIDER",
+  "MODEL",
+  "COLLECTION_NAME",
+  "PROMPT_FIELD",
+  "RESPONSE_FIELD",
+  "ENABLE_DISCUSSION_OPTION_OVERRIDES",
+  "ENABLE_GENKIT_MONITORING",
+] as const;
+
+/**
+ * Rejects required params that were explicitly set to an empty value.
+ *
+ * `.env` values bypass the CLI's prompt-time validation and take precedence
+ * over a param's declared default, so an empty entry otherwise reaches the
+ * handlers silently. Called at module scope so deploy-time discovery fails
+ * before the function ships, rather than on the first event.
+ */
+export function assertRequiredParams(
+  names: ReadonlyArray<string> = REQUIRED_PARAMS
+): void {
+  const blank = names.filter((name) => {
+    const raw = process.env[name];
+    return raw !== undefined && raw.trim() === "";
+  });
+
+  if (blank.length > 0) {
+    throw new Error(
+      `Required parameters are set to an empty value: ${blank.join(", ")}. ` +
+        "Set them in your .env file, or remove the entries to use their defaults."
+    );
+  }
 }

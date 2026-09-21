@@ -58,8 +58,8 @@ SCHEDULE=every 24 hours
 ```
 
 - `processMessages` consumes BigQuery Data Transfer completion messages.
-- `upsertTransferConfig` is the idempotent lifecycle task that creates, links,
-  or updates the scheduled query and its notification topic.
+- `upsertTransferConfig` is the idempotent lifecycle task that creates or
+  updates the scheduled query and its notification topic.
 
 Importing the package without exporting its functions deploys nothing—the CLI
 only deploys what your entry file exports.
@@ -111,7 +111,6 @@ overridden there.
 | Field                     | Env var                     | Required | Default           | Description                                                  |
 | ------------------------- | --------------------------- | -------- | ----------------- | ------------------------------------------------------------ |
 | `bigqueryDatasetLocation` | `BIGQUERY_DATASET_LOCATION` | no       | `US`              | BigQuery destination dataset location                        |
-| `transferConfigName`      | `TRANSFER_CONFIG_NAME`      | no       | (empty)           | Existing DTS config resource to link instead of creating one |
 | `datasetId`               | `DATASET_ID`                | yes      | —                 | BigQuery destination dataset id                              |
 | `tableName`               | `TABLE_NAME`                | yes      | —                 | Prefix for per-run destination tables                        |
 | `queryString`             | `QUERY_STRING`              | yes      | —                 | Scheduled Standard SQL query                                 |
@@ -157,11 +156,10 @@ query on first deploy, then reconciles supported query, table, schedule,
 dataset, partitioning, and topic changes on later deploys. It retries transient
 failures up to five times with at least 30 seconds of backoff.
 
-Set `TRANSFER_CONFIG_NAME` to link an existing scheduled-query config without
-changing it. Otherwise the kit stores `extInstanceId` on the Firestore config
-document and uses that value to find the config on later deploys. BigQuery DTS
-does not support clearing a partitioning field once set; create a new transfer
-config to remove partitioning.
+The kit stores `extInstanceId` on the Firestore config document and uses that
+value to find the config on later deploys. BigQuery DTS does not support
+clearing a partitioning field once set; create a new transfer config to remove
+partitioning.
 
 ## Firestore layout
 
@@ -217,10 +215,6 @@ there are two ways to migrate:
   `kit-<instance id>-processMessages`, which stops notifications reaching the
   extension and any other subscriber on the old topic. Do this once the extension
   is uninstalled, and the old topic can then be deleted.
-
-`TRANSFER_CONFIG_NAME` is the exception. A linked config is adopted as-is and is
-never repointed, so if it notifies a topic other than `PUB_SUB_TOPIC` the kit
-logs a warning and its runs never reach the kit's `processMessages` function.
 
 ### Repeated BigQuery columns are now written as arrays
 
@@ -281,15 +275,6 @@ update; it only applies to a config the kit creates.
 
 Removing `PARTITIONING_FIELD` once it has been set still fails, with the same
 explanation, because the BigQuery Data Transfer API cannot clear it.
-
-### You can link an existing scheduled query
-
-`TRANSFER_CONFIG_NAME` is a new setting. Point it at the full resource name of a
-scheduled query you already have
-(`projects/<project>/locations/<location>/transferConfigs/<id>`) and the kit
-records that config in Firestore and consumes its notifications instead of
-creating one of its own. The extension carried the code for this but no setting to
-reach it. Leave it empty for the create-or-reconcile behaviour described above.
 
 ### Region, and no location setting
 

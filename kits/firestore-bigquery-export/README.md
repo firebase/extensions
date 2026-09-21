@@ -24,15 +24,16 @@ below, enables the listed APIs, and attaches the account to every function in
 this kit. Do not set a custom runtime service account for this codebase — it
 conflicts with that automatic setup.
 
-| Role / API                     | Why                                                                                    |
-| ------------------------------ | -------------------------------------------------------------------------------------- |
-| `roles/bigquery.dataEditor`    | create dataset/table/views; insert rows                                                |
-| `roles/bigquery.user`          | run BigQuery jobs and materialized views                                               |
-| `roles/datastore.user`         | write failed-row records back to Firestore (only if you configure a backup collection) |
-| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events                                                  |
-| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service                                    |
-| `roles/cloudtasks.enqueuer`    | enqueue failed writes onto the kit's own `syncBigQuery` task queue                     |
-| `bigquery.googleapis.com`      | mirror Firestore collection changes in BigQuery                                        |
+| Role / API                     | Why                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------ |
+| `roles/bigquery.dataEditor`    | create dataset/table/views; insert rows                                                    |
+| `roles/bigquery.user`          | run BigQuery jobs and materialized views                                                   |
+| `roles/datastore.user`         | write failed-row records back to Firestore (only if you configure a backup collection)     |
+| `roles/eventarc.eventReceiver` | receive Gen2 Firestore trigger events                                                      |
+| `roles/run.invoker`            | allow Eventarc to invoke the Gen2 Cloud Run service                                        |
+| `roles/eventarc.publisher`     | publish the kit's custom Eventarc events (the Extensions platform granted this implicitly) |
+| `roles/cloudtasks.enqueuer`    | enqueue failed writes onto the kit's own `syncBigQuery` task queue                         |
+| `bigquery.googleapis.com`      | mirror Firestore collection changes in BigQuery                                            |
 
 If the dataset lives in a different project (`BIGQUERY_PROJECT_ID`), grant the
 managed runtime service account the `bigquery.*` roles on that project. For a
@@ -120,7 +121,7 @@ loads them at deploy time and prompts for any required values that are missing.
 | `datasetId`                      | `DATASET_ID`                        | no       | `firestore_export` | BigQuery dataset                                                   |
 | `tableId`                        | `TABLE_ID`                          | no       | `posts`            | BigQuery changelog table                                           |
 | `databaseRegion`                 | `DATABASE_REGION`                   | yes      | (prompted)         | Firestore database location; also places the functions             |
-| `datasetLocation`                | `DATASET_LOCATION`                  | no       | `us`               | BigQuery dataset location                                          |
+| `datasetLocation`                | `DATASET_LOCATION`                  | no       | `us`               | BigQuery dataset location, used only when the dataset is created   |
 | `database`                       | `DATABASE`                          | no       | `(default)`        | Firestore database id                                              |
 | `bigqueryProjectId`              | `BIGQUERY_PROJECT_ID`               | no       | project id         | Dataset project, if different                                      |
 | `backupCollection`               | `BACKUP_COLLECTION`                 | no       | (empty)            | Strongly recommended: collection for rows whose BigQuery insert failed |
@@ -169,19 +170,27 @@ the instances cannot collide.
 
 ## Events
 
-When `EVENTARC_CHANNEL` is configured, the functions publish lifecycle events
-under `firebase.extensions.firestore-bigquery-export.v1.*`: `onStart` and
-`onError` from the write path, and `onSuccess` from the `syncBigQuery` task
-when a buffered write lands (matching the extension, which only emitted
-`onSuccess` from its queue handler).
+When `EVENTARC_CHANNEL` is configured, the functions publish lifecycle events:
+`onStart` and `onError` from the write path, and `onSuccess` from the
+`syncBigQuery` task when a buffered write lands (matching the extension, which
+only emitted `onSuccess` from its queue handler).
+
+Each event is published twice, exactly as the extension published it: once
+under `firebase.extensions.firestore-bigquery-export.v1.*` and once under
+`firebase.extensions.firestore-counter.v1.*`. The `firestore-counter` type is a
+historical naming mistake the extension kept for backwards compatibility, and
+the kit keeps it for the same reason: triggers listening on it survive the
+migration. The two copies carry the same `data` and `subject`, and only differ
+by `type`. Write new triggers against the `firestore-bigquery-export` types.
 
 Publishing is filtered by `EXT_SELECTED_EVENTS`: the value is split on commas
 and only exactly matching event types are published, silently. An empty value
 suppresses every event, and a value carrying only another product's types
 (the extension offered more than one namespace to tick) publishes nothing. A
 config exported from the extension brings its `EXT_SELECTED_EVENTS` along, so
-check it lists the `firebase.extensions.firestore-bigquery-export.v1.*` types
-you expect, `onSuccess` included.
+check it lists the types you expect, `onSuccess` included. It gates the legacy
+`firestore-counter` copies too, so a trigger on a legacy type only fires when
+that legacy type is listed.
 
 ## Provisioning
 
@@ -194,6 +203,13 @@ Deploy wiring (declared in the package):
 
 - First deploy runs `initBigQuerySync` automatically (`afterFirstDeploy`).
 - Later deploys run `setupBigQuerySync` automatically (`afterRedeploy`).
+
+The `afterRedeploy` hook only runs when the deploy actually updates the
+functions. If nothing changed since the last deploy, the CLI skips the codebase
+(`No resources modified for codebase: <id>. Skipping afterRedeploy lifecycle
+hook.`) and `setupBigQuerySync` does not run. To force it, either change any
+value in the instance's `.env` file and redeploy, or enqueue the task manually
+as shown below, substituting `setupBigQuerySync` into the snippet.
 
 `initBigQuerySync` and `setupBigQuerySync` call the same handler; they exist as
 separate task functions so first-deploy and redeploy can target different
@@ -243,7 +259,9 @@ missing when a write arrives, the inline write fails and the change buffers
 through the `syncBigQuery` queue, which re-attempts the write on Cloud Tasks'
 schedule. The queue handler does not provision, as in the extension: if the
 resources are still missing the retries fail and the row lands in
-`BACKUP_COLLECTION`; run the lifecycle task (redeploy) to recreate them.
+`BACKUP_COLLECTION`; run the lifecycle task to recreate them, either by
+enqueueing `setupBigQuerySync` manually (see above) or by redeploying with a
+config change so the deploy is not skipped.
 
 ## Failure handling
 
@@ -342,6 +360,92 @@ them.
   documents get there first; `EXCLUDE_OLD_DATA=yes` halves the payload. Same as
   the extension.
 
+## Migrating from the extension
+
+### Avoiding the cutover gap
+
+`firebase ext:migrate` deploys the kit and then uninstalls the extension. The
+extension's trigger stops delivering as it is uninstalled, while the kit's
+trigger is newly created and takes a few minutes to deliver reliably, so writes
+made in between can reach neither exporter. Those writes are never seen by a
+function, so they appear in neither the changelog nor `BACKUP_COLLECTION`, and
+the command reports no error.
+
+To migrate without that gap, keep both exporters running until the kit is
+confirmed to be working.
+
+Run `ext:migrate` without `--force` and answer no when it asks whether to
+uninstall the extension. That question comes last, after the kit has deployed.
+The prompts before it cover the migration and the kit installation, so
+declining one of those aborts the migration instead.
+
+Both exporters are now live, each logging under its own function name:
+`ext-<instance-id>-fsexportbigquery` for the extension and
+`kit-<instance-id>-fsexportbigquery` for the kit. Follow the kit's:
+
+```shell
+firebase functions:log --only kit-<instance-id>-fsexportbigquery --project <project-id>
+```
+
+At the default `LOG_LEVEL` of `info`, each delivered write logs `Firestore
+event received by onDocumentWritten trigger` with the document name; `warn` and
+above suppress that line. Write to the collection and confirm the kit records
+every write rather than an intermittent few. A newly created trigger commonly
+needs several minutes to reach that point. Then uninstall the extension:
+
+```shell
+firebase ext:uninstall <instance-id> --project <project-id> --immediate
+```
+
+Running both exporters together is safe. Both triggers receive the same event
+id, and the changelog row carries it as its BigQuery insert id, so BigQuery
+collapses the second copy. Deduplication is best effort, but a duplicate row
+would not change the latest view, which reports one row per document.
+
+### Recovering documents missed during the gap
+
+If the cutover gap has already occurred, re-import the collection with
+`fs-bq-import-collection` from the extension repository, pointed at the dataset
+and table prefix the kit writes to. In non-interactive mode the script requires
+the project, collection path, dataset, table prefix,
+`--query-collection-group` and `--dataset-location`:
+
+```shell
+npx @firebaseextensions/fs-bq-import-collection \
+  --non-interactive \
+  --project <project-id> \
+  --source-collection-path <COLLECTION_PATH> \
+  --dataset <DATASET_ID> \
+  --table-name-prefix <TABLE_ID> \
+  --query-collection-group false \
+  --dataset-location <DATASET_LOCATION> \
+  --firestore-instance-id <DATABASE>
+```
+
+Import only once the kit is exporting, and pause writes to the collection while
+it runs: the script reads each document and writes its row shortly afterwards,
+so a write streamed mid-import can be superseded by the import row until that
+document changes again.
+
+Before importing, note what it does and does not restore:
+
+- The script imports the entire collection; it cannot target a subset. Every
+  document receives one `IMPORT` row holding its current value. Import rows
+  carry no event id, so running the import again adds a further row per
+  document rather than replacing the earlier one.
+- Rows are stamped with the time the import runs, so afterwards every document
+  reports operation `IMPORT` in the latest view. Current values remain correct
+  and the preceding rows remain in the changelog, but the latest view no longer
+  reflects the last real operation. (The extension's import guide describes
+  these rows as carrying an epoch timestamp; version 0.1.27 uses the import
+  time.)
+- Deletes cannot be recovered, because the import reflects only what Firestore
+  holds when it runs. A document deleted during the gap is no longer there to
+  import, so the delete never reaches the changelog and the document stays
+  visible in the latest view with its last exported value. An update that a
+  later write superseded is likewise unavailable, since only the current value
+  is imported.
+
 ## Differences from the Stream Firestore to BigQuery extension
 
 This kit is the extension repackaged as an npm package, but a few things behave
@@ -366,20 +470,6 @@ inside that window. That property is gone by design - a row that exhausts the
 queue without a configured `BACKUP_COLLECTION` is dropped, exactly as in the
 extension. Set `BACKUP_COLLECTION`.
 
-### Events
-
-Events are published under `firebase.extensions.firestore-bigquery-export.v1.*`
-only. The extension also published a duplicate copy of every event under
-`firebase.extensions.firestore-counter.v1.*`, a historical naming mistake kept
-for backwards compatibility. If you have Eventarc triggers listening on those
-`firestore-counter` types, point them at the `firestore-bigquery-export` types.
-
-### Wildcard columns include the document ID
-
-With `WILDCARD_IDS=true`, the wildcard column now contains a `documentId` key
-alongside the path parameters from your collection path. The extension wrote
-the path parameters only.
-
 ### DATABASE_REGION places the functions
 
 The extension's `LOCATION` parameter is gone. Instead, the kit deploys its
@@ -396,29 +486,64 @@ it is honored: the functions deploy near your database.
 
 Placement needs firebase-tools 15.28.0 or later - older CLIs do not load
 `.env` values during deploy discovery, so the functions silently fall back to
-the no-region behavior below. Two consequences worth knowing before you
-deploy. Upgrading the CLI (or this kit, if your `.env` already carried
+the no-region behavior below. Upgrading the CLI (or this kit, if your `.env` already carried
 `DATABASE_REGION`) can itself trigger the region move described below on your
-next deploy. And on a fresh interactive install the value you enter at the
-prompt only takes effect from the second deploy: the first deploy computes
-regions before the prompt runs, so it lands in `us-central1` and the next
-deploy moves the functions.
+next deploy.
 
-With `DATABASE_REGION` unset or empty, the functions declare no region and the
-Firebase CLI resolves one at deploy time: a function keeps the region it is
-already deployed in, and on a first deploy lands in `us-central1` unless you
-set the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when running
-`firebase deploy`. Careful with that variable: it applies to every no-region
-function in the deploy, not just this kit. Note that changing an existing
-install's function region (via this variable or `DATABASE_REGION`) deletes and
-recreates the functions in the new region - new URLs, a recreated task queue,
-and any in-flight tasks are lost.
+`firebase functions:kits:install` and `firebase ext:migrate` prompt for this
+value and write it to `.env` before anything is deployed, so a single deploy
+places the functions correctly. If you instead run `firebase deploy` with the
+value still missing from `.env`, the prompt comes after discovery has already
+chosen a region, so your answer only takes effect on the following deploy.
+
+`firebase ext:migrate` also writes `FUNCTION_DEFAULT_REGION` to your `.env`,
+recording where the extension's functions ran. Nothing reads it: placement
+comes from `DATABASE_REGION` alone, so if the two disagree your next deploy
+moves the functions.
+
+With an explicit empty `DATABASE_REGION=` line in `.env`, the functions declare
+no region and the Firebase CLI resolves one at deploy time: a function keeps
+the region it is already deployed in, and on a first deploy all four land in
+`us-central1`. The CLI would otherwise place `fsexportbigquery` next to the
+database, but it resolves the default region before it resolves params, so the
+`DATABASE` param this kit passes to the trigger is still an unresolved
+expression when the database is looked up, and the lookup falls back
+([firebase/firebase-tools#11020](https://github.com/firebase/firebase-tools/issues/11020)).
+Setting the `FIREBASE_FUNCTIONS_DEFAULT_REGION` environment variable when
+running `firebase deploy` puts all of them in that region instead. Careful
+with that variable: it applies to every no-region function in the deploy, not
+just this kit. Omitting the line is not the same as an empty one: a
+non-interactive deploy fails with `In non-interactive mode but have no value
+for the following environment variables: DATABASE_REGION`. Note that changing
+an existing install's function region (via this variable or `DATABASE_REGION`)
+deletes and recreates the functions in the new region - new URLs, a recreated
+task queue, and any in-flight tasks are lost.
 
 ### Defaults
 
 Two settings now have defaults rather than being passed through empty:
 `DATASET_LOCATION` defaults to `us`, and `BIGQUERY_PROJECT_ID` defaults to the
 project the functions are deployed to.
+
+### DATASET_LOCATION is not immutable
+
+The extension declared `DATASET_LOCATION` as immutable, so a reconfigure could
+not change it; moving the dataset meant uninstalling and reinstalling. The kit
+cannot enforce that: `firebase-functions/params` has no immutability, so a
+redeploy accepts any new value. The value only reaches BigQuery when the
+lifecycle task creates the dataset. On a redeploy the task finds the existing
+dataset by id and skips creation, so the dataset stays where it is and the new
+value is ignored, with no error and no warning. Nothing else reads it: writes,
+views, and the `syncBigQuery` queue address the dataset by id and BigQuery
+resolves the location itself, so a mismatched `.env` keeps working.
+
+To export to a different location, point the kit at a new dataset: set a new
+`DATASET_ID` together with the new `DATASET_LOCATION` and redeploy. The
+redeploy lifecycle task creates the new dataset in the new location; the old
+dataset is left behind with its table and view, as in the extension when the
+dataset id changes. Existing documents do not follow. Backfill them with
+`fs-bq-import-collection` from the extension repository (see "Tooling that is
+not included" below).
 
 ### Tooling that is not included
 
@@ -432,7 +557,9 @@ The extension shipped companion scripts that this package does not:
 
 `IMPORT_COLLECTION_PATH` is not a setting here. If you rely on any of these,
 keep using the versions from the extension repository. They operate on the same
-BigQuery changelog table, so they still work against data this kit writes.
+BigQuery changelog table, so they still work against data this kit writes. See
+"Migrating from the extension" for using `fs-bq-import-collection` to recover
+documents missed during a migration.
 
 ## API surface
 
