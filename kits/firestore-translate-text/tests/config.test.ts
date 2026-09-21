@@ -202,6 +202,21 @@ describe("configFromEnv", () => {
     });
   });
 
+  // Compatibility requirement: both are `required: true` in extension.yaml, so
+  // the extension's installer refuses an empty answer and re-prompts.
+  test("refuses an empty value for the required params", async () => {
+    await importConfig();
+
+    const options = new Map(
+      defineString.mock.calls.map(([name, opts]) => [name, opts])
+    );
+    for (const name of ["INPUT_FIELD_NAME", "OUTPUT_FIELD_NAME"]) {
+      expect(options.get(name)).toMatchObject({
+        input: { text: { nonEmpty: true } },
+      });
+    }
+  });
+
   test("offers the supported providers and gemini models as a select", async () => {
     await importConfig();
 

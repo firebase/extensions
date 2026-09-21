@@ -120,13 +120,16 @@ const params = {
       "Override the default project for BigQuery instance. This can allow updates to be directed to to a BigQuery instance on another GCP project.",
 
     default: projectID,
+    // `required: true` in the extension, which refuses an empty answer.
+    input: { text: { nonEmpty: true } },
   }),
   database: defineString("DATABASE", {
     label: "Firestore Instance ID",
     description:
       'The Firestore database to use. Use "(default)" for the default database. You can view your available Firestore databases at https://console.cloud.google.com/firestore/databases.',
     default: "(default)",
-    input: { text: { example: "(default)" } },
+    // `required: true` in the extension, which refuses an empty answer.
+    input: { text: { example: "(default)", nonEmpty: true } },
   }),
   // Declared so the CLI prompts for the value and persists it to `.env`; the
   // location to Cloud Run region lookup needs a nested ternary the CLI's CEL

@@ -44,6 +44,8 @@ const params = {
       'The ID of the Firestore database to use. Use "(default)" for the default database. You can view your available Firestore databases at https://console.cloud.google.com/firestore/databases.',
 
     default: "(default)",
+    // `required: true` in the extension, which refuses an empty answer.
+    input: { text: { example: "(default)", nonEmpty: true } },
   }),
   firestoreDeleteMode: defineString("FIRESTORE_DELETE_MODE", {
     label: "Cloud Firestore delete mode",
@@ -99,6 +101,9 @@ const params = {
       text: {
         example: "my-project-12345.appspot.com",
 
+        // `required: true` in the extension. The regex alone accepts the empty
+        // string, so nonEmpty is what reproduces the extension's refusal.
+        nonEmpty: true,
         validationRegex: /^([0-9a-z_.-]*)$/,
         validationErrorMessage: "Invalid storage bucket",
       },
@@ -128,6 +133,16 @@ const params = {
     description:
       "If auto discovery is enabled, how deep should auto discovery find collections and documents. For example, setting to `1` would only discover root collections and documents, whereas setting to `9` would search sub-collections 9 levels deep. Defaults to `3`.",
     default: 3,
+    // `required: true` in the extension. `nonEmpty` is typed for string params
+    // only, so use the regex it is sugar for: an empty answer would otherwise
+    // resolve to 0 rather than the declared default of 3.
+    input: {
+      text: {
+        example: "3",
+        validationRegex: /.+/,
+        validationErrorMessage: "A non-empty value is required.",
+      },
+    },
   }),
   searchFields: defineString("AUTO_DISCOVERY_SEARCH_FIELDS", {
     label: "Auto discovery search fields",

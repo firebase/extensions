@@ -67,14 +67,16 @@ const params = {
     description:
       "What is the name of the field that contains the string that you want to translate?",
     default: "input",
-    input: { text: { example: "input" } },
+    // `required: true` in the extension, which refuses an empty answer.
+    input: { text: { example: "input", nonEmpty: true } },
   }),
   outputFieldName: defineString("OUTPUT_FIELD_NAME", {
     label: "Translations output field name",
     description:
       "What is the name of the field where you want to store your translations?",
     default: "translated",
-    input: { text: { example: "translated" } },
+    // `required: true` in the extension, which refuses an empty answer.
+    input: { text: { example: "translated", nonEmpty: true } },
   }),
   languages: defineString("LANGUAGES", {
     label: "Target languages for translations, as a comma-separated list",

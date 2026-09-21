@@ -18,7 +18,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 
 interface StringParamOpts {
   default?: string;
-  input?: { text?: { validationRegex?: RegExp } };
+  input?: { text?: { validationRegex?: RegExp; nonEmpty?: boolean } };
 }
 
 const { stringParamOpts, paramEnv } = vi.hoisted(() => ({
@@ -183,6 +183,14 @@ describe("SMTP_CONNECTION_URI validationRegex", () => {
     ]) {
       expect(connectionUriRegex().test(uri)).toBe(true);
     }
+  });
+});
+
+// Compatibility requirement: DATABASE is `required: true` in extension.yaml,
+// so the extension's installer refuses an empty answer and re-prompts.
+describe("DATABASE", () => {
+  test("refuses an empty value at the prompt", () => {
+    expect(stringParamOpts.get("DATABASE")?.input?.text?.nonEmpty).toBe(true);
   });
 });
 

@@ -99,15 +99,45 @@ const params = {
     default: "us-central1",
     input: select([...LOCATION_OPTIONS]),
   }),
+  // Every param below is `required: true` in the extension, which refuses an
+  // empty answer, and three carry validation the kit had dropped. Both are
+  // reproduced verbatim.
   syncCollectionPath: defineString("SYNC_COLLECTION_PATH", {
     default: "posts",
+    input: {
+      text: {
+        example: "posts",
+        nonEmpty: true,
+        validationRegex: /^[^\/]+(\/[^\/]+\/[^\/]+)*$/,
+        validationErrorMessage: "Must be a valid Cloud Firestore Collection",
+      },
+    },
   }),
-  syncDataset: defineString("SYNC_DATASET", { default: "backup_dataset" }),
-  syncTable: defineString("SYNC_TABLE", { default: "backup_table" }),
+  syncDataset: defineString("SYNC_DATASET", {
+    default: "backup_dataset",
+    input: {
+      text: {
+        example: "backup_dataset",
+        nonEmpty: true,
+        validationRegex: /^[a-zA-Z0-9_]+$/,
+        validationErrorMessage:
+          "BigQuery dataset IDs must be alphanumeric (plus underscores) and must be no more than 1024 characters.",
+      },
+    },
+  }),
+  syncTable: defineString("SYNC_TABLE", {
+    default: "backup_table",
+    input: { text: { example: "backup_table", nonEmpty: true } },
+  }),
   backupInstanceId: defineString("BACKUP_INSTANCE_ID", {
-    // Required with no default, so the prompt has to reject an empty answer:
-    // whatever it resolves to is written straight into .env.
-    input: { text: { nonEmpty: true } },
+    input: {
+      text: {
+        example: "my-backup-instance",
+        nonEmpty: true,
+        validationRegex: /^[a-zA-Z][a-zA-Z0-9-]{2,61}[a-zA-Z0-9]$/,
+        validationErrorMessage: "Enter a valid instance id",
+      },
+    },
   }),
   datasetLocation: defineString("DATASET_LOCATION", {
     default: "us",
