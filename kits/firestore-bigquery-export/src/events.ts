@@ -35,6 +35,13 @@ const getEventTypes = (eventName: string) => [
 let eventChannel: eventArc.Channel | undefined;
 
 /**
+ * The Eventarc channel named by `EVENTARC_CHANNEL`, or `undefined` when the
+ * variable is unset or blank, which disables event publishing.
+ */
+export const configuredEventChannel = (): string | undefined =>
+  process.env.EVENTARC_CHANNEL?.trim() || undefined;
+
+/**
  * Sets up the Eventarc channel.
  *
  * This function retrieves the Eventarc channel based on the environment variables:
@@ -44,8 +51,9 @@ let eventChannel: eventArc.Channel | undefined;
  * @function setupEventChannel
  */
 export const setupEventChannel = () => {
-  eventChannel = process.env.EVENTARC_CHANNEL
-    ? getEventarc().channel(process.env.EVENTARC_CHANNEL, {
+  const channel = configuredEventChannel();
+  eventChannel = channel
+    ? getEventarc().channel(channel, {
         allowedEventTypes: process.env.EXT_SELECTED_EVENTS,
       })
     : undefined;

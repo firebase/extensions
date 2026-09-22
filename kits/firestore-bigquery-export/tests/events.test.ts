@@ -28,6 +28,7 @@ vi.mock("firebase-admin/eventarc", () => ({
 }));
 
 import {
+  configuredEventChannel,
   recordCompletionEvent,
   recordErrorEvent,
   recordStartEvent,
@@ -52,12 +53,48 @@ describe("no channel configured", () => {
     await recordCompletionEvent({ a: 1 });
     expect(publish).not.toHaveBeenCalled();
   });
+
+  test.each([
+    ["empty", ""],
+    ["whitespace-only", "   "],
+  ])("a %s EVENTARC_CHANNEL opens no channel", async (_label, value) => {
+    process.env.EVENTARC_CHANNEL = value;
+    setupEventChannel();
+
+    await recordStartEvent({ a: 1 });
+    expect(channel).not.toHaveBeenCalled();
+    expect(publish).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["unset", undefined],
+    ["empty", ""],
+    ["whitespace-only", "   "],
+  ])("configuredEventChannel is undefined when %s", (_label, value) => {
+    if (value === undefined) delete process.env.EVENTARC_CHANNEL;
+    else process.env.EVENTARC_CHANNEL = value;
+    expect(configuredEventChannel()).toBeUndefined();
+  });
 });
 
 describe("channel configured", () => {
   beforeEach(() => {
     process.env.EVENTARC_CHANNEL = "projects/p/locations/l/channels/c";
     setupEventChannel();
+  });
+
+  test("configuredEventChannel returns the trimmed channel name", () => {
+    process.env.EVENTARC_CHANNEL = "  projects/p/locations/l/channels/c  ";
+    expect(configuredEventChannel()).toBe("projects/p/locations/l/channels/c");
+  });
+
+  test("opens the channel on the trimmed name", () => {
+    process.env.EVENTARC_CHANNEL = "  projects/p/locations/l/channels/c  ";
+    setupEventChannel();
+    expect(channel).toHaveBeenLastCalledWith(
+      "projects/p/locations/l/channels/c",
+      expect.anything()
+    );
   });
 
   test("publishes both the legacy and the current event type", async () => {

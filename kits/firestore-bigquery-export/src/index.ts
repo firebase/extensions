@@ -82,11 +82,6 @@ const REQUIRED_ROLES: ReadonlyArray<Role> = [
   // Gen2 Firestore triggers need Eventarc receive and run.invoker on the function SA.
   "roles/eventarc.eventReceiver",
   "roles/run.invoker",
-  // The Extensions platform granted publish rights on the extension's Eventarc
-  // channel implicitly from `events:` in extension.yaml. Kits get no implicit
-  // grant, so without this the `channel.publish()` calls in ./events fail with
-  // PERMISSION_DENIED and no custom event is ever delivered.
-  "roles/eventarc.publisher",
   // The trigger enqueues failed writes onto its own syncBigQuery task queue.
   "roles/cloudtasks.enqueuer",
 ];
@@ -99,10 +94,6 @@ const REQUIRED_APIS = [
     api: "bigquery.googleapis.com",
     reason: "Mirrors data from your Cloud Firestore collection in BigQuery.",
   },
-  {
-    api: "eventarcpublishing.googleapis.com",
-    reason: "Publishes the extension's custom events to its Eventarc channel.",
-  },
 ] as const;
 
 for (const role of REQUIRED_ROLES) {
@@ -111,6 +102,15 @@ for (const role of REQUIRED_ROLES) {
 
 for (const { api, reason } of REQUIRED_APIS) {
   requiresAPI(api, reason);
+}
+
+// Declining a `requiresAPI` prompt aborts the deploy, and nothing publishes without a channel.
+if (events.configuredEventChannel()) {
+  requiresRole("roles/eventarc.publisher");
+  requiresAPI(
+    "eventarcpublishing.googleapis.com",
+    "Publishes the extension's custom events to its Eventarc channel."
+  );
 }
 
 afterFirstDeploy({
