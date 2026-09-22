@@ -183,11 +183,15 @@ only emitted `onSuccess` from its queue handler). A blank value is the same as
 an unset one: no channel is opened and nothing is published.
 
 Setting `EVENTARC_CHANNEL` also makes the deploy declare
-`eventarcpublishing.googleapis.com` and `roles/eventarc.publisher`, so the CLI
-enables the API and grants the role. That needs firebase-tools 15.28.0 or
-later, which loads `.env` during deploy discovery; on an older CLI the
-declarations are skipped and every publish fails with `PERMISSION_DENIED`,
-logged as a warning while the export itself continues.
+`eventarcpublishing.googleapis.com` and `roles/eventarc.publisher`: the CLI
+grants the role and prompts to enable the API, and declining that prompt
+aborts the deploy. That needs firebase-tools 15.28.0 or later, which loads
+`.env` during deploy discovery; on an older CLI the declarations are skipped
+and every publish fails with `PERMISSION_DENIED`, logged as a warning while
+the export itself continues. The API and role summary printed by
+`firebase functions:kits:install` and `firebase ext:migrate` runs discovery
+without your `.env`, so it does not list either even when `ext:migrate` has
+just written `EVENTARC_CHANNEL`; the deploy declares them regardless.
 
 Each event is published twice, exactly as the extension published it: once
 under `firebase.extensions.firestore-bigquery-export.v1.*` and once under

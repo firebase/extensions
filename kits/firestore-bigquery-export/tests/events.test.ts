@@ -91,6 +91,7 @@ describe("channel configured", () => {
   test("opens the channel on the trimmed name", () => {
     process.env.EVENTARC_CHANNEL = "  projects/p/locations/l/channels/c  ";
     setupEventChannel();
+    expect(channel).toHaveBeenCalledTimes(2);
     expect(channel).toHaveBeenLastCalledWith(
       "projects/p/locations/l/channels/c",
       expect.anything()
