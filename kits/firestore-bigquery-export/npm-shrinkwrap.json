@@ -1,12 +1,12 @@
 {
   "name": "@firebase-function-kits/firestore-bigquery-export",
-  "version": "0.0.2-rc.14",
+  "version": "0.0.2-rc.15",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@firebase-function-kits/firestore-bigquery-export",
-      "version": "0.0.2-rc.14",
+      "version": "0.0.2-rc.15",
       "license": "Apache-2.0",
       "dependencies": {
         "@firebaseextensions/firestore-bigquery-change-tracker": "^2.2.1",
