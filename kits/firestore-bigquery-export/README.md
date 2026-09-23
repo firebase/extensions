@@ -49,7 +49,10 @@ CMEK dataset, also grant the BigQuery service account access to your KMS key.
 
 Spread the kit's `defaultOptions` into your codebase's single
 `setGlobalOptions` call, then export the four functions from your functions
-codebase entry:
+codebase entry. `setGlobalOptions` must run before the kit module loads,
+because the kit reads the global options when it defines its functions. A
+TypeScript entry compiled to CommonJS runs its statements in order, so this
+works:
 
 ```ts
 // functions/src/index.ts
@@ -65,6 +68,29 @@ export {
   setupBigQuerySync,
 } from "@firebase-function-kits/firestore-bigquery-export";
 ```
+
+In an ES module entry (`"type": "module"`, or TypeScript emitting ES modules),
+Node loads every `import` and `export ... from` before any statement in the
+file runs, so the kit loads before `setGlobalOptions` and your functions
+deploy at 1 vCPU and concurrency `80`. Call `setGlobalOptions` in its
+own module and import that module first:
+
+```js
+// functions/options.js
+import { setGlobalOptions } from "firebase-functions";
+import { defaultOptions } from "@firebase-function-kits/firestore-bigquery-export/default-options";
+
+setGlobalOptions({ ...defaultOptions });
+```
+
+```js
+// functions/index.js
+import "./options.js";
+export * from "@firebase-function-kits/firestore-bigquery-export";
+```
+
+If the global options set no `cpu` when the kit loads, deploy logs a warning
+that `defaultOptions` was not applied.
 
 and configure them with a `.env` (or `.env.<projectId>`):
 
@@ -595,25 +621,32 @@ The kit exports `defaultOptions` from
 `@firebase-function-kits/firestore-bigquery-export/default-options`:
 `cpu: "gcf_gen1"`, `concurrency: 1` and `maxInstances: 100`. The extension
 deployed every function at 0.1666 vCPU with an instance handling one
-invocation at a time, up to 100 instances. The 2nd gen defaults would be
-concurrency `80` and 1 vCPU at 256MiB. The module has no side effects, so you
-can import it before `setGlobalOptions` runs.
+invocation at a time. `maxInstances: 100` matches the extension's Firestore
+trigger, a 2nd gen function that ran at the platform default of 100
+instances; the extension's task-queue functions were 1st gen functions with no
+declared cap. The 2nd gen defaults would be concurrency `80` and 1 vCPU at
+256MiB. The module has no side effects, so you can import it before
+`setGlobalOptions` runs.
 
 Firebase Functions applies options in this order, field by field:
 
 1. The object you pass to `setGlobalOptions`. Spread `defaultOptions` first
    and put your own keys after it, so your keys win:
    `setGlobalOptions({ ...defaultOptions, region: "europe-west1", maxInstances: 20 })`.
+   A key you set to `undefined` also wins: `maxInstances: undefined` removes
+   the default cap instead of keeping it.
 2. The options each function declares, which override the globals. The kit
    declares only `ingressSettings` on `fsexportbigquery`, `timeoutSeconds` and
-   `retryConfig` on the task-queue functions, `maxInstances` on
-   `syncBigQuery`, and `region` from `DATABASE_REGION`.
+   `retryConfig` on the task-queue functions, `maxInstances` and `rateLimits`
+   on `syncBigQuery`, and `region` from `DATABASE_REGION`.
 
 A codebase calls `setGlobalOptions` once; a second call replaces the first
 instead of merging with it. For that reason the kit does not call it. If you
-write your own entry file and do not spread `defaultOptions`, every function
-falls back to the 2nd gen defaults: 1 vCPU at 256MiB, concurrency `80` and no
-instance cap from the kit. You lose CPU parity with the extension.
+write your own entry file and do not spread `defaultOptions`, or your ES
+module entry loads the kit before `setGlobalOptions` runs (see
+[Usage](#usage)), every function falls back to the 2nd gen defaults: 1 vCPU at
+256MiB, concurrency `80` and no instance cap from the kit. You lose CPU parity
+with the extension.
 
 `concurrency` above `1` needs `cpu` of `1` or more. To raise concurrency,
 override both keys:

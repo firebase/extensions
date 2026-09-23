@@ -15,6 +15,7 @@
  */
 
 import { setGlobalOptions, type GlobalOptions } from "firebase-functions";
+import { warn } from "firebase-functions/logger";
 import * as v2Options from "firebase-functions/options";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
@@ -22,6 +23,10 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 vi.mock("firebase-functions/v2/lifecycle", () => ({
   afterFirstDeploy: vi.fn(),
   afterRedeploy: vi.fn(),
+}));
+vi.mock("firebase-functions/logger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("firebase-functions/logger")>()),
+  warn: vi.fn(),
 }));
 
 const FUNCTION_NAMES = [
@@ -42,6 +47,7 @@ const { clearGlobalOptions } = v2Options as unknown as {
 afterEach(() => {
   clearGlobalOptions();
   vi.unstubAllEnvs();
+  vi.mocked(warn).mockClear();
 });
 
 /** Loads the entry after the wrapper's `setGlobalOptions` call and returns each function's deploy endpoint. */
@@ -141,5 +147,35 @@ describe("defaultOptions", () => {
     }
     expectPlatformDefault(endpoints.fsexportbigquery, "maxInstances");
     expect(endpoints.syncBigQuery.maxInstances).toBe(500);
+  });
+
+  test("a key set to undefined after the spread drops that default", async () => {
+    const endpoints = await loadEndpoints({
+      ...(await loadDefaultOptions()),
+      maxInstances: undefined,
+    });
+    expectPlatformDefault(endpoints.fsexportbigquery, "maxInstances");
+    expect(endpoints.fsexportbigquery.cpu).toBe("gcf_gen1");
+  });
+});
+
+describe("missing defaultOptions warning", () => {
+  test("warns during deploy discovery when no global cpu is set", async () => {
+    vi.stubEnv("FUNCTIONS_CONTROL_API", "true");
+    await loadEndpoints();
+    expect(warn).toHaveBeenCalledOnce();
+    expect(vi.mocked(warn).mock.calls[0][0]).toContain("defaultOptions");
+  });
+
+  test("stays silent during deploy discovery when defaultOptions is applied", async () => {
+    vi.stubEnv("FUNCTIONS_CONTROL_API", "true");
+    await loadEndpoints(await loadDefaultOptions());
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  test("stays silent outside deploy discovery", async () => {
+    vi.stubEnv("FUNCTIONS_CONTROL_API", undefined);
+    await loadEndpoints();
+    expect(warn).not.toHaveBeenCalled();
   });
 });

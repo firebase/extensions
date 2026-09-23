@@ -24,6 +24,16 @@
       "default": "./lib/default-options.js"
     }
   },
+  "typesVersions": {
+    "*": {
+      "default-options": [
+        "lib/default-options.d.ts"
+      ],
+      "lib": [
+        "lib/lib.d.ts"
+      ]
+    }
+  },
   "engines": {
     "node": ">=22"
   },

@@ -55,12 +55,14 @@ import {
   handleDocumentWrite,
   handleSyncBigQueryTask,
 } from "./handlers";
+import { warnIfDefaultOptionsMissing } from "./global-options";
 import { createEnsureInitialized } from "./init";
 import * as logs from "./logs";
 import { firestoreLocationToFunctionRegion } from "./region";
 import { enqueueSyncTask } from "./tasks";
 
 assertRequiredParams();
+warnIfDefaultOptionsMissing();
 // Re-export the side-effect-free library surface (handlers and config types).
 export * from "./lib";
 
@@ -171,8 +173,6 @@ const functionRegion = firestoreLocationToFunctionRegion(
 const REGION_OPTION = functionRegion
   ? ({ region: functionRegion } as const)
   : {};
-
-// CPU, concurrency and the default instance cap come from `defaultOptions` through `setGlobalOptions`.
 
 /** Trigger ingress; as a global it would stop Cloud Tasks from invoking the task functions. */
 const EVENT_FUNCTION_OPTIONS = {
