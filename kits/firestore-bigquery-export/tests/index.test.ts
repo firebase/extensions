@@ -213,12 +213,12 @@ describe("exported function options", () => {
   });
 
   test.each(RUNTIME_OPTIONS_BY_FUNCTION)(
-    "%s runs one request per 0.1666 vCPU instance with ingress %s, maxInstances %s, timeout %s",
+    "%s declares ingress %s, maxInstances %s, timeout %s and leaves cpu and concurrency to the global options",
     async (name, ingress, maxInstances, timeoutSeconds) => {
       const deployed = await loadDeployedOptions();
       const opts = deployed[name];
-      expect(opts.concurrency).toBe(1);
-      expect(opts.cpu).toBe("gcf_gen1");
+      expect(opts).not.toHaveProperty("concurrency");
+      expect(opts).not.toHaveProperty("cpu");
       expectOptional(opts, "ingressSettings", ingress);
       expectOptional(opts, "maxInstances", maxInstances);
       expectOptional(opts, "timeoutSeconds", timeoutSeconds);

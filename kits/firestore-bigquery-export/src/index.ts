@@ -55,12 +55,14 @@ import {
   handleDocumentWrite,
   handleSyncBigQueryTask,
 } from "./handlers";
+import { warnIfDefaultOptionsMissing } from "./global-options";
 import { createEnsureInitialized } from "./init";
 import * as logs from "./logs";
 import { firestoreLocationToFunctionRegion } from "./region";
 import { enqueueSyncTask } from "./tasks";
 
 assertRequiredParams();
+warnIfDefaultOptionsMissing();
 // Re-export the side-effect-free library surface (handlers and config types).
 export * from "./lib";
 
@@ -172,19 +174,15 @@ const REGION_OPTION = functionRegion
   ? ({ region: functionRegion } as const)
   : {};
 
-/** Options of the Firestore trigger, matching the extension's deployed trigger. */
+/** Trigger ingress; as a global it would stop Cloud Tasks from invoking the task functions. */
 const EVENT_FUNCTION_OPTIONS = {
   ...REGION_OPTION,
-  concurrency: 1,
-  cpu: "gcf_gen1",
   ingressSettings: "ALLOW_INTERNAL_ONLY",
 } as const;
 
-/** Options shared by the task-queue functions, matching the extension's 1st gen task functions. */
+/** Options shared by the task-queue functions: the extension's 1st gen task timeout. */
 const TASK_FUNCTION_OPTIONS = {
   ...REGION_OPTION,
-  concurrency: 1,
-  cpu: "gcf_gen1",
   timeoutSeconds: 540,
 } as const;
 

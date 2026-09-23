@@ -18,6 +18,20 @@
     "./lib": {
       "types": "./lib/lib.d.ts",
       "default": "./lib/lib.js"
+    },
+    "./default-options": {
+      "types": "./lib/default-options.d.ts",
+      "default": "./lib/default-options.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "default-options": [
+        "lib/default-options.d.ts"
+      ],
+      "lib": [
+        "lib/lib.d.ts"
+      ]
     }
   },
   "engines": {
