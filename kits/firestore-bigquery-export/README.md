@@ -47,10 +47,17 @@ CMEK dataset, also grant the BigQuery service account access to your KMS key.
 
 ## Usage
 
-Export the four functions from your functions codebase entry:
+Spread the kit's `defaultOptions` into your codebase's single
+`setGlobalOptions` call, then export the four functions from your functions
+codebase entry:
 
 ```ts
 // functions/src/index.ts
+import { setGlobalOptions } from "firebase-functions";
+import { defaultOptions } from "@firebase-function-kits/firestore-bigquery-export/default-options";
+
+setGlobalOptions({ ...defaultOptions });
+
 export {
   fsexportbigquery,
   syncBigQuery,
@@ -584,12 +591,39 @@ documents missed during a migration.
 
 ### Concurrency, CPU and timeouts match the extension
 
-Every function sets `concurrency: 1` and `cpu: "gcf_gen1"`, and
-`fsexportbigquery` also sets `ingressSettings: "ALLOW_INTERNAL_ONLY"`. The 2nd
-gen defaults would be concurrency `80`, `ALLOW_ALL`, and 1 vCPU at 256MiB. The
-extension deployed every function at 0.1666 vCPU with an instance handling one
-invocation at a time, and only internal traffic reached the Firestore trigger.
-The task-queue functions `syncBigQuery`, `initBigQuerySync` and
+The kit exports `defaultOptions` from
+`@firebase-function-kits/firestore-bigquery-export/default-options`:
+`cpu: "gcf_gen1"`, `concurrency: 1` and `maxInstances: 100`. The extension
+deployed every function at 0.1666 vCPU with an instance handling one
+invocation at a time, up to 100 instances. The 2nd gen defaults would be
+concurrency `80` and 1 vCPU at 256MiB. The module has no side effects, so you
+can import it before `setGlobalOptions` runs.
+
+Firebase Functions applies options in this order, field by field:
+
+1. The object you pass to `setGlobalOptions`. Spread `defaultOptions` first
+   and put your own keys after it, so your keys win:
+   `setGlobalOptions({ ...defaultOptions, region: "europe-west1", maxInstances: 20 })`.
+2. The options each function declares, which override the globals. The kit
+   declares only `ingressSettings` on `fsexportbigquery`, `timeoutSeconds` and
+   `retryConfig` on the task-queue functions, `maxInstances` on
+   `syncBigQuery`, and `region` from `DATABASE_REGION`.
+
+A codebase calls `setGlobalOptions` once; a second call replaces the first
+instead of merging with it. For that reason the kit does not call it. If you
+write your own entry file and do not spread `defaultOptions`, every function
+falls back to the 2nd gen defaults: 1 vCPU at 256MiB, concurrency `80` and no
+instance cap from the kit. You lose CPU parity with the extension.
+
+`concurrency` above `1` needs `cpu` of `1` or more. To raise concurrency,
+override both keys:
+`setGlobalOptions({ ...defaultOptions, cpu: 1, concurrency: 80 })`.
+
+`fsexportbigquery` sets `ingressSettings: "ALLOW_INTERNAL_ONLY"`, so only
+internal traffic reaches the Firestore trigger, as with the extension. This
+option is not in `defaultOptions`: as a global it would also apply to the
+task-queue functions and stop Cloud Tasks from invoking them. The task-queue
+functions `syncBigQuery`, `initBigQuerySync` and
 `setupBigQuerySync` set `timeoutSeconds: 540`, the extension's 1st gen task
 timeout; `fsexportbigquery` keeps the 60 second default, which the deployed
 trigger ran at.
@@ -602,20 +636,21 @@ functions ran with open ingress, and the `curl` into `initBigQuerySync` under
 globally makes that request fail.
 
 At concurrency `1`, a function serves as many requests at once as it has
-instances. `fsexportbigquery`, `initBigQuerySync` and `setupBigQuerySync` run
-on the Cloud Run default of 100 instances unless your codebase sets
-`setGlobalOptions({ maxInstances })`; the two lifecycle tasks receive one task
-per deploy, so no cap is declared on them. The trigger therefore handles 100
+instances. `fsexportbigquery`, `initBigQuerySync` and `setupBigQuerySync` take
+the `maxInstances: 100` from `defaultOptions` unless you override it after the
+spread; the two lifecycle tasks receive one task per deploy, so the cap does
+not matter for them. The trigger therefore handles 100
 events at once, the same as the deployed extension trigger (100 instances,
 concurrency `1`, no retry policy). An event above that ceiling waits up to
 about 10 seconds for a free instance and is then refused before the handler
 runs: no error log, no `onError` event, no enqueue and no backup row. Whether
 Eventarc redelivers a refused push under the trigger's
-`RETRY_POLICY_DO_NOT_RETRY` is not verified. Raise
-`setGlobalOptions({ maxInstances })` to lift the ceiling.
+`RETRY_POLICY_DO_NOT_RETRY` is not verified. Set a higher `maxInstances` after
+the `defaultOptions` spread to lift the ceiling.
 
 `syncBigQuery` sets `maxInstances: 500` to match its `maxConcurrentDispatches`
-limit, and a global `maxInstances` does not override it: Cloud Tasks may
+limit. A global `maxInstances`, from `defaultOptions` or from your own keys,
+does not change it, because the per-function value wins: Cloud Tasks may
 dispatch 500 tasks at once, and 100 instances would take only 100 of them. A
 dispatch above the instance ceiling waits for a free instance for up to about
 10 seconds, then gets a Cloud Run 429. Cloud Tasks counts that as a failed
@@ -654,6 +689,10 @@ services in the region.
   yourself, plus the config types and helpers (`ExportConfig`,
   `resolveExportConfig`, `toTrackerConfig`, `SerializedDocumentChange`) for
   building their injected `HandlerContext`. Safe to import anywhere.
+- **Default options entry** (`./default-options`): `defaultOptions`, the
+  global options to spread into your `setGlobalOptions` call (see
+  [Concurrency, CPU and timeouts](#concurrency-cpu-and-timeouts-match-the-extension)).
+  Safe to import anywhere.
 
 The change-tracker engine is an internal dependency and is not exported.
 

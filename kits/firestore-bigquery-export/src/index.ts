@@ -172,19 +172,17 @@ const REGION_OPTION = functionRegion
   ? ({ region: functionRegion } as const)
   : {};
 
-/** Options of the Firestore trigger, matching the extension's deployed trigger. */
+// CPU, concurrency and the default instance cap come from `defaultOptions` through `setGlobalOptions`.
+
+/** Trigger ingress; as a global it would stop Cloud Tasks from invoking the task functions. */
 const EVENT_FUNCTION_OPTIONS = {
   ...REGION_OPTION,
-  concurrency: 1,
-  cpu: "gcf_gen1",
   ingressSettings: "ALLOW_INTERNAL_ONLY",
 } as const;
 
-/** Options shared by the task-queue functions, matching the extension's 1st gen task functions. */
+/** Options shared by the task-queue functions: the extension's 1st gen task timeout. */
 const TASK_FUNCTION_OPTIONS = {
   ...REGION_OPTION,
-  concurrency: 1,
-  cpu: "gcf_gen1",
   timeoutSeconds: 540,
 } as const;
 
