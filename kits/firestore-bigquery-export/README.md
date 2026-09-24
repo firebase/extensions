@@ -10,11 +10,85 @@ Tasks queue (`syncBigQuery`), which retries them on its own throttled schedule.
 The functions run in your own Firebase project; there is no hosted version, so
 you deploy them yourself.
 
+## Before you start
+
+You need:
+
+- A Firebase project on the Blaze plan with Cloud Firestore set up. Note the
+  database id and its location (listed at
+  https://console.cloud.google.com/firestore/databases): they become `DATABASE`
+  and `DATABASE_REGION`.
+- A local directory for that project, with a `.firebaserc` selecting it
+  (`firebase use --add`).
+- Node.js 24, the newest Cloud Functions runtime (the kit supports 22 or
+  later).
+- The latest Firebase CLI (15.28.0 at minimum), signed in, with the `kits`
+  experiment enabled:
+
+  ```sh
+  npm install -g firebase-tools@latest
+  firebase login
+  firebase experiments:enable kits
+  ```
+
+  15.28.0 is the minimum for this kit (see [Deploy](#deploy)). Some sections
+  below mention older versions; those only mark when a particular CLI feature
+  arrived.
+
 ## Install
 
+There are two ways to add the kit: the guided installer, or installing the
+package into a functions codebase you set up yourself.
+
+> Until the first stable release, install from the `next` tag. `latest`
+> currently points at 0.0.1, an empty placeholder that contains no code.
+
+### With the guided installer
+
 ```sh
-npm install @firebase-function-kits/firestore-bigquery-export
+firebase functions:kits:install --package @firebase-function-kits/firestore-bigquery-export@next
 ```
+
+The installer asks for a kit name and an instance id, creates a functions
+codebase under `function-kits/<kit name>/`, adds the `kit` stanza to
+`firebase.json`, and prompts for each setting under
+[Configuration](#configuration). It writes your answers to
+`function-kits/<kit name>/config-<instance id>/.env.<projectId>`. Then
+[deploy](#deploy).
+
+The entry file it generates also prompts for `FUNCTION_DEFAULT_REGION` and passes
+it to `setGlobalOptions({ region })`. This kit's functions set their own region
+from `DATABASE_REGION` (see
+[DATABASE_REGION places the functions](#database_region-places-the-functions)),
+which takes precedence, so the value only applies when `DATABASE_REGION` is
+empty. Enter the Cloud Run region your database maps to, for example
+`us-central1` for `nam5`.
+
+Running the installer again in the same project directory adds another instance
+to the existing kit rather than creating a second kit.
+
+### In your own functions codebase
+
+```sh
+npm install @firebase-function-kits/firestore-bigquery-export@next firebase-functions@latest firebase-admin@latest
+npm install --save-dev typescript@latest
+```
+
+`firebase-functions` and `firebase-admin` must be direct dependencies of your
+codebase. The kit ships an npm-shrinkwrap that keeps its own copies inside the
+package, where neither the CLI nor your scripts can resolve them. Without
+`firebase-functions`, the deploy stops with `Couldn't find firebase-functions
+package in your source code` followed by `Error: An unexpected error has
+occurred.` Without `firebase-admin`, the manual enqueue snippet under
+[Provisioning](#provisioning) fails with `Cannot find module
+'firebase-admin/app'`. Keep them on the same major versions the kit depends on
+(currently `firebase-functions` 7 and `firebase-admin` 14; `npm view
+@firebase-function-kits/firestore-bigquery-export@next dependencies` lists
+them). If `@latest` moves to a newer major, install those majors instead, for
+example `firebase-admin@^14`.
+
+Then set up the entry file ([Usage](#usage)) and `firebase.json`
+([Deploy](#deploy)).
 
 ## Required IAM
 
@@ -47,10 +121,24 @@ CMEK dataset, also grant the BigQuery service account access to your KMS key.
 
 ## Usage
 
-Export the four functions from your functions codebase entry:
+The guided installer sets all of this up for you. For your own codebase, this
+layout keeps the codebase and the instance's `.env` at the project root, which
+matches the `firebase.json` under [Deploy](#deploy):
+
+```text
+my-project/
+  .firebaserc
+  firebase.json
+  package.json
+  tsconfig.json
+  .env
+  src/index.ts      # compiled to lib/index.js
+```
+
+Export the four functions from your entry file:
 
 ```ts
-// functions/src/index.ts
+// src/index.ts
 export {
   fsexportbigquery,
   syncBigQuery,
@@ -59,7 +147,36 @@ export {
 } from "@firebase-function-kits/firestore-bigquery-export";
 ```
 
-and configure them with a `.env` (or `.env.<projectId>`):
+`package.json` needs `main` pointing at the compiled file, a `build` script, and
+a Node.js engine, alongside the dependencies from [Install](#install):
+
+```json
+{
+  "main": "lib/index.js",
+  "engines": { "node": "24" },
+  "scripts": { "build": "tsc" }
+}
+```
+
+`tsconfig.json` compiles `src` to `lib`, for example:
+
+```json
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2024",
+    "outDir": "lib",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}
+```
+
+Configure the functions with a `.env` (or `.env.<projectId>`) in the instance's
+directory, here the project root:
 
 ```sh
 COLLECTION_PATH=users
@@ -78,8 +195,8 @@ only deploys what your entry file exports.
 
 ## Deploy
 
-The package's `firebase.json` declares a `kit` stanza (Firebase CLI 15.25.1 or
-later, behind the `kits` experiment):
+Add a `kit` stanza to your project's `firebase.json`. The guided installer
+writes one for you; the package itself does not ship a `firebase.json`.
 
 ```json
 {
@@ -89,11 +206,21 @@ later, behind the `kits` experiment):
       "kit": "firestore-bigquery-export",
       "instances": {
         "default": "."
-      }
+      },
+      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
     }
   ]
 }
 ```
+
+`source` is the directory holding the codebase's `package.json`. `predeploy`
+compiles the TypeScript before upload.
+
+`kit` names this kit's codebase in your project and takes the place of the
+`codebase` field (the two cannot be combined). It is your choice and does not
+have to match the package name: up to 40 characters, using lowercase letters,
+digits, `_` and `-`. Deploy output shows it as a prefix, for example
+`firestore-bigquery-export:kit-default-fsexportbigquery`.
 
 `instances` maps each instance id to the directory (relative to
 `firebase.json`) holding that instance's `.env`. The CLI prefixes every
@@ -115,11 +242,21 @@ firebase deploy --only functions
 
 Deploy a single instance with `firebase deploy --only functions:<instance id>`.
 
+The first deploy asks you to confirm the roles listed under
+[Required IAM](#required-iam) (`This codebase uses declarative security. It will
+use the following role(s): … Continue? (y/N)`). Answering no aborts the deploy.
+Like any functions deploy, it may also ask how many days to keep container
+images.
+
 ## Configuration
 
-Set these values in a `.env` (or `.env.<projectId>`) file. The Firebase CLI
-loads them at deploy time and prompts for any required values that are missing.
-`PROJECT_ID` is supplied by the Firebase CLI.
+Set these values in a `.env` (or `.env.<projectId>`) file in the instance's
+directory. The Firebase CLI loads them at deploy time. On a deploy, it prompts
+for every setting that has no value in those files, including the optional ones,
+and saves your answers to `.env.<projectId>` in the same directory (`Created new
+local file .env.<projectId> to store param values`). To skip those prompts, set
+the values you want in `.env` before deploying. `PROJECT_ID` is supplied by the
+Firebase CLI.
 
 | Field                            | Env var                             | Required | Default            | Description                                                        |
 | -------------------------------- | ----------------------------------- | -------- | ------------------ | ------------------------------------------------------------------ |
@@ -256,13 +393,20 @@ getFunctions()
 '
 ```
 
-Run it from your functions directory (it uses the installed `firebase-admin`)
-with application-default credentials and `GOOGLE_CLOUD_PROJECT` set. The caller
-needs `roles/cloudtasks.enqueuer`.
+Run it from your functions directory. It needs:
+
+- `firebase-admin` as a direct dependency of that codebase (see
+  [Install](#install));
+- application-default credentials, for example from
+  `gcloud auth application-default login`;
+- `GOOGLE_CLOUD_PROJECT` set to your project id;
+- `roles/cloudtasks.enqueuer` for the account behind those credentials.
 
 Under the hood the task queue is an authenticated HTTP endpoint, so for a quick
 manual run you can also POST to it directly — note this skips the queue, so a
-failure is not retried:
+failure is not retried. This needs the
+[Google Cloud CLI](https://cloud.google.com/sdk/docs/install) (`gcloud`),
+signed in:
 
 ```sh
 URL=$(gcloud functions describe kit-default-initBigQuerySync \
