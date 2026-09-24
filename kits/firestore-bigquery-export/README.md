@@ -28,15 +28,12 @@ echo '{}' > firebase.json   # firebase use needs a firebase.json
 firebase use --add <project-id> --alias default
 ```
 
-> Until the first stable release, install from the `next` tag. `latest` points
-> at 0.0.1, an empty placeholder.
-
 **Guided installer.** This creates the codebase under `function-kits/<kit-name>/`,
 adds the `kit` entry to `firebase.json`, and prompts for each setting, writing
 the answers to `function-kits/<kit-name>/config-<instance-id>/.env.<project-id>`:
 
 ```sh
-firebase functions:kits:install --package @firebase-function-kits/firestore-bigquery-export@next
+firebase functions:kits:install --package @firebase-function-kits/firestore-bigquery-export
 ```
 
 It also asks for `FUNCTION_DEFAULT_REGION`. Enter the region your functions
@@ -49,7 +46,7 @@ can't see: without them the deploy fails with `Couldn't find firebase-functions
 package in your source code`.
 
 ```sh
-npm install @firebase-function-kits/firestore-bigquery-export@next firebase-functions@latest firebase-admin@latest
+npm install @firebase-function-kits/firestore-bigquery-export firebase-functions@latest firebase-admin@latest
 npm install --save-dev typescript@latest
 ```
 
